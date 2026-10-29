@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lettaAuth } from '../common/auth';
-import { getLettaClient } from '../common/client';
+import { lettaApi } from '../common/client';
+import { lettaSchemas } from '../common/schemas';
 import { identityIdsDropdown } from '../common/props';
 import type {
   AgentCreateParams,
@@ -12,9 +13,10 @@ export const createAgentFromTemplate = createAction({
   name: 'createAgentFromTemplate',
   classification: 'WRITE',
   displayName: 'Create Agent From Template',
-  description: 'Creates an agent from a template',
+  description: 'Creates an agent from a template version (Letta Cloud only; uses Letta\'s deprecated templates endpoint)',
   audience: 'both',
-  aiMetadata: { description: 'Deploys a new stateful Letta agent from an existing template version (identified by its template version ID), optionally seeding it with a name, identities, tags, memory/tool variables, and an initial message sequence. Use to provision a fresh agent instance from a reusable blueprint. Not idempotent: each call creates a new agent (or deployment) even with identical input.', idempotent: false },
+  outputSchema: lettaSchemas.humanCreateFromTemplate,
+  aiMetadata: { description: 'Letta Cloud only. Deploys a new stateful Letta agent from an existing template version (identified by its template version ID), optionally seeding it with a name, identities, tags, memory/tool variables, and an initial message sequence. Use to provision a fresh agent instance from a reusable blueprint. Not idempotent: each call creates a new agent (or deployment) even with identical input.', idempotent: false },
   props: {
     templateVersion: Property.ShortText({
       displayName: 'Template Version',
@@ -91,7 +93,7 @@ export const createAgentFromTemplate = createAction({
       initialMessageSequence,
     } = context.propsValue;
 
-    const client = getLettaClient(context.auth.props);
+    const client = await lettaApi.getLettaClient({ auth: context.auth.props });
 
     const body: AgentCreateParams = {};
 
@@ -104,7 +106,7 @@ export const createAgentFromTemplate = createAction({
     }
 
     if (tags && tags.length > 0) {
-      body.tags = tags.map((tagObj: any) => tagObj.tag).filter(Boolean);
+      body.tags = lettaApi.toStringArray(tags) ?? [];
     }
 
     if (memoryVariables && Object.keys(memoryVariables).length > 0) {
@@ -124,16 +126,11 @@ export const createAgentFromTemplate = createAction({
     }
 
     if (initialMessageSequence && initialMessageSequence.length > 0) {
-      body.initial_message_sequence = initialMessageSequence.map((msg: any) => ({
-        content: msg.content,
-        role: msg.role,
-        name: msg.name || undefined,
-      }));
+      body.initial_message_sequence = initialMessageSequence.map((msg) => toInitialMessage(msg));
     }
 
-    const response: AgentCreateResponse = await client.templates.agents.create(
-      templateVersion,
-      body
+    const response: AgentCreateResponse = await lettaApi.callLetta(() =>
+      client.templates.agents.create(templateVersion, body)
     );
 
     return {
@@ -145,3 +142,25 @@ export const createAgentFromTemplate = createAction({
   },
 });
 
+
+function toInitialMessage(msg: unknown): InitialMessage {
+  if (!lettaApi.isRecord(msg)) {
+    throw new Error('Each initial message must be an object.');
+  }
+  const content = msg['content'];
+  const role = msg['role'];
+  const name = msg['name'];
+  if (typeof content !== 'string' || content.trim().length === 0) {
+    throw new Error('Each initial message needs content.');
+  }
+  if (role !== 'user' && role !== 'system' && role !== 'assistant') {
+    throw new Error('Each initial message role must be user, system or assistant.');
+  }
+  return {
+    content,
+    role,
+    name: typeof name === 'string' && name.length > 0 ? name : undefined,
+  };
+}
+
+type InitialMessage = NonNullable<AgentCreateParams['initial_message_sequence']>[number];

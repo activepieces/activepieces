@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lettaAuth } from '../common/auth';
-import { getLettaClient } from '../common/client';
+import { lettaApi } from '../common/client';
+import { lettaSchemas } from '../common/schemas';
+import { lettaProps } from '../common/props';
 import type {
   IdentityListParams,
   Identity,
@@ -11,9 +13,9 @@ export const getIdentities = createAction({
   name: 'getIdentities',
   classification: 'SEARCH',
   displayName: 'Get Identities',
-  description: 'Searches for identities in your Letta Project',
-  audience: 'both',
-  aiMetadata: { description: 'Lists identities in the Letta project, optionally filtering by identifier key, name, identity type, or project ID and capping the result count; with no filters it returns all identities (up to the limit). Use to look up identity IDs or check whether an identity already exists. Idempotent: read-only query with no side effects.', idempotent: true },
+  description: 'Searches for identities in your Letta Project. Letta Cloud no longer supports Identities; this only works on self-hosted Letta servers that still serve them.',
+  audience: 'human',
+  outputSchema: lettaSchemas.humanGetIdentities,
   props: {
     identifierKey: Property.ShortText({
       displayName: 'Identifier Key',
@@ -59,7 +61,7 @@ export const getIdentities = createAction({
       limit,
     } = context.propsValue;
 
-    const client = getLettaClient(context.auth.props);
+    const client = await lettaApi.getLettaClient({ auth: context.auth.props });
 
     const query: IdentityListParams = {};
 
@@ -72,23 +74,17 @@ export const getIdentities = createAction({
     }
 
     if (identityType) {
-      query.identity_type = identityType as 'org' | 'user' | 'other';
+      query.identity_type = lettaProps.toIdentityType(identityType);
     }
 
     if (projectId) {
       query.project_id = projectId;
     }
 
-    if (limit !== undefined && limit !== null) {
-      query.limit = limit;
-    }
+    query.limit = lettaApi.resolveLimit({ limit, max: 1000, fallback: 100 });
 
-    const identitiesPage = await client.identities.list(query);
-
-    const identities: Identity[] = [];
-    for await (const identity of identitiesPage) {
-      identities.push(identity);
-    }
+    const identitiesPage = await lettaApi.callLetta(() => client.identities.list(query));
+    const identities: Identity[] = identitiesPage.getPaginatedItems();
 
     return {
       identities,

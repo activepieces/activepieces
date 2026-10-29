@@ -9,7 +9,8 @@ import {
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { lettaAuth } from '../common/auth';
-import { getLettaClient } from '../common/client';
+import { lettaApi } from '../common/client';
+import { lettaSchemas } from '../common/schemas';
 import type {
   AgentState,
   AgentListParams,
@@ -21,36 +22,26 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const client = getLettaClient(auth.props);
+    const client = await lettaApi.getLettaClient({ auth: auth.props });
 
     const query: AgentListParams = {
       limit: 100,
+      order: 'desc',
+      order_by: 'created_at',
+      include: ['agent.tags'],
     };
 
-    const agentsPage = await client.agents.list(query);
+    const agentsPage = await lettaApi.callLetta(() => client.agents.list(query));
 
-    const agents: AgentState[] = [];
-    for await (const agent of agentsPage) {
-      if (agent.created_at) {
-        const createdAtEpoch = Date.parse(agent.created_at);
-
-        if (createdAtEpoch > lastFetchEpochMS) {
-          agents.push(agent);
-        }
-      }
-    }
+    const agents: AgentState[] = agentsPage
+      .getPaginatedItems()
+      .filter((agent) => agent.created_at && Date.parse(agent.created_at) > lastFetchEpochMS);
 
     return agents
-      .sort((a, b) => {
-        const aTime = a.created_at ? Date.parse(a.created_at) : 0;
-        const bTime = b.created_at ? Date.parse(b.created_at) : 0;
-        return bTime - aTime;
-      })
+      .sort((a, b) => Date.parse(b.created_at ?? '') - Date.parse(a.created_at ?? ''))
       .map((agent) => ({
-        epochMilliSeconds: agent.created_at
-          ? Date.parse(agent.created_at)
-          : Date.now(),
-        data: agent,
+        epochMilliSeconds: agent.created_at ? Date.parse(agent.created_at) : Date.now(),
+        data: { ...lettaApi.mapAgentSummary(agent), system: agent.system ?? null },
       }));
   },
 };
@@ -62,11 +53,25 @@ export const newAgent = createTrigger({
   displayName: 'New Agent',
   description: 'Triggers when a new agent is created',
   aiMetadata: {
-    description: 'Fires when a new agent is created in the Letta project, emitting the newly created agent. Polls the agent list and detects agents whose creation timestamp is later than the last poll.',
+    description: 'Fires when a new agent is created in the Letta project, emitting a summary of the newly created agent (ID, name, type, model, tags, timestamps, system prompt); secrets and environment variables are never included. Polls the agent list and detects agents whose creation timestamp is later than the last poll.',
   },
   type: TriggerStrategy.POLLING,
   props: {},
-  sampleData: {},
+  outputSchema: lettaSchemas.newAgentTrigger,
+  sampleData: {
+    id: 'agent-6f0b2a4c-3d1e-4f6a-9b8c-2e5d7a1c4b90',
+    name: 'support-assistant',
+    agent_type: 'letta_v1_agent',
+    model: 'letta/auto',
+    embedding: null,
+    description: 'Answers customer questions',
+    tags: ['support'],
+    created_at: '2026-10-29T10:15:00.000Z',
+    updated_at: '2026-10-29T10:15:00.000Z',
+    last_run_completion: null,
+    last_stop_reason: null,
+    system: null,
+  },
   async onEnable(context) {
     await pollingHelper.onEnable(polling, context);
   },

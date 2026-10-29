@@ -6,16 +6,15 @@ import {
 import {
   TriggerStrategy,
   createTrigger,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { lettaAuth } from '../common/auth';
-import { getLettaClient } from '../common/client';
-import { agentIdDropdown } from '../common/props';
+import { lettaApi } from '../common/client';
+import { lettaSchemas } from '../common/schemas';
+import { watchedAgentDropdown } from '../common/props';
 import type {
   Message,
   MessageListParams,
-  ToolCallMessage,
 } from '../common/types';
 
 const polling: Polling<
@@ -25,50 +24,20 @@ const polling: Polling<
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { agentId } = propsValue;
-    const client = getLettaClient(auth.props);
+    const client = await lettaApi.getLettaClient({ auth: auth.props });
 
     const query: MessageListParams = {
       limit: 100,
+      order: 'desc',
     };
 
-    const messagesPage = await client.agents.messages.list(agentId, query);
+    const messagesPage = await lettaApi.callLetta(() => client.agents.messages.list(agentId, query));
 
-    const sendMessageToolCalls: ToolCallMessage[] = [];
-    for await (const message of messagesPage) {
-      if (message.message_type === 'tool_call_message') {
-        const toolCallMessage = message as ToolCallMessage;
-        
-        let hasSendMessage = false;
-        
-        if (toolCallMessage.tool_calls) {
-          if (Array.isArray(toolCallMessage.tool_calls)) {
-            hasSendMessage = toolCallMessage.tool_calls.some(
-              (tc) => tc.name === 'send_message'
-            );
-          } else {
-            const delta = toolCallMessage.tool_calls;
-            hasSendMessage = delta.name === 'send_message';
-          }
-        }
-        
-        if (!hasSendMessage && toolCallMessage.tool_call) {
-          const toolCall = toolCallMessage.tool_call;
-          if ('name' in toolCall && toolCall.name) {
-            hasSendMessage = toolCall.name === 'send_message';
-          }
-        }
-        
-        if (hasSendMessage && toolCallMessage.date) {
-          const messageDateEpoch = Date.parse(toolCallMessage.date);
-          
-          if (messageDateEpoch > lastFetchEpochMS) {
-            sendMessageToolCalls.push(toolCallMessage);
-          }
-        }
-      }
-    }
+    const replies: Message[] = messagesPage
+      .getPaginatedItems()
+      .filter((message) => isAgentReply(message) && Date.parse(message.date) > lastFetchEpochMS);
 
-    return sendMessageToolCalls
+    return replies
       .sort((a, b) => {
         const aTime = a.date ? Date.parse(a.date) : 0;
         const bTime = b.date ? Date.parse(b.date) : 0;
@@ -86,15 +55,28 @@ export const newMessage = createTrigger({
   name: 'newMessage',
   classification: 'READ',
   displayName: 'New Message',
-  description: 'Triggers when an agent uses send_message',
+  description: 'Triggers when an agent replies (assistant message, or send_message on legacy agents)',
   aiMetadata: {
-    description: 'Fires when a specific Letta agent (by agent ID) emits a message via its send_message tool call, representing the agent communicating to the user. Polls the agent\'s message history and detects send_message tool-call messages newer than the last poll.',
+    description: 'Fires when a specific Letta agent (by agent ID) replies to the user: an assistant_message from current agents, or a send_message tool call from legacy memgpt agents. Polls the newest 100 messages and emits replies newer than the last poll.',
   },
   type: TriggerStrategy.POLLING,
   props: {
-    agentId: agentIdDropdown,
+    agentId: watchedAgentDropdown,
   },
-  sampleData: {},
+  outputSchema: lettaSchemas.newMessageTrigger,
+  sampleData: {
+    id: 'message-3c9e1f2a-7b4d-4e8a-a1c5-9d0f6b2e8a71',
+    date: '2026-10-29T10:20:00.000Z',
+    otid: '7f69faf4-7a40-4330-85ab-51fb4af79201',
+    run_id: 'run-5a2b8c1d-4e6f-4a9b-8c7d-1e2f3a4b5c6d',
+    step_id: 'step-8d7c6b5a-4f3e-4d2c-9b1a-0f9e8d7c6b5a',
+    name: null,
+    sender_id: null,
+    seq_id: 170544687,
+    is_err: null,
+    message_type: 'assistant_message',
+    content: 'Hi! How can I help you today?',
+  },
   async onEnable(context) {
     await pollingHelper.onEnable(polling, context);
   },
@@ -109,3 +91,18 @@ export const newMessage = createTrigger({
   },
 });
 
+
+function isAgentReply(message: Message): boolean {
+  if (message.message_type === 'assistant_message') {
+    return true;
+  }
+  if (message.message_type !== 'tool_call_message' || !('tool_call' in message)) {
+    return false;
+  }
+  const calls = Array.isArray(message.tool_calls)
+    ? message.tool_calls
+    : message.tool_calls
+      ? [message.tool_calls]
+      : [];
+  return message.tool_call.name === 'send_message' || calls.some((call) => call.name === 'send_message');
+}
