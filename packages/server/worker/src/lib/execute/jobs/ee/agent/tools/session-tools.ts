@@ -128,8 +128,9 @@ export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter,
     }
 }
 
-export function createResultTools({ readFile }: {
+export function createResultTools({ readFile, taintState }: {
     readFile: (fileId: string) => Promise<Buffer>
+    taintState: TaintState
 }): ToolSet {
     const parsedFiles = new Map<string, unknown>()
     const loadFile = async (fileId: string): Promise<unknown> => {
@@ -139,7 +140,7 @@ export function createResultTools({ readFile }: {
         }
         const text = (await readFile(fileId)).toString('utf8')
         const { data: parsed } = tryCatchSync((): unknown => JSON.parse(text))
-        const stored = toolResultView.payloadOf(parsed ?? text)
+        const stored = parsed ?? text
         parsedFiles.set(fileId, stored)
         if (parsedFiles.size > MAX_CACHED_RESULT_FILES) {
             parsedFiles.delete(parsedFiles.keys().next().value ?? '')
@@ -153,11 +154,12 @@ export function createResultTools({ readFile }: {
                 fileId: z.string().describe('The fileId from the large-result preview'),
                 path: z.string().optional().describe('Where to read in a JSON result, e.g. "records", "messages[3].payload.headers". Omit for the root.'),
                 fields: z.array(z.string()).optional().describe('Keys to keep from each item or the object, e.g. ["id", "name", "properties.email"]'),
-                offset: z.number().int().min(0).optional().describe('First item (JSON list) or line (text) to return, 0-based'),
+                offset: z.number().int().min(0).optional().describe('First item (JSON list), line (text) or character (long text value) to return, 0-based'),
                 limit: z.number().int().min(1).max(500).optional().describe('How many items or lines (default 20 items / 200 lines)'),
                 search: z.string().optional().describe('Only items or lines containing this text'),
             }),
             execute: async ({ fileId, path, fields, offset, limit, search }) => {
+                taintState.tainted = true
                 const { data: stored, error } = await tryCatch(() => loadFile(fileId))
                 if (error || isNil(stored)) {
                     return { error: `Could not read file ${fileId}. Use a fileId from a large-result preview in this conversation.` }

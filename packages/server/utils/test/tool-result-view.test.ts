@@ -49,6 +49,25 @@ describe('toolResultView', () => {
         expect(text).toContain('…+')
     })
 
+    it('pages through a long text line and a long string value instead of clipping them', () => {
+        const long = 'a'.repeat(5000) + 'TAIL'
+        expect(toolResultView.read({ stored: mcpEnvelope(long), fileId: 'f1', search: 'TAIL' })).toContain('TAIL')
+        const body = 'b'.repeat(30_000) + 'END'
+        const first = toolResultView.read({ stored: { email: { body } }, fileId: 'f1', path: 'email.body' })
+        expect(first).toContain('Characters 1–6000 of 30003')
+        expect(toolResultView.read({ stored: { email: { body } }, fileId: 'f1', path: 'email.body', offset: 30_000 })).toContain('END')
+    })
+
+    it('keeps the text after an embedded JSON block readable', () => {
+        const text = `✅ Schemas\n${JSON.stringify({ a: 1 })}\n---\nsecond schema here`
+        expect(toolResultView.read({ stored: mcpEnvelope(text), fileId: 'f1', search: 'second schema' })).toContain('second schema here')
+    })
+
+    it('stays inside the read budget for a very wide object', () => {
+        const wide = Object.fromEntries(Array.from({ length: 5000 }, (_, index) => [`key_${index}`, 'v'.repeat(50)]))
+        expect(Buffer.byteLength(toolResultView.read({ stored: wide, fileId: 'f1' }), 'utf8')).toBeLessThan(26 * 1024)
+    })
+
     it('reads JSON embedded after a text header, and previews it shrunk with the trailing notes kept', () => {
         const pieces = Array.from({ length: 7 }, (_, index) => ({ name: `piece-${index}`, actions: Array.from({ length: 60 }, (__, action) => ({ name: `a${action}`, aiDescription: 'd'.repeat(400) })) }))
         const text = `✅ Researched 7 piece(s)\n\n${JSON.stringify(pieces)}\n📤 Output fields: id, email`

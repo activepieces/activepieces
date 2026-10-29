@@ -3,7 +3,7 @@ import { PiecePropertyMap } from '@activepieces/pieces-framework'
 import { toolResultView } from '@activepieces/server-utils'
 import { AppConnectionStatus, EngineResponse, EngineResponseStatus, FlowVersion, McpToolDefinition, ProjectScopedMcpServer, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains, In } from 'typeorm'
+import { ArrayContains } from 'typeorm'
 import { z } from 'zod'
 import { appConnectionService, appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -324,13 +324,13 @@ async function listForPieces({ projectId, platformId, pieceNames }: {
     if (pieceNames.length === 0) {
         return {}
     }
-    const rows = await appConnectionsRepo().find({
+    const rows = await Promise.all(pieceNames.map((pieceName) => appConnectionsRepo().find({
         select: { externalId: true, displayName: true, status: true, pieceName: true },
-        where: { platformId, projectIds: ArrayContains([projectId]), pieceName: In(pieceNames) },
-        order: { pieceName: 'ASC', created: 'DESC' },
-        take: MAX_ROWS,
-    })
-    return groupByPiece({ pieceNames, connections: rows })
+        where: { platformId, projectIds: ArrayContains([projectId]), pieceName },
+        order: { created: 'DESC' },
+        take: MAX_PER_PIECE,
+    })))
+    return groupByPiece({ pieceNames, connections: rows.flat() })
 }
 
 function groupByPiece({ pieceNames, connections }: { pieceNames: string[], connections: ConnectionRow[] }): ConnectionsByPiece {
@@ -376,8 +376,6 @@ const PROPERTY_TIMEOUT_MS = 30_000
 const MAX_SAMPLE_CHARS = 1500
 
 const MAX_TEXT_OPTIONS = 25
-
-const MAX_ROWS = 100
 
 const MAX_PER_PIECE = 10
 

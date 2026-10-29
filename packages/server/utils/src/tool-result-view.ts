@@ -1,9 +1,13 @@
 import { isNil, isObject, tryCatchSync } from '@activepieces/core-utils'
 import { largeResultUtils } from './large-result-utils'
 
-function payloadOf(stored: unknown): unknown {
-    const text = textOf(stored)
-    return text === null ? stored : splitText(text).json ?? text
+function payloadOf(stored: unknown): { text: string | null, json: unknown, complete: boolean } {
+    const text = typeof stored === 'string' ? stored : textOf(stored)
+    if (text === null) {
+        return { text, json: stored, complete: true }
+    }
+    const { json, complete } = splitText(text)
+    return { text, json, complete }
 }
 
 function textOf(result: unknown): string | null {
@@ -21,11 +25,11 @@ function modelVisibleBytes(result: unknown): number | null {
 }
 
 function read({ stored, fileId, path, fields, offset = 0, limit, search }: ReadParams): string {
-    const payload = payloadOf(stored)
-    if (typeof payload === 'string') {
-        return readText({ text: payload, fileId, offset, limit: limit ?? DEFAULT_LINE_LIMIT, search })
+    const { text, json, complete } = payloadOf(stored)
+    if (text !== null && (json === null || (!complete && isNil(path) && isNil(fields)))) {
+        return readText({ text, fileId, offset, limit: limit ?? DEFAULT_LINE_LIMIT, search })
     }
-    return readJson({ payload, fileId, path, fields, offset, limit: limit ?? DEFAULT_ITEM_LIMIT, search })
+    return readJson({ payload: json, fileId, path, fields, offset, limit: limit ?? DEFAULT_ITEM_LIMIT, search })
 }
 
 function textPreview({ text, fileId, byteSize, label }: { text: string, fileId: string, byteSize: number, label: string }): string {
@@ -37,10 +41,10 @@ function textPreview({ text, fileId, byteSize, label }: { text: string, fileId: 
         if (fitted !== null) {
             return fitted
         }
-        const shape = smallestShapeThatFits(json)
+        const shape = smallestShapeThatFits({ value: json, budget: PREVIEW_BYTES }) ?? describeKeys(json)
         return `${size}, too large to preview whole, so here is its shape (values clipped).${note.length > 0 ? `\n${note}` : ''}\n${shape}\n\n${hint}`
     }
-    const lines = text.split('\n')
+    const lines = linesOf(text)
     const kept = linesWithinBudget({ lines, start: 0, maxLines: lines.length, budget: PREVIEW_BYTES })
     const end = kept.length
     return [
@@ -50,33 +54,32 @@ function textPreview({ text, fileId, byteSize, label }: { text: string, fileId: 
     ].join('\n\n')
 }
 
-function splitText(text: string): { note: string, json: unknown } {
+function splitText(text: string): { note: string, json: unknown, complete: boolean } {
     const lines = text.split('\n')
     const start = lines.findIndex((line) => /^\s*[[{]/.test(line))
     if (start === -1) {
-        return { note: text, json: null }
+        return { note: text, json: null, complete: false }
     }
     const before = lines.slice(0, start).join('\n').trim()
     const whole = parseJson(lines.slice(start).join('\n'))
     if (whole !== null) {
-        return { note: before, json: whole }
+        return { note: before, json: whole, complete: true }
     }
     const single = parseJson(lines[start])
     const after = lines.slice(start + 1).join('\n').trim()
     return single === null
-        ? { note: text, json: null }
-        : { note: [before, after.length > MAX_TRAILING_NOTE_CHARS ? `${after.slice(0, MAX_TRAILING_NOTE_CHARS)}…` : after].filter((part) => part.length > 0).join('\n\n'), json: single }
+        ? { note: text, json: null, complete: false }
+        : { note: [before, after.length > MAX_TRAILING_NOTE_CHARS ? `${after.slice(0, MAX_TRAILING_NOTE_CHARS)}…` : after].filter((part) => part.length > 0).join('\n\n'), json: single, complete: false }
 }
 
-function smallestShapeThatFits(json: unknown): string {
-    let shape = ''
+function smallestShapeThatFits({ value, budget }: { value: unknown, budget: number }): string | null {
     for (const limits of PREVIEW_SHAPES) {
-        shape = safeStringify(shrinkForPreview(json, limits)) ?? ''
-        if (Buffer.byteLength(shape, 'utf8') <= PREVIEW_BYTES) {
+        const shape = safeStringify(shrinkForPreview(value, limits)) ?? ''
+        if (Buffer.byteLength(shape, 'utf8') <= budget) {
             return shape
         }
     }
-    return shape
+    return null
 }
 
 function shrinkForPreview(value: unknown, opts: PreviewLimits): unknown {
@@ -97,7 +100,7 @@ function shrinkForPreview(value: unknown, opts: PreviewLimits): unknown {
 }
 
 function readText({ text, fileId, offset, limit, search }: { text: string, fileId: string, offset: number, limit: number, search?: string }): string {
-    const lines = text.split('\n')
+    const lines = linesOf(text)
     if (search !== undefined && search.length > 0) {
         const needle = search.toLowerCase()
         const matches = lines.flatMap((line, index) => line.toLowerCase().includes(needle) ? [`${index + 1}: ${line}`] : [])
@@ -119,6 +122,12 @@ function readJson({ payload, fileId, path, fields, offset, limit, search }: { pa
         return `Nothing at "${path}". ${describeKeys(payload)}`
     }
     const where = path === undefined || path.length === 0 ? 'the root' : `"${path}"`
+    if (typeof target === 'string' && Buffer.byteLength(target, 'utf8') > READ_BYTES) {
+        const chunk = target.slice(offset, offset + STRING_CHUNK_CHARS)
+        const end = offset + chunk.length
+        const next = end < target.length ? `\n\n[More: ap_read_result({ fileId: '${fileId}', path: '${path ?? ''}', offset: ${end} })]` : ''
+        return `Characters ${offset + 1}–${end} of ${target.length} at ${where}:\n${chunk}${next}`
+    }
     if (Array.isArray(target)) {
         const filtered = search === undefined || search.length === 0
             ? target
@@ -137,7 +146,7 @@ function fitted({ header, value, footer }: { header: string, value: unknown, foo
     if (Buffer.byteLength(json, 'utf8') <= READ_BYTES) {
         return `${header}\n${json}${footer}`
     }
-    const shape = safeStringify(shrinkForPreview(value, { maxDepth: 3, maxString: 120, maxArray: 3 })) ?? ''
+    const shape = smallestShapeThatFits({ value, budget: READ_BYTES }) ?? describeKeys(value)
     return `${header} too large to show whole, so here is its shape (values clipped). Read a deeper path, pass fields, or lower limit:\n${shape}${footer}`
 }
 
@@ -170,9 +179,15 @@ function linesWithinBudget({ lines, start, maxLines, budget }: { lines: string[]
         if (bytes > budget && kept.length > 0) {
             break
         }
-        kept.push(line.length > MAX_LINE_CHARS ? `${line.slice(0, MAX_LINE_CHARS)}…` : line)
+        kept.push(line)
     }
     return kept
+}
+
+function linesOf(text: string): string[] {
+    return text.split('\n').flatMap((line) => line.length <= MAX_LINE_CHARS
+        ? [line]
+        : Array.from({ length: Math.ceil(line.length / MAX_LINE_CHARS) }, (_, index) => line.slice(index * MAX_LINE_CHARS, (index + 1) * MAX_LINE_CHARS)))
 }
 
 function parseJson(text: string): unknown {
@@ -192,6 +207,7 @@ const DEFAULT_LINE_LIMIT = 200
 const DEFAULT_ITEM_LIMIT = 20
 const MAX_LINE_CHARS = 2_000
 const READ_BYTES = 24 * 1024
+const STRING_CHUNK_CHARS = 6_000
 const PREVIEW_BYTES = 16 * 1024
 const MAX_TRAILING_NOTE_CHARS = 6_000
 const PREVIEW_SHAPES: PreviewLimits[] = [
@@ -204,7 +220,6 @@ const PREVIEW_SHAPES: PreviewLimits[] = [
 export const MODEL_RESULT_OFFLOAD_BYTES = 32 * 1024
 
 export const toolResultView = {
-    payloadOf,
     textOf,
     modelVisibleBytes,
     read,

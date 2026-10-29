@@ -272,7 +272,7 @@ export async function executePieceActionRun({
     }
 
     if (offload !== undefined) {
-        const offloaded = await maybeOffloadLargeResult({ outcome: actionRun, actionName: action.name, displayName: action.displayName, offload })
+        const offloaded = await maybeOffloadLargeResult({ outcome: rawActionRun, actionName: action.name, displayName: action.displayName, offload })
         if (offloaded !== null) {
             return offloaded
         }

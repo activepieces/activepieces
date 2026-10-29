@@ -805,6 +805,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     const thinkingTools = agentWorkerTools.createThinkingTools()
     const resultTools = agentWorkerTools.createResultTools({
         readFile: async (fileId) => (await ctx.apiClient.readAgentFile({ platformId, conversationId, fileId, ...spreadIfDefined('projectId', projectState.projectId ?? undefined) })).data,
+        taintState,
     })
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({
         eventEmitter: toolEventEmitter,

@@ -253,6 +253,9 @@ function injectSelectedAuth({ name, args, getSelectedAuth }: {
     if (getSelectedAuth === undefined || !AUTH_INJECTABLE_TOOLS.has(name) || !isObject(args)) {
         return args
     }
+    if (Array.isArray(args['items'])) {
+        return { ...args, items: args['items'].map((item) => injectSelectedAuth({ name, args: item, getSelectedAuth })) }
+    }
     const pieceName = args['pieceName']
     if (typeof pieceName !== 'string') {
         return args
