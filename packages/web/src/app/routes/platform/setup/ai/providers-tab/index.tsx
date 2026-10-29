@@ -33,8 +33,8 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarGroup, AvatarGroupCount } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -222,8 +222,20 @@ export function ProvidersTab() {
     <>
       <AdminPageHeader
         title={t('Providers')}
+        badge={
+          locked && configs.length > 0 ? (
+            <Badge variant="secondary" className="gap-1 rounded-full px-2">
+              <Lock className="size-3" />
+              {t('Read-only')}
+            </Badge>
+          ) : undefined
+        }
         description={
-          configs.length === 0
+          locked && configs.length > 0
+            ? t(
+                "Your plan doesn't include your own AI keys. You can still delete them.",
+              )
+            : configs.length === 0
             ? t(
                 'Connect a provider to turn on chat, agents, and AI steps across your platform.',
               )
@@ -231,7 +243,9 @@ export function ProvidersTab() {
         }
         resources={adminPageResources.aiProviders}
       >
-        {!locked && (
+        {locked ? (
+          configs.length > 0 && <UpgradeButton />
+        ) : (
           <Button
             onClick={() => openConnect()}
             {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
@@ -255,7 +269,6 @@ export function ProvidersTab() {
         <EmptyProviders onConnect={openConnect} />
       ) : (
         <>
-          {locked && <LockedProvidersAlert />}
           {connectedProviders.map((provider) => (
             <ProviderGroup
               key={provider}
@@ -300,36 +313,21 @@ export function ProvidersTab() {
   return page;
 }
 
-function LockedProvidersAlert() {
+function UpgradeButton() {
   const upgradeClick = useUpgradeClick();
   const { featureKey, tier } = PLATFORM_FEATURES.aiProviders;
-
   return (
-    <Alert variant="primary">
-      <Lock />
-      <AlertTitle>
-        {t('Your plan does not include Bring your own AI keys')}
-      </AlertTitle>
-      <AlertDescription className="flex flex-col items-start gap-3">
-        <p>
-          {t(
-            'You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.',
-          )}
-        </p>
-        <Button
-          size="sm"
-          onClick={() =>
-            upgradeClick({
-              feature: featureKey,
-              tier,
-              surface: PlatformAdminSurface.SAMPLE,
-            })
-          }
-        >
-          {t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
-        </Button>
-      </AlertDescription>
-    </Alert>
+    <Button
+      onClick={() =>
+        upgradeClick({
+          feature: featureKey,
+          tier,
+          surface: PlatformAdminSurface.SAMPLE,
+        })
+      }
+    >
+      {t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
+    </Button>
   );
 }
 
