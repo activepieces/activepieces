@@ -150,6 +150,7 @@ silently. Worker groups is the last page on the old full-page teaser.
 
 ## Gotchas
 
+- **A `SettingsPanel` header centres its title against its action only when it has no description.** With a description the title block is two lines, so it stays top-aligned; without one, top alignment left a one-line title floating above a taller button (the AI Center provider cards). Pass no `description` rather than an empty one, or the panel keeps the top alignment.
 - **Adding an admin page is three edits**: the sidebar (`components/sidebar/platform`), the route
   (`platform-routes.tsx`), and global search (`components/global-search/static-pages.ts`). Nothing
   checks the three agree. A page whose locked state is the sample overlay also needs a
