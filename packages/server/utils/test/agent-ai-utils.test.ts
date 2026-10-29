@@ -145,24 +145,24 @@ describe('collectStepMessages', () => {
 })
 
 describe('buildStepParts — tool call status', () => {
-    it('bills a call that ran, even one that then threw, and never one the SDK refused to run', () => {
+    it('saves a call that threw as an error with its message, and one the SDK refused to run as an error', () => {
         const content = [
             { type: 'tool-call', toolCallId: 'ran', toolName: 'ap_web_search', input: { query: 'a' } },
             { type: 'tool-result', toolCallId: 'ran', toolName: 'ap_web_search', output: { type: 'json', value: { answer: 'ok' } } },
             { type: 'tool-call', toolCallId: 'threw', toolName: 'mcp__crm__create_record', input: { name: 'b' } },
-            { type: 'tool-error', toolCallId: 'threw', toolName: 'mcp__crm__create_record' },
+            { type: 'tool-error', toolCallId: 'threw', toolName: 'mcp__crm__create_record', error: new Error('MCP tool timed out') },
             { type: 'tool-call', toolCallId: 'refused', toolName: 'ap_web_search', input: { query: 'c' }, invalid: true },
             { type: 'tool-error', toolCallId: 'refused', toolName: 'ap_web_search' },
             { type: 'tool-call', toolCallId: 'unanswered', toolName: 'ap_web_search', input: { query: 'd' } },
         ]
 
-        const statuses = agentAiUtils.buildStepParts({ content }).flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [[part.toolCallId, part.status]] : [])
+        const statuses = agentAiUtils.buildStepParts({ content }).flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [[part.toolCallId, part.status, part.errorText]] : [])
 
         expect(statuses).toEqual([
-            ['ran', PersistedToolCallStatus.COMPLETED],
-            ['threw', PersistedToolCallStatus.COMPLETED],
-            ['refused', PersistedToolCallStatus.ERROR],
-            ['unanswered', PersistedToolCallStatus.ERROR],
+            ['ran', PersistedToolCallStatus.COMPLETED, undefined],
+            ['threw', PersistedToolCallStatus.ERROR, 'MCP tool timed out'],
+            ['refused', PersistedToolCallStatus.ERROR, undefined],
+            ['unanswered', PersistedToolCallStatus.ERROR, undefined],
         ])
     })
 })

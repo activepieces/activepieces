@@ -5,24 +5,47 @@ icon: 'bell'
 
 Automated reports and alerts that tell us something is wrong before a customer does.
 
+Every alert below except the AI chat alerts ends up in **Box**. Box groups repeats of the same alert into one issue by fingerprint and starts a Claude agent only for a new issue, or for a resolved one that comes back. The agent investigates, files the Linear ticket for the team that owns the cause, and opens a pull request when the fix is small. Resolve the Box issue once its fix has shipped, and never ignore one: an ignored issue never starts an agent again.
+
 ## Enterprise OOM Report
 
 Runs that run out of memory end with status `MEMORY_LIMIT_EXCEEDED`. They are not failed queue jobs, so queue alerts never see them. This report surfaces them so we can reach out with a fix (bigger dedicated workers, flow optimization) before the customer escalates.
 
 - **Runs:** as a daily cron job on the DevOps machine, reading the read-only Postgres replica and storing one row per platform per day in ClickHouse.
 - **Who:** enterprise Cloud platforms only, every platform with at least one OOM run the previous day.
-- **Where:** one message in the internal Discord channel, one line per platform with OOM runs, flows affected and OOM rate. Nothing is sent on a quiet day.
+- **Where:** one Box signal per day (`enterprise-oom-<day>`), listing each platform by id with OOM runs, flows affected and OOM rate. The agent finds why each platform runs out of memory from the replica and the OOM history, decides whether it is the customer's flow design or a platform or piece bug, and posts a short summary to Discord. Nothing is sent on a quiet day.
+- **Customer data:** platform, project and flow names go only into a private artifact for the Activepieces org. The Linear ticket, pull requests and the Discord summary carry platform ids and the artifact link.
 - **History:** the **Enterprise OOM Tracker** dashboard in HyperDX shows trends and every past day's report.
 - **If it stops:** a Betterstack heartbeat alerts when the daily job has not run.
+
+## Queue and Host Alerts
+
+ClickStack (HyperDX) alerts on the production logs, all sending to the **Box Inbox** webhook. Each one fires separately per group, so each failing error signature or struggling host sends its own alert.
+
+| Alert | Fires when | Checked every | Grouped by |
+| --- | --- | --- | --- |
+| Queue job failure | a `workerJobs` job logs `job.failed` | 15 min | error signature |
+| Worker RSS high | a worker's memory passes 950 MB (the container is killed at about 1 GB) | 15 min | worker host |
+| App RSS high | an app server's memory passes 3,500 MB | 15 min | app host |
+| Worker event-loop wedged | a worker's event-loop delay (p99) passes 90 s | 5 min | worker host |
+| App event-loop wedged | an app server's event-loop delay (p99) passes 5 s | 5 min | app host |
+
+- **Where:** the [HyperDX alerts page](https://hyperdx.clickhouse.cloud/alerts). Each alert's message links to the matching log search.
+- **Memory and event-loop data** comes from the `system.snapshot` event every process logs once a minute.
+
+## AI Chat Alerts
+
+Two ClickStack alerts owned by the AI team (AI-20) post to the `#ai-team` Discord channel instead of Box: **Failed chat turns per hour** (fires at 8 or more) and **Avg input tokens per chat turn**, checked daily (fires above 750k, about 1.25 times normal).
 
 ## Nightly Benchmark
 
 The `Benchmark` GitHub Actions workflow (`.github/workflows/benchmark.yml`) runs every night at 03:00 UTC, once per worker shape (`shared` and `dedicated`).
 
 - **Results:** each scheduled run stores one row per shape in ClickHouse. The **Nightly Benchmark** dashboard in HyperDX charts throughput, latency, queue wait and worker resources over time.
-- **Regression alert:** `benchmark/detect-regression.mjs` compares the run with the median of the last 14 runs and alerts Betterstack when a metric is more than 5% worse on 2 runs in a row. It stays silent until a shape has 3 runs of history.
-- **Pipeline alert:** on scheduled runs only, the job's last step opens a `bench-pipeline-<shape>` alert in Betterstack when anything in the job failed, and resolves it on the next green scheduled run.
+- **Regression alert:** `benchmark/detect-regression.mjs` compares the run with the median of the last 14 runs and, when a metric is more than 5% worse on 2 runs in a row, sends a signal to Box's Errors API, which starts a Claude agent to find the culprit commit. The signal carries its own investigation prompt and the trailing runs with their SHAs. It stays silent until a shape has 3 runs of history.
+- **Pipeline alert:** on scheduled runs only, when anything in the job fails, its last step sends a `bench-pipeline-<shape>` signal to Box so an agent reads the failed logs.
+- **Dedup:** Box groups signals by fingerprint (`bench-regression-<shape>`, `bench-pipeline-<shape>`), so a regression that persists starts one agent, not one per night. Resolve the Box issue once the fix has shipped. An accepted regression stays open until the 14-run baseline absorbs it (about 7 nights), then gets resolved; resolving earlier reopens it and starts a new agent. Never ignore a bench issue: ignored issues never start an agent, so that shape would go silent for good.
 
 <Warning>
-Manual runs (`workflow_dispatch`) skip the ClickHouse writes and both Betterstack alert steps. A green manual run does not prove these steps work or resolve an existing pipeline alert. Check the next scheduled run after changing them or their secrets.
+Manual runs (`workflow_dispatch`) skip the ClickHouse writes and both Box signal steps. A green manual run does not prove these steps work. Check the next scheduled run after changing them or their secrets.
 </Warning>

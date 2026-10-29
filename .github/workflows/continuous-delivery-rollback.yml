@@ -4,17 +4,28 @@ on:
   workflow_dispatch:
     inputs:
       rollback_to_image_tag:
-        description: 'Image tag to roll back TO (e.g. 0.51.0.abc1234.beta)'
+        description: 'Image tag to roll back TO, from the previous deploy run (e.g. 0.92.3.abc1234.beta)'
         required: true
+      target:
+        description: 'Environment to roll back'
+        type: choice
+        options:
+          - prod
+          - stg
+        default: prod
       force:
-        description: 'Force rollback even if breaking migrations exist'
+        description: 'Roll back even if a breaking migration ran after the target tag'
         type: boolean
         default: false
+
+concurrency:
+  group: ${{ inputs.target == 'prod' && 'promote-production' || 'staging-deploy' }}
+  cancel-in-progress: false
 
 jobs:
   rollback:
     runs-on: ubuntu-latest
-    environment: production
+    environment: ${{ inputs.target == 'prod' && 'production' || 'staging' }}
     steps:
       - name: Configure SSH
         run: |
@@ -33,13 +44,45 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
+      - name: Get current tag
+        id: current
+        run: |
+          OUTPUT=$(ssh ops -t -t 'bash -ic "cd mrsk/${{ inputs.target }} && kamal app version --primary --config-file=config/app.yml 2>&1; exit"' | tr -d '\r')
+          CURRENT=$(echo "$OUTPUT" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.beta' | head -1)
+          SHA=$(echo "$CURRENT" | cut -d. -f4)
+          if [ -z "$SHA" ]; then
+            echo "$OUTPUT"
+            echo "Could not read the current tag of ${{ inputs.target }}"
+            exit 1
+          fi
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "Rolling back ${{ inputs.target }} from $CURRENT to ${{ inputs.rollback_to_image_tag }}"
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.current.outputs.sha }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build shared and server-utils packages
+        run: bunx turbo run build --filter=@activepieces/shared --filter=@activepieces/server-utils
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-        
+
       - name: Extract migration manifest from target image
         id: manifest
         run: |
@@ -49,29 +92,25 @@ jobs:
             /usr/src/app/packages/server/api/dist/src/migration-manifest.json)
           echo "json=$MANIFEST" >> $GITHUB_OUTPUT
 
-      - name: Rollback DB migrations
-        run: |
-          FORCE_FLAG=${{ inputs.force && '"--force"' || '""' }}
-          MANIFEST='${{ steps.manifest.outputs.json }}'
+      - name: Check for breaking migrations
+        id: check
+        run: bunx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.manifest.outputs.json }}'
 
-          printf '%s' "$MANIFEST" | ssh ops 'cat > /tmp/rollback-manifest.json'
-
-          ssh ops -t -t 'bash -ic "$(cat <<'"'"'EOF'"'"'
-          cd mrsk/prod
-          MANIFEST=$(cat /tmp/rollback-manifest.json | jq -c '"'"'[.[] | select(. != null)]'"'"')
-          MANIFEST_ESCAPED="${MANIFEST//\"/\\\"}"
-          kamal app exec --reuse --config-file=config/app.yml -- node /usr/src/app/packages/server/api/dist/src/rollback.js --manifest "$MANIFEST_ESCAPED"
-          EOF
-          )"'
-  
-      - name: Redeploy app to target image
+      - name: Fail on breaking migrations
+        if: steps.check.outputs.has_breaking == 'true' && !inputs.force
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy \
-            --version ${{ inputs.rollback_to_image_tag }} \
-            --config-file=config/app.yml --skip-push; exit"'
+          echo "Breaking migrations ran after the target tag: ${{ steps.check.outputs.breaking_names }}"
+          echo "The old code may not run on this schema. Fix forward, or rerun with force."
+          exit 1
 
       - name: Redeploy workers to target image
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy \
+          ssh ops -t -t 'bash -ic "cd mrsk/${{ inputs.target }} && kamal deploy \
             --version ${{ inputs.rollback_to_image_tag }} \
             --config-file=config/worker.yml --skip-push; exit"'
+
+      - name: Redeploy app to target image
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/${{ inputs.target }} && kamal deploy \
+            --version ${{ inputs.rollback_to_image_tag }} \
+            --config-file=config/app.yml --skip-push; exit"'

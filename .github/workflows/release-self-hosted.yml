@@ -30,6 +30,8 @@ jobs:
     needs: preflight
     if: ${{ always() && !cancelled() && !failure() }}
     runs-on: ubuntu-24.04
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     environment:
       name: release
     steps:
@@ -64,6 +66,21 @@ jobs:
       - name: Fail if tag already exists
         run: '! docker manifest inspect activepieces/activepieces:${{ inputs.tag }}'
 
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Create git tag
+        env:
+          TAG: ${{ inputs.tag }}
+          TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git tag "$TAG"
+          git -c http.https://github.com/.extraheader= push "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/$TAG"
+
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
@@ -80,6 +97,7 @@ jobs:
       - uses: depot/setup-action@v1
 
       - name: Build and push
+        id: build
         uses: depot/build-push-action@v1
         with:
           project: du7O4b0e8P
@@ -94,10 +112,19 @@ jobs:
             activepieces/activepieces:${{ inputs.tag }}
             ghcr.io/activepieces/activepieces:${{ inputs.tag }}
 
-      - name: Create git tag
+      - name: Check if this release is the newest
+        id: latest
+        env:
+          TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git tag -f ${{ inputs.tag }}
-          git push origin ${{ inputs.tag }} --force
+          if ! CURRENT="$(gh release view --json tagName --jq .tagName)"; then
+            echo "::warning::Could not read the current Latest release, so $TAG is not marked Latest. Mark it by hand if it is the newest release."
+            echo "latest=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          HIGHEST="$(printf '%s\n%s\n' "$CURRENT" "$TAG" | sort -V | tail -1)"
+          echo "latest=$([ "$HIGHEST" = "$TAG" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Create or update changelog via release-drafter
         if: ${{ !contains(inputs.tag, '-rc') || inputs.publish_rc_release }}
@@ -108,7 +135,7 @@ jobs:
           tag: ${{ inputs.tag }}
           name: ${{ inputs.tag }}
           version: ${{ inputs.tag }}
-          latest: ${{ !contains(inputs.tag, '-rc') }}
+          latest: ${{ !contains(inputs.tag, '-rc') && steps.latest.outputs.latest == 'true' }}
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -132,6 +159,36 @@ jobs:
             -X POST \
             -d "{\"content\": \"📦 **Self-hosted $TAG released**\\n\\n**Docker image:** \`activepieces/activepieces:$TAG\` (also on ghcr.io)\\n**Changelog:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
             "$WEBHOOK"
+
+  # Records the release in the Linear "Self-hosted" release pipeline once the image is published,
+  # even when a later step of the release job fails.
+  # Minor tags live on release branches, so the scan starts at the merge-base with the previous release tag.
+  linear-release:
+    needs: release
+    if: ${{ !cancelled() && needs.release.outputs.digest != '' && !contains(inputs.tag, '-rc') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Find the scan base
+        id: base
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          PREVIOUS=$(git tag | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-hotfix\.[0-9]+)?$' | grep -vx "$TAG" | { cat; echo "$TAG"; } | sort -V | grep -B1 -x "$TAG" | head -1)
+          echo "Previous release: $PREVIOUS"
+          echo "sha=$(git merge-base "$PREVIOUS" HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
+        with:
+          access_key: ${{ secrets.LINEAR_RELEASE_KEY_SELF_HOSTED }}
+          version: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          base_ref: ${{ steps.base.outputs.sha }}
+          include_paths: '!packages/pieces/community/**,!packages/pieces/core/**,!packages/pieces/custom/**,!bun.lock,!tsconfig.base.json,!docs/**'
+          no_branch_ref_detection: 'true'
+          links: Run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   sync-version-to-main:
     needs: release

@@ -1,22 +1,23 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const getBudget = createAction({
   auth: ninjapipeAuth,
   name: 'get_budget',
   classification: 'READ',
   displayName: 'Get Budget',
-  description: 'Retrieves a budget by ID.',
+  description: 'Gets one budget by ID.',
   audience: 'both',
-  aiMetadata: { description: 'Fetch a single budget by its ID. Read-only lookup for inspecting one budget; to enumerate or search budgets use a list action instead.', idempotent: true },
+  aiMetadata: { description: 'Fetch a single NinjaPipe budget by ID. Read-only.', idempotent: true },
+  outputSchema: ninjapipeSchemas.budget,
   props: {
-    budgetId: ninjapipeCommon.budgetDropdownRequired,
+    budgetId: ninjapipeProps.budgetRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/budgets/${encodeURIComponent(String(context.propsValue.budgetId))}` });
-    return flattenCustomFields(response.body);
+    const id = ninjapipeClient.pathId({ value: context.propsValue.budgetId, field: 'Budget' });
+    return ninjapipeClient.getRecord({ auth: ninjapipeClient.readAuth(context.auth), path: `/budgets/${id}`, operation: 'get budget' });
   },
 });

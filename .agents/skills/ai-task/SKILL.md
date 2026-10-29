@@ -141,6 +141,7 @@ Show the ticket card before creating or updating it.
 1. Rewrite the text as a short decision in the team's words: what was decided, and why in one line. Keep names only if they matter.
 2. Show it, then add it as a comment on the ticket after one OK.
 3. If it changes the ticket's "Done when", scope or acceptance criteria, offer to update the description too.
+4. On an `automated` ticket, mention Box (see **Box tickets**).
 
 > **Here's the note for AI-123:**
 > Decided: old flows keep running, and the builder shows "replace this step". New saves are blocked.
@@ -180,6 +181,20 @@ For support, admins and anyone outside the team, and for members reporting on so
 Whenever a ticket names a customer (Report, a plain request in Start, or a Triage that finds one), attach a Linear **customer request** to it with `save_customer_need`, in the same OK as creating or updating the ticket. Find the customer first with `list_customers` (by name or email domain); create it with `save_customer` only if none matches. Put one plain line in the request body (what they asked for), never their message, emails or credentials.
 
 This is what tells the team a customer is waiting: when the ticket is Done, support is pinged to tell them. A customer written only in the description is invisible to that.
+
+## Box tickets: teach it in the comment
+
+Box files production bugs with the `automated` label and opens a fix PR for each. It learns only from comments that mention it, so a lesson we keep to ourselves comes back in its next PR.
+
+On a ticket with the `automated` label (or created by Box), any comment that does one of these mentions `@box`:
+- rejects, closes or replaces Box's PR;
+- changes its fix or its scope;
+- records a decision;
+- names something the next automated PR must do differently.
+
+End that comment with one line: **For Box next time:** the lesson, in one sentence, general enough to apply to its next ticket. Status comments ("taking this over", "moved to review") don't mention Box. Same OK as every other comment: show it first.
+
+Box runs as the person who mentions it. If it replies "finish setting up Box first", they connect Claude and GitHub once at https://box.abuaboud.me/boxes?new. Then post the lesson again as a **new** comment, since Box ignores mentions in replies.
 
 Do the paperwork yourself. Ask only for facts you can't find in the ticket, the code, the logs or the conversation. In a grill, ask one at a time. Everywhere else, ask for all of them in one message.
 
@@ -313,6 +328,7 @@ The cards below are examples of that voice, not forms to fill in word for word.
    - **Duplicate:** link the original. Set the duplicate relation first, then the status.
    - **Not a bug / won't do:** say why in one line, then Canceled.
    - **Real:** root cause and a fix hint (the one shared place to fix it). Set a priority using the Bug report form's scale, and move it to team AI, the right project and milestone, and a cycle. Leave the owner empty unless the user takes it.
+   - **`automated` ticket:** if the decision rejects Box's PR or changes its fix, the comment mentions Box (see **Box tickets**).
 4. **Security:** if it touches auth, secrets, permissions or data exposure, say so. It gets fixed through a private advisory, never a public PR or a public ticket comment with details.
 5. **Support reply:** if a customer is waiting, draft a reply to them, plain and with no internal file names, for the user to send.
 
@@ -333,7 +349,7 @@ Run these checks and fix what you can, then show one short summary of what chang
 5. **Size:** if a reviewer can't read it in about 20 minutes, suggest how to split it before opening.
 6. **Lint:** run `npm run lint-dev` and report the result. Don't hide failures.
 7. **AI behavior check.** If the diff touches chat or agent prompts (`packages/server/api/src/assets/prompts/`), tool descriptions or the agent loop (`packages/server/worker/src/lib/execute/jobs/ee/agent/`), run `npm run agent-evals:ci`. It calls a model, so say so first. Report pass, or which fixtures regressed. Without a key in `.env.dev`, say it under **Heads up** and continue.
-8. **Ticket:** set it to In Review when the PR is open. If the work taught something the next engineer needs, add it as a bullet under `Gotchas` on that area's brain page, in this PR. Then ask once, in the same message as the other questions: "Anything decided in Discord or a DM for this ticket? Paste it and I'll save it to the ticket." If they paste something, save it the way Note does.
+8. **Ticket:** set it to In Review when the PR is open. If the work taught something the next engineer needs, add it as a bullet under `Gotchas` on that area's brain page, in this PR. Then ask once, in the same message as the other questions: "Anything decided in Discord or a DM for this ticket? Paste it and I'll save it to the ticket." If they paste something, save it the way Note does. If this PR replaces or reshapes a Box PR, the ticket comment mentions Box (see **Box tickets**).
 9. **Project update:** if the PR finishes a milestone, offer a 3-line project update draft.
 10. **Ready-for-review gate.** A PR asks for review only when **both** are true. Until then, keep it a draft.
     - **Greptile 5/5.** Read Greptile's latest summary comment (`gh pr view <n> --comments`). Below 5/5: fix its findings, push, and wait for the new score. Reply to each comment you fix in one short line, and resolve it.

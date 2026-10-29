@@ -112,6 +112,7 @@
   --color-danger-12: var(--danger-12);
 
   --color-panel: var(--panel);
+  --color-field: var(--field);
   --color-on-accent: var(--on-accent);
   --color-on-success: var(--on-success);
   --color-on-warning: var(--on-warning);
@@ -567,6 +568,7 @@
     --danger-12: var(--danger-light-12, oklch(39.6% 0.141 25.72));
 
     --panel: oklch(100% 0 0);
+    --field: transparent;
     --on-success: var(--on-success-seed, #000000);
     --on-warning: var(--on-warning-seed, #000000);
     --on-danger: var(--on-danger-seed, #ffffff);
@@ -728,6 +730,7 @@
     --danger-12: var(--danger-dark-12, oklch(93.6% 0.032 17.72));
 
     --panel: var(--gray-2);
+    --field: color-mix(in oklab, var(--gray-6) 30%, transparent);
     --on-success: var(--on-success-seed, #000000);
     --on-warning: var(--on-warning-seed, #000000);
     --on-danger: var(--on-danger-seed, #ffffff);
