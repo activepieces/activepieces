@@ -180,7 +180,7 @@ describe('collectPages', () => {
 });
 
 describe('collectSampleResponses', () => {
-  const response = (id: string, surveyId: string, createdAt: string, finished = true): FormbricksResponse => ({
+  const response = ({ id, surveyId, createdAt, finished = true }: { id: string; surveyId: string; createdAt: string; finished?: boolean }): FormbricksResponse => ({
     id,
     surveyId,
     finished,
@@ -198,9 +198,9 @@ describe('collectSampleResponses', () => {
 
   it('queries every selected survey and merges newest first', async () => {
     const bySurvey: Record<string, FormbricksResponse[]> = {
-      s1: [response('r1', 's1', '2026-10-01T00:00:00Z')],
-      s2: [response('r2', 's2', '2026-10-03T00:00:00Z'), response('x', 'other', '2026-10-09T00:00:00Z')],
-      s3: [response('r3', 's3', '2026-10-02T00:00:00Z', false)],
+      s1: [response({ id: 'r1', surveyId: 's1', createdAt: '2026-10-01T00:00:00Z' })],
+      s2: [response({ id: 'r2', surveyId: 's2', createdAt: '2026-10-03T00:00:00Z' }), response({ id: 'x', surveyId: 'other', createdAt: '2026-10-09T00:00:00Z' })],
+      s3: [response({ id: 'r3', surveyId: 's3', createdAt: '2026-10-02T00:00:00Z', finished: false })],
     };
     const fetchSurveyResponses = vi.fn(async (id: string) => bySurvey[id] ?? []);
     const result = await collectSampleResponses({ surveyIds: ['s1', 's2', 's3'], finishedOnly: false, sampleSize: 5, fetchSurveyResponses });
@@ -214,9 +214,9 @@ describe('collectSampleResponses', () => {
       finishedOnly: true,
       sampleSize: 1,
       fetchSurveyResponses: async () => [
-        response('a', 's1', '2026-10-05T00:00:00Z', false),
-        response('b', 's1', '2026-10-04T00:00:00Z'),
-        response('c', 's1', '2026-10-03T00:00:00Z'),
+        response({ id: 'a', surveyId: 's1', createdAt: '2026-10-05T00:00:00Z', finished: false }),
+        response({ id: 'b', surveyId: 's1', createdAt: '2026-10-04T00:00:00Z' }),
+        response({ id: 'c', surveyId: 's1', createdAt: '2026-10-03T00:00:00Z' }),
       ],
     });
     expect(result.map((r) => r.id)).toEqual(['b']);
