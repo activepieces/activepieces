@@ -6,6 +6,7 @@ import {
   AgentHistoryMessage,
   FileProducedEvent,
   ImageGeneratedEvent,
+  LAZY_TOOL_NAME,
   ModelChoice,
   ModelOptions,
   PersistedAgentMessage,
@@ -35,6 +36,7 @@ function humanizePieceName(raw: string): string {
 }
 
 const TOOL_LABELS: Record<string, { active: string; done: string }> = {
+  [LAZY_TOOL_NAME]: { active: 'Working on it', done: 'Finished a step' },
   ap_execute_action: { active: 'Running action', done: 'Ran action' },
   ap_discover_action_auth: {
     active: 'Checking connections',
@@ -102,6 +104,14 @@ function cleanMcpToolName(raw: string): string {
   return formatUtils.convertEnumToHumanReadable(mcpMatch[1]);
 }
 
+function labelToolName(part: AnyToolPart): string {
+  const raw = chatPartUtils.getToolPartName(part);
+  if (raw !== LAZY_TOOL_NAME || !isObject(part.input)) return raw;
+  const wrapped = isObject(part.input.input) ? part.input.input : undefined;
+  const inner = part.input.tool ?? wrapped?.tool;
+  return typeof inner === 'string' && inner.length > 0 ? inner : raw;
+}
+
 function labelForRawToolName(raw: string, variant: 'active' | 'done'): string {
   if (raw.startsWith('mcp__')) {
     return cleanMcpToolName(raw);
@@ -131,7 +141,7 @@ function formatToolName({
     return input.title;
   }
 
-  const raw = chatPartUtils.getToolPartName(part);
+  const raw = labelToolName(part);
   const baseName = labelForRawToolName(raw, 'active');
 
   if (!includeContext) return baseName;
@@ -369,7 +379,7 @@ function formatToolActiveTitle({ part }: { part: AnyToolPart }): string {
   if (input && typeof input.activeTitle === 'string' && input.activeTitle) {
     return input.activeTitle;
   }
-  const raw = chatPartUtils.getToolPartName(part);
+  const raw = labelToolName(part);
   return labelForRawToolName(raw, 'active');
 }
 
@@ -378,7 +388,7 @@ function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
   if (input && typeof input.doneTitle === 'string' && input.doneTitle) {
     return input.doneTitle;
   }
-  const raw = chatPartUtils.getToolPartName(part);
+  const raw = labelToolName(part);
   return labelForRawToolName(raw, 'done');
 }
 

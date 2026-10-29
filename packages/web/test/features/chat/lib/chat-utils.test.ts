@@ -241,6 +241,22 @@ describe('chatUtils — tool pill active/done labels', () => {
     ).toBe('Some Helper');
   });
 
+  it('never labels a broken lazy call as the lazy tool', () => {
+    expect(
+      chatUtils.formatToolActionName({
+        part: toolPart('ap_lazy_tool', { tool: 'ap_web_search', input: 42 }),
+      }),
+    ).toBe('Searching the web');
+    expect(
+      chatUtils.formatToolDoneTitle({
+        part: toolPart('ap_lazy_tool', { input: { tool: 'ap_web_search' } }),
+      }),
+    ).toBe('Searched the web');
+    expect(
+      chatUtils.formatToolActionName({ part: toolPart('ap_lazy_tool', {}) }),
+    ).toBe('Working on it');
+  });
+
   it('uses the model-authored activeTitle (-ing) and doneTitle (-ed) when provided', () => {
     const part = toolPart('ap_generate_image', {
       activeTitle: 'Designing your Instagram post',
