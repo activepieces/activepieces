@@ -1,16 +1,16 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, isSelfServeTrialPlan, PlanName, PlatformPlan, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialStatus, UNAVAILABLE_SELF_SERVE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, isSelfServeTrialPlan, PlanName, PlatformPlan, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialState, SelfServeTrialStatus, UNAVAILABLE_SELF_SERVE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEntitlementsRefreshKey, getSelfServeTrialFetchLockKey, getSelfServeTrialStartLockKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEntitlementsRefreshKey, getSelfServeTrialEndedRefreshKey, getSelfServeTrialStartLockKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, ShouldBlockOnCreditsParams, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
-import { assertSeatsNotBelowActiveUsers, platformPlanRepo, platformPlanService } from '../platform-plan.service'
+import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
 import { selfServeTrialUtils } from '../self-serve-trial-utils'
-import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
+import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache, SelfServeTrialStartResult } from './autumn-utils'
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
 const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 15
@@ -20,10 +20,11 @@ const CREDITS_CACHE_READ_TIMEOUT_MS = 400
 const FAST_CREDIT_CHECK_READ_TIMEOUT_MS = 25
 const SLOW_CREDITS_CACHE_READ_LOG_MS = 25
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
+const SELF_SERVE_TRIAL_ENDED_REFRESH_CLAIM_SECONDS = 30 * 24 * 60 * 60
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
-const ELIGIBLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: 'eligible', startedAt: null, endsAt: null }
-const INELIGIBLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: 'ineligible', startedAt: null, endsAt: null }
-const USED_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: 'used', startedAt: null, endsAt: null }
+const ELIGIBLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: SelfServeTrialState.ELIGIBLE, startedAt: null, endsAt: null }
+const INELIGIBLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null }
+const USED_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: SelfServeTrialState.USED, startedAt: null, endsAt: null }
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
@@ -202,19 +203,21 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                 fallback: UNAVAILABLE_SELF_SERVE_TRIAL,
                 fn: async (creds): Promise<SelfServeTrialStatus> => {
                     const currentStatus = await readSelfServeTrialStatus({ log, platformId })
-                    if (currentStatus.state !== 'eligible') {
+                    if (currentStatus.state !== SelfServeTrialState.ELIGIBLE) {
                         return currentStatus
                     }
                     const outcome = await autumnConsole.startSelfServeTrial(creds)
-                    if (outcome.result === 'used') {
-                        return USED_SELF_SERVE_TRIAL
+                    switch (outcome.result) {
+                        case SelfServeTrialStartResult.USED:
+                            return USED_SELF_SERVE_TRIAL
+                        case SelfServeTrialStartResult.INELIGIBLE:
+                            return INELIGIBLE_SELF_SERVE_TRIAL
+                        case SelfServeTrialStartResult.STARTED: {
+                            await selfServeTrialUtils.cacheTrialDates({ platformId, dates: { startedAt: outcome.startedAt, endsAt: outcome.endsAt } })
+                            rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialStarted({ platformId, endsAt: outcome.endsAt }), log)
+                            return { state: SelfServeTrialState.ACTIVE, startedAt: outcome.startedAt, endsAt: outcome.endsAt }
+                        }
                     }
-                    if (outcome.result === 'ineligible') {
-                        return INELIGIBLE_SELF_SERVE_TRIAL
-                    }
-                    await selfServeTrialUtils.cacheTrialDates({ platformId, dates: { startedAt: outcome.startedAt, endsAt: outcome.endsAt } })
-                    rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialStarted({ platformId, endsAt: outcome.endsAt }), log)
-                    return { state: 'active', startedAt: outcome.startedAt, endsAt: outcome.endsAt }
                 },
             }),
         })
@@ -226,10 +229,10 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return status
     },
     getCachedSelfServeTrialInfo: async (platformId: string) => {
-        return (await selfServeTrialUtils.readCachedTrialDates(platformId))?.dates ?? null
+        return readCachedTrialDates(platformId)
     },
     isOnSelfServeTrial: async (platformId: string) => {
-        const { data: dates, error } = await tryCatch(() => getTrialDatesFromCacheOrAutumn({ log, platformId }))
+        const { data: dates, error } = await tryCatch(() => readCachedTrialDates(platformId))
         if (!isNil(error)) {
             log.warn({ error, platform: { id: platformId } }, 'Failed to read the self-serve trial dates; treating the plan as not carrying the trial')
             return false
@@ -240,48 +243,41 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         if (isTrialRunning(dates)) {
             return true
         }
-        const plan = await platformPlanRepo().findOneBy({ platformId })
-        return !isNil(plan) && apDayjs(plan.updated).isBefore(dates.endsAt)
+        rejectedPromiseHandler(refreshEntitlementsOnceAfterTrialEnded({ log, platformId, endsAt: dates.endsAt }), log)
+        return false
     },
 })
 
 async function readSelfServeTrialStatus({ log, platformId }: PlatformLogParams): Promise<SelfServeTrialStatus> {
     const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    const dates = await getTrialDatesFromCacheOrAutumn({ log, platformId })
+    const dates = await readCachedTrialDates(platformId)
     return toSelfServeTrialStatus({ plan, dates })
 }
 
-async function getTrialDatesFromCacheOrAutumn({ log, platformId }: PlatformLogParams): Promise<SelfServeTrialDates | null> {
-    const cached = await selfServeTrialUtils.readCachedTrialDates(platformId)
-    if (!isNil(cached)) {
-        return cached.dates
-    }
-    return distributedLock(log).runExclusive({
-        key: getSelfServeTrialFetchLockKey(platformId),
-        timeoutInSeconds: CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS,
-        fn: async () => {
-            const cachedAfterLock = await selfServeTrialUtils.readCachedTrialDates(platformId)
-            if (!isNil(cachedAfterLock)) {
-                return cachedAfterLock.dates
-            }
-            const client = await autumnUtils.resolveClientForPlatform(log, platformId)
-            if (isNil(client)) {
-                return selfServeTrialUtils.cacheNoTrialUnlessAlreadyCached(platformId)
-            }
-            return selfServeTrialUtils.syncTrialDatesFromAutumn({ platformId, customer: await client.getCustomer() })
-        },
-    })
+async function readCachedTrialDates(platformId: string): Promise<SelfServeTrialDates | null> {
+    return (await selfServeTrialUtils.readCachedTrialDates(platformId))?.dates ?? null
 }
 
 function toSelfServeTrialStatus({ plan, dates }: ToSelfServeTrialStatusParams): SelfServeTrialStatus {
     if (!isNil(dates)) {
         return {
-            state: isTrialRunning(dates) ? 'active' : 'ended',
+            state: isTrialRunning(dates) ? SelfServeTrialState.ACTIVE : SelfServeTrialState.ENDED,
             startedAt: dates.startedAt,
             endsAt: dates.endsAt,
         }
     }
     return isSelfServeTrialPlan(plan.plan) ? ELIGIBLE_SELF_SERVE_TRIAL : INELIGIBLE_SELF_SERVE_TRIAL
+}
+
+async function refreshEntitlementsOnceAfterTrialEnded({ log, platformId, endsAt }: RefreshEntitlementsOnceAfterTrialEndedParams): Promise<void> {
+    const claimKey = getSelfServeTrialEndedRefreshKey({ platformId, endsAt })
+    await distributedStore.runOnceWithin(claimKey, SELF_SERVE_TRIAL_ENDED_REFRESH_CLAIM_SECONDS, async () => {
+        const { error } = await tryCatch(() => autumnUtils.refreshEntitlements(log, platformId))
+        if (!isNil(error)) {
+            await distributedStore.delete(claimKey)
+            throw error
+        }
+    })
 }
 
 function isTrialRunning(dates: SelfServeTrialDates): boolean {
@@ -635,6 +631,10 @@ type ComputeCreditStateParams = {
 type PlatformLogParams = {
     log: FastifyBaseLogger
     platformId: string
+}
+
+type RefreshEntitlementsOnceAfterTrialEndedParams = PlatformLogParams & {
+    endsAt: string
 }
 
 type ToSelfServeTrialStatusParams = {

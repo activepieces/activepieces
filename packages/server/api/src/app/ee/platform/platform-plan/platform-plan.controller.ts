@@ -120,10 +120,6 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
         return {}
     })
 
-    app.get('/self-serve-trial', GetSelfServeTrialRequest, async (request) => {
-        return billingProvider.get(request.log).getSelfServeTrialInfo(request.principal.platform.id)
-    })
-
     app.post('/self-serve-trial/start', StartSelfServeTrialRequest, async (request) => {
         return billingProvider.get(request.log).startSelfServeTrial(request.principal.platform.id)
     })
@@ -138,11 +134,12 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
 
 async function getBillingInformation(log: FastifyBaseLogger, platformId: string): Promise<PlatformBillingInformation> {
     const platform = await platformService(log).getOneOrThrow(platformId)
-    const [platformPlan, usage, overview, billingEnforced] = await Promise.all([
+    const [platformPlan, usage, overview, billingEnforced, selfServeTrial] = await Promise.all([
         platformPlanService(log).getOrCreateForPlatform(platform.id),
         platformPlanService(log).getUsage(platform.id),
         billingProvider.get(log).getBillingOverview(platform.id),
         billingProvider.get(log).isBillingEnforced(platform.id),
+        billingProvider.get(log).getSelfServeTrialInfo(platform.id),
     ])
 
     const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, billingPortalAvailable, creditsResetInterval, planInterval, creditsFeature, appSumoCreditsFeature, seatsFeature, includedSeats, additionalSeats, unavailable: billingUnavailable } = overview
@@ -170,6 +167,7 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         billingUnavailable,
         includedSeats,
         additionalSeats,
+        selfServeTrial,
     }
 }
 
@@ -304,15 +302,6 @@ const SetupPaymentRequest = {
             [StatusCodes.OK]: z.object({
                 url: z.string().nullable(),
             }),
-        },
-    },
-    config: PLATFORM_ADMIN_ONLY,
-}
-
-const GetSelfServeTrialRequest = {
-    schema: {
-        response: {
-            [StatusCodes.OK]: SelfServeTrialStatus,
         },
     },
     config: PLATFORM_ADMIN_ONLY,

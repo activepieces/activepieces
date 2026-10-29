@@ -248,16 +248,16 @@ describe('withoutExpiredSelfServeTrialAddOn', () => {
         return {
             subscriptions: [
                 { ...subscription({ planId: PlanName.FREE, featureIds: FREE_FLAGS }), trialEndsAt: null },
-                { ...subscription({ planId: PlanName.ENTERPRISE_TRIAL, featureIds: TRIAL_FLAGS, addOn: true }), trialEndsAt },
+                { ...subscription({ planId: PlanName.SELF_SERVE_TRIAL, featureIds: TRIAL_FLAGS, addOn: true }), trialEndsAt },
             ],
             purchases: [],
             balances: {
                 [UnconsumableFeatureId.USERS_LIMIT]: balance([
                     grant({ planId: PlanName.FREE, includedGrant: 1 }),
-                    grant({ planId: PlanName.ENTERPRISE_TRIAL, unlimited: true }),
+                    grant({ planId: PlanName.SELF_SERVE_TRIAL, unlimited: true }),
                 ]),
                 [UnconsumableFeatureId.TEAM_PROJECTS_LIMIT]: balance([
-                    grant({ planId: PlanName.ENTERPRISE_TRIAL, unlimited: true }),
+                    grant({ planId: PlanName.SELF_SERVE_TRIAL, unlimited: true }),
                 ]),
             },
         }

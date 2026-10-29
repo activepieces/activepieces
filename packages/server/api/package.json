@@ -54,7 +54,7 @@
     "ai": "7.0.44",
     "ai-gateway-provider": "4.0.0",
     "async-mutex": "0.4.0",
-    "autumn-js": "1.2.43",
+    "autumn-js": "1.5.18",
     "axios": "1.20.0",
     "bcrypt": "6.0.0",
     "bullmq": "5.61.0",

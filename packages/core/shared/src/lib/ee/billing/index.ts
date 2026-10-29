@@ -1,6 +1,6 @@
 import { isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { AiCreditsAutoTopUpState, ConsumableFeatureId, PlanName, PlatformPlanWithOnlyLimits, UnconsumableFeatureId } from '../../management/platform'
+import { AiCreditsAutoTopUpState, ConsumableFeatureId, PlanName, PlatformPlanWithOnlyLimits, SelfServeTrialState, SelfServeTrialStatus, UnconsumableFeatureId } from '../../management/platform'
 
 export const AdjustUnconsumableFeatureQuantityParams = z.object({
     featureId: z.enum(UnconsumableFeatureId),
@@ -171,16 +171,6 @@ export const isFreeLegacyEligible = ({ plan, created }: { plan?: string | null, 
     return !Number.isNaN(createdAt) && createdAt < Date.parse(FREE_LEGACY_CUTOFF_ISO)
 }
 
-export const SelfServeTrialState = z.enum(['eligible', 'ineligible', 'active', 'ended', 'used', 'unavailable'])
-export type SelfServeTrialState = z.infer<typeof SelfServeTrialState>
-
-export const SelfServeTrialStatus = z.object({
-    state: SelfServeTrialState,
-    startedAt: z.string().nullable(),
-    endsAt: z.string().nullable(),
-})
-export type SelfServeTrialStatus = z.infer<typeof SelfServeTrialStatus>
-
 export const SELF_SERVE_TRIAL_PLANS: readonly string[] = [
     PlanName.FREE,
     PlanName.FREE_LEGACY,
@@ -193,7 +183,7 @@ export const SELF_SERVE_TRIAL_PLANS: readonly string[] = [
 export const isSelfServeTrialPlan = (plan: string | null | undefined): boolean => !isNil(plan) && SELF_SERVE_TRIAL_PLANS.includes(plan)
 
 export const UNAVAILABLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = {
-    state: 'unavailable',
+    state: SelfServeTrialState.UNAVAILABLE,
     startedAt: null,
     endsAt: null,
 }

@@ -1,7 +1,8 @@
 import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { ApEdition, ConsumableFeatureId, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, ConsumableFeatureId, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, SelfServeTrialDates, UnconsumableFeatureId } from '@activepieces/shared'
 import {
+    AggregateEventsRange,
     type AggregateEventsResponse,
     Autumn,
     type Balance,
@@ -10,7 +11,9 @@ import {
     type GetCustomerParams,
     type GetCustomerResponse,
     type ListPlansParams,
-    Range,
+    type ListSubscriptionsList,
+    type ListSubscriptionsParams,
+    ListSubscriptionsStatusRequestBody,
     type TrackParams,
 } from 'autumn-js'
 import { type AxiosRequestConfig, isAxiosError } from 'axios'
@@ -64,6 +67,9 @@ export const autumnUtils = {
             listPlans(params?: ListPlansParams) {
                 return client.plans.list(params)
             },
+            listSubscriptions(params: WithoutCustomerId<Omit<ListSubscriptionsParams, 'startCursor'>>) {
+                return listAllSubscriptions({ client, params: { customerId, ...params }, startCursor: '' })
+            },
             aggregateEvents(params: WithoutCustomerId<EventsAggregateParams>) {
                 return client.events.aggregate({ customerId, ...params })
             },
@@ -98,7 +104,7 @@ export const autumnUtils = {
         }
         const timeRange = !isNil(startDate) && !isNil(endDate)
             ? { customRange: { start: new Date(startDate).getTime(), end: new Date(endDate).getTime() } }
-            : { range: Range.Thirtyd }
+            : { range: AggregateEventsRange.Thirtyd }
         const baseParams = {
             featureId: ConsumableFeatureId.AP_CREDITS,
             groupBy: `properties.${PROJECT_ID_PROPERTY}`,
@@ -166,13 +172,13 @@ export const autumnUtils = {
             return
         }
         const previousPlan = await platformPlanRepo().findOneBy({ platformId })
-        const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan'] })
+        const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan', 'trials_used'] })
         const entitlements = toAutumnEntitlements(customer)
         await platformPlanService(log).update({
             platformId,
             ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements),
         })
-        const trialDates = await selfServeTrialUtils.syncTrialDatesFromAutumn({ platformId, customer })
+        const trialDates = await syncSelfServeTrialDates({ log, platformId, client, customer })
         if (!isNil(trialDates) && shouldReportTrialEnded(trialDates.endsAt)) {
             rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialEnded({
                 platformId,
@@ -278,7 +284,7 @@ export const autumnUtils = {
             ...customer,
             subscriptions: customer.subscriptions.filter((subscription) => !isExpiredSelfServeTrialAddOn({ subscription, now })),
             balances: Object.entries(customer.balances).reduce<GetCustomerResponse['balances']>((balances, [featureId, balance]) => {
-                const balanceWithoutTrialGrants = removePlanGrantsFromBalance({ balance, planId: PlanName.ENTERPRISE_TRIAL })
+                const balanceWithoutTrialGrants = removePlanGrantsFromBalance({ balance, planId: PlanName.SELF_SERVE_TRIAL })
                 return isNil(balanceWithoutTrialGrants) ? balances : { ...balances, [featureId]: balanceWithoutTrialGrants }
             }, {}),
         }
@@ -380,16 +386,16 @@ export const autumnConsole = {
             expectedErrorStatuses: [StatusCodes.CONFLICT, StatusCodes.FORBIDDEN],
         }))
         if (isAxiosError(error) && error.response?.status === StatusCodes.CONFLICT) {
-            return { result: 'used' }
+            return { result: SelfServeTrialStartResult.USED }
         }
         if (isAxiosError(error) && error.response?.status === StatusCodes.FORBIDDEN) {
-            return { result: 'ineligible' }
+            return { result: SelfServeTrialStartResult.INELIGIBLE }
         }
         if (!isNil(error)) {
             throw error
         }
         assertNotNullOrUndefined(data, 'data')
-        return { result: 'started', startedAt: data.startedAt, endsAt: data.endsAt }
+        return { result: SelfServeTrialStartResult.STARTED, startedAt: data.startedAt, endsAt: data.endsAt }
     },
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
@@ -528,7 +534,7 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
 function findActiveSelfServeTrialAddOn(customer: GetCustomerResponse): ActiveSelfServeTrialAddOn | null {
     const now = Date.now()
     const subscription = customer.subscriptions.find((candidate) =>
-        candidate.planId === PlanName.ENTERPRISE_TRIAL
+        candidate.planId === PlanName.SELF_SERVE_TRIAL
         && candidate.status === 'active'
         && !isNil(candidate.trialEndsAt)
         && candidate.trialEndsAt > now)
@@ -538,13 +544,42 @@ function findActiveSelfServeTrialAddOn(customer: GetCustomerResponse): ActiveSel
     return { startedAt: subscription.startedAt, endsAt: subscription.trialEndsAt }
 }
 
+async function syncSelfServeTrialDates({ log, platformId, client, customer }: SyncSelfServeTrialDatesParams): Promise<SelfServeTrialDates | null> {
+    const cachedDates = (await selfServeTrialUtils.readCachedTrialDates(platformId))?.dates ?? null
+    if (isNil(cachedDates) && !selfServeTrialUtils.hasHadTrial(customer)) {
+        return null
+    }
+    const { data: subscriptions, error } = await tryCatch(() => client.listSubscriptions({
+        planId: PlanName.SELF_SERVE_TRIAL,
+        statuses: [ListSubscriptionsStatusRequestBody.Active, ListSubscriptionsStatusRequestBody.Expired],
+    }))
+    if (!isNil(error) || isNil(subscriptions)) {
+        log.warn({ error, platform: { id: platformId } }, 'Failed to list the self-serve trial subscriptions; keeping the cached trial dates')
+        return cachedDates
+    }
+    const dates = selfServeTrialUtils.latestTrialDates(subscriptions)
+    if (isNil(dates)) {
+        return cachedDates
+    }
+    await selfServeTrialUtils.cacheTrialDates({ platformId, dates })
+    return dates
+}
+
+async function listAllSubscriptions({ client, params, startCursor }: ListAllSubscriptionsParams): Promise<ListSubscriptionsList[]> {
+    const page = await client.customers.listSubscriptions({ ...params, startCursor })
+    if (!page.hasMore || isNil(page.nextCursor)) {
+        return page.list
+    }
+    return [...page.list, ...await listAllSubscriptions({ client, params, startCursor: page.nextCursor })]
+}
+
 function shouldReportTrialEnded(endsAt: string): boolean {
     const msSinceTrialEnded = Date.now() - Date.parse(endsAt)
     return msSinceTrialEnded >= 0 && msSinceTrialEnded < SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS
 }
 
 function isExpiredSelfServeTrialAddOn({ subscription, now }: IsExpiredSelfServeTrialAddOnParams): boolean {
-    return subscription.planId === PlanName.ENTERPRISE_TRIAL && !isNil(subscription.trialEndsAt) && subscription.trialEndsAt <= now
+    return subscription.planId === PlanName.SELF_SERVE_TRIAL && !isNil(subscription.trialEndsAt) && subscription.trialEndsAt <= now
 }
 
 function removePlanGrantsFromBalance({ balance, planId }: RemovePlanGrantsFromBalanceParams): Balance | null {
@@ -632,6 +667,21 @@ function toPlatformPlanLimit(balance: AutumnFeatureBalance | undefined, whenAbse
 }
 
 type WithoutCustomerId<T> = Omit<T, 'customerId'>
+
+type AutumnCustomerClient = ReturnType<typeof autumnUtils.client>
+
+type SyncSelfServeTrialDatesParams = {
+    log: FastifyBaseLogger
+    platformId: string
+    client: AutumnCustomerClient
+    customer: GetCustomerResponse
+}
+
+type ListAllSubscriptionsParams = {
+    client: Autumn
+    params: Omit<ListSubscriptionsParams, 'startCursor'>
+    startCursor: string
+}
 
 type AutumnClientParams = {
     secretKey: string
@@ -724,10 +774,16 @@ type ConsoleSelfServeTrialStartResponse = {
     endsAt: string
 }
 
+export enum SelfServeTrialStartResult {
+    STARTED = 'started',
+    USED = 'used',
+    INELIGIBLE = 'ineligible',
+}
+
 export type SelfServeTrialStartOutcome =
-    | { result: 'started', startedAt: string, endsAt: string }
-    | { result: 'used' }
-    | { result: 'ineligible' }
+    | { result: SelfServeTrialStartResult.STARTED, startedAt: string, endsAt: string }
+    | { result: SelfServeTrialStartResult.USED }
+    | { result: SelfServeTrialStartResult.INELIGIBLE }
 
 export type ConsoleCustomerCall = {
     autumnCustomerId: string
