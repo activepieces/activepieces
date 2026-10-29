@@ -96,6 +96,16 @@ export function getAuthPropertyForValue({ authValueType, pieceAuth }: GetAuthPro
   return pieceAuth.find(auth => authConnectionTypeToPropertyType[authValueType] === auth.type) ?? pieceAuth.at(0);
 }
 
+export function doesPieceAuthSupportConnectionType({ connectionType, pieceAuth }: DoesPieceAuthSupportConnectionType): boolean {
+  const authOptions = Array.isArray(pieceAuth) ? pieceAuth : [pieceAuth];
+  return authOptions.some(auth => !isNil(auth) && auth.type === authConnectionTypeToPropertyType[connectionType]);
+}
+
+type DoesPieceAuthSupportConnectionType = {
+  connectionType: AppConnectionType
+  pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
+}
+
 type GetAuthPropertyForValue = {
   authValueType: AppConnectionType
   pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined

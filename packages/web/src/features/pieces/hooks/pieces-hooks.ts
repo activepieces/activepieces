@@ -1,5 +1,6 @@
 import { isNil, LocalesEnum } from '@activepieces/core-utils';
 import {
+  doesPieceAuthSupportConnectionType,
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
@@ -8,7 +9,6 @@ import {
 import {
   AddPieceRequestBody,
   ApEdition,
-  AppConnectionType,
   AppConnectionWithoutSensitiveData,
   FlowActionType,
   flowPieceUtil,
@@ -533,7 +533,7 @@ export const piecesHooks = {
     const latestOffersConnectionAuth =
       !isNil(connection) &&
       !isNil(latest.pieceModel) &&
-      pieceAuthOffersConnectionType({
+      doesPieceAuthSupportConnectionType({
         pieceAuth: latest.pieceModel.auth,
         connectionType: connection.type,
       });
@@ -572,21 +572,6 @@ export const piecesMutations = {
 
 const isPieceNotFoundError = (error: unknown) =>
   api.isError(error) && error.response?.status === 404;
-
-function pieceAuthOffersConnectionType({
-  pieceAuth,
-  connectionType,
-}: {
-  pieceAuth: PieceMetadataModel['auth'];
-  connectionType: AppConnectionType;
-}): boolean {
-  const authOptions = Array.isArray(pieceAuth) ? pieceAuth : [pieceAuth];
-  return authOptions.some(
-    (auth) =>
-      !isNil(auth) &&
-      auth.type === AUTH_PROPERTY_TYPE_BY_CONNECTION_TYPE[connectionType],
-  );
-}
 
 const filterOutPiecesWithNoSuggestions = (
   stepsMetadata: StepMetadataWithSuggestions[],
@@ -795,18 +780,5 @@ function piecesQueryOptions({
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
-const AUTH_PROPERTY_TYPE_BY_CONNECTION_TYPE: Record<
-  AppConnectionType,
-  PropertyType | undefined
-> = {
-  [AppConnectionType.OAUTH2]: PropertyType.OAUTH2,
-  [AppConnectionType.CLOUD_OAUTH2]: PropertyType.OAUTH2,
-  [AppConnectionType.PLATFORM_OAUTH2]: PropertyType.OAUTH2,
-  [AppConnectionType.BASIC_AUTH]: PropertyType.BASIC_AUTH,
-  [AppConnectionType.CUSTOM_AUTH]: PropertyType.CUSTOM_AUTH,
-  [AppConnectionType.OIDC]: PropertyType.OIDC,
-  [AppConnectionType.SECRET_TEXT]: PropertyType.SECRET_TEXT,
-  [AppConnectionType.NO_AUTH]: undefined,
-};
 
 export const pieceQueryOptions = { latest: latestPieceQueryOptions };

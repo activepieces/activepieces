@@ -11,7 +11,7 @@ export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
 export { Property } from './input';
-export { PieceAuth,getAuthPropertyForValue } from './authentication';
+export { PieceAuth, getAuthPropertyForValue, doesPieceAuthSupportConnectionType } from './authentication';
 export type { ExtractPieceAuthPropertyTypeForMethods } from './authentication';
 export { DynamicPropsValue } from './input/dynamic-prop';
 export { DropdownOption,DropdownState } from './input/dropdown/common';

@@ -1,7 +1,7 @@
 import { AppConnectionType } from '@activepieces/core-piece-types';
 import { describe, expect, it } from 'vitest';
 import { PropertyType } from '../src/lib/property/input/property-type';
-import { getAuthPropertyForValue, PieceAuth } from '../src/lib/property';
+import { doesPieceAuthSupportConnectionType, getAuthPropertyForValue, PieceAuth } from '../src/lib/property';
 
 const secretText = () => PieceAuth.SecretText({ displayName: 'Token', required: true });
 
@@ -36,5 +36,22 @@ describe('getAuthPropertyForValue', () => {
     const pieceAuth = [oauth2(), secretText()];
     expect(getAuthPropertyForValue({ authValueType: AppConnectionType.SECRET_TEXT, pieceAuth })?.type)
       .toBe(PropertyType.SECRET_TEXT);
+  });
+});
+
+describe('doesPieceAuthSupportConnectionType', () => {
+  it('accepts every OAuth2 connection type against an OAuth2 auth inside a list', () => {
+    const pieceAuth = [secretText(), oauth2()];
+    for (const connectionType of [AppConnectionType.OAUTH2, AppConnectionType.CLOUD_OAUTH2, AppConnectionType.PLATFORM_OAUTH2]) {
+      expect(doesPieceAuthSupportConnectionType({ connectionType, pieceAuth })).toBe(true);
+    }
+  });
+
+  it('rejects a connection type the auth no longer offers', () => {
+    expect(doesPieceAuthSupportConnectionType({ connectionType: AppConnectionType.OAUTH2, pieceAuth: secretText() })).toBe(false);
+  });
+
+  it('rejects any connection type when the piece has no auth', () => {
+    expect(doesPieceAuthSupportConnectionType({ connectionType: AppConnectionType.NO_AUTH, pieceAuth: undefined })).toBe(false);
   });
 });
