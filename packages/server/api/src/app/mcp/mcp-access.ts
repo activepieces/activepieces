@@ -4,7 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { editionRequiresRbac } from '../ee/authentication/project-role/rbac-middleware'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { projectService } from '../project/project-service'
-import { userService } from '../user/user-service'
+import { userRepo, userService } from '../user/user-service'
 import { deny } from './mcp-permissions'
 
 export const mcpAccess = {
@@ -13,15 +13,19 @@ export const mcpAccess = {
     hasMcpReach,
     hasMcpAccessToProject,
     isGrantLive,
+    isUserActive,
     noMcpReachResult,
 }
 
 async function isGrantLive({ platformId, userId, projectId, log }: UserScope & { projectId: string | null }): Promise<boolean> {
-    const user = await userService(log).get({ id: userId })
-    if (isNil(user) || user.status !== UserStatus.ACTIVE || user.platformId !== platformId) {
+    if (!await isUserActive({ platformId, userId })) {
         return false
     }
     return isNil(projectId) || !editionRequiresRbac() || !isNil(await projectMemberService(log).getRole({ userId, projectId }))
+}
+
+async function isUserActive({ platformId, userId }: Omit<UserScope, 'log'>): Promise<boolean> {
+    return userRepo().existsBy({ id: userId, platformId, status: UserStatus.ACTIVE })
 }
 
 async function listAccessibleProjects({ platformId, userId, log }: UserScope): Promise<Project[]> {

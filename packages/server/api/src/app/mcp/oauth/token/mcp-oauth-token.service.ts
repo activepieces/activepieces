@@ -108,7 +108,7 @@ export const mcpOAuthTokenService = {
         if (record.clientId !== params.clientId) {
             throw new OAuthTokenError('invalid_grant', 'Client mismatch')
         }
-        if (!await mcpAccess.isGrantLive({ platformId: record.platformId, userId: record.userId, projectId: record.projectId, log: params.log })) {
+        if (!await mcpAccess.isUserActive({ platformId: record.platformId, userId: record.userId })) {
             throw new OAuthTokenError('invalid_grant', 'The user no longer has access')
         }
 
@@ -337,7 +337,6 @@ type RefreshParams = {
     redirectUris: string[]
     refreshToken: string
     clientId: string
-    log: FastifyBaseLogger
 }
 
 type TokenResponse = {

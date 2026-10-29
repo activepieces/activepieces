@@ -92,15 +92,14 @@ async function setup() {
 }
 
 describe('MCP OAuth grant of a person who lost access', () => {
-    it('removed from the project: the refresh token no longer mints access tokens', async () => {
+    it('removed from the project: a refreshed access token is refused by the project MCP server', async () => {
         const { owner, member, grant } = await setup()
         const membership = await db.findOneByOrFail<{ id: string }>('project_member', { userId: member.user.id, projectId: owner.project.id })
         expect((await owner.delete(`/v1/project-members/${membership.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
 
         const refreshed = await refresh(grant)
 
-        expect(refreshed.statusCode).toBe(StatusCodes.BAD_REQUEST)
-        expect(refreshed.json().error).toBe('invalid_grant')
+        expect((await listTools(refreshed.json().access_token)).statusCode).toBe(StatusCodes.UNAUTHORIZED)
     })
 
     it('removed from the project: the project MCP server refuses the old access token', async () => {

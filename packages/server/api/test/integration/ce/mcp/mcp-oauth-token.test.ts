@@ -43,7 +43,7 @@ describe('MCP OAuth token refresh', () => {
         const clientId = apId()
         const refreshToken = await exchangeFreshCode(clientId)
 
-        const refreshed = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken, clientId, log: app.log })
+        const refreshed = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken, clientId })
 
         expect(refreshed.access_token).toBeTypeOf('string')
         expect(refreshed.refresh_token).toBe(refreshToken)
@@ -53,8 +53,8 @@ describe('MCP OAuth token refresh', () => {
         const clientId = apId()
         const first = await exchangeFreshCode(clientId)
 
-        const second = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: first, clientId, log: app.log })
-        const third = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: requireRefreshToken(second), clientId, log: app.log })
+        const second = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: first, clientId })
+        const third = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: requireRefreshToken(second), clientId })
 
         expect(third.refresh_token).toBe(first)
     })
