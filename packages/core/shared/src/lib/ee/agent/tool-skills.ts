@@ -216,6 +216,8 @@ export const agentToolSkills = {
     renderSkillsNote,
 }
 
+export const EXPLORE_RECORD_LIMITS = { default: 20, max: 100 }
+
 export { AGENT_SKILLS, CORE_TOOL_NAMES, LAZY_TOOL_NAME, GET_TOOL_SCHEMA_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SKILLS_NOTE_HEADING }
 
 export type SkillSurface = 'CHAT' | 'AGENT'

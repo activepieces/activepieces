@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ActionPreviewEvent, agentToolClassification } from '@activepieces/shared'
+import { ActionPreviewEvent, agentToolClassification, EXPLORE_RECORD_LIMITS } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { executeBatchAction, MAX_BATCH_SIZE, MAX_IDENTICAL_ACTION_FAILURES } from './configured-tools'
@@ -217,7 +217,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 actionName: z.string().describe('A read action, e.g. "get_rows", "list_channels"'),
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
                 fields: z.array(z.string()).optional().describe('Only return these keys of each record (e.g. ["id","name","email"]). Omit to return every key.'),
-                limit: z.number().int().min(1).max(MAX_EXPLORE_LIMIT).optional().describe(`How many records to return from each list in the result (default ${DEFAULT_EXPLORE_LIMIT}, max ${MAX_EXPLORE_LIMIT}).`),
+                limit: z.number().int().min(1).max(EXPLORE_RECORD_LIMITS.max).optional().describe(`How many records to return from each list in the result (default ${EXPLORE_RECORD_LIMITS.default}, max ${EXPLORE_RECORD_LIMITS.max}).`),
             }),
             execute: async (toolInput) => {
                 if (!agentToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
@@ -290,6 +290,4 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
     }
 }
 
-const DEFAULT_EXPLORE_LIMIT = 20
-const MAX_EXPLORE_LIMIT = 100
 const CODE_SANDBOX_MISSING_TEXT = '❌ ap_run_code is not available on this server: its code sandbox (Deno, set with AP_DENO_PATH) is not installed. Do not retry it — do the work with piece actions instead, or tell the user their admin must install the code sandbox to run code.'

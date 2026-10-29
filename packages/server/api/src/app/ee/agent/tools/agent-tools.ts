@@ -1,6 +1,6 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
+import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, EXPLORE_RECORD_LIMITS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
@@ -43,13 +43,9 @@ const LARGE_RESULT_OFFLOAD_BYTES = 64 * 1024
 const FLOW_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowStatus))
 const FLOW_RUN_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowRunStatus))
 
-const DEFAULT_EXPLORE_LIMIT = 20
-
-const MAX_EXPLORE_LIMIT = 100
-
 const exploreShapeInput = z.object({
     fields: z.array(z.string()).optional(),
-    limit: z.number().int().min(1).max(MAX_EXPLORE_LIMIT).optional(),
+    limit: z.number().int().min(1).max(EXPLORE_RECORD_LIMITS.max).optional(),
 })
 
 function toFlowStatus(value?: string): FlowStatus | undefined {
@@ -1032,7 +1028,7 @@ async function recordChatAction({ piece, input, projectId, platformId, userId, c
 }
 
 function shapeExploreOutput({ output, fields, limit }: { output: unknown, fields?: string[], limit?: number }): unknown {
-    const maxRecords = limit ?? DEFAULT_EXPLORE_LIMIT
+    const maxRecords = limit ?? EXPLORE_RECORD_LIMITS.default
     if (Array.isArray(output)) {
         return shapeList({ list: output, fields, limit: maxRecords })
     }
@@ -1060,7 +1056,7 @@ function shapeList({ list, fields, limit }: { list: unknown[], fields?: string[]
     if (list.length <= limit) {
         return records
     }
-    return { records, shown: records.length, total: list.length, note: `Only the first ${records.length} of ${list.length} are shown. Pass a larger limit (max ${MAX_EXPLORE_LIMIT}) to see more.` }
+    return { records, shown: records.length, total: list.length, note: `Only the first ${records.length} of ${list.length} are shown. Pass a larger limit (max ${EXPLORE_RECORD_LIMITS.max}) to see more.` }
 }
 
 function selectFields({ record, fields }: { record: unknown, fields?: string[] }): unknown {
