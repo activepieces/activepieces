@@ -33,6 +33,7 @@ export function UsageTopList({
   title,
   subtitle,
   shareOf,
+  seeAllLabel,
   className,
 }: UsageTopListProps) {
   const TitleIcon = dimensionIcon({ dimension });
@@ -51,7 +52,7 @@ export function UsageTopList({
           </div>
           <Button variant="ghost" size="xs" asChild>
             <Link to={`/platform/ai/usage/${dimension}${search}`}>
-              {t('See all')}
+              {seeAllLabel ?? t('See all')}
               <ChevronRight className="size-3.5" />
             </Link>
           </Button>
@@ -200,5 +201,6 @@ type UsageTopListProps = {
   title?: string;
   subtitle?: string;
   shareOf?: string;
+  seeAllLabel?: string;
   className?: string;
 };

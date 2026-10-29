@@ -163,6 +163,11 @@ function DetailBody({
               shareOf={t('{name} spend', {
                 name: usageAdapters.itemDisplayName({ item: data.item }),
               })}
+              seeAllLabel={t('All {items} on the platform', {
+                items: usageFormat
+                  .dimensionLabel({ dimension: group.dimension })
+                  .toLowerCase(),
+              })}
             />
           ))}
         </div>
