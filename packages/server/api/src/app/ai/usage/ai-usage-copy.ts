@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
 import { onCallService, wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
@@ -60,7 +60,11 @@ async function copyWindows({ platformId, fromMs, untilMs, windowMs, log, deadlin
         })
     }
     const { events, skipped } = usageEventsOf({ platformId, raw: read.events, startMs: fromMs, endMs })
-    const moved = await writeWindow({ platformId, fromMs, endMs, events })
+    const { data: moved, error: writeError } = await tryCatch(() => writeWindow({ platformId, fromMs, endMs, events }))
+    if (!isNil(writeError)) {
+        log.error({ error: writeError, platform: { id: platformId } }, '[aiUsageCopy] Could not write usage events, will retry this window next run')
+        return { ...outcome, attempted: true, failed: true, lagMs: Date.now() - fromMs }
+    }
     if (!moved) {
         return { ...outcome, lagMs: Date.now() - fromMs }
     }
@@ -106,7 +110,7 @@ async function saveWindow({ platformId, windowMs }: { platformId: string, window
 function usageEventsOf({ platformId, raw, startMs, endMs }: { platformId: string, raw: UsageEvent[], startMs: number, endMs: number }): { events: UsageEventWithRun[], skipped: number } {
     const unique = [...new Map(raw.filter((event) => event.timestamp >= startMs && event.timestamp < endMs).map((event) => [event.id, event])).values()]
     const events = unique.flatMap((event) => {
-        const parsed = AiUsageBlock.safeParse(event.properties['usage'])
+        const parsed = AiUsageBlock.safeParse(sanitizeObjectForPostgresql(event.properties['usage']))
         return parsed.success ? [{ platformId, timestampMs: event.timestamp, block: parsed.data }] : []
     })
     return { events, skipped: unique.length - events.length }
