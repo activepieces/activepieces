@@ -24,9 +24,7 @@ export const authenticationSession = {
       ApStorage.setInstanceToSessionStorage();
     }
     ApStorage.getInstance().setItem(tokenKey, response.token);
-    if (!isNil(response.projectId)) {
-      ApStorage.getInstance().setItem(projectIdKey, response.projectId);
-    }
+    saveProjectIdOrClear(response.projectId);
     queryClient.invalidateQueries({ queryKey: ['flags'] });
     window.dispatchEvent(new Event('storage'));
   },
@@ -106,9 +104,7 @@ export const authenticationSession = {
       platformId,
     });
     ApStorage.getInstance().setItem(tokenKey, result.token);
-    if (!isNil(result.projectId)) {
-      ApStorage.getInstance().setItem(projectIdKey, result.projectId);
-    }
+    saveProjectIdOrClear(result.projectId);
     window.location.href = '/';
   },
   switchToProject(projectId: string) {
@@ -141,4 +137,12 @@ export const authenticationSession = {
 
 function getDecodedJwt(token: string): Principal {
   return jwtDecode<Principal>(token);
+}
+
+function saveProjectIdOrClear(projectId: string | null | undefined): void {
+  if (isNil(projectId)) {
+    ApStorage.getInstance().removeItem(projectIdKey);
+    return;
+  }
+  ApStorage.getInstance().setItem(projectIdKey, projectId);
 }
