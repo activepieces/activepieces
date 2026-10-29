@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LockedGem, useEnterpriseGate } from '@/features/billing';
+import { LockedGem, useLockedFeature } from '@/features/billing';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import {
   ROLE_BASES,
@@ -108,7 +108,7 @@ function RoleDialogBody({
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const { platform } = platformHooks.useCurrentPlatform();
-  const gate = useEnterpriseGate({
+  const lockedFeature = useLockedFeature({
     unlocked: platform.plan.customRolesEnabled,
     featureKey: 'CUSTOM_ROLES',
   });
@@ -162,16 +162,18 @@ function RoleDialogBody({
 
   const submit = () => {
     setSaveError(null);
-    gate.runOrShowLockedDialog(
-      () =>
-        upsertRole({
-          mode,
-          roleId: projectRole?.id,
-          name: name.trim(),
-          permissions,
-          type: RoleType.CUSTOM,
-        }),
-      { resumable: isCreate },
+    if (lockedFeature.locked && !isCreate) {
+      lockedFeature.showLockedDialog();
+      return;
+    }
+    lockedFeature.runOrShowLockedDialog(() =>
+      upsertRole({
+        mode,
+        roleId: projectRole?.id,
+        name: name.trim(),
+        permissions,
+        type: RoleType.CUSTOM,
+      }),
     );
   };
 
@@ -428,7 +430,7 @@ function RoleDialogBody({
                   : AdminControl.ROLES_EDIT_SUBMIT,
               )}
             >
-              {gate.locked && <LockedGem />}
+              {lockedFeature.locked && <LockedGem />}
               {isCreate ? t('Create role') : t('Save changes')}
             </Button>
           </div>

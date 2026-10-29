@@ -98,7 +98,7 @@ vi.mock('@/components/ui/sidebar-shadcn', () => ({
   ),
 }));
 
-import { FeatureSample } from '@/app/components/enterprise-gate';
+import { FeatureSample } from '@/app/components/feature-sample';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { billingDialogHooks } from '@/features/billing/hooks/billing-dialog-hooks';
@@ -182,7 +182,7 @@ describe('create project gating', () => {
       fireEvent.click(screen.getByRole('button', { name: /new project/i }));
       const payload = useSelfServeTrialDialogStore.getState().payload;
       expect(payload?.featureKey).toBe('PROJECTS');
-      expect(payload?.resume).toBeUndefined();
+      expect(payload?.postTrialActivationCallback).toBeUndefined();
       expect(screen.queryAllByRole('textbox')).toHaveLength(0);
       expect(createProject).not.toHaveBeenCalled();
     },

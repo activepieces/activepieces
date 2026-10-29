@@ -2,7 +2,7 @@ import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 
-import { FeatureSample } from '@/app/components/enterprise-gate';
+import { FeatureSample } from '@/app/components/feature-sample';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { FeatureKey } from '@/features/billing';
 import { platformHooks } from '@/hooks/platform-hooks';

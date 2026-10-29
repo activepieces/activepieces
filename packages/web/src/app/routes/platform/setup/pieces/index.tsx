@@ -33,7 +33,7 @@ import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { EnterpriseLockedRow } from '@/features/billing';
+import { LockedFeatureRow } from '@/features/billing';
 import { oauthAppsQueries } from '@/features/connections';
 import {
   InstallPieceDialog,
@@ -195,7 +195,7 @@ export const PiecesListTab = () => {
           scope={PieceScope.PLATFORM}
         />
       </AdminPageHeader>
-      <EnterpriseLockedRow
+      <LockedFeatureRow
         unlocked={isEnabled}
         featureKey="PIECES"
         line={t('Hiding pieces from your users is locked.')}

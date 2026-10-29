@@ -24,9 +24,10 @@ import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { usePlanThatHasFeature } from '../hooks/billing-hooks';
 import {
   SELF_SERVE_TRIAL_DAYS,
-  useEnterpriseAccess,
-  useEnterpriseGate,
-  EnterpriseGate,
+  useActionWhenLocked,
+  ActionWhenLocked,
+  useLockedFeature,
+  LockedFeature,
 } from '../hooks/self-serve-trial-hooks';
 import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import { enterpriseDocs, enterpriseMotion } from '../utils/billing-utils';
@@ -45,7 +46,7 @@ export function SelfServeTrialLockedActions({
 }: SelfServeTrialLockedActionsProps) {
   const size = compact ? 'sm' : 'default';
   const secondary = compact ? 'link' : 'outline';
-  const access = useEnterpriseAccess({ unlocked: false });
+  const actionWhenLocked = useActionWhenLocked();
   const plan = usePlanThatHasFeature(featureKey);
   const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
   const { capture } = useTelemetry();
@@ -78,47 +79,6 @@ export function SelfServeTrialLockedActions({
     </Button>
   );
 
-  if (access === 'ask_admin') {
-    return (
-      <p className="flex items-center gap-2 text-sm text-gray-11">
-        <UserRound className="size-4 shrink-0" />
-        {platformFeatures.askAdminToUpgradeText(plan.planThatHasFeature)}
-      </p>
-    );
-  }
-
-  if (access === 'trial_available') {
-    return (
-      <div
-        className={cn(
-          'flex flex-wrap items-center gap-x-4 gap-y-3',
-          finePrintBelow && '@3xl:flex-col @3xl:items-end @3xl:gap-y-1.5',
-        )}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          {explorePlans(secondary)}
-          <Button
-            {...adminControl(AdminControl.TRIAL_START_OPEN)}
-            size={size}
-            onClick={() => {
-              onAction?.();
-              openDialog({ featureKey });
-            }}
-          >
-            {t('Start free trial')}
-          </Button>
-        </div>
-        {!compact && (
-          <span className="text-xs text-gray-11">
-            {t('{days}-day Enterprise plan trial. No credit card.', {
-              days: SELF_SERVE_TRIAL_DAYS,
-            })}
-          </span>
-        )}
-      </div>
-    );
-  }
-
   const salesLink = (variant: 'default' | 'link') => (
     <SelfServeTrialSalesLink
       surface="locked_feature"
@@ -130,55 +90,94 @@ export function SelfServeTrialLockedActions({
     />
   );
 
-  if (access === 'community') {
-    if (!showContactSales) {
-      return null;
-    }
-    return (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <a
-          href={enterpriseDocs.switchToEnterpriseUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-medium text-accent-11 hover:underline"
+  switch (actionWhenLocked) {
+    case ActionWhenLocked.ASK_ADMIN:
+      return (
+        <p className="flex items-center gap-2 text-sm text-gray-11">
+          <UserRound className="size-4 shrink-0" />
+          {platformFeatures.askAdminToUpgradeText(plan.planThatHasFeature)}
+        </p>
+      );
+    case ActionWhenLocked.START_TRIAL:
+      return (
+        <div
+          className={cn(
+            'flex flex-wrap items-center gap-x-4 gap-y-3',
+            finePrintBelow && '@3xl:flex-col @3xl:items-end @3xl:gap-y-1.5',
+          )}
         >
-          {t('How to switch to the Enterprise edition')}
-        </a>
-        {salesLink('default')}
-      </div>
-    );
-  }
+          <div className="flex flex-wrap items-center gap-2">
+            {explorePlans(secondary)}
+            <Button
+              {...adminControl(AdminControl.TRIAL_START_OPEN)}
+              size={size}
+              onClick={() => {
+                onAction?.();
+                openDialog({ featureKey });
+              }}
+            >
+              {t('Start free trial')}
+            </Button>
+          </div>
+          {!compact && (
+            <span className="text-xs text-gray-11">
+              {t('{days}-day Enterprise plan trial. No credit card.', {
+                days: SELF_SERVE_TRIAL_DAYS,
+              })}
+            </span>
+          )}
+        </div>
+      );
+    case ActionWhenLocked.SWITCH_EDITION:
+      if (!showContactSales) {
+        return null;
+      }
+      return (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <a
+            href={enterpriseDocs.switchToEnterpriseUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-accent-11 hover:underline"
+          >
+            {t('How to switch to the Enterprise edition')}
+          </a>
+          {salesLink('default')}
+        </div>
+      );
+    case ActionWhenLocked.UPGRADE_AFTER_TRIAL:
+    case ActionWhenLocked.UPGRADE:
+      if (plan.planThatHasFeature !== PlanName.ENTERPRISE) {
+        return (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {salesLink('link')}
+            {explorePlans('default')}
+          </div>
+        );
+      }
 
-  if (plan.planThatHasFeature !== PlanName.ENTERPRISE) {
-    return (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        {salesLink('link')}
-        {explorePlans('default')}
-      </div>
-    );
+      return (
+        <div className="flex flex-wrap items-center gap-2">
+          {explorePlans(secondary)}
+          {salesLink('default')}
+        </div>
+      );
   }
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {explorePlans(secondary)}
-      {salesLink('default')}
-    </div>
-  );
 }
 
-export function EnterpriseLockedRow({
+export function LockedFeatureRow({
   unlocked,
   featureKey,
   line,
-}: EnterpriseLockedRowProps) {
-  const gate = useEnterpriseGate({ unlocked, featureKey });
-  if (!gate.locked) {
+}: LockedFeatureRowProps) {
+  const lockedFeature = useLockedFeature({ unlocked, featureKey });
+  if (!lockedFeature.locked) {
     return null;
   }
   return (
     <div
       role="status"
-      data-slot="enterprise-locked-row"
+      data-slot="locked-feature-row"
       className={cn(
         'flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-lg border bg-gray-1 px-4 py-3',
         enterpriseMotion.appear,
@@ -197,14 +196,14 @@ export function EnterpriseLockedRow({
   );
 }
 
-export function EnterpriseLockedCard({
+export function LockedFeatureCard({
   featureKey,
   fallbackHeadline,
   fallbackDescription,
   showBenefits = false,
   showContactSales = true,
   surface,
-}: EnterpriseLockedCardProps) {
+}: LockedFeatureCardProps) {
   const copy = selfServeTrialFeatures.lockedCopy(featureKey);
   const headline =
     copy?.headline ??
@@ -216,7 +215,7 @@ export function EnterpriseLockedCard({
   return (
     <Card
       role="status"
-      data-slot="enterprise-locked-card"
+      data-slot="locked-feature-card"
       className={cn('@container shrink-0 p-5', enterpriseMotion.appear)}
     >
       <div className="flex flex-col gap-4 @3xl:flex-row @3xl:items-center @3xl:gap-8">
@@ -261,19 +260,22 @@ export function EnterpriseLockedCard({
   );
 }
 
-export function EnterpriseUsageMeter({
-  gate,
+export function LockedFeatureUsageMeter({
+  lockedFeature,
   used,
   limit,
   label,
-}: EnterpriseUsageMeterProps) {
+}: LockedFeatureUsageMeterProps) {
   if (isNil(limit) || limit <= 0) {
     return null;
   }
   const usage = t('{used} of {limit} {label}', { used, limit, label });
   const meter = <UsageBar used={used} limit={limit} />;
 
-  if (gate.access === 'ask_admin' || gate.access === 'community') {
+  if (
+    lockedFeature.actionWhenLocked === ActionWhenLocked.ASK_ADMIN ||
+    lockedFeature.actionWhenLocked === ActionWhenLocked.SWITCH_EDITION
+  ) {
     return (
       <span
         className={cn(
@@ -297,7 +299,7 @@ export function EnterpriseUsageMeter({
             'gap-2 tabular-nums text-gray-11',
             enterpriseMotion.appear,
           )}
-          onClick={gate.showLockedDialog}
+          onClick={lockedFeature.showLockedDialog}
         >
           {meter}
           {usage}
@@ -359,13 +361,13 @@ type SelfServeTrialLockedActionsProps = {
   showContactSales?: boolean;
 };
 
-type EnterpriseLockedRowProps = {
+type LockedFeatureRowProps = {
   unlocked: boolean;
   featureKey: FeatureKey;
   line: string;
 };
 
-type EnterpriseLockedCardProps = {
+type LockedFeatureCardProps = {
   featureKey: FeatureKey;
   fallbackHeadline?: string;
   fallbackDescription?: string;
@@ -374,8 +376,8 @@ type EnterpriseLockedCardProps = {
   surface: PlatformAdminSurface;
 };
 
-type EnterpriseUsageMeterProps = {
-  gate: EnterpriseGate;
+type LockedFeatureUsageMeterProps = {
+  lockedFeature: LockedFeature;
   used: number;
   limit: number | null | undefined;
   label: string;

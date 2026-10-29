@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useEnterpriseGate } from '@/features/billing';
+import { ActionWhenLocked, useLockedFeature } from '@/features/billing';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -19,7 +19,7 @@ type PieceActionsProps = {
 
 const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
-  const gate = useEnterpriseGate({
+  const lockedFeature = useLockedFeature({
     unlocked: isEnabled,
     featureKey: 'PIECES',
   });
@@ -32,7 +32,8 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
     });
 
   const pinned = platform.pinnedPieces.includes(pieceName);
-  const lockedOnCommunity = gate.access === 'community';
+  const lockedOnCommunity =
+    lockedFeature.actionWhenLocked === ActionWhenLocked.SWITCH_EDITION;
   const label = pinned ? t('Unpin this piece') : t('Pin this piece');
 
   return (
@@ -54,7 +55,7 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
               aria-hidden={lockedOnCommunity ? true : undefined}
               aria-label={label}
               onClick={() =>
-                gate.runOrShowLockedDialog(() => togglePin(pieceName))
+                lockedFeature.runOrShowLockedDialog(() => togglePin(pieceName))
               }
             >
               {pinned ? (

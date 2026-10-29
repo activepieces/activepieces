@@ -15,7 +15,7 @@ import {
   AdminPageHeader,
   adminPageResources,
 } from '@/app/components/admin';
-import { EnterpriseGate } from '@/app/components/enterprise-gate';
+import { LockedFeatureUsage } from '@/app/components/feature-sample';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -24,7 +24,8 @@ import {
   billingQueries,
   billingUtils,
   seatUtils,
-  useEnterpriseGate,
+  ActionWhenLocked,
+  useLockedFeature,
   useSeatLimitGuard,
 } from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
@@ -111,7 +112,7 @@ export default function UsersPage() {
   const usersLimit = isNil(subscription)
     ? platform.plan.usersLimit
     : billingUtils.resolveSeatCap(subscription).effectiveLimit;
-  const usersGate = useEnterpriseGate({
+  const usersLockedFeature = useLockedFeature({
     unlocked: isNil(usersLimit) || activeUsers < usersLimit,
     featureKey: 'USERS',
   });
@@ -177,9 +178,9 @@ export default function UsersPage() {
         )}
         resources={adminPageResources.users}
       >
-        <EnterpriseGate
+        <LockedFeatureUsage
           featureKey="USERS"
-          unlocked={!usersGate.locked}
+          unlocked={!usersLockedFeature.locked}
           used={activeUsers}
           limit={usersLimit}
           label={t('users')}
@@ -187,10 +188,16 @@ export default function UsersPage() {
           <Button
             {...adminControl(AdminControl.USERS_INVITE_OPEN)}
             onClick={() => {
-              if (usersGate.access === 'trial_available' && !canBuySeats) {
-                usersGate.runOrShowLockedDialog(() => setInviteOpen(true), {
-                  resumable: false,
-                });
+              if (
+                usersLockedFeature.actionWhenLocked ===
+                  ActionWhenLocked.START_TRIAL &&
+                !canBuySeats
+              ) {
+                if (usersLockedFeature.locked) {
+                  usersLockedFeature.showLockedDialog();
+                } else {
+                  setInviteOpen(true);
+                }
                 return;
               }
               if (ensureSeatsAvailable(1)) {
@@ -198,14 +205,14 @@ export default function UsersPage() {
               }
             }}
           >
-            {isOutOfSeats || usersGate.locked ? (
+            {isOutOfSeats || usersLockedFeature.locked ? (
               <Gem className="text-on-accent/90" />
             ) : (
               <UserRoundPlusIcon size={16} />
             )}
             {t('Invite')}
           </Button>
-        </EnterpriseGate>
+        </LockedFeatureUsage>
       </AdminPageHeader>
       <AdminDataTable
         emptyStateTextTitle={t('No users found')}

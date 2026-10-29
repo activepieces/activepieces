@@ -60,9 +60,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  EnterpriseGateState,
+  LockedFeature,
   LockedGem,
-  useEnterpriseGate,
+  ActionWhenLocked,
+  useLockedFeature,
   usePlanThatHasFeature,
 } from '@/features/billing';
 import {
@@ -85,7 +86,7 @@ export const CustomizeSelectorDialog = ({
   isEnabled: boolean;
 }) => {
   const [open, setOpen] = useState(false);
-  const gate = useEnterpriseGate({
+  const lockedFeature = useLockedFeature({
     unlocked: isEnabled,
     featureKey: 'PIECES',
   });
@@ -99,7 +100,7 @@ export const CustomizeSelectorDialog = ({
           variant="outline"
           size="sm"
           onClick={() => {
-            if (gate.locked) {
+            if (lockedFeature.locked) {
               capture({
                 name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
                 payload: {
@@ -110,7 +111,7 @@ export const CustomizeSelectorDialog = ({
             }
           }}
         >
-          {gate.locked ? (
+          {lockedFeature.locked ? (
             <LockedGem className="text-accent-11" />
           ) : (
             <Settings2Icon />
@@ -124,7 +125,7 @@ export const CustomizeSelectorDialog = ({
       >
         <SelectorTabsEditor
           key={open ? 'open' : 'closed'}
-          gate={gate}
+          lockedFeature={lockedFeature}
           onClose={() => setOpen(false)}
         />
       </SheetContent>
@@ -133,15 +134,16 @@ export const CustomizeSelectorDialog = ({
 };
 
 const SelectorTabsEditor = ({
-  gate,
+  lockedFeature,
   onClose,
 }: {
-  gate: EnterpriseGateState;
+  lockedFeature: LockedFeature;
   onClose: () => void;
 }) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const plan = usePlanThatHasFeature('PIECES');
-  const saveLockedOnCommunity = gate.access === 'community';
+  const saveLockedOnCommunity =
+    lockedFeature.actionWhenLocked === ActionWhenLocked.SWITCH_EDITION;
   const communityLockedReason = t('Contact sales to unlock the piece selector');
   const [tabs, setTabs] = useState<PieceSelectorTabConfig[]>(
     platform.pieceSelectorConfig?.tabs.length
@@ -206,7 +208,7 @@ const SelectorTabsEditor = ({
       toast.error(t('Sections must have a name'));
       return;
     }
-    gate.runOrShowLockedDialog(() =>
+    lockedFeature.runOrShowLockedDialog(() =>
       saveMutation.mutateAsync({ tabs: normalizedTabs }).then(onClose),
     );
   };
@@ -254,7 +256,7 @@ const SelectorTabsEditor = ({
       </ScrollArea>
 
       <SheetFooter className="flex-row justify-between px-6 py-4 border-t">
-        {gate.locked ? (
+        {lockedFeature.locked ? (
           <LockedReason
             reason={saveLockedOnCommunity ? communityLockedReason : plan.label}
           >
@@ -299,7 +301,7 @@ const SelectorTabsEditor = ({
             onClick={handleSave}
             loading={saveMutation.isPending}
           >
-            {gate.locked && <LockedGem />}
+            {lockedFeature.locked && <LockedGem />}
             {t('Save')}
           </Button>
         )}

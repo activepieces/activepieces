@@ -17,7 +17,7 @@ import {
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
-import { EnterpriseGate } from '@/app/components/enterprise-gate';
+import { LockedFeatureUsage } from '@/app/components/feature-sample';
 import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -357,7 +357,7 @@ export default function ProjectsPage() {
         description={t('Manage your automation projects')}
         resources={adminPageResources.projects}
       >
-        <EnterpriseGate
+        <LockedFeatureUsage
           featureKey="PROJECTS"
           unlocked={
             isNil(platform.plan.billedTeamProjectsLimit) ||
@@ -368,7 +368,7 @@ export default function ProjectsPage() {
           label={t('team projects')}
         >
           <CreateProjectButton variant="full" projects={allProjects} />
-        </EnterpriseGate>
+        </LockedFeatureUsage>
       </AdminPageHeader>
       <SettingsPanel flush>
         <SettingsRow

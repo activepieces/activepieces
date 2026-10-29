@@ -19,15 +19,15 @@ import { cn } from '@/lib/utils';
 import { usePlanThatHasFeature } from '../hooks/billing-hooks';
 import {
   selfServeTrialHooks,
-  EnterpriseAccess,
-  useEnterpriseAccess,
+  ActionWhenLocked,
+  useActionWhenLocked,
 } from '../hooks/self-serve-trial-hooks';
 import { enterpriseMotion } from '../utils/billing-utils';
 import { platformFeatures, FeatureKey } from '../utils/platform-features';
 import { selfServeTrialFeatures } from '../utils/self-serve-trial-utils';
 
 import { SelfServeTrialSalesLink } from './current-subscription-card';
-import { PlanBadge, SelfServeTrialLockedActions } from './enterprise-locked';
+import { PlanBadge, SelfServeTrialLockedActions } from './locked-feature';
 import { ResumeState, TrialTimeline } from './self-serve-trial-dialog';
 
 export function IncludedFeatures({
@@ -71,7 +71,7 @@ export function LockedFeature({
   featureKey: FeatureKey | undefined;
   onAction: () => void;
 }) {
-  const access = useEnterpriseAccess({ unlocked: false });
+  const actionWhenLocked = useActionWhenLocked();
   const plan = usePlanThatHasFeature(featureKey);
   const copy = selfServeTrialFeatures.lockedCopy(featureKey);
   const headline =
@@ -108,7 +108,10 @@ export function LockedFeature({
       asideTitle={t('How to get it')}
       aside={
         <p className="text-sm leading-relaxed text-gray-11">
-          {howToGetIt({ access, planThatHasFeature: plan.planThatHasFeature })}
+          {howToGetIt({
+            actionWhenLocked,
+            planThatHasFeature: plan.planThatHasFeature,
+          })}
         </p>
       }
       actions={
@@ -202,24 +205,25 @@ export function DialogFrame({
 }
 
 function howToGetIt({
-  access,
+  actionWhenLocked,
   planThatHasFeature,
 }: {
-  access: EnterpriseAccess;
+  actionWhenLocked: ActionWhenLocked;
   planThatHasFeature: PlanName;
 }): string {
-  switch (access) {
-    case 'ask_admin':
+  switch (actionWhenLocked) {
+    case ActionWhenLocked.ASK_ADMIN:
       return platformFeatures.askAdminToUpgradeText(planThatHasFeature);
-    case 'community':
+    case ActionWhenLocked.SWITCH_EDITION:
       return t(
         'This needs the Enterprise edition. Our team can set you up with a license.',
       );
-    case 'trial_used':
+    case ActionWhenLocked.UPGRADE_AFTER_TRIAL:
       return t(
         'Your Enterprise plan trial was already used. Our team can extend it or set you up on a plan.',
       );
-    default:
+    case ActionWhenLocked.START_TRIAL:
+    case ActionWhenLocked.UPGRADE:
       return planThatHasFeature === PlanName.ENTERPRISE
         ? t(
             'Our team sets you up on the Enterprise plan and helps with the rollout.',

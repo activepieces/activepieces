@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SelfServeTrialDialog } from '@/features/billing/components/self-serve-trial-dialog';
 
 let offer = false;
-let payload: { featureKey?: string; resume?: () => Promise<unknown> } | null =
+let payload: { featureKey?: string; postTrialActivationCallback?: () => Promise<unknown> } | null =
   null;
 let startFailed = false;
 let liveStatus:
@@ -151,8 +151,8 @@ describe('the start dialog', () => {
 
 describe('starting the trial from a blocked change', () => {
   it('finishes the blocked change from the hook even if the dialog state was reset', async () => {
-    const resume = vi.fn().mockResolvedValue(undefined);
-    payload = { featureKey: 'PROJECTS', resume };
+    const postTrialActivationCallback = vi.fn().mockResolvedValue(undefined);
+    payload = { featureKey: 'PROJECTS', postTrialActivationCallback };
     render(dialog());
     startTrialAndSave();
     expect(mutate).toHaveBeenCalledTimes(1);
@@ -161,12 +161,12 @@ describe('starting the trial from a blocked change', () => {
       onStarted?.({ state: SelfServeTrialState.ACTIVE });
       await new Promise((resolve) => setTimeout(resolve, 10));
     });
-    expect(resume).toHaveBeenCalledTimes(1);
+    expect(postTrialActivationCallback).toHaveBeenCalledTimes(1);
   });
 
   it('finishes the blocked change once when the start errors but the trial is on', async () => {
-    const resume = vi.fn().mockResolvedValue(undefined);
-    payload = { featureKey: 'PROJECTS', resume };
+    const postTrialActivationCallback = vi.fn().mockResolvedValue(undefined);
+    payload = { featureKey: 'PROJECTS', postTrialActivationCallback };
     const { rerender } = render(dialog());
     startTrialAndSave();
     startFailed = true;
@@ -175,7 +175,7 @@ describe('starting the trial from a blocked change', () => {
     await settle();
     rerender(dialog());
     await settle();
-    expect(resume).toHaveBeenCalledTimes(1);
+    expect(postTrialActivationCallback).toHaveBeenCalledTimes(1);
   });
 
   it('shows the trial as on when the start errors but the re-read status says it started', () => {

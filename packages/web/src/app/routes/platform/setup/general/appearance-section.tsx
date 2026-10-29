@@ -41,7 +41,7 @@ import {
   SelfServeTrialSalesLink,
   LockedGem,
   PlanBadge,
-  useEnterpriseGate,
+  useLockedFeature,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -63,7 +63,7 @@ export const AppearanceSection = ({
     ApFlagId.MAX_FILE_SIZE_MB,
   );
   const brandingLocked = !platform.plan.customAppearanceEnabled;
-  const gate = useEnterpriseGate({
+  const lockedFeature = useLockedFeature({
     unlocked: !brandingLocked,
     featureKey: 'BRANDING',
   });
@@ -237,7 +237,7 @@ export const AppearanceSection = ({
                 if (!brandingIsComplete()) {
                   return;
                 }
-                gate.runOrShowLockedDialog(() =>
+                lockedFeature.runOrShowLockedDialog(() =>
                   form.handleSubmit(
                     () => updatePlatformAsync({ includeBranding: true }),
                     rejectInvalidBranding,
@@ -343,7 +343,7 @@ export const AppearanceSection = ({
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={gate.showLockedDialog}
+                  onClick={lockedFeature.showLockedDialog}
                 >
                   <LockedGem />
                   {t('Unlock branding')}

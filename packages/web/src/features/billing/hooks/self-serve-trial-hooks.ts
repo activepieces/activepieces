@@ -185,74 +185,63 @@ const MAX_POLL_MS = 60 * 60 * 1000;
 
 const MAX_TIMER_MS = 2 ** 31 - 1;
 
-export function useEnterpriseAccess({
-  unlocked,
-}: {
-  unlocked: boolean;
-}): EnterpriseAccess {
+export function useActionWhenLocked(): ActionWhenLocked {
   const trial = selfServeTrialHooks.useTrial();
   const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  if (unlocked) {
-    return trial.state === SelfServeTrialState.ACTIVE ? 'trialing' : 'entitled';
-  }
   if (edition === ApEdition.COMMUNITY) {
-    return 'community';
+    return ActionWhenLocked.SWITCH_EDITION;
   }
   if (!trial.isPlatformAdmin) {
-    return 'ask_admin';
+    return ActionWhenLocked.ASK_ADMIN;
   }
   if (shouldOfferTrial) {
-    return 'trial_available';
+    return ActionWhenLocked.START_TRIAL;
   }
   if (trial.state === SelfServeTrialState.ENDED) {
-    return 'trial_used';
+    return ActionWhenLocked.UPGRADE_AFTER_TRIAL;
   }
-  return 'upgrade';
+  return ActionWhenLocked.UPGRADE;
 }
 
-export function useEnterpriseGate({
+export function useLockedFeature({
   unlocked,
   featureKey,
 }: {
   unlocked: boolean;
   featureKey: FeatureKey;
-}): EnterpriseGate {
-  const access = useEnterpriseAccess({ unlocked });
+}): LockedFeature {
+  const actionWhenLocked = useActionWhenLocked();
   const openDialog = useOpenLockedFeature();
-  const locked = access !== 'entitled' && access !== 'trialing';
+  const locked = !unlocked;
 
-  const runOrShowLockedDialog: EnterpriseGate['runOrShowLockedDialog'] = (
-    action,
-    options,
+  const runOrShowLockedDialog: LockedFeature['runOrShowLockedDialog'] = (
+    postTrialActivationCallback,
   ) => {
     if (!locked) {
-      Promise.resolve(action()).catch(() => undefined);
+      Promise.resolve(postTrialActivationCallback()).catch(() => undefined);
       return;
     }
-    if (access === 'community') {
+    if (actionWhenLocked === ActionWhenLocked.SWITCH_EDITION) {
       window.open(enterpriseDocs.switchToEnterpriseUrl, '_blank', 'noopener');
       return;
     }
-    openDialog({
-      featureKey,
-      resume: options?.resumable === false ? undefined : async () => action(),
-    });
+    openDialog({ featureKey, postTrialActivationCallback });
   };
 
   const showLockedDialog = () => openDialog({ featureKey });
 
-  return { access, locked, runOrShowLockedDialog, showLockedDialog };
+  return { actionWhenLocked, locked, runOrShowLockedDialog, showLockedDialog };
 }
 
 function useOpenLockedFeature() {
-  const access = useEnterpriseAccess({ unlocked: false });
+  const actionWhenLocked = useActionWhenLocked();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
   const upgradeClick = useUpgradeClick();
 
   return (payload: SelfServeTrialDialogPayload) => {
-    if (access === 'trial_used') {
+    if (actionWhenLocked === ActionWhenLocked.UPGRADE_AFTER_TRIAL) {
       upgradeClick({
         feature: payload.featureKey,
         plan: platformFeatures.planThatHasFeature({
@@ -380,21 +369,19 @@ export type SelfServeTrial = {
   basePlanName: string;
 };
 
-export type EnterpriseAccess =
-  | 'entitled'
-  | 'trialing'
-  | 'trial_available'
-  | 'trial_used'
-  | 'upgrade'
-  | 'ask_admin'
-  | 'community';
+export enum ActionWhenLocked {
+  SWITCH_EDITION = 'switch_edition',
+  ASK_ADMIN = 'ask_admin',
+  START_TRIAL = 'start_trial',
+  UPGRADE_AFTER_TRIAL = 'upgrade_after_trial',
+  UPGRADE = 'upgrade',
+}
 
-export type EnterpriseGate = {
-  access: EnterpriseAccess;
+export type LockedFeature = {
+  actionWhenLocked: ActionWhenLocked;
   locked: boolean;
   runOrShowLockedDialog: (
-    action: () => Promise<unknown> | void,
-    options?: { resumable?: boolean },
+    postTrialActivationCallback: () => Promise<unknown> | void,
   ) => void;
   showLockedDialog: () => void;
 };

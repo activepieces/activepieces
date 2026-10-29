@@ -42,14 +42,17 @@ export { SelfServeTrialDialog } from './components/self-serve-trial-dialog';
 export { SelfServeTrialEndingAlert } from './components/self-serve-trial-notices';
 export { EnterprisePlanIndicator } from './components/self-serve-trial-notices';
 export { selfServeTrialHooks } from './hooks/self-serve-trial-hooks';
-export { LockedGem } from './components/enterprise-locked';
-export { PlanBadge } from './components/enterprise-locked';
+export { LockedGem } from './components/locked-feature';
+export { PlanBadge } from './components/locked-feature';
 export { seatUtils } from './utils/billing-utils';
-export { EnterpriseLockedRow } from './components/enterprise-locked';
+export { LockedFeatureRow } from './components/locked-feature';
 export { SelfServeTrialSalesLink } from './components/current-subscription-card';
-export { EnterpriseLockedCard } from './components/enterprise-locked';
-export { EnterpriseUsageMeter } from './components/enterprise-locked';
-export { useEnterpriseGate } from './hooks/self-serve-trial-hooks';
-export type { EnterpriseGate as EnterpriseGateState } from './hooks/self-serve-trial-hooks';
+export { LockedFeatureCard } from './components/locked-feature';
+export { LockedFeatureUsageMeter } from './components/locked-feature';
+export {
+  ActionWhenLocked,
+  useLockedFeature,
+} from './hooks/self-serve-trial-hooks';
+export type { LockedFeature } from './hooks/self-serve-trial-hooks';
 export { enterpriseDocs } from './utils/billing-utils';
 export { usePlanThatHasFeature } from './hooks/billing-hooks';

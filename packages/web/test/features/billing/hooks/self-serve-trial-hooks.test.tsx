@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PLATFORM_BILLING_SUBSCRIPTION_KEY } from '@/features/billing/hooks/billing-hooks';
-import { selfServeTrialHooks, SelfServeTrial, useEnterpriseAccess, useEnterpriseGate } from '@/features/billing/hooks/self-serve-trial-hooks';
+import { ActionWhenLocked, selfServeTrialHooks, SelfServeTrial, useActionWhenLocked, useLockedFeature } from '@/features/billing/hooks/self-serve-trial-hooks';
 import { billingDialogHooks } from '@/features/billing/hooks/billing-dialog-hooks';
 
 const state = vi.hoisted(() => ({
@@ -165,7 +165,7 @@ describe('starting the trial fails', () => {
   });
 });
 
-describe('enterprise gate', () => {
+describe('enterprise lockedFeature', () => {
   beforeEach(() => {
     vi.spyOn(selfServeTrialHooks, 'useTrial').mockImplementation(
       () =>
@@ -191,20 +191,18 @@ describe('enterprise gate', () => {
     vi.restoreAllMocks();
   });
 
-  describe('enterprise access', () => {
+  describe('action when a feature is locked', () => {
     it.each([
-      { unlocked: true, trialState: 'active', access: 'trialing' },
-      { unlocked: true, access: 'entitled' },
-      { edition: ApEdition.COMMUNITY, access: 'community' },
-      { isPlatformAdmin: false, access: 'ask_admin' },
-      { offer: true, access: 'trial_available' },
-      { trialState: 'ended', access: 'trial_used' },
-      { trialState: 'used', access: 'upgrade' },
-      { access: 'upgrade' },
-    ])('is $access for %j', ({ access, unlocked = false, ...setup }) => {
+      { edition: ApEdition.COMMUNITY, actionWhenLocked: ActionWhenLocked.SWITCH_EDITION },
+      { isPlatformAdmin: false, actionWhenLocked: ActionWhenLocked.ASK_ADMIN },
+      { offer: true, actionWhenLocked: ActionWhenLocked.START_TRIAL },
+      { trialState: 'ended', actionWhenLocked: ActionWhenLocked.UPGRADE_AFTER_TRIAL },
+      { trialState: 'used', actionWhenLocked: ActionWhenLocked.UPGRADE },
+      { actionWhenLocked: ActionWhenLocked.UPGRADE },
+    ])('is $actionWhenLocked for %j', ({ actionWhenLocked, ...setup }) => {
       Object.assign(state, setup);
-      const { result } = renderHook(() => useEnterpriseAccess({ unlocked }));
-      expect(result.current).toBe(access);
+      const { result } = renderHook(() => useActionWhenLocked());
+      expect(result.current).toBe(actionWhenLocked);
     });
   });
 
@@ -213,24 +211,24 @@ describe('enterprise gate', () => {
       { unlocked: true, click: 'ran' },
       { edition: ApEdition.COMMUNITY, click: 'guide' },
       { trialState: 'ended', click: 'plans' },
-      { trialState: 'used', click: 'trial with resume' },
-      { offer: true, click: 'trial with resume' },
-      { offer: true, resumable: false, click: 'trial' },
+      { trialState: 'used', click: 'trial with callback' },
+      { offer: true, click: 'trial with callback' },
     ])('opens $click for %j', ({ click, unlocked = false, ...setup }) => {
-      const { resumable, ...trial } = setup;
-      Object.assign(state, trial);
+      Object.assign(state, setup);
       const action = vi.fn();
-      const gate = renderHook(() =>
-        useEnterpriseGate({ unlocked, featureKey: 'AUDIT_LOGS' }),
+      const lockedFeature = renderHook(() =>
+        useLockedFeature({ unlocked, featureKey: 'AUDIT_LOGS' }),
       ).result;
-      act(() => gate.current.runOrShowLockedDialog(action, { resumable }));
+      act(() =>
+        lockedFeature.current.runOrShowLockedDialog(action),
+      );
       const payload = trialDialogPayload();
       const outcomes = [
         action.mock.calls.length > 0 && 'ran',
         state.openWindow.mock.calls.length > 0 && 'guide',
         plansDialogOpen() && 'plans',
         payload?.featureKey === 'AUDIT_LOGS' &&
-          (payload.resume ? 'trial with resume' : 'trial'),
+          (payload.postTrialActivationCallback ? 'trial with callback' : 'trial'),
       ];
       expect(outcomes.filter((outcome) => outcome !== false)).toEqual([click]);
     });

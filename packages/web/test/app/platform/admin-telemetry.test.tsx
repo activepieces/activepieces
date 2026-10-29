@@ -88,7 +88,7 @@ vi.mock('@/components/ui/sidebar-shadcn', () => ({
   ),
 }));
 
-import { FeatureSample } from '@/app/components/enterprise-gate';
+import { FeatureSample } from '@/app/components/feature-sample';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { CreateProjectButton } from '@/features/projects/components/create-project-button';
 import { ADMIN_CONTROL_ATTRIBUTE, AdminControl } from '@/lib/admin-control';

@@ -10,7 +10,7 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { EnterpriseLockedRow } from '@/features/billing';
+import { LockedFeatureRow } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
@@ -102,7 +102,7 @@ const PiecesSettings = () => {
 
   return (
     <div className="space-y-6">
-      <EnterpriseLockedRow
+      <LockedFeatureRow
         unlocked={platform.plan.managePiecesEnabled}
         featureKey="PIECES"
         line={t('Choosing which pieces this project can use is locked.')}

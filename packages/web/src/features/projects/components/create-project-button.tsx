@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/tooltip';
 import {
   LockedGem,
-  useEnterpriseGate,
+  useLockedFeature,
   useTeamProjectLimitGuard,
 } from '@/features/billing';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -36,7 +36,7 @@ export function CreateProjectButton({
   const { hasReachedLimit, used, limit } = useTeamProjectLimitGuard({
     projects,
   });
-  const gate = useEnterpriseGate({
+  const lockedFeature = useLockedFeature({
     unlocked: !hasReachedLimit,
     featureKey: 'PROJECTS',
   });
@@ -63,21 +63,15 @@ export function CreateProjectButton({
   const trigger = triggerFor({
     variant,
     className,
-    locked: gate.locked,
+    locked: lockedFeature.locked,
     expanded: createOpen,
     onClick: () => {
-      if (!gate.locked) {
+      if (!lockedFeature.locked) {
         setCreateOpen(true);
         return;
       }
       reportBlocked();
-      if (gate.access === 'community') {
-        gate.showLockedDialog();
-        return;
-      }
-      gate.runOrShowLockedDialog(() => setCreateOpen(true), {
-        resumable: false,
-      });
+      lockedFeature.showLockedDialog();
     },
   });
 
@@ -86,7 +80,7 @@ export function CreateProjectButton({
       <TooltipTrigger
         asChild
         aria-label={
-          gate.locked
+          lockedFeature.locked
             ? `${t('Create Project')}, ${t('Requires a plan upgrade')}`
             : t('Create Project')
         }
@@ -104,10 +98,10 @@ export function CreateProjectButton({
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreate={onCreate}
-        limitReached={gate.locked}
+        limitReached={lockedFeature.locked}
         onLimitReached={() => {
           reportBlocked();
-          gate.showLockedDialog();
+          lockedFeature.showLockedDialog();
         }}
       />
     </>
@@ -123,7 +117,7 @@ export function CreateProjectButton({
       <TooltipContent side="bottom">
         <span className="flex flex-col">
           <span>{t('Create Project')}</span>
-          {gate.locked && (
+          {lockedFeature.locked && (
             <span className="opacity-70">{t('Requires a plan upgrade')}</span>
           )}
         </span>

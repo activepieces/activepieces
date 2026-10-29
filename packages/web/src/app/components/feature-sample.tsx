@@ -10,27 +10,27 @@ import {
 } from 'react';
 
 import {
-  EnterpriseLockedCard,
-  EnterpriseUsageMeter,
+  LockedFeatureCard,
+  LockedFeatureUsageMeter,
   FeatureKey,
-  useEnterpriseGate,
+  useLockedFeature,
 } from '@/features/billing';
 
 import { AdminPageLockContext } from './admin/admin-page';
 
-export function EnterpriseGate({
+export function LockedFeatureUsage({
   unlocked,
   featureKey,
   used,
   limit,
   label,
   children,
-}: EnterpriseGateProps) {
-  const gate = useEnterpriseGate({ unlocked, featureKey });
+}: LockedFeatureUsageProps) {
+  const lockedFeature = useLockedFeature({ unlocked, featureKey });
   return (
     <div className="flex flex-wrap items-center gap-4">
-      <EnterpriseUsageMeter
-        gate={gate}
+      <LockedFeatureUsageMeter
+        lockedFeature={lockedFeature}
         used={used}
         limit={limit}
         label={label}
@@ -46,14 +46,14 @@ export function FeatureSample({
   featureKey,
   children,
 }: FeatureSampleProps) {
-  const gate = useEnterpriseGate({ unlocked: !locked, featureKey });
-  if (!gate.locked) {
+  const lockedFeature = useLockedFeature({ unlocked: !locked, featureKey });
+  if (!lockedFeature.locked) {
     return <>{children}</>;
   }
   return (
     <LockedPreview
       callout={
-        <EnterpriseLockedCard
+        <LockedFeatureCard
           featureKey={featureKey}
           fallbackHeadline={t(title)}
           surface={PlatformAdminSurface.SAMPLE}
@@ -110,7 +110,7 @@ function LockedPreview({
 
 const InsideFeatureSampleContext = createContext(false);
 
-type EnterpriseGateProps = {
+type LockedFeatureUsageProps = {
   unlocked: boolean;
   featureKey: FeatureKey;
   used: number;

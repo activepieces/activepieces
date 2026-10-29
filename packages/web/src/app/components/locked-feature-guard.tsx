@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import React from 'react';
 
 import { PageHeader } from '@/components/custom/page-header';
-import { EnterpriseLockedCard, FeatureKey } from '@/features/billing';
+import { LockedFeatureCard, FeatureKey } from '@/features/billing';
 
 export const LockedFeatureGuard = ({
   children,
@@ -21,7 +21,7 @@ export const LockedFeatureGuard = ({
 
   const teaser = (
     <div className="flex w-full flex-1 flex-col gap-6 px-4 py-6 md:px-6 in-data-[slot=admin-page]:p-0 md:in-data-[slot=admin-page]:p-0">
-      <EnterpriseLockedCard
+      <LockedFeatureCard
         featureKey={featureKey}
         fallbackHeadline={t(lockTitle)}
         fallbackDescription={t(lockDescription)}

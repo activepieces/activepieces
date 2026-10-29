@@ -30,7 +30,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { EnterpriseLockedRow } from '@/features/billing';
+import { LockedFeatureRow } from '@/features/billing';
 import {
   aiProviderKeys,
   aiProviderMutations,
@@ -244,7 +244,7 @@ export function ProvidersTab() {
       ) : (
         <>
           {locked && (
-            <EnterpriseLockedRow
+            <LockedFeatureRow
               unlocked={false}
               featureKey="UNIVERSAL_AI"
               line={t('Adding or changing AI keys is locked.')}

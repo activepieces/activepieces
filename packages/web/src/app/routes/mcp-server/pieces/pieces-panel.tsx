@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
-import { EnterpriseLockedRow } from '@/features/billing';
+import { LockedFeatureRow } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
@@ -194,7 +194,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
 
   if (!platform.plan.managePiecesEnabled) {
     return (
-      <EnterpriseLockedRow
+      <LockedFeatureRow
         unlocked={false}
         featureKey="PIECES"
         line={t('Choosing which pieces connected clients can reach is locked.')}

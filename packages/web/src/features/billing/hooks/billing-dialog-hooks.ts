@@ -50,7 +50,7 @@ export const billingDialogHooks = {
 
 export type SelfServeTrialDialogPayload = {
   featureKey?: FeatureKey;
-  resume?: () => Promise<unknown>;
+  postTrialActivationCallback?: () => Promise<unknown> | void;
 };
 
 type PlanPurchase = {

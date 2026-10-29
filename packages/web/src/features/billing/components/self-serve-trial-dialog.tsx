@@ -43,15 +43,17 @@ export function SelfServeTrialDialog() {
   const { data: liveStatus } = selfServeTrialHooks.useStatus();
   const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
   const [resumeState, setResumeState] = useState<ResumeState>('idle');
-  const resumeOnStart =
-    useRef<SelfServeTrialDialogPayload['resume']>(undefined);
-  const resumeRan = useRef(false);
+  const postTrialActivationCallbackOnStart =
+    useRef<SelfServeTrialDialogPayload['postTrialActivationCallback']>(
+      undefined,
+    );
+  const postTrialActivationCallbackRan = useRef(false);
   const start = selfServeTrialHooks.useStart((status) => {
     if (status.state !== SelfServeTrialState.ACTIVE) {
       return;
     }
     celebrate();
-    resumeBlockedWorkOnce();
+    runPostTrialActivationCallbackOnce();
   });
   const open = !isNil(payload);
   const startedAnyway =
@@ -73,12 +75,14 @@ export function SelfServeTrialDialog() {
     closeDialog();
     start.reset();
     setResumeState('idle');
-    resumeRan.current = false;
+    postTrialActivationCallbackRan.current = false;
   };
-  const resume = payload?.resume;
+  const postTrialActivationCallback = payload?.postTrialActivationCallback;
 
-  const finishBlockedWork = useCallback(
-    async (work: SelfServeTrialDialogPayload['resume']) => {
+  const runPostTrialActivationCallback = useCallback(
+    async (
+      work: SelfServeTrialDialogPayload['postTrialActivationCallback'],
+    ) => {
       if (isNil(work)) {
         return;
       }
@@ -97,19 +101,21 @@ export function SelfServeTrialDialog() {
     [queryClient],
   );
 
-  const resumeBlockedWorkOnce = useCallback(() => {
-    if (resumeRan.current) {
+  const runPostTrialActivationCallbackOnce = useCallback(() => {
+    if (postTrialActivationCallbackRan.current) {
       return;
     }
-    resumeRan.current = true;
-    finishBlockedWork(resumeOnStart.current).catch(() => undefined);
-  }, [finishBlockedWork]);
+    postTrialActivationCallbackRan.current = true;
+    runPostTrialActivationCallback(
+      postTrialActivationCallbackOnStart.current,
+    ).catch(() => undefined);
+  }, [runPostTrialActivationCallback]);
 
   useEffect(() => {
     if (startedAnyway) {
-      resumeBlockedWorkOnce();
+      runPostTrialActivationCallbackOnce();
     }
-  }, [startedAnyway, resumeBlockedWorkOnce]);
+  }, [startedAnyway, runPostTrialActivationCallbackOnce]);
 
   return (
     <>
@@ -147,12 +153,15 @@ export function SelfServeTrialDialog() {
               {view === 'start' && (
                 <StartTrial
                   featureKey={payload?.featureKey}
-                  resumes={!isNil(resume)}
+                  hasPostTrialActivationCallback={
+                    !isNil(postTrialActivationCallback)
+                  }
                   isPending={start.isPending}
                   isError={start.isError}
                   onStart={() => {
-                    resumeOnStart.current = resume;
-                    resumeRan.current = false;
+                    postTrialActivationCallbackOnStart.current =
+                      postTrialActivationCallback;
+                    postTrialActivationCallbackRan.current = false;
                     start.mutate();
                   }}
                 />
@@ -164,7 +173,9 @@ export function SelfServeTrialDialog() {
                   featureKey={payload?.featureKey}
                   resumeState={resumeState}
                   onRetry={() =>
-                    finishBlockedWork(resume).catch(() => undefined)
+                    runPostTrialActivationCallback(
+                      postTrialActivationCallback,
+                    ).catch(() => undefined)
                   }
                   onClose={close}
                 />
@@ -187,13 +198,13 @@ export function SelfServeTrialDialog() {
 
 function StartTrial({
   featureKey,
-  resumes,
+  hasPostTrialActivationCallback,
   isPending,
   isError,
   onStart,
 }: {
   featureKey: FeatureKey | undefined;
-  resumes: boolean;
+  hasPostTrialActivationCallback: boolean;
   isPending: boolean;
   isError: boolean;
   onStart: () => void;
@@ -221,7 +232,7 @@ function StartTrial({
         'Everything in the Enterprise plan turns on for everyone on your platform. No credit card, nothing to set up.',
       )}
       note={
-        resumes && (
+        hasPostTrialActivationCallback && (
           <p className="flex items-start gap-2.5 text-sm text-gray-12">
             <Check className="mt-0.5 size-4 shrink-0 text-success-11" />
             {t(
@@ -272,7 +283,9 @@ function StartTrial({
             loading={isPending}
             onClick={onStart}
           >
-            {resumes ? t('Start trial and save') : t('Start free trial')}
+            {hasPostTrialActivationCallback
+              ? t('Start trial and save')
+              : t('Start free trial')}
           </Button>
         </div>
       }

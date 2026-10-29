@@ -34,7 +34,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { EnterpriseLockedRow } from '@/features/billing';
+import { LockedFeatureRow } from '@/features/billing';
 import { workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -68,7 +68,7 @@ export default function WorkersPage({ section }: WorkersPageProps) {
       {section === 'health' &&
         isCloud &&
         fleetType === WorkerMachineType.SHARED && (
-          <EnterpriseLockedRow
+          <LockedFeatureRow
             unlocked={platform.plan.workerGroupsEnabled}
             featureKey="DEDICATED_WORKERS"
             line={t(

@@ -17,7 +17,7 @@ const state = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   invalidate: vi.fn(async (_filters: unknown) => undefined),
   saving: Promise.resolve() as Promise<unknown>,
-  gateRun: vi.fn(),
+  runOrShowLockedDialog: vi.fn(),
 }));
 
 vi.mock('i18next', () => ({
@@ -126,10 +126,9 @@ vi.mock('@/features/billing', () => ({
   LockedGem: () => null,
   PlanBadge: () => null,
   SelfServeTrialSalesLink: () => null,
-  useEnterpriseGate: ({ unlocked }: { unlocked: boolean }) => ({
-    access: unlocked ? 'entitled' : 'trial_available',
+  useLockedFeature: ({ unlocked }: { unlocked: boolean }) => ({
     locked: !unlocked,
-    runOrShowLockedDialog: state.gateRun,
+    runOrShowLockedDialog: state.runOrShowLockedDialog,
     showLockedDialog: vi.fn(),
   }),
 }));
@@ -464,7 +463,7 @@ describe('AppearanceSection on a plan without branding', () => {
   beforeEach(() => {
     state.update.mockReset();
     state.update.mockResolvedValue(undefined);
-    state.gateRun.mockClear();
+    state.runOrShowLockedDialog.mockClear();
     state.saving = Promise.resolve();
     state.customAppearanceEnabled = false;
     state.primaryColor = '#6e41e2';
@@ -489,10 +488,11 @@ describe('AppearanceSection on a plan without branding', () => {
     await act(async () => {
       buttonNamed({ name: 'Save branding' }).click();
     });
-    expect(state.gateRun).toHaveBeenCalledTimes(1);
-    const [resume] = state.gateRun.mock.calls[0];
+    expect(state.runOrShowLockedDialog).toHaveBeenCalledTimes(1);
+    const [postTrialActivationCallback] =
+      state.runOrShowLockedDialog.mock.calls[0];
     await act(async () => {
-      await resume();
+      await postTrialActivationCallback();
     });
     expect(sentFields().primaryColor).toBe('#123456');
   });
