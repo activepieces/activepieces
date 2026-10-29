@@ -1,4 +1,4 @@
-import { AIProviderName, AiUsageEnvironment, AiUsageOrigin, isNil, tryCatch } from '@activepieces/core-utils'
+import { AIProviderName, AiUsageEnvironment, AiUsageOrigin, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { modelCatalog } from '@activepieces/server-utils'
 import { AI_USAGE_RELATED_DIMENSIONS, AI_USAGE_SOURCE_DIMENSIONS, AIProviderModelMetadata, AiUsageDetail, AiUsageDimension, AiUsageHistory, AiUsageItem, AiUsageItemList, AiUsageOverview, AiUsagePeriod, AiUsageScope, AiUsageSeriesPoint, AiUsageSource, AiUsageSourceSpend, AiUsageTotals } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -426,7 +426,7 @@ export const aiUsageReadService = (log: FastifyBaseLogger) => ({
                 const setRows = (set: SetName): UsageRow[] => rows.filter((row) => row.g === query.maskFor(set))
                 const history = historyOf({ resolved, since, hasAnyUsage: rows[0]?.hasAnyUsage ?? false, now: now.getTime() })
                 const groups = related.map((relatedDimension) => ({ dimension: relatedDimension, rows: setRows(DIMENSION_SETS[relatedDimension]) }))
-                const names = await aiUsageNames.lookup({ platformId, ids: idsToName({ groups, extra: { dimension, id } }) })
+                const names = await aiUsageNames.lookup({ platformId, ids: idsToName({ groups, ...spreadIfDefined('extra', isNil(conditions) ? undefined : { dimension, id }) }) })
                 const totalRow = setRows('total')[0] ?? EMPTY_ROW
                 const itemRow: UsageRow = {
                     ...totalRow,

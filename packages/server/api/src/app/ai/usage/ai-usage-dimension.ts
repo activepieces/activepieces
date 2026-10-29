@@ -26,7 +26,25 @@ function modelFilterOf(id: string): DimensionCondition[] | null {
     return isNil(provider) ? null : [{ column: 'provider', value: provider }, { column: 'modelId', value: decoded.slice(separator + 1) }]
 }
 
+function conditionsOf({ dimension, id }: { dimension: AiUsageDimension, id: string }): DimensionCondition[] | null {
+    switch (dimension) {
+        case 'project':
+            return [{ column: 'projectId', value: id === AI_USAGE_NO_PROJECT_ID ? null : id }]
+        case 'flow':
+            return [{ column: 'flowId', value: id }]
+        case 'agent':
+            return [{ column: 'agentId', value: id }]
+        case 'user':
+            return [{ column: 'userId', value: id }]
+        case 'key':
+            return keyFilterOf(id)
+        case 'model':
+            return modelFilterOf(id)
+    }
+}
+
 const PROVIDERS = Object.values(AIProviderName)
+const NUL = '\u0000'
 const MODEL_ID_SEPARATOR = '|'
 
 export const aiUsageDimension = {
@@ -67,20 +85,8 @@ export const aiUsageDimension = {
         }
     },
     filterOf({ dimension, id }: { dimension: AiUsageDimension, id: string }): DimensionCondition[] | null {
-        switch (dimension) {
-            case 'project':
-                return [{ column: 'projectId', value: id === AI_USAGE_NO_PROJECT_ID ? null : id }]
-            case 'flow':
-                return [{ column: 'flowId', value: id }]
-            case 'agent':
-                return [{ column: 'agentId', value: id }]
-            case 'user':
-                return [{ column: 'userId', value: id }]
-            case 'key':
-                return keyFilterOf(id)
-            case 'model':
-                return modelFilterOf(id)
-        }
+        const conditions = conditionsOf({ dimension, id })
+        return conditions?.some((condition) => condition.value?.includes(NUL)) ? null : conditions
     },
 }
 
