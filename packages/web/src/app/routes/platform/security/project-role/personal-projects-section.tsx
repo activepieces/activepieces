@@ -1,7 +1,8 @@
+import { tryCatch } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import {
   Item,
   ItemActions,
@@ -12,38 +13,97 @@ import {
 import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
-import { newMemberSettingsMutations } from '@/features/platform-admin';
+import {
+  newMemberSettingsMutations,
+  newMemberSettingsQueries,
+} from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import {
+  TurnOffPersonalProjectsDialog,
+  TurnOnPersonalProjectsDialog,
+} from './personal-projects-dialogs';
+
 export function PersonalProjectsSection() {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const { platform, refetch: refetchPlatform } =
+    platformHooks.useCurrentPlatform();
+  const [openDialog, setOpenDialog] = useState<'turn-on' | 'turn-off' | null>(
+    null,
+  );
   const gate = useFeatureGate({
     locked: !platform.plan.projectRolesEnabled,
     feature: PLATFORM_FEATURES.projectRoles,
   });
-  const {
-    mutate: updateSettings,
-    mutateAsync: updateSettingsAsync,
-    isPending,
-  } = newMemberSettingsMutations.useUpdateNewMemberSettings();
+  const { mutateAsync: updateSettings, isPending: isUpdating } =
+    newMemberSettingsMutations.useUpdateNewMemberSettings();
+  const { mutateAsync: createMissing, isPending: isCreatingMissing } =
+    newMemberSettingsMutations.useCreateMissingPersonalProjects();
+  const { data: summary, refetch: refetchSummary } =
+    newMemberSettingsQueries.usePersonalProjectsSummary({
+      enabled: !gate.locked,
+    });
+  const [isCheckingMembers, setIsCheckingMembers] = useState(false);
+  const [membersToOffer, setMembersToOffer] = useState(0);
+  const isPending = isUpdating || isCreatingMissing || isCheckingMembers;
 
   const isEnabled = gate.locked || platform.autoCreatePersonalProjects;
 
-  const onCheckedChange = (checked: boolean) => {
-    if (checked) {
-      updateSettings(
-        { autoCreatePersonalProjects: true },
-        { onError: () => internalErrorToast() },
-      );
-      return;
-    }
+  const onCheckedChange = async (checked: boolean) => {
     if (gate.locked) {
       gate.open();
       return;
     }
-    setIsConfirmOpen(true);
+    if (!checked) {
+      refetchSummary();
+      setOpenDialog('turn-off');
+      return;
+    }
+    setIsCheckingMembers(true);
+    const fresh = await refetchSummary();
+    setIsCheckingMembers(false);
+    const membersWithoutPersonalProject = fresh.isError
+      ? 0
+      : fresh.data?.membersWithoutPersonalProject ?? 0;
+    if (membersWithoutPersonalProject === 0) {
+      await turnOn({ createForExistingMembers: false });
+      return;
+    }
+    setMembersToOffer(membersWithoutPersonalProject);
+    setOpenDialog('turn-on');
+  };
+
+  const turnOn = async ({
+    createForExistingMembers,
+  }: {
+    createForExistingMembers: boolean;
+  }) => {
+    const { error } = await tryCatch(async () => {
+      if (createForExistingMembers) {
+        await createMissing();
+        await refetchPlatform();
+        return;
+      }
+      await updateSettings({ autoCreatePersonalProjects: true });
+    });
+    setOpenDialog(null);
+    if (error) {
+      internalErrorToast();
+      return;
+    }
+    if (createForExistingMembers) {
+      toast.success(t('Creating personal projects for members without one.'));
+    }
+  };
+
+  const turnOff = async () => {
+    const { error } = await tryCatch(() =>
+      updateSettings({ autoCreatePersonalProjects: false }),
+    );
+    setOpenDialog(null);
+    if (error) {
+      internalErrorToast();
+    }
   };
 
   return (
@@ -73,23 +133,20 @@ export function PersonalProjectsSection() {
           />
         </ItemActions>
       </Item>
-      <ConfirmationDeleteDialog
-        open={isConfirmOpen}
-        onOpenChange={setIsConfirmOpen}
-        title={t('Turn off personal projects?')}
-        message={t(
-          "New members won't get a personal project. Existing personal projects won't change.",
-        )}
-        entityName={t('Personal projects')}
-        buttonText={t('Turn off')}
-        confirmVariant="default"
-        mutationFn={async () => {
-          await updateSettingsAsync({ autoCreatePersonalProjects: false });
-        }}
-        onError={() => {
-          setIsConfirmOpen(false);
-          internalErrorToast();
-        }}
+      {openDialog === 'turn-on' && (
+        <TurnOnPersonalProjectsDialog
+          onClose={() => setOpenDialog(null)}
+          membersWithoutPersonalProject={membersToOffer}
+          isPending={isPending}
+          onConfirm={turnOn}
+        />
+      )}
+      <TurnOffPersonalProjectsDialog
+        open={openDialog === 'turn-off'}
+        onOpenChange={(open) => setOpenDialog(open ? 'turn-off' : null)}
+        personalProjectCount={summary?.personalProjectCount ?? 0}
+        isPending={isPending}
+        onConfirm={turnOff}
       />
       {gate.dialog}
     </section>
