@@ -8,7 +8,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
-  Bot,
   ChevronRight,
   Cpu,
   Layers,
@@ -32,8 +31,10 @@ import {
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarGroup, AvatarGroupCount } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -586,7 +587,7 @@ function EmptyProviders({
   return (
     <>
       <AdminEmpty
-        icon={<Bot />}
+        media={<ProviderFaces />}
         title={t('No providers yet')}
         description={t('Add an API key to turn on chat, agents and AI steps.')}
         action={
@@ -607,6 +608,31 @@ function EmptyProviders({
         />
       </AdminSection>
     </>
+  );
+}
+
+function ProviderFaces() {
+  const ranked = byImportance(SUPPORTED_AI_PROVIDERS);
+  const shown = ranked.slice(0, PROVIDER_FACES_SHOWN);
+  return (
+    <AvatarGroup>
+      {shown.map((info) => (
+        <Avatar
+          key={info.provider}
+          size="lg"
+          className="size-11 border border-gray-6 bg-gray-1"
+        >
+          <LogoPlate
+            src={info.logoUrl}
+            alt={info.name}
+            className="size-full rounded-full p-2"
+          />
+        </Avatar>
+      ))}
+      <AvatarGroupCount className="size-11 border border-gray-6 text-xs font-medium tabular-nums">
+        {t('+{count}', { count: ranked.length - shown.length })}
+      </AvatarGroupCount>
+    </AvatarGroup>
   );
 }
 
@@ -652,17 +678,12 @@ function ProviderTile({
       {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
     >
       <ProviderLogo info={info} />
-      <span className="flex min-w-0 flex-1 items-center gap-2">
+      <span className="flex min-w-0 flex-1">
         <TextWithTooltip tooltipMessage={info.name}>
           <span className="truncate text-sm font-medium text-gray-12">
             {info.name}
           </span>
         </TextWithTooltip>
-        {recommended && (
-          <span className="shrink-0 text-xs font-medium text-accent-11">
-            {t('Recommended')}
-          </span>
-        )}
       </span>
       <ChevronRight className="size-4 shrink-0 text-gray-9 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
     </button>
@@ -730,6 +751,8 @@ function providerInfoOf({
     (candidate) => candidate.provider === provider,
   );
 }
+
+const PROVIDER_FACES_SHOWN = 5;
 
 const RECOMMENDED_PROVIDERS: AIProviderName[] = [
   AIProviderName.ANTHROPIC,
