@@ -330,6 +330,16 @@ async function upsertContact({
     throw new Error('Enter a valid email address for the contact.');
   }
   const extra = Object.entries(attributes).filter(([key, value]) => key.trim().length > 0 && key !== 'email' && value.trim().length > 0);
+  // Formbricks' bulk upsert overwrites an existing key's display name with whatever we send, so reuse the stored name.
+  const existingNames = new Map<string, string>();
+  if (extra.length > 0) {
+    const keys = await listAttributeKeys({ auth, workspaceId: workspaceId.trim() });
+    for (const attributeKey of keys) {
+      if (attributeKey.name !== null && attributeKey.name.trim().length > 0) {
+        existingNames.set(attributeKey.key, attributeKey.name);
+      }
+    }
+  }
   const result = await formbricksData<unknown>({
     auth,
     method: HttpMethod.PUT,
@@ -341,7 +351,7 @@ async function upsertContact({
           attributes: [
             { attributeKey: { key: 'email', name: 'Email' }, value: trimmedEmail },
             ...extra.map(([key, value]) => ({
-              attributeKey: { key: key.trim(), name: DEFAULT_ATTRIBUTE_NAMES[key.trim()] ?? key.trim() },
+              attributeKey: { key: key.trim(), name: existingNames.get(key.trim()) ?? DEFAULT_ATTRIBUTE_NAMES[key.trim()] ?? key.trim() },
               value: value.trim(),
             })),
           ],

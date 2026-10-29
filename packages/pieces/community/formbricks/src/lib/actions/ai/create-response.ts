@@ -19,7 +19,7 @@ export const createResponseAiAction = createAction({
   props: {
     surveyId: Property.ShortText({ displayName: 'Survey ID', required: true }),
     answers: Property.Json({ displayName: 'Answers', description: 'Object keyed by question ID.', required: true }),
-    finished: Property.Checkbox({ displayName: 'Finished', description: 'Default true.', required: false }),
+    finished: Property.Checkbox({ displayName: 'Finished', description: 'Default true.', required: false, defaultValue: true }),
     contactId: Property.ShortText({ displayName: 'Contact ID', required: false }),
     language: Property.ShortText({ displayName: 'Language Code', description: 'Default "default".', required: false }),
   },

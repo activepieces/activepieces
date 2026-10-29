@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Formbricks 0.4.0: calls to Formbricks now verify the TLS certificate
+
+From Formbricks 0.4.0, the piece checks the certificate of your Formbricks server on every call. Before, certificate checks were skipped, so a self-hosted Formbricks behind a self-signed or private-CA certificate worked. With 0.4.0 the connection check, turning a trigger on, the dropdowns and every action fail with a certificate error for such servers. Formbricks Cloud and servers with a publicly trusted certificate are not affected.
+
+#### What you need to do
+
+If you self-host Formbricks on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to the Activepieces container with `NODE_EXTRA_CA_CERTS`, before upgrading Formbricks steps or connections to 0.4.0.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
