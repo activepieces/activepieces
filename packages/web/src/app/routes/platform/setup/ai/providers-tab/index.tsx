@@ -373,7 +373,7 @@ function ProviderGroup({
           </Button>
         )}
       </header>
-      <p className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-gray-11">
+      <p className="flex items-center gap-1.5 py-1.5 pl-16 pr-4 text-xs font-medium text-gray-11">
         {t('Keys')}
         <span className="tabular-nums">{configs.length}</span>
       </p>
@@ -442,7 +442,7 @@ function ConfigRow({
         }
       }}
       className={cn(
-        'group flex items-center gap-4 px-4 py-3 transition-colors',
+        'group flex items-center gap-6 py-3 pl-16 pr-4 transition-colors',
         !locked &&
           'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
@@ -452,7 +452,9 @@ function ConfigRow({
           <p className="truncate text-sm font-semibold text-gray-12">
             {config.name}
           </p>
-          <KeyStatusBadge status={config.status} />
+          <span className="md:hidden">
+            <KeyStatusBadge status={config.status} />
+          </span>
         </div>
         {tierCount > 0 && (
           <span className="inline-flex items-center gap-1 text-xs text-gray-11 [&_svg]:text-gray-9">
@@ -469,7 +471,10 @@ function ConfigRow({
         </div>
       </div>
 
-      <div className="hidden shrink-0 items-center gap-4 md:flex">
+      <div className="hidden shrink-0 items-center gap-6 md:flex">
+        <span className="flex w-24">
+          <KeyStatusBadge status={config.status} />
+        </span>
         <KeyScope
           modelsLabel={modelsLabel}
           modelIds={config.modelIds}
@@ -490,24 +495,23 @@ function ConfigRow({
         className="flex shrink-0 items-center gap-1"
         onClick={(event) => event.stopPropagation()}
       >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className={cn(
-                'text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100',
-                locked && 'opacity-100',
-              )}
-              onClick={() => setDeleteOpen(true)}
-              {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
-            >
-              <Trash2 className="size-4" />
-              <span className="sr-only">{t('Delete')}</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{t('Delete')}</TooltipContent>
-        </Tooltip>
+        {locked && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-gray-11 hover:bg-danger-3 hover:text-danger-11"
+                onClick={() => setDeleteOpen(true)}
+                {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
+              >
+                <Trash2 className="size-4" />
+                <span className="sr-only">{t('Delete')}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('Delete')}</TooltipContent>
+          </Tooltip>
+        )}
         {!locked && (
           <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
         )}
