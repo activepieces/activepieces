@@ -25,7 +25,7 @@ export const platformPlanTelemetry = (log: FastifyBaseLogger) => ({
             platformId,
             event: {
                 name: TelemetryEventName.TRIAL_STARTED,
-                payload: { platformId, plan: PlanName.ENTERPRISE_TRIAL, trialEndsAt: endsAt },
+                payload: { platformId, plan: PlanName.SELF_SERVE_TRIAL, trialEndsAt: endsAt },
             },
         })
     },
@@ -37,7 +37,7 @@ export const platformPlanTelemetry = (log: FastifyBaseLogger) => ({
                 platformId,
                 event: {
                     name: TelemetryEventName.TRIAL_ENDED,
-                    payload: { platformId, plan: PlanName.ENTERPRISE_TRIAL, trialEndedAt: endedAt },
+                    payload: { platformId, plan: PlanName.SELF_SERVE_TRIAL, trialEndedAt: endedAt },
                 },
             }))
             if (!isNil(error)) {
