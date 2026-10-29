@@ -6,7 +6,7 @@ import { ChargekeepApiError, chargekeepClient } from '../src/lib/common/client';
 import { newLead } from '../src/lib/triggers/new-lead';
 import { newPayment } from '../src/lib/triggers/new-payment';
 import { newSubscription } from '../src/lib/triggers/new-subscription';
-import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
+import { DEDUPE_KEY_PROPERTY, PropertyType } from '@activepieces/pieces-framework';
 
 type Loose = { [key: string]: Loose };
 
@@ -221,11 +221,11 @@ describe('contacts', () => {
     await expect(run({ name: 'upsert_contact', propsValue: { email: 'a@example.com', contactType: 'Vendor' } })).rejects.toThrow('Contact Type');
   });
   it('ai upsert keeps matchExisting on when an agent leaves it out (optional checkboxes are filled with defaultValue ?? false)', async () => {
-    const props = chargekeep.actions()['upsert_contact'].props as Record<string, { type: string; required: boolean; defaultValue?: unknown }>;
-    expect(props['matchExisting'].defaultValue).toBe(true);
+    const props = chargekeep.actions()['upsert_contact'].props;
+    expect(Reflect.get(props['matchExisting'], 'defaultValue')).toBe(true);
     const propsValue: Record<string, unknown> = { email: 'jane@example.com', mobilePhone: '+15550100' };
     for (const [key, prop] of Object.entries(props)) {
-      if (prop.type === 'CHECKBOX' && !prop.required && !(key in propsValue)) propsValue[key] = prop.defaultValue ?? false;
+      if (prop.type === PropertyType.CHECKBOX && !prop.required && !(key in propsValue)) propsValue[key] = Reflect.get(prop, 'defaultValue') ?? false;
     }
     const spy = mockSeq({ contactId: 9, leadId: 10 });
     await run({ name: 'upsert_contact', propsValue });
