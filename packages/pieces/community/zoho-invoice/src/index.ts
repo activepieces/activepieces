@@ -1,69 +1,26 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { common } from './lib/common';
-import { newInvoice } from './lib/triggers/new-invoice';
-
-export const zohoAuth = PieceAuth.OAuth2({
-  required: true,
-  authUrl: 'https://accounts.zoho.{region}/oauth/v2/auth',
-  tokenUrl: 'https://accounts.zoho.{region}/oauth/v2/token',
-  scope: ['ZohoInvoice.invoices.READ'],
-  props: {
-    region: Property.StaticDropdown({
-      displayName: 'Region',
-      description: 'Select your account region',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'US (.com)',
-            value: 'com',
-          },
-          {
-            label: 'Europe (.eu)',
-            value: 'eu',
-          },
-          {
-            label: 'India (.in)',
-            value: 'in',
-          },
-          {
-            label: 'Australia (.com.au)',
-            value: 'com.au',
-          },
-          {
-            label: 'Japan (.jp)',
-            value: 'jp',
-          },
-        ],
-      },
-    }),
-  },
-});
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { zohoInvoiceAiActions } from './lib/actions/ai';
+import { zohoInvoiceAuth } from './lib/auth';
+import { zohoInvoiceClient } from './lib/common/client';
+import { newInvoiceTrigger } from './lib/triggers/new-invoice';
 
 export const zohoInvoice = createPiece({
   displayName: 'Zoho Invoice',
   description: 'Online invoicing software for businesses',
 
-  auth: zohoAuth,
-  minimumSupportedRelease: '0.30.0',
+  auth: zohoInvoiceAuth,
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-invoice.png',
   categories: [PieceCategory.ACCOUNTING],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
+    ...zohoInvoiceAiActions,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        common.baseUrl((auth as OAuth2PropertyValue).props!['region']),
-      auth: zohoAuth,
-      authMapping: async (auth) =>
-        common.authHeaders((auth as OAuth2PropertyValue).access_token),
+      baseUrl: (auth) => (auth ? zohoInvoiceClient.baseUrl({ auth }) : ''),
+      auth: zohoInvoiceAuth,
+      authMapping: async (auth) => zohoInvoiceClient.authHeaders({ auth }),
     }),
   ],
-  triggers: [newInvoice],
+  triggers: [newInvoiceTrigger],
 });

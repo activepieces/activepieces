@@ -1,11 +1,15 @@
 
 import { wideEvent } from '@activepieces/server-utils'
 import {
+    EngineHttpResponse,
+    isNil,
     RAW_PAYLOAD_HEADER,
+    sanitizeHttpHeaders,
+    tryCatch,
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
-import { FastifyRequest } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
@@ -40,10 +44,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                 ...extractHeaderFromRequest(request),
             })
             wideEvent.set({ webhook: { responseStatus: response.status } })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
+            await sendWebhookResponse({ reply, response })
         },
     )
 
@@ -73,10 +74,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
                 ...extractHeaderFromRequest(request),
             })
             wideEvent.set({ webhook: { responseStatus: response.status } })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
+            await sendWebhookResponse({ reply, response })
         },
     )
 
@@ -94,10 +92,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
             },
             ...extractHeaderFromRequest(request),
         })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
+        await sendWebhookResponse({ reply, response })
     })
 
     app.all('/:flowId/draft', WEBHOOK_PARAMS, async (request, reply) => {
@@ -111,10 +106,7 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
             execute: true,
             ...extractHeaderFromRequest(request),
         })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
+        await sendWebhookResponse({ reply, response })
     })
 
     app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
@@ -128,14 +120,23 @@ export const webhookController: FastifyPluginAsyncZod = async (app) => {
             execute: false,
             ...extractHeaderFromRequest(request),
         })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
+        await sendWebhookResponse({ reply, response })
     })
 
 }
 
+async function sendWebhookResponse({ reply, response }: { reply: FastifyReply, response: EngineHttpResponse }): Promise<void> {
+    const { error } = await tryCatch(async () => {
+        await reply
+            .status(response.status)
+            .headers(sanitizeHttpHeaders(response.headers))
+            .send(response.body)
+    })
+    if (!isNil(error) && !reply.raw.headersSent) {
+        reply.log.error({ error }, 'Failed to send webhook response')
+        await reply.status(500).send({ message: 'Failed to send webhook response' })
+    }
+}
 
 const WEBHOOK_PARAMS = {
     config: {

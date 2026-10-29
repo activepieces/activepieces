@@ -1,4 +1,4 @@
-import { type Message } from 'kafkajs'
+import type { Message, RecordMetadata } from 'kafkajs'
 
 function toRecord({ topic, partition, message }: {
   topic: string
@@ -46,7 +46,14 @@ function startOffsetPlan({ topicOffsets, committed, fromBeginning }: {
   committed: { partition: number, offset: string }[]
   fromBeginning: boolean
 }): { partition: number, offset: string }[] {
-  const pinned = new Set(committed.filter((entry) => BigInt(entry.offset) >= BigInt(0)).map((entry) => entry.partition))
+  const highByPartition = new Map(topicOffsets.map((entry) => [entry.partition, BigInt(entry.high)]))
+  const pinned = new Set(committed
+    .filter((entry) => {
+      const offset = BigInt(entry.offset)
+      const high = highByPartition.get(entry.partition)
+      return offset >= BigInt(0) && (high === undefined || offset <= high)
+    })
+    .map((entry) => entry.partition))
   return topicOffsets
     .filter((entry) => !pinned.has(entry.partition))
     .map((entry) => ({ partition: entry.partition, offset: fromBeginning ? entry.low : entry.high }))
@@ -56,22 +63,22 @@ function readOutboundMessages(value: unknown): OutboundMessage[] {
   if (!Array.isArray(value) || value.length === 0) {
     throw new Error('Add at least one message. Each message needs a value.')
   }
-  return value.map((item, index) => readOutboundMessage(item, index))
+  return value.map((item, index) => readOutboundMessage({ value: item, index }))
 }
 
-function readOutboundMessage(value: unknown, index: number): OutboundMessage {
+function readOutboundMessage({ value, index }: { value: unknown, index: number }): OutboundMessage {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new Error(`${messageLabel(index)} must include a value.`)
   }
-  const rawValue = readField(value, 'value')
+  const rawValue = readField({ record: value, key: 'value' })
   if (typeof rawValue !== 'string' || rawValue.length === 0) {
     throw new Error(`${messageLabel(index)} needs a value.`)
   }
   return {
     value: rawValue,
-    key: readOptionalString(readField(value, 'key'), `${messageLabel(index)} key`),
-    partition: readOptionalPartition(readField(value, 'partition'), index),
-    headers: readHeadersInput(readField(value, 'headers'), index),
+    key: readOptionalString({ value: readField({ record: value, key: 'key' }), label: `${messageLabel(index)} key` }),
+    partition: readOptionalPartition({ value: readField({ record: value, key: 'partition' }), index }),
+    headers: readHeadersInput({ value: readField({ record: value, key: 'headers' }), index }),
   }
 }
 
@@ -102,6 +109,86 @@ function toTriggerOutput({ records, topic, batch }: {
   }]
 }
 
+function pendingTargets({ topicOffsets, committed }: {
+  topicOffsets: { partition: number, low: string, high: string }[]
+  committed: { partition: number, offset: string }[]
+}): ReadTarget[] {
+  const committedByPartition = new Map(committed.map((entry) => [entry.partition, BigInt(entry.offset)]))
+  return topicOffsets.flatMap((entry) => {
+    const high = BigInt(entry.high)
+    const low = BigInt(entry.low)
+    const current = committedByPartition.get(entry.partition)
+    const start = current === undefined || current < low ? low : current
+    if (start >= high) {
+      return []
+    }
+    return [{ partition: entry.partition, offset: start.toString(), end: entry.high }]
+  })
+}
+
+function reachesLogStart({ topicOffsets, targets }: {
+  topicOffsets: { partition: number, low: string }[]
+  targets: ReadTarget[]
+}): boolean {
+  const lowByPartition = new Map(topicOffsets.map((entry) => [entry.partition, entry.low]))
+  return targets.every((target) => lowByPartition.get(target.partition) === target.offset)
+}
+
+function recentTargets({ topicOffsets, count }: {
+  topicOffsets: { partition: number, low: string, high: string }[]
+  count: number
+}): ReadTarget[] {
+  return topicOffsets.flatMap((entry) => {
+    const high = BigInt(entry.high)
+    const low = BigInt(entry.low)
+    if (high <= low) {
+      return []
+    }
+    const fromCount = high - BigInt(count)
+    const start = fromCount > low ? fromCount : low
+    return [{ partition: entry.partition, offset: start.toString(), end: entry.high }]
+  })
+}
+
+function newestFirst({ records, count }: { records: KafkaRecord[], count: number }): KafkaRecord[] {
+  return [...records]
+    .sort((left, right) => compareBigInt({ left: BigInt(right.timestamp), right: BigInt(left.timestamp) }))
+    .slice(0, count)
+}
+
+function publishResults({ topic, messages, metadata }: {
+  topic: string
+  messages: OutboundMessage[]
+  metadata: RecordMetadata[]
+}): PublishResult[] {
+  const nextIndex = new Map<number, number>()
+  return messages.map((message) => {
+    const record = messages.length === 1 ? metadata[0] : metadata.find((entry) => entry.partition === message.partition)
+    if (record === undefined || record.errorCode !== 0) {
+      throw new Error(`Broker returned error code ${record?.errorCode ?? 'unknown'}.`)
+    }
+    const base = record.baseOffset ?? record.offset
+    if (base === undefined || base.length === 0) {
+      throw new Error('Kafka did not return an offset for the published message.')
+    }
+    const index = nextIndex.get(record.partition) ?? 0
+    nextIndex.set(record.partition, index + 1)
+    return {
+      topic,
+      key: message.key ?? null,
+      partition: record.partition,
+      offset: (BigInt(base) + BigInt(index)).toString(),
+    }
+  })
+}
+
+function compareBigInt({ left, right }: { left: bigint, right: bigint }): number {
+  if (left === right) {
+    return 0
+  }
+  return left < right ? -1 : 1
+}
+
 function headerRecord(headers: Record<string, Buffer | string | (Buffer | string)[] | undefined> | undefined): Record<string, string> {
   if (headers === undefined) {
     return {}
@@ -124,7 +211,7 @@ function headerValue(value: Buffer | string | (Buffer | string)[]): string {
   return value.map((entry) => (Buffer.isBuffer(entry) ? entry.toString('utf8') : entry)).join(',')
 }
 
-function readHeadersInput(value: unknown, index: number): Record<string, string> | undefined {
+function readHeadersInput({ value, index }: { value: unknown, index: number }): Record<string, string> | undefined {
   if (value === undefined || value === null) {
     return undefined
   }
@@ -140,7 +227,7 @@ function readHeadersInput(value: unknown, index: number): Record<string, string>
   }, {})
 }
 
-function readOptionalString(value: unknown, label: string): string | undefined {
+function readOptionalString({ value, label }: { value: unknown, label: string }): string | undefined {
   if (value === undefined || value === null || value === '') {
     return undefined
   }
@@ -150,7 +237,7 @@ function readOptionalString(value: unknown, label: string): string | undefined {
   return value
 }
 
-function readOptionalPartition(value: unknown, index: number): number | undefined {
+function readOptionalPartition({ value, index }: { value: unknown, index: number }): number | undefined {
   if (value === undefined || value === null || value === '') {
     return undefined
   }
@@ -160,7 +247,7 @@ function readOptionalPartition(value: unknown, index: number): number | undefine
   return value
 }
 
-function readField(record: object, key: string): unknown {
+function readField({ record, key }: { record: object, key: string }): unknown {
   if (!(key in record)) {
     return undefined
   }
@@ -179,6 +266,11 @@ export const kafkaRecords = {
   readOutboundMessages,
   toKafkaMessage,
   toTriggerOutput,
+  pendingTargets,
+  recentTargets,
+  reachesLogStart,
+  newestFirst,
+  publishResults,
 }
 
 export type KafkaRecord = {
@@ -202,4 +294,17 @@ export type OutboundMessage = {
   value: string
   headers?: Record<string, string>
   partition?: number
+}
+
+export type ReadTarget = {
+  partition: number
+  offset: string
+  end: string
+}
+
+export type PublishResult = {
+  topic: string
+  key: string | null
+  partition: number
+  offset: string
 }

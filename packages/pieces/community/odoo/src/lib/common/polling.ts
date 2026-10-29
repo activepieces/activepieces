@@ -352,7 +352,8 @@ async function onEnable({ client, source, store, isRepublish }: HookParams & { i
   await seed({ client, source, store });
 }
 
-async function onDisable({ store }: { store: Store }): Promise<void> {
+async function onDisable({ store, isRepublish }: { store: Store; isRepublish?: boolean }): Promise<void> {
+  if (isRepublish) return;
   await store.delete(CURSOR_KEY);
   await store.delete(EMITTED_KEY);
   await store.delete(ENABLED_AT_KEY);
