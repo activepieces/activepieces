@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, PurchasablePlan, RunEnvironment, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialStatus, UNAVAILABLE_SELF_SERVE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, PlatformSelfServeTrial, PurchasablePlan, RunEnvironment, SeatsBillableFeature, SelfServeTrialStatus, UNAVAILABLE_SELF_SERVE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AiUsageBlock } from '../ai/usage/ai-usage-block'
 import { hooksFactory } from '../helper/hooks-factory'
@@ -452,7 +452,7 @@ export type BillingProvider = {
     listUsageEvents(params: ListUsageEventsParams): Promise<UsageEventsPage>
     getSelfServeTrialInfo(platformId: string): Promise<SelfServeTrialStatus>
     startSelfServeTrial(platformId: string): Promise<SelfServeTrialStatus>
-    getCachedSelfServeTrialInfo(platformId: string): Promise<SelfServeTrialDates | null>
+    getCachedSelfServeTrialInfo(platformId: string): Promise<PlatformSelfServeTrial | null>
     isOnSelfServeTrial(platformId: string): Promise<boolean>
 }
 
