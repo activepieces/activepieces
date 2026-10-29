@@ -162,6 +162,21 @@ describe('usePieceForReconnect', () => {
     );
   });
 
+  it('keeps the stored version for a non-OAuth2 connection without fetching the latest', async () => {
+    mockGmailVersions({ latestAuth: { type: PropertyType.CUSTOM_AUTH } });
+
+    const { result } = renderReconnect({
+      connection: { ...PINNED_GMAIL, type: AppConnectionType.CUSTOM_AUTH },
+    });
+
+    await waitFor(() =>
+      expect(result.current.pieceModel?.version).toBe(PINNED_VERSION),
+    );
+    expect(get).not.toHaveBeenCalledWith(
+      expect.not.objectContaining({ version: PINNED_VERSION }),
+    );
+  });
+
   it('fetches nothing until it is enabled', async () => {
     mockGmailVersions({ latestAuth: { type: PropertyType.OAUTH2 } });
 
