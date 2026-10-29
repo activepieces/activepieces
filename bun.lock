@@ -9763,6 +9763,17 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/videogen": {
+      "name": "@activepieces/piece-videogen",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/vidlab7": {
       "name": "@activepieces/piece-vidlab7",
       "version": "0.1.7",
@@ -12903,6 +12914,8 @@
     "@activepieces/piece-vero": ["@activepieces/piece-vero@workspace:packages/pieces/community/vero"],
 
     "@activepieces/piece-videoask": ["@activepieces/piece-videoask@workspace:packages/pieces/community/videoask"],
+
+    "@activepieces/piece-videogen": ["@activepieces/piece-videogen@workspace:packages/pieces/community/videogen"],
 
     "@activepieces/piece-vidlab7": ["@activepieces/piece-vidlab7@workspace:packages/pieces/community/vidlab7"],
 
