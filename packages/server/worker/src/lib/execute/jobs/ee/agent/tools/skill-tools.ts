@@ -285,12 +285,12 @@ function paidToolRefusal(toolName: string): string {
 }
 
 function withFallbackLabels<T extends Record<string, unknown>>({ input, toolName }: { input: T, toolName: string }): T & ToolCallLabelSet {
-    const fallback = fallbackLabelsFor(toolName)
+    const fallback = readableToolName(toolName)
     return {
         ...input,
-        title: labelOr({ value: input['title'], fallback: fallback.title }),
-        activeTitle: labelOr({ value: input['activeTitle'], fallback: fallback.activeTitle }),
-        doneTitle: labelOr({ value: input['doneTitle'], fallback: fallback.doneTitle }),
+        title: labelOr({ value: input['title'], fallback }),
+        activeTitle: labelOr({ value: input['activeTitle'], fallback }),
+        doneTitle: labelOr({ value: input['doneTitle'], fallback }),
     }
 }
 
@@ -298,24 +298,9 @@ function labelOr({ value, fallback }: { value: unknown, fallback: string }): str
     return typeof value === 'string' && value.trim().length > 0 ? value : fallback
 }
 
-function fallbackLabelsFor(toolName: string): ToolCallLabelSet {
-    const words = toolName.replace(/^mcp__[^_]+__/, '').replace(/^ap_/, '').split(/[_\s-]+/).filter((word) => word.length > 0)
-    const [verb = '', ...rest] = words
-    const subject = rest.join(' ')
-    const forms = VERB_FORMS[verb.toLowerCase()]
-    const title = capitalize([verb, subject].filter((word) => word.length > 0).join(' '))
-    if (isNil(forms)) {
-        return { title, activeTitle: title, doneTitle: title }
-    }
-    return {
-        title,
-        activeTitle: capitalize([forms.active, subject].filter((word) => word.length > 0).join(' ')),
-        doneTitle: capitalize([forms.done, subject].filter((word) => word.length > 0).join(' ')),
-    }
-}
-
-function capitalize(text: string): string {
-    return text.length === 0 ? 'Working on it' : `${text[0].toUpperCase()}${text.slice(1)}`
+function readableToolName(toolName: string): string {
+    const words = toolName.replace(/^mcp__[^_]+__/, '').replace(/^ap_/, '').replace(/[_-]+/g, ' ').trim()
+    return words.length === 0 ? 'Working on it' : `${words[0].toUpperCase()}${words.slice(1)}`
 }
 
 const OTHER_TOOLS_HEADING = '## Other tools you have'
@@ -339,36 +324,6 @@ const LAZY_TOOL_ADVERTISED_SCHEMA = LAZY_TOOL_OUTER_SCHEMA.extend({
 const LABEL_FIELDS = new Set(Object.keys(cardTitleFields))
 const LABEL_SCHEMA = asSchema(z.object(cardTitleFields))
 const SCHEMA_NOISE_KEYS = new Set(['$schema', 'additionalProperties'])
-
-const VERB_FORMS: Record<string, { active: string, done: string }> = {
-    add: { active: 'adding', done: 'added' },
-    build: { active: 'building', done: 'built' },
-    change: { active: 'changing', done: 'changed' },
-    create: { active: 'creating', done: 'created' },
-    delete: { active: 'deleting', done: 'deleted' },
-    execute: { active: 'running', done: 'ran' },
-    explore: { active: 'exploring', done: 'explored' },
-    fetch: { active: 'fetching', done: 'fetched' },
-    find: { active: 'finding', done: 'found' },
-    generate: { active: 'generating', done: 'generated' },
-    get: { active: 'getting', done: 'got' },
-    insert: { active: 'adding', done: 'added' },
-    list: { active: 'listing', done: 'listed' },
-    manage: { active: 'updating', done: 'updated' },
-    move: { active: 'moving', done: 'moved' },
-    read: { active: 'reading', done: 'read' },
-    remove: { active: 'removing', done: 'removed' },
-    rename: { active: 'renaming', done: 'renamed' },
-    research: { active: 'researching', done: 'researched' },
-    resolve: { active: 'resolving', done: 'resolved' },
-    retry: { active: 'retrying', done: 'retried' },
-    run: { active: 'running', done: 'ran' },
-    search: { active: 'searching', done: 'searched' },
-    send: { active: 'sending', done: 'sent' },
-    test: { active: 'testing', done: 'tested' },
-    update: { active: 'updating', done: 'updated' },
-    validate: { active: 'checking', done: 'checked' },
-}
 
 export const toolCallLabels = {
     withFallbackLabels,

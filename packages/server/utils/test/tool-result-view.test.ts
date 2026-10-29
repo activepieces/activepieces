@@ -45,8 +45,8 @@ describe('toolResultView', () => {
     it('falls back to the shape when a value is too big to show whole', () => {
         const text = toolResultView.read({ stored: { records }, fileId: 'f1', path: 'records', limit: 200 })
 
-        expect(text).toContain('too large to show whole')
-        expect(text).toContain('…+')
+        expect(text).toContain('(shortened;')
+        expect(text).toContain('…[truncated')
     })
 
     it('pages through a long text line and a long string value instead of clipping them', () => {
@@ -54,8 +54,9 @@ describe('toolResultView', () => {
         expect(toolResultView.read({ stored: mcpEnvelope(long), fileId: 'f1', search: 'TAIL' })).toContain('TAIL')
         const body = 'b'.repeat(30_000) + 'END'
         const first = toolResultView.read({ stored: { email: { body } }, fileId: 'f1', path: 'email.body' })
-        expect(first).toContain('Characters 1–6000 of 30003')
-        expect(toolResultView.read({ stored: { email: { body } }, fileId: 'f1', path: 'email.body', offset: 30_000 })).toContain('END')
+        expect(first).toContain('Lines 1–')
+        expect(first).toContain("path: 'email.body'")
+        expect(toolResultView.read({ stored: { email: { body } }, fileId: 'f1', path: 'email.body', offset: 15 })).toContain('END')
     })
 
     it('keeps the text after an embedded JSON block readable', () => {

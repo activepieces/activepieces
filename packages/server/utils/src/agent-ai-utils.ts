@@ -4,7 +4,6 @@ import { ModelMessage, TelemetryOptions } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
 import { agentProviderOptions } from './agent-provider-options'
 import { modelCatalog } from './model-catalog'
-import { toolResultView } from './tool-result-view'
 import { wideEvent } from './wide-event'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
@@ -366,17 +365,34 @@ function buildLargeResultPreview({ payload, byteSize, fileId, label = 'Result', 
     const found = findDataArray(payload)
     if (found) {
         const previewCount = Math.min(found.array.length, PREVIEW_RECORD_COUNT)
-        const preview = found.array.slice(0, previewCount).map((record) => toolResultView.shrinkForPreview(record, { maxDepth: 4, maxString: 200, maxArray: 4 }))
+        const preview = found.array.slice(0, previewCount).map((record) => shrinkForPreview(record, { maxDepth: 4, maxString: 200, maxArray: 4 }))
         const how = fileId !== undefined
             ? `→ Full result (all ${found.array.length} records) saved as file ${fileId}. Read exactly what you need with ap_read_result({ fileId: '${fileId}', path: '${found.path === 'root' ? '' : found.path}', fields: [...], offset, limit }) or find records with search. Use ap_run_code (inputFileIds:['${fileId}'], read inputs.data) only to compute over all records. Do NOT re-run this call.`
             : `→ Narrow with a filter/limit or paginate (offset/cursor) to get the rest — or process it in ap_run_code.`
         return `✅ ${label} completed${statusNote}. ${found.array.length} record(s) at "${found.path}", ~${kb}KB — too large to load inline.\nShape preview (first ${previewCount}, values clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
     }
-    const preview = toolResultView.shrinkForPreview(payload, { maxDepth: 3, maxString: 300, maxArray: 5 })
+    const preview = shrinkForPreview(payload, { maxDepth: 3, maxString: 300, maxArray: 5 })
     const how = fileId !== undefined
         ? `→ Full result saved as file ${fileId}. Read the part you need with ap_read_result({ fileId: '${fileId}', path: '<a.b[0].c>', fields: [...] }). Use ap_run_code (inputFileIds:['${fileId}']) only to compute over it. Do NOT re-run this call.`
         : '→ Process it in ap_run_code or request a narrower slice.'
     return `✅ ${label} completed${statusNote}. Large result ~${kb}KB — too large to load inline.\nShape preview (clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
+}
+
+function shrinkForPreview(value: unknown, opts: { maxDepth: number, maxString: number, maxArray: number, depth?: number }): unknown {
+    const depth = opts.depth ?? 0
+    if (typeof value === 'string') {
+        return value.length <= opts.maxString ? value : `${value.slice(0, opts.maxString)}…`
+    }
+    if (Array.isArray(value)) {
+        if (depth >= opts.maxDepth) return `[${value.length} items]`
+        const kept = value.slice(0, opts.maxArray).map((item) => shrinkForPreview(item, { ...opts, depth: depth + 1 }))
+        return value.length > opts.maxArray ? [...kept, `…+${value.length - opts.maxArray} more`] : kept
+    }
+    if (isObject(value)) {
+        if (depth >= opts.maxDepth) return '{…}'
+        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkForPreview(val, { ...opts, depth: depth + 1 })]))
+    }
+    return value
 }
 
 async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {

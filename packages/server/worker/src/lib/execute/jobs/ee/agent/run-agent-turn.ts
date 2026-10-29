@@ -1,8 +1,7 @@
 import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
-import { APICallError, asSchema, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
-import { toolInputNormalizer } from './tool-input-normalizer'
+import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
 import { buildSkillSurface } from './tools/skill-tools'
 
 const MAX_AUTO_CONTINUATIONS = 3
@@ -25,8 +24,6 @@ const FINAL_STEP_NOTE = '[system note — not from the user] This is the last st
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
 
 const FINAL_STEP_MESSAGE: ModelMessage = { role: 'user', content: FINAL_STEP_NOTE }
-const LAZY_LABEL_KEYS = new Set(['title', 'activeTitle', 'doneTitle'])
-const LAZY_OUTER_KEYS = new Set(['tool', 'input', ...LAZY_LABEL_KEYS])
 
 export function decideLoopAction({ finishReason, endedWithReply, continuations, emptyContinuations }: {
     finishReason: string
@@ -205,22 +202,16 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 if (!isNil(skillSurface) && toolCall.toolName in skillSurface.tools && isParsableJson(toolCall.input)) {
                     log.info({ toolName: toolCall.toolName }, 'Rerouting a deferred tool called by name through ap_lazy_tool')
                     reroutedCallIds.add(toolCall.toolCallId)
-                    const innerInput = await normalizedInputFor({ tool: guardedTools[toolCall.toolName], input: JSON.parse(toolCall.input) })
-                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input: innerInput }) }
+                    return { ...toolCall, toolName: LAZY_TOOL_NAME, input: JSON.stringify({ tool: toolCall.toolName, input: JSON.parse(toolCall.input) }) }
                 }
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
                 return null
-            }
-            const schema = await inputSchema({ toolName: toolCall.toolName })
-            const normalized = await normalizedToolCallInput({ toolCall, schema, tools: guardedTools })
-            if (!isNil(normalized) && await isValidToolInput({ tool: guardedTools[toolCall.toolName], input: normalized })) {
-                log.info({ tool: { name: toolCall.toolName } }, 'Fixed the shape of a malformed tool call without a repair round trip')
-                return { ...toolCall, input: normalized }
             }
             if (toolCall.toolName === LAZY_TOOL_NAME && isParsableJson(toolCall.input)) {
                 return null
             }
             log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
+            const schema = await inputSchema({ toolName: toolCall.toolName })
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
                     model: current().model,
@@ -555,63 +546,6 @@ export function looksEmptyResultText(text: string): boolean {
     return /"found"\s*:\s*false|\bempty result\b|no results matched|"result"\s*:\s*\[\s*\]|"results"\s*:\s*\[\s*\]/i.test(text)
 }
 
-
-async function normalizedToolCallInput({ toolCall, schema, tools }: { toolCall: { toolName: string, input: string }, schema: unknown, tools: ToolSet }): Promise<string | undefined> {
-    const outer = toolInputNormalizer.normalizeJsonText({ text: toolCall.input, schema })
-    if (toolCall.toolName !== LAZY_TOOL_NAME) {
-        return outer
-    }
-    const { data: parsed } = tryCatchSync((): unknown => JSON.parse(outer ?? toolCall.input))
-    if (!isObject(parsed) || Array.isArray(parsed)) {
-        return outer
-    }
-    const strayArguments = Object.fromEntries(Object.entries(parsed).filter(([key]) => !LAZY_OUTER_KEYS.has(key)))
-    const nestedArguments = isObject(parsed['input']) ? parsed['input'] : {}
-    const mergedArguments = { ...strayArguments, ...nestedArguments }
-    const toolName = typeof parsed['tool'] === 'string' ? parsed['tool'] : await inferToolName({ input: mergedArguments, tools })
-    if (isNil(toolName)) {
-        return outer
-    }
-    const innerInput = await normalizedInputFor({ tool: tools[toolName], input: mergedArguments })
-    const labels = Object.fromEntries(Object.entries(parsed).filter(([key]) => LAZY_LABEL_KEYS.has(key)))
-    const candidate = JSON.stringify({ ...labels, tool: toolName, input: innerInput })
-    return candidate === toolCall.input ? undefined : candidate
-}
-
-async function inferToolName({ input, tools }: { input: Record<string, unknown>, tools: ToolSet }): Promise<string | undefined> {
-    const keys = Object.keys(input).filter((key) => !LAZY_LABEL_KEYS.has(key))
-    if (keys.length === 0) {
-        return undefined
-    }
-    const candidates = await Promise.all(Object.entries(tools)
-        .filter(([name]) => name !== LAZY_TOOL_NAME && !agentToolSkills.isMetaTool(name))
-        .map(async ([name, target]) => {
-            const { data: schema } = await tryCatch(async () => asSchema(target.inputSchema).jsonSchema)
-            const properties = isObject(schema) && isObject(schema['properties']) ? schema['properties'] : {}
-            const required = isObject(schema) && Array.isArray(schema['required']) ? schema['required'].filter((key): key is string => typeof key === 'string') : []
-            const fits = required.length > 0 && required.every((key) => keys.includes(key)) && keys.every((key) => key in properties)
-            return fits ? name : undefined
-        }))
-    const matches = candidates.filter((name): name is string => !isNil(name))
-    return matches.length === 1 ? matches[0] : undefined
-}
-
-async function normalizedInputFor({ tool: target, input }: { tool: ToolSet[string] | undefined, input: unknown }): Promise<unknown> {
-    if (isNil(target)) {
-        return input
-    }
-    const { data: schema } = await tryCatch(async () => asSchema(target.inputSchema).jsonSchema)
-    return isNil(schema) ? input : toolInputNormalizer.normalize({ input, schema })
-}
-
-async function isValidToolInput({ tool: target, input }: { tool: ToolSet[string] | undefined, input: string }): Promise<boolean> {
-    const validate = isNil(target) ? undefined : asSchema(target.inputSchema).validate
-    if (isNil(validate)) {
-        return true
-    }
-    const { data: result } = await tryCatch(async () => validate(JSON.parse(input)))
-    return result?.success === true
-}
 
 function isParsableJson(text: string): boolean {
     return tryCatchSync((): unknown => JSON.parse(text)).error === null

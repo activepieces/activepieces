@@ -283,19 +283,15 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     if (saveLargeResult === undefined) {
         return null
     }
-    const visibleText = toolResultView.textOf(result)
-    const visibleBytes = isNil(visibleText) ? null : Buffer.byteLength(visibleText, 'utf8')
-    if (!isNil(visibleBytes) && visibleBytes <= MODEL_RESULT_OFFLOAD_BYTES) {
+    const byteSize = toolResultView.modelVisibleBytes(result)
+    if (isNil(byteSize) || byteSize <= MODEL_RESULT_OFFLOAD_BYTES) {
         return null
     }
     const { data: serialized } = tryCatchSync(() => JSON.stringify(result))
     if (isNil(serialized)) {
         return null
     }
-    const byteSize = visibleBytes ?? Buffer.byteLength(serialized, 'utf8')
-    if (byteSize <= MODEL_RESULT_OFFLOAD_BYTES) {
-        return null
-    }
+    const visibleText = toolResultView.textOf(result)
     const fileId = await saveLargeResult({ json: serialized, fileName: `${toolName}-result.json` })
     if (fileId === null) {
         return null

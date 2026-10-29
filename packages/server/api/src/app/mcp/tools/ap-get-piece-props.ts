@@ -321,9 +321,6 @@ async function listForPieces({ projectId, platformId, pieceNames }: {
     platformId: string
     pieceNames: string[]
 }): Promise<ConnectionsByPiece> {
-    if (pieceNames.length === 0) {
-        return {}
-    }
     const rows = await Promise.all(pieceNames.map((pieceName) => appConnectionsRepo().find({
         select: { externalId: true, displayName: true, status: true, pieceName: true },
         where: { platformId, projectIds: ArrayContains([projectId]), pieceName },

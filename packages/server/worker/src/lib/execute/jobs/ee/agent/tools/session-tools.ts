@@ -154,7 +154,7 @@ export function createResultTools({ readFile, taintState }: {
                 fileId: z.string().describe('The fileId from the large-result preview'),
                 path: z.string().optional().describe('Where to read in a JSON result, e.g. "records", "messages[3].payload.headers". Omit for the root.'),
                 fields: z.array(z.string()).optional().describe('Keys to keep from each item or the object, e.g. ["id", "name", "properties.email"]'),
-                offset: z.number().int().min(0).optional().describe('First item (JSON list), line (text) or character (long text value) to return, 0-based'),
+                offset: z.number().int().min(0).optional().describe('First item (JSON list) or line (text) to return, 0-based'),
                 limit: z.number().int().min(1).max(500).optional().describe('How many items or lines (default 20 items / 200 lines)'),
                 search: z.string().optional().describe('Only items or lines containing this text'),
             }),

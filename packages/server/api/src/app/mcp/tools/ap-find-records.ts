@@ -5,8 +5,7 @@ import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
-import { tableToolInput } from './table-tool-input'
-import { resolveInternalTableId, tableNotFoundError } from './table-utils'
+import { resolveFieldNameToId, resolveInternalTableId, tableNotFoundError } from './table-utils'
 
 const DEFAULT_LIMIT = 10
 const PREVIEW_VALUE_LENGTH = 200
@@ -30,11 +29,11 @@ const operatorSchema = z.enum(OPERATOR_VALUES)
 const findRecordsInput = z.object({
     tableId: z.string().describe('The table ID. Use ap_list_tables to find it.'),
     filters: z.array(z.object({
-        fieldName: z.string().describe('Field name (or field id) to filter on'),
+        fieldName: z.string().describe('The field name to filter on'),
         operator: operatorSchema.describe('Filter operator'),
         value: z.string().optional().describe('Filter value (required for all operators except exists/not_exists)'),
     })).optional().describe('Optional filters. All filters are combined with AND logic.'),
-    fields: z.array(z.string()).optional().describe('Field names (or ids) to return. Omit for all fields.'),
+    fields: z.array(z.string()).optional().describe('Field names to return. Omit for all fields.'),
     limit: z.number().min(1).max(500).optional().describe(`Max records to return (default ${DEFAULT_LIMIT}, max 500)`),
     fullValues: z.boolean().optional().describe(`Return full cell values instead of truncating at ${PREVIEW_VALUE_LENGTH} chars`),
 })
@@ -58,10 +57,7 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
 
                 const tableFields = await fieldService.getAll({ projectId: mcp.projectId, tableId: resolvedTableId })
                 const filterList = filters ?? []
-                const { fieldMap, errors } = tableToolInput.resolveFieldKeys({
-                    fields: tableFields,
-                    keys: [...filterList.map(f => f.fieldName), ...(requestedFields ?? [])],
-                })
+                const { fieldMap, errors } = resolveFieldNameToId(tableFields, [...filterList.map(f => f.fieldName), ...(requestedFields ?? [])])
                 const valueErrors = filterList
                     .filter(f => !VALUELESS_OPERATORS.has(f.operator) && f.value === undefined)
                     .map(f => `Filter on "${f.fieldName}" with operator "${f.operator}" requires a value.`)
@@ -70,11 +66,11 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 }
 
                 const resolvedFilters = filterList.flatMap(f => {
-                    const field = fieldMap.get(f.fieldName)
-                    if (isNil(field)) {
+                    const fieldId = fieldMap.get(f.fieldName)
+                    if (isNil(fieldId)) {
                         return []
                     }
-                    return [Filter.parse({ fieldId: field.id, operator: f.operator, value: f.value })]
+                    return [Filter.parse({ fieldId, operator: f.operator, value: f.value })]
                 })
 
                 const result = await recordService.list({
@@ -96,14 +92,14 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
 
                 const selectedFieldIds = isNil(requestedFields) || requestedFields.length === 0
                     ? null
-                    : new Set(requestedFields.flatMap(k => fieldMap.get(k)?.id ?? []))
+                    : new Set(requestedFields.flatMap(k => fieldMap.get(k) ?? []))
                 const maxValueLength = fullValues ? Number.MAX_SAFE_INTEGER : PREVIEW_VALUE_LENGTH
                 const records = result.data.slice(0, effectiveLimit).map(r => ({
                     id: r.id,
                     cells: Object.fromEntries(
                         Object.entries(r.cells)
                             .filter(([fieldId]) => isNil(selectedFieldIds) || selectedFieldIds.has(fieldId))
-                            .map(([fieldId, c]) => [c.fieldName ?? fieldId, tableToolInput.truncateValue({ value: c.value, max: maxValueLength })]),
+                            .map(([fieldId, c]) => [c.fieldName ?? fieldId, truncateValue({ value: c.value, max: maxValueLength })]),
                     ),
                 }))
 
@@ -123,4 +119,8 @@ export const apFindRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
             }
         },
     }
+}
+
+function truncateValue({ value, max }: { value: unknown, max: number }): unknown {
+    return typeof value === 'string' && value.length > max ? `${value.slice(0, max)}… (+${value.length - max} chars)` : value
 }

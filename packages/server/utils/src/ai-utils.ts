@@ -11,7 +11,6 @@ import { EmbeddingModel, generateText, ImageModel, LanguageModel, ToolSet } from
 import { billedEmbeddingModel, billedLanguageModel } from './activepieces-ai-cost'
 import { keyHealthReporterFor } from './ai-provider-key-health'
 import { modelTierCatalog } from './model-tier-catalog'
-import { streamedToolInput } from './streamed-tool-input'
 
 const DEFAULT_WEB_SEARCH_RESULTS = 5
 const MIN_OPENROUTER_WEB_SEARCH_RESULTS = 1
@@ -157,7 +156,7 @@ function assertManagedModelAllowed({ provider, modelId, image, adminChosenModelI
     }, message)
 }
 
-function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId, agentToolCalls = false }: {
+function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId }: {
     credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
@@ -170,12 +169,11 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, turnAl
     providerConfigId?: string
     imageGeneration?: boolean
     adminChosenImageModelId?: string
-    agentToolCalls?: boolean
 }): LanguageModel {
     assertManagedModelAllowed({ provider: credentials.provider, modelId, image: imageGeneration, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
     const model = buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
     return billedLanguageModel({
-        model: agentToolCalls ? streamedToolInput.preserveStreamedToolInput(model) : model,
+        model,
         provider: credentials.provider,
         modelId,
         billing,
