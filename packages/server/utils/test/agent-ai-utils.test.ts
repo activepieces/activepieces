@@ -393,6 +393,49 @@ describe('collapseStaleToolOutputs', () => {
     })
 })
 
+describe('fitContextToBudget', () => {
+    const codeCall = (id: string): ModelMessage => ({
+        role: 'assistant',
+        content: [
+            { type: 'text', text: 't'.repeat(2000) },
+            { type: 'tool-call', toolCallId: id, toolName: 'ap_run_code', input: { code: 'c'.repeat(4000) } },
+        ],
+    })
+    const codeResult = (id: string): ModelMessage => ({
+        role: 'tool',
+        content: [{ type: 'tool-result', toolCallId: id, toolName: 'ap_get_piece_props', output: { type: 'text', value: 's'.repeat(4000) } }],
+    })
+    const turn = (rounds: number): ModelMessage[] => [
+        { role: 'user', content: 'u'.repeat(4000) },
+        ...Array.from({ length: rounds }, (_, i) => [codeCall(`c${i}`), codeResult(`c${i}`)]).flat(),
+    ]
+
+    it('leaves a turn that already fits untouched', () => {
+        const messages = turn(2)
+        expect(agentAiUtils.fitContextToBudget({ messages, systemPromptLength: 0, maxTokens: 1_000_000 })).toEqual(messages)
+    })
+
+    it('shrinks old tool inputs, pinned schemas and assistant text until the turn fits, keeping every message and the latest round', () => {
+        const messages = turn(40)
+        const out = agentAiUtils.fitContextToBudget({ messages, systemPromptLength: 0, maxTokens: 20_000 })
+
+        expect(agentAiUtils.estimateTokenCount({ messages: out, systemPromptLength: 0 })).toBeLessThanOrEqual(20_000)
+        expect(out).toHaveLength(messages.length)
+        expect(out[0]).toEqual(messages[0])
+        expect(out.slice(-2)).toEqual(messages.slice(-2))
+        expect(JSON.stringify(out[1])).toContain('input omitted to save context')
+        expect(JSON.stringify(out[2])).toContain('omitted to save context')
+        expect(out.map((m) => JSON.stringify(m).match(/"toolCallId":"(c\d+)"/)?.[1])).toEqual(messages.map((m) => JSON.stringify(m).match(/"toolCallId":"(c\d+)"/)?.[1]))
+    })
+
+    it('shrinks the fewest messages that make the turn fit', () => {
+        const messages = turn(40)
+        const out = agentAiUtils.fitContextToBudget({ messages, systemPromptLength: 0, maxTokens: 100_000 })
+
+        expect(out.slice(-12)).toEqual(messages.slice(-12))
+    })
+})
+
 describe('estimateTokenCount', () => {
     it('grows with message size and system prompt length', () => {
         const small = agentAiUtils.estimateTokenCount({ messages: [{ role: 'user', content: 'hi' }], systemPromptLength: 0 })
