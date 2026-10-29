@@ -1,4 +1,4 @@
-import { AiProviderCredentials, AIProviderName, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
+import { AiProviderCredentials, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
 import { OPENAI_COMPATIBLE_VENDOR_BASE_URLS } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createVertex } from '@ai-sdk/google-vertex'
@@ -10,7 +10,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { defaultSettingsMiddleware, ImageModel, LanguageModel, wrapLanguageModel } from 'ai'
+import { defaultSettingsMiddleware, ImageModel, LanguageModel, LanguageModelMiddleware, wrapLanguageModel } from 'ai'
 
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
@@ -83,7 +83,8 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
         case AIProviderName.ZAI:
         case AIProviderName.QWEN:
         case AIProviderName.MINIMAX:
-        case AIProviderName.MOONSHOT: {
+        case AIProviderName.MOONSHOT:
+        case AIProviderName.NVIDIA: {
             const { apiKey } = credentials.auth
             return createOpenAICompatible({
                 name: credentials.provider,
@@ -91,6 +92,14 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
                 apiKey: apiKey ?? '',
                 ...observed,
             }).chatModel(modelId)
+        }
+        case AIProviderName.META: {
+            const { apiKey } = credentials.auth
+            const responses = createOpenAI({ baseURL: OPENAI_COMPATIBLE_VENDOR_BASE_URLS[AIProviderName.META], apiKey, ...observed }).responses(modelId)
+            return withoutServerStorage({
+                model: wrapLanguageModel({ model: responses, middleware: autoToolChoiceOnly }),
+                providerOptionsName: 'openai',
+            })
         }
         case AIProviderName.OPENROUTER:
         case AIProviderName.ACTIVEPIECES: {
@@ -187,6 +196,20 @@ export function withoutServerStorage({ model, providerOptionsName }: {
         model,
         middleware: defaultSettingsMiddleware({ settings: { providerOptions: { [providerOptionsName]: { store: false } } } }),
     })
+}
+
+const autoToolChoiceOnly: LanguageModelMiddleware = {
+    transformParams: async ({ params }) => {
+        const { toolChoice, tools } = params
+        if (isNil(toolChoice) || toolChoice.type === 'auto') {
+            return params
+        }
+        if (toolChoice.type === 'none') {
+            return { ...params, tools: undefined, toolChoice: undefined }
+        }
+        const kept = toolChoice.type === 'tool' ? tools?.filter((tool) => tool.name === toolChoice.toolName) : tools
+        return { ...params, tools: kept, toolChoice: { type: 'auto' } }
+    },
 }
 
 function createOpenRouterChatModel({ apiKey, modelId, options }: {

@@ -134,11 +134,60 @@ describe('createLanguageModel', () => {
         expect(headers.has('x-amz-security-token')).toBe(false)
     })
 
-    it.each([AIProviderName.OPENAI, AIProviderName.AZURE])('sends %s to the Responses API without storing the conversation', async (provider) => {
+    it.each([AIProviderName.OPENAI, AIProviderName.AZURE, AIProviderName.META])('sends %s to the Responses API without storing the conversation', async (provider) => {
         const request = await generateHi(buildFor(provider))
 
         expect(new URL(request.url).pathname).toMatch(/\/responses$/)
         expect(request.body.store).toBe(false)
+    })
+
+    it('sends Meta to the Meta Model API and NVIDIA to the NVIDIA chat completions endpoint', async () => {
+        const meta = await generateHi(buildFor(AIProviderName.META))
+        const nvidia = await generateHi(buildFor(AIProviderName.NVIDIA))
+
+        expect(meta.url).toBe('https://api.meta.ai/v1/responses')
+        expect(meta.headers.get('authorization')).toBe('Bearer test-key')
+        expect(nvidia.url).toBe('https://integrate.api.nvidia.com/v1/chat/completions')
+    })
+
+    describe('Meta, which only accepts tool_choice auto', () => {
+        const tools = [
+            { type: 'function' as const, name: 'extractData', inputSchema: { type: 'object' as const, properties: {} } },
+            { type: 'function' as const, name: 'search', inputSchema: { type: 'object' as const, properties: {} } },
+        ]
+        const sendToMeta = (toolChoice: Parameters<ReturnType<typeof createLanguageModel>['doGenerate']>[0]['toolChoice']) => {
+            const model = buildFor(AIProviderName.META)
+            return captureSentRequest(() => model.doGenerate({ tools, toolChoice, prompt: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] }))
+        }
+        const toolNames = (body: Record<string, unknown>) => (Array.isArray(body.tools) ? body.tools.map((tool: { name: string }) => tool.name) : [])
+
+        it('turns required into auto and keeps every tool', async () => {
+            const { body } = await sendToMeta({ type: 'required' })
+
+            expect(body.tool_choice).toBe('auto')
+            expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
+
+        it('turns a forced tool into auto with only that tool offered', async () => {
+            const { body } = await sendToMeta({ type: 'tool', toolName: 'extractData' })
+
+            expect(body.tool_choice).toBe('auto')
+            expect(toolNames(body)).toEqual(['extractData'])
+        })
+
+        it('turns none into a request with no tools', async () => {
+            const { body } = await sendToMeta({ type: 'none' })
+
+            expect(body.tools).toBeUndefined()
+            expect(body.tool_choice).toBeUndefined()
+        })
+
+        it('leaves auto alone', async () => {
+            const { body } = await sendToMeta({ type: 'auto' })
+
+            expect(body.tool_choice).toBe('auto')
+            expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
     })
 
     it.each([
