@@ -67,6 +67,7 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   ap_create_folder: FolderPlus,
   ap_add_step: Plus,
   ap_update_step: Pencil,
+  ap_apply_flow_operations: Pencil,
   ap_delete_step: Trash2,
   ap_update_trigger: Zap,
   ap_add_branch: GitBranch,

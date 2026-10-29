@@ -45,6 +45,7 @@ describe('MCP activity recording predicate', () => {
             .sort()
 
         expect(destructive).toEqual([
+            'ap_apply_flow_operations',
             'ap_change_flow_status',
             'ap_delete_branch',
             'ap_delete_flow',

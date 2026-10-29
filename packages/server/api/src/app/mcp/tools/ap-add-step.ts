@@ -1,9 +1,10 @@
-import { isNil, Permission } from '@activepieces/core-utils'
+import { isNil, isObject, Permission } from '@activepieces/core-utils'
 import { BranchExecutionType, FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolContext, McpToolDefinition, RouterExecutionType, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { buildFlowReview } from './build-flow-review'
 import { mcpUtils } from './mcp-utils'
 
 const addStepInput = z.object({
@@ -11,7 +12,7 @@ const addStepInput = z.object({
     parentStepName: z.string(),
     stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [StepLocationRelativeToParent, ...StepLocationRelativeToParent[]]),
     branchIndex: z.number().optional(),
-    stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]),
+    stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]).optional(),
     displayName: z.string(),
     pieceName: z.string().optional(),
     actionName: z.string().optional(),
@@ -34,7 +35,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
             parentStepName: z.string().describe('The step name to insert after/into (e.g. "trigger", "step_1"). Use ap_flow_structure to get valid values.'),
             stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [string, ...string[]]).describe('Where to place the step: AFTER = after the parent, INSIDE_LOOP = first action inside a loop, INSIDE_BRANCH = first action inside a router branch, INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH = first action inside the On success / On failure branch of a continue-on-failure step (set continueOnFailure on the parent first).'),
             branchIndex: z.number().optional().describe('Branch index (required when stepLocationRelativeToParent is INSIDE_BRANCH)'),
-            stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]).describe('The type of step to add. Prefer PIECE over CODE — only use CODE when no piece fits and the logic can\'t be done with an inline formula expression (in a free-text/value input) or a router condition.'),
+            stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]).optional().describe('The type of step to add; inferred when omitted (pieceName → PIECE, sourceCode → CODE, loopItems → LOOP_ON_ITEMS). Prefer PIECE over CODE — only use CODE when no piece fits and the logic can\'t be done with an inline formula expression (in a free-text/value input) or a router condition.'),
             displayName: z.string().describe('Display name for the step'),
             pieceName: z.string().optional().describe('For PIECE steps: the piece name (e.g. "@activepieces/piece-gmail"). Use ap_research_pieces to get valid values.'),
             actionName: z.string().optional().describe('For PIECE steps: the action name within the piece. Use ap_research_pieces with includeActions=true to get valid values.'),
@@ -48,7 +49,11 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, actionName, input, auth: rawAuth, sourceCode, packageJson, loopItems, continueOnFailure, retryOnFailure } = addStepInput.parse(args)
+            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType: requestedStepType, displayName, pieceName, actionName, input, auth: rawAuth, sourceCode, packageJson, loopItems, continueOnFailure, retryOnFailure } = addStepInput.parse(args)
+            const stepType = requestedStepType ?? inferStepType({ pieceName, actionName, sourceCode, loopItems })
+            if (isNil(stepType)) {
+                return { content: [{ type: 'text', text: '❌ Pass stepType (PIECE, CODE, LOOP_ON_ITEMS or ROUTER), or pieceName/sourceCode/loopItems so it can be inferred.' }] }
+            }
             const auth = mcpUtils.normalizeAuth(rawAuth)
 
             const [flow, project] = await Promise.all([
@@ -73,6 +78,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                 ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
 
+            const labelNotes: string[] = []
             let skeletonAction: Record<string, unknown>
             switch (stepType) {
                 case FlowActionType.CODE:
@@ -120,7 +126,10 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                             if (unknownPropsError) {
                                 return unknownPropsError
                             }
-                            pieceSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', input: resolvedInput, projectId: mcp.projectId, platformId: project.platformId, log })
+                            const labels = await buildFlowReview.resolveDropdownLabels({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', stepName, input: isObject(pieceSettings.input) ? pieceSettings.input : resolvedInput, fields: Object.keys(resolvedInput), projectId: mcp.projectId, platformId: project.platformId, log })
+                            labelNotes.push(...buildFlowReview.labelNotes(labels))
+                            pieceSettings.input = labels.input
+                            pieceSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', input: labels.input, projectId: mcp.projectId, platformId: project.platformId, log })
                         }
                     }
                     skeletonAction = {
@@ -198,7 +207,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                     operation,
                 })
 
-                const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
+                const draftWarning = `${mcpUtils.publishedFlowWarning(flow.publishedVersionId)}${labelNotes.length > 0 ? `\n${labelNotes.join('\n')}` : ''}`
                 const hasConfig = input !== undefined || auth !== undefined || sourceCode !== undefined || loopItems !== undefined
                 const addedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
                 const stepValid = hasConfig && addedStep ? addedStep.valid : false
@@ -234,4 +243,22 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
             }
         },
     }
+}
+
+function inferStepType({ pieceName, actionName, sourceCode, loopItems }: {
+    pieceName: string | undefined
+    actionName: string | undefined
+    sourceCode: string | undefined
+    loopItems: string | undefined
+}): FlowActionType.CODE | FlowActionType.PIECE | FlowActionType.LOOP_ON_ITEMS | undefined {
+    if (!isNil(pieceName) || !isNil(actionName)) {
+        return FlowActionType.PIECE
+    }
+    if (!isNil(sourceCode)) {
+        return FlowActionType.CODE
+    }
+    if (!isNil(loopItems)) {
+        return FlowActionType.LOOP_ON_ITEMS
+    }
+    return undefined
 }
