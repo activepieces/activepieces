@@ -144,10 +144,10 @@
   "Classification": "分類",
   "Clustering": "クラスタリング（グループ分け）",
   "Question Answering": "質問への回答",
-  "GET": "取得",
+  "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",
   "PUT": "PUT",
-  "DELETE": "削除",
-  "HEAD": "頭"
+  "DELETE": "DELETE",
+  "HEAD": "HEAD"
 }
