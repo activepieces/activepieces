@@ -617,15 +617,13 @@ function ProviderFaces() {
   return (
     <AvatarGroup>
       {shown.map((info) => (
-        <Avatar
-          key={info.provider}
-          size="lg"
-          className="size-9 border border-gray-6 bg-gray-1 dark:brightness-75"
-        >
+        <Avatar key={info.provider} size="lg" className="size-9">
           <LogoPlate
             src={info.logoUrl}
             alt={info.name}
-            className="size-full rounded-full p-1.5"
+            border
+            className="size-full rounded-full"
+            innerClassName="p-2"
           />
         </Avatar>
       ))}

@@ -14,13 +14,11 @@ export function ProviderLogo({
     );
   }
   return (
-    <span className="flex shrink-0 dark:brightness-75">
-      <LogoPlate
-        src={info.logoUrl}
-        alt={info.name}
-        size={size === 'sm' ? undefined : 'md'}
-        className={size === 'sm' ? 'size-4' : 'rounded-lg'}
-      />
-    </span>
+    <LogoPlate
+      src={info.logoUrl}
+      alt={info.name}
+      size={size === 'sm' ? undefined : 'md'}
+      className={size === 'sm' ? 'size-4' : 'rounded-lg'}
+    />
   );
 }

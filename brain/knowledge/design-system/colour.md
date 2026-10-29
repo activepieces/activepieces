@@ -125,7 +125,7 @@ light island (`data-theme="light"`, `bg-gray-1`, `text-gray-12`), so the chip st
 dark mode; a fallback glyph or monogram inside it inherits the dark `gray-12`. A border or ring passed in `className`
 resolves in the island's light values. `className` styles the plate and `innerClassName` the box that holds the image
 inside it (a percentage padding would resolve against the plate's *parent*). `PieceIcon` is a tooltip wrapper
-over it. A `dark:` class passed in `className` never fires: the plate is its own `data-theme="light"` island, so the `dark` variant does not match it. To soften plates in dark mode (the AI Center provider logos use `dark:brightness-75`), put the `dark:` on a wrapper outside the plate.
+over it. A `dark:` class passed in `className` never fires: the plate is its own `data-theme="light"` island, so the `dark` variant does not match it. Anything theme-dependent for a plate goes on a wrapper outside it. Dimming plates in dark mode with a brightness filter was tried on the AI Center provider logos and rejected: it greys the logo artwork too and reads as disabled.
 
 - **`tint` gives the plate a flat wash of the logo's own colour** (`lib/logo-tint.ts`). The logo is loaded once with
   CORS, sampled at 24px, and its visible, *coloured* pixels are averaged in OKLab, weighted by chroma, so white and
