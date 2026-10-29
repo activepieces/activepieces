@@ -195,7 +195,7 @@ export const AutomationsTable = ({
         </div>
 
         {isLoading ? (
-          <div>
+          <div data-testid="automations-loading">
             {Array.from({ length: 10 }).map((_, i) => (
               <AutomationsSkeletonRow
                 key={i}

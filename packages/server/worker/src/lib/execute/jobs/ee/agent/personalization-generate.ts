@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, isNil, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { AiProviderCredentials } from '@activepieces/shared'
 import { generateObject, LanguageModel } from 'ai'
@@ -8,8 +8,9 @@ import { CARDS_SCHEMA, MAX_DISPLAY_NAME_CHARS, MAX_USE_CASES, MIN_USE_CASES, Per
 import { aOrAn, cleanCards, cleanProfile } from './personalization-shaping'
 import { delayWithJitter } from './run-agent-turn'
 
-export async function fallbackResearch({ credentials, fastModelId, companyRef, role, groundwork, log }: {
+export async function fallbackResearch({ credentials, fastModelId, companyRef, role, groundwork, billing, log }: {
     credentials: AiProviderCredentials
+    billing: ActivepiecesAiBilling
     fastModelId: string
     companyRef: string
     role: string | null
@@ -24,6 +25,8 @@ export async function fallbackResearch({ credentials, fastModelId, companyRef, r
     const { data, error } = await tryCatch(() => aiUtils.searchWeb({
         credentials,
         modelId: fastModelId,
+        billing,
+        usageOnly: true,
         abortSignal: AbortSignal.timeout(FALLBACK_RESEARCH_TIMEOUT_MS),
         system: 'You are a precise B2B researcher. Be factual and specific; name real tools, metrics, and competitors; when unsure, say unsure.',
         prompt: `Research **${companyRef}** (business model, products, named competitors, recent news)${role ? ` AND what ${aOrAn(role)} ${role} lives and breathes there (day-to-day, tools, metrics, time sinks, best practices)` : ''}. Be compact and dense.

@@ -8,7 +8,9 @@ import {
     ApplicationEvent,
     ApplicationEventName,
     AuditLogRetentionUpdatedEvent,
+    AuthenticationDomainEvent,
     AuthenticationEvent,
+    AuthenticationSettingEvent,
     ConnectionEvent,
     FlowActivatedEvent,
     FlowApprovalEvent,
@@ -303,6 +305,36 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     retentionDays: 90,
                     instanceLimitDays: null,
                 },
+            }
+            return mock
+        }
+        case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+        case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+        case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+        case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+        case ApplicationEventName.SAML_CONNECTED:
+        case ApplicationEventName.SAML_CONNECTION_REPLACED:
+        case ApplicationEventName.SSO_DISABLED: {
+            const mock: AuthenticationSettingEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {},
+            }
+            return mock
+        }
+        case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+        case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+        case ApplicationEventName.SSO_DOMAIN_ADDED:
+        case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+        case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+        case ApplicationEventName.SSO_DOMAIN_REMOVED:
+        case ApplicationEventName.SSO_DOMAIN_EXPIRED: {
+            const mock: AuthenticationDomainEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: { domain: 'acme.com' },
             }
             return mock
         }

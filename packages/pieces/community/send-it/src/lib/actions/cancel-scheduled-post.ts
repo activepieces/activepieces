@@ -1,7 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../auth';
-import { scheduleIdProperty, sendItRequest } from '../common';
+import { sendItAuth } from '../common/auth';
+import { apiKeyOf } from '../common/client';
+import { sendItOutputSchemas } from '../common/output-schemas';
+import { scheduleIdProperty } from '../common/props';
+import { sendItRequests } from '../common/requests';
 
 export const cancelScheduledPost = createAction({
   auth: sendItAuth,
@@ -9,22 +11,17 @@ export const cancelScheduledPost = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Cancel Scheduled Post',
   description: 'Cancel a scheduled post before it is published',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Cancels a pending scheduled post by its schedule ID so it will not be published. Use this to call off a future post created by Schedule Post; only posts in Pending status can be cancelled. Idempotent: cancelling an already-cancelled or non-existent schedule leaves it in the same cancelled end state.',
-    idempotent: true,
+      'Cancels a pending scheduled post chosen from a dropdown so it will not be published. Not idempotent: SendIt returns 404 "Scheduled post not found" for an ID that is already cancelled, published or unknown.',
+    idempotent: false,
   },
   props: {
     scheduleId: scheduleIdProperty,
   },
+  outputSchema: sendItOutputSchemas.cancelResult,
   async run(context) {
-    const { scheduleId } = context.propsValue;
-
-    return await sendItRequest(
-      context.auth.secret_text,
-      HttpMethod.DELETE,
-      `/scheduled/${scheduleId}`
-    );
+    return sendItRequests.cancel({ apiKey: apiKeyOf(context.auth), scheduleId: context.propsValue.scheduleId });
   },
 });

@@ -63,6 +63,7 @@ export const Project = z.object({
     workerGroupId: Nullable(z.string()),
     executionDataRetentionDays: Nullable(z.number()),
     sensitive: z.boolean(),
+    isDefault: z.boolean(),
 })
 
 const projectAnalytics = z.object({
@@ -89,6 +90,7 @@ export const ProjectMetaData = z.object({
 export type ProjectMetaData = z.infer<typeof ProjectMetaData>
 
 export const ProjectWithLimitsWithPlatform = z.object({
+    platformId: z.string(),
     platformName: z.string(),
     projects: z.array(ProjectWithLimits),
 })
@@ -142,4 +144,3 @@ export const PROJECT_COLOR_PALETTE: Record<ColorName, ProjectColor> = {
     [ColorName.BLUE]: projectColorFor(ColorName.BLUE),
     [ColorName.LAVENDER]: projectColorFor(ColorName.LAVENDER),
 }
-

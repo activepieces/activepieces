@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises'
 import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import { ReportAiUsageRequest } from '@activepieces/shared'
 import { activepiecesAiCost } from './activepieces-ai-cost'
@@ -6,7 +7,8 @@ import { onCallService } from './on-call.service'
 
 function install({ log, report, pageWebhookUrl }: InstallAiCostReporterParams): void {
     activepiecesAiCost.setReporter((event) => {
-        tryCatch(() => report(aiUsageReportOf({ event, idempotencyKey: `ai:${apId()}` }))).then(({ error }) => {
+        const request = aiUsageReportOf({ event, idempotencyKey: `ai:${apId()}` })
+        reportWithRetries({ report, request }).then((error) => {
             if (isNil(error)) {
                 return
             }
@@ -14,6 +16,22 @@ function install({ log, report, pageWebhookUrl }: InstallAiCostReporterParams): 
         }).catch(() => undefined)
     })
     startUnbilledCallWatch({ log, pageWebhookUrl })
+}
+
+async function reportWithRetries({ report, request }: { report: InstallAiCostReporterParams['report'], request: ReportAiUsageRequest }): Promise<unknown> {
+    const { error } = await tryCatch(() => report(request))
+    if (isNil(error)) {
+        return null
+    }
+    return RETRY_DELAYS_MS.reduce<Promise<unknown>>(async (previous, delayMs) => {
+        const lastError = await previous
+        if (isNil(lastError)) {
+            return null
+        }
+        await delay(delayMs)
+        const { error: retryError } = await tryCatch(() => report(request))
+        return retryError
+    }, Promise.resolve(error))
 }
 
 function startUnbilledCallWatch({ log, pageWebhookUrl }: Omit<InstallAiCostReporterParams, 'report'>): void {
@@ -34,6 +52,7 @@ function startUnbilledCallWatch({ log, pageWebhookUrl }: Omit<InstallAiCostRepor
 }
 
 const UNBILLED_CHECK_INTERVAL_MS = 5 * 60 * 1000
+const RETRY_DELAYS_MS = [500, 2000, 8000]
 
 export const aiCostReporter = {
     install,

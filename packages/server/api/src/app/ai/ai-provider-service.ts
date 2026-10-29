@@ -11,6 +11,7 @@ import { distributedLock, distributedStore } from '../database/redis-connections
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
+import { sleep } from '../helper/sleep'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
@@ -27,7 +28,10 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 
 const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
-const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 30
+const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 60
+const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 30_000
+const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 1_000
+const MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW = 3
 
 // A passing check must not lock out the next real failure, so the claim is a floor between
 // checks rather than a window that swallows them. A confirmed failure needs no floor: the row
@@ -716,6 +720,7 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
                 limit_reset: MANAGED_OPENROUTER_KEY_LIMIT_RESET,
             })
             const minted: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
+            await waitUntilKeyIsLive({ minted, platformId, log })
             const { data: stored, error } = await tryCatch(() => storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth: current.auth, auth: minted }))
             if (isNil(stored) || managedKeyHash(stored) !== minted.apiKeyHash) {
                 await revokeManagedKey({ hash: minted.apiKeyHash, platformId, log })
@@ -729,6 +734,19 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             return stored
         },
     })
+}
+
+async function waitUntilKeyIsLive({ minted, platformId, log }: { minted: ActivePiecesProviderAuthConfig, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
+    const deadline = Date.now() + MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS
+    let passesInARow = 0
+    while (Date.now() < deadline) {
+        passesInARow = await openRouterApi.isKeyLive({ key: minted.apiKey }) ? passesInARow + 1 : 0
+        if (passesInARow === MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW) {
+            return
+        }
+        await sleep(MANAGED_OPENROUTER_KEY_LIVE_POLL_MS)
+    }
+    log.warn({ platform: { id: platformId }, openRouterKey: { hash: minted.apiKeyHash } }, '[aiProviderService#waitUntilKeyIsLive] New managed OpenRouter key is still not live, using it anyway')
 }
 
 async function storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth, auth }: { providerId: string, platformId: PlatformId, observedAuth: EncryptedObject, auth: ActivePiecesProviderAuthConfig }): Promise<AIProviderAuthConfig> {

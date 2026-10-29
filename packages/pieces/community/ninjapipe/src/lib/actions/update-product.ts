@@ -1,38 +1,50 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeFields } from '../common/fields';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const updateProduct = createAction({
   auth: ninjapipeAuth,
   name: 'update_product',
   classification: 'WRITE',
   displayName: 'Update Product',
-  description: 'Updates a product by ID.',
+  description: 'Updates a product. Fields left blank keep their value; use Clear Fields to empty them.',
   audience: 'both',
-  aiMetadata: { description: 'Updates an existing product identified by Product ID, applying only the fields you supply (name, SKU, description, price, currency, status, custom fields); omitted fields are left unchanged. Requires a valid product ID; repeating with the same values is safe.', idempotent: true },
+  aiMetadata: {
+    description: 'Update a NinjaPipe product by ID. Only filled fields change and Clear Fields empties fields. Re-running with the same input gives the same result.',
+    idempotent: true,
+  },
+  outputSchema: ninjapipeSchemas.product,
   props: {
-    productId: ninjapipeCommon.productDropdownRequired,
+    productId: ninjapipeProps.productRequired(),
     name: Property.ShortText({ displayName: 'Name', required: false }),
     sku: Property.ShortText({ displayName: 'SKU', required: false }),
-    description: Property.LongText({ displayName: 'Description', required: false }),
     price: Property.Number({ displayName: 'Price', required: false }),
-    currency: Property.ShortText({ displayName: 'Currency', required: false }),
+    cost: Property.Number({ displayName: 'Cost', required: false }),
+    description: Property.LongText({ displayName: 'Description', required: false }),
+    currency: Property.ShortText({ displayName: 'Currency', description: 'ISO currency code, e.g. EUR.', required: false }),
     status: Property.ShortText({ displayName: 'Status', required: false }),
-    customFields: Property.Object({ displayName: 'Custom Fields', required: false }),
+    category: Property.ShortText({ displayName: 'Category', required: false }),
+    clearFields: ninjapipeProps.clearFields({ fields: { sku: 'SKU', description: 'Description', currency: 'Currency', status: 'Status', category: 'Category' } }),
   },
   async run(context) {
-    const auth = getAuth(context);
+    const auth = ninjapipeClient.readAuth(context.auth);
     const p = context.propsValue;
-    const body: Record<string, unknown> = {};
-    if (p.name) body['name'] = p.name;
-    if (p.sku) body['sku'] = p.sku;
-    if (p.description) body['description'] = p.description;
-    if (p.price !== undefined) body['price'] = p.price;
-    if (p.currency) body['currency'] = p.currency;
-    if (p.status) body['status'] = p.status;
-    if (p.customFields && typeof p.customFields === 'object') body['custom_fields'] = p.customFields;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.PUT, path: `/products/${encodeURIComponent(String(p.productId))}`, body });
-    return flattenCustomFields(response.body);
+    const path = `/products/${ninjapipeClient.pathId({ value: p.productId, field: 'Product' })}`;
+    const changes = ninjapipeFields.compact({
+      name: p.name,
+      sku: p.sku,
+      price: ninjapipeFields.toNumber({ value: p.price, field: 'Price' }),
+      cost: ninjapipeFields.toNumber({ value: p.cost, field: 'Cost' }),
+      description: p.description,
+      currency: p.currency,
+      status: p.status,
+      category: p.category,
+    });
+    const body = ninjapipeFields.requireChanges({ body: ninjapipeFields.withClears({ body: changes, clear: p.clearFields }), what: 'product' });
+    return ninjapipeClient.sendRecord({ auth, method: HttpMethod.PUT, path, body, operation: 'update product' });
   },
 });

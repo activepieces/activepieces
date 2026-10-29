@@ -194,7 +194,10 @@ export function ConnectionSelect({
             </div>
           )}
 
-          <SelectTrigger className="flex gap-2 items-center">
+          <SelectTrigger
+            className="flex gap-2 items-center"
+            aria-label={t('Connection')}
+          >
             <SelectValue
               className="truncate grow shrink"
               placeholder={t('Select a connection')}

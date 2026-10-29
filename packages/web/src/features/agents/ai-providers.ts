@@ -11,6 +11,7 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
 2. Once on the website, locate and click on the option to obtain your Claude API Key.
 `),
     logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
+    dashboardUrl: 'https://console.anthropic.com/settings/billing',
   },
   {
     provider: AIProviderName.BEDROCK,
@@ -76,6 +77,7 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
 2. Once on the website, locate and click on the option to obtain your Google API Key.
 `),
     logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
+    dashboardUrl: 'https://aistudio.google.com/usage',
   },
   {
     provider: AIProviderName.MINIMAX,
@@ -99,6 +101,7 @@ This connects to MiniMax's international endpoint. A key from the China platform
 2. Navigate to **API Keys** in your account settings.
 3. Click **Create new key**, copy the key, and paste it below.
 `),
+    dashboardUrl: 'https://console.mistral.ai/usage',
   },
   {
     provider: AIProviderName.MOONSHOT,
@@ -124,6 +127,7 @@ This connects to Moonshot's international endpoint. A key from the China platfor
 It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
 `),
     logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+    dashboardUrl: 'https://platform.openai.com/usage',
   },
   {
     provider: AIProviderName.OPENROUTER,
@@ -132,6 +136,7 @@ It is strongly recommended that you add your credit card information to your Ope
     markdown: t(`Follow these instructions to get your OpenRouter API Key:
 1. Go to https://openrouter.ai/settings/keys.
 2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`),
+    dashboardUrl: 'https://openrouter.ai/activity',
   },
   {
     provider: AIProviderName.QWEN,
@@ -184,4 +189,5 @@ export type AiProviderInfo = {
   name: string;
   markdown: string;
   logoUrl: string;
+  dashboardUrl?: string;
 };

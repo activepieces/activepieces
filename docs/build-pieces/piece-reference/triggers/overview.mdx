@@ -63,7 +63,7 @@ export const createNewIssue = createTrigger({
 - A failing `onDisable` is logged and ignored, so the flow still turns off. A failing `onEnable` fails the publish or the turn-on.
 - A patch upgrade in the builder (e.g. 0.5.1 → 0.5.3) keeps the trigger's inputs. A minor or major upgrade resets them to the new version's defaults. Which row applies depends on the inputs that get published: if they match the running flow, `context.isRepublish` is still `true`; if they differ, the trigger starts fresh. Don't rely on an upgrade to clear stored state.
 - `context.isRepublish` is `true` only in the rows that say so. Use it to keep stored state that is still valid, rather than starting fresh. See [Polling Trigger → Republishing a running flow](/build-pieces/piece-reference/triggers/polling-trigger#republishing-a-running-flow).
-- Don't count on a polling trigger's `onDisable` to clean up anything outside the store: on an upgrade it doesn't run.
+- A polling trigger's `onDisable` still runs when the flow is turned off or deleted, but not on an upgrade, because the trigger keeps running. If `onEnable` creates something outside the store, save its id in the store and, when `context.isRepublish` is `true` and the id exists, reuse it instead of creating another. If the trigger needs to register and unregister with every version, make it a webhook trigger: those run both hooks on every republish.
 - `test` runs when the user loads sample data in the builder, and `run` runs on every poll or incoming event. Neither is part of turning the flow on or off.
 
 ## Context Object

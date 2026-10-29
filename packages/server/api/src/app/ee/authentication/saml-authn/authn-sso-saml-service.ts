@@ -1,11 +1,12 @@
 import { resolveTxt } from 'dns/promises'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch, UserId } from '@activepieces/core-utils'
 import { ApEdition, AuthenticationResponse, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
+import { platformSideEffects } from '../../../platform/platform-side-effects'
 import { platformRepo, platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
@@ -57,28 +58,26 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             return response
         },
         async discoverByDomain(domain: string): Promise<DiscoverResult> {
+            const platformId = await this.findPlatformIdByDomain({ domain })
+            if (isNil(platformId)) {
+                return { platformId: null }
+            }
+            const samlConfigured = await platformService(log).hasSamlConfigured(platformId)
+            return { platformId: samlConfigured ? platformId : null }
+        },
+        async findPlatformIdByDomain({ domain }: FindPlatformIdByDomainParams): Promise<PlatformId | null> {
             const ssoDomain = domain.trim().toLowerCase()
             if (ssoDomain.length === 0) {
-                return { platformId: null }
+                return null
             }
             const platform = await platformRepo().findOneBy({ ssoDomain })
-            if (isNil(platform)) {
-                return { platformId: null }
-            }
-            if (platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
-                return { platformId: null }
+            if (isNil(platform) || platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+                return null
             }
             const plan = await platformPlanService(log).getOrCreateForPlatform(platform.id)
-            if (!plan.ssoEnabled) {
-                return { platformId: null }
-            }
-            const samlConfigured = await platformService(log).hasSamlConfigured(platform.id)
-            if (!samlConfigured) {
-                return { platformId: null }
-            }
-            return { platformId: platform.id }
+            return plan.ssoEnabled ? platform.id : null
         },
-        async updateSsoDomain({ platformId, ssoDomain }: UpdateSsoDomainParams): Promise<SsoDomainState> {
+        async updateSsoDomain({ platformId, ssoDomain, userId, ip }: UpdateSsoDomainParams): Promise<SsoDomainState> {
             const normalized = ssoDomain?.trim().toLowerCase() ?? null
             const value = normalized && normalized.length > 0 ? normalized : null
             if (!isNil(value)) {
@@ -111,10 +110,12 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 ssoDomain: value,
                 ssoDomainVerification: verification,
                 ...spreadIfDefined('federatedAuthProviders', removesSaml ? { saml: null } : undefined),
+                userId,
+                ip,
             })
             return { ssoDomain: value, ssoDomainVerification: verification }
         },
-        async verifySsoDomain({ platformId }: VerifySsoDomainParams): Promise<SsoDomainState> {
+        async verifySsoDomain({ platformId, userId, ip }: VerifySsoDomainParams): Promise<SsoDomainState> {
             const platform = await platformService(log).getOneOrThrow(platformId)
             if (isNil(platform.ssoDomain) || isNil(platform.ssoDomainVerification)) {
                 throw new ActivepiecesError({
@@ -137,27 +138,43 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 ...platform.ssoDomainVerification,
                 status: SsoDomainVerificationStatus.VERIFIED,
             }
-            const updated = await platformService(log).update({ id: platformId, ssoDomainVerification: verified })
+            const updated = await platformService(log).update({ id: platformId, ssoDomainVerification: verified, userId, ip })
             return { ssoDomain: updated.ssoDomain ?? null, ssoDomainVerification: updated.ssoDomainVerification ?? null }
         },
         async expirePendingSsoDomains(): Promise<void> {
-            const result = await platformRepo()
-                .createQueryBuilder()
-                .update()
-                .set({ ssoDomain: null, ssoDomainVerification: null })
-                .where('"ssoDomain" IS NOT NULL')
-                .andWhere('"ssoDomainVerification"->>\'status\' = :status', { status: SsoDomainVerificationStatus.PENDING_VERIFICATION })
-                .andWhere(`("ssoDomainVerification"->>'createdAt')::timestamptz < NOW() - INTERVAL '${PENDING_DOMAIN_TTL_DAYS} day'`)
-                .execute()
-            const affected = result.affected ?? 0
-            if (affected > 0) {
-                log.info({ affected }, 'Expired pending SSO domain verifications')
+            const rows: unknown = await platformRepo().query(`
+                WITH expired AS (
+                    SELECT id, "ssoDomain" FROM "platform"
+                    WHERE "ssoDomain" IS NOT NULL
+                      AND "ssoDomainVerification"->>'status' = $1
+                      AND ("ssoDomainVerification"->>'createdAt')::timestamptz < NOW() - make_interval(days => $2)
+                    FOR UPDATE SKIP LOCKED
+                ), cleared AS (
+                    UPDATE "platform" p
+                    SET "ssoDomain" = NULL, "ssoDomainVerification" = NULL
+                    FROM expired
+                    WHERE p.id = expired.id
+                    RETURNING p.id AS "platformId", expired."ssoDomain" AS "domain"
+                )
+                SELECT "platformId", "domain" FROM cleared
+            `, [SsoDomainVerificationStatus.PENDING_VERIFICATION, PENDING_DOMAIN_TTL_DAYS])
+            const expired = ExpiredSsoDomainRows.parse(rows)
+            for (const { platformId, domain } of expired) {
+                platformSideEffects(log).onSsoDomainExpired({ platformId, domain })
+            }
+            if (expired.length > 0) {
+                log.info({ affected: expired.length }, 'Expired pending SSO domain verifications')
             }
         },
     }
 }
 
 const PENDING_DOMAIN_TTL_DAYS = 7
+
+const ExpiredSsoDomainRows = z.array(z.object({
+    platformId: z.string(),
+    domain: z.string(),
+}))
 
 function computeNextVerification({ nextDomain, currentDomain, currentVerification }: { nextDomain: string | null, currentDomain: string | null, currentVerification: SsoDomainVerification | null }): SsoDomainVerification | null {
     if (isNil(nextDomain)) {
@@ -202,13 +219,21 @@ type DiscoverResult = {
     platformId: string | null
 }
 
+type FindPlatformIdByDomainParams = {
+    domain: string
+}
+
 type UpdateSsoDomainParams = {
     platformId: PlatformId
     ssoDomain: string | null
+    userId: UserId
+    ip: string
 }
 
 type VerifySsoDomainParams = {
     platformId: PlatformId
+    userId: UserId
+    ip: string
 }
 
 type SsoDomainState = {
