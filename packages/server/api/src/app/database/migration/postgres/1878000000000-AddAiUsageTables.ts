@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddAiUsageTables1877000000000 implements Migration {
-    name = 'AddAiUsageTables1877000000000'
+export class AddAiUsageTables1878000000000 implements Migration {
+    name = 'AddAiUsageTables1878000000000'
     breaking = false
     release = '0.93.0'
     transaction = true

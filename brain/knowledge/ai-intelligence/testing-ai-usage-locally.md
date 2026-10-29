@@ -6,7 +6,7 @@ icon: 🧪
 How to see AI calls go to Autumn and land in the usage tables on a dev box. The copy job only runs in Cloud and Enterprise, and only for platforms with Autumn credentials.
 
 1. Run with `AP_EDITION=ee` and `npm run dev`.
-2. If your dev database ran an older version of migration `AddAiUsageTables1877000000000`, drop `ai_usage_ingest_cursor`, `ai_usage_5m` and `ai_usage_daily`, delete that row from `migrations`, and restart so the current version runs.
+2. If your dev database ran an older version of migration `AddAiUsageTables1878000000000`, drop `ai_usage_ingest_cursor`, `ai_usage_5m` and `ai_usage_daily`, delete that row from `migrations`, and restart so the current version runs.
 3. In the Autumn **sandbox**:
    - create a customer **with an ID**. One created without an ID shows `PENDING` and can't be used;
    - attach the Free plan;

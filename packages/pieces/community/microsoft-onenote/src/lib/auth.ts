@@ -1,5 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { microsoftCloudProperty } from './common/microsoft-cloud';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 const authDesc = `
 If you’d like to use your own custom Azure app instead of the default app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),
@@ -8,7 +7,21 @@ If you’d like to use your own custom Azure app instead of the default app, fol
  - Notes.ReadWrite
  - offline_access`;
 
-export const oneNoteAuth = PieceAuth.OAuth2({
+const microsoftCloudProperty = Property.StaticDropdown({
+  displayName: 'Cloud Environment',
+  description: 'Select your Microsoft cloud environment.',
+  required: true,
+  defaultValue: 'login.microsoftonline.com',
+  options: {
+    disabled: false,
+    options: [
+      { label: 'Commercial (Global)', value: 'login.microsoftonline.com' },
+      { label: 'US Government (GCC High)', value: 'login.microsoftonline.us' },
+    ],
+  },
+});
+
+export const microsoftOneNoteAuth = PieceAuth.OAuth2({
   description: authDesc,
   props: {
     cloud: microsoftCloudProperty,
