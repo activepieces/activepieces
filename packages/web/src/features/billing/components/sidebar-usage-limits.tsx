@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, SelfServeTrialState } from '@activepieces/shared';
 import { t } from 'i18next';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import React from 'react';
@@ -21,7 +21,7 @@ import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { billingUtils, BILLING_DATE_FORMAT } from '../utils/billing-utils';
 
 import { CreditsActionButton } from './credits-action-button';
-import { SelfServeTrialLine } from './self-serve-trial-pill';
+import { SelfServeTrialLine } from './self-serve-trial-notices';
 
 export const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -37,7 +37,7 @@ export const SidebarUsageLimits = React.memo(() => {
   } = useCreditsUsage();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const trial = selfServeTrialHooks.useTrial();
-  const inTrial = trial.state === 'active';
+  const inTrial = trial.state === SelfServeTrialState.ACTIVE;
 
   const inWarning = !isUnlimited && severity !== 'default';
   const canManage = isPlatformAdmin && inWarning;

@@ -1,5 +1,11 @@
 import { ArrowLeft } from 'lucide-react';
-import { ReactNode, useContext, useLayoutEffect, useState } from 'react';
+import {
+  ReactNode,
+  useContext,
+  useLayoutEffect,
+  useState,
+  createContext,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
@@ -7,11 +13,6 @@ import { useEmbedding } from '@/components/providers/embed-provider';
 import { cn } from '@/lib/utils';
 
 import { adminLayout } from './admin-layout';
-import {
-  AdminPageHeaderSlotContext,
-  AdminPageLockContext,
-  useAdminPageLock,
-} from './admin-page-lock';
 import { AdminResource, AdminResources } from './admin-resources';
 import { adminSurface } from './admin-surface';
 
@@ -215,6 +216,15 @@ const WIDTH_CLASS: Record<AdminPageWidth, string> = {
   wide: 'mx-auto max-w-5xl',
 };
 
+export function useAdminPageLock() {
+  return useContext(AdminPageLockContext);
+}
+
+export const AdminPageLockContext = createContext<AdminPageLock | null>(null);
+
+export const AdminPageHeaderSlotContext =
+  createContext<AdminPageHeaderSlot | null>(null);
+
 type AdminPageBack = { label: string; to: string };
 
 type AdminPageWidth = 'full' | 'content' | 'wide';
@@ -242,4 +252,13 @@ type AdminSectionProps = {
   action?: ReactNode;
   className?: string;
   children: ReactNode;
+};
+
+type AdminPageHeaderSlot = {
+  target: HTMLElement | null;
+};
+
+type AdminPageLock = {
+  callout: ReactNode;
+  claim: () => void;
 };

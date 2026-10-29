@@ -1,19 +1,27 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
   ApEdition,
   CreditsBillableFeature,
   PlanName,
   PlatformBillingInformation,
+  InvitationStatus,
+  UserStatus,
 } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 
 import { formatUtils } from '@/lib/format-utils';
 
+import type { SelfServeTrial } from '../hooks/self-serve-trial-hooks';
+
 const DAILY_RESET_INTERVAL = 'day';
+
 const MINUTES_PER_HOUR = 60;
+
 const CREDITS_WARNING_PERCENT = 70;
+
 const CREDITS_DANGER_PERCENT = 90;
+
 const COMPACT_CREDITS_FROM = 1_000_000;
 
 function isPaidPlan(planName: string | null | undefined): planName is string {
@@ -150,6 +158,142 @@ function formatTimeUntil(value: string): string {
   });
 }
 
+function daysLeftLabel(trial: SelfServeTrial): string {
+  if (trial.endsToday) {
+    return t('Ends today');
+  }
+  if (trial.ending) {
+    return t('Ends tomorrow');
+  }
+  return t('{count, plural, =1 {1 day left} other {# days left}}', {
+    count: trial.daysLeft,
+  });
+}
+
+function cardStatus(trial: SelfServeTrial): string {
+  if (trial.endsToday) {
+    return t('last day');
+  }
+  return t('{count, plural, =1 {1 day left} other {# days left}}', {
+    count: trial.ending ? 1 : trial.daysLeft,
+  });
+}
+
+function sidebarDetail(trial: SelfServeTrial): string {
+  const end = dayjs(trial.endsAt);
+  if (trial.endsToday) {
+    return t('Ends today at {time}', { time: end.format('h:mm A') });
+  }
+  if (trial.ending) {
+    return t('Ends tomorrow at {time}', { time: end.format('h:mm A') });
+  }
+  return t(
+    '{count, plural, =1 {1 day left} other {# days left}}, ends {date}',
+    { count: trial.daysLeft, date: end.format('MMM D') },
+  );
+}
+
+function endsSentence(trial: SelfServeTrial): string {
+  const end = dayjs(trial.endsAt);
+  const time = end.format('h:mm A');
+  if (trial.endsToday) {
+    return t('Your Enterprise plan trial ends today at {time}.', { time });
+  }
+  if (trial.ending) {
+    return t('Your Enterprise plan trial ends tomorrow at {time}.', { time });
+  }
+  return t('Your Enterprise plan trial ends on {date}.', {
+    date: end.format('MMM D'),
+  });
+}
+
+function details(trial: SelfServeTrial): string {
+  const end = dayjs(trial.endsAt);
+  const plan = trial.basePlanName;
+  if (trial.endsToday) {
+    return t(
+      'Every Enterprise plan feature is on until today at {time}. Then you are back on the {plan} plan. Your credits are not affected.',
+      { time: end.format('h:mm A'), plan },
+    );
+  }
+  if (trial.ending) {
+    return t(
+      'Every Enterprise plan feature is on until tomorrow at {time}. Then you are back on the {plan} plan. Your credits are not affected.',
+      { time: end.format('h:mm A'), plan },
+    );
+  }
+  return t(
+    'Every Enterprise plan feature is on until {date}. Then you are back on the {plan} plan. Your credits are not affected.',
+    { date: end.format('MMM D'), plan },
+  );
+}
+
+function focusDialogItself(event: Event): void {
+  event.preventDefault();
+  if (event.currentTarget instanceof HTMLElement) {
+    event.currentTarget.focus();
+  }
+}
+
+function readLocalStorageFlag(key: string): boolean {
+  const { data } = tryCatchSync(() => window.localStorage.getItem(key));
+  return data === 'true';
+}
+
+function setLocalStorageFlag(key: string): void {
+  tryCatchSync(() => window.localStorage.setItem(key, 'true'));
+}
+
+function trialStorageId({
+  platformId,
+  userId,
+  endsAt,
+}: TrialStorageIdParams): string {
+  return `${platformId}-${userId ?? 'unknown'}-${
+    endsAt?.toISOString() ?? 'unknown'
+  }`;
+}
+
+function reservedSeats({
+  users,
+  invitations,
+  now = new Date(),
+}: {
+  users: { email: string; status: UserStatus }[];
+  invitations: {
+    email: string;
+    status: InvitationStatus;
+    updated: string;
+  }[];
+  now?: Date;
+}): number {
+  const active = users.filter((user) => user.status === UserStatus.ACTIVE);
+  const existingUserEmails = new Set(
+    users.map((user) => user.email.toLowerCase()),
+  );
+  const cutoff = dayjs(now).subtract(INVITATION_RESERVATION_DAYS, 'day');
+  const pending = new Set(
+    invitations
+      .filter(
+        (invitation) =>
+          RESERVING_STATUSES.includes(invitation.status) &&
+          dayjs(invitation.updated).isAfter(cutoff),
+      )
+      .map((invitation) => invitation.email.toLowerCase())
+      .filter((email) => !existingUserEmails.has(email)),
+  );
+  return active.length + pending.size;
+}
+
+export const seatUtils = { reservedSeats };
+
+const INVITATION_RESERVATION_DAYS = 7;
+
+const RESERVING_STATUSES = [
+  InvitationStatus.PENDING,
+  InvitationStatus.ACCEPTED,
+];
+
 export const billingUtils = {
   isPaidPlan,
   isYearlyPlan,
@@ -164,6 +308,32 @@ export const billingUtils = {
 };
 
 export const BILLING_DATE_FORMAT = 'MMM D, YYYY';
+
+export const selfServeTrialCopy = {
+  daysLeftLabel,
+  sidebarDetail,
+  cardStatus,
+  endsSentence,
+  details,
+};
+
+export const selfServeTrialUi = {
+  focusDialogItself,
+  readLocalStorageFlag,
+  setLocalStorageFlag,
+  trialStorageId,
+};
+
+export const enterpriseDocs = {
+  switchToEnterpriseUrl:
+    'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional',
+};
+
+export const enterpriseMotion = {
+  appear:
+    'animate-in fade-in-0 slide-in-from-bottom-1 duration-200 ease-expand-out motion-reduce:animate-none',
+  swap: 'animate-in fade-in-0 duration-200 ease-expand-out motion-reduce:animate-none',
+};
 
 export type IsYearlyPlanInfo = Pick<
   PlatformBillingInformation,
@@ -216,4 +386,10 @@ export type CreditsResetParams = {
 export type CreditsResetLine = {
   label: string;
   value: string;
+};
+
+type TrialStorageIdParams = {
+  platformId: string;
+  userId: string | null;
+  endsAt: Date | null;
 };

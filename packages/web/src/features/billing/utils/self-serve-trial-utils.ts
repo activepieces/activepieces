@@ -1,3 +1,6 @@
+import { isNil } from '@activepieces/core-utils';
+import { PlatformPlanLimits } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
   FileClock,
@@ -11,9 +14,7 @@ import {
   Vault,
 } from 'lucide-react';
 
-import { FeatureKey } from '../components/request-trial';
-
-import { planTiers } from './plan-tiers';
+import { FeatureKey } from './platform-features';
 
 function list(): SelfServeTrialFeature[] {
   return [
@@ -22,42 +23,50 @@ function list(): SelfServeTrialFeature[] {
       title: t('Single sign-on'),
       benefit: t('Your team signs in with your identity provider.'),
       featureKeys: ['SSO'],
+      isOnPlan: (plan) => plan.ssoEnabled,
     },
     {
       icon: FileClock,
       title: t('Audit logs'),
       benefit: t('See who changed which flow, and when.'),
       featureKeys: ['AUDIT_LOGS', 'EVENT_DESTINATIONS'],
+      isOnPlan: (plan) => plan.auditLogEnabled && plan.eventStreamingEnabled,
     },
     {
       icon: Vault,
       title: t('Secret managers'),
       benefit: t('Keep credentials in your own vault, not in flows.'),
       featureKeys: ['SECRET_MANAGERS'],
+      isOnPlan: (plan) => plan.secretManagersEnabled,
     },
     {
       icon: Sparkles,
       title: t('AI Center'),
       benefit: t('Use your own AI provider accounts in every flow and agent.'),
       featureKeys: ['UNIVERSAL_AI'],
+      isOnPlan: (plan) => plan.aiProvidersEnabled,
     },
     {
       icon: UserCog,
       title: t('Custom roles'),
       benefit: t('Give every person exactly the access they need.'),
       featureKeys: ['CUSTOM_ROLES'],
+      isOnPlan: (plan) => plan.projectRolesEnabled,
     },
     {
       icon: Users,
       title: t('Unlimited users and projects'),
       benefit: t('Bring every team in without counting seats.'),
-      featureKeys: ['USERS', 'PROJECTS', 'TEAM'],
+      featureKeys: ['USERS', 'PROJECTS'],
+      isOnPlan: (plan) =>
+        isNil(plan.usersLimit) && isNil(plan.billedTeamProjectsLimit),
     },
     {
       icon: Globe,
       title: t('Global connections'),
       benefit: t('Connect an app once and share it with every project.'),
       featureKeys: ['GLOBAL_CONNECTIONS'],
+      isOnPlan: (plan) => plan.globalConnectionsEnabled,
     },
     {
       icon: Server,
@@ -66,19 +75,13 @@ function list(): SelfServeTrialFeature[] {
         'Give critical projects workers of their own, so they never wait.',
       ),
       featureKeys: ['DEDICATED_WORKERS'],
+      isOnPlan: (plan) => plan.workerGroupsEnabled,
     },
   ];
 }
 
-function lockedAfterTrial(
-  plan: string | null | undefined,
-): SelfServeTrialFeature[] {
-  return list().filter(
-    (feature) =>
-      !feature.featureKeys.every((featureKey) =>
-        planTiers.planIncludes({ plan, featureKey }),
-      ),
-  );
+function lockedAfterTrial(plan: PlatformPlanLimits): SelfServeTrialFeature[] {
+  return list().filter((feature) => !feature.isOnPlan(plan));
 }
 
 function name(featureKey: FeatureKey | undefined): string | null {
@@ -315,6 +318,62 @@ function lockedCopyByFeature(): Partial<Record<FeatureKey, LockedFeatureCopy>> {
   };
 }
 
+function calendarDaysBetween({
+  from,
+  to,
+}: {
+  from: Date | string | number;
+  to: Date | string | number;
+}): number {
+  return dayjs(to).startOf('day').diff(dayjs(from).startOf('day'), 'day');
+}
+
+function activeTrialTiming({
+  startedAt,
+  endsAt,
+  now,
+}: {
+  startedAt: Date | string | null | undefined;
+  endsAt: Date | string;
+  now: number;
+}): ActiveTrialTiming {
+  const daysLeft = Math.max(0, calendarDaysBetween({ from: now, to: endsAt }));
+  const daysSinceStart = isNil(startedAt)
+    ? null
+    : Math.max(0, calendarDaysBetween({ from: startedAt, to: now }));
+  return {
+    startedAt: isNil(startedAt) ? null : dayjs(startedAt).toDate(),
+    endsAt: dayjs(endsAt).toDate(),
+    daysLeft,
+    endsToday: daysLeft === 0,
+    ending: daysLeft <= ENDING_PHASE_DAYS,
+    justStarted: !isNil(daysSinceStart) && daysSinceStart < JUST_STARTED_DAYS,
+  };
+}
+
+function nextBoundary({
+  end,
+  now,
+}: {
+  end: number;
+  now: number;
+}): number | null {
+  const candidates = [end, dayjs(now).add(1, 'day').startOf('day').valueOf()];
+  const upcomingBoundaries = candidates.filter(
+    (moment) => moment > now && moment <= end + HOUR_MS,
+  );
+  if (upcomingBoundaries.length === 0) {
+    return null;
+  }
+  return Math.min(...upcomingBoundaries);
+}
+
+const ENDING_PHASE_DAYS = 1;
+
+const JUST_STARTED_DAYS = 2;
+
+const HOUR_MS = 60 * 60 * 1000;
+
 export const selfServeTrialFeatures = {
   list,
   lockedAfterTrial,
@@ -323,15 +382,33 @@ export const selfServeTrialFeatures = {
   lockedCopy,
 };
 
+export const selfServeTrialTime = {
+  calendarDaysBetween,
+  activeTrialTiming,
+  nextBoundary,
+};
+
+export const TRIAL_DAYS = 7;
+
 type SelfServeTrialFeature = {
   icon: LucideIcon;
   title: string;
   benefit: string;
   featureKeys: FeatureKey[];
+  isOnPlan: (plan: PlatformPlanLimits) => boolean;
 };
 
 type LockedFeatureCopy = {
   headline: string;
   description: string;
   benefits: string[];
+};
+
+type ActiveTrialTiming = {
+  startedAt: Date | null;
+  endsAt: Date;
+  daysLeft: number;
+  endsToday: boolean;
+  ending: boolean;
+  justStarted: boolean;
 };

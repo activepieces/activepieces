@@ -1,12 +1,13 @@
 /**
  * @vitest-environment jsdom
  */
+import { SelfServeTrialState } from '@activepieces/shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SelfServeTrialEndingAlert } from '@/features/billing/components/self-serve-trial-ending-alert';
+import { SelfServeTrialEndingAlert } from '@/features/billing/components/self-serve-trial-notices';
 import type { SelfServeTrial } from '@/features/billing/hooks/self-serve-trial-hooks';
 
 let trial: SelfServeTrial;
@@ -34,14 +35,14 @@ vi.mock('@/features/billing/hooks/use-upgrade-click', () => ({
   useUpgradeClick: () => vi.fn(),
 }));
 
-vi.mock('@/features/billing/components/self-serve-trial-sales-link', () => ({
+vi.mock('@/features/billing/components/current-subscription-card', () => ({
   SelfServeTrialSalesLink: () => null,
 }));
 
 const NOW = new Date(2026, 9, 12, 10, 0, 0);
 
 const trialEnding = (ending: boolean): SelfServeTrial => ({
-  state: 'active',
+  state: SelfServeTrialState.ACTIVE,
   startedAt: NOW,
   endsAt: dayjs(NOW)
     .add(ending ? 1 : 7, 'day')

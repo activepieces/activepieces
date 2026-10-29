@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import * as React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { SelfServeTrialBillingStatus } from '@/features/billing/components/self-serve-trial-billing-status';
+import { SelfServeTrialBillingStatus } from '@/features/billing/components/current-subscription-card';
 
 const state = vi.hoisted(() => ({
   plan: 'free',
@@ -34,8 +34,12 @@ vi.mock('@/features/billing/hooks/use-credits-usage', () => ({
   useCreditsUsage: () => ({ isPaid: state.plan !== 'free' }),
 }));
 
-vi.mock('@/features/billing/components/self-serve-trial-sales-link', () => ({
-  SelfServeTrialSalesLink: () => null,
+vi.mock('@/components/providers/telemetry-provider', () => ({
+  useTelemetry: () => ({ capture: vi.fn() }),
+}));
+
+vi.mock('@/hooks/user-hooks', () => ({
+  userHooks: { useCurrentUser: () => ({ data: null }) },
 }));
 
 describe('billing page after the trial', () => {

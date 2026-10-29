@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+import { SelfServeTrialState } from '@activepieces/shared';
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen } from '@testing-library/react';
@@ -81,11 +82,11 @@ vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
   },
 }));
 
-vi.mock('@/features/billing/components/self-serve-trial-ended-dialog', () => ({
+vi.mock('@/features/billing/components/self-serve-trial-notices', () => ({
   SelfServeTrialEndedDialog: () => null,
 }));
 
-vi.mock('@/features/billing/components/self-serve-trial-sales-link', () => ({
+vi.mock('@/features/billing/components/current-subscription-card', () => ({
   SelfServeTrialSalesLink: () => null,
 }));
 
@@ -108,7 +109,7 @@ const startTrialAndSave = () =>
   fireEvent.click(screen.getByRole('button', { name: 'Start trial and save' }));
 
 const trialIsOn = () => ({
-  state: 'active',
+  state: SelfServeTrialState.ACTIVE,
   startedAt: new Date().toISOString(),
   endsAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
 });
@@ -157,7 +158,7 @@ describe('starting the trial from a blocked change', () => {
     expect(mutate).toHaveBeenCalledTimes(1);
     payload = null;
     await act(async () => {
-      onStarted?.({ state: 'active' });
+      onStarted?.({ state: SelfServeTrialState.ACTIVE });
       await new Promise((resolve) => setTimeout(resolve, 10));
     });
     expect(resume).toHaveBeenCalledTimes(1);

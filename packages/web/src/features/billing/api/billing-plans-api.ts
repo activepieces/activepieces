@@ -62,11 +62,6 @@ export const platformBillingApi = {
       params,
     );
   },
-  getSelfServeTrial() {
-    return api.get<SelfServeTrialStatus>(
-      '/v1/platform-billing/self-serve-trial',
-    );
-  },
   startSelfServeTrial() {
     return api.post<SelfServeTrialStatus>(
       '/v1/platform-billing/self-serve-trial/start',

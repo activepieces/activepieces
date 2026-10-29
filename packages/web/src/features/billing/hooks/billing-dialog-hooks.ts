@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import type { BillingCycle } from '../components/plan-selector-utils';
-import type { FeatureKey } from '../components/request-trial';
+import type { FeatureKey } from '../utils/platform-features';
 
 const useManagePlanDialogStore = create<ManagePlanDialogStore>((set) => ({
   isOpen: false,

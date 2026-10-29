@@ -16,7 +16,7 @@ import {
   useEnterpriseGate,
 } from '@/features/billing';
 
-import { AdminPageLockContext } from './admin/admin-page-lock';
+import { AdminPageLockContext } from './admin/admin-page';
 
 export function EnterpriseGate({
   unlocked,

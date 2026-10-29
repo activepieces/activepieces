@@ -63,7 +63,7 @@ import {
   EnterpriseGateState,
   LockedGem,
   useEnterpriseGate,
-  usePlanTier,
+  usePlanThatHasFeature,
 } from '@/features/billing';
 import {
   PieceIcon,
@@ -140,7 +140,7 @@ const SelectorTabsEditor = ({
   onClose: () => void;
 }) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
-  const plan = usePlanTier('PIECES');
+  const plan = usePlanThatHasFeature('PIECES');
   const saveLockedOnCommunity = gate.access === 'community';
   const communityLockedReason = t('Contact sales to unlock the piece selector');
   const [tabs, setTabs] = useState<PieceSelectorTabConfig[]>(

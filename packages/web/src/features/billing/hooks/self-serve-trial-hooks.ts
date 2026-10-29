@@ -2,8 +2,10 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
+  PlatformBillingInformation,
   SelfServeTrialState,
   SelfServeTrialStatus,
+  PlatformAdminSurface,
 } from '@activepieces/shared';
 import {
   QueryClient,
@@ -22,101 +24,19 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { platformBillingApi } from '../api/billing-plans-api';
-import { billingUtils } from '../utils/billing-utils';
-import { selfServeTrialTime, TRIAL_DAYS } from '../utils/self-serve-trial-time';
+import { billingUtils, enterpriseDocs } from '../utils/billing-utils';
+import { FeatureKey, platformFeatures } from '../utils/platform-features';
+import {
+  selfServeTrialTime,
+  TRIAL_DAYS,
+} from '../utils/self-serve-trial-utils';
 
-import { refreshBillingCaches } from './billing-hooks';
-
-export const selfServeTrialHooks = {
-  useStatus: () => {
-    const { platform } = platformHooks.useCurrentPlatform();
-    const enabled = useCanManageSelfServeTrial();
-    return useQuery({
-      queryKey: selfServeTrialKey(platform.id),
-      queryFn: platformBillingApi.getSelfServeTrial,
-      staleTime: 60 * 1000,
-      refetchInterval: (query) => refetchAfterTrialEnds(query.state.data),
-      enabled,
-    });
-  },
-  useShouldOfferTrial: (): boolean => {
-    const { data } = selfServeTrialHooks.useStatus();
-    return data?.state === 'eligible';
-  },
-  useStart: (onStarted?: (status: SelfServeTrialStatus) => void) => {
-    const queryClient = useQueryClient();
-    const { platform } = platformHooks.useCurrentPlatform();
-    return useMutation({
-      mutationFn: platformBillingApi.startSelfServeTrial,
-      onSuccess: (status: SelfServeTrialStatus) => {
-        queryClient.setQueryData(selfServeTrialKey(platform.id), status);
-        refreshBillingCaches(queryClient);
-        onStarted?.(status);
-      },
-      onError: () => {
-        queryClient
-          .invalidateQueries({ queryKey: selfServeTrialKey(platform.id) })
-          .catch(() => undefined);
-        refreshBillingCaches(queryClient);
-      },
-    });
-  },
-  useTrial: (): SelfServeTrial => {
-    const { platform } = platformHooks.useCurrentPlatform();
-    const { data: status } = selfServeTrialHooks.useStatus();
-    const { embedState } = useEmbedding();
-    const isPlatformAdmin = useIsPlatformAdmin();
-    const basePlanName = toBasePlanName(platform.plan.plan);
-    useTrialClock(
-      status?.state === 'active'
-        ? status.endsAt
-        : platform.selfServeTrial?.endsAt,
-    );
-    if (embedState.isEmbedded) {
-      return NO_TRIAL;
-    }
-    const planEndsAt = platform.selfServeTrial?.endsAt;
-    if (status?.state === 'active' && !isNil(status.endsAt)) {
-      if (!dayjs(status.endsAt).isAfter(dayjs())) {
-        return {
-          ...NO_TRIAL,
-          state: 'ended',
-          endsAt: new Date(status.endsAt),
-          isPlatformAdmin,
-          basePlanName,
-        };
-      }
-      return toActiveTrial({
-        startedAt: status.startedAt ?? platform.selfServeTrial?.startedAt,
-        endsAt: status.endsAt,
-        isPlatformAdmin,
-        basePlanName,
-      });
-    }
-    if (!isNil(planEndsAt) && dayjs(planEndsAt).isAfter(dayjs())) {
-      return toActiveTrial({
-        startedAt: platform.selfServeTrial?.startedAt,
-        endsAt: planEndsAt,
-        isPlatformAdmin,
-        basePlanName,
-      });
-    }
-    if (isNil(status) || status.state === 'active') {
-      return { ...NO_TRIAL, isPlatformAdmin, basePlanName };
-    }
-    return {
-      ...NO_TRIAL,
-      state: status.state,
-      endsAt: isNil(status.endsAt) ? null : new Date(status.endsAt),
-      isPlatformAdmin,
-      basePlanName,
-    };
-  },
-};
-
-export function selfServeTrialKey(platformId: string) {
-  return ['self-serve-trial', platformId] as const;
-}
+import {
+  billingDialogHooks,
+  SelfServeTrialDialogPayload,
+} from './billing-dialog-hooks';
+import { billingKeys, refreshBillingCaches } from './billing-hooks';
+import { useUpgradeClick } from './use-upgrade-click';
 
 function useCanManageSelfServeTrial(): boolean {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -198,7 +118,7 @@ function scheduleTrialBoundary({
 function refetchAfterTrialEnds(
   status: SelfServeTrialStatus | undefined,
 ): number | false {
-  if (status?.state !== 'active' || isNil(status.endsAt)) {
+  if (status?.state !== SelfServeTrialState.ACTIVE || isNil(status.endsAt)) {
     return false;
   }
   const msUntilEnd = dayjs(status.endsAt).diff(dayjs());
@@ -227,7 +147,7 @@ function toActiveTrial({
   basePlanName: string;
 }): SelfServeTrial {
   return {
-    state: 'active',
+    state: SelfServeTrialState.ACTIVE,
     ...selfServeTrialTime.activeTrialTiming({
       startedAt,
       endsAt,
@@ -257,6 +177,187 @@ const useTrialClockTick = create<TrialClockTick>((set) => ({
 
 const trialClocks = new Map<number, TrialClock>();
 
+const BOUNDARY_GRACE_MS = 5 * 1000;
+
+const EXPIRED_POLL_MS = 60 * 1000;
+
+const MAX_POLL_MS = 60 * 60 * 1000;
+
+const MAX_TIMER_MS = 2 ** 31 - 1;
+
+export function useEnterpriseAccess({
+  unlocked,
+}: {
+  unlocked: boolean;
+}): EnterpriseAccess {
+  const trial = selfServeTrialHooks.useTrial();
+  const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  if (unlocked) {
+    return trial.state === SelfServeTrialState.ACTIVE ? 'trialing' : 'entitled';
+  }
+  if (edition === ApEdition.COMMUNITY) {
+    return 'community';
+  }
+  if (!trial.isPlatformAdmin) {
+    return 'ask_admin';
+  }
+  if (shouldOfferTrial) {
+    return 'trial_available';
+  }
+  if (trial.state === SelfServeTrialState.ENDED) {
+    return 'trial_used';
+  }
+  return 'upgrade';
+}
+
+export function useEnterpriseGate({
+  unlocked,
+  featureKey,
+}: {
+  unlocked: boolean;
+  featureKey: FeatureKey;
+}): EnterpriseGate {
+  const access = useEnterpriseAccess({ unlocked });
+  const openDialog = useOpenLockedFeature();
+  const locked = access !== 'entitled' && access !== 'trialing';
+
+  const runOrShowLockedDialog: EnterpriseGate['runOrShowLockedDialog'] = (
+    action,
+    options,
+  ) => {
+    if (!locked) {
+      Promise.resolve(action()).catch(() => undefined);
+      return;
+    }
+    if (access === 'community') {
+      window.open(enterpriseDocs.switchToEnterpriseUrl, '_blank', 'noopener');
+      return;
+    }
+    openDialog({
+      featureKey,
+      resume: options?.resumable === false ? undefined : async () => action(),
+    });
+  };
+
+  const showLockedDialog = () => openDialog({ featureKey });
+
+  return { access, locked, runOrShowLockedDialog, showLockedDialog };
+}
+
+function useOpenLockedFeature() {
+  const access = useEnterpriseAccess({ unlocked: false });
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
+  const upgradeClick = useUpgradeClick();
+
+  return (payload: SelfServeTrialDialogPayload) => {
+    if (access === 'trial_used') {
+      upgradeClick({
+        feature: payload.featureKey,
+        plan: platformFeatures.planThatHasFeature({
+          featureKey: payload.featureKey,
+          edition,
+        }),
+        surface: PlatformAdminSurface.DIALOG,
+      });
+      return;
+    }
+    openDialog(payload);
+  };
+}
+
+export const selfServeTrialHooks = {
+  useStatus: () => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    const enabled = useCanManageSelfServeTrial();
+    return useQuery({
+      queryKey: billingKeys.platformSubscription(platform.id),
+      queryFn: platformBillingApi.getSubscriptionInfo,
+      select: (info: PlatformBillingInformation) => info.selfServeTrial,
+      staleTime: 60 * 1000,
+      refetchInterval: (query) =>
+        refetchAfterTrialEnds(query.state.data?.selfServeTrial),
+      enabled,
+    });
+  },
+  useShouldOfferTrial: (): boolean => {
+    const { data } = selfServeTrialHooks.useStatus();
+    return data?.state === SelfServeTrialState.ELIGIBLE;
+  },
+  useStart: (onStarted?: (status: SelfServeTrialStatus) => void) => {
+    const queryClient = useQueryClient();
+    const { platform } = platformHooks.useCurrentPlatform();
+    return useMutation({
+      mutationFn: platformBillingApi.startSelfServeTrial,
+      onSuccess: (status: SelfServeTrialStatus) => {
+        queryClient.setQueryData<PlatformBillingInformation>(
+          billingKeys.platformSubscription(platform.id),
+          (info) => (isNil(info) ? info : { ...info, selfServeTrial: status }),
+        );
+        refreshBillingCaches(queryClient);
+        onStarted?.(status);
+      },
+      onError: () => {
+        refreshBillingCaches(queryClient);
+      },
+    });
+  },
+  useTrial: (): SelfServeTrial => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    const { data: status } = selfServeTrialHooks.useStatus();
+    const { embedState } = useEmbedding();
+    const isPlatformAdmin = useIsPlatformAdmin();
+    const basePlanName = toBasePlanName(platform.plan.plan);
+    useTrialClock(
+      status?.state === SelfServeTrialState.ACTIVE
+        ? status.endsAt
+        : platform.selfServeTrial?.endsAt,
+    );
+    if (embedState.isEmbedded) {
+      return NO_TRIAL;
+    }
+    const planEndsAt = platform.selfServeTrial?.endsAt;
+    if (status?.state === SelfServeTrialState.ACTIVE && !isNil(status.endsAt)) {
+      if (!dayjs(status.endsAt).isAfter(dayjs())) {
+        return {
+          ...NO_TRIAL,
+          state: SelfServeTrialState.ENDED,
+          endsAt: new Date(status.endsAt),
+          isPlatformAdmin,
+          basePlanName,
+        };
+      }
+      return toActiveTrial({
+        startedAt: status.startedAt ?? platform.selfServeTrial?.startedAt,
+        endsAt: status.endsAt,
+        isPlatformAdmin,
+        basePlanName,
+      });
+    }
+    if (!isNil(planEndsAt) && dayjs(planEndsAt).isAfter(dayjs())) {
+      return toActiveTrial({
+        startedAt: platform.selfServeTrial?.startedAt,
+        endsAt: planEndsAt,
+        isPlatformAdmin,
+        basePlanName,
+      });
+    }
+    if (isNil(status) || status.state === SelfServeTrialState.ACTIVE) {
+      return { ...NO_TRIAL, isPlatformAdmin, basePlanName };
+    }
+    return {
+      ...NO_TRIAL,
+      state: status.state,
+      endsAt: isNil(status.endsAt) ? null : new Date(status.endsAt),
+      isPlatformAdmin,
+      basePlanName,
+    };
+  },
+};
+
+export const SELF_SERVE_TRIAL_DAYS = TRIAL_DAYS;
+
 type TrialClockTick = {
   tick: number;
   advance: () => void;
@@ -266,12 +367,6 @@ type TrialClock = {
   subscribers: number;
   timer: ReturnType<typeof setTimeout> | null;
 };
-
-export const SELF_SERVE_TRIAL_DAYS = TRIAL_DAYS;
-const BOUNDARY_GRACE_MS = 5 * 1000;
-const EXPIRED_POLL_MS = 60 * 1000;
-const MAX_POLL_MS = 60 * 60 * 1000;
-const MAX_TIMER_MS = 2 ** 31 - 1;
 
 export type SelfServeTrial = {
   state: SelfServeTrialState | 'none';
@@ -283,4 +378,23 @@ export type SelfServeTrial = {
   justStarted: boolean;
   isPlatformAdmin: boolean;
   basePlanName: string;
+};
+
+export type EnterpriseAccess =
+  | 'entitled'
+  | 'trialing'
+  | 'trial_available'
+  | 'trial_used'
+  | 'upgrade'
+  | 'ask_admin'
+  | 'community';
+
+export type EnterpriseGate = {
+  access: EnterpriseAccess;
+  locked: boolean;
+  runOrShowLockedDialog: (
+    action: () => Promise<unknown> | void,
+    options?: { resumable?: boolean },
+  ) => void;
+  showLockedDialog: () => void;
 };

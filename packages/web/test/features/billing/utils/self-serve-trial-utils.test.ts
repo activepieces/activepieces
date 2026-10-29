@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { describe, expect, it } from 'vitest';
 
-import { selfServeTrialTime } from '@/features/billing/utils/self-serve-trial-time';
+import { selfServeTrialTime } from '@/features/billing/utils/self-serve-trial-utils';
 
 const NOW = new Date(2026, 9, 12, 10, 0, 0);
 const LATE = new Date(2026, 9, 12, 23, 30, 0);
