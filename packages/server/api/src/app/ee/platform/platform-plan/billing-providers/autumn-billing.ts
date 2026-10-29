@@ -21,6 +21,7 @@ const CREDITS_CACHE_READ_TIMEOUT_MS: Record<CreditCheckSpeed, number> = {
 }
 const SLOW_CREDITS_CACHE_READ_LOG_MS = 25
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
+const USAGE_EVENTS_PAGE_SIZE = 5000
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
@@ -174,6 +175,22 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
     getCreditUsage: async ({ platformId, startDate, endDate }) => {
         return autumnUtils.getCreditUsage(log, platformId, startDate, endDate)
+    },
+    listUsageEvents: async ({ platformId, startMs, endMs, cursor }) => {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return { events: [], nextCursor: null }
+        }
+        const page = await client.listEvents({
+            featureId: ConsumableFeatureId.AP_CREDITS,
+            customRange: { start: startMs, end: endMs },
+            limit: USAGE_EVENTS_PAGE_SIZE,
+            startCursor: cursor ?? '',
+        })
+        return {
+            events: page.list.map((event) => ({ id: event.id, timestamp: event.timestamp, properties: event.properties })),
+            nextCursor: page.nextCursor,
+        }
     },
 })
 

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiUsageEnvironment, AiUsageOrigin, isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { GetAgentMemoryResponse } from '@activepieces/shared'
 import { generateText } from 'ai'
@@ -9,6 +9,7 @@ import { z } from 'zod'
 import { agentHelpers } from './agent-helpers'
 
 const MAX_INPUT_LENGTH = 50_000
+const MEMORY_USAGE_CONVERSATION = 'memory'
 
 function loadMemoryPrompt(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
@@ -45,6 +46,16 @@ function naiveSplit(text: string): GetAgentMemoryResponse {
     return agentHelpers.capMemories({ instructions: null, memories })
 }
 
+function memoryBillingOf({ platformId }: { platformId: string }): ActivepiecesAiBilling {
+    return {
+        source: ActivepiecesAiConsumerSource.CHAT,
+        platformId,
+        projectId: null,
+        conversationId: MEMORY_USAGE_CONVERSATION,
+        context: { origin: AiUsageOrigin.CHAT, environment: AiUsageEnvironment.PRODUCTION },
+    }
+}
+
 async function runMemoryLlm<T>({ platformId, instructions, prompt, schema, log }: {
     platformId: string
     instructions: string
@@ -53,7 +64,7 @@ async function runMemoryLlm<T>({ platformId, instructions, prompt, schema, log }
     log: FastifyBaseLogger
 }): Promise<T | null> {
     const { data, error } = await tryCatch(async () => {
-        const { text: raw } = await generateText({ model: await agentHelpers.resolvePlatformFastModel({ platformId, log }), instructions, prompt, temperature: 0, telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-memory' }) })
+        const { text: raw } = await generateText({ model: await agentHelpers.resolvePlatformFastModel({ platformId, billing: memoryBillingOf({ platformId }), log }), instructions, prompt, temperature: 0, telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-memory' }) })
         return parseJsonObject(raw, schema)
     })
     if (!isNil(error)) {

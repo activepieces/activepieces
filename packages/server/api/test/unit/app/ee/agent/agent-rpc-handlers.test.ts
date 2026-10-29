@@ -119,6 +119,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
         assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
         surfaceOf: () => 'flow',
         resolveFastModel: mockResolveFastModel,
+        usageContextOf: async () => ({ origin: 'CHAT', environment: 'PRODUCTION' }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
             findOneByOrFail: mockFindOneBy,
@@ -127,13 +128,23 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
             createQueryBuilder: (): QueryBuilderMock => {
                 const builder: QueryBuilderMock = {
                     update: () => builder,
-                    set: (values) => { mockSet(values); return builder },
-                    setParameters: (params) => { mockSetParameters(params); return builder },
-                    where: (_sql, params) => { mockWhere(params); return builder },
-                    andWhere: (_sql, params) => { mockAndWhere(params); return builder },
+                    set: (values) => {
+                        mockSet(values); return builder 
+                    },
+                    setParameters: (params) => {
+                        mockSetParameters(params); return builder 
+                    },
+                    where: (_sql, params) => {
+                        mockWhere(params); return builder 
+                    },
+                    andWhere: (_sql, params) => {
+                        mockAndWhere(params); return builder 
+                    },
                     returning: () => builder,
                     insert: () => builder,
-                    values: (values) => { mockInsertValues(values); return builder },
+                    values: (values) => {
+                        mockInsertValues(values); return builder 
+                    },
                     orIgnore: () => builder,
                     execute: mockExecute,
                 }
