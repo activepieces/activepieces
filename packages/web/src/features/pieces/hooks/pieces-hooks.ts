@@ -1,5 +1,6 @@
-import { LocalesEnum } from '@activepieces/core-utils';
+import { isNil, LocalesEnum } from '@activepieces/core-utils';
 import {
+  doesPieceAuthSupportConnectionType,
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
@@ -8,6 +9,8 @@ import {
 import {
   AddPieceRequestBody,
   ApEdition,
+  AppConnectionType,
+  AppConnectionWithoutSensitiveData,
   FlowActionType,
   flowPieceUtil,
   PieceAudienceFilter,
@@ -104,6 +107,14 @@ type UsePiecesSearchProps = {
   enabled?: boolean;
   type: 'action' | 'trigger';
   shouldCaptureEvent: boolean;
+};
+type UsePieceForReconnectProps = {
+  connection: Pick<
+    AppConnectionWithoutSensitiveData,
+    'pieceName' | 'pieceVersion' | 'type'
+  > | null;
+  enabled?: boolean;
+  audience?: PieceAudienceFilter;
 };
 
 export const pieceQueryKey = ({
@@ -509,6 +520,44 @@ export const piecesHooks = {
       staleTime: Infinity,
     });
   },
+  usePieceForReconnect: ({
+    connection,
+    enabled = true,
+    audience,
+  }: UsePieceForReconnectProps) => {
+    const name = connection?.pieceName ?? '';
+    const prefersLatest =
+      !isNil(connection) && OAUTH2_CONNECTION_TYPES.includes(connection.type);
+    const latest = piecesHooks.usePiece({
+      name,
+      enabled: enabled && prefersLatest,
+      audience,
+    });
+    const latestOffersConnectionAuth =
+      prefersLatest &&
+      !isNil(latest.pieceModel) &&
+      doesPieceAuthSupportConnectionType({
+        pieceAuth: latest.pieceModel.auth,
+        connectionType: connection.type,
+      });
+    const stored = piecesHooks.usePiece({
+      name,
+      version: connection?.pieceVersion,
+      audience,
+      enabled:
+        enabled &&
+        !isNil(connection) &&
+        (!prefersLatest ||
+          latest.isError ||
+          (latest.isSuccess && !latestOffersConnectionAuth)),
+    });
+    return {
+      pieceModel: latestOffersConnectionAuth
+        ? latest.pieceModel
+        : stored.pieceModel,
+      isLoading: latest.isLoading || stored.isLoading,
+    };
+  },
 };
 
 export const piecesMutations = {
@@ -737,5 +786,10 @@ function piecesQueryOptions({
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
+const OAUTH2_CONNECTION_TYPES: AppConnectionType[] = [
+  AppConnectionType.OAUTH2,
+  AppConnectionType.CLOUD_OAUTH2,
+  AppConnectionType.PLATFORM_OAUTH2,
+];
 
 export const pieceQueryOptions = { latest: latestPieceQueryOptions };
