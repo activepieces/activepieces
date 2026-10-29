@@ -60,6 +60,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Document Processed": "New Document Processed",
   "New Table Field Processed": "New Table Field Processed",
   "New Document Not Processed": "New Document Not Processed",

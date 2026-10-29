@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mastodonAuth } from '../..';
 import {
@@ -25,47 +25,62 @@ export const getHashtagTimeline = createAction({
   props: {
     hashtag: Property.ShortText({
       displayName: 'Hashtag',
-      description: 'Hashtag without the # sign, for example mastodon. A leading # is removed automatically.',
+      description: 'Without the # sign; a leading # is removed.',
+      placeholder: 'mastodon',
       required: true,
     }),
     any: Property.Array({
       displayName: 'Any of These Tags',
-      description: 'Also include statuses using any of these additional hashtags, one per item, without #.',
+      description: 'Also include statuses with any of these tags, one per item.',
       required: false,
     }),
     all: Property.Array({
       displayName: 'All of These Tags',
-      description: 'Only statuses that also use all of these hashtags, one per item, without #.',
+      description: 'Only statuses that also have all of these tags, one per item.',
       required: false,
     }),
     none: Property.Array({
       displayName: 'None of These Tags',
-      description: 'Exclude statuses using any of these hashtags, one per item, without #.',
+      description: 'Leave out statuses with any of these tags, one per item.',
       required: false,
+    }),
+    source_info: Property.MarkDown({
+      value: 'Turn on Only Local or Only Remote, not both.',
+      variant: MarkdownVariant.WARNING,
     }),
     local: Property.Checkbox({
       displayName: 'Only Local Statuses',
-      description: 'Only include statuses posted by accounts on your own server.',
+      description: 'Only statuses from accounts on your server.',
       required: false,
       defaultValue: false,
     }),
     remote: Property.Checkbox({
       displayName: 'Only Remote Statuses',
-      description: 'Only include statuses posted by accounts on other servers.',
+      description: 'Only statuses from accounts on other servers.',
       required: false,
       defaultValue: false,
     }),
     only_media: Property.Checkbox({
-      displayName: 'Only Statuses With Media',
-      description: 'Only include statuses that have images, video or audio attached.',
+      displayName: 'Only Statuses with Media',
+      description: 'Only statuses with images, video or audio.',
       required: false,
       defaultValue: false,
     }),
     limit: mastodonProps.limit({ noun: 'statuses', defaultLimit: 20, maxLimit: 40 }),
-    max_id: mastodonProps.maxId(),
-    since_id: mastodonProps.sinceId(),
-    min_id: mastodonProps.minId(),
+    max_id: mastodonProps.maxId({ advanced: true }),
+    since_id: mastodonProps.sinceId({ advanced: true }),
+    min_id: mastodonProps.minId({ advanced: true }),
   },
+  propertyGroups: [
+    { key: 'tags', display: 'section', label: 'Tags', icon: 'tag', props: ['hashtag', 'any', 'all', 'none'] },
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Source',
+      icon: 'filter',
+      props: ['source_info', 'local', 'remote', 'only_media'],
+    },
+  ],
   async run(context) {
     const props = context.propsValue;
     const hashtag = props.hashtag.trim().replace(/^#/, '');

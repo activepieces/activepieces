@@ -45,7 +45,11 @@ export function buildMessageBlocks({
 
   function ensureThinking() {
     if (!currentThinking) {
-      currentThinking = { kind: 'thinking', steps: [], reasoningText: '' };
+      currentThinking = {
+        kind: 'thinking',
+        steps: [],
+        trailingReasoningText: '',
+      };
       result.push(currentThinking);
     }
     return currentThinking;
@@ -72,6 +76,7 @@ export function buildMessageBlocks({
     const description = pendingDescription;
     pendingDescription = null;
     thinking.steps.push({ kind: 'tool', part: p, description });
+    thinking.trailingReasoningText = '';
     return description;
   }
 
@@ -117,7 +122,13 @@ export function buildMessageBlocks({
     // would mislabel a completed card as failed. Batch executions stream their
     // own live progress, so skip those too.
     const cardKind = chatPartUtils.getPendingCardKind(toolName);
-    if (isStreaming && cardKind && !toolCallMeta[toolCallId]?.batchProgress) {
+    const finishedWithoutCard = p.state === 'output-available';
+    if (
+      isStreaming &&
+      cardKind &&
+      !finishedWithoutCard &&
+      !toolCallMeta[toolCallId]?.batchProgress
+    ) {
       const state = p.state;
       const phase: CardSkeletonPhase =
         state === 'output-error' || state === 'output-denied'
@@ -160,7 +171,15 @@ export function buildMessageBlocks({
     } else if (p.type === 'reasoning') {
       flushPendingDescription();
       const thinking = ensureThinking();
-      thinking.reasoningText += p.text;
+      if (p.text.length > 0) {
+        const lastStep = thinking.steps[thinking.steps.length - 1];
+        if (lastStep?.kind === 'reasoning') {
+          lastStep.text += p.text;
+        } else {
+          thinking.steps.push({ kind: 'reasoning', text: p.text });
+        }
+        thinking.trailingReasoningText += p.text;
+      }
     } else if (chatPartUtils.isAnyToolPart(p)) {
       const toolName = chatPartUtils.getToolPartName(p);
       if (chatPartUtils.isThinkingStatusTool(toolName)) {
@@ -238,7 +257,7 @@ export function buildMessageBlocks({
   if (isStreaming && !hasText) {
     const hasThinkingBlock = result.some((b) => b.kind === 'thinking');
     if (!hasThinkingBlock) {
-      result.push({ kind: 'thinking', steps: [], reasoningText: '' });
+      result.push({ kind: 'thinking', steps: [], trailingReasoningText: '' });
     }
   }
 
@@ -246,7 +265,7 @@ export function buildMessageBlocks({
   const cleaned = result.filter((block, idx) => {
     if (block.kind !== 'thinking') return true;
     if (idx === lastThinkingIdx && isStreaming) return true;
-    return block.steps.length > 0 || block.reasoningText.length > 0;
+    return block.steps.length > 0;
   });
 
   return {
@@ -394,6 +413,7 @@ export function getLastThinkingSegment(steps: ThinkingStep[]): {
   let thought: string | null = null;
   for (let i = steps.length - 1; i >= 0; i--) {
     const step = steps[i];
+    if (step.kind === 'reasoning') continue;
     if (step.kind === 'thinking-status') {
       thought = step.text;
       break;
@@ -411,7 +431,7 @@ export type MessageBlock =
   | {
       kind: 'thinking';
       steps: ThinkingStep[];
-      reasoningText: string;
+      trailingReasoningText: string;
     }
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }

@@ -83,6 +83,14 @@ function rename(flowVersion: FlowVersion): FlowVersion {
     return flowOperations.apply(flowVersion, { type: FlowOperationType.CHANGE_NAME, request: { displayName: 'Renamed' } })
 }
 
+function updateStep({ flowVersion, skip }: { flowVersion: FlowVersion, skip?: boolean }): FlowVersion {
+    const { settings } = codeStep({ name: 'step_1' })
+    return flowOperations.apply(flowVersion, {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: { type: FlowActionType.CODE, name: 'step_1', displayName: 'Renamed step', valid: true, settings, skip },
+    })
+}
+
 describe('flowStructureUtil.getSkippedStepNames', () => {
     it('includes a skipped loop and every step inside it, but not the step after it', () => {
         const flowVersion = flowWith(loopStep({
@@ -146,5 +154,17 @@ describe('flow version validity with skipped steps', () => {
     it('is invalid when the invalid step is after a skipped loop', () => {
         const flowVersion = flowWith(loopStep({ name: 'step_1', skip: true, nextAction: codeStep({ name: 'step_2', valid: false }) }))
         expect(rename(flowVersion).valid).toBe(false)
+    })
+})
+
+describe('updating a skipped step', () => {
+    it('keeps it skipped when the update does not mention skip', () => {
+        const flowVersion = flowWith(codeStep({ name: 'step_1', skip: true }))
+        expect(flowStructureUtil.getActionOrThrow('step_1', updateStep({ flowVersion }).trigger).skip).toBe(true)
+    })
+
+    it('un-skips it when the update says so', () => {
+        const flowVersion = flowWith(codeStep({ name: 'step_1', skip: true }))
+        expect(flowStructureUtil.getActionOrThrow('step_1', updateStep({ flowVersion, skip: false }).trigger).skip).toBe(false)
     })
 })
