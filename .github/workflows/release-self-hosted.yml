@@ -261,7 +261,7 @@ jobs:
           BRANCH: ${{ steps.push.outputs.branch }}
         run: |
           BODY="$(printf '%s\n' \
-            "The self-hosted release \`$TAG\` was published. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin when \`main\` is behind, and moves the breaking-change entries that \`$TAG\` contains from the hidden unreleased page under \`## $TAG\` on the Breaking Changes page. Merge before the next release-candidate cut (Thursday 5 PM UTC). See GIT-1595 and SRE-232." \
+            "The self-hosted release \`$TAG\` was published. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin when \`main\` is behind, and moves the breaking-change entries that \`$TAG\` contains from the hidden unreleased page under \`## $TAG\` on the Breaking Changes page. Merge before the next release. See GIT-1595 and SRE-232." \
             "" \
             "### Breaking change?" \
             "" \
