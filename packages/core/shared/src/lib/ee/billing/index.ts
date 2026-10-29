@@ -180,7 +180,7 @@ export const SELF_SERVE_TRIAL_PLANS: readonly string[] = [
     PlanName.TEAM_ANNUAL,
 ]
 
-export const isSelfServeTrialPlan = (plan: string | null | undefined): boolean => !isNil(plan) && SELF_SERVE_TRIAL_PLANS.includes(plan)
+export const isEligibleForSelfServeTrial = (plan: string | null | undefined): boolean => !isNil(plan) && SELF_SERVE_TRIAL_PLANS.includes(plan)
 
 export const UNAVAILABLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = {
     state: SelfServeTrialState.UNAVAILABLE,

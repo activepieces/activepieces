@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, isSelfServeTrialPlan, PlanName, PlatformPlan, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialState, SelfServeTrialStatus, UNAVAILABLE_SELF_SERVE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, isEligibleForSelfServeTrial, PlanName, PlatformPlan, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialState, SelfServeTrialStatus, UNAVAILABLE_SELF_SERVE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEntitlementsRefreshKey, getSelfServeTrialEndedRefreshKey, getSelfServeTrialStartLockKey } from '../../../../database/redis/keys'
@@ -266,7 +266,7 @@ function toSelfServeTrialStatus({ plan, dates }: ToSelfServeTrialStatusParams): 
             endsAt: dates.endsAt,
         }
     }
-    return isSelfServeTrialPlan(plan.plan) ? ELIGIBLE_SELF_SERVE_TRIAL : INELIGIBLE_SELF_SERVE_TRIAL
+    return isEligibleForSelfServeTrial(plan.plan) ? ELIGIBLE_SELF_SERVE_TRIAL : INELIGIBLE_SELF_SERVE_TRIAL
 }
 
 async function refreshEntitlementsOnceAfterTrialEnded({ log, platformId, endsAt }: RefreshEntitlementsOnceAfterTrialEndedParams): Promise<void> {
