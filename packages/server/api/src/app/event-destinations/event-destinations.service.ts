@@ -90,10 +90,19 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
     update: async ({ id, platformId, request }: UpdateParams): Promise<EventDestination> => {
         const updated = await transaction(async (entityManager) => {
             const repo = eventDestinationRepo(entityManager)
-            const stored = await repo.findOneOrFail({
+            const stored = await repo.findOne({
                 where: { id, platformId },
                 lock: { mode: 'pessimistic_write' },
             })
+            if (isNil(stored)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'EventDestination',
+                        entityId: id,
+                    },
+                })
+            }
             const { headers: requestedHeaders, ...rest } = request
             const url = rest.url ?? stored.url
             const format = rest.format ?? stored.format

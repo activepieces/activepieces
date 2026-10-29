@@ -320,7 +320,7 @@ describe('Event Destinations API', () => {
             })
         })
 
-        it('should return error for non-existent destination', async () => {
+        it('should return 404 for non-existent destination', async () => {
             const ctx = await createEnabledContext()
             const nonExistentId = apId()
 
@@ -333,8 +333,8 @@ describe('Event Destinations API', () => {
                 },
             })
 
-            // TODO: Server returns 500 instead of 404 for non-existent destinations — this is a server bug
-            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.json().code).toBe(ErrorCode.ENTITY_NOT_FOUND)
         })
     })
 
