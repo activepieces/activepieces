@@ -328,7 +328,7 @@ jobs:
   # The one approval. A newer candidate cancels an older one that still waits here.
   approve:
     needs: [cut, e2e-matrix, upgrade-test, tickets]
-    if: needs.cut.outputs.skip != 'true'
+    if: ${{ !cancelled() && needs.cut.outputs.skip != 'true' && needs.e2e-matrix.result == 'success' && needs.upgrade-test.result == 'success' && needs.tickets.result == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -344,6 +344,7 @@ jobs:
   # canary and the fleet. The group matches continuous-delivery-rollback.yml.
   deploy:
     needs: [cut, approve]
+    if: ${{ !cancelled() && needs.approve.result == 'success' }}
     runs-on: ubuntu-latest
     concurrency:
       group: promote-production
@@ -504,7 +505,7 @@ jobs:
   # A rollback, an emergency deploy or a hotfix deploy does not sync; the next normal deploy records it.
   linear-release:
     needs: [cut, deploy]
-    if: ${{ !inputs.hotfix_prs }}
+    if: ${{ !cancelled() && needs.deploy.result == 'success' && !inputs.hotfix_prs }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     continue-on-error: true
