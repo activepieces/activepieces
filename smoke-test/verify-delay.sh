@@ -74,7 +74,7 @@ fi
 # Wait for delay and webhook pieces to be synced, and pin the exact versions listed
 echo "--- Waiting for delay and webhook pieces ---"
 for i in $(seq 1 300); do
-  PIECES=$(curl -sf "$API_URL/pieces" 2>/dev/null || echo "[]")
+  PIECES=$(curl -sf "$API_URL/pieces" -H "$AUTH" 2>/dev/null || echo "[]")
   DELAY_VERSION=$(echo "$PIECES" | jq -r '[.[] | select(.name == "@activepieces/piece-delay") | .version][0] // empty' 2>/dev/null || true)
   WEBHOOK_VERSION=$(echo "$PIECES" | jq -r '[.[] | select(.name == "@activepieces/piece-webhook") | .version][0] // empty' 2>/dev/null || true)
   if [ -n "$DELAY_VERSION" ] && [ -n "$WEBHOOK_VERSION" ]; then
