@@ -448,9 +448,12 @@ function ConfigRow({
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-sm font-semibold text-gray-12">
-          {config.name}
-        </p>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <p className="truncate text-sm font-semibold text-gray-12">
+            {config.name}
+          </p>
+          <KeyStatusBadge status={config.status} />
+        </div>
         {tierCount > 0 && (
           <span className="inline-flex items-center gap-1 text-xs text-gray-11 [&_svg]:text-gray-9">
             <Layers className="size-3.5" />
@@ -463,11 +466,10 @@ function ConfigRow({
             modelIds={config.modelIds}
             projectsLabel={projectsLabel}
           />
-          <KeyStatusBadge status={config.status} />
         </div>
       </div>
 
-      <div className="hidden shrink-0 items-center gap-6 md:flex">
+      <div className="hidden shrink-0 items-center gap-4 md:flex">
         <KeyScope
           modelsLabel={modelsLabel}
           modelIds={config.modelIds}
@@ -482,9 +484,6 @@ function ConfigRow({
             )
           }
         />
-        <span className="flex w-28 justify-end">
-          <KeyStatusBadge status={config.status} />
-        </span>
       </div>
 
       <div
