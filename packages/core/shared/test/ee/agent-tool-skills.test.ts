@@ -43,7 +43,7 @@ describe('agentToolSkills', () => {
     })
 
     it('sends the tools the model tends to guess directly, so the provider checks their arguments', () => {
-        for (const tool of ['ap_show_connection_picker', 'ap_show_connection_required', 'ap_discover_action_auth', 'ap_show_questions', 'ap_get_piece_props', 'ap_resolve_property_options', 'ap_resolve_property_chain']) {
+        for (const tool of ['ap_show_connection_picker', 'ap_show_connection_required', 'ap_discover_action_auth', 'ap_show_questions', 'ap_get_piece_props', 'ap_resolve_property_chain']) {
             expect(CORE_TOOL_NAMES.CHAT).toContain(tool)
         }
         expect(CORE_TOOL_NAMES.AGENT).toContain('ap_show_connection_picker')

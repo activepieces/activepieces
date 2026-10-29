@@ -1,9 +1,8 @@
 import { apId } from '@activepieces/core-utils'
-import { AppConnectionStatus, EngineResponseStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
+import { AppConnectionStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { apGetPiecePropsTool, pieceConnections } from '../../../../src/app/mcp/tools/ap-get-piece-props'
-import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
 import { db } from '../../../helpers/db'
 import { createMockConnection, createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -107,6 +106,26 @@ describe('ap_get_piece_props connections and samples', () => {
         expect(result.structuredContent).toMatchObject({ sampleOutput: expect.stringContaining('hello'), connections: { [KEYED_PIECE]: [] } })
     })
 })
+
+function makeMcp(projectId: string): ProjectScopedMcpServer {
+    return {
+        id: apId(),
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        projectId,
+        platformId: null,
+        type: McpServerType.PROJECT,
+        token: apId(),
+        disabledTools: null,
+    }
+}
+
+function text(result: { content: Array<{ type: 'text', text: string }> }): string {
+    return result.content.map((c) => c.text).join('\n')
+}
+
+const KEYED_PIECE = '@activepieces/piece-test-chat-props'
+const OTHER_PIECE = '@activepieces/piece-test-mail-props'
 
 describe('pieceConnections', () => {
     it('groups connections per requested piece, keeping pieces with none', () => {
