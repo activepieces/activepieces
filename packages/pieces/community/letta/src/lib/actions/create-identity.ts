@@ -1,10 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lettaAuth } from '../common/auth';
-import { getLettaClient } from '../common/client';
+import { lettaApi } from '../common/client';
+import { lettaProps } from '../common/props';
+import { lettaSchemas } from '../common/schemas';
 import type {
   IdentityCreateParams,
   Identity,
-  IdentityProperty,
 } from '../common/types';
 
 export const createIdentity = createAction({
@@ -12,9 +13,9 @@ export const createIdentity = createAction({
   name: 'createIdentity',
   classification: 'WRITE',
   displayName: 'Create Identity',
-  description: 'Creates a Letta identity',
-  audience: 'both',
-  aiMetadata: { description: 'Creates a Letta identity (representing an org, user, or other entity) with a required external identifier key and name, plus optional project scoping and typed key/value properties. Use to register a new addressable identity that agents can be associated with. Not idempotent: each call creates a new identity record.', idempotent: false },
+  description: 'Creates a Letta identity. Letta Cloud no longer supports Identities; this only works on self-hosted Letta servers that still serve them.',
+  audience: 'human',
+  outputSchema: lettaSchemas.humanCreateIdentity,
   props: {
     identifierKey: Property.ShortText({
       displayName: 'Identifier Key',
@@ -85,12 +86,15 @@ export const createIdentity = createAction({
       properties,
     } = context.propsValue;
 
-    const client = getLettaClient(context.auth.props);
+    const resolvedType = lettaProps.toIdentityType(identityType);
+    if (resolvedType === undefined) {
+      throw new Error('Identity Type must be org, user or other.');
+    }
 
     const body: IdentityCreateParams = {
       identifier_key: identifierKey,
       name: name,
-      identity_type: identityType as 'org' | 'user' | 'other',
+      identity_type: resolvedType,
     };
 
     if (projectId) {
@@ -98,38 +102,11 @@ export const createIdentity = createAction({
     }
 
     if (properties && properties.length > 0) {
-      body.properties = properties.map((prop: any) => {
-        let parsedValue: string | number | boolean | { [key: string]: unknown };
-        
-        switch (prop.type) {
-          case 'number':
-            parsedValue = Number(prop.value);
-            break;
-          case 'boolean':
-            parsedValue = prop.value === 'true' || prop.value === true;
-            break;
-          case 'json':
-            try {
-              parsedValue = JSON.parse(prop.value);
-            } catch (e) {
-              throw new Error(`Invalid JSON in property "${prop.key}": ${e instanceof Error ? e.message : 'Unknown error'}`);
-            }
-            break;
-          default:
-            parsedValue = String(prop.value);
-        }
-
-        const identityProperty: IdentityProperty = {
-          key: prop.key,
-          type: prop.type as 'string' | 'number' | 'boolean' | 'json',
-          value: parsedValue,
-        };
-
-        return identityProperty;
-      });
+      body.properties = lettaApi.parseIdentityProperties(properties);
     }
 
-    const response: Identity = await client.identities.create(body);
+    const client = await lettaApi.getLettaClient({ auth: context.auth.props });
+    const response: Identity = await lettaApi.callLetta(() => client.identities.create(body));
 
     return {
       id: response.id,
