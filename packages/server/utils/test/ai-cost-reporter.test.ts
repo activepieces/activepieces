@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName } from '@activepieces/core-utils'
 import { ReportAiUsageRequest } from '@activepieces/shared'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, Mock, vi } from 'vitest'
 import { activepiecesAiCost } from '../src/activepieces-ai-cost'
 import { aiCostReporter } from '../src/ai-cost-reporter'
 
@@ -15,7 +15,7 @@ const BILLING: ActivepiecesAiBilling = {
     flowRun: { flowId: 'flow-1', flowRunId: 'run-1' },
 }
 
-async function reportOnceThrough(report: (request: ReportAiUsageRequest) => Promise<void>): Promise<void> {
+async function reportOnceThrough(report: Mock<(request: ReportAiUsageRequest) => Promise<void>>): Promise<void> {
     const logged = vi.fn()
     aiCostReporter.install({ log: { error: logged }, report, pageWebhookUrl: () => undefined })
     activepiecesAiCost.reportFixedCredits({ billing: BILLING, provider: AIProviderName.OPENAI, modelId: 'gpt-5' })

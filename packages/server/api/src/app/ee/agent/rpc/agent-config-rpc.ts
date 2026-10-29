@@ -285,9 +285,9 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 billing: {
                     source: ActivepiecesAiConsumerSource.CHAT,
                     platformId: conversation.platformId,
-                    projectId: conversation.projectId ?? null,
+                    projectId: runProjectId,
                     conversationId: conversation.id,
-                    context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: conversation.projectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId, userId: conversation.userId }),
+                    context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: runProjectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId, userId: conversation.userId }),
                 },
                 log,
                 run: (model) => agentCompaction.compactMessages({
@@ -339,6 +339,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('imageCredentials', chosen.image?.credentials),
             ...spreadIfDefined('imageProviderConfigId', chosen.image?.credentials.configId),
             ...spreadIfDefined('agentId', conversation.agentId ?? undefined),
+            ...spreadIfDefined('projectId', runProjectId ?? undefined),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,

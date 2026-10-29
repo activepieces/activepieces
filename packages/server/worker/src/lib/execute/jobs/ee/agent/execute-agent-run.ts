@@ -131,7 +131,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const billing: ActivepiecesAiBilling = {
                 source: ActivepiecesAiConsumerSource.CHAT,
                 platformId,
-                projectId: projectId ?? null,
+                projectId: config.projectId ?? projectId ?? null,
                 conversationId,
                 chat: { userId, turnIndex: config.previousUiMessages.length, tier: config.tier.id },
                 context: usageContextOf({ source, data, agentId: data.agentId ?? config.agentId }),

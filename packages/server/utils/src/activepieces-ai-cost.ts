@@ -144,6 +144,7 @@ async function recoverCostAndReport({ state, context }: SettleStreamParams): Pro
         context,
         generationId,
         call: {
+            ...state.tokens,
             charge: AiChargeBasis.PROVIDER_REPORTED_COST,
             generationId,
             costUsd: generation.costUsd,
