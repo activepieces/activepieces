@@ -1,4 +1,4 @@
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '.';
@@ -57,12 +57,26 @@ function connectFirst() {
 	};
 }
 
-function loadFailed(noun: string) {
+function loadFailed({ noun, error }: LoadFailedParams) {
+	const brevoMessage = brevoErrorMessage(error);
 	return {
 		disabled: false,
 		options: [],
-		placeholder: `Could not load ${noun}. Check your connection.`,
+		placeholder: brevoMessage
+			? `Could not load ${noun}: ${brevoMessage}`
+			: `Could not load ${noun}. Check your connection.`,
 	};
+}
+
+function brevoErrorMessage(error: unknown): string | undefined {
+	if (!(error instanceof HttpError)) {
+		return undefined;
+	}
+	const body = error.response.body;
+	if (typeof body === 'object' && body !== null && 'message' in body && typeof body.message === 'string') {
+		return body.message;
+	}
+	return undefined;
 }
 
 function noneFound(noun: string) {
@@ -100,8 +114,8 @@ export const brevoProps = {
 							value: String(list.id),
 						})),
 					};
-				} catch {
-					return loadFailed('lists');
+				} catch (error) {
+					return loadFailed({ noun: 'lists', error });
 				}
 			},
 		}),
@@ -150,8 +164,8 @@ export const brevoProps = {
 						value: sender.email,
 					})),
 				};
-			} catch {
-				return loadFailed('senders');
+			} catch (error) {
+				return loadFailed({ noun: 'senders', error });
 			}
 		},
 	}),
@@ -181,8 +195,8 @@ export const brevoProps = {
 						value: template.id,
 					})),
 				};
-			} catch {
-				return loadFailed('templates');
+			} catch (error) {
+				return loadFailed({ noun: 'templates', error });
 			}
 		},
 	}),
@@ -226,4 +240,9 @@ export type ListIdsPropParams = {
 export type OptionalBooleanPropParams = {
 	displayName: string;
 	description: string;
+};
+
+export type LoadFailedParams = {
+	noun: string;
+	error: unknown;
 };
