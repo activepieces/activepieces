@@ -1,7 +1,8 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { BexioClient } from './client';
 import { BexioAccount, BexioTax, BexioCurrency } from './types';
 import { bexioAuth } from '../auth';
+import { bexioAi } from './ai-helpers';
 
 export const bexioCommonProps = {
   account: (options: {
@@ -25,12 +26,12 @@ export const bexioCommonProps = {
         }
 
         try {
-          const client = new BexioClient(auth);
-          const accounts = await client.get<BexioAccount[]>('/accounts');
+          const accounts = await bexioAi.listAll<BexioAccount>({ auth, path: '/2.0/accounts' });
 
           return {
             disabled: false,
-            options: accounts.map((account) => ({
+            placeholder: accounts.truncated ? bexioAi.truncatedPlaceholder({ count: accounts.items.length }) : undefined,
+            options: accounts.items.map((account) => ({
               label: `${account.account_no} - ${account.name}`,
               value: account.id,
             })),

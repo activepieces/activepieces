@@ -1,6 +1,7 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const findCountryAction = createAction({
   auth: bexioAuth,
@@ -8,7 +9,8 @@ export const findCountryAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find Country',
   description: 'Search for countries using various criteria',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.countryArrayOutputSchema,
   aiMetadata: { description: 'Searches the Bexio country list by name or short code with operators such as contains or equals. Use to resolve a country to its id before setting country_id on a contact or other record. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({

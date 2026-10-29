@@ -1,6 +1,7 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const createCompanyAction = createAction({
   auth: bexioAuth,
@@ -8,7 +9,8 @@ export const createCompanyAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Company',
   description: 'Create a new company contact',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.contactOutputSchema,
   aiMetadata: { description: 'Creates a new organization (company-type) contact in Bexio with name, address, communication, and grouping fields. Use to add a company; pick Create Person for an individual or Update Company to modify an existing one. Requires a company name plus an assigned user and owner. Not idempotent: each call creates a separate contact, so search first to avoid duplicates.', idempotent: false },
   props: {
     name_1: Property.ShortText({

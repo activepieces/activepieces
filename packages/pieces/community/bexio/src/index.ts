@@ -1,10 +1,8 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
-  PieceAuth,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { BexioClient } from './lib/common/client';
 import { createManualEntryAction } from './lib/actions/create-manual-entry';
 import { createCompanyAction } from './lib/actions/create-company';
 import { createPersonAction } from './lib/actions/create-person';
@@ -36,12 +34,13 @@ import { newProductTrigger } from './lib/triggers/new-product';
 import { newProjectTrigger } from './lib/triggers/new-project';
 import { newQuoteTrigger } from './lib/triggers/new-quote';
 import { bexioAuth } from './lib/auth';
+import { bexioAiActions } from './lib/actions/ai';
 
 export const bexio = createPiece({
   displayName: 'Bexio',
   description: 'Swiss business software for accounting, invoicing, and project management',
   auth: bexioAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/bexio.png',
   authors: ["onyedikachi-david"],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
@@ -69,6 +68,7 @@ export const bexio = createPiece({
     createProjectAction,
     createSalesQuoteAction,
     createTimeTrackingAction,
+    ...bexioAiActions,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.bexio.com',
       auth: bexioAuth,
