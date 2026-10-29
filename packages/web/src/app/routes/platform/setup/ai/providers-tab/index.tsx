@@ -373,25 +373,29 @@ function ProviderGroup({
           </Button>
         )}
       </header>
-      <p className="flex items-center gap-1.5 py-1.5 pl-16 pr-4 text-xs font-medium text-gray-11">
-        {t('Keys')}
-        <span className="tabular-nums">{configs.length}</span>
-      </p>
-      {configs.map((config) => (
-        <ConfigRow
-          key={config.id}
-          config={config}
-          projects={projects}
-          tierCount={
-            tiers.filter((tier) =>
-              tier.entries.some((entry) => entry.configId === config.id),
-            ).length
-          }
-          locked={locked}
-          onOpen={() => onOpen(config.id)}
-          onDelete={() => onDelete(config.id)}
-        />
-      ))}
+      <div className="overflow-hidden rounded-b-xl">
+        <p className="flex items-center gap-1.5 px-4 pt-2 pb-1 text-xs font-medium text-gray-11">
+          {t('Keys')}
+          <span className="tabular-nums">{configs.length}</span>
+        </p>
+        <div className={cn('divide-y', adminSurface.divider)}>
+          {configs.map((config) => (
+            <ConfigRow
+              key={config.id}
+              config={config}
+              projects={projects}
+              tierCount={
+                tiers.filter((tier) =>
+                  tier.entries.some((entry) => entry.configId === config.id),
+                ).length
+              }
+              locked={locked}
+              onOpen={() => onOpen(config.id)}
+              onDelete={() => onDelete(config.id)}
+            />
+          ))}
+        </div>
+      </div>
     </SettingsPanel>
   );
 }
@@ -442,7 +446,7 @@ function ConfigRow({
         }
       }}
       className={cn(
-        'group flex items-center gap-4 py-3 pl-16 pr-4 transition-colors',
+        'group flex items-center gap-4 px-4 py-3 transition-colors',
         !locked &&
           'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
@@ -643,7 +647,7 @@ function ProviderTile({
       onClick={onConnect}
       className={cn(
         adminSurface.card,
-        'flex min-w-0 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
+        'group flex min-w-0 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
       {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
     >
@@ -658,7 +662,7 @@ function ProviderTile({
           <span className="truncate text-xs text-gray-11">{tagline}</span>
         )}
       </span>
-      <ChevronRight className="size-4 shrink-0 text-gray-9" />
+      <ChevronRight className="size-4 shrink-0 text-gray-9 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
     </button>
   );
 }
