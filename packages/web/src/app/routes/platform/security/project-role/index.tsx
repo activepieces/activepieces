@@ -10,6 +10,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { sampleData } from '../../sample-data';
 
+import { DefaultProjectsSection } from './default-projects-section';
 import { RolesCard } from './roles-card';
 
 const ProjectRolePage = () => {
@@ -24,9 +25,7 @@ const ProjectRolePage = () => {
     <AdminPage width="content">
       <AdminPageHeader
         title={t('Roles & Access')}
-        description={t(
-          'Create roles and control what members can do in each project',
-        )}
+        description={t('Manage roles and where new members land')}
         resources={adminPageResources.roles}
       />
       <RolesCard
@@ -35,6 +34,7 @@ const ProjectRolePage = () => {
         isError={isSample ? false : isError}
         refetch={refetch}
       />
+      <DefaultProjectsSection />
     </AdminPage>
   );
 };

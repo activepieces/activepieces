@@ -463,7 +463,8 @@ import { AddBarrierChildAttribution1871000000000 } from './migration/postgres/18
 import { AddPieceTranslationTable1873000000000 } from './migration/postgres/1873000000000-AddPieceTranslationTable'
 import { AddDefaultChatModelToPlatformConfiguration1875000000000 } from './migration/postgres/1875000000000-AddDefaultChatModelToPlatformConfiguration'
 import { AddAgentConversationWaitpointId1876000000000 } from './migration/postgres/1876000000000-AddAgentConversationWaitpointId'
-import { AddAiUsageTables1877000000000 } from './migration/postgres/1877000000000-AddAiUsageTables'
+import { AddIsDefaultToProject1877000000000 } from './migration/postgres/1877000000000-AddIsDefaultToProject'
+import { AddAiUsageTables1878000000000 } from './migration/postgres/1878000000000-AddAiUsageTables'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
@@ -952,7 +953,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddPieceTranslationTable1873000000000,
         AddDefaultChatModelToPlatformConfiguration1875000000000,
         AddAgentConversationWaitpointId1876000000000,
-        AddAiUsageTables1877000000000,
+        AddIsDefaultToProject1877000000000,
+        AddAiUsageTables1878000000000,
     ]
     return migrations
 }
