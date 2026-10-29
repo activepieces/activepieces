@@ -7,7 +7,7 @@ import { Store } from '@activepieces/pieces-framework';
 import {
   SEEN_CHUNK_SIZE,
   loadSeenIds,
-  newTransaction,
+  enableCheckpoint,
   pollNewTransactions,
   saveSeenIds,
 } from '../src/lib/triggers/new-transaction';
@@ -183,18 +183,10 @@ describe('trigger lifecycle', () => {
     vi.setSystemTime(NOW);
     const { store } = memoryStore();
     const enable = (isRepublish: boolean) =>
-      newTransaction.onEnable({
-        auth: { props: AUTH },
-        propsValue: { account_id: undefined },
-        store,
-        isRepublish,
-      } as unknown as Parameters<typeof newTransaction.onEnable>[0]);
+      enableCheckpoint({ auth: AUTH, accountId: undefined, store, isRepublish });
     await enable(false);
     expect(await loadSeenIds({ store })).toEqual(['old']);
     fake.state.transactions.push({ id: 'b', account: 'a1', date: '2026-10-26', amount: -50 });
-    await newTransaction.onDisable(
-      { store } as unknown as Parameters<typeof newTransaction.onDisable>[0]
-    );
     await enable(true);
     expect(await loadSeenIds({ store })).toEqual(['old']);
     await enable(false);
