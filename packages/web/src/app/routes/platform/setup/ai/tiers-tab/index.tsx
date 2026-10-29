@@ -327,6 +327,7 @@ function NoTiersState({
         </p>
       </div>
       <Button
+        variant="outline"
         onClick={(event) => onCreate(event.currentTarget)}
         {...adminControl(AdminControl.AI_TIER_OPEN)}
       >
