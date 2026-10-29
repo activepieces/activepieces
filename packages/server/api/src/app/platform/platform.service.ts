@@ -1,8 +1,8 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, partition, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
+import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { EntityManager } from 'typeorm'
+import { EntityManager, IsNull } from 'typeorm'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -11,10 +11,14 @@ import { distributedLock } from '../database/redis-connections'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
+import { buildPaginator } from '../helper/pagination/build-paginator'
+import { Order } from '../helper/pagination/paginator'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { auditLogRetentionCeiling } from '../helper/retention/audit-log-retention-ceiling'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
+import { ProjectEntity } from '../project/project-entity'
+import { projectRepo } from '../project/project-repo'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { authenticationAuditEvents } from './authentication-audit-events'
@@ -24,24 +28,28 @@ import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
+const DEFAULT_PROJECT_IDS_PAGE_SIZE = 100
+
 export const platformService = (log: FastifyBaseLogger) => ({
-    async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+    async listPlatformsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+        const memberships = await this.listPlatformMembershipsForIdentity(params)
+        return memberships.map((membership) => membership.platform)
+    },
+    async listPlatformMembershipsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformMembershipWithPlatform[]> {
         const users = await userService(log).getByIdentityId({ identityId: params.identityId })
-
-        const platformsWithProjects = await Promise.all(users.map(async (user) => {
-            if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
-                return null
-            }
-            const hasProjects = await projectService(log).userHasProjects({
-                platformId: user.platformId,
-                userId: user.id,
-                isPrivileged: userService(log).isUserPrivileged(user),
-            })
-            return hasProjects ? user.platformId : null
+        const activeUsers = users.flatMap((user) => isNil(user.platformId) || user.status === UserStatus.INACTIVE
+            ? []
+            : [{ userId: user.id, platformId: user.platformId, isPrivileged: userService(log).isUserPrivileged(user) }])
+        const platformIdsWithProjects = new Set(await projectService(log).listPlatformIdsWhereUsersHaveProjects({ users: activeUsers }))
+        const memberships: PlatformMembership[] = activeUsers.map((user) => ({
+            platformId: user.platformId,
+            hasProjects: platformIdsWithProjects.has(user.platformId),
         }))
-
-        const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => this.getOneWithPlanOrThrow(platformId)))
-        return platforms
+        const [withProjects, withoutProjects] = partition(memberships, (membership) => membership.hasProjects)
+        return Promise.all([...withProjects, ...withoutProjects].map(async (membership) => ({
+            platform: await this.getOneWithPlanOrThrow(membership.platformId),
+            hasProjects: membership.hasProjects,
+        })))
     },
     async create(params: AddParams): Promise<PlatformWithoutFederatedAuth> {
         const {
@@ -174,6 +182,9 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ? await this.getOneWithFederatedAuthOrThrow(params.id)
             : await this.getOneOrThrow(params.id)
         await assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays: params.auditLogRetentionDays })
+        if (params.autoCreatePersonalProjects === false && platform.autoCreatePersonalProjects) {
+            await assertPersonalProjectsCanBeTurnedOff({ platform, log })
+        }
         const federatedAuthProviders = hasFederatedAuth(platform)
             ? {
                 ...platform.federatedAuthProviders,
@@ -215,9 +226,12 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
         log.info({ platform: { id: params.id } }, 'Platform updated')
         const { saved, locked } = await transaction(async (entityManager) => {
-            const lockedPlatform = await lockPlatformForUpdate({ entityManager, platformId: params.id, includeFederatedAuth: hasFederatedAuth(platform) })
+            const lockedPlatform = await lockPlatformForUpdate({ entityManager, platformId: params.id, includeFederatedAuth: true })
+            const signInSettingsToSave = buildSignInSettingsToSave({ lockedPlatform, params })
+            assertLeavesAWorkingSignInMethod({ log, before: lockedPlatform, after: signInSettingsToSave })
             const savedPlatform = await platformRepo(entityManager).save({
                 ...updatedPlatform,
+                ...signInSettingsToSave,
                 auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedPlatform.auditLogRetentionDays ?? null : params.auditLogRetentionDays,
             })
             return { saved: savedPlatform, locked: lockedPlatform }
@@ -243,6 +257,16 @@ export const platformService = (log: FastifyBaseLogger) => ({
             })
         }
         return stripFederatedAuth(saved)
+    },
+    async runWithPlatformSettingsLock<T>({ platformId, fn }: RunWithPlatformSettingsLockParams<T>): Promise<T> {
+        return distributedLock(log).runExclusive({
+            key: `platform-settings-${platformId}`,
+            timeoutInSeconds: 30,
+            fn,
+        })
+    },
+    async listDefaultProjectIds({ platformId, entityManager }: ListDefaultProjectIdsParams): Promise<string[]> {
+        return readDefaultProjectIdPages({ platformId, entityManager, afterCursor: null })
     },
     async getOneOrThrow(id: PlatformId): Promise<PlatformWithoutFederatedAuth> {
         return platformRepo().findOneByOrFail({ id })
@@ -294,13 +318,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
             plan,
         }
     },
-    async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
+    async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformResponse> {
         const platform = await this.getOneOrThrow(id)
-        const [samlConfigured, usage, plan, billingEnforced] = await Promise.all([
+        const [samlConfigured, usage, plan, billingEnforced, defaultProjectIds] = await Promise.all([
             this.hasSamlConfigured(id),
             getUsage(log, platform),
             getPlan(log, platform),
             getBillingEnforced(log, id),
+            this.listDefaultProjectIds({ platformId: id }),
         ])
         return {
             ...platform,
@@ -308,9 +333,37 @@ export const platformService = (log: FastifyBaseLogger) => ({
             usage,
             billingEnforced,
             plan,
+            defaultProjectIds,
         }
     },
 })
+
+async function readDefaultProjectIdPages({ platformId, entityManager, afterCursor }: ReadDefaultProjectIdPagesParams): Promise<string[]> {
+    const paginator = buildPaginator({
+        entity: ProjectEntity,
+        query: {
+            limit: DEFAULT_PROJECT_IDS_PAGE_SIZE,
+            afterCursor: afterCursor ?? undefined,
+            orderBy: [
+                { field: 'created', order: Order.ASC },
+                { field: 'id', order: Order.ASC },
+            ],
+        },
+    })
+    const { data, cursor } = await paginator.paginate(
+        projectRepo(entityManager).createQueryBuilder('project').where({
+            platformId,
+            type: ProjectType.TEAM,
+            isDefault: true,
+            deleted: IsNull(),
+        }),
+    )
+    const pageIds = data.map((project) => project.id)
+    if (isNil(cursor.afterCursor)) {
+        return pageIds
+    }
+    return [...pageIds, ...await readDefaultProjectIdPages({ platformId, entityManager, afterCursor: cursor.afterCursor })]
+}
 
 async function lockPlatformForUpdate({ entityManager, platformId, includeFederatedAuth }: LockPlatformForUpdateParams): Promise<Platform> {
     return platformRepo(entityManager).findOneOrFail({
@@ -464,6 +517,30 @@ async function assertAuditLogRetentionDaysAllowed({ log, platform, auditLogReten
     }
 }
 
+function buildSignInSettingsToSave({ lockedPlatform, params }: BuildSignInSettingsToSaveParams): SignInSettings {
+    return {
+        emailAuthEnabled: params.emailAuthEnabled ?? lockedPlatform.emailAuthEnabled,
+        googleAuthEnabled: params.googleAuthEnabled ?? lockedPlatform.googleAuthEnabled,
+        ssoDomainVerification: params.ssoDomainVerification === undefined ? lockedPlatform.ssoDomainVerification : params.ssoDomainVerification,
+        federatedAuthProviders: { ...lockedPlatform.federatedAuthProviders, ...params.federatedAuthProviders },
+    }
+}
+
+function assertLeavesAWorkingSignInMethod({ log, before, after }: AssertLeavesAWorkingSignInMethodParams): void {
+    const methodsBefore = authenticationUtils(log).getSignInMethods({ platform: before })
+    const methodsAfter = authenticationUtils(log).getSignInMethods({ platform: after })
+    const hadWorkingMethod = methodsBefore.email || methodsBefore.google || methodsBefore.sso
+    const hasWorkingMethod = methodsAfter.email || methodsAfter.google || methodsAfter.sso
+    if (hadWorkingMethod && !hasWorkingMethod) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'This is the only way left to sign in. Turn on another sign-in method first.',
+            },
+        })
+    }
+}
+
 async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
@@ -472,6 +549,18 @@ async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederate
         }
     }
     return platformPlanService(log).getOrCreateForPlatform(platform.id)
+}
+
+async function assertPersonalProjectsCanBeTurnedOff({ platform, log }: AssertPersonalProjectsCanBeTurnedOffParams): Promise<void> {
+    const plan = await getPlan(log, platform)
+    if (!plan.projectRolesEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: 'Turning personal projects off is not enabled for this platform',
+            },
+        })
+    }
 }
 
 function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
@@ -500,10 +589,54 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     auditLogRetentionDays: number | null | undefined
 }
 
+type SignInSettings = Pick<Platform, 'emailAuthEnabled' | 'googleAuthEnabled' | 'ssoDomainVerification' | 'federatedAuthProviders'>
+
+type BuildSignInSettingsToSaveParams = {
+    lockedPlatform: Platform
+    params: UpdateParams
+}
+
+type AssertLeavesAWorkingSignInMethodParams = {
+    log: FastifyBaseLogger
+    before: SignInSettings
+    after: SignInSettings
+}
+
 type LockPlatformForUpdateParams = {
     entityManager: EntityManager
     platformId: PlatformId
     includeFederatedAuth: boolean
+}
+
+type PlatformMembership = {
+    platformId: PlatformId
+    hasProjects: boolean
+}
+
+type PlatformMembershipWithPlatform = {
+    platform: PlatformWithoutSensitiveData
+    hasProjects: boolean
+}
+
+type AssertPersonalProjectsCanBeTurnedOffParams = {
+    platform: PlatformWithoutFederatedAuth
+    log: FastifyBaseLogger
+}
+
+type RunWithPlatformSettingsLockParams<T> = {
+    platformId: string
+    fn: () => Promise<T>
+}
+
+type ListDefaultProjectIdsParams = {
+    platformId: PlatformId
+    entityManager?: EntityManager
+}
+
+type ReadDefaultProjectIdPagesParams = {
+    platformId: PlatformId
+    entityManager?: EntityManager
+    afterCursor: string | null
 }
 
 type UpdateParams = UpdatePlatformRequestBody & {

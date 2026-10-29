@@ -24,6 +24,33 @@ Nothing until you move an Airtable step to `1.0.0`. When you do, the builder res
 
 Replace every "Clean Record" step with "Update Airtable Record": turn on the fields to clear, and leave their values empty.
 
+#### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
+
+**Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
+
+Once a step is upgraded to Workable 0.3.0, these outputs change:
+
+- **Get Candidate** returns the candidate itself, without the `candidate` wrapper.
+- **Move Candidate** and **Rate Candidate** return `{success, candidate_id, ...}` instead of `{status, headers, body}`.
+- **Get Members** returns `nextCursor` and `hasMore` instead of `paging`, and refuses a Limit above 100.
+- **New Candidate** ignores webhook deliveries that are unsigned or that arrive more than 6 hours after Workable fired them.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Move Candidate as a tool, switch it to Move Candidate (by IDs). Flow steps that use Move Candidate keep working. Steps keep running on the version they were built with until you upgrade them; when you upgrade, update any later step that reads `candidate.*` from Get Candidate, `body` from Move Candidate or Rate Candidate, or `paging` from Get Members.
+
+#### iLoveAPI 0.1.0: Create Signature Request is no longer an agent tool, and triggers need a Webhook Secret
+
+iLoveAPI 0.1.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+**Create Signature Request** is no longer offered as a tool to AI agents. It still works as a normal flow step. Agents should use **Send PDF for Signature** instead, which takes the PDFs as URLs. Create Signature Request also checks its input more strictly: a signature element with a missing field, or with an email that matches no signer, used to be skipped and now fails the step.
+
+Every iLoveAPI trigger now has a required **Webhook Secret**, and a delivery whose URL does not carry that secret is ignored without an error.
+
+#### What you need to do
+
+Point any agent that used Create Signature Request at Send PDF for Signature. When you upgrade an iLoveAPI trigger, fill in a Webhook Secret of at least 16 characters, then change the endpoint URL in the iLoveAPI developer dashboard to `<trigger URL>?ap_secret=<secret>`. Until you do, deliveries are dropped and the flow stops running. Check that Create Signature Request steps give every signature element all its fields and use signer emails that match a signer.
+
 #### SendIt 0.3.0: two scheduled-post actions leave AI agents, and publishing checks inputs before sending
 
 From SendIt 0.3.0, **Cancel Scheduled Post** and **Trigger Scheduled Post Now** are no longer offered to AI agents and MCP clients. They stay available as flow steps. An agent or MCP client that called them by name no longer finds them.

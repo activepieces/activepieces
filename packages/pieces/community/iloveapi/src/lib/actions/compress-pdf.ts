@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { fileToUploadInput, sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { fileToUploadInput, regionOf, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
 
 export const compressPdfAction = createAction({
@@ -10,6 +11,7 @@ export const compressPdfAction = createAction({
   displayName: 'Compress PDF',
   description: 'Reduce the size of a PDF file using iLoveAPI.',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Shrink a PDF file size, choosing a compression level: "extreme" for the smallest file at lower quality, "recommended" for a balanced result (default), or "low" for the largest file at best quality. Each run produces a new compressed file.',
@@ -42,9 +44,11 @@ export const compressPdfAction = createAction({
 
     return await runAndStoreResult({
       auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'compress',
-      uploads: [fileToUploadInput(file)],
+      uploads: [fileToUploadInput({ file: file })],
       options: {
         compression_level: compression_level ?? 'recommended',
       },

@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, isNil, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp, WebSearchResult } from '@activepieces/server-utils'
 import { AiProviderCredentials, SaveAgentFileResponse } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
@@ -242,10 +242,11 @@ export function falImageGenerator({ apiKey }: { apiKey: string }): ImageGenerato
     }
 }
 
-export function providerImageGenerator({ credentials, modelId, billing }: { credentials: AiProviderCredentials, modelId: string, billing: ActivepiecesAiBilling }): ImageGenerator {
+export function providerImageGenerator({ credentials, providerConfigId, modelId, billing }: { credentials: AiProviderCredentials, providerConfigId?: string, modelId: string, billing: ActivepiecesAiBilling }): ImageGenerator {
     return async ({ prompt, style, aspectRatio, inputImages, signal }) => {
         const image = await getGeneratedImage({
             credentials,
+            ...spreadIfDefined('providerConfigId', providerConfigId),
             modelId,
             prompt: `${prompt}\n\n${STYLE_GUIDANCE_BY_STYLE[style]}`,
             inputImages,

@@ -147,18 +147,18 @@ describe('aiUtils.createModel on the managed Activepieces key', () => {
     const managed = aiProviderCredentials({ provider: AIProviderName.ACTIVEPIECES, auth: { apiKey: 'sk-managed' }, config: {} })
 
     it('refuses a model that no published tier or allow-list entry permits', () => {
-        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'perplexity/sonar-deep-research' }))
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'perplexity/sonar-deep-research', billing: null }))
             .toThrow(/not available on Activepieces AI credits/)
     })
 
     it('runs a model the tiers permit', () => {
-        expect(() => aiUtils.createModel({ credentials: managed, modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId })).not.toThrow()
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, billing: null })).not.toThrow()
     })
 
     it('refuses an image model outside the managed image tiers', () => {
         expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: 'openai/gpt-5-image' }))
             .toThrow(/not available on Activepieces AI credits/)
-        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'openai/gpt-5-image', imageGeneration: true }))
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'openai/gpt-5-image', imageGeneration: true, billing: null }))
             .toThrow(/not available on Activepieces AI credits/)
     })
 
@@ -169,13 +169,13 @@ describe('aiUtils.createModel on the managed Activepieces key', () => {
 
     it('leaves a customer-supplied OpenRouter key unrestricted', () => {
         const own = aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'sk-own' }, config: {} })
-        expect(() => aiUtils.createModel({ credentials: own, modelId: 'perplexity/sonar-deep-research' })).not.toThrow()
+        expect(() => aiUtils.createModel({ credentials: own, modelId: 'perplexity/sonar-deep-research', billing: null })).not.toThrow()
     })
 })
 
 describe('what the managed provider is asked to send back', () => {
     function settingsFor({ provider, webSearchEnabled = false }: { provider: AIProviderName, webSearchEnabled?: boolean }): Record<string, unknown> | undefined {
-        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth: { apiKey: 'key' }, config: {} }), modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, webSearchEnabled })
+        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth: { apiKey: 'key' }, config: {} }), modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, webSearchEnabled, billing: null })
         return (model as unknown as { settings?: Record<string, unknown> }).settings
     }
 
@@ -190,7 +190,7 @@ describe('what the managed provider is asked to send back', () => {
         })
     })
 
-    it('does not ask for cost accounting on a customer own OpenRouter key, which we never pay for', () => {
-        expect(settingsFor({ provider: AIProviderName.OPENROUTER })).toEqual({})
+    it('asks a customer own OpenRouter key for its cost too, so AI usage shows what the provider charged', () => {
+        expect(settingsFor({ provider: AIProviderName.OPENROUTER })).toMatchObject({ usage: { include: true } })
     })
 })

@@ -17,6 +17,8 @@ import { aiToolConfigModule } from './ai/ai-tool-config.module'
 import { aiUsageHooks } from './ai/ai-usage-hooks'
 import { aiUsageService } from './ai/ai-usage-service'
 import { platformModelTierModule } from './ai/platform-model-tier.module'
+import { aiUsageJobs } from './ai/usage/ai-usage-jobs'
+import { aiUsageModule } from './ai/usage/ai-usage.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -24,6 +26,7 @@ import { platformAppConnectionModule } from './app-connection/platform-app-conne
 import { authenticationModule } from './authentication/authentication.module'
 import { otpModule } from './authentication/otp/otp-module'
 import { passwordlessAuthModule } from './authentication/passwordless-auth.module'
+import { verifiedDomainHooks } from './authentication/verified-domain-hooks'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { oidcModule } from './core/security/oidc/oidc.module'
@@ -46,6 +49,7 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
+import { authnSsoSamlService } from './ee/authentication/saml-authn/authn-sso-saml-service'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { flowApprovalModule } from './ee/flows/flow-approval/flow-approval.module'
@@ -67,6 +71,8 @@ import { platformTeardownJobs } from './ee/platform/platform-teardown-jobs'
 import { eventDestinationEntitlementHooks } from './ee/platform-webhooks/event-destination-entitlement-hooks'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
+import { personalProjectsModule } from './ee/projects/personal-projects/personal-projects.module'
+import { personalProjectsService } from './ee/projects/personal-projects/personal-projects.service'
 import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
@@ -77,6 +83,7 @@ import { projectRoleModule } from './ee/projects/project-role/project-role.modul
 import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
+import { userEnterpriseHooks } from './ee/users/ee-user-hooks'
 import { userModule } from './ee/users/user.module'
 import { eventDestinationHooks } from './event-destinations/event-destinations-hooks'
 import { fileModule } from './file/file.module'
@@ -124,6 +131,7 @@ import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
 import { platformUserModule } from './user/platform/platform-user-module'
+import { userHooks } from './user/user-hooks'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
 import { resumePageHooks } from './waitpoints/resume-page-hooks'
@@ -289,6 +297,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS, (data) => personalProjectsService(app.log).createMissingHandler(data))
 
     systemJobHandlers.registerJobHandler(SystemJobName.CHAT_STALE_SWEEP, async () => {
         await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
@@ -373,6 +382,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
+            await app.register(personalProjectsModule)
             await app.register(projectReleaseModule)
             await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
@@ -385,10 +395,14 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
+            userHooks.set(userEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
+            await aiUsageJobs.register(app.log)
+            await app.register(aiUsageModule)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            verifiedDomainHooks.set(authnSsoSamlService)
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
@@ -415,6 +429,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
+            await app.register(personalProjectsModule)
             await app.register(projectReleaseModule)
             await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
@@ -427,9 +442,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
+            userHooks.set(userEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
+            await aiUsageJobs.register(app.log)
+            await app.register(aiUsageModule)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)

@@ -1,15 +1,20 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { raindropAuth } from '../auth';
-import { raindropCommons } from '../common';
+import { raindropClient } from '../common/client';
+import { raindropProps } from '../common/props';
+import type { RaindropItem } from '../common/types';
+import { raindropUtils } from '../common/utils';
+import { updateRaindropOutputSchema } from '../output-schemas';
 
 export const updateRaindropAction = createAction({
   auth: raindropAuth,
   name: 'update_raindrop',
+  outputSchema: updateRaindropOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Bookmark',
   description: 'Updates the details of an existing bookmark',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates an existing Raindrop.io bookmark identified by its numeric ID, changing any of title, excerpt, note, tags, collection, or favourite flag. Only supplied fields are changed; supplying tags replaces the existing tag list. Idempotent: repeating the same update yields the same final state.',
@@ -37,7 +42,7 @@ export const updateRaindropAction = createAction({
       description: 'Updated personal note attached to the bookmark',
       required: false,
     }),
-    collection_id: raindropCommons.collectionDropdown,
+    collection_id: raindropProps.collectionId({ required: false }),
     tags: Property.Array({
       displayName: 'Tags',
       description:
@@ -53,7 +58,6 @@ export const updateRaindropAction = createAction({
   async run(context) {
     const { raindrop_id, title, excerpt, note, collection_id, tags, important } =
       context.propsValue;
-    const accessToken = context.auth.access_token;
 
     const body: Record<string, unknown> = {};
     if (title !== undefined && title !== null) body['title'] = title;
@@ -62,51 +66,17 @@ export const updateRaindropAction = createAction({
     if (collection_id !== null && collection_id !== undefined) {
       body['collection'] = { $id: collection_id };
     }
-    if (tags && (tags as string[]).length > 0) body['tags'] = tags;
+    if (tags && tags.length > 0) body['tags'] = tags;
     if (important !== undefined && important !== null) body['important'] = important;
 
-    const response = await httpClient.sendRequest<{ item: RaindropApiResponse }>({
+    const response = await raindropClient.request<{ item: RaindropItem }>({
+      auth: context.auth,
       method: HttpMethod.PUT,
-      url: `${raindropCommons.BASE_URL}/raindrop/${raindrop_id}`,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
+      path: `/raindrop/${raindrop_id}`,
+      headers: { 'Content-Type': 'application/json' },
       body,
     });
 
-    return flattenResponse(response.body.item);
+    return raindropUtils.flattenRaindrop({ raindrop: response.item });
   },
 });
-
-function flattenResponse(item: RaindropApiResponse) {
-  return {
-    id: item._id,
-    title: item.title ?? null,
-    excerpt: item.excerpt ?? null,
-    note: item.note ?? null,
-    link: item.link ?? null,
-    type: item.type ?? null,
-    tags: Array.isArray(item.tags) ? item.tags.join(', ') : null,
-    important: item.important ?? false,
-    collection_id: item.collection?.$id ?? null,
-    cover: item.cover ?? null,
-    created_at: item.created ?? null,
-    updated_at: item.lastUpdate ?? null,
-  };
-}
-
-type RaindropApiResponse = {
-  _id: number;
-  title?: string;
-  excerpt?: string;
-  note?: string;
-  link?: string;
-  type?: string;
-  tags?: string[];
-  important?: boolean;
-  collection?: { $id: number };
-  cover?: string;
-  created?: string;
-  lastUpdate?: string;
-};

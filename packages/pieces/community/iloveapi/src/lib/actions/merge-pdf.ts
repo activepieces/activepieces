@@ -1,8 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { regionOf, rowFiles, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
-import { UploadInput } from '../common/client';
 
 export const mergePdfAction = createAction({
   auth: iloveapiAuth,
@@ -12,6 +12,7 @@ export const mergePdfAction = createAction({
   description:
     'Combine multiple PDF files into a single document, in the order provided.',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Concatenate two or more PDF files into one document, preserving the order in which they are listed. Requires at least two input files. Each run generates a new merged file, so re-running does not deduplicate against earlier outputs.',
@@ -39,19 +40,12 @@ export const mergePdfAction = createAction({
       throw new Error('At least two PDF files are required for merging.');
     }
 
-    const uploads: UploadInput[] = files.map((entry) => {
-      const file = (entry as { file: { base64: string; filename: string } }).file;
-      if (!file?.base64) {
-        throw new Error('Each row must include a file.');
-      }
-      return {
-        kind: 'file',
-        file: { base64: file.base64, filename: file.filename },
-      };
-    });
+    const uploads = rowFiles({ rows: files, label: 'PDF Files' });
 
     return await runAndStoreResult({
       auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'merge',
       uploads,
