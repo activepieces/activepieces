@@ -23,8 +23,10 @@ import {
 import { aiUsageHooks } from '@/features/ai-usage';
 import { cn } from '@/lib/utils';
 
+import { AiCenterTrail } from '../components/ai-center-trail';
+
 import { usageAdapters } from './usage-adapters';
-import { DeltaChip, ItemIcon, USAGE_LIST_GRID, UsageTrail } from './usage-bits';
+import { DeltaChip, ItemIcon, USAGE_LIST_GRID } from './usage-bits';
 import { UsageEmpty } from './usage-empty';
 import { usageFormat } from './usage-format';
 import {
@@ -53,7 +55,7 @@ export function UsageListPage() {
     <>
       <AdminPageHeader
         title={
-          <UsageTrail
+          <AiCenterTrail
             crumbs={[
               { label: t('AI usage'), to: `/platform/ai/usage${view.search}` },
             ]}

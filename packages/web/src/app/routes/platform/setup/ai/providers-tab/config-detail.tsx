@@ -54,6 +54,8 @@ import { platformModelTierQueries } from '@/features/platform-admin/hooks/platfo
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
+import { AiCenterTrail } from '../components/ai-center-trail';
+
 import { KeyModelList } from './key-model-list';
 import { KeyStatusBadge } from './key-status';
 import { ManualModelList } from './manual-model-list';
@@ -221,8 +223,12 @@ export function ConfigDetail({
   return (
     <>
       <AdminPageHeader
-        title={draft.name}
-        back={{ label: t('Providers'), to: '/platform/ai' }}
+        title={
+          <AiCenterTrail
+            crumbs={[{ label: t('Providers'), to: '/platform/ai' }]}
+            current={draft.name}
+          />
+        }
         badge={<KeyStatusBadge status={config.status} />}
         description={
           <span className="flex items-center gap-2">
