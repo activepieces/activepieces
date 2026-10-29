@@ -10,7 +10,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { defaultSettingsMiddleware, ImageModel, LanguageModel, LanguageModelMiddleware, wrapLanguageModel } from 'ai'
+import { defaultSettingsMiddleware, ImageModel, LanguageModel, LanguageModelMiddleware, simulateStreamingMiddleware, wrapLanguageModel } from 'ai'
 
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
@@ -199,17 +199,60 @@ export function withoutServerStorage({ model, providerOptionsName }: {
 }
 
 const autoToolChoiceOnly: LanguageModelMiddleware = {
-    transformParams: async ({ params }) => {
-        const { toolChoice, tools } = params
+    wrapGenerate: async ({ params, model }) => generateWithAutoToolChoice({ params, model }),
+    wrapStream: async ({ params, model, doStream }) => {
+        const { toolChoice } = params
         if (isNil(toolChoice) || toolChoice.type === 'auto') {
-            return params
+            return doStream()
         }
         if (toolChoice.type === 'none') {
-            return { ...params, tools: undefined, toolChoice: undefined }
+            return model.doStream(withoutTools({ params }))
         }
-        const kept = toolChoice.type === 'tool' ? tools?.filter((tool) => tool.name === toolChoice.toolName) : tools
-        return { ...params, tools: kept, toolChoice: { type: 'auto' } }
+        return simulatedStreaming.wrapStream!({
+            params,
+            model,
+            doStream,
+            doGenerate: () => generateWithAutoToolChoice({ params, model }),
+        })
     },
+}
+
+async function generateWithAutoToolChoice({ params, model }: MiddlewareCall): Promise<GenerateResult> {
+    const { toolChoice, tools } = params
+    if (isNil(toolChoice) || toolChoice.type === 'auto') {
+        return model.doGenerate(params)
+    }
+    if (toolChoice.type === 'none') {
+        return model.doGenerate(withoutTools({ params }))
+    }
+    const toolName = toolChoice.type === 'tool' ? toolChoice.toolName : undefined
+    const relaxed: MiddlewareCall['params'] = {
+        ...params,
+        tools: isNil(toolName) ? tools : tools?.filter((tool) => tool.name === toolName),
+        toolChoice: { type: 'auto' },
+    }
+    const first = await model.doGenerate(withToolInstruction({ params: relaxed, toolName, retry: false }))
+    if (first.content.some((part) => part.type === 'tool-call')) {
+        return first
+    }
+    return model.doGenerate(withToolInstruction({ params: relaxed, toolName, retry: true }))
+}
+
+function withoutTools({ params }: { params: MiddlewareCall['params'] }): MiddlewareCall['params'] {
+    return { ...params, tools: undefined, toolChoice: undefined }
+}
+
+function withToolInstruction({ params, toolName, retry }: {
+    params: MiddlewareCall['params']
+    toolName: string | undefined
+    retry: boolean
+}): MiddlewareCall['params'] {
+    const target = isNil(toolName) ? 'one of the available tools' : `the ${toolName} tool`
+    const reminder = retry ? 'Your previous reply did not call a tool. ' : ''
+    return {
+        ...params,
+        prompt: [...params.prompt, { role: 'system', content: `${reminder}Reply only by calling ${target}. Do not reply with text.` }],
+    }
 }
 
 function createOpenRouterChatModel({ apiKey, modelId, options }: {
@@ -236,6 +279,12 @@ export function buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHead
         [apiKeyHeader]: apiKey,
     }
 }
+
+const simulatedStreaming = simulateStreamingMiddleware()
+
+type MiddlewareCall = Pick<Parameters<NonNullable<LanguageModelMiddleware['wrapGenerate']>>[0], 'params' | 'model'>
+
+type GenerateResult = Awaited<ReturnType<MiddlewareCall['model']['doGenerate']>>
 
 export type LanguageModelOptions = {
     onOutcome?: ProviderOutcomeReporter
