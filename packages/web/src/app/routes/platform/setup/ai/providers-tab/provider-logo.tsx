@@ -18,7 +18,6 @@ export function ProviderLogo({
       src={info.logoUrl}
       alt={info.name}
       size={size === 'sm' ? undefined : 'md'}
-      border={size === 'md'}
       className={size === 'sm' ? 'size-4' : 'rounded-lg'}
     />
   );
