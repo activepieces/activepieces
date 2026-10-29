@@ -1,82 +1,30 @@
-import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { getNotebooksDropdown, getSectionsByNotebookDropdown, getPagesBySectionDropdown } from '../common';
-import { oneNoteAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { microsoftOneNoteAuth } from '../auth';
+import { microsoftOneNoteClient } from '../common/client';
+import { microsoftOneNoteProps } from '../common/props';
+import { appendNoteOutputSchema } from '../output-schemas';
 
-export const appendNote = createAction({
-	auth: oneNoteAuth,
+export const appendNoteAction = createAction({
+	auth: microsoftOneNoteAuth,
 	name: 'append_note',
+	outputSchema: appendNoteOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Append Note',
 	description: 'Append content to the end of an existing note.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Appends content to the body of an existing OneNote page (note), identified by notebook, section, and page. Use to add to a note rather than replace it; the content type can be a paragraph, list item, heading, or raw HTML. Not idempotent: each call appends again, so repeating duplicates the content.', idempotent: false },
 	props: {
-		notebook_id: Property.Dropdown({
-			auth: oneNoteAuth,
-			displayName: 'Notebook',
+		notebook_id: microsoftOneNoteProps.notebookId({
+			required: true,
 			description: 'The notebook containing the page to append to.',
-			required: true,
-			refreshers: [],
-			options: async ({ auth }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				return await getNotebooksDropdown(auth as OAuth2PropertyValue);
-			},
 		}),
-		section_id: Property.Dropdown({
-			auth: oneNoteAuth,
-			displayName: 'Section',
+		section_id: microsoftOneNoteProps.sectionId({
+			required: true,
 			description: 'The section containing the page to append to.',
-			required: true,
-			refreshers: ['notebook_id'],
-			options: async ({ auth, notebook_id }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				if (!notebook_id) {
-					return {
-						disabled: true,
-						placeholder: 'Select a notebook first',
-						options: [],
-					};
-				}
-				return await getSectionsByNotebookDropdown(auth as OAuth2PropertyValue, notebook_id as string);
-			},
 		}),
-		page_id: Property.Dropdown({
-			auth: oneNoteAuth,
-			displayName: 'Page',
-			description: 'The page to append content to.',
+		page_id: microsoftOneNoteProps.pageId({
 			required: true,
-			refreshers: ['section_id'],
-			options: async ({ auth, section_id }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				if (!section_id) {
-					return {
-						disabled: true,
-						placeholder: 'Select a section first',
-						options: [],
-					};
-				}
-				return await getPagesBySectionDropdown(auth as OAuth2PropertyValue, section_id as string);
-			},
+			description: 'The page to append content to.',
 		}),
 		content_type: Property.StaticDropdown({
 			displayName: 'Content Type',
@@ -118,17 +66,10 @@ export const appendNote = createAction({
 		const { auth, propsValue } = context;
 		const { page_id, content_type, content, heading_level } = propsValue;
 
-		const authValue = auth as OAuth2PropertyValue;
-		const cloud = authValue.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(authValue.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = microsoftOneNoteClient.create({ auth });
 
 		let htmlContent: string;
-		
+
 		switch (content_type) {
 			case 'paragraph':
 				htmlContent = `<p>${content}</p>`;
@@ -168,8 +109,8 @@ export const appendNote = createAction({
 				contentType: content_type,
 				appendedContent: htmlContent,
 			};
-		} catch (error: any) {
-			throw new Error(`Failed to append content: ${error.message || 'Unknown error'}`);
+		} catch (error) {
+			throw new Error(`Failed to append content: ${(error instanceof Error && error.message) || 'Unknown error'}`);
 		}
 	},
 });
