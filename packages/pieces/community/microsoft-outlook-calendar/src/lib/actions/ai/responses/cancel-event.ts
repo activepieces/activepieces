@@ -15,7 +15,7 @@ export const outlookCalendarCancelEventAction = createAction({
   classification: 'DESTRUCTIVE',
   aiMetadata: {
     description:
-      'Cancels a meeting the signed-in user organizes, sends a cancellation with the optional comment to every attendee, and removes the event. Only the organizer can cancel; an attendee uses Decline Event, and Delete Event removes an event without notifying anyone. Takes the event ID from List Events or Get Calendar View.',
+      'Cancels a meeting the signed-in user organizes, sends a cancellation with the optional comment to every attendee, and removes the event. Only the organizer can cancel; an attendee uses Decline Event. Delete Event also sends the attendees a cancellation, but without a comment. Takes the event ID from List Events or Get Calendar View.',
     idempotent: false,
   },
   props: {

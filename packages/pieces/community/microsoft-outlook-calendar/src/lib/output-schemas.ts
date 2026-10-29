@@ -205,7 +205,20 @@ export const outlookCalendarEventInstanceListOutputSchema: OutputSchema = {
 
 export const outlookCalendarEventDeltaOutputSchema: OutputSchema = {
   fields: [
-    { key: 'value', label: 'Changed Events', labelKey: 'subject', listItems: eventFieldsWithoutListDetails },
+    {
+      key: 'value',
+      label: 'Changed Events',
+      labelKey: 'subject',
+      listItems: [
+        ...eventFieldsWithoutListDetails,
+        {
+          key: '@removed',
+          label: 'Removed',
+          value: "['@removed']",
+          children: [{ key: 'reason', label: 'Removal Reason' }],
+        },
+      ],
+    },
     nextLinkField,
     { key: '@odata.deltaLink', label: 'Delta URL', value: "['@odata.deltaLink']", format: 'url' },
   ],
