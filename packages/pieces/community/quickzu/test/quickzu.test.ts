@@ -226,11 +226,17 @@ describe('update product', () => {
   it('skips the lookup when every required field is given', async () => {
     const send = mockSend({ _id: 'p1' });
     await updateProductAction.run(
-      actionContext({ productId: 'p1', name: 'N', categoryId: 'c2', mrp: 5, price: 4, unit: 'piece', value_per_unit: 1, availability: true, exclude_tax: false, enable_variants: false, status: true, nonveg: true })
+      actionContext({ productId: 'p1', name: 'N', categoryId: 'c2', mrp: 5, price: 4, unit: 'piece', value_per_unit: 1, availability: 'yes', exclude_tax: 'no', enable_variants: false, status: true, nonveg: 'yes' })
     );
     expect(send).toHaveBeenCalledTimes(1);
     expect(send.mock.calls[0][0].method).toBe('PUT');
-    expect(send.mock.calls[0][0].body).toMatchObject({ meta: { nonveg: true } });
+    expect(send.mock.calls[0][0].body).toMatchObject({
+      availability: true,
+      exclude_tax: false,
+      enable_variants: false,
+      status: true,
+      meta: { nonveg: true },
+    });
   });
 
   it('keeps every unset flag at the product\'s current value on a price-only update', async () => {
@@ -248,7 +254,7 @@ describe('update product', () => {
       }
       return { status: 200, headers: {}, body: { _id: 'p1' } };
     });
-    await updateProductAction.run(actionContext({ productId: 'p1', price: 15, status: false }));
+    await updateProductAction.run(actionContext({ productId: 'p1', price: 15, status: 'no' }));
     const put = send.mock.calls.find(([request]) => request.method === 'PUT');
     expect(put?.[0].body).toMatchObject({
       price: 15,

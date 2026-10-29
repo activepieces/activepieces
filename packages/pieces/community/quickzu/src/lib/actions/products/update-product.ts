@@ -94,7 +94,13 @@ export const updateProductAction = createAction({
       client,
       productId: id,
       changes,
-      flags: { availability, exclude_tax, enable_variants, status, nonveg },
+      flags: {
+        availability: toFlag(availability),
+        exclude_tax: toFlag(exclude_tax),
+        enable_variants: toFlag(enable_variants),
+        status: toFlag(status),
+        nonveg: toFlag(nonveg),
+      },
     });
 
     return await client.updateProduct({
@@ -158,18 +164,25 @@ async function fillRequiredProductFields({
 }
 
 function keepOrSet(displayName: string) {
-  return Property.StaticDropdown<boolean>({
+  return Property.StaticDropdown<string>({
     displayName,
     required: false,
     options: {
       disabled: false,
       placeholder: 'Keep current setting',
       options: [
-        { label: 'Yes', value: true },
-        { label: 'No', value: false },
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
       ],
     },
   });
+}
+
+// Saved flows from the Checkbox era store true/false; the dropdown stores 'yes'/'no'.
+function toFlag(value: unknown): boolean | undefined {
+  if (value === true || value === 'yes') return true;
+  if (value === false || value === 'no') return false;
+  return undefined;
 }
 
 type ProductFlags = {
