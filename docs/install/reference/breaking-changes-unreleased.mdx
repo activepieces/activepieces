@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
+
+The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows.
+
+#### What you need to do
+
+If a flow maps fields from Order Created, re-map them without the `body` prefix (for example `payload.id` instead of `body.payload.id`). Agents that used the discount actions get new agent versions named **Create Product Discount** and **Create Promo Code**, which take plain IDs and values.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.

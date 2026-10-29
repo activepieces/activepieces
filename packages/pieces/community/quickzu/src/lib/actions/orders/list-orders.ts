@@ -1,10 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
 import { makeClient } from '../../common';
 
 export const listOrdersAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_list_orders',
+  outputSchema: quickzuOutputSchemas.orderList,
   classification: 'SEARCH',
   displayName: 'List Orders',
   description: 'Retrieves orders of store.',
@@ -30,6 +32,6 @@ export const listOrdersAction = createAction({
     const { page, limit } = context.propsValue;
 
     const client = makeClient(context.auth);
-    return await client.listOrders(page, limit);
+    return await client.listOrders({ page, limit });
   },
 });
