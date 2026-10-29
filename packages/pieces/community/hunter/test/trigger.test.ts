@@ -101,7 +101,8 @@ describe('new lead trigger', () => {
     await newLeadTrigger.onEnable(fakeContext({ store, isRepublish: true }));
     expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(501);
     const output = await newLeadTrigger.run(fakeContext({ store }));
-    expect(output.map((lead) => (lead as { id: number }).id)).toEqual([502, 503]);
+    expect(output).toMatchObject([{ id: 502 }, { id: 503 }]);
+    expect(output).toHaveLength(2);
   });
 
   test('a republish without a stored cursor sets the baseline', async () => {
