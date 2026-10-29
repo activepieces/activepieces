@@ -86,6 +86,13 @@ export const newTransaction = createTrigger({
     subtransactions: [],
   },
   async onEnable(context) {
+    if (
+      context.isRepublish &&
+      readCheckpoint({ value: await context.store.get<unknown>(SEEN_KEY) }) !==
+        null
+    ) {
+      return;
+    }
     const { seen } = await pollNewTransactions({
       auth: context.auth.props,
       accountId: optionalId(context.propsValue.account_id),
@@ -93,8 +100,10 @@ export const newTransaction = createTrigger({
     });
     await saveSeenIds({ store: context.store, ids: seen });
   },
-  async onDisable(context) {
-    await saveSeenIds({ store: context.store, ids: null });
+  async onDisable() {
+    // Keep the checkpoint: a republish runs onDisable then onEnable, and
+    // clearing here would silently drop transactions added in between.
+    // Turning the flow off and on re-baselines in onEnable instead.
   },
   async run(context) {
     const stored = await loadSeenIds({ store: context.store });

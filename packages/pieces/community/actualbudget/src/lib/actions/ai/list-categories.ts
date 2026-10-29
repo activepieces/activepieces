@@ -6,7 +6,7 @@ import { actualOutputSchemas } from '../../common/output-schemas';
 export const listCategories = createAction({
   auth: actualBudgetAuth,
   name: 'list_categories',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Categories',
   description: 'Lists category groups with their categories.',
   audience: 'ai',

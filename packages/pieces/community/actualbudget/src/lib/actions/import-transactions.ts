@@ -46,7 +46,9 @@ export function validateTransactionRows(
       value: row['date'],
       field: `Transaction #${index + 1} date`,
     });
-    const amount = row['amount'];
+    const raw = row['amount'];
+    const amount =
+      typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : raw;
     if (
       amount !== undefined &&
       amount !== null &&
@@ -56,12 +58,12 @@ export function validateTransactionRows(
         `Transaction #${
           index + 1
         } amount must be an integer in cents (e.g. -1250 for -12.50), got ${JSON.stringify(
-          amount
+          raw
         )}.`,
         'invalid-input'
       );
     }
-    return row;
+    return amount === raw ? row : { ...row, amount };
   });
 }
 
@@ -88,7 +90,7 @@ export const importTransactions = createAction({
     transactions: Property.Json({
       displayName: 'Transactions',
       description:
-        'JSON array of transactions. date = YYYY-MM-DD, amount = integer cents (negative = expense, -1250 = -12.50). Optional: payee_name, category (ID), notes, imported_id, cleared.',
+        'JSON array of transactions. date = YYYY-MM-DD, amount = integer cents as a number or string like "-1250" (negative = expense, -1250 = -12.50). Optional: payee_name, category (ID), notes, imported_id, cleared.',
       required: true,
       defaultValue: [
         {

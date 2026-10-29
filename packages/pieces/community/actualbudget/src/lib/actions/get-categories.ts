@@ -6,7 +6,7 @@ import { actualOutputSchemas } from '../common/output-schemas';
 export const getCategories = createAction({
   auth: actualBudgetAuth,
   name: 'get_categories',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'Get Categories',
   description: 'Gets every budget category as a flat list.',
   audience: 'human',

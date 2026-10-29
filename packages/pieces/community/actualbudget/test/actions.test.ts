@@ -167,6 +167,27 @@ describe('import transactions (bulk)', () => {
       { date: '2026-10-01', amount: -1250 },
     ]);
   });
+  test('accepts integer strings from sheets and CSVs, rejects decimals', async () => {
+    await runAction({
+      action: importTransactions,
+      propsValue: {
+        account_id: 'a1',
+        transactions: [{ date: '2026-10-01', amount: '-1250' }],
+      },
+    });
+    expect(fake.importTransactions).toHaveBeenCalledWith('a1', [
+      { date: '2026-10-01', amount: -1250 },
+    ]);
+    await expect(
+      runAction({
+        action: importTransactions,
+        propsValue: {
+          account_id: 'a1',
+          transactions: [{ date: '2026-10-01', amount: '-12.50' }],
+        },
+      })
+    ).rejects.toThrow('integer in cents');
+  });
 });
 
 describe('delete transaction', () => {

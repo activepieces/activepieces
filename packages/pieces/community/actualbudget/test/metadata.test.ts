@@ -42,8 +42,10 @@ describe('piece metadata', () => {
       actions.map((a) => [a.name, a.classification])
     );
     expect(cls).toMatchObject({
-      get_accounts: 'READ',
-      get_categories: 'READ',
+      get_accounts: 'SEARCH',
+      get_categories: 'SEARCH',
+      list_accounts: 'SEARCH',
+      list_categories: 'SEARCH',
       delete_transaction: 'DESTRUCTIVE',
       find_transactions: 'SEARCH',
     });
