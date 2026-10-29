@@ -49,15 +49,18 @@ export const apApplyFlowOperationsTool = ({ mcp, userId }: McpToolContext, log: 
             }
 
             const loadTrigger = async (): Promise<FlowTrigger> => (await flowService(log).getOnePopulatedOrThrow({ id: flowId, projectId: mcp.projectId })).version.trigger
-            const { applied, failure } = await applyInOrder({ flowId, operations, toolsByType, disabledTools: mcp.disabledTools ?? [], loadTrigger })
+            const { applied, failure } = await applyInOrder({ flowId, operations, toolsByType, disabledTools: mcp.disabledTools ?? [], loadTrigger, publishedWarning: mcpUtils.publishedFlowWarning(flow.publishedVersionId) })
 
             if (!isNil(failure)) {
                 const failedLine = `❌ Operation ${failure.index + 1} (${failure.type}) failed: ${failure.reason}`
                 const { error: rollbackError } = applied.length === 0
                     ? { error: null }
                     : await tryCatch(() => restoreDraft({ flow, projectId: mcp.projectId, platformId: project.platformId, userId, log }))
+                const deletedTestData = applied.some((operation) => operation.type === 'delete_step' || operation.type === 'delete_branch')
+                    ? ' Saved test data of the deleted steps could not be restored, so test them again.'
+                    : ''
                 const outcome = isNil(rollbackError)
-                    ? `Nothing was changed: the flow is as it was before this call (${applied.length} earlier operation(s) undone). Fix operation ${failure.index + 1} and resend all operations.`
+                    ? `Nothing was changed: the flow is as it was before this call (${applied.length} earlier operation(s) undone).${deletedTestData} Fix operation ${failure.index + 1} and resend all operations.`
                     : `⚠️ Rollback failed (${rollbackError.message}). Operations 1-${applied.length} are still applied; check with ap_flow_structure.`
                 return {
                     content: [{ type: 'text', text: `${failedLine}\n${outcome}` }],
@@ -83,12 +86,13 @@ export const apApplyFlowOperationsTool = ({ mcp, userId }: McpToolContext, log: 
     }
 }
 
-async function applyInOrder({ flowId, operations, toolsByType, disabledTools, loadTrigger }: {
+async function applyInOrder({ flowId, operations, toolsByType, disabledTools, loadTrigger, publishedWarning }: {
     flowId: string
     operations: Operation[]
     toolsByType: Record<OperationType, McpToolDefinition>
     disabledTools: string[]
     loadTrigger: () => Promise<FlowTrigger>
+    publishedWarning: string
 }): Promise<{ applied: AppliedOperation[], failure: FailedOperation | null }> {
     const applied: AppliedOperation[] = []
     for (const [index, { type, ...fields }] of operations.entries()) {
@@ -103,7 +107,7 @@ async function applyInOrder({ flowId, operations, toolsByType, disabledTools, lo
         if (result.isError === true || agentToolClassification.hasFailureTextPrefix(text)) {
             return { applied, failure: { index, type, reason: text.replace(/^❌\s*/, '') } }
         }
-        applied.push({ index, type, result: text.split('\n')[0] })
+        applied.push({ index, type, result: text.replace(publishedWarning, '').trim() })
     }
     return { applied, failure: null }
 }
@@ -179,9 +183,10 @@ async function withBranchTarget({ type, fields, loadTrigger }: {
     const routerRef = [fields['routerStepName'], fields['stepName'], fields['parentStepName'], fields['routerName']].find((value): value is string => typeof value === 'string')
     const routers = flowStructureUtil.getAllSteps(await loadTrigger()).flatMap((step) => step.type === FlowActionType.ROUTER ? [step] : [])
     const withBranch = isNil(branchName) ? [] : routers.filter((router) => router.settings.branches.some((branch) => branch.branchName.trim().toLowerCase() === branchName))
-    const router = routers.find((candidate) => candidate.name === routerRef || candidate.displayName === routerRef)
-        ?? (withBranch.length === 1 ? withBranch[0] : undefined)
-        ?? (routers.length === 1 ? routers[0] : undefined)
+    const named = routers.find((candidate) => candidate.name === routerRef || candidate.displayName === routerRef)
+    const router = typeof fields['routerStepName'] === 'string'
+        ? named
+        : (withBranch.length === 1 ? withBranch[0] : undefined) ?? (routers.length === 1 ? routers[0] : undefined)
     if (isNil(router)) {
         return fields
     }

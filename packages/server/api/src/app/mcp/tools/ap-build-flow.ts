@@ -320,13 +320,13 @@ function parentsFirst<T extends { displayName: string, parentStepName?: string }
     const ordered: T[] = []
     let remaining = steps
     while (remaining.length > 0) {
-        const ready = remaining.filter((step) => isNil(step.parentStepName) || step.parentStepName === step.displayName || !batchNames.has(step.parentStepName) || placed.has(step.parentStepName))
-        if (ready.length === 0) {
+        const next = remaining.find((step) => isNil(step.parentStepName) || step.parentStepName === step.displayName || !batchNames.has(step.parentStepName) || placed.has(step.parentStepName))
+        if (isNil(next)) {
             return [...ordered, ...remaining]
         }
-        ready.forEach((step) => placed.add(step.displayName))
-        ordered.push(...ready)
-        remaining = remaining.filter((step) => !ready.includes(step))
+        placed.add(next.displayName)
+        ordered.push(next)
+        remaining = remaining.filter((step) => step !== next)
     }
     return ordered
 }
