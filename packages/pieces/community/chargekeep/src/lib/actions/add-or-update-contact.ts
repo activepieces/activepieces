@@ -1,16 +1,19 @@
-// add-or-update-contact.ts
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { chargekeepClient } from '../common/client';
+import { chargekeepServices } from '../common/services';
+import { contactCommon } from '../common/contact';
+import { chargekeepOutputSchemas } from '../common/output-schemas';
 
 export const addOrUpdateContact = createAction({
   name: 'addOrUpdateContact',
   classification: 'WRITE',
   displayName: 'Add or Update Contact',
-  description: 'Creates a new contact.',
-  audience: 'both',
-  aiMetadata: { description: 'Imports a contact (Lead, Client, or Partner) into the ChargeKeep/Sperse CRM, creating it or updating an existing record. When Match Existing is enabled it upserts by matching on email and full name (or the supplied Contact ID); otherwise it always creates a new record. Use to add or sync a person; requires First Name or Last Name (or Company Name if both are empty). Repeating with the same identifying input upserts the same contact rather than duplicating.', idempotent: true },
+  description: 'Creates a contact, or updates it when it matches an existing one.',
+  audience: 'human',
+  aiMetadata: { description: 'Imports a contact (Lead, Client, or Partner) into the ChargeKeep/Sperse CRM, creating it or updating an existing record. When Match Existing is enabled it upserts by matching on email and full name (or the supplied Contact ID); otherwise it always creates a new record. Use to add or sync a person; requires at least one of First Name, Last Name, Company Name or an email. Repeating with the same identifying input upserts the same contact rather than duplicating.', idempotent: true },
   auth: chargekeepAuth,
+  outputSchema: chargekeepOutputSchemas.importedContact,
   props: {
     importType: Property.StaticDropdown({
       displayName: 'Contact Type',
@@ -56,14 +59,12 @@ export const addOrUpdateContact = createAction({
     }),
     contactId: Property.Number({
       displayName: 'Contact ID',
-      description: 'Sperse Contact ID. Will be used for looking a client',
-      defaultValue: 0,
+      description: 'ChargeKeep contact ID of an existing contact to update. Leave empty to match by email and name, or to create a new contact.',
       required: false,
     }),
-    // fullname
     fullName: Property.ShortText({
       displayName: 'Full Name',
-      description: "The contact's full name.",
+      description: "The contact's full name. Used to fill First Name and Last Name when both are empty.",
       required: false,
     }),
     namePrefix: Property.ShortText({
@@ -73,8 +74,8 @@ export const addOrUpdateContact = createAction({
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
-      description: 'Required if Last Name and Company Name fields are empty.',
-      required: true,
+      description: 'Required if Last Name, Company Name and email fields are empty.',
+      required: false,
     }),
     middleName: Property.ShortText({
       displayName: 'Middle Name',
@@ -83,8 +84,8 @@ export const addOrUpdateContact = createAction({
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
-      description: 'Required if First Name and Company Name fields are empty.',
-      required: true,
+      description: 'Required if First Name, Company Name and email fields are empty.',
+      required: false,
     }),
     nickName: Property.ShortText({
       displayName: 'Nick Name',
@@ -96,7 +97,6 @@ export const addOrUpdateContact = createAction({
       description: 'Additional information about the contact e.g PhD.',
       required: false,
     }),
-    // personal info
     gender: Property.StaticDropdown({
       displayName: 'Gender',
       required: false,
@@ -129,11 +129,10 @@ export const addOrUpdateContact = createAction({
       description: "The contact's social security number.",
       required: false,
     }),
-    // business info
     companyName: Property.ShortText({
       displayName: 'Company Name',
       description:
-        "Name of the contact's company (This field is mandatory if the First Name and Last Name fields are empty).",
+        "Name of the contact's company. Required if First Name, Last Name and email fields are empty.",
       required: false,
     }),
     jobTitle: Property.ShortText({
@@ -146,7 +145,6 @@ export const addOrUpdateContact = createAction({
       description: "The company's industry.",
       required: false,
     }),
-    // email
     workEmail1: Property.LongText({
       displayName: 'Work Email',
       description: "The contact's work email.",
@@ -162,7 +160,6 @@ export const addOrUpdateContact = createAction({
       description: "The contact's additional email.",
       required: false,
     }),
-    // phone
     workPhone1: Property.ShortText({
       displayName: 'Work Phone',
       description: "The contact's work/primary phone number.",
@@ -178,7 +175,6 @@ export const addOrUpdateContact = createAction({
       description: "The contact's mobile phone number.",
       required: false,
     }),
-    // links
     webSiteUrl: Property.ShortText({
       displayName: 'Website',
       description: "The contact's company website URL.",
@@ -194,7 +190,6 @@ export const addOrUpdateContact = createAction({
       description: "The contact's person photo URL.",
       required: false,
     }),
-    // Full Address
     street: Property.ShortText({
       displayName: 'Street',
       description:
@@ -235,7 +230,6 @@ export const addOrUpdateContact = createAction({
       description: "The contact's country code.",
       required: false,
     }),
-    // content
     experience: Property.LongText({
       displayName: 'Content',
       description: "The contact's professional experience.",
@@ -268,7 +262,6 @@ export const addOrUpdateContact = createAction({
       description: 'Estimated deal/opportunity amount.',
       required: false,
     }),
-    // tracking info
     leadSource: Property.ShortText({
       displayName: 'Source Code',
       description:
@@ -300,16 +293,25 @@ export const addOrUpdateContact = createAction({
     }),
   },
   async run(context) {
+    const split = contactCommon.splitFullName({ fullName: context.propsValue.fullName, firstName: context.propsValue.firstName, lastName: context.propsValue.lastName });
+    const contactId = chargekeepClient.positiveId({ value: context.propsValue.contactId, label: 'Contact ID' });
+    contactCommon.assertIdentity({
+      firstName: split.firstName,
+      lastName: split.lastName,
+      companyName: context.propsValue.companyName,
+      emails: [context.propsValue.email1, context.propsValue.email2, context.propsValue.workEmail1],
+      contactId,
+    });
     const contact = {
       importType: context.propsValue.importType,
       matchExisting: context.propsValue.matchExisting,
-      contactId: context.propsValue.contactId,
+      contactId,
       personalInfo: {
         fullName: {
           namePrefix: context.propsValue.namePrefix,
-          firstName: context.propsValue.firstName,
+          firstName: split.firstName,
           middleName: context.propsValue.middleName,
-          lastName: context.propsValue.lastName,
+          lastName: split.lastName,
           nameSuffix: context.propsValue.nameSuffix,
           nickName: context.propsValue.nickName,
         },
@@ -359,21 +361,7 @@ export const addOrUpdateContact = createAction({
       entryUrl: context.propsValue.entryUrl,
     };
 
-    const res = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportContact`,
-      headers: {
-        'api-key': context.auth.props.api_key, // Pass API key in headers
-        'Content-Type': 'application/json',
-      },
-      body: {
-        ...contact,
-      },
-    });
-
-    return {
-      status: res.status,
-      body: res.body,
-    };
+    const { mapped } = await chargekeepServices.importContact({ auth: context.auth, body: contact });
+    return mapped();
   },
 });

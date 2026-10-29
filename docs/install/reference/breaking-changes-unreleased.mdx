@@ -8,6 +8,20 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### ChargeKeep 0.4.0: actions return mapped records, triggers start one run per event, and some inputs changed
+
+Add or Update Contact, Add or Update Contact (Extended), Add or Update Subscription, Create Invoice, Create Product and Get Contact Details used to return the raw response as `{ status, body }`. From ChargeKeep 0.4.0 they return the record itself: `contactId` and `leadId` for contact imports, the saved invoice (`invoiceId`, `number`, `lines`, ...), the saved product (`productId`, `priceOptions`, ...), the contact for Get Contact Details, and `{ contactId, subscription }` for subscriptions. Steps also fail when ChargeKeep reports an error in a 200 response.
+
+New Lead, New Payment and New Subscription used to start one run per delivery with the whole delivery (an array of events) as the trigger output. They now start one run per event, with the event object as the output, and skip events they have already processed. Replacing a subscription sends two events, so New Subscription starts two runs.
+
+Create Invoice's **Invoice No.** is now text instead of a number, and Get Contact Details' **User Email** is now a single-line text input. Add or Update Contact (Extended) now defaults **Create User** and **Send Welcome Email** to No.
+
+**Add or Update Contact**, **Add or Update Contact (Extended)** and **Create Invoice** are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps. Agents get **Create or Update Contact** and **Create or Update Invoice** instead.
+
+#### What you need to do
+
+Update later steps that read `{{step.body.result...}}` or `{{step.status}}` to the new fields, for example `{{step.contactId}}` instead of `{{step.body.result.contactId}}`. Update steps after a ChargeKeep trigger that read `{{trigger[0]...}}` to read the event fields directly, for example `{{trigger.id}}`. Re-enter a numeric Invoice No. if the step shows it as empty, and turn Create User and Send Welcome Email on in new Extended contact steps if you want portal users and welcome emails. Create Invoice steps built before 0.4.0 saved **Quantity** as 0 and a fixed **Date** and **Transaction Date** (the old default was taken when the step was created): set a real quantity, and clear or map the dates if each run should use the current date. Remove Add or Update Contact, Add or Update Contact (Extended) and Create Invoice from any agent's tool list and give it Create or Update Contact and Create or Update Invoice. Steps keep running on the version they were built with until you upgrade them.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.

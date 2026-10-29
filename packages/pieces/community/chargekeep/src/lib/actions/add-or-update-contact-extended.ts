@@ -1,15 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { chargekeepClient } from '../common/client';
+import { chargekeepServices } from '../common/services';
+import { contactCommon } from '../common/contact';
+import { chargekeepOutputSchemas } from '../common/output-schemas';
 
 export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContact(extended)',
   classification: 'WRITE',
   displayName: 'Add or Update Contact (Extended)',
   description: 'Adds or updates a contact (extended version)',
-  audience: 'both',
-  aiMetadata: { description: 'Imports a contact into the ChargeKeep/Sperse CRM with the full field set (driving license, military/citizenship flags, company details, tracking/UTM data, custom fields, and up to three inline subscriptions), upserting by Contact ID, Contact XREF, or email/name match. Prefer this over the basic Add or Update Contact when you need those extra fields. Can also provision a portal user and send a welcome email when Create User / Send Welcome Email are enabled (that email is a one-time side effect); otherwise repeating with the same identifying input upserts the same contact.', idempotent: true },
+  audience: 'human',
+  aiMetadata: { description: 'Imports a contact into the ChargeKeep/Sperse CRM with the full field set (driving license, military/citizenship flags, company details, tracking/UTM data, custom fields, and up to three inline subscriptions), upserting by Contact ID, Contact XREF, or email/name match. Prefer this over the basic Add or Update Contact when you need those extra fields. Can also provision a portal user and send a welcome email when Create User / Send Welcome Email are enabled (that email is a one-time side effect); otherwise repeating with the same identifying input upserts the same contact.', idempotent: false },
   auth: chargekeepAuth,
+  outputSchema: chargekeepOutputSchemas.importedContact,
   props: {
     matchExisting: Property.StaticDropdown({
       displayName: 'Match Existing Contact',
@@ -73,8 +77,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     contactId: Property.Number({
       displayName: 'Contact ID',
-      description: 'Sperse Contact ID. Will be used for looking a client',
-      defaultValue: 0,
+      description: 'ChargeKeep contact ID of an existing contact to update. Leave empty to match by XREF, email and name, or to create a new contact.',
       required: false,
     }),
     contactXref: Property.ShortText({
@@ -105,13 +108,12 @@ export const addOrUpdateContactExtended = createAction({
         ],
       },
     }),
-    // user info
     createUser: Property.StaticDropdown({
       displayName: 'Create User',
       description:
-        'If "Yes" then User will be created. Personal email will be used as User Name.',
+        'If "Yes" then a portal user is created for the contact, using the personal email as user name.',
       required: false,
-      defaultValue: true,
+      defaultValue: false,
       options: {
         disabled: false,
         options: [
@@ -129,9 +131,9 @@ export const addOrUpdateContactExtended = createAction({
     sendWelcomeEmail: Property.StaticDropdown({
       displayName: 'Send Welcome Email',
       description:
-        'If "Yes" then Welcome Email will be sent to the newly created user.',
+        'If "Yes" then a welcome email is sent to the newly created user. Only applies when Create User is "Yes".',
       required: false,
-      defaultValue: true,
+      defaultValue: false,
       options: {
         disabled: false,
         options: [
@@ -152,7 +154,6 @@ export const addOrUpdateContactExtended = createAction({
         'If password is not passed then it will be automatically generated.',
       required: false,
     }),
-    // fullname
     namePrefix: Property.ShortText({
       displayName: 'Prefix',
       description: 'The title used to address the contact.',
@@ -160,8 +161,8 @@ export const addOrUpdateContactExtended = createAction({
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
-      description: 'Required if Last Name and Company Name fields are empty.',
-      required: true,
+      description: 'Required if Last Name, Company Name and email fields are empty.',
+      required: false,
     }),
     middleName: Property.ShortText({
       displayName: 'Middle Name',
@@ -170,8 +171,8 @@ export const addOrUpdateContactExtended = createAction({
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
-      description: 'Required if First Name and Company Name fields are empty.',
-      required: true,
+      description: 'Required if First Name, Company Name and email fields are empty.',
+      required: false,
     }),
     nickName: Property.ShortText({
       displayName: 'Nick Name',
@@ -183,7 +184,6 @@ export const addOrUpdateContactExtended = createAction({
       description: 'Additional information about the contact e.g PhD.',
       required: false,
     }),
-    // personal info
     gender: Property.StaticDropdown({
       displayName: 'Gender',
       required: false,
@@ -294,7 +294,6 @@ export const addOrUpdateContactExtended = createAction({
         'Affiliate Code is used for the current person detection as a source of new leads. Alphanumeric characters, underscore and hyphen are allowed.',
       required: false,
     }),
-    // email
     email1: Property.LongText({
       displayName: 'Personal Email',
       description: "The contact's personal email.",
@@ -325,7 +324,6 @@ export const addOrUpdateContactExtended = createAction({
       description: "The contact's other work email.",
       required: false,
     }),
-    // phone
     mobilePhone: Property.ShortText({
       displayName: 'Mobile Phone',
       description: "The contact's primary phone number.",
@@ -366,7 +364,6 @@ export const addOrUpdateContactExtended = createAction({
       description: "The contact's alternative work phone number extension.",
       required: false,
     }),
-    // home address
     home_street: Property.LongText({
       displayName: 'Home Street',
       description:
@@ -407,7 +404,6 @@ export const addOrUpdateContactExtended = createAction({
       description: "The contact's country code.",
       required: false,
     }),
-    // work address
     work_street: Property.LongText({
       displayName: 'Work Street',
       description: "The contact's work address.",
@@ -447,7 +443,6 @@ export const addOrUpdateContactExtended = createAction({
       description: "The contact's work country code.",
       required: false,
     }),
-    // links
     webSiteUrl: Property.LongText({
       displayName: 'Website',
       description: "The contact's company website URL.",
@@ -493,7 +488,6 @@ export const addOrUpdateContactExtended = createAction({
       description: "The contact's Zoom id.",
       required: false,
     }),
-    // content
     experience: Property.LongText({
       displayName: 'Content',
       description: "The contact's professional experience.",
@@ -526,7 +520,6 @@ export const addOrUpdateContactExtended = createAction({
       description: 'Estimated deal/opportunity amount.',
       required: false,
     }),
-    // custom fields
     customField1: Property.LongText({
       displayName: 'Custom Field 1',
       description: 'Additional custom data for the contact record.',
@@ -548,7 +541,6 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Custom Field 5',
       required: false,
     }),
-    // business info
     companyName: Property.LongText({
       displayName: 'Company Name',
       description:
@@ -714,7 +706,6 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Company Affiliate Code',
       required: false,
     }),
-    // company full Address
     company_street: Property.LongText({
       displayName: 'Company Street',
       required: false,
@@ -747,7 +738,6 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Company Country Code',
       required: false,
     }),
-    // tracking info
     leadSource: Property.ShortText({
       displayName: 'Source Code',
       description:
@@ -814,11 +804,10 @@ export const addOrUpdateContactExtended = createAction({
         'The first page of visit through which the contact visited your website.',
       required: false,
     }),
-    // contact Attributes
     leadStageName: Property.ShortText({
       displayName: 'Lead Stage Name',
       description:
-        'The first page of visit through which the contact visited your website.',
+        'Name of the lead pipeline stage to put the lead in.',
       required: false,
     }),
     star: Property.ShortText({
@@ -832,7 +821,6 @@ export const addOrUpdateContactExtended = createAction({
       description: 'This is the static array from 1 to 10',
       required: false,
     }),
-    // UtmParameters
     utmSource: Property.LongText({
       displayName: 'UTM Source',
       required: false,
@@ -865,7 +853,6 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'UTM Name',
       required: false,
     }),
-    // requestCustomInfo
     requestCustomField1: Property.LongText({
       displayName: 'Request Custom Field 1',
       required: false,
@@ -886,7 +873,6 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Request Custom Field 5',
       required: false,
     }),
-    // subscription1
     sub1_productCode: Property.ShortText({
       displayName: 'Product Code',
       description:
@@ -951,7 +937,6 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Amount',
       required: false,
     }),
-    // subscription2
     sub2_productCode: Property.ShortText({
       displayName: 'Product Code',
       description:
@@ -1016,7 +1001,6 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Amount',
       required: false,
     }),
-    // subscription3
     sub3_productCode: Property.ShortText({
       displayName: 'Product Code',
       description:
@@ -1085,13 +1069,14 @@ export const addOrUpdateContactExtended = createAction({
 
   async run(context) {
     const customer = {
+      star: context.propsValue.star,
       importType: context.propsValue.importType,
       ignoreInvalidValues: context.propsValue.ignoreInvalidValues,
       matchExisting: context.propsValue.matchExisting,
       overrideLists: context.propsValue.overrideLists,
       createUser: context.propsValue.createUser,
       sendWelcomeEmail: context.propsValue.sendWelcomeEmail,
-      contactId: context.propsValue.contactId,
+      contactId: chargekeepClient.positiveId({ value: context.propsValue.contactId, label: 'Contact ID' }),
       contactXref: context.propsValue.contactXref,
       userPassword: context.propsValue.userPassword,
       personalInfo: {
@@ -1100,8 +1085,8 @@ export const addOrUpdateContactExtended = createAction({
           firstName: context.propsValue.firstName,
           middleName: context.propsValue.middleName,
           lastName: context.propsValue.lastName,
-          nameSuffix: context.propsValue.nickName,
-          nickName: context.propsValue.nameSuffix,
+          nameSuffix: context.propsValue.nameSuffix,
+          nickName: context.propsValue.nickName,
         },
         doB: context.propsValue.dob,
         mobilePhone: context.propsValue.mobilePhone,
@@ -1152,8 +1137,8 @@ export const addOrUpdateContactExtended = createAction({
       businessInfo: {
         companyName: context.propsValue.companyName,
         organizationType: context.propsValue.organizationType,
-        jobTitle: context.propsValue.isEmployed,
-        isEmployed: context.propsValue.jobTitle,
+        jobTitle: context.propsValue.jobTitle,
+        isEmployed: context.propsValue.isEmployed,
         employmentStartDate: context.propsValue.employmentStartDate,
         employeeCount: context.propsValue.employeeCount,
         dateFounded: context.propsValue.dateFounded,
@@ -1182,8 +1167,8 @@ export const addOrUpdateContactExtended = createAction({
         companyGooglePlusUrl: context.propsValue.companyGooglePlusUrl,
         companyCrunchbaseUrl: context.propsValue.companyCrunchbaseUrl,
         companyBBBUrl: context.propsValue.companyBBBUrl,
-        companyCalendlyUrl: context.propsValue.companyZoomUrl,
-        companyZoomUrl: context.propsValue.companyCalendlyUrl,
+        companyCalendlyUrl: context.propsValue.companyCalendlyUrl,
+        companyZoomUrl: context.propsValue.companyZoomUrl,
         companyLogoUrl: context.propsValue.companyLogoUrl,
         workPhone1: context.propsValue.workPhone1,
         workPhone1Ext: context.propsValue.workPhone1Ext,
@@ -1276,21 +1261,16 @@ export const addOrUpdateContactExtended = createAction({
       },
     };
 
-    const res = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportContact`,
-      headers: {
-        'api-key': context.auth.props.api_key, // Pass API key in headers
-        'Content-Type': 'application/json',
-      },
-      body: {
-        ...customer,
-      },
+    contactCommon.assertIdentity({
+      firstName: context.propsValue.firstName,
+      lastName: context.propsValue.lastName,
+      companyName: context.propsValue.companyName,
+      emails: [context.propsValue.email1, context.propsValue.email2, context.propsValue.email3, context.propsValue.workEmail1, context.propsValue.workEmail2, context.propsValue.workEmail3],
+      contactId: customer.contactId,
+      contactXref: context.propsValue.contactXref,
     });
 
-    return {
-      status: res.status,
-      body: res.body,
-    };
+    const { mapped } = await chargekeepServices.importContact({ auth: context.auth, body: customer });
+    return mapped();
   },
 });
