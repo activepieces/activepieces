@@ -77,6 +77,29 @@ export function isConsumableFeatureId(value: string): value is ConsumableFeature
     return Object.values<string>(ConsumableFeatureId).includes(value)
 }
 
+const FREE_PLAN_CONCURRENT_JOBS_LIMIT = 5
+const PLUS_PLAN_CONCURRENT_JOBS_LIMIT = 10
+const TEAM_PLAN_CONCURRENT_JOBS_LIMIT = 20
+const ENTERPRISE_PLAN_CONCURRENT_JOBS_LIMIT = 30
+
+export function getConcurrentJobsLimitForCloudPlan(planName: string | null | undefined): number {
+    switch (planName ?? PlanName.FREE) {
+        case PlanName.FREE:
+            return FREE_PLAN_CONCURRENT_JOBS_LIMIT
+        case PlanName.APPSUMO:
+        case PlanName.FREE_LEGACY:
+        case PlanName.PLUS:
+        case PlanName.PLUS_ANNUAL:
+        case PlanName.PLUS_CHAT:
+            return PLUS_PLAN_CONCURRENT_JOBS_LIMIT
+        case PlanName.TEAM:
+        case PlanName.TEAM_ANNUAL:
+            return TEAM_PLAN_CONCURRENT_JOBS_LIMIT
+        default:
+            return ENTERPRISE_PLAN_CONCURRENT_JOBS_LIMIT
+    }
+}
+
 
 export const PlatformPlan = z.object({
     ...BaseModelSchema,
