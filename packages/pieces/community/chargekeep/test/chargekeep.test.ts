@@ -84,11 +84,11 @@ describe('metadata', () => {
       expect(a.aiMetadata?.description, a.name).toBeTruthy();
     }
   });
-  it('ai actions take no dropdowns', () => {
+  it('ai actions take no dynamic dropdowns (static string dropdowns are fine)', () => {
     for (const a of Object.values(chargekeep.actions())) {
       if (a.audience !== 'ai') continue;
       for (const p of Object.values(a.props)) {
-        expect(['DROPDOWN', 'STATIC_DROPDOWN', 'MULTI_SELECT_DROPDOWN', 'DYNAMIC'], a.name).not.toContain(Reflect.get(p, 'type'));
+        expect(['DROPDOWN', 'MULTI_SELECT_DROPDOWN', 'DYNAMIC'], a.name).not.toContain(Reflect.get(p, 'type'));
       }
     }
   });
@@ -281,6 +281,17 @@ describe('invoices', () => {
     expect(body.grandTotal).toBe(12);
     expect(body.lines[1]).toEqual({ quantity: 3, rate: 2, total: 6, unitId: 'Unit', description: 'c', sortOrder: 1 });
     await expect(run({ name: 'create_invoice', propsValue: { contactId: '1', invoiceNumber: 'A', dueDate: '2026-11-30', description: 'd', lines: {} } })).rejects.toThrow('JSON array');
+  });
+  it('ai invoice historical payment is a yes/no dropdown: unset sends false, yes or legacy true sends true', async () => {
+    const options = Reflect.get(Reflect.get(chargekeep.actions()['create_invoice'].props['historicalPayment'], 'options'), 'options');
+    expect(options.map((o: { value: unknown }) => typeof o.value)).toEqual(['string', 'string']);
+    const base = { contactId: '1', invoiceNumber: 'A-2', dueDate: '2026-11-30', description: 'd', lines: [{ description: 'c', quantity: 1, rate: 5 }], paymentAmount: 5 };
+    for (const [historicalPayment, expected] of [[undefined, false], ['no', false], ['yes', true], [true, true], [false, false]] as const) {
+      const spy = mockSeq(15, { id: 15 });
+      await run({ name: 'create_invoice', propsValue: { ...base, historicalPayment } });
+      expect(sent({ spy }).body.historicalData).toBe(expected);
+      spy.mockRestore();
+    }
   });
 });
 

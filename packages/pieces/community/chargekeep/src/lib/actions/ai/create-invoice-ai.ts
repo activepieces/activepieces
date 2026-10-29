@@ -43,7 +43,12 @@ export const createInvoiceAi = createAction({
     paymentDate: Property.ShortText({ displayName: 'Payment Date', description: 'ISO 8601. Defaults to now.', required: false }),
     paymentGatewayName: Property.ShortText({ displayName: 'Payment Gateway Name', required: false }),
     paymentGatewayTransactionId: Property.ShortText({ displayName: 'Payment Gateway Transaction ID', required: false }),
-    historicalPayment: Property.Checkbox({ displayName: 'Historical Payment', description: 'True when the payment is a past record, not a live transaction.', required: false }),
+    historicalPayment: Property.StaticDropdown<string>({
+      displayName: 'Historical Payment',
+      description: 'yes when the payment is a past record, not a live transaction. Defaults to no.',
+      required: false,
+      options: { disabled: false, options: [{ label: 'Yes', value: 'yes' }, { label: 'No', value: 'no' }] },
+    }),
   },
   async run({ auth, propsValue: p }) {
     const { mapped } = await chargekeepServices.importInvoice({
@@ -64,9 +69,13 @@ export const createInvoiceAi = createAction({
         shippingTotal: p.shippingTotal,
         taxTotal: p.taxTotal,
         payment: { amount: p.paymentAmount, date: p.paymentDate, gatewayName: p.paymentGatewayName, gatewayTransactionId: p.paymentGatewayTransactionId },
-        historicalData: p.historicalPayment === true,
+        historicalData: isYes(p.historicalPayment),
       },
     });
     return mapped();
   },
 });
+
+function isYes(value: unknown): boolean {
+  return value === 'yes' || value === true;
+}
