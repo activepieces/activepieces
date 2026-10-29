@@ -16,6 +16,7 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
         return userService(req.log).list({
             platformId,
             externalId: req.query.externalId,
+            excludeEmbedded: req.query.excludeEmbedded,
             cursorRequest: req.query.cursor ?? null,
             limit: req.query.limit ?? 10,
         })

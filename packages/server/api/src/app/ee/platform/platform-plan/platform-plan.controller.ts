@@ -14,6 +14,7 @@ import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
 import { platformPlanTelemetry } from './platform-plan-telemetry'
 import { platformPlanService } from './platform-plan.service'
+import { trialSeatGrace } from './trial-seat-grace'
 
 const FORCE_REFRESH_DEDUP_SECONDS = 60
 const DEFAULT_USAGE_PAGE_SIZE = 10
@@ -168,6 +169,7 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         includedSeats,
         additionalSeats,
         selfServeTrial,
+        seatGrace: await trialSeatGrace(log).get({ plan: platformPlan }),
     }
 }
 

@@ -135,6 +135,6 @@ describe('Self-serve trial API', () => {
         const after = await member.get(`/v1/platforms/${ctx.platform.id}`)
 
         expect(before.json().selfServeTrial).toBeUndefined()
-        expect(after.json().selfServeTrial).toEqual(STARTED)
+        expect(after.json().selfServeTrial).toEqual({ ...STARTED, seatGraceEndsAt: null })
     })
 })
