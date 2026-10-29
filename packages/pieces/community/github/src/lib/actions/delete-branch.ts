@@ -1,4 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -8,7 +12,7 @@ export const githubDeleteBranchAction = createAction({
   name: 'delete_branch',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Branch',
-  description: 'Deletes a branch from a repository.',
+  description: 'Permanently deletes a branch.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -16,9 +20,22 @@ export const githubDeleteBranchAction = createAction({
     idempotent: false,
   },
   props: {
+    deleteWarning: Property.MarkDown({
+      value: 'The branch is deleted on GitHub as soon as this step runs.',
+      variant: MarkdownVariant.WARNING,
+    }),
     repository: githubCommon.repositoryDropdown,
     branch: githubCommon.branchDropdown('Branch', '', true),
   },
+  propertyGroups: [
+    {
+      key: 'branch',
+      display: 'section',
+      label: 'Branch to delete',
+      icon: 'trash',
+      props: ['deleteWarning', 'repository', 'branch'],
+    },
+  ],
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
     const branchName = propsValue.branch;

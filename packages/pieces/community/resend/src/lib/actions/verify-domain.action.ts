@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendClient } from '../common/client';
@@ -15,6 +15,10 @@ export const verifyDomain = createAction({
   audience: 'both',
   aiMetadata: { description: 'Triggers Resend to re-check the DNS records of a domain and update its verification status, identified by domain ID. Use this after adding the required DNS records (from Create Domain) to confirm the domain is ready to send. Safe to call repeatedly — it only re-runs the check.', idempotent: true },
   props: {
+    info: Property.MarkDown({
+      value: 'Resend checks the DNS records again. The result can take a few minutes.',
+      variant: MarkdownVariant.INFO,
+    }),
     domain_id: resendProps.domainId,
   },
   async run({ auth, propsValue }) {

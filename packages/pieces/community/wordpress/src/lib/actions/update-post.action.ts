@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { wordpressCommon } from '../common';
 import {
   httpClient,
@@ -18,8 +22,49 @@ export const updateWordPressPost = createAction({
   aiMetadata: { description: 'Updates an existing WordPress post identified by its post ID, changing only the fields you supply (title, content, status, categories, tags, excerpt, featured image, or ACF fields). Choose this to edit or republish a known post rather than create a new one. Requires the target post ID; idempotent — repeating with the same input leaves the post in the same final state.', idempotent: true },
   displayName: 'Update Post',
   outputSchema: updatePostActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'post',
+      display: 'section',
+      label: 'Post',
+      icon: 'file',
+      props: ['post'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['empty_fields_info', 'title', 'content', 'excerpt'],
+    },
+    {
+      key: 'publishing',
+      display: 'section',
+      label: 'Publishing',
+      icon: 'calendar',
+      props: ['status'],
+    },
+    {
+      key: 'organize',
+      display: 'section',
+      label: 'Categories and Tags',
+      icon: 'tag',
+      props: ['categories', 'tags'],
+    },
+    {
+      key: 'image',
+      display: 'section',
+      label: 'Image',
+      icon: 'paperclip',
+      props: ['featured_media', 'featured_media_file'],
+    },
+  ],
   props: {
     post: wordpressCommon.post,
+    empty_fields_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     title: Property.ShortText({
       description: 'New title. Empty keeps the current one.',
       displayName: 'Title',
@@ -96,7 +141,7 @@ export const updateWordPressPost = createAction({
         ? 'open'
         : 'closed';
     }
-    if (context.propsValue.categories) {
+    if (context.propsValue.categories?.length) {
       requestBody['categories'] = context.propsValue.categories;
     }
     if (context.propsValue.slug) {
@@ -105,7 +150,7 @@ export const updateWordPressPost = createAction({
     if (context.propsValue.excerpt) {
       requestBody['excerpt'] = context.propsValue.excerpt;
     }
-    if (context.propsValue.tags) {
+    if (context.propsValue.tags?.length) {
       requestBody['tags'] = context.propsValue.tags;
     }
     if (context.propsValue.ping_status) {

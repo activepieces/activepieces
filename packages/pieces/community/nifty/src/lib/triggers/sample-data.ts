@@ -1,0 +1,46 @@
+export const TASK_SAMPLE = {
+  id: 'HjGDVlaejN',
+  nice_id: 'ANP-1',
+  name: 'Prepare launch checklist',
+  description: 'List everything we need before launch.',
+  created_at: '2026-10-05T13:04:32.278Z',
+  created_by: '81wbAVYMye',
+  archived: false,
+  completed: false,
+  due_date: '2026-10-20T00:00:00.000Z',
+  start_date: '2026-10-06T00:00:00.000Z',
+  task_group: 'jiA!cEfY03',
+  project: 'mvxI3LynBI',
+  milestone: 'JSkRUQiJ_6',
+  assignees: ['81wbAVYMye'],
+  subscribers: ['81wbAVYMye'],
+  labels: [],
+  total_subtasks: 0,
+  completed_subtasks: 0,
+  comments: 0,
+  story_points: '3',
+};
+
+export const COMPLETED_TASK_SAMPLE = {
+  ...TASK_SAMPLE,
+  completed: true,
+  completed_on: '2026-10-05T13:04:59.623Z',
+  completed_by: '81wbAVYMye',
+};
+
+export const PROJECT_SAMPLE = {
+  id: 'mvxI3LynBI',
+  nice_id: 'ANP',
+  name: 'Website Relaunch',
+  description: 'Everything for the new website.',
+  color: '#FF735F',
+  archived: false,
+  default_tasks_view: 'table',
+  access_type: 'public',
+  owner: '81wbAVYMye',
+  subteam: 'heSYcmGCH2',
+  progress: 0,
+  total_story_points: 0,
+  completed_story_points: 0,
+  email: 'project.anp@mail.nifty.pm',
+};

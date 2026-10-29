@@ -1,17 +1,81 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { vtigerAuth } from '../..';
-import { instanceLogin } from '../common';
 import {
-  AuthenticationType,
   HttpHeaders,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
+import { vtigerAuth } from '../auth';
+import {
+  basicAuthorization,
+  isRecord,
+  normalizeInstanceUrl,
+  restBaseUrl,
+  verifiedTlsDispatcher,
+  VtigerCredentials,
+} from '../rest-client';
+import { vtwsLogin } from '../vtws';
 
-//Docs: https://code.vtiger.com/vtiger/vtigercrm-manual/-/wikis/Webservice-Docs
-//Extra: https://help.vtiger.com/article/147111249-Rest-API-Manual
+export function resolveCustomCallTarget({
+  creds,
+  url,
+  urlPath,
+}: {
+  creds: VtigerCredentials;
+  url?: string;
+  urlPath?: string;
+}): { url: string; useRestAuth: boolean } {
+  const origin = normalizeInstanceUrl(creds.instance_url);
+  const restBase = restBaseUrl(creds);
+  if (urlPath && !urlPath.startsWith('/')) {
+    throw new Error('URL path must start with a slash, example: /me, /listtypes, /describe');
+  }
+  if (url) {
+    if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('//')) {
+      const parsed = parseAbsolute(url);
+      if (parsed.origin !== origin || parsed.username !== '' || parsed.password !== '') {
+        throw new Error(
+          `Absolute URLs must point to the connected instance (${origin}). Use a path such as /me instead.`
+        );
+      }
+      return {
+        url: parsed.toString(),
+        useRestAuth: parsed.pathname.startsWith('/restapi/'),
+      };
+    }
+    return { url: `${restBase}${url.startsWith('/') ? url : `/${url}`}`, useRestAuth: true };
+  }
+  if (urlPath) {
+    return { url: `${restBase}${urlPath}`, useRestAuth: true };
+  }
+  return { url: `${origin}/webservice.php`, useRestAuth: false };
+}
+
+export function customApiCallAuthHeaders({
+  creds,
+  url,
+}: {
+  creds: VtigerCredentials;
+  url: unknown;
+}): { Authorization: string } {
+  const value = typeof url === 'string' ? url.trim() : '';
+  if (/^https?:\/\//i.test(value)) {
+    const parsed = parseAbsolute(value);
+    const restBase = new URL(restBaseUrl(creds));
+    if (
+      parsed.origin !== restBase.origin ||
+      parsed.username !== '' ||
+      parsed.password !== '' ||
+      !`${parsed.pathname}/`.startsWith(`${restBase.pathname}/`)
+    ) {
+      throw new Error(
+        `Absolute URLs must point to the connected instance's REST API (${restBase.toString()}). Use a relative path such as /me instead.`
+      );
+    }
+  }
+  return { Authorization: basicAuthorization(creds) };
+}
 
 export const makeAPICall = createAction({
   name: 'make_api_call',
@@ -19,8 +83,12 @@ export const makeAPICall = createAction({
   auth: vtigerAuth,
   displayName: 'Custom API Call (Deprecated)',
   description: 'Performs an arbitrary authorized API call. (Deprecated)',
-  audience: 'both',
-  aiMetadata: { description: 'Deprecated. Makes an arbitrary authenticated HTTP call to the Vtiger API, routing to either the legacy webservice.php endpoint or the REST base depending on the URL given. Prefer the dedicated record/query actions; reach for this only for endpoints they do not cover. Idempotency depends on the method and operation invoked, so treat write calls as non-idempotent.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Deprecated. Makes an arbitrary authenticated HTTP call to the connected Vtiger instance, routing to the legacy webservice.php endpoint or the REST base depending on the URL given. Prefer the dedicated actions. Treat write calls as non-idempotent.',
+    idempotent: false,
+  },
   props: {
     method: Property.StaticDropdown<HttpMethod>({
       displayName: 'Http Method',
@@ -39,7 +107,7 @@ export const makeAPICall = createAction({
     url: Property.ShortText({
       displayName: 'URL',
       description:
-        'Absolute URL or path. If a relative path is provided (e.g., /me, /listtypes, /describe), it will be called against the REST base.',
+        'Path (e.g. /me, /listtypes, /describe) called against the REST base, or an absolute URL on the connected instance.',
       required: false,
     }),
     urlPath: Property.ShortText({
@@ -63,136 +131,67 @@ export const makeAPICall = createAction({
   },
   async run({ propsValue, auth }) {
     const method = propsValue.method ?? HttpMethod.GET;
-    const urlPath = propsValue.urlPath;
-    const url = propsValue.url;
-
-    if (urlPath && !urlPath.startsWith('/')) {
-      return {
-        error:
-          'URL path must start with a slash, example: /me, /listtypes, /describe',
-      };
+    const target = resolveCustomCallTarget({
+      creds: auth.props,
+      url: propsValue.url,
+      urlPath: propsValue.urlPath,
+    });
+    const headers = normalizeHeaders(propsValue.headers);
+    const hasContentType = Object.keys(headers).some((k) => k.toLowerCase() === 'content-type');
+    if (method !== HttpMethod.GET && !hasContentType) {
+      headers['Content-Type'] = target.useRestAuth ? 'application/json' : 'application/x-www-form-urlencoded';
     }
-
-    let finalUrl = `${auth.props.instance_url}/webservice.php`;
-    let useRestAuth = false;
-
-    if (url) {
-      if (url.startsWith('http://') || url.startsWith('https://')) {
-        finalUrl = url;
-      } else if (url.startsWith('/')) {
-        finalUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default${url}`;
-        useRestAuth = true;
-      } else {
-        finalUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default/${url}`;
-        useRestAuth = true;
-      }
-    } else if (urlPath) {
-      finalUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default${urlPath}`;
-      useRestAuth = true;
+    const userData = isRecord(propsValue.data) ? propsValue.data : {};
+    const data: Record<string, unknown> = target.useRestAuth
+      ? userData
+      : { ...userData, sessionName: (await vtwsLogin(auth.props)).sessionName };
+    if (target.useRestAuth) {
+      headers['Authorization'] = basicAuthorization(auth.props);
     }
-
-    const normalizeHeaders = (h: unknown): HttpHeaders => {
-      const out: HttpHeaders = {};
-      if (h && typeof h === 'object' && !Array.isArray(h)) {
-        for (const [k, v] of Object.entries(h as Record<string, unknown>)) {
-          if (v === undefined || v === null) {
-            out[k] = undefined;
-          } else if (Array.isArray(v)) {
-            out[k] = (v as unknown[]).map((x) => String(x));
-          } else if (typeof v === 'string') {
-            out[k] = v;
-          } else {
-            out[k] = String(v);
-          }
-        }
-      }
-      return out;
-    };
-
-    const headers: HttpHeaders = normalizeHeaders(propsValue.headers);
-
-    if (useRestAuth) {
-      // Default JSON for REST when not GET and no explicit content-type provided
-      if (
-        method !== HttpMethod.GET &&
-        !Object.keys(headers).some(
-          (k) => k.toLowerCase() === 'content-type'
-        )
-      ) {
-        headers['Content-Type'] = 'application/json';
-      }
-    } else {
-      // webservice.php defaults to urlencoded for POST operations
-      if (
-        method !== HttpMethod.GET &&
-        !Object.keys(headers).some(
-          (k) => k.toLowerCase() === 'content-type'
-        )
-      ) {
-        headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      }
-    }
-
-    const httpRequest: HttpRequest<HttpMessageBody> = {
-      url: finalUrl,
-      method,
-      headers,
-    };
-
-    let data: Record<string, unknown> = propsValue.data ?? {};
-
-    const toQueryParams = (obj: Record<string, unknown>): Record<string, string> => {
-      const qp: Record<string, string> = {};
-      for (const [k, v] of Object.entries(obj ?? {})) {
-        if (v === undefined || v === null) continue;
-        qp[k] = typeof v === 'string' ? v : JSON.stringify(v);
-      }
-      return qp;
-    };
-
-    if (useRestAuth) {
-      httpRequest.authentication = {
-        type: AuthenticationType.BASIC,
-        username: auth.props.username,
-        password: auth.props.password,
-      };
-    } else {
-      const vtigerInstance = await instanceLogin(
-        auth.props.instance_url,
-        auth.props.username,
-        auth.props.password
-      );
-      if (vtigerInstance === null) return;
-
-      data = {
-        sessionName: vtigerInstance.sessionId ?? vtigerInstance.sessionName,
-        ...(propsValue.data ?? {}),
-      };
-    }
-
+    const request: HttpRequest<HttpMessageBody> = { url: target.url, method, headers };
     if (method === HttpMethod.GET) {
-      httpRequest['queryParams'] = toQueryParams(data);
+      request.queryParams = toQueryParams(data);
     } else {
-      // For REST with JSON default, send raw object; else url-encode
       const contentType = Object.entries(headers).find(([k]) => k.toLowerCase() === 'content-type')?.[1];
       const ct = Array.isArray(contentType) ? contentType[0] : contentType;
-      if (useRestAuth && ct === 'application/json') {
-        httpRequest['body'] = data;
-      } else {
-        httpRequest['body'] = toQueryParams(data);
-      }
+      request.body = target.useRestAuth && ct === 'application/json' ? data : toQueryParams(data);
     }
-
-    const response = await httpClient.sendRequest<Record<string, unknown>[]>(
-      httpRequest
-    );
-
-    if ([200, 201].includes(response.status)) {
-      return response.body;
-    }
-
-    return {
-      error: 'Unexpected outcome!',
-    };
+    const dispatcher = await verifiedTlsDispatcher();
+    const response = await httpClient.sendRequest<HttpMessageBody>(request, { dispatcher });
+    return response.body;
   },
 });
+
+function parseAbsolute(url: string): URL {
+  try {
+    return new URL(url);
+  } catch {
+    throw new Error(`"${url}" is not a valid URL`);
+  }
+}
+
+function normalizeHeaders(h: unknown): HttpHeaders {
+  if (!isRecord(h)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(h)
+      .filter(([k]) => k.toLowerCase() !== 'authorization')
+      .map(([k, v]): [string, string | string[] | undefined] => [
+        k,
+        v === undefined || v === null
+          ? undefined
+          : Array.isArray(v)
+          ? v.map((x) => String(x))
+          : String(v),
+      ])
+  );
+}
+
+function toQueryParams(obj: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(([, v]) => v !== undefined && v !== null)
+      .map(([k, v]) => [k, typeof v === 'string' ? v : JSON.stringify(v)])
+  );
+}

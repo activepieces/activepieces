@@ -23,6 +23,9 @@ export const activityMatchingFilterTrigger = createTrigger({
 		filterId: filterIdProp('activity', true),
 	},
 	async onEnable(context) {
+		if (context.isRepublish && !isNil(await context.store.get('activities'))) {
+			return;
+		}
 		const ids: number[] = [];
 
 		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
@@ -42,6 +45,9 @@ export const activityMatchingFilterTrigger = createTrigger({
 		await context.store.put('activities', JSON.stringify(ids));
 	},
 	async onDisable(context) {
+		if (context.isRepublish) {
+			return;
+		}
 		await context.store.delete('activities');
 	},
 	async test(context) {

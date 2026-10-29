@@ -1,4 +1,5 @@
-import { evlogSetup } from '@activepieces/server-utils'
+import { aiDevtools, evlogSetup } from '@activepieces/server-utils'
+import { ApEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
@@ -29,11 +30,12 @@ const start = async (app: FastifyInstance): Promise<void> => {
 let shuttingDown = false
 
 
-const stop = async (app: FastifyInstance): Promise<void> => {
+const stop = async ({ app, signal }: { app: FastifyInstance, signal: NodeJS.Signals }): Promise<void> => {
     if (shuttingDown) return
     shuttingDown = true
 
     try {
+        app.log.info({ signal }, '[main#stop] Received shutdown signal, stopping server gracefully')
         await app.close()
         await evlogSetup.flush()
         process.exit(0)
@@ -54,6 +56,7 @@ function setupTimeZone(): void {
 
 const main = async (): Promise<void> => {
     setupTimeZone()
+    await aiDevtools.register({ enabled: system.get(AppSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT })
     if (system.isApp()) {
         await distributedLock(system.globalLogger()).runExclusive({
             key: 'database-migration-lock',
@@ -64,11 +67,11 @@ const main = async (): Promise<void> => {
     const app = await setupServer()
 
     process.on('SIGINT', async () => {
-        await stop(app).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
+        await stop({ app, signal: 'SIGINT' }).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
     })
 
     process.on('SIGTERM', async () => {
-        await stop(app).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
+        await stop({ app, signal: 'SIGTERM' }).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
     })
 
     await start(app)

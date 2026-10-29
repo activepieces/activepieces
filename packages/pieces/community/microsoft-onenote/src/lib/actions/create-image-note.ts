@@ -1,58 +1,27 @@
-import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { getNotebooksDropdown, getSectionsByNotebookDropdown } from '../common';
-import { oneNoteAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { microsoftOneNoteAuth } from '../auth';
+import { microsoftOneNoteClient } from '../common/client';
+import { microsoftOneNoteProps } from '../common/props';
+import type { OnenotePage } from '../common/types';
+import { createImageNoteOutputSchema } from '../output-schemas';
 
-export const createImageNote = createAction({
-	auth: oneNoteAuth,
+export const createImageNoteAction = createAction({
+	auth: microsoftOneNoteAuth,
 	name: 'create_image_note',
+	outputSchema: createImageNoteOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Image Note',
 	description: 'Create a note containing an embedded image via a public image URL.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new OneNote page in a section with an embedded image referenced by a publicly accessible image URL, plus an optional title and description. Choose this over Create Page when the note is primarily an image; the image URL must be reachable by Microsoft Graph. Not idempotent: each call creates a new page.', idempotent: false },
 	props: {
-		notebook_id: Property.Dropdown({
-			auth: oneNoteAuth,
-			displayName: 'Notebook',
+		notebook_id: microsoftOneNoteProps.notebookId({
+			required: true,
 			description: 'The notebook to create the image note in.',
-			required: true,
-			refreshers: [],	
-			options: async ({ auth }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				return await getNotebooksDropdown(auth as OAuth2PropertyValue);
-			},
 		}),
-		section_id: Property.Dropdown({
-			auth: oneNoteAuth,
-			displayName: 'Section',
-			description: 'The section to create the image note in.',
+		section_id: microsoftOneNoteProps.sectionId({
 			required: true,
-			refreshers: ['notebook_id'],
-			options: async ({ auth, notebook_id }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				if (!notebook_id) {
-					return {
-						disabled: true,
-						placeholder: 'Select a notebook first',
-						options: [],
-					};
-				}
-				return await getSectionsByNotebookDropdown(auth as OAuth2PropertyValue, notebook_id as string);
-			},
+			description: 'The section to create the image note in.',
 		}),
 		title: Property.ShortText({
 			displayName: 'Page Title',
@@ -86,16 +55,9 @@ export const createImageNote = createAction({
 		const { auth, propsValue } = context;
 		const { section_id, title, image_url, image_width, image_alt_text, description } = propsValue;
 
-		const authValue = auth as OAuth2PropertyValue;
-		const cloud = authValue.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(authValue.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = microsoftOneNoteClient.create({ auth });
 
-		const imageTag = image_width 
+		const imageTag = image_width
 			? `<img src="${image_url}" alt="${image_alt_text || 'Embedded image'}" width="${image_width}" />`
 			: `<img src="${image_url}" alt="${image_alt_text || 'Embedded image'}" />`;
 
@@ -112,7 +74,7 @@ export const createImageNote = createAction({
 </html>`;
 
 		try {
-			const response = await client
+			const response: OnenotePage = await client
 				.api(`/me/onenote/sections/${section_id}/pages`)
 				.header('Content-Type', 'application/xhtml+xml')
 				.post(htmlContent);
@@ -130,8 +92,8 @@ export const createImageNote = createAction({
 				links: response.links,
 				self: response.self,
 			};
-		} catch (error: any) {
-			throw new Error(`Failed to create image note: ${error.message || 'Unknown error'}`);
+		} catch (error) {
+			throw new Error(`Failed to create image note: ${(error instanceof Error && error.message) || 'Unknown error'}`);
 		}
 	},
 });

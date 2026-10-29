@@ -7,6 +7,7 @@ type ModelIdentity = { provider: string, modelId: string, settings?: { plugins?:
 
 type VertexModelIdentity = { config: { baseURL: string | (() => string) } }
 type CustomModelIdentity = { config: { headers: () => Record<string, string>, fetch?: typeof globalThis.fetch } }
+type SentRequest = { url: string, headers: Headers, body: Record<string, unknown> }
 
 function identify(model: unknown): ModelIdentity {
     return model as ModelIdentity
@@ -20,11 +21,11 @@ function identifyCustom(model: unknown): CustomModelIdentity {
     return model as CustomModelIdentity
 }
 
-async function captureSentHeaders(send: () => Promise<unknown>): Promise<Headers> {
+async function captureSentRequest(send: () => Promise<unknown>): Promise<SentRequest> {
     const original = globalThis.fetch
-    let seen = new Headers()
-    globalThis.fetch = (_input, init) => {
-        seen = new Headers(init?.headers)
+    let seen: SentRequest = { url: '', headers: new Headers(), body: {} }
+    globalThis.fetch = (input, init) => {
+        seen = { url: String(input), headers: new Headers(init?.headers), body: typeof init?.body === 'string' ? JSON.parse(init.body) : {} }
         return Promise.resolve(new Response('{}'))
     }
     try {
@@ -34,6 +35,14 @@ async function captureSentHeaders(send: () => Promise<unknown>): Promise<Headers
         globalThis.fetch = original
     }
     return seen
+}
+
+async function captureSentHeaders(send: () => Promise<unknown>): Promise<Headers> {
+    return (await captureSentRequest(send)).headers
+}
+
+function generateHi(model: ReturnType<typeof createLanguageModel>): Promise<SentRequest> {
+    return captureSentRequest(() => model.doGenerate({ prompt: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] }))
 }
 
 function captureHeaders({ patchedFetch, headers }: {
@@ -104,9 +113,9 @@ describe('createLanguageModel', () => {
     })
 
     it('picks the right SDK client per provider', () => {
-        expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.chat')
+        expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.responses')
         expect(identify(buildFor(AIProviderName.ANTHROPIC)).provider).toBe('anthropic.messages')
-        expect(identify(buildFor(AIProviderName.AZURE)).provider).toBe('azure.chat')
+        expect(identify(buildFor(AIProviderName.AZURE)).provider).toBe('azure.responses')
         expect(identify(buildFor(AIProviderName.BEDROCK)).provider).toBe('amazon-bedrock')
         expect(identify(buildFor(AIProviderName.CUSTOM)).provider).toBe('openai-compatible.chat')
         expect(identify(buildFor(AIProviderName.OPENROUTER)).provider).toBe('openrouter')
@@ -125,9 +134,32 @@ describe('createLanguageModel', () => {
         expect(headers.has('x-amz-security-token')).toBe(false)
     })
 
-    it('uses the OpenAI Chat API by default and the Responses API when asked', () => {
-        expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.chat')
-        expect(identify(buildFor(AIProviderName.OPENAI, { openaiResponsesModel: true })).provider).toBe('openai.responses')
+    it.each([AIProviderName.OPENAI, AIProviderName.AZURE])('sends %s to the Responses API without storing the conversation', async (provider) => {
+        const request = await generateHi(buildFor(provider))
+
+        expect(new URL(request.url).pathname).toMatch(/\/responses$/)
+        expect(request.body.store).toBe(false)
+    })
+
+    it.each([
+        { provider: AIProviderName.OPENAI, optionsKey: 'openai' },
+        { provider: AIProviderName.AZURE, optionsKey: 'azure' },
+    ])('replays a saved $provider tool turn in full instead of as a stored item reference', async ({ provider, optionsKey }) => {
+        const model = buildFor(provider)
+        const request = await captureSentRequest(() => model.doGenerate({
+            tools: [{ type: 'function', name: 'getWeather', inputSchema: { type: 'object', properties: {} } }],
+            prompt: [
+                { role: 'user', content: [{ type: 'text', text: 'weather in Paris?' }] },
+                { role: 'assistant', content: [{ type: 'text', text: 'Checking the weather.', providerOptions: { [optionsKey]: { itemId: 'msg_saved' } } }, { type: 'tool-call', toolCallId: 'call_1', toolName: 'getWeather', input: { city: 'Paris' }, providerOptions: { [optionsKey]: { itemId: 'fc_saved' } } }] },
+                { role: 'tool', content: [{ type: 'tool-result', toolCallId: 'call_1', toolName: 'getWeather', output: { type: 'json', value: { celsius: 20 } } }] },
+            ],
+        }))
+        const items = Array.isArray(request.body.input) ? request.body.input : []
+
+        expect(items).toContainEqual(expect.objectContaining({ role: 'assistant' }))
+        expect(items).toContainEqual(expect.objectContaining({ type: 'function_call', call_id: 'call_1', name: 'getWeather' }))
+        expect(items).toContainEqual(expect.objectContaining({ type: 'function_call_output', call_id: 'call_1' }))
+        expect(items).not.toContainEqual(expect.objectContaining({ type: 'item_reference' }))
     })
 
     it('routes Vertex straight at the configured GCP project and region', () => {
@@ -277,18 +309,17 @@ describe('resolved endpoint, credentials and headers', () => {
     const headersOf = (cfg: ResolvedConfig): Record<string, string> => (typeof cfg.headers === 'function' ? cfg.headers() : cfg.headers)
     const urlOf = (cfg: ResolvedConfig): string => cfg.url({ path: '/chat/completions', modelId: 'm' })
 
-    it('sends OpenAI to the OpenAI endpoint with a bearer credential', () => {
-        const cfg = configOf(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENAI, auth: { apiKey: 'SECRET' }, config: {} }), modelId: 'm' }))
-        expect(urlOf(cfg)).toContain('https://api.openai.com')
-        expect(headersOf(cfg)['authorization']).toBe('Bearer SECRET')
+    it('sends OpenAI to the OpenAI endpoint with a bearer credential', async () => {
+        const request = await generateHi(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENAI, auth: { apiKey: 'SECRET' }, config: {} }), modelId: 'm' }))
+        expect(request.url).toContain('https://api.openai.com')
+        expect(request.headers.get('authorization')).toBe('Bearer SECRET')
     })
 
-    it('encodes the Azure resource name and api version into the URL', () => {
-        const cfg = configOf(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.AZURE, auth: { apiKey: 'SECRET' }, config: { resourceName: 'myres', apiVersion: '2024-08-01' } }), modelId: 'm' }))
-        const url = urlOf(cfg)
-        expect(url).toContain('myres')
-        expect(url).toContain('api-version=2024-08-01')
-        expect(headersOf(cfg)['api-key']).toBe('SECRET')
+    it('encodes the Azure resource name and api version into the URL', async () => {
+        const request = await generateHi(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.AZURE, auth: { apiKey: 'SECRET' }, config: { resourceName: 'myres', apiVersion: '2024-08-01' } }), modelId: 'm' }))
+        expect(request.url).toContain('myres')
+        expect(request.url).toContain('api-version=2024-08-01')
+        expect(request.headers.get('api-key')).toBe('SECRET')
     })
 
     it('attaches the caller metadata headers to managed OpenRouter traffic', () => {

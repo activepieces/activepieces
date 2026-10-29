@@ -1,15 +1,16 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
-import { clockifyApiCall } from '../common/client';
-import { workspaceId } from '../common/props';
+import { clockifyApi } from '../common/api';
+import { clockifyProps } from '../common/props';
+import { webhookTimeEntryOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'new-timer-started-trigger';
 
 export const newTimerStartedTrigger = createTrigger({
 	auth: clockifyAuth,
 	name: 'new-timer-started',
+	outputSchema: webhookTimeEntryOutputSchema,
 	classification: 'READ',
 	displayName: 'New Timer Started',
 	description: 'Triggers when a new entry is started and running.',
@@ -19,24 +20,18 @@ export const newTimerStartedTrigger = createTrigger({
 	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
-		workspaceId: workspaceId({
-			displayName: 'Workspace',
-			required: true,
-		}),
+		workspaceId: clockifyProps.workspaceId({ required: true }),
 	},
 	async onEnable(context) {
 		const { workspaceId } = context.propsValue;
 
-		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.POST,
-			resourceUri: `/workspaces/${workspaceId}/webhooks`,
-			body: {	
-				url: context.webhookUrl,
-				webhookEvent: 'NEW_TIMER_STARTED',
-				triggerSourceType: 'WORKSPACE_ID',
-				triggerSource: [workspaceId],
-			},
+		const response = await clockifyApi.createWebhook({
+			auth: context.auth,
+			workspaceId,
+			url: context.webhookUrl,
+			webhookEvent: 'NEW_TIMER_STARTED',
+			triggerSourceType: 'WORKSPACE_ID',
+			triggerSource: [workspaceId],
 		});
 
 		await context.store.put<string>(TRIGGER_KEY, response.id);
@@ -47,11 +42,7 @@ export const newTimerStartedTrigger = createTrigger({
 		const webhookId = await context.store.get<string>(TRIGGER_KEY);
 
 		if (!isNil(webhookId)) {
-			await clockifyApiCall<{ id: string }>({
-				apiKey: context.auth.secret_text	,
-				method: HttpMethod.DELETE,
-				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
-			});
+			await clockifyApi.deleteWebhook({ auth: context.auth, workspaceId, webhookId });
 		}
 	},
 	async run(context) {

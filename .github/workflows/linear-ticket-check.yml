@@ -1,0 +1,33 @@
+name: Linear ticket check
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  linear-ticket-check:
+    name: Linear ticket check
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    concurrency:
+      group: linear-ticket-check-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    if: >
+      github.repository == 'activepieces/activepieces' &&
+      !contains(fromJSON('["dependabot[bot]", "automated-commits-ap"]'), github.event.pull_request.user.login)
+    steps:
+      # pull_request_target exposes secrets to fork PRs: check out the base branch only, never the PR head.
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Check the Linear ticket
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: bun tools/scripts/linear-ticket-check.ts

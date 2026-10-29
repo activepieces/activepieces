@@ -2,10 +2,10 @@ import '@fastify/reply-from'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
-import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { platformWorkerGroupService } from '../../workers/worker-groups/platform-worker-group.service'
 
 export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     if (request.headers.upgrade === 'websocket') return
@@ -17,7 +17,7 @@ export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: Fa
     if (resolveError || isNil(platformId)) return
 
     const { data: shouldForward, error: canaryLookupError } = await tryCatch(() =>
-        workerGroupService(request.log).isCanaryPlatform({ platformId }),
+        platformWorkerGroupService(request.log).isCanaryPlatform({ platformId }),
     )
     if (canaryLookupError) {
         request.log.error({ error: canaryLookupError }, '[canaryRoutingMiddleware] failed to fetch canary platform IDs, falling through')

@@ -6,6 +6,7 @@ import { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,6 +24,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { oauthAppsMutations, oauthAppsQueries } from '@/features/connections';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type ConfigurePieceOAuth2DialogProps = {
   pieceName: string;
@@ -66,6 +68,11 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              {...adminControl(
+                isNil(oauth2App)
+                  ? AdminControl.PIECES_OAUTH_CONFIGURE_OPEN
+                  : AdminControl.PIECES_OAUTH_DELETE_RUN,
+              )}
               ref={ref}
               size={'sm'}
               variant={'ghost'}
@@ -89,7 +96,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
               {isNil(oauth2App) ? (
                 <Unlock className="size-4" />
               ) : (
-                <Lock className="size-4 text-destructive" />
+                <Lock className="size-4 text-danger-11" />
               )}
             </Button>
           </TooltipTrigger>
@@ -100,7 +107,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
           </TooltipContent>
         </Tooltip>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>
 
         <Form {...form}>
@@ -121,12 +128,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                   <Label htmlFor="clientId" showRequiredIndicator>
                     {t('Client ID')}
                   </Label>
-                  <Input
-                    {...field}
-                    required
-                    id="clientId"
-                    className="rounded-sm"
-                  />
+                  <Input {...field} required id="clientId" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -142,7 +144,6 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                     {...field}
                     required
                     id="clientSecret"
-                    className="rounded-sm"
                     type="password"
                   />
                   <FormMessage />
@@ -160,6 +161,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                 {t('Cancel')}
               </Button>
               <Button
+                {...adminControl(AdminControl.PIECES_OAUTH_CONFIGURE_SUBMIT)}
                 loading={isUpserting}
                 disabled={!form.formState.isValid}
                 type="submit"

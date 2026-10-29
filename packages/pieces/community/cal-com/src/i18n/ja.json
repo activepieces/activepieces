@@ -6,5 +6,12 @@
   "Booking Rescheduled": "予約の再スケジュール",
   "Create a webhook to monitor when Booking Cancelled": "予約がキャンセルされたときに監視するWebhookを作成します",
   "Create a webhook to monitor when Booking Created": "予約作成時にモニターするWebhookを作成する",
-  "Create a webhook to monitor when Booking Rescheduled": "予約変更時に監視するWebhookを作成します"
+  "Create a webhook to monitor when Booking Rescheduled": "予約変更時に監視するWebhookを作成します",
+  "To get your API key:\n1. Open [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) in Cal.com.\n2. Create a new key and choose when it expires.\n3. Copy the key (it starts with `cal_`) and paste it here.": "API キーの取得方法:\n1. Cal.com で [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) を開きます。\n2. 新しいキーを作成し、有効期限を選びます。\n3. キー(`cal_` で始まります)をコピーしてここに貼り付けます。",
+  "Add cal-api-version (2026-05-01 for /bookings). Auth is added for you.": "cal-api-version を追加してください(/bookings には 2026-05-01)。認証は自動で追加されます。",
+  "New Booking": "新しい予約",
+  "Triggers when a Cal.com booking is cancelled.": "Cal.com の予約がキャンセルされたときにトリガーします。",
+  "Triggers when someone books a meeting with you on Cal.com.": "誰かが Cal.com であなたとのミーティングを予約したときにトリガーします。",
+  "Triggers when a Cal.com booking is moved to a new time.": "Cal.com の予約が別の時間に変更されたときにトリガーします。",
+  "This webhook is added to your Cal.com account when you publish the flow and removed when you turn it off. It fires for bookings on the account that owns the API key.": "この Webhook はフローを公開すると Cal.com アカウントに追加され、オフにすると削除されます。API キーを所有するアカウントの予約で発火します。"
 }

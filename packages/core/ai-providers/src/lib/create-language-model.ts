@@ -10,7 +10,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { ImageModel, LanguageModel } from 'ai'
+import { defaultSettingsMiddleware, ImageModel, LanguageModel, wrapLanguageModel } from 'ai'
 
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
@@ -22,8 +22,7 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
     switch (credentials.provider) {
         case AIProviderName.OPENAI: {
             const { apiKey } = credentials.auth
-            const client = createOpenAI({ apiKey, ...observed })
-            return options.openaiResponsesModel ? client.responses(modelId) : client.chat(modelId)
+            return withoutServerStorage({ model: createOpenAI({ apiKey, ...observed }).responses(modelId), providerOptionsName: 'openai' })
         }
         case AIProviderName.ANTHROPIC: {
             const { apiKey } = credentials.auth
@@ -36,7 +35,7 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
         case AIProviderName.AZURE: {
             const { apiKey } = credentials.auth
             const { resourceName, apiVersion } = credentials.config
-            return createAzure({ resourceName, apiKey, apiVersion, ...observed }).chat(modelId)
+            return withoutServerStorage({ model: createAzure({ resourceName, apiKey, apiVersion, ...observed }).responses(modelId), providerOptionsName: 'azure' })
         }
         case AIProviderName.BEDROCK: {
             const { accessKeyId, secretAccessKey, sessionToken } = credentials.auth
@@ -180,6 +179,16 @@ function stripDefaultAuthorization({ headers, delegate }: {
     }
 }
 
+export function withoutServerStorage({ model, providerOptionsName }: {
+    model: Parameters<typeof wrapLanguageModel>[0]['model']
+    providerOptionsName: 'openai' | 'azure'
+}): LanguageModel {
+    return wrapLanguageModel({
+        model,
+        middleware: defaultSettingsMiddleware({ settings: { providerOptions: { [providerOptionsName]: { store: false } } } }),
+    })
+}
+
 function createOpenRouterChatModel({ apiKey, modelId, options }: {
     apiKey: string | undefined
     modelId: string
@@ -207,7 +216,6 @@ export function buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHead
 
 export type LanguageModelOptions = {
     onOutcome?: ProviderOutcomeReporter
-    openaiResponsesModel?: boolean
     openRouterSettings?: OpenRouterChatSettings
     mistralViaOpenRouter?: boolean
     extraHeaders?: Record<string, string>

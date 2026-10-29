@@ -1,5 +1,5 @@
-import { isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
-import { ApplicationEventName, FileType, Flow, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared'
+import { FlowId, isNil, PlatformId, ProjectId, tryCatch } from '@activepieces/core-utils'
+import { ApplicationEventName, FileType, Flow, FlowDraftUpdatedEvent, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, PopulatedFlow, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { applicationEvents, MetaInformation } from '../../helper/application-events'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
@@ -12,6 +12,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         publishedFlowVersion,
         templateId,
         isRepublish,
+        isTriggerUnchanged,
     }: PreUpdateStatusParams): Promise<void> {
         switch (newStatus) {
             case FlowStatus.ENABLED: {
@@ -21,6 +22,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     simulate: false,
                     templateId,
                     isRepublish,
+                    isTriggerUnchanged,
                 })
                 break
             }
@@ -105,6 +107,17 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async onDraftWritten({ flowId, projectId, editorSessionId }: OnDraftWrittenParams): Promise<void> {
+        const { error } = await tryCatch(async () => {
+            const { websocketService } = await import('../../core/websockets.service')
+            const event: FlowDraftUpdatedEvent = { flowId, editorSessionId }
+            websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_DRAFT_UPDATED, event)
+        })
+        if (!isNil(error)) {
+            log.error({ error, flow: { id: flowId }, project: { id: projectId } }, '[flowSideEffects#onDraftWritten] Could not send the Draft Push, the write is kept')
+        }
+    },
+
     onDisabledByWorker({ flow, projectId, platformId }: OnDisabledByWorkerParams): void {
         applicationEvents(log).sendWorkerEvent({
             projectId,
@@ -133,6 +146,7 @@ type PreUpdateStatusParams = {
     newStatus: FlowStatus
     templateId?: string
     isRepublish?: boolean
+    isTriggerUnchanged?: boolean
 }
 
 
@@ -148,6 +162,12 @@ type OnOperationAppliedParams = FlowEventParams & {
     previousVersion: FlowVersion
     previousStatus: FlowStatus
     operation: FlowOperationRequest
+}
+
+type OnDraftWrittenParams = {
+    flowId: FlowId
+    projectId: ProjectId
+    editorSessionId: string | null
 }
 
 type OnDisabledByWorkerParams = {

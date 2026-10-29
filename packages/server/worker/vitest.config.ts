@@ -8,6 +8,7 @@ export default defineConfig({
     pool: 'forks',
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],
     exclude: [path.resolve(__dirname, 'test/e2e/**')],
+    setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
   },
   resolve: {
     alias: {

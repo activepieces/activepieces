@@ -3,7 +3,7 @@
   "\nTo get your API Key:\n\n1. Go to [Appfollow platform](https://watch.appfollow.io/apps/)\n2. Sign up or log in to your account\n3. Click on the \"Integrations\" from  the left sidebar\n4. Navigate to the \"API Dashboard\" section\n5. Create a new API token or the use existing one\n6. Copy and save your API token\n": "\nTo get your API Key:\n\n1. Go to [Appfollow platform](https://watch.appfollow.io/apps/)\n2. Sign up or log in to your account\n3. Click on the \"Integrations\" from  the left sidebar\n4. Navigate to the \"API Dashboard\" section\n5. Create a new API token or the use existing one\n6. Copy and save your API token\n",
   "Add user": "ユーザーを追加",
   "Reply to Review": "レビューに返信",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Adds a new user to the Appfollow account": "Appfollowアカウントに新しいユーザーを追加します",
   "Reply to a specific review within a date range for a selected application and collection": "選択したアプリケーションとコレクションの日付範囲内で特定のレビューに返信する",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",

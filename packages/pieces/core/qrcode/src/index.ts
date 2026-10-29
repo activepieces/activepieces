@@ -5,6 +5,7 @@
     
     export const qrcode = createPiece({
       displayName: 'QR Code',
+      description: 'Make QR code images from text or links.',
       auth: PieceAuth.None(),
       minimumSupportedRelease: '0.30.0',
       logoUrl: "https://cdn.activepieces.com/pieces/new-core/qrcode.svg",

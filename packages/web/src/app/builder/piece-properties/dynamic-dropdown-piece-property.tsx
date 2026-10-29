@@ -6,7 +6,7 @@ import { t } from 'i18next';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { useOptionalBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesHooks } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -18,10 +18,11 @@ import { DynamicPropertiesContext } from './dynamic-properties-context';
 
 const DynamicDropdownPiecePropertyImplementation = React.memo(
   (props: DynamicDropdownProps) => {
-    const [flowVersion, readonly] = useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.readonly,
-    ]);
+    const flowVersion = useOptionalBuilderStateContext(
+      (state) => state.flowVersion,
+    );
+    const readonly =
+      useOptionalBuilderStateContext((state) => state.readonly) ?? false;
 
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
@@ -122,8 +123,8 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
             propertyName: props.propertyName,
             actionOrTriggerName: props.actionOrTriggerName,
             input,
-            flowVersionId: flowVersion.id,
-            flowId: flowVersion.flowId,
+            flowVersionId: flowVersion?.id,
+            flowId: flowVersion?.flowId,
             searchValue: term,
           },
           propertyType: PropertyType.DROPDOWN,
@@ -171,6 +172,11 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       label: option.label,
       value: option.value,
     }));
+    const singleSelectOptions = withSavedValueNotInList({
+      options: selectOptions,
+      value: props.value,
+      loadsOptionsOnSearch: props.shouldRefreshOnSearch === true,
+    });
     const isDisabled = dropdownState.disabled || props.disabled;
     return props.multiple ? (
       <MultiSelectPieceProperty
@@ -194,7 +200,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       />
     ) : (
       <SearchableSelect
-        options={selectOptions}
+        options={singleSelectOptions}
         disabled={dropdownState.disabled || props.disabled}
         loading={isPending}
         placeholder={dropdownState.placeholder ?? t('Select an option')}
@@ -225,6 +231,36 @@ DynamicDropdownPieceProperty.displayName = 'DynamicDropdownPieceProperty';
 DynamicDropdownPiecePropertyImplementation.displayName =
   'DynamicDropdownPiecePropertyImplementation';
 export { DynamicDropdownPieceProperty };
+
+function withSavedValueNotInList({
+  options,
+  value,
+  loadsOptionsOnSearch,
+}: {
+  options: SelectOption[];
+  value: unknown;
+  loadsOptionsOnSearch: boolean;
+}): SelectOption[] {
+  const isReadableValue =
+    (typeof value === 'string' && value !== '') || typeof value === 'number';
+  const isNotInList =
+    isReadableValue &&
+    !loadsOptionsOnSearch &&
+    options.length > 0 &&
+    !options.some((option) => deepEqual(option.value, value));
+  return isNotInList
+    ? [
+        {
+          label: t('{value} (not in the list)', { value: String(value) }),
+          value,
+        },
+        ...options,
+      ]
+    : options;
+}
+
+type SelectOption = { label: string; value: unknown };
+
 type DynamicDropdownProps = {
   refreshers: string[];
   propertyName: string;

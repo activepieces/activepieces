@@ -9,11 +9,12 @@ export const getClickupSpace = createAction({
   auth: clickupAuth,
   name: 'get_space',
   classification: 'READ',
-  description: 'Gets a space in a ClickUp',
+  description: 'Get one ClickUp space.',
   audience: 'human',
   aiMetadata: { description: 'Read-only: fetch the details of a single ClickUp space by its space ID. Use when you already know which space you want; to discover space IDs first, use the list-spaces action instead. Safe to call repeatedly.', idempotent: true },
   displayName: 'Get Space',
   props: {
+    workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),
   },
   outputSchema: spaceOutputSchema,

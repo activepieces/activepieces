@@ -3,7 +3,7 @@ import autocannon from 'autocannon';
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { Project } from '@activepieces/shared';
+import type { Project } from '@activepieces/shared';
 
 const BENCHMARK_DOC = 'Load-test a deployment\'s sync-webhook path, auto-discover its shape, and attribute latency (queue-wait vs service-time) against the recommended setup.';
 
@@ -13,6 +13,8 @@ export const benchmarkCommand = new Command('benchmark')
     .option('--requests <n>', 'Total requests to fire (default: 40 x concurrency)')
     .option('--concurrency <c>', 'Concurrent connections (default: auto = sum of worker execution slots)')
     .option('--api-key <key>', 'Platform API key (Bearer). Or set AP_API_KEY.')
+    .option('--project-id <id>', 'Reuse an existing project ID (skip throwaway provision + teardown). Useful in CI where the platform plan does not allow team-project creation.')
+    .option('--flow-id <id>', 'Reuse an existing sync-webhook flow ID (skip flow creation). Requires --project-id.')
     .option('--body <json>', 'JSON request body sent to the webhook', '{"test":true}')
     .option('--json', 'Emit machine-readable JSON output')
     .action(async (opts) => {
@@ -35,12 +37,15 @@ export const benchmarkCommand = new Command('benchmark')
                 measureNetwork(authed),
             ]);
 
-            const project = await provisionProject({ client: authed });
-            log(config, `Provisioned throwaway project ${project.id}`);
+            const reusedProjectId = config.projectId;
+            const project = reusedProjectId
+                ? { id: reusedProjectId }
+                : await provisionProject({ client: authed });
+            log(config, reusedProjectId ? `Reusing project ${project.id}` : `Provisioned throwaway project ${project.id}`);
             const runsFailed = await (async () => {
                 const projectLimits = await collectProjectLimits({ client: authed, projectId: project.id, rateLimiterEnabled: flags['PROJECT_RATE_LIMITER_ENABLED'] === true });
-                const flowId = await createBenchmarkFlow({ client: authed, projectId: project.id });
-                log(config, `Flow ready: ${flowId}`);
+                const flowId = config.flowId ?? await createBenchmarkFlow({ client: authed, projectId: project.id });
+                log(config, config.flowId ? `Reusing flow ${flowId}` : `Flow ready: ${flowId}`);
 
                 const slots = setup.executionSlots;
                 const phases = benchmarkUtils.resolvePhases({ concurrency: config.concurrency, slots });
@@ -83,8 +88,10 @@ export const benchmarkCommand = new Command('benchmark')
                 }
                 return runs.some((r) => r.summary.failed > 0);
             })().finally(async () => {
-                log(config, `Deleting throwaway project ${project.id}`);
-                await deleteProject({ client: authed, id: project.id });
+                if (!reusedProjectId) {
+                    log(config, `Deleting throwaway project ${project.id}`);
+                    await deleteProject({ client: authed, id: project.id });
+                }
             });
             process.exit(runsFailed ? 1 : 0);
         } catch (e) {
@@ -108,11 +115,18 @@ function normalizeOptions(opts: Record<string, string | boolean | undefined>): B
         throw new Error(`--body must be valid JSON, got "${opts.body}"`);
     }
     const url = String(opts.url);
+    const projectId = typeof opts.projectId === 'string' ? opts.projectId : undefined;
+    const flowId = typeof opts.flowId === 'string' ? opts.flowId : undefined;
+    if (Boolean(projectId) !== Boolean(flowId)) {
+        throw new Error('--project-id and --flow-id must be provided together, or both omitted (letting the CLI provision and delete its own throwaway project + flow).');
+    }
     return {
         url: url.endsWith('/') ? url.slice(0, -1) : url,
         requests,
         concurrency,
         apiKey: typeof opts.apiKey === 'string' ? opts.apiKey : undefined,
+        projectId,
+        flowId,
         body,
         json: opts.json === true,
     };
@@ -941,6 +955,8 @@ const DIAGNOSTIC_FLAGS = [
 export const benchmarkUtils = { normalizeOptions, toSummary, resolvePhases, validateSetup, aggregateTimeline, percentile, aggregateOutsideRuns };
 
 type BenchmarkConfig = {
+    projectId?: string;
+    flowId?: string;
     url: string;
     requests?: number;
     concurrency?: number;

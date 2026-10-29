@@ -17,27 +17,39 @@ export const findContact = createAction({
 			'Looks up a single Brevo contact by email, phone number, contact id, external id, WhatsApp id or landline number, and returns its attributes, list membership and blacklist flags. Returns found:false instead of failing when no contact matches, so it is safe to branch on. Read-only and idempotent.',
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'lookup',
+			display: 'section',
+			label: 'Contact',
+			icon: 'user',
+			props: ['identifier_type', 'identifier'],
+		},
+	],
 	props: {
-		identifier: Property.ShortText({
-			displayName: 'Identifier',
-			description: 'The value to look the contact up by, for example an email address.',
-			required: true,
-		}),
 		identifier_type: Property.StaticDropdown({
-			displayName: 'Identifier Type',
-			description: 'How the identifier above should be interpreted.',
+			displayName: 'Look Up By',
+			description: 'What kind of value you are searching with.',
 			required: false,
 			defaultValue: 'email_id',
+			width: 'half',
 			options: {
 				options: [
 					{ label: 'Email', value: 'email_id' },
-					{ label: 'Phone (SMS)', value: 'phone_id' },
+					{ label: 'Mobile Number', value: 'phone_id' },
 					{ label: 'Contact ID', value: 'contact_id' },
 					{ label: 'External ID', value: 'ext_id' },
 					{ label: 'WhatsApp', value: 'whatsapp_id' },
 					{ label: 'Landline Number', value: 'landline_number_id' },
 				],
 			},
+		}),
+		identifier: Property.ShortText({
+			displayName: 'Value',
+			description: 'The email, number or ID to search for.',
+			placeholder: 'jane@example.com',
+			required: true,
+			width: 'half',
 		}),
 	},
 	async run(context) {

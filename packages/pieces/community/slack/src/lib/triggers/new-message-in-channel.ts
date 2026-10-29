@@ -16,6 +16,22 @@ export const newMessageInChannelTrigger = createTrigger({
 		description:
 			'Fires when a new message is posted to the specific channel selected in the trigger configuration. Only channel or group messages in the chosen channel fire; bot messages can be optionally ignored. The event payload is the Slack message event, including its channel, text, and sender.',
 	},
+	propertyGroups: [
+		{
+			key: 'channel_picker',
+			display: 'section',
+			label: 'Channel',
+			icon: 'markdown',
+			props: ['webhookInfo', 'info', 'onlyBotChannels', 'channel'],
+		},
+		{
+			key: 'filters',
+			display: 'section',
+			label: 'Filters',
+			icon: 'filter',
+			props: ['ignoreBots'],
+		},
+	],
 	props: {
 		webhookInfo: appWebhookSetupInfo,
 		info: singleSelectChannelInfo,

@@ -68,7 +68,7 @@ export const SamlLoginForm = ({
           mutate(data);
         })}
       >
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t('Enter your email to be redirected to your SAML provider.')}
         </p>
         <FormField
@@ -80,7 +80,6 @@ export const SamlLoginForm = ({
                 {...field}
                 type="text"
                 placeholder="jdoe@acme.com"
-                className="rounded-sm"
                 autoFocus
               />
               <FormMessage />

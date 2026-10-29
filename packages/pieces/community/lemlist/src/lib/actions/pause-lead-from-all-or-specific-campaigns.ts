@@ -1,16 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { campaignsDropdown } from '../common/props';
 import { lemlistAuth } from '../common/constants';
-import { lemlistApiService } from '../common/requests';
+import { campaignsDropdown } from '../common/props';
+import { lemlistLeads } from '../common/requests';
+import { lemlistSchemas } from '../common/schemas';
 
 export const pauseLeadFromAllOrSpecificCampaigns = createAction({
   auth: lemlistAuth,
   name: 'pauseLeadFromAllOrSpecificCampaigns',
-  classification: 'DESTRUCTIVE',
+  classification: 'WRITE',
   displayName: 'Pause Lead From All or Specific Campaigns',
   description: 'Pause a lead’s outreach across all or specific campaigns.',
-  audience: 'both',
-  aiMetadata: { description: 'Pauses outreach sequencing for a lead, identified by email. Operates in two modes: supply a campaign to pause the lead only in that campaign, or leave the campaign empty to pause the lead across all campaigns. Idempotent: re-running leaves the lead paused.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Pauses outreach for a lead, identified by email, in one campaign or, with no campaign, in all campaigns. Reversible with Resume. Idempotent.',
+    idempotent: true,
+  },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'], required: false }),
     email: Property.ShortText({
@@ -19,10 +24,13 @@ export const pauseLeadFromAllOrSpecificCampaigns = createAction({
       required: true,
     }),
   },
-  async run({ auth, propsValue: { campaignId, email } }) {
-    return await lemlistApiService.pauseLeadInSpecificOrAllCampaigns(auth, {
-      campaignId: campaignId as string,
-      leadEmail: email as string,
+  outputSchema: lemlistSchemas.leadList,
+  async run({ auth, propsValue }) {
+    return lemlistLeads.setLeadPaused({
+      apiKey: auth.secret_text,
+      lead: propsValue.email,
+      campaignId: propsValue.campaignId,
+      paused: true,
     });
   },
 });

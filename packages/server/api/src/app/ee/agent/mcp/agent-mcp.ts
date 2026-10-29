@@ -12,7 +12,7 @@ async function getMcpCredentials({ platformId, userId, log }: {
     log: FastifyBaseLogger
 }): Promise<McpCredentials> {
     const { data: accessToken, error } = await tryCatch(() =>
-        mcpOAuthTokenService.issueInternalAccessToken({ userId, platformId, projectId: null }),
+        mcpOAuthTokenService.issueChatTurnAccessToken({ userId, platformId, projectId: null }),
     )
     if (error) {
         log.warn({ error, platform: { id: platformId } }, 'Failed to get MCP credentials — chat will work without MCP tools')

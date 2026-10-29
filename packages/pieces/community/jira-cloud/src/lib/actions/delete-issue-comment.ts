@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { sendJiraRequest } from '../common';
 import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
+import { jiraCommentProps } from '../common/comment-props';
 
 export const deleteIssueCommentAction = createAction({
 	auth: jiraCloudAuth,
@@ -19,41 +20,17 @@ export const deleteIssueCommentAction = createAction({
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
-		commentId: Property.Dropdown<string, true, typeof jiraCloudAuth>({
-			auth: jiraCloudAuth,
-			displayName: 'Comment ID',
-			refreshers: ['issueId'],
-			required: true,
-			options: async ({ auth, issueId }) => {
-				if (!auth || !issueId) {
-					return {
-						disabled: true,
-						placeholder: 'Please connect your account and select issue.',
-						options: [],
-					};
-				}
-				const response = await sendJiraRequest({
-					method: HttpMethod.GET,
-					url: `issue/${issueId}/comment`,
-					auth: auth,
-					queryParams: {
-						orderBy: '-created',
-						expand: 'renderedBody',
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.comments.map((comment: { id: string; renderedBody: string }) => {
-						return {
-							label: comment.renderedBody,
-							value: comment.id,
-						};
-					}),
-				};
-			},
-		}),
+		commentId: jiraCommentProps.commentId(),
 	},
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Comment to Delete',
+			icon: 'trash',
+			props: ['projectId', 'issueId', 'commentId'],
+		},
+	],
 	async run(context) {
 		const { issueId, commentId } = context.propsValue;
 		const response = await sendJiraRequest({

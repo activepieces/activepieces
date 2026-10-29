@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomAuth } from '../auth';
 import { commonProps, intercomClient } from '../common';
 import { conversationIdProp } from '../common/props';
+import { conversationOutputSchema } from '../output-schemas';
 
 export const addNoteToConversationAction = createAction({
 	auth: intercomAuth,
@@ -9,18 +10,19 @@ export const addNoteToConversationAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Add note to conversation',
 	description: 'Add a note (for other admins) to an existing conversation',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Append an internal admin-only note to an existing conversation; the note is visible to admins but never sent to the contact. Each call adds a new note, so it is not idempotent. To send a customer-visible reply instead, use Reply to conversation.', idempotent: false },
 	props: {
 		from: commonProps.admins({ displayName: 'From (Admin)', required: true }),
 		conversationId:conversationIdProp('Conversation ID', true),
-		body: Property.ShortText({
+		body: Property.LongText({
 			displayName: 'Message Body',
 			required: true,
 		}),
 	},
+	outputSchema: conversationOutputSchema,
 	async run(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.conversations.reply({
 			conversation_id: context.propsValue.conversationId!,

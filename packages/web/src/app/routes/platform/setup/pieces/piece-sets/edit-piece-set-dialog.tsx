@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,6 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: formErrors.required }),
@@ -118,7 +120,11 @@ const EditPieceSetForm = ({
           >
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={isPending}>
+          <Button
+            {...adminControl(AdminControl.PIECE_SETS_SAVE_SUBMIT)}
+            type="submit"
+            loading={isPending}
+          >
             {t('Save')}
           </Button>
         </DialogFooter>
@@ -136,7 +142,7 @@ export const EditPieceSetDialog = ({
 }: EditPieceSetDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>{t('Edit Piece Set')}</DialogTitle>
         </DialogHeader>

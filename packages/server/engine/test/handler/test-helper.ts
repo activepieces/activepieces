@@ -126,7 +126,7 @@ export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOp
                 code: '',
             },
             errorHandlingOptions,
-            useDeno: useDeno ?? true,
+            ...(useDeno === undefined ? {} : { useDeno }),
         },
         nextAction,
         valid: true,

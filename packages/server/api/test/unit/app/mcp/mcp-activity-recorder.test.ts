@@ -3,6 +3,7 @@ import { MCP_ACTIVITY_PAYLOAD_MAX_BYTES, McpServerType, McpToolResult, ProjectSc
 import { FastifyBaseLogger } from 'fastify'
 import { describe, expect, it } from 'vitest'
 import { capPayload, runActionFieldsFrom, shouldRecord, withActivityRecording } from '../../../../src/app/mcp/activity/mcp-activity-recorder'
+import { CONTROLLABLE_PLACEHOLDER_ANNOTATIONS, FLOW_TOOL_ANNOTATIONS, LOCKED_PLACEHOLDER_ANNOTATIONS } from '../../../../src/app/mcp/mcp-server-builder'
 import { activepiecesTools } from '../../../../src/app/mcp/tools'
 
 const noopLog: FastifyBaseLogger = {
@@ -35,6 +36,58 @@ describe('MCP activity recording predicate', () => {
             .map((tool) => tool.title)
 
         expect(missing).toEqual([])
+    })
+
+    it('flags exactly the tools that can overwrite, delete, or run connector steps as destructive', () => {
+        const destructive = activepiecesTools(mcp, apId(), noopLog)
+            .filter((tool) => tool.annotations?.destructiveHint === true)
+            .map((tool) => tool.title)
+            .sort()
+
+        expect(destructive).toEqual([
+            'ap_change_flow_status',
+            'ap_delete_branch',
+            'ap_delete_flow',
+            'ap_delete_records',
+            'ap_delete_step',
+            'ap_delete_table',
+            'ap_lock_and_publish',
+            'ap_manage_fields',
+            'ap_manage_notes',
+            'ap_retry_run',
+            'ap_run_action',
+            'ap_test_flow',
+            'ap_test_step',
+            'ap_update_branch',
+            'ap_update_record',
+            'ap_update_step',
+            'ap_update_trigger',
+        ])
+    })
+
+    it('flags exactly the tools that reach a connected third-party account as open-world', () => {
+        const openWorld = activepiecesTools(mcp, apId(), noopLog)
+            .filter((tool) => tool.annotations?.openWorldHint === true)
+            .map((tool) => tool.title)
+            .sort()
+
+        expect(openWorld).toEqual([
+            'ap_change_flow_status',
+            'ap_get_piece_props',
+            'ap_lock_and_publish',
+            'ap_resolve_property_chain',
+            'ap_resolve_property_options',
+            'ap_retry_run',
+            'ap_run_action',
+            'ap_test_flow',
+            'ap_test_step',
+        ])
+    })
+
+    it('never labels a dynamic flow tool or placeholder as safer than the tool it stands for', () => {
+        expect(FLOW_TOOL_ANNOTATIONS).toEqual({ readOnlyHint: false, destructiveHint: true, openWorldHint: true })
+        expect(LOCKED_PLACEHOLDER_ANNOTATIONS).toEqual({ readOnlyHint: true, destructiveHint: false, openWorldHint: true })
+        expect(CONTROLLABLE_PLACEHOLDER_ANNOTATIONS).toEqual({ readOnlyHint: false, destructiveHint: true, openWorldHint: true })
     })
 
     it('records ap_run_action and nothing else', () => {

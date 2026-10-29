@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import { togglTrackAuth } from '../auth';
 import { togglCommon } from '../common';
+import { togglApi } from '../common/client';
+import { togglTimeEntries } from '../common/time-entries';
+import { togglOutputSchemas } from '../output-schemas';
 
 export const startTimeEntry = createAction({
   auth: togglTrackAuth,
@@ -9,8 +11,12 @@ export const startTimeEntry = createAction({
   classification: 'WRITE',
   displayName: 'Start Time Entry',
   description: 'Start a new time entry (live timer).',
-  audience: 'both',
-  aiMetadata: { description: 'Starts a live running timer in a Toggl Track workspace, beginning now with an open-ended duration; optionally links project, task, tags, and billable flag. Use to begin tracking time in real time (use Stop Time Entry to end it); prefer Create Time Entry to log a completed entry with an explicit start/stop. Not idempotent: each call starts a new running entry.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Starts a running timer now, optionally linked to a project, task, and tags. Returns the running entry; end it with Stop Time Entry. A retry starts another timer (on Toggl 2.0 it also stops the previous one).',
+    idempotent: false,
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     description: Property.LongText({
@@ -27,33 +33,52 @@ export const startTimeEntry = createAction({
     }),
     task_id: togglCommon.optional_task_id,
   },
+  outputSchema: togglOutputSchemas.timeEntry,
   async run(context) {
-    const { workspace_id, description, project_id, tags, billable, task_id } =
-      context.propsValue;
-    const apiToken = context.auth;
+    const { description, tags, billable } = context.propsValue;
+    const auth = context.auth;
+    const workspaceId = togglApi.requireId({
+      value: context.propsValue.workspace_id,
+      label: 'Workspace',
+    });
+    const projectId = togglApi.optionalId({
+      value: context.propsValue.project_id,
+      label: 'Project',
+    });
+    const taskId = togglApi.optionalId({
+      value: context.propsValue.task_id,
+      label: 'Task',
+    });
+    const start = new Date().toISOString();
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/time_entries`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${apiToken}:api_token`).toString(
-          'base64'
-        )}`,
-      },
-      body: {
-        workspace_id: Number(workspace_id),
+    if (togglApi.isTwo(auth)) {
+      return togglTimeEntries.twoStart({
+        auth,
+        workspaceId,
+        start,
         description,
-        start: new Date().toISOString(),
+        projectId,
+        taskId,
+        tags,
+        billable,
+      });
+    }
+
+    return togglApi.request<Record<string, unknown>>({
+      auth,
+      method: togglApi.HttpMethod.POST,
+      path: `/workspaces/${workspaceId}/time_entries`,
+      body: {
+        workspace_id: workspaceId,
+        description,
+        start,
         duration: -1,
         created_with: 'Activepieces',
         billable,
-        ...(project_id && { project_id }),
-        ...(task_id && { task_id }),
-        ...(tags && { tags }),
+        ...(projectId ? { project_id: projectId } : {}),
+        ...(taskId ? { task_id: taskId } : {}),
+        ...(tags ? { tags } : {}),
       },
     });
-
-    return response.body;
   },
 });

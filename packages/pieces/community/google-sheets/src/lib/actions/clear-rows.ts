@@ -18,6 +18,22 @@ export const clearRowsAction = createAction({
 			'Blanks the cell contents of one row or a contiguous row range in a worksheet without removing the rows, so row numbers and downstream references stay stable — prefer Delete Row or Delete Multiple Rows when the rows themselves should disappear, and Clear Sheet when the whole sheet should be emptied. Requires a selected spreadsheet and worksheet plus a 1-based starting row; leaving the ending row empty clears only that single row. Idempotent — re-running over the same range leaves it equally empty, but the erased values cannot be recovered.',
 		idempotent: true,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'target_rows',
+			display: 'section',
+			label: 'Rows',
+			icon: 'markdown',
+			props: ['startingRow', 'endingRow'],
+		},
+	],
 	props: {
 		...commonProps,
 		startingRow: Property.Number({

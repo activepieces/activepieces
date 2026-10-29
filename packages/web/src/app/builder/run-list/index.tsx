@@ -129,7 +129,7 @@ const RunsList = React.memo(() => {
               <div className="mx-5 h-full flex items-center ">
                 <Button
                   className="w-full"
-                  variant={'accent'}
+                  variant={'secondary'}
                   onClick={() => fetchNextPage()}
                   loading={isFetchingNextPage}
                 >

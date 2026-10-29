@@ -4,6 +4,7 @@ import { isNil, Property } from '@activepieces/pieces-framework';
 export const gmbApi = {
   request,
   paginate,
+  dropdownErrorPlaceholder,
   locationReadMask:
     'name,title,storeCode,languageCode,phoneNumbers,categories,storefrontAddress,websiteUri,regularHours,specialHours,serviceArea,labels,latlng,openInfo,metadata,profile',
   resourceNames: { accountName, v1Location, v4Location, childId, reviewUrl },
@@ -87,8 +88,7 @@ function buildErrorMessage({ status, body }: { status: number; body: unknown }):
   const vendorMessage = vendor.message ?? 'Unknown error';
   const suffix = `(status ${status}${isNil(vendor.status) ? '' : ` ${vendor.status}`}): ${vendorMessage}`;
   if (status === 403) {
-    const disabled = vendor.reasons.some((reason) => reason === 'SERVICE_DISABLED' || reason === 'accessNotConfigured');
-    if (disabled) {
+    if (vendor.reasons.some(isServiceDisabledReason)) {
       return `This Business Profile API is not enabled for the connection's Google project ${suffix}`;
     }
     return `The connected Google account does not manage this account or location ${suffix}`;
@@ -103,6 +103,21 @@ function buildErrorMessage({ status, body }: { status: number; body: unknown }):
     return `Precondition failed; the location may be unverified ${suffix}`;
   }
   return `Google Business Profile request failed ${suffix}`;
+}
+
+function dropdownErrorPlaceholder({ error, fallback }: { error: unknown; fallback: string }): string {
+  if (!(error instanceof HttpError) || error.response.status !== 403) {
+    return fallback;
+  }
+  const vendor = readVendorError(error.response.body);
+  if (vendor.reasons.some(isServiceDisabledReason)) {
+    return 'Enable the Business Profile APIs first';
+  }
+  return 'No access to Business Profile';
+}
+
+function isServiceDisabledReason(reason: string): boolean {
+  return reason === 'SERVICE_DISABLED' || reason === 'accessNotConfigured';
 }
 
 function readVendorError(body: unknown): VendorError {

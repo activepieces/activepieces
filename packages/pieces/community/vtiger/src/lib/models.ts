@@ -1,6 +1,6 @@
 export interface Challenge {
-  token: string; // Challenge token to be used for login.
-  serverTime: string; // Current Server time
+  token: string;
+  serverTime: string;
   expireTime: string;
 }
 

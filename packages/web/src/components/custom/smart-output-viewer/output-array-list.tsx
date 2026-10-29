@@ -12,11 +12,11 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
 
   if (!isObject(item)) {
     return (
-      <div className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 border-b border-dividers">
-        <span className="text-sm font-medium text-muted-foreground shrink-0">
+      <div className="flex items-center gap-3 py-2 px-4 hover:bg-gray-4/50 border-b border-gray-6">
+        <span className="text-sm font-medium text-gray-11 shrink-0">
           {t('Item')} {index + 1}
         </span>
-        <span className="text-sm text-foreground/70 truncate flex-1">
+        <span className="text-sm text-gray-12/70 truncate flex-1">
           {truncateValue(item)}
         </span>
       </div>
@@ -31,25 +31,25 @@ function ArrayItemRow({ item, index }: { item: unknown; index: number }) {
     .join(' · ');
 
   return (
-    <div className="border-b border-dividers last:border-b-0">
+    <div className="border-b border-gray-6 last:border-b-0">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-3 py-2 px-4 hover:bg-accent/50 cursor-pointer w-full text-left"
+        className="flex items-center gap-3 py-2 px-4 hover:bg-gray-4/50 cursor-pointer w-full text-left"
       >
-        <div className="shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground">
+        <div className="shrink-0 w-4 h-4 flex items-center justify-center text-gray-11">
           {expanded ? (
             <ChevronDown className="h-3.5 w-3.5" />
           ) : (
             <ChevronRight className="h-3.5 w-3.5" />
           )}
         </div>
-        <span className="text-sm font-medium text-muted-foreground shrink-0">
+        <span className="text-sm font-medium text-gray-11 shrink-0">
           {t('Item')} {index + 1}
         </span>
         {!expanded && (
           <span
-            className="text-sm text-foreground/50 truncate flex-1 min-w-0"
+            className="text-sm text-gray-11 truncate flex-1 min-w-0"
             title={previewValues}
           >
             {previewValues}
@@ -73,11 +73,7 @@ type OutputArrayListProps = {
 
 function OutputArrayList({ items }: OutputArrayListProps) {
   if (items.length === 0) {
-    return (
-      <div className="p-4 text-sm text-muted-foreground italic">
-        {t('empty')}
-      </div>
-    );
+    return <div className="p-4 text-sm text-gray-11 italic">{t('empty')}</div>;
   }
 
   return (

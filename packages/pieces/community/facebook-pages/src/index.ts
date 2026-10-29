@@ -23,7 +23,7 @@ import { getPostReactionsAction } from './lib/actions/ai/get-post-reactions';
 export const facebookPages = createPiece({
   displayName: 'Facebook Pages',
   description: 'Manage your Facebook pages to grow your business',
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/facebook.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],

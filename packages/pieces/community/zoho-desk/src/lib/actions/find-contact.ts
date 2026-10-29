@@ -1,48 +1,35 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { zohoDeskApiCall } from '../common';
-import { zohoDeskAuth } from '../common/auth';
-import { organizationId } from '../common/props';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
+import { zohoDeskAuth } from '../auth';
+import { zohoDeskApi } from '../common/api';
+import { zohoDeskProps } from '../common/props';
+import { findContactOutputSchema } from '../output-schemas';
 
 export const findContactAction = createAction({
 	auth: zohoDeskAuth,
 	name: 'find-contact',
+	outputSchema: findContactOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Contact',
 	description: 'Finds an existing contact by email.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Searches a Zoho Desk organization for contacts matching an exact email address, returning whether any were found along with the matches. Use to resolve a contact (e.g. before creating or routing a ticket) when you have the email rather than an ID; requires the organization ID and email. Read-only and idempotent.', idempotent: true },
 	props: {
-		orgId: organizationId({ displayName: 'Organization', required: true }),
+		orgId: zohoDeskProps.orgId({ required: true }),
 		email: Property.ShortText({
 			displayName: 'Email',
 			required: true,
 		}),
 	},
 	async run(context) {
-		const response = await zohoDeskApiCall({
+		const contacts = await zohoDeskApi.searchContacts({
 			auth: context.auth,
-			method: HttpMethod.GET,
-			resourceUri: '/contacts/search',
 			orgId: context.propsValue.orgId,
-			query: {
-				email: context.propsValue.email,
-			},
+			email: context.propsValue.email,
 		});
 
-		if (isNil(response) || response === '') {
-			return {
-				found: false,
-				result: [],
-			};
-		}
-
-		const contacts = response as { data: Record<string, any>[] };
-
 		return {
-			found: contacts.data.length > 0,
-			result: contacts.data,
+			found: contacts.length > 0,
+			result: contacts,
 		};
 	},
 });

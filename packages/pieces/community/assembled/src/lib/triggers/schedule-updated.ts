@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { assembledAuth } from '../common/auth';
@@ -21,6 +21,9 @@ export const scheduleUpdated = createTrigger({
     updated_at: '2025-01-15T10:00:00Z',
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('lastScheduleCheck'))) {
+      return;
+    }
     await context.store.put('lastScheduleCheck', new Date().toISOString());
   },
   async onDisable() {

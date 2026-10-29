@@ -39,6 +39,8 @@ type SearchableSelectProps<T> = {
   onRefresh?: () => void;
   showRefresh?: boolean;
   onClose?: () => void;
+  variant?: 'field' | 'outline' | 'ghost';
+  /**Layout classes only; use variant for the surface */
   triggerClassName?: string;
   /**Widens the popover past the trigger, for compact or inline triggers */
   contentWidth?: string;
@@ -80,6 +82,7 @@ export const SearchableSelect = <T,>({
   onRefresh,
   showRefresh,
   onClose,
+  variant = 'field',
   triggerClassName,
   contentWidth,
   valuesRendering,
@@ -144,7 +147,7 @@ export const SearchableSelect = <T,>({
       <PopoverTrigger
         asChild
         className={cn({
-          'cursor-not-allowed opacity-80 ': disabled,
+          'cursor-not-allowed': disabled,
         })}
         onClick={(e) => {
           if (disabled) {
@@ -156,7 +159,7 @@ export const SearchableSelect = <T,>({
         <div className="relative">
           <Button
             ref={triggerRef}
-            variant="outline"
+            variant={variant}
             disabled={disabled}
             role="combobox"
             loading={loading}
@@ -271,7 +274,7 @@ export const SearchableSelect = <T,>({
                               <button
                                 type="button"
                                 className={cn(
-                                  'absolute inset-0 flex items-center justify-center text-muted-foreground hover:text-destructive',
+                                  'absolute inset-0 flex items-center justify-center text-gray-11 hover:text-danger-11',
                                   'opacity-0 group-hover/option:opacity-100',
                                 )}
                                 onClick={(e) => {
@@ -298,7 +301,7 @@ export const SearchableSelect = <T,>({
                           </div>
                         </div>
                         {option.description && (
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm text-gray-11">
                             {option.description}
                           </div>
                         )}

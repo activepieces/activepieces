@@ -97,6 +97,15 @@ export const newContactInListTrigger = createTrigger({
 	},
 	outputSchema: newContactInListTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
+	propertyGroups: [
+		{
+			key: 'list',
+			display: 'section',
+			label: 'List',
+			icon: 'users',
+			props: ['listId'],
+		},
+	],
 	props: {
 		listId: Property.Dropdown({
 			displayName: 'Contact List',
@@ -140,16 +149,15 @@ export const newContactInListTrigger = createTrigger({
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                         
-                         firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry			
-                                                 
-                         **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.CONTACT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async onEnable(context) {

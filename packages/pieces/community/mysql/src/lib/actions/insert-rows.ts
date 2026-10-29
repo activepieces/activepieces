@@ -58,8 +58,18 @@ export const insertRows = createAction({
       description: 'Insert empty fields as empty strings instead of the column default.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'rows',
+      display: 'section',
+      label: 'Data to insert',
+      icon: 'inbox',
+      props: ['table', 'batch'],
+    },
+  ],
   async run(context) {
     const { table, batch, keep_empty_strings } = context.propsValue;
     const records = insertRowsUtils.toRecords({ rows: batch?.['rows'], keepEmptyStrings: keep_empty_strings === true });

@@ -13,11 +13,10 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { isToolSearchEnabled } from '../../../tool-search/tool-search-flag'
 import { toolSearchReindexJob } from '../../../tool-search/tool-search-reindex.job'
+import { CANARY_WORKER_GROUP_ID, platformWorkerGroupService } from '../../../workers/worker-groups/platform-worker-group.service'
 import { AgentConversationEntity } from '../../agent/agent-conversation-entity'
 import { chatAnalyticsBulkSync } from '../../agent/chat-analytics-sync'
-import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
-import { denoMigrationService } from './deno-migration.service'
 
 const API_KEY_HEADER = 'api-key'
 const API_KEY = system.get(AppSystemProp.API_KEY)
@@ -74,26 +73,16 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 
     app.post('/platforms/worker-group', UpdateWorkerGroupRequest, async (req, res) => {
         const { platformId, workerGroupId } = req.body
-        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
-        await workerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
+        await platformWorkerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
+        await platformWorkerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
         return res.status(StatusCodes.OK).send()
     })
 
     app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
         const { platformId, canary } = req.body
-        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
-        await workerGroupService(req.log).updateCanary({ platformId, canary })
+        await platformWorkerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
+        await platformWorkerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
-    })
-
-    app.post('/flows/migrate-to-deno', MigrateFlowsDenoRequest, async (req, res) => {
-        const result = await denoMigrationService(req.log).migrateToDeno(req.body)
-        return res.status(StatusCodes.OK).send(result)
-    })
-
-    app.post('/flows/revert-from-deno', MigrateFlowsDenoRequest, async (req, res) => {
-        const result = await denoMigrationService(req.log).revertFromDeno(req.body)
-        return res.status(StatusCodes.OK).send(result)
     })
 
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
@@ -217,21 +206,6 @@ const CreatePieceRequest = {
             actions: z.record(z.string(), Action),
             triggers: z.record(z.string(), Trigger),
             i18n: z.record(z.string(), z.record(z.string(), z.string())).optional(),
-        }),
-    },
-    config: {
-        security: securityAccess.public(),
-    },
-}
-
-const MigrateFlowsDenoRequest = {
-    schema: {
-        body: z.object({
-            platformId: z.string().optional(),
-            projectId: z.string().optional(),
-            flowIds: z.array(z.string()).optional(),
-        }).refine((body) => [body.platformId, body.projectId, body.flowIds].filter((value) => !isNil(value)).length === 1, {
-            message: 'exactly one of platformId, projectId or flowIds must be provided',
         }),
     },
     config: {

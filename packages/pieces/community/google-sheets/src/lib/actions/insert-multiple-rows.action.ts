@@ -36,6 +36,29 @@ export const insertMultipleRowsAction = createAction({
 			'Bulk-appends many rows to a worksheet in one call, accepting input as CSV, JSON, or per-column values. Use for batch inserts instead of calling Add Row repeatedly. Optional flags can overwrite existing data or skip duplicates keyed on a chosen column; in default append mode it is not idempotent — repeating it adds the rows again.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'new_rows',
+			display: 'section',
+			label: 'New Rows',
+			icon: 'text',
+			props: ['input_type', 'headerRow', 'values'],
+		},
+		{
+			key: 'options',
+			display: 'section',
+			label: 'Options',
+			icon: 'sliders',
+			props: ['overwrite', 'check_for_duplicate', 'check_for_duplicate_column'],
+		},
+	],
 	props: {
 		...commonProps,
 		input_type: Property.StaticDropdown({
@@ -43,20 +66,27 @@ export const insertMultipleRowsAction = createAction({
 			description: 'Select the format of the input values to be added into the worksheet.',
 			required: true,
 			defaultValue: 'column_names',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
 					{
 						value: 'csv',
 						label: 'CSV',
+						description: 'Line per row',
+						icon: 'file',
 					},
 					{
 						value: 'json',
 						label: 'JSON',
+						description: 'List of objects',
+						icon: 'code',
 					},
 					{
 						value: 'column_names',
 						label: 'Column Names',
+						description: 'Field per column',
+						icon: 'type',
 					},
 				],
 			},

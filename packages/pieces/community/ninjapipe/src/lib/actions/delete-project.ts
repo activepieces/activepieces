@@ -1,22 +1,31 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const deleteProject = createAction({
   auth: ninjapipeAuth,
   name: 'delete_project',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Project',
-  description: 'Deletes a project by ID.',
+  description: 'Permanently deletes a project. Its tasks are removed with it.',
   audience: 'both',
-  aiMetadata: { description: 'Permanently deletes a project identified by Project ID, including its tasks. Pick this to remove a project entirely; the change is destructive and cannot be undone. Re-running after deletion typically fails since the ID no longer exists.', idempotent: false },
+  aiMetadata: {
+    description: 'Permanently delete one NinjaPipe project by ID (projectId; get it from a list or search step). Cannot be undone. A second call fails with 404 because the project is gone.',
+    idempotent: false,
+  },
+  outputSchema: ninjapipeSchemas.deleted,
   props: {
-    projectId: ninjapipeCommon.projectDropdownRequired,
+    projectId: ninjapipeProps.projectRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.DELETE, path: `/projects/${encodeURIComponent(String(context.propsValue.projectId))}` });
-    return { success: true, deleted_id: context.propsValue.projectId };
+    const id = ninjapipeClient.pathId({ value: context.propsValue.projectId, field: 'Project' });
+    return ninjapipeClient.deleteRecord({
+      auth: ninjapipeClient.readAuth(context.auth),
+      path: `/projects/${id}`,
+      id: decodeURIComponent(id),
+      operation: 'delete project',
+    });
   },
 });

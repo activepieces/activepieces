@@ -14,44 +14,68 @@ export const todoistCreateTaskAction = createAction({
   name: 'create_task',
   classification: 'WRITE',
   displayName: 'Create Task',
-  description: 'Create task',
+  description: 'Add a task to a Todoist project or your Inbox.',
   audience: 'human',
   aiMetadata: { description: 'Creates a new task in Todoist with content, optional description, labels, priority (1-4), and a natural-language or ISO due date. Use to add a to-do item; without a project_id it lands in the user\'s Inbox. Not idempotent: each call appends a separate task even if the content is identical.', idempotent: false },
   outputSchema: createTaskActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Where to add it',
+      icon: 'inbox',
+      props: ['project_id', 'section_id'],
+    },
+    {
+      key: 'task',
+      display: 'section',
+      label: 'Task',
+      icon: 'text',
+      props: ['content', 'description'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'tag',
+      props: ['labels', 'priority', 'due_date'],
+    },
+  ],
   props: {
     project_id: todoistProjectIdDropdown(
-      "Task project ID. If not set, task is put to user's Inbox."
+      'Leave empty to add the task to your Inbox.'
     ),
+    section_id: todoistSectionIdDropdown,
     content: Property.LongText({
-      displayName: 'content',
-      description:
-        "The task's content. It may contain some markdown-formatted text and hyperlinks",
+      displayName: 'Title',
+      description: 'Markdown and links are supported.',
+      placeholder: 'e.g. Buy milk',
       required: true,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description:
-        'A description for the task. This value may contain some markdown-formatted text and hyperlinks.',
+      description: 'Extra details shown under the title. Markdown is supported.',
       required: false,
     }),
     labels: Property.Array({
       displayName: 'Labels',
       required: false,
-      description:
-        "The task's labels (a list of names that may represent either personal or shared labels)",
+      description: 'Names of personal or shared labels to add.',
     }),
     priority: Property.Number({
       displayName: 'Priority',
-      description: 'Task priority from 1 (normal) to 4 (urgent)',
+      description: '1 is normal, 4 is urgent; Todoist shows 4 as P1.',
       required: false,
+      width: 'half',
     }),
     due_date: Property.ShortText({
-      displayName: 'Due date',
+      displayName: 'Due Date',
       description:
-        "Can be either a specific date in YYYY-MM-DD format relative to user's timezone, a specific date and time in RFC3339 format, or a human defined date (e.g. 'next Monday') using local time",
+        'YYYY-MM-DD or English words. Repeating dates work too.',
+      placeholder: 'e.g. tomorrow 5pm',
       required: false,
+      width: 'half',
     }),
-    section_id: todoistSectionIdDropdown,
   },
 
   async run({ auth, propsValue }) {

@@ -35,7 +35,8 @@ function ManageMemoriesContent() {
   });
 
   const forget = useMutation({
-    mutationFn: (next: string[]) => chatApi.saveMemory({ memories: next }),
+    mutationFn: ({ next, base }: { next: string[]; base: string[] }) =>
+      chatApi.saveMemory({ memories: { next, base } }),
     onSuccess: invalidate,
     onError: () => toast.error(t('Could not update memory')),
   });
@@ -51,12 +52,15 @@ function ManageMemoriesContent() {
         </DialogDescription>
       </DialogHeader>
 
-      <div className="rounded-lg border p-2">
+      <div className="rounded-xl border p-2">
         <ScrollArea className="max-h-[45vh] pr-2">
           <RememberedFacts
             memories={memories}
             onForget={(index) =>
-              forget.mutate(memories.filter((_, i) => i !== index))
+              forget.mutate({
+                next: memories.filter((_, i) => i !== index),
+                base: memories,
+              })
             }
           />
         </ScrollArea>
@@ -78,8 +82,8 @@ function ManageMemoriesContent() {
         />
         <Button
           type="button"
-          size="icon"
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
+          size="icon-sm"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full"
           loading={instruct.isPending}
           disabled={instruction.trim().length === 0}
           onClick={() => instruct.mutate()}
@@ -100,7 +104,7 @@ export function ManageMemoriesDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl gap-5" overlayClassName="bg-black/20">
+      <DialogContent className="max-w-xl gap-5" overlayClassName="bg-scrim/40">
         <ManageMemoriesContent key={open ? 'open' : 'closed'} />
       </DialogContent>
     </Dialog>

@@ -22,6 +22,9 @@ export const gmailNewLabelTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get(TRIGGER_KEY))) {
+      return;
+    }
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
 
@@ -35,6 +38,9 @@ export const gmailNewLabelTrigger = createTrigger({
     await context.store.put(TRIGGER_KEY, JSON.stringify(existingLabelIds));
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete(TRIGGER_KEY);
   },
   async test(context) {

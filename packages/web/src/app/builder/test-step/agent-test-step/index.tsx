@@ -38,7 +38,7 @@ export const AgentTestStep = ({
   errorMessage,
 }: AgentTestStepProps) => {
   return (
-    <div className="flex flex-col justify-center w-full items-start">
+    <div className="flex flex-col justify-center w-full items-start pt-3">
       <Tabs defaultValue="timeline" className="w-full">
         <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>

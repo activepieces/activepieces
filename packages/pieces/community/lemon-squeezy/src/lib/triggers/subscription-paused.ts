@@ -1,6 +1,7 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { lemonSqueezyAuth } from '../common/auth';
-import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, generateWebhookSecret, createWebhookTriggerKey } from '../common/webhook';
+import { createStoreDropdownProperty, disableWebhook, enableWebhook, handleWebhook } from '../common/webhook';
+import { webhookSchemas } from '../common/output-schemas';
 
 export const subscriptionPausedTrigger = createTrigger({
   auth: lemonSqueezyAuth,
@@ -16,32 +17,21 @@ export const subscriptionPausedTrigger = createTrigger({
     store_id: createStoreDropdownProperty()
   },
   async onEnable(context) {
-    const webhookSecret = generateWebhookSecret();
-
-    const webhookData = await subscribeWebhook(
-      context.auth.secret_text,
-      context.propsValue.store_id as unknown as string,
-      ['subscription_paused'],
-      context.webhookUrl,
-      webhookSecret
-    );
-
-    await context.store?.put(createWebhookTriggerKey('subscription_paused'), {
-      webhookId: webhookData.data.id,
-      secret: webhookSecret,
-      storeId: context.propsValue.store_id
+    await enableWebhook({
+      auth: context.auth,
+      store: context.store,
+      storeId: context.propsValue.store_id,
+      webhookUrl: context.webhookUrl,
+      eventName: 'subscription_paused',
     });
   },
   async onDisable(context) {
-    const response: { webhookId: string } | null = await context.store?.get(createWebhookTriggerKey('subscription_paused'));
-
-    if (response !== null && response !== undefined) {
-      await unsubscribeWebhook(context.auth.secret_text, response.webhookId);
-    }
+    await disableWebhook({ auth: context.auth, store: context.store, eventName: 'subscription_paused' });
   },
   async run(context) {
-    return [context.payload.body];
+    return handleWebhook({ payload: context.payload, store: context.store, eventName: 'subscription_paused' });
   },
+  outputSchema: webhookSchemas.subscription,
   sampleData: {
     meta: {
       event_name: 'subscription_paused',

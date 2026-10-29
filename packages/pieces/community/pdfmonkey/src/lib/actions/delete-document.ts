@@ -1,34 +1,31 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { pdfmonkeyAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { pdfmonkeyOperations } from '../common/operations';
+import { pdfmonkeySchemas } from '../common/output-schemas';
 import { documentIdDropdown } from '../common/props';
 
 export const deleteDocumentAction = createAction({
-	auth: pdfmonkeyAuth,
-	name: 'deleteDocument',
-	classification: 'DESTRUCTIVE',
-	displayName: 'Delete Document',
-	description: 'Deletes a document.',
-	audience: 'both',
-	aiMetadata: { description: 'Permanently delete a generated document in PDFMonkey by its document ID. Use to clean up documents no longer needed. The document ID is required; deletion is irreversible, and a repeat call for an already-deleted ID is not a successful no-op, so treat it as not idempotent.', idempotent: false },
-	props: {
-		document_id: documentIdDropdown,
-	},
-	async run({ auth, propsValue }) {
-		const { document_id } = propsValue;
-		if (!document_id) {
-			throw new Error('Document ID is required');
-		}
-		const response = await makeRequest(
-			auth,
-			HttpMethod.DELETE,
-			`/documents/${document_id}`,
-		);
-		return {
-			status: 'success',
-			message: 'Document deleted successfully.',
-			data: response,
-		};
-	},
+  auth: pdfmonkeyAuth,
+  name: 'deleteDocument',
+  classification: 'DESTRUCTIVE',
+  displayName: 'Delete Document',
+  description: 'Deletes a document.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Permanently deletes a PDFMonkey document picked in a dropdown, together with its file. Irreversible; a second call for the same ID fails with not found.',
+    idempotent: false,
+  },
+  outputSchema: pdfmonkeySchemas.legacyDeleted,
+  props: {
+    document_id: documentIdDropdown,
+  },
+  async run({ auth, propsValue }) {
+    const result = await pdfmonkeyOperations.deleteDocument({ auth, documentId: propsValue.document_id });
+    return {
+      status: 'success',
+      message: 'Document deleted successfully.',
+      document_id: result.document_id,
+    };
+  },
 });

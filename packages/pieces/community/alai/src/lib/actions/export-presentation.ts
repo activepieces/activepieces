@@ -1,110 +1,56 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { alaiAuth } from '../common/auth';
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+import { alaiClient } from '../common/client';
+import { alaiOutputSchemas } from '../common/output-schemas';
+import { exportFormatOptions, presentationIdProp } from './shared-props';
+
 export const exportPresentation = createAction({
   auth: alaiAuth,
   name: 'exportPresentation',
   classification: 'WRITE',
   displayName: 'Export Presentation',
-  description: 'Export a presentation in the specified formats.',
-  audience: 'both',
+  description: 'Export a presentation as a link, PDF and/or PowerPoint file.',
+  audience: 'human',
+  outputSchema: alaiOutputSchemas.generation,
   aiMetadata: {
     description:
-      'Export an existing Alai presentation into one or more formats (link, PDF, and/or PPTX) by its presentation ID. Use this to render a deck for download or sharing. By default it returns immediately with a generation_id (poll Get Generation for status); set Wait for Completion to block until the export finishes (up to Max Wait Time). Not idempotent: each call kicks off a new export job. Requires the presentation ID and at least one export format.',
+      'Starts an export of an existing Alai presentation to link, pdf and/or ppt by presentation ID. By default returns at once with generation_id; set waitForCompletion to wait (max 480 s) and get link_url, pdf_url and ppt_url (signed, valid about 24 h). Fails if a requested format failed. Not idempotent: each call starts a new export job.',
     idempotent: false,
   },
   props: {
-    presentationId: Property.ShortText({
-      displayName: 'Presentation ID',
-      description: 'The ID of the presentation to export.',
-      required: true,
-    }),
+    presentationId: presentationIdProp('The presentation to export.'),
     exportFormats: Property.StaticMultiSelectDropdown({
       displayName: 'Export Formats',
-      description: 'Formats to export the presentation in.',
+      description: 'Formats to produce.',
       required: true,
-      options: {
-        options: [
-          { label: 'Link', value: 'link' },
-          { label: 'PDF', value: 'pdf' },
-          { label: 'PowerPoint (PPTX)', value: 'ppt' },
-        ],
-      },
+      options: { options: exportFormatOptions },
     }),
     waitForCompletion: Property.Checkbox({
       displayName: 'Wait for Completion',
-      description:
-        'Wait for the presentation generation to complete before returning.',
+      description: 'Wait until Alai finishes. If off, use "Get Generation" with the returned ID later.',
       required: false,
       defaultValue: false,
     }),
     maxWaitTime: Property.Number({
       displayName: 'Max Wait Time (seconds)',
-      description:
-        'Maximum time to wait for completion (default 300 seconds / 5 minutes).',
+      description: 'How long to wait when waiting is on. Default 300, capped at 480.',
       required: false,
       defaultValue: 300,
     }),
   },
-  async run(context) {
-    const { presentationId, exportFormats, waitForCompletion, maxWaitTime } =
-      context.propsValue;
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://slides-api.getalai.com/api/v1/presentations/${presentationId}/exports`,
-      headers: {
-        Authorization: `Bearer ${context.auth.props.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: {
-        export_formats: exportFormats,
-      },
+  async run({ auth, propsValue }) {
+    const presentationId = alaiClient.pathId({ value: propsValue.presentationId, label: 'Presentation ID' });
+    const formats = alaiClient.exportFormats(propsValue.exportFormats);
+    if (formats.length === 0) {
+      throw new Error('Choose at least one export format.');
+    }
+    return alaiClient.startGeneration({
+      apiKey: auth.props.apiKey,
+      path: `/presentations/${presentationId}/exports`,
+      body: { formats },
+      waitForCompletion: propsValue.waitForCompletion,
+      maxWaitTime: propsValue.maxWaitTime,
+      requestedFormats: formats,
     });
-    const generationId = response.body?.generation_id;
-
-    if (!generationId) {
-      throw new Error(
-        `Failed to get generation_id from response: ${JSON.stringify(
-          response.body
-        )}`
-      );
-    }
-
-    if (!waitForCompletion) {
-      return response.body;
-    }
-
-    await sleep(1000);
-
-    // Poll for completion
-    const maxWait = (maxWaitTime || 300) * 1000; // Convert to milliseconds
-    const startTime = Date.now();
-    const pollInterval = 5000; // Poll every 5 seconds
-
-    while (Date.now() - startTime < maxWait) {
-      const statusResponse = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `https://slides-api.getalai.com/api/v1/generations/${generationId}`,
-        headers: {
-          Authorization: `Bearer ${context.auth.props.apiKey}`,
-        },
-      });
-
-      const status = statusResponse.body?.status;
-
-      if (status === 'completed') {
-        return statusResponse.body;
-      } else if (status === 'failed') {
-        throw new Error(
-          `Generation failed: ${statusResponse.body?.error || 'Unknown error'}`
-        );
-      }
-
-      // Wait before polling again
-      await sleep(pollInterval);
-    }
-
-    throw new Error(`Generation timed out after ${maxWaitTime || 300} seconds`);
   },
 });

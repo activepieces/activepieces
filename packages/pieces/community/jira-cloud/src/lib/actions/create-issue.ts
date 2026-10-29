@@ -42,6 +42,22 @@ export const createIssueAction = createAction({
 	},
 	auth: jiraCloudAuth,
 	outputSchema: issueOutputSchema,
+	propertyGroups: [
+		{
+			key: 'destination',
+			display: 'section',
+			label: 'Where',
+			icon: 'inbox',
+			props: ['projectId', 'issueTypeId'],
+		},
+		{
+			key: 'fields',
+			display: 'section',
+			label: 'Issue Fields',
+			icon: 'text',
+			props: ['issueFields'],
+		},
+	],
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueTypeId: issueTypeIdProp('Issue Type'),
@@ -83,9 +99,10 @@ export const createIssueAction = createAction({
 		}),
     adfFields: Property.MultiSelectDropdown({
 		auth: jiraCloudAuth,
-			displayName: 'Fields in JSON Atlassian Document Format',
-			description: 'https://developer.atlassian.com/cloud/jira/platform/apis/document/structure',
+			displayName: 'Fields Given as ADF JSON',
+			description: 'Fields whose value is Atlassian Document Format JSON, not plain text.',
 			required: false,
+			advanced: true,
 			refreshers: ['projectId', 'issueTypeId'],
 			options: async ({ auth, projectId, issueTypeId }) => {
 				if (!auth || !issueTypeId || !projectId) {

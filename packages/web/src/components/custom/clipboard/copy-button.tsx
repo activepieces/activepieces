@@ -1,8 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
-import React, { forwardRef, useState } from 'react';
-import { toast } from 'sonner';
+import React, { forwardRef } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 import {
@@ -10,6 +8,8 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+
+import { useCopyToClipboard } from './use-copy-to-clipboard';
 
 interface CopyButtonProps extends ButtonProps {
   textToCopy: string;
@@ -31,20 +31,8 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
     },
     ref,
   ) => {
-    const [isCopied, setIsCopied] = useState(false);
-
-    const { mutate: copyToClipboard } = useMutation({
-      mutationFn: async () => {
-        await navigator.clipboard.writeText(textToCopy);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 3000);
-      },
-      onError: () => {
-        toast.error(t('Failed to copy to clipboard'), {
-          duration: 3000,
-        });
-      },
-    });
+    const { isCopied, copy } = useCopyToClipboard();
+    const copyToClipboard = () => copy(textToCopy);
 
     const content = (
       <>

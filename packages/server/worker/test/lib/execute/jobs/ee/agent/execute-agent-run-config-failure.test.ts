@@ -1,5 +1,6 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { AgentEvent, AgentEventType, AgentRunSource, AI_PROVIDER_ENTITY_TYPES, EngineResponseStatus, ExecuteAgentRunJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
+import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { executeAgentRunJob } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
 import { JobContext } from '../../../../../../src/lib/execute/types'
@@ -17,11 +18,15 @@ const noopLogger = {
 function buildContext(configError?: Error) {
     const events: AgentEvent[] = []
     const resumed: { flowRunId: string, waitpointId: string, output: unknown }[] = []
+    const configRequests: unknown[] = []
     const apiClient = {
-        getAgentConfig: () => Promise.reject(configError ?? new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: 'OPENAI', entityType: 'AIProvider' },
-        })),
+        getAgentConfig: (input: unknown) => {
+            configRequests.push(input)
+            return Promise.reject(configError ?? new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: 'OPENAI', entityType: 'AIProvider' },
+            }))
+        },
         resumeFlowStep: (input: { flowRunId: string, waitpointId: string, output: unknown }) => {
             resumed.push(input)
             return Promise.resolve()
@@ -33,7 +38,7 @@ function buildContext(configError?: Error) {
         },
     }
     const ctx = { apiClient, log: noopLogger } as unknown as JobContext
-    return { ctx, events, resumed }
+    return { ctx, events, resumed, configRequests }
 }
 
 function buildJobData(overrides: Partial<ExecuteAgentRunJobData>): ExecuteAgentRunJobData {
@@ -69,6 +74,24 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(resumed[0].output).toMatchObject({ failure: expect.stringContaining('ENTITY_NOT_FOUND') })
     })
 
+    it('hands the step\'s waitpoint to the server, so the stale sweep can release the flow if this worker dies', async () => {
+        const { ctx, configRequests } = buildContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' }))
+
+        expect(configRequests[0]).toMatchObject({ flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' })
+    })
+
+    it('exits quietly without releasing the flow when it is a redelivered copy of a run still in progress', async () => {
+        const { ctx, resumed, events } = buildContext(new ActivepiecesError({ code: ErrorCode.AGENT_RUN_SUPERSEDED, params: { message: 'This run was already delivered' } }))
+
+        const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' }))
+
+        expect(result.status).toBe(EngineResponseStatus.OK)
+        expect(resumed).toHaveLength(0)
+        expect(events).toHaveLength(0)
+    })
+
     it('fails a flow step on a model our credits do not serve with the reason alone, as a user failure', async () => {
         const reason = 'The model "openai/gpt-4o" is not available on Activepieces AI credits. Available models: anthropic/claude-sonnet-4.6'
         const { ctx, resumed } = buildContext(Object.assign(new Error(`RPC [getAgentConfig] handler threw: ENTITY_NOT_FOUND: ${reason}`), {
@@ -98,6 +121,34 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
         expect(events[0]).toMatchObject({ type: AgentEventType.ERROR, data: { code: ErrorCode.QUOTA_EXCEEDED } })
     })
+
+    it('completes as a user failure when the customer\'s own provider is overloaded, so it is not reported as ours', async () => {
+        const overloaded = new RetryError({
+            message: 'Failed after 4 attempts',
+            reason: 'maxRetriesExceeded',
+            errors: [new APICallError({ message: 'This model is currently experiencing high demand.', url: 'https://provider.test/v1/chat', requestBodyValues: {}, statusCode: 503 })],
+        })
+        const { ctx, events } = buildContext(overloaded)
+
+        const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))
+
+        expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
+        expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
+    })
+
+    for (const code of [ErrorCode.VALIDATION, ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED]) {
+        it(`completes as a user failure when the server rejects the turn with ${code}, so on-call is not paged`, async () => {
+            const reason = 'No model in tier "Smart" can run'
+            const { ctx, resumed } = buildContext(Object.assign(new Error(`RPC [getAgentConfig] handler threw: ${code}`), {
+                apError: { code, message: reason },
+            }))
+
+            const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' }))
+
+            expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
+            expect(resumed[0].output).toMatchObject({ failure: reason })
+        })
+    }
 
     it('still fails the job on an unrecognised error, so our own bugs are not laundered', async () => {
         const { ctx, events } = buildContext(new Error('Cannot read properties of undefined'))

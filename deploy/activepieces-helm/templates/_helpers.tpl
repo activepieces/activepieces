@@ -72,3 +72,17 @@ Create the name of the service account to use
 {{- "rollout" }}
 {{- end }}
 {{- end }}
+
+{{- define "activepieces.cacheStorageClassName" -}}
+{{- if .Values.persistence.storageClassName }}
+{{- .Values.persistence.storageClassName }}
+{{- else }}
+{{- with lookup "apps/v1" "StatefulSet" .Release.Namespace (include "activepieces.fullname" .) }}
+{{- range .spec.volumeClaimTemplates }}
+{{- if eq .metadata.name "cache" }}
+{{- .spec.storageClassName | default "" }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

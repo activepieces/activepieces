@@ -7,19 +7,35 @@ export const githubLockIssueAction = createAction({
   auth: githubAuth,
   name: 'lockIssue',
   classification: 'WRITE',
-  displayName: 'Lock issue',
-  description: 'Locks the specified issue',
+  displayName: 'Lock Issue',
+  description: 'Locks an issue so only collaborators can comment.',
   audience: 'human',
   aiMetadata: {
     description:
       'Locks an issue (by number) so only collaborators can comment, optionally recording a lock reason (off-topic, too heated, resolved, or spam). Use to freeze discussion on an issue or pull request. Idempotent: re-locking an already-locked issue leaves it locked.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'issue',
+      display: 'section',
+      label: 'Issue',
+      icon: 'inbox',
+      props: ['repository', 'issue_number'],
+    },
+    {
+      key: 'lock',
+      display: 'section',
+      label: 'Lock',
+      icon: 'sliders',
+      props: ['lock_reason'],
+    },
+  ],
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: Property.Number({
       displayName: 'Issue Number',
-      description: 'The number of the issue to be locked',
+      description: 'The number shown after # on GitHub.',
       required: true,
     }),
     lock_reason: Property.Dropdown<
@@ -29,7 +45,7 @@ export const githubLockIssueAction = createAction({
     >({
       auth: githubAuth,
       displayName: 'Lock Reason',
-      description: 'The reason for locking the issue',
+      description: "Shown on the issue's timeline.",
       required: false,
       refreshers: [],
       options: async () => {

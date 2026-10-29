@@ -19,17 +19,20 @@ export const telegramSendMediaGroupAction = createAction({
   classification: 'WRITE',
   displayName: 'Send Media Group',
   description:
-    'Send a group of 2–10 photos, videos, documents or audios as an album to a chat',
+    'Send 2 to 10 photos, videos, files or audio tracks as one album.',
   audience: 'human',
   aiMetadata: { description: 'Sends 2–10 media items (each a public URL or a Telegram file_id) as a single grouped album to a chat. Use to post several photos/videos together; photo and video may be mixed, but audio-only and document-only groups cannot be combined with other types. Not idempotent: each call posts a new album.', idempotent: false },
+  propertyGroups: [
+    { key: 'send_to', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id'] },
+    { key: 'album', display: 'section', label: 'Album', icon: 'file', props: ['media', 'parse_mode', 'instructions_format'] },
+  ],
   props: {
-    instructions: telegramCommons.chatIdInstructions(),
-    chat_id: telegramCommons.chatIdProp(),
-    message_thread_id: telegramCommons.messageThreadIdProp(),
+    instructions: telegramCommons.form.chatIdInstructions(),
+    chat_id: telegramCommons.form.chatIdProp(),
     media: Property.Array({
       displayName: 'Media',
       description:
-        'Media items to send. Each must be a URL or a Telegram file_id. Mixing photo/video is allowed; audio and document groups cannot be mixed with other types.',
+        'Photos and videos can mix. Audio and files go in albums of their own.',
       required: true,
       properties: {
         type: Property.StaticDropdown({
@@ -46,21 +49,26 @@ export const telegramSendMediaGroupAction = createAction({
           defaultValue: 'photo',
         }),
         media: Property.ShortText({
-          displayName: 'Media URL or File Id',
-          description:
-            'Public URL or a Telegram file_id of an already uploaded media item.',
+          displayName: 'URL or File ID',
+          description: 'Public URL, or file_id of media already on Telegram.',
           required: true,
         }),
         caption: Property.LongText({
           displayName: 'Caption',
+          description: 'Up to 1024 characters.',
           required: false,
         }),
       },
     }),
-    parse_mode: telegramCommons.parseModeProp(),
-    disable_notification: telegramCommons.disableNotificationProp(),
-    protect_content: telegramCommons.protectContentProp(),
-    reply_to_message_id: telegramCommons.replyToMessageIdProp(),
+    parse_mode: telegramCommons.form.parseModeProp({
+      displayName: 'Caption Format',
+      description: 'How Telegram styles the captions.',
+    }),
+    instructions_format: telegramCommons.form.formatLinkInstructions(),
+    message_thread_id: telegramCommons.form.messageThreadIdProp(),
+    disable_notification: telegramCommons.form.disableNotificationProp(),
+    protect_content: telegramCommons.form.protectContentProp(),
+    reply_to_message_id: telegramCommons.form.replyToMessageIdProp(),
   },
   outputSchema: sendMediaGroupActionOutputSchema,
   async run(ctx) {

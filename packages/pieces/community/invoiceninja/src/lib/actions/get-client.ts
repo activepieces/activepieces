@@ -1,105 +1,63 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import * as z from 'zod/mini'
-import { invoiceninjaAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { invoiceninjaAuth } from '../common/auth';
+import { invoiceNinjaClient } from '../common/client';
+import { invoiceNinjaOutputSchemas } from '../common/output-schemas';
 
 export const getClient = createAction({
   auth: invoiceninjaAuth,
   name: 'getclient_task',
   classification: 'READ',
   displayName: 'Get Client Details from e-mail',
-  description: 'Gets the client details if they exist by e-mail.',
-  audience: 'both',
-  aiMetadata: { description: 'Looks up a client in Invoice Ninja by email address and returns a trimmed set of their details (id, name, balances, address, contacts). Use to resolve a client id or fetch client info from an email; returns a falsy result when no matching client is found. Read-only and idempotent.', idempotent: true },
-
+  description: 'Gets the client whose contact has this e-mail. Returns false when there is none.',
+  audience: 'human',
+  outputSchema: invoiceNinjaOutputSchemas.legacyClient,
   props: {
-    email: Property.LongText({
-      displayName: 'Client e-mail address', 
-      description: 'A valid e-mail address to get client details for',
+    email: Property.ShortText({
+      displayName: 'Client e-mail address',
+      description: 'The e-mail address of one of the client\'s contacts.',
       required: true,
     }),
   },
-
-  async run(context) {
-    await propsValidation.validateZod(context.propsValue, {
-      email: z.string().check(z.email()),
-    });
-
-    const INapiToken = context.auth.props.access_token;
-
-    const headers = {
-      'X-Api-Token': INapiToken,
-    };
-    const queryParams = new URLSearchParams();
-    queryParams.append('email', context.propsValue.email || '');
-
-    // Remove trailing slash from base_url
-    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
-    const url = `${baseUrl}/api/v1/clients/?${queryParams.toString()}`;
-    const httprequestdata = {
-      method: HttpMethod.GET,
-      url,
-      headers,
-    };
-
-    try {
-      const response = await httpClient.sendRequest(httprequestdata);
-      // Process the successful response here (status 2xx).
-      //
-      if (response.body.meta.pagination.total > 0) {
-        // Each client that is found will have one or more contacts
-        const NumberOfContactsThisClient =
-          response.body.data[0].contacts.length;
-        for (let i = 0; i < NumberOfContactsThisClient; i++) {
-          // theres a lot of extra data I don't really want in the actual response of contacts so I want to tr and just pick out
-          // firstname, lastname, email, etc as I don't think we need the rest, just to keep it simpler
-          delete response.body.data[0].contacts[i].id;
-          delete response.body.data[0].contacts[i].created_at;
-          delete response.body.data[0].contacts[i].updated_at;
-          delete response.body.data[0].contacts[i].archived_at;
-          delete response.body.data[0].contacts[i].is_primary;
-          delete response.body.data[0].contacts[i].is_locked;
-          delete response.body.data[0].contacts[i].contact_key;
-          delete response.body.data[0].contacts[i].send_email;
-          delete response.body.data[0].contacts[i].last_login;
-          delete response.body.data[0].contacts[i].password;
-          delete response.body.data[0].contacts[i].link;
-        }
-        const json = [
-          {
-            client_no_contacts: NumberOfContactsThisClient,
-            client_id: response.body.data[0].id,
-            client_name: response.body.data[0].name,
-            client_web: response.body.data[0].website,
-            client_private_notes: response.body.data[0].private_notes,
-            client_balance: response.body.data[0].balance,
-            client_paid_to_date: response.body.data[0].paid_to_date,
-            client_payment_balance: response.body.data[0].payment_balance,
-            client_credit_balance: response.body.data[0].credit_balance,
-            client_public_notes: response.body.data[0].public_notes,
-            client_address1: response.body.data[0].address1,
-            client_address2: response.body.data[0].address2,
-            client_phone: response.body.data[0].phone,
-            client_city: response.body.data[0].city,
-            client_state: response.body.data[0].state,
-            client_postcode: response.body.data[0].postal_code,
-            client_vat: response.body.data[0].vat_number,
-            client_display_name: response.body.data[0].display_name,
-            client_contacts: response.body.data[0].contacts,
-            //meta: response.body.meta,
-          },
-        ];
-        return json;
-        return true;
-      } else {
-        return false;
-      } // this is still returned so if it is false we'll return notfound or similar
-    } catch (error) {
-      // Handle the error when the request fails (status other than 2xx).
-      return 'There was a problem getting information from your Invoice Ninja';
+  async run({ auth, propsValue }) {
+    const email = invoiceNinjaClient.optionalText(propsValue.email);
+    if (email === undefined || !/^[^\s@]+@[^\s@]+$/.test(email)) {
+      throw new Error('Client e-mail address must be a valid e-mail address.');
     }
+    const result = await invoiceNinjaClient.listPage({ auth: auth.props, entity: 'clients', query: { email }, page: 1, perPage: 1 });
+    const client = result.items.find(invoiceNinjaClient.isRecord);
+    if (!client) return false;
+    const contacts = invoiceNinjaClient.arrayOf(client['contacts']).filter(invoiceNinjaClient.isRecord);
+    return [
+      {
+        client_no_contacts: contacts.length,
+        client_id: client['id'],
+        client_name: client['name'],
+        client_web: client['website'],
+        client_private_notes: client['private_notes'],
+        client_balance: client['balance'],
+        client_paid_to_date: client['paid_to_date'],
+        client_payment_balance: client['payment_balance'],
+        client_credit_balance: client['credit_balance'],
+        client_public_notes: client['public_notes'],
+        client_address1: client['address1'],
+        client_address2: client['address2'],
+        client_phone: client['phone'],
+        client_city: client['city'],
+        client_state: client['state'],
+        client_postcode: client['postal_code'],
+        client_vat: client['vat_number'],
+        client_display_name: client['display_name'],
+        client_contacts: contacts.map((contact) => ({
+          first_name: contact['first_name'],
+          last_name: contact['last_name'],
+          email: contact['email'],
+          phone: contact['phone'],
+          custom_value1: contact['custom_value1'],
+          custom_value2: contact['custom_value2'],
+          custom_value3: contact['custom_value3'],
+          custom_value4: contact['custom_value4'],
+        })),
+      },
+    ];
   },
 });

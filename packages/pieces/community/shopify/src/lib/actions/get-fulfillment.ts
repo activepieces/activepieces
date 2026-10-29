@@ -10,16 +10,27 @@ export const getFulfillmentAction = createAction({
   description: `Get a fulfillment.`,
   audience: 'both',
   aiMetadata: { description: 'Look up a single fulfillment by its fulfillment ID within a given order. Read-only and repeatable; use to inspect shipment/fulfillment details when you already know both the order ID and fulfillment ID.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'fulfillment',
+      display: 'section',
+      label: 'Fulfillment to get',
+      icon: 'inbox',
+      props: ['orderId', 'fulfillmentId'],
+    },
+  ],
   props: {
     orderId: Property.Number({
-      displayName: 'Order',
-      description: 'The ID of the order.',
+      displayName: 'Order ID',
+      description: "From the order's URL in Shopify admin, not its #1001 number.",
       required: true,
+      width: 'half',
     }),
     fulfillmentId: Property.Number({
-      displayName: 'Fulfillment',
-      description: 'The ID of the fulfillment.',
+      displayName: 'Fulfillment ID',
+      description: 'Get it from a Get Fulfillments step.',
       required: true,
+      width: 'half',
     }),
   },
   async run({ auth, propsValue }) {

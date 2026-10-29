@@ -52,7 +52,7 @@ const ResetPasswordForm = () => {
   };
 
   return (
-    <Card className="w-md rounded-sm drop-shadow-xl">
+    <Card className="w-md rounded-md drop-shadow-xl">
       <CardHeader>
         <CardTitle className="text-2xl">
           {isSent ? t('Check Your Inbox') : t('Reset Password')}
@@ -102,7 +102,7 @@ const ResetPasswordForm = () => {
           </Form>
         )}
         <div className="mt-4 text-center text-sm">
-          <Link to="/sign-in" className="text-muted-foreground">
+          <Link to="/sign-in" className="text-gray-11">
             {t('Back to sign in')}
           </Link>
         </div>

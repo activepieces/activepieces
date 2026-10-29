@@ -7,7 +7,10 @@ import {
     AgentAuditEvent,
     ApplicationEvent,
     ApplicationEventName,
+    AuditLogRetentionUpdatedEvent,
+    AuthenticationDomainEvent,
     AuthenticationEvent,
+    AuthenticationSettingEvent,
     ConnectionEvent,
     FlowActivatedEvent,
     FlowApprovalEvent,
@@ -30,16 +33,27 @@ import {
 
 export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventParams): ApplicationEvent => {
     const isoNow = new Date().toISOString()
-    const baseEnvelope = {
+    const project = { displayName: 'Dream Department' }
+    const user = {
+        id: apId(),
+        email: 'sample@example.com',
+        firstName: 'Sample',
+        lastName: 'User',
+    }
+    const workerEnvelope = {
         id: apId(),
         created: isoNow,
         updated: isoNow,
-        ip: '127.0.0.1',
         platformId,
         projectId,
-        userId: apId(),
     }
-    const project = { displayName: 'Dream Department' }
+    const baseEnvelope = {
+        ...workerEnvelope,
+        ip: '127.0.0.1',
+        userId: user.id,
+        userEmail: user.email,
+        projectDisplayName: project.displayName,
+    }
     const flow = { id: apId(), externalId: apId(), created: isoNow, updated: isoNow }
     const flowVersion = {
         id: apId(),
@@ -48,12 +62,6 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         created: isoNow,
         updated: isoNow,
     }
-    const user = {
-        id: apId(),
-        email: 'sample@example.com',
-        firstName: 'Sample',
-        lastName: 'User',
-    }
 
     switch (event) {
         case ApplicationEventName.FLOW_RUN_STARTED:
@@ -61,7 +69,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         case ApplicationEventName.FLOW_RUN_RESUMED:
         case ApplicationEventName.FLOW_RUN_RETRIED: {
             const mock: FlowRunEvent = {
-                ...baseEnvelope,
+                ...workerEnvelope,
                 action: event,
                 data: {
                     flowRun: {
@@ -285,6 +293,48 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                         updated: isoNow,
                     },
                 },
+            }
+            return mock
+        }
+        case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED: {
+            const mock: AuditLogRetentionUpdatedEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED,
+                data: {
+                    previousRetentionDays: 365,
+                    retentionDays: 90,
+                    instanceLimitDays: null,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+        case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+        case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+        case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+        case ApplicationEventName.SAML_CONNECTED:
+        case ApplicationEventName.SAML_CONNECTION_REPLACED:
+        case ApplicationEventName.SSO_DISABLED: {
+            const mock: AuthenticationSettingEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {},
+            }
+            return mock
+        }
+        case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+        case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+        case ApplicationEventName.SSO_DOMAIN_ADDED:
+        case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+        case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+        case ApplicationEventName.SSO_DOMAIN_REMOVED:
+        case ApplicationEventName.SSO_DOMAIN_EXPIRED: {
+            const mock: AuthenticationDomainEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: { domain: 'acme.com' },
             }
             return mock
         }

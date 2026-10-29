@@ -1,11 +1,13 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 
-import { ghostAuth } from '../..';
-import { common } from '../common';
+import { ghostAuth } from '../auth';
+import { ghostWebhook } from '../common/webhooks';
+import { ghostPagePublishedTriggerOutputSchema } from '../output-schemas';
 
 export const pagePublished = createTrigger({
   auth: ghostAuth,
   name: 'page_published',
+  outputSchema: ghostPagePublishedTriggerOutputSchema,
   classification: 'READ',
   displayName: 'Page Published',
   description: 'Triggers when a page is published',
@@ -15,26 +17,24 @@ export const pagePublished = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
-    const webhookData: any = await common.subscribeWebhook(
-      context.auth,
-      'page.published',
-      context.webhookUrl
-    );
-
-    await context.store?.put('_page_published_trigger', {
-      webhookId: webhookData.webhooks[0].id,
+    await ghostWebhook.enable({
+      auth: context.auth,
+      event: 'page.published',
+      webhookUrl: context.webhookUrl,
+      store: context.store,
+      storeKey: '_page_published_trigger',
     });
   },
   async onDisable(context) {
-    const response: {
-      webhookId: string;
-    } | null = await context.store?.get('_page_published_trigger');
-
-    if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
-    }
+    await ghostWebhook.disable({ auth: context.auth, store: context.store, storeKey: '_page_published_trigger' });
   },
   async run(context) {
+    await ghostWebhook.assertSigned({
+      store: context.store,
+      storeKey: '_page_published_trigger',
+      rawBody: context.payload.rawBody,
+      headers: context.payload.headers,
+    });
     return [context.payload.body];
   },
 

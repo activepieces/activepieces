@@ -1,6 +1,7 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 
 import {
+    isNil,
     PieceCategory,
     SuggestionType,
 } from '@activepieces/shared'
@@ -24,7 +25,7 @@ const MINIMUM_FUZZY_QUERY_LENGTH = 6
 const FUZZY_THRESHOLD = 0.2
 const EXACT_THRESHOLD = 0
 
-const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: SearchParams): PieceMetadataSchema[] => {
+const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType, untranslatedNames }: SearchParams): PieceMetadataSchema[] => {
     if (!searchQuery) {
         return pieces
     }
@@ -39,7 +40,7 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: Searc
     const fuse = new Fuse(searchablePieces, {
         isCaseSensitive: false,
         shouldSort: true,
-        keys: PIECE_SEARCH_KEYS,
+        keys: [...PIECE_SEARCH_KEYS, { name: 'untranslatedName', weight: 3, getFn: (piece: PieceIdentity) => untranslatedNames.get(piece.name) ?? [] }],
         threshold: thresholdFor(searchQuery),
         distance: 250,
         ignoreLocation: true,
@@ -59,11 +60,15 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: Searc
         tokens.some((token) => pieceNameHaystack(piece).includes(token)),
     )
 
-    return [...nameMatches, ...descriptionMatches, ...substringMatches].map((piece) => ({
-        ...piece,
-        actions: searchForSuggestion({ actionsOrTriggers: piece.actions, searchQuery, pieceDisplayName: piece.displayName }),
-        triggers: searchForSuggestion({ actionsOrTriggers: piece.triggers, searchQuery, pieceDisplayName: piece.displayName }),
-    }))
+    return [...nameMatches, ...descriptionMatches, ...substringMatches].map((piece) => {
+        const untranslatedName = untranslatedNames.get(piece.name)
+        const pieceNames = isNil(untranslatedName) ? [piece.displayName] : [piece.displayName, untranslatedName]
+        return {
+            ...piece,
+            actions: searchForSuggestion({ actionsOrTriggers: piece.actions, searchQuery, pieceNames }),
+            triggers: searchForSuggestion({ actionsOrTriggers: piece.triggers, searchQuery, pieceNames }),
+        }
+    })
 }
 
 const filterBasedOnCategories = (categories: PieceCategory[] | undefined, pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
@@ -129,13 +134,15 @@ function toSuggestionRecord<T extends { name: string }>(actionsOrTriggers: T[]):
 function searchForSuggestion<T extends ActionBase | TriggerBase>({
     actionsOrTriggers,
     searchQuery,
-    pieceDisplayName,
+    pieceNames,
 }: SearchForSuggestionParams<T>): Record<string, T> {
     if (actionsOrTriggers.length === 0) {
         return {}
     }
 
-    const { pieceWasNamed, remainingQuery, wholeNameTyped } = matchPieceName({ searchQuery, pieceDisplayName })
+    const nameMatches = pieceNames.map((pieceDisplayName) => matchPieceName({ searchQuery, pieceDisplayName }))
+    const { pieceWasNamed, remainingQuery, wholeNameTyped } = nameMatches.find((match) => match.pieceWasNamed) ?? nameMatches[0]
+    const pieceDisplayName = pieceNames.join(' ')
     if (pieceWasNamed && remainingQuery.length === 0) {
         return toSuggestionRecord(actionsOrTriggers)
     }
@@ -170,6 +177,7 @@ type SearchParams = {
     categories: PieceCategory[] | undefined
     searchQuery: string | undefined
     pieces: PieceMetadataSchema[]
+    untranslatedNames: Map<string, string>
     suggestionType?: SuggestionType
 }
 
@@ -203,5 +211,5 @@ type PieceNameMatch = {
 type SearchForSuggestionParams<T extends ActionBase | TriggerBase> = {
     actionsOrTriggers: T[]
     searchQuery: string
-    pieceDisplayName: string
+    pieceNames: string[]
 }

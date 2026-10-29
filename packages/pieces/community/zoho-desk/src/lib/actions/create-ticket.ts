@@ -1,20 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { zohoDeskAuth } from '../common/auth';
-import { zohoDeskApiCall } from '../common';
-import { departmentId, organizationId } from '../common/props';
+import { zohoDeskAuth } from '../auth';
+import { zohoDeskApi } from '../common/api';
+import { zohoDeskProps } from '../common/props';
+import { createTicketOutputSchema } from '../output-schemas';
 
 export const createTicketAction = createAction({
 	auth: zohoDeskAuth,
 	name: 'create_ticket',
+	outputSchema: createTicketOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Ticket',
 	description: 'Creates a new ticket.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new support ticket in a Zoho Desk organization. Use when an agent needs to log a new issue or request; requires the organization ID, a department ID, a subject, and a description, with optional contact, status, priority, channel, assignee, and custom fields. Not idempotent — each call creates a separate ticket.', idempotent: false },
 	props: {
-		orgId: organizationId({ displayName: 'Organization', required: true }),
-		departmentId: departmentId({ displayName: 'Department', required: true }),
+		orgId: zohoDeskProps.orgId({ required: true }),
+		departmentId: zohoDeskProps.departmentId({ required: true }),
 		contactId: Property.ShortText({
 			displayName: 'Contact ID',
 			required: false,
@@ -153,36 +154,27 @@ export const createTicketAction = createAction({
 			customFields,
 		} = propsValue;
 
-		const requestBody: Record<string, any> = {
+		return await zohoDeskApi.createTicket({
+			auth,
+			orgId,
 			departmentId,
 			subject,
 			description,
-		};
-
-		if (contactId) requestBody['contactId'] = contactId;
-		if (email) requestBody['email'] = email;
-		if (phone) requestBody['phone'] = phone;
-		if (status) requestBody['status'] = status;
-		if (priority) requestBody['priority'] = priority;
-		if (category) requestBody['category'] = category;
-		if (subCategory) requestBody['subCategory'] = subCategory;
-		if (dueDate) requestBody['dueDate'] = dueDate;
-		if (channel) requestBody['channel'] = channel;
-		if (assigneeId) requestBody['assigneeId'] = assigneeId;
-		if (productId) requestBody['productId'] = productId;
-		if (classification) requestBody['classification'] = classification;
-		if (language) requestBody['language'] = language;
-		if (entitySkills && entitySkills.length > 0) requestBody['entitySkills'] = entitySkills;
-		if (customFields) requestBody['cf'] = customFields;
-
-		const response = await zohoDeskApiCall({
-			auth,
-			method: HttpMethod.POST,
-			resourceUri: '/tickets',
-			orgId,
-			body: requestBody,
+			contactId,
+			email,
+			phone,
+			status,
+			priority,
+			category,
+			subCategory,
+			dueDate,
+			channel,
+			assigneeId,
+			productId,
+			classification,
+			language,
+			entitySkills,
+			customFields,
 		});
-
-		return response;
 	},
 });

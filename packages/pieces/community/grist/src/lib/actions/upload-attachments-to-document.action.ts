@@ -8,14 +8,16 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { GristAPIClient } from '../common/helpers';
+import { gristUploadAttachmentOutputSchema } from '../output-schemas';
 
 export const gristUploadAttachmentsToDocumnetAction = createAction({
   auth: gristAuth,
   name: 'grist-upload-attachments-to-document',
+  outputSchema: gristUploadAttachmentOutputSchema,
   classification: 'WRITE',
   displayName: 'Upload Attachment to Document',
   description: 'Uploads attachments to specific document.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Uploads a file as an attachment to a specific Grist document and returns its attachment metadata. Use it to store a file in Grist before referencing it from an attachment-type column; requires the document identifier and a file. Not idempotent — each call uploads a new attachment with a fresh ID.', idempotent: false },
   props: {
     workspace_id: commonProps.workspace_id,

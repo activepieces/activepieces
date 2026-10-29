@@ -67,12 +67,16 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
         return authnSsoSamlService(req.log).updateSsoDomain({
             platformId: req.principal.platform.id,
             ssoDomain: req.body.ssoDomain,
+            userId: req.principal.id,
+            ip: networkUtils.clientIp(req),
         })
     })
 
     app.post('/sso-domain/verify', VerifySsoDomainRequest, async (req) => {
         return authnSsoSamlService(req.log).verifySsoDomain({
             platformId: req.principal.platform.id,
+            userId: req.principal.id,
+            ip: networkUtils.clientIp(req),
         })
     })
 }

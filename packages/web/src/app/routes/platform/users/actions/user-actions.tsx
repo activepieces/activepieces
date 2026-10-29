@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserRowData } from '../index';
 
@@ -46,7 +47,7 @@ export const UserActions = ({
     <div className="flex justify-end">
       <DropdownMenu modal={true} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="ghost" size="icon-sm">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -54,11 +55,17 @@ export const UserActions = ({
           {!isInvitation && (
             <UpdateUserDialog
               userId={row.data.id}
+              email={row.data.email}
+              firstName={row.data.firstName}
               role={row.data.platformRole}
               externalId={row.data.externalId ?? undefined}
+              hasProjects={row.data.hasProjects ?? true}
               onUpdate={onUpdate}
             >
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                {...adminControl(AdminControl.USERS_EDIT_OPEN)}
+              >
                 <Pencil className="h-4 w-4" />
                 {t('Edit')}
               </DropdownMenuItem>
@@ -71,6 +78,11 @@ export const UserActions = ({
                 onToggleStatus(row.data.id, row.data.status);
                 setOpen(false);
               }}
+              {...adminControl(
+                isActive
+                  ? AdminControl.USERS_DEACTIVATE_RUN
+                  : AdminControl.USERS_ACTIVATE_RUN,
+              )}
             >
               {isActive ? (
                 <CircleMinus className="h-4 w-4" />
@@ -93,10 +105,12 @@ export const UserActions = ({
             mutationFn={async () => {
               onDelete(isInvitation ? row.id : row.data.id, isInvitation);
             }}
+            controlId={AdminControl.USERS_DELETE_CONFIRM}
           >
             <DropdownMenuItem
               variant="destructive"
               onSelect={(e) => e.preventDefault()}
+              {...adminControl(AdminControl.USERS_DELETE_OPEN)}
             >
               <Trash className="h-4 w-4" />
               {t('Delete')}

@@ -17,6 +17,29 @@ export const discordAddRoleToMember = createAction({
   aiMetadata: { description: 'Assigns a role to a guild member, identified by guild ID, user ID, and role ID. Use to grant permissions or tag a user. Requires the bot to have Manage Roles and a higher role than the target; idempotent, since re-adding an already-assigned role leaves the member unchanged.', idempotent: true },
   displayName: 'Add Role to Member',
   outputSchema: discordSuccessActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'server',
+      display: 'section',
+      label: 'Server',
+      icon: 'users',
+      props: ['guild_id'],
+    },
+    {
+      key: 'user',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['user_id'],
+    },
+    {
+      key: 'role',
+      display: 'section',
+      label: 'Role',
+      icon: 'tag',
+      props: ['role_id'],
+    },
+  ],
   props: {
     guild_id: discordCommon.guilds,
     user_id: Property.ShortText({

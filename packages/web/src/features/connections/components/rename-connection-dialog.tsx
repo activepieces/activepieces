@@ -114,7 +114,6 @@ const RenameConnectionDialog = forwardRef<
                       {...field}
                       id="displayName"
                       placeholder={t('New Connection Name')}
-                      className="rounded-sm"
                     />
                     <FormMessage />
                   </FormItem>

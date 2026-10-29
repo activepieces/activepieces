@@ -13,7 +13,7 @@ This guide walks you through deploying Activepieces on Kubernetes using the offi
 - Helm 3.x installed
 - kubectl configured to access your cluster
 
-When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts](https://argoproj.github.io/rollouts/), the chart deploys a `StatefulSet`; otherwise it deploys an Argo `Rollout`. A release that already runs as a `Rollout` stays one. Rendering without a cluster (`helm template`, Kustomize) produces a `Rollout`, so set `workloadType: statefulset` there, or pass the cluster's API versions as Argo CD does. The StatefulSet volume uses the `local-path` storage class unless you set `persistence.storageClassName`.
+When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts](https://argoproj.github.io/rollouts/), the chart deploys a `StatefulSet`; otherwise it deploys an Argo `Rollout`. A release that already runs as a `Rollout` stays one. Rendering without a cluster (`helm template`, Kustomize) produces a `Rollout`, so set `workloadType: statefulset` there, or pass the cluster's API versions as Argo CD does. The StatefulSet volume uses the cluster's default StorageClass unless you set `persistence.storageClassName`. On a cluster without a default class (`kubectl get storageclass` shows none marked `(default)`), set it, or the pod stays `Pending`. Choose it before the first install: a StatefulSet's volume class cannot change afterwards.
 
 ## Database and Redis
 
@@ -195,6 +195,27 @@ FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name |
 kubectl delete statefulset "$FULLNAME"
 kubectl delete pvc "cache-$FULLNAME-0"
 ```
+
+## OpenShift
+
+The base chart runs as root on port 80, which OpenShift's default `restricted-v2` SCC rejects with `listen EACCES :::80`. Add the OpenShift overlay on top of your own values:
+
+```bash
+helm install activepieces deploy/activepieces-helm \
+  -f deploy/activepieces-helm/values.yaml \
+  -f deploy/activepieces-helm/values-openshift.yaml \
+  -f my-values.yaml
+```
+
+The overlay runs the pod as non-root on port 8080, drops all capabilities and uses the cluster's default StorageClass. It sets no user or group ID, so OpenShift assigns both from the project's range.
+
+Set `AP_EXECUTION_MODE` to `SANDBOX_CODE_ONLY` in the `activepieces-config-secrets` secret, as in step 3. `SANDBOX_PROCESS` and `SANDBOX_CODE_AND_PROCESS` need `CAP_SYS_ADMIN`, which `restricted-v2` never grants. In `SANDBOX_CODE_ONLY`, code steps that import npm packages fail; see [Sandboxing](/install/architecture/sandboxing).
+
+The bundled PostgreSQL and Redis subcharts hardcode user ID 1001, which `restricted-v2` rejects. The overlay turns off their security contexts and OpenShift assigns the IDs instead, so `postgresql.enabled` and `redis.enabled` need no extra settings.
+
+The chart does not create an OpenShift `Route`. Create one pointing at the `activepieces` service on port 80, or use the `Ingress` under `ingress.*`.
+
+To use the overlay on another cluster that enforces the Kubernetes `restricted` Pod Security profile, also set a non-root `runAsUser` and `fsGroup` (for example `1001`) under `podSecurityContext`: the image runs as root, and `runAsNonRoot` refuses to start it without one. Use external PostgreSQL and Redis there: with the overlay, the bundled database pods have no security context, which that profile rejects.
 
 ## Troubleshooting
 

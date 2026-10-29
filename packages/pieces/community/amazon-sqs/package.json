@@ -1,12 +1,12 @@
 {
   "name": "@activepieces/piece-amazon-sqs",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@aws-sdk/client-sqs": "^3.806.0",
+    "@aws-sdk/client-sqs": "3.1039.0",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },

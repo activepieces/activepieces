@@ -1,12 +1,14 @@
-import { apId } from '@activepieces/core-utils'
-import { FieldType, Table } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { FieldType, Table, TableWebhookEventType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { db } from '../../../helpers/db'
 import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
     createMockCell,
     createMockField,
+    createMockFlow,
     createMockFolder,
     createMockProject,
     createMockRecord,
@@ -557,10 +559,89 @@ describe('Table API', () => {
             expect(recordsResponse?.json().data.length).toBe(0)
         })
     })
+
+    describeWithAuth('Tables sharing an externalId', () => app!, (setup) => {
+        it('should list every table that shares an externalId, newest first', async () => {
+            const ctx = await setup()
+            const externalId = apId()
+            const older = await createAndSaveTable(ctx, { externalId, created: '2026-01-01T00:00:00.000Z' })
+            const newer = await createAndSaveTable(ctx, { externalId, created: '2026-02-01T00:00:00.000Z' })
+            await createAndSaveTable(ctx)
+
+            const response = await ctx.get('/v1/tables', { projectId: ctx.project.id, externalIds: [externalId] })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().data.map((table: Table) => table.id)).toEqual([newer.id, older.id])
+        })
+    })
+
+    describeWithAuth('POST and DELETE /v1/tables/:id/webhooks', () => app!, (setup) => {
+        it('should delete a webhook from the table it was created on', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const webhookId = await createWebhook({ ctx, tableId: table.id })
+
+            const response = await ctx.delete(`/v1/tables/${table.id}/webhooks/${webhookId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await db.findOneBy('table_webhook', { id: webhookId })).toBeNull()
+        })
+
+        it('should leave a webhook when deleting it through another table with the same externalId', async () => {
+            const ctx = await setup()
+            const externalId = apId()
+            const original = await createAndSaveTable(ctx, { externalId })
+            const copy = await createAndSaveTable(ctx, { externalId })
+            const webhookId = await createWebhook({ ctx, tableId: original.id })
+
+            const response = await ctx.delete(`/v1/tables/${copy.id}/webhooks/${webhookId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await db.findOneBy('table_webhook', { id: webhookId })).not.toBeNull()
+        })
+
+        it('should not delete a webhook on a table from another project', async () => {
+            const ctx = await setup()
+            const otherCtx = await createTestContext(app!)
+            const otherTable = await createAndSaveTable(otherCtx)
+            const webhookId = await createWebhook({ ctx: otherCtx, tableId: otherTable.id })
+
+            const response = await ctx.delete(`/v1/tables/${otherTable.id}/webhooks/${webhookId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(await db.findOneBy('table_webhook', { id: webhookId })).not.toBeNull()
+        })
+
+        it('should remove a flow\'s webhooks when the flow is deleted', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const flow = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', flow)
+            const webhookId = await createWebhook({ ctx, tableId: table.id, flowId: flow.id })
+
+            await databaseConnection().getRepository('flow').delete({ id: flow.id })
+
+            expect(await db.findOneBy('table_webhook', { id: webhookId })).toBeNull()
+        })
+    })
 })
 
-async function createAndSaveTable(ctx: TestContext) {
-    const table = createMockTable({ projectId: ctx.project.id })
-    await db.save('table', table)
-    return table
+async function createAndSaveTable(ctx: TestContext, table?: Partial<Table>) {
+    const mockTable = { ...createMockTable({ projectId: ctx.project.id }), ...table }
+    await db.save('table', mockTable)
+    return mockTable
+}
+
+async function createWebhook({ ctx, tableId, flowId }: { ctx: TestContext, tableId: string, flowId?: string }): Promise<string> {
+    const flow = createMockFlow({ projectId: ctx.project.id })
+    if (isNil(flowId)) {
+        await db.save('flow', flow)
+    }
+    const response = await ctx.post(`/v1/tables/${tableId}/webhooks`, {
+        events: [TableWebhookEventType.RECORD_CREATED],
+        webhookUrl: 'http://localhost:4200/api/v1/webhooks/flow',
+        flowId: flowId ?? flow.id,
+    })
+    expect(response?.statusCode).toBe(StatusCodes.OK)
+    return response?.json().id
 }

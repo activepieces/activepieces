@@ -6,13 +6,15 @@ export const twilioPhoneNumberLookup = createAction({
   auth: twilioAuth,
   name: 'phone_number_lookup',
   classification: 'READ',
-  description: 'Lookup information about a phone number.',
+  description: 'Look up the carrier and line type (mobile, landline) of a number.',
   audience: 'both',
   aiMetadata: { description: 'Looks up carrier and line-type intelligence for a single phone number via the Twilio Lookup API. Use to validate or enrich a number (e.g. detect mobile vs landline, carrier) before messaging or calling it. Read-only and idempotent.', idempotent: true },
   displayName: 'Phone Number Lookup',
   props: {
     phone_number:Property.ShortText({
       displayName:'Phone Number',
+      description:'Phone number with country code, starting with +.',
+      placeholder:'+15558675310',
       required:true
     })
   },

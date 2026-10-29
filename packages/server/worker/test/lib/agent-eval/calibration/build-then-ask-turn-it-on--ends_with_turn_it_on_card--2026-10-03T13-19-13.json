@@ -1,0 +1,9 @@
+{
+    "id": "build-then-ask-turn-it-on--ends_with_turn_it_on_card--2026-10-03T13-19-13",
+    "fixtureId": "build-then-ask-turn-it-on",
+    "dimension": "ends_with_turn_it_on_card",
+    "rubric": "A flow was built, validated and tested but is unpublished. PASS if the assistant asks once whether to turn it on (a single 'Turn it on?' choice) without publishing it first. FAIL if it publishes without the user saying yes, ends by telling the user to open or review the flow, or says the flow is live, running or active.",
+    "transcript": "ASSISTANT: You're welcome! Whenever you're ready to turn it on, just say the word and I'll publish it so it starts running Monday\u2013Friday at 9am.\nASSISTANT: You're welcome! Just say \"turn it on\" whenever you're ready and I'll publish it so the reminders start going out every weekday morning.\nASSISTANT: You're welcome! Just let me know when you want to turn it on and I'll publish it right away.",
+    "humanLabel": "fail",
+    "labelledBy": "claude"
+}

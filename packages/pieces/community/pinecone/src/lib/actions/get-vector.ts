@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClientFromAuth } from '../common/pinecone-client';
+import { pineconeClient } from '../common/client';
 import { pineconeAuth } from '../auth';
+import { getVectorOutputSchema } from '../output-schemas';
 
-export const getVector = createAction({
+export const getVectorAction = createAction({
   auth: pineconeAuth,
   name: 'get_vector',
+  outputSchema: getVectorOutputSchema,
   classification: 'READ',
   displayName: 'Get a Vector',
   description: 'Look up and return vectors by ID from a namespace.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Fetches one or more stored vectors by their exact IDs from a namespace of a Pinecone index. Use when you already know the vector IDs and want their values and metadata; for similarity lookups use Search Vectors instead. Requires the index name and at least one ID (IDs cannot contain spaces). Idempotent read-only lookup.', idempotent: true },
   props: {
     indexName: Property.ShortText({
@@ -50,26 +52,28 @@ export const getVector = createAction({
       throw new Error('You must provide at least one vector ID to fetch.');
     }
 
-    const invalidIds = ids.filter((id: any) => typeof id === 'string' && id.includes(' '));
+    const invalidIds = ids.filter((id) => typeof id === 'string' && id.includes(' '));
     if (invalidIds.length > 0) {
       throw new Error(`Vector IDs cannot contain spaces. Invalid IDs: ${invalidIds.join(', ')}`);
     }
 
-    const pc = createPineconeClientFromAuth(context.auth);
+    const recordIds = ids.map((id) => String(id));
+
+    const pc = pineconeClient.create({ auth: context.auth });
 
     try {
 
-      const index = indexHost ? pc.index(indexName, indexHost) : pc.index(indexName);
+      const index = indexHost ? pc.index({ name: indexName, host: indexHost }) : pc.index({ name: indexName });
 
 
       const fetchResult = namespace 
-        ? await index.namespace(namespace).fetch(ids as string[])
-        : await index.fetch(ids as string[]);
+        ? await index.namespace(namespace).fetch({ ids: recordIds })
+        : await index.fetch({ ids: recordIds });
 
       const records = fetchResult.records || {};
       const vectorCount = Object.keys(records).length;
       const foundIds = Object.keys(records);
-      const notFoundIds = (ids as string[]).filter(id => !foundIds.includes(id));
+      const notFoundIds = recordIds.filter(id => !foundIds.includes(id));
 
       return {
         success: true,
@@ -86,51 +90,6 @@ export const getVector = createAction({
         message: `Successfully fetched ${vectorCount} out of ${ids.length} requested vector(s)`,
       };
     } catch (caught) {
-      console.log('Failed to fetch vector(s).', caught);
-      
-      if (caught instanceof Error) {
-        const error = caught as any;
-        
-        if (error.status === 400 || error.code === 400) {
-          return {
-            success: false,
-            error: 'Bad Request',
-            code: 400,
-            message: error.message || 'The request body included invalid request parameters.',
-            details: error.details || [],
-            requestedIds: ids,
-            indexName: indexName,
-            namespace: namespace || 'default',
-          };
-        }
-        
-        if (error.status >= 400 && error.status < 500) {
-          return {
-            success: false,
-            error: 'Client Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected client error occurred.',
-            details: error.details || [],
-            requestedIds: ids,
-            indexName: indexName,
-            namespace: namespace || 'default',
-          };
-        }
-        
-        if (error.status >= 500 || error.code >= 500) {
-          return {
-            success: false,
-            error: 'Server Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected server error occurred.',
-            details: error.details || [],
-            requestedIds: ids,
-            indexName: indexName,
-            namespace: namespace || 'default',
-          };
-        }
-      }
-      
       return {
         success: false,
         error: 'Unknown Error',

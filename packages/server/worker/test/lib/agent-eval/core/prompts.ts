@@ -2,10 +2,11 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { tryCatchSync } from '@activepieces/core-utils';
+import { AGENT_SKILLS, agentToolSkills } from '@activepieces/shared'
 import { repoRoot } from './repo-root'
 
 const PROMPTS_DIR = path.join(repoRoot, 'packages/server/api/src/assets/prompts')
-const GUIDE_TOPICS = ['build_flow', 'one_time_task', 'error_handling', 'http_fallback']
+const GUIDE_TOPICS = AGENT_SKILLS.flatMap((skill) => skill.guideTopic === undefined ? [] : [skill.guideTopic])
 
 const EVAL_FRONTEND_URL = 'https://eval.activepieces.test'
 const EVAL_PROJECT_LIST = '- Eval Project (id: eval-project)'
@@ -22,6 +23,7 @@ function loadSystemPrompt(read: AssetReader = workingTreeReader): string {
         .replaceAll('{{PROJECT_LIST}}', EVAL_PROJECT_LIST)
         .replaceAll('{{PROJECT_CONTEXT}}', EVAL_PROJECT_CONTEXT)
         .replaceAll('{{FRONTEND_URL}}', EVAL_FRONTEND_URL)
+        + agentToolSkills.renderSkillsNote({ surface: 'CHAT' })
 }
 
 function loadGuides(read: AssetReader = workingTreeReader): Record<string, string> {

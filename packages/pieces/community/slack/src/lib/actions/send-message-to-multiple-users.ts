@@ -40,6 +40,29 @@ export const slackSendMessageToMultipleUsersAction = createAction({
       'Sends a direct message to many Slack users in parallel and reports which sends succeeded and which failed. Replaces a loop of single Send Message To A User steps. Either one shared message for everyone, or a personal message per user. Each call posts new DMs, so it is not idempotent, and a retry re-sends to everyone.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'recipient_list',
+      display: 'section',
+      label: 'Recipients',
+      icon: 'users',
+      props: ['mode', 'recipients'],
+    },
+    {
+      key: 'formatting',
+      display: 'section',
+      label: 'Formatting',
+      icon: 'code',
+      props: ['blocks', 'unfurlLinks'],
+    },
+    {
+      key: 'delivery',
+      display: 'section',
+      label: 'Delivery',
+      icon: 'sliders',
+      props: ['concurrency'],
+    },
+  ],
   props: {
     mode: Property.StaticDropdown<BulkDmMode>({
       displayName: 'Message Mode',

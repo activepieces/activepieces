@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { redditAuth } from '../auth';
+import { redditApi } from '../common/client';
+import { createRedditCommentOutputSchema } from '../output-schemas';
 
 export const editRedditComment = createAction({
   auth: redditAuth,
   name: 'editRedditComment',
+  outputSchema: createRedditCommentOutputSchema,
   classification: 'WRITE',
   displayName: 'Edit Comment',
   description: 'Edits the content of an existing Reddit comment.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Replaces the text of an existing comment owned by the authenticated account, identified by comment ID. Use it to update a comment you previously posted. Requires the comment ID (with or without the t1_ prefix) and the new content. Idempotent — repeating with the same content leaves the comment in the same state.', idempotent: true },
   props: {
     comment_id: Property.ShortText({
@@ -23,36 +26,16 @@ export const editRedditComment = createAction({
     }),
   },
   async run(context) {
-    let commentId = context.propsValue.comment_id.trim();
-    if (commentId.startsWith('t1_')) {
-      commentId = commentId.slice(3);
-    }
-
-    const url = 'https://oauth.reddit.com/api/editusertext';
-    const payload = new URLSearchParams({
-      api_type: 'json',
-      thing_id: `t1_${commentId}`,
-      text: context.propsValue.content,
-    });
-
-    const response = await httpClient.sendRequest({
+    return redditApi.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url,
-      headers: {
-        'Authorization': `Bearer ${context.auth.access_token}`,
-        'User-Agent': 'ActivePieces Reddit Client',
-        'Content-Type': 'application/x-www-form-urlencoded',
+      allowJsonErrors: true,
+      path: '/api/editusertext',
+      form: {
+        api_type: 'json',
+        thing_id: redditApi.toFullname({ value: context.propsValue.comment_id, prefix: 't1_' }),
+        text: context.propsValue.content,
       },
-      body: payload.toString(),
     });
-
-    if (response.status !== 200) {
-      return {
-        error: `Failed to edit comment: ${response.status}`,
-        details: response.body,
-      };
-    }
-
-    return response.body;
   },
 });

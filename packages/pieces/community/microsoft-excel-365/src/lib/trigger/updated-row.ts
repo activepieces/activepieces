@@ -25,7 +25,7 @@ function createRowHash(rowData: unknown[]): string {
 // Helper function to get all worksheet rows with error handling
 async function getWorksheetRows(auth: AppConnectionValueForAuthProperty<typeof excelAuth>, workbookId: string, worksheetId: string, drivePath: string): Promise<(string | number | boolean)[][]> {
     try {
-        return await excelCommon.getAllRows(workbookId, worksheetId, auth.access_token, drivePath);
+        return await excelCommon.getAllRows(workbookId, worksheetId, auth.access_token, drivePath, auth.props?.['cloud']);
     } catch (error) {
         throw new Error(`Failed to fetch worksheet rows: ${error}`);
     }
@@ -136,37 +136,19 @@ export const updatedRowTrigger = createTrigger({
         if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
             throw new Error('please select SharePoint site and document library.');
         }
-        await pollingHelper.onEnable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await pollingHelper.onEnable(polling, context);
     },
 
     onDisable: async (context) => {
 
-        await pollingHelper.onDisable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await pollingHelper.onDisable(polling, context);
     },
 
     run: async (context) => {
-        return await pollingHelper.poll(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-            files: context.files,
-        });
+        return await pollingHelper.poll(polling, context);
     },
 
     test: async (context) => {
-        return await pollingHelper.test(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-            files: context.files,
-        });
+        return await pollingHelper.test(polling, context);
     },
 });

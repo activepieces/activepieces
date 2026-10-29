@@ -1,26 +1,24 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, HttpError } from '@activepieces/pieces-common';
-import {
-	PdfCoSuccessResponse,
-	PdfCoErrorResponse,
-	PdfCoImageAnnotation,
-	PdfCoAddImagesRequestBody,
-} from '../common/types';
 import { pdfCoAuth } from '../auth';
-import { BASE_URL, commonProps } from '../common/props';
+import { pdfCoClient } from '../common/client';
+import { pdfCoJobs } from '../common/jobs';
+import { commonProps, PDF_CO_DEFAULTS, pdfCoProps } from '../common/props';
+import { pdfCoOutputSchemas } from '../output-schemas';
 
 export const addImageToPdf = createAction({
 	name: 'add_image_to_pdf',
 	classification: 'WRITE',
 	displayName: 'Add Image to PDF',
 	description: 'Add image to a PDF document.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
-			'Overlays an image (referenced by URL) onto a source PDF (referenced by URL) at the given x/y coordinates, optionally on specific pages. Use when an agent needs to stamp a logo, signature, or other graphic onto an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+			'Overlays an image (referenced by URL) onto a source PDF (referenced by URL) at the given x/y coordinates, optionally on specific pages (first page is 0). Agents should use Edit PDF (AI), which adds several images, texts and form values in one call. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
 		idempotent: false,
 	},
 	auth: pdfCoAuth,
+	outputSchema: pdfCoOutputSchemas.legacyEdit,
 	props: {
 		url: Property.ShortText({
 			displayName: 'Source PDF URL',
@@ -56,94 +54,40 @@ export const addImageToPdf = createAction({
 		pages: Property.ShortText({
 			displayName: 'Target Pages',
 			description:
-				'Specify page indices as comma-separated values or ranges to process (e.g. "0, 1, 2-" or "1, 2, 3-7").',
+				'Page indexes as comma-separated values or ranges (first page is 0), e.g. "0, 1, 2-" or "1, 2, 3-7".',
 			required: false,
 		}),
 		...commonProps,
+		saveOutputFile: pdfCoProps.saveOutputFile({ defaultValue: PDF_CO_DEFAULTS.saveOutputFileOnExistingActions }),
 	},
-	async run(context) {
-		const { auth, propsValue } = context;
-		const {
-			url,
-			imageUrl,
-			fileName,
-			pdfPassword,
-			xCoordinate,
-			pages,
-			yCoordinate,
-			width,
-			height,
-			expiration,
-			httpPassword,
-			httpUsername,
-		} = propsValue;
-
-		const imageAnnotationPayload: PdfCoImageAnnotation = {
-			url: imageUrl,
-			x: xCoordinate,
-			y: yCoordinate,
-			pages,
-			height,
-			width,
-		};
-
-		const requestBody: PdfCoAddImagesRequestBody = {
-			url: url,
-			images: [imageAnnotationPayload],
-			async: false,
-			name: fileName,
-			expiration,
-			httppassword: httpPassword,
-			httpusername: httpUsername,
-			password: pdfPassword,
-			inline: false,
-		};
-
-		try {
-			const response = await httpClient.sendRequest<PdfCoSuccessResponse | PdfCoErrorResponse>({
+	async run({ auth, propsValue, files }) {
+		const body = pdfCoClient.readRecord(
+			await pdfCoClient.request<unknown>({
+				apiKey: pdfCoClient.apiKeyOf(auth),
 				method: HttpMethod.POST,
-				url: `${BASE_URL}/pdf/edit/add`,
-				headers: {
-					'x-api-key': auth.secret_text,
-					'Content-Type': 'application/json',
+				path: '/v1/pdf/edit/add',
+				body: {
+					url: propsValue.url,
+					images: [
+						{
+							url: propsValue.imageUrl,
+							x: propsValue.xCoordinate,
+							y: propsValue.yCoordinate,
+							pages: propsValue.pages,
+							height: propsValue.height,
+							width: propsValue.width,
+						},
+					],
+					async: false,
+					name: propsValue.fileName,
+					expiration: propsValue.expiration,
+					httppassword: propsValue.httpPassword,
+					httpusername: propsValue.httpUsername,
+					password: propsValue.pdfPassword,
+					inline: false,
 				},
-				body: requestBody,
-			});
-
-			console.log(JSON.stringify(response, null, 2));
-
-			if (response.body.error) {
-				const errorBody = response.body as PdfCoErrorResponse;
-				let errorMessage = `PDF.co API Error (Add Image): Status ${errorBody.status}.`;
-				if (errorBody.message) {
-					errorMessage += ` Message: ${errorBody.message}.`;
-				} else {
-					errorMessage += ` An unspecified error occurred.`;
-				}
-				errorMessage += ` Raw response: ${JSON.stringify(errorBody)}`;
-				throw new Error(errorMessage);
-			}
-
-			const successBody = response.body as PdfCoSuccessResponse;
-			return {
-				outputUrl: successBody.url,
-				pageCount: successBody.pageCount,
-				outputName: successBody.name,
-				creditsUsed: successBody.credits,
-				remainingCredits: successBody.remainingCredits,
-			};
-		} catch (error) {
-			if (error instanceof HttpError) {
-				const responseBody = error.response?.body as PdfCoErrorResponse | undefined;
-				let detailedMessage = `HTTP Error calling PDF.co API (Add Image): ${error.message}.`;
-				if (responseBody && responseBody.message) {
-					detailedMessage += ` Server message: ${responseBody.message}.`;
-				} else if (responseBody) {
-					detailedMessage += ` Server response: ${JSON.stringify(responseBody)}.`;
-				}
-				throw new Error(detailedMessage);
-			}
-			throw error;
-		}
+			}),
+		);
+		return pdfCoJobs.legacyEditOutput({ body, files, saveOutputFile: propsValue.saveOutputFile, fileName: propsValue.fileName });
 	},
 });

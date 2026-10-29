@@ -1,7 +1,7 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { CustomField } from '../types';
 import { fetchCustomFields } from '../service';
-import { convertkitAuth } from '../../..';
+import { convertkitAuth } from '../../auth';
 
 export const fieldsArray = Property.Array({
   displayName: 'Fields',

@@ -19,11 +19,20 @@ export const newReview = createTrigger({
   name: 'new_review',
   classification: 'READ',
   displayName: 'New Review',
-  description: 'Triggers when there is new review',
+  description: 'Triggers when a customer posts a new review on the location.',
   aiMetadata: {
     description: 'Fires when a new customer review is posted for the selected Google Business Profile account and location. Each event represents one newly created review and can be used to react to incoming customer feedback.',
   },
   auth: googleAuth,
+  propertyGroups: [
+    {
+      key: 'business',
+      display: 'section',
+      label: 'Business',
+      icon: 'location',
+      props: ['account', 'location'],
+    },
+  ],
   props: {
     account: googleBusinessCommon.account,
     location: googleBusinessCommon.location,

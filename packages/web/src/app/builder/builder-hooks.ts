@@ -1,7 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import { QueryClient } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 import { Socket } from 'socket.io-client';
-import { create, useStore } from 'zustand';
+import { create, createStore, useStore } from 'zustand';
 
 import { CanvasState, createCanvasState } from './state/canvas-state';
 import { ChatState, createChatState } from './state/chat-state';
@@ -28,6 +29,15 @@ export function useBuilderStateContext<T>(
 ): T {
   return useStore(useBuilderStore(), selector);
 }
+
+export function useOptionalBuilderStateContext<T>(
+  selector: (state: BuilderState) => T,
+): T | null {
+  const store = useContext(BuilderStateContext) ?? noBuilderStore;
+  return useStore(store, (state) => (isNil(state) ? null : selector(state)));
+}
+
+const noBuilderStore = createStore<BuilderState | null>(() => null);
 
 export type BuilderState = FlowState &
   PieceSelectorState &

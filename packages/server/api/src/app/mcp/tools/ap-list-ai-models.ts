@@ -15,7 +15,7 @@ const listAiModelsInput = z.object({
 export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_ai_models',
-        description: 'List configured AI providers and their available models. Use this to discover valid provider and model values for configuring Run Agent steps. The output shows provider names and model IDs needed for the aiProviderModel input.',
+        description: 'List configured AI providers and their available models. Use this to discover valid provider and model values for AI steps (Ask AI, Summarize, Classify, Extract and Run Agent). The output shows provider names and model IDs needed for the aiProviderModel input.',
         inputSchema: listAiModelsInput.shape,
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -77,7 +77,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 return {
                     content: [{
                         type: 'text',
-                        text: `Configured AI Providers:\n\n${sections.join('\n\n')}\n\nUsage: Set aiProviderModel to {"provider": "<provider>", "model": "<model id>"} when configuring a Run Agent step.`,
+                        text: `Configured AI Providers:\n\n${sections.join('\n\n')}\n\nUsage: Set aiProviderModel to {"provider": "<provider>", "model": "<model id>"} when configuring an AI step (Ask AI, Summarize, Classify, Extract or Run Agent).`,
                     }],
                     structuredContent: { providers: structuredProviders },
                 }

@@ -16,6 +16,22 @@ export const clearSheetAction = createAction({
 		idempotent: true,
 	},
 	displayName: 'Clear Sheet',
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'headers',
+			display: 'section',
+			label: 'Headers',
+			icon: 'tag',
+			props: ['is_first_row_headers', 'headerRow'],
+		},
+	],
 	props: {
 		...commonProps,
 		is_first_row_headers: isFirstRowHeaderProp(),

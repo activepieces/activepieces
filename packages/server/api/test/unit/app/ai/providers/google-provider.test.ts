@@ -38,8 +38,8 @@ describe('googleProvider.listModels', () => {
         mockSendRequest.mockResolvedValue({
             body: {
                 models: [
-                    { name: 'models/gemini-2.5-pro', displayName: 'Gemini 2.5 Pro' },
-                    { name: 'models/gemini-2.5-flash', displayName: 'Gemini 2.5 Flash' },
+                    { name: 'models/gemini-3.7-flash', displayName: 'Gemini 3.7 Flash' },
+                    { name: 'models/gemini-3.1-pro-preview', displayName: 'Gemini 3.1 Pro Preview' },
                 ],
             },
         })
@@ -50,7 +50,7 @@ describe('googleProvider.listModels', () => {
         const intersection = models.filter((model) => allowedIds.includes(model.id))
 
         expect(intersection.map((model) => model.id)).toEqual(
-            expect.arrayContaining(['gemini-2.5-pro', 'gemini-2.5-flash']),
+            expect.arrayContaining(['gemini-3.7-flash', 'gemini-3.1-pro-preview']),
         )
     })
 

@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroUpdateSalesInvoice = createAction({
   auth: xeroAuth,
@@ -14,12 +15,13 @@ export const xeroUpdateSalesInvoice = createAction({
   classification: 'WRITE',
   displayName: 'Update Sales Invoice',
   description: 'Updates details of an existing sales invoice (ACCREC).',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Update an existing ACCREC sales invoice identified by its ID, changing fields like reference, due date, status, contact, or line items. Idempotent on a fixed invoice ID. By default line-item changes merge into the existing lines (matching by LineItemID, appending new ones); enable Replace All Line Items to overwrite the full set instead. AUTHORISED invoices can only be edited when the allow-authorised flag is set.',
-    idempotent: true,
+      'Update an existing ACCREC sales invoice identified by its ID, changing fields like reference, due date, status, contact, or line items. By default line-item changes merge into the existing lines (matching by LineItemID, appending new ones); enable Replace All Line Items to overwrite the full set instead. AUTHORISED invoices can only be edited when the allow-authorised flag is set. Not idempotent when line items without a LineItemID are passed in merge mode, because each run appends them again; field-only changes converge.',
+    idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.invoiceEnvelope,
   props: {
     tenant_id: props.tenant_id,
     allow_authorised: Property.Checkbox({

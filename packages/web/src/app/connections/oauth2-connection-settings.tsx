@@ -20,6 +20,7 @@ import { ChevronDown } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import {
   MultiSelect,
   MultiSelectContent,
@@ -30,6 +31,7 @@ import {
   MultiSelectValue,
 } from '@/components/custom/multi-select';
 import { Button } from '@/components/ui/button';
+import { CommandEmpty } from '@/components/ui/command';
 import {
   FormControl,
   FormField,
@@ -61,13 +63,26 @@ function OAuth2ConnectionSettings({
       | UpsertPlatformOAuth2Request;
   }>();
 
+  const [discoveryFailed, setDiscoveryFailed] = useState(false);
+  // Endpoints and credentials are fetched from the server's own metadata on Connect,
+  // so the fields that would carry them stay hidden until that fails.
+  const useDiscovery = !isNil(authProperty.discovery) && !discoveryFailed;
+
   const isClientIdValid = isNil(
     form.formState.errors.request?.value?.client_id,
   );
   const isClientSecretValid =
     oauth2App.oauth2Type !== AppConnectionType.OAUTH2 ||
+    useDiscovery ||
     form.getValues('request.value.client_secret');
-  const isPropsValid = isNil(form.formState.errors.request?.value?.props);
+  // Discovery fills these on Connect, so their emptiness must not gate the button
+  // that triggers it — but every other prop (the server URL) still gates it.
+  const propErrors = form.formState.errors.request?.value?.props;
+  const discoveredNames = discoveredPropNames(authProperty.discovery);
+  const isPropsValid =
+    isNil(propErrors) ||
+    (useDiscovery &&
+      Object.keys(propErrors).every((name) => discoveredNames.includes(name)));
   const selectedScopeString = form.watch('request.value.scope') ?? '';
   const showScopeSelector = authProperty.scope.length > 1;
   const hasSelectedScopes =
@@ -87,6 +102,10 @@ function OAuth2ConnectionSettings({
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
   const [loading, setLoading] = useState(false);
   const [scopesEditing, setScopesEditing] = useState(false);
+  const [scopeSearch, setScopeSearch] = useState('');
+  const filteredScopes = authProperty.scope.filter((scope) =>
+    scope.toLowerCase().includes(scopeSearch.toLowerCase()),
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -100,7 +119,7 @@ function OAuth2ConnectionSettings({
         </div>
       )}
 
-      {oauth2App.oauth2Type === AppConnectionType.OAUTH2 && (
+      {oauth2App.oauth2Type === AppConnectionType.OAUTH2 && !useDiscovery && (
         <>
           <FormField
             name="request.value.client_id"
@@ -145,6 +164,7 @@ function OAuth2ConnectionSettings({
           useMentionTextInput={false}
           propertySettings={null}
           dynamicPropsInfo={null}
+          hiddenPropNames={useDiscovery ? discoveredNames : []}
         />
       )}
 
@@ -173,7 +193,7 @@ function OAuth2ConnectionSettings({
                       <span className="leading-none">{t('Permissions')}</span>
                       <ChevronDown
                         className={cn(
-                          'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                          'h-4 w-4 shrink-0 text-gray-11 transition-transform',
                           !scopesEditing && '-rotate-90',
                         )}
                       />
@@ -187,6 +207,12 @@ function OAuth2ConnectionSettings({
                           value: scope,
                           label: scope,
                         }))}
+                        onSearch={(keyword) => setScopeSearch(keyword ?? '')}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setScopeSearch('');
+                          }
+                        }}
                       >
                         <MultiSelectTrigger>
                           {selected.length < 10 ? (
@@ -204,24 +230,31 @@ function OAuth2ConnectionSettings({
                             placeholder={t('Search permissions')}
                           />
                           <MultiSelectList>
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                field.onChange(authProperty.scope.join(' '));
-                              }}
-                            >
-                              <MultiSelectItem>
-                                {t('Select All')}
-                              </MultiSelectItem>
-                            </div>
-                            {authProperty.scope.map((scope) => (
+                            {scopeSearch === '' && (
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  field.onChange(authProperty.scope.join(' '));
+                                }}
+                              >
+                                <MultiSelectItem>
+                                  {t('Select All')}
+                                </MultiSelectItem>
+                              </div>
+                            )}
+                            {filteredScopes.map((scope) => (
                               <MultiSelectItem key={scope} value={scope}>
                                 <span className="truncate min-w-0">
                                   {scope}
                                 </span>
                               </MultiSelectItem>
                             ))}
+                            {filteredScopes.length === 0 && (
+                              <CommandEmpty>
+                                {t('No results found.')}
+                              </CommandEmpty>
+                            )}
                           </MultiSelectList>
                         </MultiSelectContent>
                       </MultiSelect>
@@ -246,16 +279,20 @@ function OAuth2ConnectionSettings({
                 <FormControl>
                   <input type="hidden" {...field} />
                 </FormControl>
-                <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
-                  <div className="rounded-full  border border-solid p-1 flex items-center justify-center">
-                    <img src={piece.logoUrl} className="w-5 h-5"></img>
-                  </div>
+                <div className="border border-solid p-2 rounded-xl gap-2 flex text-center items-center justify-center h-full">
+                  <LogoPlate
+                    src={piece.logoUrl}
+                    alt=""
+                    border
+                    className="size-7.5 rounded-full"
+                    innerClassName="p-1"
+                  />
                   <div className="text-sm">{piece.displayName}</div>
                   <div className="grow"></div>
                   <Button
                     size={'sm'}
                     variant={'basic'}
-                    className={cn(hasCode && 'text-destructive')}
+                    className={cn(hasCode && 'text-danger-11')}
                     disabled={!isConnectButtonEnabled}
                     loading={loading}
                     type="button"
@@ -275,6 +312,7 @@ function OAuth2ConnectionSettings({
                           scopes:
                             scopesList.length > 0 ? scopesList : undefined,
                           setLoading,
+                          onDiscoveryFailed: () => setDiscoveryFailed(true),
                         });
                       } else {
                         field.onChange('');
@@ -307,6 +345,19 @@ function parseScopeString(value: string | undefined): string[] {
   return value.split(' ').filter((scope) => scope.length > 0);
 }
 
+function discoveredPropNames(
+  discovery: OAuth2Property<OAuth2Props>['discovery'],
+): string[] {
+  if (isNil(discovery)) {
+    return [];
+  }
+  return [
+    discovery.authUrlProp,
+    discovery.tokenUrlProp,
+    ...(isNil(discovery.scopesProp) ? [] : [discovery.scopesProp]),
+  ];
+}
+
 async function openPopup({
   redirectUrl,
   oauth2Type,
@@ -317,6 +368,7 @@ async function openPopup({
   form,
   scopes,
   setLoading,
+  onDiscoveryFailed,
 }: OpenPopupParams) {
   let authorizationUrl, codeVerifier;
   try {
@@ -333,10 +385,38 @@ async function openPopup({
     });
     authorizationUrl = result.authorizationUrl;
     codeVerifier = result.codeVerifier;
+    if (!isNil(result.discovered)) {
+      form.setValue('request.value.client_id', result.discovered.client_id, {
+        shouldValidate: true,
+      });
+      form.setValue(
+        'request.value.client_secret',
+        result.discovered.client_secret,
+        { shouldValidate: true },
+      );
+      form.setValue(
+        'request.value.props',
+        { ...props, ...result.discovered.props },
+        { shouldValidate: true },
+      );
+      form.setValue('request.value.resource', result.discovered.resource, {
+        shouldValidate: true,
+      });
+      form.setValue(
+        'request.value.authorization_method',
+        result.discovered.authorization_method,
+        { shouldValidate: true },
+      );
+    }
   } catch (error: unknown) {
     const apError = api.isError(error)
       ? (error.response?.data as ApErrorParams | undefined)
       : undefined;
+    // Only a rejection by the server itself means discovery can't work here; a
+    // transient failure should leave the Connect button able to try again.
+    if (apError?.code === ErrorCode.INVALID_APP_CONNECTION) {
+      onDiscoveryFailed();
+    }
     form.setError('request.value.code', {
       type: 'manual',
       message:
@@ -387,4 +467,5 @@ type OpenPopupParams = {
       | UpsertPlatformOAuth2Request;
   }>;
   setLoading: Dispatch<SetStateAction<boolean>>;
+  onDiscoveryFailed: () => void;
 };

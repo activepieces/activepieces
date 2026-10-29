@@ -1,0 +1,53 @@
+{
+  "first_name": "Ada",
+  "last_name": "Lovelace",
+  "zero": 0,
+  "flag_false": false,
+  "nil": null,
+  "special": "Tom & Jerry <b> \"q\" 'a' 😀 مرحبا",
+  "address": "Line1\nLine2",
+  "customer": {
+    "city": "Paris"
+  },
+  "First Name": "SpaceAda",
+  "customer-id": "C-42",
+  "company": "Acme",
+  "paid": true,
+  "unpaid": false,
+  "items": [
+    {
+      "name": "Widget",
+      "qty": 2
+    },
+    {
+      "name": "Gadget",
+      "qty": 5
+    }
+  ],
+  "none": [],
+  "orders": [
+    {
+      "id": "O1",
+      "lines": [
+        {
+          "sku": "S1"
+        },
+        {
+          "sku": "S2"
+        }
+      ]
+    },
+    {
+      "id": "O2",
+      "lines": [
+        {
+          "sku": "S3"
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "red",
+    "blue"
+  ]
+}

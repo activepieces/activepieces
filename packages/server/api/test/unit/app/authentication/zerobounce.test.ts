@@ -75,8 +75,12 @@ describe('zerobounce', () => {
             { status: 'do_not_mail', sub_status: 'toxic' },
             { status: 'do_not_mail', sub_status: 'possible_trap' },
             { status: 'do_not_mail', sub_status: 'global_suppression' },
+            { status: 'do_not_mail', sub_status: 'blocked' },
             { status: 'spamtrap', sub_status: '' },
             { status: 'abuse', sub_status: '' },
+            { status: 'invalid', sub_status: 'no_dns_entries' },
+            { status: 'invalid', sub_status: 'does_not_accept_mail' },
+            { status: 'invalid', sub_status: 'unroutable_ip_address' },
         ])('refuses $status/$sub_status', async (verdict) => {
             answers(verdict)
             expect(await maySignUp()).toBe(false)
@@ -86,8 +90,11 @@ describe('zerobounce', () => {
             { status: 'valid', sub_status: '' },
             { status: 'catch-all', sub_status: '' },
             { status: 'unknown', sub_status: 'greylisted' },
+            { status: 'invalid', sub_status: '' },
             { status: 'invalid', sub_status: 'mailbox_not_found' },
             { status: 'invalid', sub_status: 'possible_typo' },
+            { status: 'invalid', sub_status: 'mailbox_quota_exceeded' },
+            { status: 'invalid', sub_status: 'failed_syntax_check' },
             { status: 'do_not_mail', sub_status: 'role_based' },
             { status: 'do_not_mail', sub_status: 'role_based_catch_all' },
             { status: 'do_not_mail', sub_status: 'mx_forward' },
@@ -195,6 +202,17 @@ describe('zerobounce', () => {
 
             await maySignUp('one-bad-mailbox@gmail.com')
 
+            expect(mockStorePut).not.toHaveBeenCalled()
+        })
+
+        it.each([
+            { status: 'invalid', sub_status: 'no_dns_entries' },
+            { status: 'invalid', sub_status: 'does_not_accept_mail' },
+            { status: 'invalid', sub_status: 'unroutable_ip_address' },
+        ])('never caches the domain-level verdict $status/$sub_status, so a transient DNS failure cannot poison the list', async (verdict) => {
+            answers(verdict)
+
+            expect(await maySignUp('someone@dns-is-down-today.com')).toBe(false)
             expect(mockStorePut).not.toHaveBeenCalled()
         })
 

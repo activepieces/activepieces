@@ -2,14 +2,16 @@ import { Property, createAction, OAuth2PropertyValue } from '@activepieces/piece
 import { getTaskListsDropdown, getTasksInListDropdown, createTodoClient } from '../common';
 import { microsoftToDoAuth } from '../auth';
 import { Importance, TaskStatus, TodoTask } from '@microsoft/microsoft-graph-types';
+import { createTaskOutputSchema } from '../output-schemas';
 
 export const updateTaskAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'update_task',
+	outputSchema: createTaskOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Update Task',
 	description: 'Update an existing task.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Update fields of an existing Microsoft To Do task identified by its task list id and task id — title, body/notes, importance, status, due/reminder/start dates, or categories. Use to edit an already-created task; resolve the task id first via list/find actions. Idempotent in effect: re-sending the same field values converges the task to that state without additional side effects.', idempotent: true },
 	props: {
 		task_list_id: Property.Dropdown({

@@ -1,4 +1,8 @@
-import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PROJECT_COLOR_PALETTE,
+} from '@activepieces/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
@@ -8,10 +12,11 @@ import { foldersApi } from '@/features/folders';
 import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { tablesApi } from '@/features/tables';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { getAccessHistory } from './access-history';
-import { STATIC_PAGES, type StaticPage } from './static-pages';
+import { STATIC_PAGES, staticPageUtils, type StaticPage } from './static-pages';
 
 const SEARCH_LIMIT = 6;
 const SUPPLEMENT_THRESHOLD = 5;
@@ -39,6 +44,7 @@ function getTimePeriod(
 export function useGlobalSearchResults(query: string, open: boolean) {
   const projectId = authenticationSession.getProjectId() ?? '';
   const isPlatformAdmin = useIsPlatformAdmin();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
   const hideTables = embedState.hideTables;
   const { data: allProjects = [] } = projectCollectionUtils.useAll();
@@ -100,7 +106,7 @@ export function useGlobalSearchResults(query: string, open: boolean) {
 
   const matchedPages = STATIC_PAGES.filter(
     (p) =>
-      (!p.requiresPlatformAdmin || isPlatformAdmin) &&
+      staticPageUtils.isVisible({ page: p, isPlatformAdmin, edition }) &&
       (!hasQuery || p.label.toLowerCase().includes(query.toLowerCase())),
   ).slice(0, SEARCH_LIMIT);
 

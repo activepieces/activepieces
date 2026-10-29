@@ -1,6 +1,8 @@
 import { Permission, isNil } from '@activepieces/core-utils';
 import {
+  FlowDraftUpdatedEvent,
   FlowRunStatus,
+  FlowVersionState,
   WebsocketClientEvent,
   RunEnvironment,
   isFlowRunStateTerminal,
@@ -8,7 +10,7 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -18,8 +20,9 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { editorSession } from '@/lib/editor-session';
 
-import { useBuilderStateContext } from '../builder-hooks';
+import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -94,6 +97,89 @@ const useShowBuilderIsSavingWarningBeforeLeaving = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [isSaving, isEmbedded]);
+};
+
+const useFlushPendingEditsOnLeave = () => {
+  const flushPendingEdits = useBuilderStateContext(
+    (state) => state.flushPendingEdits,
+  );
+  useEffect(() => {
+    const flushWhenHidden = () => {
+      if (document.visibilityState === 'hidden') {
+        flushPendingEdits();
+      }
+    };
+    document.addEventListener('visibilitychange', flushWhenHidden);
+    return () => {
+      document.removeEventListener('visibilitychange', flushWhenHidden);
+      flushPendingEdits();
+    };
+  }, [flushPendingEdits]);
+};
+
+const useRefreshDraftAndMakeNewDraftEditable = () => {
+  const store = useBuilderStore();
+  const { checkAccess } = useAuthorization();
+  const canEditFlow = checkAccess(Permission.WRITE_FLOW);
+  return useCallback(async () => {
+    const { flowVersion: versionBeforeRefresh, refreshDraft } =
+      store.getState();
+    const applied = await refreshDraft();
+    const { flowVersion: versionAfterRefresh, setReadOnly } = store.getState();
+    if (
+      applied &&
+      versionBeforeRefresh.state === FlowVersionState.LOCKED &&
+      versionAfterRefresh.state === FlowVersionState.DRAFT
+    ) {
+      setReadOnly(!canEditFlow);
+    }
+    return applied;
+  }, [store, canEditFlow]);
+};
+
+const useRefreshDraftOnPush = () => {
+  const socket = useSocket();
+  const flowId = useBuilderStateContext((state) => state.flow.id);
+  const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
+  useEffect(() => {
+    const refreshOnPush = (event: FlowDraftUpdatedEvent) => {
+      if (
+        event.flowId !== flowId ||
+        event.editorSessionId === editorSession.getId()
+      ) {
+        return;
+      }
+      refreshDraft().catch(() => undefined);
+    };
+    socket.on(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
+    return () => {
+      socket.off(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
+    };
+  }, [socket, flowId, refreshDraft]);
+};
+
+const useRefreshDraftOnReconnectAndReturn = () => {
+  const socket = useSocket();
+  const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
+  useEffect(() => {
+    const refreshOnConnect = () => {
+      refreshDraft().catch(() => undefined);
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') {
+        refreshDraft().catch(() => undefined);
+      }
+    };
+    socket.on('connect', refreshOnConnect);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    if (socket.connected) {
+      refreshDraft().catch(() => undefined);
+    }
+    return () => {
+      socket.off('connect', refreshOnConnect);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [socket, refreshDraft]);
 };
 
 export const useSwitchToDraft = () => {
@@ -229,6 +315,10 @@ export const useResizeCanvas = (
 export const flowCanvasHooks = {
   useSetSocketListener,
   useShowBuilderIsSavingWarningBeforeLeaving,
+  useFlushPendingEditsOnLeave,
+  useRefreshDraftAndMakeNewDraftEditable,
+  useRefreshDraftOnPush,
+  useRefreshDraftOnReconnectAndReturn,
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,
   useResizeCanvas,

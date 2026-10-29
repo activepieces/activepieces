@@ -20,7 +20,7 @@ export const runActor = createAction({
   classification: 'WRITE',
   auth: apifyAuth,
   displayName: 'Run Actor',
-  description: 'Runs an Actor and returns all associated details.',
+  description: 'Runs an Actor and, if you wait, returns its results.',
   audience: 'human',
   outputSchema: runActorActionOutputSchema,
   aiMetadata: { description: 'Starts an Apify Actor (a hosted scraper/automation program) by actor ID, passing a JSON input body and optional build/memory/timeout settings. Use this to execute a specific Actor for scraping or data extraction; set waitForFinish to block until the run completes and fetch its dataset items. Not idempotent — each call launches a new actor run.', idempotent: false },
@@ -31,8 +31,13 @@ export const runActor = createAction({
     build: createBuildProperty(),
     memory: createMemoryProperty(RunType.ACTOR),
     timeout: createTimeoutProperty(RunType.ACTOR),
-    waitForFinish: createWaitForFinishProperty(RunType.ACTOR)
+    waitForFinish: createWaitForFinishProperty()
   },
+  propertyGroups: [
+    { key: 'actor', display: 'section', label: 'What to Run', icon: 'send', props: ['actorSource', 'actorid'] },
+    { key: 'input', display: 'section', label: 'What to Send', icon: 'code', props: ['input'] },
+    { key: 'result', display: 'section', label: 'Results', icon: 'inbox', props: ['waitForFinish'] },
+  ],
   async run(context) {
     const apifyToken = context.auth.props.apikey;
     const { input, actorid, timeout, build, memory, waitForFinish } = context.propsValue;

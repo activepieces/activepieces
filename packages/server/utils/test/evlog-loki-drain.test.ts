@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { DrainContext, WideEvent } from 'evlog'
 import { evlogDrains } from '../src/evlog-drains'
-import type { AxiosInstance } from 'axios'
+import { safeHttp } from '../src/safe-http'
+import { AxiosError } from 'axios'
+import type { AxiosInstance, AxiosResponse } from 'axios'
 
 function makeEvent(overrides: Partial<WideEvent> = {}): WideEvent {
     return {
@@ -15,6 +17,10 @@ function makeEvent(overrides: Partial<WideEvent> = {}): WideEvent {
 
 function makeContext(event: WideEvent): DrainContext {
     return { event }
+}
+
+function makeHttpError(status: number): AxiosError {
+    return new AxiosError(`Request failed with status code ${status}`, 'ERR_BAD_RESPONSE', undefined, undefined, { status } as AxiosResponse)
 }
 
 function makeHttpClient(postFn = vi.fn().mockResolvedValue({ status: 204 })): AxiosInstance {
@@ -94,10 +100,9 @@ describe('evlogDrains.createLokiDrain', () => {
         expect(postFn).not.toHaveBeenCalled()
     })
 
-    it('logs to console.error on HTTP failure (no rethrow)', async () => {
+    it('rejects on HTTP failure so the pipeline can retry the batch', async () => {
         const postFn = vi.fn().mockRejectedValue(new Error('network error'))
         const client = makeHttpClient(postFn)
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
         const drain = evlogDrains.createLokiDrain({
             url: 'http://loki:3100',
@@ -105,9 +110,34 @@ describe('evlogDrains.createLokiDrain', () => {
             httpClient: client,
         })
 
+        await expect(drain([makeContext(makeEvent())])).rejects.toThrow('network error')
+    })
+
+    it.each([408, 429, 503])('rejects on a retryable %i response so the pipeline can retry the batch', async (status) => {
+        const postFn = vi.fn().mockRejectedValue(makeHttpError(status))
+
+        const drain = evlogDrains.createLokiDrain({
+            url: 'http://loki:3100',
+            serviceName: 'svc',
+            httpClient: makeHttpClient(postFn),
+        })
+
+        await expect(drain([makeContext(makeEvent())])).rejects.toThrow(`status code ${status}`)
+    })
+
+    it('logs and resolves when Loki rejects the batch with a 4xx response', async () => {
+        const postFn = vi.fn().mockRejectedValue(makeHttpError(400))
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+        const drain = evlogDrains.createLokiDrain({
+            url: 'http://loki:3100',
+            serviceName: 'svc',
+            httpClient: makeHttpClient(postFn),
+        })
+
         await expect(drain([makeContext(makeEvent())])).resolves.toBeUndefined()
         expect(consoleSpy).toHaveBeenCalledOnce()
-        expect(consoleSpy.mock.calls[0][0]).toContain('[evlog-loki]')
+        expect(consoleSpy.mock.calls[0][0]).toContain('[evlog-loki] dropped 1 events')
 
         consoleSpy.mockRestore()
     })
@@ -167,5 +197,60 @@ describe('evlogDrains.resolve', () => {
             config: { serviceName: 'svc', axiomToken: 'xaat-token' },
         })
         expect(result.drain).toBeUndefined()
+    })
+})
+
+describe('evlogDrains.resolve with lokiUrl', () => {
+    beforeEach(() => {
+        vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+        vi.restoreAllMocks()
+    })
+
+    async function pushAndFlush(postFn: ReturnType<typeof vi.fn>): Promise<void> {
+        vi.spyOn(safeHttp, 'createAxios').mockReturnValue(makeHttpClient(postFn))
+        const result = evlogDrains.resolve({
+            config: { serviceName: 'svc', lokiUrl: 'http://loki:3100' },
+        })
+        await result.drain?.(makeContext(makeEvent()))
+        const flushed = result.flush()
+        await vi.runAllTimersAsync()
+        await flushed
+    }
+
+    it('retries a batch after a transient push failure', async () => {
+        const postFn = vi.fn()
+            .mockRejectedValueOnce(makeHttpError(503))
+            .mockResolvedValueOnce({ status: 204 })
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+        await pushAndFlush(postFn)
+
+        expect(postFn).toHaveBeenCalledTimes(2)
+        expect(consoleSpy).not.toHaveBeenCalled()
+    })
+
+    it('reports dropped events after exhausting retries', async () => {
+        const postFn = vi.fn().mockRejectedValue(makeHttpError(503))
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+        await pushAndFlush(postFn)
+
+        expect(postFn).toHaveBeenCalledTimes(3)
+        expect(consoleSpy).toHaveBeenCalledWith('[evlog-pipeline] dropped 1 events', 'Request failed with status code 503')
+    })
+
+    it('does not retry a batch Loki rejects with a 4xx response', async () => {
+        const postFn = vi.fn().mockRejectedValue(makeHttpError(400))
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+        await pushAndFlush(postFn)
+
+        expect(postFn).toHaveBeenCalledOnce()
+        expect(consoleSpy).toHaveBeenCalledOnce()
+        expect(consoleSpy.mock.calls[0][0]).toContain('[evlog-loki] dropped 1 events')
     })
 })

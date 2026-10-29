@@ -23,7 +23,7 @@ const formatError = (
           <strong>Respond on UI</strong> is in{' '}
           <a
             href={`/projects/${projectId}/flows/${flowId}`}
-            className="text-primary underline"
+            className="text-accent-11 underline"
             target="_blank"
             rel="noreferrer"
           >
@@ -72,10 +72,10 @@ export const ErrorBubble = ({
         fallback={<BotIcon className="size-5" />}
       />
       <div className="absolute -bottom-[2px] -right-[2px]">
-        <CircleX className="size-4 text-destructive" strokeWidth={3} />
+        <CircleX className="size-4 text-danger-11" strokeWidth={3} />
       </div>
     </div>
-    <ChatBubbleMessage className="text-destructive">
+    <ChatBubbleMessage className="text-danger-11">
       {formatError(chatUI?.projectId, flowId, sendingError)}
     </ChatBubbleMessage>
     <div className="flex gap-1">

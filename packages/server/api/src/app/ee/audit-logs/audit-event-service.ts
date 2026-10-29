@@ -22,13 +22,13 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async list({ platformId, cursorRequest, limit, userId, action, projectId, createdBefore, createdAfter }: ListParams): Promise<SeekPage<ApplicationEvent>> {
+    async list({ platformId, cursorRequest, limit, userId, action, projectId, createdBefore, createdAfter, order }: ListParams): Promise<SeekPage<ApplicationEvent>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: AuditEventEntity,
             query: {
                 limit,
-                order: 'DESC',
+                order: order ?? 'DESC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -75,4 +75,5 @@ type ListParams = {
     projectId?: string[]
     createdBefore?: string
     createdAfter?: string
+    order?: 'ASC' | 'DESC'
 }

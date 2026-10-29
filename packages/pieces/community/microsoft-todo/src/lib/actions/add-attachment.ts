@@ -2,14 +2,16 @@ import { Property, createAction, OAuth2PropertyValue } from '@activepieces/piece
 import { getTaskListsDropdown, getTasksInListDropdown, createTodoClient } from '../common';
 import { TaskFileAttachment } from '@microsoft/microsoft-graph-types';
 import { microsoftToDoAuth } from '../auth';
+import { addAttachmentOutputSchema } from '../output-schemas';
 
 export const addAttachmentAction = createAction({
     auth: microsoftToDoAuth,
     name: 'add_attachment',
+    outputSchema: addAttachmentOutputSchema,
     classification: 'WRITE',
     displayName: 'Add an Attachment',
     description: 'Adds an attachment to a task.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Upload a file as an attachment onto a specific Microsoft To Do task, identified by task list id and task id. Handles both small files (inline upload) and larger ones (chunked upload session) automatically; files must be 25 MB or smaller. Use to attach a document to a task. Not idempotent — each call adds another attachment even if the same file was already attached.', idempotent: false },
     props: {
         task_list_id: Property.Dropdown({

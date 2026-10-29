@@ -17,16 +17,24 @@ export const listMediaComments = createAction({
       'Lists the top-level comments on one Instagram post, with author, text, timestamp, like count and whether the comment is hidden. Replies are not included — use List Comment Replies for those. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'account', display: 'section', label: 'Account', icon: 'user', props: ['page'] },
+    { key: 'media', display: 'section', label: 'Post', icon: 'file', props: ['media_id'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit'] },
+  ],
   props: {
     page: instagramCommon.page,
     media_id: Property.ShortText({
       displayName: 'Media ID',
+      description: 'The id from List Media or a publish step.',
       required: true,
+      placeholder: '17895695668004550',
     }),
     limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Maximum number of comments to return (default 25).',
+      displayName: 'Max Results',
+      description: 'Comments to return per run, up to 100.',
       required: false,
+      defaultValue: 25,
     }),
     cursor: instagramCommon.cursor,
   },

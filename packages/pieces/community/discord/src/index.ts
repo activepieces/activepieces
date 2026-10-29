@@ -19,6 +19,7 @@ import { discordBanGuildMember } from './lib/actions/ban-a-guild-member';
 import { newMember } from './lib/triggers/new-member';
 import { sendMessageWithBot } from './lib/actions/send-message-with-bot'
 import { discordAuth } from './lib/auth';
+import { discordCommon } from './lib/common';
 // audience:'ai' agent atomics
 import { discordSendMessage } from './lib/actions/ai-send-message';
 import { discordCreateChannelAi } from './lib/actions/ai-create-channel';
@@ -138,12 +139,18 @@ export const discord = createPiece({
     createCustomApiCallAction({
       auth:discordAuth,
       baseUrl: () => {
-        return 'https://discord.com/api/v9';
+        return discordCommon.baseUrl;
       },
       authMapping: async (auth) => {
         return {
           Authorization: `Bot ${auth.secret_text}`,
         };
+      },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${discordCommon.baseUrl}`,
+          placeholder: '/users/@me/guilds',
+        },
       },
     }),
   ],

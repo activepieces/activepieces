@@ -3,6 +3,8 @@ import {
   AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
+  ModelOptions,
+  ModelOptionsSurface,
   ProjectAIProvider,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
@@ -18,23 +20,35 @@ export const aiProviderApi = {
       '/v1/ai-providers/configs',
     );
   },
-  listModelsForProvider(
-    provider: string,
-    projectId: string,
-    configId?: string,
-  ) {
-    return api.get<AIProviderModel[]>(`/v1/ai-providers/${provider}/models`, {
-      projectId,
-      ...(configId === undefined ? {} : { configId }),
-    });
-  },
   listModelsForConfig(configId: string) {
     return api.get<AIProviderModel[]>(
       `/v1/ai-providers/configs/${configId}/models`,
     );
   },
-  listModelTiers() {
-    return api.get<ModelTiersResponse>('/v1/ai-providers/tiers');
+  listSuggestedModelsForConfig(configId: string) {
+    return api.get<string[]>(
+      `/v1/ai-providers/configs/${configId}/suggested-models`,
+    );
+  },
+  listPlatformModelOptions({ surface }: { surface: ModelOptionsSurface }) {
+    return api.get<ModelOptions>('/v1/ai-providers/model-options/platform', {
+      surface,
+    });
+  },
+  listModelOptions({
+    projectId,
+    surface,
+    tierId,
+  }: {
+    projectId: string;
+    surface: ModelOptionsSurface;
+    tierId?: string;
+  }) {
+    return api.get<ModelOptions>('/v1/ai-providers/model-options', {
+      projectId,
+      surface,
+      ...(tierId === undefined ? {} : { tierId }),
+    });
   },
   upsert(request: CreateAIProviderRequest) {
     return api.post<AIProviderWithoutSensitiveData>(
@@ -55,18 +69,3 @@ export const aiProviderApi = {
     return api.delete(`/v1/ai-providers/${providerId}`);
   },
 };
-
-export type ModelTierSurface = 'chat' | 'flow';
-
-export type ModelTier = {
-  id: string;
-  label: string;
-  modelId: string;
-};
-
-export type ModelTierList = {
-  tiers: ModelTier[];
-  defaultTierId: string;
-};
-
-export type ModelTiersResponse = Record<ModelTierSurface, ModelTierList>;

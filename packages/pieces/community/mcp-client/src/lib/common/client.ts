@@ -1,23 +1,25 @@
 import {
+  AppConnectionType,
+  AppConnectionValueForAuthProperty,
   buildAuthHeaders,
   McpAuthConfig,
   McpAuthType,
   McpProtocol,
-  PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { mcpClientAuth } from '../auth';
+import { mcpAuth } from '../auth';
 
 async function connect(auth: McpClientAuthValue): Promise<Client> {
   const headers = buildAuthHeaders(toAuthConfig(auth));
-  const url = new URL(auth.serverUrl);
+  const { serverUrl, protocol } = resolveServerConfig(auth);
+  const url = new URL(serverUrl);
 
   // ponytail: Streamable HTTP transport also serves plain-JSON ("HTTP") servers,
   // so both HTTP variants share it; only legacy SSE needs its own transport.
   const transport =
-    auth.protocol === McpProtocol.SSE
+    protocol === McpProtocol.SSE
       ? new SSEClientTransport(url, { requestInit: { headers } })
       : new StreamableHTTPClientTransport(url, { requestInit: { headers } });
 
@@ -37,20 +39,40 @@ async function listTools(auth: McpClientAuthValue): Promise<McpToolInfo[]> {
 }
 
 function toAuthConfig(auth: McpClientAuthValue): McpAuthConfig {
-  switch (auth.authType) {
+  if (auth.type === AppConnectionType.OAUTH2) {
+    return { type: McpAuthType.ACCESS_TOKEN, accessToken: auth.access_token };
+  }
+  switch (auth.props.authType) {
     case McpAuthType.ACCESS_TOKEN:
-      return { type: McpAuthType.ACCESS_TOKEN, accessToken: auth.accessToken ?? '' };
+      return { type: McpAuthType.ACCESS_TOKEN, accessToken: auth.props.accessToken ?? '' };
     case McpAuthType.API_KEY:
       return {
         type: McpAuthType.API_KEY,
-        apiKey: auth.apiKey ?? '',
-        apiKeyHeader: auth.apiKeyHeader ?? '',
+        apiKey: auth.props.apiKey ?? '',
+        apiKeyHeader: auth.props.apiKeyHeader ?? '',
       };
     case McpAuthType.HEADERS:
-      return { type: McpAuthType.HEADERS, headers: parseHeaders(auth.headers) };
+      return { type: McpAuthType.HEADERS, headers: parseHeaders(auth.props.headers) };
     default:
       return { type: McpAuthType.NONE };
   }
+}
+
+function resolveServerConfig(auth: McpClientAuthValue): { serverUrl: string; protocol: McpProtocol } {
+  if (auth.type !== AppConnectionType.OAUTH2) {
+    return { serverUrl: auth.props.serverUrl, protocol: auth.props.protocol };
+  }
+  // The OAuth2 connection value's own `props` is framework-typed as an untyped bag
+  // (`BaseOAuth2ConnectionValue.props?: Record<string, unknown>`), so narrow by hand.
+  const serverUrl = auth.props?.['serverUrl'];
+  const protocol = auth.props?.['protocol'];
+  if (typeof serverUrl !== 'string') {
+    throw new Error('OAuth2 connection is missing the MCP Server URL.');
+  }
+  return {
+    serverUrl,
+    protocol: protocol === McpProtocol.SSE || protocol === McpProtocol.SIMPLE_HTTP ? protocol : McpProtocol.STREAMABLE_HTTP,
+  };
 }
 
 function parseHeaders(raw: string | undefined): Record<string, string> {
@@ -73,5 +95,5 @@ function parseHeaders(raw: string | undefined): Record<string, string> {
 
 export const mcpClient = { connect, listTools };
 
-export type McpClientAuthValue = PiecePropValueSchema<typeof mcpClientAuth>;
+export type McpClientAuthValue = AppConnectionValueForAuthProperty<typeof mcpAuth>;
 export type McpToolInfo = Awaited<ReturnType<Client['listTools']>>['tools'][number];

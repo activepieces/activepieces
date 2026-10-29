@@ -1,8 +1,10 @@
+import { closeMappers } from '../common/mappers';
+import { closeOutputSchemas } from '../common/output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeAuth } from '../auth';
 import { customFields, leadId, statusId, userId } from '../common/props';
-import { closeApiCall } from '../common/client';
+import { CloseApiError, closeApiCall, closeClient } from '../common/client';
 
 export const createOpportunity = createAction({
 	auth: closeAuth,
@@ -10,11 +12,12 @@ export const createOpportunity = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Opportunity',
 	description: 'Create a new opportunity.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Creates a new opportunity (deal) on an existing lead in Close CRM, with optional value, value period, confidence, status, contact, and custom fields. Use to log a sales deal against a lead. Requires the lead ID and an opportunity status. Not idempotent; each call creates a separate opportunity.',
 		idempotent: false,
 	},
+	outputSchema: closeOutputSchemas.raw.opportunity,
 	props: {
 		lead_id: leadId(),
 		status_id: statusId('opportunity', true),
@@ -34,7 +37,8 @@ export const createOpportunity = createAction({
 			required: false,
 		}),
 		value: Property.Number({
-			displayName: 'Value',
+			displayName: 'Value (cents)',
+			description: 'Monetary value in cents of your organization currency, e.g. 340000 for $3,400.00.',
 			required: false,
 		}),
 		value_period: Property.StaticDropdown({
@@ -61,6 +65,9 @@ export const createOpportunity = createAction({
 	async run(context) {
 		const { lead_id, name, note, status_id, confidence, value, value_period, contact_id, user_id } =
 			context.propsValue;
+
+		closeClient.parseInteger({ value: confidence, label: 'Confidence %', min: 0, max: 100 });
+		closeClient.parseInteger({ value, label: 'Value (cents)', min: 0, max: Number.MAX_SAFE_INTEGER });
 
 		const customFields = context.propsValue.custom_fields ?? {};
 
@@ -91,15 +98,12 @@ export const createOpportunity = createAction({
 				body: opportunityData,
 			});
 
-			return response;
-		} catch (error: any) {
-			if (error.response?.status === 400) {
-				throw new Error(`Invalid request: ${JSON.stringify(error.response.body)}`);
+			return closeMappers.withCustomMap({ objectType: 'opportunity', record: response });
+		} catch (error) {
+			if (error instanceof CloseApiError && error.status === 404) {
+				throw new Error(`Lead or related resource not found. ${error.message}`);
 			}
-			if (error.response?.status === 404) {
-				throw new Error(`Lead or related resource not found`);
-			}
-			throw new Error(`Failed to create opportunity: ${error.message}`);
+			throw error;
 		}
 	},
 });

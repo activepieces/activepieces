@@ -11,6 +11,7 @@ import { runAgent } from "./lib/actions/agents/run-agent";
 
 export const ai = createPiece({
   displayName: "AI",
+  description: 'Ask, summarize, classify, extract and create images with AI.',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.93.0',
   categories: [

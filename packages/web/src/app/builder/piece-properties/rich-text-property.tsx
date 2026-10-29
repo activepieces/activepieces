@@ -77,7 +77,7 @@ function RichTextProperty({
           {property.required && <RequiredFieldAsterisk />}
         </div>
         <span className="grow" />
-        <span className="text-xs text-muted-foreground tabular-nums">
+        <span className="text-xs text-gray-11 tabular-nums">
           {t('{count, plural, other {# chars}}', { count: charCount })}
         </span>
       </FormLabel>

@@ -15,25 +15,40 @@ export const createCustomObjectAction = createAction({
 	name: 'create-custome-object',
 	classification: 'WRITE',
 	displayName: 'Create Custom Object',
-	description: 'Creates a custom object in Hubspot.',
+	description: 'Creates a custom object record in HubSpot.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a new record of a selected HubSpot custom object type from the supplied properties. Each call inserts a new record, so it is not idempotent. Requires choosing the custom object type; use Find Custom Object to locate an existing record.', idempotent: false },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'object',
+			display: 'section',
+			label: 'Object Type',
+			icon: 'tag',
+			props: ['customObjectType'],
+		},
+		{
+			key: 'details',
+			display: 'section',
+			label: 'Details',
+			icon: 'text',
+			props: ['objectProperties'],
+		},
+	],
 	props: {
 		customObjectType: customObjectDropdown,
 		objectProperties: customObjectDynamicProperties,
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                            
-                    hs_object_id, hs_lastmodifieddate, hs_createdate   
+			value: `Returned by default: hs_object_id, hs_lastmodifieddate, hs_createdate.
 
-                    **Specify here a list of additional properties to retrieve**`,
+Pick more under **Advanced**.`,
 		}),
-		additionalPropertiesToRetrieve: customObjectPropertiesDropdown(
-			'Additional Properties to Retrieve',
-			false,
-		),
+		additionalPropertiesToRetrieve: customObjectPropertiesDropdown({
+			displayName: 'Additional Properties to Retrieve',
+			required: false,
+			advanced: true,
+		}),
 	},
 	async run(context) {
 		const customObjectType = context.propsValue.customObjectType as string;

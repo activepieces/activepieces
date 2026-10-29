@@ -10,7 +10,7 @@ export const getPost = createAction({
   outputSchema: getPostActionOutputSchema,
   classification: 'READ',
   displayName: 'Get Post',
-  description: 'Retrieves a single post by its resource name.',
+  description: 'Get one post by its ID.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -20,9 +20,9 @@ export const getPost = createAction({
   auth: googleAuth,
   props: {
     postName: Property.ShortText({
-      displayName: 'Post Name',
-      description:
-        'Full resource name of the post, as `accounts/{account}/locations/{location}/localPosts/{post}`. List Posts and Create Post both return it as `name`.',
+      displayName: 'Post ID',
+      description: 'Paste the whole name field from Create Post or List Posts.',
+      placeholder: 'accounts/123/locations/456/localPosts/789',
       required: true,
     }),
   },

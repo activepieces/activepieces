@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { classifyProviderOutcome, observedProviderFetch, ProviderOutcomeSignal } from '../src/lib/ai-provider-health'
+import { classifyProviderOutcome, isFallbackWorthy, observedProviderFetch, ProviderOutcomeSignal } from '../src/lib/ai-provider-health'
 
 describe('classifyProviderOutcome', () => {
     it('reads a 2xx as a working key', () => {
@@ -196,5 +196,32 @@ describe('observedProviderFetch', () => {
             globalThis.fetch = original
         }
         expect(signals).toMatchObject([{ statusCode: 200 }])
+    })
+})
+
+describe('isFallbackWorthy', () => {
+    it('moves on when the provider fails or refuses the key', () => {
+        for (const statusCode of [401, 402, 403, 404, 408, 429, 500, 503]) {
+            expect(isFallbackWorthy({ statusCode })).toBe(true)
+        }
+    })
+
+    it('stops on a bad request, since the next model would get the same one', () => {
+        expect(isFallbackWorthy({ statusCode: 400, body: '{"error":"invalid schema"}' })).toBe(false)
+        expect(isFallbackWorthy({ statusCode: 422 })).toBe(false)
+    })
+
+    it('moves on when a 400 is really the key out of credits', () => {
+        expect(isFallbackWorthy({ statusCode: 400, body: 'Your credit balance is too low to access the Anthropic API.' })).toBe(true)
+    })
+
+    it('moves on for network failures that carry no status', () => {
+        expect(isFallbackWorthy({ message: 'read ECONNRESET' })).toBe(true)
+        expect(isFallbackWorthy({ message: 'Cannot connect to API: connect ECONNREFUSED 10.0.0.1:443', retryable: true })).toBe(true)
+    })
+
+    it('stops on our own errors', () => {
+        expect(isFallbackWorthy({ message: 'Unable to classify the text into the provided categories.' })).toBe(false)
+        expect(isFallbackWorthy({ message: 'Provider foo is not supported for web search' })).toBe(false)
     })
 })

@@ -20,7 +20,7 @@ export function CollapsibleJson({
     <div className={`flex flex-col gap-2 ${className}`}>
       <button
         onClick={toggleVisibility}
-        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-2 text-sm font-medium text-gray-11 hover:text-gray-12 transition-colors"
       >
         {isOpen ? (
           <ChevronDown className="h-4 w-4" />
@@ -33,16 +33,14 @@ export function CollapsibleJson({
       {isOpen && (
         <div className="flex flex-col gap-2 min-w-0">
           <div className="relative min-w-0">
-            <pre className="bg-muted/50 whitespace-pre-wrap break-all rounded-md px-4 py-4 text-xs overflow-x-auto max-w-full">
+            <pre className="bg-gray-3/50 whitespace-pre-wrap break-all rounded-md px-4 py-4 text-xs overflow-x-auto max-w-full">
               <code>{jsonString}</code>
             </pre>
             <div className="absolute top-2 right-2">
               <CopyButton textToCopy={jsonString} />
             </div>
           </div>
-          {description && (
-            <p className="text-xs text-muted-foreground">{description}</p>
-          )}
+          {description && <p className="text-xs text-gray-11">{description}</p>}
         </div>
       )}
     </div>

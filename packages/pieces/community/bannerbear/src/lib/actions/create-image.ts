@@ -1,351 +1,264 @@
 import {
-  Property,
-  DynamicPropsValue,
   createAction,
+  InputPropertyMap,
+  Property,
 } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { bannerbearAuth } from '../auth';
+import {
+  bannerbearClient,
+  RawTemplate,
+  V2Modification,
+} from '../common/client';
+import { bannerbearProps } from '../common/props';
+import { bannerbearOutputSchemas } from '../output-schemas';
 
 export const bannerbearCreateImageAction = createAction({
   auth: bannerbearAuth,
-  name: 'bannerbear_create_image', // Must be a unique across the piece, this shouldn't be changed.
+  name: 'bannerbear_create_image',
   classification: 'WRITE',
   displayName: 'Create Image',
   description: 'Create image from Bannerbear template',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Renders a new image (or PDF) from a Bannerbear template by applying layer modifications (text, image URLs, ratings, charts, bar codes, colors). Choose this to programmatically generate branded graphics; requires a valid template UID and modifications matching that template\'s available layers. Not idempotent — each call submits a new render and produces a new image.',
+      'Renders a new image (or PDF) from a Bannerbear template picked from a dropdown, with one input group per template layer. Agents should use Create Image from JSON instead. Each call submits a new render and uses a credit.',
     idempotent: false,
   },
+  outputSchema: bannerbearOutputSchemas['createImage'],
   props: {
-    template: Property.Dropdown({
-      auth: bannerbearAuth,
-      displayName: 'Template',
-      description: 'The template to use in image creation.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please enter your API key first.',
-          };
-        }
-
-        const response = await httpClient.sendRequest<BannerbearTemplate[]>({
-          method: HttpMethod.GET,
-          url: `https://api.bannerbear.com/v2/templates`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth.secret_text,
-          },
-        });
-
-        if (response.status === 200) {
-          return {
-            disabled: false,
-            options: response.body.map((template) => {
-              return {
-                label: template.name,
-                value: template,
-              };
-            }),
-          };
-        }
-
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Error processing templates',
-        };
-      },
-    }),
+    template: bannerbearProps.template({ required: true }),
     template_version: Property.Number({
       displayName: 'Template version',
-      description: 'Create image based on a specific version of the template.',
+      description: 'Render a specific template version. Leave empty for latest.',
       required: false,
     }),
     modifications: Property.DynamicProperties({
       auth: bannerbearAuth,
       displayName: 'Template modifications',
-      description: 'A list of modifications you want to make on the template.',
+      description: 'Values for each template layer. Empty fields are skipped.',
       required: true,
       refreshers: ['template'],
       props: async ({ auth, template }) => {
-        if (!auth) return {};
-        if (!template) return {};
-
-        let fields: DynamicPropsValue = {};
-
-        (template as BannerbearTemplate).available_modifications.map(
-          (modification) => {
-            if ('text' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.text,
-                ...BannerbearModificationsMapping.common,
-              };
-            } else if ('rating' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.star_rating,
-                ...BannerbearModificationsMapping.common,
-              };
-            } else if ('image_url' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.image,
-                ...BannerbearModificationsMapping.common,
-              };
-            } else if ('chart_data' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.barline_chart,
-                ...BannerbearModificationsMapping.common,
-              };
-            } else if ('bar_code_data' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.bar_code,
-                ...BannerbearModificationsMapping.common,
-              };
-            }
+        const templateUid = bannerbearClient.readTemplateUid(template);
+        if (!auth || !templateUid) return {};
+        const apiKey = auth.secret_text;
+        const raw = await bannerbearClient.request<RawTemplate>({
+          apiKey,
+          method: HttpMethod.GET,
+          path: bannerbearClient.templatePath({ apiKey, uid: templateUid }),
+        });
+        const normalized = bannerbearClient.normalizeTemplate(raw);
+        const fields: InputPropertyMap = {};
+        for (const layer of normalized.layers) {
+          if (!layer.name) continue;
+          for (const field of fieldsForLayer(layer.type)) {
+            fields[`${layer.name}${SEPARATOR}${field.key}`] = buildFieldProp({
+              layerName: layer.name,
+              field,
+            });
           }
-        );
-
+        }
         return fields;
       },
     }),
     transparent: Property.Checkbox({
       displayName: 'Transparent background',
-      description:
-        'Render a PNG with a transparent background. Default is false.',
+      description: 'Render a PNG with a transparent background.',
       required: false,
     }),
     render_pdf: Property.Checkbox({
       displayName: 'Render a PDF',
-      description: 'Render a PDF instead of a PNG. Default is false.',
+      description: 'Also render a PDF (uses extra credits).',
       required: false,
     }),
     metadata: Property.LongText({
       displayName: 'Metadata',
-      description:
-        'Any metadata that you need to store e.g. ID of a record in your DB.',
+      description: 'Any text to store with the image, e.g. a record ID.',
       required: false,
     }),
+    wait_for_completion: bannerbearProps.waitForCompletion,
   },
   async run({ auth, propsValue }) {
-    const body = {
-      modifications:
-        Object.keys(propsValue.modifications).length === 0
-          ? []
-          : [propsValue.modifications],
-      template_version: propsValue.template_version,
-      transparent: propsValue.transparent,
-      render_pdf: propsValue.render_pdf,
-      template: propsValue.template.uid,
-      metadata: propsValue.metadata,
-    };
-
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `https://sync.api.bannerbear.com/v2/images`,
-      body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.secret_text,
-      },
-    };
-
-    const result = await httpClient.sendRequest<BannerbearTemplate>(request);
-
-    if (result.status === 200 || result.status === 202) {
-      return result.body;
-    } else {
-      return result;
+    const apiKey = auth.secret_text;
+    const templateUid = bannerbearClient.readTemplateUid(propsValue.template);
+    if (!templateUid) {
+      throw new Error('Please select a template.');
     }
+    const templateVersion = toOptionalInteger(propsValue.template_version);
+    const body = bannerbearClient.buildImageRequest({
+      apiKey,
+      templateUid,
+      modifications: toModifications(propsValue.modifications ?? {}),
+      transparent: propsValue.transparent,
+      renderPdf: propsValue.render_pdf,
+      metadata: propsValue.metadata,
+      templateVersion,
+    });
+    return bannerbearClient.createImageAndWait({
+      apiKey,
+      body,
+      wait: propsValue.wait_for_completion !== false,
+    });
   },
 });
 
-interface BannerbearTemplate {
-  created_at: string;
-  name: string;
-  self: string;
-  uid: string;
-  preview_url: number;
-  width: number;
-  height: number;
-  available_modifications: {
-    name: string;
-    image_url?: string;
-    text?: string;
-    chart_data: string;
-    bar_code_data: number;
-    rating: number;
-  }[];
-  tags: string[];
+function toModifications(values: Record<string, unknown>): V2Modification[] {
+  const legacyName = values['name'];
+  if (typeof legacyName === 'string' && legacyName.trim() !== '') {
+    return [cleanLegacy(values)];
+  }
+  const byLayer = new Map<string, V2Modification>();
+  for (const [key, value] of Object.entries(values)) {
+    const index = key.lastIndexOf(SEPARATOR);
+    if (index < 0 || isEmptyValue(value)) {
+      continue;
+    }
+    const layer = key.slice(0, index);
+    const field = key.slice(index + SEPARATOR.length);
+    const current = byLayer.get(layer) ?? { name: layer };
+    byLayer.set(layer, { ...current, [field]: coerceField({ field, value }) });
+  }
+  return Array.from(byLayer.values());
 }
 
-const BannerbearModificationsMapping = {
-  main: {
-    name: Property.ShortText({
-      displayName: 'Name',
-      required: true,
-      description: 'The name of the layer you want to change.',
-    }),
-    color: Property.ShortText({
-      displayName: 'Color',
-      required: false,
-      description: 'Color in hex format e.g. "#FF0000".',
-    }),
-  },
-  common: {
-    gradient: Property.ShortText({
-      displayName: 'Gradient',
-      required: false,
-      description: 'Fill with gradient e.g. ["#000", "#FFF"]',
-    }),
-    border_width: Property.Number({
-      displayName: 'Border width',
-      required: false,
-      description: 'Width of the object border.',
-    }),
-    border_color: Property.ShortText({
-      displayName: 'Border color',
-      required: false,
-      description: 'Border color in hex format e.g. "#FF0000".',
-    }),
-    shift_x: Property.Number({
-      displayName: 'Shift x',
-      required: false,
-      description: 'Shift layer along the x axis.',
-    }),
-    shift_y: Property.Number({
-      displayName: 'Shift y',
-      required: false,
-      description: 'Shift layer along the y axis.',
-    }),
-    target: Property.ShortText({
-      displayName: 'Target',
-      required: false,
-      description:
-        'Add a clickable link to a URL on this object when rendering a PDF.',
-    }),
-    hide: Property.Checkbox({
-      displayName: 'Hide',
-      required: false,
-      description: 'Set to true to hide a layer.',
-    }),
-  },
-  text: {
-    text: Property.ShortText({
-      displayName: 'Text',
-      required: false,
-      description: 'Replacement text you want to use.',
-    }),
-    background: Property.ShortText({
-      displayName: 'Background',
-      required: false,
-      description: 'Background color in hex format e.g. "#FF0000".',
-    }),
-    font_family: Property.ShortText({
-      displayName: 'Font family',
-      required: false,
-      description: 'Change the font.',
-    }),
-    text_align_h: Property.ShortText({
-      displayName: 'Text align H',
-      required: false,
-      description: 'Horizontal alignment (left, center, right)',
-    }),
-    text_align_v: Property.ShortText({
-      displayName: 'Text align V',
-      required: false,
-      description: 'Vertical alignment (top, center, bottom)',
-    }),
-    font_family_2: Property.ShortText({
-      displayName: 'Font family 2',
-      required: false,
-      description: 'Change the secondary font.',
-    }),
-    color_2: Property.ShortText({
-      displayName: 'Color 2',
-      required: false,
-      description: 'Change the secondary font color.',
-    }),
-  },
-  image: {
-    image_url: Property.ShortText({
-      displayName: 'Image url',
-      required: false,
-      description: 'Change the image.',
-    }),
-    effect: Property.ShortText({
-      displayName: 'Effect',
-      required: false,
-      description: 'Change the effect.',
-    }),
-    anchor_x: Property.ShortText({
-      displayName: 'Anchor x',
-      required: false,
-      description: 'Change the anchor point (left, center, right)',
-    }),
-    anchor_y: Property.ShortText({
-      displayName: 'Anchor y',
-      required: false,
-      description: 'Change the anchor point (top, center, bottom).',
-    }),
-    fill_type: Property.ShortText({
-      displayName: 'Fill type',
-      required: false,
-      description: 'Change the fill type (fill, fit).',
-    }),
-    disable_face_detect: Property.Checkbox({
-      displayName: 'Disable face detect',
-      required: false,
-      description:
-        'Set to true to disable face detect for this request (if the image container is using face detect).',
-    }),
-    disable_smart_crop: Property.Checkbox({
-      displayName: 'Disable smart crop',
-      required: false,
-      description:
-        'Set to true to disable smart crop for this request (if the image container is using smart crop)',
-    }),
-  },
-  barline_chart: {
-    chart_data: Property.ShortText({
-      displayName: 'Chart data',
-      required: false,
-      description: 'Comma-delimited list of numbers to use as data.',
-    }),
-  },
-  star_rating: {
-    rating: Property.Number({
-      displayName: 'Rating',
-      required: false,
-      description: 'Number from 0 to 100 to use as the rating.',
-    }),
-  },
-  qr_code: {
-    target: Property.ShortText({
-      displayName: 'Target',
-      required: false,
-      description: 'URL or text to use as the code target.',
-    }),
-  },
-  bar_code: {
-    bar_code_data: Property.ShortText({
-      displayName: 'Barcode data',
-      required: false,
-      description: 'Text to encode as a bar code.',
-    }),
-  },
+function cleanLegacy(values: Record<string, unknown>): V2Modification {
+  const result: V2Modification = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (isEmptyValue(value)) continue;
+    result[key] = coerceField({ field: key, value });
+  }
+  return result;
+}
+
+function coerceField({
+  field,
+  value,
+}: {
+  field: string;
+  value: unknown;
+}): unknown {
+  if (NUMBER_FIELDS.includes(field)) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) {
+      throw new Error(`"${field}" must be a number, got "${String(value)}".`);
+    }
+    return n;
+  }
+  if (field === 'gradient' && typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed: unknown = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        throw new Error('Gradient must be a list like ["#000","#FFF"].');
+      }
+    }
+    return trimmed.split(',').map((c) => c.trim()).filter((c) => c !== '');
+  }
+  return value;
+}
+
+function toOptionalInteger(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1) {
+    throw new Error('Template version must be a whole number of 1 or more.');
+  }
+  return n;
+}
+
+function isEmptyValue(value: unknown): boolean {
+  return value === undefined || value === null || value === '';
+}
+
+function fieldsForLayer(type: string): LayerField[] {
+  const result: LayerField[] = [];
+  const keys = new Set<string>();
+  for (const field of [...(LAYER_FIELDS[type] ?? []), ...COMMON_FIELDS]) {
+    if (keys.has(field.key)) continue;
+    keys.add(field.key);
+    result.push(field);
+  }
+  return result;
+}
+
+function buildFieldProp({
+  layerName,
+  field,
+}: {
+  layerName: string;
+  field: LayerField;
+}) {
+  const options = {
+    displayName: `${layerName}: ${field.label}`,
+    description: field.description,
+    required: false,
+  };
+  if (field.kind === 'checkbox') return Property.Checkbox(options);
+  if (field.kind === 'number') return Property.Number(options);
+  return Property.ShortText(options);
+}
+
+const SEPARATOR = '::';
+
+const NUMBER_FIELDS = ['rating', 'border_width', 'shift_x', 'shift_y'];
+
+const COMMON_FIELDS: LayerField[] = [
+  { key: 'color', label: 'Color', description: 'Hex color, e.g. #FF0000.' },
+  { key: 'gradient', label: 'Gradient', description: 'Fill with a gradient, e.g. ["#000","#FFF"] or #000,#FFF.' },
+  { key: 'border_width', label: 'Border Width', description: 'Width of the layer border.', kind: 'number' },
+  { key: 'border_color', label: 'Border Color', description: 'Hex color, e.g. #FF0000.' },
+  { key: 'shift_x', label: 'Shift X', description: 'Move the layer along the x axis (pixels).', kind: 'number' },
+  { key: 'shift_y', label: 'Shift Y', description: 'Move the layer along the y axis (pixels).', kind: 'number' },
+  { key: 'target', label: 'Link Target', description: 'Clickable link URL on this layer when rendering a PDF.' },
+  { key: 'hide', label: 'Hide', description: 'Hide this layer.', kind: 'checkbox' },
+];
+
+const TEXT_FIELDS: LayerField[] = [
+  { key: 'text', label: 'Text', description: 'Replacement text.' },
+  { key: 'color', label: 'Text Color', description: 'Hex color, e.g. #FF0000.' },
+  { key: 'background', label: 'Background', description: 'Hex color, e.g. #000000.' },
+  { key: 'font_family', label: 'Font', description: 'Font family name.' },
+  { key: 'text_align_h', label: 'Horizontal Align', description: 'left, center or right.' },
+  { key: 'text_align_v', label: 'Vertical Align', description: 'top, center or bottom.' },
+  { key: 'font_family_2', label: 'Secondary Font', description: 'Secondary font family name.' },
+  { key: 'color_2', label: 'Secondary Text Color', description: 'Hex color for the secondary font.' },
+];
+
+const IMAGE_FIELDS: LayerField[] = [
+  { key: 'image_url', label: 'Image URL', description: 'Public URL of the image.' },
+  { key: 'effect', label: 'Effect', description: 'Image effect name, e.g. Grayscale.' },
+  { key: 'anchor_x', label: 'Anchor X', description: 'left, center or right.' },
+  { key: 'anchor_y', label: 'Anchor Y', description: 'top, center or bottom.' },
+  { key: 'fill_type', label: 'Fill Type', description: 'fill or fit.' },
+  { key: 'disable_face_detect', label: 'Disable Face Detect', description: 'Turn off face detection for this render.', kind: 'checkbox' },
+  { key: 'disable_smart_crop', label: 'Disable Smart Crop', description: 'Turn off smart crop for this render.', kind: 'checkbox' },
+];
+
+const LAYER_FIELDS: Record<string, LayerField[]> = {
+  text: TEXT_FIELDS,
+  image: IMAGE_FIELDS,
+  rectangle_image_container: IMAGE_FIELDS,
+  circle_image_container: IMAGE_FIELDS,
+  rating: [
+    { key: 'rating', label: 'Rating', description: 'Number from 0 to 100.', kind: 'number' },
+  ],
+  chart: [
+    { key: 'chart_data', label: 'Chart Data', description: 'Comma-separated numbers, e.g. 10,20,30.' },
+  ],
+  bar_code: [
+    { key: 'bar_code_data', label: 'Bar Code Data', description: 'Text to encode as a bar code.' },
+  ],
+  qr_code: [
+    { key: 'target', label: 'QR Code Target', description: 'URL or text to encode in the QR code.' },
+  ],
+};
+
+type LayerField = {
+  key: string;
+  label: string;
+  description: string;
+  kind?: 'text' | 'number' | 'checkbox';
 };

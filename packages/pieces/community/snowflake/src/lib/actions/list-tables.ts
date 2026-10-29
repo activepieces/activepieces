@@ -1,24 +1,22 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { mapTable } from '../common/mappers';
+import { listTablesOutputSchema } from '../common/output-schemas';
+import { qualifiedName } from '../common/sql';
 
 export const listTablesAction = createAction({
   name: 'list_tables',
+  classification: 'SEARCH',
   displayName: 'List Tables',
   description: 'List all tables in a Snowflake schema.',
   audience: 'both',
   aiMetadata: {
     description:
-      "Lists the tables in a given Snowflake database and schema (via SHOW TABLES), returning each table's name, kind, row/byte counts, owner, and creation time. Use to discover what tables exist before querying or to enumerate a schema. Read-only and idempotent.",
+      'Lists every table in a database and schema chosen from dropdowns, with kind, row and byte counts, owner and creation time. For free-text names or a name pattern use List Tables (by name). Read-only.',
     idempotent: true,
   },
+  outputSchema: listTablesOutputSchema,
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -26,30 +24,17 @@ export const listTablesAction = createAction({
   },
   async run(context) {
     const { database, schema } = context.propsValue;
-
-    const connection = configureConnection(context.auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(
-        connection,
-        `SHOW TABLES IN SCHEMA ${database}.${schema}`,
-        []
-      );
-      if (!result) return [];
-
-      return (result as Record<string, unknown>[]).map((t) => ({
-        table_name: t['name'] ?? null,
-        database_name: t['database_name'] ?? null,
-        schema_name: t['schema_name'] ?? null,
-        kind: t['kind'] ?? null,
-        rows: t['rows'] ?? null,
-        bytes: t['bytes'] ?? null,
-        owner: t['owner'] ?? null,
-        comment: t['comment'] ?? null,
-        created_on: t['created_on'] ?? null,
-      }));
-    } finally {
-      await destroy(connection);
-    }
+    const result = await withSnowflake({
+      auth: toAuthValue(context.auth),
+      fn: (session) =>
+        session.query({
+          sql: `SHOW TABLES IN SCHEMA ${qualifiedName({
+            value: `${database}.${schema}`,
+            maxParts: 2,
+            label: 'Schema',
+          })}`,
+        }),
+    });
+    return result.rows.map(mapTable);
   },
 });

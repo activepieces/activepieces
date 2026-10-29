@@ -1,17 +1,18 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { smartsuiteAuth } from '../auth';
 import { smartsuiteCommon } from '../common/props';
-import { smartSuiteApiCall } from '../common';
+import { smartSuiteClient } from '../common/client';
+import { outputSchemas } from '../output-schemas';
 
 export const deleteRecord = createAction({
 	name: 'delete_record',
 	classification: 'DESTRUCTIVE',
 	displayName: 'Delete a Record',
 	description: 'Deletes a record from the specified table',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
-		description: 'Permanently deletes a single SmartSuite record identified by its record ID from the given solution and table. Use when an agent needs to remove a known record. Idempotent in effect — once the record is gone the call has no further effect, though deleting an already-removed record returns a not-found error.',
+		description: 'Moves one SmartSuite record to the solution trash (it can be brought back with Restore Record). Agents should use Delete Record (by ID). Idempotent: deleting a record that is already in the trash succeeds again, and a record that no longer exists at all (404) succeeds with alreadyDeleted true.',
 		idempotent: true,
 	},
 	auth: smartsuiteAuth,
@@ -20,28 +21,24 @@ export const deleteRecord = createAction({
 		tableId: smartsuiteCommon.tableId,
 		recordId: smartsuiteCommon.recordId,
 	},
+	outputSchema: outputSchemas['deleteRecord'],
 	async run({ auth, propsValue }) {
 		const { tableId, recordId } = propsValue;
-
+		const recordPath = `/applications/${smartSuiteClient.pathSegment({ value: tableId, label: 'Table' })}/records/${smartSuiteClient.pathSegment({ value: recordId, label: 'Record ID' })}/`;
 		try {
-			const response = await smartSuiteApiCall<Record<string, any>>({
-				apiKey: auth.props.apiKey,
-				accountId: auth.props.accountId,
+			const response = await smartSuiteClient.request<unknown>({
+				credentials: smartSuiteClient.credentialsOf(auth),
 				method: HttpMethod.DELETE,
-				resourceUri: `/applications/${tableId}/records/${recordId}/`,
+				path: recordPath,
+				operation: 'delete record',
 			});
-
-			return response;
-		} catch (error: any) {
-			if (error.response?.status === 404) {
-				throw new Error(`Record with ID ${recordId} not found in table ${tableId}`);
+			const vendorFields = response !== null && typeof response === 'object' && !Array.isArray(response) ? response : {};
+			return { ...vendorFields, id: String(recordId).trim(), deleted: true, alreadyDeleted: false };
+		} catch (error) {
+			if (smartSuiteClient.statusOf(error) === 404) {
+				return { id: String(recordId).trim(), deleted: true, alreadyDeleted: true };
 			}
-
-			if (error.response?.status === 403) {
-				throw new Error('You do not have permission to delete this record');
-			}
-
-			throw new Error(`Failed to delete record: ${error.message || 'Unknown error'}`);
+			throw error;
 		}
 	},
 });

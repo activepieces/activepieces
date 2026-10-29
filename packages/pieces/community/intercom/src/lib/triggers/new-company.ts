@@ -1,6 +1,8 @@
 import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
+import { companyTriggerOutputSchema } from '../output-schemas';
+import { COMPANY_SAMPLE } from '../common/webhook-samples';
 
 export const newCompanyTrigger = createTrigger({
 	auth: intercomAuth,
@@ -12,9 +14,10 @@ export const newCompanyTrigger = createTrigger({
 		description: 'Fires when a new company record is created in Intercom. Companies group related contacts under a single organization. Outputs the newly created company object with its attributes.',
 	},
 	props: {},
+	outputSchema: companyTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -26,11 +29,11 @@ export const newCompanyTrigger = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.companies.list({ per_page: 5 });
 
@@ -40,101 +43,5 @@ export const newCompanyTrigger = createTrigger({
 		const payload = context.payload.body as TriggerPayload;
 		return [payload.data.item];
 	},
-	sampleData: {
-		type: 'contact',
-		id: '67a9b9dfcc14109e073fbe19',
-		workspace_id: 'nzekhfwb',
-		external_id: '5b803f65-bcec-4198-b4f4-a0588454b537',
-		role: 'lead',
-		email: 'john.doe@example.com',
-		phone: null,
-		name: 'John Doe',
-		avatar: null,
-		owner_id: null,
-		social_profiles: {
-			type: 'list',
-			data: [],
-		},
-		has_hard_bounced: false,
-		marked_email_as_spam: false,
-		unsubscribed_from_emails: false,
-		created_at: '2025-02-10T08:33:35.910+00:00',
-		updated_at: '2025-02-10T08:33:35.907+00:00',
-		signed_up_at: null,
-		last_seen_at: null,
-		last_replied_at: null,
-		last_contacted_at: null,
-		last_email_opened_at: null,
-		last_email_clicked_at: null,
-		language_override: null,
-		browser: null,
-		browser_version: null,
-		browser_language: null,
-		os: null,
-		location: {
-			type: 'location',
-			country: null,
-			region: null,
-			city: null,
-			country_code: null,
-			continent_code: null,
-		},
-		android_app_name: null,
-		android_app_version: null,
-		android_device: null,
-		android_os_version: null,
-		android_sdk_version: null,
-		android_last_seen_at: null,
-		ios_app_name: null,
-		ios_app_version: null,
-		ios_device: null,
-		ios_os_version: null,
-		ios_sdk_version: null,
-		ios_last_seen_at: null,
-		custom_attributes: {},
-		tags: {
-			type: 'list',
-			data: [],
-			url: '/contacts/67a9b9dfcc14109e073fbe19/tags',
-			total_count: 0,
-			has_more: false,
-		},
-		notes: {
-			type: 'list',
-			data: [],
-			url: '/contacts/67a9b9dfcc14109e073fbe19/notes',
-			total_count: 0,
-			has_more: false,
-		},
-		companies: {
-			type: 'list',
-			data: [],
-			url: '/contacts/67a9b9dfcc14109e073fbe19/companies',
-			total_count: 0,
-			has_more: false,
-		},
-		opted_out_subscription_types: {
-			type: 'list',
-			data: [],
-			url: '/contacts/67a9b9dfcc14109e073fbe19/subscriptions',
-			total_count: 0,
-			has_more: false,
-		},
-		opted_in_subscription_types: {
-			type: 'list',
-			data: [],
-			url: '/contacts/67a9b9dfcc14109e073fbe19/subscriptions',
-			total_count: 0,
-			has_more: false,
-		},
-		utm_campaign: null,
-		utm_content: null,
-		utm_medium: null,
-		utm_source: null,
-		utm_term: null,
-		referrer: null,
-		sms_consent: false,
-		unsubscribed_from_sms: false,
-		enabled_push_messaging: null,
-	},
+	sampleData: COMPANY_SAMPLE,
 });

@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lemlistAuth } from '../common/constants';
+import { lemlistInput } from '../common/input';
 import { campaignsDropdown } from '../common/props';
-import { lemlistApiService } from '../common/requests';
+import { lemlistLeads } from '../common/requests';
+import { lemlistSchemas } from '../common/schemas';
 
 export const searchLead = createAction({
   auth: lemlistAuth,
@@ -9,8 +11,12 @@ export const searchLead = createAction({
   classification: 'READ',
   displayName: 'Search Lead',
   description: 'Look up a lead by email and campaign.',
-  audience: 'both',
-  aiMetadata: { description: 'Looks up a lead by email across the account and returns matching lead records. Operates in two modes: supply a campaign to filter results to that campaign, or leave it empty to return all campaigns the lead belongs to; returns a not-found result when no match exists. Idempotent read-only lookup.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Looks up the leads for one email across Lemlist campaigns, optionally filtered to one campaign. Returns found=false when nothing matches. Read-only.',
+    idempotent: true,
+  },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'], required: false }),
     email: Property.ShortText({
@@ -19,29 +25,25 @@ export const searchLead = createAction({
       required: true,
     }),
   },
+  outputSchema: lemlistSchemas.leadsByEmail,
   async run({ auth, propsValue }) {
-    const { email, campaignId } = propsValue as {
-      email: string;
-      campaignId: string;
-    };
-
-    const leads = await lemlistApiService.getLeadByEmail(auth, email);
-
-    if (!Array.isArray(leads) || leads.length === 0) {
-      return { found: false, message: `No leads found for ${email}` };
+    const email = lemlistInput.email({ value: propsValue.email, label: 'Lead Email' });
+    const campaignId = lemlistInput.optionalText(propsValue.campaignId);
+    const leads = await lemlistLeads.getLeadsByEmail({ apiKey: auth.secret_text, email });
+    if (leads.length === 0) {
+      return { found: false, message: `No leads found for ${email}`, leads: [] };
     }
-
-    const matching = campaignId
-      ? leads.filter((lead) => lead.campaign.id === campaignId)
-      : leads;
-
+    const matching =
+      campaignId === undefined
+        ? leads
+        : leads.filter((lead) => lemlistLeads.leadCampaignId(lead) === campaignId);
     if (matching.length === 0) {
       return {
         found: false,
         message: `Lead with email ${email} not found in campaign ${campaignId}`,
+        leads: [],
       };
     }
-
     return { found: true, leads: matching };
   },
 });

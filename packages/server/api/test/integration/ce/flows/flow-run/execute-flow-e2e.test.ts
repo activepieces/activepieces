@@ -66,7 +66,7 @@ beforeAll(async () => {
 afterAll(async () => {
     worker.stop()
     await app.close()
-}, 15_000)
+}, 60_000)
 
 async function setupSubflowFixtures({ childAlwaysFails = false, retryOnFailure = false }: { childAlwaysFails?: boolean, retryOnFailure?: boolean } = {}) {
     const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()

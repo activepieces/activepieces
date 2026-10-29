@@ -1,20 +1,26 @@
 import { inspect } from 'node:util'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import {
     createNotifyClient,
+    createRpcClient,
     createRpcServer,
     EngineContract,
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
+    ForceReinstallPieceRequest,
     WorkerNotifyContract,
+    WorkerRpcContract,
 } from '@activepieces/shared'
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
 import { flowRunProgressReporter } from './helper/flow-run-progress-reporter'
 import { execute } from './operations'
 
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
+const PIECE_REINSTALL_RPC_TIMEOUT_MS = 120_000
 
 let socket: Socket | undefined
 let notifyClient: WorkerNotifyContract | undefined
+let rpcClient: WorkerRpcContract | undefined
 let initialConnectWatchdog: NodeJS.Timeout | undefined
 
 function clearInitialConnectWatchdog(): void {
@@ -41,6 +47,7 @@ export const workerSocket = {
         }, INITIAL_CONNECT_TIMEOUT_MS)
 
         notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
+        rpcClient = createRpcClient<WorkerRpcContract>(socket, PIECE_REINSTALL_RPC_TIMEOUT_MS)
 
         socket.on('connect', () => {
             clearInitialConnectWatchdog()
@@ -108,6 +115,19 @@ export const workerSocket = {
 
     sendError: (error: unknown): void => {
         notifyClient?.stderr({ message: inspect(error) })
+    },
+
+    requestPieceReinstall: async (input: ForceReinstallPieceRequest): Promise<boolean> => {
+        if (isNil(socket) || !socket.connected || isNil(rpcClient)) {
+            return false
+        }
+        const client = rpcClient
+        const { error } = await tryCatch(() => client.forceReinstallPiece(input))
+        if (error) {
+            notifyClient?.stderr({ message: `Piece reinstall request failed: ${inspect(error)}\n` })
+            return false
+        }
+        return true
     },
 
     disconnect: (): void => {

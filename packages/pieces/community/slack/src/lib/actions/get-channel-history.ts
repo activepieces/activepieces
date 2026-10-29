@@ -14,6 +14,22 @@ export const getChannelHistory = createAction({
   audience: 'human',
   aiMetadata: { description: 'Retrieve top-level messages from a known channel, paging through the full range and optionally bounded by oldest/latest timestamps; read-only and repeatable. Use this to read a channel you already have the ID for; use Search messages to find messages by content across the workspace, or Retrieve Thread Messages to read replies within a thread.', idempotent: true },
   outputSchema: channelHistoryActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channel'],
+    },
+    {
+      key: 'time_window',
+      display: 'section',
+      label: 'Time window',
+      icon: 'calendar',
+      props: ['oldest', 'latest'],
+    },
+  ],
   props: {
     info: singleSelectChannelInfo,
     onlyBotChannels,

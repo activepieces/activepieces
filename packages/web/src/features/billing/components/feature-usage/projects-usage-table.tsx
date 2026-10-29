@@ -10,6 +10,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
+  LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
@@ -20,9 +21,11 @@ import { projectCollectionUtils } from '@/features/projects';
 export function ProjectsUsageTable({
   platformId,
   enabled = true,
+  frameClassName,
 }: {
   platformId: string;
   enabled?: boolean;
+  frameClassName?: string;
 }) {
   const [range, setRange] = useState<{ from: Date; to: Date }>(() => ({
     from: dayjs().subtract(30, 'day').startOf('day').toDate(),
@@ -30,6 +33,7 @@ export function ProjectsUsageTable({
   }));
   const [searchParams] = useSearchParams();
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
+  const limit = searchParams.get(LIMIT_QUERY_PARAM);
 
   const { data, isLoading, isError, refetch } = billingQueries.useProjectsUsage(
     platformId,
@@ -37,6 +41,7 @@ export function ProjectsUsageTable({
       startDate: range.from.toISOString(),
       endDate: range.to.toISOString(),
       cursor,
+      limit: limit ? parseInt(limit) : undefined,
     },
     enabled,
   );
@@ -47,8 +52,8 @@ export function ProjectsUsageTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <h2 className="text-base font-semibold text-gray-12">
           {t('Credits Usage by Project')}
         </h2>
         <DateTimePickerWithRange
@@ -63,13 +68,15 @@ export function ProjectsUsageTable({
         />
       </div>
       <DataTable
+        bordered={frameClassName !== undefined}
+        frameClassName={frameClassName}
         columns={COLUMNS}
         page={page}
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('project usage')}
         onRetry={refetch}
-        emptyStateIcon={<Coins className="size-14 text-muted-foreground" />}
+        emptyStateIcon={<Coins className="size-14 text-gray-11" />}
         emptyStateTextTitle={t('No project usage yet')}
         emptyStateTextDescription={t(
           'Once your projects consume credits, their usage will appear here.',
@@ -96,7 +103,7 @@ function ProjectNameLink({
       <button
         type="button"
         onClick={goToProjectHome}
-        className="truncate text-sm font-medium text-primary hover:underline"
+        className="truncate text-sm font-medium text-accent-11 hover:underline"
       >
         {projectName}
       </button>

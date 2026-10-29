@@ -12,6 +12,22 @@ export const addPermission = createAction({
     audience: 'human',
     aiMetadata: { description: 'Grants a specified role (reader, commenter, writer, fileOrganizer, or organizer) on a Drive file or folder to a user identified by email, optionally sending a notification email. Use to share a resource with a person. Requires the file/folder ID and target email. Not idempotent: each call creates a new permission grant.', idempotent: false },
     displayName: 'Share File or Folder',
+    propertyGroups: [
+        {
+            key: 'item',
+            display: 'section',
+            label: 'What to share',
+            icon: 'file',
+            props: ['fileId', 'include_team_drives'],
+        },
+        {
+            key: 'access',
+            display: 'section',
+            label: 'Who gets access',
+            icon: 'user',
+            props: ['user_email', 'permission_name', 'send_invitation_email'],
+        },
+    ],
     props: {
         fileId: Property.ShortText({
             displayName: 'File or Folder ID',

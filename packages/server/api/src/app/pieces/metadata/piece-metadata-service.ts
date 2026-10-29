@@ -1,17 +1,19 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, LocalesEnum, PlatformId } from '@activepieces/core-utils'
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceAudienceFilter, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
+import { ActionExistence, EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceAudienceFilter, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { EntityManager, FindOptionsSelect, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
+import { pieceTranslationService } from './piece-translation-service'
 import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
@@ -23,7 +25,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const locale = params.locale ?? LocalesEnum.ENGLISH
-            const translatedPieces = await dedupe(`list:${params.platformId ?? ''}:${locale}`, () => fetchLatestPieces({
+            const { pieces: translatedPieces, untranslatedNames } = await dedupe(`list:${params.platformId ?? ''}:${locale}`, () => fetchLatestPieces({
                 platformId: params.platformId,
                 locale,
                 log,
@@ -34,6 +36,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             const sortedPieces = await pieceListUtils(log).sortAndSearchPieces({
                 ...params,
                 pieces: audiencePieces,
+                untranslatedNames,
                 suggestionType: params.suggestionType,
             })
             const visiblePieces = params.includeHidden ? sortedPieces : sortedPieces.filter((piece) => !piece.deprecated)
@@ -52,7 +55,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 version: piece.version,
             }))
         },
-        async get({ projectId, platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
+        async get({ projectId, platformId, version, name, locale }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
             const bestMatch = await findExactVersion(log, { name, version, platformId })
             if (isNil(bestMatch)) {
                 return undefined
@@ -67,18 +70,46 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             if (isNil(piece)) {
                 return undefined
             }
+            const [translatedPiece] = await translatePieces({ pieces: [piece], locale: locale ?? LocalesEnum.ENGLISH })
 
             const policy = await resolveVisibility({ platformId, projectId, log })
             if (isNil(policy)) {
-                return piece
+                return translatedPiece
             }
-            if (!policy.isPieceVisible(piece.name)) {
+            if (!policy.isPieceVisible(translatedPiece.name)) {
                 return undefined
             }
-            return policy.filterPieceComponents(piece)
+            return policy.filterPieceComponents(translatedPiece)
+        },
+        async checkActionsExist({ actions, platformId }: CheckActionsExistParams): Promise<ActionExistence> {
+            const latestVersions = await Promise.all(Object.keys(actions).map((name) => findExactVersion(log, { name, version: undefined, platformId })))
+            const lookups = latestVersions.flatMap((latest) => isNil(latest) ? [] : actions[latest.name].map((actionName) => ({ ...latest, actionName })))
+            if (lookups.length === 0) {
+                return {}
+            }
+            const rows: { pieceName: string, actionName: string, exists: boolean }[] = await pieceRepos().query(
+                `
+                SELECT lookup.piece_name AS "pieceName",
+                       lookup.action_name AS "actionName",
+                       (pm."actions" -> lookup.action_name) IS NOT NULL
+                       AND (pm."actions" -> lookup.action_name ->> 'audience') IS DISTINCT FROM 'ai' AS "exists"
+                FROM unnest($1::varchar[], $2::varchar[], $3::varchar[], $4::varchar[]) AS lookup(piece_name, version, platform_id, action_name)
+                LEFT JOIN "piece_metadata" AS pm
+                  ON pm."name" = lookup.piece_name
+                 AND pm."version" = lookup.version
+                 AND pm."platformId" IS NOT DISTINCT FROM lookup.platform_id
+                `,
+                [
+                    lookups.map((lookup) => lookup.name),
+                    lookups.map((lookup) => lookup.version),
+                    lookups.map((lookup) => lookup.platformId ?? null),
+                    lookups.map((lookup) => lookup.actionName),
+                ],
+            )
+            return rows.reduce<ActionExistence>((acc, row) => ({ ...acc, [row.pieceName]: { ...acc[row.pieceName], [row.actionName]: row.exists } }), {})
         },
         async getOrThrow({ version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
-            const piece = await this.get({ version, name, platformId })
+            const piece = await this.get({ version, name, platformId, locale })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
@@ -87,10 +118,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     },
                 })
             }
-            if (isNil(locale) || locale === LocalesEnum.ENGLISH) {
-                return piece
-            }
-            return pieceTranslation.translatePiece<PieceMetadataModel>({ piece, locale, mutate: false })
+            return piece
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await pieceRepos().findOneByOrFail({
@@ -142,7 +170,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 name: pieceMetadata.name,
                 platformId,
             })
-            const savedPiece = await pieceRepos().save({
+            const pieceRow = {
                 id: apId(),
                 packageType,
                 pieceType,
@@ -150,6 +178,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 platformId,
                 created: createdDate,
                 ...pieceMetadata,
+            }
+            const savedPiece = await transaction(async (entityManager) => {
+                const piece = await pieceRepos(entityManager).save(pieceRow)
+                await pieceTranslationService.save({ pieceMetadataId: pieceRow.id, i18n: pieceMetadata.i18n, entityManager })
+                return piece
             })
             if (publishCacheRefresh) {
                 await pieceCache(log).invalidate()
@@ -400,22 +433,25 @@ const increaseMajorVersion = (version: string): string => {
     return incrementedVersion
 }
 
-async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log }: FetchLatestPiecesParams): Promise<PieceMetadataSchema[]> {
+async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log }: FetchLatestPiecesParams): Promise<LatestPieces> {
     const currentRelease = apVersionUtil.getCurrentRelease()
 
     const latestPieces = await dedupe(`latest-pieces:${currentRelease}`, () => fetchLatestCompatiblePiecesFromDB(currentRelease))
-    const translatedPieces = await translatePieces({ pieces: latestPieces, locale })
-
     const devPieces = await loadDevPiecesIfEnabled(log)
-    const translatedDevPieces = devPieces.map((piece) =>
-        pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
-    )
 
-    const devPieceNames = new Set(translatedDevPieces.map((p) => p.name))
-    const merged = [...translatedPieces.filter((p) => !devPieceNames.has(p.name)), ...translatedDevPieces]
+    const devPieceNames = new Set(devPieces.map((p) => p.name))
+    const merged = [...latestPieces.filter((p) => !devPieceNames.has(p.name)), ...devPieces]
         .filter((piece) => filterPieceBasedOnType(platformId, piece))
         .filter((piece) => isSupportedRelease(currentRelease, piece))
-    return lastVersionOfEachPiece(merged)
+    const newestVersions = lastVersionOfEachPiece(merged)
+    const translatedPieces = await translatePieces({ pieces: newestVersions, locale })
+    return { pieces: translatedPieces, untranslatedNames: untranslatedNamesOf({ originalPieces: newestVersions, translatedPieces }) }
+}
+
+function untranslatedNamesOf({ originalPieces, translatedPieces }: UntranslatedNamesOfParams): Map<string, string> {
+    return new Map(originalPieces
+        .filter((piece, index) => piece.displayName !== translatedPieces[index].displayName)
+        .map((piece) => [piece.name, piece.displayName]))
 }
 
 async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchPieceVersionParams): Promise<PieceMetadataSchema | null> {
@@ -431,6 +467,7 @@ async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchP
             version,
             platformId: platformId ?? IsNull(),
         },
+        select: PIECE_COLUMNS_WITHOUT_TRANSLATIONS,
     })
     return foundPiece ?? null
 }
@@ -489,40 +526,18 @@ async function translatePieces({ pieces, locale }: TranslatePiecesParams): Promi
     if (locale === LocalesEnum.ENGLISH) {
         return pieces.map((piece) => ({ ...piece, i18n: undefined }))
     }
-    const translationsByPieceId = await fetchTranslationsForLocale({ pieceIds: pieces.map((piece) => piece.id), locale })
+    const translationsByPieceId = await pieceTranslationService.getForLocale({ pieceIds: pieces.map((piece) => piece.id), locale })
     return pieces.map((piece) => {
-        const translations = translationsByPieceId.get(piece.id)
+        const translations = translationsByPieceId.get(piece.id) ?? piece.i18n?.[locale]
         if (isNil(translations)) {
             return { ...piece, i18n: undefined }
         }
         const translated = pieceTranslation.translatePiece<PieceMetadataSchema>({
             piece: { ...piece, i18n: { [locale]: translations } },
             locale,
-            mutate: false,
         })
-        translated.i18n = undefined
-        return translated
+        return { ...translated, i18n: undefined }
     })
-}
-
-async function fetchTranslationsForLocale({ pieceIds, locale }: FetchTranslationsForLocaleParams): Promise<Map<string, Record<string, string>>> {
-    const translationsByPieceId = new Map<string, Record<string, string>>()
-    if (pieceIds.length === 0) {
-        return translationsByPieceId
-    }
-    const rows = await pieceRepos()
-        .createQueryBuilder('pm')
-        .select('pm."id"', 'id')
-        .addSelect('pm."i18n" -> :locale', 'translations')
-        .where('pm."id" IN (:...pieceIds)', { pieceIds })
-        .setParameter('locale', locale)
-        .getRawMany<{ id: string, translations: Record<string, string> | null }>()
-    for (const row of rows) {
-        if (!isNil(row.translations)) {
-            translationsByPieceId.set(row.id, row.translations)
-        }
-    }
-    return translationsByPieceId
 }
 
 const inflightFetches = new Map<string, Promise<unknown>>()
@@ -554,8 +569,6 @@ function filterRegistry(registry: PieceRegistryEntry[], params: { release: strin
         .filter((piece) => isNil(params.release) || isSupportedRelease(params.release, piece))
 }
 
-
-
 type ListParams = {
     projectId?: string
     platformId?: string
@@ -567,6 +580,11 @@ type ListParams = {
     suggestionType?: SuggestionType
     locale?: LocalesEnum
     audience?: PieceAudienceFilter
+}
+
+type CheckActionsExistParams = {
+    actions: Record<string, string[]>
+    platformId: string
 }
 
 type GetOrThrowParams = {
@@ -634,13 +652,18 @@ type ToPieceMetadataModelSummaryParams<T extends PieceMetadataSchema | PieceMeta
     suggestionType?: SuggestionType
 }
 
-type TranslatePiecesParams = {
+type LatestPieces = {
     pieces: PieceMetadataSchema[]
-    locale: LocalesEnum
+    untranslatedNames: Map<string, string>
 }
 
-type FetchTranslationsForLocaleParams = {
-    pieceIds: string[]
+type UntranslatedNamesOfParams = {
+    originalPieces: PieceMetadataSchema[]
+    translatedPieces: PieceMetadataSchema[]
+}
+
+type TranslatePiecesParams = {
+    pieces: PieceMetadataSchema[]
     locale: LocalesEnum
 }
 

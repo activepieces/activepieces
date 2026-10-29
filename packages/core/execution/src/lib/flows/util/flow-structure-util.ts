@@ -1,7 +1,7 @@
 import { AgentPieceProps } from '@activepieces/core-piece-types'
 import { isNil, unique } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { BranchCondition, BranchedAction, BranchExecutionType, emptyCondition, FlowAction, FlowActionType } from '../actions/action'
+import { BranchCondition, BranchedAction, BranchExecutionType, CodeAction, emptyCondition, FlowAction, FlowActionType, PieceAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
@@ -195,6 +195,22 @@ function getAllChildSteps(action: Step): Step[] {
     })
 }
 
+function hasContinueOnFailureBranches(step: Step): step is CodeAction | PieceAction {
+    if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
+        return false
+    }
+    return step.settings.errorHandlingOptions?.continueOnFailure?.value ?? false
+}
+
+function getSkippedStepNames({ trigger }: { trigger: FlowTrigger }): Set<string> {
+    const skippedSteps = getAllSteps(trigger).filter((step) => isAction(step.type) && 'skip' in step && step.skip === true)
+    return new Set(skippedSteps.flatMap((step) => getAllChildSteps(step).map((child) => child.name)))
+}
+
+function isSkipped({ stepName, trigger }: { stepName: string, trigger: FlowTrigger }): boolean {
+    return getSkippedStepNames({ trigger }).has(stepName)
+}
+
 function isChildOf(parent: Step, childStepName: string): boolean {
     return getAllChildSteps(parent).some((c) => c.name === childStepName && c.name !== parent.name)
 }
@@ -297,6 +313,9 @@ export const flowStructureUtil = {
     findUnusedNames,
     getAllNextActionsWithoutChildren,
     getAllChildSteps,
+    hasContinueOnFailureBranches,
+    getSkippedStepNames,
+    isSkipped,
     extractConnectionIds,
     isAgentPiece,
     isBranchedAction,

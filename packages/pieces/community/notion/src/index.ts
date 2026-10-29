@@ -2,7 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { notionAuth } from './lib/auth';
-import { getNotionToken, NotionAuthValue } from './lib/common';
+import { getNotionToken, NotionAuthValue, notionCommon } from './lib/common';
 import { appendToPage } from './lib/actions/append-to-page';
 import { createDatabaseItem } from './lib/actions/create-database-item';
 import { createPage } from './lib/actions/create-page';
@@ -107,6 +107,16 @@ export const notion = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${getNotionToken(auth as NotionAuthValue)}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${notionCommon.baseUrl}`,
+          placeholder: '/users/me',
+        },
+        headers: {
+          description:
+            'Add Notion-Version, e.g. 2022-02-22. Authorization is added for you.',
+        },
+      },
     }),
   ],
   triggers: [newDatabaseItem, updatedDatabaseItem, newComment, updatedPage],

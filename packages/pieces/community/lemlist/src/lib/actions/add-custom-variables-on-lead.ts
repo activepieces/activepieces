@@ -1,6 +1,8 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lemlistAuth } from '../common/constants';
-import { lemlistApiService } from '../common/requests';
+import { lemlistLeads } from '../common/requests';
+import { lemlistSchemas } from '../common/schemas';
 
 export const addCustomVariablesOnLead = createAction({
   auth: lemlistAuth,
@@ -11,7 +13,7 @@ export const addCustomVariablesOnLead = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Creates new custom variables on a specific lead (identified by its Lemlist lead id) and sets each variable’s value for that lead. Variable names must be new — the call fails if a name matches a default field (email, firstName, lastName, picture, phone, linkedinUrl, companyName, companyDomain, icebreaker) or a previously created custom variable. Use to add extra mail-merge fields beyond the standard ones. Not idempotent: re-running with the same variable names returns an error.',
+      'Creates new custom variables on one lead (Lemlist lead ID lea_...) and sets their values. Names must be new: the call fails with a conflict if a name matches a default field (email, firstName, lastName, picture, phone, linkedinUrl, companyName, companyDomain, icebreaker) or an existing custom variable; use Update Lead Variables to change existing values. company-prefixed names write to the shared company record. Not idempotent: a second run with the same names fails.',
     idempotent: false,
   },
   props: {
@@ -28,12 +30,13 @@ export const addCustomVariablesOnLead = createAction({
       required: true,
     }),
   },
+  outputSchema: lemlistSchemas.variables,
   async run({ auth, propsValue }) {
-    const { leadId, customVariables } = propsValue;
-
-    return await lemlistApiService.addLeadVariables(auth, {
-      leadId,
-      variables: customVariables ?? {},
+    return lemlistLeads.writeLeadVariables({
+      apiKey: auth.secret_text,
+      leadId: propsValue.leadId,
+      variables: propsValue.customVariables,
+      method: HttpMethod.POST,
     });
   },
 });

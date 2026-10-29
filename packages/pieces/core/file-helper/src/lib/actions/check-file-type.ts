@@ -11,6 +11,10 @@ export const checkFileType = createAction({
   description: "Detect a file's type and check it against the one you pick.",
   aiMetadata: { description: 'Determines the MIME type of a file from its extension and reports whether it matches the selected MIME type. Use it as a guard before a format-specific step (e.g. only continue for images or PDFs); use Get File Name if you only want the name, or Read File to get the contents. Detection is extension-based only - contents are never sniffed, so the extension is trusted as-is and only a missing or unrecognized one falls back to application/octet-stream; read-only and idempotent.', idempotent: true },
   outputSchema: checkFileTypeActionOutputSchema,
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'File', icon: 'paperclip', props: ['file'] },
+    { key: 'match', display: 'section', label: 'Match', icon: 'tag', props: ['mimeTypes'] },
+  ],
   props: {
     file: Property.File({
       displayName: 'File',

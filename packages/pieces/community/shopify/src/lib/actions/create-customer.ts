@@ -13,10 +13,28 @@ export const createCustomerAction = createAction({
   description: 'Create a new customer.',
   audience: 'both',
   aiMetadata: { description: 'Create a new Shopify customer record with email, name, phone, tags, and marketing consent. Pick this for a new contact; use Update Customer to edit an existing one. Each call creates a new record, so repeating it may produce duplicate customers.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'contact',
+      display: 'section',
+      label: 'Contact',
+      icon: 'user',
+      props: ['firstName', 'lastName', 'email', 'phoneNumber'],
+    },
+    {
+      key: 'account',
+      display: 'section',
+      label: 'Account',
+      icon: 'inbox',
+      props: ['verifiedEmail', 'sendEmailInvite', 'acceptsMarketing'],
+    },
+  ],
   props: {
     email: Property.ShortText({
       displayName: 'Email',
+      placeholder: 'jane@example.com',
       required: false,
+      width: 'half',
     }),
     verifiedEmail: Property.Checkbox({
       displayName: 'Verified Email',
@@ -26,30 +44,39 @@ export const createCustomerAction = createAction({
     }),
     sendEmailInvite: Property.Checkbox({
       displayName: 'Send Email Invite',
+      description: 'Email the customer an invite to create an account.',
       required: false,
       defaultValue: false,
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
       required: false,
+      width: 'half',
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
       required: false,
+      width: 'half',
     }),
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
+      description: 'Include the country code.',
+      placeholder: '+15145550123',
       required: false,
+      width: 'half',
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
-      description: 'A string of comma-separated tags for filtering and search',
+      description: 'Separate tags with commas.',
+      placeholder: 'sale, summer',
+      required: false,
+      advanced: true,
+    }),
+    acceptsMarketing: Property.Checkbox({
+      displayName: 'Accepts Marketing',
+      description: 'Subscribe the customer to email marketing.',
       required: false,
     }),
-    acceptsMarketing:Property.Checkbox({
-      displayName:'Accepts Marketing ?',
-      required:false
-    })
   },
   async run({ auth, propsValue }) {
     const {
