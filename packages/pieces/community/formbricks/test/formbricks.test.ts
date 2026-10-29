@@ -21,9 +21,6 @@ function memoryStore(initial: Record<string, unknown>) {
       data.set(key, value);
       return value;
     }),
-    delete: vi.fn(async (key: string) => {
-      data.delete(key);
-    }),
     keys: () => [...data.keys()],
   };
 }
@@ -141,24 +138,17 @@ describe('handleFormbricksWebhook', () => {
     expect(await handleFormbricksWebhook({ payload: first, store, storeKey: 'key', eventType: 'responseFinished', nowMs: replayAt })).toEqual([]);
   });
 
-  it('deletes delivery buckets once their signatures have expired', async () => {
-    const stale = timestamp - 30 * 60;
-    const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET }, [`key_deliveries_${stale}`]: ['old'], key_deliveries_index: [stale] });
-    const payload = delivery({ event: 'responseFinished', id: 'msg_new', timestamp });
-    await handleFormbricksWebhook({ payload, store, storeKey: 'key', eventType: 'responseFinished', nowMs: NOW_MS });
-    expect(store.keys().sort()).toEqual(['key', `key_deliveries_${timestamp}`, 'key_deliveries_index']);
-    expect(await store.get('key_deliveries_index')).toEqual([timestamp]);
-  });
-
-  it('spreads delivery IDs across one bucket per signed second', async () => {
+  it('reuses a fixed set of slots, so old delivery IDs are overwritten instead of piling up', async () => {
     const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET } });
-    for (let i = 0; i < 1200; i++) {
-      const next = delivery({ event: 'responseFinished', id: `msg_${i}`, timestamp: timestamp - (i % 600) });
+    for (let i = 0; i < 3000; i++) {
+      const next = delivery({ event: 'responseFinished', id: `msg_${i}`, timestamp: timestamp - (i % 900) });
       await handleFormbricksWebhook({ payload: next, store, storeKey: 'key', eventType: 'responseFinished', nowMs: NOW_MS });
     }
-    const index = (await store.get<number[]>('key_deliveries_index')) ?? [];
-    expect(index).toHaveLength(600);
-    expect(((await store.get<string[]>(`key_deliveries_${timestamp}`)) ?? []).length).toBe(2);
+    expect(store.keys().length).toBeLessThanOrEqual(1 + 1260);
+    const later = NOW_MS + 1260 * 1000;
+    const reused = delivery({ event: 'responseFinished', id: 'msg_reused', timestamp: timestamp + 1260 });
+    expect(await handleFormbricksWebhook({ payload: reused, store, storeKey: 'key', eventType: 'responseFinished', nowMs: later })).toHaveLength(1);
+    expect(store.keys().length).toBeLessThanOrEqual(1 + 1260);
   });
 
   it('drops a forged delivery when a secret is stored', async () => {

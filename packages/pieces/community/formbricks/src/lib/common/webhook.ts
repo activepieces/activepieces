@@ -47,7 +47,7 @@ export async function handleFormbricksWebhook({
   nowMs,
 }: {
   payload: { body: unknown; rawBody?: unknown; headers: Record<string, string | undefined> };
-  store: { get<T>(key: string): Promise<T | null>; put<T>(key: string, value: T): Promise<T>; delete(key: string): Promise<void> };
+  store: { get<T>(key: string): Promise<T | null>; put<T>(key: string, value: T): Promise<T> };
   storeKey: string;
   eventType: string;
   nowMs: number;
@@ -66,19 +66,13 @@ export async function handleFormbricksWebhook({
   }
   const timestamp = headerValue({ headers: payload.headers, name: 'webhook-timestamp' });
   const signedAtSec = timestamp !== undefined && /^\d+$/.test(timestamp) ? Number(timestamp) : Math.floor(nowMs / 1000);
-  const bucketKey = `${storeKey}_deliveries_${signedAtSec}`;
-  const seen = (await store.get<string[]>(bucketKey)) ?? [];
+  const slotKey = `${storeKey}_deliveries_${signedAtSec % DELIVERY_SLOTS}`;
+  const slot = await store.get<{ second: number; ids: string[] }>(slotKey);
+  const seen = slot !== null && slot.second === signedAtSec && Array.isArray(slot.ids) ? slot.ids : [];
   if (seen.includes(deliveryId)) {
     return [];
   }
-  const indexKey = `${storeKey}_deliveries_index`;
-  const oldestLiveSec = Math.floor((nowMs - REPLAY_WINDOW_MS - CLOCK_SKEW_MS) / 1000);
-  const buckets = (await store.get<number[]>(indexKey)) ?? [];
-  const expired = buckets.filter((second) => second < oldestLiveSec);
-  const live = buckets.filter((second) => second >= oldestLiveSec && second !== signedAtSec);
-  await store.put(bucketKey, [...seen, deliveryId]);
-  await store.put(indexKey, [...live, signedAtSec]);
-  await Promise.all(expired.map((second) => store.delete(`${storeKey}_deliveries_${second}`)));
+  await store.put(slotKey, { second: signedAtSec, ids: [...seen, deliveryId] });
   return [{ ...body, [DEDUPE_KEY_PROPERTY]: deliveryId }];
 }
 
@@ -123,3 +117,4 @@ function parseBody(body: unknown): Record<string, unknown> | undefined {
 const SECRET_PREFIX = 'whsec_';
 const REPLAY_WINDOW_MS = 15 * 60 * 1000;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
+const DELIVERY_SLOTS = Math.ceil((REPLAY_WINDOW_MS + CLOCK_SKEW_MS) / 1000) + 60;
