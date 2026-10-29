@@ -1,6 +1,7 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const searchInvoiceAction = createAction({
   auth: bexioAuth,
@@ -8,7 +9,8 @@ export const searchInvoiceAction = createAction({
   classification: 'SEARCH',
   displayName: 'Search Invoice',
   description: 'Search for invoices using various criteria',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.invoiceArrayOutputSchema,
   aiMetadata: { description: 'Searches Bexio sales invoices by one or more field criteria (document number, contact, status, totals, dates, etc.) with operators such as contains, equals, or comparison, with ordering and paging. Use to locate invoices before exporting, sending, or reconciling them; pick Search Order or Search Quote for those document types. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({

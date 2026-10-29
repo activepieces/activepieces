@@ -2,19 +2,19 @@ import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } fro
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bexioAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, lastItemId }) => {
+  items: async ({ auth }) => {
     const client = new BexioClient(auth);
 
-    // Use GET endpoint to fetch all articles, then sort by ID descending
-    // This avoids the issue with empty search arrays
     const queryParams: Record<string, string> = {
       limit: '500',
+      order_by: 'id_desc',
     };
 
     const products = await client.get<Array<{
@@ -59,7 +59,6 @@ const polling: Polling<
       expense_account_id: number | null;
     }>>('/2.0/article', queryParams);
 
-    // Sort by ID descending to get newest first (since GET doesn't support order_by)
     const sortedProducts = products.sort((a, b) => b.id - a.id);
 
     return sortedProducts.map((product) => ({
@@ -78,6 +77,7 @@ export const newProductTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a new product (article) is created in Bexio. Polls the article list and emits each newly added product, including its codes, names, pricing, stock levels, and accounting references. Use to react to additions to the product catalog.',
   },
+  outputSchema: bexioOutputSchemas.itemOutputSchema,
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

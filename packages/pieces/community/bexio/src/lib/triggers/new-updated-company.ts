@@ -1,8 +1,9 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
 import dayjs from 'dayjs';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bexioAuth>,
@@ -92,6 +93,7 @@ export const newUpdatedCompanyTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a company contact is created or its updated timestamp changes in Bexio. Emits each matching company with its name, address, contact details (email, phone), group memberships, and lead status. Use to react to new or modified organization contacts.',
   },
+  outputSchema: bexioOutputSchemas.contactSummaryOutputSchema,
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

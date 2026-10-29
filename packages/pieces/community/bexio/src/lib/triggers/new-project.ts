@@ -1,8 +1,8 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bexioAuth>,
@@ -68,6 +68,7 @@ export const newProjectTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a project is created or updated in Bexio, optionally filtered to a chosen project status. Emits each matching project with its number, name, dates, status, type, contact, invoicing and budget settings. Use to track new or changing projects.',
   },
+  outputSchema: bexioOutputSchemas.projectOutputSchema,
   type: TriggerStrategy.POLLING,
   props: {
     status_id: Property.Dropdown({

@@ -1,6 +1,7 @@
-import { createAction, Property, OAuth2PropertyValue, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const createTimeTrackingAction = createAction({
   auth: bexioAuth,
@@ -8,7 +9,8 @@ export const createTimeTrackingAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Time Tracking',
   description: 'Create a new timesheet entry',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.timesheetOutputSchema,
   aiMetadata: { description: 'Logs a new timesheet entry in Bexio for a user against a client service/business activity, recording time either as a duration on a date or as a from/to range. Use to record worked or billable hours, optionally tying it to a contact, project, or milestone. Requires a user, client service, billable flag, and the tracking details for the chosen mode. Not idempotent: each call creates a separate entry.', idempotent: false },
   props: {
     user_id: Property.Dropdown({
