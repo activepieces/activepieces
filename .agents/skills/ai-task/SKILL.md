@@ -369,6 +369,10 @@ Run these checks, show what you'd fix as one preview (see **Preview before every
 3. **Description:**
    - what changed;
    - how it was tested, including which edition paths and whether it was checked in the app;
+   - **proof it works:** an example of the output or a screenshot. Ask the user for one, in the same message as the other questions:
+     - **Terminal or API change:** ask them to paste the output or attach a screenshot of the terminal.
+     - **UI change:** offer to demo it in Chrome yourself ("Want me to record it in Chrome?"). On a yes, use the claude-in-chrome tools to walk through the change and record a GIF, then attach it.
+     - Put it under how it was tested. If they skip it, say so there instead of leaving the section empty;
    - both required boxes (Breaking change, Security impact) ticked, exactly one each.
 4. **Labels,** from the repo's CLAUDE.md:
    - exactly one of `🌟 feature`, `🐛 bug` or `skip-changelog`;
