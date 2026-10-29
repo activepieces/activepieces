@@ -667,6 +667,58 @@
                         ]
                      },
                      {
+                        "group": "AI Center",
+                        "icon": "sparkles",
+                        "pages": [
+                           {
+                              "group": "Providers",
+                              "pages": [
+                                 "endpoints/ai-providers/list-keys",
+                                 "endpoints/ai-providers/list-key-models",
+                                 "endpoints/ai-providers/list-suggested-models",
+                                 "endpoints/ai-providers/list-model-options",
+                                 "endpoints/ai-providers/create-key",
+                                 "endpoints/ai-providers/recheck-key",
+                                 "endpoints/ai-providers/update-key",
+                                 "endpoints/ai-providers/delete-key"
+                              ]
+                           },
+                           {
+                              "group": "Model Tiers",
+                              "pages": [
+                                 "endpoints/ai-model-tiers/list",
+                                 "endpoints/ai-model-tiers/create",
+                                 "endpoints/ai-model-tiers/reorder",
+                                 "endpoints/ai-model-tiers/update",
+                                 "endpoints/ai-model-tiers/delete"
+                              ]
+                           },
+                           {
+                              "group": "Capabilities",
+                              "pages": [
+                                 "endpoints/ai-capabilities/list",
+                                 "endpoints/ai-capabilities/set-up",
+                                 "endpoints/ai-capabilities/update",
+                                 "endpoints/ai-capabilities/reset"
+                              ]
+                           },
+                           {
+                              "group": "Usage",
+                              "pages": [
+                                 "endpoints/ai-usage/overview",
+                                 "endpoints/ai-usage/list-items",
+                                 "endpoints/ai-usage/get-item"
+                              ]
+                           },
+                           {
+                              "group": "Platform Configuration",
+                              "pages": [
+                                 "endpoints/platform-configuration/update"
+                              ]
+                           }
+                        ]
+                     },
+                     {
                         "group": "Flows",
                         "icon": "bolt",
                         "pages": [

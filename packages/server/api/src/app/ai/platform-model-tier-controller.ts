@@ -1,5 +1,5 @@
 import { ApId } from '@activepieces/core-utils'
-import { CreatePlatformModelTierRequest, DeletePlatformModelTierRequest, PlatformModelTier, PlatformModelTierSummary, PrincipalType, ReorderPlatformModelTiersRequest, UpdatePlatformModelTierRequest } from '@activepieces/shared'
+import { CreatePlatformModelTierRequest, DeletePlatformModelTierRequest, PlatformModelTier, PlatformModelTierSummary, PrincipalType, ReorderPlatformModelTiersRequest, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformModelTierRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -51,9 +51,12 @@ const ListPlatformModelTiers = {
 
 const ListPlatformModelTiersForAdmin = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
+        tags: ['ai-model-tiers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List the platform model tiers with their main model and fallbacks.',
         response: {
             [StatusCodes.OK]: z.array(PlatformModelTier),
         },
@@ -62,10 +65,13 @@ const ListPlatformModelTiersForAdmin = {
 
 const CreatePlatformModelTier = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
+        tags: ['ai-model-tiers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Create a model tier: a named main model with fallbacks that builders pick.',
         body: CreatePlatformModelTierRequest,
         response: {
             [StatusCodes.OK]: PlatformModelTier,
@@ -75,10 +81,13 @@ const CreatePlatformModelTier = {
 
 const ReorderPlatformModelTiers = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
+        tags: ['ai-model-tiers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Set the order tiers appear in for builders.',
         body: ReorderPlatformModelTiersRequest,
         response: {
             [StatusCodes.OK]: z.array(PlatformModelTier),
@@ -88,10 +97,13 @@ const ReorderPlatformModelTiers = {
 
 const UpdatePlatformModelTier = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
+        tags: ['ai-model-tiers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update a model tier: its name, models, fallbacks or default flags.',
         params: TierIdParams,
         body: UpdatePlatformModelTierRequest,
         response: {
@@ -102,9 +114,12 @@ const UpdatePlatformModelTier = {
 
 const DeletePlatformModelTier = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
+        tags: ['ai-model-tiers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Delete a model tier.',
         params: TierIdParams,
         querystring: DeletePlatformModelTierRequest,
     },

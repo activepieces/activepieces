@@ -27,6 +27,7 @@ Each group has a schema page plus CRUD operations:
 - **Templates** — create, delete, get, list.
 - **Worker Machines** — queue metrics.
 - **Embedding** — add allowed embed origins.
+- **AI Center** — provider keys (list, models, suggested models, model options, create, recheck, update, delete), model tiers (list, create, reorder, update, delete), capabilities (list, set up, update, reset), usage (overview, items, item detail), and platform configuration update (default chat model). Platform-admin routes; an API key acts for its platform.
 
 ## Gotchas
 - `docs/openapi.json` is a committed dump of `GET /api/v1/docs`, not generated in CI, and it drifts. Dump it from a **cloud** edition server: the EE modules (project members, git sync, releases, global connections) only register in the cloud and enterprise editions, so a CE dump deletes them. Merge only the paths you changed instead of replacing the file, or unreviewed internal routes get published.
