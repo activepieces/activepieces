@@ -112,18 +112,18 @@ export async function hasCreditsLeft({ platformId, log }: { platformId: string, 
     return isNil(left) || left > 0
 }
 
-export async function shouldBlockRunOnCredits({ platformId, environment, fastCreditCheck = false, log }: RunCreditsGateParams): Promise<boolean> {
+export async function shouldBlockRunOnCredits({ platformId, environment, creditCheckSpeed, log }: RunCreditsGateParams): Promise<boolean> {
     if (system.getEdition() === ApEdition.ENTERPRISE) {
         return false
     }
     if (environment !== RunEnvironment.PRODUCTION) {
         return false
     }
-    return billingProvider.get(log).shouldBlockOnCredits({ platformId, fastCreditCheck })
+    return billingProvider.get(log).shouldBlockOnCredits({ platformId, creditCheckSpeed })
 }
 
-export async function assertRunCreditsNotExceeded({ platformId, environment, log }: RunCreditsGateParams): Promise<void> {
-    const blocked = await shouldBlockRunOnCredits({ platformId, environment, log })
+export async function assertRunCreditsNotExceeded({ platformId, environment, creditCheckSpeed, log }: RunCreditsGateParams): Promise<void> {
+    const blocked = await shouldBlockRunOnCredits({ platformId, environment, creditCheckSpeed, log })
     if (!blocked) {
         return
     }
@@ -186,13 +186,13 @@ type EmptyBillingOverviewParams = {
 type RunCreditsGateParams = {
     platformId: string
     environment: RunEnvironment
-    fastCreditCheck?: boolean
+    creditCheckSpeed: CreditCheckSpeed
     log: FastifyBaseLogger
 }
 
 export type ShouldBlockOnCreditsParams = {
     platformId: string
-    fastCreditCheck: boolean
+    creditCheckSpeed: CreditCheckSpeed
 }
 
 export type CreditEventBreakdownEntry = {
@@ -425,4 +425,10 @@ export type BillingProvider = {
     getCreditsAndAppSumoState(platformId: string): Promise<CreditsAndAppSumoState>
     getConsumablesUsage(platformId: string): Promise<ConsumablesUsage>
     getCreditUsage(params: CreditUsageByProjectParams): Promise<CreditUsage>
+}
+
+export enum CreditCheckSpeed {
+    FAST = 'FAST',
+    NORMAL = 'NORMAL',
+    BACKGROUND = 'BACKGROUND',
 }
