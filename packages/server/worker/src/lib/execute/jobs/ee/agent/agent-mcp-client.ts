@@ -275,6 +275,13 @@ function injectSelectedAuth({ name, args, getSelectedAuth }: {
 // A large mcp__ tool result is persisted to a file and replaced with a compact preview + fileId,
 // so the agent processes it in ap_run_code (inputs.data) instead of the blob flooding context —
 // the same contract as the native-action offload. Returns null to fall through to truncation.
+function withAppendedText({ result, text }: { result: unknown, text: string }): unknown {
+    if (!isObject(result) || !Array.isArray(result['content'])) {
+        return result
+    }
+    return { ...result, content: [...result['content'], { type: 'text', text }] }
+}
+
 async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     result: unknown
     toolName: string
@@ -306,12 +313,13 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     return { content: [{ type: 'text', text }] }
 }
 
-function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelectedAuth, saveLargeResult }: {
+function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelectedAuth, saveLargeResult, onToolResult }: {
     mcpToolSet: Record<string, unknown>
     brokenConnectors: Set<string>
     taintState: TaintState
     getSelectedAuth?: (params: { pieceName: string }) => string | undefined
     saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
+    onToolResult?: (params: { toolName: string, result: unknown }) => string | undefined
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
     const readCache = new Map<string, unknown>()
@@ -367,8 +375,10 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                     }
                     return buildReconnectGuidance({ connectorUuid })
                 }
-                const offloaded = await maybeOffloadMcpResult({ result: toolResult, toolName: name, saveLargeResult })
-                const finalResult = offloaded ?? agentWorkerTools.truncateLargeResult(toolResult)
+                const note = onToolResult?.({ toolName: name, result: toolResult })
+                const notedResult = isNil(note) ? toolResult : withAppendedText({ result: toolResult, text: note })
+                const offloaded = await maybeOffloadMcpResult({ result: notedResult, toolName: name, saveLargeResult })
+                const finalResult = offloaded ?? agentWorkerTools.truncateLargeResult(notedResult)
                 if (cacheKey !== undefined && !(isObject(toolResult) && toolResult['isError'] === true)) {
                     readCache.set(cacheKey, finalResult)
                 }
