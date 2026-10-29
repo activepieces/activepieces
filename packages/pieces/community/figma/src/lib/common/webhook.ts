@@ -172,9 +172,6 @@ function eventIdOf({ body, eventType }: { body: Record<string, unknown>; eventTy
   return `${webhook}:${eventType}:${file}:${text(body['timestamp'])}`;
 }
 
-// Figma splits one publish into several LIBRARY_PUBLISH events (per asset type, and again when large)
-// that share a whole-second timestamp. Hashing the change lists keeps each part distinct, while a
-// retry resends the same body and still collapses.
 function libraryChangesHash(body: Record<string, unknown>): string {
   const changes = LIBRARY_CHANGE_FIELDS.map((field) => [field, body[field] ?? null]);
   return hash(JSON.stringify(changes));
