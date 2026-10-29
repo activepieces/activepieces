@@ -1,17 +1,17 @@
-import { DefaultProjectRole, PlanName, SelfServeTrialStatus } from '@activepieces/shared'
+import { DefaultProjectRole, PlanName, SelfServeTrialState, SelfServeTrialStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { distributedStore } from '../../../../src/app/database/redis-connections'
-import { autumnConsole, autumnUtils, SelfServeTrialStartOutcome } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
+import { autumnConsole, autumnUtils, SelfServeTrialStartOutcome, SelfServeTrialStartResult } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
 import { platformPlanRepo } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const STARTED = { startedAt: '2026-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
-const ELIGIBLE: SelfServeTrialStatus = { state: 'eligible', startedAt: null, endsAt: null }
-const INELIGIBLE: SelfServeTrialStatus = { state: 'ineligible', startedAt: null, endsAt: null }
-const ACTIVE: SelfServeTrialStatus = { state: 'active', ...STARTED }
-const USED: SelfServeTrialStatus = { state: 'used', startedAt: null, endsAt: null }
+const ELIGIBLE: SelfServeTrialStatus = { state: SelfServeTrialState.ELIGIBLE, startedAt: null, endsAt: null }
+const INELIGIBLE: SelfServeTrialStatus = { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null }
+const ACTIVE: SelfServeTrialStatus = { state: SelfServeTrialState.ACTIVE, ...STARTED }
+const USED: SelfServeTrialStatus = { state: SelfServeTrialState.USED, startedAt: null, endsAt: null }
 
 let app: FastifyInstance | null = null
 
@@ -44,9 +44,9 @@ describe('Self-serve trial API', () => {
     it('refuses platform members on both routes', async () => {
         const ctx = await createTestContext(app!)
         const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.EDITOR })
-        const { startTrial } = stubBilling({ outcome: { result: 'started', ...STARTED } })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
 
-        const status = await member.get('/v1/platform-billing/self-serve-trial')
+        const status = await member.get('/v1/platform-billing/info')
         const start = await member.post('/v1/platform-billing/self-serve-trial/start')
 
         expect(status.statusCode).toBe(StatusCodes.FORBIDDEN)
@@ -57,24 +57,24 @@ describe('Self-serve trial API', () => {
     it('reads a Free platform that never had a trial as eligible, without asking the console', async () => {
         const ctx = await createTestContext(app!)
         await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
-        const { startTrial } = stubBilling({ outcome: { result: 'started', ...STARTED } })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
 
-        const response = await ctx.get('/v1/platform-billing/self-serve-trial')
+        const response = await ctx.get('/v1/platform-billing/info')
 
         expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.json()).toEqual(ELIGIBLE)
+        expect(response.json().selfServeTrial).toEqual(ELIGIBLE)
         expect(startTrial).not.toHaveBeenCalled()
     })
 
     it.each([PlanName.APPSUMO, PlanName.ENTERPRISE, PlanName.PLUS_CHAT])('offers no trial to a %s platform and never asks the console', async (plan) => {
         const ctx = await createTestContext(app!)
         await onPlan({ platformId: ctx.platform.id, plan })
-        const { startTrial } = stubBilling({ outcome: { result: 'started', ...STARTED } })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
 
-        const status = await ctx.get('/v1/platform-billing/self-serve-trial')
+        const status = await ctx.get('/v1/platform-billing/info')
         const start = await ctx.post('/v1/platform-billing/self-serve-trial/start')
 
-        expect(status.json()).toEqual(INELIGIBLE)
+        expect(status.json().selfServeTrial).toEqual(INELIGIBLE)
         expect(start.json()).toEqual(INELIGIBLE)
         expect(startTrial).not.toHaveBeenCalled()
     })
@@ -82,15 +82,15 @@ describe('Self-serve trial API', () => {
     it('starts the trial once, and a second start returns the running trial', async () => {
         const ctx = await createTestContext(app!)
         await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
-        const { startTrial } = stubBilling({ outcome: { result: 'started', ...STARTED } })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
 
         const first = await ctx.post('/v1/platform-billing/self-serve-trial/start')
         const second = await ctx.post('/v1/platform-billing/self-serve-trial/start')
-        const status = await ctx.get('/v1/platform-billing/self-serve-trial')
+        const status = await ctx.get('/v1/platform-billing/info')
 
         expect(first.json()).toEqual(ACTIVE)
         expect(second.json()).toEqual(ACTIVE)
-        expect(status.json()).toEqual(ACTIVE)
+        expect(status.json().selfServeTrial).toEqual(ACTIVE)
         expect(startTrial).toHaveBeenCalledTimes(1)
         expect(startTrial).toHaveBeenCalledWith({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
     })
@@ -98,7 +98,7 @@ describe('Self-serve trial API', () => {
     it('keeps a started trial when the refresh after it fails', async () => {
         const ctx = await createTestContext(app!)
         await onPlan({ platformId: ctx.platform.id, plan: PlanName.TEAM })
-        const { startTrial } = stubBilling({ outcome: { result: 'started', ...STARTED } })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
         vi.spyOn(autumnUtils, 'refreshEntitlements').mockRejectedValue(new Error('autumn timeout'))
 
         const start = await ctx.post('/v1/platform-billing/self-serve-trial/start')
@@ -112,14 +112,14 @@ describe('Self-serve trial API', () => {
     it('answers a start the console refuses as used and asks the console again on the next start', async () => {
         const ctx = await createTestContext(app!)
         await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
-        const { startTrial } = stubBilling({ outcome: { result: 'used' } })
+        const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.USED } })
 
         const first = await ctx.post('/v1/platform-billing/self-serve-trial/start')
-        const status = await ctx.get('/v1/platform-billing/self-serve-trial')
+        const status = await ctx.get('/v1/platform-billing/info')
         const second = await ctx.post('/v1/platform-billing/self-serve-trial/start')
 
         expect(first.json()).toEqual(USED)
-        expect(status.json()).toEqual(ELIGIBLE)
+        expect(status.json().selfServeTrial).toEqual(ELIGIBLE)
         expect(second.json()).toEqual(USED)
         expect(startTrial).toHaveBeenCalledTimes(2)
     })
@@ -128,7 +128,7 @@ describe('Self-serve trial API', () => {
         const ctx = await createTestContext(app!)
         const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.EDITOR })
         await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
-        stubBilling({ outcome: { result: 'started', ...STARTED } })
+        stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
 
         const before = await member.get(`/v1/platforms/${ctx.platform.id}`)
         await ctx.post('/v1/platform-billing/self-serve-trial/start')

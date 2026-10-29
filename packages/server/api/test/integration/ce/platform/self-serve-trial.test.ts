@@ -14,13 +14,11 @@ afterAll(async () => {
 })
 
 describe('Self-serve trial API', () => {
-    it('does not exist on Community', async () => {
+    it('has no trial start on Community', async () => {
         const ctx = await createTestContext(app!)
 
-        const status = await ctx.get('/v1/platform-billing/self-serve-trial')
         const start = await ctx.post('/v1/platform-billing/self-serve-trial/start')
 
-        expect(status.statusCode).toBe(StatusCodes.NOT_FOUND)
         expect(start.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
 })

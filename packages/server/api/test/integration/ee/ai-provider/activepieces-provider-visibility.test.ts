@@ -3,7 +3,6 @@ import { SelfServeTrialDates } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { selfServeTrialUtils } from '../../../../src/app/ee/platform/platform-plan/self-serve-trial-utils'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -21,13 +20,10 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-async function visibleProviders({ embeddingEnabled, trial, planWrittenAt }: VisibleProvidersParams) {
+async function visibleProviders({ embeddingEnabled, trial }: VisibleProvidersParams) {
     const ctx = await createTestContext(app!, { plan: { embeddingEnabled } })
     if (trial !== undefined) {
         await selfServeTrialUtils.cacheTrialDates({ platformId: ctx.platform.id, dates: trial })
-    }
-    if (planWrittenAt !== undefined) {
-        await databaseConnection().query('UPDATE "platform_plan" SET "updated" = $1 WHERE "platformId" = $2', [planWrittenAt, ctx.platform.id])
     }
     await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.ACTIVEPIECES, enabledForChat: false })
     const listed = await aiProviderService(app!.log).listConfigs(ctx.platform.id)
@@ -61,25 +57,14 @@ describe('Activepieces AI provider visibility', () => {
         expect(chat).toBe(AIProviderName.ACTIVEPIECES)
     })
 
-    it('keeps the provider after the trial ends while the plan still carries the trial\'s Embedding', async () => {
-        const { listed, chat } = await visibleProviders({
-            embeddingEnabled: true,
-            trial: trialEnding({ days: -1 }),
-            planWrittenAt: dayjs().subtract(2, 'day').toISOString(),
-        })
-
-        expect(listed).toContain(AIProviderName.ACTIVEPIECES)
-        expect(chat).toBe(AIProviderName.ACTIVEPIECES)
-    })
-
-    it('hides the provider once the plan is written after the trial ended and still includes Embedding', async () => {
+    it('hides the provider as soon as the trial ends and the plan still includes Embedding', async () => {
         const { listed, chat } = await visibleProviders({ embeddingEnabled: true, trial: trialEnding({ days: -1 }) })
 
         expect(listed).not.toContain(AIProviderName.ACTIVEPIECES)
         expect(chat).toBeNull()
     })
 
-    it('hides the provider when the trial cache is empty and the platform has no Autumn customer', async () => {
+    it('hides the provider when the trial cache is empty', async () => {
         const { listed, chat } = await visibleProviders({ embeddingEnabled: true })
 
         expect(listed).not.toContain(AIProviderName.ACTIVEPIECES)
@@ -90,5 +75,4 @@ describe('Activepieces AI provider visibility', () => {
 type VisibleProvidersParams = {
     embeddingEnabled: boolean
     trial?: SelfServeTrialDates | null
-    planWrittenAt?: string
 }
