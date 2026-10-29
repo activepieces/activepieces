@@ -373,29 +373,25 @@ function ProviderGroup({
           </Button>
         )}
       </header>
-      <div className="overflow-hidden rounded-b-xl">
-        <p className="flex items-center gap-1.5 px-4 pt-2 pb-1 text-xs font-medium text-gray-11">
-          {t('Keys')}
-          <span className="tabular-nums">{configs.length}</span>
-        </p>
-        <div className={cn('divide-y', adminSurface.divider)}>
-          {configs.map((config) => (
-            <ConfigRow
-              key={config.id}
-              config={config}
-              projects={projects}
-              tierCount={
-                tiers.filter((tier) =>
-                  tier.entries.some((entry) => entry.configId === config.id),
-                ).length
-              }
-              locked={locked}
-              onOpen={() => onOpen(config.id)}
-              onDelete={() => onDelete(config.id)}
-            />
-          ))}
-        </div>
-      </div>
+      <p className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-gray-11">
+        {t('Keys')}
+        <span className="tabular-nums">{configs.length}</span>
+      </p>
+      {configs.map((config) => (
+        <ConfigRow
+          key={config.id}
+          config={config}
+          projects={projects}
+          tierCount={
+            tiers.filter((tier) =>
+              tier.entries.some((entry) => entry.configId === config.id),
+            ).length
+          }
+          locked={locked}
+          onOpen={() => onOpen(config.id)}
+          onDelete={() => onDelete(config.id)}
+        />
+      ))}
     </SettingsPanel>
   );
 }
@@ -499,23 +495,24 @@ function ConfigRow({
         className="flex shrink-0 items-center gap-1"
         onClick={(event) => event.stopPropagation()}
       >
-        {locked && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-gray-11 hover:bg-danger-3 hover:text-danger-11"
-                onClick={() => setDeleteOpen(true)}
-                {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
-              >
-                <Trash2 className="size-4" />
-                <span className="sr-only">{t('Delete')}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('Delete')}</TooltipContent>
-          </Tooltip>
-        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={cn(
+                'text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100',
+                locked && 'opacity-100',
+              )}
+              onClick={() => setDeleteOpen(true)}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">{t('Delete')}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('Delete')}</TooltipContent>
+        </Tooltip>
         {!locked && (
           <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
         )}
