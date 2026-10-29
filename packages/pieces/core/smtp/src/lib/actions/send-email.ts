@@ -63,11 +63,13 @@ export const sendEmail = createAction({
           {
             label: 'Plain Text',
             value: 'plain_text',
+            description: 'Sent as written',
             icon: 'text',
           },
           {
             label: 'HTML',
             value: 'html',
+            description: 'Tags are rendered',
             icon: 'code',
           },
         ],
