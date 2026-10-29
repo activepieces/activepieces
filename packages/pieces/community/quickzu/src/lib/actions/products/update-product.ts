@@ -178,7 +178,6 @@ function keepOrSet(displayName: string) {
   });
 }
 
-// Saved flows from the Checkbox era store true/false; the dropdown stores 'yes'/'no'.
 function toFlag(value: unknown): boolean | undefined {
   if (value === true || value === 'yes') return true;
   if (value === false || value === 'no') return false;
