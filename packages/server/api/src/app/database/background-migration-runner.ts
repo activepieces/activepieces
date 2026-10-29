@@ -1,5 +1,5 @@
-import { tryCatch } from '@activepieces/core-utils'
-import { wideEvent } from '@activepieces/server-utils'
+import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { createLogger, wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { DataSource } from 'typeorm'
 import { BackgroundMigration } from './background-migration'
@@ -113,7 +113,6 @@ async function runOne({
                 log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Migration already completed under another lock holder, skipping')
                 return
             }
-            log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Running migration')
             wideEvent.set({ migration: { name: migration.name } })
             await wideEvent.timed({
                 name: 'backgroundMigration',
@@ -132,6 +131,11 @@ async function executeMigrationBody({
     log: FastifyBaseLogger
     dataSource: DataSource
 }): Promise<void> {
+    const startedAt = Date.now()
+    emitProgress({ migrationName: migration.name, phase: 'started' })
+    const heartbeat = setInterval(() => {
+        emitHeartbeat({ migrationName: migration.name, startedAt }).catch(() => undefined)
+    }, BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
     try {
         const executionDs = await migrationDatabaseConnection()
         const queryRunner = executionDs.createQueryRunner()
@@ -152,8 +156,11 @@ async function executeMigrationBody({
         if (recordError) {
             log.error({ migration: { name: migration.name }, error: recordError instanceof Error ? recordError.message : String(recordError) }, '[backgroundMigrationRunner] Failed to persist migration failure; original error follows')
         }
-        log.error({ migration: { name: migration.name }, error: message }, '[backgroundMigrationRunner] Migration failed')
+        emitProgress({ migrationName: migration.name, phase: 'failed', elapsedMs: Date.now() - startedAt, error })
         throw error
+    }
+    finally {
+        clearInterval(heartbeat)
     }
 
     await dataSource.query(
@@ -161,7 +168,40 @@ async function executeMigrationBody({
          ON CONFLICT ("name") DO UPDATE SET "executed_at" = NOW(), "failed_at" = NULL, "last_error" = NULL`,
         [migration.name],
     )
-    log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Migration completed')
+    emitProgress({ migrationName: migration.name, phase: 'completed', elapsedMs: Date.now() - startedAt })
+}
+
+function emitProgress({ migrationName, phase, elapsedMs, error, details }: EmitProgressParams): void {
+    const logger = createLogger({
+        event: 'background-migration.progress',
+        migration: { name: migrationName, phase, ...spreadIfDefined('elapsedMs', elapsedMs), ...details },
+    })
+    if (!isNil(error)) {
+        logger.error(error instanceof Error ? error : new Error(String(error)))
+    }
+    logger.emit({ _forceKeep: true })
+}
+
+async function emitHeartbeat({ migrationName, startedAt }: EmitHeartbeatParams): Promise<void> {
+    const { data: createIndexProgress } = await tryCatch(async () => {
+        const executionDs = await migrationDatabaseConnection()
+        const rows: unknown = await executionDs.query(
+            `SELECT p."phase",
+                    p."index_relid"::regclass::text AS "indexName",
+                    p."blocks_done" AS "blocksDone",
+                    p."blocks_total" AS "blocksTotal",
+                    p."tuples_done" AS "tuplesDone",
+                    p."tuples_total" AS "tuplesTotal"
+               FROM pg_stat_progress_create_index p`,
+        )
+        return Array.isArray(rows) && rows.length > 0 ? rows : undefined
+    })
+    emitProgress({
+        migrationName,
+        phase: 'running',
+        elapsedMs: Date.now() - startedAt,
+        details: isNil(createIndexProgress) ? undefined : { createIndexProgress },
+    })
 }
 
 async function ensureBackgroundMigrationsTable(dataSource: DataSource): Promise<void> {
@@ -216,6 +256,7 @@ const MAX_CATCHUP_ATTEMPTS = 10
 
 export const backgroundMigrationLockKey = (migrationName: string): string => `background_migration:${migrationName}`
 export const BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS = 240
+export const BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000
 
 export const BACKGROUND_MIGRATIONS_TABLE = 'background_migrations'
 
@@ -230,4 +271,19 @@ export type BackgroundMigrationStatus = {
     completedCount: number
     error: string | null
     failedMigration: FailedBackgroundMigration | null
+}
+
+type BackgroundMigrationPhase = 'started' | 'running' | 'completed' | 'failed'
+
+type EmitProgressParams = {
+    migrationName: string
+    phase: BackgroundMigrationPhase
+    elapsedMs?: number
+    error?: unknown
+    details?: Record<string, unknown>
+}
+
+type EmitHeartbeatParams = {
+    migrationName: string
+    startedAt: number
 }

@@ -8,6 +8,7 @@ import { jobFailureLogger } from '../../workers/job-queue/job-failure-logger'
 import { exceptionHandler } from '../exception-handler'
 import { SystemJobData, SystemJobName, SystemJobSchedule, UpsertJobResult } from './common'
 import { systemJobHandlers } from './job-handlers'
+import { systemJobFailurePager } from './system-job-failure-pager'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
@@ -97,6 +98,13 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                     log,
                 })
                 exceptionHandler.handle(err, log)
+                systemJobFailurePager.pageOnFinalFailure({
+                    jobName: job?.name ?? 'unknown',
+                    jobId: job?.id,
+                    attemptsMade: attemptsUsed,
+                    error: err,
+                    log,
+                })
             }
         })
 
