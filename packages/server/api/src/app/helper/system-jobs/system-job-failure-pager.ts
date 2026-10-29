@@ -1,10 +1,15 @@
 import { onCallService } from '@activepieces/server-utils'
+import { UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../system/system'
 import { AppSystemProp } from '../system/system-props'
 import { SystemJobName } from './common'
 
 export const systemJobFailurePager = {
+    gaveUp({ attemptsMade, attempts, error }: GaveUpParams): boolean {
+        return error instanceof UnrecoverableError || attemptsMade >= (attempts ?? 1)
+    },
+
     pageOnFinalFailure({ jobName, jobId, attemptsMade, error, log }: PageOnFinalFailureParams): void {
         if (!PAGED_SYSTEM_JOBS.has(jobName)) {
             return
@@ -20,6 +25,12 @@ export const systemJobFailurePager = {
 }
 
 const PAGED_SYSTEM_JOBS = new Set<string>([SystemJobName.RUN_BACKGROUND_MIGRATIONS])
+
+type GaveUpParams = {
+    attemptsMade: number
+    attempts: number | undefined
+    error: Error
+}
 
 type PageOnFinalFailureParams = {
     jobName: string

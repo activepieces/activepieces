@@ -1,3 +1,4 @@
+import { UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SystemJobName } from '../../../../../src/app/helper/system-jobs/common'
@@ -71,5 +72,19 @@ describe('systemJobFailurePager.pageOnFinalFailure', () => {
         })
 
         await vi.waitFor(() => expect(log.error).toHaveBeenCalled())
+    })
+})
+
+describe('systemJobFailurePager.gaveUp', () => {
+    it('is true for a stalled job on its first attempt, because BullMQ fails it as unrecoverable', () => {
+        expect(systemJobFailurePager.gaveUp({ attemptsMade: 1, attempts: 10, error: new UnrecoverableError('job stalled more than allowable limit') })).toBe(true)
+    })
+
+    it('is true once the attempts are used up', () => {
+        expect(systemJobFailurePager.gaveUp({ attemptsMade: 10, attempts: 10, error: new Error('canceling statement due to statement timeout') })).toBe(true)
+    })
+
+    it('is false while BullMQ will still retry', () => {
+        expect(systemJobFailurePager.gaveUp({ attemptsMade: 3, attempts: 10, error: new Error('canceling statement due to statement timeout') })).toBe(false)
     })
 })

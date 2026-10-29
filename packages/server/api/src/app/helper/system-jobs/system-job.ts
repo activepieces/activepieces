@@ -88,8 +88,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
 
         systemJobWorker.on('failed', (job, err) => {
             const attemptsUsed = job?.attemptsMade ?? 0
-            const maxAttempts = job?.opts?.attempts ?? 1
-            if (attemptsUsed >= maxAttempts) {
+            if (systemJobFailurePager.gaveUp({ attemptsMade: attemptsUsed, attempts: job?.opts?.attempts, error: err })) {
                 jobFailureLogger.logJobFailed({
                     queueName: SYSTEM_JOB_QUEUE,
                     jobId: job?.id,

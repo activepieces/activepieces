@@ -1,7 +1,7 @@
 import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { createLogger, wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
-import { DataSource } from 'typeorm'
+import { DataSource, QueryRunner } from 'typeorm'
 import { BackgroundMigration } from './background-migration'
 import { databaseConnection, migrationDatabaseConnection } from './database-connection'
 import { BackgroundMigrationNotCompleteError } from './migration-helpers'
@@ -132,14 +132,17 @@ async function executeMigrationBody({
     dataSource: DataSource
 }): Promise<void> {
     const startedAt = Date.now()
+    let finished = false
+    let backendPid: number | undefined
     emitProgress({ migrationName: migration.name, phase: 'started' })
     const heartbeat = setInterval(() => {
-        emitHeartbeat({ migrationName: migration.name, startedAt }).catch(() => undefined)
+        emitHeartbeat({ migrationName: migration.name, startedAt, backendPid, isFinished: () => finished }).catch(() => undefined)
     }, BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
     try {
         const executionDs = await migrationDatabaseConnection()
         const queryRunner = executionDs.createQueryRunner()
         try {
+            backendPid = await readBackendPid({ queryRunner })
             await migration.up(queryRunner)
         }
         finally {
@@ -160,6 +163,7 @@ async function executeMigrationBody({
         throw error
     }
     finally {
+        finished = true
         clearInterval(heartbeat)
     }
 
@@ -182,8 +186,32 @@ function emitProgress({ migrationName, phase, elapsedMs, error, details }: EmitP
     logger.emit({ _forceKeep: true })
 }
 
-async function emitHeartbeat({ migrationName, startedAt }: EmitHeartbeatParams): Promise<void> {
-    const { data: createIndexProgress } = await tryCatch(async () => {
+async function emitHeartbeat({ migrationName, startedAt, backendPid, isFinished }: EmitHeartbeatParams): Promise<void> {
+    const createIndexProgress = isNil(backendPid) ? undefined : await readCreateIndexProgress({ backendPid })
+    if (isFinished()) {
+        return
+    }
+    emitProgress({
+        migrationName,
+        phase: 'running',
+        elapsedMs: Date.now() - startedAt,
+        details: isNil(createIndexProgress) ? undefined : { createIndexProgress },
+    })
+}
+
+async function readBackendPid({ queryRunner }: { queryRunner: QueryRunner }): Promise<number | undefined> {
+    const { data } = await tryCatch(async () => {
+        const rows: unknown = await queryRunner.query('SELECT pg_backend_pid() AS "pid"')
+        if (!Array.isArray(rows) || rows.length === 0) return undefined
+        const [row] = rows
+        if (row === null || typeof row !== 'object' || !('pid' in row) || typeof row.pid !== 'number') return undefined
+        return row.pid
+    })
+    return data ?? undefined
+}
+
+async function readCreateIndexProgress({ backendPid }: { backendPid: number }): Promise<unknown[] | undefined> {
+    const { data } = await tryCatch(async () => {
         const executionDs = await migrationDatabaseConnection()
         const rows: unknown = await executionDs.query(
             `SELECT p."phase",
@@ -192,16 +220,13 @@ async function emitHeartbeat({ migrationName, startedAt }: EmitHeartbeatParams):
                     p."blocks_total" AS "blocksTotal",
                     p."tuples_done" AS "tuplesDone",
                     p."tuples_total" AS "tuplesTotal"
-               FROM pg_stat_progress_create_index p`,
+               FROM pg_stat_progress_create_index p
+              WHERE p."pid" = $1`,
+            [backendPid],
         )
         return Array.isArray(rows) && rows.length > 0 ? rows : undefined
     })
-    emitProgress({
-        migrationName,
-        phase: 'running',
-        elapsedMs: Date.now() - startedAt,
-        details: isNil(createIndexProgress) ? undefined : { createIndexProgress },
-    })
+    return data ?? undefined
 }
 
 async function ensureBackgroundMigrationsTable(dataSource: DataSource): Promise<void> {
@@ -286,4 +311,6 @@ type EmitProgressParams = {
 type EmitHeartbeatParams = {
     migrationName: string
     startedAt: number
+    backendPid: number | undefined
+    isFinished: () => boolean
 }
