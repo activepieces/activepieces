@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Twitch 0.2.0: connections must be reconnected for the new write actions
+
+Twitch 0.2.0 adds actions that manage your channel, chat, moderation, polls, predictions, channel points, raids, schedule and ads, so the connection now asks for more Twitch scopes. Twitch connections made before 0.2.0 don't have them.
+
+The **Stream Started** trigger also changes once upgraded: it ignores blank entries and fails if no valid channel name is left, instead of watching Twitch's top live streams.
+
+#### What you need to do
+
+Reconnect your Twitch connection before you use any of the new actions that change something on Twitch. Existing Stream Started triggers keep working on the old connection.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
