@@ -68,11 +68,6 @@ export function CapabilitiesTab() {
     <>
       <AdminPageHeader
         title={t('Assistant capabilities')}
-        badge={
-          <span className="text-sm tabular-nums text-gray-11">
-            {AI_TOOL_CATALOG.length}
-          </span>
-        }
         description={t(
           'Search and images use your AI provider. Scraping needs a service of its own. Connect a service to use it in place of your provider.',
         )}

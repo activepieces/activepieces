@@ -211,11 +211,6 @@ export function ProvidersTab() {
     <>
       <AdminPageHeader
         title={t('Providers')}
-        badge={
-          <span className="text-sm tabular-nums text-gray-11">
-            {configs.length}
-          </span>
-        }
         description={
           configs.length === 0
             ? t(
