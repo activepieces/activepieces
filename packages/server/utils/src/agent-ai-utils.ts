@@ -1,11 +1,11 @@
-import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils';
-import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
-import { agentProviderOptions } from './agent-provider-options'
+import { AIProviderName, isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
+import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { ModelMessage, TelemetryOptions } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
+import { agentProviderOptions } from './agent-provider-options'
 import { modelCatalog } from './model-catalog'
+import { toolResultView } from './tool-result-view'
 import { wideEvent } from './wide-event'
-
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const KEEP_RECENT_TOOL_RESULTS = 6
@@ -14,7 +14,6 @@ const COLLAPSE_OUTPUT_OVER_CHARS = 600
 // so it doesn't re-discover or guess a schema it already fetched (A5 pin-discovered-schemas).
 const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action', 'ap_load_skill', 'ap_get_tool_schema'])
 const CHARS_PER_TOKEN_ESTIMATE = 4
-
 
 /**
  * Strips for ALL providers (not just non-thinking ones) because Anthropic rejects
@@ -329,7 +328,7 @@ function findDataArray(payload: unknown): { array: unknown[], path: string } | n
     if (Array.isArray(payload)) {
         return { array: payload, path: 'root' }
     }
-    if (!isPlainObject(payload)) {
+    if (!isObject(payload)) {
         return null
     }
     for (const key of DATA_ARRAY_KEYS) {
@@ -339,25 +338,6 @@ function findDataArray(payload: unknown): { array: unknown[], path: string } | n
         }
     }
     return null
-}
-
-// Depth-capped, value-clipped copy of a value — shows the SHAPE of a record (so the model can
-// see how to project it) without dragging the full payload (incl. deep history) into context.
-function shrinkForPreview(value: unknown, opts: { maxDepth: number, maxString: number, maxArray: number, depth?: number }): unknown {
-    const depth = opts.depth ?? 0
-    if (typeof value === 'string') {
-        return value.length <= opts.maxString ? value : `${value.slice(0, opts.maxString)}…`
-    }
-    if (Array.isArray(value)) {
-        if (depth >= opts.maxDepth) return `[${value.length} items]`
-        const kept = value.slice(0, opts.maxArray).map((item) => shrinkForPreview(item, { ...opts, depth: depth + 1 }))
-        return value.length > opts.maxArray ? [...kept, `…+${value.length - opts.maxArray} more`] : kept
-    }
-    if (isPlainObject(value)) {
-        if (depth >= opts.maxDepth) return '{…}'
-        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkForPreview(val, { ...opts, depth: depth + 1 })]))
-    }
-    return value
 }
 
 // Builds a compact, never-mangled preview of a large tool result: a depth-capped shape sample of
@@ -375,21 +355,17 @@ function buildLargeResultPreview({ payload, byteSize, fileId, label = 'Result', 
     const found = findDataArray(payload)
     if (found) {
         const previewCount = Math.min(found.array.length, PREVIEW_RECORD_COUNT)
-        const preview = found.array.slice(0, previewCount).map((record) => shrinkForPreview(record, { maxDepth: 4, maxString: 200, maxArray: 4 }))
+        const preview = found.array.slice(0, previewCount).map((record) => toolResultView.shrinkForPreview(record, { maxDepth: 4, maxString: 200, maxArray: 4 }))
         const how = fileId !== undefined
-            ? `→ Full result (all ${found.array.length} records) saved as file ${fileId}. Process it with ap_run_code: pass inputFileIds:['${fileId}'] and read inputs.data (parsed JSON) — pull just the fields you need (e.g. name, stage, value, owner), then return a compact summary. Do NOT re-run this call or regex the preview.`
+            ? `→ Full result (all ${found.array.length} records) saved as file ${fileId}. Read exactly what you need with ap_read_result({ fileId: '${fileId}', path: '${found.path === 'root' ? '' : found.path}', fields: [...], offset, limit }) or find records with search. Use ap_run_code (inputFileIds:['${fileId}'], read inputs.data) only to compute over all records. Do NOT re-run this call.`
             : `→ Narrow with a filter/limit or paginate (offset/cursor) to get the rest — or process it in ap_run_code.`
         return `✅ ${label} completed${statusNote}. ${found.array.length} record(s) at "${found.path}", ~${kb}KB — too large to load inline.\nShape preview (first ${previewCount}, values clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
     }
-    const preview = shrinkForPreview(payload, { maxDepth: 3, maxString: 300, maxArray: 5 })
+    const preview = toolResultView.shrinkForPreview(payload, { maxDepth: 3, maxString: 300, maxArray: 5 })
     const how = fileId !== undefined
-        ? `→ Full result saved as file ${fileId}. Inspect/process it with ap_run_code via inputFileIds:['${fileId}'] (read inputs.data).`
+        ? `→ Full result saved as file ${fileId}. Read the part you need with ap_read_result({ fileId: '${fileId}', path: '<a.b[0].c>', fields: [...] }). Use ap_run_code (inputFileIds:['${fileId}']) only to compute over it. Do NOT re-run this call.`
         : '→ Process it in ap_run_code or request a narrower slice.'
     return `✅ ${label} completed${statusNote}. Large result ~${kb}KB — too large to load inline.\nShape preview (clipped):\n${JSON.stringify(preview, null, 2)}\n\n${how}`
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {

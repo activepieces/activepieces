@@ -1,6 +1,6 @@
 import { agentToolPhases } from '@activepieces/shared'
 import { tool, ToolExecutionOptions } from 'ai'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { agentWorkerTools } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 
@@ -70,6 +70,14 @@ describe('wrapToolsWithTaint', () => {
 })
 
 describe('reads through the action, code and cross-project tools', () => {
+    beforeEach(() => {
+        vi.stubEnv('AP_DENO_PATH', process.execPath)
+    })
+
+    afterEach(() => {
+        vi.unstubAllEnvs()
+    })
+
     const crossProjectTools = (taintState: { tainted: boolean }, waitForApproval = async () => ({ outcome: 'approved' as const })) => agentWorkerTools.createCrossProjectTools({
         executeTool: async () => ({ success: true, content: [{ type: 'text', text: 'data' }] }),
         eventEmitter: agentWorkerTools.createEventEmitter({ sendEvent: async () => undefined, userId: 'user-1', conversationId: 'conv-1' }),

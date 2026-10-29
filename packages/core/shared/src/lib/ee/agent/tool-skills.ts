@@ -98,9 +98,9 @@ const CORE_TOOL_NAMES: Record<SkillSurface, readonly string[]> = {
         'ap_show_connection_required',
         'ap_discover_action_auth',
         'ap_get_piece_props',
-        'ap_resolve_property_options',
         'ap_resolve_property_chain',
         'ap_run_task',
+        'ap_read_result',
     ],
     AGENT: [
         LOAD_SKILL_NAME,
@@ -131,6 +131,7 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
             'ap_build_flow', 'ap_create_folder', 'ap_add_step', 'ap_update_step', 'ap_delete_step', 'ap_update_trigger',
             'ap_validate_flow', 'ap_validate_step_config', 'ap_test_flow', 'ap_test_step',
             'ap_search_actions', 'ap_search_triggers', 'ap_set_build_plan', 'ap_lock_and_publish',
+            'ap_resolve_property_options',
         ],
     },
     {

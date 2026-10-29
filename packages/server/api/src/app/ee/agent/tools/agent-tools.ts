@@ -2,6 +2,7 @@ import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfD
 import { agentAiUtils } from '@activepieces/server-utils'
 import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
@@ -41,6 +42,15 @@ const MAX_RESULT_TEXT_CHARS = 20_000
 const LARGE_RESULT_OFFLOAD_BYTES = 64 * 1024
 const FLOW_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowStatus))
 const FLOW_RUN_STATUS_VALUES: ReadonlySet<string> = new Set(Object.values(FlowRunStatus))
+
+const DEFAULT_EXPLORE_LIMIT = 20
+
+const MAX_EXPLORE_LIMIT = 100
+
+const exploreShapeInput = z.object({
+    fields: z.array(z.string()).optional(),
+    limit: z.number().int().min(1).max(MAX_EXPLORE_LIMIT).optional(),
+})
 
 function toFlowStatus(value?: string): FlowStatus | undefined {
     return value && FLOW_STATUS_VALUES.has(value) ? value as FlowStatus : undefined
@@ -633,7 +643,11 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (!agentToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
                 return agentToolClassification.readOnlyRejection(actionName)
             }
-            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            const { data: shape } = exploreShapeInput.safeParse(toolInput)
+            return runAgentAction({
+                toolInput, projects, availableProjectIds, conversationId, platformId, userId, log,
+                shapeOutput: (output) => agentActionHelpers.shapeExploreOutput({ output, ...spreadIfDefined('fields', shape?.fields), ...spreadIfDefined('limit', shape?.limit) }),
+            })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -683,7 +697,7 @@ function buildActionRunOffload({ projectId, platformId, conversationId, pieceNam
         thresholdBytes: LARGE_RESULT_OFFLOAD_BYTES,
         handle: async ({ payload, byteSize, label, statusNote }) => {
             const json = JSON.stringify(payload, null, 2)
-            const fileName = `${pieceName.replace('@activepieces/piece-', '')}-${actionName}.json`
+            const fileName = `${pieceShortName(pieceName)}-${actionName}.json`
             const { data: saved, error } = await tryCatch(() => fileService(log).save({
                 projectId,
                 platformId,
@@ -703,7 +717,7 @@ function buildActionRunOffload({ projectId, platformId, conversationId, pieceNam
     }
 }
 
-async function runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
+async function runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, shapeOutput, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
@@ -711,6 +725,7 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
     platformId?: string
     userId: string
     requireWritePermission?: boolean
+    shapeOutput?: (output: unknown) => unknown
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const { pieceName, actionName, input: parsedInput } = runActionInput.parse(toolInput)
@@ -728,7 +743,7 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
         }
     }
 
-    const resolvedProjectId = connectionProjectId ?? projects[0]?.id
+    const resolvedProjectId = connectionProjectId || projects[0]?.id
     if (!resolvedProjectId) {
         return { success: false, error: 'No projects available. Create a project first.' }
     }
@@ -741,6 +756,13 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
             return { success: false, error: denial }
         }
     }
+    if (isNil(connectionExternalId) && isNil(mcpUtils.resolveConnectionExternalId({ connectionExternalId: undefined, input: parsedInput })) && !isNil(platformId)) {
+        const { data: piece } = await tryCatch(() => pieceMetadataService(log).get({ name: normalizedPiece, projectId: resolvedProjectId, platformId }))
+        const pickRequired = agentActionHelpers.connectionPickRequiredText({ piece: piece ?? undefined, actionName })
+        if (!isNil(pickRequired)) {
+            return { content: [{ type: 'text', text: pickRequired }], isError: true }
+        }
+    }
 
     const result = await executePieceActionRun({
         projectId: resolvedProjectId,
@@ -748,6 +770,7 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
         actionName,
         input: parsedInput,
         connectionExternalId,
+        ...spreadIfDefined('shapeOutput', shapeOutput),
         ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, conversationId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
@@ -970,6 +993,13 @@ type RunCodeToolResult = {
     producedFiles: ProducedFile[]
 }
 
+type PieceAuthInfo = {
+    name: string
+    displayName: string
+    auth?: unknown
+    actions: Record<string, { requireAuth?: boolean }>
+}
+
 export { executeCrossProjectTool, findConnectionsForPiece }
 
 async function recordChatAction({ piece, input, projectId, platformId, userId, conversationId, connection, outcome, log }: {
@@ -1000,3 +1030,54 @@ async function recordChatAction({ piece, input, projectId, platformId, userId, c
         ...spreadIfDefined('classification', action?.classification),
     })
 }
+
+function shapeExploreOutput({ output, fields, limit }: { output: unknown, fields?: string[], limit?: number }): unknown {
+    const maxRecords = limit ?? DEFAULT_EXPLORE_LIMIT
+    if (Array.isArray(output)) {
+        return shapeList({ list: output, fields, limit: maxRecords })
+    }
+    if (!isObject(output)) {
+        return output
+    }
+    const hasList = Object.values(output).some((value) => Array.isArray(value))
+    if (!hasList) {
+        return selectFields({ record: output, fields })
+    }
+    return Object.fromEntries(Object.entries(output).map(([key, value]) => [key, Array.isArray(value) ? shapeList({ list: value, fields, limit: maxRecords }) : value]))
+}
+
+function connectionPickRequiredText({ piece, actionName }: { piece: PieceAuthInfo | undefined, actionName: string }): string | null {
+    const action = piece?.actions[actionName]
+    if (isNil(piece) || isNil(piece.auth) || isNil(action) || action.requireAuth === false) {
+        return null
+    }
+    const shortName = pieceShortName(piece.name)
+    return `❌ No ${piece.displayName} account has been picked in this conversation, so nothing ran. Call ap_show_connection_picker with piece "${shortName}", then retry with input.auth set to the connectionExternalId it returns. Do not choose an account for the user.`
+}
+
+function shapeList({ list, fields, limit }: { list: unknown[], fields?: string[], limit: number }): unknown {
+    const records = list.slice(0, limit).map((record) => selectFields({ record, fields }))
+    if (list.length <= limit) {
+        return records
+    }
+    return { records, shown: records.length, total: list.length, note: `Only the first ${records.length} of ${list.length} are shown. Pass a larger limit (max ${MAX_EXPLORE_LIMIT}) to see more.` }
+}
+
+function selectFields({ record, fields }: { record: unknown, fields?: string[] }): unknown {
+    if (isNil(fields) || fields.length === 0 || !isObject(record)) {
+        return record
+    }
+    const wanted = new Set(fields)
+    return Object.fromEntries(Object.entries(record).flatMap(([key, value]) => {
+        if (wanted.has(key)) {
+            return [[key, value]]
+        }
+        if (!isObject(value)) {
+            return []
+        }
+        const nested = Object.entries(value).filter(([nestedKey]) => wanted.has(nestedKey))
+        return nested.length > 0 ? [[key, Object.fromEntries(nested)]] : []
+    }))
+}
+
+export const agentActionHelpers = { shapeExploreOutput, connectionPickRequiredText }

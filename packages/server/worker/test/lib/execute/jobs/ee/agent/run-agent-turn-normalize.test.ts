@@ -133,7 +133,7 @@ const FILLER_TOOL_NAMES = [
     'ap_update_thinking_status', 'ap_show_quick_replies', 'ap_list_flows', 'ap_add_step', 'ap_update_step', 'ap_build_flow',
     'ap_test_flow', 'ap_list_connections', 'ap_list_runs', 'ap_get_run', 'ap_remember', 'ap_show_questions',
     'ap_show_connection_picker', 'ap_show_connection_required', 'ap_discover_action_auth', 'ap_get_piece_props',
-    'ap_resolve_property_options', 'ap_resolve_property_chain', 'ap_run_task', 'ap_list_tables',
+    'ap_resolve_property_chain', 'ap_run_task', 'ap_read_result', 'ap_list_tables',
 ]
 const RESULT = { content: [{ type: 'text', text: 'ok' }] }
 const TIER = { id: 'smart', thinkingBudget: 2_000, modelId: 'anthropic/claude-sonnet-4.6' }

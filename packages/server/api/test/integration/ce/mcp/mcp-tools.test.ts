@@ -485,6 +485,39 @@ describe('MCP Tools integration', () => {
         expect(text(blank)).toContain('❌')
     })
 
+    it('11c. ap_get_piece_props — describes a trigger and several actions in one call, keeping a failed one separate', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({
+            items: [
+                { pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'new_email', type: 'trigger' },
+                { pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'send_email', type: 'action' },
+                { pieceName: '@activepieces/piece-does-not-exist', actionOrTriggerName: 'nothing', type: 'action' },
+            ],
+        })
+
+        expect(text(result)).toContain('/new_email')
+        expect(text(result)).toContain('/send_email')
+        expect(text(result)).toContain('❌')
+        expect(result.structuredContent).toMatchObject({
+            results: [
+                { name: 'new_email' },
+                { name: 'send_email', exampleInput: expect.any(Object) },
+                { error: expect.any(String) },
+            ],
+        })
+    })
+
+    it('11d. ap_get_piece_props — asks for the action when neither a single lookup nor items is given', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email' })
+
+        expect(text(result)).toContain('Pass pieceName, actionOrTriggerName and type')
+    })
+
     it('12. ap_get_piece_props — returns error for non-existent piece', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
@@ -1169,13 +1202,13 @@ describe('MCP Tools integration', () => {
         })
 
         const output = text(result)
-        expect(output).toContain('"name": "to"')
-        expect(output).toContain('"required": true')
-        expect(output).toContain('"type": "SHORT_TEXT"')
-        expect(output).toContain('"name": "subject"')
-        expect(output).toContain('"name": "folder"')
-        expect(output).toContain('"type": "DROPDOWN"')
-        expect(output).toContain('"required": false')
+        expect(output).toContain('"name":"to"')
+        expect(output).toContain('"required":true')
+        expect(output).toContain('"type":"SHORT_TEXT"')
+        expect(output).toContain('"name":"subject"')
+        expect(output).toContain('"name":"folder"')
+        expect(output).toContain('"type":"DROPDOWN"')
+        expect(output).toContain('"required":false')
     })
 
     it('42. ap_validate_step_config — PIECE action with missing required fields returns specific field names', async () => {
@@ -2044,8 +2077,8 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('✅')
         expect(output).toContain('ARRAY')
         expect(output).toContain('"items"')
-        expect(output).toContain('"name": "name"')
-        expect(output).toContain('"name": "value"')
+        expect(output).toContain('"name":"name"')
+        expect(output).toContain('"name":"value"')
         expect(output).toContain('SHORT_TEXT')
         expect(output).toContain('NUMBER')
     })
