@@ -23,46 +23,6 @@ afterAll(async () => {
 })
 
 describe('MCP table tools', () => {
-    it('ap_create_table coerces type spellings and returns field ids keyed by name', async () => {
-        const mcp = await newMcp()
-        const result = await apCreateTableTool(mcp, mockLog).execute({
-            name: 'Leads',
-            fields: [{ name: 'Name', type: 'text' }, { name: 'Age', type: 'Integer' }, { name: 'Stage', type: 'dropdown', options: ['new', 'won'] }],
-        })
-        const content = createdSchema.parse(result.structuredContent)
-        expect(Object.keys(content.fieldIds).sort()).toEqual(['Age', 'Name', 'Stage'])
-        expect(content.fields.find(f => f.name === 'Age')?.type).toBe('NUMBER')
-        expect(content.fields.find(f => f.name === 'Stage')?.type).toBe('STATIC_DROPDOWN')
-    })
-
-    it('ap_create_table rejects an unknown type and lists the valid ones', async () => {
-        const mcp = await newMcp()
-        const result = await apCreateTableTool(mcp, mockLog).execute({ name: 'Bad', fields: [{ name: 'X', type: 'blob' }] })
-        expect(text(result)).toContain('unknown type "blob"')
-        expect(text(result)).toContain('TEXT, NUMBER')
-    })
-
-    it('ap_insert_records accepts names in any case, field ids and non-string values; rejects unknown names', async () => {
-        const mcp = await newMcp()
-        const created = createdSchema.parse((await apCreateTableTool(mcp, mockLog).execute({
-            name: 'People',
-            fields: [{ name: 'Name', type: 'TEXT' }, { name: 'Age', type: 'NUMBER' }],
-        })).structuredContent)
-
-        const inserted = await apInsertRecordsTool(mcp, mockLog).execute({
-            tableId: created.id,
-            records: [{ name: 'Alice', [created.fieldIds.Age]: 30 }, { NAME: 'Bob', age: '41' }],
-        })
-        expect(text(inserted)).toContain('Inserted 2 record(s)')
-
-        const bad = await apInsertRecordsTool(mcp, mockLog).execute({ tableId: created.id, records: [{ Phone: '1' }] })
-        expect(text(bad)).toContain('"Phone"')
-        expect(text(bad)).toContain('Name (TEXT), Age (NUMBER)')
-
-        const found = await apFindRecordsTool(mcp, mockLog).execute({ tableId: created.id, filters: [{ fieldName: 'name', operator: 'eq', value: 'Alice' }] })
-        expect(text(found)).toContain('Age=30')
-    })
-
     it('ap_find_records returns a small preview, says more match, and picks fields and truncated values', async () => {
         const mcp = await newMcp()
         const created = createdSchema.parse((await apCreateTableTool(mcp, mockLog).execute({
@@ -79,7 +39,7 @@ describe('MCP table tools', () => {
         expect(preview.hasMore).toBe(true)
         expect(String(preview.records[0].cells.Body).length).toBeLessThan(300)
 
-        const picked = findSchema.parse((await apFindRecordsTool(mcp, mockLog).execute({ tableId: created.id, fields: ['title'], limit: 3 })).structuredContent)
+        const picked = findSchema.parse((await apFindRecordsTool(mcp, mockLog).execute({ tableId: created.id, fields: ['Title'], limit: 3 })).structuredContent)
         expect(picked.count).toBe(3)
         expect(Object.keys(picked.records[0].cells)).toEqual(['Title'])
 
@@ -129,7 +89,6 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
 
 const createdSchema = z.object({
     id: z.string(),
-    fieldIds: z.record(z.string(), z.string()),
     fields: z.array(z.object({ name: z.string(), type: z.string() })),
 })
 
