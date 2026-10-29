@@ -125,6 +125,25 @@ describe('handleFormbricksWebhook', () => {
     expect(second).toHaveLength(0);
   });
 
+  it('still drops a replay after 1,000 newer deliveries inside the signature window', async () => {
+    const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET } });
+    const first = delivery({ event: 'responseFinished', id: 'msg_old', timestamp });
+    expect(await handleFormbricksWebhook({ payload: first, store, storeKey: 'key', eventType: 'responseFinished', nowMs: NOW_MS })).toHaveLength(1);
+    for (let i = 0; i < 1000; i++) {
+      const next = delivery({ event: 'responseFinished', id: `msg_${i}`, timestamp });
+      await handleFormbricksWebhook({ payload: next, store, storeKey: 'key', eventType: 'responseFinished', nowMs: NOW_MS });
+    }
+    const replayAt = NOW_MS + 14 * 60 * 1000;
+    expect(await handleFormbricksWebhook({ payload: first, store, storeKey: 'key', eventType: 'responseFinished', nowMs: replayAt })).toEqual([]);
+  });
+
+  it('forgets delivery IDs once their signature has expired', async () => {
+    const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET }, key_deliveries: { stale: NOW_MS - 1, live: NOW_MS + 60_000 } });
+    const payload = delivery({ event: 'responseFinished', id: 'msg_new', timestamp });
+    await handleFormbricksWebhook({ payload, store, storeKey: 'key', eventType: 'responseFinished', nowMs: NOW_MS });
+    expect(Object.keys((await store.get('key_deliveries')) ?? {}).sort()).toEqual(['live', 'msg_new']);
+  });
+
   it('drops a forged delivery when a secret is stored', async () => {
     const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET } });
     const payload = delivery({ event: 'responseFinished', id: 'msg_2', timestamp, signature: 'v1,Zm9yZ2Vk' });

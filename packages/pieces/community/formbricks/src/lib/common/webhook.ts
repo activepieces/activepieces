@@ -65,11 +65,13 @@ export async function handleFormbricksWebhook({
     return [body];
   }
   const dedupeStoreKey = `${storeKey}_deliveries`;
-  const seen = (await store.get<string[]>(dedupeStoreKey)) ?? [];
-  if (seen.includes(deliveryId)) {
+  const seen = readSeenDeliveries({ value: await store.get<unknown>(dedupeStoreKey), nowMs });
+  if (deliveryId in seen) {
     return [];
   }
-  await store.put(dedupeStoreKey, [...seen, deliveryId].slice(-MAX_REMEMBERED_DELIVERIES));
+  const timestamp = headerValue({ headers: payload.headers, name: 'webhook-timestamp' });
+  const signedAtMs = timestamp !== undefined && /^\d+$/.test(timestamp) ? Math.min(Number(timestamp) * 1000, nowMs) : nowMs;
+  await store.put(dedupeStoreKey, { ...seen, [deliveryId]: signedAtMs + REPLAY_WINDOW_MS + CLOCK_SKEW_MS });
   return [{ ...body, [DEDUPE_KEY_PROPERTY]: deliveryId }];
 }
 
@@ -85,6 +87,19 @@ export function readStoredWebhook(value: unknown): { webhookId: string | null; s
     return { webhookId: legacy['id'], secret: null };
   }
   return { webhookId: null, secret: null };
+}
+
+function readSeenDeliveries({ value, nowMs }: { value: unknown; nowMs: number }): Record<string, number> {
+  if (Array.isArray(value)) {
+    const legacyExpiry = nowMs + REPLAY_WINDOW_MS + CLOCK_SKEW_MS;
+    return Object.fromEntries(value.filter((id): id is string => typeof id === 'string').map((id) => [id, legacyExpiry]));
+  }
+  if (!isRecord(value)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > nowMs),
+  );
 }
 
 function headerValue({ headers, name }: { headers: Record<string, string | undefined> | undefined; name: string }): string | undefined {
@@ -112,6 +127,5 @@ function parseBody(body: unknown): Record<string, unknown> | undefined {
 }
 
 const SECRET_PREFIX = 'whsec_';
-const MAX_REMEMBERED_DELIVERIES = 500;
 const REPLAY_WINDOW_MS = 15 * 60 * 1000;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
