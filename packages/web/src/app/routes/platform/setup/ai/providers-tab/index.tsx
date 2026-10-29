@@ -253,23 +253,19 @@ export function ProvidersTab() {
       ) : (
         <>
           {locked && <LockedProvidersAlert />}
-          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-            {connectedProviders.map((provider) => (
-              <ProviderGroup
-                key={provider}
-                provider={provider}
-                configs={configs.filter(
-                  (config) => config.provider === provider,
-                )}
-                projects={projects}
-                tiers={tiers ?? []}
-                locked={locked}
-                onAdd={() => openConnect(provider)}
-                onOpen={openConfig}
-                onDelete={(id) => deleteProvider(id)}
-              />
-            ))}
-          </div>
+          {connectedProviders.map((provider) => (
+            <ProviderGroup
+              key={provider}
+              provider={provider}
+              configs={configs.filter((config) => config.provider === provider)}
+              projects={projects}
+              tiers={tiers ?? []}
+              locked={locked}
+              onAdd={() => openConnect(provider)}
+              onOpen={openConfig}
+              onDelete={(id) => deleteProvider(id)}
+            />
+          ))}
           {!locked && available.length > 0 && (
             <AdminSection title={t('Also available')}>
               <ProviderTileGrid
@@ -450,19 +446,19 @@ function ConfigRow({
         }
       }}
       className={cn(
-        'group flex items-center gap-4 px-5 py-3 transition-colors',
+        'group flex items-center gap-4 px-5 py-4 transition-colors',
         !locked &&
           'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-medium text-gray-12">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <p className="truncate text-sm font-semibold text-gray-12">
             {config.name}
           </p>
           <KeyStatusBadge status={config.status} />
         </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-11">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-11 [&_svg]:text-gray-9">
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="inline-flex items-center gap-1">
