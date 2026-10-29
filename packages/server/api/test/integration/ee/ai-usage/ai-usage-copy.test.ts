@@ -134,6 +134,19 @@ describe('AI usage copy from Autumn', () => {
         expect(await fiveMinuteCalls()).toBe(2)
     })
 
+    it('skips an event with fractional tokens and cleans a model id with a NUL, then keeps copying', async () => {
+        await startCursorAt({ platformId: ctx.platform.id, minutesAgo: 30 })
+        addEvent({ minutesAgo: 25, properties: { usage: block({ inputTokens: 1.5 }) } })
+        addEvent({ minutesAgo: 20, properties: { usage: block({ modelId: 'gpt-5\u0000' }) } })
+        addEvent({ minutesAgo: 15, properties: { usage: block() } })
+
+        await aiUsageCopy(app.log).run()
+
+        expect((await dailyTotals()).calls).toBe(2)
+        const cursor: { copiedUntil: Date }[] = await databaseConnection().query('SELECT "copiedUntil" FROM "ai_usage_copy_cursor" WHERE "platformId" = $1', [ctx.platform.id])
+        expect(cursor[0].copiedUntil.getTime()).toBeGreaterThan(Date.now() - 5 * MINUTE_MS)
+    })
+
     it('copies events whose null ids Autumn dropped', async () => {
         await startCursorAt({ platformId: ctx.platform.id, minutesAgo: 10 })
         const stored = Object.fromEntries(Object.entries(block()).filter(([, value]) => value !== null))
