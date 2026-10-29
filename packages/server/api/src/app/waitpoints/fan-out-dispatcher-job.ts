@@ -7,7 +7,7 @@ import { transaction } from '../core/db/transaction'
 import { distributedStore } from '../database/redis-connections'
 import { ChildDispatchTarget, childRunDispatchService } from '../flows/flow-run/child-run-dispatch-service'
 
-import { shouldBlockRunOnCredits } from '../platform/billing-provider'
+import { CreditCheckSpeed, shouldBlockRunOnCredits } from '../platform/billing-provider'
 import { barrierQueue } from './barrier-queue'
 import { BarrierFanOutPayload, BarrierJobData, barrierSourceKey } from './barrier-queue-factory'
 import { barrierService, SignalClaim } from './barrier-service'
@@ -80,7 +80,7 @@ export async function handleFanOutDispatchGaveUp({ data, log }: JobParams): Prom
 async function dispatchChunks({ data, source, target, log }: DispatchChunksParams): Promise<DispatchOutcome> {
     let afterSequence: number | null = START_OF_BARRIER
     while (!isNil(afterSequence)) {
-        if (await shouldBlockRunOnCredits({ platformId: target.platformId, environment: target.environment, log })) {
+        if (await shouldBlockRunOnCredits({ platformId: target.platformId, environment: target.environment, creditCheckSpeed: CreditCheckSpeed.NORMAL, log })) {
             return 'credits-exhausted'
         }
         const cursor: number = afterSequence

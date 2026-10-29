@@ -22,6 +22,7 @@ describe('SSO domain API', () => {
             const ctx = await createTestContext(app!, {
                 plan: { ssoEnabled: true },
                 platform: {
+                    emailAuthEnabled: true,
                     ssoDomain: 'remove-with-saml.example.com',
                     ssoDomainVerification: verified('remove-with-saml.example.com'),
                     federatedAuthProviders: { saml: SAML },

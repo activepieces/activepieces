@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, PlatformRole, PlatformWithoutSensitiveData, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, Platform, PlatformRole, PlatformWithoutSensitiveData, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -268,13 +268,14 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         return project.ownerId
     },
     getSignInMethods({ platform }: GetSignInMethodsParams): SignInMethods {
-        if (system.getEdition() === ApEdition.COMMUNITY) {
+        const edition = system.getEdition()
+        if (edition === ApEdition.COMMUNITY) {
             return { email: true, google: false, sso: false }
         }
         return {
             email: platform.emailAuthEnabled,
             google: isGoogleConfigured() && platform.googleAuthEnabled,
-            sso: !isNil(platform.federatedAuthProviders?.saml),
+            sso: !isNil(platform.federatedAuthProviders?.saml) && (edition !== ApEdition.CLOUD || platform.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED),
         }
     },
 })
@@ -329,7 +330,7 @@ export type SignInMethods = {
 }
 
 type GetSignInMethodsParams = {
-    platform: Pick<PlatformWithoutSensitiveData, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders'>
+    platform: Pick<Platform | PlatformWithoutSensitiveData, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders' | 'ssoDomainVerification'>
 }
 
 type GetOnboardingResponseParams = {
