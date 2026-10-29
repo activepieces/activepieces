@@ -47,7 +47,7 @@ export async function handleFormbricksWebhook({
   nowMs,
 }: {
   payload: { body: unknown; rawBody?: unknown; headers: Record<string, string | undefined> };
-  store: { get<T>(key: string): Promise<T | null>; put<T>(key: string, value: T): Promise<T> };
+  store: { get<T>(key: string): Promise<T | null>; put<T>(key: string, value: T): Promise<T>; delete(key: string): Promise<void> };
   storeKey: string;
   eventType: string;
   nowMs: number;
@@ -64,14 +64,21 @@ export async function handleFormbricksWebhook({
   if (deliveryId === undefined) {
     return [body];
   }
-  const dedupeStoreKey = `${storeKey}_deliveries`;
-  const seen = readSeenDeliveries({ value: await store.get<unknown>(dedupeStoreKey), nowMs });
-  if (deliveryId in seen) {
+  const timestamp = headerValue({ headers: payload.headers, name: 'webhook-timestamp' });
+  const signedAtSec = timestamp !== undefined && /^\d+$/.test(timestamp) ? Number(timestamp) : Math.floor(nowMs / 1000);
+  const bucketKey = `${storeKey}_deliveries_${signedAtSec}`;
+  const seen = (await store.get<string[]>(bucketKey)) ?? [];
+  if (seen.includes(deliveryId)) {
     return [];
   }
-  const timestamp = headerValue({ headers: payload.headers, name: 'webhook-timestamp' });
-  const signedAtMs = timestamp !== undefined && /^\d+$/.test(timestamp) ? Math.min(Number(timestamp) * 1000, nowMs) : nowMs;
-  await store.put(dedupeStoreKey, { ...seen, [deliveryId]: signedAtMs + REPLAY_WINDOW_MS + CLOCK_SKEW_MS });
+  const indexKey = `${storeKey}_deliveries_index`;
+  const oldestLiveSec = Math.floor((nowMs - REPLAY_WINDOW_MS - CLOCK_SKEW_MS) / 1000);
+  const buckets = (await store.get<number[]>(indexKey)) ?? [];
+  const expired = buckets.filter((second) => second < oldestLiveSec);
+  const live = buckets.filter((second) => second >= oldestLiveSec && second !== signedAtSec);
+  await store.put(bucketKey, [...seen, deliveryId]);
+  await store.put(indexKey, [...live, signedAtSec]);
+  await Promise.all(expired.map((second) => store.delete(`${storeKey}_deliveries_${second}`)));
   return [{ ...body, [DEDUPE_KEY_PROPERTY]: deliveryId }];
 }
 
@@ -87,19 +94,6 @@ export function readStoredWebhook(value: unknown): { webhookId: string | null; s
     return { webhookId: legacy['id'], secret: null };
   }
   return { webhookId: null, secret: null };
-}
-
-function readSeenDeliveries({ value, nowMs }: { value: unknown; nowMs: number }): Record<string, number> {
-  if (Array.isArray(value)) {
-    const legacyExpiry = nowMs + REPLAY_WINDOW_MS + CLOCK_SKEW_MS;
-    return Object.fromEntries(value.filter((id): id is string => typeof id === 'string').map((id) => [id, legacyExpiry]));
-  }
-  if (!isRecord(value)) {
-    return {};
-  }
-  return Object.fromEntries(
-    Object.entries(value).filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > nowMs),
-  );
 }
 
 function headerValue({ headers, name }: { headers: Record<string, string | undefined> | undefined; name: string }): string | undefined {

@@ -21,6 +21,10 @@ function memoryStore(initial: Record<string, unknown>) {
       data.set(key, value);
       return value;
     }),
+    delete: vi.fn(async (key: string) => {
+      data.delete(key);
+    }),
+    keys: () => [...data.keys()],
   };
 }
 
@@ -137,11 +141,24 @@ describe('handleFormbricksWebhook', () => {
     expect(await handleFormbricksWebhook({ payload: first, store, storeKey: 'key', eventType: 'responseFinished', nowMs: replayAt })).toEqual([]);
   });
 
-  it('forgets delivery IDs once their signature has expired', async () => {
-    const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET }, key_deliveries: { stale: NOW_MS - 1, live: NOW_MS + 60_000 } });
+  it('deletes delivery buckets once their signatures have expired', async () => {
+    const stale = timestamp - 30 * 60;
+    const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET }, [`key_deliveries_${stale}`]: ['old'], key_deliveries_index: [stale] });
     const payload = delivery({ event: 'responseFinished', id: 'msg_new', timestamp });
     await handleFormbricksWebhook({ payload, store, storeKey: 'key', eventType: 'responseFinished', nowMs: NOW_MS });
-    expect(Object.keys((await store.get('key_deliveries')) ?? {}).sort()).toEqual(['live', 'msg_new']);
+    expect(store.keys().sort()).toEqual(['key', `key_deliveries_${timestamp}`, 'key_deliveries_index']);
+    expect(await store.get('key_deliveries_index')).toEqual([timestamp]);
+  });
+
+  it('spreads delivery IDs across one bucket per signed second', async () => {
+    const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET } });
+    for (let i = 0; i < 1200; i++) {
+      const next = delivery({ event: 'responseFinished', id: `msg_${i}`, timestamp: timestamp - (i % 600) });
+      await handleFormbricksWebhook({ payload: next, store, storeKey: 'key', eventType: 'responseFinished', nowMs: NOW_MS });
+    }
+    const index = (await store.get<number[]>('key_deliveries_index')) ?? [];
+    expect(index).toHaveLength(600);
+    expect(((await store.get<string[]>(`key_deliveries_${timestamp}`)) ?? []).length).toBe(2);
   });
 
   it('drops a forged delivery when a secret is stored', async () => {
