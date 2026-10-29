@@ -214,7 +214,10 @@ function AddDefaultProjectsContent({
           entityName={t('Default projects')}
           buttonText={t('Remove')}
           mutationFn={() => onSave(selectedIds)}
-          onError={showServerError}
+          onError={(error) => {
+            setIsConfirmOpen(false);
+            showServerError(error);
+          }}
         />
       </div>
     </Form>
