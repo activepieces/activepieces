@@ -355,16 +355,13 @@ function ProviderGroup({
   }
 
   return (
-    <SettingsPanel
-      flush
-      title={
-        <span className="flex items-center gap-2">
-          <ProviderLogo info={info} size="sm" />
+    <SettingsPanel flush>
+      <header className="flex items-center gap-3 px-4 py-3">
+        <ProviderLogo info={info} />
+        <h2 className="min-w-0 flex-1 truncate text-sm font-medium text-gray-12">
           {info.name}
-        </span>
-      }
-      action={
-        locked ? undefined : (
+        </h2>
+        {!locked && (
           <Button
             variant="ghost"
             size="sm"
@@ -374,10 +371,9 @@ function ProviderGroup({
             <Plus className="size-4" />
             {t('Add key')}
           </Button>
-        )
-      }
-    >
-      <p className="flex items-center gap-1.5 px-5 py-2 text-xs font-medium text-gray-11">
+        )}
+      </header>
+      <p className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-gray-11">
         {t('Keys')}
         <span className="tabular-nums">{configs.length}</span>
       </p>
@@ -446,12 +442,12 @@ function ConfigRow({
         }
       }}
       className={cn(
-        'group flex items-center gap-4 px-5 py-4 transition-colors',
+        'group flex items-center gap-4 px-4 py-3 transition-colors',
         !locked &&
           'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <p className="truncate text-sm font-semibold text-gray-12">
             {config.name}
