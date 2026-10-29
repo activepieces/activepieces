@@ -85,6 +85,25 @@ describe('new lead trigger', () => {
     expect(output).toEqual([{ id: 501 }]);
   });
 
+  test('an upgrade from the time-based 0.1.x trigger keeps the leads created since its last poll', async () => {
+    const all = [
+      { id: 503, created_at: '2026-10-26 10:04:00 UTC' },
+      { id: 502, created_at: '2026-10-26 10:02:00 UTC' },
+      { id: 501, created_at: '2026-10-26 09:59:00 UTC' },
+      { id: 500, created_at: '2026-10-26 09:50:00 UTC' },
+    ];
+    stubFetch((request: SeenRequest) => {
+      const offset = Number(request.query.get('offset'));
+      const limit = Number(request.query.get('limit'));
+      return { body: { data: { leads: all.slice(offset, offset + limit) } } };
+    });
+    const store = memoryStore({ lastPoll: new Date('2026-10-26 10:00:00 UTC').valueOf() });
+    await newLeadTrigger.onEnable(fakeContext({ store, isRepublish: true }));
+    expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(501);
+    const output = await newLeadTrigger.run(fakeContext({ store }));
+    expect(output.map((lead) => (lead as { id: number }).id)).toEqual([502, 503]);
+  });
+
   test('a republish without a stored cursor sets the baseline', async () => {
     stubFetch(() => ({ body: { data: { leads: [{ id: 42 }] } } }));
     const store = memoryStore();

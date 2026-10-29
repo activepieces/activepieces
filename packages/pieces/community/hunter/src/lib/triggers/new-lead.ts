@@ -46,6 +46,12 @@ export const newLeadTrigger = createTrigger({
     if (context.isRepublish && typeof (await context.store.get(LAST_LEAD_ID_KEY)) === 'number') {
       return;
     }
+    const legacyLastPoll = context.isRepublish ? await context.store.get<number>(LEGACY_LAST_POLL_KEY) : null;
+    if (typeof legacyLastPoll === 'number') {
+      const cursor = await cursorFromLegacyCheckpoint({ apiKey: apiKeyOf(context.auth), lastPollMs: legacyLastPoll });
+      await context.store.put(LAST_LEAD_ID_KEY, cursor);
+      return;
+    }
     const newest = await hunterRequests.listLeadsPage({ apiKey: apiKeyOf(context.auth), limit: 1, offset: 0 });
     await context.store.put(LAST_LEAD_ID_KEY, leadIdOf(newest[0]) ?? 0);
   },
@@ -61,6 +67,8 @@ export const newLeadTrigger = createTrigger({
 });
 
 export const LAST_LEAD_ID_KEY = 'hunter_last_lead_id';
+
+const LEGACY_LAST_POLL_KEY = 'lastPoll';
 
 const PAGE_SIZE = 100;
 
@@ -96,6 +104,25 @@ async function collectNewer({ apiKey, lastSeen }: { apiKey: string; lastSeen: nu
     }
   }
   throw new Error(`More than ${MAX_PAGED_LEADS} new Hunter leads since the last check; the trigger stopped so none are skipped. Disable and re-enable it to start from the newest lead.`);
+}
+
+async function cursorFromLegacyCheckpoint({ apiKey, lastPollMs }: { apiKey: string; lastPollMs: number }): Promise<number> {
+  for (let offset = 0; offset < MAX_PAGED_LEADS; offset += PAGE_SIZE) {
+    const page = await hunterRequests.listLeadsPage({ apiKey, limit: PAGE_SIZE, offset });
+    const alreadySeen = page.filter((lead) => !(createdAtMs(lead) > lastPollMs));
+    if (alreadySeen.length > 0) {
+      return alreadySeen.reduce((max, lead) => Math.max(max, leadIdOf(lead) ?? 0), 0);
+    }
+    if (page.length < PAGE_SIZE) {
+      return 0;
+    }
+  }
+  return 0;
+}
+
+function createdAtMs(lead: HunterRecord): number {
+  const createdAt = lead['created_at'];
+  return typeof createdAt === 'string' ? new Date(createdAt).valueOf() : Number.NaN;
 }
 
 function leadIdOf(lead: HunterRecord | undefined): number | undefined {
