@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { PlatformResponse } from '@activepieces/shared';
+import { newMemberSettingsUtils, PlatformResponse } from '@activepieces/shared';
 import {
   QueryClient,
   useMutation,
@@ -48,6 +48,16 @@ export const platformHooks = {
       ) => {
         queryClient.setQueryData(['platform', currentPlatformId], platform);
       },
+    };
+  },
+  useNewMemberSettings: () => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return {
+      personalProjectsActive: platform.autoCreatePersonalProjects,
+      activeDefaultProjectIds: newMemberSettingsUtils.activeDefaultProjectIds({
+        defaultProjectIds: platform.defaultProjectIds,
+        projectRolesEnabled: platform.plan.projectRolesEnabled,
+      }),
     };
   },
   useUpdateLisenceKey: ({
