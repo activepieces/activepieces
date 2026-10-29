@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -8,6 +8,7 @@ import { userIdentityService } from '../authentication/user-identity/user-identi
 import { transaction } from '../core/db/transaction'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { distributedLock } from '../database/redis-connections'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -50,22 +51,29 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             status,
         }
 
-        const wouldAddNewUser = await userInvitationsService(request.log).wouldAddNewUser({ email, platformId })
-        const userInvitationRecord = await transaction(async (entityManager) => {
-            if (wouldAddNewUser) {
-                const additionalSeatsNeeded = await userInvitationsService(request.log).countAdditionalSeatsNeeded({
-                    email,
-                    platformId,
-                    entityManager,
+        const userInvitationRecord = await distributedLock(request.log).runExclusive({
+            key: `user-invitation:${platformId}:${email.toLowerCase().trim()}`,
+            timeoutInSeconds: 30,
+            fn: async () => {
+                const wouldAddNewUser = await userInvitationsService(request.log).wouldAddNewUser({ email, platformId })
+                return transaction(async (entityManager) => {
+                    if (wouldAddNewUser) {
+                        const additionalSeatsNeeded = await userInvitationsService(request.log).countAdditionalSeatsNeeded({
+                            email,
+                            platformId,
+                            entityManager,
+                        })
+                        await platformPlanService(request.log).checkUsersExceededLimit({ platformId, entityManager, additionalSeatsNeeded })
+                    }
+                    return userInvitationsService(request.log).createInvitationRecord({ ...invitationRecordParams, entityManager })
                 })
-                await platformPlanService(request.log).checkUsersExceededLimit({ platformId, entityManager, additionalSeatsNeeded })
-            }
-            return userInvitationsService(request.log).createInvitationRecord({ ...invitationRecordParams, entityManager })
+            },
         })
 
         const invitation = await userInvitationsService(request.log).finalizeInvitation({
             userInvitation: userInvitationRecord,
             invitationExpirySeconds: INVITATION_EXPIRY_SECONDS,
+            resent: status === InvitationStatus.PENDING && userInvitationRecord.status === InvitationStatus.ACCEPTED,
         })
         rejectedPromiseHandler(trackInviteSent({
             principal: request.principal,
@@ -87,10 +95,13 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         if (!isNil(request.query.projectId) && request.query.type === InvitationType.PROJECT) {
             await projectMustBeTeamType.call(app, request, reply)
         }
-        const projectId = await getProjectIdAndAssertPermission(app, request, reply, request.principal, request.query)
+        const projectId = await getProjectIdAndAssertPermission(app, request, reply, request.principal, {
+            ...request.query,
+            projectId: request.query.projectId === '' ? null : request.query.projectId,
+        })
         const invitations = await userInvitationsService(request.log).list({
             platformId: request.principal.platform.id,
-            projectId: request.query.type === InvitationType.PROJECT ? projectId : null,
+            projectId,
             type: request.query.type,
             status: request.query.status,
             cursor: request.query.cursor ?? null,
@@ -107,6 +118,16 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         })
         await landNextSignInOnInvitedPlatform({ email: invitation.email, platformId: invitation.platformId, log: request.log })
         await reply.status(StatusCodes.OK).send({ ...invitation, registered })
+    })
+
+    app.post('/:id/remove-project', RemoveProjectFromInvitationRequestParams, async (request, reply) => {
+        await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+        const result = await userInvitationsService(request.log).removeProjectFromPlatformInvite({
+            id: request.params.id,
+            platformId: request.principal.platform.id,
+            projectId: request.body.projectId,
+        })
+        await reply.status(StatusCodes.OK).send(result)
     })
 
     app.delete('/:id', DeleteInvitationRequestParams, async (request, reply) => {
@@ -289,6 +310,26 @@ const DeleteInvitationRequestParams = {
         }),
         response: {
             [StatusCodes.NO_CONTENT]: z.never(),
+        },
+    },
+}
+
+const RemoveProjectFromInvitationRequestParams = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['user-invitations'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Take the project off a platform invitation. When it is a Member invite and new members get no personal project and no default projects, the invitation is revoked instead, since they would have nowhere to land; their project invitations are not affected.',
+        params: z.object({
+            id: z.string(),
+        }),
+        body: z.object({
+            projectId: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: RemoveProjectFromInvitationResponse,
         },
     },
 }

@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, PlatformRole, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ApEdition, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
@@ -14,6 +14,7 @@ import { JwtAudience, jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { ProjectEntity } from '../project/project-entity'
@@ -84,13 +85,57 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     break
                 }
             }
-            await repo().delete({
-                id: invitation.id,
-            })
+            await deleteIfUnchanged({ invitation })
         }
     },
     async detachProjectFromPlatformInvites({ projectId, entityManager }: DetachProjectFromPlatformInvitesParams): Promise<void> {
         await repo(entityManager).update({ type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null })
+    },
+    async removeProjectFromPlatformInvite({ id, platformId, projectId }: RemoveProjectFromPlatformInviteParams): Promise<RemoveProjectFromInvitationResponse> {
+        if (system.getEdition() !== ApEdition.COMMUNITY) {
+            const deleted = await repo().createQueryBuilder()
+                .delete()
+                .where('"id" = :id AND "platformId" = :platformId AND "type" = :type AND "platformRole" = :platformRole AND "projectId" = :projectId', {
+                    id,
+                    platformId,
+                    type: InvitationType.PLATFORM,
+                    platformRole: PlatformRole.MEMBER,
+                    projectId,
+                })
+                .andWhere('EXISTS (SELECT 1 FROM "platform" WHERE "platform"."id" = :platformId AND "platform"."autoCreatePersonalProjects" = false)')
+                .andWhere('EXISTS (SELECT 1 FROM "platform_plan" WHERE "platform_plan"."platformId" = :platformId AND "platform_plan"."projectRolesEnabled" = true)')
+                .andWhere('NOT EXISTS (SELECT 1 FROM "project" "default_project" WHERE "default_project"."platformId" = :platformId AND "default_project"."isDefault" = true AND "default_project"."deleted" IS NULL)')
+                .returning('id')
+                .execute()
+            if (rowsOf(deleted).length > 0) {
+                return { revoked: true, invitation: null }
+            }
+        }
+        const cleared = await repo().createQueryBuilder()
+            .update()
+            .set({ projectId: null, projectRoleId: null, updated: () => '"updated"' })
+            .where('"id" = :id AND "platformId" = :platformId AND "type" = :type AND "projectId" = :projectId', {
+                id,
+                platformId,
+                type: InvitationType.PLATFORM,
+                projectId,
+            })
+            .returning('*')
+            .execute()
+        const [clearedRow] = rowsOf(cleared)
+        if (!isNil(clearedRow)) {
+            return { revoked: false, invitation: { ...repo().create(clearedRow), projectRole: null } }
+        }
+        const invitation = await this.getOneOrThrow({ id, platformId })
+        if (invitation.type !== InvitationType.PLATFORM) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Only a platform invitation can have its project removed',
+                },
+            })
+        }
+        return { revoked: false, invitation }
     },
     async detachProjectRoleFromPlatformInvites({ projectRoleId, entityManager }: DetachProjectRoleFromPlatformInvitesParams): Promise<void> {
         await repo(entityManager).update({ type: InvitationType.PLATFORM, projectRoleId }, { projectId: null, projectRoleId: null })
@@ -107,39 +152,67 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     }: CreateInvitationRecordParams): Promise<UserInvitation> {
         const normalizedEmail = email.toLowerCase().trim()
         const invitedProject = await claimInvitedProject({ email: normalizedEmail, platformId, projectId, type, entityManager })
-        const id = apId()
-        await repo(entityManager).upsert({
-            id,
+        const record = {
             status,
             type,
             email: normalizedEmail,
             platformId,
-            projectRoleId: invitedProject.keepsProject ? projectRoleId ?? undefined : undefined,
-            platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
-            projectId: invitedProject.keepsProject ? projectId ?? undefined : undefined,
-        }, ['email', 'platformId', 'projectId'])
-
-        return this.getOneOrThrow({
-            id,
-            platformId,
-            entityManager,
-        })
+            projectRoleId: invitedProject.keepsProject ? projectRoleId : null,
+            platformRole: type === InvitationType.PROJECT ? null : platformRole,
+            projectId: invitedProject.keepsProject ? projectId : null,
+        }
+        switch (type) {
+            case InvitationType.PLATFORM: {
+                const replaced = await replacePlatformInvites({ email: normalizedEmail, platformId, entityManager })
+                const resentStatus = replaced.wasAccepted ? InvitationStatus.ACCEPTED : status
+                if (replaced.existed) {
+                    await repo(entityManager).createQueryBuilder()
+                        .update()
+                        .set({
+                            ...record,
+                            status: () => 'CASE WHEN "status" = :acceptedStatus THEN :acceptedStatus ELSE :resentStatus END',
+                            updated: dayjs().toISOString(),
+                        })
+                        .setParameters({ acceptedStatus: InvitationStatus.ACCEPTED, resentStatus })
+                        .where({ id: replaced.id })
+                        .execute()
+                }
+                else {
+                    await repo(entityManager).save({
+                        id: replaced.id,
+                        ...record,
+                        status: resentStatus,
+                        updated: dayjs().toISOString(),
+                    })
+                }
+                return this.getOneOrThrow({ id: replaced.id, platformId, entityManager })
+            }
+            case InvitationType.PROJECT: {
+                const id = apId()
+                await repo(entityManager).upsert({ id, ...record }, ['email', 'platformId', 'projectId'])
+                return this.getOneOrThrow({ id, platformId, entityManager })
+            }
+        }
     },
     async finalizeInvitation({
         userInvitation,
         invitationExpirySeconds,
+        resent,
     }: FinalizeInvitationParams): Promise<UserInvitationWithLink> {
         if (userInvitation.status === InvitationStatus.ACCEPTED) {
-            await this.accept({
+            const { registered } = await this.accept({
                 invitationId: userInvitation.id,
                 platformId: userInvitation.platformId,
             })
+            if (resent && !registered) {
+                return enrichWithInvitationLink(userInvitation, invitationExpirySeconds, log)
+            }
             if (smtpEmailSender(log).isSmtpConfigured()) {
                 await emailService(log).sendProjectMemberAdded({
                     userInvitation,
                 })
             }
-            return userInvitation
+            return { ...userInvitation, addedNow: registered }
         }
         return enrichWithInvitationLink(userInvitation, invitationExpirySeconds, log)
     },
@@ -330,6 +403,37 @@ const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
 )`
 
 
+async function replacePlatformInvites({ email, platformId, entityManager }: ReplacePlatformInvitesParams): Promise<ReplacedPlatformInvite> {
+    const invitations = await repo(entityManager).find({
+        where: { type: InvitationType.PLATFORM, email, platformId },
+        order: { created: 'DESC' },
+        lock: { mode: 'pessimistic_write' },
+    })
+    const [latest, ...duplicates] = invitations
+    if (duplicates.length > 0) {
+        await repo(entityManager).delete(duplicates.map((invitation) => invitation.id))
+    }
+    return {
+        id: latest?.id ?? apId(),
+        existed: !isNil(latest),
+        wasAccepted: invitations.some((invitation) => invitation.status === InvitationStatus.ACCEPTED),
+    }
+}
+
+async function deleteIfUnchanged({ invitation }: { invitation: UserInvitation }): Promise<void> {
+    await repo().delete({
+        id: invitation.id,
+        status: invitation.status,
+        platformRole: isNil(invitation.platformRole) ? IsNull() : invitation.platformRole,
+        projectId: isNil(invitation.projectId) ? IsNull() : invitation.projectId,
+        projectRoleId: isNil(invitation.projectRoleId) ? IsNull() : invitation.projectRoleId,
+    })
+}
+
+function rowsOf(result: { raw: unknown }): ObjectLiteral[] {
+    return Array.isArray(result.raw) ? result.raw : []
+}
+
 async function loadProvisioningContext({ invitations, log }: LoadProvisioningContextParams): Promise<ProvisioningContext> {
     const withProject = invitations.filter((invitation) => !isNil(invitation.projectId) && !isNil(invitation.projectRoleId))
     const projectRoleIds = unique(withProject.map((invitation) => invitation.projectRoleId).filter((id): id is string => !isNil(id)))
@@ -428,6 +532,18 @@ const enrichWithInvitationLink = async (userInvitation: UserInvitation, expireyI
     })
     return userInvitation
 }
+type ReplacedPlatformInvite = {
+    id: string
+    existed: boolean
+    wasAccepted: boolean
+}
+
+type ReplacePlatformInvitesParams = {
+    email: string
+    platformId: string
+    entityManager?: EntityManager
+}
+
 type DetachProjectFromPlatformInvitesParams = {
     projectId: string
     entityManager: EntityManager
@@ -479,6 +595,12 @@ type PlatformAndIdParams = {
     platformId: string
     entityManager?: EntityManager
 }
+
+type RemoveProjectFromPlatformInviteParams = {
+    id: string
+    platformId: string
+    projectId: string
+}
 export type UserInvitationToken = {
     id: string
 }
@@ -506,6 +628,7 @@ export type CreateInvitationRecordParams = {
 export type FinalizeInvitationParams = {
     userInvitation: UserInvitation
     invitationExpirySeconds: number
+    resent: boolean
 }
 
 export type CountAdditionalSeatsNeededParams = {
