@@ -1,4 +1,4 @@
-import { SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
+import { Platform, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformRepo } from '../../../../src/app/platform/platform.service'
@@ -126,16 +126,10 @@ function ssoOn({ domain }: { domain: string | undefined }): SsoOnSettings | Reco
 }
 
 async function readSignInSettings({ platformId }: { platformId: string }): Promise<SignInSettings> {
-    const platform = await platformRepo().findOneOrFail({
+    return platformRepo().findOneOrFail({
         where: { id: platformId },
-        select: { id: true, emailAuthEnabled: true, googleAuthEnabled: true, ssoDomain: true, federatedAuthProviders: true },
+        select: { id: true, emailAuthEnabled: true, googleAuthEnabled: true, ssoDomain: true, ssoDomainVerification: true, federatedAuthProviders: true },
     })
-    return {
-        emailAuthEnabled: platform.emailAuthEnabled,
-        googleAuthEnabled: platform.googleAuthEnabled,
-        ssoDomain: platform.ssoDomain ?? null,
-        samlConnected: platform.federatedAuthProviders?.saml !== null && platform.federatedAuthProviders?.saml !== undefined,
-    }
 }
 
 const SSO_DOMAIN = '/v1/authn/saml/sso-domain'
@@ -150,9 +144,4 @@ type SsoOnSettings = {
     federatedAuthProviders: { saml: typeof SAML }
 }
 
-type SignInSettings = {
-    emailAuthEnabled: boolean
-    googleAuthEnabled: boolean
-    ssoDomain: string | null
-    samlConnected: boolean
-}
+type SignInSettings = Pick<Platform, 'id' | 'emailAuthEnabled' | 'googleAuthEnabled' | 'ssoDomain' | 'ssoDomainVerification' | 'federatedAuthProviders'>

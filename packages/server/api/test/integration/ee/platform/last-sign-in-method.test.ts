@@ -1,6 +1,7 @@
-import { SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
+import { Platform, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { platformRepo } from '../../../../src/app/platform/platform.service'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -32,11 +33,13 @@ describe('Last sign-in method guard on self-hosted EE', () => {
         },
     ])('refuses $reason', async ({ domain, status, path, body }) => {
         const ctx = await createTestContext(app, { platform: onlySso({ domain, status }), plan: { ssoEnabled: true } })
+        const before = await readSignInSettings({ platformId: ctx.platform.id })
 
         const response = await ctx.post(path === 'platform' ? `/v1/platforms/${ctx.platform.id}` : SSO_DOMAIN, body)
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(response.json()).toEqual(expect.objectContaining({ code: 'VALIDATION', params: { message: LAST_METHOD_MESSAGE } }))
+        expect(await readSignInSettings({ platformId: ctx.platform.id })).toEqual(before)
     })
 
     it('allows changing the domain when SSO is the only method, because EE does not check the domain at sign-in', async () => {
@@ -65,6 +68,13 @@ function onlySso({ domain, status }: { domain: string, status: SsoDomainVerifica
     }
 }
 
+async function readSignInSettings({ platformId }: { platformId: string }): Promise<SignInSettings> {
+    return platformRepo().findOneOrFail({
+        where: { id: platformId },
+        select: { id: true, emailAuthEnabled: true, googleAuthEnabled: true, ssoDomain: true, ssoDomainVerification: true, federatedAuthProviders: true },
+    })
+}
+
 const SSO_DOMAIN = '/v1/authn/saml/sso-domain'
 
 const LAST_METHOD_MESSAGE = 'This is the only way left to sign in. Turn on another sign-in method first.'
@@ -78,3 +88,5 @@ type OnlySsoPlatform = {
     ssoDomainVerification: SsoDomainVerification
     federatedAuthProviders: { saml: typeof SAML }
 }
+
+type SignInSettings = Pick<Platform, 'id' | 'emailAuthEnabled' | 'googleAuthEnabled' | 'ssoDomain' | 'ssoDomainVerification' | 'federatedAuthProviders'>
