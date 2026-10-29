@@ -1,136 +1,208 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocAuth, pandadocClient } from './index';
+import { pandadocAuth } from './auth';
+import { pandadocRequest, PandaDocQuery } from './client';
+import { pandadocNormalize } from './normalize';
 
-// Documents dropdown
+async function fetchList({ apiKey, path, query }: { apiKey: string; path: string; query?: PandaDocQuery }): Promise<Record<string, unknown>[]> {
+  const response = await pandadocRequest<unknown>({ apiKey, method: HttpMethod.GET, path, query });
+  const body = response.body;
+  const items = Array.isArray(body) ? body : pandadocNormalize.list(pandadocNormalize.rec(body)['results']);
+  return items.map(pandadocNormalize.rec);
+}
+
+function shortId(id: string): string {
+  return id.length > 8 ? `${id.substring(0, 8)}...` : id;
+}
+
+function label({ name, fallback }: { name: unknown; fallback: string }): string {
+  const text = pandadocNormalize.str(name);
+  return text !== null && text.trim().length > 0 ? text : fallback;
+}
+
+async function documentOptions({ apiKey, searchValue }: { apiKey: string; searchValue: string | undefined }) {
+  const docs = await fetchList({
+    apiKey,
+    path: '/documents',
+    query: { count: 100, order_by: '-date_modified', q: searchValue && searchValue.trim().length > 0 ? searchValue.trim() : undefined },
+  });
+  return docs.flatMap((doc) => {
+    const id = pandadocNormalize.str(doc['id']);
+    if (id === null) {
+      return [];
+    }
+    const status = pandadocNormalize.str(doc['status'])?.replace('document.', '') ?? 'unknown';
+    return [{ label: `${label({ name: doc['name'], fallback: id })} (${status})`, value: id }];
+  });
+}
+
+async function templateOptions({ apiKey, searchValue }: { apiKey: string; searchValue: string | undefined }) {
+  const templates = await fetchList({
+    apiKey,
+    path: '/templates',
+    query: { count: 100, q: searchValue && searchValue.trim().length > 0 ? searchValue.trim() : undefined },
+  });
+  return templates.flatMap((template) => {
+    const id = pandadocNormalize.str(template['id']);
+    return id === null ? [] : [{ label: `${label({ name: template['name'], fallback: id })} - ${shortId(id)}`, value: id }];
+  });
+}
+
+async function folderOptions({ apiKey }: { apiKey: string }) {
+  const folders = await fetchList({ apiKey, path: '/documents/folders', query: { count: 100 } });
+  return folders.flatMap((folder) => {
+    const id = pandadocNormalize.str(folder['uuid']);
+    return id === null ? [] : [{ label: `${label({ name: folder['name'], fallback: id })} - ${shortId(id)}`, value: id }];
+  });
+}
+
+async function contactOptions({ apiKey }: { apiKey: string }) {
+  const contacts = await fetchList({ apiKey, path: '/contacts' });
+  return contacts.flatMap((contact) => {
+    const id = pandadocNormalize.str(contact['id']);
+    if (id === null) {
+      return [];
+    }
+    const name = [pandadocNormalize.str(contact['first_name']), pandadocNormalize.str(contact['last_name'])].filter((part) => part !== null && part.length > 0).join(' ') || 'Unnamed';
+    const email = pandadocNormalize.str(contact['email']);
+    return [{ label: `${name}${email ? ` <${email}>` : ''}`, value: id }];
+  });
+}
+
+function unauthenticated() {
+  return { disabled: true, placeholder: 'Please connect your PandaDoc account first', options: [] };
+}
+
+function failed(error: unknown) {
+  return { disabled: true, placeholder: error instanceof Error ? error.message.slice(0, 200) : 'Failed to load options', options: [] };
+}
+
 export const documentDropdown = Property.Dropdown({
   auth: pandadocAuth,
-
   displayName: 'Document',
-  description: 'Select a document from your PandaDoc workspace',
+  description: 'Select a document. The newest documents are listed first; type to search by name.',
   required: true,
   refreshers: [],
-  options: async ({ auth }) => {
+  refreshOnSearch: true,
+  options: async ({ auth }, { searchValue }) => {
     if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Please authenticate first',
-        options: [],
-      };
+      return unauthenticated();
     }
-
     try {
-      const response = await pandadocClient.makeRequest<{
-        results: Array<{
-          id: string;
-          name: string;
-          status: string;
-          date_created: string;
-        }>;
-      }>(
-        auth.secret_text,
-        HttpMethod.GET,
-        '/documents?count=100&order_by=date_created'
-      );
-
-      const options = response.results.map((doc) => ({
-        label: doc.name,
-        value: doc.id,
-      }));
-
-      return {
-        disabled: false,
-        options,
-      };
+      return { disabled: false, options: await documentOptions({ apiKey: auth.secret_text, searchValue }) };
     } catch (error) {
-      return {
-        disabled: true,
-        placeholder: 'Failed to load documents',
-        options: [],
-      };
+      return failed(error);
     }
   },
 });
 
-// Templates dropdown
 export const templateDropdown = Property.Dropdown({
   auth: pandadocAuth,
-
   displayName: 'Template',
-  description: 'Select a template from your PandaDoc workspace',
+  description: 'Select a template from your PandaDoc workspace. Type to search by name.',
   required: true,
+  refreshers: [],
+  refreshOnSearch: true,
+  options: async ({ auth }, { searchValue }) => {
+    if (!auth) {
+      return unauthenticated();
+    }
+    try {
+      return { disabled: false, options: await templateOptions({ apiKey: auth.secret_text, searchValue }) };
+    } catch (error) {
+      return failed(error);
+    }
+  },
+});
+
+export const templateFilterDropdown = Property.MultiSelectDropdown({
+  auth: pandadocAuth,
+  displayName: 'Filter by Templates',
+  description: 'Only trigger for documents created from these templates (leave empty for all).',
+  required: false,
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Please authenticate first',
-        options: [],
-      };
+      return unauthenticated();
     }
-
     try {
-      const response = await pandadocClient.makeRequest<{
-        results: Array<{
-          id: string;
-          name: string;
-          date_created: string;
-        }>;
-      }>(auth.secret_text, HttpMethod.GET, '/templates?count=100');
-
-      const options = response.results.map((template) => ({
-        label: template.name,
-        value: template.id,
-      }));
-
-      return {
-        disabled: false,
-        options,
-      };
+      return { disabled: false, options: await templateOptions({ apiKey: auth.secret_text, searchValue: undefined }) };
     } catch (error) {
-      return {
-        disabled: true,
-        placeholder: 'Failed to load templates',
-        options: [],
-      };
+      return failed(error);
+    }
+  },
+});
+
+export const folderFilterDropdown = Property.MultiSelectDropdown({
+  auth: pandadocAuth,
+  displayName: 'Filter by Folders',
+  description: 'Only trigger for documents stored in these folders (leave empty for all).',
+  required: false,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return unauthenticated();
+    }
+    try {
+      return { disabled: false, options: await folderOptions({ apiKey: auth.secret_text }) };
+    } catch (error) {
+      return failed(error);
     }
   },
 });
 
 export const templateFields = Property.DynamicProperties({
   displayName: 'Template Fields',
+  description: 'Values for the template fields that have a merge field name. Leave a field empty to keep its default.',
   refreshers: ['template_uuid'],
   required: false,
   auth: pandadocAuth,
   props: async ({ auth, template_uuid }) => {
-    if (!auth || !template_uuid) return {};
-
+    const templateId = pandadocNormalize.str(template_uuid);
+    if (!auth || templateId === null || templateId.length === 0) {
+      return {};
+    }
     const fields: DynamicPropsValue = {};
-
-    const response = await pandadocClient.makeRequest<{
-      fields: Array<{
-        field_id: string;
-        type: string;
-        name: string;
-      }>;
-    }>(
-      auth as unknown as string,
-      HttpMethod.GET,
-      `/templates/${template_uuid}/details`
-    );
-
-    for (const prop of response.fields) {
-      fields[prop.field_id] = Property.ShortText({
-        displayName: prop.name,
-        required: false,
+    try {
+      const response = await pandadocRequest<unknown>({
+        apiKey: auth.secret_text,
+        method: HttpMethod.GET,
+        path: `/templates/${encodeURIComponent(templateId)}/details`,
+      });
+      const details = pandadocNormalize.templateDetails(response.body);
+      for (const field of details.fields) {
+        if (field.merge_field === null || field.merge_field.length === 0 || field.merge_field in fields) {
+          continue;
+        }
+        const displayName = field.name && field.name !== field.merge_field ? `${field.name} (${field.merge_field})` : field.merge_field;
+        fields[field.merge_field] =
+          field.type === 'checkbox'
+            ? Property.StaticDropdown({
+                displayName,
+                description: 'Leave empty to keep the template default.',
+                required: false,
+                options: {
+                  options: [
+                    { label: 'Checked', value: true },
+                    { label: 'Unchecked', value: false },
+                  ],
+                },
+              })
+            : Property.ShortText({
+                displayName,
+                description: field.type === 'date' ? 'Date in ISO 8601 format, for example 2026-12-31T00:00:00.000Z.' : undefined,
+                required: false,
+              });
+      }
+    } catch (error) {
+      fields['template_fields_error'] = Property.MarkDown({
+        value: `Could not load the template fields: ${error instanceof Error ? error.message : 'unknown error'}`,
       });
     }
-
     return fields;
   },
 });
 
-// Folders dropdown
 export const folderDropdown = Property.Dropdown({
   auth: pandadocAuth,
   displayName: 'Folder',
@@ -139,42 +211,16 @@ export const folderDropdown = Property.Dropdown({
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Please authenticate first',
-        options: [],
-      };
+      return unauthenticated();
     }
-
     try {
-      const response = await pandadocClient.makeRequest<{
-        results: Array<{
-          uuid: string;
-          name: string;
-          date_created: string;
-        }>;
-      }>(auth.secret_text, HttpMethod.GET, '/documents/folders?count=100');
-
-      const options = response.results.map((folder) => ({
-        label: `${folder.name} - ${folder.uuid.substring(0, 8)}...`,
-        value: folder.uuid,
-      }));
-
-      return {
-        disabled: false,
-        options,
-      };
+      return { disabled: false, options: await folderOptions({ apiKey: auth.secret_text }) };
     } catch (error) {
-      return {
-        disabled: true,
-        placeholder: 'Failed to load folders',
-        options: [],
-      };
+      return failed(error);
     }
   },
 });
 
-// Contacts dropdown
 export const contactDropdown = Property.Dropdown({
   auth: pandadocAuth,
   displayName: 'Contact',
@@ -183,49 +229,53 @@ export const contactDropdown = Property.Dropdown({
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Please authenticate first',
-        options: [],
-      };
+      return unauthenticated();
     }
-
     try {
-      const response = await pandadocClient.makeRequest<{
-        results: Array<{
-          id: string;
-          first_name: string | null;
-          last_name: string | null;
-          email: string | null;
-        }>;
-      }>(auth.secret_text, HttpMethod.GET, '/contacts?count=100');
-
-      const options = response.results.map((contact) => {
-        const name =
-          [contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
-          'Unnamed';
-        const email = contact.email ? ` <${contact.email}>` : '';
-        return {
-          label: `${name}${email} - ${contact.id.substring(0, 8)}...`,
-          value: contact.id,
-        };
-      });
-
-      return {
-        disabled: false,
-        options,
-      };
+      return { disabled: false, options: await contactOptions({ apiKey: auth.secret_text }) };
     } catch (error) {
-      return {
-        disabled: true,
-        placeholder: 'Failed to load contacts',
-        options: [],
-      };
+      return failed(error);
     }
   },
 });
 
-// Forms dropdown
+export const contactUpdateDropdown = Property.Dropdown({
+  auth: pandadocAuth,
+  displayName: 'Contact ID (for Update)',
+  description: 'Select a contact to update. Leave empty to create a new contact.',
+  required: false,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return unauthenticated();
+    }
+    try {
+      return { disabled: false, options: await contactOptions({ apiKey: auth.secret_text }) };
+    } catch (error) {
+      return failed(error);
+    }
+  },
+});
+
+export const templateFilterSingleDropdown = Property.Dropdown({
+  auth: pandadocAuth,
+  displayName: 'Template',
+  description: 'Filter by parent template (cannot be used with Form)',
+  required: false,
+  refreshers: [],
+  refreshOnSearch: true,
+  options: async ({ auth }, { searchValue }) => {
+    if (!auth) {
+      return unauthenticated();
+    }
+    try {
+      return { disabled: false, options: await templateOptions({ apiKey: auth.secret_text, searchValue }) };
+    } catch (error) {
+      return failed(error);
+    }
+  },
+});
+
 export const formDropdown = Property.Dropdown({
   auth: pandadocAuth,
   displayName: 'Form',
@@ -234,42 +284,23 @@ export const formDropdown = Property.Dropdown({
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Please authenticate first',
-        options: [],
-      };
+      return unauthenticated();
     }
-
     try {
-      const response = await pandadocClient.makeRequest<{
-        results: Array<{
-          id: string;
-          name: string;
-          status: string;
-        }>;
-      }>(auth.secret_text, HttpMethod.GET, '/forms?count=100');
-
-      const options = response.results.map((form) => ({
-        label: `${form.name} (${form.status}) - ${form.id.substring(0, 8)}...`,
-        value: form.id,
-      }));
-
+      const forms = await fetchList({ apiKey: auth.secret_text, path: '/forms', query: { count: 100 } });
       return {
         disabled: false,
-        options,
+        options: forms.flatMap((form) => {
+          const id = pandadocNormalize.str(form['id']);
+          return id === null ? [] : [{ label: `${label({ name: form['name'], fallback: id })} (${pandadocNormalize.str(form['status']) ?? 'unknown'})`, value: id }];
+        }),
       };
     } catch (error) {
-      return {
-        disabled: true,
-        placeholder: 'Failed to load forms',
-        options: [],
-      };
+      return failed(error);
     }
   },
 });
 
-// Members dropdown
 export const memberDropdown = Property.Dropdown({
   auth: pandadocAuth,
   displayName: 'Member',
@@ -278,52 +309,29 @@ export const memberDropdown = Property.Dropdown({
   refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Please authenticate first',
-        options: [],
-      };
+      return unauthenticated();
     }
-
     try {
-      const response = await pandadocClient.makeRequest<{
-        results: Array<{
-          membership_id: string;
-          first_name: string;
-          last_name: string;
-          email: string;
-          role: string;
-          is_active: boolean;
-        }>;
-      }>(auth.secret_text, HttpMethod.GET, '/members');
-
-      const options = response.results
-        .filter((member) => member.is_active)
-        .map((member) => {
-          const name =
-            [member.first_name, member.last_name].filter(Boolean).join(' ') ||
-            'Unnamed';
-          return {
-            label: `${name} (${member.role}) - ${member.email}`,
-            value: member.membership_id,
-          };
-        });
-
+      const members = await fetchList({ apiKey: auth.secret_text, path: '/members' });
       return {
         disabled: false,
-        options,
+        options: members
+          .filter((member) => member['is_active'] === true)
+          .flatMap((member) => {
+            const id = pandadocNormalize.str(member['membership_id']);
+            if (id === null) {
+              return [];
+            }
+            const name = [pandadocNormalize.str(member['first_name']), pandadocNormalize.str(member['last_name'])].filter((part) => part !== null && part.length > 0).join(' ') || 'Unnamed';
+            return [{ label: `${name} (${pandadocNormalize.str(member['role']) ?? 'member'}) - ${pandadocNormalize.str(member['email']) ?? ''}`, value: id }];
+          }),
       };
     } catch (error) {
-      return {
-        disabled: true,
-        placeholder: 'Failed to load members',
-        options: [],
-      };
+      return failed(error);
     }
   },
 });
 
-// Document attachments dropdown (dependent on document selection)
 export const documentAttachmentDropdown = Property.Dropdown({
   auth: pandadocAuth,
   displayName: 'Attachment',
@@ -332,54 +340,27 @@ export const documentAttachmentDropdown = Property.Dropdown({
   refreshers: ['document_id'],
   options: async ({ auth, document_id }) => {
     if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Please authenticate first',
-        options: [],
-      };
+      return unauthenticated();
     }
-
-    if (!document_id) {
-      return {
-        disabled: true,
-        placeholder: 'Please select a document first',
-        options: [],
-      };
+    const documentId = pandadocNormalize.str(document_id);
+    if (documentId === null || documentId.length === 0) {
+      return { disabled: true, placeholder: 'Please select a document first', options: [] };
     }
-
     try {
-      const response = await pandadocClient.makeRequest<
-        Array<{
-          uuid: string;
-          name: string | null;
-          date_created: string;
-        }>
-      >(
-        auth.secret_text,
-        HttpMethod.GET,
-        `/documents/${document_id}/attachments`
-      );
-
-      const options = response.map((attachment) => ({
-        label: `${attachment.name || 'Unnamed Attachment'}`,
-        value: attachment.uuid,
-      }));
-
+      const attachments = await fetchList({ apiKey: auth.secret_text, path: `/documents/${encodeURIComponent(documentId)}/attachments` });
       return {
         disabled: false,
-        options,
+        options: attachments.flatMap((attachment) => {
+          const id = pandadocNormalize.str(attachment['uuid']);
+          return id === null ? [] : [{ label: label({ name: attachment['name'], fallback: 'Unnamed Attachment' }), value: id }];
+        }),
       };
     } catch (error) {
-      return {
-        disabled: true,
-        placeholder: 'Failed to load attachments',
-        options: [],
-      };
+      return failed(error);
     }
   },
 });
 
-// Country dropdown with custom input support
 export const countryDropdown = Property.StaticDropdown({
   displayName: 'Country',
   description: 'Select a country or choose "Other" to enter a custom country',
@@ -420,7 +401,6 @@ export const countryDropdown = Property.StaticDropdown({
   },
 });
 
-// Custom country input field
 export const customCountryInput = Property.ShortText({
   displayName: 'Custom Country',
   description:
@@ -428,7 +408,6 @@ export const customCountryInput = Property.ShortText({
   required: false,
 });
 
-// US/Canada States dropdown with custom input support
 export const stateDropdown = Property.StaticDropdown({
   displayName: 'State/Province',
   description:
@@ -436,7 +415,7 @@ export const stateDropdown = Property.StaticDropdown({
   required: false,
   options: {
     options: [
-      // US States
+
       { label: 'Alabama (US)', value: 'Alabama' },
       { label: 'Alaska (US)', value: 'Alaska' },
       { label: 'Arizona (US)', value: 'Arizona' },
@@ -487,7 +466,7 @@ export const stateDropdown = Property.StaticDropdown({
       { label: 'West Virginia (US)', value: 'West Virginia' },
       { label: 'Wisconsin (US)', value: 'Wisconsin' },
       { label: 'Wyoming (US)', value: 'Wyoming' },
-      // Canadian Provinces
+
       { label: 'Alberta (CA)', value: 'Alberta' },
       { label: 'British Columbia (CA)', value: 'British Columbia' },
       { label: 'Manitoba (CA)', value: 'Manitoba' },
@@ -504,7 +483,7 @@ export const stateDropdown = Property.StaticDropdown({
       { label: 'Quebec (CA)', value: 'Quebec' },
       { label: 'Saskatchewan (CA)', value: 'Saskatchewan' },
       { label: 'Yukon (CA)', value: 'Yukon' },
-      // Other common ones
+
       { label: 'England (UK)', value: 'England' },
       { label: 'Scotland (UK)', value: 'Scotland' },
       { label: 'Wales (UK)', value: 'Wales' },
@@ -520,7 +499,6 @@ export const stateDropdown = Property.StaticDropdown({
   },
 });
 
-// Custom state input field
 export const customStateInput = Property.ShortText({
   displayName: 'Custom State/Province',
   description:
@@ -528,7 +506,6 @@ export const customStateInput = Property.ShortText({
   required: false,
 });
 
-// Job title dropdown with custom input support
 export const jobTitleDropdown = Property.StaticDropdown({
   displayName: 'Job Title',
   description:
@@ -536,7 +513,7 @@ export const jobTitleDropdown = Property.StaticDropdown({
   required: false,
   options: {
     options: [
-      // Executive Level
+
       { label: 'CEO / Chief Executive Officer', value: 'CEO' },
       { label: 'CTO / Chief Technology Officer', value: 'CTO' },
       { label: 'CFO / Chief Financial Officer', value: 'CFO' },
@@ -545,7 +522,7 @@ export const jobTitleDropdown = Property.StaticDropdown({
       { label: 'Vice President', value: 'Vice President' },
       { label: 'Director', value: 'Director' },
       { label: 'Manager', value: 'Manager' },
-      // Sales & Marketing
+
       { label: 'Sales Manager', value: 'Sales Manager' },
       { label: 'Sales Representative', value: 'Sales Representative' },
       { label: 'Account Manager', value: 'Account Manager' },
@@ -555,7 +532,7 @@ export const jobTitleDropdown = Property.StaticDropdown({
       },
       { label: 'Marketing Manager', value: 'Marketing Manager' },
       { label: 'Marketing Coordinator', value: 'Marketing Coordinator' },
-      // Technical
+
       { label: 'Software Engineer', value: 'Software Engineer' },
       { label: 'Senior Software Engineer', value: 'Senior Software Engineer' },
       { label: 'Lead Developer', value: 'Lead Developer' },
@@ -563,18 +540,18 @@ export const jobTitleDropdown = Property.StaticDropdown({
       { label: 'Data Scientist', value: 'Data Scientist' },
       { label: 'Product Manager', value: 'Product Manager' },
       { label: 'IT Manager', value: 'IT Manager' },
-      // Operations
+
       { label: 'Operations Manager', value: 'Operations Manager' },
       { label: 'Project Manager', value: 'Project Manager' },
       { label: 'Program Manager', value: 'Program Manager' },
       { label: 'Business Analyst', value: 'Business Analyst' },
       { label: 'Consultant', value: 'Consultant' },
-      // Finance & Legal
+
       { label: 'Accountant', value: 'Accountant' },
       { label: 'Financial Analyst', value: 'Financial Analyst' },
       { label: 'Legal Counsel', value: 'Legal Counsel' },
       { label: 'Compliance Officer', value: 'Compliance Officer' },
-      // HR & Admin
+
       { label: 'HR Manager', value: 'HR Manager' },
       { label: 'HR Coordinator', value: 'HR Coordinator' },
       { label: 'Office Manager', value: 'Office Manager' },
@@ -585,7 +562,6 @@ export const jobTitleDropdown = Property.StaticDropdown({
   },
 });
 
-// Custom job title input field
 export const customJobTitleInput = Property.ShortText({
   displayName: 'Custom Job Title',
   description:
@@ -593,7 +569,6 @@ export const customJobTitleInput = Property.ShortText({
   required: false,
 });
 
-// Industry dropdown with custom input support
 export const industryDropdown = Property.StaticDropdown({
   displayName: 'Industry',
   description:
@@ -639,7 +614,6 @@ export const industryDropdown = Property.StaticDropdown({
   },
 });
 
-// Custom industry input field
 export const customIndustryInput = Property.ShortText({
   displayName: 'Custom Industry',
   description:
@@ -647,7 +621,6 @@ export const customIndustryInput = Property.ShortText({
   required: false,
 });
 
-// Recipient role dropdown with custom input support
 export const recipientRoleDropdown = Property.StaticDropdown({
   displayName: 'Recipient Role',
   description:
@@ -680,7 +653,6 @@ export const recipientRoleDropdown = Property.StaticDropdown({
   },
 });
 
-// Custom recipient role input field
 export const customRecipientRoleInput = Property.ShortText({
   displayName: 'Custom Recipient Role',
   description:
@@ -688,7 +660,6 @@ export const customRecipientRoleInput = Property.ShortText({
   required: false,
 });
 
-// Watermark text dropdown with custom input support
 export const watermarkTextDropdown = Property.StaticDropdown({
   displayName: 'Watermark Text',
   description:
@@ -715,7 +686,6 @@ export const watermarkTextDropdown = Property.StaticDropdown({
   },
 });
 
-// Custom watermark text input field
 export const customWatermarkTextInput = Property.ShortText({
   displayName: 'Custom Watermark Text',
   description:
@@ -723,7 +693,6 @@ export const customWatermarkTextInput = Property.ShortText({
   required: false,
 });
 
-// Tag suggestions dropdown with custom input support
 export const tagDropdown = Property.StaticDropdown({
   displayName: 'Tag',
   description: 'Select a common tag or choose "Custom" to enter your own',
@@ -756,7 +725,6 @@ export const tagDropdown = Property.StaticDropdown({
   },
 });
 
-// Custom tag input field
 export const customTagInput = Property.ShortText({
   displayName: 'Custom Tag',
   description: 'Enter a custom tag (only used if "Custom" is selected above)',

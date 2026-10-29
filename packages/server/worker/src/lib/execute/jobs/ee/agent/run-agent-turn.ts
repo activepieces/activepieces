@@ -1,4 +1,4 @@
-import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
@@ -88,10 +88,15 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         paidToolsAffordable = isNil(left) || left >= CHAT_CREDITS_PER_TOOL_CALL
         return creditsExhausted
     }
+    const maxTurnTokens = runawayTokenCeiling(models[0].provider)
+    let totalInputTokens = 0
+    let totalOutputTokens = 0
+    const tokenBudgetSpent = (): boolean => totalInputTokens + totalOutputTokens >= maxTurnTokens
     const loopStopCondition = [
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
         ...(isNil(stepCeiling) ? [] : [isStepCount(stepCeiling)]),
         creditsRanOut,
+        tokenBudgetSpent,
     ]
     const reroutedCallIds = new Set<string>()
     const skillSurface = isNil(skills) ? null : buildSkillSurface({
@@ -108,7 +113,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     })
     const turnSystemPrompt = systemPrompt + (skillSurface?.catalogNote ?? '')
     const guardedTools = wrapToolsWithFailureGuard({ tools: skillSurface?.tools ?? tools, log })
-    const maxTurnTokens = runawayTokenCeiling(models[0].provider)
     const runsATier = models.some((candidate) => !isNil(candidate.key))
     const peers = [...models, ...(isNil(fastModel) ? [] : [fastModel])]
     const ranked = await Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers })))
@@ -132,8 +136,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     let streamRetries = 0
     let truncatedAfterRetries = false
     let usage: LanguageModelUsage | undefined
-    let totalInputTokens = 0
-    let totalOutputTokens = 0
     let lastFinishReason = ''
     let budgetExceeded = false
 
@@ -257,7 +259,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         },
         onError: ({ error }) => {
             log.error({ error }, 'Chat streamText error')
-            streamError = error instanceof Error ? error : new Error(String(error))
+            streamError = toError(error)
         },
     })
 
@@ -330,7 +332,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             break
         }
 
-        if (totalInputTokens + totalOutputTokens >= maxTurnTokens) {
+        if (tokenBudgetSpent()) {
             accumulatedResponseMessages.push(...stepMessages)
             budgetExceeded = true
             log.error({ totalInputTokens, totalOutputTokens, maxTurnTokens }, 'Chat turn hit per-turn token budget — stopping to prevent runaway cost')
@@ -515,6 +517,10 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
         const missingUserConfig = apError?.code === ErrorCode.ENTITY_NOT_FOUND && USER_CONFIG_ENTITY_TYPES.has(apError.entityType ?? '')
         const rejectedWithReason = USER_FACING_ERROR_CODES.has(apError?.code ?? '')
         return missingUserConfig || rejectedWithReason ? 'user' : 'internal'
+    }
+    const rejectedByCustomGateway = apiError.statusCode === 400 && provider === AIProviderName.CUSTOM
+    if (rejectedByCustomGateway) {
+        return 'user'
     }
     if (apiError.statusCode === 400 && provider !== AIProviderName.ACTIVEPIECES && MODEL_UNAVAILABLE_PATTERNS.some((pattern) => pattern.test(message))) {
         return 'user'

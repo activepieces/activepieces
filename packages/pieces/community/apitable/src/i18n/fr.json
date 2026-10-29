@@ -85,5 +85,8 @@
   "DELETE": "DELETE",
   "HEAD": "HEAD",
   "New Record": "Nouvel enregistrement",
-  "Triggers when a new record is added to a datasheet.": "Déclenche lorsqu'un nouvel enregistrement est ajouté à une fiche de données."
+  "Triggers when a new record is added to a datasheet.": "Déclenche lorsqu'un nouvel enregistrement est ajouté à une fiche de données.",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "Les champs vides restent vides. Certains types de colonnes, comme les pièces jointes et les formules, ne sont pas listés.",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "Les champs vides gardent leur valeur actuelle ; les cases non cochées sont effacées. Certains types de colonnes, comme les pièces jointes et les formules, ne sont pas listés."
 }

@@ -15,7 +15,7 @@ describe('update_product images', () => {
     it('sends no images key when no image is attached, so Shopify keeps the current images', async () => {
         const sent = mockRest({ replies: [{ body: { product: { id: 1 } } }] });
 
-        await runAction({ action: updateProductAction, propsValue: { id: '1', title: 'Shirt', status: 'DRAFT' } });
+        await runAction({ action: updateProductAction, propsValue: { id: '1', title: 'Shirt', status: 'draft' } });
 
         expect(sent).toHaveLength(1);
         expect(readProduct({ request: sent[0] })).not.toHaveProperty('images');
@@ -26,7 +26,7 @@ describe('update_product images', () => {
 
         await runAction({
             action: updateProductAction,
-            propsValue: { id: '1', status: 'DRAFT', productImage: { filename: 'shirt.png', extension: 'png', base64: 'aW1hZ2U=' } },
+            propsValue: { id: '1', status: 'draft', productImage: { filename: 'shirt.png', extension: 'png', base64: 'aW1hZ2U=' } },
         });
 
         expect(readProduct({ request: sent[0] })).toHaveProperty('images', [{ attachment: 'aW1hZ2U=' }]);
