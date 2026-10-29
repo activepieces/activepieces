@@ -213,7 +213,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             }
             const schema = await inputSchema({ toolName: toolCall.toolName })
             const normalized = await normalizedToolCallInput({ toolCall, schema, tools: guardedTools })
-            if (!isNil(normalized)) {
+            if (!isNil(normalized) && await isValidToolInput({ tool: guardedTools[toolCall.toolName], input: normalized })) {
                 log.info({ tool: { name: toolCall.toolName } }, 'Fixed the shape of a malformed tool call without a repair round trip')
                 return { ...toolCall, input: normalized }
             }
@@ -602,6 +602,15 @@ async function normalizedInputFor({ tool: target, input }: { tool: ToolSet[strin
     }
     const { data: schema } = await tryCatch(async () => asSchema(target.inputSchema).jsonSchema)
     return isNil(schema) ? input : toolInputNormalizer.normalize({ input, schema })
+}
+
+async function isValidToolInput({ tool: target, input }: { tool: ToolSet[string] | undefined, input: string }): Promise<boolean> {
+    const validate = isNil(target) ? undefined : asSchema(target.inputSchema).validate
+    if (isNil(validate)) {
+        return true
+    }
+    const { data: result } = await tryCatch(async () => validate(JSON.parse(input)))
+    return result?.success === true
 }
 
 function isParsableJson(text: string): boolean {
