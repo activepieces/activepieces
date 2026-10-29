@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ActivepiecesError, AIProviderName, ErrorCode, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils, agentTokenEstimate } from '@activepieces/server-utils'
+import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -202,7 +202,7 @@ function fairShareCap({ lengths, budget }: { lengths: number[], budget: number }
 }
 
 function messageTokens(value: unknown): number {
-    const { text, attachmentTokens } = agentTokenEstimate.textForEstimate(value)
+    const { text, attachmentTokens } = agentAiUtils.textForEstimate(value)
     return tokensIn(text) + attachmentTokens
 }
 

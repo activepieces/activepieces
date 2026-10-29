@@ -84,8 +84,9 @@ function flowStepStates({ trigger, problemStepNames, skippedDisplayNames = [] }:
     ]
 }
 
-function labelNotes(resolution: LabelResolution): string[] {
-    return [...resolution.resolved.map((line) => `Replaced ${line}`), ...resolution.problems.map(formatProblem)]
+function labelNote(resolution: LabelResolution): string {
+    const notes = [...resolution.resolved.map((line) => `Replaced ${line}`), ...resolution.problems.map(formatProblem)]
+    return notes.length > 0 ? `\n${notes.join('\n')}` : ''
 }
 
 function formatProblem(problem: FlowProblem): string {
@@ -274,7 +275,7 @@ function shortPieceName(pieceName: string): string {
 export const buildFlowReview = {
     resolveDropdownLabels,
     flowStepStates,
-    labelNotes,
+    labelNote,
     findProblems,
     formatProblem,
     summarizeStep,

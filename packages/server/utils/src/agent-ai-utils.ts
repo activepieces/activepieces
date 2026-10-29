@@ -88,7 +88,7 @@ function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[]
 }
 
 function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelMessage[], systemPromptLength: number }): number {
-    const { text, attachmentTokens } = agentTokenEstimate.textForEstimate(messages)
+    const { text, attachmentTokens } = textForEstimate(messages)
     return Math.ceil((text.length + systemPromptLength) / CHARS_PER_TOKEN_ESTIMATE) + attachmentTokens
 }
 
@@ -437,6 +437,7 @@ function isAttachmentPart(value: unknown): value is AttachmentPart {
 }
 
 export const agentAiUtils = {
+    textForEstimate,
     affordableOutputTokens,
     clampOutputTokens,
     stripThinkingBlocks,
@@ -449,10 +450,6 @@ export const agentAiUtils = {
     buildStepParts,
     findDataArray,
     buildLargeResultPreview,
-}
-
-export const agentTokenEstimate = {
-    textForEstimate,
 }
 
 export type { ContentPartLike }
