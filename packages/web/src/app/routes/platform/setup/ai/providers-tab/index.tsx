@@ -8,6 +8,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
+  Bot,
   ChevronRight,
   Cpu,
   Layers,
@@ -21,6 +22,7 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import {
+  AdminEmpty,
   AdminPageHeader,
   AdminSection,
   SettingsPanel,
@@ -581,29 +583,28 @@ function EmptyProviders({
 }: {
   onConnect: (provider?: AIProviderName) => void;
 }) {
-  const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
-    SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
-  ).filter((info): info is AiProviderInfo => info !== undefined);
-  const others = SUPPORTED_AI_PROVIDERS.filter(
-    ({ provider }) => !RECOMMENDED_PROVIDERS.includes(provider),
-  );
-
   return (
     <>
-      <AdminSection title={t('Recommended')}>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {recommended.map((info) => (
-            <ProviderTile
-              key={info.provider}
-              info={info}
-              tagline={recommendedTagline({ provider: info.provider })}
-              onConnect={() => onConnect(info.provider)}
-            />
-          ))}
-        </div>
-      </AdminSection>
-      <AdminSection title={t('Other providers')}>
-        <ProviderTileGrid providers={others} onConnect={onConnect} />
+      <AdminEmpty
+        icon={<Bot />}
+        title={t('No providers yet')}
+        description={t('Add an API key to turn on chat, agents and AI steps.')}
+        action={
+          <Button
+            variant="outline"
+            onClick={() => onConnect()}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
+            <Plus className="size-4" />
+            {t('Add key')}
+          </Button>
+        }
+      />
+      <AdminSection title={t('Choose a provider')}>
+        <ProviderTileGrid
+          providers={SUPPORTED_AI_PROVIDERS}
+          onConnect={onConnect}
+        />
       </AdminSection>
     </>
   );
@@ -618,10 +619,11 @@ function ProviderTileGrid({
 }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {byName(providers).map((info) => (
+      {byImportance(providers).map((info) => (
         <ProviderTile
           key={info.provider}
           info={info}
+          recommended={RECOMMENDED_PROVIDERS.includes(info.provider)}
           onConnect={() => onConnect(info.provider)}
         />
       ))}
@@ -631,11 +633,11 @@ function ProviderTileGrid({
 
 function ProviderTile({
   info,
-  tagline,
+  recommended,
   onConnect,
 }: {
   info: AiProviderInfo;
-  tagline?: string;
+  recommended: boolean;
   onConnect: () => void;
 }) {
   return (
@@ -645,18 +647,21 @@ function ProviderTile({
       className={cn(
         adminSurface.card,
         'group flex min-w-0 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
+        recommended && 'border-accent-8',
       )}
       {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
     >
       <ProviderLogo info={info} />
-      <span className="flex min-w-0 flex-1 flex-col">
+      <span className="flex min-w-0 flex-1 items-center gap-2">
         <TextWithTooltip tooltipMessage={info.name}>
           <span className="truncate text-sm font-medium text-gray-12">
             {info.name}
           </span>
         </TextWithTooltip>
-        {tagline && (
-          <span className="truncate text-xs text-gray-11">{tagline}</span>
+        {recommended && (
+          <span className="shrink-0 text-xs font-medium text-accent-11">
+            {t('Recommended')}
+          </span>
         )}
       </span>
       <ChevronRight className="size-4 shrink-0 text-gray-9 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
@@ -664,16 +669,12 @@ function ProviderTile({
   );
 }
 
-function byName(providers: AiProviderInfo[]): AiProviderInfo[] {
-  return [...providers].sort((a, b) => {
-    if (a.provider === AIProviderName.CUSTOM) {
-      return 1;
-    }
-    if (b.provider === AIProviderName.CUSTOM) {
-      return -1;
-    }
-    return a.name.localeCompare(b.name);
-  });
+function byImportance(providers: AiProviderInfo[]): AiProviderInfo[] {
+  const rank = (provider: AIProviderName) => {
+    const index = PROVIDERS_BY_IMPORTANCE.indexOf(provider);
+    return index === -1 ? PROVIDERS_BY_IMPORTANCE.length : index;
+  };
+  return [...providers].sort((a, b) => rank(a.provider) - rank(b.provider));
 }
 
 function ProvidersSkeleton() {
@@ -735,17 +736,23 @@ const RECOMMENDED_PROVIDERS: AIProviderName[] = [
   AIProviderName.OPENAI,
 ];
 
-function recommendedTagline({
-  provider,
-}: {
-  provider: AIProviderName;
-}): string | undefined {
-  switch (provider) {
-    case AIProviderName.ANTHROPIC:
-      return t('Claude models');
-    case AIProviderName.OPENAI:
-      return t('GPT models');
-    default:
-      return undefined;
-  }
-}
+const PROVIDERS_BY_IMPORTANCE: AIProviderName[] = [
+  AIProviderName.ANTHROPIC,
+  AIProviderName.OPENAI,
+  AIProviderName.GOOGLE,
+  AIProviderName.AZURE,
+  AIProviderName.BEDROCK,
+  AIProviderName.VERTEX,
+  AIProviderName.META,
+  AIProviderName.MISTRAL,
+  AIProviderName.XAI,
+  AIProviderName.DEEPSEEK,
+  AIProviderName.OPENROUTER,
+  AIProviderName.QWEN,
+  AIProviderName.NVIDIA,
+  AIProviderName.MOONSHOT,
+  AIProviderName.MINIMAX,
+  AIProviderName.ZAI,
+  AIProviderName.CLOUDFLARE_GATEWAY,
+  AIProviderName.CUSTOM,
+];
