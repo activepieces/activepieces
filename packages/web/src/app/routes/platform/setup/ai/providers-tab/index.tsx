@@ -7,7 +7,15 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
+import {
+  ChevronRight,
+  Cpu,
+  Layers,
+  LayoutGrid,
+  Lock,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -454,26 +462,31 @@ function ConfigRow({
           </p>
           <KeyStatusBadge status={config.status} />
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p className="w-fit truncate text-xs text-gray-11">
-              {modelsLabel}
-              <span aria-hidden> · </span>
-              {projectsLabel}
-              {tierCount > 0 && (
-                <>
-                  <span aria-hidden> · </span>
-                  {t('usedByTiersCount', { count: tierCount })}
-                </>
-              )}
-            </p>
-          </TooltipTrigger>
-          {config.modelIds.length > 0 && (
-            <TooltipContent className="max-w-64">
-              {config.modelIds.join(', ')}
-            </TooltipContent>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-11">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1">
+                <Cpu className="size-3.5" />
+                {modelsLabel}
+              </span>
+            </TooltipTrigger>
+            {config.modelIds.length > 0 && (
+              <TooltipContent className="max-w-64">
+                {config.modelIds.join(', ')}
+              </TooltipContent>
+            )}
+          </Tooltip>
+          <span className="inline-flex items-center gap-1">
+            <LayoutGrid className="size-3.5" />
+            {projectsLabel}
+          </span>
+          {tierCount > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Layers className="size-3.5" />
+              {t('usedByTiersCount', { count: tierCount })}
+            </span>
           )}
-        </Tooltip>
+        </div>
       </div>
 
       {config.projectScope !== 'all' && (
