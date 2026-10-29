@@ -17,7 +17,7 @@ export const updatePersonAi = createAction({
   outputSchema: folkOutputSchemas.person,
   aiMetadata: {
     description:
-      'Updates a Folk person by ID (per_...). Only fields you give change; omitted fields stay as they are. Lists (emails, phones, URLs, addresses, companies, groups) replace the whole current list, so read the person first with Get Person and include values to keep. To empty a field, name it in Clear Fields. Custom Field Values update only the named fields; their groups are added while the person keeps existing groups. Returns the updated person.',
+      'Updates a Folk person by ID (per_...). Only fields you give change; omitted fields stay as they are. Lists (emails, phones, URLs, addresses, companies, groups) replace the whole current list, so read the person first with Get Person and include values to keep. An empty list keeps the current values. To empty a field or remove all groups, name it in Clear Fields; leaving a group deletes its custom field values. Custom Field Values update only the named fields; their groups are added while the person keeps existing groups. Returns the updated person.',
     idempotent: false,
   },
   props: {
@@ -32,11 +32,13 @@ export const updatePersonAi = createAction({
     const body = folkRecordBody.personBody({ props, clear });
     const customFieldValues = folkFields.customFieldValues({ value: props.customFieldValues });
     const groupIds = folkFields.idList({ value: props.groupIds, label: 'Group IDs', prefix: 'grp_' });
-    const currentGroupIds =
-      groupIds === undefined && customFieldValues !== undefined
-        ? await folkAi.currentGroupIdsOf({ auth: context.auth, path })
-        : undefined;
-    const groups = folkAi.mergedGroups({ groupIds, customFieldValues, currentGroupIds });
+    const groups = await folkAi.groupsForUpdate({
+      auth: context.auth,
+      path,
+      groupIds,
+      clearGroups: clear.includes('groups'),
+      customFieldValues,
+    });
     const finalBody = {
       ...body,
       ...(groups !== undefined ? { groups: groups.map((id) => ({ id })) } : {}),

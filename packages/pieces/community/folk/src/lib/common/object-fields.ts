@@ -19,7 +19,7 @@ function objectProps() {
 }
 
 function objectBodyProps({ forUpdate }: { forUpdate: boolean }) {
-  const replaces = forUpdate ? ' Replaces the current list; an empty list removes every link.' : '';
+  const replaces = forUpdate ? ' Replaces the current links. Empty keeps them; to remove all, pick the list in Clear Fields.' : '';
   return {
     personIds: folkAi.listProp({ displayName: 'Person IDs', description: `People in this group to link (per_...); Folk ignores records outside the group.${replaces}` }),
     companyIds: folkAi.listProp({ displayName: 'Company IDs', description: `Companies in this group to link (com_...); Folk ignores records outside the group.${replaces}` }),
@@ -32,10 +32,26 @@ function objectBodyProps({ forUpdate }: { forUpdate: boolean }) {
   };
 }
 
-function objectBody({ props }: { props: ObjectInput }): Record<string, unknown> {
+function clearFieldsProp() {
+  return Property.StaticMultiSelectDropdown({
+    displayName: 'Clear Fields',
+    description: 'Links to remove. A list named here is emptied even if IDs are also given for it.',
+    required: false,
+    options: {
+      options: [
+        { label: 'Person IDs (unlink all people)', value: 'people' },
+        { label: 'Company IDs (unlink all companies)', value: 'companies' },
+      ],
+    },
+  });
+}
+
+function objectBody({ props, clear = [] }: { props: ObjectInput; clear?: string[] }): Record<string, unknown> {
   const name = folkFields.textValue({ value: props.name });
-  const people = folkFields.idList({ value: props.personIds, label: 'Person IDs', prefix: 'per_' });
-  const companies = folkFields.idList({ value: props.companyIds, label: 'Company IDs', prefix: 'com_' });
+  const people = clear.includes('people') ? [] : nonEmpty(folkFields.idList({ value: props.personIds, label: 'Person IDs', prefix: 'per_' }));
+  const companies = clear.includes('companies')
+    ? []
+    : nonEmpty(folkFields.idList({ value: props.companyIds, label: 'Company IDs', prefix: 'com_' }));
   const fields = folkFields.jsonObject({ value: props.customFieldValues, label: 'Custom Field Values' });
   return {
     ...(name !== undefined ? { name } : {}),
@@ -45,6 +61,10 @@ function objectBody({ props }: { props: ObjectInput }): Record<string, unknown> 
   };
 }
 
-export const folkObjectFields = { objectPath, objectProps, objectBodyProps, objectBody };
+function nonEmpty(list: string[] | undefined): string[] | undefined {
+  return list === undefined || list.length === 0 ? undefined : list;
+}
+
+export const folkObjectFields = { objectPath, objectProps, objectBodyProps, objectBody, clearFieldsProp, CLEAR_FIELDS: ['people', 'companies'] };
 
 type ObjectInput = { name?: unknown; personIds?: unknown; companyIds?: unknown; customFieldValues?: unknown };

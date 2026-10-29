@@ -167,7 +167,7 @@ function lowerCaseHeaders({ headers }: { headers: Record<string, unknown> }): Re
   );
 }
 
-const TOLERANCE_SECONDS = 900;
+const TOLERANCE_SECONDS = 3600;
 const MAX_SEEN_IDS = 200;
 const WEBHOOK_ID_KEY = '_webhookId';
 const SECRET_KEY = '_signingSecret';

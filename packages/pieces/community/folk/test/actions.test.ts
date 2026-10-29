@@ -24,6 +24,8 @@ import { deleteGroupObject } from '../src/lib/actions/ai/delete-group-object';
 import { createGroupObject } from '../src/lib/actions/ai/create-group-object';
 import { updateGroupObject } from '../src/lib/actions/ai/update-group-object';
 import { folkCustomApiCall } from '../src/lib/actions/custom-api-call';
+import { createTask } from '../src/lib/actions/ai/create-task';
+import { PropertyType } from '@activepieces/pieces-framework';
 
 const GRP = 'grp_0a873e70-8534-40e7-a275-1a187381118f';
 const PER = 'per_b8ecc039-a7b2-4d4d-bf1d-7fa3d2eabdfe';
@@ -229,10 +231,13 @@ describe('group objects', () => {
     expect(call().body).toEqual({ name: 'Deal', people: [{ id: PER }], customFieldValues: { Status: 'Lead' } });
   });
 
-  it('update keeps an empty link list so all links can be removed', async () => {
+  it('update unlinks people only through Clear Fields', async () => {
     sendRequest.mockResolvedValueOnce(ok({ data: { id: 'obj_1' } }));
-    await runAction({ action: updateGroupObject, propsValue: { groupId: GRP, objectType: 'Object', objectId: 'obj_1', personIds: [], companyIds: [] } });
-    expect(call().body).toEqual({ people: [], companies: [] });
+    await runAction({
+      action: updateGroupObject,
+      propsValue: { groupId: GRP, objectType: 'Object', objectId: 'obj_1', personIds: [], companyIds: [], clearFields: ['people'] },
+    });
+    expect(call().body).toEqual({ people: [] });
   });
 
   it('delete sends DELETE to the object path', async () => {
@@ -296,5 +301,81 @@ describe('errors', () => {
     sendRequest.mockResolvedValueOnce(ok({ data: { id: 'usr_1' } }));
     expect(await folkAuth.validate?.({ auth: 'k', server: serverContext() })).toEqual({ valid: true });
     expect(call(2).url).toBe('https://api.folk.app/v1/users/me');
+  });
+});
+
+function agentDefaults(action: { props: Record<string, { type: string; required: boolean }> }): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(action.props).flatMap(([name, prop]) => {
+      if (prop.required) {
+        return [];
+      }
+      if (prop.type === PropertyType.ARRAY) {
+        return [[name, []]];
+      }
+      if (prop.type === PropertyType.CHECKBOX) {
+        return [[name, false]];
+      }
+      if (prop.type === PropertyType.DYNAMIC) {
+        return [[name, {}]];
+      }
+      return [];
+    })
+  );
+}
+
+describe('agent-filled defaults ([] for lists, false for checkboxes) send only the given field', () => {
+  it('update_person_ai sends only the job title', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: PER } }));
+    await runAction({ action: updatePersonAi, propsValue: { ...agentDefaults(updatePersonAi), personId: PER, jobTitle: 'CTO' } });
+    expect(sendRequest).toHaveBeenCalledTimes(1);
+    expect(call().body).toEqual({ jobTitle: 'CTO' });
+  });
+
+  it('update_person_ai with only custom fields keeps current groups', async () => {
+    sendRequest
+      .mockResolvedValueOnce(ok({ data: { id: PER, groups: [{ id: 'grp_other' }] } }))
+      .mockResolvedValueOnce(ok({ data: { id: PER } }));
+    await runAction({
+      action: updatePersonAi,
+      propsValue: { ...agentDefaults(updatePersonAi), personId: PER, customFieldValues: { [GRP]: { Status: 'Won' } } },
+    });
+    expect(call(1).body).toEqual({ groups: [{ id: 'grp_other' }, { id: GRP }], customFieldValues: { [GRP]: { Status: 'Won' } } });
+  });
+
+  it('update_person_ai removes groups only through Clear Fields', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: PER } }));
+    await runAction({ action: updatePersonAi, propsValue: { ...agentDefaults(updatePersonAi), personId: PER, clearFields: ['groups'] } });
+    expect(call().body).toEqual({ groups: [] });
+  });
+
+  it('update_company_ai sends only the industry', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: 'com_1' } }));
+    await runAction({ action: updateCompanyAi, propsValue: { ...agentDefaults(updateCompanyAi), companyId: 'com_1', industry: 'SaaS' } });
+    expect(call().body).toEqual({ industry: 'SaaS' });
+  });
+
+  it('update_group_object sends only the custom field', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: 'obj_1' } }));
+    await runAction({
+      action: updateGroupObject,
+      propsValue: { ...agentDefaults(updateGroupObject), groupId: GRP, objectType: 'Deals', objectId: 'obj_1', customFieldValues: { Status: 'Won' } },
+    });
+    expect(call().body).toEqual({ customFieldValues: { Status: 'Won' } });
+  });
+
+  it('update_task sends only the title and keeps visibility', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: 'tsk_1' } }));
+    await runAction({ action: updateTask, propsValue: { ...agentDefaults(updateTask), taskId: 'tsk_1', title: 'Call back' } });
+    expect(call().body).toEqual({ title: 'Call back' });
+  });
+
+  it('create_task leaves visibility to Folk unless Yes or No is picked', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: 'tsk_1' } })).mockResolvedValueOnce(ok({ data: { id: 'tsk_2' } }));
+    const base = { ...agentDefaults(createTask), title: 'Call', dueAt: '2026-11-01', entityId: PER };
+    await runAction({ action: createTask, propsValue: base });
+    expect(call(0).body).not.toHaveProperty('isPublic');
+    await runAction({ action: createTask, propsValue: { ...base, isPublic: 'no' } });
+    expect(call(1).body).toMatchObject({ isPublic: false });
   });
 });

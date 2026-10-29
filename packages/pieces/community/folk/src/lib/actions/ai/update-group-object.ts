@@ -4,6 +4,7 @@ import { folkAi } from '../../common/ai-common';
 import { folkAuth } from '../../common/auth';
 import { folkClient } from '../../common/client';
 import { folkObjectFields } from '../../common/object-fields';
+import { folkRecordBody } from '../../common/record-body';
 import { folkOutputSchemas } from '../../output-schemas';
 
 export const updateGroupObject = createAction({
@@ -16,7 +17,7 @@ export const updateGroupObject = createAction({
   outputSchema: folkOutputSchemas.object,
   aiMetadata: {
     description:
-      'Updates a Folk group object (for example a deal) by ID. Only fields you give change; Person IDs and Company IDs replace the current links; Custom Field Values change only the named fields. Returns the updated object.',
+      'Updates a Folk group object (for example a deal) by ID. Only fields you give change; Person IDs and Company IDs replace the current links (an empty list keeps them; to unlink everyone, name people or companies in Clear Fields); Custom Field Values change only the named fields. Returns the updated object.',
     idempotent: false,
   },
   props: {
@@ -24,10 +25,12 @@ export const updateGroupObject = createAction({
     objectId: folkAi.idProp({ displayName: 'Object ID', description: 'ID of the object to update (obj_...).' }),
     name: Property.ShortText({ displayName: 'Name', description: 'New name.', required: false }),
     ...folkObjectFields.objectBodyProps({ forUpdate: true }),
+    clearFields: folkObjectFields.clearFieldsProp(),
   },
   async run(context) {
     const p = context.propsValue;
-    const body = folkObjectFields.objectBody({ props: p });
+    const clear = folkRecordBody.clearList({ value: p.clearFields, allowed: folkObjectFields.CLEAR_FIELDS });
+    const body = folkObjectFields.objectBody({ props: p, clear });
     if (Object.keys(body).length === 0) {
       throw new Error('Nothing to update. Give at least one field.');
     }

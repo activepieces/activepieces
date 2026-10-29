@@ -17,10 +17,16 @@ function taskProps() {
       description: 'User IDs (usr_...) or emails of workspace users; use one kind only. If empty on create, Folk assigns the API key owner.',
       required: false,
     }),
-    isPublic: Property.Checkbox({
+    isPublic: Property.StaticDropdown({
       displayName: 'Visible To Everyone',
-      description: 'On: the whole workspace sees the task. Off: only assignees. Folk default is on.',
+      description: 'Yes: the whole workspace sees the task. No: only assignees. Empty leaves it as is (new tasks: Folk default, visible).',
       required: false,
+      options: {
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+        ],
+      },
     }),
   };
 }
@@ -80,7 +86,7 @@ function commonBody({ props }: { props: TaskInput }): Record<string, unknown> {
     ...(dueTime !== undefined ? { dueTime } : {}),
     ...(recurrence !== undefined ? { recurrenceFrequency: recurrence } : {}),
     ...(assignees !== undefined ? { assignedUsers: assignees } : {}),
-    ...(typeof props.isPublic === 'boolean' ? { isPublic: props.isPublic } : {}),
+    ...(props.isPublic === 'yes' ? { isPublic: true } : props.isPublic === 'no' ? { isPublic: false } : {}),
   };
 }
 

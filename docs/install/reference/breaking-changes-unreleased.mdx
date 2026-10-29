@@ -8,6 +8,19 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Folk 0.2.0: eight Folk actions are no longer agent tools, and Update Person/Company behave differently
+
+From Folk 0.2.0, **Create Person**, **Create Company**, **Get Person**, **Get Company**, **List People**, **Find Company**, **Update Person** and **Update Company** (the existing flow-builder actions) are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents get new tools instead: **Create Person**, **Create Company**, **Get Person**, **Get Company**, **Search People** (replaces List People), **Search Companies** (replaces Find Company), **Update Person** and **Update Company** (the `*_ai` actions, which take IDs and plain lists).
+
+Once a step is upgraded to Folk 0.2.0:
+
+- **Update Company** no longer clears Emails, Phones, URLs or Addresses when the list is left empty; an empty list now keeps the current values.
+- **Update Person** and **Update Company** fail with "Nothing to update" when no field is filled in, instead of sending an empty update.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used these eight actions at the new agent tools listed above. Flow steps keep running on the version they were built with until you upgrade them; when you upgrade, make sure Update Person and Update Company steps always fill in at least one field, and use the Folk app (or Custom API Call) if a flow relied on an empty list to clear a Company field.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.

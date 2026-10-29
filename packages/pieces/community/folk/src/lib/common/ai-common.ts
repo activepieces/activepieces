@@ -54,6 +54,25 @@ function mergedGroups({
   return [...new Set([...base, ...fieldGroups])];
 }
 
+async function groupsForUpdate({
+  auth,
+  path,
+  groupIds,
+  clearGroups,
+  customFieldValues,
+}: {
+  auth: FolkAuthValue;
+  path: string;
+  groupIds: string[] | undefined;
+  clearGroups: boolean;
+  customFieldValues: Record<string, unknown> | undefined;
+}): Promise<string[] | undefined> {
+  const given = clearGroups ? [] : groupIds !== undefined && groupIds.length > 0 ? groupIds : undefined;
+  const currentGroupIds =
+    given === undefined && customFieldValues !== undefined ? await currentGroupIdsOf({ auth, path }) : undefined;
+  return mergedGroups({ groupIds: given, customFieldValues, currentGroupIds });
+}
+
 async function currentGroupIdsOf({ auth, path }: { auth: FolkAuthValue; path: string }): Promise<string[]> {
   const record = await folkClient.getData<{ groups?: { id?: unknown }[] }>({ auth, path });
   return (record.groups ?? []).map((group) => group.id).filter((id): id is string => typeof id === 'string');
@@ -170,6 +189,7 @@ export const folkAi = {
   extraFiltersProp,
   mergedGroups,
   currentGroupIdsOf,
+  groupsForUpdate,
   filterQuery,
   extraFilters,
   deleteRecord,

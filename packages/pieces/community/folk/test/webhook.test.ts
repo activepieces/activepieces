@@ -38,7 +38,7 @@ describe('signature + dedupe', () => {
     store.data.set('_signingSecret', SECRET);
     const forged = delivery({ secret: `whsec_${Buffer.from('other').toString('base64')}` });
     expect(await handlers.run({ store, payload: forged })).toEqual([]);
-    const stale = delivery({ ts: Math.floor(Date.now() / 1000) - 3600 });
+    const stale = delivery({ ts: Math.floor(Date.now() / 1000) - folkWebhook.TOLERANCE_SECONDS - 60 });
     expect(await handlers.run({ store, payload: stale })).toEqual([]);
     const other = delivery({ body: { id: 'evt_2', type: 'person.deleted', data: { id: 'per_1' } } });
     expect(await handlers.run({ store, payload: other })).toEqual([]);

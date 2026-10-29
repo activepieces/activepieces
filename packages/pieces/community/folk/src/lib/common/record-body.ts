@@ -43,7 +43,7 @@ function personProps({ forUpdate }: { forUpdate: boolean }) {
     }),
     groupIds: folkAi.listProp({
       displayName: 'Group IDs',
-      description: `IDs of groups (grp_...) to put the person in. Get them from List Groups.${forUpdate ? ' Replaces all current groups, so include the ones to keep.' : ''}`,
+      description: `IDs of groups (grp_...) to put the person in. Get them from List Groups.${forUpdate ? GROUPS_UPDATE : ''}`,
     }),
     customFieldValues: customFieldValuesProp(),
   };
@@ -72,7 +72,7 @@ function companyProps({ forUpdate }: { forUpdate: boolean }) {
     addresses: folkAi.listProp({ displayName: 'Addresses', description: `Postal addresses (max 20).${forUpdate ? REPLACES : ''}` }),
     groupIds: folkAi.listProp({
       displayName: 'Group IDs',
-      description: `IDs of groups (grp_...) to put the company in.${forUpdate ? ' Replaces all current groups, so include the ones to keep.' : ''}`,
+      description: `IDs of groups (grp_...) to put the company in.${forUpdate ? GROUPS_UPDATE : ''}`,
     }),
     customFieldValues: customFieldValuesProp(),
   };
@@ -209,8 +209,10 @@ function fundingValue({ value }: { value: unknown }): number | undefined {
   return parsed;
 }
 
-const REPLACES = ' Replaces the whole current list, so include existing values you want to keep.';
-const REPLACES_COMPANIES = ' Company IDs and names together replace all current company links.';
+const REPLACES = ' Replaces the whole current list, so include existing values you want to keep. Empty keeps the current list; use Clear Fields to empty it.';
+const GROUPS_UPDATE =
+  ' Replaces all current groups, so include the ones to keep. Empty keeps the current groups; to remove all, pick groups in Clear Fields. Leaving a group also deletes its custom field values.';
+const REPLACES_COMPANIES = ' Company IDs and names together replace all current company links. Empty keeps the current links; use Clear Fields to remove them.';
 const GENDERS = ['Male', 'Female', 'Unknown', 'Other'];
 const EMPLOYEE_RANGES = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1001-5000', '5001-10000', '10000+'];
 const LIST_LABELS = { emails: 'Emails', phones: 'Phones', urls: 'URLs', addresses: 'Addresses' };
@@ -224,12 +226,14 @@ const PERSON_CLEAR_VALUES: Record<string, unknown> = {
   urls: [],
   addresses: [],
   companies: [],
+  groups: [],
 };
 const COMPANY_CLEAR_VALUES: Record<string, unknown> = {
   emails: [],
   phones: [],
   urls: [],
   addresses: [],
+  groups: [],
 };
 
 export const folkRecordBody = {

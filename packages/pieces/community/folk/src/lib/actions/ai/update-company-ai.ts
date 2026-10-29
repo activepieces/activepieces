@@ -17,7 +17,7 @@ export const updateCompanyAi = createAction({
   outputSchema: folkOutputSchemas.company,
   aiMetadata: {
     description:
-      'Updates a Folk company by ID (com_...). Only fields you give change; omitted fields stay as they are. Lists (emails, phones, URLs, addresses, groups) replace the whole current list, so read the company first with Get Company and include values to keep. To empty emails, phones, URLs or addresses, name them in Clear Fields; the Folk API does not blank company text or number fields once set, so overwrite them instead. Custom Field Values update only the named fields; their groups are added while the company keeps existing groups. Returns the updated company.',
+      'Updates a Folk company by ID (com_...). Only fields you give change; omitted fields stay as they are. Lists (emails, phones, URLs, addresses, groups) replace the whole current list, so read the company first with Get Company and include values to keep. An empty list keeps the current values. To empty emails, phones, URLs, addresses or groups, name them in Clear Fields (leaving a group deletes its custom field values); the Folk API does not blank company text or number fields once set, so overwrite them instead. Custom Field Values update only the named fields; their groups are added while the company keeps existing groups. Returns the updated company.',
     idempotent: false,
   },
   props: {
@@ -33,11 +33,13 @@ export const updateCompanyAi = createAction({
     const body = folkRecordBody.companyBody({ props, clear });
     const customFieldValues = folkFields.customFieldValues({ value: props.customFieldValues });
     const groupIds = folkFields.idList({ value: props.groupIds, label: 'Group IDs', prefix: 'grp_' });
-    const currentGroupIds =
-      groupIds === undefined && customFieldValues !== undefined
-        ? await folkAi.currentGroupIdsOf({ auth: context.auth, path })
-        : undefined;
-    const groups = folkAi.mergedGroups({ groupIds, customFieldValues, currentGroupIds });
+    const groups = await folkAi.groupsForUpdate({
+      auth: context.auth,
+      path,
+      groupIds,
+      clearGroups: clear.includes('groups'),
+      customFieldValues,
+    });
     const finalBody = {
       ...body,
       ...(groups !== undefined ? { groups: groups.map((id) => ({ id })) } : {}),
