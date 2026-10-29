@@ -69,6 +69,8 @@ import { platformTeardownJobs } from './ee/platform/platform-teardown-jobs'
 import { eventDestinationEntitlementHooks } from './ee/platform-webhooks/event-destination-entitlement-hooks'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
+import { personalProjectsModule } from './ee/projects/personal-projects/personal-projects.module'
+import { personalProjectsService } from './ee/projects/personal-projects/personal-projects.service'
 import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
@@ -79,6 +81,7 @@ import { projectRoleModule } from './ee/projects/project-role/project-role.modul
 import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
+import { userEnterpriseHooks } from './ee/users/ee-user-hooks'
 import { userModule } from './ee/users/user.module'
 import { eventDestinationHooks } from './event-destinations/event-destinations-hooks'
 import { fileModule } from './file/file.module'
@@ -126,6 +129,7 @@ import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
 import { platformUserModule } from './user/platform/platform-user-module'
+import { userHooks } from './user/user-hooks'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
 import { resumePageHooks } from './waitpoints/resume-page-hooks'
@@ -291,6 +295,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS, (data) => personalProjectsService(app.log).createMissingHandler(data))
 
     systemJobHandlers.registerJobHandler(SystemJobName.CHAT_STALE_SWEEP, async () => {
         await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
@@ -375,6 +380,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
+            await app.register(personalProjectsModule)
             await app.register(projectReleaseModule)
             await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
@@ -387,6 +393,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
+            userHooks.set(userEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
@@ -418,6 +425,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
+            await app.register(personalProjectsModule)
             await app.register(projectReleaseModule)
             await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
@@ -430,6 +438,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
+            userHooks.set(userEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
