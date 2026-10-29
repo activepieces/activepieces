@@ -137,6 +137,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Message": "New Message",
   "Triggers when a message is published to a ntfy topic. Needs the server to cache messages (ntfy.sh keeps them 12 hours); messages sent with \"Do not cache\" are never seen.": "Triggers when a message is published to a ntfy topic. Needs the server to cache messages (ntfy.sh keeps them 12 hours); messages sent with \"Do not cache\" are never seen.",
   "Only trigger for messages with any of these priorities. Leave empty for all.": "Only trigger for messages with any of these priorities. Leave empty for all.",

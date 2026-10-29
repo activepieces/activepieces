@@ -1,4 +1,8 @@
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
+import { githubDarkInit, githubLight } from '@uiw/codemirror-theme-github';
+
+const githubDark = githubDarkInit({
+  settings: { background: 'transparent', gutterBackground: 'transparent' },
+});
 
 const codeMirror = (resolvedTheme: string) =>
   resolvedTheme === 'dark' ? githubDark : githubLight;

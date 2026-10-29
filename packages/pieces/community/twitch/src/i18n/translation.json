@@ -24,6 +24,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Streamer(s) Go Live": "Streamer(s) Go Live",
   "Triggers when a stream from a list of streamers has started": "Triggers when a stream from a list of streamers has started",
   "Streamer Name(s)/URL(s)": "Streamer Name(s)/URL(s)",

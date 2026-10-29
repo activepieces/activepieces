@@ -73,6 +73,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Conversation Started": "Conversation Started",
   "New or Updated Contact": "New or Updated Contact",
   "Trigger when a new conversation is started or an existing conversation is updated": "Trigger when a new conversation is started or an existing conversation is updated",

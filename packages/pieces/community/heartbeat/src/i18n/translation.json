@@ -283,6 +283,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Member Joined": "New Member Joined",
   "New Thread": "New Thread",
   "New Mention in Thread or Comment": "New Mention in Thread or Comment",

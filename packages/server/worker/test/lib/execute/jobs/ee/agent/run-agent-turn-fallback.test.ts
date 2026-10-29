@@ -18,6 +18,28 @@ describe('a platform tier chat turn', () => {
         expect(textOf(turn)).toBe('from backup')
     })
 
+    it.each([
+        ['statusCode, the shape the ai sdk uses', { statusCode: 503, responseBody: '{"error":"overloaded"}' }],
+        ['status, the shape a client library uses', { status: 503, body: '{"error":"overloaded"}' }],
+        ['no status, only a nested message', { error: { message: 'service unavailable, try another upstream' } }],
+    ])('answers on the next model when the main model fails with a plain object carrying %s', async (_name, raw) => {
+        const turn = await runTurn({ models: [tierModel({ modelId: 'main', model: failingModelWithoutAnError(raw) }), tierModel({ modelId: 'backup', model: answeringModel('from backup') })] })
+
+        expect(turn.streamError).toBeNull()
+        expect(turn.answeredBy.modelId).toBe('backup')
+        expect(textOf(turn)).toBe('from backup')
+    })
+
+    it('says what the provider returned instead of [object Object] when the whole tier is down', async () => {
+        const raw = { error: { message: 'service unavailable, try another upstream' } }
+
+        const turn = await runTurn({ models: [tierModel({ modelId: 'main', model: failingModelWithoutAnError(raw) }), tierModel({ modelId: 'backup', model: failingModelWithoutAnError(raw) })] })
+
+        expect(turn.allModelsFailed).toBe(true)
+        expect(turn.streamError?.message).toContain('service unavailable')
+        expect(turn.streamError?.message).not.toContain('[object Object]')
+    })
+
     it('continues on the next model after the fast step already answered and ran a tool, without running it again', async () => {
         const search = vi.fn(async () => ({ content: [{ type: 'text', text: 'found' }] }))
         const backup = answeringModel('done')
@@ -218,6 +240,14 @@ function failingModel({ statusCode }: { statusCode: number }): MockLanguageModel
     return new MockLanguageModelV3({
         doStream: async () => {
             throw new APICallError({ message: `HTTP ${statusCode}`, url: 'https://llm.example/v1', requestBodyValues: {}, statusCode, isRetryable: false })
+        },
+    })
+}
+
+function failingModelWithoutAnError(raw: unknown): MockLanguageModelV3 {
+    return new MockLanguageModelV3({
+        doStream: async () => {
+            throw raw
         },
     })
 }

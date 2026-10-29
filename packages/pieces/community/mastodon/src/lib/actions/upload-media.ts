@@ -1,5 +1,5 @@
 import FormData from 'form-data';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mastodonAuth } from '../..';
 import { mastodonClient, mastodonUtils } from '../common/client';
@@ -10,8 +10,7 @@ export const uploadMedia = createAction({
   name: 'upload_media',
   classification: 'WRITE',
   displayName: 'Upload Media',
-  description:
-    'Upload an image, video or audio file, then map its Media ID into Media IDs of Post Status, Schedule Status or Edit Status to attach it.',
+  description: 'Upload an image, video or audio file to attach to a status.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,7 +18,27 @@ export const uploadMedia = createAction({
     idempotent: false,
   },
   outputSchema: mappedMediaOutputSchema,
+  propertyGroups: [
+    {
+      key: 'upload',
+      display: 'section',
+      label: 'Upload',
+      icon: 'paperclip',
+      props: ['upload_info', 'file'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'text',
+      props: ['description', 'focus'],
+    },
+  ],
   props: {
+    upload_info: Property.MarkDown({
+      value: 'Map the returned Media ID into Media IDs on Post, Schedule or Edit Status.',
+      variant: MarkdownVariant.INFO,
+    }),
     file: Property.File({
       displayName: 'File',
       description: 'The image, video or audio file to upload.',
@@ -27,13 +46,14 @@ export const uploadMedia = createAction({
     }),
     description: Property.LongText({
       displayName: 'Alt Text',
-      description: 'Describe the media for people using screen readers (alt text), for example "A cat asleep on a keyboard".',
+      description: 'Describes the media for people using screen readers.',
+      placeholder: 'A cat asleep on a keyboard',
       required: false,
     }),
     focus: Property.ShortText({
       displayName: 'Focal Point',
-      description:
-        'Focal point for thumbnail cropping as two comma-separated numbers from -1.0 to 1.0, for example 0.0,0.5.',
+      description: 'Where thumbnails centre, as x,y from -1.0 to 1.0.',
+      placeholder: '0.0,0.5',
       required: false,
     }),
   },

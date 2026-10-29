@@ -126,7 +126,8 @@ export const salesforceAuth = PieceAuth.OAuth2({
 		environment: Property.ShortText({
 			displayName: 'Salesforce Domain',
 			description:
-				'Enter your Salesforce domain. Use "login.salesforce.com" for Production, "test.salesforce.com" for Sandbox, or your custom My Domain (e.g. "mycompany.my.salesforce.com" or "mycompany.sandbox.my.salesforce.com").',
+				'login.salesforce.com for production, test.salesforce.com for a sandbox, or your My Domain.',
+			placeholder: 'mycompany.my.salesforce.com',
 			required: true,
 			defaultValue: 'login.salesforce.com',
 		}),
@@ -163,7 +164,7 @@ export const salesforceAuth = PieceAuth.OAuth2({
 export const salesforce = createPiece({
 	displayName: 'Salesforce',
 	description: 'CRM software solutions and enterprise cloud computing',
-	minimumSupportedRelease: '0.87.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/salesforce.png',
 	authors: [
 		'HKudria',
@@ -287,6 +288,12 @@ export const salesforce = createPiece({
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),
+			props: {
+				url: {
+					description: 'Full URL, or a path relative to your Salesforce instance URL.',
+					placeholder: '/services/data/v56.0/sobjects/Account',
+				},
+			},
 		}),
 	],
 	triggers: [

@@ -92,6 +92,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Channel Message": "New Channel Message",
   "New Channel": "New Channel",
   "New Chat": "New Chat",

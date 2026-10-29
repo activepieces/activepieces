@@ -1,6 +1,7 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
+  MarkdownVariant,
   Property,
   StaticPropsValue,
   TriggerStrategy,
@@ -14,21 +15,27 @@ import { mastodonSampleData } from '../common/sample-data';
 import { statusOutputSchema } from '../output-schemas';
 
 const props = {
+  account_info: Property.MarkDown({
+    value:
+      'For accounts on other servers, only statuses that reach your server are seen; following the account helps.',
+    variant: MarkdownVariant.INFO,
+  }),
   account: Property.ShortText({
     displayName: 'Account',
     description:
-      'The handle of the account to watch, for example Gargron@mastodon.social (or just Gargron for an account on your own server). An Account ID from Lookup Account also works.',
+      'A username on your server, or user@domain for another server. An Account ID also works.',
+    placeholder: 'Gargron@mastodon.social',
     required: true,
   }),
   exclude_replies: Property.Checkbox({
     displayName: 'Skip Replies',
-    description: 'Do not trigger for replies the account posts to other people.',
+    description: 'Ignore the account\'s replies to other people.',
     required: false,
     defaultValue: false,
   }),
   exclude_reblogs: Property.Checkbox({
     displayName: 'Skip Boosts',
-    description: 'Do not trigger when the account boosts someone else\'s post.',
+    description: 'Ignore statuses the account boosts from others.',
     required: false,
     defaultValue: false,
   }),
@@ -94,13 +101,28 @@ export const newStatusFromAccount = createTrigger({
   name: 'new_status_from_account',
   classification: 'READ',
   displayName: 'New Status from Account',
-  description:
-    'Triggers when a specific account publishes a new post. For accounts on other servers, only posts that reach your server are seen, so following the account makes this reliable.',
+  description: 'Triggers when a chosen account publishes a new status.',
   aiMetadata: {
     description:
       'Fires once per new status published by one watched account (by handle or Account ID), optionally skipping its replies and boosts; the payload is the full status. For remote accounts only statuses federated to the connected server are visible.',
   },
   props,
+  propertyGroups: [
+    {
+      key: 'account',
+      display: 'section',
+      label: 'Account to Watch',
+      icon: 'user',
+      props: ['account_info', 'account'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['exclude_replies', 'exclude_reblogs'],
+    },
+  ],
   sampleData: mastodonSampleData.status,
   outputSchema: statusOutputSchema,
   type: TriggerStrategy.POLLING,

@@ -29,6 +29,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Call Created": "New Call Created",
   "Triggers when a new call is created.": "Triggers when a new call is created."
 }

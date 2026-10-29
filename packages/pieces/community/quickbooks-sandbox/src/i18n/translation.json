@@ -166,6 +166,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Invoice": "New Invoice",
   "New Expense (Purchase)": "New Expense (Purchase)",
   "New Customer": "New Customer",

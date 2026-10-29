@@ -29,6 +29,10 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             ...ApIdSchema,
             nullable: true,
         },
+        waitpointId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         aiCredits: {
             type: Number,
             nullable: true,

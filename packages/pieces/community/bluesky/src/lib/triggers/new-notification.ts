@@ -70,7 +70,7 @@ export const newNotification = createTrigger({
     });
   },
   async onDisable(context) {
-    await blueskyPolling.onDisable({ store: context.store, storeKey: STORE_KEY });
+    await blueskyPolling.onDisable({ store: context.store, storeKey: STORE_KEY, isRepublish: context.isRepublish });
   },
   async run(context) {
     const reasons = reasonsFrom(context.propsValue.reasons);

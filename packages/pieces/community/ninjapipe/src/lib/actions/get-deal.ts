@@ -1,22 +1,23 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const getDeal = createAction({
   auth: ninjapipeAuth,
   name: 'get_deal',
   classification: 'READ',
   displayName: 'Get Deal',
-  description: 'Retrieves a deal by ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Fetches a single deal by its ID, returning its full record. Pick this when you already have a deal ID and need its details; use List Deals instead to search or browse. Read-only and safe to repeat.', idempotent: true },
+  description: 'Gets one deal by ID.',
+  audience: 'human',
+  aiMetadata: { description: 'Fetch a single NinjaPipe deal by ID. Read-only.', idempotent: true },
+  outputSchema: ninjapipeSchemas.deal,
   props: {
-    dealId: ninjapipeCommon.dealDropdownRequired,
+    dealId: ninjapipeProps.dealRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/deals/${encodeURIComponent(String(context.propsValue.dealId))}` });
-    return flattenCustomFields(response.body);
+    const id = ninjapipeClient.pathId({ value: context.propsValue.dealId, field: 'Deal' });
+    return ninjapipeClient.getRecord({ auth: ninjapipeClient.readAuth(context.auth), path: `/deals/${id}`, operation: 'get deal' });
   },
 });

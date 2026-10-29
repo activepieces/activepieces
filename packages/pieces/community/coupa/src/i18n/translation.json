@@ -99,6 +99,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New or Updated Object": "New or Updated Object",
   "Triggers when a Purchase Order, Supplier, or Contract is created or updated in Coupa.": "Triggers when a Purchase Order, Supplier, or Contract is created or updated in Coupa.",
   "Additional Filters (JSON)": "Additional Filters (JSON)",

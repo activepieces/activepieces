@@ -45,7 +45,7 @@ export const VerifyDomainDialog = ({
           <DialogDescription>
             {pending
               ? t(
-                  'Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.',
+                  'Add this TXT record at your DNS provider, then verify. Verify within 7 days or the domain is dropped.',
                 )
               : t(
                   'Prove your company owns its email domain with a DNS record.',

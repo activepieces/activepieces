@@ -20,6 +20,8 @@ const buttonVariants = cva(
           'bg-danger-9 text-on-danger enabled:hover:bg-danger-9/90 focus-visible:ring-danger-9/20 dark:focus-visible:ring-danger-9/40',
         outline:
           'border-gray-6 bg-gray-1 enabled:hover:bg-gray-4 enabled:hover:text-gray-12 border',
+        field:
+          'border border-gray-8 bg-field shadow-xs enabled:hover:bg-gray-4 enabled:hover:text-gray-12',
         ghost: 'hover:bg-gray-4 hover:text-gray-12',
         link: 'text-accent-11 underline-offset-4 hover:underline',
       },

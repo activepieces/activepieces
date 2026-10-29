@@ -72,6 +72,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Media": "New Media",
   "New Project": "New Project",
   "Triggers when a new video or media file is added to your account.": "Triggers when a new video or media file is added to your account.",

@@ -15,6 +15,7 @@ const checkbox = Property.Checkbox({
 });
 const shortText = Property.ShortText({ displayName: 'Text', required: false });
 const color = Property.Color({ displayName: 'Brand', required: false });
+const object = Property.Object({ displayName: 'Model', required: true });
 const staticDropdown = Property.StaticDropdown({
   displayName: 'Channel',
   required: true,
@@ -27,6 +28,12 @@ describe('formUtils.parseDynamicValue', () => {
     ['[]', multiSelect, []],
     ['true', checkbox, true],
     ['false', checkbox, false],
+    [
+      '{"provider":"openai","model":"gpt-5","configId":"key-1"}',
+      object,
+      { provider: 'openai', model: 'gpt-5', configId: 'key-1' },
+    ],
+    ['{"modelTierId":"tier-1"}', object, { modelTierId: 'tier-1' }],
   ])('restores %s', (value, property, expected) => {
     expect(formUtils.parseDynamicValue({ property, value })).toEqual(expected);
   });
@@ -74,6 +81,9 @@ describe('formUtils.parseDynamicValue', () => {
     [undefined, staticDropdown],
     ['', color],
     [undefined, color],
+    ['{{ trigger.body.model }}', object],
+    ['["a"]', object],
+    ['', object],
   ])('has nothing unambiguous to restore in %s', (value, property) => {
     expect(formUtils.parseDynamicValue({ property, value })).toBeUndefined();
   });

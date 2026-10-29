@@ -25,7 +25,7 @@ function getConfig(auth: MistralAuthValue): MistralRequestConfig {
 		};
 	}
 	return {
-		baseUrl: 'https://api.mistral.ai/v1',
+		baseUrl: MISTRAL_API_BASE_URL,
 		headers: { Authorization: `Bearer ${a.secret_text}` },
 	};
 }
@@ -53,3 +53,5 @@ export type MistralRequestConfig = {
 	baseUrl: string;
 	headers: Record<string, string>;
 };
+
+export const MISTRAL_API_BASE_URL = 'https://api.mistral.ai/v1';

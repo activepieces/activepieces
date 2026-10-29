@@ -1,12 +1,12 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils, aiProviderSignal, aiUtils } from '@activepieces/server-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { agentAiUtils, aiProviderSignal, aiUtils, modelCatalog } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { LanguageModel, ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentChatModel } from '.././agent-chat-model'
 import { agentCompaction } from '.././agent-compaction'
-import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from '.././agent-file-utils'
+import { buildAttachmentNote, buildUserContentWithFiles, dropImagesForTextOnlyModels, persistAgentAttachments } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
 import { agentModelTier, agentTierCandidates, AgentTierRun } from '.././agent-model-tier'
 import { agentMcp } from '.././mcp/agent-mcp'
@@ -29,7 +29,7 @@ import { CONNECTION_INVENTORY_LIMIT, loadOrStartConversation } from './rpc-share
 
 export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     async getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: requestedSource, projectId: requestedProjectId, agentId: linkedAgentId, flowRunId } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: requestedSource, projectId: requestedProjectId, agentId: linkedAgentId, flowRunId, waitpointId } = input
 
         // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
         // anyway meant an owner without an MCP token or a user record failed the run outright.
@@ -40,7 +40,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
 
         const [conversation, userProjects, enabledAiTools, providerChoices] = await Promise.all([
-            loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName, agentId: linkedAgentId, flowRunId }),
+            loadOrStartConversation({ conversationId, runId: input.runId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName, agentId: linkedAgentId, flowRunId, waitpointId }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
             aiToolConfigService(log).getProviderChoices({ platformId }),
@@ -135,10 +135,10 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             })
         }
         if (lock === 'duplicate') {
-            log.warn({ conversation: { id: conversationId }, run: { id: input.runId } }, '[agentRpc#getAgentConfig] Run redelivered while its first delivery is still streaming, dropping the duplicate')
+            log.warn({ conversation: { id: conversationId }, run: { id: input.runId } }, '[agentRpc#getAgentConfig] Run redelivered after its first delivery started, dropping the duplicate')
             throw new ActivepiecesError({
                 code: ErrorCode.AGENT_RUN_SUPERSEDED,
-                params: { message: 'This run is already in progress' },
+                params: { message: 'This run was already delivered' },
             })
         }
         if (lock === 'busy') {
@@ -242,7 +242,15 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
         const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
         const allMessages = [...previousMessages, newUserMessage]
-        const llmHistory = agentAiUtils.collapseStaleToolOutputs({ messages: allMessages })
+        const fastModelSeesMessages = conversation.source !== AgentRunSource.CHAT
+        const modelsSeeingMessages = isNil(tierRun)
+            ? [resolvedModelId, ...(fastModelSeesMessages ? [fastModelId] : [])].map((modelId) => ({ provider: providerConfig.provider, modelId }))
+            : [...tierRun.candidates, ...(fastModelSeesMessages && !isNil(tierRun.fast) ? [tierRun.fast] : [])].map((candidate) => ({ provider: candidate.config.provider, modelId: candidate.modelId }))
+        const catalog = await modelCatalog.load()
+        const llmHistory = dropImagesForTextOnlyModels({
+            messages: agentAiUtils.collapseStaleToolOutputs({ messages: allMessages }),
+            models: modelsSeeingMessages.map((model) => catalog.lookup(model)),
+        })
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedAgentMessage[]
         const uiMessagesWithUser: PersistedAgentMessage[] = [
@@ -274,6 +282,13 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             const previous = compactionState
             compactionState = await onFirstModelThatAnswers({
                 models: compactionModels,
+                billing: {
+                    source: ActivepiecesAiConsumerSource.CHAT,
+                    platformId: conversation.platformId,
+                    projectId: runProjectId,
+                    conversationId: conversation.id,
+                    context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: runProjectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId, userId: conversation.userId }),
+                },
                 log,
                 run: (model) => agentCompaction.compactMessages({
                     messages: llmHistory,
@@ -319,8 +334,12 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             fastModelId,
             ...spreadIfDefined('imageModelId', imageModelId),
             ...spreadIfDefined('searchCredentials', chosen.search?.credentials),
+            ...spreadIfDefined('searchProviderConfigId', chosen.search?.credentials.configId),
             ...spreadIfDefined('searchModelId', chosen.search?.modelId),
             ...spreadIfDefined('imageCredentials', chosen.image?.credentials),
+            ...spreadIfDefined('imageProviderConfigId', chosen.image?.credentials.configId),
+            ...spreadIfDefined('agentId', conversation.agentId ?? undefined),
+            ...spreadIfDefined('projectId', runProjectId ?? undefined),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
@@ -359,9 +378,9 @@ function smallestContextProvider({ configs }: { configs: GetProviderConfigRespon
     return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
 }
 
-async function onFirstModelThatAnswers<T>({ models, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], billing: ActivepiecesAiBilling, run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
     for (const [index, candidate] of models.entries()) {
-        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId })))
+        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true })))
         if (attempt.error === null) {
             return attempt.data
         }

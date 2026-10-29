@@ -282,6 +282,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Client": "New Client",
   "New or Updated Workspace": "New or Updated Workspace",
   "New Project": "New Project",

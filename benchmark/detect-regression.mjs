@@ -23,7 +23,8 @@ if (!/^[a-z0-9-]+$/i.test(args.label)) {
 
 const THRESHOLD_PCT = Number(args.threshold ?? 5)
 const CONSECUTIVE = Number(args.consecutive ?? 2)
-const WEBHOOK_URL = process.env.BETTERSTACK_WEBHOOK_URL
+const SIGNALS_URL = process.env.SIGNALS_URL
+const SIGNALS_TOKEN = process.env.SIGNALS_TOKEN
 const CH_HOST = process.env.CH_HOST
 const CH_USER = process.env.CH_USER
 const CH_PASS = process.env.CH_PASS
@@ -86,50 +87,50 @@ if (history.length < MIN_HISTORY) {
     process.exit(0)
 }
 
-const ALERT_ID = `bench-regression-${args.label}`
-
 if (breaches.length === 0) {
     console.error(`No regressions on ${args.label}.`)
-    if (!WEBHOOK_URL) process.exit(0)
-    await postToBetterstack({
-        name: `Bench regression: ${args.label}`,
-        cause: `No regressions on \`${args.label}\` (${results.length} dimensions all within ${THRESHOLD_PCT}% of trailing-14 median).\n\n[Run details →](${args.runUrl})`,
-        alertId: ALERT_ID,
-        state: 'ok',
-    })
     process.exit(0)
 }
 
-if (!WEBHOOK_URL) {
-    console.error(`BREACH on ${args.label} but BETTERSTACK_WEBHOOK_URL unset — skipping alert.`)
+if (!SIGNALS_URL || !SIGNALS_TOKEN) {
+    console.error(`BREACH on ${args.label} but SIGNALS_URL / SIGNALS_TOKEN unset — skipping signal.`)
     process.exit(0)
 }
 
-const lines = breaches.map((b) => `- **${b.name}**: ${b.currentValue.toFixed(2)} ${b.unit} (baseline ${b.baseline.toFixed(2)}, +${b.pct.toFixed(1)}%)`)
-const cause = `Benchmark regression on \`${args.label}\` — ${breaches.length} dimension(s) above ${THRESHOLD_PCT}% for ${CONSECUTIVE} consecutive runs:\n\n${lines.join('\n')}\n\n[Run details →](${args.runUrl})\n\nSHA: \`${current.meta.sha}\``
+const lines = breaches.map((b) => `- ${b.name}: ${b.currentValue.toFixed(2)} ${b.unit} (baseline ${b.baseline.toFixed(2)}, +${b.pct.toFixed(1)}%)`)
+const historyRows = history.map((h) => `${h.meta.ts}  ${h.meta.sha}  ${DIMENSIONS.map((d) => `${d.name}=${d.get(h)}`).join('  ')}`)
 
-await postToBetterstack({
-    name: `Bench regression: ${args.label}`,
-    cause,
-    alertId: ALERT_ID,
-    state: 'alert',
+await sendBoxSignal({
+    service: 'nightly-benchmark',
+    fingerprint: `bench-regression-${args.label}`,
+    message: [
+        `Nightly benchmark regression on the \`${args.label}\` worker shape: ${breaches.length} metric(s) more than ${THRESHOLD_PCT}% worse than the trailing-14 median for ${CONSECUTIVE} runs in a row.`,
+        '',
+        ...lines,
+        '',
+        `Current SHA: ${current.meta.sha}`,
+        `Run: ${args.runUrl}`,
+        '',
+        'Find the commit that caused this. The stack field lists the trailing runs oldest first with their SHA; the first run where the breached metrics step up brackets the culprit between its SHA and the previous one. Run `git log <prev>..<first-bad>` and read the diffs that touch packages/server, packages/core or benchmark/. The bench flow is built in benchmark/setup.ts (webhook trigger, math steps, a CODE step); check whether a commit changed how one of those executes. In the report give the culprit commit, why it costs this much, and whether it looks intended. Open a PR only if the regression is clearly unintended and the fix is small; this is a performance regression, so no failing test is expected and the next nightly run is the check. Linear: team SRE, project Stability, even when the culprit commit belongs to another team; the benchmark is SRE-owned and SRE decides whether to hand it off.',
+    ].join('\n'),
+    stack: historyRows.join('\n'),
 })
-console.error(`Alerted Betterstack on ${breaches.length} dimension(s).`)
+console.error(`Sent Box signal for ${breaches.length} dimension(s).`)
 
-async function postToBetterstack(payload) {
-    const res = await fetch(WEBHOOK_URL, {
+async function sendBoxSignal(payload) {
+    const res = await fetch(SIGNALS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        headers: { 'Content-Type': 'application/json; charset=utf-8', Authorization: `Bearer ${SIGNALS_TOKEN}` },
         body: JSON.stringify(payload),
     })
     if (!res.ok) {
-        console.error(`Betterstack webhook responded ${res.status}: ${await res.text().catch(() => '')}`)
+        console.error(`Box signals API responded ${res.status}: ${await res.text().catch(() => '')}`)
         process.exit(1)
     }
 }
 
 async function fetchHistory({ label }) {
-    const sql = `SELECT p50_ms, p90_ms, p99_ms, mean_ms, req_sec, queue_p90_ms, service_p90_ms, provision_p50_ms, boot_p50_ms, app_cpu_p95, app_mem_max_mb, worker_cpu_p95, worker_mem_max_mb FROM bench.results WHERE label = '${label}' ORDER BY ts DESC LIMIT 14 FORMAT JSONEachRow`
+    const sql = `SELECT toString(ts) AS ts, sha, p50_ms, p90_ms, p99_ms, mean_ms, req_sec, queue_p90_ms, service_p90_ms, provision_p50_ms, boot_p50_ms, app_cpu_p95, app_mem_max_mb, worker_cpu_p95, worker_mem_max_mb FROM bench.results WHERE label = '${label}' ORDER BY ts DESC LIMIT 14 FORMAT JSONEachRow`
     const url = `https://${CH_HOST}:8443/?query=${encodeURIComponent(sql)}`
     const auth = Buffer.from(`${CH_USER}:${CH_PASS}`).toString('base64')
     const res = await fetch(url, { headers: { Authorization: `Basic ${auth}` } })
@@ -144,6 +145,7 @@ async function fetchHistory({ label }) {
 
 function toResultShape(row) {
     return {
+        meta: { ts: row.ts, sha: row.sha },
         latency: { p50Ms: row.p50_ms, p90Ms: row.p90_ms, p99Ms: row.p99_ms, meanMs: row.mean_ms },
         throughput: { reqSec: row.req_sec },
         timeline: {

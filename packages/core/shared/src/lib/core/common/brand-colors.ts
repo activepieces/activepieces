@@ -8,20 +8,20 @@ const MARK_CONTRAST = 3
 const LIGHTNESS_STEP = 0.5
 const STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
 const LIGHT_GROUNDS = [100, 99.3, 98.2, 97, 95.5, 93.8]
-const DARK_GROUNDS = [11, 16.2, 19.5, 23.5, 27.5]
+const DARK_GROUNDS = [17.8, 21.3, 25.2, 28.5, 31.3]
 const LIGHT_MARK_GROUNDS = [100, 99.3, 98.2]
-const DARK_MARK_GROUNDS = [11, 16.2]
+const DARK_MARK_GROUNDS = [17.8, 21.3]
 const LIGHT_SHADES: Record<RampStep, number> = { 1: 25, 2: 50, 3: 100, 4: 150, 5: 200, 6: 250, 7: 300, 8: 400, 9: 600, 10: 600, 11: 700, 12: 900 }
 const DARK_SHADES: Record<RampStep, number> = { 1: 950, 2: 950, 3: 950, 4: 900, 5: 900, 6: 800, 7: 800, 8: 700, 9: 600, 10: 400, 11: 300, 12: 100 }
 const DARK_SURFACES: Partial<Record<RampStep, { lightness: number, chromaShare: number }>> = {
-    1: { lightness: 14, chromaShare: 0.35 },
-    2: { lightness: 17, chromaShare: 0.5 },
-    3: { lightness: 20.5, chromaShare: 0.6 },
-    4: { lightness: 24, chromaShare: 0.65 },
-    5: { lightness: 27.5, chromaShare: 0.7 },
-    6: { lightness: 31, chromaShare: 0.72 },
-    7: { lightness: 38, chromaShare: 0.75 },
-    8: { lightness: 47, chromaShare: 0.8 },
+    1: { lightness: 20.8, chromaShare: 0.35 },
+    2: { lightness: 22.1, chromaShare: 0.5 },
+    3: { lightness: 26.2, chromaShare: 0.6 },
+    4: { lightness: 29, chromaShare: 0.65 },
+    5: { lightness: 31.3, chromaShare: 0.7 },
+    6: { lightness: 33.8, chromaShare: 0.72 },
+    7: { lightness: 39.2, chromaShare: 0.75 },
+    8: { lightness: 45.9, chromaShare: 0.8 },
 }
 const SCALE_ANCHORS: Record<RampScale, { family: ColorFamily, shade: number }> = {
     accent: { family: 'violet', shade: 600 },

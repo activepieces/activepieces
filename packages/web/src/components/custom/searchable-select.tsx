@@ -39,6 +39,8 @@ type SearchableSelectProps<T> = {
   onRefresh?: () => void;
   showRefresh?: boolean;
   onClose?: () => void;
+  variant?: 'field' | 'outline' | 'ghost';
+  /**Layout classes only; use variant for the surface */
   triggerClassName?: string;
   /**Widens the popover past the trigger, for compact or inline triggers */
   contentWidth?: string;
@@ -80,6 +82,7 @@ export const SearchableSelect = <T,>({
   onRefresh,
   showRefresh,
   onClose,
+  variant = 'field',
   triggerClassName,
   contentWidth,
   valuesRendering,
@@ -144,7 +147,7 @@ export const SearchableSelect = <T,>({
       <PopoverTrigger
         asChild
         className={cn({
-          'cursor-not-allowed opacity-80 ': disabled,
+          'cursor-not-allowed': disabled,
         })}
         onClick={(e) => {
           if (disabled) {
@@ -156,7 +159,7 @@ export const SearchableSelect = <T,>({
         <div className="relative">
           <Button
             ref={triggerRef}
-            variant="outline"
+            variant={variant}
             disabled={disabled}
             role="combobox"
             loading={loading}

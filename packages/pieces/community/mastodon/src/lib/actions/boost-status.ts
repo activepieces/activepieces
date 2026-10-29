@@ -9,7 +9,7 @@ export const boostStatus = createAction({
   name: 'boost_status',
   classification: 'WRITE',
   displayName: 'Boost Status',
-  description: 'Boost (reblog) a status to your followers.',
+  description: 'Share a status with your followers by boosting it.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -17,17 +17,25 @@ export const boostStatus = createAction({
     idempotent: true,
   },
   outputSchema: statusOutputSchema,
+  propertyGroups: [
+    {
+      key: 'target',
+      display: 'section',
+      label: 'Status to Boost',
+      icon: 'send',
+      props: ['status_id', 'visibility'],
+    },
+  ],
   props: {
     status_id: Property.ShortText({
       displayName: 'Status ID',
-      description:
-        'ID of the status to boost, for example 109372843234737004. Map it from a trigger such as New Status with Hashtag (Status ID), a timeline, Get Status or Search (Search turns a status URL from another server into an ID).',
+      description: 'ID of the status, for example from a trigger, Get Status or Search.',
+      placeholder: '109372843234737004',
       required: true,
     }),
     visibility: Property.StaticDropdown({
       displayName: 'Visibility',
-      description:
-        'Who sees the boost. Leave empty to use the account default posting privacy.',
+      description: 'Who sees the boost. Empty uses your account default.',
       required: false,
       options: {
         disabled: false,

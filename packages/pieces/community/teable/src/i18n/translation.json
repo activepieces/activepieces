@@ -141,6 +141,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Record": "New Record",
   "Updated Record": "Updated Record",
   "Triggers when a new record is created in a table.": "Triggers when a new record is created in a table.",

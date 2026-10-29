@@ -154,33 +154,15 @@ export const newProfileTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, { ...context, auth: context.auth as KlaviyoAuthValue });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, { ...context, auth: context.auth as KlaviyoAuthValue });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, { ...context, auth: context.auth as KlaviyoAuthValue });
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      store: context.store,
-      auth: context.auth as KlaviyoAuthValue,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, { ...context, auth: context.auth as KlaviyoAuthValue });
   },
 });

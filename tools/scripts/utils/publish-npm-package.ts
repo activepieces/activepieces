@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import { argv } from 'node:process'
-import { execSync } from 'node:child_process'
+import { execSync, spawnSync } from 'node:child_process'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { tryCatchSync } from '@activepieces/core-utils'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
@@ -93,10 +94,15 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   assertNoUnpublishableDeps(`${outputPath}/package.json`)
   assertNoSemverRanges(`${outputPath}/package.json`)
 
-  const { error } = tryCatchSync(() => execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' }))
-  if (error) {
+  const publish = spawnSync('npm', ['publish', '--access', 'public', '--tag', 'latest'], { cwd: outputPath, stdio: ['ignore', 'inherit', 'pipe'], encoding: 'utf8' })
+  process.stderr.write(publish.stderr ?? '')
+  if (publish.status !== 0) {
+    if (publish.stderr?.includes('previously staged version')) {
+      await waitForStagedVersion({ name: json.name, version, path })
+      return
+    }
     if (!isVersionOnRegistry({ name: json.name, version })) {
-      throw error
+      throw new Error(`[publishProject] npm publish failed, path=${path}, version=${version}, exitCode=${publish.status}`)
     }
     console.info(`[publishProject] publish failed but version is already on registry, path=${path}, version=${version}`)
     return
@@ -109,6 +115,21 @@ function isVersionOnRegistry({ name, version }: { name: string, version: string 
   const { data } = tryCatchSync(() => execSync(`npm view ${name}@${version} version`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }))
   return data?.trim() === version
 }
+
+async function waitForStagedVersion({ name, version, path }: { name: string, version: string, path: string }): Promise<void> {
+  for (let attempt = 1; attempt <= STAGED_VERSION_POLL_ATTEMPTS; attempt++) {
+    console.info(`[publishProject] version staged on registry but not live yet, path=${path}, version=${version}, attempt=${attempt}/${STAGED_VERSION_POLL_ATTEMPTS}`)
+    await sleep(STAGED_VERSION_POLL_INTERVAL_MS)
+    if (isVersionOnRegistry({ name, version })) {
+      console.info(`[publishProject] staged version is now live on registry, path=${path}, version=${version}`)
+      return
+    }
+  }
+  throw new Error(`[publishProject] ${name}@${version} is staged on npm but still not live after ${STAGED_VERSION_POLL_ATTEMPTS * STAGED_VERSION_POLL_INTERVAL_MS / 60000} minutes; inspect it with "npm stage list ${name}"`)
+}
+
+const STAGED_VERSION_POLL_ATTEMPTS = 20
+const STAGED_VERSION_POLL_INTERVAL_MS = 15000
 
 const main = async (): Promise<void> => {
   const path = argv[2]

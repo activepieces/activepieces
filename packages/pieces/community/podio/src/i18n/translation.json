@@ -167,6 +167,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Item": "New Item",
   "New Task": "New Task",
   "New Status": "New Status",

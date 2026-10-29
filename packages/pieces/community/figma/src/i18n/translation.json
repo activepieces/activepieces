@@ -33,6 +33,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Comment (Figma Professional plan only)": "New Comment (Figma Professional plan only)",
   "Triggers when a new comment is posted": "Triggers when a new comment is posted",
   "Team ID": "Team ID",

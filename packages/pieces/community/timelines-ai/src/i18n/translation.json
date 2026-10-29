@@ -97,6 +97,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Chat Closed": "Chat Closed",
   "New Outgoing Chat": "New Outgoing Chat",
   "New Incoming Chat": "New Incoming Chat",

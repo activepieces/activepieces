@@ -66,6 +66,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Active Subscription": "New Active Subscription",
   "Subscription Canceled": "Subscription Canceled",
   "Subscription Past Due": "Subscription Past Due",

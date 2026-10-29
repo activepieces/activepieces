@@ -62,6 +62,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Contact Created": "New Contact Created",
   "New Conversation Created": "New Conversation Created",
   "Triggers when a new contact is added.": "Triggers when a new contact is added.",

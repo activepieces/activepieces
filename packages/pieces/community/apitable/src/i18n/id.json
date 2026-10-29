@@ -67,5 +67,8 @@
   "Field names to include. Empty: every field.": "Nama kolom yang disertakan. Kosong: semua kolom.",
   "Records returned per page.": "Catatan yang dikembalikan per halaman.",
   "Caps matching records before paging. Empty: no cap.": "Membatasi hasil yang cocok sebelum dibagi per halaman. Kosong: tanpa batas.",
-  "Which page to return, starting at 1.": "Halaman yang dikembalikan, mulai dari 1."
+  "Which page to return, starting at 1.": "Halaman yang dikembalikan, mulai dari 1.",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "Kolom kosong dibiarkan kosong. Beberapa jenis kolom, seperti lampiran dan rumus, tidak dicantumkan.",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "Kolom kosong mempertahankan nilainya saat ini; kotak centang yang tidak dicentang dikosongkan. Beberapa jenis kolom, seperti lampiran dan rumus, tidak dicantumkan."
 }

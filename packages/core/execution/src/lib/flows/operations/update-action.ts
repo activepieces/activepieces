@@ -16,7 +16,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             displayName: request.displayName,
             name: request.name,
             valid: false,
-            skip: request.skip,
+            skip: request.skip ?? ('skip' in stepToUpdate ? stepToUpdate.skip : undefined),
             lastUpdatedDate: dayjs().toISOString(),
             settings: {
                 ...stepToUpdate.settings,

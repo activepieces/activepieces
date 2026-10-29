@@ -77,6 +77,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Email Received": "New Email Received",
   "Triggers when a new email is received in a specified folder (or inbox).": "Triggers when a new email is received in a specified folder (or inbox).",
   "Select the folder to watch. If empty, watches the inbox/all messages based on API default.": "Select the folder to watch. If empty, watches the inbox/all messages based on API default."

@@ -70,6 +70,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Lead": "New Lead",
   "Triggers when someone fills in one of your lead ad forms.": "Triggers when someone fills in one of your lead ad forms.",
   "Page": "Page",

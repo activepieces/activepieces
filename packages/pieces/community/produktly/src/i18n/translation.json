@@ -109,6 +109,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Changelog Post": "New Changelog Post",
   "New Feedback Response": "New Feedback Response",
   "New NPS Response": "New NPS Response",

@@ -167,6 +167,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Alert for Query": "Alert for Query",
   "Trigger when a new alert is created for a specific news query": "Trigger when a new alert is created for a specific news query",
   "Alert Query": "Alert Query",

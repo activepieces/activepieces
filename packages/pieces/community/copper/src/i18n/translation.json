@@ -261,6 +261,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Activity": "New Activity",
   "New Person": "New Person",
   "New Lead": "New Lead",

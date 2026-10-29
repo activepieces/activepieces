@@ -32,6 +32,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "new lead submission": "new lead submission",
   "Trigger when a new lead is captured through the assistant conversation": "Trigger when a new lead is captured through the assistant conversation"
 }

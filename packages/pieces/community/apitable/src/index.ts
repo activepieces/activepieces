@@ -49,6 +49,12 @@ export const apitable = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth?.props.token ?? '')}`,
       }),
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to your AITable instance URL.',
+          placeholder: '/fusion/v1/spaces',
+        },
+      },
     }),
   ],
   triggers: [newRecordTrigger],

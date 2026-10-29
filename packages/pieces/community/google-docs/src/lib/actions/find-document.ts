@@ -7,6 +7,7 @@ import {
 import { drive as googleDrive } from '@googleapis/drive';
 import { docs as googleDocs } from '@googleapis/docs';
 import { folderIdProp } from '../common/props';
+import { driveQuery } from '../common/drive-query';
 import { findDocumentActionOutputSchema } from '../output-schemas';
 
 export const findDocumentAction = createAction({
@@ -85,12 +86,12 @@ export const findDocumentAction = createAction({
 
 		// Search for the document in Google Drive
 		const query: string[] = [
-			`name contains '${documentName}'`,
+			`name contains '${driveQuery.escapeLiteral(documentName)}'`,
 			`mimeType='application/vnd.google-apps.document'`,
 			'trashed=false',
 		];
 
-		if (folderId) query.push(`'${folderId}' in parents`);
+		if (folderId) query.push(`'${driveQuery.escapeLiteral(folderId)}' in parents`);
 
 		const response = await drive.files.list({
 			q: query.join(' and '),

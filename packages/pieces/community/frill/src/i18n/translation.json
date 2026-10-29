@@ -93,6 +93,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Idea": "New Idea",
   "New Comment": "New Comment",
   "Triggers when a new idea or feedback entry is created in Frill.": "Triggers when a new idea or feedback entry is created in Frill.",

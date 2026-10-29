@@ -83,6 +83,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Playlist Items Changed": "Playlist Items Changed",
   "Triggers when the items of a playlist change": "Triggers when the items of a playlist change"
 }

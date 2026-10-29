@@ -20,8 +20,8 @@ export const getStatus = createAction({
   props: {
     status_id: Property.ShortText({
       displayName: 'Status ID',
-      description:
-        'ID of the status on your server, for example 109372843234737004. Map it from a trigger such as New Mention (Related Status > Status ID), from Post Status, a timeline or Search.',
+      description: 'ID of the status, for example from a trigger or Search.',
+      placeholder: '109372843234737004',
       required: true,
     }),
   },

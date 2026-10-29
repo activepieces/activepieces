@@ -161,3 +161,13 @@ function options(): ModelOptions {
     specificModelsHidden: false,
   };
 }
+
+describe('agentModelUtils.isEmpty', () => {
+  it('treats only a missing value or an empty object as empty', () => {
+    expect(agentModelUtils.isEmpty({ value: undefined })).toBe(true);
+    expect(agentModelUtils.isEmpty({ value: null })).toBe(true);
+    expect(agentModelUtils.isEmpty({ value: {} })).toBe(true);
+    expect(agentModelUtils.isEmpty({ value: '{{step_1.model}}' })).toBe(false);
+    expect(agentModelUtils.isEmpty({ value: { modelTierId: 't' } })).toBe(false);
+  });
+});

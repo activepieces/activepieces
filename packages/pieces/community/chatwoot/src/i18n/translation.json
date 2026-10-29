@@ -38,6 +38,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Incoming Message": "New Incoming Message",
   "Triggers when a contact sends a new message in a Chatwoot conversation": "Triggers when a contact sends a new message in a Chatwoot conversation"
 }

@@ -44,7 +44,7 @@ function MiniDonut({
           cy={DONUT_CENTER}
           r={DONUT_RADIUS}
           fill="none"
-          stroke="var(--gray-6)"
+          stroke="var(--gray-7)"
           strokeWidth={DONUT_STROKE}
         />
       ) : (

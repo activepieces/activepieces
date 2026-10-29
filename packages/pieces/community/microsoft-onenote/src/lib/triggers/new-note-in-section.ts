@@ -1,38 +1,33 @@
-import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { getNotebooksDropdown, getSectionsByNotebookDropdown } from '../common';
-import { oneNoteAuth } from '../auth';
-import { Client, PageCollection, ResponseType } from '@microsoft/microsoft-graph-client';
+import { Client, ResponseType } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
+import { microsoftOneNoteAuth } from '../auth';
+import { microsoftOneNoteClient } from '../common/client';
+import { microsoftOneNoteProps } from '../common/props';
+import type { MicrosoftOneNoteList, OnenotePage } from '../common/types';
+import { newNoteInSectionOutputSchema } from '../output-schemas';
 
-async function fetchPageContent(client: Client, pageId: string): Promise<string | null> {
+async function fetchPageContent({ client, pageId }: { client: Client; pageId: string | undefined }): Promise<string | null> {
 	try {
 		return await client
 			.api(`/me/onenote/pages/${pageId}/content`)
 			.responseType(ResponseType.TEXT)
 			.get();
-	} catch (error) {
-		console.error(`Failed to fetch content for page ${pageId}:`, error);
+	} catch {
 		return null;
 	}
 }
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { notebook_id: string; section_id: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOneNoteAuth>, { notebook_id: string; section_id: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
-	items: async ({ auth, propsValue, store, lastFetchEpochMS }) => {
+	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
 		const sectionId = propsValue.section_id;
-		const cloud = auth.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = microsoftOneNoteClient.create({ auth });
 
 		try {
-			const pages = [];
+			const pages: OnenotePage[] = [];
 
 			let queryParams: string;
 			if (lastFetchEpochMS === 0) {
@@ -42,7 +37,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { 
 				queryParams = `$filter=createdDateTime gt ${lastFetchDate}&$orderby=createdDateTime desc`;
 			}
 
-			let response: PageCollection = await client
+			let response: MicrosoftOneNoteList<OnenotePage> = await client
 				.api(`/me/onenote/sections/${sectionId}/pages?${queryParams}`)
 				.get();
 
@@ -61,7 +56,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { 
 			const pagesWithContent = await Promise.all(
 				pages.map(async (page) => ({
 					...page,
-					content: await fetchPageContent(client, page.id),
+					content: await fetchPageContent({ client, pageId: page.id }),
 				})),
 			);
 
@@ -69,79 +64,38 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { 
 				epochMilliSeconds: dayjs(page.createdDateTime).valueOf(),
 				data: page,
 			}));
-		} catch (error: any) {
-			console.error('Error fetching new notes from section:', error);
-			throw new Error(`Failed to fetch new notes: ${error.message || 'Unknown error'}`);
+		} catch (error) {
+			throw new Error(`Failed to fetch new notes: ${(error instanceof Error && error.message) || 'Unknown error'}`);
 		}
 	},
 };
 
 export const newNoteInSectionTrigger = createTrigger({
 	name: 'new_note_in_section',
+	outputSchema: newNoteInSectionOutputSchema,
 	classification: 'READ',
 	displayName: 'New Note in Section',
 	description: 'Fires when a new note is created in a specified section.',
 	aiMetadata: {
 		description: 'Fires when a new page (note) is created in a specific OneNote notebook section, detected by polling for pages newer than the last check ordered by creation time. Each event represents one newly created page.',
 	},
-	auth: oneNoteAuth,
+	auth: microsoftOneNoteAuth,
 	props: {
-		notebook_id: Property.Dropdown({	
-			auth: oneNoteAuth,
-			displayName: 'Notebook',
+		notebook_id: microsoftOneNoteProps.notebookId({
+			required: true,
 			description: 'The notebook to monitor for new notes.',
-			required: true,
-			refreshers: [],
-			options: async ({ auth }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				return await getNotebooksDropdown(auth as OAuth2PropertyValue);
-			},
 		}),
-		section_id: Property.Dropdown({
-			auth: oneNoteAuth,
-			displayName: 'Section',
-			description: 'The section to monitor for new notes.',
+		section_id: microsoftOneNoteProps.sectionId({
 			required: true,
-			refreshers: ['notebook_id'],
-			options: async ({ auth, notebook_id }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				if (!notebook_id) {
-					return {
-						disabled: true,
-						placeholder: 'Select a notebook first',
-						options: [],
-					};
-				}
-				return await getSectionsByNotebookDropdown(auth as OAuth2PropertyValue, notebook_id as string);
-			},
+			description: 'The section to monitor for new notes.',
 		}),
 	},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

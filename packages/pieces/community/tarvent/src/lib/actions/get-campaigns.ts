@@ -1,71 +1,56 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient } from '../common';
+import { tarventCommon } from '../common';
+import { tarventClient } from '../common/client';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const getCampaigns = createAction({
   auth: tarventAuth,
   name: 'tarvent_get_campaigns',
   classification: 'SEARCH',
   displayName: 'Find Campaign',
-  description: 'Finds a campaign by name, status or tags.',
+  description: 'Finds campaigns by name, status or tags.',
   audience: 'both',
-  aiMetadata: { description: 'Searches Tarvent campaigns, optionally filtered by name, comma-separated tags, and/or status (sent, draft, scheduled, paused, etc.); leaving the filters empty returns all campaigns. Use to look up a campaign or its ID, e.g. before sending it. Idempotent read-only lookup.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Searches Tarvent campaigns whose name contains the given text, that have any of the given comma-separated tags, and/or that are in a status (COMPLETED = sent, READY_TO_SEND, NOT_SCHEDULED = draft, PENDING = scheduled, Paused, STOPPED, SENDING_PENDING_AB_WINNER), newest first; empty filters return all campaigns. Returns up to 50 per call with totalCount, hasMore and nextCursor. Use to get a campaign ID for Get Campaign Stats. Read-only.',
+    idempotent: true,
+  },
+  outputSchema: tarventOutputSchemas.campaignPage,
   props: {
-    name: Property.ShortText({
-      displayName: 'Campaign name',
-      description: 'Find a campaign by searching using its name.',
-      required: false,
-      defaultValue: '',
-
-    }),
-    tags: Property.LongText({
-      displayName: 'Campaign tags',
-      description: 'Find a campaign by searching using its tags. To search using multiple tags, separate the tags with a comma.',
-      required: false,
-      defaultValue: '',
-    }),
+    name: Property.ShortText({ displayName: 'Campaign name', description: 'Find campaigns whose name contains this text.', required: false }),
+    tags: Property.LongText({ displayName: 'Campaign tags', description: 'Find campaigns with any of these tags. Separate multiple tags with a comma.', required: false }),
     status: Property.StaticDropdown({
       displayName: 'Campaign status',
-      description: '',
       required: false,
       options: {
         options: [
-          {
-            label: 'Sent',
-            value: 'COMPLETED'
-          },
-          {
-            label: 'Ready to send',
-            value: 'READY_TO_SEND'
-          },
-          {
-            label: 'Draft',
-            value: 'NOT_SCHEDULED'
-          },
-          {
-            label: 'Scheduled',
-            value: 'PENDING'
-          },
-          {
-            label: 'Paused',
-            value: 'Paused'
-          },
-          {
-            label: 'Stopped',
-            value: 'STOPPED'
-          },
-          {
-            label: 'Pending multivariate winner',
-            value: 'SENDING_PENDING_AB_WINNER'
-          },
+          { label: 'Sent', value: 'COMPLETED' },
+          { label: 'Ready to send', value: 'READY_TO_SEND' },
+          { label: 'Draft', value: 'NOT_SCHEDULED' },
+          { label: 'Scheduled', value: 'PENDING' },
+          { label: 'Paused', value: 'Paused' },
+          { label: 'Stopped', value: 'STOPPED' },
+          { label: 'Pending multivariate winner', value: 'SENDING_PENDING_AB_WINNER' },
         ],
       },
     }),
+    limit: tarventCommon.limit,
+    cursor: tarventCommon.cursor,
   },
   async run(context) {
     const { name, tags, status } = context.propsValue;
-
-    const client = makeClient(context.auth);
-    return await client.listCampaignsAdv(name, tags, status);
+    return tarventClient.listPage({
+      auth: context.auth.props,
+      operation: 'FindCampaigns',
+      field: 'campaigns',
+      selection: tarventClient.fields.campaign,
+      argDefs: ', $order: [CampaignInfoSortInput!], $where: CampaignInfoFilterInput',
+      args: ', order: $order, where: $where',
+      variables: { order: [{ modifiedUtc: 'DESC' }], where: tarventClient.campaignWhere({ name, tags, status }) },
+      first: tarventCommon.pageLimit(context.propsValue.limit),
+      after: tarventCommon.trimmed(context.propsValue.cursor),
+      withTotalCount: true,
+    });
   },
 });

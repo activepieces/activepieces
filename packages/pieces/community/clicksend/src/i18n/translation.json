@@ -83,6 +83,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Incoming SMS": "New Incoming SMS",
   "Triggers when a new SMS message is received.": "Triggers when a new SMS message is received."
 }

@@ -1,5 +1,6 @@
 import {
   createTrigger,
+  isNil,
   StoreScope,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -20,7 +21,13 @@ export default createTrigger({
     playlist_id: spotifyCommon.playlist_id(true),
   },
   sampleData: {},
-  onEnable: async ({ store, auth, propsValue }) => {
+  onEnable: async ({ store, auth, propsValue, isRepublish }) => {
+    if (
+      isRepublish &&
+      !isNil(await store.get('playlist_changed_trigger_hash', StoreScope.FLOW))
+    ) {
+      return;
+    }
     const client = makeClient({ auth });
     const items = await client.getAllPlaylistItems(
       propsValue.playlist_id as string
@@ -30,7 +37,10 @@ export default createTrigger({
       .digest('hex');
     await store.put('playlist_changed_trigger_hash', hash, StoreScope.FLOW);
   },
-  onDisable: async ({ store, auth, propsValue }) => {
+  onDisable: async ({ store, auth, propsValue, isRepublish }) => {
+    if (isRepublish) {
+      return;
+    }
     await store.delete('playlist_changed_trigger_hash', StoreScope.FLOW);
   },
   run: async ({ store, auth, propsValue }) => {

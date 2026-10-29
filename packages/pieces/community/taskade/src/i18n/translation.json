@@ -224,6 +224,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Task Due": "Task Due",
   "Task Assigned": "Task Assigned",
   "New Comment": "New Comment",

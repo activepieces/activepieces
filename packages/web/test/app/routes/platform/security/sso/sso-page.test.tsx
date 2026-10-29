@@ -13,7 +13,7 @@ import {
 } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 const {
   toastMock,
@@ -284,6 +284,37 @@ describe('SSOPage', () => {
     await waitFor(() =>
       expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith(null),
     );
+  });
+
+  it('shows which day of the 7-day window a pending domain is on', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+    vi.setSystemTime(new Date('2026-10-16T12:00:00.000Z'));
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: pendingVerification,
+    });
+    mount();
+
+    expect(screen.getByText('Waiting for DNS · day 3 of 7')).toBeDefined();
+  });
+
+  it('stays on day 7 once the window has passed but the domain is not dropped yet', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+    vi.setSystemTime(new Date('2026-10-21T00:30:00.000Z'));
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: pendingVerification,
+    });
+    mount();
+
+    expect(screen.getByText('Waiting for DNS · day 7 of 7')).toBeDefined();
+    expect(screen.queryByText('Waiting for DNS · day 8 of 7')).toBeNull();
   });
 
   it('shows a verified domain without the DNS check', () => {

@@ -408,6 +408,7 @@ const AgentsPageContent = () => {
                     ...projectOptions,
                   ]}
                   placeholder={t('Search projects')}
+                  variant="outline"
                   triggerClassName="h-8 w-[170px] rounded-md text-sm font-normal"
                 />
               )}

@@ -63,5 +63,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "AI Model": "AI Model",
+  "Message": "Message",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

@@ -465,6 +465,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Client Created": "Client Created",
   "Client Updated": "Client Updated",
   "Client Deleted": "Client Deleted",

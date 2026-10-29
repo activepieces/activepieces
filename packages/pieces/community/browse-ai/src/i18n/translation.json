@@ -36,6 +36,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Task Finished with Error": "Task Finished with Error",
   "Task Finished Successfully": "Task Finished Successfully",
   "Triggers when a robot task run fails with an error.": "Triggers when a robot task run fails with an error.",

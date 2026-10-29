@@ -64,6 +64,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Submission": "New Submission",
   "Triggers when Webflow Site receives a new submission": "Triggers when Webflow Site receives a new submission",
   "Form Name": "Form Name",

@@ -9,7 +9,7 @@ export const addContactToCampaign = createAction({
     name: 'add_contact_to_campaign',
     classification: 'WRITE',
     displayName: 'Add Contact to Campaign',
-    description: 'Add a contact to a campaign.',
+    description: 'Adds a contact to a campaign with a member status.',
     audience: 'human',
     aiMetadata: { description: 'Add a Contact to a Campaign by creating a CampaignMember linking the two, with an optional member status. Not idempotent — re-adding the same contact to the same campaign errors on the existing membership.', idempotent: false },
     outputSchema: sobjectCreateResponseOutputSchema,

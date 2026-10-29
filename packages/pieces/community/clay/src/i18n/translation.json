@@ -837,6 +837,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Row Received from Clay": "Row Received from Clay",
   "Triggers when Clay sends a row to this flow.": "Triggers when Clay sends a row to this flow.",
   "Markdown": "Markdown",

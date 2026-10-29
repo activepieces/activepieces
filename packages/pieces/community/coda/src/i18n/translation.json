@@ -232,6 +232,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Row Created": "New Row Created",
   "Triggers when a new row is added to the selected table.": "Triggers when a new row is added to the selected table."
 }

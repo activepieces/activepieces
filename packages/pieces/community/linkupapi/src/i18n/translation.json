@@ -106,6 +106,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Message Received": "New Message Received",
   "Invitation Accepted": "Invitation Accepted",
   "Fires in real time when the connected LinkedIn account receives a new message. Registers a LinkupAPI webhook (≈10 credits/day per monitored account while active).": "Fires in real time when the connected LinkedIn account receives a new message. Registers a LinkupAPI webhook (≈10 credits/day per monitored account while active).",

@@ -84,6 +84,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Email Received": "New Email Received",
   "New Email Thread": "New Email Thread",
   "Thread Reply Received": "Thread Reply Received",

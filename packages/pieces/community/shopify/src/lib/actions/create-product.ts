@@ -24,7 +24,7 @@ export const createProductAction = createAction({
       display: 'section',
       label: 'Organise',
       icon: 'tag',
-      props: ['productType', 'vendor', 'tags', 'status'],
+      props: ['productType', 'vendor', 'tags', 'productStatus'],
     },
   ],
   props: {
@@ -51,11 +51,10 @@ export const createProductAction = createAction({
       description: 'A file, or a public URL to an image.',
       required: false,
     }),
-    status: Property.StaticDropdown({
+    productStatus: Property.StaticDropdown({
       displayName: 'Status',
-      description: 'Not sent to Shopify yet, so this choice has no effect.',
-      required: true,
-      defaultValue: ShopifyProductStatuses.DRAFT,
+      description: "Leave empty to use Shopify's default.",
+      required: false,
       options: {
         options: [
           {
@@ -87,8 +86,15 @@ export const createProductAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { title, bodyHtml, vendor, productType, tags, productImage } =
-      propsValue;
+    const {
+      title,
+      bodyHtml,
+      vendor,
+      productType,
+      tags,
+      productImage,
+      productStatus,
+    } = propsValue;
 
     const images: Partial<ShopifyImage>[] = [];
     if (productImage) {
@@ -105,6 +111,7 @@ export const createProductAction = createAction({
         product_type: productType,
         tags,
         images,
+        ...(productStatus ? { status: productStatus } : {}),
       },
       auth
     );

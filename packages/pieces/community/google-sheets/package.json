@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-google-sheets",
-  "version": "0.18.2",
+  "version": "0.19.3",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {

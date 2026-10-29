@@ -79,6 +79,10 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        workerGroupId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -111,6 +115,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             name: 'idx_flow_deleting_updated',
             columns: ['updated'],
             where: `"operationStatus" = '${FlowOperationStatus.DELETING}'`,
+        },
+        {
+            name: 'idx_flow_worker_group',
+            columns: ['workerGroupId'],
+            unique: false,
         },
     ],
     relations: {

@@ -1,23 +1,25 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastefyCommon } from '../common';
-import { pastefyAuth } from '../..';
+import { pastefyAuth } from '../common/auth';
+import { pastefyOutputSchemas } from '../common/output-schemas';
+import { pastefyProps } from '../common/props';
+import { pastefyRequests } from '../common/requests';
 
 export default createAction({
   auth: pastefyAuth,
   name: 'delete_folder',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Folder',
-  description: 'Deletes a folder',
-  audience: 'both',
-  aiMetadata: { description: 'Permanently deletes a folder by its ID from a Pastefy instance. Use to remove a folder you no longer need. Keyed on the stable folder ID, so the end state (folder absent) is the same on repeat calls; idempotent.', idempotent: true },
-  props: {
-    folder_id: pastefyCommon.folder_id(true),
+  description: 'Deletes a folder.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Permanently deletes a folder picked from a dropdown. Fails when the folder no longer exists, so a repeat call is not silent; not idempotent. Needs an API key in the Pastefy connection.',
+    idempotent: false,
   },
-  async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const res = await client.deleteFolder(
-      context.propsValue.folder_id as string
-    );
-    return res;
+  props: {
+    folder_id: pastefyProps.folderDropdown({ required: true, displayName: 'Folder', description: 'The folder to delete.' }),
+  },
+  outputSchema: pastefyOutputSchemas.deleted,
+  async run({ auth, propsValue }) {
+    return pastefyRequests.deleteItem({ auth, kind: 'folder', id: propsValue.folder_id, missingIsOk: false });
   },
 });

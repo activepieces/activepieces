@@ -42,6 +42,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Page Accepted": "Page Accepted",
   "Page Partially Accepted": "Page Partially Accepted",
   "Page Preview Accepted": "Page Preview Accepted",

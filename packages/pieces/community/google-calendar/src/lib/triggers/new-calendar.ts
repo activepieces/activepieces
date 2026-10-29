@@ -1,6 +1,7 @@
 import {
   createTrigger,
   AppConnectionValueForAuthProperty,
+  isNil,
   Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
@@ -140,6 +141,9 @@ export const newCalendar = createTrigger({
   },
 
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('calendars'))) {
+      return;
+    }
     const calendars = await getCalendars(context.auth);
 
     const { access_role_filter, calendar_name_filter, exclude_shared } =
@@ -172,28 +176,15 @@ export const newCalendar = createTrigger({
       filteredCalendars.map((cal) => cal.id)
     );
 
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
 
   async test(context) {

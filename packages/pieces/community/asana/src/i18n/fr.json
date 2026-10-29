@@ -10,7 +10,7 @@
   "Task Description": "Description de tâche",
   "Due Date": "Date de fin",
   "Tags": "Tags",
-  "Assignee": "Assignee",
+  "Assignee": "Responsable",
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
@@ -849,5 +849,13 @@
   "Gid of the task, project or project brief to attach to. Obtain a task gid from List Project Tasks or Get Task, a project gid from List Projects.": "Gid of the task, project or project brief to attach to. Obtain a task gid from List Project Tasks or Get Task, a project gid from List Projects.",
   "The file to upload (up to 100 MB). Leave empty when attaching an External URL.": "The file to upload (up to 100 MB). Leave empty when attaching an External URL.",
   "An http(s) link to attach instead of a file. Requires Name. Leave empty when uploading a File.": "An http(s) link to attach instead of a file. Requires Name. Leave empty when uploading a File.",
-  "Display name of the attachment. Required with External URL; for a File it replaces the file name.": "Display name of the attachment. Required with External URL; for a File it replaces the file name."
+  "Display name of the attachment. Required with External URL; for a File it replaces the file name.": "Display name of the attachment. Required with External URL; for a File it replaces the file name.",
+  "Where": "Où",
+  "Details": "Détails",
+  "Workspace the task is created in.": "Espace de travail dans lequel la tâche est créée.",
+  "Project the task is added to. Archived projects are not listed.": "Projet auquel la tâche est ajoutée. Les projets archivés ne sont pas listés.",
+  "Plain text shown in the task's description.": "Texte brut affiché dans la description de la tâche.",
+  "Day the task is due. For a due time too, use 2026-12-31T14:00:00Z.": "Jour d'échéance de la tâche. Pour une heure d'échéance, utilisez 2026-12-31T14:00:00Z.",
+  "Pick tags, or type the names of existing tags.": "Choisissez des tags ou saisissez les noms de tags existants.",
+  "Leave empty to keep the task unassigned.": "Laissez vide pour que la tâche ne soit attribuée à personne."
 }

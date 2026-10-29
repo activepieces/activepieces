@@ -125,6 +125,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Job Completed": "Job Completed",
   "Triggers when a Descript background job (import, agent edit, or publish) finishes.": "Triggers when a Descript background job (import, agent edit, or publish) finishes.",
   "Job Type Filter": "Job Type Filter",

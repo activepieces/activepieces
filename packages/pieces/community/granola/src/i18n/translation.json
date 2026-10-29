@@ -40,6 +40,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Note": "New Note",
   "Updated Note": "Updated Note",
   "Triggers when a new meeting note is created in Granola.": "Triggers when a new meeting note is created in Granola.",

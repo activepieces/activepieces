@@ -82,6 +82,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Beamer Post": "New Beamer Post",
   "Triggers when new post is found in your beamer account": "Triggers when new post is found in your beamer account",
   "Markdown": "Markdown",

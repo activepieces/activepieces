@@ -108,6 +108,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Item": "New Item",
   "Updated Item": "Updated Item",
   "Item Completed": "Item Completed",

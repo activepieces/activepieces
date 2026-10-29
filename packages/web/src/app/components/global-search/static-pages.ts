@@ -1,3 +1,5 @@
+import { isNil } from '@activepieces/core-utils';
+import { ApEdition } from '@activepieces/shared';
 import { type ComponentType } from 'react';
 
 import { BotIcon } from '@/components/icons/bot';
@@ -29,6 +31,7 @@ export type StaticPage = {
   href: string;
   icon: ComponentType<{ className?: string; size?: number }>;
   requiresPlatformAdmin?: boolean;
+  requiresEdition?: ApEdition;
 };
 
 export const STATIC_PAGES: StaticPage[] = [
@@ -77,6 +80,14 @@ export const STATIC_PAGES: StaticPage[] = [
     href: '/platform/ai',
     icon: BotIcon,
     requiresPlatformAdmin: true,
+  },
+  {
+    id: 'page-platform-ai-tiers',
+    label: 'Platform Admin — AI Tiers',
+    href: '/platform/ai/tiers',
+    icon: BotIcon,
+    requiresPlatformAdmin: true,
+    requiresEdition: ApEdition.CLOUD,
   },
   {
     id: 'page-platform-ai-capabilities',
@@ -240,3 +251,20 @@ export const STATIC_PAGES: StaticPage[] = [
     requiresPlatformAdmin: true,
   },
 ];
+
+function isVisible({
+  page,
+  isPlatformAdmin,
+  edition,
+}: {
+  page: StaticPage;
+  isPlatformAdmin: boolean;
+  edition: ApEdition | null;
+}): boolean {
+  return (
+    (!page.requiresPlatformAdmin || isPlatformAdmin) &&
+    (isNil(page.requiresEdition) || page.requiresEdition === edition)
+  );
+}
+
+export const staticPageUtils = { isVisible };

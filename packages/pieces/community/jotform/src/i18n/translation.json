@@ -188,6 +188,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Submission": "New Submission",
   "Triggers when someone submits a response to your form. Each form field is returned as a separate field using the question label as the key.": "Triggers when someone submits a response to your form. Each form field is returned as a separate field using the question label as the key.",
   "Form": "Form"

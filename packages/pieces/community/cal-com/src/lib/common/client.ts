@@ -109,6 +109,7 @@ async function calRequestPaginated<T>(
 }
 
 export const calcomCommon = {
+  baseUrl: 'https://api.cal.com/v2',
   calRequest,
   calRequestPaginated,
   versions: {

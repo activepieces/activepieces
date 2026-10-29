@@ -46,6 +46,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Review": "New Review",
   "New Tag": "New Tag",
   "Triggered when a new review is added": "Triggered when a new review is added",

@@ -79,6 +79,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Event": "New Event",
   "New Session": "New Session",
   "Triggers when a new custom event is recorded on a website.": "Triggers when a new custom event is recorded on a website.",

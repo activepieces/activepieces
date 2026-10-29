@@ -1,5 +1,5 @@
 import { claudeAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/pieces-framework';
 import Anthropic from '@anthropic-ai/sdk';
 import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
@@ -15,9 +15,15 @@ export const extractStructuredDataAction = createAction({
   classification: 'READ',
   displayName: 'Extract Structured Data',
   description: 'Pull the fields you define out of text, an image or a PDF.',
-  aiMetadata: { description: 'Runs a Claude model over supplied text, an image, or a PDF and returns only the fields you defined, using a forced tool call so the output matches your schema. The Field Definition prop switches between Field List mode (a list of named fields with types and required flags) and JSON Schema mode (a raw JSON Schema object); prefer the sibling Ask Claude action when you want free-form prose instead of typed fields. Requires a model, the field definitions, and at least one of Text, or an Image or PDF; not idempotent, since each call re-runs the model and extraction can vary.', idempotent: false },
+  aiMetadata: { description: 'Runs a Claude model over supplied text, an image, or a PDF and returns only the fields you defined, using a forced tool call so the output matches your schema. The Field Definition prop switches between Simple mode (a list of named fields with types and required flags) and Advanced mode (a raw JSON Schema object); prefer the sibling Ask Claude action when you want free-form prose instead of typed fields. Requires a model, the field definitions, and at least one of Text, or an Image or PDF; not idempotent, since each call re-runs the model and extraction can vary.', idempotent: false },
+  propertyGroups: [
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'maxTokens'] },
+    { key: 'source', display: 'section', label: 'Extract from', icon: 'file', props: ['sourceInfo', 'text', 'image'] },
+    { key: 'output', display: 'section', label: 'Data to extract', icon: 'tag', props: ['mode', 'schema'] },
+  ],
   props: {
     model: modelDropdown,
+    sourceInfo: Property.MarkDown({ value: 'Fill in Text, Image or PDF, or both.', variant: MarkdownVariant.INFO }),
     text: Property.LongText({
       displayName: 'Text',
       description: 'Text to pull the fields from.',
@@ -37,15 +43,15 @@ export const extractStructuredDataAction = createAction({
         disabled: false,
         options: [
           {
-            label: 'Field List',
+            label: 'Simple',
             value: 'simple',
-            description: 'One row per field',
+            description: 'List fields',
             icon: 'type',
           },
           {
-            label: 'JSON Schema',
+            label: 'Advanced',
             value: 'advanced',
-            description: 'Nested or complex',
+            description: 'JSON Schema',
             icon: 'code',
           },
         ],

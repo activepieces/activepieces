@@ -67,5 +67,8 @@
   "Field names to include. Empty: every field.": "Названия полей для включения. Пусто: все поля.",
   "Records returned per page.": "Записей на странице.",
   "Caps matching records before paging. Empty: no cap.": "Ограничивает число совпадений до разбивки на страницы. Пусто: без ограничения.",
-  "Which page to return, starting at 1.": "Какую страницу вернуть, начиная с 1."
+  "Which page to return, starting at 1.": "Какую страницу вернуть, начиная с 1.",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "Пустые поля остаются пустыми. Некоторые типы столбцов, например вложения и формулы, не отображаются.",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "Пустые поля сохраняют текущее значение; неотмеченные флажки сбрасываются. Некоторые типы столбцов, например вложения и формулы, не отображаются."
 }

@@ -18,11 +18,15 @@ const noopLogger = {
 function buildContext(configError?: Error) {
     const events: AgentEvent[] = []
     const resumed: { flowRunId: string, waitpointId: string, output: unknown }[] = []
+    const configRequests: unknown[] = []
     const apiClient = {
-        getAgentConfig: () => Promise.reject(configError ?? new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: 'OPENAI', entityType: 'AIProvider' },
-        })),
+        getAgentConfig: (input: unknown) => {
+            configRequests.push(input)
+            return Promise.reject(configError ?? new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: 'OPENAI', entityType: 'AIProvider' },
+            }))
+        },
         resumeFlowStep: (input: { flowRunId: string, waitpointId: string, output: unknown }) => {
             resumed.push(input)
             return Promise.resolve()
@@ -34,7 +38,7 @@ function buildContext(configError?: Error) {
         },
     }
     const ctx = { apiClient, log: noopLogger } as unknown as JobContext
-    return { ctx, events, resumed }
+    return { ctx, events, resumed, configRequests }
 }
 
 function buildJobData(overrides: Partial<ExecuteAgentRunJobData>): ExecuteAgentRunJobData {
@@ -68,6 +72,24 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(resumed[0].waitpointId).toBe('waitpoint-1')
         expect(JSON.stringify(resumed[0].output)).toContain('FAILED')
         expect(resumed[0].output).toMatchObject({ failure: expect.stringContaining('ENTITY_NOT_FOUND') })
+    })
+
+    it('hands the step\'s waitpoint to the server, so the stale sweep can release the flow if this worker dies', async () => {
+        const { ctx, configRequests } = buildContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' }))
+
+        expect(configRequests[0]).toMatchObject({ flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' })
+    })
+
+    it('exits quietly without releasing the flow when it is a redelivered copy of a run still in progress', async () => {
+        const { ctx, resumed, events } = buildContext(new ActivepiecesError({ code: ErrorCode.AGENT_RUN_SUPERSEDED, params: { message: 'This run was already delivered' } }))
+
+        const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' }))
+
+        expect(result.status).toBe(EngineResponseStatus.OK)
+        expect(resumed).toHaveLength(0)
+        expect(events).toHaveLength(0)
     })
 
     it('fails a flow step on a model our credits do not serve with the reason alone, as a user failure', async () => {

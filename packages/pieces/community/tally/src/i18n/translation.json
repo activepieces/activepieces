@@ -122,6 +122,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Submission": "New Submission",
   "Triggers when someone submits the selected form": "Triggers when someone submits the selected form"
 }

@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import { cursorAuth } from '../common/auth';
 import { makeCursorRequest } from '../common/client';
@@ -114,6 +114,11 @@ export const agentStatusEqualsTrigger = createTrigger({
     const { agentId } = propsValue;
     const storeKey = `agent_status_${agentId}`;
 
+    await pollingHelper.onEnable(polling, context);
+    if (context.isRepublish && !isNil(await store.get(storeKey))) {
+      return;
+    }
+
     try {
       const agent = await makeCursorRequest<Agent>(
         auth,
@@ -124,24 +129,23 @@ export const agentStatusEqualsTrigger = createTrigger({
     } catch (error) {
       await store.put(storeKey, null);
     }
-
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
+    if (context.isRepublish) {
+      return;
+    }
+    const { store, propsValue } = context;
     const { agentId } = propsValue;
     const storeKey = `agent_status_${agentId}`;
 
     await store.delete(storeKey);
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.test(polling, { store, auth, propsValue, files });
+    return await pollingHelper.test(polling, context);
   },
   async run(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.poll(polling, { store, auth, propsValue, files });
+    return await pollingHelper.poll(polling, context);
   },
 });
 

@@ -47,36 +47,16 @@ export const newFile = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   run: async (context) => {
-    return pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-      server: context.server,
-    });
+    return pollingHelper.poll(polling, context);
   },
   test: async (context) => {
-    return pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-      server: context.server,
-    });
+    return pollingHelper.test(polling, context);
   },
   sampleData: {
     Key: 'myfolder/100-3.png',

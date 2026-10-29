@@ -3,6 +3,7 @@ import {
   AgentProviderModel,
   ModelChoice,
   ModelOptions,
+  ModelOptionsSurface,
 } from '@activepieces/shared';
 import semver from 'semver';
 
@@ -80,7 +81,11 @@ function supportsTiers({ pieceVersion }: { pieceVersion: string }): boolean {
 }
 
 function isEmpty({ value }: { value: unknown }): boolean {
-  return !isRecord(value) || Object.keys(value).length === 0;
+  return isNil(value) || (isRecord(value) && Object.keys(value).length === 0);
+}
+
+function fieldFor({ actionName }: { actionName: string }): ModelFieldLayout {
+  return MODEL_FIELD_BY_ACTION[actionName] ?? DEFAULT_MODEL_FIELD;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -93,10 +98,29 @@ function stringOf(value: unknown): string | undefined {
 
 const FIRST_PIECE_VERSION_WITH_TIERS = '0.14.1';
 
+const DEFAULT_MODEL_FIELD: ModelFieldLayout = {
+  surface: 'agent',
+  showHeading: true,
+};
+
+const MODEL_FIELD_BY_ACTION: Record<string, ModelFieldLayout> = {
+  run_agent: DEFAULT_MODEL_FIELD,
+  extractStructuredData: { surface: 'agent', showHeading: false },
+  askAi: { surface: 'flow', showHeading: false },
+  summarizeText: { surface: 'flow', showHeading: true },
+  classifyText: { surface: 'flow', showHeading: true },
+};
+
 export const agentModelUtils = {
   choiceOf,
   valueOf,
   defaultFor,
   supportsTiers,
   isEmpty,
+  fieldFor,
+};
+
+type ModelFieldLayout = {
+  surface: ModelOptionsSurface;
+  showHeading: boolean;
 };

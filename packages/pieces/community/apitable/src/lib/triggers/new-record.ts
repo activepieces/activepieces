@@ -60,6 +60,15 @@ export const newRecordTrigger = createTrigger({
     description:
       'Fires when a new record is created in the selected AITable datasheet. Polls by creation time, so each newly added row in the chosen space and datasheet surfaces as one event.',
   },
+  propertyGroups: [
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['space_id', 'datasheet_id'],
+    },
+  ],
   props: {
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,
@@ -77,34 +86,16 @@ export const newRecordTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-    });
+    await pollingHelper.onEnable(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-    });
+    await pollingHelper.onDisable(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
   },
 });
 

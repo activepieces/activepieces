@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { fileToUploadInput, regionOf, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
 
 export const unlockPdfAction = createAction({
@@ -10,6 +11,7 @@ export const unlockPdfAction = createAction({
   displayName: 'Unlock PDF',
   description: 'Remove the password from a PDF (you must know the current password).',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Strip password protection from a PDF, producing an unencrypted copy. You must supply the current password that protects the file. Use the Protect PDF action for the reverse operation of adding a password. Each run produces a new output file.',
@@ -37,14 +39,11 @@ export const unlockPdfAction = createAction({
 
     return await runAndStoreResult({
       auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'unlock',
-      uploads: [
-        {
-          kind: 'file',
-          file: { base64: file.base64, filename: file.filename },
-        },
-      ],
+      uploads: [fileToUploadInput({ file: file, label: 'PDF File' })],
       perFileOverrides: [{ password }],
       output_filename,
       packaged_filename,

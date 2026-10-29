@@ -292,6 +292,12 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Placeholders": "Placeholders",
+  "Images": "Images",
+  "Search": "Search",
+  "If Not Found": "If Not Found",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Document": "New Document",
   "Triggers when a new document is created in Drive or a chosen folder.": "Triggers when a new document is created in Drive or a chosen folder."
 }

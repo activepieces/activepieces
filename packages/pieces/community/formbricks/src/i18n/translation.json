@@ -26,6 +26,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Response Created": "Response Created",
   "Response Updated": "Response Updated",
   "Response Finished": "Response Finished",

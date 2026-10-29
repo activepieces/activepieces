@@ -17,6 +17,7 @@
   "Frequency Penalty": "Frequency Penalty",
   "Presence Penalty": "Presence Penalty",
   "Conversation Memory ID": "Conversation Memory ID",
+  "Markdown": "Markdown",
   "Roles": "Roles",
   "Audio File": "Audio File",
   "Language": "Language",
@@ -38,6 +39,7 @@
   "From 0 to 1. Adjust this or Temperature, not both.": "From 0 to 1. Adjust this or Temperature, not both.",
   "From -2 to 2. Groq models do not support this yet.": "From -2 to 2. Groq models do not support this yet.",
   "Runs that share this ID continue one conversation. Empty: no memory.": "Runs that share this ID continue one conversation. Empty: no memory.",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Saved for the whole project, so other flows that use this ID join the same conversation.",
   "Messages sent before the question, such as a system instruction.": "Messages sent before the question, such as a system instruction.",
   "flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav or webm.": "flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav or webm.",
   "whisper-large-v3 is the most accurate; turbo is faster.": "whisper-large-v3 is the most accurate; turbo is faster.",
@@ -62,6 +64,11 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
-  "Markdown": "Markdown",
-  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Saved for the whole project, so other flows that use this ID join the same conversation."
+  "Settings": "Settings",
+  "Message": "Message",
+  "History": "History",
+  "Recording": "Recording",
+  "Output": "Output",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

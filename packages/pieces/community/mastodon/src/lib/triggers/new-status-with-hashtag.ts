@@ -1,6 +1,7 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
+  MarkdownVariant,
   Property,
   StaticPropsValue,
   TriggerStrategy,
@@ -12,20 +13,25 @@ import { mastodonSampleData } from '../common/sample-data';
 import { statusOutputSchema } from '../output-schemas';
 
 const props = {
+  hashtag_info: Property.MarkDown({
+    value: 'Statuses from other servers appear once they reach your server.',
+    variant: MarkdownVariant.INFO,
+  }),
   hashtag: Property.ShortText({
     displayName: 'Hashtag',
-    description: 'The hashtag to watch, without the # sign, for example opensource.',
+    description: 'Without the # sign; a leading # is removed.',
+    placeholder: 'opensource',
     required: true,
   }),
   local: Property.Checkbox({
     displayName: 'Only Local Statuses',
-    description: 'Only trigger for posts by accounts on your own server.',
+    description: 'Only statuses from accounts on your server.',
     required: false,
     defaultValue: false,
   }),
   only_media: Property.Checkbox({
-    displayName: 'Only Statuses With Media',
-    description: 'Only trigger for posts that have images, video or audio attached.',
+    displayName: 'Only Statuses with Media',
+    description: 'Only statuses with images, video or audio.',
     required: false,
     defaultValue: false,
   }),
@@ -60,13 +66,28 @@ export const newStatusWithHashtag = createTrigger({
   name: 'new_status_with_hashtag',
   classification: 'READ',
   displayName: 'New Status with Hashtag',
-  description:
-    'Triggers when a new public post uses a hashtag. Posts from other servers are included once they reach your server.',
+  description: 'Triggers when a new public status uses a hashtag.',
   aiMetadata: {
     description:
       'Fires once per new public status using the watched hashtag, as seen by the connected server, optionally limited to local posts or posts with media; the payload is the full status.',
   },
   props,
+  propertyGroups: [
+    {
+      key: 'tag',
+      display: 'section',
+      label: 'Hashtag to Watch',
+      icon: 'tag',
+      props: ['hashtag_info', 'hashtag'],
+    },
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Source',
+      icon: 'filter',
+      props: ['local', 'only_media'],
+    },
+  ],
   sampleData: mastodonSampleData.status,
   outputSchema: statusOutputSchema,
   type: TriggerStrategy.POLLING,

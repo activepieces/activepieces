@@ -161,6 +161,7 @@ function buildFlowOperation(
         executionType: ExecutionType.BEGIN,
         triggerPayload: data.payload,
         executeTrigger: data.executeTrigger ?? false,
+        entryStepName: data.entryStepName,
         sampleData: data.sampleData,
     }
 }

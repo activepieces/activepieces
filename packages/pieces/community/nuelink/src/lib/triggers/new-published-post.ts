@@ -53,6 +53,9 @@ export const newPublishedPost = createTrigger({
     await seed({ query, store: context.store });
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete(STORE_KEY);
   },
   async test(context) {

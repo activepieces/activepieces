@@ -85,6 +85,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New API Event": "New API Event",
   "Trigger when a new API event is logged (activation, deactivation, key creation, etc.)": "Trigger when a new API event is logged (activation, deactivation, key creation, etc.)",
   "Event States": "Event States",

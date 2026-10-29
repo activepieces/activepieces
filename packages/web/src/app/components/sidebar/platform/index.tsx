@@ -109,6 +109,9 @@ export function PlatformNav() {
               ? undefined
               : [
                   { to: '/platform/ai', label: t('Providers'), end: true },
+                  ...(edition === ApEdition.CLOUD
+                    ? [{ to: '/platform/ai/tiers', label: t('Tiers') }]
+                    : []),
                   {
                     to: '/platform/ai/capabilities',
                     label: t('Capabilities'),

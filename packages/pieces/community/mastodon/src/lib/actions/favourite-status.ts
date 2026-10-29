@@ -20,8 +20,8 @@ export const favouriteStatus = createAction({
   props: {
     status_id: Property.ShortText({
       displayName: 'Status ID',
-      description:
-        'ID of the status to favourite, for example 109372843234737004. Map it from a trigger such as New Mention (Related Status > Status ID), a timeline, Get Status or Search (Search turns a status URL from another server into an ID).',
+      description: 'ID of the status, for example from a trigger, Get Status or Search.',
+      placeholder: '109372843234737004',
       required: true,
     }),
   },

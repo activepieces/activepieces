@@ -1,76 +1,31 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../auth';
-import { sendItRequest } from '../common';
+import { createTrigger } from '@activepieces/pieces-framework';
+import { sendItAuth } from '../common/auth';
+import { sendItWebhookHooks } from '../common/webhook-trigger';
+import { sendItOutputSchemas } from '../common/output-schemas';
+import { triggerMappers } from '../common/trigger-mappers';
 
-type FailedPayload = {
-  deliveryId?: string;
-  event?: string;
-  timestamp?: string;
-  data?: {
-    platform?: string;
-    content?: { text?: string };
-    error?: string;
-    failedAt?: string;
-  };
+export const postFailedSampleData = {
+  delivery_id: 'dlv_sample789',
+  event: 'post.failed',
+  timestamp: '2026-01-15T10:05:00.000Z',
+  content_text: 'Check this out!',
+  platform: 'instagram',
+  error: 'Media URL is not accessible',
+  failed_at: '2026-01-15T10:05:00Z',
 };
 
 export const postFailed = createTrigger({
   auth: sendItAuth,
   name: 'post_failed',
-  classification: 'READ',
   displayName: 'Post Failed',
   description: 'Triggers when a post fails to publish to a platform',
+  classification: 'READ',
   aiMetadata: {
     description:
-      'Fires when SendIt fails to publish a post to a connected social platform, representing a failed publication attempt. Each event carries the platform, the post content, and an error message describing why it failed.',
+      'Fires when SendIt fails to publish a post to a connected social platform, representing a failed publication attempt. Each event carries the platform, the post content, and an error message describing why it failed. Deliveries are verified with the X-SendIt-Signature header and deduplicated by delivery ID.',
   },
   props: {},
-  type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    const response = (await sendItRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      '/webhooks',
-      {
-        url: context.webhookUrl,
-        events: ['post.failed'],
-      }
-    )) as { webhook: { id: string; secret: string } };
-
-    await context.store.put('webhookId', response.webhook.id);
-  },
-  async onDisable(context) {
-    const webhookId = await context.store.get<string>('webhookId');
-    if (webhookId) {
-      await sendItRequest(
-        context.auth.secret_text,
-        HttpMethod.DELETE,
-        `/webhooks/${webhookId}`
-      );
-    }
-  },
-  async run(context) {
-    const payload = context.payload.body as FailedPayload;
-    return [
-      {
-        delivery_id: payload.deliveryId ?? null,
-        event: payload.event ?? null,
-        timestamp: payload.timestamp ?? null,
-        platform: payload.data?.platform ?? null,
-        content_text: payload.data?.content?.text ?? null,
-        error: payload.data?.error ?? null,
-        failed_at: payload.data?.failedAt ?? null,
-      },
-    ];
-  },
-  sampleData: {
-    delivery_id: 'dlv_sample789',
-    event: 'post.failed',
-    timestamp: '2025-01-14T12:00:00.000Z',
-    platform: 'instagram',
-    content_text: 'Failed post content',
-    error: 'Instagram API rate limit exceeded',
-    failed_at: '2025-01-14T12:00:00.000Z',
-  },
+  outputSchema: sendItOutputSchemas.postFailedEvent,
+  sampleData: postFailedSampleData,
+  ...sendItWebhookHooks({ event: 'post.failed', sampleData: postFailedSampleData, mapEvent: triggerMappers.failed }),
 });

@@ -130,5 +130,12 @@
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
   "New Review": "Nieuwe review",
-  "Triggers when a customer posts a new review on the location.": "Wordt geactiveerd wanneer een klant een nieuwe review over de locatie plaatst."
+  "Triggers when a customer posts a new review on the location.": "Wordt geactiveerd wanneer een klant een nieuwe review over de locatie plaatst.",
+  "Post to Update": "Bij te werken bericht",
+  "Review": "Review",
+  "Reply": "Antwoord",
+  "Results": "Resultaten",
+  "Business": "Bedrijf",
+  "Markdown": "Markdown",
+  "Fields left empty keep their current value.": "Lege velden behouden hun huidige waarde."
 }

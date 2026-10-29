@@ -260,6 +260,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Link Created": "New Link Created",
   "Fires when a new short link is created on a domain. Useful to sync newly created links to other systems.": "Fires when a new short link is created on a domain. Useful to sync newly created links to other systems.",
   "Polling Interval": "Polling Interval",

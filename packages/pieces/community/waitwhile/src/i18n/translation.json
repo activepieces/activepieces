@@ -76,6 +76,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Or Updated Message": "New Or Updated Message",
   "New Or Updated Visit": "New Or Updated Visit",
   "Triggers when an SMS or EMAIL notification is created or its delivery status changes": "Triggers when an SMS or EMAIL notification is created or its delivery status changes",

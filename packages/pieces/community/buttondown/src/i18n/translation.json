@@ -122,6 +122,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Subscriber": "New Subscriber",
   "Subscriber Confirmed": "Subscriber Confirmed",
   "Email Sent": "Email Sent",

@@ -352,6 +352,17 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Reaction": "Reaction",
+  "Formatting": "Formatting",
+  "Delivery": "Delivery",
+  "Filters": "Filters",
+  "Profile": "Profile",
+  "Time window": "Time window",
+  "Status": "Status",
+  "User group": "User group",
+  "Members": "Members",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Public Message Posted Anywhere": "New Public Message Posted Anywhere",
   "New Message Posted to Channel": "New Message Posted to Channel",
   "New Direct Message": "New Direct Message",
@@ -402,5 +413,7 @@
   "This trigger needs Slack's Interactivity & Shortcuts Request URL manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).": "This trigger needs Slack's Interactivity & Shortcuts Request URL manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).",
   "Submit fires on send, Close fires when the modal is dismissed.": "Submit fires on send, Close fires when the modal is dismissed.",
   "View Submission": "View Submission",
-  "View Closed": "View Closed"
+  "View Closed": "View Closed",
+  "Mentions": "Mentions",
+  "Command": "Command"
 }

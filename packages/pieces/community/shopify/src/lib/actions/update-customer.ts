@@ -1,8 +1,4 @@
-import {
-  MarkdownVariant,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateCustomer } from '../common';
 import * as z from 'zod/mini'
@@ -44,7 +40,7 @@ export const updateCustomerAction = createAction({
       label: 'Account',
       icon: 'inbox',
       props: [
-        'account_warning',
+        'account_info',
         'verifiedEmail',
         'sendEmailInvite',
         'acceptsMarketing',
@@ -67,15 +63,13 @@ export const updateCustomerAction = createAction({
       required: false,
       width: 'half',
     }),
-    account_warning: Property.MarkDown({
-      value: 'These three are always sent. Leaving Accepts Marketing off unsubscribes the customer.',
-      variant: MarkdownVariant.WARNING,
+    account_info: Property.MarkDown({
+      value: "Switched off, these leave the customer's current setting unchanged.",
     }),
     verifiedEmail: Property.Checkbox({
       displayName: 'Verified Email',
-      description: 'Whether the customer has verified their email.',
+      description: "Mark the customer's email as verified.",
       required: false,
-      defaultValue: true,
     }),
     sendEmailInvite: Property.Checkbox({
       displayName: 'Send Email Invite',
@@ -108,7 +102,7 @@ export const updateCustomerAction = createAction({
     }),
     acceptsMarketing: Property.Checkbox({
       displayName: 'Accepts Marketing',
-      description: 'Off unsubscribes the customer from email marketing.',
+      description: 'Subscribe the customer to email marketing.',
       required: false,
     }),
   },
@@ -133,16 +127,20 @@ export const updateCustomerAction = createAction({
       customerId,
       {
         email,
-        verified_email: verifiedEmail,
-        send_email_invite: sendEmailInvite,
         first_name: firstName,
         last_name: lastName,
         phone: phoneNumber,
         tags,
-           email_marketing_consent:{
-          state:acceptsMarketing?'subscribed':'unsubscribed',
-          opt_in_level:"unknown"
-        }
+        ...(verifiedEmail ? { verified_email: true } : {}),
+        ...(sendEmailInvite ? { send_email_invite: true } : {}),
+        ...(acceptsMarketing
+          ? {
+              email_marketing_consent: {
+                state: 'subscribed',
+                opt_in_level: 'unknown',
+              },
+            }
+          : {}),
       },
       auth
     );

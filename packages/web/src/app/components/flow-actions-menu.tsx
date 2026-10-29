@@ -62,8 +62,16 @@ type FlowActionMenuProps = {
   onDelete: () => void;
   onOwnerChange?: () => void;
 } & (
-  | { insideBuilder: true; onVersionsListClick: () => void }
-  | { insideBuilder: false; onVersionsListClick: null }
+  | {
+      insideBuilder: true;
+      onVersionsListClick: () => void;
+      savePendingEdits: () => Promise<void>;
+    }
+  | {
+      insideBuilder: false;
+      onVersionsListClick: null;
+      savePendingEdits: null;
+    }
 );
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
@@ -78,6 +86,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onOwnerChange,
   onVersionsListClick,
   insideBuilder,
+  savePendingEdits,
 }) => {
   const isRunsPage = useLocation().pathname.includes('/runs');
   const { platform } = platformHooks.useCurrentPlatform();
@@ -315,7 +324,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               <PermissionNeededTooltip
                 hasPermission={userHasPermissionToUpdateFlow}
               >
-                <ImportFlowDialog insideBuilder={true} flowId={flow.id}>
+                <ImportFlowDialog
+                  insideBuilder={true}
+                  flowId={flow.id}
+                  savePendingEdits={savePendingEdits}
+                >
                   <DropdownMenuItem
                     disabled={!userHasPermissionToUpdateFlow}
                     onSelect={(e) => e.preventDefault()}

@@ -130,5 +130,12 @@
   "DELETE": "SUPPRIMER",
   "HEAD": "HEAD",
   "New Review": "Nouveau commentaire",
-  "Triggers when a customer posts a new review on the location.": "Se déclenche lorsqu’un client publie un nouvel avis sur l’établissement."
+  "Triggers when a customer posts a new review on the location.": "Se déclenche lorsqu’un client publie un nouvel avis sur l’établissement.",
+  "Post to Update": "Contenu à modifier",
+  "Review": "Avis",
+  "Reply": "Réponse",
+  "Results": "Résultats",
+  "Business": "Établissement",
+  "Markdown": "Markdown",
+  "Fields left empty keep their current value.": "Les champs laissés vides conservent leur valeur actuelle."
 }

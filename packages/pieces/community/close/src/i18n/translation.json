@@ -229,6 +229,7 @@
   "nextCursor from the previous page.": "nextCursor from the previous page.",
   "Words to find, e.g. company name or email.": "Words to find, e.g. company name or email.",
   "emailacct_... from Get Current User.": "emailacct_... from Get Current User.",
+  "Pass an empty string to clear it.": "Pass an empty string to clear it.",
   "Replaces all emails on the contact.": "Replaces all emails on the contact.",
   "Replaces all phones on the contact.": "Replaces all phones on the contact.",
   "Replaces all URLs on the contact.": "Replaces all URLs on the contact.",
@@ -276,11 +277,12 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Lead Created": "New Lead Created",
   "New Contact Added": "New Contact Added",
   "New Opportunity Added": "New Opportunity Added",
   "Triggers when a new lead is created.": "Triggers when a new lead is created.",
   "Triggers when a new contact is created.": "Triggers when a new contact is created.",
-  "Triggers when a new opportunity is created.": "Triggers when a new opportunity is created.",
-  "Pass an empty string to clear it.": "Pass an empty string to clear it."
+  "Triggers when a new opportunity is created.": "Triggers when a new opportunity is created."
 }

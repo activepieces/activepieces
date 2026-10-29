@@ -232,6 +232,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Order": "New Order",
   "Order Status Changed": "Order Status Changed",
   "Invoice Paid": "Invoice Paid",

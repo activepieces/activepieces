@@ -41,6 +41,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Response": "New Response",
   "Triggers when someone submits or edits a response to the form.": "Triggers when someone submits or edits a response to the form.",
   "Markdown": "Markdown",

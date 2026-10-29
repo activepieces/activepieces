@@ -25,6 +25,7 @@ export type ApErrorParams =
     | ExistingUserErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
+    | FlowRunNotRetryableErrorParams
     | FlowRunRetryOutsideRetentionErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -44,6 +45,7 @@ export type ApErrorParams =
     | QuotaExceededParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
+    | LastProjectParams
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
@@ -193,6 +195,14 @@ export type SystemInvalidErrorParams = BaseErrorParams<
 ErrorCode.SYSTEM_PROP_INVALID,
 {
     prop: string
+}
+>
+
+export type FlowRunNotRetryableErrorParams = BaseErrorParams<
+ErrorCode.FLOW_RUN_NOT_RETRYABLE,
+{
+    flowRunId: FlowRunId
+    status: string
 }
 >
 
@@ -444,6 +454,11 @@ ErrorCode.SIGN_UP_DISABLED,
 Record<string, never>
 >
 
+export type LastProjectParams = BaseErrorParams<
+ErrorCode.LAST_PROJECT,
+Record<string, never>
+>
+
 export type AuthenticationParams = BaseErrorParams<
 ErrorCode.AUTHENTICATION,
 {
@@ -601,6 +616,7 @@ export enum ErrorCode {
     FLOW_EXTERNAL_ID_ALREADY_EXISTS = 'FLOW_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
+    FLOW_RUN_NOT_RETRYABLE = 'FLOW_RUN_NOT_RETRYABLE',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
@@ -622,6 +638,7 @@ export enum ErrorCode {
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
+    LAST_PROJECT = 'LAST_PROJECT',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
     TEST_TRIGGER_FAILED = 'TEST_TRIGGER_FAILED',

@@ -78,5 +78,7 @@
   "Appended to the URL as ?key=value.": "Добавляется к URL как ?key=value.",
   "On a failed request, output the error instead of failing the step.": "При неудачном запросе вернуть ошибку вместо сбоя шага.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Секунды ожидания ответа. Пусто: до лимита потока (10 мин).",
-  "Follow 3xx redirects instead of returning them as the response.": "Следовать перенаправлениям 3xx, а не возвращать их как ответ."
+  "Follow 3xx redirects instead of returning them as the response.": "Следовать перенаправлениям 3xx, а не возвращать их как ответ.",
+  "Fill in Text, Image or PDF, or both.": "Заполните «Текст», «Изображение или PDF» или оба поля.",
+  "Add anthropic-version: 2023-06-01. Your API key is added for you.": "Добавьте anthropic-version: 2023-06-01. Ваш API-ключ добавляется автоматически."
 }

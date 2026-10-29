@@ -34,7 +34,8 @@ const DropdownEditor = () => {
       ref={containerRef}
     >
       <SearchableSelect
-        triggerClassName={cn('rounded-none px-2 border-none bg-transparent')}
+        variant="ghost"
+        triggerClassName="rounded-none px-2"
         onClose={() => {
           setIsEditing(false);
         }}

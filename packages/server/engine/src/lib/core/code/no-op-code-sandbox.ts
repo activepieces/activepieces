@@ -6,7 +6,7 @@ const CODE_RUNNER_SCRIPT = `
 process.once('message', async function(msg) {
     let settled = false
 
-    ${sandboxError.payloadSource}
+    ${sandboxError.payloadSourceFor({})}
 
     process.on('unhandledRejection', (reason) => {
         if (settled) return

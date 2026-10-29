@@ -2,10 +2,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mastodonAuth } from '../..';
 import { MastodonEntity, mastodonClient, mastodonProps } from '../common/client';
+import { searchOutputSchema } from '../output-schemas';
 
 const URL_PATTERN = /^https?:\/\//i;
 const HANDLE_PATTERN = /^@?[^@\s]+@[^@\s]+\.[^@\s]+$/;
-import { searchOutputSchema } from '../output-schemas';
 
 export const search = createAction({
   auth: mastodonAuth,
@@ -23,13 +23,13 @@ export const search = createAction({
   props: {
     q: Property.ShortText({
       displayName: 'Query',
-      description:
-        'Search text, a hashtag, a handle such as Gargron@mastodon.social, or a status or profile URL such as https://mastodon.social/@Gargron/109372843234737004.',
+      description: 'Text, a #hashtag, a user@domain handle or a status URL.',
+      placeholder: 'Gargron@mastodon.social',
       required: true,
     }),
     type: Property.StaticDropdown({
       displayName: 'Result Type',
-      description: 'Only return one kind of result. Leave empty for all three.',
+      description: 'Empty returns all three.',
       required: false,
       options: {
         disabled: false,
@@ -42,40 +42,53 @@ export const search = createAction({
     }),
     resolve: mastodonProps.optionalBoolean({
       displayName: 'Resolve Remote Content',
-      description:
-        'Fetch unknown remote accounts or URLs from their server. Leave empty to resolve automatically when the query is a URL or user@domain handle.',
+      description: 'Fetch results from other servers. Empty: on for URLs and user@domain.',
+      advanced: true,
     }),
     following: mastodonProps.optionalBoolean({
       displayName: 'Only Accounts I Follow',
-      description: 'Only include accounts the connected account follows. Leave empty for no restriction.',
+      description: 'Limits account results to accounts you follow.',
     }),
     account_id: Property.ShortText({
-      displayName: 'Statuses By Account ID',
-      description:
-        'Only return statuses written by this account. Use the Account ID from Lookup Account, not the @handle.',
+      displayName: 'Statuses by Account ID',
+      description: 'Only statuses written by this account.',
+      placeholder: '109302436954721982',
       required: false,
     }),
     exclude_unreviewed: mastodonProps.optionalBoolean({
       displayName: 'Exclude Unreviewed Hashtags',
-      description: 'Leave out hashtags not yet reviewed by moderators. Leave empty for the default (no).',
+      description: 'Skip hashtags your server\'s moderators have not reviewed.',
+      advanced: true,
     }),
-    limit: mastodonProps.limit({ noun: 'results per type', defaultLimit: 20, maxLimit: 40 }),
+    limit: mastodonProps.limit({ noun: 'results of each type', defaultLimit: 20, maxLimit: 40 }),
     offset: Property.Number({
       displayName: 'Offset',
-      description: 'Number of results to skip, for paging. Only applies when Result Type is set.',
+      description: 'Results to skip. Works only when Result Type is set.',
       required: false,
+      advanced: true,
     }),
     max_id: Property.ShortText({
       displayName: 'Max ID',
-      description: 'Only return results with an ID lower than this.',
+      description: 'Only results older than this ID.',
       required: false,
+      advanced: true,
     }),
     min_id: Property.ShortText({
       displayName: 'Min ID',
-      description: 'Only return results with an ID immediately higher than this.',
+      description: 'Only results just newer than this ID.',
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'text',
+      props: ['q', 'type', 'account_id', 'following'],
+    },
+  ],
   async run(context) {
     const props = context.propsValue;
     const query = props.q.trim();

@@ -55,7 +55,7 @@ inside an island, can do it, it is not an exception.
 Every coloured scale (accent, success, warning, danger) comes from one generator, `brandColors.ramp`
 (`@activepieces/shared`). Given a hex, it finds the nearest of our colour families by hue and walks that family's shades:
 light steps 1–12 are the shades `25 50 100 150 200 250 300 400 · 600 700 900` (step 9 is the hex itself), dark
-steps 1–8 use the family's 950–700 hue and chroma on a deep ladder (`14 17 20.5 24 27.5 31 38 47`), and dark 10–12
+steps 1–8 use the family's 950–700 hue and chroma on a lightness ladder (`20.8 22.1 26.2 29 31.3 33.8 39.2 45.9`), and dark 10–12
 are 400, 300 and 100. The family's hue drift and chroma follow the hex, so a custom teal behaves like our teal.
 Step 11 is then lowered (light) or raised (dark) until it reads 4.5:1 on every ground and on its own tint, and step
 10 until it reads 3:1 on the page. The defaults in `styles.css` are this generator's output for violet (`#6e41e2`),
@@ -84,7 +84,8 @@ chip `97%`, border `92.2%`, muted text `52%`, strong text `16%` in light), so th
 sits at the lightest value that still reads 4.5:1 on every chip ground; do not lighten it further.
 
 Dark follows the same rules as light: neutral greys, and swatches from the same colour families. Its greys
-are deep (`gray-1` 11%, `gray-2` 16.2%) so the sidebar, page and panels separate. Its swatch marks are the family's
+are Radix gray steps 1–8 (`gray-1` 17.8% = `#111111`, `gray-2` 21.3% = `#191919`): soft enough not to read as
+black, and still far enough apart that the sidebar, page and panels separate. Its swatch marks are the family's
 500 at 80% chroma with the family's 950 as the label, calmer than light mode's 600 on a near-black ground.
 
 ## White-labelling
