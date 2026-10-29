@@ -8,8 +8,9 @@ vi.mock('../src/lib/common/client', async (importOriginal) => {
 });
 
 import { formbricksApi } from '../src/lib/common/api';
+import { FormbricksAuthValue } from '../src/lib/common/client';
 
-const auth = { apiKey: 'k', appUrl: 'https://app.formbricks.com' } as never;
+const auth: FormbricksAuthValue = { apiKey: 'k', appUrl: 'https://app.formbricks.com' };
 
 describe('upsertContact', () => {
   it('keeps the stored display name of an existing attribute key', async () => {
@@ -28,8 +29,16 @@ describe('upsertContact', () => {
       return [];
     });
     await formbricksApi.upsertContact({ auth, workspaceId: 'ws', email: 'a@b.co', attributes: { company_size: '10', plan: 'pro' } });
-    const sent = bodies[0] as { contacts: { attributes: { attributeKey: { key: string; name: string } }[] }[] };
-    const names = Object.fromEntries(sent.contacts[0].attributes.map((a) => [a.attributeKey.key, a.attributeKey.name]));
-    expect(names).toEqual({ email: 'Email', company_size: 'Company Size', plan: 'plan' });
+    expect(bodies[0]).toMatchObject({
+      contacts: [
+        {
+          attributes: [
+            { attributeKey: { key: 'email', name: 'Email' }, value: 'a@b.co' },
+            { attributeKey: { key: 'company_size', name: 'Company Size' }, value: '10' },
+            { attributeKey: { key: 'plan', name: 'plan' }, value: 'pro' },
+          ],
+        },
+      ],
+    });
   });
 });

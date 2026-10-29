@@ -330,7 +330,6 @@ async function upsertContact({
     throw new Error('Enter a valid email address for the contact.');
   }
   const extra = Object.entries(attributes).filter(([key, value]) => key.trim().length > 0 && key !== 'email' && value.trim().length > 0);
-  // Formbricks' bulk upsert overwrites an existing key's display name with whatever we send, so reuse the stored name.
   const existingNames = new Map<string, string>();
   if (extra.length > 0) {
     const keys = await listAttributeKeys({ auth, workspaceId: workspaceId.trim() });
