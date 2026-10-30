@@ -9,7 +9,7 @@
     "amqplib": "0.10.7",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
-    "undici": "7.29.1"
+    "undici": "7.30.1"
   },
   "devDependencies": {
     "@types/amqplib": "0.10.7",
