@@ -16,35 +16,64 @@ export const sendDynamicTemplate = createAction({
   description: 'Send an email using a dynamic template',
   audience: 'both',
   aiMetadata: { description: 'Sends an email rendered from a SendGrid dynamic template, merging the provided JSON template data into the template referenced by its ID. Use when the message design lives in SendGrid and you only need to supply variables; for composing the body inline use Send Email instead. Requires a valid template ID, a verified sender, and at least one recipient. Not idempotent — each call dispatches a new email.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Sender',
+      icon: 'user',
+      props: ['from', 'from_name'],
+    },
+    {
+      key: 'recipients',
+      display: 'section',
+      label: 'Send to',
+      icon: 'send',
+      props: ['to', 'reply_to'],
+    },
+    {
+      key: 'template',
+      display: 'section',
+      label: 'Template',
+      icon: 'file',
+      props: ['template_id', 'template_data'],
+    },
+  ],
   props: {
     to: Property.Array({
       displayName: 'To',
-      description: 'Emails of the recipients',
+      description: "Each address gets its own copy; recipients don't see each other.",
       required: true,
     }),
     from_name: Property.ShortText({
-      displayName: 'From (Name)',
-      description: 'Sender name',
+      displayName: 'Sender Name',
+      description: 'Name recipients see next to the From address.',
+      placeholder: 'Acme Support',
+      width: 'half',
       required: false,
     }),
     from: Property.ShortText({
-      displayName: 'From (Email)',
-      description: 'Sender email, must be on your SendGrid',
+      displayName: 'From',
+      description: 'Must be a verified sender in your SendGrid account.',
+      placeholder: 'you@example.com',
+      width: 'half',
       required: true,
     }),
     template_id: Property.ShortText({
-      displayName: 'Template Id',
-      description: 'Dynamic template id',
+      displayName: 'Template ID',
+      description: 'Find it in SendGrid under Email API > Dynamic Templates.',
+      placeholder: 'd-1234567890abcdef1234567890abcdef',
       required: true,
     }),
     template_data: Property.Json({
       displayName: 'Template Data',
-      description: 'Dynamic template data',
+      description: 'JSON whose keys match the variables in your template.',
       required: true,
     }),
     reply_to: Property.ShortText({
       displayName: 'Reply To',
-      description: 'Email to receive replies on (defaults to sender)',
+      description: 'Empty: replies go to the From address.',
+      placeholder: 'support@example.com',
       required: false,
     }),
     attachments: Property.Array({
@@ -53,12 +82,13 @@ export const sendDynamicTemplate = createAction({
       properties: {
         file: Property.File({
           displayName: 'File',
-          description: 'File to attach to the email you want to send',
+          description: 'Upload a file or paste its URL.',
           required: true,
         }),
         name: Property.ShortText({
-          displayName: 'Attachment Name',
-          description: 'In case you want to change the name of the attachment',
+          displayName: 'File Name',
+          description: "Empty: keeps the file's own name.",
+          placeholder: 'invoice.pdf',
           required: false,
         }),
       }
