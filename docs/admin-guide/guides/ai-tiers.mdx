@@ -10,7 +10,7 @@ A **tier** is a named group of models that builders pick instead of a raw model 
 
 - A **name**, an **emoji** and a short **description**. Builders see these when they pick a model.
 - A **main model**, tried first.
-- Up to **4 fallbacks**, tried in order when the main model fails. Fallbacks can come from different keys and providers.
+- Up to **4 fallbacks**, tried in order when the main model can't serve a request. Fallbacks can come from different keys and providers.
 - A **thinking** budget: Default, Off, Low (5,000 tokens), Medium (10,000 tokens) or High (20,000 tokens). Only models that support reasoning use it.
 
 Tiers show up in the model picker for chat, agents, Run Agent steps and AI text steps. When you swap the model behind a tier, every flow and agent that uses the tier moves with it. Nothing needs to be edited.
@@ -43,7 +43,7 @@ Go to **Platform admin** → **AI Center** → **Tiers**.
   </Step>
 </Steps>
 
-A fallback is used only when the model before it fails at the provider, for example a rate limit, an outage, an expired key or no credits left. Without a fallback, the tier fails when its main model is unavailable.
+Models whose key is **Active** are tried first, in tier order. A model whose key is marked **Out of credits**, **Key rejected** or **Unreachable** moves behind them, so an active fallback can serve a request before the main model is retried. Within that order, the next model is used when the one before it fails at the provider, for example a rate limit, an outage, an expired key or no credits left. Without a fallback, the tier fails when its main model is unavailable.
 
 To change a model, use the **...** menu on its row: **Change main model**, **Move up**, **Move down** or **Remove**.
 
@@ -58,7 +58,7 @@ The default tier is not the same as the [Default chat model](/admin-guide/guides
 
 ## Reorder and edit
 
-The order of the cards is the order builders see. Use **Move up** and **Move down** in a tier's **...** menu to change it. Use **Edit** to change the name, emoji, description, main model or thinking.
+The order of the cards is the order builders see. Use **Move up** and **Move down** in a tier's **...** menu to change it. Use **Edit** to change the name, emoji, description or thinking. To change the main model, use **Change main model** in the model row's **...** menu.
 
 ## Delete a tier
 
@@ -91,5 +91,4 @@ Hiding specific models only changes the picker. Flows and agents that already us
 ## Related
 
 - [Providers and keys](/admin-guide/guides/setup-ai-providers)
-- [AI usage](/admin-guide/guides/ai-usage)
 - API reference: [list tiers](/endpoints/ai-model-tiers/list), [create](/endpoints/ai-model-tiers/create), [reorder](/endpoints/ai-model-tiers/reorder), [update](/endpoints/ai-model-tiers/update), [delete](/endpoints/ai-model-tiers/delete).
