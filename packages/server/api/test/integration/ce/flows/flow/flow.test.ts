@@ -420,6 +420,42 @@ describe('Flow API', () => {
     })
 
     describe('List Flows endpoint', () => {
+        it('Filters connections on the published version when versionState is LOCKED', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', mockFlow)
+            const publishedVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.LOCKED,
+                created: '2020-01-01T00:00:00.000Z',
+                connectionIds: ['published-only-connection'],
+            })
+            const newerDraftVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.DRAFT,
+                created: '2020-06-01T00:00:00.000Z',
+                connectionIds: [],
+            })
+            await db.save('flow_version', [publishedVersion, newerDraftVersion])
+            mockFlow.publishedVersionId = publishedVersion.id
+            await db.save('flow', mockFlow)
+
+            const draftMatches = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                connectionExternalIds: 'published-only-connection',
+            })
+            const publishedMatches = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                connectionExternalIds: 'published-only-connection',
+                versionState: FlowVersionState.LOCKED,
+            })
+
+            expect(draftMatches?.json().data).toHaveLength(0)
+            expect(publishedMatches?.statusCode).toBe(StatusCodes.OK)
+            expect(publishedMatches?.json().data.map((flow: { id: string }) => flow.id)).toEqual([mockFlow.id])
+        })
+
         it('Filters Flows by status', async () => {
             const ctx = await createTestContext(app!)
 
