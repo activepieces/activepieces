@@ -708,6 +708,7 @@ export const microsoftTeamsListChannelMessageRepliesOutputSchema: OutputSchema =
     fields: [
       odataContextField,
       odataCountField,
+      odataNextLinkField,
       { key: 'value', label: 'Replies', labelKey: 'id', listItems: channelMessageFields },
     ],
   };
@@ -716,6 +717,7 @@ export const microsoftTeamsListChannelMessagesOutputSchema: OutputSchema = {
   fields: [
     odataContextField,
     odataCountField,
+    odataNextLinkField,
     { key: 'value', label: 'Messages', labelKey: 'subject', listItems: channelMessageWithMentionsFields },
   ],
 };
@@ -749,7 +751,24 @@ export const microsoftTeamsListChatsOutputSchema: OutputSchema = {
   fields: [
     odataContextField,
     odataCountField,
+    odataNextLinkField,
     { key: 'value', label: 'Chats', labelKey: 'topic', listItems: chatDetailFields },
+  ],
+};
+
+export const microsoftTeamsListDeletedTeamsOutputSchema: OutputSchema = {
+  fields: [
+    odataContextField,
+    odataCountField,
+    { key: 'value', label: 'Deleted Teams', labelKey: 'id', listItems: [{ key: 'id', label: 'Team ID' }] },
+  ],
+};
+
+export const microsoftTeamsListIncomingChannelsOutputSchema: OutputSchema = {
+  fields: [
+    odataContextField,
+    odataCountField,
+    { key: 'value', label: 'Channels', labelKey: 'displayName', listItems: channelFields },
   ],
 };
 
@@ -772,6 +791,15 @@ export const microsoftTeamsListPinnedChatMessagesOutputSchema: OutputSchema = {
   ],
 };
 
+export const microsoftTeamsListTeamMembersOutputSchema: OutputSchema = {
+  fields: [
+    odataContextField,
+    odataCountField,
+    odataNextLinkField,
+    { key: 'value', label: 'Members', labelKey: 'displayName', listItems: conversationMemberFields },
+  ],
+};
+
 export const microsoftTeamsListTeamsOutputSchema: OutputSchema = {
   fields: [
     odataContextField,
@@ -783,6 +811,7 @@ export const microsoftTeamsListTeamsOutputSchema: OutputSchema = {
 export const microsoftTeamsListUsersOutputSchema: OutputSchema = {
   fields: [
     odataContextField,
+    odataNextLinkField,
     { key: 'value', label: 'Users', labelKey: 'displayName', listItems: userFields },
   ],
 };

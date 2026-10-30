@@ -2,12 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsClient } from '../../../common/client';
-import { microsoftTeamsListChannelMessageHostedContentsOutputSchema } from '../../../output-schemas';
+import { microsoftTeamsListDeletedTeamsOutputSchema } from '../../../output-schemas';
 
 export const listDeletedTeams = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_deleted_teams',
-  outputSchema: microsoftTeamsListChannelMessageHostedContentsOutputSchema,
+  outputSchema: microsoftTeamsListDeletedTeamsOutputSchema,
   displayName: 'List Deleted Teams',
   description: 'Lists teams that were deleted and can still be restored.',
   audience: 'ai',

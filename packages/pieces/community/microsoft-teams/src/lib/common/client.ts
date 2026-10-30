@@ -101,6 +101,7 @@ async function list<T>({
 }): Promise<MicrosoftTeamsPage<T>> {
   const client = create({ auth });
   if (nextLink) {
+    assertGraphUrl({ auth, url: nextLink });
     return await withRetry(() => client.api(nextLink).get());
   }
   let request = client.api(path);
@@ -127,6 +128,13 @@ async function signedInUser({ auth }: { auth: MicrosoftTeamsAuthValue }): Promis
     throw new Error('Could not read the signed-in user from the connection. Reconnect the Microsoft Teams connection.');
   }
   return { id: claims.oid, tenantId: claims.tid };
+}
+
+function assertGraphUrl({ auth, url }: { auth: MicrosoftTeamsAuthValue; url: string }): void {
+  const origin = URL.canParse(url) ? new URL(url).origin : null;
+  if (origin !== graphUrl({ auth })) {
+    throw new Error(`Next Page Link must be an @odata.nextLink returned by a previous page (it starts with ${graphUrl({ auth })}/).`);
+  }
 }
 
 async function delay({ ms }: { ms: number }): Promise<void> {

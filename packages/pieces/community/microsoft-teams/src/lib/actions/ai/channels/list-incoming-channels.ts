@@ -3,12 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
-import { microsoftTeamsListChannelMessageHostedContentsOutputSchema } from '../../../output-schemas';
+import { microsoftTeamsListIncomingChannelsOutputSchema } from '../../../output-schemas';
 
 export const listIncomingChannels = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_incoming_channels',
-  outputSchema: microsoftTeamsListChannelMessageHostedContentsOutputSchema,
+  outputSchema: microsoftTeamsListIncomingChannelsOutputSchema,
   displayName: 'List Incoming Channels',
   description: 'Lists the channels shared into a team from other teams.',
   audience: 'ai',
