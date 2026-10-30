@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Site } from '@microsoft/microsoft-graph-types';
+import { microsoftSharepointFindSiteOutputSchema } from '../output-schemas';
 
 export const findSiteAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_find_site',
+  outputSchema: microsoftSharepointFindSiteOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find Site',
   description: 'Search for SharePoint sites by name and return matching results.',

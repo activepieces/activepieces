@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { microsoftSharepointPublishPageOutputSchema } from '../output-schemas';
 
 export const publishPageAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_publish_page',
+  outputSchema: microsoftSharepointPublishPageOutputSchema,
   classification: 'WRITE',
   displayName: 'Publish Page',
   description: 'Publishes a SharePoint page, making it available to all users. If the page is checked out, it will be automatically checked in. Note: Pages with active approval flows will not publish until approval is complete.',

@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { microsoftSharepointCreateFolderOutputSchema } from '../output-schemas';
 
 export const createFolderAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_create_folder',
+  outputSchema: microsoftSharepointCreateFolderOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Folder',
   description: 'Creates a new folder at path you specify.',
