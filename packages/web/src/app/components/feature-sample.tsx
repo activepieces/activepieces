@@ -1,4 +1,4 @@
-import { PlatformAdminSurface } from '@activepieces/shared';
+import { UpgradeLocationInWebApp } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   createContext,
@@ -11,34 +11,11 @@ import {
 
 import {
   LockedFeatureCard,
-  LockedFeatureUsageMeter,
   FeatureKey,
   useLockedFeature,
 } from '@/features/billing';
 
 import { AdminPageLockContext } from './admin/admin-page';
-
-export function LockedFeatureUsage({
-  unlocked,
-  featureKey,
-  used,
-  limit,
-  label,
-  children,
-}: LockedFeatureUsageProps) {
-  const lockedFeature = useLockedFeature({ unlocked, featureKey });
-  return (
-    <div className="flex flex-wrap items-center gap-4">
-      <LockedFeatureUsageMeter
-        lockedFeature={lockedFeature}
-        used={used}
-        limit={limit}
-        label={label}
-      />
-      {children}
-    </div>
-  );
-}
 
 export function FeatureSample({
   locked,
@@ -56,7 +33,7 @@ export function FeatureSample({
         <LockedFeatureCard
           featureKey={featureKey}
           fallbackHeadline={t(title)}
-          surface={PlatformAdminSurface.SAMPLE}
+          locationInWebApp={UpgradeLocationInWebApp.SAMPLE}
         />
       }
     >
@@ -109,15 +86,6 @@ function LockedPreview({
 }
 
 const InsideFeatureSampleContext = createContext(false);
-
-type LockedFeatureUsageProps = {
-  unlocked: boolean;
-  featureKey: FeatureKey;
-  used: number;
-  limit: number | null | undefined;
-  label: string;
-  children: ReactNode;
-};
 
 type FeatureSampleProps = {
   locked: boolean;

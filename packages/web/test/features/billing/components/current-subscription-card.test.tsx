@@ -11,22 +11,31 @@ import { SelfServeTrialBillingStatus } from '@/features/billing/components/curre
 
 const state = vi.hoisted(() => ({
   plan: 'free',
-  trialState: 'ended',
-  endsAt: new Date(),
+  endsAt: '',
+  offer: false,
 }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
-    useCurrentPlatform: () => ({ platform: { plan: { plan: state.plan } } }),
+    useCurrentPlatform: () => ({
+      platform: {
+        plan: { plan: state.plan },
+        selfServeTrial: {
+          startedAt: dayjs(state.endsAt).subtract(7, 'day').toISOString(),
+          endsAt: state.endsAt,
+          seatGraceEndsAt: null,
+        },
+      },
+    }),
   },
 }));
 
 vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
   SELF_SERVE_TRIAL_DAYS: 7,
   selfServeTrialHooks: {
-    useTrial: () => ({ state: state.trialState, endsAt: state.endsAt }),
+    useShouldOfferTrial: () => state.offer,
   },
 }));
 
@@ -42,24 +51,22 @@ vi.mock('@/hooks/user-hooks', () => ({
   userHooks: { useCurrentUser: () => ({ data: null }) },
 }));
 
-describe('billing page after the trial', () => {
+describe('billing page trial offer', () => {
   it.each([
-    { trialState: 'ended', daysAgo: 2, plan: 'free', shown: true },
-    { trialState: 'ended', daysAgo: 45, plan: 'free', shown: false },
-    { trialState: 'ended', daysAgo: 2, plan: 'enterprise', shown: false },
-    { trialState: 'used', daysAgo: -5, plan: 'free', shown: false },
+    { offer: true, daysAgo: -5, shown: true },
+    { offer: false, daysAgo: 2, shown: false },
+    { offer: false, daysAgo: -5, shown: false },
   ])(
-    '$trialState $daysAgo days ago on $plan: shown $shown',
-    ({ trialState, daysAgo, plan, shown }) => {
+    'offer $offer, trial ended $daysAgo days ago: shown $shown',
+    ({ offer, daysAgo, shown }) => {
       Object.assign(state, {
-        trialState,
-        plan,
-        endsAt: dayjs().subtract(daysAgo, 'day').toDate(),
+        offer,
+        endsAt: dayjs().subtract(daysAgo, 'day').toISOString(),
       });
       render(<SelfServeTrialBillingStatus />);
-      expect(
-        screen.queryAllByText(/Enterprise plan settings are locked/),
-      ).toHaveLength(shown ? 1 : 0);
+      expect(screen.queryAllByText('Start free trial')).toHaveLength(
+        shown ? 1 : 0,
+      );
     },
   );
 });

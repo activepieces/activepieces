@@ -15,7 +15,6 @@ import {
   AdminPageHeader,
   adminPageResources,
 } from '@/app/components/admin';
-import { LockedFeatureUsage } from '@/app/components/feature-sample';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -25,6 +24,7 @@ import {
   billingUtils,
   seatUtils,
   ActionWhenLocked,
+  LockedFeatureUsage,
   useLockedFeature,
   useSeatLimitGuard,
 } from '@/features/billing';

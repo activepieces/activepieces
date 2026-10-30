@@ -1,11 +1,13 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   PlanName,
-  PlatformAdminSurface,
+  UpgradeLocationInWebApp,
   TelemetryEventName,
+  SalesLinkLocationInWebApp,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { UserRound, Check, Gem } from 'lucide-react';
+import { ReactNode } from 'react';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
@@ -27,25 +29,24 @@ import {
   useActionWhenLocked,
   ActionWhenLocked,
   useLockedFeature,
-  LockedFeature,
 } from '../hooks/self-serve-trial-hooks';
 import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import { enterpriseDocs, enterpriseMotion } from '../utils/billing-utils';
 import { platformFeatures, FeatureKey } from '../utils/platform-features';
-import { selfServeTrialFeatures } from '../utils/self-serve-trial-utils';
+import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
 
 import { SelfServeTrialSalesLink } from './current-subscription-card';
 
 export function SelfServeTrialLockedActions({
   featureKey,
-  surface,
+  locationInWebApp,
   onAction,
-  compact = false,
-  finePrintBelow = false,
+  size = LockedActionsSize.REGULAR,
   showContactSales = true,
 }: SelfServeTrialLockedActionsProps) {
-  const size = compact ? 'sm' : 'default';
-  const secondary = compact ? 'link' : 'outline';
+  const small = size === LockedActionsSize.SMALL;
+  const buttonSize = small ? 'sm' : 'default';
+  const secondary = small ? 'link' : 'outline';
   const actionWhenLocked = useActionWhenLocked();
   const plan = usePlanThatHasFeature(featureKey);
   const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
@@ -53,10 +54,13 @@ export function SelfServeTrialLockedActions({
   const upgradeClick = useUpgradeClick();
   const contactSales = () => {
     onAction?.();
-    if (featureKey !== undefined && surface !== PlatformAdminSurface.DIALOG) {
+    if (
+      featureKey !== undefined &&
+      locationInWebApp !== UpgradeLocationInWebApp.DIALOG
+    ) {
       capture({
         name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
-        payload: { feature: featureKey, surface },
+        payload: { feature: featureKey, surface: locationInWebApp },
       });
     }
   };
@@ -64,14 +68,14 @@ export function SelfServeTrialLockedActions({
     <Button
       {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}
       variant={variant}
-      size={size}
+      size={buttonSize}
       className={variant === 'link' ? 'h-auto p-0' : undefined}
       onClick={() => {
         onAction?.();
         upgradeClick({
           feature: featureKey,
           plan: plan.planThatHasFeature,
-          surface,
+          locationInWebApp,
         });
       }}
     >
@@ -81,9 +85,9 @@ export function SelfServeTrialLockedActions({
 
   const salesLink = (variant: 'default' | 'link') => (
     <SelfServeTrialSalesLink
-      surface="locked_feature"
+      locationInWebApp={SalesLinkLocationInWebApp.LOCKED_FEATURE}
       variant={variant}
-      size={size}
+      size={buttonSize}
       className={variant === 'link' ? 'h-auto p-0' : undefined}
       featureKey={featureKey}
       onClick={contactSales}
@@ -103,14 +107,14 @@ export function SelfServeTrialLockedActions({
         <div
           className={cn(
             'flex flex-wrap items-center gap-x-4 gap-y-3',
-            finePrintBelow && '@3xl:flex-col @3xl:items-end @3xl:gap-y-1.5',
+            !small && '@3xl:flex-col @3xl:items-end @3xl:gap-y-1.5',
           )}
         >
           <div className="flex flex-wrap items-center gap-2">
             {explorePlans(secondary)}
             <Button
               {...adminControl(AdminControl.TRIAL_START_OPEN)}
-              size={size}
+              size={buttonSize}
               onClick={() => {
                 onAction?.();
                 openDialog({ featureKey });
@@ -119,7 +123,7 @@ export function SelfServeTrialLockedActions({
               {t('Start free trial')}
             </Button>
           </div>
-          {!compact && (
+          {!small && (
             <span className="text-xs text-gray-11">
               {t('{days}-day Enterprise plan trial. No credit card.', {
                 days: SELF_SERVE_TRIAL_DAYS,
@@ -189,8 +193,8 @@ export function LockedFeatureRow({
       </div>
       <SelfServeTrialLockedActions
         featureKey={featureKey}
-        surface={PlatformAdminSurface.TEASER}
-        compact
+        locationInWebApp={UpgradeLocationInWebApp.TEASER}
+        size={LockedActionsSize.SMALL}
       />
     </div>
   );
@@ -202,7 +206,7 @@ export function LockedFeatureCard({
   fallbackDescription,
   showBenefits = false,
   showContactSales = true,
-  surface,
+  locationInWebApp,
 }: LockedFeatureCardProps) {
   const copy = selfServeTrialFeatures.lockedCopy(featureKey);
   const headline =
@@ -250,8 +254,7 @@ export function LockedFeatureCard({
         <div className="shrink-0">
           <SelfServeTrialLockedActions
             featureKey={featureKey}
-            surface={surface}
-            finePrintBelow
+            locationInWebApp={locationInWebApp}
             showContactSales={showContactSales}
           />
         </div>
@@ -260,77 +263,61 @@ export function LockedFeatureCard({
   );
 }
 
-export function LockedFeatureUsageMeter({
-  lockedFeature,
+export function LockedFeatureUsage({
+  unlocked,
+  featureKey,
   used,
   limit,
   label,
-}: LockedFeatureUsageMeterProps) {
-  if (isNil(limit) || limit <= 0) {
-    return null;
-  }
+  children,
+}: LockedFeatureUsageProps) {
+  const lockedFeature = useLockedFeature({ unlocked, featureKey });
   const usage = t('{used} of {limit} {label}', { used, limit, label });
-  const meter = <UsageBar used={used} limit={limit} />;
-
-  if (
+  const upgradeHidden =
     lockedFeature.actionWhenLocked === ActionWhenLocked.ASK_ADMIN ||
-    lockedFeature.actionWhenLocked === ActionWhenLocked.SWITCH_EDITION
-  ) {
-    return (
-      <span
-        className={cn(
-          'flex h-9 items-center gap-2 px-1 text-sm tabular-nums text-gray-11',
-          enterpriseMotion.appear,
-        )}
-      >
-        {meter}
-        {usage}
-      </span>
-    );
-  }
+    lockedFeature.actionWhenLocked === ActionWhenLocked.SWITCH_EDITION;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          className={cn(
-            'gap-2 tabular-nums text-gray-11',
-            enterpriseMotion.appear,
-          )}
-          onClick={lockedFeature.showLockedDialog}
-        >
-          {meter}
-          {usage}
-          <LockedGem className="text-accent-11" />
-          <span className="sr-only">
-            {t('Unlimited on the Enterprise plan')}
+    <div className="flex flex-wrap items-center gap-4">
+      {!isNil(limit) &&
+        limit > 0 &&
+        (upgradeHidden ? (
+          <span
+            className={cn(
+              'flex h-9 items-center gap-2 px-1 text-sm tabular-nums text-gray-11',
+              enterpriseMotion.appear,
+            )}
+          >
+            <UsageBar used={used} limit={limit} />
+            {usage}
           </span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {t('Unlimited on the Enterprise plan')}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-function UsageBar({ used, limit }: { used: number; limit: number }) {
-  const percent = Math.round(Math.min(1, used / limit) * 100);
-  return (
-    <span
-      aria-hidden
-      className="relative h-1.5 w-10 shrink-0 overflow-hidden rounded-full bg-gray-5"
-    >
-      <span
-        className={cn(
-          'absolute inset-y-0 left-0 rounded-full',
-          usageIndicatorClass(used / limit),
-        )}
-        style={{ width: `${Math.max(percent, 8)}%` }}
-      />
-    </span>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                className={cn(
+                  'gap-2 tabular-nums text-gray-11',
+                  enterpriseMotion.appear,
+                )}
+                onClick={lockedFeature.showLockedDialog}
+              >
+                <UsageBar used={used} limit={limit} />
+                {usage}
+                <LockedGem className="text-accent-11" />
+                <span className="sr-only">
+                  {t('Unlimited on the Enterprise plan')}
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t('Unlimited on the Enterprise plan')}
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      {children}
+    </div>
   );
 }
 
@@ -352,12 +339,29 @@ export function LockedGem({ className }: LockedGemProps) {
   return <Gem aria-hidden className={cn('size-3.5 shrink-0', className)} />;
 }
 
+function UsageBar({ used, limit }: { used: number; limit: number }) {
+  const percent = Math.round(Math.min(1, used / limit) * 100);
+  return (
+    <span
+      aria-hidden
+      className="relative h-1.5 w-10 shrink-0 overflow-hidden rounded-full bg-gray-5"
+    >
+      <span
+        className={cn(
+          'absolute inset-y-0 left-0 rounded-full',
+          usageIndicatorClass(used / limit),
+        )}
+        style={{ width: `${Math.max(percent, 8)}%` }}
+      />
+    </span>
+  );
+}
+
 type SelfServeTrialLockedActionsProps = {
   featureKey?: FeatureKey;
-  surface: PlatformAdminSurface;
+  locationInWebApp: UpgradeLocationInWebApp;
   onAction?: () => void;
-  compact?: boolean;
-  finePrintBelow?: boolean;
+  size?: LockedActionsSize;
   showContactSales?: boolean;
 };
 
@@ -373,16 +377,23 @@ type LockedFeatureCardProps = {
   fallbackDescription?: string;
   showBenefits?: boolean;
   showContactSales?: boolean;
-  surface: PlatformAdminSurface;
+  locationInWebApp: UpgradeLocationInWebApp;
 };
 
-type LockedFeatureUsageMeterProps = {
-  lockedFeature: LockedFeature;
+type LockedFeatureUsageProps = {
+  unlocked: boolean;
+  featureKey: FeatureKey;
   used: number;
   limit: number | null | undefined;
   label: string;
+  children: ReactNode;
 };
 
 type LockedGemProps = {
   className?: string;
 };
+
+export enum LockedActionsSize {
+  REGULAR = 'regular',
+  SMALL = 'small',
+}

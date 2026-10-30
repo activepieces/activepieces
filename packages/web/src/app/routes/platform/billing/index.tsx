@@ -5,7 +5,6 @@ import {
   PlanName,
   PlatformBillingInformation,
 } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
 import React, { useState } from 'react';
@@ -35,6 +34,7 @@ import {
   SelfServeTrialBillingStatus,
   useCancelSubscriptionGuard,
   billingDialogHooks,
+  selfServeTrialTime,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -130,7 +130,11 @@ function PlanTab({ platform, info }: PlanTabProps) {
     info.plan.plan === PlanName.FREE_LEGACY;
   const hasLicenseKey = !isNil(platform.plan.licenseKey);
   const isTrialKeySection = isCloud && !hasLicenseKey;
-  const licenseKeyCopy = licenseKeySectionCopy({ hasLicenseKey, isCloud });
+  const licenseKeyCopy = licenseKeySectionCopy({
+    hasLicenseKey,
+    isCloud,
+    trialRunning: selfServeTrialTime.isRunning(platform.selfServeTrial),
+  });
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -269,17 +273,21 @@ function PlanTab({ platform, info }: PlanTabProps) {
           </>
         )}
 
-        <Separator />
-        <BillingSection
-          title={licenseKeyCopy.title}
-          description={licenseKeyCopy.description}
-        >
-          <LicenseKey
-            platform={platform}
-            isSelfHosted={edition === ApEdition.ENTERPRISE}
-            isTrialKey={isTrialKeySection}
-          />
-        </BillingSection>
+        {!isNil(licenseKeyCopy) && (
+          <>
+            <Separator />
+            <BillingSection
+              title={licenseKeyCopy.title}
+              description={licenseKeyCopy.description}
+            >
+              <LicenseKey
+                platform={platform}
+                isSelfHosted={edition === ApEdition.ENTERPRISE}
+                isTrialKey={isTrialKeySection}
+              />
+            </BillingSection>
+          </>
+        )}
       </div>
       {deactivateUsersDialog}
       <CancelSubscriptionDialog
@@ -302,10 +310,12 @@ function PlanTab({ platform, info }: PlanTabProps) {
 function licenseKeySectionCopy({
   hasLicenseKey,
   isCloud,
+  trialRunning,
 }: {
   hasLicenseKey: boolean;
   isCloud: boolean;
-}): { title: string; description: string } {
+  trialRunning: boolean;
+}): { title: string; description: string } | null {
   if (hasLicenseKey) {
     return {
       title: t('License key'),
@@ -315,6 +325,9 @@ function licenseKeySectionCopy({
     };
   }
   if (isCloud) {
+    if (trialRunning) {
+      return null;
+    }
     return {
       title: t('Trial Keys'),
       description: t('Got a trial key from our team? Activate it here.'),
@@ -368,7 +381,7 @@ const SubscriptionScheduleNotice = ({
 };
 
 function dayjsCancelDate(cancelAt: string): string {
-  return dayjs(cancelAt).format('MMM D, YYYY');
+  return billingUtils.formatDate(cancelAt);
 }
 
 const LinkButton = ({ children, ...props }: React.ComponentProps<'button'>) => (

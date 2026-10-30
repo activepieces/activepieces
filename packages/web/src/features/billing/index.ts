@@ -40,15 +40,16 @@ export { PLATFORM_FEATURES, platformFeatures } from './utils/platform-features';
 export { SelfServeTrialBillingStatus } from './components/current-subscription-card';
 export { SelfServeTrialDialog } from './components/self-serve-trial-dialog';
 export { SelfServeTrialEndingAlert } from './components/self-serve-trial-notices';
-export { EnterprisePlanIndicator } from './components/self-serve-trial-notices';
+export { EnterprisePlanIndicator } from './components/self-serve-trial-sidebar';
 export { selfServeTrialHooks } from './hooks/self-serve-trial-hooks';
+export { selfServeTrialTime } from './utils/self-serve-trial-utils';
 export { LockedGem } from './components/locked-feature';
 export { PlanBadge } from './components/locked-feature';
 export { seatUtils } from './utils/billing-utils';
 export { LockedFeatureRow } from './components/locked-feature';
 export { SelfServeTrialSalesLink } from './components/current-subscription-card';
 export { LockedFeatureCard } from './components/locked-feature';
-export { LockedFeatureUsageMeter } from './components/locked-feature';
+export { LockedFeatureUsage } from './components/locked-feature';
 export {
   ActionWhenLocked,
   useLockedFeature,

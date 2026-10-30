@@ -1,5 +1,9 @@
 import { isNil } from '@activepieces/core-utils';
-import { PlanName, PlatformAdminSurface } from '@activepieces/shared';
+import {
+  PlanName,
+  UpgradeLocationInWebApp,
+  SalesLinkLocationInWebApp,
+} from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowRight, Check, ChevronDown } from 'lucide-react';
@@ -12,12 +16,13 @@ import { cn } from '@/lib/utils';
 
 import { usePlanThatHasFeature } from '../hooks/billing-hooks';
 import {
-  selfServeTrialHooks,
   ActionWhenLocked,
+  SELF_SERVE_TRIAL_DAYS,
   useActionWhenLocked,
 } from '../hooks/self-serve-trial-hooks';
 import { platformFeatures, FeatureKey } from '../utils/platform-features';
-import { selfServeTrialFeatures } from '../utils/self-serve-trial-utils';
+import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
+import { selfServeTrialTime } from '../utils/self-serve-trial-utils';
 
 import { SelfServeTrialSalesLink } from './current-subscription-card';
 import { PlanBadge, SelfServeTrialLockedActions } from './locked-feature';
@@ -110,7 +115,7 @@ export function LockedFeature({
       actions={
         <SelfServeTrialLockedActions
           featureKey={featureKey}
-          surface={PlatformAdminSurface.DIALOG}
+          locationInWebApp={UpgradeLocationInWebApp.DIALOG}
           onAction={onAction}
         />
       }
@@ -197,46 +202,7 @@ export function DialogFrame({
   );
 }
 
-function howToGetIt({
-  actionWhenLocked,
-  planThatHasFeature,
-}: {
-  actionWhenLocked: ActionWhenLocked;
-  planThatHasFeature: PlanName;
-}): string {
-  switch (actionWhenLocked) {
-    case ActionWhenLocked.ASK_ADMIN:
-      return platformFeatures.askAdminToUpgradeText(planThatHasFeature);
-    case ActionWhenLocked.SWITCH_EDITION:
-      return t(
-        'This needs the Enterprise edition. Our team can set you up with a license.',
-      );
-    case ActionWhenLocked.UPGRADE_AFTER_TRIAL:
-      return t(
-        'Your Enterprise plan trial was already used. Our team can extend it or set you up on a plan.',
-      );
-    case ActionWhenLocked.START_TRIAL:
-    case ActionWhenLocked.UPGRADE:
-      return planThatHasFeature === PlanName.ENTERPRISE
-        ? t(
-            'Our team sets you up on the Enterprise plan and helps with the rollout.',
-          )
-        : t(
-            'Upgrade from the plans page whenever you are ready. Your flows and settings stay as they are.',
-          );
-  }
-}
-
-export function TrialStarted({
-  endsAt,
-  startedAt,
-  onClose,
-}: {
-  endsAt: string | null;
-  startedAt: string | null;
-  onClose: () => void;
-}) {
-  const trial = selfServeTrialHooks.useTrial();
+export function TrialStarted({ onClose }: { onClose: () => void }) {
   const shortcuts = [
     { label: t('Set up single sign-on'), to: '/platform/sso' },
     { label: t('Review audit logs'), to: '/platform/audit-log' },
@@ -245,22 +211,16 @@ export function TrialStarted({
   return (
     <DialogFrame
       title={t('Your Enterprise plan trial is on')}
-      description={
-        isNil(endsAt)
-          ? t('Every Enterprise plan feature is unlocked for your platform.')
-          : t('Every Enterprise plan feature is unlocked until {date}.', {
-              date: dayjs(endsAt).format('MMM D'),
-            })
-      }
+      description={t(
+        'Every Enterprise plan feature is unlocked until {date}.',
+        {
+          date: selfServeTrialTime.formatDate(
+            dayjs().add(SELF_SERVE_TRIAL_DAYS, 'day'),
+          ),
+        },
+      )}
       mainTitle={t('Your trial')}
-      main={
-        <TrialTimeline
-          basePlanName={trial.basePlanName}
-          started={true}
-          startedAt={isNil(startedAt) ? undefined : new Date(startedAt)}
-          endsAt={isNil(endsAt) ? undefined : new Date(endsAt)}
-        />
-      }
+      main={<TrialTimeline started={true} />}
       asideTitle={t('Good first steps')}
       aside={
         <div className="flex flex-col divide-y border-y">
@@ -295,7 +255,7 @@ export function TrialAlreadyUsed() {
       )}
       actions={
         <SelfServeTrialSalesLink
-          surface="enterprise_trial_used"
+          locationInWebApp={SalesLinkLocationInWebApp.ENTERPRISE_TRIAL_USED}
           variant="default"
         />
       }
@@ -316,13 +276,45 @@ export function TrialNotStarted({ onClose }: { onClose: () => void }) {
             {t('Close')}
           </Button>
           <SelfServeTrialSalesLink
-            surface="enterprise_trial_unavailable"
+            locationInWebApp={
+              SalesLinkLocationInWebApp.ENTERPRISE_TRIAL_UNAVAILABLE
+            }
             variant="default"
           />
         </div>
       }
     />
   );
+}
+
+function howToGetIt({
+  actionWhenLocked,
+  planThatHasFeature,
+}: {
+  actionWhenLocked: ActionWhenLocked;
+  planThatHasFeature: PlanName;
+}): string {
+  switch (actionWhenLocked) {
+    case ActionWhenLocked.ASK_ADMIN:
+      return platformFeatures.askAdminToUpgradeText(planThatHasFeature);
+    case ActionWhenLocked.SWITCH_EDITION:
+      return t(
+        'This needs the Enterprise edition. Our team can set you up with a license.',
+      );
+    case ActionWhenLocked.UPGRADE_AFTER_TRIAL:
+      return t(
+        'Your Enterprise plan trial was already used. Our team can extend it or set you up on a plan.',
+      );
+    case ActionWhenLocked.START_TRIAL:
+    case ActionWhenLocked.UPGRADE:
+      return planThatHasFeature === PlanName.ENTERPRISE
+        ? t(
+            'Our team sets you up on the Enterprise plan and helps with the rollout.',
+          )
+        : t(
+            'Upgrade from the plans page whenever you are ready. Your flows and settings stay as they are.',
+          );
+  }
 }
 
 function useMoreBelow(element: HTMLElement | null): boolean {

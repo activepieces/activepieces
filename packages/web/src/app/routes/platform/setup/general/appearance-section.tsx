@@ -9,6 +9,7 @@ import {
   PlatformThemeColors,
   StatusColors,
   StatusScale,
+  SalesLinkLocationInWebApp,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -225,7 +226,7 @@ export const AppearanceSection = ({
         action:
           edition === ApEdition.COMMUNITY ? (
             <SelfServeTrialSalesLink
-              surface="locked_feature"
+              locationInWebApp={SalesLinkLocationInWebApp.LOCKED_FEATURE}
               variant="default"
               featureKey="BRANDING"
             />

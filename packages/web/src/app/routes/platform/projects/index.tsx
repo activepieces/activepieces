@@ -17,7 +17,6 @@ import {
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
-import { LockedFeatureUsage } from '@/app/components/feature-sample';
 import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -28,6 +27,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { LockedFeatureUsage } from '@/features/billing';
 import { globalConnectionsQueries } from '@/features/connections';
 import {
   CreateProjectButton,

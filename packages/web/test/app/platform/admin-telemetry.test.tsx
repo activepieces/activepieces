@@ -5,7 +5,7 @@
 import {
   ApEdition,
   PlatformAdminLimit,
-  PlatformAdminSurface,
+  UpgradeLocationInWebApp,
   TelemetryEventName,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -130,7 +130,7 @@ describe('platform admin telemetry', () => {
     fireEvent.click(screen.getByRole('link', { name: /talk to sales/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
-    ).toEqual({ feature: 'AUDIT_LOGS', surface: PlatformAdminSurface.SAMPLE });
+    ).toEqual({ feature: 'AUDIT_LOGS', surface: UpgradeLocationInWebApp.SAMPLE });
   });
 
   it('reports the sales enquiry from a locked page', () => {
@@ -148,7 +148,7 @@ describe('platform admin telemetry', () => {
     fireEvent.click(screen.getByRole('link', { name: /talk to sales/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
-    ).toEqual({ feature: 'API', surface: PlatformAdminSurface.TEASER });
+    ).toEqual({ feature: 'API', surface: UpgradeLocationInWebApp.TEASER });
   });
 
   it('reports a refused control and the limit behind it, with no control id on the locked trigger', () => {

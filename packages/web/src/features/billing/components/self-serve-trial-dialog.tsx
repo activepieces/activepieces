@@ -1,5 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApEdition, ApFlagId, SelfServeTrialState } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  SelfServeTrialState,
+  SalesLinkLocationInWebApp,
+} from '@activepieces/shared';
 import confetti from 'canvas-confetti';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
@@ -8,17 +13,19 @@ import { Check, Gem, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
+import { billingQueries } from '../hooks/billing-hooks';
 import {
   SELF_SERVE_TRIAL_DAYS,
   selfServeTrialHooks,
 } from '../hooks/self-serve-trial-hooks';
-import { enterpriseMotion, selfServeTrialUi } from '../utils/billing-utils';
-import { FeatureKey } from '../utils/platform-features';
-import { selfServeTrialFeatures } from '../utils/self-serve-trial-utils';
+import { enterpriseMotion } from '../utils/billing-utils';
+import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
+import { selfServeTrialTime } from '../utils/self-serve-trial-utils';
 
 import { SelfServeTrialSalesLink } from './current-subscription-card';
 import {
@@ -69,8 +76,6 @@ export function SelfServeTrialDialog() {
       case DialogView.START:
         return (
           <StartTrial
-            featureKey={payload?.featureKey}
-            hasPostTrialActivationCallback={!isNil(postTrialActivationCallback)}
             isPending={isStartingTrial}
             isError={trialStartFailed}
             onStart={() => {
@@ -79,13 +84,7 @@ export function SelfServeTrialDialog() {
           />
         );
       case DialogView.STARTED:
-        return (
-          <TrialStarted
-            endsAt={startedTrial?.endsAt ?? null}
-            startedAt={startedTrial?.startedAt ?? null}
-            onClose={close}
-          />
-        );
+        return <TrialStarted onClose={close} />;
       case DialogView.ALREADY_USED:
         return <TrialAlreadyUsed />;
       case DialogView.NOT_STARTED:
@@ -120,7 +119,7 @@ export function SelfServeTrialDialog() {
               event.preventDefault();
             }
           }}
-          onOpenAutoFocus={selfServeTrialUi.focusDialogItself}
+          onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => {
             if (returnFocus?.isConnected) {
               event.preventDefault();
@@ -146,20 +145,85 @@ export function SelfServeTrialDialog() {
   );
 }
 
+export function TrialTimeline({ started }: { started: boolean }) {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: info } = billingQueries.usePlatformSubscription(platform.id);
+  const endDate = dayjs().add(SELF_SERVE_TRIAL_DAYS, 'day');
+  const steps = [
+    started
+      ? {
+          when: t('Today · {date}', {
+            date: selfServeTrialTime.formatDate(),
+          }),
+          what: t(
+            'Your Enterprise plan trial started. Everything is unlocked for {days} days.',
+            { days: SELF_SERVE_TRIAL_DAYS },
+          ),
+        }
+      : {
+          when: t('Today'),
+          what: t('Everything turns on. Your credits stay the same.'),
+        },
+    {
+      when: selfServeTrialTime.formatDate(endDate.subtract(1, 'day')),
+      what: t('We remind you the day before it ends.'),
+    },
+    {
+      when: selfServeTrialTime.formatDate(endDate),
+      what: t(
+        'You are back on {plan}. Your flows, connections and settings are kept.',
+        {
+          plan: info?.autumnPlanName,
+        },
+      ),
+    },
+  ];
+  return (
+    <ol className="flex flex-col">
+      {steps.map((step, index) => (
+        <li key={step.when} className="flex gap-3">
+          <span className="flex flex-col items-center">
+            <span className="grid size-4 shrink-0 place-items-center">
+              {index === 0 && !started && (
+                <Check className="size-4 text-success-11" />
+              )}
+              {index === 0 && started && (
+                <span className="size-2.5 rounded-full bg-accent-9" />
+              )}
+              {index > 0 && <span className="size-2 rounded-full bg-gray-8" />}
+            </span>
+            {index < steps.length - 1 && (
+              <span className="my-1 w-px flex-1 bg-gray-6" />
+            )}
+          </span>
+          <span className="flex flex-col gap-0.5 pb-5">
+            <span className="text-sm font-medium text-gray-12">
+              {step.when}
+            </span>
+            <span className="text-sm leading-relaxed text-gray-11">
+              {step.what}
+            </span>
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function StartTrial({
-  featureKey,
-  hasPostTrialActivationCallback,
   isPending,
   isError,
   onStart,
 }: {
-  featureKey: FeatureKey | undefined;
-  hasPostTrialActivationCallback: boolean;
   isPending: boolean;
   isError: boolean;
   onStart: () => void;
 }) {
-  const trial = selfServeTrialHooks.useTrial();
+  const { payload } = billingDialogHooks.useSelfServeTrialDialogStore();
+  const featureKey = payload?.featureKey;
+  const hasPostTrialActivationCallback = !isNil(
+    payload?.postTrialActivationCallback,
+  );
   const featureName = selfServeTrialFeatures.name(featureKey);
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
@@ -206,14 +270,12 @@ function StartTrial({
         </>
       }
       asideTitle={t('How the trial works')}
-      aside={
-        <TrialTimeline basePlanName={trial.basePlanName} started={false} />
-      }
+      aside={<TrialTimeline started={false} />}
       footerNote={
         <>
           {t('Want to keep the Enterprise plan?')}
           <SelfServeTrialSalesLink
-            surface="enterprise_trial_start"
+            locationInWebApp={SalesLinkLocationInWebApp.ENTERPRISE_TRIAL_START}
             variant="link"
             className="h-auto p-0"
             featureKey={featureKey}
@@ -240,77 +302,6 @@ function StartTrial({
         </div>
       }
     />
-  );
-}
-
-export function TrialTimeline({
-  basePlanName,
-  started,
-  startedAt,
-  endsAt,
-}: {
-  basePlanName: string;
-  started: boolean;
-  startedAt?: Date;
-  endsAt?: Date;
-}) {
-  const endDate = dayjs(endsAt ?? dayjs().add(SELF_SERVE_TRIAL_DAYS, 'day'));
-  const steps = [
-    started
-      ? {
-          when: t('Today · {date}', {
-            date: dayjs(startedAt ?? undefined).format('MMM D'),
-          }),
-          what: t(
-            'Your Enterprise plan trial started. Everything is unlocked for {days} days.',
-            { days: SELF_SERVE_TRIAL_DAYS },
-          ),
-        }
-      : {
-          when: t('Today'),
-          what: t('Everything turns on. Your credits stay the same.'),
-        },
-    {
-      when: endDate.subtract(1, 'day').format('MMM D'),
-      what: t('We remind you the day before it ends.'),
-    },
-    {
-      when: endDate.format('MMM D'),
-      what: t(
-        'You are back on the {plan} plan. Your flows, connections and settings are kept.',
-        { plan: basePlanName },
-      ),
-    },
-  ];
-  return (
-    <ol className="flex flex-col">
-      {steps.map((step, index) => (
-        <li key={step.when} className="flex gap-3">
-          <span className="flex flex-col items-center">
-            <span className="grid size-4 shrink-0 place-items-center">
-              {index === 0 && !started && (
-                <Check className="size-4 text-success-11" />
-              )}
-              {index === 0 && started && (
-                <span className="size-2.5 rounded-full bg-accent-9" />
-              )}
-              {index > 0 && <span className="size-2 rounded-full bg-gray-8" />}
-            </span>
-            {index < steps.length - 1 && (
-              <span className="my-1 w-px flex-1 bg-gray-6" />
-            )}
-          </span>
-          <span className="flex flex-col gap-0.5 pb-5">
-            <span className="text-sm font-medium text-gray-12">
-              {step.when}
-            </span>
-            <span className="text-sm leading-relaxed text-gray-11">
-              {step.what}
-            </span>
-          </span>
-        </li>
-      ))}
-    </ol>
   );
 }
 

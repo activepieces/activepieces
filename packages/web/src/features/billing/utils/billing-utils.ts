@@ -1,4 +1,4 @@
-import { isNil, tryCatchSync } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   CreditsBillableFeature,
@@ -12,8 +12,6 @@ import { t } from 'i18next';
 
 import { formatUtils } from '@/lib/format-utils';
 
-import type { SelfServeTrial } from '../hooks/self-serve-trial-hooks';
-
 const DAILY_RESET_INTERVAL = 'day';
 
 const MINUTES_PER_HOUR = 60;
@@ -23,6 +21,10 @@ const CREDITS_WARNING_PERCENT = 70;
 const CREDITS_DANGER_PERCENT = 90;
 
 const COMPACT_CREDITS_FROM = 1_000_000;
+
+function formatDate(date: dayjs.ConfigType): string {
+  return dayjs(date).format(BILLING_DATE_FORMAT);
+}
 
 function isPaidPlan(planName: string | null | undefined): planName is string {
   return !isNil(planName) && planName !== PlanName.FREE;
@@ -105,7 +107,7 @@ function resolveSeatCap(info: PlatformBillingInformation): SeatCap {
     scheduledCap,
     effectiveLimit: capBinds ? scheduledCap : limit,
     scheduledPlanName: info.scheduledPlanName ?? t('Free'),
-    switchDate: dayjs(info.cancelAt).format(BILLING_DATE_FORMAT),
+    switchDate: formatDate(info.cancelAt),
   };
 }
 
@@ -120,7 +122,7 @@ function scheduledCapNotice(info: PlatformBillingInformation): string {
 function resolveCreditsReset({
   dateFormat,
   ...params
-}: CreditsResetParams & { dateFormat: string }): CreditsResetLine | null {
+}: CreditsResetParams & { dateFormat?: string }): CreditsResetLine | null {
   const reset = resolveResetMoment(params);
   if (isNil(reset)) {
     return null;
@@ -156,102 +158,6 @@ function formatTimeUntil(value: string): string {
   return t('{count, plural, =1 {1 hour} other {# hours}}', {
     count: Math.floor(minutes / MINUTES_PER_HOUR),
   });
-}
-
-function daysLeftLabel(trial: SelfServeTrial): string {
-  if (trial.endsToday) {
-    return t('Ends today');
-  }
-  if (trial.ending) {
-    return t('Ends tomorrow');
-  }
-  return t('{count, plural, =1 {1 day left} other {# days left}}', {
-    count: trial.daysLeft,
-  });
-}
-
-function cardStatus(trial: SelfServeTrial): string {
-  if (trial.endsToday) {
-    return t('last day');
-  }
-  return t('{count, plural, =1 {1 day left} other {# days left}}', {
-    count: trial.ending ? 1 : trial.daysLeft,
-  });
-}
-
-function sidebarDetail(trial: SelfServeTrial): string {
-  const end = dayjs(trial.endsAt);
-  if (trial.endsToday) {
-    return t('Ends today at {time}', { time: end.format('h:mm A') });
-  }
-  if (trial.ending) {
-    return t('Ends tomorrow at {time}', { time: end.format('h:mm A') });
-  }
-  return t(
-    '{count, plural, =1 {1 day left} other {# days left}}, ends {date}',
-    { count: trial.daysLeft, date: end.format('MMM D') },
-  );
-}
-
-function endsSentence(trial: SelfServeTrial): string {
-  const end = dayjs(trial.endsAt);
-  const time = end.format('h:mm A');
-  if (trial.endsToday) {
-    return t('Your Enterprise plan trial ends today at {time}.', { time });
-  }
-  if (trial.ending) {
-    return t('Your Enterprise plan trial ends tomorrow at {time}.', { time });
-  }
-  return t('Your Enterprise plan trial ends on {date}.', {
-    date: end.format('MMM D'),
-  });
-}
-
-function details(trial: SelfServeTrial): string {
-  const end = dayjs(trial.endsAt);
-  const plan = trial.basePlanName;
-  if (trial.endsToday) {
-    return t(
-      'Every Enterprise plan feature is on until today at {time}. Then you are back on the {plan} plan. Your credits are not affected.',
-      { time: end.format('h:mm A'), plan },
-    );
-  }
-  if (trial.ending) {
-    return t(
-      'Every Enterprise plan feature is on until tomorrow at {time}. Then you are back on the {plan} plan. Your credits are not affected.',
-      { time: end.format('h:mm A'), plan },
-    );
-  }
-  return t(
-    'Every Enterprise plan feature is on until {date}. Then you are back on the {plan} plan. Your credits are not affected.',
-    { date: end.format('MMM D'), plan },
-  );
-}
-
-function focusDialogItself(event: Event): void {
-  event.preventDefault();
-  if (event.currentTarget instanceof HTMLElement) {
-    event.currentTarget.focus();
-  }
-}
-
-function readLocalStorageFlag(key: string): boolean {
-  const { data } = tryCatchSync(() => window.localStorage.getItem(key));
-  return data === 'true';
-}
-
-function setLocalStorageFlag(key: string): void {
-  tryCatchSync(() => window.localStorage.setItem(key, 'true'));
-}
-
-function trialStorageId({
-  platformId,
-  userId,
-  endsAt,
-}: TrialStorageIdParams): string {
-  return `${platformId}-${userId ?? 'unknown'}-${
-    endsAt?.toISOString() ?? 'unknown'
-  }`;
 }
 
 function reservedSeats({
@@ -295,6 +201,7 @@ const RESERVING_STATUSES = [
 ];
 
 export const billingUtils = {
+  formatDate,
   isPaidPlan,
   isYearlyPlan,
   percentUsed,
@@ -307,22 +214,7 @@ export const billingUtils = {
   resolveCreditsReset,
 };
 
-export const BILLING_DATE_FORMAT = 'MMM D, YYYY';
-
-export const selfServeTrialCopy = {
-  daysLeftLabel,
-  sidebarDetail,
-  cardStatus,
-  endsSentence,
-  details,
-};
-
-export const selfServeTrialUi = {
-  focusDialogItself,
-  readLocalStorageFlag,
-  setLocalStorageFlag,
-  trialStorageId,
-};
+const BILLING_DATE_FORMAT = 'MMM D, YYYY';
 
 export const enterpriseDocs = {
   switchToEnterpriseUrl:
@@ -386,10 +278,4 @@ export type CreditsResetParams = {
 export type CreditsResetLine = {
   label: string;
   value: string;
-};
-
-type TrialStorageIdParams = {
-  platformId: string;
-  userId: string | null;
-  endsAt: Date | null;
 };

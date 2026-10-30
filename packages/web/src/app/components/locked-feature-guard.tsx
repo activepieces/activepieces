@@ -1,4 +1,4 @@
-import { PlatformAdminSurface } from '@activepieces/shared';
+import { UpgradeLocationInWebApp } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 
@@ -27,7 +27,7 @@ export const LockedFeatureGuard = ({
         fallbackDescription={t(lockDescription)}
         showBenefits
         showContactSales={showContactSales}
-        surface={PlatformAdminSurface.TEASER}
+        locationInWebApp={UpgradeLocationInWebApp.TEASER}
       />
       {guide && (
         <a

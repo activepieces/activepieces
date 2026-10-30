@@ -54,8 +54,7 @@ export function PlatformNav() {
               to: '/platform/users/roles',
               label: t('Roles & Access'),
               locked: !platform.plan.projectRolesEnabled,
-              planThatHasFeature:
-                PLATFORM_FEATURES.projectRoles.planThatHasFeature,
+              featureKey: PLATFORM_FEATURES.projectRoles.featureKey,
             },
           ],
         },
@@ -69,8 +68,7 @@ export function PlatformNav() {
               to: '/platform/connections/global',
               label: t('Global Connections'),
               locked: !platform.plan.globalConnectionsEnabled,
-              planThatHasFeature:
-                PLATFORM_FEATURES.globalConnections.planThatHasFeature,
+              featureKey: PLATFORM_FEATURES.globalConnections.featureKey,
             },
           ],
         },
@@ -89,7 +87,7 @@ export function PlatformNav() {
               to: '/platform/pieces/piece-sets',
               label: t('Piece Sets'),
               locked: !platform.plan.managePiecesEnabled,
-              planThatHasFeature: PLATFORM_FEATURES.pieces.planThatHasFeature,
+              featureKey: PLATFORM_FEATURES.pieces.featureKey,
             },
           ],
         },
@@ -98,14 +96,14 @@ export function PlatformNav() {
           label: t('Templates'),
           icon: LayoutGridIcon,
           locked: !platform.plan.manageTemplatesEnabled,
-          planThatHasFeature: PLATFORM_FEATURES.templates.planThatHasFeature,
+          featureKey: PLATFORM_FEATURES.templates.featureKey,
         },
         {
           to: '/platform/ai',
           label: t('AI Center'),
           icon: SparklesIcon,
           locked: !platform.plan.aiProvidersEnabled,
-          planThatHasFeature: PLATFORM_FEATURES.aiProviders.planThatHasFeature,
+          featureKey: PLATFORM_FEATURES.aiProviders.featureKey,
           subItems:
             edition === ApEdition.COMMUNITY
               ? undefined
@@ -130,15 +128,14 @@ export function PlatformNav() {
           label: t('Authentication'),
           icon: LogInIcon,
           locked: !platform.plan.ssoEnabled,
-          planThatHasFeature: PLATFORM_FEATURES.sso.planThatHasFeature,
+          featureKey: PLATFORM_FEATURES.sso.featureKey,
         },
         {
           to: '/platform/secret-managers',
           label: t('Secret Managers'),
           icon: KeyRoundIcon,
           locked: !platform.plan.secretManagersEnabled,
-          planThatHasFeature:
-            PLATFORM_FEATURES.secretManagers.planThatHasFeature,
+          featureKey: PLATFORM_FEATURES.secretManagers.featureKey,
         },
         {
           to: '/platform/audit-log',
@@ -150,15 +147,13 @@ export function PlatformNav() {
               label: t('Events'),
               end: true,
               locked: !platform.plan.auditLogEnabled,
-              planThatHasFeature:
-                PLATFORM_FEATURES.auditLogs.planThatHasFeature,
+              featureKey: PLATFORM_FEATURES.auditLogs.featureKey,
             },
             {
               to: '/platform/audit-log/streaming',
               label: t('Event Streaming'),
               locked: !platform.plan.eventStreamingEnabled,
-              planThatHasFeature:
-                PLATFORM_FEATURES.eventStreaming.planThatHasFeature,
+              featureKey: PLATFORM_FEATURES.eventStreaming.featureKey,
             },
           ],
         },
@@ -172,14 +167,14 @@ export function PlatformNav() {
           label: t('API Keys'),
           icon: FileJson2Icon,
           locked: !platform.plan.apiKeysEnabled,
-          planThatHasFeature: PLATFORM_FEATURES.apiKeys.planThatHasFeature,
+          featureKey: PLATFORM_FEATURES.apiKeys.featureKey,
         },
         {
           to: '/platform/embedding',
           label: t('Embedding'),
           icon: FrameIcon,
           locked: !platform.plan.embeddingEnabled,
-          planThatHasFeature: PLATFORM_FEATURES.embedding.planThatHasFeature,
+          featureKey: PLATFORM_FEATURES.embedding.featureKey,
         },
         {
           to: '/platform/mcp',
@@ -287,7 +282,7 @@ export function PlatformNav() {
                   label={item.label}
                   icon={item.icon}
                   locked={item.locked}
-                  planThatHasFeature={item.planThatHasFeature}
+                  featureKey={item.featureKey}
                   subItems={item.subItems}
                 />
               ))}
@@ -301,5 +296,5 @@ export function PlatformNav() {
 
 type PlatformNavItem = Pick<
   SidebarItemType,
-  'to' | 'label' | 'icon' | 'locked' | 'planThatHasFeature' | 'subItems'
+  'to' | 'label' | 'icon' | 'locked' | 'featureKey' | 'subItems'
 >;

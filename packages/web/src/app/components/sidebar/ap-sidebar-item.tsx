@@ -1,9 +1,5 @@
-import {
-  ApEdition,
-  ApFlagId,
-  PlanName,
-  TelemetryEventName,
-} from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronRight } from 'lucide-react';
 import React, { ComponentType, ReactNode, useRef, useState } from 'react';
@@ -24,7 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformFeatures } from '@/features/billing';
+import { FeatureKey, platformFeatures } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -58,14 +54,19 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   const isRowHighlighted = hasSubItems
     ? isLinkActive && !showSubItems
     : isLinkActive;
-  const parentPlanThatHasFeature =
-    item.planThatHasFeature ??
-    subItems.find(isSubItemLocked)?.planThatHasFeature;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const parentFeatureKey =
+    item.featureKey ?? subItems.find(isSubItemLocked)?.featureKey;
 
-  const captureLockedClick = ({ path, planThatHasFeature }: LockedClick) =>
+  const captureLockedClick = ({ path, featureKey }: LockedClick) =>
     capture({
       name: TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
-      payload: { path, tier: planThatHasFeature },
+      payload: {
+        path,
+        tier: isNil(featureKey)
+          ? undefined
+          : platformFeatures.planThatHasFeature({ featureKey, edition }),
+      },
     });
 
   const closeMobileSheet = () => {
@@ -93,8 +94,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     ) {
       captureLockedClick({
         path: subItem.to,
-        planThatHasFeature:
-          subItem.planThatHasFeature ?? item.planThatHasFeature,
+        featureKey: subItem.featureKey ?? item.featureKey,
       });
     }
   };
@@ -115,7 +115,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
           <span className="flex flex-col">
             <span>{item.label}</span>
             <span className="opacity-70">
-              <LockedText planThatHasFeature={parentPlanThatHasFeature} />
+              <LockedText featureKey={parentFeatureKey} />
             </span>
           </span>
         ),
@@ -133,7 +133,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     if (isPremium && !isRouteActive({ pathname, to: item.to, end: true })) {
       captureLockedClick({
         path: item.to,
-        planThatHasFeature: parentPlanThatHasFeature,
+        featureKey: parentFeatureKey,
       });
     }
   };
@@ -180,10 +180,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   return (
     <SidebarMenuItem>
       {isPremium ? (
-        <LockedTooltip
-          planThatHasFeature={parentPlanThatHasFeature}
-          disabled={isCollapsed}
-        >
+        <LockedTooltip featureKey={parentFeatureKey} disabled={isCollapsed}>
           {button}
         </LockedTooltip>
       ) : (
@@ -238,9 +235,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                   <SidebarMenuSubItem key={subItem.to}>
                     {shut && !isPremium ? (
                       <LockedTooltip
-                        planThatHasFeature={
-                          subItem.planThatHasFeature ?? item.planThatHasFeature
-                        }
+                        featureKey={subItem.featureKey ?? item.featureKey}
                       >
                         {subButton}
                       </LockedTooltip>
@@ -258,26 +253,22 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   );
 };
 
-function LockedText({ planThatHasFeature }: { planThatHasFeature?: PlanName }) {
+function LockedText({ featureKey }: { featureKey?: FeatureKey }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  if (planThatHasFeature === undefined) {
+  if (featureKey === undefined) {
     return t('Not included in your plan');
   }
   return platformFeatures.includedInPlanLabel(
-    edition === ApEdition.CLOUD ? planThatHasFeature : PlanName.ENTERPRISE,
+    platformFeatures.planThatHasFeature({ featureKey, edition }),
   );
 }
 
-function LockedTooltip({
-  planThatHasFeature,
-  disabled,
-  children,
-}: LockedTooltipProps) {
+function LockedTooltip({ featureKey, disabled, children }: LockedTooltipProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent side="right" align="center" hidden={disabled}>
-        <LockedText planThatHasFeature={planThatHasFeature} />
+        <LockedText featureKey={featureKey} />
       </TooltipContent>
     </Tooltip>
   );
@@ -342,7 +333,7 @@ export type SidebarSubItemType = {
   label: string;
   end?: boolean;
   locked?: boolean;
-  planThatHasFeature?: PlanName;
+  featureKey?: FeatureKey;
 };
 
 export type SidebarItemType = {
@@ -351,7 +342,7 @@ export type SidebarItemType = {
   type: 'link';
   icon?: ComponentType<{ className?: string }>;
   locked?: boolean;
-  planThatHasFeature?: PlanName;
+  featureKey?: FeatureKey;
   subItems?: SidebarSubItemType[];
   activeOn?: string;
   badge?: ReactNode;
@@ -364,14 +355,14 @@ type ExpandOverride = {
 };
 
 type LockedTooltipProps = {
-  planThatHasFeature?: PlanName;
+  featureKey?: FeatureKey;
   disabled?: boolean;
   children: React.ReactElement;
 };
 
 type LockedClick = {
   path: string;
-  planThatHasFeature?: PlanName;
+  featureKey?: FeatureKey;
 };
 
 type AnimatedIconHandle = {

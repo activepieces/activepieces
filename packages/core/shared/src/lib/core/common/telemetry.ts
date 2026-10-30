@@ -75,7 +75,7 @@ type InviteAccepted = {
 type SalesHandoffClicked = {
     featureKey?: string
     plan?: string
-    surface: string
+    surface: SalesLinkLocationInWebApp
 }
 
 type SignInFailed = {
@@ -150,12 +150,12 @@ type PlatformAdminGateBlocked = {
 type PlatformAdminUpgradeClicked = {
     feature: string | null
     tier: string | null
-    surface: PlatformAdminSurface
+    surface: UpgradeLocationInWebApp
 }
 
 type PlatformAdminSalesContacted = {
     feature: string
-    surface: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>
+    surface: Exclude<UpgradeLocationInWebApp, UpgradeLocationInWebApp.DIALOG>
 }
 
 type PlatformAdminControlClicked = {
@@ -220,7 +220,19 @@ export enum TelemetryEventName {
     PLATFORM_ADMIN_CONTROL_CLICKED = 'platform.admin.control.clicked',
 }
 
-export enum PlatformAdminSurface {
+export enum SalesLinkLocationInWebApp {
+    ENTERPRISE_PLAN_INDICATOR = 'enterprise_plan_indicator',
+    ENTERPRISE_TRIAL_BILLING = 'enterprise_trial_billing',
+    ENTERPRISE_TRIAL_ENDED = 'enterprise_trial_ended',
+    ENTERPRISE_TRIAL_ENDING = 'enterprise_trial_ending',
+    ENTERPRISE_TRIAL_START = 'enterprise_trial_start',
+    ENTERPRISE_TRIAL_UNAVAILABLE = 'enterprise_trial_unavailable',
+    ENTERPRISE_TRIAL_USED = 'enterprise_trial_used',
+    LOCKED_FEATURE = 'locked_feature',
+    PLAN_SELECTOR = 'plan_selector',
+}
+
+export enum UpgradeLocationInWebApp {
     SAMPLE = 'sample',
     TEASER = 'teaser',
     DIALOG = 'dialog',
