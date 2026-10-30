@@ -27,7 +27,7 @@ export const addSectionWebPartAction = createAction({
     webPart: microsoftSharePointPageCommon.webPart(),
     index: Property.Number({
       displayName: 'Index',
-      description: 'Position to insert the web part at, starting at 0. Leave empty to add it at the end.',
+      description: 'Position to insert the web part at, starting at 1. Leave empty to add it at the end.',
       required: false,
     }),
   },

@@ -1571,7 +1571,7 @@ export const microsoftSharepointGetSharedItemOutputSchema: OutputSchema = {
 
 export const microsoftSharepointGetSiteActivityStatsOutputSchema: OutputSchema =
   {
-    fields: [
+    fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
       {
         key: 'value',
         label: 'Value',
@@ -1840,7 +1840,7 @@ export const microsoftSharepointListDriveActivitiesOutputSchema: OutputSchema =
   };
 
 export const microsoftSharepointListFileActivitiesOutputSchema: OutputSchema = {
-  fields: [
+  fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
     {
       key: 'value',
       label: 'Value',
@@ -1885,7 +1885,7 @@ export const microsoftSharepointListFileActivitiesOutputSchema: OutputSchema = {
 
 export const microsoftSharepointListFilePermissionsOutputSchema: OutputSchema =
   {
-    fields: [
+    fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
       {
         key: 'value',
         label: 'Value',
@@ -1923,7 +1923,7 @@ export const microsoftSharepointListFilePermissionsOutputSchema: OutputSchema =
   };
 
 export const microsoftSharepointListFileVersionsOutputSchema: OutputSchema = {
-  fields: [
+  fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
     {
       key: 'value',
       label: 'Value',
@@ -1934,7 +1934,7 @@ export const microsoftSharepointListFileVersionsOutputSchema: OutputSchema = {
 };
 
 export const microsoftSharepointListFolderChildrenOutputSchema: OutputSchema = {
-  fields: [
+  fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
     {
       key: 'value',
       label: 'Value',
@@ -2038,7 +2038,7 @@ export const microsoftSharepointListHorizontalSectionsOutputSchema: OutputSchema
   };
 
 export const microsoftSharepointListListActivitiesOutputSchema: OutputSchema = {
-  fields: [
+  fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
     {
       key: 'value',
       label: 'Value',
@@ -2104,7 +2104,7 @@ export const microsoftSharepointListListColumnsOutputSchema: OutputSchema = {
 
 export const microsoftSharepointListListContentTypeColumnsOutputSchema: OutputSchema =
   {
-    fields: [
+    fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
       {
         key: 'value',
         label: 'Value',
@@ -2143,7 +2143,7 @@ export const microsoftSharepointListListContentTypeColumnsOutputSchema: OutputSc
 
 export const microsoftSharepointListListContentTypesOutputSchema: OutputSchema =
   {
-    fields: [
+    fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
       {
         key: 'value',
         label: 'Value',
@@ -2158,7 +2158,7 @@ export const microsoftSharepointListListContentTypesOutputSchema: OutputSchema =
 
 export const microsoftSharepointListListItemPermissionsOutputSchema: OutputSchema =
   {
-    fields: [
+    fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
       {
         key: 'value',
         label: 'Value',
@@ -2194,7 +2194,7 @@ export const microsoftSharepointListListItemPermissionsOutputSchema: OutputSchem
 
 export const microsoftSharepointListListItemVersionsOutputSchema: OutputSchema =
   {
-    fields: [
+    fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
       {
         key: 'value',
         label: 'Value',
@@ -2205,7 +2205,7 @@ export const microsoftSharepointListListItemVersionsOutputSchema: OutputSchema =
   };
 
 export const microsoftSharepointListListItemsOutputSchema: OutputSchema = {
-  fields: [
+  fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
     {
       key: 'value',
       label: 'Value',
@@ -2277,7 +2277,7 @@ export const microsoftSharepointListListsOutputSchema: OutputSchema = {
 };
 
 export const microsoftSharepointListPagesOutputSchema: OutputSchema = {
-  fields: [
+  fields: [{ key: '@odata.nextLink', label: 'Next Page Link', value: "['@odata.nextLink']", format: 'url' },
     { key: 'value', label: 'Value', labelKey: 'name', listItems: pageFields },
   ],
 };

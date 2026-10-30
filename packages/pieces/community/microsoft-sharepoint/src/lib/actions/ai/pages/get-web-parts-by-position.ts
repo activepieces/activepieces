@@ -47,7 +47,7 @@ export const getWebPartsByPositionAction = createAction({
     }),
     webPartIndex: Property.ShortText({
       displayName: 'Web Part Index',
-      description: 'Position of the web part, a number like "0" sent as text. Needs Column ID or In Vertical Section set to true.',
+      description: 'Position of the web part, a number like "1" sent as text; the first web part is 1. Needs Column ID or In Vertical Section set to true.',
       required: false,
     }),
   },

@@ -27,7 +27,7 @@ function columnId() {
 function webPartIndex({ listAction }: { listAction: string }) {
   return Property.ShortText({
     displayName: 'Web Part Index',
-    description: `Position of the web part in its column or section, a number like "0" sent as text. Use ${listAction} to find it.`,
+    description: `Position of the web part in its column or section, a number like "1" sent as text; the first web part is 1. Use ${listAction} to find it.`,
     required: true,
   });
 }
