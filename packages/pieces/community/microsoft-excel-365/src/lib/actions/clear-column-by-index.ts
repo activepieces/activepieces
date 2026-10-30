@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -8,10 +8,26 @@ export const clearColumnAction = createAction({
   auth: excelAuth,
   name: 'clear_column',
   classification: 'DESTRUCTIVE',
-  displayName: 'Clear Column by Index',
-  description: 'Clear contents/formatting of a column by its index.',
+  displayName: 'Clear Column',
+  description: 'Clear the contents or formatting of a column.',
   audience: 'both',
   aiMetadata: { description: 'Clear an entire column in a worksheet identified by its 1-based index (1 = A, 2 = B). Choose what to remove via Clear Type: contents, formats, or both. Clears in place without shifting other cells; idempotent — re-running on an already-cleared column has no further effect. To clear a row instead use Clear Row by ID, or a specific range with Clear Worksheet.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId']
+    },
+    {
+      key: 'column',
+      display: 'section',
+      label: 'Column',
+      icon: 'markdown',
+      props: ['column_index', 'applyTo', 'clear_warning']
+    }
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -19,32 +35,38 @@ export const clearColumnAction = createAction({
     workbookId: commonProps.workbookId,
     worksheetId: commonProps.worksheetId,
     column_index: Property.Number({
-      displayName: 'Column Index',
-      description:
-        'The 1-based index of the column to be cleared (e.g., 1 for column A, 2 for column B).',
+      displayName: 'Column Number',
+      description: '1 is column A, 2 is column B.',
       required: true
     }),
     applyTo: Property.StaticDropdown({
-      displayName: 'Clear Type',
-      description: 'Specify what to clear from the column.',
+      displayName: 'What to Clear',
       required: true,
       defaultValue: 'All',
+      display: 'cards',
       options: {
         options: [
           {
-            label: 'All (Contents and Formatting)',
-            value: 'All'
+            label: 'Everything',
+            value: 'All',
+            icon: 'trash'
           },
           {
-            label: 'Contents Only',
-            value: 'Contents'
+            label: 'Contents',
+            value: 'Contents',
+            icon: 'text'
           },
           {
-            label: 'Formats Only',
-            value: 'Formats'
+            label: 'Formatting',
+            value: 'Formats',
+            icon: 'sliders'
           }
         ]
       }
+    }),
+    clear_warning: Property.MarkDown({
+      value: 'Cleared cells cannot be restored.',
+      variant: MarkdownVariant.WARNING
     })
   },
   async run(context) {
@@ -66,10 +88,8 @@ export const clearColumnAction = createAction({
       throw new Error('Column index must be a positive integer.');
     }
 
-    // Convert 1-based index to Excel column letter (e.g., 1 -> 'A')
     const columnLetter = excelCommon.numberToColumnName(column_index);
 
-    // Construct the range address for the entire column, e.g., 'C:C'
     const columnAddress = `${columnLetter}:${columnLetter}`;
 
     const client = createMSGraphClient(access_token, cloud);
@@ -77,7 +97,6 @@ export const clearColumnAction = createAction({
       .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${columnAddress}')/clear`)
       .post({ applyTo: applyTo });
 
-    // A successful request returns a 200 OK with no body.
     return {};
   }
 });

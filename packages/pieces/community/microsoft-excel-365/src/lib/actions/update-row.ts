@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -8,10 +8,33 @@ export const updateRowAction = createAction({
 	auth: excelAuth,
 	name: 'update_row',
 	classification: 'WRITE',
-	description: 'Update a row in a worksheet',
+	description: 'Overwrite a worksheet row, starting at column A.',
 	audience: 'both',
 	aiMetadata: { description: 'Overwrite the cells of a specific worksheet row, identified by its row number, with the provided values starting at column A. Use to edit an existing row in place; to add a new row use the append actions, or Delete Row to remove one. Idempotent for a given row number and values — re-running writes the same cells. Values can be keyed by header when the first row holds headers.', idempotent: true },
-	displayName: 'Update Worksheet Rows',
+	displayName: 'Update Row',
+	propertyGroups: [
+		{
+			key: 'workbook',
+			display: 'section',
+			label: 'Workbook',
+			icon: 'file',
+			props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+		},
+		{
+			key: 'target_row',
+			display: 'section',
+			label: 'Row',
+			icon: 'markdown',
+			props: ['row_number'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'text',
+			props: ['blank_fields_warning', 'isFirstRowHeaders', 'values'],
+		},
+	],
 	props: {
 		storageSource: commonProps.storageSource,
 		siteId: commonProps.siteId,
@@ -19,9 +42,13 @@ export const updateRowAction = createAction({
 		workbookId: commonProps.workbookId,
 		worksheetId: commonProps.worksheetId,
 		row_number: Property.Number({
-			displayName: 'Row number',
-			description: 'The row number to update',
+			displayName: 'Row Number',
+			description: 'Row 1 is the first row of the worksheet.',
 			required: true,
+		}),
+		blank_fields_warning: Property.MarkDown({
+			value: 'Blank fields clear their cell. Fill in every value you want to keep.',
+			variant: MarkdownVariant.WARNING,
 		}),
 		isFirstRowHeaders: commonProps.isFirstRowHeaders,
 		values: commonProps.worksheetValues,
@@ -31,7 +58,7 @@ export const updateRowAction = createAction({
 		const rowNumber = propsValue['row_number'];
 		const values = propsValue.isFirstRowHeaders
 			? objectToArray(propsValue['values'])
-			: Object.values(propsValue['values']);
+			: Object.values(propsValue['values'])[0];
 		const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 
 		if (storageSource === 'sharepoint' && (!siteId || !documentId)) {

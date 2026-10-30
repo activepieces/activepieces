@@ -8,9 +8,25 @@ export const getRangeAction = createAction({
   name: 'get_range',
   classification: 'READ',
   displayName: 'Get Cells in Range',
-  description: 'Retrieve the values in a given cell range (e.g., “A1:C10”).',
+  description: 'Retrieve the cells in a range.',
   audience: 'both',
   aiMetadata: { description: 'Read a specific rectangular cell range from a worksheet using A1 notation (e.g. "A1:C10" or a single cell "B2"). Use when you know the exact addresses to fetch; for full-sheet or header-keyed reads use Get Worksheet Rows. Read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId']
+    },
+    {
+      key: 'range',
+      display: 'section',
+      label: 'Range',
+      icon: 'markdown',
+      props: ['range']
+    }
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -19,8 +35,8 @@ export const getRangeAction = createAction({
     worksheetId: commonProps.worksheetId,
     range: Property.ShortText({
       displayName: 'Range',
-      description:
-        'The range of cells to retrieve, in A1 notation (e.g., "A1:C10").',
+      description: 'Cells in A1 notation, in capitals.',
+      placeholder: 'A1:C10',
       required: true
     })
   },
@@ -45,8 +61,6 @@ export const getRangeAction = createAction({
       .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')`)
       .get();
 
-    // The response body contains the workbookRange object with details
-    // like values, text, formulas, rowCount, etc.
     return response;
   }
 });
