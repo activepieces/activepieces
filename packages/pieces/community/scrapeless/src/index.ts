@@ -1,5 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { ScrapelessValidator } from './lib/utils/validator';
+import { createPiece } from '@activepieces/pieces-framework';
 import { googleSearchApi } from './lib/actions/google-search-api';
 import { crawlScrapeApi } from './lib/actions/crawl-scrape';
 import { crawlCrawlApi } from './lib/actions/crawl-crawl';
@@ -8,6 +7,7 @@ import { universalScrapingApi } from './lib/actions/universal-scraping-api';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { scrapelessApiAuth } from './lib/auth';
+import { aiScraperAction } from './lib/actions/ai-scraper';
 
 export const scrapeless = createPiece({
   displayName: 'Scrapeless',
@@ -24,6 +24,7 @@ export const scrapeless = createPiece({
     crawlCrawlApi,
     googleTrendsApi,
     universalScrapingApi,
+    aiScraperAction,
     createCustomApiCallAction({
       auth:scrapelessApiAuth,
       baseUrl:()=>'https://api.scrapeless.com/api/v1',
