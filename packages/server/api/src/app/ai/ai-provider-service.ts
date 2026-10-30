@@ -53,6 +53,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return rows.map((row) => toConfigResponse({ row, enabledForChat: row.id === chatRowId }))
     },
 
+    async getConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderWithoutSensitiveData> {
+        const rows = await aiProviderRepo().findBy({ platformId })
+        const row = rows.find((candidate) => candidate.id === configId)
+        if (isNil(row)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: configId, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+            })
+        }
+        return toConfigResponse({ row, enabledForChat: row.id === pickChatRow(rows)?.id })
+    },
+
     async listForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectAIProvider[]> {
         const rows = await listVisibleRows({ platformId, log })
         const eligible = rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope: { type: 'project', projectId } }))

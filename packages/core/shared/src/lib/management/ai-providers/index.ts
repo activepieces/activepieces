@@ -106,6 +106,18 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         config: OpenAiCompatibleVendorConfig,
         auth: strictAuth(BaseAIProviderAuthConfig),
     }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.META),
+        config: OpenAiCompatibleVendorConfig,
+        auth: strictAuth(BaseAIProviderAuthConfig),
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.NVIDIA),
+        config: OpenAiCompatibleVendorConfig,
+        auth: strictAuth(BaseAIProviderAuthConfig),
+    }),
 ])
 
 const StrictAIProviderAuthConfig = z.union([

@@ -79,6 +79,7 @@ export function DefaultChatModelCard({
                     variant="ghost"
                     size="xs"
                     className="text-warning-11"
+                    disabled={isPending}
                     onClick={() => save(null)}
                   >
                     {t('Use default')}
