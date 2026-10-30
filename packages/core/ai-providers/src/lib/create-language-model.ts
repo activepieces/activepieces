@@ -232,10 +232,13 @@ async function generateWithAutoToolChoice({ params, model }: MiddlewareCall): Pr
         toolChoice: { type: 'auto' },
     }
     const first = await model.doGenerate(withToolInstruction({ params: relaxed, toolName, retry: false }))
-    if (first.content.some((part) => part.type === 'tool-call')) {
+    if (callsATool({ result: first })) {
         return first
     }
     const retried = await model.doGenerate(withToolInstruction({ params: relaxed, toolName, retry: true }))
+    if (!callsATool({ result: retried })) {
+        throw new ForcedToolNotCalledError(toolName)
+    }
     return { ...retried, usage: addUsage({ a: first.usage, b: retried.usage }) }
 }
 
@@ -258,6 +261,10 @@ function addUsage({ a, b }: { a: GenerateResult['usage'], b: GenerateResult['usa
 
 function addCounts({ a, b }: { a: number | undefined, b: number | undefined }): number | undefined {
     return isNil(a) && isNil(b) ? undefined : (a ?? 0) + (b ?? 0)
+}
+
+function callsATool({ result }: { result: GenerateResult }): boolean {
+    return result.content.some((part) => part.type === 'tool-call')
 }
 
 function withoutTools({ params }: { params: MiddlewareCall['params'] }): MiddlewareCall['params'] {
@@ -303,6 +310,15 @@ export function buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHead
 }
 
 const simulatedStreaming = simulateStreamingMiddleware()
+
+class ForcedToolNotCalledError extends Error {
+    constructor(toolName: string | undefined) {
+        super(isNil(toolName)
+            ? 'The model answered in text twice instead of calling a tool'
+            : `The model answered in text twice instead of calling the ${toolName} tool`)
+        this.name = 'ForcedToolNotCalledError'
+    }
+}
 
 type MiddlewareCall = Pick<Parameters<NonNullable<LanguageModelMiddleware['wrapGenerate']>>[0], 'params' | 'model'>
 
