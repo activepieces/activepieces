@@ -169,7 +169,7 @@ export function emptyBillingOverview({ startDate, endDate, unavailable = false }
         planInterval: null,
         planName: null,
         scheduledPlanName: null,
-        billingPortalAvailable: false,
+        hasPaymentMethod: false,
         creditsResetInterval: null,
         creditsFeature: null,
         appSumoCreditsFeature: null,
@@ -369,7 +369,7 @@ export type BillingInfo = {
     trialEndsAt: string | null
     planName: string | null
     scheduledPlanName: string | null
-    billingPortalAvailable: boolean
+    hasPaymentMethod: boolean
     creditsResetInterval: string | null
     planInterval: string | null
 }

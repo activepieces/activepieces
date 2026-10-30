@@ -142,7 +142,7 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         billingProvider.get(log).getSelfServeTrialInfo(platform.id),
     ])
 
-    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, billingPortalAvailable, creditsResetInterval, planInterval, creditsFeature, appSumoCreditsFeature, seatsFeature, includedSeats, additionalSeats, unavailable: billingUnavailable } = overview
+    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, hasPaymentMethod, creditsResetInterval, planInterval, creditsFeature, appSumoCreditsFeature, seatsFeature, includedSeats, additionalSeats, unavailable: billingUnavailable } = overview
 
     const usageWithCredits = usage.creditsRemaining === null
         ? { ...usage, creditsUsed: await fetchUnlimitedCreditsUsed({ log, platformId: platform.id, startDate: billingPeriodStart, endDate: nextBillingDate, fallback: usage.creditsUsed }) }
@@ -162,7 +162,7 @@ async function getBillingInformation(log: FastifyBaseLogger, platformId: string)
         creditsFeature,
         appSumoCreditsFeature,
         seatsFeature,
-        billingPortalAvailable,
+        hasPaymentMethod,
         billingEnforced,
         billingUnavailable,
         includedSeats,
