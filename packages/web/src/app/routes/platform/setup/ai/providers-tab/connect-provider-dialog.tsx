@@ -167,27 +167,29 @@ function ConnectProviderForm({
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
                   <FormLabel showRequiredIndicator>{t('Provider')}</FormLabel>
-                  <SearchableSelect
-                    value={field.value}
-                    options={SUPPORTED_AI_PROVIDERS.map((candidate) => ({
-                      value: candidate.provider,
-                      label: candidate.name,
-                    }))}
-                    placeholder={t('Search providers')}
-                    disabled={editing !== undefined}
-                    valuesRendering={(value) => (
-                      <ProviderOption provider={value} />
-                    )}
-                    onChange={(next) => {
-                      if (next === null) {
-                        return;
-                      }
-                      field.onChange(next);
-                      form.setValue('credentials', emptyCredentialsOf(next));
-                      form.setValue('headers', {});
-                      form.setValue('name', defaultNameOf(next));
-                    }}
-                  />
+                  <FormControl>
+                    <SearchableSelect
+                      value={field.value}
+                      options={SUPPORTED_AI_PROVIDERS.map((candidate) => ({
+                        value: candidate.provider,
+                        label: candidate.name,
+                      }))}
+                      placeholder={t('Search providers')}
+                      disabled={editing !== undefined}
+                      valuesRendering={(value) => (
+                        <ProviderOption provider={value} />
+                      )}
+                      onChange={(next) => {
+                        if (next === null || next === field.value) {
+                          return;
+                        }
+                        field.onChange(next);
+                        form.setValue('credentials', emptyCredentialsOf(next));
+                        form.setValue('headers', {});
+                        form.setValue('name', defaultNameOf(next));
+                      }}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
