@@ -22,6 +22,8 @@ describe('AI_PROVIDER_CAPABILITIES', () => {
             AIProviderName.QWEN,
             AIProviderName.MINIMAX,
             AIProviderName.MOONSHOT,
+            AIProviderName.META,
+            AIProviderName.NVIDIA,
         ].sort())
     })
 
@@ -204,6 +206,20 @@ describe('aiProviderUtils.isChatModelId', () => {
     })
 
     it.each([
+        'meta/llama-guard-4-12b',
+        'nvidia/llama-3.1-nemoguard-8b-content-safety',
+        'nvidia/nemotron-3.5-content-safety',
+        'nvidia/nemotron-4-340b-reward',
+        'nvidia/nemotron-parse',
+        'nvidia/nvclip',
+        'nvidia/ai-synthetic-video-detector',
+        'nvidia/ising-calibration-1.5-31b',
+        'google/deplot',
+    ])('rejects %s, an NVIDIA catalogue model that classifies or parses rather than chats', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
         'gpt-4o',
         'gpt-4.1-mini',
         'o3',
@@ -211,6 +227,9 @@ describe('aiProviderUtils.isChatModelId', () => {
         'gemini-2.5-pro',
         'deepseek-chat',
         'kimi-k2',
+        'muse-spark-1.3',
+        'nvidia/nemotron-3-super-120b-a12b',
+        'openai/gpt-oss-20b',
     ])('accepts %s', (modelId) => {
         expect(isChat(modelId)).toBe(true)
     })
