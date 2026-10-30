@@ -16,7 +16,8 @@ export const findListByName = createAction({
   props: {
     name: Property.ShortText({
       displayName: 'List Name',
-      description: 'The exact name of the list to search for',
+      description: "Matches the whole name; upper or lower case doesn't matter.",
+      placeholder: 'Newsletter',
       required: true,
     }),
   },
