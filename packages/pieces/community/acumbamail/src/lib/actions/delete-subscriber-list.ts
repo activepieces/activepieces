@@ -3,7 +3,11 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
+import {
+  MarkdownVariant,
+  Property,
+  createAction,
+} from '@activepieces/pieces-framework';
 
 import { acumbamailAuth } from '../auth';
 import { acumbamailCommon } from '../common';
@@ -21,6 +25,10 @@ export const deleteSubscriberListAction = createAction({
     idempotent: true,
   },
   props: {
+    delete_warning: Property.MarkDown({
+      value: 'Deletes the list and everyone on it. This cannot be undone.',
+      variant: MarkdownVariant.WARNING,
+    }),
     listId: acumbamailCommon.listId,
   },
   async run(context) {

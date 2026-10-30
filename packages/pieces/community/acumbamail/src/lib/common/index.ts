@@ -23,7 +23,7 @@ export const acumbamailCommon = {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Acumbamail account first',
           options: [],
         };
       }
@@ -34,16 +34,32 @@ export const acumbamailCommon = {
         queryParams: { auth_token: auth.secret_text },
       };
 
-      const res = await httpClient.sendRequest<GetListsResponse>(request);
-      return {
-        disabled: false,
-        options: Object.entries(res.body).map(([key, val]) => {
+      try {
+        const res = await httpClient.sendRequest<GetListsResponse>(request);
+        const options = Object.entries(res.body).map(([key, val]) => {
           return {
             value: Number(key),
             label: val.name,
           };
-        }),
-      };
+        });
+        if (options.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No lists found. Create one first.',
+          };
+        }
+        return {
+          disabled: false,
+          options,
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load lists. Check your connection.',
+        };
+      }
     },
   }),
   listMergeFields: Property.DynamicProperties({
@@ -82,7 +98,6 @@ export const acumbamailCommon = {
             fields[field.tag] = Property.DateTime({
               displayName: field.label,
               required: false,
-              description: 'Use dd/mm/yyy mm:ss format.',
             });
             break;
           case SubscriberListFieldType.EMAIL:
@@ -138,14 +153,14 @@ export const acumbamailCommon = {
   }),
   templateId: Property.Dropdown({
     auth: acumbamailAuth,
-    displayName: 'Origin Template',
+    displayName: 'Template',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Acumbamail account first',
           options: [],
         };
       }
@@ -156,16 +171,34 @@ export const acumbamailCommon = {
         queryParams: { auth_token: auth.secret_text },
       };
 
-      const res = await httpClient.sendRequest<GetTemplatesResponse[]>(request);
-      return {
-        disabled: false,
-        options: res.body.map((template) => {
+      try {
+        const res = await httpClient.sendRequest<GetTemplatesResponse[]>(
+          request
+        );
+        const options = res.body.map((template) => {
           return {
             label: template.name,
             value: template.id,
           };
-        }),
-      };
+        });
+        if (options.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No templates found. Create one first.',
+          };
+        }
+        return {
+          disabled: false,
+          options,
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load templates. Check your connection.',
+        };
+      }
     },
   }),
 };
