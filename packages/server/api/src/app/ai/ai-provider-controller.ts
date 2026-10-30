@@ -1,6 +1,6 @@
 import { AiProviderKeyStatus, AIProviderName } from '@activepieces/core-utils'
 import { modelTierCatalog } from '@activepieces/server-utils'
-import { AIProviderModel, CreateAIProviderRequest, ModelOptions, ModelOptionsSurface, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
+import { AIProviderModel, AIProviderWithoutSensitiveData, CreateAIProviderRequest, ModelOptions, ModelOptionsSurface, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -72,7 +72,9 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     })
     app.post('/:id', UpdateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
-        return aiProviderService(app.log).update(platformId, request.params.id, request.body)
+        const service = aiProviderService(app.log)
+        await service.update(platformId, request.params.id, request.body)
+        return service.getConfig({ platformId, configId: request.params.id })
     })
     app.delete('/:id', DeleteAIProvider, async (request, reply) => {
         const platformId = request.principal.platform.id
@@ -100,6 +102,9 @@ const ListAIProviderConfigs = {
         tags: ['ai-providers'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'List the AI provider keys connected to the platform. Secrets are never returned.',
+        response: {
+            [StatusCodes.OK]: z.array(AIProviderWithoutSensitiveData),
+        },
     },
 }
 
@@ -221,6 +226,9 @@ const CreateAIProvider = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Connect a new AI provider key. The credentials are checked with the provider before saving.',
         body: CreateAIProviderRequest,
+        response: {
+            [StatusCodes.OK]: AIProviderWithoutSensitiveData,
+        },
     },
 }
 
@@ -255,6 +263,9 @@ const UpdateAIProvider = {
             id: z.string(),
         }),
         body: UpdateAIProviderRequest,
+        response: {
+            [StatusCodes.OK]: AIProviderWithoutSensitiveData,
+        },
     },
 }
 
@@ -269,5 +280,8 @@ const DeleteAIProvider = {
         params: z.object({
             id: z.string(),
         }),
+        response: {
+            [StatusCodes.NO_CONTENT]: z.never(),
+        },
     },
 }

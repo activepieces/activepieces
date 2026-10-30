@@ -122,5 +122,8 @@ const DeletePlatformModelTier = {
         description: 'Delete a model tier.',
         params: TierIdParams,
         querystring: DeletePlatformModelTierRequest,
+        response: {
+            [StatusCodes.NO_CONTENT]: z.never(),
+        },
     },
 }

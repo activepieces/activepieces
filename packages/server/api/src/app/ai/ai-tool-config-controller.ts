@@ -77,5 +77,8 @@ const DeleteAiToolConfig = {
         params: z.object({
             id: z.string(),
         }),
+        response: {
+            [StatusCodes.NO_CONTENT]: z.never(),
+        },
     },
 }
