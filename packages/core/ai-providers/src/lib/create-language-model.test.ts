@@ -250,12 +250,31 @@ describe('createLanguageModel', () => {
             expect(JSON.stringify(body.input)).toContain('Reply only by calling the extractData tool')
         })
 
-        it('asks once more when the model answers a forced call in text, then stops', async () => {
-            const { bodies, result } = await replyingWith({ replies: [TEXT_REPLY, TEXT_REPLY], send: (model) => model.doGenerate(forcedCall) })
+        it('asks once more when the model answers a forced call in text', async () => {
+            const { bodies, result } = await replyingWith({ replies: [TEXT_REPLY, TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
 
             expect(bodies).toHaveLength(2)
             expect(JSON.stringify(bodies[1].input)).toContain('Your previous reply did not call a tool')
-            expect(result.content.some((part) => part.type === 'tool-call')).toBe(false)
+            expect(result.content).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
+        })
+
+        it('fails instead of completing when the model answers in text twice', async () => {
+            const { bodies, result } = await replyingWith({
+                replies: [TEXT_REPLY, TEXT_REPLY],
+                send: (model) => model.doGenerate(forcedCall).then(() => 'completed', (error: Error) => error.message),
+            })
+
+            expect(bodies).toHaveLength(2)
+            expect(result).toBe('The model answered in text twice instead of calling the extractData tool')
+        })
+
+        it('fails a forced streamed call when the model answers in text twice', async () => {
+            const { result } = await replyingWith({
+                replies: [TEXT_REPLY, TEXT_REPLY],
+                send: (model) => model.doStream(forcedCall).then(() => 'completed', (error: Error) => error.name),
+            })
+
+            expect(result).toBe('ForcedToolNotCalledError')
         })
 
         it('counts the tokens of both attempts when it asks again', async () => {
