@@ -1,9 +1,13 @@
 import { createAction, MarkdownVariant, Property, StoreScope } from '@activepieces/pieces-framework';
-import { groqAuth } from '../..';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import * as z from 'zod/mini';
+import { groqAuth } from '../auth';
+import { groqClient } from '../common/client';
+import { groqProps } from '../common/props';
+import type { GroqChatCompletion, GroqChatMessage } from '../common/types';
 import { askAiActionOutputSchema } from '../output-schemas';
 
-export const askGroq = createAction({
+export const askAiAction = createAction({
   audience: 'both',
 	auth: groqAuth,
 	name: 'ask-ai',
@@ -17,52 +21,7 @@ export const askGroq = createAction({
 		{ key: 'history', display: 'section', label: 'History', icon: 'inbox', props: ['memoryKey', 'memoryInfo'] },
 	],
 	props: {
-		model: Property.Dropdown({
-			auth: groqAuth,
-			displayName: 'Model',
-			required: true,
-			description: 'Speech models are left out; use the audio actions for them.',
-			refreshers: [],
-			defaultValue: 'llama-3.1-70b-versatile',
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						placeholder: 'Please connect your Groq account first.',
-						options: [],
-					};
-				}
-				try {
-					const response = await httpClient.sendRequest({
-						url: 'https://api.groq.com/openai/v1/models',
-						method: HttpMethod.GET,
-						authentication: {
-							type: AuthenticationType.BEARER_TOKEN,
-							token: auth.secret_text,
-						},
-					});
-					// Filter out audio models
-					const models = (response.body.data as Array<{ id: string }>).filter(
-						(model) => !model.id.toLowerCase().includes('whisper'),
-					);
-					return {
-						disabled: false,
-						options: models.map((model) => {
-							return {
-								label: model.id,
-								value: model.id,
-							};
-						}),
-					};
-				} catch (error) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: "Couldn't load models. Check your API key or try again.",
-					};
-				}
-			},
-		}),
+		model: groqProps.chatModel({ required: true }),
 		prompt: Property.LongText({
 			displayName: 'Question',
 			description: 'What you want the model to answer or do.',
@@ -131,21 +90,20 @@ export const askGroq = createAction({
 			memoryKey,
 		} = propsValue;
 
-		let messageHistory: any[] | null = [];
-		// If memory key is set, retrieve messages stored in history
+		let messageHistory: GroqChatMessage[] = [];
 		if (memoryKey) {
-			messageHistory = (await store.get(memoryKey, StoreScope.PROJECT)) ?? [];
+			messageHistory = (await store.get<GroqChatMessage[]>(memoryKey, StoreScope.PROJECT)) ?? [];
 		}
 
-		// Add user prompt to message history
 		messageHistory.push({
 			role: 'user',
 			content: prompt,
 		});
 
-		// Add system instructions if set by user
-		const rolesArray = propsValue.roles ? (propsValue.roles as any) : [];
-		const roles = rolesArray.map((item: any) => {
+		const rolesArray = z
+			.array(z.object({ role: z.string(), content: z.unknown() }))
+			.parse(propsValue.roles ? propsValue.roles : []);
+		const roles: GroqChatMessage[] = rolesArray.map((item) => {
 			const rolesEnum = ['system', 'user', 'assistant'];
 			if (!rolesEnum.includes(item.role)) {
 				throw new Error('The only available roles are: [system, user, assistant]');
@@ -157,14 +115,10 @@ export const askGroq = createAction({
 			};
 		});
 
-		// Send prompt
-		const completion = await httpClient.sendRequest({
+		const completion = await groqClient.request<GroqChatCompletion>({
+			auth,
 			method: HttpMethod.POST,
-			url: 'https://api.groq.com/openai/v1/chat/completions',
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text,
-			},
+			path: '/chat/completions',
 			body: {
 				model: model,
 				messages: [...roles, ...messageHistory],
@@ -176,44 +130,29 @@ export const askGroq = createAction({
 			},
 		});
 
-		// Add response to message history
-		messageHistory = [...messageHistory, completion.body.choices[0].message];
+		messageHistory = [...messageHistory, completion.choices[0].message];
 
-		// Store history if memory key is set
 		if (memoryKey) {
 			await store.put(memoryKey, messageHistory, StoreScope.PROJECT);
 		}
 
-		// Get the raw content from the response
-		const rawContent = completion.body.choices[0].message.content;
-		
-		// Check if the response contains thinking (content inside <think> tags)
-		const thinkRegex = /<think>([\s\S]*?)<\/think>/;
-		const thinkMatch = rawContent.match(thinkRegex);
-		
-		// Create the response structure
-		const responseStructure = [];
-		
+		const rawContent = completion.choices[0].message.content;
+		const thinkMatch = rawContent.match(/<think>([\s\S]*?)<\/think>/);
+
 		if (thinkMatch) {
-			// Extract the thinking content
-			const thinkContent = thinkMatch[1].trim();
-			
-			// Extract the final answer (content after the last </think> tag)
-			const finalContent = rawContent.split('</think>').pop()?.trim() || '';
-			
-			// Add to response structure
-			responseStructure.push({
-				Think: thinkContent,
-				Content: finalContent
-			});
-		} else {
-			// If no thinking tags, just return the content as is
-			responseStructure.push({
-				Think: null,
-				Content: rawContent
-			});
+			return [
+				{
+					Think: thinkMatch[1].trim(),
+					Content: rawContent.split('</think>').pop()?.trim() || '',
+				},
+			];
 		}
-		
-		return responseStructure;
+
+		return [
+			{
+				Think: null,
+				Content: rawContent,
+			},
+		];
 	},
 });

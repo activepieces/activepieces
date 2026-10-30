@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { groqAuth } from '../..';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { groqAuth } from '../auth';
+import { groqClient } from '../common/client';
+import { groqProps } from '../common/props';
 import { transcribeAudioActionOutputSchema } from '../output-schemas';
 
-export const transcribeAudio = createAction({
+export const transcribeAudioAction = createAction({
   audience: 'both',
 	auth: groqAuth,
 	name: 'transcribe-audio',
@@ -23,52 +25,7 @@ export const transcribeAudio = createAction({
 			description:
 				'flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav or webm.',
 		}),
-		model: Property.Dropdown({
-			displayName: 'Model',
-			auth: groqAuth,
-			required: true,
-			description: 'whisper-large-v3 is the most accurate; turbo is faster.',
-			refreshers: [],
-			defaultValue: 'whisper-large-v3',
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						placeholder: 'Please connect your Groq account first.',
-						options: [],
-					};
-				}
-				try {
-					const response = await httpClient.sendRequest({
-						url: 'https://api.groq.com/openai/v1/models',
-						method: HttpMethod.GET,
-						authentication: {
-							type: AuthenticationType.BEARER_TOKEN,
-							token: auth.secret_text,
-						},
-					});
-					// Filter for whisper models only
-					const models = (response.body.data as Array<{ id: string }>).filter((model) =>
-						model.id.toLowerCase().includes('whisper'),
-					);
-					return {
-						disabled: false,
-						options: models.map((model) => {
-							return {
-								label: model.id,
-								value: model.id,
-							};
-						}),
-					};
-				} catch (error) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: "Couldn't load models. Check your API key or try again.",
-					};
-				}
-			},
-		}),
+		model: groqProps.whisperModel({ required: true }),
 		language: Property.ShortText({
 			displayName: 'Language',
 			required: false,
@@ -111,9 +68,8 @@ export const transcribeAudio = createAction({
 	async run({ auth, propsValue }) {
 		const { file, model, language, prompt, temperature, responseFormat } = propsValue;
 
-		// Create form data
 		const formData = new FormData();
-		formData.append('file', new Blob([file.data] as unknown as BlobPart[]), file.filename);
+		formData.append('file', new Blob([new Uint8Array(file.data)]), file.filename);
 		formData.append('model', model);
 
 		if (language) formData.append('language', language);
@@ -121,20 +77,14 @@ export const transcribeAudio = createAction({
 		if (temperature !== undefined) formData.append('temperature', temperature.toString());
 		if (responseFormat) formData.append('response_format', responseFormat);
 
-		// Send request
-		const response = await httpClient.sendRequest({
+		return await groqClient.request({
+			auth,
 			method: HttpMethod.POST,
-			url: 'https://api.groq.com/openai/v1/audio/transcriptions',
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text,
-			},
+			path: '/audio/transcriptions',
 			headers: {
 				'Content-Type': 'multipart/form-data',
 			},
 			body: formData,
 		});
-
-		return response.body;
 	},
 });
