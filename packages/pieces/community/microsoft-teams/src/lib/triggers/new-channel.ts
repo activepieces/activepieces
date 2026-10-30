@@ -5,10 +5,9 @@ import {
 	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, withGraphRetry } from '../common/graph';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
-import { Channel } from '@microsoft/microsoft-graph-types';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
+import type { Channel, MicrosoftTeamsPage } from '../common/types';
 import dayjs from 'dayjs';
 
 import { isNil } from '@activepieces/pieces-framework';
@@ -27,7 +26,7 @@ export const newChannelTrigger = createTrigger({
 		description: 'Fires when a new channel is created within the selected Microsoft Teams team. Each event represents the newly created channel and its metadata. Polls periodically by creation time, so events appear with a short delay rather than instantly.',
 	},
 	props: {
-		teamId: microsoftTeamsCommon.teamId,
+		teamId: microsoftTeamsProps.teamId({ required: true }),
 	},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
@@ -56,19 +55,18 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const { teamId } = propsValue;
-		const cloud = auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth });
 		const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
 
 		const channels: Channel[] = [];
 		const filter = lastFetchEpochMS === 0 ? '' : `?$filter=createdDateTime gt ${lastFetchDate}`;
 
-		let response: PageCollection = await withGraphRetry(() =>
+		let response: MicrosoftTeamsPage<Channel> = await microsoftTeamsClient.withRetry(() =>
 			client.api(`/teams/${teamId}/channels${filter}`).get(),
 		);
 
 		while (response.value && response.value.length > 0) {
-			for (const channel of response.value as Channel[]) {
+			for (const channel of response.value) {
 				if (isNil(channel.createdDateTime)) {
 					continue;
 				}
@@ -76,7 +74,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 			}
 			const nextLink = response['@odata.nextLink'];
 			if (lastFetchEpochMS !== 0 && nextLink) {
-				response = await withGraphRetry(() => client.api(nextLink).get());
+				response = await microsoftTeamsClient.withRetry(() => client.api(nextLink).get());
 			} else {
 				break;
 			}

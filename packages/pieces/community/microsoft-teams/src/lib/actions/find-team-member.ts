@@ -1,8 +1,8 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
+import type { ConversationMember, MicrosoftTeamsPage } from '../common/types';
 
 export const findTeamMemberAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -16,7 +16,7 @@ export const findTeamMemberAction = createAction({
 		idempotent: true,
 	},
 	props: {
-		teamId: microsoftTeamsCommon.teamId,
+		teamId: microsoftTeamsProps.teamId({ required: true }),
 		searchBy: Property.StaticDropdown({
 			displayName: 'Search By',
 			required: true,
@@ -38,12 +38,11 @@ export const findTeamMemberAction = createAction({
 	async run(context) {
 		const { teamId, searchBy, searchValue } = context.propsValue 
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
 		const filter = searchBy == 'email' ?`microsoft.graph.aadUserConversationMember/email eq '${searchValue}'`:`microsoft.graph.aadUserConversationMember/displayName eq  '${searchValue}'`;
 
-		const response: PageCollection = await client
+		const response: MicrosoftTeamsPage<ConversationMember> = await client
 			.api(`/teams/${teamId}/members`)
 			.filter(filter)
 			.get();

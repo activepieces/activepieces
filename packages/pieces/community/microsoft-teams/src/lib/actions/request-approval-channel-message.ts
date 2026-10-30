@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../auth';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
-import { ChatMessage } from '@microsoft/microsoft-graph-types';
+import type { ChatMessage } from '../common/types';
 
 export const requestApprovalInChannel = createAction({
   auth: microsoftTeamsAuth,
@@ -18,8 +18,8 @@ export const requestApprovalInChannel = createAction({
     idempotent: false,
   },
   props: {
-    teamId: microsoftTeamsCommon.teamId,
-    channelId: microsoftTeamsCommon.channelId,
+    teamId: microsoftTeamsProps.teamId({ required: true }),
+    channelId: microsoftTeamsProps.channelId({ required: true }),
     message: Property.LongText({
       displayName: 'Message',
       required: true,
@@ -28,15 +28,12 @@ export const requestApprovalInChannel = createAction({
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
       const { teamId, channelId, message } = context.propsValue;
-      const token = context.auth.access_token;
-
-      assertNotNullOrUndefined(token, 'token');
+      assertNotNullOrUndefined(context.auth.access_token, 'token');
       assertNotNullOrUndefined(teamId, 'teamId');
       assertNotNullOrUndefined(channelId, 'channelId');
       assertNotNullOrUndefined(message, 'message');
 
-      const cloud = context.auth.props?.['cloud'] as string | undefined;
-      const client = createGraphClient(token, cloud);
+      const client = microsoftTeamsClient.create({ auth: context.auth });
 
       const attachmentId = Date.now().toString();
       const waitpoint = await context.run.createWaitpoint({
@@ -76,14 +73,13 @@ export const requestApprovalInChannel = createAction({
         ],
       };
 
-      // Send the message
-      const response = await client
+      await client
         .api(`/teams/${teamId}/channels/${channelId}/messages`)
         .post(chatMessage);
 
       context.run.waitForWaitpoint(waitpoint.id);
       return {
-        approved: false, // default approval is false
+        approved: false,
       };
     } else {
       return {

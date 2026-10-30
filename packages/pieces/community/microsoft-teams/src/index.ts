@@ -1,10 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { getGraphBaseUrl } from './lib/common/microsoft-cloud';
-import {
-  createPiece,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createChannelAction } from './lib/actions/create-channel';
 import { createChatAndSendMessageAction } from './lib/actions/create-chat-and-send-message';
 import { createPrivateChannelAction } from './lib/actions/create-private-channel';
@@ -21,6 +16,7 @@ import { requestApprovalDirectMessage } from './lib/actions/request-approval-dir
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
 import { microsoftTeamsAuth } from './lib/auth';
+import { microsoftTeamsClient } from './lib/common/client';
 import { newChannelTrigger } from './lib/triggers/new-channel';
 import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
 import { newChatTrigger } from './lib/triggers/new-chat';
@@ -54,12 +50,9 @@ export const microsoftTeams = createPiece({
     requestApprovalDirectMessage,
     createCustomApiCallAction({
       auth: microsoftTeamsAuth,
-      baseUrl: (auth) => {
-        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
-        return getGraphBaseUrl(cloud) + '/v1.0/teams';
-      },
+      baseUrl: (auth) => (auth ? microsoftTeamsClient.baseUrl({ auth }) : ''),
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],

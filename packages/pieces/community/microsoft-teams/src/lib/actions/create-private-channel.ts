@@ -1,7 +1,7 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, withGraphRetry } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
 
 export const createPrivateChannelAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -15,7 +15,7 @@ export const createPrivateChannelAction = createAction({
 		idempotent: false,
 	},
 	props: {
-		teamId: microsoftTeamsCommon.teamId,
+		teamId: microsoftTeamsProps.teamId({ required: true }),
 		channelDisplayName: Property.ShortText({
 			displayName: 'Channel Name',
 			required: true,
@@ -28,8 +28,7 @@ export const createPrivateChannelAction = createAction({
 	async run(context) {
 		const { teamId, channelDescription, channelDisplayName } = context.propsValue;
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
 		const channel = {
 			displayName: channelDisplayName,
@@ -37,8 +36,7 @@ export const createPrivateChannelAction = createAction({
 			membershipType: 'private',
 		};
 
-		// https://learn.microsoft.com/graph/api/channel-post?view=graph-rest-1.0
-		return await withGraphRetry(() => client.api(`/teams/${teamId}/channels`).post(channel));
+		return await microsoftTeamsClient.withRetry(() => client.api(`/teams/${teamId}/channels`).post(channel));
 	},
 });
 

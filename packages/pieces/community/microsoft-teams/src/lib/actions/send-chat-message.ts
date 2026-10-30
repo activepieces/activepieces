@@ -1,7 +1,7 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
 
 export const sendChatMessageAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -15,7 +15,7 @@ export const sendChatMessageAction = createAction({
 		idempotent: false,
 	},
 	props: {
-		chatId: microsoftTeamsCommon.chatId,
+		chatId: microsoftTeamsProps.chatId({ required: true }),
 		contentType: Property.StaticDropdown({
 			displayName: 'Content Type',
 			required: true,
@@ -42,8 +42,7 @@ export const sendChatMessageAction = createAction({
 	async run(context) {
 		const { chatId, contentType, content } = context.propsValue;
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
 		const chatMessage = {
 			body: {

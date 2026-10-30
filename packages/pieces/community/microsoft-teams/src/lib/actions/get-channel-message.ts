@@ -1,7 +1,7 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, withGraphRetry } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
 
 export const getChannelMessageAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -15,8 +15,8 @@ export const getChannelMessageAction = createAction({
 		idempotent: true,
 	},
 	props: {
-		teamId: microsoftTeamsCommon.teamId,
-		channelId: microsoftTeamsCommon.channelId,
+		teamId: microsoftTeamsProps.teamId({ required: true }),
+		channelId: microsoftTeamsProps.channelId({ required: true }),
 		messageId: Property.ShortText({
 			displayName: 'Message ID',
 			required: true,
@@ -31,13 +31,11 @@ export const getChannelMessageAction = createAction({
 	async run(context) {
 		const { teamId, channelId, messageId, replyId } = context.propsValue;
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
-		// https://learn.microsoft.com/graph/api/chatmessage-get?view=graph-rest-1.0
 		const base = `/teams/${teamId}/channels/${channelId}/messages/${messageId}`;
 		const path = replyId ? `${base}/replies/${replyId}` : base;
-		return await withGraphRetry(() => client.api(path).get());
+		return await microsoftTeamsClient.withRetry(() => client.api(path).get());
 	},
 });
 

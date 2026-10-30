@@ -1,7 +1,7 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, withGraphRetry } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
 
 export const replyToChannelMessageAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -15,8 +15,8 @@ export const replyToChannelMessageAction = createAction({
 		idempotent: false,
 	},
 	props: {
-		teamId: microsoftTeamsCommon.teamId,
-		channelId: microsoftTeamsCommon.channelId,
+		teamId: microsoftTeamsProps.teamId({ required: true }),
+		channelId: microsoftTeamsProps.channelId({ required: true }),
 		messageId: Property.ShortText({
 			displayName: 'Message ID',
 			required: true,
@@ -42,8 +42,7 @@ export const replyToChannelMessageAction = createAction({
 	async run(context) {
 		const { teamId, channelId, messageId, contentType, content } = context.propsValue;
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
 		const chatMessage = {
 			body: {
@@ -52,8 +51,7 @@ export const replyToChannelMessageAction = createAction({
 			},
 		};
 
-		// https://learn.microsoft.com/graph/api/chatmessage-post-replies?view=graph-rest-1.0
-		return await withGraphRetry(() =>
+		return await microsoftTeamsClient.withRetry(() =>
 			client
 				.api(`/teams/${teamId}/channels/${channelId}/messages/${messageId}/replies`)
 				.post(chatMessage)

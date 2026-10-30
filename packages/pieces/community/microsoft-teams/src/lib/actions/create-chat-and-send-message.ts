@@ -1,10 +1,9 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
 import { isNil } from '@activepieces/pieces-framework';
-import { Chat } from '@microsoft/microsoft-graph-types';
+import type { Chat, MicrosoftTeamsMe } from '../common/types';
 
 export const createChatAndSendMessageAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -18,8 +17,8 @@ export const createChatAndSendMessageAction = createAction({
 		idempotent: false,
 	},
 	props: {
-		teamId: microsoftTeamsCommon.teamId,
-		members:microsoftTeamsCommon.memberIds(true),
+		teamId: microsoftTeamsProps.teamId({ required: true }),
+		members:microsoftTeamsProps.memberIds({ required: true }),
 		contentType: Property.StaticDropdown({
 			displayName: 'Message Content Type',
 			required: true,
@@ -44,15 +43,12 @@ export const createChatAndSendMessageAction = createAction({
 			throw new Error('For one-on-one chats, provide exactly one other member.');
 		}
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
-		const graphBaseUrl = getGraphBaseUrl(cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
+		const graphBaseUrl = microsoftTeamsClient.graphUrl({ auth: context.auth });
 
-		// Resolve current user to include as a member
-		const me = await client.api('/me').select('id,userPrincipalName').get();
+		const me: MicrosoftTeamsMe = await client.api('/me').select('id,userPrincipalName').get();
 		const currentUserBind = `${graphBaseUrl}/v1.0/users('${me.id}')`;
 
-		// Parse provided members
 		const otherMembersRaw: string[] = members.map((member) => `${graphBaseUrl}/v1.0/users('${member}')`)
 
 
@@ -74,10 +70,8 @@ export const createChatAndSendMessageAction = createAction({
 			members: membersPayload,
 		};
 
-		// Create or get existing chat
 		const chat = await client.api('/chats').post(chatBody);
 
-		// Send initial message
 		const chatMessage = {
 			body: {
 				content: content,
