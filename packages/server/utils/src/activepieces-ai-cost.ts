@@ -1,4 +1,5 @@
-import { ActivepiecesAiBilling, ActivepiecesAiCall, ActivepiecesAiConsumerSource, ActivepiecesAiCostReporter, AiCallTokens, AiCharge, AiChargeBasis, AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ForcedToolNotCalledError } from '@activepieces/ai-providers'
+import { ActivepiecesAiBilling, ActivepiecesAiCall, ActivepiecesAiConsumerSource, ActivepiecesAiCostReporter, AiCallTokens, AiCharge, AiChargeBasis, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { EmbeddingModelV4Result, isJSONObject, LanguageModelV4GenerateResult, LanguageModelV4StreamPart, LanguageModelV4StreamResult, LanguageModelV4Usage, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel, wrapEmbeddingModel, wrapLanguageModel } from 'ai'
 import { z } from 'zod'
@@ -70,14 +71,24 @@ function billingContextOf({ provider, providerConfigId, modelId, billing, charge
 }
 
 async function billGenerate({ doGenerate, context }: BillGenerateParams): Promise<LanguageModelV4GenerateResult> {
-    const result = await doGenerate()
+    const attempt = await tryCatch(async () => doGenerate())
+    if (attempt.error !== null) {
+        reportFailedAttempts({ context, error: attempt.error })
+        throw attempt.error
+    }
+    const result = attempt.data
     const generationId = result.response?.id
     report({ context, generationId, call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers }), tokens: tokensOf(result.usage) })
     return result
 }
 
 async function billStream({ doStream, context }: BillStreamParams): Promise<LanguageModelV4StreamResult> {
-    const { stream, ...rest } = await doStream()
+    const attempt = await tryCatch(async () => doStream())
+    if (attempt.error !== null) {
+        reportFailedAttempts({ context, error: attempt.error })
+        throw attempt.error
+    }
+    const { stream, ...rest } = attempt.data
     return { ...rest, stream: stream.pipeThrough(billedStream({ context, headers: rest.response?.headers })) }
 }
 
@@ -153,6 +164,13 @@ async function recoverCostAndReport({ state, context }: SettleStreamParams): Pro
             observedCostUsd: generation.costUsd,
         },
     })
+}
+
+function reportFailedAttempts({ context, error }: { context: BillingContext, error: Error }): void {
+    if (!(error instanceof ForcedToolNotCalledError)) {
+        return
+    }
+    report({ context, call: createBillingInfo({ context, generationId: undefined, providerMetadata: undefined, usage: error.usage }), tokens: tokensOf(error.usage) })
 }
 
 function createBillingInfo({ context, generationId, providerMetadata, usage, headers }: CreateBillingInfoParams): ActivepiecesAiCall | undefined {
