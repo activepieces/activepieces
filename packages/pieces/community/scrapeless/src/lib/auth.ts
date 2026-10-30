@@ -1,5 +1,5 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { ScrapelessValidator } from './utils/validator';
+import { AppConnectionType, PieceAuth } from '@activepieces/pieces-framework';
+import { scrapelessApi } from './common/api';
 
 export const scrapelessApiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -7,14 +7,9 @@ export const scrapelessApiAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      // Validate API key format first
-      const formatValidation = await ScrapelessValidator.validateApiKey(auth);
-      if (!formatValidation.isValid) {
-        return {
-          valid: false,
-          error: `${formatValidation.errors.join(', ')}`,
-        };
-      }
+      await scrapelessApi.getMe({
+        auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
+      });
 
       return {
         valid: true,
