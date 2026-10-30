@@ -3702,5 +3702,12 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Sign-in method": "Sign-in method",
+  "Sign-up method": "Sign-up method",
+  "Not recorded": "Not recorded",
+  "Google": "Google",
+  "JWT": "JWT",
+  "SSO": "SSO",
+  "Managed": "Managed"
 }
