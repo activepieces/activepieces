@@ -333,7 +333,7 @@ export const PlatformBillingInformation = z.object({
     creditsFeature: Nullable(CreditsBillableFeature),
     appSumoCreditsFeature: Nullable(AppSumoCreditsBillableFeature),
     seatsFeature: Nullable(SeatsBillableFeature),
-    billingPortalAvailable: z.boolean(),
+    hasPaymentMethod: z.boolean(),
     billingEnforced: z.boolean(),
     billingUnavailable: z.boolean(),
     includedSeats: Nullable(z.number()),

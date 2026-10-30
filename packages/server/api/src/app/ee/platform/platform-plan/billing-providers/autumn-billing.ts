@@ -327,7 +327,7 @@ function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthE
         cancelAt: msToIso(subscription?.expiresAt) ?? null,
         trialEndsAt: msToIso(subscription?.trialEndsAt) ?? purchaseTrialEndsAt(purchase),
         scheduledPlanName: scheduledPlan?.plan?.name ?? null,
-        billingPortalAvailable: !isNil(customer.paymentMethod),
+        hasPaymentMethod: !isNil(customer.paymentMethod),
     }
 }
 
