@@ -11,3 +11,23 @@ export type PerplexityAiChatCompletion = {
   choices: { message: { content: string } }[];
   citations?: string[];
 };
+
+export type PerplexityAiAgentResponse = {
+  id: string;
+  object: 'response';
+  created_at: number;
+  model: string;
+  status:
+    | 'completed'
+    | 'failed'
+    | 'incomplete'
+    | 'in_progress'
+    | 'queued'
+    | 'cancelled';
+  output: unknown[];
+  effort?: string;
+  error?: unknown;
+  usage?: unknown;
+};
+
+export type PerplexityAiList<T> = { object: string; data: T[] };

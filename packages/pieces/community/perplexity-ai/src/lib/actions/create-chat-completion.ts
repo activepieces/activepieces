@@ -19,7 +19,7 @@ export const createChatCompletionAction = createAction({
   displayName: 'Ask AI',
   description:
     'Ask a question and get an answer sourced from the live web.',
-  aiMetadata: { description: 'Sends a question to a Perplexity Sonar model, which answers from a live web search with source citations rather than model memory alone, choosing between the plain sonar models for fast grounded answers and the sonar-reasoning models for step-by-step reasoning. It is the only action in this piece; pick it when the reply must reflect current web content, and prefer a general LLM vendor piece such as OpenAI or Google Gemini when no web lookup is needed. Runs stateless - earlier turns must be supplied in the optional roles array, which alternates user and assistant after any system message; requires a model and a question, and is not idempotent: each call runs a new search and produces a fresh completion.', idempotent: false },
+  aiMetadata: { description: 'Sends a question to a Perplexity Sonar model, which answers from a live web search with source citations rather than model memory alone, choosing between the plain sonar models for fast grounded answers and the sonar-reasoning models for step-by-step reasoning. Pick it for a quick cited answer; use Create Agent Response to choose any catalogued model or tools, and Search the Web for raw results without an answer. Runs stateless - earlier turns must be supplied in the optional roles array, which alternates user and assistant after any system message; requires a model and a question, and is not idempotent: each call runs a new search and produces a fresh completion.', idempotent: false },
   propertyGroups: [
     { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'max_tokens'] },
     { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt'] },
@@ -41,10 +41,6 @@ export const createChatCompletionAction = createAction({
           {
             label:'Sonar Pro',
             value:'sonar-pro'
-          },
-          {
-            label:'Sonar Reasoning',
-            value:'sonar-reasoning'
           },
           {
             label:'Sonar Reasoning Pro',
