@@ -75,6 +75,7 @@ describe('zerobounce', () => {
             { status: 'do_not_mail', sub_status: 'toxic' },
             { status: 'do_not_mail', sub_status: 'possible_trap' },
             { status: 'do_not_mail', sub_status: 'global_suppression' },
+            { status: 'do_not_mail', sub_status: 'blocked' },
             { status: 'spamtrap', sub_status: '' },
             { status: 'abuse', sub_status: '' },
             { status: 'invalid', sub_status: 'no_dns_entries' },

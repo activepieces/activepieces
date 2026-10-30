@@ -11,6 +11,7 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
 2. Once on the website, locate and click on the option to obtain your Claude API Key.
 `),
     logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
+    dashboardUrl: 'https://console.anthropic.com/settings/billing',
   },
   {
     provider: AIProviderName.BEDROCK,
@@ -76,6 +77,20 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
 2. Once on the website, locate and click on the option to obtain your Google API Key.
 `),
     logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
+    dashboardUrl: 'https://aistudio.google.com/usage',
+  },
+  {
+    provider: AIProviderName.META,
+    name: 'Meta',
+    logoUrl: 'https://cdn.activepieces.com/pieces/meta.png',
+    markdown: t(`Follow these instructions to get your Meta Model API Key:
+
+1. Go to https://dev.meta.ai and sign in.
+2. Open **API keys** in the dashboard, click **Create API key**, copy the key, and paste it below.
+
+The Meta Model API serves Meta's Muse models and opened to developers in the US first.
+`),
+    dashboardUrl: 'https://dev.meta.ai',
   },
   {
     provider: AIProviderName.MINIMAX,
@@ -99,6 +114,7 @@ This connects to MiniMax's international endpoint. A key from the China platform
 2. Navigate to **API Keys** in your account settings.
 3. Click **Create new key**, copy the key, and paste it below.
 `),
+    dashboardUrl: 'https://console.mistral.ai/usage',
   },
   {
     provider: AIProviderName.MOONSHOT,
@@ -114,6 +130,18 @@ This connects to Moonshot's international endpoint. A key from the China platfor
 `),
   },
   {
+    provider: AIProviderName.NVIDIA,
+    name: 'NVIDIA',
+    logoUrl: 'https://cdn.activepieces.com/pieces/nvidia.png',
+    markdown: t(`Follow these instructions to get your NVIDIA API Key:
+
+1. Go to https://build.nvidia.com and open any model.
+2. Click **Get API Key**, sign in with your NVIDIA account, copy the key (it starts with nvapi-), and paste it below.
+
+NVIDIA offers these hosted keys for trial and development use. For production, run NVIDIA NIM yourself and add it through **Other (OpenAI Compatible)** with your NIM base URL.
+`),
+  },
+  {
     provider: AIProviderName.OPENAI,
     name: 'OpenAI',
     markdown: t(`Follow these instructions to get your OpenAI API Key:
@@ -124,6 +152,7 @@ This connects to Moonshot's international endpoint. A key from the China platfor
 It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
 `),
     logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+    dashboardUrl: 'https://platform.openai.com/usage',
   },
   {
     provider: AIProviderName.OPENROUTER,
@@ -132,6 +161,7 @@ It is strongly recommended that you add your credit card information to your Ope
     markdown: t(`Follow these instructions to get your OpenRouter API Key:
 1. Go to https://openrouter.ai/settings/keys.
 2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`),
+    dashboardUrl: 'https://openrouter.ai/activity',
   },
   {
     provider: AIProviderName.QWEN,
@@ -184,4 +214,5 @@ export type AiProviderInfo = {
   name: string;
   markdown: string;
   logoUrl: string;
+  dashboardUrl?: string;
 };

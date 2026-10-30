@@ -14,11 +14,12 @@ function actionNameMatchesPatterns({ actionName, patterns }: { actionName: strin
     return patterns.some((pattern) => words.includes(pattern))
 }
 
-function requiresActionPreview({ actionName, input, needsConfirmation, tainted }: {
+function requiresActionPreview({ actionName, input, needsConfirmation, tainted, declaredReadOnly }: {
     actionName: string
     input?: Record<string, unknown>
     needsConfirmation?: boolean
     tainted?: boolean
+    declaredReadOnly?: boolean
 }): boolean {
     // Raw HTTP: skip the gate only for a provably read-only method (GET/HEAD/OPTIONS). A mutating
     // method (POST/PUT/PATCH/DELETE) — or an unknown/unspecified one — must be confirmed, so chat
@@ -26,6 +27,9 @@ function requiresActionPreview({ actionName, input, needsConfirmation, tainted }
     if (actionName === 'custom_api_call') {
         const method = typeof input?.['method'] === 'string' ? input['method'].toUpperCase() : undefined
         return method === undefined || !READ_ONLY_HTTP_METHODS.includes(method)
+    }
+    if (declaredReadOnly !== undefined) {
+        return !declaredReadOnly
     }
 
     const isRead = actionNameMatchesPatterns({ actionName, patterns: READ_ACTION_PATTERNS })
@@ -46,15 +50,12 @@ function isReadActionName(actionName: string): boolean {
 
 // custom_api_call carries no read/write verb in its name, so name-based classification
 // wrongly blocks a read-only GET. Treat it as read-only when its HTTP method is safe.
-function isReadOnlyActionCall({ actionName, input }: { actionName: string, input?: Record<string, unknown> }): boolean {
-    if (isReadActionName(actionName)) {
-        return true
-    }
+function isReadOnlyActionCall({ actionName, input, declaredReadOnly }: { actionName: string, input?: Record<string, unknown>, declaredReadOnly?: boolean }): boolean {
     if (actionName === 'custom_api_call') {
         const method = typeof input?.['method'] === 'string' ? input['method'].toUpperCase() : undefined
         return method === undefined || READ_ONLY_HTTP_METHODS.includes(method)
     }
-    return false
+    return declaredReadOnly ?? isReadActionName(actionName)
 }
 
 function isWriteActionName(actionName: string): boolean {

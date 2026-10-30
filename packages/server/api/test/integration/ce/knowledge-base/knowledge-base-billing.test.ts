@@ -68,7 +68,7 @@ describe('embedding an upload on the managed provider', () => {
         expect(events[0].call).toMatchObject({ costUsd: 0.00042 })
     })
 
-    it('does not charge an own-key provider', async () => {
+    it('records an own-key embedding for usage without charging it', async () => {
         const events: ActivepiecesAiCostEvent[] = []
         activepiecesAiCost.setReporter((event) => {
             events.push(event)
@@ -80,6 +80,6 @@ describe('embedding an upload on the managed provider', () => {
         const response = await upload({ ctx })
 
         expect(response.statusCode).toBe(StatusCodes.CREATED)
-        expect(events).toHaveLength(0)
+        expect(events.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
     })
 })

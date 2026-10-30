@@ -69,17 +69,19 @@ function buildWebSearchToolsOrThrow({ provider, model, webSearchEnabled, options
     return buildWebSearchTools({ provider, model, options })
 }
 
-async function searchWeb({ credentials, modelId, billing, turnAlreadyCharged, system, prompt, abortSignal }: {
+async function searchWeb({ credentials, modelId, providerConfigId, billing, turnAlreadyCharged, usageOnly, system, prompt, abortSignal }: {
     credentials: AiProviderCredentials
     modelId: string
-    billing?: ActivepiecesAiBilling
+    providerConfigId?: string
+    billing: ActivepiecesAiBilling | null
     turnAlreadyCharged?: boolean
+    usageOnly?: boolean
     system: string
     prompt: string
     abortSignal: AbortSignal
 }): Promise<WebSearchResult> {
     const { text, sources } = await generateText({
-        model: createModel({ credentials, modelId, billing, turnAlreadyCharged, webSearchEnabled: true }),
+        model: createModel({ credentials, modelId, billing, turnAlreadyCharged, usageOnly, webSearchEnabled: true, ...spreadIfDefined('providerConfigId', providerConfigId) }),
         tools: buildWebSearchTools({ provider: credentials.provider, model: modelId }),
         system,
         prompt,
@@ -118,12 +120,16 @@ function openRouterModelSettings({ provider, webSearchEnabled, options }: {
     options?: WebSearchOptions
 }): OpenRouterChatSettings | undefined {
     const settings: OpenRouterChatSettings = {
-        ...(provider === AIProviderName.ACTIVEPIECES ? REPORT_WHAT_THE_CALL_COST : {}),
+        ...(reportsItsCost(provider) ? REPORT_WHAT_THE_CALL_COST : {}),
         ...(webSearchEnabled && AI_PROVIDER_CAPABILITIES[provider].webSearch === 'plugin'
             ? { plugins: [{ id: 'web' as const, max_results: openRouterWebSearchResults(options) }] }
             : {}),
     }
     return Object.keys(settings).length === 0 ? undefined : settings
+}
+
+function reportsItsCost(provider: AIProviderName): boolean {
+    return provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER
 }
 
 function openRouterWebSearchResults(options?: WebSearchOptions): number {
@@ -156,13 +162,14 @@ function assertManagedModelAllowed({ provider, modelId, image, adminChosenModelI
     }, message)
 }
 
-function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId }: {
+function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, usageOnly, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId }: {
     credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
-    billing?: ActivepiecesAiBilling
+    billing: ActivepiecesAiBilling | null
     turnAlreadyCharged?: boolean
+    usageOnly?: boolean
     webSearchEnabled?: boolean
     webSearchOptions?: WebSearchOptions
     platformId?: string
@@ -175,9 +182,10 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, turnAl
     return billedLanguageModel({
         model,
         provider: credentials.provider,
+        providerConfigId,
         modelId,
         billing,
-        charge: aiChargeFor({ credentials, turnAlreadyCharged }),
+        charge: aiChargeFor({ credentials, turnAlreadyCharged, usageOnly }),
     })
 }
 
@@ -262,7 +270,7 @@ function toStorageEmbedding(embedding: number[]): number[] {
 function createEmbeddingModel({ credentials, modelId, billing, platformId, providerConfigId }: {
     credentials: AiProviderCredentials
     modelId?: string
-    billing?: ActivepiecesAiBilling
+    billing: ActivepiecesAiBilling | null
     platformId?: string
     providerConfigId?: string
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
@@ -272,7 +280,7 @@ function createEmbeddingModel({ credentials, modelId, billing, platformId, provi
     }
     const built = buildEmbeddingModel({ credentials, embeddingModelId, fetch: observedProviderFetch(keyHealthReporterFor({ platformId, providerConfigId })) })
     return {
-        model: billedEmbeddingModel({ model: built.model, provider: credentials.provider, modelId: embeddingModelId, billing }),
+        model: billedEmbeddingModel({ model: built.model, provider: credentials.provider, providerConfigId, modelId: embeddingModelId, billing }),
         providerOptions: built.providerOptions,
     }
 }
@@ -298,7 +306,7 @@ function buildEmbeddingModel({ credentials, embeddingModelId, fetch }: {
         case AIProviderName.OPENROUTER:
             return {
                 model: createOpenRouter({ apiKey: credentials.auth.apiKey, ...spreadIfDefined('fetch', fetch) })
-                    .textEmbeddingModel(embeddingModelId, credentials.provider === AIProviderName.ACTIVEPIECES ? EMBEDDING_REPORTS_WHAT_IT_COST : undefined),
+                    .textEmbeddingModel(embeddingModelId, EMBEDDING_REPORTS_WHAT_IT_COST),
                 providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS,
             }
         default:

@@ -1,10 +1,12 @@
-import { ApId, ProjectRole, SeekPage } from '@activepieces/core-utils'
+import { ApId, ProjectRole, RoleType, SeekPage } from '@activepieces/core-utils'
 import { ApplicationEventName, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectMemberWithUser, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { transaction } from '../../../core/db/transaction'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
+import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectRoleService } from './project-role.service'
@@ -71,15 +73,22 @@ export const projectRoleController: FastifyPluginAsyncZod = async (app) => {
             name: req.params.name,
             platformId: req.principal.platform.id,
         })
+        if (projectRole.type === RoleType.DEFAULT) {
+            return
+        }
         applicationEvents(req.log).sendUserEvent(req, {
             action: ApplicationEventName.PROJECT_ROLE_DELETED,
             data: {
                 projectRole,
             },
         })
-        return projectRoleService.delete({
-            name: req.params.name,
-            platformId: req.principal.platform.id,
+        await transaction(async (entityManager) => {
+            await userInvitationsService(req.log).detachProjectRoleFromPlatformInvites({ projectRoleId: projectRole.id, entityManager })
+            await projectRoleService.delete({
+                name: projectRole.name,
+                platformId: req.principal.platform.id,
+                entityManager,
+            })
         })
     })
 }

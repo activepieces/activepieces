@@ -1,30 +1,9 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
 import { iLoveApi } from '../common/client';
-import {
-  CreateSignatureRequest,
-  SignatureElement,
-  SignatureSigner,
-} from '../common/types';
-
-type SignerRow = {
-  name?: string;
-  email?: string;
-  phone?: string;
-  type?: 'signer' | 'validator' | 'viewer';
-  force_signature_type?: 'all' | 'text' | 'sign' | 'image';
-  access_code?: string;
-};
-
-type ElementRow = {
-  signer_email?: string;
-  type?: 'signature' | 'initials' | 'date' | 'text' | 'input';
-  position?: string;
-  pages?: string;
-  size?: number;
-  content?: string;
-  color?: string;
-};
+import { regionOf, regionProp, rowFiles } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { signatureBodyOf } from '../common/signature';
 
 export const createSignatureRequestAction = createAction({
   auth: iloveapiAuth,
@@ -33,7 +12,8 @@ export const createSignatureRequestAction = createAction({
   displayName: 'Create Signature Request',
   description:
     'Send one or more PDF documents for electronic signature, with custom signers and signature placeholders.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: iloveSchemas.signature,
   aiMetadata: {
     description:
       'Start an electronic signature request: upload one or more PDFs and define the signers (by name and email, each as signer, validator, or viewer) plus optional field placeholders matched to signers by email. Returns a requester token used by the status, reminder, void, expiration, and download actions. Each call creates a brand-new request and dispatches invitation emails, so it is not idempotent.',
@@ -218,6 +198,7 @@ export const createSignatureRequestAction = createAction({
       description: 'Days between auto-reminders. Default 1.',
       required: false,
     }),
+    region: regionProp,
     certified: Property.Checkbox({
       displayName: 'Certified Signature',
       description: 'Apply a certified-signature seal to the final PDF.',
@@ -241,109 +222,28 @@ export const createSignatureRequestAction = createAction({
       certified,
     } = context.propsValue;
 
-    if (!Array.isArray(files) || files.length === 0) {
-      throw new Error('At least one PDF file is required.');
-    }
-    if (!Array.isArray(signers) || signers.length === 0) {
-      throw new Error('At least one signer is required.');
-    }
+    const uploads = rowFiles({ rows: files, label: 'PDF Files' });
+    const draft = signatureBodyOf({
+      signers,
+      elements,
+      options: {
+        brand_name,
+        language,
+        subject_signer,
+        message_signer,
+        expiration_days,
+        lock_order,
+        signer_reminders,
+        signer_reminder_days_cycle,
+        certified,
+      },
+    });
 
-    const token = await iLoveApi.authenticate({
+    return iLoveApi.createSignatureRequest({
       publicKey: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      uploads,
+      draft,
     });
-    const startResp = await iLoveApi.startTask({ token, tool: 'sign' });
-
-    const uploadedFiles: Array<{ server_filename: string; filename: string }> = [];
-    for (const entry of files as Array<{
-      file: { base64: string; filename: string };
-    }>) {
-      if (!entry.file?.base64) {
-        throw new Error('Each PDF row must include a file.');
-      }
-      const buffer = Buffer.from(entry.file.base64, 'base64');
-      const serverFilename = await iLoveApi.uploadBuffer({
-        token,
-        server: startResp.server,
-        task: startResp.task,
-        buffer,
-        filename: entry.file.filename,
-      });
-      uploadedFiles.push({
-        server_filename: serverFilename,
-        filename: entry.file.filename,
-      });
-    }
-
-    const signerRows = signers as SignerRow[];
-    const elementRows = (elements ?? []) as ElementRow[];
-
-    const elementsByEmail = new Map<string, SignatureElement[]>();
-    for (const row of elementRows) {
-      if (!row.signer_email || !row.type || !row.position || !row.pages) continue;
-      const element: SignatureElement = {
-        type: row.type,
-        position: row.position,
-        pages: row.pages,
-        ...(row.size !== undefined && row.size !== null ? { size: row.size } : {}),
-        ...(row.content ? { content: row.content } : {}),
-        ...(row.color ? { color: row.color } : {}),
-      };
-      const list = elementsByEmail.get(row.signer_email) ?? [];
-      list.push(element);
-      elementsByEmail.set(row.signer_email, list);
-    }
-
-    const signatureSigners: SignatureSigner[] = signerRows.map((row) => {
-      if (!row.name || !row.email) {
-        throw new Error('Each signer needs both name and email.');
-      }
-      const elementsForSigner = elementsByEmail.get(row.email);
-      const signerFiles = uploadedFiles.map((file) => ({
-        server_filename: file.server_filename,
-        ...(elementsForSigner && elementsForSigner.length > 0
-          ? { elements: elementsForSigner }
-          : {}),
-      }));
-      return {
-        name: row.name,
-        email: row.email,
-        type: row.type ?? 'signer',
-        force_signature_type: row.force_signature_type ?? 'all',
-        files: signerFiles,
-        ...(row.phone ? { phone: row.phone } : {}),
-        ...(row.access_code ? { access_code: row.access_code } : {}),
-      };
-    });
-
-    const body: CreateSignatureRequest = {
-      task: startResp.task,
-      files: uploadedFiles,
-      signers: signatureSigners,
-      ...(brand_name ? { brand_name } : {}),
-      ...(language ? { language } : {}),
-      ...(subject_signer ? { subject_signer } : {}),
-      ...(message_signer ? { message_signer } : {}),
-      ...(expiration_days !== undefined && expiration_days !== null
-        ? { expiration_days }
-        : {}),
-      ...(lock_order !== undefined ? { lock_order } : {}),
-      ...(signer_reminders !== undefined ? { signer_reminders } : {}),
-      ...(signer_reminder_days_cycle !== undefined &&
-      signer_reminder_days_cycle !== null
-        ? { signer_reminder_days_cycle }
-        : {}),
-      ...(certified !== undefined ? { certified } : {}),
-    };
-
-    const response = await iLoveApi.createSignature({
-      token,
-      server: startResp.server,
-      body,
-    });
-
-    return {
-      ...response,
-      server: startResp.server,
-    };
   },
 });
