@@ -20,28 +20,50 @@ export const createSubscriberListAction = createAction({
       'Creates a new Acumbamail subscriber list, requiring a list name and the sender email shown to subscribers when campaigns go out (company name, address, and phone are optional). Use when a contact list does not yet exist and must be provisioned before adding subscribers or sending campaigns. Not idempotent: each call creates a separate list even with the same name.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'list',
+      display: 'section',
+      label: 'List details',
+      icon: 'inbox',
+      props: ['listname', 'sender_email'],
+    },
+    {
+      key: 'company',
+      display: 'section',
+      label: 'Company details',
+      icon: 'location',
+      props: ['company', 'phone', 'address'],
+    },
+  ],
   props: {
     listname: Property.ShortText({
       displayName: 'List Name',
       required: true,
+      placeholder: 'Monthly newsletter',
     }),
     sender_email: Property.ShortText({
-      displayName: 'Sener Email',
-      description:
-        'Sender e-mail shown to the subscribers of the list when e-mail marketing campaigns are sent to them.',
+      displayName: 'Sender Email',
+      description: 'Sender address for emails sent from this list.',
       required: true,
+      placeholder: 'news@example.com',
     }),
     company: Property.ShortText({
       displayName: 'Company Name',
       required: false,
-    }),
-    address: Property.ShortText({
-      displayName: 'Company Address',
-      required: false,
+      placeholder: 'Acme Inc.',
+      width: 'half',
     }),
     phone: Property.ShortText({
       displayName: 'Company Phone',
       required: false,
+      placeholder: '+34 900 000 000',
+      width: 'half',
+    }),
+    address: Property.ShortText({
+      displayName: 'Company Address',
+      required: false,
+      placeholder: 'Calle Mayor 1, Madrid',
     }),
   },
   async run(context) {
