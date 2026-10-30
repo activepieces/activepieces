@@ -1,16 +1,9 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { tryCatch } from '@activepieces/pieces-framework';
 import { GraphError } from '@microsoft/microsoft-graph-client';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
-
-const namingRules = `
-The name for the copied worksheet. If left empty, Excel assigns a default name. The name must:
-- Not be blank or exceed 31 characters.
-- Not contain any of: \`/\`, \`\\\`, \`?\`, \`*\`, \`:\`, \`[\`, \`]\`.
-- Be unique within the destination workbook, and not be the reserved name "History".
-`;
 
 const copyLimitationsNote =
   'Cell values, formulas, and number formats are copied. Cell styles (fonts, fills, borders), column widths, row heights, charts, conditional formatting, data validation, and tables are not copied — Microsoft Graph does not expose a native worksheet-copy operation. When copying to a different workbook, formulas that reference other worksheets may not resolve.';
@@ -28,6 +21,29 @@ export const copyWorksheetAction = createAction({
       'Duplicates an Excel worksheet (tab) into the same or a different workbook by copying its used range — cell values or formulas plus number formats; cell styles, charts, and tables are not carried over. Use to clone a template tab or copy sheet data across workbooks. Not idempotent: each run creates another worksheet, and re-running with the same explicit name fails on the name collision.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Source',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'folderId', 'workbookId', 'worksheetId'],
+    },
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Destination',
+      icon: 'send',
+      props: ['destinationWorkbookId', 'newWorksheetName', 'naming_rules'],
+    },
+    {
+      key: 'copy_mode',
+      display: 'section',
+      label: 'What to Copy',
+      icon: 'sliders',
+      props: ['copyMode', 'copy_note'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -42,21 +58,30 @@ export const copyWorksheetAction = createAction({
     destinationWorkbookId: commonProps.destinationWorkbookId,
     newWorksheetName: Property.ShortText({
       displayName: 'New Worksheet Name',
-      description: namingRules,
+      description: 'Empty lets Excel pick a name.',
+      placeholder: 'Copy of Sheet1',
       required: false,
+    }),
+    naming_rules: Property.MarkDown({
+      value: 'Names can be up to 31 characters, must be unique in the workbook, and cannot use `/ \\ ? * : [ ]` or the name History.',
+      variant: MarkdownVariant.INFO,
     }),
     copyMode: Property.StaticDropdown({
       displayName: 'Copy Mode',
-      description:
-        'Whether to copy the formulas (recalculated in the new sheet) or just the resulting values.',
+      description: 'Formulas recalculate in the copy. Values copies results only.',
       required: true,
       defaultValue: 'formulas',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Values and formulas', value: 'formulas' },
-          { label: 'Values only', value: 'values' },
+          { label: 'Formulas', value: 'formulas', icon: 'code' },
+          { label: 'Values', value: 'values', icon: 'text' },
         ],
       },
+    }),
+    copy_note: Property.MarkDown({
+      value: 'Values, formulas and number formats are copied. Styles, charts and tables are not.',
+      variant: MarkdownVariant.INFO,
     }),
   },
   async run(context) {
@@ -119,7 +144,7 @@ export const copyWorksheetAction = createAction({
         );
         const formulasModeHint =
           copyMode === 'formulas'
-            ? ' Sheets that use table (structured-reference) formulas or merged cells may not be copyable with formulas — try setting Copy Mode to "Values only".'
+            ? ' Sheets that use table (structured-reference) formulas or merged cells may not be copyable with formulas — try setting Copy Mode to "Values".'
             : '';
         throw new Error(
           `Failed to write the copied contents, so the new worksheet was removed: ${patchError.message}${formulasModeHint}`,

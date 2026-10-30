@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -7,10 +7,26 @@ export const clearWorksheetAction = createAction({
   auth: excelAuth,
   name: 'clear_worksheet',
   classification: 'DESTRUCTIVE',
-  description: 'Clear a worksheet',
+  description: 'Clear the values of a worksheet or a range in it.',
   audience: 'both',
   aiMetadata: { description: 'Clear cell contents from a worksheet — either a specific A1-notation range (e.g. A2:B2) or, when no range is given, the entire used range. Removes values only (not formatting) and does not delete rows or shift cells. Idempotent — re-running over the same area has no further effect.', idempotent: true },
   displayName: 'Clear Worksheet',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+    },
+    {
+      key: 'range',
+      display: 'section',
+      label: 'Range',
+      icon: 'markdown',
+      props: ['range', 'clear_warning'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -19,9 +35,13 @@ export const clearWorksheetAction = createAction({
     worksheetId: commonProps.worksheetId,
     range: Property.ShortText({
       displayName: 'Range',
-      description:
-        'The range in A1 notation (e.g., A2:B2) to clear in the worksheet, if not provided, clear the entire worksheet',
+      description: 'Cells in A1 notation. Empty clears every used cell.',
+      placeholder: 'A1:C10',
       required: false,
+    }),
+    clear_warning: Property.MarkDown({
+      value: 'Cleared values cannot be restored. Formatting is kept.',
+      variant: MarkdownVariant.WARNING,
     }),
   },
   async run({ propsValue, auth }) {
@@ -36,7 +56,6 @@ export const clearWorksheetAction = createAction({
 
     let url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
 
-    // If range is not provided, clear the entire worksheet
     if (!range) {
       url += 'usedRange(valuesOnly=true)/clear';
     } else {

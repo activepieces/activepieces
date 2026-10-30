@@ -8,16 +8,33 @@ export const createWorkbook = createAction({
   name: 'createWorkbook',
   classification: 'WRITE',
   displayName: 'Create Workbook',
-  description: 'Create a new workbook at the specified location',
+  description: 'Create a new workbook in the root of the drive.',
   audience: 'both',
   aiMetadata: { description: 'Create a new, empty .xlsx workbook file in OneDrive or a SharePoint document library. Use to provision a fresh spreadsheet before adding worksheets or data. Not idempotent — name conflicts are auto-renamed, so re-running produces an additional file rather than reusing an existing one.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'drive',
+      display: 'section',
+      label: 'Drive',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId'],
+    },
+    {
+      key: 'new_workbook',
+      display: 'section',
+      label: 'New Workbook',
+      icon: 'file',
+      props: ['name'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
     documentId: commonProps.documentId,
     name: Property.ShortText({
-      displayName: "Name",
-      description: "The name of the new workbook",
+      displayName: "File Name",
+      description: ".xlsx is added if missing.",
+      placeholder: "Budget 2026",
       required: true
     }),
   },
