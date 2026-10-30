@@ -1,5 +1,22 @@
 import { MCP_OAUTH_SUPPORTED_SCOPES } from '../mcp-oauth-scopes'
 
+export function protectedResourceMetadata({ issuer, resourcePath = 'mcp' }: { issuer: string, resourcePath?: string }): ProtectedResourceMetadata {
+    const cleanPath = resourcePath.replace(/^\//, '')
+    return {
+        resource: `${issuer}/${cleanPath}`,
+        authorization_servers: [issuer],
+        scopes_supported: MCP_OAUTH_SUPPORTED_SCOPES,
+        bearer_methods_supported: ['header'],
+    }
+}
+
+export type ProtectedResourceMetadata = {
+    resource: string
+    authorization_servers: string[]
+    scopes_supported: string[]
+    bearer_methods_supported?: string[]
+}
+
 export function authorizationServerMetadata({ issuer }: { issuer: string }): AuthorizationServerMetadata {
     return {
         issuer,

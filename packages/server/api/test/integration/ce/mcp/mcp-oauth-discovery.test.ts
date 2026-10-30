@@ -60,6 +60,37 @@ describe('MCP OAuth discovery', () => {
         const body = res.json()
         expect(body.resource).toBe('https://example.com/activepieces/mcp')
         expect(body.authorization_servers).toEqual(['https://example.com/activepieces'])
+        expect(body.scopes_supported).toEqual(['mcp', 'openid', 'email', 'profile'])
+        expect(body.bearer_methods_supported).toEqual(['header'])
+    })
+
+    it('advertises the protected resource at the canonical rfc 9728 root endpoint', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/.well-known/oauth-protected-resource',
+            headers: subpathHeaders,
+        })
+
+        expect(res.statusCode).toBe(200)
+        const body = res.json()
+        expect(body.resource).toBe('https://example.com/activepieces/mcp')
+        expect(body.authorization_servers).toEqual(['https://example.com/activepieces'])
+        expect(body.scopes_supported).toEqual(['mcp', 'openid', 'email', 'profile'])
+        expect(body.bearer_methods_supported).toEqual(['header'])
+    })
+
+    it('resolves platform resource from query param at the canonical root endpoint', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/.well-known/oauth-protected-resource?resource=https://example.com/activepieces/mcp/platform',
+            headers: subpathHeaders,
+        })
+
+        expect(res.statusCode).toBe(200)
+        const body = res.json()
+        expect(body.resource).toBe('https://example.com/activepieces/mcp/platform')
+        expect(body.authorization_servers).toEqual(['https://example.com/activepieces'])
+        expect(body.bearer_methods_supported).toEqual(['header'])
     })
 
     it('returns WWW-Authenticate pointing at the prefixed resource metadata on a project 401', async () => {
