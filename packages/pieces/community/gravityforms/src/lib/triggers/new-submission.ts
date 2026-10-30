@@ -18,7 +18,7 @@ const markdown = `
 - Keep the other settings unchanged (default).
 `;
 
-export const gravityFormsNewSubmission = createTrigger({
+export const newSubmissionTrigger = createTrigger({
   name: 'new-submission',
   classification: 'READ',
   displayName: 'New Submission',
@@ -35,11 +35,11 @@ export const gravityFormsNewSubmission = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {},
-  async onEnable(context) {
-    // Empty
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // Empty
+  async onDisable() {
+    return;
   },
   async run(context) {
     return [context.payload];

@@ -1,6 +1,6 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { gravityFormsNewSubmission } from './lib/triggers/new-submission';
+import { newSubmissionTrigger } from './lib/triggers/new-submission';
 
 export const gravityforms = createPiece({
   displayName: 'Gravity Forms',
@@ -12,5 +12,5 @@ export const gravityforms = createPiece({
   authors: ["Abdallah-Alwarawreh","kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   actions: [],
-  triggers: [gravityFormsNewSubmission],
+  triggers: [newSubmissionTrigger],
 });
