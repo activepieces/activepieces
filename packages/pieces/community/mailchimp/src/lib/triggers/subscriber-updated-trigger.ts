@@ -47,7 +47,7 @@ export const mailChimpSubscriberUpdatedTrigger = createTrigger({
   name: 'subscriber_updated',
   classification: 'READ',
   displayName: 'Subscriber Updated',
-  description: "Fires when a subscriber's profile, email or status changes",
+  description: 'Fires on profile or email changes, new sign-ups and cleaned addresses',
   aiMetadata: {
     description: 'Fires on subscriber-record changes in the selected audience (list) — covering profile/merge-field updates, new subscriptions, email-address changes, and cleaned addresses. The event carries the subscriber email, merge fields, and (for email changes) the old and new addresses.',
   },

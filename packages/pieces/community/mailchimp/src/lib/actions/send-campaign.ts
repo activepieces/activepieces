@@ -24,7 +24,7 @@ export const sendCampaign = createAction({
   ],
   props: {
     send_info: Property.MarkDown({
-      value: 'The campaign goes out right away and cannot be unsent.',
+      value: 'Regular campaigns go out right away and RSS campaigns follow their schedule. Sending cannot be undone.',
       variant: MarkdownVariant.INFO,
     }),
     campaign_id: mailchimpCommon.mailChimpDraftCampaignIdDropdown,
