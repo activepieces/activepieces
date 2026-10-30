@@ -12,9 +12,8 @@ export const addUpdateSubscriberAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_add_update_subscriber',
   classification: 'WRITE',
-  displayName: 'Add/Update Subscriber',
-  description:
-    'Adds a new subscriber to a subscriber list of your choosing.Can be used to update an existing subscriber too.',
+  displayName: 'Add or Update Subscriber',
+  description: 'Adds a subscriber to a list, or updates one already on it.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -25,16 +24,18 @@ export const addUpdateSubscriberAction = createAction({
     listId: acumbamailCommon.listId,
     listMergeFields: acumbamailCommon.listMergeFields,
     update_subscriber: Property.Checkbox({
-      displayName: 'Update Existing Subscriber Data',
+      displayName: 'Update Existing Subscriber',
       description:
-        'Updates the merge fields over the existent ones if the subscriber exists on the subscriber list.',
+        'If the email is already on the list, overwrite its fields.',
       required: false,
+      defaultValue: false,
     }),
     double_option: Property.Checkbox({
-      displayName: 'Double Option',
+      displayName: 'Double Opt-In',
       description:
-        'Activates the send of a confirmation email when the subscriber is added.',
+        'Send a confirmation email the subscriber must accept first.',
       required: false,
+      defaultValue: false,
     }),
   },
   async run(context) {
@@ -49,7 +50,7 @@ export const addUpdateSubscriberAction = createAction({
 
     formData.append('auth_token', context.auth.secret_text);
     formData.append('list_id', listId.toString());
-    formData.append('double_option', double_option ? '1' : '0');
+    formData.append('double_optin', double_option ? '1' : '0');
     formData.append('update_subscriber', update_subscriber ? '1' : '0');
     formData.append('complete_json ', '1');
 
