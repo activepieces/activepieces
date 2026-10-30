@@ -1,4 +1,3 @@
-import { ForcedToolNotCalledError } from '@activepieces/ai-providers'
 import { ActivepiecesAiBilling, ActivepiecesAiCall, ActivepiecesAiConsumerSource, ActivepiecesAiCostReporter, AiCallTokens, AiCharge, AiChargeBasis, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { EmbeddingModelV4Result, isJSONObject, LanguageModelV4GenerateResult, LanguageModelV4StreamPart, LanguageModelV4StreamResult, LanguageModelV4Usage, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel, wrapEmbeddingModel, wrapLanguageModel } from 'ai'
@@ -167,10 +166,14 @@ async function recoverCostAndReport({ state, context }: SettleStreamParams): Pro
 }
 
 function reportFailedAttempts({ context, error }: { context: BillingContext, error: Error }): void {
-    if (!(error instanceof ForcedToolNotCalledError)) {
+    if (!isForcedToolFailure(error)) {
         return
     }
     report({ context, call: createBillingInfo({ context, generationId: undefined, providerMetadata: undefined, usage: error.usage }), tokens: tokensOf(error.usage) })
+}
+
+function isForcedToolFailure(error: Error): error is Error & { usage: LanguageModelV4Usage } {
+    return error.name === FORCED_TOOL_NOT_CALLED_ERROR && 'usage' in error
 }
 
 function createBillingInfo({ context, generationId, providerMetadata, usage, headers }: CreateBillingInfoParams): ActivepiecesAiCall | undefined {
@@ -279,6 +282,8 @@ function drainUnbilledCalls(): UnbilledCall[] {
     unbilledCalls = []
     return drained
 }
+
+const FORCED_TOOL_NOT_CALLED_ERROR = 'ForcedToolNotCalledError'
 
 const EmbeddingResponseBody = z.object({
     id: z.string().min(1),
