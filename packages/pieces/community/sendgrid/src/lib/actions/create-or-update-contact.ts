@@ -41,7 +41,7 @@ export const createOrUpdateContact = createAction({
   props: {
     upsert_note: Property.MarkDown({
       value:
-        'If a contact with this email exists, it is updated. Empty fields keep their current value.',
+        'If a contact with this email exists, it is updated. An empty First Name or Last Name keeps its current value.',
       variant: MarkdownVariant.INFO,
     }),
     email: Property.ShortText({
