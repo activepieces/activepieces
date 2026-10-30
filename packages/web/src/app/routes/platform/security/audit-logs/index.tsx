@@ -5,7 +5,9 @@ import {
   AgentRunSource,
   ApplicationEvent,
   ApplicationEventName,
+  SignUpEvent,
   summarizeApplicationEvent,
+  UserIdentityProvider,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -321,10 +323,14 @@ export default function AuditLogsPage() {
                   </p>
                   <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
                     {extractEventDetails(selectedEvent).map(
-                      ({ label, value }) => (
+                      ({ label, value, muted }) => (
                         <Fragment key={label}>
                           <span className="text-gray-11">{label}</span>
-                          <span className="font-medium">{value}</span>
+                          <span
+                            className={muted ? 'text-gray-11' : 'font-medium'}
+                          >
+                            {value}
+                          </span>
                         </Fragment>
                       ),
                     )}
@@ -610,15 +616,18 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.FOLDER_DELETED:
       return [{ label: t('Folder'), value: event.data.folder.displayName }];
     case ApplicationEventName.USER_SIGNED_IN:
+      return [
+        methodRow({ label: t('Sign-in method'), method: event.data.method }),
+      ];
     case ApplicationEventName.USER_PASSWORD_RESET:
     case ApplicationEventName.USER_EMAIL_VERIFIED:
       return [];
     case ApplicationEventName.USER_SIGNED_UP:
       return [
-        {
-          label: t('Source'),
-          value: formatUtils.convertEnumToHumanReadable(event.data.source),
-        },
+        methodRow({ label: t('Sign-up method'), method: event.data.method }),
+        isNil(event.data.source)
+          ? notRecordedRow(t('Source'))
+          : { label: t('Source'), value: SOURCE_LABEL[event.data.source]() },
       ];
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return [
@@ -739,9 +748,26 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
   }
 }
 
+function methodRow({
+  label,
+  method,
+}: {
+  label: string;
+  method: UserIdentityProvider | undefined;
+}): EventDetailRow {
+  return isNil(method)
+    ? notRecordedRow(label)
+    : { label, value: METHOD_LABEL[method]() };
+}
+
+function notRecordedRow(label: string): EventDetailRow {
+  return { label, value: t('Not recorded'), muted: true };
+}
+
 type EventDetailRow = {
   label: string;
   value: string;
+  muted?: boolean;
 };
 
 const OUTCOME_LABEL: Record<AgentActionOutcome, () => string> = {
@@ -754,4 +780,20 @@ const RAN_FROM_LABEL: Record<AgentRunSource, () => string> = {
   [AgentRunSource.AGENT]: () => t('The agent page'),
   [AgentRunSource.CHAT]: () => t('Chat'),
   [AgentRunSource.AGENT_BUILDER]: () => t('The agent builder'),
+};
+
+const METHOD_LABEL: Record<UserIdentityProvider, () => string> = {
+  [UserIdentityProvider.EMAIL]: () => t('Email'),
+  [UserIdentityProvider.GOOGLE]: () => t('Google'),
+  [UserIdentityProvider.SAML]: () => t('SAML'),
+  [UserIdentityProvider.JWT]: () => t('JWT'),
+};
+
+const SOURCE_LABEL: Record<
+  NonNullable<SignUpEvent['data']['source']>,
+  () => string
+> = {
+  credentials: () => t('Credentials'),
+  sso: () => t('SSO'),
+  managed: () => t('Managed'),
 };

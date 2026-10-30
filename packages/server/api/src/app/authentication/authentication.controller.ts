@@ -1,10 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, attributionUtils, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpMethod, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
+import { attributionUtils, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpMethod, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { authnRateLimit } from '../core/security/rate-limit'
-import { applicationEvents } from '../helper/application-events'
 import { networkUtils } from '../helper/network-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
@@ -12,6 +11,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
+import { authenticationSideEffects } from './authentication-side-effects'
 import { authenticationService } from './authentication.service'
 import { turnstile } from './lib/turnstile'
 import { passwordlessAuthService } from './passwordless-auth.service'
@@ -34,18 +34,13 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             platformId: platformId ?? null,
         })
 
+        authenticationSideEffects(request.log).onSignIn({
+            response,
+            signedUp,
+            method: UserIdentityProvider.EMAIL,
+            ip: networkUtils.clientIp(request),
+        })
         if (signedUp && !isNil(response.platformId)) {
-            applicationEvents(request.log).sendUserEvent({
-                platformId: response.platformId,
-                userId: response.id,
-                projectId: response.projectId ?? undefined,
-                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_UP,
-                data: {
-                    source: 'credentials',
-                },
-            })
             rejectedPromiseHandler(telemetry(request.log).identifySignUp({
                 userId: response.id,
                 platformId: response.platformId,
@@ -75,16 +70,13 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             }), request.log)
         }
 
+        authenticationSideEffects(request.log).onSignIn({
+            response,
+            signedUp,
+            method: UserIdentityProvider.EMAIL,
+            ip: networkUtils.clientIp(request),
+        })
         if (!isNil(response.platformId)) {
-            applicationEvents(request.log).sendUserEvent({
-                platformId: response.platformId,
-                userId: response.id,
-                projectId: response.projectId ?? undefined,
-                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_IN,
-                data: {},
-            })
             rejectedPromiseHandler(telemetry(request.log).trackUser({
                 userId: response.id,
                 platformId: response.platformId,
@@ -107,16 +99,13 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             fullName: request.body.fullName,
         })
 
+        authenticationSideEffects(request.log).onSignIn({
+            response,
+            signedUp,
+            method: provider,
+            ip: networkUtils.clientIp(request),
+        })
         if (signedUp && !isNil(response.platformId)) {
-            applicationEvents(request.log).sendUserEvent({
-                platformId: response.platformId,
-                userId: response.id,
-                projectId: response.projectId ?? undefined,
-                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_UP,
-                data: {},
-            })
             rejectedPromiseHandler(telemetry(request.log).identifySignUp({
                 userId: response.id,
                 platformId: response.platformId,
