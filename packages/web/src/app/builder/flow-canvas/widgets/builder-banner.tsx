@@ -1,4 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
+import { LockResourceResponse } from '@activepieces/shared';
 
 import { RightSideBarType } from '@/app/builder/types';
 import { ResourceLockWidget } from '@/components/custom/resource-lock-widget';
@@ -10,11 +11,9 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import { FlowApprovalBanner } from './flow-approval-banner';
 import { PublishFlowReminderWidget } from './publish-flow-reminder-widget';
 import { RunInfoWidget } from './run-info-widget';
-import { useFlowLock } from './use-flow-lock';
 import { ViewingOldVersionWidget } from './viewing-old-version-widget';
 
-const BuilderBanner = () => {
-  const { lockedBy, takeOver } = useFlowLock();
+const BuilderBanner = ({ lockedBy, takeOver }: BuilderBannerProps) => {
   const [run, rightSidebar] = useBuilderStateContext((state) => [
     state.run,
     state.rightSidebar,
@@ -50,3 +49,8 @@ const BuilderBanner = () => {
 
 BuilderBanner.displayName = 'BuilderBanner';
 export { BuilderBanner };
+
+type BuilderBannerProps = {
+  lockedBy: LockResourceResponse['lock'];
+  takeOver: () => void;
+};

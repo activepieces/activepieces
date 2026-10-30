@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowActionType,
   FlowTriggerType,
@@ -28,6 +29,7 @@ import { FlowCanvas } from './flow-canvas';
 import { flowCanvasHooks } from './flow-canvas/hooks';
 import { flowCanvasConsts } from './flow-canvas/utils/consts';
 import { BuilderBanner } from './flow-canvas/widgets/builder-banner';
+import { useFlowLock } from './flow-canvas/widgets/use-flow-lock';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
@@ -41,6 +43,7 @@ const DEFAULT_MIN_SIZE = '400px';
 const SPLIT_MODE_COLLAPSE_THRESHOLD_PX = 700;
 
 const BuilderPage = () => {
+  const { lockedBy, takeOver } = useFlowLock();
   const { platform } = platformHooks.useCurrentPlatform();
   const [
     rightSidebar,
@@ -150,7 +153,7 @@ const BuilderPage = () => {
   return (
     <div className="flex h-full w-full flex-col relative max-h-[100vh]">
       <div className="z-40">
-        <BuilderHeader />
+        <BuilderHeader isFlowLocked={!isNil(lockedBy)} />
       </div>
       <ResizablePanelGroup orientation="horizontal">
         <ResizablePanel defaultSize="100%" id="flow-canvas">
@@ -161,7 +164,7 @@ const BuilderPage = () => {
               ></FlowCanvas>
             </CursorPositionProvider>
 
-            <BuilderBanner />
+            <BuilderBanner lockedBy={lockedBy} takeOver={takeOver} />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls
