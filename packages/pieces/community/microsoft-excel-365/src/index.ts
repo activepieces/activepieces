@@ -53,7 +53,7 @@ export const microsoftExcel = createPiece({
 	description: 'Spreadsheet software by Microsoft',
 
 	auth: excelAuth,
-	minimumSupportedRelease: '0.30.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: [
@@ -106,6 +106,12 @@ export const microsoftExcel = createPiece({
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),
+			props: {
+				url: {
+					description: 'Full URL, or a path relative to /v1.0/me/drive on Microsoft Graph.',
+					placeholder: '/items/{item-id}/workbook/worksheets',
+				},
+			},
 		}),
 	],
 	triggers: [readNewRows, newRowInTableTrigger, newWorksheetTrigger, updatedRowTrigger],
