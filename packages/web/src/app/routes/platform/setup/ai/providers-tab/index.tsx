@@ -73,7 +73,6 @@ export function ProvidersTab() {
     AIProviderWithoutSensitiveData | undefined
   >(undefined);
   const [credentialsVersion, setCredentialsVersion] = useState(0);
-  const [replacedConfigId, setReplacedConfigId] = useState<string | null>(null);
   const [dialogProvider, setDialogProvider] = useState<
     AIProviderName | undefined
   >(undefined);
@@ -151,12 +150,13 @@ export function ProvidersTab() {
   const openConfig = (id: string) => {
     const next = new URLSearchParams(searchParams);
     next.set('config', id);
+    next.delete(CONFIG_TAB_PARAM);
     setSearchParams(next);
   };
   const closeConfig = () => {
-    setReplacedConfigId(null);
     const next = new URLSearchParams(searchParams);
     next.delete('config');
+    next.delete(CONFIG_TAB_PARAM);
     setSearchParams(next);
   };
   const openConnect = (provider?: AIProviderName) => {
@@ -181,7 +181,9 @@ export function ProvidersTab() {
       openConfig(createdId);
       return;
     }
-    setReplacedConfigId(editing?.id ?? null);
+    const next = new URLSearchParams(searchParams);
+    next.set(CONFIG_TAB_PARAM, 'settings');
+    setSearchParams(next, { replace: true });
     setCredentialsVersion((version) => version + 1);
   };
 
@@ -217,7 +219,9 @@ export function ProvidersTab() {
           onDelete={() => deleteProvider(activeConfig.id)}
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
           initialTab={
-            replacedConfigId === activeConfig.id ? 'settings' : 'models'
+            searchParams.get(CONFIG_TAB_PARAM) === 'settings'
+              ? 'settings'
+              : 'models'
           }
           isRechecking={isRechecking}
           onRecheck={() => recheckProvider(activeConfig.id)}
@@ -763,6 +767,8 @@ function providerInfoOf({
     (candidate) => candidate.provider === provider,
   );
 }
+
+const CONFIG_TAB_PARAM = 'tab';
 
 const PROVIDER_FACES_SHOWN = 5;
 
