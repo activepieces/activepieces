@@ -52,21 +52,22 @@ const ApTableEditorPage = () => {
 
   // the lock lives in the table state provider, above the take-over refresh
   // remount boundary, so refreshing never releases the just-acquired lock
-  const { lockedBy, takeOver } = useTableLock();
+  const { lockedBy, acquiring, takeOver } = useTableLock();
+  const blockedByLock = !!lockedBy || acquiring;
 
   useEffect(() => {
-    setLockedByOtherUser(!!lockedBy);
-  }, [lockedBy, setLockedByOtherUser]);
+    setLockedByOtherUser(blockedByLock);
+  }, [blockedByLock, setLockedByOtherUser]);
 
   const gridRef = useRef<DataGridHandle>(null);
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const { data: maxRecords } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_RECORDS_PER_TABLE,
   );
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
-  const canEdit = userHasTableWritePermission && !lockedBy;
+  const canEdit = userHasTableWritePermission && !blockedByLock;
   const isAllowedToCreateRecord =
     canEdit && maxRecords && records.length < maxRecords;
 
@@ -142,8 +143,8 @@ const ApTableEditorPage = () => {
               onSelectedRowsChange={setSelectedRecords}
               onColumnsReorder={handleColumnsReorder}
               className={cn(
-                'scroll-smooth w-full !h-full bg-muted/30 !border-0',
-                theme === 'dark' ? 'rdg-dark' : 'rdg-light',
+                'scroll-smooth w-full !h-full bg-gray-2 !border-0',
+                resolvedTheme === 'dark' ? 'rdg-dark' : 'rdg-light',
               )}
               bottomSummaryRows={canEdit ? [{ id: 'new-record' }] : []}
               rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}

@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { CredentialField, providerCredentials } from './provider-credentials';
@@ -70,7 +72,7 @@ export function ConnectProviderDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className={adminLayout.dialog.md}>
         <ConnectProviderForm
           key={open ? editing?.id ?? defaultProvider ?? 'new' : 'closed'}
           editing={editing}
@@ -235,7 +237,16 @@ function ConnectProviderForm({
           <Button type="button" variant="outline" onClick={onCancel}>
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={connecting} disabled={connecting}>
+          <Button
+            type="submit"
+            loading={connecting}
+            disabled={connecting}
+            {...adminControl(
+              editing
+                ? AdminControl.AI_PROVIDER_KEY_CREDENTIALS_SUBMIT
+                : AdminControl.AI_PROVIDER_KEY_SUBMIT,
+            )}
+          >
             {editing ? t('Save credentials') : t('Connect')}
           </Button>
         </DialogFooter>
@@ -344,10 +355,10 @@ function SecretInput({
       <Button
         type="button"
         variant="ghost"
-        size="icon"
+        size="icon-xs"
         tabIndex={-1}
         onClick={() => setVisible(!visible)}
-        className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:text-foreground"
+        className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
       >
         {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </Button>
@@ -362,7 +373,7 @@ function SetupInstructions({ info }: { info: AiProviderInfo }) {
       <CollapsibleTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-full items-center gap-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
           <ChevronDown
             className={cn('size-4 transition-transform', open && 'rotate-180')}

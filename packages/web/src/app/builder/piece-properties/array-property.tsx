@@ -141,15 +141,14 @@ const ArrayPieceProperty = React.memo(
                     <div className="font-semibold"> #{index + 1}</div>
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="size-8 shrink-0"
+                      size="icon-sm"
                       onClick={() => {
                         remove(index);
                       }}
                       disabled={disabled}
                     >
                       <TrashIcon
-                        className="size-4 text-destructive"
+                        className="size-4 text-danger-11"
                         aria-hidden="true"
                       />
                       <span className="sr-only">{t('Remove')}</span>

@@ -30,9 +30,9 @@ export const DataSelectorSizeTogglers = ({
   };
 
   const buttonClassName = (btnState: DataSelectorSizeState) =>
-    cn('', {
-      'text-outline': state === btnState,
-      'text-outline opacity-50': state !== btnState,
+    cn('text-gray-11 enabled:hover:text-gray-12', {
+      'text-gray-12': state === btnState,
+      'opacity-50': state !== btnState,
     });
 
   return (
@@ -43,7 +43,7 @@ export const DataSelectorSizeTogglers = ({
             size="icon"
             className={buttonClassName(DataSelectorSizeState.EXPANDED)}
             onClick={() => handleClick(DataSelectorSizeState.EXPANDED)}
-            variant="basic"
+            variant="ghost"
           >
             <ExpandIcon className="size-5"></ExpandIcon>
           </Button>
@@ -56,7 +56,7 @@ export const DataSelectorSizeTogglers = ({
             size="icon"
             className={buttonClassName(DataSelectorSizeState.DOCKED)}
             onClick={() => handleClick(DataSelectorSizeState.DOCKED)}
-            variant="basic"
+            variant="ghost"
           >
             <PanelRightDashedIcon className="size-5"></PanelRightDashedIcon>
           </Button>
@@ -69,7 +69,7 @@ export const DataSelectorSizeTogglers = ({
             size="icon"
             className={buttonClassName(DataSelectorSizeState.COLLAPSED)}
             onClick={() => handleClick(DataSelectorSizeState.COLLAPSED)}
-            variant="basic"
+            variant="ghost"
           >
             <MinusIcon className="size-5"></MinusIcon>
           </Button>

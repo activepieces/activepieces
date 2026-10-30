@@ -1,165 +1,128 @@
-import { createGoogleClient, getAccessToken, googleSlidesAuth, GoogleSlidesAuthValue } from '../auth';
-import { createAction, DynamicPropsValue, Property } from "@activepieces/pieces-framework";
-import { getSlide, PageElement, batchUpdate, TableCell, TextElement } from '../commons/common';
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
-
-function extractPlaceholders(content: string, fields: Record<string, any>, placeholder_format: string) {
-    const regex = placeholder_format === '[[]]' 
-        ? /\[\[([^\]]+)\]\]/g 
-        : /\{\{([^}]+)\}\}/g;
-        
-    const matches = content.match(regex);
-    if (matches) {
-        matches.forEach((match: string) => {
-            const matchValue = placeholder_format === '[[]]'
-                ? match.replace(/[[\]]/g, '')
-                : match.replace(/[{}]/g, '');
-                
-            const varName = matchValue.trim();
-            fields[matchValue] = Property.ShortText({
-                displayName: varName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                description: `Value for "${placeholder_format === '[[]]' ? `[[${varName}]]` : `{{${varName}}}`}"`,
-                required: false,
-            });
-        });
-    }
-}
+import { createGoogleClient, getAccessToken, googleSlidesAuth } from '../auth';
+import { slidesApi } from '../commons/common';
+import { slidesIds } from '../commons/ids';
+import { slidesText } from '../commons/presentation-text';
+import { slidesProps } from '../commons/props';
+import { slidesRequests } from '../commons/requests';
+import { generateFromTemplateOutputSchema } from '../output-schemas';
 
 export const generateFromTemplate = createAction({
-    name: 'generate_from_template',
-    classification: 'WRITE',
-    displayName: 'Generate from template',
-    description: 'Generate a new slide from a template',
-    audience: 'both',
-    aiMetadata: { description: 'Create a new Google Slides presentation by copying a template presentation, then substituting its placeholder tokens with supplied values. Use this for mail-merge style document generation from a reusable deck. The template\'s placeholder syntax must be selected (curly braces {{}} or square brackets [[]]); placeholders are discovered from the template\'s text and table cells, and matching is case-sensitive. Not idempotent: each call copies the template into a brand-new presentation file.', idempotent: false },
-    auth: googleSlidesAuth,
-    props: {
-        template_presentation_id: Property.ShortText({
-            displayName: 'Template presentation ID',
-            description: 'The ID of the templated presentation',
+  name: 'generate_from_template',
+  classification: 'WRITE',
+  displayName: 'Generate from template',
+  description: 'Generate a new slide from a template',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Create a new Google Slides presentation by copying a template presentation, then substituting its placeholder tokens with supplied values. Use this for mail-merge style document generation from a reusable deck; to copy without replacing text use Copy Presentation. The template's placeholder syntax must be selected (curly braces {{}} or square brackets [[]]); placeholders are discovered in slide text, grouped shapes, table cells and speaker notes, and matching is case-sensitive. The Presentation Title value also fills a {{title}} placeholder. A service account needs a Shared Drive folder to write the copy into. Not idempotent: each call copies the template into a brand-new presentation file.",
+    idempotent: false,
+  },
+  auth: googleSlidesAuth,
+  outputSchema: generateFromTemplateOutputSchema,
+  props: {
+    template_presentation_id: Property.ShortText({
+      displayName: 'Template presentation ID',
+      description: 'The template presentation ID (between /d/ and /edit in its URL), or the full URL.',
+      required: true,
+    }),
+    placeholder_format: Property.StaticDropdown({
+      displayName: 'Placeholder Format',
+      description: 'Choose the format of placeholders in your template',
+      required: true,
+      defaultValue: '{{}}',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Curly Braces {{}}', value: '{{}}' },
+          { label: 'Square Brackets [[]]', value: '[[]]' },
+        ],
+      },
+    }),
+    table_data: Property.DynamicProperties({
+      auth: googleSlidesAuth,
+      displayName: 'Table Data',
+      required: true,
+      refreshers: ['template_presentation_id', 'placeholder_format'],
+      props: async ({ auth, template_presentation_id, placeholder_format }) => {
+        if (!template_presentation_id || !auth) return {};
+
+        const accessToken = await getAccessToken(auth);
+        const presentation = await slidesApi.getPresentation({
+          accessToken,
+          presentationId: slidesIds.parsePresentationId(template_presentation_id),
+        });
+        if (!presentation) return {};
+
+        const format = String(placeholder_format) === '[[]]' ? '[[]]' : '{{}}';
+        const placeholderFields = slidesText
+          .discoverPlaceholders({ presentation, format })
+          .filter((name) => name !== 'title')
+          .map((name): [string, DynamicPropsValue[string]] => [
+            name,
+            Property.ShortText({
+              displayName: name.trim().replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()),
+              description: `Value for "${slidesRequests.toPlaceholder({ name: name.trim(), format })}"`,
+              required: false,
+            }),
+          ]);
+        return {
+          title: Property.ShortText({
+            displayName: 'Presentation Title',
+            description: `Title of the new presentation. It also fills a ${slidesRequests.toPlaceholder({ name: 'title', format })} placeholder if the template has one.`,
+            defaultValue: `Copy of: ${presentation.title}`,
             required: true,
-        }),
-        placeholder_format: Property.StaticDropdown({
-            displayName: 'Placeholder Format',
-            description: 'Choose the format of placeholders in your template',
-            required: true,
-            defaultValue: '{{}}',
-            options: {
-                disabled: false,
-                options: [
-                    { label: 'Curly Braces {{}}', value: '{{}}' },
-                    { label: 'Square Brackets [[]]', value: '[[]]' }
-                ],
-              },
-        }),
-        table_data: Property.DynamicProperties({
-            auth: googleSlidesAuth,
-            displayName: 'Table Data',
-            required: true,
-            refreshers: ['template_presentation_id', 'placeholder_format'],
-            props: async ({auth, template_presentation_id, placeholder_format}) => {
-                if (!template_presentation_id || !auth)
-                    return {};
-        
-                const accessToken = await getAccessToken(auth as GoogleSlidesAuthValue);
-                const presentation = await getSlide(accessToken, template_presentation_id as unknown as string);
-                if (!presentation)
-                    return {}
+          }),
+          ...Object.fromEntries(placeholderFields),
+        };
+      },
+    }),
+    folder_id: slidesProps.folderIdProp(
+      'Optional Drive folder for the new presentation: its ID or URL (https://drive.google.com/drive/folders/<id>). Leave empty to use the default location. A service account needs a folder in a Shared Drive here.'
+    ),
+  },
+  async run(context) {
+    const { placeholder_format, table_data } = context.propsValue;
+    const templateId = slidesIds.parsePresentationId(context.propsValue.template_presentation_id);
+    const folderId = slidesIds.parseFolderId(context.propsValue.folder_id);
+    const tableData: Record<string, unknown> = table_data ?? {};
+    const title = typeof tableData['title'] === 'string' ? tableData['title'] : '';
 
-                const fields = {
-                    title: Property.ShortText({
-                        displayName: 'Presentation Title',
-                        description: 'Title of the new presentation',
-                        defaultValue: `Copy of: ${presentation.title}`,
-                        required: true,
-                    })
-                } as DynamicPropsValue;
-        
-                presentation.slides?.forEach(slide => {
-                    slide.pageElements?.forEach((element: PageElement) => {
-                        if (element.shape?.text?.textElements) {
-                            element.shape.text.textElements.forEach(textElement => {
-                                const content = textElement?.textRun?.content;
-                                if (content) {
-                                    extractPlaceholders(content, fields, placeholder_format as unknown as string);
-                                }
-                            });
-                        }
-                        
-                        if (element.table) {
-                            element.table.tableRows?.forEach(row => {
-                                row.tableCells?.forEach((cell: TableCell) => {
-                                    if (cell.text?.textElements) {
-                                        cell.text.textElements.forEach((textElement: TextElement) => {
-                                            const content = textElement?.textRun?.content;
-                                            if (content) {
-                                                extractPlaceholders(content, fields, placeholder_format as unknown as string);
-                                            }
-                                        });
-                                    }
-                                });
-                            });
-                        }
-                    });
-                });
-        
-                return fields;
-            }
-        })
-    },
-    async run(context) {
-        const { template_presentation_id, placeholder_format, table_data } = context.propsValue;
-
-        try {
-            const authClient = await createGoogleClient(context.auth);
-
-            const drive = googleDrive({ version: 'v3', auth: authClient });
-                
-            const copyResponse = await drive.files.copy({
-                fileId: template_presentation_id as string,
-                requestBody: {
-                    name: table_data["title"] || "New Presentation"
-                },
-                supportsAllDrives: true
-            });
-            
-            const newPresentationId = copyResponse.data.id;
-            if (!newPresentationId)
-                return
-
-            const requests = Object.entries(table_data)
-                .map(([key, value]): { replaceAllText: unknown } => {
-                    const placeholder = placeholder_format === '[[]]' 
-                        ? `[[${key}]]` 
-                        : `{{${key}}}`;
-
-                    return {
-                        replaceAllText: {
-                            containsText: {
-                                text: placeholder,
-                                matchCase: true
-                            },
-                            replaceText: value as string
-                        }
-                    };
-                });
-    
-            
-            if (requests.length > 0) {
-                await batchUpdate(
-                    await getAccessToken(context.auth),
-                    newPresentationId,
-                    requests
-                );
-            }
-    
-            return {
-                presentationId: newPresentationId,
-                presentationUrl: `https://docs.google.com/presentation/d/${newPresentationId}/edit`
-            };
-        } catch (error) {
-            console.error('Error creating presentation:', error);
-            throw error;
-        }
+    const drive = googleDrive({ version: 'v3', auth: await createGoogleClient(context.auth) });
+    const copyResponse = await drive.files
+      .copy({
+        fileId: templateId,
+        requestBody: {
+          name: title || 'New Presentation',
+          ...(folderId ? { parents: [folderId] } : {}),
+        },
+        supportsAllDrives: true,
+        fields: 'id',
+      })
+      .catch((error: unknown) => {
+        throw slidesApi.googleApiError({ error, action: 'copy the template' });
+      });
+    const newPresentationId = copyResponse.data.id;
+    if (!newPresentationId) {
+      throw new Error('Google Drive copied the template but returned no file ID, so no placeholders were replaced.');
     }
+
+    const requests = slidesRequests.buildTemplateRequests({ tableData, format: placeholder_format });
+    if (requests.length > 0) {
+      await slidesApi
+        .batchUpdate({ accessToken: await getAccessToken(context.auth), presentationId: newPresentationId, requests })
+        .catch((error: unknown) => {
+          const reason = slidesApi.googleApiError({ error, action: 'replace the placeholders' }).message;
+          throw new Error(
+            `${reason} The copy was created (${slidesApi.presentationUrl(newPresentationId)}) but its placeholders were not replaced.`
+          );
+        });
+    }
+
+    return {
+      presentationId: newPresentationId,
+      presentationUrl: slidesApi.presentationUrl(newPresentationId),
+    };
+  },
 });

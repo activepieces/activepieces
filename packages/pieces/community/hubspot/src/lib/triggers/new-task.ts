@@ -77,7 +77,7 @@ export const newTaskTrigger = createTrigger({
 	name: 'new-task',
 	classification: 'READ',
 	displayName: 'New Task',
-	description: 'Trigger when a new task is added.',
+	description: 'Triggers when a new task is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new task is created in the HubSpot CRM. Each event represents one task record (call, to-do, or email follow-up) with its properties such as subject, type, priority, owner, due timestamp, and associated contacts/companies/deals. Polls for tasks by creation date.',
@@ -85,15 +85,13 @@ export const newTaskTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                        
-					hs_task_subject, hs_task_type, hs_task_priority, hubspot_owner_id, hs_timestamp, hs_queue_membership_ids, hs_lastmodifieddate,hs_createdate
+			value: `Returned by default: hs_task_body, hubspot_owner_id, hs_task_subject, hs_task_status, hs_task_priority, hs_task_type, hs_created_by, hs_repeat_status, hs_task_completion_date, hs_task_is_completed, hs_timestamp, hs_queue_membership_ids, hs_lastmodifieddate, hs_createdate.
 
-                    **Specify here a list of additional properties to retrieve**`,
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.TASK,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},

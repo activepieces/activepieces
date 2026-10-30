@@ -1,6 +1,6 @@
-import { ActivepiecesAiBilling, aiChargeFor, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
+import { ActivepiecesAiBilling, aiChargeFor, ActivepiecesError, AIProviderName, ErrorCode, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, AiProviderCredentials, getEffectiveProviderAndModel } from '@activepieces/shared';
+import { ACTIVEPIECES_IMAGE_TIERS, AI_PROVIDER_CAPABILITIES, AiProviderCredentials, aiProviderUtils, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { anthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
@@ -10,6 +10,7 @@ import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-pro
 import { EmbeddingModel, generateText, ImageModel, LanguageModel, ToolSet } from 'ai'
 import { billedEmbeddingModel, billedLanguageModel } from './activepieces-ai-cost'
 import { keyHealthReporterFor } from './ai-provider-key-health'
+import { modelTierCatalog } from './model-tier-catalog'
 
 const DEFAULT_WEB_SEARCH_RESULTS = 5
 const MIN_OPENROUTER_WEB_SEARCH_RESULTS = 1
@@ -68,17 +69,19 @@ function buildWebSearchToolsOrThrow({ provider, model, webSearchEnabled, options
     return buildWebSearchTools({ provider, model, options })
 }
 
-async function searchWeb({ credentials, modelId, billing, turnAlreadyCharged, system, prompt, abortSignal }: {
+async function searchWeb({ credentials, modelId, providerConfigId, billing, turnAlreadyCharged, usageOnly, system, prompt, abortSignal }: {
     credentials: AiProviderCredentials
     modelId: string
-    billing?: ActivepiecesAiBilling
+    providerConfigId?: string
+    billing: ActivepiecesAiBilling | null
     turnAlreadyCharged?: boolean
+    usageOnly?: boolean
     system: string
     prompt: string
     abortSignal: AbortSignal
 }): Promise<WebSearchResult> {
     const { text, sources } = await generateText({
-        model: createModel({ credentials, modelId, billing, turnAlreadyCharged, webSearchEnabled: true }),
+        model: createModel({ credentials, modelId, billing, turnAlreadyCharged, usageOnly, webSearchEnabled: true, ...spreadIfDefined('providerConfigId', providerConfigId) }),
         tools: buildWebSearchTools({ provider: credentials.provider, model: modelId }),
         system,
         prompt,
@@ -117,12 +120,16 @@ function openRouterModelSettings({ provider, webSearchEnabled, options }: {
     options?: WebSearchOptions
 }): OpenRouterChatSettings | undefined {
     const settings: OpenRouterChatSettings = {
-        ...(provider === AIProviderName.ACTIVEPIECES ? REPORT_WHAT_THE_CALL_COST : {}),
+        ...(reportsItsCost(provider) ? REPORT_WHAT_THE_CALL_COST : {}),
         ...(webSearchEnabled && AI_PROVIDER_CAPABILITIES[provider].webSearch === 'plugin'
             ? { plugins: [{ id: 'web' as const, max_results: openRouterWebSearchResults(options) }] }
             : {}),
     }
     return Object.keys(settings).length === 0 ? undefined : settings
+}
+
+function reportsItsCost(provider: AIProviderName): boolean {
+    return provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER
 }
 
 function openRouterWebSearchResults(options?: WebSearchOptions): number {
@@ -132,35 +139,61 @@ function openRouterWebSearchResults(options?: WebSearchOptions): number {
     )
 }
 
-function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId }: {
+function managedModelIds(): string[] {
+    return [
+        ...aiProviderUtils.managedChatModelIds(),
+        ...(['flow', 'chat'] as const).flatMap((surface) => modelTierCatalog.current(surface).tiers.map((tier) => tier.modelId)),
+    ]
+}
+
+function managedImageModelIds(): string[] {
+    return ACTIVEPIECES_IMAGE_TIERS.map((tier) => tier.modelId)
+}
+
+function assertManagedModelAllowed({ provider, modelId, image, adminChosenModelId }: { provider: AIProviderName, modelId: string, image: boolean, adminChosenModelId?: string }): void {
+    const allowed = image ? [...managedImageModelIds(), ...(isNil(adminChosenModelId) ? [] : [adminChosenModelId])] : managedModelIds()
+    if (provider !== AIProviderName.ACTIVEPIECES || allowed.includes(modelId)) {
+        return
+    }
+    const message = `The model "${modelId}" is not available on Activepieces AI credits. Choose one of the listed models or connect your own AI provider key.`
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message },
+    }, message)
+}
+
+function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, usageOnly, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId }: {
     credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
-    billing?: ActivepiecesAiBilling
+    billing: ActivepiecesAiBilling | null
     turnAlreadyCharged?: boolean
-    openaiResponsesModel?: boolean
+    usageOnly?: boolean
     webSearchEnabled?: boolean
     webSearchOptions?: WebSearchOptions
     platformId?: string
     providerConfigId?: string
+    imageGeneration?: boolean
+    adminChosenImageModelId?: string
 }): LanguageModel {
-    const model = buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
+    assertManagedModelAllowed({ provider: credentials.provider, modelId, image: imageGeneration, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
+    const model = buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
     return billedLanguageModel({
         model,
         provider: credentials.provider,
+        providerConfigId,
         modelId,
         billing,
-        charge: aiChargeFor({ credentials, turnAlreadyCharged }),
+        charge: aiChargeFor({ credentials, turnAlreadyCharged, usageOnly }),
     })
 }
 
-function buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome }: {
+function buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome }: {
     credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
-    openaiResponsesModel: boolean
     webSearchEnabled: boolean
     webSearchOptions?: WebSearchOptions
     onOutcome?: ProviderOutcomeReporter
@@ -170,7 +203,6 @@ function buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesM
         return createCloudflareGatewayModel({
             credentials,
             modelId,
-            openaiResponsesModel,
             routing: isNil(flowStep) ? 'compat' : 'submodel',
             ...spreadIfDefined('metadata', cloudflareGatewayMetadata(flowStep)),
             ...spreadIfDefined('onOutcome', onOutcome),
@@ -182,7 +214,6 @@ function buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesM
         options: {
             openRouterSettings: openRouterModelSettings({ provider, webSearchEnabled, options: webSearchOptions }),
             mistralViaOpenRouter: isNil(flowStep),
-            openaiResponsesModel,
             ...spreadIfDefined('extraHeaders', flowStepMetadataHeaders(flowStep) ?? managedProviderMetadataHeaders({ provider, metadata })),
             ...spreadIfDefined('onOutcome', onOutcome),
         },
@@ -208,11 +239,13 @@ function flowStepMetadataHeaders(flowStep?: FlowStepMetadata): Record<string, st
     }
 }
 
-function createModelForImages({ credentials, modelId, flowStep }: {
+function createModelForImages({ credentials, modelId, flowStep, adminChosenImageModelId }: {
     credentials: AiProviderCredentials
     modelId: string
     flowStep?: FlowStepMetadata
+    adminChosenImageModelId?: string
 }): ImageModel | undefined {
+    assertManagedModelAllowed({ provider: credentials.provider, modelId, image: true, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
     if (credentials.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         return createCloudflareGatewayModel({
             credentials,
@@ -234,19 +267,20 @@ function toStorageEmbedding(embedding: number[]): number[] {
     return magnitude === 0 ? truncated : truncated.map((value) => value / magnitude)
 }
 
-function createEmbeddingModel({ credentials, billing, platformId, providerConfigId }: {
+function createEmbeddingModel({ credentials, modelId, billing, platformId, providerConfigId }: {
     credentials: AiProviderCredentials
-    billing?: ActivepiecesAiBilling
+    modelId?: string
+    billing: ActivepiecesAiBilling | null
     platformId?: string
     providerConfigId?: string
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
-    const embeddingModelId = AI_PROVIDER_CAPABILITIES[credentials.provider].defaultEmbeddingModel
+    const embeddingModelId = modelId ?? AI_PROVIDER_CAPABILITIES[credentials.provider].defaultEmbeddingModel
     if (isNil(embeddingModelId)) {
         throw new Error(`Provider ${credentials.provider} does not support knowledge base search`)
     }
     const built = buildEmbeddingModel({ credentials, embeddingModelId, fetch: observedProviderFetch(keyHealthReporterFor({ platformId, providerConfigId })) })
     return {
-        model: billedEmbeddingModel({ model: built.model, provider: credentials.provider, modelId: embeddingModelId, billing }),
+        model: billedEmbeddingModel({ model: built.model, provider: credentials.provider, providerConfigId, modelId: embeddingModelId, billing }),
         providerOptions: built.providerOptions,
     }
 }
@@ -272,7 +306,7 @@ function buildEmbeddingModel({ credentials, embeddingModelId, fetch }: {
         case AIProviderName.OPENROUTER:
             return {
                 model: createOpenRouter({ apiKey: credentials.auth.apiKey, ...spreadIfDefined('fetch', fetch) })
-                    .textEmbeddingModel(embeddingModelId, credentials.provider === AIProviderName.ACTIVEPIECES ? EMBEDDING_REPORTS_WHAT_IT_COST : undefined),
+                    .textEmbeddingModel(embeddingModelId, EMBEDDING_REPORTS_WHAT_IT_COST),
                 providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS,
             }
         default:

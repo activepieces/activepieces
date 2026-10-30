@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendClient } from '../common/client';
@@ -26,7 +26,12 @@ export const listEmails = createAction({
   description: 'Retrieve a list of emails sent from your Resend account',
   audience: 'both',
   aiMetadata: { description: 'Retrieves the list of emails sent from the connected Resend account, including their IDs, recipients, subjects, and latest delivery event. Use this to discover email IDs (e.g. to feed Get Email Status, Cancel Scheduled Email, or Reschedule Email) or to audit recent sends. Read-only and idempotent.', idempotent: true },
-  props: {},
+  props: {
+    info: Property.MarkDown({
+      value: 'Returns your 20 most recently sent emails.',
+      variant: MarkdownVariant.INFO,
+    }),
+  },
   async run({ auth }) {
     const response = await resendClient.sendRequest<{ data: EmailRecord[] }>({ auth: auth.secret_text, method: HttpMethod.GET, path: '/emails' });
     return response.data.map((email) => ({

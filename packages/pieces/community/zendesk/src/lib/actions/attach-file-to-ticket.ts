@@ -6,10 +6,12 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { attachFileToTicketOutputSchema } from '../output-schemas';
 
 export const attachFileToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'attach-file-to-ticket',
+  outputSchema: attachFileToTicketOutputSchema,
   classification: 'WRITE',
   displayName: 'Attach File to Ticket',
   description: 'Attach a file to a ticket.',

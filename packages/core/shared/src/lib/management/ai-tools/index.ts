@@ -6,6 +6,7 @@ export enum AiToolCapability {
     WEB_SEARCH = 'WEB_SEARCH',
     WEB_SCRAPING = 'WEB_SCRAPING',
     IMAGE_GENERATION = 'IMAGE_GENERATION',
+    EMBEDDINGS = 'EMBEDDINGS',
 }
 
 export enum AiToolProvider {
@@ -84,4 +85,5 @@ export type GetEnabledAiToolsResponse = z.infer<typeof GetEnabledAiToolsResponse
 export type AiProviderToolChoices = {
     webSearch?: AiProviderToolConfig
     imageGeneration?: AiProviderToolConfig
+    embeddings?: AiProviderToolConfig
 }

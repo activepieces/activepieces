@@ -15,14 +15,14 @@ export const translateAction = createAction({
   name: 'translate',
   classification: 'READ',
   displayName: 'Translate Audio',
-  description: 'Translate audio to text using whisper-1 model',
+  description: 'Turn speech in any language into English text.',
   aiMetadata: { description: 'Turns an uploaded audio file into English text with the whisper-1 model, translating from whatever language was spoken; there is no target-language option, the output is always English. Pick the sibling transcribe action when the transcript must stay in the original language, and note this handles audio input only - it cannot translate a text string. Requires an audio file; not idempotent: each call re-runs the model and the wording can vary slightly.', idempotent: false },
   auth: openaiAuth,
   props: {
     audio: Property.File({
       displayName: 'Audio',
       required: true,
-      description: 'Audio file to translate',
+      description: 'The recording to translate.',
     }),
   },
   outputSchema: translateActionOutputSchema,

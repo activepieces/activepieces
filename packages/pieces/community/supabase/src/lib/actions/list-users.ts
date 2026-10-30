@@ -17,12 +17,13 @@ export const listUsers = createAction({
     props: {
         page: Property.Number({
             displayName: 'Page',
-            description: 'Page number for pagination (starts from 1).',
+            description: 'Starts at 1.',
             required: false,
             defaultValue: 1,
         }),
         perPage: Property.Number({
             displayName: 'Users Per Page',
+            description: 'How many users each page returns.',
             required: false,
             defaultValue: 50,
         }),

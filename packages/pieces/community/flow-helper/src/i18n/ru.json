@@ -6,5 +6,14 @@
   "Fails the flow execution with a custom message.": "Ошибка выполнения потока с пользовательским сообщением.",
   "Stops the flow immediately this step is reached.": "Немедленно останавливает поток, который достигается на этом шаге.",
   "Error Message": "Сообщение об ошибке",
-  "The error message to show when the flow fails.": "Сообщение об ошибке при сбое процесса."
+  "The error message to show when the flow fails.": "Сообщение об ошибке при сбое процесса.",
+  "Stop or fail a running flow, or get a link to the current run.": "Остановить выполняемый поток или завершить его с ошибкой либо получить ссылку на текущий запуск.",
+  "Gets this run's ID and a link to open it.": "Получает ID этого запуска и ссылку для его открытия.",
+  "Fails this step with your error message.": "Завершает этот шаг с ошибкой и вашим сообщением.",
+  "Ends the run at this step and marks it as succeeded.": "Завершает запуск на этом шаге и отмечает его как успешный.",
+  "Markdown": "Markdown",
+  "Outputs this run's ID and a link that opens the run.": "Выводит ID этого запуска и ссылку, которая открывает запуск.",
+  "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.": "Здесь запуск завершается с ошибкой, и последующие шаги не выполняются. Если включён Add Error Handler, с ошибкой завершается только этот шаг. Выполняется ветка Failure, и поток продолжается.",
+  "Shown as the step's error. Can include data from earlier steps.": "Отображается как ошибка шага. Может содержать данные из предыдущих шагов.",
+  "The run ends here and is marked as succeeded. Steps after this one do not run.": "Запуск завершается здесь и отмечается как успешный. Последующие шаги не выполняются."
 }

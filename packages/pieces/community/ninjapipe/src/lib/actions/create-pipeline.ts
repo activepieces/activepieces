@@ -1,21 +1,28 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeFields } from '../common/fields';
+import { ninjapipePipelines } from '../common/pipelines';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const createPipeline = createAction({
   auth: ninjapipeAuth,
   name: 'create_pipeline',
   classification: 'WRITE',
   displayName: 'Create Pipeline',
-  description: 'Creates a new pipeline.',
+  description: 'Creates a pipeline (board) with its stages.',
   audience: 'both',
-  aiMetadata: { description: 'Creates a new pipeline of a given type (contacts, deals, or general) with at least one stage, each stage needing an id, name, and hex color. Requires name, pipeline type, and a non-empty stages array. Not idempotent: each call creates another pipeline.', idempotent: false },
+  aiMetadata: {
+    description: 'Create a NinjaPipe pipeline of type deals, contacts or general with an ordered list of stages (each needs a name; id and hex color are optional and generated when missing). Not idempotent: each call creates another pipeline.',
+    idempotent: false,
+  },
+  outputSchema: ninjapipeSchemas.pipeline,
   props: {
     name: Property.ShortText({ displayName: 'Name', required: true }),
     pipelineType: Property.StaticDropdown({
       displayName: 'Pipeline Type',
-      description: 'Required by NinjaPipe — what this pipeline tracks.',
+      description: 'What this pipeline tracks.',
       required: true,
       defaultValue: 'general',
       options: {
@@ -28,54 +35,26 @@ export const createPipeline = createAction({
     }),
     stages: Property.Array({
       displayName: 'Stages',
-      description: 'Pipeline stages. Add at least one. Color must be a hex like #3b82f6.',
+      description: 'Stages in board order. Add at least one.',
       required: true,
       properties: {
-        id: Property.ShortText({
-          displayName: 'ID',
-          description: 'Stable slug, e.g. "new", "won".',
-          required: true,
-        }),
-        name: Property.ShortText({
-          displayName: 'Name',
-          description: 'Display name shown on the board.',
-          required: true,
-        }),
-        color: Property.ShortText({
-          displayName: 'Color',
-          description: 'Hex color, e.g. #3b82f6.',
-          required: true,
-        }),
+        name: Property.ShortText({ displayName: 'Name', description: 'Name shown on the board.', required: true }),
+        id: Property.ShortText({ displayName: 'ID', description: 'Optional stable ID, e.g. "won". Generated from the name when empty.', required: false }),
+        color: Property.ShortText({ displayName: 'Color', description: 'Optional hex color, e.g. #3b82f6.', required: false }),
       },
     }),
     description: Property.LongText({ displayName: 'Description', required: false }),
-    status: Property.ShortText({ displayName: 'Status', required: false }),
+    status: Property.ShortText({ displayName: 'Status', description: 'e.g. Active.', required: false }),
   },
   async run(context) {
-    const auth = getAuth(context);
     const p = context.propsValue;
-    if (!Array.isArray(p.stages) || p.stages.length === 0) {
-      throw new Error('Stages must contain at least one entry with id, name, and color.');
-    }
-    const stages = (p.stages as Array<{ id?: unknown; name?: unknown; color?: unknown }>).map((stage) => {
-      if (!stage?.id || !stage.name || !stage.color) {
-        throw new Error('Each stage requires id, name, and color.');
-      }
-      return { id: String(stage.id), name: String(stage.name), color: String(stage.color) };
-    });
-    const body: Record<string, unknown> = {
+    const body = ninjapipeFields.compact({
       name: p.name,
       pipeline_type: p.pipelineType,
-      stages,
-    };
-    if (p.description) body['description'] = p.description;
-    if (p.status) body['status'] = p.status;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({
-      auth,
-      method: HttpMethod.POST,
-      path: '/pipelines',
-      body,
+      stages: ninjapipePipelines.toStages(p.stages),
+      description: p.description,
+      status: p.status,
     });
-    return flattenCustomFields(response.body);
+    return ninjapipeClient.sendRecord({ auth: ninjapipeClient.readAuth(context.auth), method: HttpMethod.POST, path: '/pipelines', body, operation: 'create pipeline' });
   },
 });

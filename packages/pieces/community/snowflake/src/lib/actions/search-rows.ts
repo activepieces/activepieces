@@ -1,25 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { rawRowsOutputSchema } from '../common/output-schemas';
+import { boundedInteger, qualifiedName } from '../common/sql';
 
 export const searchRowsAction = createAction({
   name: 'search_rows',
+  classification: 'SEARCH',
   displayName: 'Search Rows',
   description:
     'Search for rows in a Snowflake table using an optional WHERE condition, ordering, and row limit.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Returns rows from a Snowflake table with an optional WHERE filter, ORDER BY sort, and row limit (default 100); leaving the filter empty returns all rows up to the limit. Use to retrieve a filtered or sorted set of records; for a single row by key use Get Row by ID. The filter and sort clauses are embedded directly into SQL, so pass only trusted values. Read-only and idempotent.',
+      'Returns rows matching a hand-written WHERE and ORDER BY on a table picked from dropdowns. Human-only; agents use Find Rows with structured filters. Read-only.',
     idempotent: true,
   },
+  outputSchema: rawRowsOutputSchema,
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -42,26 +39,34 @@ export const searchRowsAction = createAction({
     }),
     limit: Property.Number({
       displayName: 'Row Limit',
-      description: 'Maximum number of rows to return. Defaults to 100.',
+      description:
+        'Maximum number of rows to return (1–10 000). Defaults to 100.',
       required: false,
       defaultValue: 100,
     }),
   },
   async run(context) {
     const { table, where_clause, order_by, limit } = context.propsValue;
-
-    let sql = `SELECT * FROM ${table}`;
-    if (where_clause) sql += ` WHERE ${where_clause}`;
-    if (order_by) sql += ` ORDER BY ${order_by}`;
-    sql += ` LIMIT ${Math.trunc(limit ?? 100)}`;
-
-    const connection = configureConnection(context.auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(connection, sql, []);
-      return result ?? [];
-    } finally {
-      await destroy(connection);
-    }
+    const rowLimit = boundedInteger({
+      value:
+        limit === undefined || limit === null ? undefined : Math.trunc(limit),
+      defaultValue: 100,
+      min: 1,
+      max: 10000,
+      label: 'Row Limit',
+    });
+    let sql = `SELECT * FROM ${qualifiedName({
+      value: table,
+      label: 'Table',
+    })}`;
+    if (where_clause && where_clause.trim() !== '')
+      sql += ` WHERE ${where_clause}`;
+    if (order_by && order_by.trim() !== '') sql += ` ORDER BY ${order_by}`;
+    sql += ` LIMIT ${rowLimit}`;
+    const result = await withSnowflake({
+      auth: toAuthValue(context.auth),
+      fn: (session) => session.query({ sql, maxRows: rowLimit }),
+    });
+    return result.rows;
   },
 });

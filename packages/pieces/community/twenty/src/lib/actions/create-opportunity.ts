@@ -1,15 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest } from '../common';
+import { twentyApi } from '../common/api';
+import { createOpportunityOutputSchema } from '../output-schemas';
 
-export const createOpportunity = createAction({
+export const createOpportunityAction = createAction({
   auth: twentyAuth,
   name: 'create_opportunity',
+  outputSchema: createOpportunityOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Opportunity',
   description: 'Creates a new opportunity (deal) in Twenty CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new opportunity (sales deal) in Twenty CRM. Use when registering a deal to track; only the opportunity name is required, with optional stage, amount, currency, close date, and a company ID to link it to an existing company. Not idempotent: each call inserts a new deal, so repeated calls create duplicates.', idempotent: false },
   props: {
     name: Property.ShortText({
@@ -56,17 +57,14 @@ export const createOpportunity = createAction({
   async run(context) {
     const { name, stage, amount, currency, closeDate, companyId } = context.propsValue;
 
-    return await twentyRequest(
-      context.auth,
-      HttpMethod.POST,
-      '/rest/opportunities',
-      {
-        name,
-        stage: stage ?? undefined,
-        amount: amount != null ? { amountMicros: Math.round(amount * 1_000_000), currencyCode: currency ?? 'USD' } : undefined,
-        closeDate: closeDate ?? undefined,
-        companyId: companyId ?? undefined,
-      },
-    );
+    return await twentyApi.createOpportunity({
+      auth: context.auth,
+      name,
+      stage,
+      amount,
+      currency,
+      closeDate,
+      companyId,
+    });
   },
 });

@@ -1,7 +1,7 @@
 import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
-import { GateDecision, gateNoResponseMessage, normalizePieceName, questionTextSchema, questionTitleSchema, richOptionSchema } from './tool-primitives'
+import { GateDecision, gateNoResponseMessage, normalizePieceName, questionTextSchema, questionTitleSchema, richOptionSchema, stableStringify } from './tool-primitives'
 
 export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor, connectionChosenEarlierFor }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
@@ -12,6 +12,8 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
     accountAlreadyChosenFor?: (pieceName: string) => boolean
     connectionChosenEarlierFor?: (pieceName: string) => Promise<{ externalId: string, label: string } | null>
 }): ToolSet {
+    const unansweredCards = new Set<string>()
+
     function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
         const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
         if (isNil(accountAlreadyChosenFor) || !accountAlreadyChosenFor(normalizePieceName(piece))) {
@@ -47,6 +49,11 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             if (!isNil(refusal)) {
                 return refusal
             }
+            const displayName = getDisplayName?.(input) ?? toolName
+            const cardKey = cardIdentity({ toolName, input })
+            if (unansweredCards.has(cardKey)) {
+                return { notShown: true, message: cardStillUnansweredMessage(displayName) }
+            }
             if (onGateOpened) {
                 const fallbackName = typeof input['displayName'] === 'string' ? input['displayName'] : toolName
                 await tryCatch(() => onGateOpened({
@@ -58,7 +65,8 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             }
             const decision = await waitForApproval({ gateId: options.toolCallId, timeoutMs: displayToolTimeoutMs })
             if (decision.outcome === 'timeout') {
-                return { timedOut: true, message: gateNoResponseMessage(getDisplayName?.(input) ?? toolName) }
+                unansweredCards.add(cardKey)
+                return { timedOut: true, message: gateNoResponseMessage(displayName) }
             }
             if (decision.outcome !== 'approved') {
                 return { dismissed: true, message: typeof dismissMessage === 'function' ? dismissMessage(input) : dismissMessage }
@@ -74,7 +82,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         ap_show_connection_required: tool({
             description: 'Display the connection card for a piece that needs auth. The card lists every account the user has for this piece, pre-selects one, and offers to connect a new account — so this works whether the user has zero, one, or many. After they pick or connect, briefly confirm before proceeding. If they dismiss, respect it — do not proceed without a connection. Prefer ap_show_connection_picker; this is an alias kept for compatibility.',
             inputSchema: z.object({
-                piece: z.string().describe('Piece short name (e.g. "gmail", "slack")'),
+                piece: z.string().min(1).describe('Piece short name (e.g. "gmail", "slack")'),
                 displayName: z.string().describe('Human-readable name (e.g. "Gmail", "Slack")'),
                 status: z.enum(['missing', 'error']).optional().describe('Set to "error" when an existing connection needs reconnecting'),
             }),
@@ -125,7 +133,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         ap_show_connection_picker: tool({
             description: 'The connection card for a piece that needs auth. Use it whenever a piece needs a connection — it lists every account the user has for that piece, pre-selects one, and offers to connect a new account, so the same card covers zero, one, or many existing connections. Just provide the piece name; the system manages connection details. It returns the chosen connection\'s `connectionExternalId` — pass that exact value as `auth` to ap_get_piece_props / ap_resolve_property_options / ap_execute_action (never guess or use the label). After the user picks or connects, briefly confirm the account chosen. If they dismiss without selecting, do not pick a connection on their behalf.',
             inputSchema: z.object({
-                piece: z.string().describe('Piece short name'),
+                piece: z.string().min(1).describe('Piece short name'),
                 displayName: z.string().describe('Human-readable piece name'),
                 switchAccount: z.boolean().optional().describe('Set when the user asked to use a different account, so the card is shown again instead of reusing the one they already picked'),
             }),
@@ -249,3 +257,12 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
     }
 }
 
+function cardIdentity({ toolName, input }: { toolName: string, input: Record<string, unknown> }): string {
+    const piece = input['piece']
+    const subject = typeof piece === 'string' ? normalizePieceName(piece) : input['connectorUuid'] ?? input['questions'] ?? null
+    return `${toolName}:${stableStringify(subject)}`
+}
+
+function cardStillUnansweredMessage(displayName: string): string {
+    return `The ${displayName} card was already shown in this turn and the user has not answered it, so it was not shown again. Do not ask for it again now. End your reply with one short line saying what you need from them, and continue when they answer.`
+}

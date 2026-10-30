@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lemlistAuth } from '../common/constants';
 import { campaignsDropdown } from '../common/props';
-import { lemlistApiService } from '../common/requests';
+import { lemlistLeads } from '../common/requests';
+import { lemlistSchemas } from '../common/schemas';
 
 export const markLeadFromOneCampaignAsNotInterested = createAction({
   auth: lemlistAuth,
@@ -9,8 +10,12 @@ export const markLeadFromOneCampaignAsNotInterested = createAction({
   classification: 'WRITE',
   displayName: 'Mark Lead From One Campaign as Not Interested',
   description: 'Mark a lead in a campaign as not interested.',
-  audience: 'both',
-  aiMetadata: { description: 'Sets the "not interested" status on a lead within one specific Lemlist campaign, identified by the campaign and the lead\'s email. Use when disqualifying interest scoped to a single campaign rather than across all of them. Idempotent: re-running leaves the lead in the same not-interested state.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Sets the "not interested" status on a lead in one Lemlist campaign, identified by campaign and lead email. Idempotent.',
+    idempotent: true,
+  },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({
@@ -19,10 +24,13 @@ export const markLeadFromOneCampaignAsNotInterested = createAction({
       required: true,
     }),
   },
-  async run({ auth, propsValue: { campaignId, email } }) {
-    return await lemlistApiService.markLeadAsNotInterestedInCampaign(auth, {
-      campaignId: campaignId as string,
-      leadEmail: email as string,
+  outputSchema: lemlistSchemas.lead,
+  async run({ auth, propsValue }) {
+    return lemlistLeads.setInterestInCampaign({
+      apiKey: auth.secret_text,
+      campaignId: propsValue.campaignId,
+      lead: propsValue.email,
+      interested: false,
     });
   },
 });

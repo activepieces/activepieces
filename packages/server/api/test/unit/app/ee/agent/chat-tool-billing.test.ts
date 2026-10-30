@@ -66,6 +66,48 @@ describe('chatToolBilling.countBillableToolCallsInLatestTurn', () => {
         expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
     })
 
+    it('bills the paid tool calls a task agent made inside its run', () => {
+        const taskPart: PersistedAgentPart = {
+            type: PersistedAgentPartType.TOOL_CALL,
+            toolCallId: 'task-1',
+            toolName: 'ap_run_task',
+            input: {},
+            status: PersistedToolCallStatus.COMPLETED,
+            output: { status: 'done', billedToolCalls: [{ toolName: 'ap_execute_action', output: {} }, { toolName: 'ap_web_search', output: { billedAtCost: true } }, { toolName: 'ap_explore_data', output: {} }] },
+        }
+        const messages = [user('build it'), assistant([taskPart])]
+
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(2)
+    })
+
+    it('bills the paid calls every researcher made inside deep research', () => {
+        const researchPart: PersistedAgentPart = {
+            type: PersistedAgentPartType.TOOL_CALL,
+            toolCallId: 'research-1',
+            toolName: 'ap_deep_research',
+            input: {},
+            status: PersistedToolCallStatus.COMPLETED,
+            output: { tasks: [], billedToolCalls: [{ toolName: 'ap_scrape_url', output: {} }, { toolName: 'ap_scrape_url', output: {} }, { toolName: 'ap_fetch_url', output: {} }] },
+        }
+        const messages = [user('compare them'), assistant([researchPart])]
+
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(2)
+    })
+
+    it('never bills inner calls reported by a tool that is not a task', () => {
+        const connectedPart: PersistedAgentPart = {
+            type: PersistedAgentPartType.TOOL_CALL,
+            toolCallId: 'mcp-1',
+            toolName: 'mcp__attio__list_records',
+            input: {},
+            status: PersistedToolCallStatus.COMPLETED,
+            output: { billedToolCalls: [{ toolName: 'ap_execute_action', output: {} }, { toolName: 'ap_web_search', output: {} }] },
+        }
+        const messages = [user('list them'), assistant([connectedPart])]
+
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
+    })
+
     it('bills nothing when every billable call errored', () => {
         const messages = [
             user('do it'),

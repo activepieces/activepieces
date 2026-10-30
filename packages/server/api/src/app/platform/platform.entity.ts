@@ -95,6 +95,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        auditLogRetentionDays: {
+            type: Number,
+            nullable: true,
+        },
     },
     indices: [
         {

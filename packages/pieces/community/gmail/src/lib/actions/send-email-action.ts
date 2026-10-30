@@ -1,7 +1,7 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
-import Mail, { Attachment } from 'nodemailer/lib/mailer';
+import Mail from 'nodemailer/lib/mailer';
 import { gmailAuth, createGoogleClient, getUserEmail } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { sendEmailActionOutputSchema } from '../output-schemas';
@@ -184,7 +184,7 @@ export const gmailSendEmailAction = createAction({
     }
 
     if (attachments && attachments.length > 0) {
-      const attachmentOption: Attachment[] = attachments.map(
+      const attachmentOption: Mail.Attachment[] = attachments.map(
         ({ file, name }) => {
           const lookupResult = mime.lookup(
             file.extension ? file.extension : ''

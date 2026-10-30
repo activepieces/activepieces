@@ -13,6 +13,15 @@ export const createChannelAction = createAction({
   audience: 'human',
   aiMetadata: { description: 'Create a new public or private channel with the given name. Not idempotent: calling again with a name that already exists fails with a name-taken error rather than reusing the existing channel. Channel names are normalized by Slack (lowercased, spaces to hyphens).', idempotent: false },
   outputSchema: channelResponseOutputSchema,
+  propertyGroups: [
+    {
+      key: 'new_channel',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['channelName', 'isPrivate'],
+    },
+  ],
   props: {
     channelName: Property.ShortText({
       displayName: 'Channel Name',

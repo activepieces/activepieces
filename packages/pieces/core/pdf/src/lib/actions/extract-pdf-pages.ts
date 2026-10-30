@@ -91,6 +91,10 @@ export const extractPdfPages = createAction({
       required: true,
     }),
   },
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Source', icon: 'file', props: ['file'] },
+    { key: 'pages', display: 'section', label: 'Pages', icon: 'filter', props: ['markdown', 'pageRanges'] },
+  ],
   async run(context) {
     try {
       const srcDoc = await PDFDocument.load(context.propsValue.file.data as any);

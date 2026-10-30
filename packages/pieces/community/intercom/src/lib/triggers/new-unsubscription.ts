@@ -10,12 +10,12 @@ export const newUnsubscriptionTrigger = createTrigger({
 	description: 'Triggers when a contact unsubscribes from your emails.',
 	aiMetadata: {
 		description:
-			'Fires when a contact unsubscribes from email in  Intercom. Outputs the contact that unsubscribed.',
+			'Fires when a contact unsubscribes from email in Intercom. Outputs the contact that unsubscribed.',
 	},
 	props: {},
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify(); 
 
 		if (!response.app?.id_code) {
@@ -27,11 +27,11 @@ export const newUnsubscriptionTrigger = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.contacts.search({
 			query: {

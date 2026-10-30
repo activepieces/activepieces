@@ -25,7 +25,7 @@ const NumberEditor = () => {
     <div className="h-full relative w-full">
       <div
         className={cn('h-full flex items-center gap-2', {
-          'border-2 border-primary': isEditing,
+          'border-2 border-accent-9': isEditing,
           'border-transparent': !isEditing,
         })}
       >
@@ -53,7 +53,7 @@ const NumberEditor = () => {
               'flex-1 h-full min-w-0',
               'border-none text-sm px-2',
               'focus:outline-hidden',
-              'placeholder:text-muted-foreground',
+              'placeholder:text-gray-11',
             )}
             autoComplete="off"
           />

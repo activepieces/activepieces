@@ -25,6 +25,10 @@ export const unzipFile = createAction({
   description: 'Extract every file inside a zip archive.',
   aiMetadata: { description: 'Extracts every file entry from a zip archive, writing each one out as its own file; supports password-protected archives. Use it to reach the contents of a zip attachment before processing them; use Zip Files for the reverse direction. Set Max Files to throw when an untrusted archive exceeds that entry count; directory entries are skipped, a wrong or missing password makes extraction fail, and the source archive is unchanged, so it is idempotent.', idempotent: true },
   outputSchema: unzipFileActionOutputSchema,
+  propertyGroups: [
+    { key: 'archive', display: 'section', label: 'Archive', icon: 'paperclip', props: ['file'] },
+    { key: 'password', display: 'section', label: 'Password', icon: 'sliders', props: ['usePassword', 'passwordOptions'] },
+  ],
   props: {
     file: Property.File({
       displayName: 'Zip File',

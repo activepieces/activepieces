@@ -77,7 +77,7 @@ export const newDealTrigger = createTrigger({
 	name: 'new-deal',
 	classification: 'READ',
 	displayName: 'New Deal',
-	description: 'Trigger when a new deal is added.',
+	description: 'Triggers when a new deal is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new deal is created in HubSpot. Each event represents one deal record with properties such as deal name, type, amount, close date, owner, forecast, and associated contacts. Polls for deals by creation date; does not fire on updates to existing deals.',
@@ -85,15 +85,13 @@ export const newDealTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                        
-					dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-                            
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.DEAL,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},

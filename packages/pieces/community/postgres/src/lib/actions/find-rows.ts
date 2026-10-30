@@ -15,23 +15,40 @@ export const findRows = createAction({
     description: 'Reads rows from a PostgreSQL table, optionally narrowed by a SQL WHERE condition and limited to specific columns. Use to look up or filter records by arbitrary criteria. Returns at most 100 rows unless limit is raised or cleared. The condition is interpolated raw into the query, so pass dynamic values through the args array and reference them as $1, $2 placeholders to avoid SQL injection. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'rows',
+      display: 'section',
+      label: 'Rows to find',
+      icon: 'filter',
+      props: ['markdown', 'table', 'condition', 'args'],
+    },
+    {
+      key: 'result',
+      display: 'section',
+      label: 'What to return',
+      icon: 'sliders',
+      props: ['columns', 'limit'],
+    },
+  ],
   props: {
     markdown: warningMarkdown,
     table: postgresCommon.table,
     condition: Property.ShortText({
       displayName: 'Condition',
-      description: 'SQL condition without the WHERE keyword, such as `status = $1 AND age > $2`. Leave empty to read every row.',
+      description: 'The SQL after WHERE. Leave empty to read every row.',
+      placeholder: 'status = $1 AND age > $2',
       required: false,
     }),
     args: Property.Array({
       displayName: 'Arguments',
-      description: 'Values for the $1, $2, ... placeholders used in the condition.',
+      description: 'Values for $1, $2 and so on in the condition, in order.',
       required: false,
     }),
     columns: postgresCommon.columns,
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'The maximum number of rows to return. Raise it to read more, or clear the field to return every matching row.',
+      description: 'Maximum rows to return. Clear it to return every matching row.',
       required: false,
       defaultValue: 100,
     }),

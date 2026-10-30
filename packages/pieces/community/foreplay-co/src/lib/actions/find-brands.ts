@@ -1,56 +1,37 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { foreplayCoApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { findBrands as findBrandsProperties } from '../properties';
-import { findBrandsSchema } from '../schemas';
-import { foreplayCoAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { foreplayCoAuth } from '../auth';
+import { foreplayClient } from '../common/client';
+import { foreplayMappers } from '../common/mappers';
+import { foreplayOutputSchemas } from '../common/output-schemas';
+import { foreplayProps } from '../common/props';
 
-export const findBrands = createAction({
+const findBrands = createAction({
+  auth: foreplayCoAuth,
   name: 'findBrands',
   classification: 'SEARCH',
   displayName: 'Find Brands',
-  description: 'Search for brands by name with fuzzy matching.',
-  audience: 'both',
-  aiMetadata: { description: 'Search the Foreplay brand directory by name using fuzzy matching, returning matching brands. Use to resolve a brand name to its Foreplay brand record (e.g. to discover a brand ID before fetching its ads). Requires a query string; read-only, so repeating the call is safe.', idempotent: true },
-  props: findBrandsProperties(),
-  auth: foreplayCoAuth,
+  description: 'Search for brands by name. Costs 1 Foreplay credit per search.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Search Foreplay brands by name and return raw brand objects with their IDs and Facebook page IDs. Costs 1 credit per call.',
+    idempotent: true,
+  },
+  outputSchema: foreplayOutputSchemas.rawBrands,
+  props: {
+    query: Property.ShortText({ displayName: 'Brand Name', description: 'Brand name to search for, e.g. Nike.', required: true }),
+    limit: Property.Number({ displayName: 'Limit', description: 'Number of brands to return (1 to 100).', required: false, defaultValue: 10 }),
+  },
   async run({ auth, propsValue }) {
-    // Validate props using Zod schema
-    const validation = findBrandsSchema.safeParse(propsValue);
-    if (!validation.success) {
-      throw new Error(`Validation failed: ${validation.error.message}`);
-    }
-
-    const values = propsValue;
-    const queryParams: Record<string, string> = {
-      query: String(values['query']),
-    };
-
-    // Add optional limit parameter if provided
-    if (values['limit']) {
-      queryParams['limit'] = String(values['limit']);
-    }
-
-    const response = await foreplayCoApiCall({
-      apiKey: auth,
-      method: HttpMethod.GET,
-      resourceUri: '/api/discovery/brands',
-      queryParams,
+    const response = await foreplayClient.request({
+      auth,
+      path: '/api/discovery/brands',
+      query: {
+        query: foreplayProps.requiredText({ value: propsValue.query, label: 'Brand Name' }),
+        limit: foreplayProps.parseInteger({ value: propsValue.limit, label: 'Limit', min: 1, max: 100 }),
+      },
     });
-
-    const responseBody = response.body;
-
-    // Check if the response is successful
-    if (responseBody.metadata && responseBody.metadata.success === true) {
-      // Return just the brands data for clean automation workflows
-      return responseBody.data;
-    } else {
-      // Handle error responses by throwing an error
-      const errorMessage =
-        responseBody.error ||
-        responseBody.metadata?.message ||
-        'Failed to find brands';
-      throw new Error(`Foreplay.co API Error: ${errorMessage}`);
-    }
+    return foreplayMappers.listOf(response.body);
   },
 });
+
+export { findBrands };

@@ -139,7 +139,7 @@ function VariablesPage() {
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-2 min-w-0">
-            <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
+            <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-accent-3 text-accent-11">
               <Variable className="w-4 h-4" />
             </div>
             <span className="font-mono text-sm truncate">
@@ -197,7 +197,7 @@ function VariablesPage() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   disabled={!canWrite}
-                  className="text-destructive focus:text-destructive"
+                  className="text-danger-11 focus:text-danger-11"
                   onSelect={(e) => {
                     e.preventDefault();
                     setDeleting(row.original);
@@ -241,7 +241,7 @@ function VariablesPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-destructive hover:text-destructive"
+                  className="text-danger-11 hover:text-danger-11"
                   disabled={!canWrite}
                   onClick={() => setShowBulkDeleteDialog(true)}
                 >

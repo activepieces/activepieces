@@ -176,11 +176,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
 
               <div className="flex flex-col gap-8 min-w-0">
                 <div className="flex flex-row justify-center gap-3 min-w-0">
-                  <Button
-                    onClick={handleUseTemplate}
-                    size="xl"
-                    className="flex-1"
-                  >
+                  <Button onClick={handleUseTemplate} className="flex-1">
                     {t('Use Template')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -188,7 +184,6 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                     <Button
                       variant="outline"
                       onClick={handleUseWithGuide}
-                      size="xl"
                       className="flex-1"
                     >
                       {t('Setup guide')}
@@ -201,7 +196,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                   <span className="text-sm font-medium">
                     {t('About this template')}
                   </span>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-gray-11 leading-relaxed">
                     {template.description}
                   </p>
                 </div>
@@ -259,7 +254,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
 
           <div
             ref={canvasContainerRef}
-            className="bg-muted/30 h-full w-full relative overflow-hidden border-l"
+            className="bg-gray-2 h-full w-full relative overflow-hidden border-l"
           >
             {mockFlow && renderKey > 0 ? (
               <div key={renderKey} className="h-full w-full">
@@ -288,9 +283,9 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                 </ReactFlowProvider>
               </div>
             ) : mockFlow ? (
-              <div className="text-muted-foreground text-sm flex items-center justify-center h-full" />
+              <div className="text-gray-11 text-sm flex items-center justify-center h-full" />
             ) : (
-              <div className="text-muted-foreground text-sm flex items-center justify-center h-full">
+              <div className="text-gray-11 text-sm flex items-center justify-center h-full">
                 {t('No flow preview available')}
               </div>
             )}

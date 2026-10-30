@@ -30,8 +30,8 @@ import {
   OutcomeCardBlock,
 } from '../lib/message-blocks';
 import {
-  ConnectionPickerData,
   getTextFromParts,
+  isConnectionPickerData,
   parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
@@ -45,6 +45,7 @@ import { CopyIconButton } from './copy-icon-button';
 import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
+import { LiveReasoning } from './live-reasoning';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { DocumentPreview } from './previews/document-preview';
 import { markdownPreviewComponents } from './previews/markdown-preview-components';
@@ -53,12 +54,13 @@ import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
 import { ShowcaseCard } from './showcase-card/showcase-card';
 import { ShowcaseTileData } from './showcase-card/showcase-tile';
+import { SubagentGroup } from './subagent-card';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
 const PROSE_CLASSES = 'max-w-none break-words';
 
 const ACTION_BUTTON_CLASS =
-  'flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
+  'flex h-6 w-6 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8';
 
 const EMPTY_BUILD_IDS: ReadonlySet<string> = new Set();
 
@@ -142,7 +144,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           {!isStreaming && sources.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-2">
               <motion.span
-                className="text-xs text-muted-foreground"
+                className="text-xs text-gray-11"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
@@ -162,7 +164,7 @@ export const AssistantMessage = memo(function AssistantMessage({
                     {source.href ? (
                       <Source href={source.href} title={source.title} />
                     ) : (
-                      <span className="inline-flex items-center rounded-full border bg-muted/50 px-2.5 py-1 text-xs text-foreground/80">
+                      <span className="inline-flex items-center rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs text-gray-12/80">
                         {source.title}
                       </span>
                     )}
@@ -194,7 +196,7 @@ export const AssistantMessage = memo(function AssistantMessage({
                       onClick={() => (isSpeaking ? stop() : speak(fullText))}
                       className={cn(
                         ACTION_BUTTON_CLASS,
-                        isSpeaking && 'text-foreground',
+                        isSpeaking && 'text-gray-12',
                       )}
                     >
                       {isSpeaking ? (
@@ -279,9 +281,7 @@ function MessageBlocks({
               !hasSkeletonAfter &&
               !hasBuildAfter;
             const lastStep =
-              block.steps.length > 0
-                ? block.steps[block.steps.length - 1]
-                : null;
+              block.steps.findLast((step) => step.kind !== 'reasoning') ?? null;
             // Collapsed view = ONLY the last segment: the last thought and the
             // tools after it. Earlier segments live in the expanded accordion.
             // The thought lives in the first tool's `description`, so derive the
@@ -300,8 +300,11 @@ function MessageBlocks({
               lastThinkingStatus ??
               lastSegmentToolSteps[0]?.part.toolCallId ??
               'segment';
+            const isLive = isMessageStreaming && !isAccordionOpen;
+            const showLiveReasoning =
+              isLive && block.trailingReasoningText.length > 0;
             const showLiveGroup =
-              isMessageStreaming && !isAccordionOpen && Boolean(lastStep);
+              isLive && Boolean(lastStep) && !showLiveReasoning;
             return (
               <div
                 key={`thinking-${i}`}
@@ -309,7 +312,6 @@ function MessageBlocks({
               >
                 <ThinkingBlock
                   thinkingSteps={block.steps}
-                  reasoningText={block.reasoningText}
                   isStreaming={isMessageStreaming}
                   thinkingDurationMs={
                     i === lastThinkingIdx
@@ -347,6 +349,14 @@ function MessageBlocks({
                         lastThinkingStatus={lastThinkingStatus}
                       />
                     </motion.div>
+                  )}
+                </AnimatePresence>
+                <AnimatePresence initial={false}>
+                  {showLiveReasoning && (
+                    <LiveReasoning
+                      key="live-reasoning"
+                      text={block.trailingReasoningText}
+                    />
                   )}
                 </AnimatePresence>
               </div>
@@ -397,6 +407,15 @@ function MessageBlocks({
             }
             return null;
           }
+          case 'tasks':
+            return (
+              <SubagentGroup
+                key={`tasks-${block.tasks[0]?.toolCallId ?? i}`}
+                tasks={block.tasks}
+                toolCallMeta={toolCallMeta}
+                isStreaming={isStreaming}
+              />
+            );
           case 'batch-progress':
             return (
               <div key={`batch-${i}`} className="py-2">
@@ -407,7 +426,7 @@ function MessageBlocks({
             return (
               <div
                 key={`memory-${i}`}
-                className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground"
+                className="flex items-center gap-1.5 py-1 text-xs text-gray-11"
               >
                 <Brain className="h-3.5 w-3.5 shrink-0" />
                 <span className="shrink-0">{t('Memory updated')}</span>
@@ -531,7 +550,7 @@ function CardGroup({
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex w-full items-center gap-1.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-full items-center gap-1.5 text-left text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
           <span>{t('chatOutcomeCount', { count: cards.length })}</span>
           <ChevronDown
@@ -572,15 +591,18 @@ function DisplayToolCard({
   const data = part.input as Record<string, unknown>;
   const toolName = chatPartUtils.getToolPartName(part);
   const parsedOutput = chatPartUtils.parseToolOutput(part);
+  if (parsedOutput.state === 'error') return null;
   const toolOutput =
     parsedOutput.state === 'success'
       ? (parsedOutput.data as Record<string, unknown>)
       : undefined;
   const toolCallId = chatPartUtils.getToolCallId(part);
+  if (toolOutput?.['notShown'] === true) return null;
 
   switch (toolName) {
     case 'ap_show_connection_required':
     case 'ap_show_connection_picker': {
+      if (!isConnectionPickerData(data)) return null;
       if (!isInteractive && toolOutput?.['dismissed'] === true) return null;
       const selectedLabel =
         typeof toolOutput?.['label'] === 'string'
@@ -588,7 +610,7 @@ function DisplayToolCard({
           : undefined;
       return (
         <ConnectionPickerCard
-          picker={data as unknown as ConnectionPickerData}
+          picker={data}
           onResolve={(payload) => onResolve(toolCallId, payload)}
           isInteractive={isInteractive}
           selectedConnectionLabel={selectedLabel}
@@ -663,7 +685,7 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%] bg-muted rounded-2xl rounded-br-md px-4 py-3 space-y-3">
+      <div className="max-w-[80%] bg-gray-3 rounded-xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
           <div key={i} className="space-y-0.5">
             <p className="text-sm font-semibold">

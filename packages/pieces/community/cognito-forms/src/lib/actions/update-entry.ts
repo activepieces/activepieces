@@ -1,35 +1,37 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
 import { cognitoFormsAuth } from '../auth';
-import { formFields, formIdDropdown } from '../common/props';
+import { cognitoRequest } from '../common/client';
+import { entryPath, stripEmptyValues } from '../common/entries';
+import { entryIdText, formIdDropdown, updateFormFields } from '../common/props';
 
 export const updateEntryAction = createAction({
   auth: cognitoFormsAuth,
   name: 'update_entry',
   classification: 'WRITE',
   displayName: 'Update Entry',
-  description: 'Update an existing entry.',
-  audience: 'both',
-  aiMetadata: { description: 'Updates an existing entry in a Cognito Forms form, identified by its entry ID, applying the provided field values. Choose this when you already have the entry ID and want to modify its data rather than create a new one. Idempotent: repeating with the same field values leaves the entry in the same state.', idempotent: true },
+  description: 'Updates an existing entry. Fields you leave empty keep their current value.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Updates an existing Cognito Forms entry by entry ID with the fields filled in; empty fields are left unchanged. Idempotent: repeating with the same values leaves the entry in the same state.',
+    idempotent: true,
+  },
   props: {
     formId: formIdDropdown,
-    entryId: Property.ShortText({
-      displayName: 'Entry ID',
-      required: true,
-      description: 'Enter the ID of the entry you want to update.',
-    }),
-    entryData: formFields,
+    entryId: entryIdText('The entry number (for example 12) or the full entry ID (for example 5-12). You can map it from a trigger or a "Create Entry" step.'),
+    entryData: updateFormFields,
   },
   async run(context) {
-    const apiKey = context.auth;
     const { formId, entryId, entryData } = context.propsValue;
-
-    return await makeRequest(
-      apiKey,
-      HttpMethod.PATCH,
-      `/forms/${formId}/entries/${entryId}`,
-      entryData
-    );
+    const body = stripEmptyValues(entryData);
+    if (Object.keys(body).length === 0) {
+      throw new Error('Fill in at least one field to update.');
+    }
+    return cognitoRequest<unknown>({
+      apiKey: context.auth.secret_text,
+      method: HttpMethod.PATCH,
+      path: entryPath({ formId: formId, entryId: entryId }),
+      body,
+    });
   },
 });

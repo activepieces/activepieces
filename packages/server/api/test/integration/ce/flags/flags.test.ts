@@ -27,6 +27,7 @@ describe('Flags API', () => {
             expect(typeof body.ENVIRONMENT).toBe('string')
             expect(body).toHaveProperty('WEBHOOK_URL_PREFIX')
             expect(typeof body.WEBHOOK_URL_PREFIX).toBe('string')
+            expect(body).not.toHaveProperty('EMBED_SUBDOMAIN_URL')
         })
     })
 })

@@ -1,6 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { podioApiCall } from './common/client';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { PODIO_API_URL, podioApiCall } from './common/client';
 import { validateAuthData } from './common/auth';
 
 export const podioAuth = PieceAuth.OAuth2({
@@ -9,6 +9,19 @@ export const podioAuth = PieceAuth.OAuth2({
       tokenUrl: 'https://podio.com/oauth/token',
       required: true,
       scope: ['global:read', 'global:write'],
+      getConnectionIdentifier: async ({ auth }) => {
+        try {
+          const response = await httpClient.sendRequest<PodioUserStatus>({
+            method: HttpMethod.GET,
+            url: `${PODIO_API_URL}/user/status`,
+            headers: { Authorization: `Bearer ${auth.access_token}` },
+            timeout: 5000,
+          });
+          return response.body?.user?.mail || response.body?.profile?.name || undefined;
+        } catch {
+          return undefined;
+        }
+      },
       validate: async ({ auth }) => {
         try {
           const validation = validateAuthData(auth);
@@ -43,3 +56,5 @@ export const podioAuth = PieceAuth.OAuth2({
         }
       },
     });
+
+type PodioUserStatus = { user?: { mail?: string }; profile?: { name?: string } };

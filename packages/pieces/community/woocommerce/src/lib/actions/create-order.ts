@@ -22,6 +22,29 @@ export const wooCreateOrder = createAction({
   },
   auth: wooAuth,
   outputSchema: createOrderOutputSchema,
+  propertyGroups: [
+    {
+      key: 'items',
+      display: 'section',
+      label: 'Products',
+      icon: 'inbox',
+      props: ['line_items'],
+    },
+    {
+      key: 'order',
+      display: 'section',
+      label: 'Order',
+      icon: 'user',
+      props: ['customer_id', 'status'],
+    },
+    {
+      key: 'payment',
+      display: 'section',
+      label: 'Payment',
+      icon: 'send',
+      props: ['billing_email', 'payment_method', 'payment_method_title'],
+    },
+  ],
   props: {
     line_items: Property.Array({
       displayName: 'Line Items',
@@ -30,6 +53,8 @@ export const wooCreateOrder = createAction({
       properties: {
         product_id: Property.ShortText({
           displayName: 'Product ID',
+          description: 'Find it in WooCommerce under Products.',
+          placeholder: '123',
           required: true,
         }),
         quantity: Property.Number({
@@ -42,15 +67,18 @@ export const wooCreateOrder = createAction({
     customer_id: Property.ShortText({
       displayName: 'Customer ID',
       description: 'Leave empty for a guest order',
+      placeholder: '123',
+      width: 'half',
       required: false,
     }),
     status: Property.StaticDropdown({
       displayName: 'Status',
-      description: 'Status the order is created with',
+      description: 'Status the order starts with.',
+      width: 'half',
       required: false,
       options: {
         options: [
-          { label: 'Pending', value: 'pending' },
+          { label: 'Pending payment', value: 'pending' },
           { label: 'Processing', value: 'processing' },
           { label: 'On hold', value: 'on-hold' },
           { label: 'Completed', value: 'completed' },
@@ -59,18 +87,22 @@ export const wooCreateOrder = createAction({
     }),
     billing_email: Property.ShortText({
       displayName: 'Billing Email',
-      description: 'Email address for the order',
+      description: 'Where WooCommerce sends the order emails.',
+      placeholder: 'jane@example.com',
       required: false,
     }),
     payment_method: Property.ShortText({
       displayName: 'Payment Method ID',
-      description:
-        'Payment gateway id the order is associated with, e.g. bacs, cheque or cod',
+      description: 'Gateway ID, e.g. bacs, cheque or cod.',
+      placeholder: 'bacs',
+      width: 'half',
       required: false,
     }),
     payment_method_title: Property.ShortText({
       displayName: 'Payment Method Title',
-      description: 'Human-readable payment method, e.g. Direct bank transfer',
+      description: 'Name the customer sees, e.g. Direct bank transfer.',
+      placeholder: 'Direct bank transfer',
+      width: 'half',
       required: false,
     }),
   },

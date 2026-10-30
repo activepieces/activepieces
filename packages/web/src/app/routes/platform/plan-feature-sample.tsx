@@ -2,7 +2,10 @@ import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import React from 'react';
 
 import { FeatureSample } from '@/app/components/feature-sample';
-import { FeatureTeaserProps } from '@/app/components/feature-teaser';
+import {
+  FeatureTeaser,
+  FeatureTeaserProps,
+} from '@/app/components/feature-teaser';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export function PlanFeatureSample({
@@ -27,6 +30,16 @@ export function PlanFeatureSample({
   );
 }
 
+export function PlanFeatureGuard({
+  feature,
+  children,
+}: PlanFeatureSampleProps) {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { isLocked, teaser } = PLAN_FEATURE_SAMPLES[feature];
+
+  return isLocked(platform.plan) ? <FeatureTeaser {...teaser} /> : children;
+}
+
 const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
   sso: {
     isLocked: (plan) => !plan.ssoEnabled,
@@ -42,9 +55,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.projectRolesEnabled,
     teaser: {
       featureKey: 'CUSTOM_ROLES',
-      title: 'Enable Custom Roles',
+      title: 'Enable Roles & Access',
       description:
-        'Define custom roles and permissions to control what your team members can access and modify',
+        'Create custom roles, set default projects for new members, and choose whether they get a personal project.',
       tier: 'team',
     },
   },
@@ -110,8 +123,10 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       featureKey: 'EVENT_DESTINATIONS',
       title: 'Unlock Event Streaming',
       description:
-        'Forward every audit event we emit to a webhook, then handle it in a flow.',
+        'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
       tier: 'enterprise',
+      documentationUrl:
+        'https://www.activepieces.com/docs/admin-guide/guides/event-streaming',
     },
   },
   aiProviders: {

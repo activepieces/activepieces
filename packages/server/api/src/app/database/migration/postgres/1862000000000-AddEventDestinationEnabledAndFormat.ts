@@ -1,0 +1,24 @@
+import { QueryRunner } from 'typeorm'
+import { Migration } from '../../migration'
+
+export class AddEventDestinationEnabledAndFormat1862000000000 implements Migration {
+    name = 'AddEventDestinationEnabledAndFormat1862000000000'
+    breaking = false
+    release = '0.93.0'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            ALTER TABLE "event_destination"
+            ADD COLUMN IF NOT EXISTS "enabled" boolean NOT NULL DEFAULT true,
+            ADD COLUMN IF NOT EXISTS "format" character varying NOT NULL DEFAULT 'RAW'
+        `)
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            ALTER TABLE "event_destination"
+            DROP COLUMN IF EXISTS "enabled",
+            DROP COLUMN IF EXISTS "format"
+        `)
+    }
+}

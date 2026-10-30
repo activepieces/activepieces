@@ -19,7 +19,7 @@ describe('codeExecutor', () => {
         expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
     })
 
-    it('should execute a legacy step (useDeno unset) from the compiled index.js artifact', async () => {
+    it('should execute a legacy step (useDeno explicitly false) from the compiled index.js artifact', async () => {
         const result = await codeExecutor.handle({
             action: buildCodeAction({
                 name: 'echo_step_legacy',

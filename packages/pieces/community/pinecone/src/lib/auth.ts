@@ -1,4 +1,5 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { AppConnectionType, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
+import { pineconeClient } from './common/client';
 
 export const pineconeAuth = PieceAuth.CustomAuth({
   description: 'Configure your Pinecone API key',
@@ -11,31 +12,15 @@ export const pineconeAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    try {
-      const { apiKey } = auth;
-      
-      if (!apiKey || typeof apiKey !== 'string') {
-        return {
-          valid: false,
-          error: 'API key is required'
-        };
-      }
-
-      if (apiKey.length < 10) {
-        return {
-          valid: false,
-          error: 'API key appears to be too short. Please check your Pinecone API key.'
-        };
-      }
-
-      return {
-        valid: true
-      };
-    } catch (error) {
+    const { error } = await tryCatch(() =>
+      pineconeClient.create({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }).indexes.list(),
+    );
+    if (error) {
       return {
         valid: false,
-        error: 'Invalid authentication configuration'
+        error: 'Could not connect to Pinecone. Check that the API key is correct and belongs to the target project.',
       };
     }
-  }
+    return { valid: true };
+  },
 });

@@ -128,7 +128,7 @@ export function EditableCell({
           : cn(
               'h-full flex items-center justify-between gap-2  focus:outline-hidden  ',
               'group cursor-pointer border',
-              isSelected && !locked ? 'border-primary' : 'border-transparent',
+              isSelected && !locked ? 'border-accent-9' : 'border-transparent',
               locked && 'locked-row',
               !isDropdown && 'pl-2 py-2',
             )

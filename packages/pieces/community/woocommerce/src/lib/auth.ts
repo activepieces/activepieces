@@ -17,18 +17,20 @@ export const wooAuth = PieceAuth.CustomAuth({
   props: {
     baseUrl: Property.ShortText({
       displayName: 'Base URL',
-      description:
-        'The base URL of your app (e.g https://mystore.com) and it should start with HTTPS only',
+      description: "Your store's address. It must start with https://.",
+      placeholder: 'https://mystore.com',
       required: true,
     }),
     consumerKey: Property.ShortText({
       displayName: 'Consumer Key',
-      description: 'The consumer key generated from your app',
+      description:
+        'Starts with ck_. Created under Settings > Advanced > REST API.',
+      placeholder: 'ck_...',
       required: true,
     }),
     consumerSecret: PieceAuth.SecretText({
       displayName: 'Consumer Secret',
-      description: 'The consumer secret generated from your app',
+      description: 'Starts with cs_. WooCommerce shows it only once.',
       required: true,
     }),
   },

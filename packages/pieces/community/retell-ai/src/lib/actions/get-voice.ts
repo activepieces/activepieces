@@ -1,8 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { retellAiApiCall } from '../common/client';
+import { createAction } from '@activepieces/pieces-framework';
 import { retellAiAuth } from '../common/auth';
+import { apiKeyOf, retellApiCall } from '../common/client';
+import { retellInput } from '../common/input';
 import { voiceIdDropdown } from '../common/props';
+import { retellSchemas } from '../common/schemas';
 
 export const getVoice = createAction({
   auth: retellAiAuth,
@@ -10,22 +12,21 @@ export const getVoice = createAction({
   classification: 'READ',
   displayName: 'Get Voice',
   description: 'Retrieve details for a specific voice model or configuration by ID in Retell AI.',
-  audience: 'both',
-  aiMetadata: { description: 'Look up the details of a single Retell voice by its Voice ID, such as provider, accent, gender, and preview. Use to inspect a voice before assigning it to an agent. Read-only and idempotent.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description: 'Returns one Retell voice (provider, accent, gender, preview URL). Read-only.',
+    idempotent: true,
+  },
   props: {
     voiceId: voiceIdDropdown,
   },
+  outputSchema: retellSchemas.rawVoice,
   async run({ propsValue, auth }) {
-    const { voiceId } = propsValue;
-
-    if (!voiceId) {
-      throw new Error('Voice ID is required');
-    }
-
-    return await retellAiApiCall({
+    return retellApiCall({
+      apiKey: apiKeyOf(auth),
       method: HttpMethod.GET,
-      url: `/get-voice/${encodeURIComponent(voiceId)}`,
-      auth: auth,
+      path: `/get-voice/${retellInput.seg({ value: propsValue.voiceId, label: 'Voice ID' })}`,
+      retryRateLimit: true,
     });
   },
 });

@@ -1,37 +1,38 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { revokeBadgeFromMember } from '../api';
-import { buildBadgesDropdown } from '../props';
+import { bindTokenStore } from '../common/client';
 import { bettermodeAuth } from '../auth';
+import { bettermodeInput } from '../common/input';
+import { bettermodeOps } from '../common/operations';
+import { badgesDropdown } from '../common/props';
+import { bettermodeSchemas } from '../common/schemas';
 
 export const revokeBadgeAction = createAction({
   name: 'revoke_badge',
   classification: 'WRITE',
   auth: bettermodeAuth,
-  displayName: 'Revoke Badge from Member',
+  displayName: 'Revoke Badge From Member',
   description: 'Revoke a badge from a member by email',
-  audience: 'both',
-  aiMetadata: { description: 'Removes a Bettermode badge (by badge ID) from the member resolved from the given email address. The email must match a network member, or the call fails. Idempotent: the member ends up without the badge regardless of how many times it is called.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description: 'Removes a badge from the member whose email matches exactly. Agents should use Find Member by Email and Revoke Badge from Member instead. Fails when no member has that exact email.',
+    idempotent: false,
+  },
   props: {
-    badgeId: Property.Dropdown({
-      auth: bettermodeAuth,
-      displayName: 'Badge',
-      description: 'The badge to revoke',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) =>
-        await buildBadgesDropdown(auth?.props),
-    }),
+    badgeId: badgesDropdown,
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'The email of the member to revoke the badge from',
+      description: 'The exact email of the member. The connected account must be an admin to look members up by email.',
       required: true,
     }),
-  },  
+  },
+  outputSchema: bettermodeSchemas.legacyBadgeAction,
   async run(context) {
-    return await revokeBadgeFromMember(
-      context.auth.props,
-      context.propsValue.badgeId,
-      context.propsValue.email
-    );
+    bindTokenStore({ credentials: context.auth.props, store: context.store });
+    const auth = context.auth.props;
+    const badgeId = bettermodeInput.requireText({ value: context.propsValue.badgeId, label: 'Badge' });
+    const email = bettermodeInput.email({ value: context.propsValue.email, label: 'Email' });
+    const member = await bettermodeOps.requireMemberByEmail({ auth, email });
+    const result = await bettermodeOps.changeBadge({ auth, operation: 'revokeBadge', badgeId, memberId: member.id });
+    return { ...result, member_name: member.name, member_email: member.email };
   },
 });

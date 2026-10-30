@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { posthogAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { posthogAuth } from '../auth';
+import { posthogClient } from '../common/client';
+import { posthogOutputSchemas } from '../common/output-schemas';
 
 export const posthogListPersons = createAction({
   auth: posthogAuth,
@@ -9,11 +11,15 @@ export const posthogListPersons = createAction({
   displayName: 'List Persons',
   description: 'Get a list of identified users in your PostHog project',
   audience: 'both',
-  aiMetadata: { description: 'Lists identified users (persons) in the connected PostHog project; with an empty search it returns all persons up to the limit, or pass a search string to filter by email or name. Use to look up users or find a specific person before acting on them. Idempotent: a read-only lookup with no side effects.', idempotent: true },
+  aiMetadata: {
+    description: 'Lists persons (identified users) in the connected PostHog project, newest first, up to limit (1-100, default 100). search filters by email, name or distinct ID (partial match). Returns id (numeric), uuid, distinct_ids (comma separated), name, email, created_at. To look up one known distinct ID exactly, use Get Person instead. Read-only.',
+    idempotent: true,
+  },
+  outputSchema: posthogOutputSchemas.legacyPersons,
   props: {
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of persons to return (default: 100)',
+      description: 'Maximum number of persons to return, 1-100 (default: 100)',
       required: false,
       defaultValue: 100,
     }),
@@ -23,52 +29,26 @@ export const posthogListPersons = createAction({
       required: false,
     }),
   },
-  async run(context) {
-    const { personal_api_key, project_id, api_host } = context.auth.props;
-    const apiBase = api_host || 'https://us.posthog.com';
-
-    const queryParams: Record<string, string> = {
-      limit: String(context.propsValue.limit ?? 100),
-    };
-    if (context.propsValue.search) {
-      queryParams['search'] = context.propsValue.search;
-    }
-
-    const result = await httpClient.sendRequest<PersonsResponse>({
+  async run({ auth, propsValue }) {
+    const limit = posthogClient.parseInteger({ value: propsValue.limit, label: 'Limit', min: 1, max: 100, fallback: 100 });
+    const body = await posthogClient.request({
+      auth: auth.props,
       method: HttpMethod.GET,
-      url: `${apiBase}/api/projects/${project_id}/persons/`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: personal_api_key,
-      },
-      queryParams,
+      path: posthogClient.projectPath({ auth: auth.props, segments: ['persons'] }),
+      query: { limit, search: posthogClient.optionalText(propsValue.search) },
     });
-
-    return (result.body.results ?? []).map((person) => ({
-      id: person.id,
-      uuid: person.uuid,
-      distinct_ids: Array.isArray(person.distinct_ids) ? person.distinct_ids.join(', ') : null,
-      name: person.name ?? null,
-      email: (person.properties?.['email'] as string) ?? null,
-      created_at: person.created_at,
-      updated_at: person.updated_at ?? null,
-    }));
+    return posthogClient.arrayOf(posthogClient.recordOf(body)['results']).slice(0, limit).map((raw) => {
+      const person = posthogClient.recordOf(raw);
+      const ids = posthogClient.arrayOf(person['distinct_ids']).filter((d): d is string => typeof d === 'string');
+      return {
+        id: person['id'] ?? null,
+        uuid: posthogClient.str(person['uuid']),
+        distinct_ids: ids.length > 0 ? ids.join(', ') : null,
+        name: posthogClient.str(person['name']),
+        email: posthogClient.str(posthogClient.recordOf(person['properties'])['email']),
+        created_at: posthogClient.str(person['created_at']),
+        updated_at: posthogClient.str(person['updated_at']),
+      };
+    });
   },
 });
-
-type Person = {
-  id: number;
-  uuid: string;
-  distinct_ids: string[];
-  name?: string;
-  created_at: string;
-  updated_at?: string;
-  properties: Record<string, unknown>;
-};
-
-type PersonsResponse = {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Person[];
-};

@@ -20,6 +20,8 @@ export const findUserAction = createAction({
     props:{
         keyword:Property.ShortText({
             displayName:'Keyword',
+            description: 'Matches part of a name or email address.',
+            placeholder: 'jane@example.com',
             required:true,
         })
     },

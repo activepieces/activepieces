@@ -1,5 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { calcomAuth } from '../auth';
+import { calcomCommon } from '../common';
 import { calcomListEventTypes } from './list-event-types';
 import { calcomGetEventType } from './get-event-type';
 import { calcomCreateEventType } from './create-event-type';
@@ -53,10 +54,19 @@ export const actions = [
   calcomUpdateMyProfile,
   calcomListTeams,
   createCustomApiCallAction({
-    baseUrl: () => 'https://api.cal.com/v2',
+    baseUrl: () => calcomCommon.baseUrl,
     auth: calcomAuth,
     authMapping: async (auth) => ({
       Authorization: `Bearer ${auth.secret_text}`,
     }),
+    props: {
+      url: {
+        description: `Full URL, or a path relative to ${calcomCommon.baseUrl}`,
+        placeholder: '/me',
+      },
+      headers: {
+        description: `Add cal-api-version (${calcomCommon.versions.bookingsList} for /bookings). Auth is added for you.`,
+      },
+    },
   }),
 ];

@@ -16,6 +16,7 @@ export enum WorkerMachineType {
 export enum WorkerGroupScope {
     PLATFORM = 'platform',
     PROJECT = 'project',
+    FLOW = 'flow',
 }
 
 export enum NetworkMode {

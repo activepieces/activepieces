@@ -11,7 +11,7 @@ import { v8IsolateCodeSandbox } from '../../../src/lib/core/code/v8-isolate-code
 const SANDBOXES: SandboxUnderTest[] = [
     { name: 'noOp', sandbox: noOpCodeSandbox, wrap: (body) => `exports.code = async () => { ${body} }`, extension: 'js' },
     { name: 'v8Isolate', sandbox: v8IsolateCodeSandbox, wrap: (body) => `exports.code = async () => { ${body} }`, extension: 'js' },
-    { name: 'deno', sandbox: denoCodeSandbox([DenoPermission.NET]), wrap: (body) => `export const code = async () => { ${body} }`, extension: 'ts' },
+    { name: 'deno', sandbox: denoCodeSandbox({ permissions: [DenoPermission.NET], codeStepMemoryLimitMb: null }), wrap: (body) => `export const code = async () => { ${body} }`, extension: 'ts' },
 ]
 
 const CHILD_PROCESS_SANDBOXES = SANDBOXES.filter((entry) => entry.name !== 'v8Isolate')

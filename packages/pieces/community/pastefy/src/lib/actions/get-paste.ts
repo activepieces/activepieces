@@ -1,41 +1,26 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient } from '../common';
-import { pastefyAuth } from '../..';
-import CryptoJS from 'crypto-js';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { pastefyAiProps } from '../common/ai-props';
+import { pastefyAuth } from '../common/auth';
+import { pastefyOutputSchemas } from '../common/output-schemas';
+import { pastefyRequests } from '../common/requests';
 
 export default createAction({
   auth: pastefyAuth,
   name: 'get_paste',
   classification: 'READ',
   displayName: 'Get Paste',
-  description: 'Retrieves a paste',
+  description: 'Retrieves a paste.',
   audience: 'both',
-  aiMetadata: { description: 'Fetches a single paste by its ID from a Pastefy instance. Use to read the content/metadata of a known paste. If the paste is encrypted and an encryption password is provided, the content (and title) are AES-decrypted client-side. Read-only and idempotent.', idempotent: true },
-  props: {
-    paste_id: Property.ShortText({
-      displayName: 'Paste ID',
-      required: true,
-    }),
-    password: Property.ShortText({
-      displayName: 'Encryption Password',
-      description: 'Decrypts the paste with this password',
-      required: false,
-    }),
+  aiMetadata: {
+    description: 'Gets one paste by its 8-character ID: content, title, visibility, folder ID, tags, owner and raw URL. For an encrypted paste give the encryption password to get plain text (decrypted: true); a wrong password fails the step, and without one the content stays ciphertext. Read-only and idempotent. Works without an API key for public and unlisted pastes.',
+    idempotent: true,
   },
-  async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const password = context.propsValue.password;
-    const paste = await client.getPaste(context.propsValue.paste_id);
-    if (paste.encrypted && password) {
-      paste.content = CryptoJS.AES.decrypt(paste.content, password).toString(
-        CryptoJS.enc.Utf8
-      );
-      if (paste.title) {
-        paste.title = CryptoJS.AES.decrypt(paste.title, password).toString(
-          CryptoJS.enc.Utf8
-        );
-      }
-    }
-    return paste;
+  props: {
+    paste_id: pastefyAiProps.pasteId(),
+    password: Property.ShortText({ displayName: 'Encryption Password', description: 'Decrypts an encrypted paste with this password.', required: false }),
+  },
+  outputSchema: pastefyOutputSchemas.paste,
+  async run({ auth, propsValue }) {
+    return pastefyRequests.getPaste({ auth, pasteId: propsValue.paste_id, password: propsValue.password });
   },
 });

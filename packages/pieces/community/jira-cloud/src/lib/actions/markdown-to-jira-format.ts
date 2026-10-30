@@ -7,9 +7,9 @@ import { markdownToAdfOutputSchema } from '../output-schemas';
 export const markdownToJiraFormat = createAction({
   name: 'markdownToJiraFormat',
   classification: 'READ',
-  displayName: 'Markdown to Jira format',
+  displayName: 'Markdown to Jira Format',
   description:
-    "Convert Markdown-formatted text to Jira's ADF syntax for use in comments and descriptions etc",
+    'Converts Markdown to Jira rich text (ADF) for comments and fields.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -20,7 +20,8 @@ export const markdownToJiraFormat = createAction({
   outputSchema: markdownToAdfOutputSchema,
   props: {
     markdown: Property.LongText({
-      displayName: 'Markdown text',
+      displayName: 'Markdown',
+      placeholder: '**Bold**, _italic_ and - lists',
       required: true,
     }),
   },

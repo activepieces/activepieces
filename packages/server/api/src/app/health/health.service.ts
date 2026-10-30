@@ -1,6 +1,7 @@
 import { apVersionUtil, systemUsage, UNKNOWN_VERSION } from '@activepieces/server-utils'
 import { ActivepiecesError, ApEdition, apId, AppInstance, DeploymentConfig, ErrorCode, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, tryCatch, unique } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { backgroundMigrationRunner } from '../database/background-migration-runner'
 import { databaseConnection } from '../database/database-connection'
 import { redisConnections } from '../database/redis-connections'
 import { s3Helper } from '../file/s3-helper'
@@ -45,10 +46,11 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         return buildReleaseHealth(log, workerVersions)
     },
     getSystemHealthChecks: async (platformId: string): Promise<GetSystemHealthChecksResponse> => {
-        const [workers, databaseHealthy, latestVersion] = await Promise.all([
+        const [workers, databaseHealthy, latestVersion, backgroundMigrations] = await Promise.all([
             machineService(log).list(platformId),
             healthStatusService(log).checkDatabaseHealth(),
             apVersionUtil.getLatestRelease(),
+            backgroundMigrationRunner.getStatus(),
         ])
         const hasWorkers = workers.length > 0
         const release = buildReleaseHealth(log, workers.map(worker => worker.information.workerProps.version))
@@ -62,6 +64,7 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
             workerRam: hasWorkers ? workers.every(worker => worker.information.totalAvailableRamInBytes >= gigaBytes(WORKER_MIN_RAM_GB)) : null,
             database: databaseHealthy,
             release,
+            backgroundMigrations,
         }
     },
     collectDeploymentDiagnostics: async (): Promise<DeploymentDiagnostics> => {

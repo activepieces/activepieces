@@ -1,23 +1,27 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
+import { tarventCommon } from '../common';
+import { tarventOperations } from '../common/operations';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const generateCustomEvent = createAction({
   auth: tarventAuth,
   name: 'tarvent_generate_custom_event',
   classification: 'WRITE',
   displayName: 'Generate A Custom Event',
-  description: 'Generate a custom event in your Tarvent account.',
-  audience: 'both',
-  aiMetadata: { description: 'Fires a predefined custom event in Tarvent for a specific contact, which can drive journeys and automations listening for that event. Use to signal that a contact performed a tracked action. Not idempotent: each call emits another event occurrence.', idempotent: false },
+  description: 'Records a custom event for a contact in your Tarvent account.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Records a predefined Tarvent custom event (by its event key) for one contact (by contact ID); journeys and automations listening for that event can then run. Use Find Custom Event to get the key. Not idempotent: each call records another event occurrence.',
+    idempotent: false,
+  },
+  outputSchema: tarventOutputSchemas.customEventGenerated,
   props: {
-    customEventId: tarventCommon.customEventId(true, ''),
-    contactId: tarventCommon.contactId
+    customEventId: tarventCommon.customEventId(true, 'The custom event to record (its key is sent).'),
+    contactId: tarventCommon.contactId,
   },
   async run(context) {
-    const { customEventId, contactId } = context.propsValue;
-
-    const client = makeClient(context.auth);
-    return await client.generateCustomEvent(contactId,customEventId);
+    return tarventOperations.recordCustomEvent({ auth: context.auth.props, contactId: context.propsValue.contactId, eventKey: context.propsValue.customEventId });
   },
 });

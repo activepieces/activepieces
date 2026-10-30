@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
+import { findOrCreateLeadOutputSchema } from '../output-schemas';
 
 export const findOrCreateLeadAction = createAction({
 	auth: intercomAuth,
@@ -11,7 +12,7 @@ export const findOrCreateLeadAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Resolve a lead (role=lead prospect) to a single record: searches by email, Intercom ID, or external User ID and returns the match, or creates a new lead when none exists. Returns the lead plus a "created" flag. For signed-up users use Find User / Create User instead.',
+			'Resolve a lead (role=lead prospect) to a single record: searches by email, Intercom ID, or external User ID and returns the match, or creates a new lead when none exists. Returns the lead plus a "created" flag. For signed-up users use Get Contact or Create User instead.',
 		idempotent: true,
 	},
 	props: {
@@ -45,10 +46,11 @@ export const findOrCreateLeadAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: findOrCreateLeadOutputSchema,
 	async run(context) {
 		const { searchField, searchValue, name, phone, customAttributes } = context.propsValue;
 
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const existing = await client.contacts.search({
 			query: {

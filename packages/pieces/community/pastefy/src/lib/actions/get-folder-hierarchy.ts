@@ -1,23 +1,33 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastefyCommon } from '../common';
-import { pastefyAuth } from '../..';
+import { pastefyAuth } from '../common/auth';
+import { pastefyOutputSchemas } from '../common/output-schemas';
+import { pastefyProps } from '../common/props';
+import { pastefyRequests } from '../common/requests';
 
 export default createAction({
   auth: pastefyAuth,
   name: 'get_folder_hierarchy',
-  classification: 'SEARCH',
+  classification: 'READ',
   displayName: 'Get Folder Hierarchy',
-  description: 'Retrieves a hierarchy of all folders',
-  audience: 'both',
-  aiMetadata: { description: 'Retrieves the nested tree of folders on a Pastefy instance, recursively listing each folder and its children. Pass a start folder ID to scope the tree to that subtree, or omit it to walk from the root. Use to discover folder structure or resolve folder IDs by name. Read-only and idempotent.', idempotent: true },
-  props: {
-    parent_id: pastefyCommon.folder_id(false, 'Start Folder'),
+  description: 'Retrieves the tree of all your folders.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Returns the full nested folder tree of the account in one request, or the subtree under a start folder picked from a dropdown. Read-only and idempotent. Needs an API key in the Pastefy connection.',
+    idempotent: true,
   },
-  async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const hierarchy = await client.getFolderHierarchy(
-      context.propsValue.parent_id
-    );
-    return hierarchy;
+  props: {
+    parent_id: pastefyProps.folderDropdown({ required: false, displayName: 'Start Folder', description: 'Only return the folders inside this folder.' }),
+  },
+  outputSchema: pastefyOutputSchemas.folderTree,
+  async run({ auth, propsValue }) {
+    const tree = await pastefyRequests.folderTree({ auth });
+    if (!propsValue.parent_id) {
+      return tree;
+    }
+    const children = pastefyRequests.subtree({ tree, folderId: propsValue.parent_id });
+    if (children === null) {
+      throw new Error(`Folder ${propsValue.parent_id} was not found in your folders.`);
+    }
+    return children;
   },
 });

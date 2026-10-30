@@ -57,6 +57,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
                   initialValue={value}
                   disabled={disabled}
                   onChange={onChange}
+                  ariaLabel={t('Value')}
                 />
               )}
             />

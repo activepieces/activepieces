@@ -1,5 +1,5 @@
-import { apId, Metadata, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
-import { flowPieceUtil, FlowVersionTemplate, Template, TemplateStatus, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { apId, Metadata, spreadIfDefined } from '@activepieces/core-utils'
+import { FlowVersionTemplate, Template, TemplateStatus, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { TemplateEntity } from '../../template/template.entity'
 
@@ -27,10 +27,8 @@ export const platformTemplateService = () => ({
         }
         return templateRepo().save(newTemplate)
     },
-    async update({ id, params }: UpdateParams): Promise<Template> {
-        const { name, description, summary, tags, blogUrl, metadata, categories, flows, status } = params
-        const flow: FlowVersionTemplate | undefined = flows?.[0] ? sanitizeObjectForPostgresql(flows[0]) : undefined
-        const pieces = flow ? flowPieceUtil.getUsedPieces(flow.trigger) : undefined
+    async update({ id, params, flows, pieces }: UpdateParams): Promise<Template> {
+        const { name, description, summary, tags, blogUrl, metadata, categories, status } = params
         await templateRepo().update(id, {
             ...spreadIfDefined('name', name),
             ...spreadIfDefined('description', description),
@@ -66,4 +64,6 @@ type NewTemplate = Omit<Template, 'created' | 'updated'>
 type UpdateParams = {
     id: string
     params: UpdateTemplateRequestBody
+    flows: FlowVersionTemplate[] | undefined
+    pieces: string[] | undefined
 }

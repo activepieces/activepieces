@@ -94,6 +94,7 @@ export const DictionaryInput = ({
             value={key}
             disabled={disabled}
             placeholder={keyPlaceholder}
+            aria-label={t('Key')}
             className={cn('basis-[50%] max-w-[50%]', keyInputClassName)}
             onChange={(e) => onChangeValue(index, undefined, e.target.value)}
           />
@@ -109,6 +110,7 @@ export const DictionaryInput = ({
                 value={value}
                 disabled={disabled}
                 placeholder={valuePlaceholder}
+                aria-label={t('Value')}
                 onChange={(e) =>
                   onChangeValue(index, e.target.value, undefined)
                 }
@@ -119,12 +121,11 @@ export const DictionaryInput = ({
           <Button
             type="button"
             variant="outline"
-            size="icon"
-            className="size-8 shrink-0"
+            size="icon-sm"
             disabled={disabled}
             onClick={() => remove(index)}
           >
-            <TrashIcon className="size-4 text-destructive" aria-hidden="true" />
+            <TrashIcon className="size-4 text-danger-11" aria-hidden="true" />
             <span className="sr-only">{t('Remove')}</span>
           </Button>
         </div>

@@ -19,7 +19,7 @@ export const runTask = createAction({
   classification: 'WRITE',
   auth: apifyAuth,
   displayName: 'Run Task',
-  description: 'Runs an Actor task and returns all associated details.',
+  description: 'Runs a saved Actor task and, if you wait, returns its results.',
   audience: 'human',
   outputSchema: runTaskActionOutputSchema,
   aiMetadata: { description: 'Runs a saved Apify Actor task (an Actor pre-configured with stored input) by task ID, optionally overriding the input body and build/memory/timeout. Use this instead of Run Actor when the user has an existing configured task to execute; set waitForFinish to block until completion and retrieve dataset items. Not idempotent — each call launches a new task run.', idempotent: false },
@@ -29,8 +29,13 @@ export const runTask = createAction({
     build: createBuildProperty(),
     memory: createMemoryProperty(RunType.TASK),
     timeout: createTimeoutProperty(RunType.TASK),
-    waitForFinish: createWaitForFinishProperty(RunType.TASK)
+    waitForFinish: createWaitForFinishProperty()
   },
+  propertyGroups: [
+    { key: 'task', display: 'section', label: 'What to Run', icon: 'send', props: ['taskid'] },
+    { key: 'input', display: 'section', label: 'Input Changes', icon: 'code', props: ['input'] },
+    { key: 'result', display: 'section', label: 'Results', icon: 'inbox', props: ['waitForFinish'] },
+  ],
   async run(context) {
     const apifyToken = context.auth.props.apikey;
     const { input, taskid, timeout, build, memory, waitForFinish } = context.propsValue;

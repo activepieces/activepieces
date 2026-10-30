@@ -147,15 +147,16 @@ function main(): void {
   console.log('Finding pieces with translation changes compared to main...');
   
   const piecesWithChanges: string[] = [];
-  const piecesDir = 'packages/pieces/community';
   
   // Get all piece directories
-  const pieceDirs = getPieceDirectories(piecesDir);
+  const piecePaths = ['packages/pieces/community', 'packages/pieces/core'].flatMap(piecesDir =>
+    getPieceDirectories(piecesDir).map(piece => path.join(piecesDir, piece))
+  );
   
-  console.log(`Checking ${pieceDirs.length} pieces for changes...`);
+  console.log(`Checking ${piecePaths.length} pieces for changes...`);
   
-  for (const piece of pieceDirs) {
-    const piecePath = path.join(piecesDir, piece);
+  for (const piecePath of piecePaths) {
+    const piece = path.basename(piecePath);
     // Check if piece has changes compared to main
     if (hasChangesComparedToMain(piecePath)) {
       // Check if it has i18n directory (indicating translations were added)
@@ -166,7 +167,7 @@ function main(): void {
           if (hasVersionBeenBumped(piecePath)) {
             console.log(`  - ${piece} - has translation changes but version already bumped`);
           } else {
-            piecesWithChanges.push(piece);
+            piecesWithChanges.push(piecePath);
             console.log(`  ✓ ${piece} - has translation changes and needs version bump`);
           }
         } else {
@@ -193,8 +194,8 @@ function main(): void {
   let successCount = 0;
   let errorCount = 0;
   
-  for (const piece of piecesWithChanges) {
-    const packageJsonPath = path.join(piecesDir, piece, 'package.json');
+  for (const piecePath of piecesWithChanges) {
+    const packageJsonPath = path.join(piecePath, 'package.json');
     
     if (fs.existsSync(packageJsonPath)) {
       const result = updatePackageJson(packageJsonPath);
@@ -204,7 +205,7 @@ function main(): void {
         errorCount++;
       }
     } else {
-      console.error(`Package.json not found for ${piece}`);
+      console.error(`Package.json not found for ${piecePath}`);
       errorCount++;
     }
   }

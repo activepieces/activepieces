@@ -37,7 +37,8 @@ export const newMentionTrigger = createTrigger({
   name: 'new_mention',
   classification: 'READ',
   displayName: 'New Mention',
-  description: 'Triggers when you are mentioned in a comment.',
+  description:
+    'Triggers when your account is @mentioned in an issue or PR comment.',
   aiMetadata: {
     description:
       'Fires when the authenticated user is @-mentioned in a newly created or edited issue or pull-request review comment in the chosen repository. Represents someone tagging you in a comment.',

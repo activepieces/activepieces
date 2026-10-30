@@ -1,20 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluenceApiCall } from '../common';
-import { pageIdProp, spaceIdProp } from '../common/props';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { movePageOutputSchema } from '../output-schemas';
 
 export const movePageAction = createAction({
 	auth: confluenceAuth,
 	name: 'move-page',
+	outputSchema: movePageOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Move Page',
 	description: 'Moves a page to a new parent as a child, sibling, or to the top of the parent.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Repositions a Confluence page in the content tree relative to a target page: append/insert it as a child of the target, or place it as a sibling after the target. Use to re-parent or reorder a page. Requires the page ID and the target page ID. Effectively idempotent — re-running with the same position and target leaves the page in the same place.', idempotent: true },
 	props: {
-		spaceId: spaceIdProp,
-		pageId: pageIdProp,
+		spaceId: confluenceProps.spaceId({ required: true }),
+		pageId: confluenceProps.pageId({ required: true }),
 		position: Property.StaticDropdown({
 			displayName: 'Position Relative to Target',
 			required: true,
@@ -38,14 +39,7 @@ export const movePageAction = createAction({
 	async run(context) {
 		const { pageId, position, targetPageId } = context.propsValue;
 
-		await confluenceApiCall({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.PUT,
-			version: 'v1',
-			resourceUri: `/content/${pageId}/move/${position}/${targetPageId}`,
-		});
+		await confluenceApi.movePage({ auth: context.auth, pageId, position, targetPageId });
 
 		return { success: true, pageId, position, targetPageId };
 	},

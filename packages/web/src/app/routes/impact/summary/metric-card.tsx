@@ -32,12 +32,10 @@ export const MetricCard = ({
     <Card className="p-5">
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground">
-            {title}
-          </span>
+          <span className="text-sm font-medium text-gray-11">{title}</span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
+              <Info className="h-3.5 w-3.5 text-gray-11 cursor-help" />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">{description}</TooltipContent>
           </Tooltip>
@@ -48,10 +46,8 @@ export const MetricCard = ({
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          <div className="text-2xl font-semibold text-foreground">{value}</div>
-          {subtitle && (
-            <div className="text-sm text-muted-foreground">{subtitle}</div>
-          )}
+          <div className="text-2xl font-semibold text-gray-12">{value}</div>
+          {subtitle && <div className="text-sm text-gray-11">{subtitle}</div>}
         </div>
       </div>
     </Card>

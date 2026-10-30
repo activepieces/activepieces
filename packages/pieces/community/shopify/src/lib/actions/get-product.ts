@@ -7,13 +7,14 @@ export const getProductAction = createAction({
   name: 'get_product',
   classification: 'READ',
   displayName: 'Get Product',
-  description: `Get existing product.`,
+  description: 'Get a product by ID.',
   audience: 'both',
   aiMetadata: { description: 'Look up a single product by its product ID. Read-only and repeatable; use to fetch the details of one known product rather than to search or list products.', idempotent: true },
   props: {
     id: Property.ShortText({
-      displayName: 'Product',
-      description: 'The ID of the product.',
+      displayName: 'Product ID',
+      description: "The number at the end of the product's URL in Shopify admin.",
+      placeholder: '1234567890',
       required: true,
     }),
   },

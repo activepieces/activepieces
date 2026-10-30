@@ -1,4 +1,6 @@
+import { randomInt } from 'node:crypto';
 import { test } from '../../../fixtures';
+import { e2eFlows } from '../../../fixtures/flows';
 
 /**
  * Warmup resilience smoke test.
@@ -9,49 +11,19 @@ import { test } from '../../../fixtures';
  * flows from executing.
  */
 test.describe('Piece isolation — CE', () => {
-  test('worker stays healthy after piece sync and can execute a webhook flow', async ({ page, automationsPage, builderPage, request }) => {
+  test('worker stays healthy after piece sync and can execute a webhook flow', async ({ automationsPage, builderPage, request, session, flowCleanup }) => {
     test.setTimeout(120000);
 
     // Trigger a piece sync — this exercises the warmup path
-    const token = await page.evaluate(() => localStorage.getItem('token'));
     await request.post('/api/v1/pieces/sync', {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${session.token}` },
     });
 
-    await automationsPage.waitFor();
-    await automationsPage.newFlowFromScratch();
-
-    await builderPage.selectInitialTrigger({
-      piece: 'Webhook',
-      trigger: 'Catch Webhook'
-    });
-
-    const webhookUrlBlock = page.getByTestId('markdown-code-block');
-    const webhookUrl = (await webhookUrlBlock.textContent())?.trim() ?? '';
-
-    await builderPage.testTrigger();
-
-    const runVersion = Math.floor(Math.random() * 100000);
-    await page.context().request.get(`${webhookUrl}?runVersion=${runVersion}`);
-    await page.waitForTimeout(3000);
-
-    await builderPage.addAction({
-      piece: 'Webhook',
-      action: 'Return Response'
-    });
-
-    await page.locator('div.cm-activeLine.cm-line').fill('');
-    await page.locator('div.cm-activeLine.cm-line').fill(
-      '{"runVersion": "{{trigger[\'output\'][\'queryParams\'][\'runVersion\']}}"}'
-    );
-
-    await page.waitForTimeout(1000);
-    await builderPage.publishFlow();
-
+    const { webhookUrl } = await e2eFlows.publishWebhookEchoFlow({ automationsPage, builderPage, flowCleanup });
+    const value = randomInt(1, 1000000);
     await builderPage.expectSyncWebhookResponse({
-      url: `${webhookUrl}/sync?runVersion=${runVersion}`,
-      key: 'runVersion',
-      expected: runVersion.toString(),
+      url: `${webhookUrl}/sync?value=${value}`,
+      expected: { value: String(value) },
     });
   });
 });

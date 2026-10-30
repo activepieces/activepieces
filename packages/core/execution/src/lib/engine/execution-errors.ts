@@ -136,9 +136,22 @@ export class WaitpointRejectedError extends ExecutionError {
     }
 }
 
+export class InvalidSeededStepsError extends ExecutionError {
+    constructor(entryStepName: string, cause?: unknown) {
+        super('InvalidSeededStepsError', formatMessage(`A run entered at step ${entryStepName} needs the steps it starts after as its payload`), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class EngineGenericError extends ExecutionError {
     constructor(name: string, message: string, cause?: unknown) {
         super(name, formatMessage(message), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
+export class RequireError extends ExecutionError {
+    constructor(piecePath: string, cause?: unknown) {
+        const causeMessage = cause instanceof Error ? cause.message : String(cause)
+        super('RequireError', formatMessage(`Failed to require piece module at ${piecePath}: ${causeMessage}`), ExecutionErrorType.ENGINE, cause)
     }
 }
 

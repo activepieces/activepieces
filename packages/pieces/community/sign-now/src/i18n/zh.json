@@ -75,7 +75,7 @@
   "One entry per signer role defined in the template. Each signer must have an email and a role name (e.g. \"Signer 1\").": "One entry per signer role defined in the template. Each signer must have an email and a role name (e.g. \"Signer 1\").",
   "Default email subject sent to all signers. Overridden by per-signer subject if set.": "Default email subject sent to all signers. Overridden by per-signer subject if set.",
   "Default email body sent to all signers. Overridden by per-signer message if set.": "Default email body sent to all signers. Overridden by per-signer message if set.",
-  "Number of days before the invite expires (3–180). Defaults to 30.": "Number of days before the invite expires (3–180). Defaults to 30.",
+  "Number of days before the invite expires (1-180). Defaults to 30.": "Number of days before the invite expires (1-180). Defaults to 30.",
   "The unique ID of the document group template.": "The unique ID of the document group template.",
   "Name for the new document group.": "Name for the new document group.",
   "One entry per signer. Each signer needs an email, role name, and the document they are signing within the group. Signing order determines the step sequence.": "One entry per signer. Each signer needs an email, role name, and the document they are signing within the group. Signing order determines the step sequence.",

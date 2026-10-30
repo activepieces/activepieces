@@ -33,7 +33,7 @@ export function QuickReplies({
           key={`${i}-${reply}`}
           type="button"
           onClick={() => onSend(reply)}
-          className="flex w-full items-start gap-2 text-left text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer min-w-0 pl-1"
+          className="flex w-full items-start gap-2 text-left text-sm text-gray-11 hover:text-gray-12 transition-colors cursor-pointer min-w-0 pl-1"
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: i * 0.06, ease: 'easeOut' }}

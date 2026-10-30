@@ -144,7 +144,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                 render={({ field }) => (
                   <FormItem className="grid space-y-3">
                     <Label htmlFor="name">{t('Name')}</Label>
-                    <Input thin={true} {...field} id="name" />
+                    <Input size="sm" {...field} id="name" />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -180,9 +180,10 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                             <Label
                               htmlFor={type}
                               className={cn(
-                                'flex items-center gap-2 w-full px-3 py-2 rounded-sm',
-                                'text-left text-accent-foreground cursor-pointer hover:bg-muted',
-                                field.value === type && 'bg-muted text-primary',
+                                'flex items-center gap-2 w-full px-3 py-2 rounded-md',
+                                'text-left text-gray-12 cursor-pointer hover:bg-gray-3',
+                                field.value === type &&
+                                  'bg-gray-3 text-accent-11',
                               )}
                             >
                               {tablesUtils.getColumnIcon(type)}

@@ -52,32 +52,32 @@ export const Success = () => {
       case 'upgrade':
         return {
           icon: TrendingUp,
-          iconBg: 'bg-success-50 dark:bg-success-950',
-          iconColor: 'text-success-600 dark:text-success-400',
+          iconBg: 'bg-success-3',
+          iconColor: 'text-success-11',
           title: t('Successfully Upgraded!'),
           description: t('Subscription updated successfully'),
         };
       case 'downgrade':
         return {
           icon: TrendingDown,
-          iconBg: 'bg-orange-50 dark:bg-orange-950',
-          iconColor: 'text-orange-600 dark:text-orange-400',
+          iconBg: 'bg-warning-3',
+          iconColor: 'text-warning-11',
           title: t('Plan Downgraded'),
           description: t('Subscription updated successfully'),
         };
       case 'create':
         return {
           icon: Check,
-          iconBg: 'bg-primary/10',
-          iconColor: 'text-primary',
+          iconBg: 'bg-accent-3',
+          iconColor: 'text-accent-11',
           title: t('Success!'),
           description: t('Subscription created successfully'),
         };
       default:
         return {
           icon: Check,
-          iconBg: 'bg-primary/10',
-          iconColor: 'text-primary',
+          iconBg: 'bg-accent-3',
+          iconColor: 'text-accent-11',
           title: t('Success!'),
           description: t('Subscription updated successfully'),
         };
@@ -89,12 +89,12 @@ export const Success = () => {
 
   if (finalizing) {
     return (
-      <div className="h-full bg-background flex items-center justify-center p-4">
+      <div className="h-full bg-gray-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <CardContent className="pt-8 pb-6 px-6">
             <div className="flex flex-col items-center gap-4">
               <LoadingSpinner />
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-gray-11">
                 {t('Finalizing your payment…')}
               </p>
             </div>
@@ -105,7 +105,7 @@ export const Success = () => {
   }
 
   return (
-    <div className="h-full bg-background flex items-center justify-center p-4">
+    <div className="h-full bg-gray-1 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <CardContent className="pt-8 pb-6 px-6">
           <div className="text-center space-y-6">
@@ -119,12 +119,10 @@ export const Success = () => {
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold text-foreground">
+              <h1 className="text-2xl font-semibold text-gray-12">
                 {config.title}
               </h1>
-              <p className="text-lg text-muted-foreground">
-                {config.description}
-              </p>
+              <p className="text-lg text-gray-11">{config.description}</p>
             </div>
 
             <div className="flex flex-col gap-3 pt-2">
@@ -141,7 +139,7 @@ export const Success = () => {
               </Button>
             </div>
 
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-11">
               {t('Redirecting to billing shortly...')}
             </p>
           </div>

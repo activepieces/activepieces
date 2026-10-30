@@ -28,5 +28,6 @@
   "Record Deleted": "Запись удалена",
   "Triggers when a new record is added to the selected table.": "Включает при добавлении новой записи в выбранную таблицу.",
   "Triggers when a record is updated in the selected table.": "Включает при обновлении записи в выбранной таблице.",
-  "Triggers when a record is deleted from the selected table.": "Включает при удалении записи из выбранной таблицы."
+  "Triggers when a record is deleted from the selected table.": "Включает при удалении записи из выбранной таблицы.",
+  "Empty fields keep their current value.": "Пустые поля сохраняют текущее значение."
 }

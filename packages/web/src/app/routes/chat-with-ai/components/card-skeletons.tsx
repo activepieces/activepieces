@@ -83,7 +83,7 @@ function labelForCard({
 function GeneratedImageCardSkeleton({ label }: { label: string }) {
   return (
     <motion.div
-      className="my-2 max-w-md overflow-hidden rounded-xl border bg-card"
+      className="my-2 max-w-md overflow-hidden rounded-xl border bg-panel"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
@@ -92,12 +92,12 @@ function GeneratedImageCardSkeleton({ label }: { label: string }) {
       <div className="flex items-center justify-between gap-2 p-2">
         <TextShimmer
           as="span"
-          className="min-w-0 truncate text-xs text-muted-foreground"
+          className="min-w-0 truncate text-xs text-gray-11"
           duration={2}
         >
           {label}
         </TextShimmer>
-        <ImageIcon className="size-4 shrink-0 text-muted-foreground/50" />
+        <ImageIcon className="size-4 shrink-0 text-gray-9" />
       </div>
     </motion.div>
   );
@@ -117,7 +117,7 @@ function ActionReceiptCardSkeleton({
 
   return (
     <motion.div
-      className="my-2 overflow-hidden rounded-xl border bg-background"
+      className="my-2 overflow-hidden rounded-xl border bg-gray-1"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
@@ -153,12 +153,12 @@ function ActionReceiptCardSkeleton({
 function CardSkeletonFailed({ cardKind }: { cardKind: PendingCardKind }) {
   return (
     <motion.div
-      className="my-2 flex items-center gap-2.5 rounded-xl border bg-background px-3.5 py-2.5 text-muted-foreground"
+      className="my-2 flex items-center gap-2.5 rounded-xl border bg-gray-1 px-3.5 py-2.5 text-gray-11"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <AlertCircle className="size-4 shrink-0 text-muted-foreground/70" />
+      <AlertCircle className="size-4 shrink-0 text-gray-11" />
       <span className="text-xs">
         {cardKind === 'image'
           ? t("Couldn't generate the image")

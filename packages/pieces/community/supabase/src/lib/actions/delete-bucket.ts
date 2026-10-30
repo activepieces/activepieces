@@ -16,7 +16,9 @@ export const deleteBucket = createAction({
     auth: supabaseAuth,
     props: {
         name: Property.ShortText({
-            displayName: 'Bucket Name',
+            displayName: 'Bucket',
+            description: "The bucket's name, as shown in Storage.",
+            placeholder: 'avatars',
             required: true,
         }),
     },

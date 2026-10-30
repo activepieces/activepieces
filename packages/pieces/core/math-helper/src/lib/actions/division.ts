@@ -16,6 +16,15 @@ export const division = createAction({
   displayName: 'Division',
   description: 'Divide the first number by the second number.',
   aiMetadata: { description: 'Compute the quotient of two numbers, returning first_number / second_number as a floating-point value rather than integer division. Pick this for a two-operand division such as an average, ratio, or unit price; use the sibling Modulo action when you need the remainder instead, or the other Math Helper siblings for the remaining operations. Critical constraint: second_number is validated and must not be zero, or the step fails before computing; read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'numbers',
+      display: 'section',
+      label: 'Numbers',
+      icon: 'markdown',
+      props: ['first_number', 'second_number'],
+    },
+  ],
   props: {
     first_number: Property.Number({
       displayName: 'First Number',

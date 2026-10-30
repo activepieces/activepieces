@@ -25,7 +25,7 @@ export const telegramGetFile = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Resolves a Telegram file_id (from a message the bot received) to its file metadata and download URL, and optionally downloads the content as base64 when download is enabled. Use to retrieve a file attached to an incoming message; the download URL Telegram returns is time-limited. Read-only and safe to retry.',
+      'Resolves a Telegram file_id (from a message the bot received) to its file metadata (size and Telegram file path), and optionally downloads the content as base64 when download is enabled. Use to retrieve a file attached to an incoming message. Read-only and safe to retry.',
     idempotent: true,
   },
   outputSchema: telegramGetFileActionOutputSchema,
@@ -56,29 +56,22 @@ export const telegramGetFile = createAction({
     }
 
     const fileInfo = fileInfoResponse.body.result;
-    const fileUrl = fileInfo.file_path
-      ? `https://api.telegram.org/file/bot${ctx.auth.secret_text}/${fileInfo.file_path}`
-      : undefined;
 
-    if (ctx.propsValue.download && fileUrl) {
-      const fileResponse = await httpClient.sendRequest<Buffer>({
+    if (ctx.propsValue.download && fileInfo.file_path) {
+      const fileResponse = await httpClient.sendRequest<ArrayBuffer>({
         method: HttpMethod.GET,
-        url: fileUrl,
+        url: `https://api.telegram.org/file/bot${ctx.auth.secret_text}/${fileInfo.file_path}`,
         responseType: 'arraybuffer',
       });
 
-      const base64Content = Buffer.from(fileResponse.body).toString('base64');
-
       return {
         file_info: fileInfo,
-        file_url: fileUrl,
-        file_content_base64: base64Content,
+        file_content_base64: Buffer.from(fileResponse.body).toString('base64'),
       };
     }
 
     return {
       file_info: fileInfo,
-      file_url: fileUrl,
     };
   },
 });

@@ -9,14 +9,20 @@ export const createCase = createAction({
     name: 'create_case',
     classification: 'WRITE',
     displayName: 'Create Case',
-    description: 'Creates a Case, which represents a customer issue or problem.',
+    description: 'Creates a case for a customer issue.',
     audience: 'both',
     aiMetadata: { description: 'Create a new support Case (customer issue/problem) with a required Subject and optional status, priority, origin, and links to an Account or Contact. Not idempotent — each call opens a separate Case, so guard against duplicate submissions.', idempotent: false },
     outputSchema: sobjectCreateResponseOutputSchema,
+    propertyGroups: [
+        { key: 'case', display: 'section', label: 'Case', icon: 'text', props: ['Subject', 'Description'] },
+        { key: 'details', display: 'section', label: 'Details', icon: 'tag', props: ['Status', 'Priority', 'Origin'] },
+        { key: 'related', display: 'section', label: 'Related To', icon: 'paperclip', props: ['AccountId', 'ContactId'] },
+    ],
     props: {
         Subject: Property.ShortText({
             displayName: 'Subject',
             required: true,
+            placeholder: 'Cannot sign in to the portal',
         }),
         Description: Property.LongText({
             displayName: 'Description',
@@ -29,8 +35,9 @@ export const createCase = createAction({
         ContactId: salesforcesCommon.optionalContact,
         other_fields: Property.Json({
             displayName: 'Other Fields',
-            description: 'Enter additional fields as a JSON object.',
-            required: false
+            description: 'More fields as JSON, with Salesforce field API names as keys.',
+            required: false,
+            advanced: true,
         })
     },
     async run(context) {

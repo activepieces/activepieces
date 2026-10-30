@@ -1,16 +1,10 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   createOpportunity,
-  getContacts,
   getPipeline,
-  getPipelines,
-  getUsers,
   LeadConnectorOpportunityStatus,
 } from '../common';
+import { leadConnectorProps } from '../common/props';
 import { leadConnectorAuth } from '../..';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
@@ -23,36 +17,27 @@ export const createOpportunityAction = createAction({
   description: 'Create a new opportunity.',
   audience: 'both',
   aiMetadata: { description: 'Creates a new sales opportunity in a GoHighLevel/LeadConnector pipeline, tied to a contact and placed in a chosen pipeline stage with a status (open/won/lost/abandoned). Use to start tracking a deal. Requires pipeline, stage, title, contact, and status; not idempotent — each call creates a separate opportunity.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'pipeline',
+      display: 'section',
+      label: 'Pipeline and stage',
+      icon: 'filter',
+      props: ['pipeline', 'stage'],
+    },
+    {
+      key: 'deal',
+      display: 'section',
+      label: 'Opportunity',
+      icon: 'file',
+      props: ['title', 'contact', 'status', 'monetaryValue', 'assignedTo'],
+    },
+  ],
   props: {
-    pipeline: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'Pipeline',
-      description: 'The ID of the pipeline to use.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-          };
-        }
-
-        const pipelines = await getPipelines(auth as OAuth2PropertyValue);
-        return {
-          options: pipelines.map((pipeline: any) => {
-            return {
-              label: pipeline.name,
-              value: pipeline.id,
-            };
-          }),
-        };
-      },
-    }),
+    pipeline: leadConnectorProps.pipeline(),
     stage: Property.Dropdown({
-  auth: leadConnectorAuth,
+      auth: leadConnectorAuth,
       displayName: 'Stage',
-      description: 'The stage of the pipeline to use.',
       required: true,
       refreshers: ['pipeline'],
       options: async ({ auth, pipeline }) => {
@@ -60,16 +45,21 @@ export const createOpportunityAction = createAction({
           return {
             disabled: true,
             options: [],
+            placeholder: 'Connect your account first',
+          };
+        }
+        if (typeof pipeline !== 'string' || !pipeline) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select a pipeline first',
           };
         }
 
-        const pipelineObj = await getPipeline(
-          auth as OAuth2PropertyValue,
-          pipeline as string
-        );
+        const pipelineObj = await getPipeline(auth, pipeline);
         return {
           options: pipelineObj
-            ? pipelineObj.stages.map((stage: any) => {
+            ? pipelineObj.stages.map((stage: LeadConnectorStage) => {
                 return {
                   label: stage.name,
                   value: stage.id,
@@ -80,35 +70,12 @@ export const createOpportunityAction = createAction({
       },
     }),
     title: Property.ShortText({
-      displayName: 'Title',
+      displayName: 'Opportunity Name',
       required: true,
     }),
-    contact: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'Contact',
-      description: 'The contact to use.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
-        return {
-          options: contacts.map((contact) => {
-            return {
-              label: contact.contactName,
-              value: contact.id,
-            };
-          }),
-        };
-      },
-    }),
+    contact: leadConnectorProps.contact({ required: true }),
     status: Property.Dropdown({
-  auth: leadConnectorAuth,
+      auth: leadConnectorAuth,
       displayName: 'Status',
       required: true,
       refreshers: [],
@@ -125,31 +92,14 @@ export const createOpportunityAction = createAction({
         };
       },
     }),
-    assignedTo: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'Assigned To',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const users = await getUsers(auth as OAuth2PropertyValue);
-        return {
-          options: users.map((user: any) => {
-            return {
-              label: `${user.firstName} ${user.lastName}`,
-              value: user.id,
-            };
-          }),
-        };
-      },
-    }),
     monetaryValue: Property.Number({
-      displayName: 'Monetary Value',
+      displayName: 'Value',
+      description: "In your account's currency.",
+      required: false,
+    }),
+    assignedTo: leadConnectorProps.user({
+      displayName: 'Assigned To',
+      description: 'Leave empty to keep it unassigned.',
       required: false,
     }),
   },
@@ -180,3 +130,8 @@ export const createOpportunityAction = createAction({
     });
   },
 });
+
+type LeadConnectorStage = {
+  id: string;
+  name: string;
+};

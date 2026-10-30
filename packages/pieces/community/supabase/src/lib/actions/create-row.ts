@@ -17,7 +17,7 @@ export const createRow = createAction({
         row_data: supabaseCommon.table_columns,
         return_row: Property.Checkbox({
             displayName: 'Return Created Row',
-            description: 'Whether to return the created row',
+            description: 'When off, the step outputs nothing.',
             required: false,
             defaultValue: true,
         }),

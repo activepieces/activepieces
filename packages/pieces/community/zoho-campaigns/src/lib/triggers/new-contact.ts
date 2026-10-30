@@ -6,32 +6,30 @@ import {
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
-  StaticPropsValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
+import { zohoCampaignsAuth } from '../auth';
+import { zohoCampaignsApi } from '../common/api';
+import { zohoCampaignsProps } from '../common/props';
+import { zohoCampaignsContactOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
-  StaticPropsValue<any>
+  { listkey: string | undefined }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const location = auth.props?.['location'] as string || 'zoho.com';
-    const accessToken = auth.access_token;
     const { listkey } = propsValue;
 
     if (!listkey) {
       throw new Error('Mailing list is required');
     }
 
-    const items = await zohoCampaignsCommon.listContacts({
-      accessToken,
-      location,
+    const items = await zohoCampaignsApi.listContacts({
+      auth,
       listkey,
-      sort:'desc',
+      sort: 'desc',
     });
 
     return items.map((item) => ({
@@ -41,9 +39,10 @@ const polling: Polling<
   },
 };
 
-export const newContact = createTrigger({
+export const newContactTrigger = createTrigger({
   auth: zohoCampaignsAuth,
   name: 'newContact',
+  outputSchema: zohoCampaignsContactOutputSchema,
   classification: 'READ',
   displayName: 'New Contact',
   description: 'Fires when a new contact is added to a selected mailing list.',
@@ -51,7 +50,9 @@ export const newContact = createTrigger({
     description:
       'Fires when a new contact appears in the selected Zoho Campaigns mailing list, representing a newly added subscriber. Polls the list and emits each new contact record.',
   },
-  props: zohoCampaignsCommon.newContactProperties(),
+  props: {
+    listkey: zohoCampaignsProps.listKey({ required: true }),
+  },
   sampleData: {
     contact_email: 'john.doe@example.com',
     firstname: 'John',
@@ -66,13 +67,11 @@ export const newContact = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

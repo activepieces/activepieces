@@ -5,6 +5,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { vi } from 'vitest'
 import { generateMockToken } from '../../../helpers/auth'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { publishedTierReaders } from '../../../unit/app/ee/agent/model-tier-fixture'
@@ -36,7 +37,7 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-async function executeAiStep({ action, modelId }: { action: AiStepAction, modelId: string }) {
+async function executeAiStep({ action, modelId, provider = AIProviderName.ACTIVEPIECES, providerConfigId }: { action: AiStepAction, modelId: string, provider?: AIProviderName, providerConfigId?: string }) {
     const engineToken = await generateMockToken({
         type: PrincipalType.ENGINE,
         id: apId(),
@@ -52,7 +53,8 @@ async function executeAiStep({ action, modelId }: { action: AiStepAction, modelI
             flowId: apId(),
             flowRunId: apId(),
             waitpointId: apId(),
-            provider: AIProviderName.ACTIVEPIECES,
+            provider,
+            ...(providerConfigId ? { providerConfigId } : {}),
             modelId,
             prompt: 'hello',
         },
@@ -81,5 +83,16 @@ describe('POST /v1/ai/execute', () => {
             action: AiStepAction.GENERATE_IMAGE,
             modelId: 'smart',
         })
+    })
+
+    it('refuses a specific model the key no longer allows, before anything is queued', async () => {
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, modelScope: 'selected', modelIds: ['gpt-4o'] })
+
+        const refused = await executeAiStep({ action: AiStepAction.ASK_AI, provider: AIProviderName.OPENAI, providerConfigId: key.id, modelId: 'gpt-4o-mini' })
+        const allowed = await executeAiStep({ action: AiStepAction.ASK_AI, provider: AIProviderName.OPENAI, providerConfigId: key.id, modelId: 'gpt-4o' })
+
+        expect(refused.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(allowed.statusCode).toBe(StatusCodes.OK)
+        expect(enqueue).toHaveBeenCalledTimes(1)
     })
 })

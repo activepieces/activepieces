@@ -67,15 +67,14 @@ div[role="gridcell"]:focus-within {
 
   /* Handle */
   ::-webkit-scrollbar-thumb {
-    /* @apply relative flex-1 rounded-full bg-border; */
     @apply touch-none select-none transition-colors;
   }
 }
 
 .locked-row {
-  background-color: #ffedd5 !important; /* orange-100 */
+  background-color: var(--warning-3) !important;
 }
 .locked-row .lock-icon {
-  color: #f97316 !important; /* orange-500 */
+  color: var(--warning-11) !important;
   margin-right: 0.5rem;
 }

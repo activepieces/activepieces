@@ -15,4 +15,5 @@ export type HttpRequest<RequestBody extends HttpRequestBody = any> = {
   retries?: number;
   responseType?: 'arraybuffer' | 'json' | 'blob' | 'text' | 'stream';
   followRedirects?: boolean;
+  redactBodyInErrors?: boolean;
 };

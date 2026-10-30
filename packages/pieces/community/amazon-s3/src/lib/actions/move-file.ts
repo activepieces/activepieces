@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
+import { moveFileOutputSchema } from '../output-schemas';
 
 export const moveFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'moveFile',
+  outputSchema: moveFileOutputSchema,
   classification: 'WRITE',
   displayName: 'Move File',
   description: 'Move a File to Another Folder',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Moves an object within the configured S3 bucket by copying it to a new key under the destination folder (keeping the same filename) and then deleting the original. Use to relocate or archive a file. Not idempotent — the source object is deleted on the first successful run, so a repeat call errors because the source key no longer exists.',
     idempotent: false,

@@ -1,5 +1,6 @@
 import { CheckIcon, ListFilterIcon } from 'lucide-react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,18 +49,12 @@ const DataTableSelectPopover = ({
           {selectedValues?.size > 0 && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge
-                variant="accent"
-                className="rounded-sm px-1 font-normal lg:hidden"
-              >
+              <Badge variant="secondary" className="font-normal lg:hidden">
                 {selectedValues.size}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.size > 2 ? (
-                  <Badge
-                    variant="accent"
-                    className="rounded-sm px-1 font-normal"
-                  >
+                  <Badge variant="secondary" className="font-normal">
                     {selectedValues.size} selected
                   </Badge>
                 ) : (
@@ -67,9 +62,9 @@ const DataTableSelectPopover = ({
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
                       <Badge
-                        variant="accent"
+                        variant="secondary"
                         key={option.value}
-                        className="rounded-sm px-1 font-normal"
+                        className="font-normal"
                       >
                         {option.label}
                       </Badge>
@@ -108,23 +103,24 @@ const DataTableSelectPopover = ({
                     >
                       <div
                         className={cn(
-                          'mr-2 flex h-4 w-4 items-center justify-center rounded border border-secondary',
+                          'mr-2 flex h-4 w-4 items-center justify-center rounded-md border border-gray-12',
                           isSelected
-                            ? 'bg-secondary text-secondary-foreground'
+                            ? 'bg-gray-12 text-gray-1'
                             : 'opacity-50 [&_svg]:invisible',
                         )}
                       >
                         <CheckIcon className={cn('h-4 w-4')} />
                       </div>
                       {typeof option.icon === 'string' ? (
-                        <img
+                        <LogoPlate
                           src={option.icon}
                           alt={option.label}
-                          className="mr-2 size-4 object-contain"
+                          size="xxs"
+                          className="mr-2"
                         />
                       ) : (
                         option.icon && (
-                          <option.icon className="mr-2 size-4 text-muted-foreground" />
+                          <option.icon className="mr-2 size-4 text-gray-11" />
                         )
                       )}
                       <div>

@@ -1,127 +1,51 @@
-import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { netlifyAuth } from "../common/auth";
+import { createAction } from '@activepieces/pieces-framework';
+import { netlifyAuth } from '../common/auth';
+import { netlifyOperations } from '../common/operations';
+import { netlifySchemas } from '../common/output-schemas';
+import { netlifyProps } from '../common/props';
 
 export const listSiteDeploys = createAction({
-  name: "list_site_deploys",
+  auth: netlifyAuth,
+  name: 'list_site_deploys',
   classification: 'SEARCH',
-  displayName: "List Site Deploys",
-  description: "Returns a list of all deploys for a specific site.",
-  audience: 'both',
-  aiMetadata: { description: 'Lists the deploys (builds) for a Netlify site by its site ID, ordered most-recent first, with optional page and per-page pagination. Use it to inspect deploy history or find a deploy state/ID. Read-only and idempotent.', idempotent: true },
-  props: {
-    siteId: Property.Dropdown({
-      auth: netlifyAuth,      displayName: "Site",
-      description: "Select the site to list deploys for",
-      required: true,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: "Connect your account first",
-            options: [],
-          };
-        }
-
-        const authentication = auth as OAuth2PropertyValue;
-        if (!authentication.access_token) {
-          return {
-            disabled: true,
-            placeholder: "Access token is required",
-            options: [],
-          };
-        }
-
-        try {
-          const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: "https://api.netlify.com/api/v1/sites?per_page=50",
-            headers: {
-              "Authorization": `Bearer ${authentication.access_token}`,
-              "Content-Type": "application/json",
-            },
-          });
-
-          if (response.status === 200) {
-            const sites = response.body as any[];
-            return {
-              disabled: false,
-              options: sites.map((site) => ({
-                label: `${site.name} (${site.url})`,
-                value: site.id,
-              })),
-            };
-          } else {
-            return {
-              disabled: true,
-              placeholder: `Failed to fetch sites: ${response.status}`,
-              options: [],
-            };
-          }
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: "Failed to fetch sites",
-            options: [],
-          };
-        }
-      },
-    }),
-    page: Property.Number({
-      displayName: "Page",
-      description: "Page number for pagination (starts from 1)",
-      required: false,
-      defaultValue: 1,
-    }),
-    perPage: Property.Number({
-      displayName: "Per Page",
-      description: "Number of items per page (max 100)",
-      required: false,
-      defaultValue: 100,
-    }),
+  displayName: 'List Site Deploys',
+  description: 'List the deploys of a site, newest first.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Lists the deploys of one Netlify site, newest first, one page at a time (Per Page up to 100; ask for the next page when a full page comes back). Each deploy has its ID, state, branch, commit, context and URLs; pass an ID to Get Deploy, Cancel Deploy, Restore Deploy or Lock Deploy. Read-only.',
+    idempotent: true,
   },
-  async run(context) {
-    const { siteId, page, perPage } = context.propsValue;
+  outputSchema: netlifySchemas.deployList,
+  props: {
+    siteId: netlifyProps.siteDropdown({ description: 'The site whose deploys to list.' }),
+    page: netlifyProps.page(),
+    perPage: netlifyProps.perPage({ defaultValue: 100 }),
+  },
+  async run({ auth, propsValue }) {
+    return netlifyOperations.listDeploys({ auth, siteId: propsValue.siteId, page: propsValue.page, perPage: propsValue.perPage });
+  },
+});
 
-    if (!context.auth) {
-      throw new Error("Authentication is required");
-    }
-
-    const auth = context.auth as OAuth2PropertyValue;
-    if (!auth.access_token) {
-      throw new Error("Access token is required");
-    }
-
-    const queryParams = new URLSearchParams();
-    if (page) queryParams.append('page', page.toString());
-    if (perPage) queryParams.append('per_page', perPage.toString());
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.netlify.com/api/v1/sites/${siteId}/deploys?${queryParams.toString()}`,
-      headers: {
-        "Authorization": `Bearer ${auth.access_token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (response.status === 200) {
-      return response.body;
-    }
-
-    if (response.status === 404) {
-      throw new Error(`Site not found: ${siteId}. Please check the site ID or domain.`);
-    }
-
-    if (response.status === 401) {
-      throw new Error("Unauthorized. Please check your access token.");
-    }
-
-    if (response.status === 403) {
-      throw new Error("Forbidden. You don't have permission to access this site.");
-    }
-
-    throw new Error(`Failed to list site deploys: ${response.status}`);
+export const listSiteDeploysById = createAction({
+  auth: netlifyAuth,
+  name: 'list_site_deploys_by_id',
+  classification: 'SEARCH',
+  displayName: 'List Site Deploys by Site ID',
+  description: 'List the deploys of a site given its ID or domain.',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Lists the deploys of one Netlify site, newest first, one page at a time (Per Page up to 100; ask for the next page when a full page comes back). Each deploy has its ID, state, branch, commit, context and URLs; pass an ID to Get Deploy, Cancel Deploy, Restore Deploy or Lock Deploy. Read-only. Get the site ID from List Sites.',
+    idempotent: true,
+  },
+  outputSchema: netlifySchemas.deployList,
+  props: {
+    siteId: netlifyProps.siteId(),
+    page: netlifyProps.page(),
+    perPage: netlifyProps.perPage({ defaultValue: 20 }),
+  },
+  async run({ auth, propsValue }) {
+    return netlifyOperations.listDeploys({ auth, siteId: propsValue.siteId, page: propsValue.page, perPage: propsValue.perPage });
   },
 });

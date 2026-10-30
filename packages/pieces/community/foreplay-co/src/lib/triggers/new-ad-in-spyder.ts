@@ -1,158 +1,75 @@
-import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { foreplayCoApiCall } from '../common';
-import {
-  HttpMethod,
-  Polling,
-  DedupeStrategy,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { newAdInSpyder as newAdInSpyderProperties } from '../properties';
-import { newAdInSpyderSchema } from '../schemas';
-import { foreplayCoAuth } from '../..';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { foreplayCoAuth } from '../auth';
+import { ForeplayAuthInput, foreplayClient } from '../common/client';
+import { foreplayMappers } from '../common/mappers';
+import { foreplayOutputSchemas } from '../common/output-schemas';
+import { foreplayPolling } from '../common/polling';
+import { foreplayProps } from '../common/props';
+import { sampleAd } from './sample-ad';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof foreplayCoAuth>, Record<string, any>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue }) => {
-    const { brand_id } = propsValue;
+const MAX_DROPDOWN_PAGES = 30;
 
-    // Build query parameters with user's filter preferences
-    const queryParams = new URLSearchParams();
-    queryParams.append('brand_id', brand_id);
-    queryParams.append('limit', String(50)); // Reasonable default for polling
-    queryParams.append('order', 'newest');
+function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Record<string, unknown> }) {
+  const brandId = foreplayProps.foreplayId({ value: propsValue['brand_id'], label: 'Brand' });
+  const filters = foreplayProps.adFilterQuery(foreplayProps.humanAdFilterInput(propsValue));
+  const pageSize = foreplayPolling.pageSizeOf(propsValue['page_size']);
+  return async ({ limit, cursor }: { limit: number | undefined; cursor: string | undefined }) => {
+    const size = limit ?? pageSize;
+    return foreplayPolling.fetchAdPage({ auth, path: '/api/spyder/brand/ads', query: { brand_id: brandId, ...filters, order: 'newest', limit: size, cursor }, pageSize: size });
+  };
+}
 
-    // Add optional filters if provided
-    if (propsValue['live']) {
-      queryParams.append('live', String(propsValue['live']));
-    }
-    if (
-      propsValue['display_format'] &&
-      propsValue['display_format'].length > 0
-    ) {
-      propsValue['display_format'].forEach((format: unknown) => {
-        queryParams.append('display_format', String(format));
-      });
-    }
-    if (
-      propsValue['publisher_platform'] &&
-      propsValue['publisher_platform'].length > 0
-    ) {
-      propsValue['publisher_platform'].forEach((platform: unknown) => {
-        queryParams.append('publisher_platform', String(platform));
-      });
-    }
-    if (propsValue['niches'] && propsValue['niches'].length > 0) {
-      propsValue['niches'].forEach((niche: unknown) => {
-        queryParams.append('niches', String(niche));
-      });
-    }
-    if (propsValue['market_target'] && propsValue['market_target'].length > 0) {
-      propsValue['market_target'].forEach((target: unknown) => {
-        queryParams.append('market_target', String(target));
-      });
-    }
-    if (propsValue['languages'] && propsValue['languages'].length > 0) {
-      propsValue['languages'].forEach((language: unknown) => {
-        queryParams.append('languages', String(language));
-      });
-    }
-
-    const queryString = queryParams.toString();
-    const fullUrl = `/api/spyder/brand/ads?${queryString}`;
-
-    const response = await foreplayCoApiCall({
-      apiKey: auth,
-      method: HttpMethod.GET,
-      resourceUri: fullUrl,
-    });
-
-    const responseBody = response.body;
-
-    if (!responseBody.metadata || !responseBody.metadata.success) {
-      return [];
-    }
-
-    const ads = responseBody.data || [];
-
-    return ads.map((ad: any) => ({
-      epochMilliSeconds: new Date(ad.created_at).getTime(),
-      data: ad,
-    }));
-  },
-};
-
-export const newAdInSpyder = createTrigger({
-  name: 'newAdInSpyder',
-  classification: 'READ',
-  displayName: 'New Ad in Spyder',
-  description: 'Triggers when new ads are added for a brand in Spyder.',
-  aiMetadata: {
-    description: 'Fires when Foreplay Spyder detects a newly tracked ad for the specified brand, optionally narrowed by filters such as platform, format, niche, market, language, and live-only status. Each event represents one newly surfaced ad for that brand.',
-  },
-  type: TriggerStrategy.POLLING,
-  sampleData: {
-    id: 'ad_123456789',
-    brand_id: 'brand_987654321',
-    title: 'New Summer Sale Ad',
-    description: 'A great summer sale ad.',
-    live: true,
-    display_format: 'video',
-    publisher_platform: ['facebook'],
-    niches: ['fashion'],
-    market_target: 'b2c',
-    languages: ['en'],
-    created_at: '2024-01-15T10:30:00Z',
-    updated_at: '2024-01-15T10:30:00Z',
-  },
-
-  props: newAdInSpyderProperties(),
+const newAdInSpyder = createTrigger({
   auth: foreplayCoAuth,
-  async test(context) {
-    // Validate props using Zod schema
-    const validation = newAdInSpyderSchema.safeParse(context.propsValue);
-    if (!validation.success) {
-      throw new Error(`Validation failed: ${validation.error.message}`);
-    }
-
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+  name: 'newAdInSpyder',
+  displayName: 'New Ad in Spyder',
+  description: 'Triggers when Spyder finds a new ad for a tracked brand.',
+  aiMetadata: {
+    description: 'Fires when a new ad appears among the newest ads Foreplay Spyder has collected for the selected tracked brand, optionally narrowed by platform, format, niche, market, language and live status. Each event is one ad. Costs 1 Foreplay credit per ad checked on every poll.',
   },
-
-  async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+  classification: 'READ',
+  type: TriggerStrategy.POLLING,
+  sampleData: sampleAd,
+  outputSchema: foreplayOutputSchemas.rawAd,
+  props: {
+    brand_id: Property.Dropdown({
+      auth: foreplayCoAuth,
+      displayName: 'Brand',
+      description: 'A brand from your Spyder watchlist.',
+      required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) return { disabled: true, options: [], placeholder: 'Connect your Foreplay account first.' };
+        try {
+          const options: { label: string; value: string }[] = [];
+          for (let page = 0; page < MAX_DROPDOWN_PAGES; page++) {
+            const response = await foreplayClient.request({ auth, path: '/api/spyder/brands', query: { offset: page * 10, limit: 10 } });
+            const brands = foreplayMappers.listOf(response.body).map(foreplayMappers.brand);
+            for (const b of brands) if (b.id !== null) options.push({ label: b.name ?? b.id, value: b.id });
+            if (brands.length < 10) break;
+          }
+          return { disabled: false, options, placeholder: options.length === 0 ? 'No brands in your Spyder watchlist.' : undefined };
+        } catch (error) {
+          return { disabled: true, options: [], placeholder: error instanceof Error ? error.message : 'Could not load Spyder brands.' };
+        }
+      },
+    }),
+    page_size: foreplayPolling.pageSizeProp(),
+    polling_interval: foreplayPolling.legacyPollingIntervalProp(),
+    ...foreplayProps.humanAdFilterProps({ withDates: false }),
   },
-
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      propsValue: context.propsValue,
-      auth: context.auth,
-    });
+  async onEnable({ auth, propsValue, store, isRepublish }) {
+    await foreplayPolling.seed({ store, fetchAds: fetcher({ auth, propsValue }), isRepublish });
   },
-
-  async run(context) {
-    // Validate props using Zod schema
-    const validation = newAdInSpyderSchema.safeParse(context.propsValue);
-    if (!validation.success) {
-      throw new Error(`Validation failed: ${validation.error.message}`);
-    }
-
-    const result = await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
-
-    // Return clean ad data for automation workflows
-    return result.map((item: any) => item.data);
+  async onDisable() {
+    return;
+  },
+  async test({ auth, propsValue }) {
+    return foreplayPolling.testAds({ fetchAds: fetcher({ auth, propsValue }) });
+  },
+  async run({ auth, propsValue, store }) {
+    return foreplayPolling.pollNewAds({ store, fetchAds: fetcher({ auth, propsValue }) });
   },
 });
+
+export { newAdInSpyder };

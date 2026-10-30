@@ -16,6 +16,15 @@ export const newDirectMessageTrigger = createTrigger({
 		description:
 			'Fires when a new message is posted in a direct message (im) channel with the connected Slack app. Bot messages and the connected user\'s own messages can be optionally ignored. The event payload is the Slack message event, including its channel, text, and sender.',
 	},
+	propertyGroups: [
+		{
+			key: 'filters',
+			display: 'section',
+			label: 'Filters',
+			icon: 'filter',
+			props: ['info', 'ignoreBots', 'ignoreSelfMessages'],
+		},
+	],
 	props: {
 		info: appWebhookSetupInfo,
 		ignoreBots: Property.Checkbox({

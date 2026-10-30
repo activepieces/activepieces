@@ -101,7 +101,7 @@ import { clickupUpdateTimeEntry } from './lib/actions/time-tracking/update-time-
 export const clickup = createPiece({
   displayName: 'ClickUp',
   description: 'All-in-one productivity platform',
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/clickup.png',
   categories: [PieceCategory.PRODUCTIVITY],
   auth: clickupAuth,

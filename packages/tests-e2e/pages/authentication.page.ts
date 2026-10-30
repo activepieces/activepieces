@@ -21,6 +21,16 @@ export class AuthenticationPage extends BasePage {
     await this.page.getByTestId('sign-in-button').click();
   }
 
+  async waitForSignedIn() {
+    await this.page.waitForURL(
+      (url) => !ONBOARDING_PATHS.some((path) => url.pathname.startsWith(path)),
+      { timeout: 30000 },
+    );
+    await this.page.waitForFunction(
+      () => Boolean(localStorage.getItem('token') && localStorage.getItem('projectId')),
+    );
+  }
+
   async signUp(params?: { email?: string; password?: string; firstName?: string; lastName?: string }) {
     await this.page.goto(this.signUpUrl);
     await this.openPasswordForm();

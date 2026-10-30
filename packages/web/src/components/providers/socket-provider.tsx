@@ -20,39 +20,39 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const toastIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const dismissConnectionLostToast = () => {
+      if (toastIdRef.current) {
+        toast.dismiss(toastIdRef.current);
+        toastIdRef.current = null;
+      }
+      console.log('connected to socket');
+    };
+    const showConnectionLostToast = (reason: string) => {
+      if (!toastIdRef.current) {
+        const id = toast('Connection Lost', {
+          id: 'websocket-disconnected',
+          description: 'We are trying to reconnect...',
+          duration: Infinity,
+        });
+        toastIdRef.current = id?.toString() ?? null;
+      }
+      if (reason === 'io server disconnect') {
+        socket.connect();
+      }
+    };
     if (token) {
       socket.auth = { token, projectId };
       if (!socket.connected) {
         socket.connect();
-
-        socket.on('connect', () => {
-          if (toastIdRef.current) {
-            toast.dismiss(toastIdRef.current);
-            toastIdRef.current = null;
-          }
-          console.log('connected to socket');
-        });
-
-        socket.on('disconnect', (reason) => {
-          if (!toastIdRef.current) {
-            const id = toast('Connection Lost', {
-              id: 'websocket-disconnected',
-              description: 'We are trying to reconnect...',
-              duration: Infinity,
-            });
-            toastIdRef.current = id?.toString() ?? null;
-          }
-          if (reason === 'io server disconnect') {
-            socket.connect();
-          }
-        });
+        socket.on('connect', dismissConnectionLostToast);
+        socket.on('disconnect', showConnectionLostToast);
       }
     } else {
       socket.disconnect();
     }
     return () => {
-      socket.off('connect');
-      socket.off('disconnect');
+      socket.off('connect', dismissConnectionLostToast);
+      socket.off('disconnect', showConnectionLostToast);
       socket.disconnect();
     };
   }, [token, projectId]);

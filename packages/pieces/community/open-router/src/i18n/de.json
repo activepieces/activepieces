@@ -35,5 +35,6 @@
   "None": "Keine",
   "JSON": "JSON",
   "Form Data": "Formulardaten",
-  "Raw": "Rohe"
+  "Raw": "Rohe",
+  "Full URL, or a path relative to https://openrouter.ai/api/v1": "Vollständige URL oder ein Pfad relativ zu https://openrouter.ai/api/v1"
 }

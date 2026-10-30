@@ -15,8 +15,7 @@ vi.mock('@activepieces/pieces-common', async (importOriginal) => {
 const sendRequest = vi.mocked(httpClient.sendRequest);
 
 const baseProps = {
-  provider: { provider: 'openai', configId: 'config1' },
-  model: 'gpt-test',
+  aiProviderModel: { provider: 'openai', model: 'gpt-test', configId: 'config1' },
   maxOutputTokens: 2000,
 };
 

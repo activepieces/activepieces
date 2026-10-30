@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
 import { jinaAiAuth } from '../auth';
+import { classifyContentOutputSchema } from '../output-schemas';
 
 export const classifyContentAction = createAction({
   auth:jinaAiAuth,
   name: 'classify_content',
+  outputSchema: classifyContentOutputSchema,
   classification: 'READ',
   displayName: 'Classify Text or Image',
   description:

@@ -6,7 +6,7 @@ import { deleteFileActionOutputSchema } from '../output-schemas';
 export const deleteFile = createAction({
     name: 'delete_file',
     classification: 'DESTRUCTIVE',
-    displayName: 'Delete File',
+    displayName: 'Delete Files',
     description: 'Permanently deletes one or more files from a Storage bucket.',
     audience: 'both',
     aiMetadata: {
@@ -17,12 +17,13 @@ export const deleteFile = createAction({
     props: {
         bucket: Property.ShortText({
             displayName: 'Bucket',
-            description: 'The name of the Storage bucket.',
+            description: "The bucket's name, as shown in Storage.",
+            placeholder: 'avatars',
             required: true,
         }),
         paths: Property.Array({
             displayName: 'File Paths',
-            description: 'Paths of the files to delete within the bucket.',
+            description: 'One path per entry, like folder/report.pdf.',
             required: true,
         }),
     },

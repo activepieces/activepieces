@@ -1,17 +1,14 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { clockifyApiCall } from './common/client';
+import { AppConnectionType, PieceAuth } from '@activepieces/pieces-framework';
+import { clockifyApi } from './common/api';
 
 export const clockifyAuth = PieceAuth.SecretText({
-	displayName:'API Key',
+	displayName: 'API Key',
 	description: `You can obtain your API key by navigating to **Preferences->Advanced**.`,
 	required: true,
 	validate: async ({ auth }) => {
 		try {
-			await clockifyApiCall({
-				apiKey: auth,
-				method: HttpMethod.GET,
-				resourceUri: '/user',
+			await clockifyApi.getCurrentUser({
+				auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
 			});
 
 			return {

@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { cloudinaryAuth } from '../common/auth';
 import { resourceTypeDropdown, publicIdsDropdown } from '../common/props';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { transformresourceOutputSchema } from '../output-schemas';
 
 export const transformResource = createAction({
   auth: cloudinaryAuth,
   name: 'transformResource',
+  outputSchema: transformresourceOutputSchema,
   classification: 'READ',
   displayName: 'Transform Resource',
   description: 'Apply transformations (resize, crop, watermark, etc.) to an asset and generate a new URL.',

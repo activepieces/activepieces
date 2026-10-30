@@ -34,14 +34,24 @@ export const driveUpdateFileMetadata = createAction({
       description: 'A new description for the file or folder. Leave empty to keep the current description.',
       required: false,
     }),
-    starred: Property.Checkbox({
+    starred: Property.StaticDropdown<string, false>({
       displayName: 'Starred',
-      description: 'Whether to mark the file or folder as starred.',
+      description:
+        'Whether to mark the file or folder as starred. Leave empty or pick Leave unchanged to keep the current setting.',
       required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+          { label: 'Leave unchanged', value: 'unchanged' },
+        ],
+      },
     }),
   },
   async run(context) {
-    const { file_id, name, description, starred } = context.propsValue;
+    const { file_id, name, description } = context.propsValue;
+    const starred = starredValue(context.propsValue.starred);
 
     const requestBody: { name?: string; description?: string; starred?: boolean } =
       {};
@@ -51,7 +61,7 @@ export const driveUpdateFileMetadata = createAction({
     if (description !== undefined && description !== null) {
       requestBody.description = description;
     }
-    if (starred !== undefined && starred !== null) {
+    if (starred !== undefined) {
       requestBody.starred = starred;
     }
 
@@ -81,3 +91,10 @@ export const driveUpdateFileMetadata = createAction({
     }
   },
 });
+
+function starredValue(value: unknown): boolean | undefined {
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : value;
+  if (normalized === true || normalized === 'yes' || normalized === 'true') return true;
+  if (normalized === false || normalized === 'no' || normalized === 'false') return false;
+  return undefined;
+}

@@ -69,7 +69,7 @@ function buildExecuteParams(workerIndex: number, expiresAt?: number) {
             flowVersionId: 'fv1',
             pieces: [],
             codes: [],
-            publicApiUrl: 'http://localhost/api/',
+            internalApiUrl: 'http://localhost/api/',
             engineToken: 't',
         },
     } as never

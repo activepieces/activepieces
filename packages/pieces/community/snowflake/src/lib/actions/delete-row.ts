@@ -1,25 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { dmlCount } from '../common/operations';
+import { legacyDeleteOutputSchema } from '../common/output-schemas';
+import { qualifiedName } from '../common/sql';
 
 export const deleteRowAction = createAction({
   name: 'delete_row',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Row',
   description:
     'Delete one or more rows from a Snowflake table that match a WHERE condition.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Runs a DELETE on a Snowflake table, removing every row matching the required WHERE condition. Use to remove records; the condition is mandatory to guard against wiping the whole table, and it is embedded directly into SQL so pass only trusted values. Re-running after the matching rows are gone deletes nothing further, but treat this as a destructive mutating operation.',
+      'Runs a DELETE with a hand-written, required WHERE condition on a table picked from dropdowns. Human-only; agents use Delete Row by Key or Delete Rows by Filter. Deleted rows cannot be restored by a retry.',
     idempotent: false,
   },
+  outputSchema: legacyDeleteOutputSchema,
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -36,19 +34,21 @@ export const deleteRowAction = createAction({
   },
   async run(context) {
     const { table, where_clause } = context.propsValue;
-
-    const sql = `DELETE FROM ${table} WHERE ${where_clause}`;
-
-    const connection = configureConnection(context.auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(connection, sql, []);
-      return {
-        success: true,
-        rows_deleted: result?.[0]?.['number of rows deleted'] ?? null,
-      };
-    } finally {
-      await destroy(connection);
+    const where = (where_clause ?? '').trim();
+    if (where === '') {
+      throw new Error('The WHERE condition is required to delete rows.');
     }
+    const sql = `DELETE FROM ${qualifiedName({
+      value: table,
+      label: 'Table',
+    })} WHERE ${where}`;
+    const result = await withSnowflake({
+      auth: toAuthValue(context.auth),
+      fn: (session) => session.query({ sql }),
+    });
+    return {
+      success: true,
+      rows_deleted: dmlCount({ result, key: 'number of rows deleted' }),
+    };
   },
 });

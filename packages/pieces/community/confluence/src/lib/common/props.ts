@@ -1,35 +1,28 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { confluenceApiCall, confluencePaginatedApiCall } from '.';
-import { confluenceAuth } from '../auth';
 import {
 	DropdownOption,
+	DropdownState,
 	DynamicPropsValue,
 	Property,
 } from '@activepieces/pieces-framework';
 import { parseStringPromise } from 'xml2js';
 
-function buildSpaceDropdown(required: boolean) {
+import { confluenceAuth } from '../auth';
+import { confluenceApi } from './api';
+
+import type { ConfluenceTemplateDeclarations } from './types';
+
+function spaceId<R extends boolean>({ required, displayName = 'Space', description }: PropParams<R>) {
 	return Property.Dropdown({
 		auth: confluenceAuth,
-		displayName: 'Space',
+		displayName,
+		description,
 		refreshers: [],
 		required,
 		options: async ({ auth }) => {
 			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account first.',
-				};
+				return disabledOptions({ placeholder: 'Please connect your account first.' });
 			}
-			const spaces = await confluencePaginatedApiCall<{ id: string; name: string }>({
-				domain: auth.props.confluenceDomain,
-				username: auth.props.username,
-				password: auth.props.password,
-				version: 'v2',
-				method: HttpMethod.GET,
-				resourceUri: '/spaces',
-			});
+			const spaces = await confluenceApi.listSpaces({ auth });
 			return {
 				disabled: false,
 				options: spaces.map((space) => ({ label: space.name, value: space.id })),
@@ -38,31 +31,20 @@ function buildSpaceDropdown(required: boolean) {
 	});
 }
 
-export const spaceIdProp = buildSpaceDropdown(true);
-export const spaceIdPropOptional = buildSpaceDropdown(false);
-
-function buildPageDropdown(displayName: string, required: boolean) {
+function pageId<R extends boolean>({ required, displayName = 'Page', description }: PropParams<R>) {
 	return Property.Dropdown({
 		auth: confluenceAuth,
 		displayName,
+		description,
 		refreshers: ['spaceId'],
 		required,
 		options: async ({ auth, spaceId }) => {
 			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account first.',
-				};
+				return disabledOptions({ placeholder: 'Please connect your account first.' });
 			}
-			const resourceUri = spaceId ? `/spaces/${spaceId}/pages` : `/pages`;
-			const pages = await confluencePaginatedApiCall<{ id: string; title: string }>({
-				domain: auth.props.confluenceDomain,
-				username: auth.props.username,
-				password: auth.props.password,
-				version: 'v2',
-				method: HttpMethod.GET,
-				resourceUri,
+			const pages = await confluenceApi.listPages({
+				auth,
+				spaceId: spaceId ? String(spaceId) : undefined,
 			});
 			return {
 				disabled: false,
@@ -72,210 +54,190 @@ function buildPageDropdown(displayName: string, required: boolean) {
 	});
 }
 
-export const pageIdProp = buildPageDropdown('Page', true);
-export const pageIdPropOptional = buildPageDropdown('Page', false);
-export const parentPageIdProp = buildPageDropdown('Parent Page', false);
-
-export const templateIdProp = Property.Dropdown({
-	displayName: 'Template',
-	auth: confluenceAuth,
-	refreshers: ['spaceId'],
-	required: true,
-	options: async ({ auth, spaceId }) => {
-		if (!auth || !spaceId) {
-			return {
-				disabled: true,
-				options: [],
-				placeholder: 'Please connect your account first and select a space.',
-			};
-		}
-
-		const space = await confluenceApiCall<{ id: string; name: string; key: string }>({
-			domain: auth.props.confluenceDomain,
-			username: auth.props.username,
-			password: auth.props.password,
-			method: HttpMethod.GET,
-			version: 'v2',
-			resourceUri: `/spaces/${spaceId}`,
-		});
-
-		const templates = await confluencePaginatedApiCall<{ templateId: string; name: string }>({
-			domain: auth.props.confluenceDomain,
-			username: auth.props.username,
-			password: auth.props.password,
-			version: 'v1',
-			method: HttpMethod.GET,
-			resourceUri: `/template/page`,
-			query: { spaceKey: space.key },
-		});
-
-		const options: DropdownOption<string>[] = [];
-		for (const template of templates) {
-			options.push({
-				label: template.name,
-				value: template.templateId,
-			});
-		}
-		return {
-			disabled: false,
-			options,
-		};
-	},
-});
-
-export const folderIdProp = Property.Dropdown({
-		displayName:'Parent Folder',
-	auth: confluenceAuth,
-	refreshers:['spaceId'],
-	required:false,
-	options:async ({auth,spaceId})=>{
-		if (!auth || !spaceId) {
-			return {
-				disabled: true,
-				options: [],
-				placeholder: 'Please connect your account first and select a space.',
-			};
-		}
-
-		const space = await confluenceApiCall<{ id: string; name: string; key: string,homepageId:string }>({
-			domain: auth.props.confluenceDomain,
-			username: auth.props.username,
-			password: auth.props.password,
-			method: HttpMethod.GET,
-			version: 'v2',
-			resourceUri: `/spaces/${spaceId}`,
-		});
-
-		const folders = await confluencePaginatedApiCall<{id:string,title:string}>({
-			domain:auth.props.confluenceDomain,
-			username:auth.props.username,
-			password:auth.props.password,
-			version:'v1',
-			method:HttpMethod.GET,
-			resourceUri:`/content/${space.homepageId}/descendant/folder`,
-		})
-
-		const options:DropdownOption<string>[] = [];
-		for(const folder of folders){
-			options.push({
-				label:folder.title,
-				value:folder.id
-			})
-		}
-		return{
-			disabled:false,
-			options
-		}
-	}	
-})
-
-export const templateVariablesProp = Property.DynamicProperties({
-	displayName: 'Template Variables',
-	auth: confluenceAuth,
-	refreshers: ['templateId'],
-	required: false,
-	props: async ({ auth, templateId }) => {
-		if (!auth) return {};
-		if (!templateId) return {};
-
-		const props: DynamicPropsValue = {};
-
-		const response = await confluenceApiCall<{ body: { storage: { value: string } } }>({
-			domain: auth.props.confluenceDomain,
-			username: auth.props.username,
-			password: auth.props.password,
-			method: HttpMethod.GET,
-			version: 'v1',
-			resourceUri: `/template/${templateId}`,
-		});
-
-		const parsedXml = await parseStringPromise(response.body.storage.value, {
-			explicitArray: false,
-		});
-		const declarations = parsedXml['at:declarations'];
-
-		if (!declarations) return {};
-
-		const variables: Array<{ name: string; type: string; options?: string[] }> = [];
-
-		Object.entries(declarations).forEach(([key, value]: [string, any]) => {
-			const type = key.replace('at:', '');
-			if (Array.isArray(value)) {
-				value.forEach((item) => {
-					if (item['$']) {
-						const varName = item['$']['at:name'];
-						let options: string[] | undefined;
-
-						if (type === 'list' && item['at:option']) {
-							options = item['at:option'].map((opt: any) => opt['$']['at:value']);
-						}
-
-						if (varName && type) {
-							variables.push({
-								name: varName,
-								type: type,
-								options: options,
-							});
-						}
-					}
+function templateId<R extends boolean>({ required, displayName = 'Template', description }: PropParams<R>) {
+	return Property.Dropdown({
+		displayName,
+		description,
+		auth: confluenceAuth,
+		refreshers: ['spaceId'],
+		required,
+		options: async ({ auth, spaceId }) => {
+			if (!auth || !spaceId) {
+				return disabledOptions({
+					placeholder: 'Please connect your account first and select a space.',
 				});
-			} else if (value['$']) {
-				const varName = value['$']['at:name'];
-				let options: string[] | undefined;
+			}
 
-				if (type === 'list' && value['at:option']) {
-					options = value['at:option'].map((opt: any) => opt['$']['at:value']);
-				}
+			const space = await confluenceApi.getSpace({ auth, spaceId: String(spaceId) });
 
-				if (varName && type) {
-					variables.push({
-						name: varName,
-						type: type,
-						options: options,
+			const templates = await confluenceApi.listPageTemplates({ auth, spaceKey: space.key });
+
+			const options: DropdownOption<string>[] = [];
+			for (const template of templates) {
+				options.push({
+					label: template.name,
+					value: template.templateId,
+				});
+			}
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+}
+
+function folderId<R extends boolean>({ required, displayName = 'Parent Folder', description }: PropParams<R>) {
+	return Property.Dropdown({
+		displayName,
+		description,
+		auth: confluenceAuth,
+		refreshers: ['spaceId'],
+		required,
+		options: async ({ auth, spaceId }) => {
+			if (!auth || !spaceId) {
+				return disabledOptions({
+					placeholder: 'Please connect your account first and select a space.',
+				});
+			}
+
+			const space = await confluenceApi.getSpace({ auth, spaceId: String(spaceId) });
+
+			const folders = await confluenceApi.listFolderDescendants({
+				auth,
+				contentId: space.homepageId,
+			});
+
+			const options: DropdownOption<string>[] = [];
+			for (const folder of folders) {
+				options.push({
+					label: folder.title,
+					value: folder.id,
+				});
+			}
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+}
+
+function templateVariables<R extends boolean>({
+	required,
+	displayName = 'Template Variables',
+	description,
+}: PropParams<R>) {
+	return Property.DynamicProperties({
+		displayName,
+		description,
+		auth: confluenceAuth,
+		refreshers: ['templateId'],
+		required,
+		props: async ({ auth, templateId }) => {
+			if (!auth) return {};
+			if (!templateId) return {};
+
+			const props: DynamicPropsValue = {};
+
+			const response = await confluenceApi.getTemplate({ auth, templateId: String(templateId) });
+
+			const parsedXml = await parseStringPromise(response.body.storage.value, {
+				explicitArray: false,
+			});
+			const declarations: ConfluenceTemplateDeclarations | undefined = parsedXml['at:declarations'];
+
+			if (!declarations) return {};
+
+			const variables: Array<{ name: string; type: string; options?: string[] }> = [];
+
+			Object.entries(declarations).forEach(([key, value]) => {
+				const type = key.replace('at:', '');
+				if (Array.isArray(value)) {
+					value.forEach((item) => {
+						if (item['$']) {
+							const varName = item['$']['at:name'];
+							let options: string[] | undefined;
+
+							if (type === 'list' && item['at:option']) {
+								options = item['at:option'].map((opt) => opt['$']['at:value']);
+							}
+
+							if (varName && type) {
+								variables.push({
+									name: varName,
+									type: type,
+									options: options,
+								});
+							}
+						}
 					});
+				} else if (value['$']) {
+					const varName = value['$']['at:name'];
+					let options: string[] | undefined;
+
+					if (type === 'list' && value['at:option']) {
+						options = value['at:option'].map((opt) => opt['$']['at:value']);
+					}
+
+					if (varName && type) {
+						variables.push({
+							name: varName,
+							type: type,
+							options: options,
+						});
+					}
+				}
+			});
+
+			for (const variable of variables) {
+				switch (variable.type) {
+					case 'list':
+						props[variable.name] = Property.StaticDropdown({
+							displayName: variable.name,
+							required: false,
+							defaultValue: '',
+							options: {
+								disabled: false,
+								options: variable.options
+									? variable.options.map((option) => {
+											return {
+												label: option,
+												value: option,
+											};
+									  })
+									: [],
+							},
+						});
+						break;
+					case 'string':
+						props[variable.name] = Property.ShortText({
+							displayName: variable.name,
+							required: false,
+							defaultValue: '',
+						});
+						break;
+					case 'textarea':
+						props[variable.name] = Property.LongText({
+							displayName: variable.name,
+							required: false,
+							defaultValue: '',
+						});
+						break;
+					default:
+						break;
 				}
 			}
-		});
 
-		for (const variable of variables) {
-			switch (variable.type) {
-				case 'list':
-					props[variable.name] = Property.StaticDropdown({
-						displayName: variable.name,
-						required: false,
-						defaultValue: '',
-						options: {
-							disabled: false,
-							options: variable.options
-								? variable.options.map((option) => {
-										return {
-											label: option,
-											value: option,
-										};
-								  })
-								: [],
-						},
-					});
-					break;
-				case 'string':
-					props[variable.name] = Property.ShortText({
-						displayName: variable.name,
-						required: false,
-						defaultValue: '',
-					});
-					break;
-				case 'textarea':
-					props[variable.name] = Property.LongText({
-						displayName: variable.name,
-						required: false,
-						defaultValue: '',
-					});
-					break;
-				default:
-					break;
-			}
-		}
+			return props;
+		},
+	});
+}
 
-		return props;
-	},
-});
+function disabledOptions({ placeholder }: { placeholder: string }): DropdownState<never> {
+	return { disabled: true, options: [], placeholder };
+}
+
+export const confluenceProps = { spaceId, pageId, templateId, folderId, templateVariables };
+
+export type PropParams<R extends boolean> = { required: R; displayName?: string; description?: string };

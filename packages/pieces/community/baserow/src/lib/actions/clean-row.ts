@@ -1,4 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, formatFieldValues, makeClient } from '../common';
 import { rowOutputSchema } from '../output-schemas';
@@ -8,8 +12,7 @@ export const cleanRowAction = createAction({
   classification: 'DESTRUCTIVE',
   outputSchema: rowOutputSchema,
   displayName: 'Clean Row',
-  description:
-    'Sets all fields in a row to empty/null. To update only specific fields, use Update Row instead.',
+  description: 'Clears the fields of a row that you leave empty.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -17,29 +20,46 @@ export const cleanRowAction = createAction({
     idempotent: true,
   },
   auth: baserowAuth,
+  propertyGroups: [
+    {
+      key: 'row',
+      display: 'section',
+      label: 'Row to Clean',
+      icon: 'file',
+      props: ['table_id', 'row_id'],
+    },
+    {
+      key: 'values',
+      display: 'section',
+      label: 'Fields',
+      icon: 'trash',
+      props: ['info', 'table_fields'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
     row_id: baserowCommon.rowId(),
+    info: Property.MarkDown({
+      value:
+        'Fields left empty are cleared. Fields you fill in are saved as entered.',
+      variant: MarkdownVariant.INFO,
+    }),
     table_fields: baserowCommon.tableFields(true),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue as {
-      table_id: number;
-      row_id: number;
-    };
-    const tableFieldsInput = context.propsValue.table_fields!;
+    const { table_id, row_id, table_fields } = context.propsValue;
 
     const client = await makeClient(context.auth);
-    const tableSchema = await client.listTableFields(table_id);
+    const tableSchema = await client.listTableFields(table_id!);
 
     const fieldTypeMap: Record<string, string> = {};
     for (const column of tableSchema) {
       fieldTypeMap[column.name] = column.type;
     }
 
-    const formattedFields = formatFieldValues(tableFieldsInput, fieldTypeMap, {
+    const formattedFields = formatFieldValues(table_fields!, fieldTypeMap, {
       skipEmpty: false,
     });
-    return await client.updateRow(table_id, row_id, formattedFields);
+    return await client.updateRow(table_id!, row_id!, formattedFields);
   },
 });

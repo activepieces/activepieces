@@ -36,7 +36,7 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 if (wide) {
                     wide.info(message ?? 'log', { ...bindings, ...safeFields })
                 }
-                else {
+                else if (!wideEvent.sealed()) {
                     log.info({ msg: message, ...bindings, ...safeFields })
                 }
             }
@@ -53,7 +53,7 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                     wide.warn(message ?? 'log', { ...bindings, ...safeFields })
                 }
                 else {
-                    log.warn({ msg: message, ...bindings, ...safeFields })
+                    log.warn({ msg: message, ...wideEvent.postEmitContext(), ...bindings, ...safeFields })
                 }
             }
             catch {
@@ -71,10 +71,10 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 }
                 else {
                     if (err) {
-                        log.error({ msg: message ?? err.message, error: stringifyError(err), ...bindings, ...fields })
+                        log.error({ msg: message ?? err.message, error: stringifyError(err), ...wideEvent.postEmitContext(), ...bindings, ...fields })
                     }
                     else {
-                        log.error({ msg: message, ...bindings, ...fields })
+                        log.error({ msg: message, ...wideEvent.postEmitContext(), ...bindings, ...fields })
                     }
                 }
             }
@@ -91,10 +91,10 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 }
                 else {
                     if (err) {
-                        log.error({ msg: message ?? err.message, error: stringifyError(err), ...bindings, ...fields })
+                        log.error({ msg: message ?? err.message, error: stringifyError(err), ...wideEvent.postEmitContext(), ...bindings, ...fields })
                     }
                     else {
-                        log.error({ msg: message, ...bindings, ...fields })
+                        log.error({ msg: message, ...wideEvent.postEmitContext(), ...bindings, ...fields })
                     }
                 }
             }

@@ -15,31 +15,48 @@ export const createEvent = createAction({
 			'Records a custom event against a Brevo contact so automations and segments can react to it. Identify the contact by email, contact id or external id, and attach arbitrary event properties. Brevo answers with an empty body, so this returns a success flag rather than the stored event. Not idempotent — each call records another occurrence.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'event',
+			display: 'section',
+			label: 'Event',
+			icon: 'calendar',
+			props: ['event_name', 'event_date', 'event_properties'],
+		},
+		{
+			key: 'contact',
+			display: 'section',
+			label: 'Contact',
+			icon: 'user',
+			props: ['email', 'contact_properties'],
+		},
+	],
 	props: {
 		event_name: Property.ShortText({
-			displayName: 'Event Name',
-			description: 'How the event is identified in Brevo, for example order_completed.',
-			required: true,
-		}),
-		email: Property.ShortText({
-			displayName: 'Contact Email',
-			description: 'Email of the contact the event belongs to.',
+			displayName: 'Name',
+			description: 'How the event is named in Brevo.',
+			placeholder: 'order_completed',
 			required: true,
 		}),
 		event_date: Property.DateTime({
-			displayName: 'Event Date',
-			description: 'When the event occurred. Defaults to now when left empty.',
+			displayName: 'Date',
+			description: 'Leave empty to use the current time.',
 			required: false,
 		}),
 		event_properties: Property.Object({
-			displayName: 'Event Properties',
-			description: 'Details of the event, for example {"order_id": 42, "total": 99.5}.',
+			displayName: 'Details',
+			description: 'Event data, such as an order ID and total.',
 			required: false,
 		}),
+		email: Property.ShortText({
+			displayName: 'Email',
+			description: 'The contact the event belongs to.',
+			placeholder: 'jane@example.com',
+			required: true,
+		}),
 		contact_properties: Property.Object({
-			displayName: 'Contact Properties',
-			description:
-				'Contact attributes to update alongside the event, for example {"FIRSTNAME": "Elly"}.',
+			displayName: 'Attributes',
+			description: 'Contact attributes to update, such as FIRSTNAME.',
 			required: false,
 		}),
 	},
@@ -67,4 +84,3 @@ export const createEvent = createAction({
 		return { success: true };
 	},
 });
-

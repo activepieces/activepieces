@@ -1,19 +1,15 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { youformAuth } from '../common/auth';
-import { formIdDropdown } from '../common/props';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { BASE_URL } from '../common/constants';
-import { CreateWebhookResponse } from '../common/types';
+import { youformAuth } from '../auth';
+import { youformProps } from '../common/props';
+import { youformApi } from '../common/api';
 import { isNil } from '@activepieces/pieces-framework';
+import { newSubmissionOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'youform-new-submission-trigger';
 
 export const newSubmissionTrigger = createTrigger({
   name: 'new-submission',
+  outputSchema: newSubmissionOutputSchema,
   classification: 'READ',
   auth: youformAuth,
   displayName: 'New Submission',
@@ -24,26 +20,18 @@ export const newSubmissionTrigger = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
-    formId: formIdDropdown,
+    formId: youformProps.formId({ required: true }),
   },
   async onEnable(context) {
     const { formId } = context.propsValue;
 
-    const response = await httpClient.sendRequest<CreateWebhookResponse>({
-      method: HttpMethod.POST,
-      url: BASE_URL + '/webhooks',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
-      body:{},
-      queryParams: {
-        form_id: formId.toString(),
-        webhook_url: context.webhookUrl,
-      },
+    const response = await youformApi.createWebhook({
+      auth: context.auth,
+      formId: formId.toString(),
+      webhookUrl: context.webhookUrl,
     });
 
-    const webhookId = response.body.data.id;
+    const webhookId = response.data.id;
 
     await context.store.put<number>(TRIGGER_KEY, webhookId);
   },
@@ -51,13 +39,9 @@ export const newSubmissionTrigger = createTrigger({
     const webhookId = await context.store.get<number>(TRIGGER_KEY);
 
     if (!isNil(webhookId)) {
-      await httpClient.sendRequest<CreateWebhookResponse>({
-        method: HttpMethod.DELETE,
-        url: BASE_URL + `/webhooks/${webhookId}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.secret_text,
-        },
+      await youformApi.deleteWebhook({
+        auth: context.auth,
+        webhookId,
       });
     }
   },

@@ -19,6 +19,22 @@ export const newMentionInDirectMessageTrigger = createTrigger({
     description:
       'Fires when the configured user is @-mentioned in a direct message (im channel). Only messages in DM channels that contain the mention token for the selected user fire; bot messages and the user\'s own messages can be optionally ignored. The event payload is the Slack message event including its text, channel, and sender.',
   },
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['info', 'user'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['ignoreBots', 'ignoreSelfMessages'],
+    },
+  ],
   props: {
     info: appWebhookSetupInfo,
     user: userId(true),

@@ -1,24 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { legacyProcedureOutputSchema } from '../common/output-schemas';
+import { isUserDefined } from '../common/operations';
+import { buildCall, parseSignatureArgTypes } from '../common/procedures';
+import { qualifiedName } from '../common/sql';
 
 export const executeStoredProcedureAction = createAction({
   name: 'execute_stored_procedure',
+  classification: 'WRITE',
   displayName: 'Execute Stored Procedure',
   description: 'Call a stored procedure in Snowflake and return its result.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Calls a named stored procedure in a Snowflake database/schema with optional positional arguments and returns its result (CALL). Use to invoke server-side procedural logic rather than ad-hoc SQL. Idempotency depends on what the procedure does internally; assume not idempotent since a procedure may mutate data or have side effects on each call.',
+      'CALLs a stored procedure picked from dropdowns with positional arguments. Human-only; agents use Call Procedure. A procedure may change data on every call.',
     idempotent: false,
   },
+  outputSchema: legacyProcedureOutputSchema,
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -44,27 +43,36 @@ export const executeStoredProcedureAction = createAction({
             placeholder: 'Please select a database and schema first',
           };
         }
-        const connection = configureConnection(auth as SnowflakeAuthValue);
-        await connect(connection);
-        let result;
         try {
-          result = await execute(
-            connection,
-            `SHOW PROCEDURES IN SCHEMA ${database}.${schema}`,
-            []
-          );
-        } finally {
-          await destroy(connection);
+          const result = await withSnowflake({
+            auth: toAuthValue(auth),
+            statementTimeoutSeconds: 60,
+            fn: (session) =>
+              session.query({
+                sql: `SHOW PROCEDURES IN SCHEMA ${qualifiedName({
+                  value: `${database}.${schema}`,
+                  maxParts: 2,
+                  label: 'Schema',
+                })}`,
+                maxRows: 5000,
+              }),
+          });
+          return {
+            disabled: false,
+            options: result.rows.filter(isUserDefined).map((proc) => {
+              const value = String(proc['arguments'] ?? proc['name'] ?? '');
+              return { label: value, value };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: `Could not load procedures: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          };
         }
-        return {
-          disabled: false,
-          options: result
-            ? (result as Record<string, unknown>[]).map((proc) => ({
-                label: String(proc['arguments'] ?? proc['name'] ?? ''),
-                value: String(proc['arguments'] ?? proc['name'] ?? ''),
-              }))
-            : [],
-        };
       },
     }),
     arguments: Property.Array({
@@ -82,28 +90,27 @@ export const executeStoredProcedureAction = createAction({
       procedure_name,
       arguments: args,
     } = context.propsValue;
-
-    // procedure_name is the full signature string (e.g. "MY_PROC(NUMBER) RETURN VARCHAR")
-    // Extract just the bare name before the first '('
     const bareName = procedure_name.includes('(')
       ? procedure_name.substring(0, procedure_name.indexOf('(')).trim()
       : procedure_name.trim();
-
-    const argPlaceholders =
-      args && args.length > 0
-        ? (args as string[]).map(() => '?').join(', ')
-        : '';
-
-    const sql = `CALL ${database}.${schema}.${bareName}(${argPlaceholders})`;
-    const binds = args && args.length > 0 ? (args as string[]) : [];
-
-    const connection = configureConnection(context.auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(connection, sql, binds);
-      return { result: result ?? null };
-    } finally {
-      await destroy(connection);
-    }
+    const { sql, binds } = buildCall({
+      procedure: `${qualifiedName({
+        value: `${database}.${schema}`,
+        maxParts: 2,
+        label: 'Schema',
+      })}.${qualifiedName({
+        value: bareName,
+        maxParts: 1,
+        label: 'Procedure',
+      })}`,
+      args: args ?? [],
+      preQualified: true,
+      argTypes: parseSignatureArgTypes(procedure_name),
+    });
+    const result = await withSnowflake({
+      auth: toAuthValue(context.auth),
+      fn: (session) => session.query({ sql, binds }),
+    });
+    return { result: result.rows };
   },
 });

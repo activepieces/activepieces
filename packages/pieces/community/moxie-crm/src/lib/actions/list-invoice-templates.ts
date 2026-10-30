@@ -5,7 +5,7 @@ import { moxieCRMAuth } from '../auth';
 export const moxieListInvoiceTemplatesAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_list_invoice_templates',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Invoice Templates',
   description: 'Retrieve the invoice template names of the workspace.',
   audience: 'both',

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-flowise",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "devDependencies": {
@@ -16,6 +16,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "@activepieces/core-utils": "workspace:*",
+    "form-data": "4.0.6"
   }
 }

@@ -67,6 +67,11 @@ describe('sanitizeObjectForPostgresql', () => {
         const result = sanitizeObjectForPostgresql({ a: { b: 'te\u0000st' } })
         expect(result).toEqual({ a: { b: 'test' } })
     })
+
+    it('should remove null characters and lone surrogates from keys', () => {
+        const result = sanitizeObjectForPostgresql({ 'Se\u0000nd': { 'a\uD800': ['b'] } })
+        expect(result).toEqual({ 'Send': { 'a': ['b'] } })
+    })
 })
 
 describe('groupBy', () => {

@@ -60,7 +60,7 @@ const CopyAiPromptButton = ({
   };
 
   return (
-    <div className={cn('px-4 py-3 border-t border-border', className)}>
+    <div className={cn('px-4 py-3 border-t border-gray-6', className)}>
       <Button
         type="button"
         variant="outline"
@@ -69,9 +69,9 @@ const CopyAiPromptButton = ({
         className="gap-1.5"
       >
         {copied ? (
-          <Check className="size-3.5 text-success" />
+          <Check className="size-3.5 text-success-11" />
         ) : (
-          <Sparkles className="size-3.5 text-primary" />
+          <Sparkles className="size-3.5 text-accent-11" />
         )}
         {copied ? t('Copied') : t('Copy Error for AI')}
       </Button>

@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { deleteBroadcastOutputSchema } from '../output-schemas';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
@@ -15,6 +15,10 @@ export const deleteBroadcast = createAction({
   audience: 'both',
   aiMetadata: { description: 'Permanently deletes a broadcast from the Resend account, identified by broadcast ID. Use this to remove a draft or unwanted campaign; only broadcasts that have not been sent can be deleted. Effectively idempotent — once deleted, repeating the call has no further effect.', idempotent: true },
   props: {
+    info: Property.MarkDown({
+      value: 'Only broadcasts that have not been sent can be deleted. Deleting a scheduled one cancels its send.',
+      variant: MarkdownVariant.INFO,
+    }),
     broadcast_id: resendProps.broadcastId,
   },
   async run({ auth, propsValue }) {

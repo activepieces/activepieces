@@ -18,7 +18,7 @@ export function CodeFilePreview({
   return (
     <CodeBlock className="my-3">
       <CodeBlockGroup className="border-b px-3 py-1.5">
-        <span className="font-mono text-xs text-muted-foreground">
+        <span className="font-mono text-xs text-gray-11">
           {language !== 'plaintext' ? language : ''}
         </span>
         <div className="flex items-center gap-0.5">
@@ -26,14 +26,14 @@ export function CodeFilePreview({
             textToCopy={code}
             withoutTooltip
             variant="ghost"
-            className="h-6 w-6 p-0"
+            size="icon-xs"
           />
           <DownloadButton
             fileName="snippet"
             textToDownload={code}
             extension={previewUtils.languageToExtension(language)}
             variant="ghost"
-            className="h-6 w-6 p-0"
+            size="icon-xs"
           />
         </div>
       </CodeBlockGroup>

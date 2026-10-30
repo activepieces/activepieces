@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClientFromAuth } from '../common/pinecone-client';
+import { pineconeApi } from '../common/api';
 import { pineconeAuth } from '../auth';
+import { searchIndexOutputSchema } from '../output-schemas';
 
-export const searchIndex = createAction({
+export const searchIndexAction = createAction({
   auth: pineconeAuth,
   name: 'search_index',
+  outputSchema: searchIndexOutputSchema,
   classification: 'SEARCH',
   displayName: 'Search Index',
   description: 'Search indexes by name or list all indexes in your project.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Discovers indexes in the connected Pinecone project, operating in one of two modes: list all indexes (optionally narrowed by a case-insensitive partial name filter) or describe one specific index by its exact name. Use to enumerate available indexes or confirm an index exists and inspect its configuration before other operations. Idempotent read-only lookup.', idempotent: true },
   props: {
     searchMode: Property.StaticDropdown({
@@ -41,11 +43,9 @@ export const searchIndex = createAction({
       throw new Error('You must provide an index name when using Find Specific Index mode.');
     }
 
-    const pc = createPineconeClientFromAuth(context.auth);
-
     try {
-      if (searchMode === 'find') {
-        const indexDetails = await pc.describeIndex(indexName!);
+      if (searchMode === 'find' && indexName) {
+        const indexDetails = await pineconeApi.describeLegacyIndex({ auth: context.auth, indexName });
         
         return {
           success: true,
@@ -56,7 +56,7 @@ export const searchIndex = createAction({
           message: `Successfully found index: ${indexName}`
         };
       } else {
-        const indexList = await pc.listIndexes();
+        const indexList = await pineconeApi.listLegacyIndexes({ auth: context.auth });
         const allIndexes = indexList.indexes || [];
 
         let filteredIndexes = allIndexes;
@@ -85,56 +85,6 @@ export const searchIndex = createAction({
         };
       }
     } catch (caught) {
-      console.log('Failed to search indexes.', caught);
-
-      if (caught instanceof Error) {
-        const error = caught as any;
-
-        if (error.status === 404 || error.code === 404) {
-          if (searchMode === 'find') {
-            return {
-              success: false,
-              mode: 'find',
-              searchTerm: indexName,
-              found: false,
-              error: 'Index Not Found',
-              code: 404,
-              message: `Index "${indexName}" does not exist in your project.`
-            };
-          }
-        }
-
-        if (error.status === 400 || error.code === 400) {
-          return {
-            success: false,
-            error: 'Bad Request',
-            code: 400,
-            message: error.message || 'The request included invalid parameters.',
-            details: error.details || []
-          };
-        }
-
-        if (error.status === 403 || error.code === 403) {
-          return {
-            success: false,
-            error: 'Permission Denied',
-            code: 403,
-            message: 'You do not have permission to access indexes in this project.',
-            details: error.details || []
-          };
-        }
-
-        if (error.status >= 500 || error.code >= 500) {
-          return {
-            success: false,
-            error: 'Server Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected server error occurred.',
-            details: error.details || []
-          };
-        }
-      }
-
       return {
         success: false,
         error: 'Unknown Error',

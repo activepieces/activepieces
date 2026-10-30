@@ -32,6 +32,22 @@ export const insertRowAction = createAction({
 		idempotent: false,
 	},
 	displayName: 'Add Row',
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'new_row',
+			display: 'section',
+			label: 'New Row',
+			icon: 'text',
+			props: ['first_row_headers', 'values'],
+		},
+	],
 	props: {
 		...commonProps,
 		first_row_headers: isFirstRowHeaderProp(),

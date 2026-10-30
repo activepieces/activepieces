@@ -1,4 +1,5 @@
 import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
+import { EDITOR_SESSION_ID_HEADER } from '@activepieces/shared';
 import axios, {
   AxiosError,
   AxiosRequestConfig,
@@ -10,6 +11,7 @@ import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { chatDebug } from '@/lib/chat-debug-logger';
+import { editorSession } from '@/lib/editor-session';
 export const CLOUD_HOSTNAME = 'cloud.activepieces.com';
 
 export const isRunningCloudInDevMode = import.meta.env.MODE === 'cloud';
@@ -79,6 +81,9 @@ function request<TResponse>(
         isApWebsite,
         authenticationSession.getToken(),
       ),
+      ...(isApWebsite
+        ? { [EDITOR_SESSION_ID_HEADER]: editorSession.getId() }
+        : {}),
     },
   })
     .then((response) => {

@@ -6,7 +6,7 @@ import { listWorkspaceUsersActionOutputSchema } from '../output-schemas';
 export const moxieListWorkspaceUsersAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_list_workspace_users',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Workspace Users',
   description: 'Retrieve the users of the workspace and their access.',
   audience: 'both',

@@ -1,54 +1,31 @@
 import {
+	AppConnectionValueForAuthProperty,
 	createTrigger,
 	TriggerStrategy,
-	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
-import { confluenceAuth, confluenceAuthValue } from '../auth';
-import { confluenceApiCall, PaginatedResponse } from '../common';
-import { spaceIdProp } from '../common/props';
-
-interface ConfluencePage {
-	id: string;
-	status: string;
-	title: string;
-	spaceId: string;
-	createdAt: string;
-	version: {
-		number: number;
-		createdAt: string;
-	};
-}
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { confluenceAuth } from '../auth';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { updatedPageOutputSchema } from '../output-schemas';
 
 const props = {
-	spaceId: spaceIdProp,
+	spaceId: confluenceProps.spaceId({ required: true }),
 };
 
-const PAGE_FETCH_LIMIT = 100;
-
 const polling: Polling<
-  confluenceAuthValue,
+	AppConnectionValueForAuthProperty<typeof confluenceAuth>,
   { spaceId?: string }
 > = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue }) {
-		const response = await confluenceApiCall<PaginatedResponse<ConfluencePage>>({
-			domain: auth.props.confluenceDomain,
-			username: auth.props.username,
-			password: auth.props.password,
-			version: 'v2',
-			method: HttpMethod.GET,
-			resourceUri: `/spaces/${propsValue.spaceId}/pages`,
-			query: {
-				limit: String(PAGE_FETCH_LIMIT),
-				sort: '-modified-date',
-			},
+		const results = await confluenceApi.listSpacePages({
+			auth,
+			spaceId: propsValue.spaceId,
+			sort: '-modified-date',
 		});
 
-		if (isNil(response.results)) return [];
-
-		return response.results
+		return results
 			.filter((page) => page.version.number > 1)
 			.map((page) => ({
 				epochMilliSeconds: new Date(page.version.createdAt).getTime(),
@@ -59,6 +36,7 @@ const polling: Polling<
 
 export const updatedPageTrigger = createTrigger({
 	name: 'updated-page',
+	outputSchema: updatedPageOutputSchema,
 	classification: 'READ',
 	displayName: 'Updated Page',
 	description: 'Triggers when an existing page is updated (version > 1).',

@@ -2,6 +2,7 @@ import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps, intercomClient } from '../common';
 import { collectionIdProp } from '../common/props';
+import { articleOutputSchema } from '../output-schemas';
 
 export const createArticleAction = createAction({
 	auth: intercomAuth,
@@ -9,7 +10,7 @@ export const createArticleAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Article',
 	description: 'Creates a new article in your Help Center.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Create a new Help Center article with title, optional description and body, an author admin, and a draft or published state, optionally nested under a parent collection. Always creates a new article, so it is not idempotent and repeated calls produce duplicates.', idempotent: false },
 	props: {
 		title: Property.LongText({
@@ -39,6 +40,7 @@ export const createArticleAction = createAction({
 		}),
 		collectionId: collectionIdProp('Parent Collection', false),
 	},
+	outputSchema: articleOutputSchema,
 	async run(context) {
 		const { authorId, collectionId, title, description, body, state } = context.propsValue;
 
@@ -46,7 +48,7 @@ export const createArticleAction = createAction({
 			throw new Error('Author is required');
 		}
 
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.articles.create({
 			title,

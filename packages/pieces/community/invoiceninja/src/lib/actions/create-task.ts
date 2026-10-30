@@ -1,71 +1,44 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { invoiceninjaAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { invoiceninjaAuth } from '../common/auth';
+import { invoiceNinjaClient } from '../common/client';
+import { invoiceNinjaOutputSchemas } from '../common/output-schemas';
+import { invoiceNinjaProps } from '../common/props';
+import { invoiceNinjaTaskHelpers } from './ai/tasks-reports';
+
 export const createTask = createAction({
   auth: invoiceninjaAuth,
   name: 'create_task',
   classification: 'WRITE',
   displayName: 'Create Task',
-  description: 'Creates a task instance in Invoice Ninja for billing purposes.',
-  audience: 'both',
-  aiMetadata: { description: 'Creates a billable task in Invoice Ninja, identified by a task/ticket number that must be unique (not previously used). Optionally associates the task with a client and project and applies a custom hourly rate. Not idempotent — each call creates a new task.', idempotent: false },
-
+  description: 'Creates a billable task in Invoice Ninja.',
+  audience: 'human',
+  outputSchema: invoiceNinjaOutputSchemas.legacyTaskCreated,
   props: {
-    number: Property.LongText({
-      displayName: 'Task or Ticket Number (alphanumeric)',
-      description:
-        'A unique task or ticket number that has not been used before in Invoice Ninja',
+    number: Property.ShortText({
+      displayName: 'Task or Ticket Number',
+      description: 'A task or ticket number not used before in Invoice Ninja.',
       required: true,
     }),
-    client_id: Property.LongText({
-      displayName: 'Client ID (alphanumeric)',
-      description: 'Client ID from Invoice Ninja (optional)',
-      required: false,
-    }),
-    project_id: Property.LongText({
-      displayName: 'Project ID (alphanumeric)',
-      description: 'Project ID from Invoice Ninja (optional)',
-      required: false,
-    }),
+    client_id: invoiceNinjaProps.clientDropdown({ required: false }),
+    project_id: invoiceNinjaProps.projectDropdown({ required: false }),
     description: Property.LongText({
-      displayName: 'Description of task',
-      description: 'Description of task to be billed',
+      displayName: 'Description',
+      description: 'What the task is about.',
       required: true,
     }),
     rate: Property.Number({
-      displayName: 'Custom hourly rate',
-      description: 'Custom hourly rate (optional) otherwise default used',
+      displayName: 'Custom Hourly Rate',
+      description: 'Leave empty to use the default rate.',
       required: false,
     }),
   },
-
-  async run(context) {
-    const INapiToken = context.auth.props.access_token;
-
-    const headers = {
-      'X-Api-Token': INapiToken,
-    };
-    const queryParams = new URLSearchParams();
-    queryParams.append('number', context.propsValue.number || '');
-    queryParams.append('client_id', context.propsValue.client_id || '');
-    queryParams.append('project_id', context.propsValue.project_id || '');
-    queryParams.append('description', context.propsValue.description || '');
-    // bugfix - only append rate if a rate has been specified in the piece
-    if (context.propsValue.rate?.valueOf != null) {
-      queryParams.append('rate', context.propsValue.rate?.toString() || '0');
-    }
-    // Remove trailing slash from base_url
-    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
-    const url = `${baseUrl}/api/v1/tasks?${queryParams.toString()}`;
-    const httprequestdata = {
-      method: HttpMethod.POST,
-      url,
-      headers,
-    };
-    const response = await httpClient.sendRequest(httprequestdata);
-    return response.body;
+  async run({ auth, propsValue }) {
+    const body = invoiceNinjaTaskHelpers.taskBody(propsValue);
+    if (body['description'] === undefined) throw new Error('Description is required.');
+    if (body['number'] === undefined) throw new Error('Task or Ticket Number is required.');
+    return invoiceNinjaClient.envelopeOf(
+      await invoiceNinjaClient.request({ auth: auth.props, method: HttpMethod.POST, path: '/tasks', body }),
+    );
   },
 });

@@ -124,7 +124,6 @@ const ShareTemplateDialog: React.FC<{
                     required
                     id="description"
                     placeholder={t('A short description of the template')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>

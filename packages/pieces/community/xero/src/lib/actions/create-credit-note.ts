@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroCreateCreditNote = createAction({
   auth: xeroAuth,
@@ -14,12 +15,13 @@ export const xeroCreateCreditNote = createAction({
   classification: 'WRITE',
   displayName: 'Create Credit Note',
   description: 'Creates a new credit note for a contact.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Create a new Xero credit note for a contact, either accounts-receivable (ACCRECCREDIT, customer refunds) or accounts-payable (ACCPAYCREDIT, supplier credits), with optional line items and status. Pick this to issue credit; to apply it against an invoice afterward use Allocate Credit Note to Invoice. Not idempotent: each call creates another credit note. Reference is honored only for ACCRECCREDIT.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.creditNoteEnvelope,
   props: {
     tenant_id: props.tenant_id,
     type: Property.StaticDropdown({

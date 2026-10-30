@@ -1,60 +1,39 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { retellAiAuth } from '../common/auth';
+import { apiKeyOf } from '../common/client';
+import { SAMPLE_CALL_STARTED } from '../common/sample';
+import { retellSchemas } from '../common/schemas';
+import { handleRetellWebhook, webhookInstructions } from '../common/webhook';
 
 export const newCallTrigger = createTrigger({
+  auth: retellAiAuth,
   name: 'new_call',
   classification: 'READ',
   displayName: 'New Call',
-  description: 'Triggers when a new outgoing or incoming call is created.',
+  description: 'Triggers when an inbound or outbound call starts (call_started event).',
   aiMetadata: {
-    description: 'Fires when a new call is created in Retell, for either inbound or outbound direction, via the call.created webhook event. Each event represents a freshly initiated call with its call ID, numbers, direction, agent, and metadata. Requires a manually configured webhook in the Retell dashboard.',
+    description:
+      'Fires once per Retell call when it starts (call_started webhook event), inbound or outbound. Payload is {event, call} with the call ID, numbers, direction, agent and metadata; no transcript yet. Requires the account webhook URL set manually in Retell and a connection key with the webhook badge.',
   },
-  auth: retellAiAuth,
   props: {
-    webhookInstructions: Property.MarkDown({
-      value: `
-      To use this trigger, you need to manually set up a webhook in your Retell AI account:
-
-      1. Login to your Retell AI dashboard.
-      2. Navigate to the Webhooks section in your settings.
-      3. Click on "Add Webhook" or "Create New Webhook".
-      4. Add the following URL in the **Webhook URL** field:
-      \`\`\`text
-      {{webhookUrl}}
-      \`\`\`
-      5. Select the **call.created** event type.
-      6. Click Save to create the webhook.
-      `,
-    }),
+    webhookInstructions: webhookInstructions('call_started'),
   },
   type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    call_id: "119c3f8e47135a29e65947eeb34cf12d",
-    status: "initiated",
-    from_number: "+15551234567",
-    to_number: "+15557654321",
-    direction: "outbound",
-    agent_id: "ag_01h9pc3e7jnb2rvnj5jkxgf5d4",
-    created_at: "2023-09-15T14:30:00.000Z",
-    metadata: {
-      custom_field: "value"
-    }
+  sampleData: SAMPLE_CALL_STARTED,
+  outputSchema: retellSchemas.webhookCall,
+  async onEnable() {
+    return;
   },
-
-  async onEnable(context) {
-    // No need to register webhooks programmatically as user will do it manually
+  async onDisable() {
+    return;
   },
-
-  async onDisable(context) {
-    // No need to unregister webhooks as user will do it manually
-  },
-
   async run(context) {
-    return [context.payload.body];
+    return handleRetellWebhook({
+      apiKey: apiKeyOf(context.auth),
+      payload: context.payload,
+      store: context.store,
+      event: 'call_started',
+      nowMs: Date.now(),
+    });
   },
 });

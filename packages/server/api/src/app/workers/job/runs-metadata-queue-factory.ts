@@ -73,7 +73,7 @@ export const runsMetadataQueueFactory = ({
 const RUNS_METADATA_UPSERT_KEYS: (keyof RunsMetadataUpsertData)[] = [
     'id', 'projectId', 'created', 'flowId', 'flowVersionId', 'environment',
     'triggeredBy', 'startTime', 'finishTime', 'status', 'tags',
-    'failedStep', 'stepNameToTest', 'parentRunId', 'failParentOnFailure',
+    'failedStep', 'stepNameToTest', 'parentRunId', 'parentWaitpointId', 'failParentOnFailure',
     'logsFileId', 'updated', 'stepsCount', 'requestId',
     'provisionMs', 'bootMs', 'runMs', 'willRetry',
 ]
@@ -123,6 +123,7 @@ export type RunsMetadataUpsertData = {
     failedStep?: FailedStep
     stepNameToTest?: string
     parentRunId?: string
+    parentWaitpointId?: string
     failParentOnFailure?: boolean
     logsFileId?: string | null
     updated?: string

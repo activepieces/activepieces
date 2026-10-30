@@ -35,5 +35,6 @@
   "None": "无",
   "JSON": "JSON",
   "Form Data": "表单数据",
-  "Raw": "原始文件"
+  "Raw": "原始文件",
+  "Full URL, or a path relative to https://openrouter.ai/api/v1": "完整 URL，或相对于 https://openrouter.ai/api/v1 的路径"
 }

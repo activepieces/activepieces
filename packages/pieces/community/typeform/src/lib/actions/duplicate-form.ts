@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { typeformAuth } from '../auth';
 import { typeformCommon, TypeformRecord } from '../common';
@@ -17,14 +17,22 @@ export const duplicateFormAction = createAction({
     idempotent: false,
   },
   outputSchema: formOutputSchema,
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Original', icon: 'file', props: ['form_id'] },
+    { key: 'copy', display: 'section', label: 'The copy', icon: 'file', props: ['title', 'workspace', 'copy_info'] },
+  ],
   props: {
     form_id: typeformCommon.form,
     title: Property.ShortText({
-      displayName: 'New Title',
-      description: 'Defaults to "Copy of" and the original title.',
+      displayName: 'Title',
+      description: 'Leave empty for "Copy of" and the original title.',
       required: false,
     }),
-    workspace: typeformCommon.workspace,
+    workspace: typeformCommon.copyWorkspace,
+    copy_info: Property.MarkDown({
+      value: 'Responses, translations and webhooks are not copied.',
+      variant: MarkdownVariant.INFO,
+    }),
   },
   async run({ auth, propsValue }) {
     const { form_id, title, workspace } = propsValue;

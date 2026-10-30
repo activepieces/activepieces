@@ -1,133 +1,162 @@
-import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import { TaskadeAPIClient } from './client';
+import { DropdownOption, DropdownState, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { taskadeAuth } from '../auth';
-
-const createEmptyOptions = (placeholder: string) => {
-	return {
-		disabled: true,
-		options: [],
-		placeholder,
-	};
-};
+import { taskadeApi } from './client';
+import { ListAPIResponse, ProjectResponse, TaskPageResponse, WorkspaceFolderResponse, WorkspaceResponse } from './types';
 
 export const taskadeProps = {
 	workspace_id: Property.Dropdown({
-	auth: taskadeAuth,
+		auth: taskadeAuth,
 		displayName: 'Workspace',
 		refreshers: [],
 		required: true,
 		options: async ({ auth }) => {
 			if (!auth) {
-				return createEmptyOptions('Please connect account first.');
+				return emptyOptions('Please connect account first.');
 			}
-
-			const client = new TaskadeAPIClient(auth.secret_text);
-			const response = await client.listWorkspaces();
-
-			const options: DropdownOption<string>[] = [];
-
-			for (const workspace of response.items) {
-				options.push({ label: workspace.name, value: workspace.id });
-			}
-
-			return {
-				disabled: false,
-				options,
-			};
+			return dropdownOrError(async () => {
+				const response = await listWorkspaces(auth.secret_text);
+				return response.items.map((workspace) => ({ label: workspace.name, value: workspace.id }));
+			});
 		},
 	}),
 	folder_id: Property.Dropdown({
-	auth: taskadeAuth,
+		auth: taskadeAuth,
 		displayName: 'Folder',
 		refreshers: ['workspace_id'],
 		required: false,
 		options: async ({ auth, workspace_id }) => {
 			if (!auth) {
-				return createEmptyOptions('Please connect account first.');
+				return emptyOptions('Please connect account first.');
 			}
 			if (!workspace_id) {
-				return createEmptyOptions('Please select workspace.');
+				return emptyOptions('Please select workspace.');
 			}
-
-			const client = new TaskadeAPIClient(auth.secret_text);
-			const response = await client.listWorkspaceFolders(workspace_id as string);
-
-			const options: DropdownOption<string>[] = [];
-
-			for (const folder of response.items) {
-				options.push({ label: folder.name, value: folder.id });
-			}
-
-			return {
-				disabled: false,
-				options,
-			};
+			return dropdownOrError(async () => {
+				const response = await taskadeApi.request<ListAPIResponse<WorkspaceFolderResponse>>({
+					token: auth.secret_text,
+					method: HttpMethod.GET,
+					path: `/workspaces/${taskadeApi.seg({ value: workspace_id, label: 'Workspace ID' })}/folders`,
+					operation: 'list folders',
+				});
+				return response.items.map((folder) => ({ label: folder.name, value: folder.id }));
+			});
 		},
 	}),
 	project_id: Property.Dropdown({
-	auth: taskadeAuth,
+		auth: taskadeAuth,
 		displayName: 'Project',
 		refreshers: ['workspace_id', 'folder_id'],
 		required: true,
 		options: async ({ auth, workspace_id, folder_id }) => {
 			if (!auth) {
-				return createEmptyOptions('Please connect account first.');
+				return emptyOptions('Please connect account first.');
 			}
 			if (!workspace_id) {
-				return createEmptyOptions('Please select workspace.');
+				return emptyOptions('Please select workspace.');
 			}
-
-			const workspaceId = workspace_id as string;
-			const folderId = (folder_id as string) ?? workspaceId;
-
-			const client = new TaskadeAPIClient(auth.secret_text);
-			const response = await client.listProjects(folderId as string);
-
-			const options: DropdownOption<string>[] = [];
-
-			for (const project of response.items) {
-				options.push({ label: project.name, value: project.id });
-			}
-
-			return {
-				disabled: false,
-				options,
-			};
+			const folderId = typeof folder_id === 'string' && folder_id.length > 0 ? folder_id : workspace_id;
+			return dropdownOrError(async () => {
+				const response = await taskadeApi.request<ListAPIResponse<ProjectResponse>>({
+					token: auth.secret_text,
+					method: HttpMethod.GET,
+					path: `/folders/${taskadeApi.seg({ value: folderId, label: 'Folder ID' })}/projects`,
+					operation: 'list projects',
+				});
+				return response.items.map((project) => ({ label: project.name ?? project.id, value: project.id }));
+			});
 		},
 	}),
 	task_id: Property.Dropdown({
-	auth: taskadeAuth,
+		auth: taskadeAuth,
 		displayName: 'Task',
 		refreshers: ['project_id'],
 		required: true,
 		options: async ({ auth, project_id }) => {
 			if (!auth) {
-				return createEmptyOptions('Please connect account first.');
+				return emptyOptions('Please connect account first.');
 			}
 			if (!project_id) {
-				return createEmptyOptions('Please select project.');
+				return emptyOptions('Please select project.');
 			}
-
-			const client = new TaskadeAPIClient(auth.secret_text);
-			const options: DropdownOption<string>[] = [];
-
-			let after;
-			let moreTasks = true;
-			while (moreTasks) {
-				const response = await client.listTasks(project_id as string, { limit: 100, after });
-				if (response.items.length === 0) {
-					moreTasks = false;
-				} else {
-					after = response.items[response.items.length - 1].id;
-					for (const task of response.items) {
-						options.push({ label: task.text, value: task.id });
-					}
-				}
+			try {
+				const { options, truncated } = await listTaskOptions({ token: auth.secret_text, projectId: String(project_id) });
+				return {
+					disabled: false,
+					options,
+					placeholder: truncated
+						? `Showing the first ${TASK_DROPDOWN_PAGE_SIZE * TASK_DROPDOWN_MAX_PAGES} tasks. Use the Task ID in a custom expression for others.`
+						: undefined,
+				};
+			} catch (error) {
+				return emptyOptions(dropdownErrorMessage(error));
 			}
-			return {
-				disabled: false,
-				options,
-			};
 		},
 	}),
 };
+
+export const taskadeDropdowns = { listWorkspaces, listTaskOptions, dropdownErrorMessage };
+
+async function listWorkspaces(token: string): Promise<ListAPIResponse<WorkspaceResponse>> {
+	return taskadeApi.request<ListAPIResponse<WorkspaceResponse>>({
+		token,
+		method: HttpMethod.GET,
+		path: '/workspaces',
+		operation: 'list workspaces',
+	});
+}
+
+async function listTaskOptions({ token, projectId }: { token: string; projectId: string }): Promise<{ options: DropdownOption<string>[]; truncated: boolean }> {
+	const pages: DropdownOption<string>[][] = [];
+	let after: string | undefined = undefined;
+	for (let page = 0; page < TASK_DROPDOWN_MAX_PAGES; page++) {
+		const response: TaskPageResponse = await taskadeApi.request<TaskPageResponse>({
+			token,
+			method: HttpMethod.GET,
+			path: `/projects/${taskadeApi.seg({ value: projectId, label: 'Project ID' })}/tasks`,
+			operation: 'list tasks',
+			query: { limit: TASK_DROPDOWN_PAGE_SIZE, after },
+		});
+		const items = response.items ?? [];
+		pages.push(
+			items.map((task) => ({
+				label: task.parentId ? task.text || '(empty task)' : `${task.text || 'Project'} (project root)`,
+				value: task.id,
+			})),
+		);
+		const nextCursor = response.nextCursor ?? items[items.length - 1]?.id;
+		const hasMore = response.hasMore ?? items.length === TASK_DROPDOWN_PAGE_SIZE;
+		if (!hasMore || items.length === 0 || !nextCursor) {
+			return { options: pages.flat(), truncated: false };
+		}
+		after = nextCursor;
+	}
+	return { options: pages.flat(), truncated: true };
+}
+
+function emptyOptions(placeholder: string): DropdownState<string> {
+	return { disabled: true, options: [], placeholder };
+}
+
+async function dropdownOrError(load: () => Promise<DropdownOption<string>[]>): Promise<DropdownState<string>> {
+	try {
+		return { disabled: false, options: await load() };
+	} catch (error) {
+		return emptyOptions(dropdownErrorMessage(error));
+	}
+}
+
+function dropdownErrorMessage(error: unknown): string {
+	const status = taskadeApi.statusOf(error);
+	if (status === 401 || status === 403) {
+		return 'Taskade rejected the personal access token. Reconnect the account.';
+	}
+	if (status === 429) {
+		return 'Taskade rate limit reached (30 requests per minute). Wait a minute and refresh.';
+	}
+	const message = error instanceof Error ? error.message : String(error);
+	return `Could not load options from Taskade: ${message.slice(0, 200)}`;
+}
+
+const TASK_DROPDOWN_PAGE_SIZE = 1000;
+const TASK_DROPDOWN_MAX_PAGES = 10;

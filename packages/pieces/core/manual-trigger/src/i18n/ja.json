@@ -1,6 +1,7 @@
 {
+  "Start a flow on demand with a button click.": "Start a flow on demand with a button click.",
   "Manual Trigger": "手動トリガー",
-  "Manually start your own flow without any extra configurations": "追加設定なしで手動でフローを開始する",
+  "Start the flow on demand with the Run Flow button": "Start the flow on demand with the Run Flow button",
   "Markdown": "Markdown",
-  "Manual triggers are used to start a flow on demand, publish your flow and click (Run Flow) at the start of the flow.": "手動トリガーは、フローをオンデマンドで開始し、フローを公開し、フローの開始時にformat@@0をクリックします。"
+  "Publish the flow, then click **Run Flow** on the canvas to start it.\n\nThis trigger passes no data, so later steps have nothing to map from it.": "Publish the flow, then click **Run Flow** on the canvas to start it.\n\nThis trigger passes no data, so later steps have nothing to map from it."
 }

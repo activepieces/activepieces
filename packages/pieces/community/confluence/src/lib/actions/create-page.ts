@@ -1,20 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluenceApiCall } from '../common';
-import { parentPageIdProp, spaceIdProp } from '../common/props';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { createPageOutputSchema } from '../output-schemas';
 
 export const createPageAction = createAction({
 	auth: confluenceAuth,
 	name: 'create-page',
+	outputSchema: createPageOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Page',
 	description: 'Creates a new page in a space with the given title and body.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new Confluence page in the given space with a title and body, optionally nested under a parent page, and either published (current) or saved as a draft. The body is interpreted in the chosen format (storage XHTML, wiki markup, or atlas doc format). Use to author a brand-new page. Not idempotent: each call creates another page even with identical input.', idempotent: false },
 	props: {
-		spaceId: spaceIdProp,
-		parentId: parentPageIdProp,
+		spaceId: confluenceProps.spaceId({ required: true }),
+		parentId: confluenceProps.pageId({ required: false, displayName: 'Parent Page' }),
 		title: Property.ShortText({
 			displayName: 'Title',
 			required: true,
@@ -53,23 +54,14 @@ export const createPageAction = createAction({
 	async run(context) {
 		const { spaceId, parentId, title, bodyFormat, body, status } = context.propsValue;
 
-		return await confluenceApiCall({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.POST,
-			version: 'v2',
-			resourceUri: '/pages',
-			body: {
-				spaceId,
-				parentId: parentId || undefined,
-				title,
-				status,
-				body: {
-					representation: bodyFormat,
-					value: body ?? '',
-				},
-			},
+		return await confluenceApi.createPage({
+			auth: context.auth,
+			spaceId,
+			parentId: parentId || undefined,
+			title,
+			status,
+			representation: bodyFormat,
+			value: body ?? '',
 		});
 	},
 });

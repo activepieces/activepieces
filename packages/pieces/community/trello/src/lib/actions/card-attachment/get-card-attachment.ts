@@ -17,16 +17,22 @@ export const getCardAttachment = createAction({
   audience: 'both',
   outputSchema: getCardAttachmentActionOutputSchema,
   aiMetadata: { description: 'Retrieves the details of one specific attachment on a Trello card, identified by both card_id and attachment_id. Use to inspect a single attachment when you already know its id (e.g. from Get All Card Attachments). Read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    { key: 'attachment', display: 'section', label: 'Attachment', icon: 'paperclip', props: ['card_id', 'attachment_id'] },
+  ],
   props: {
     card_id: Property.ShortText({
-      description: 'The ID of the card',
+      description: "From an earlier step, or the code after /c/ in the card's URL.",
       displayName: 'Card ID',
+      placeholder: 'aBcD1234',
       required: true,
+      width: 'half',
     }),
     attachment_id: Property.ShortText({
-      description: 'The ID of the attachment to retrieve',
+      description: 'From Get All Card Attachments or an earlier step.',
       displayName: 'Attachment ID',
       required: true,
+      width: 'half',
     })
   },
 

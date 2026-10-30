@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../../core/security/authorization/common'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { editorSession } from '../../../flows/flow/editor-session'
 import { FlowApprovalRequestEntity } from './flow-approval-request.entity'
 import { flowApprovalRequestService } from './flow-approval-request.service'
 
@@ -45,6 +46,7 @@ export const flowApprovalRequestController: FastifyPluginAsyncZod = async (app) 
             requestId: req.params.id,
             projectId: req.projectId,
             request: req,
+            editorSessionId: editorSession.idFromRequest(req),
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })

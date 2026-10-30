@@ -52,6 +52,7 @@ export type BaseOAuth2ConnectionValue = {
     data: Record<string, any>
     props?: Record<string, unknown>
     grant_type?: OAuth2GrantType
+    resource?: string
 }
 
 export type CustomAuthConnectionValue<T extends Record<string, unknown> = Record<string, unknown>> = {

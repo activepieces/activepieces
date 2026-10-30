@@ -49,10 +49,10 @@ const ApFieldActionMenuItemRenderer = ({
               setPopoverContent(null);
               setIsPopoverOpen(false);
             }}
-            className="flex items-center gap-2 text-destructive cursor-pointer"
+            className="flex items-center gap-2 text-danger-11 cursor-pointer"
           >
-            <Trash className="h-4 w-4 text-destructive" />
-            <span className="text-destructive">{t('Delete')}</span>
+            <Trash className="h-4 w-4 text-danger-11" />
+            <span className="text-danger-11">{t('Delete')}</span>
           </DropdownMenuItem>
         </ConfirmationDeleteDialog>
       );

@@ -4,12 +4,14 @@ import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
 import { CallRecordingResponse, CallRecordingWebhookPayload, MeetingResponse, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
+import { callRecordingCreatedOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'call-recording-created-trigger';
 
 export const callRecordingCreatedTrigger = createTrigger({
 	auth: attioAuth,
 	name: 'call_recording_created',
+	outputSchema: callRecordingCreatedOutputSchema,
 	classification: 'READ',
 	displayName: 'Call Recording Created',
 	description: 'Triggers when a call recording finishes and its media upload is complete.',

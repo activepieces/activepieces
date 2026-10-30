@@ -2,6 +2,7 @@ import { AssignProjectsRequestBody, CreatePieceSetRequestBody, DuplicatePieceSet
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { ProjectResourceType } from '../../../core/security/authorization/common'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { pieceSetService } from './piece-set.service'
 
@@ -15,6 +16,7 @@ export const pieceSetController: FastifyPluginAsyncZod = async (app) => {
             platformId: req.principal.platform.id,
             cursor: req.query.cursor,
             limit: req.query.limit,
+            name: req.query.name,
         })
     })
 
@@ -24,6 +26,10 @@ export const pieceSetController: FastifyPluginAsyncZod = async (app) => {
             ...req.body,
         })
         return reply.status(StatusCodes.CREATED).send(set)
+    })
+
+    app.get('/projects/:projectId', GetProjectPieceSet, async (req) => {
+        return service.getForProject({ projectId: req.projectId, platformId: req.principal.platform.id })
     })
 
     app.get('/:id', GetPieceSet, async (req) => {
@@ -78,6 +84,7 @@ const ListPieceSets = {
         querystring: z.object({
             cursor: z.string().optional(),
             limit: z.coerce.number().int().min(1).max(100).optional().default(10),
+            name: z.string().optional(),
         }),
     },
 }
@@ -100,6 +107,20 @@ const GetPieceSet = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         summary: 'Get a piece set by id',
         params: idParam,
+    },
+}
+
+const GetProjectPieceSet = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], undefined, {
+            type: ProjectResourceType.PARAM,
+        }),
+    },
+    schema: {
+        tags: ['piece-sets'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        summary: 'Get the piece set that applies to a project',
+        params: z.object({ projectId: z.string() }),
     },
 }
 

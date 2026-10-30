@@ -4,10 +4,15 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { PropertySettings } from '@activepieces/shared';
+import {
+  AgentPieceProps,
+  AI_PIECE_NAME,
+  PropertySettings,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ControllerRenderProps, UseFormReturn } from 'react-hook-form';
 
+import { AgentModelField } from '@/app/builder/step-settings/agent-settings/agent-model-field';
 import { SecretInput } from '@/app/connections/secret-input';
 import { ColorPicker } from '@/components/custom/color-picker';
 import { DictionaryInput } from '@/components/custom/dictionary-input';
@@ -74,6 +79,38 @@ export const selectGenericFormComponentForProperty = ({
         </AutoFormFieldWrapper>
       );
     case PropertyType.OBJECT:
+      if (
+        dynamicPropsInfo?.pieceName === AI_PIECE_NAME &&
+        propertyName === AgentPieceProps.AI_PROVIDER_MODEL
+      ) {
+        const modelField = (
+          <AgentModelField
+            value={field.value}
+            onChange={field.onChange}
+            pieceVersion={dynamicPropsInfo.pieceVersion}
+            actionName={dynamicPropsInfo.actionOrTriggerName}
+            disabled={disabled}
+            hideHeading={allowDynamicValues}
+          />
+        );
+        if (!allowDynamicValues) {
+          return modelField;
+        }
+        return (
+          <AutoFormFieldWrapper
+            property={property}
+            propertyName={propertyName}
+            field={field}
+            hideLabel={hideLabel}
+            inputName={inputName}
+            disabled={disabled}
+            allowDynamicValues={allowDynamicValues}
+            dynamicInputModeToggled={dynamicInputModeToggled}
+          >
+            {modelField}
+          </AutoFormFieldWrapper>
+        );
+      }
       return (
         <AutoFormFieldWrapper
           property={property}
@@ -97,6 +134,7 @@ export const selectGenericFormComponentForProperty = ({
                       initialValue={value}
                       disabled={disabled}
                       onChange={onChange}
+                      ariaLabel={t('Value')}
                     />
                   )
                 : undefined
@@ -303,13 +341,15 @@ export const selectGenericFormComponentForProperty = ({
               ariaLabel={property.displayName}
             ></FormFieldMentionInput>
           ) : (
-            <SecretInput
-              ref={field.ref}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={disabled}
-              type="text"
-            ></SecretInput>
+            <FormControl>
+              <SecretInput
+                ref={field.ref}
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled}
+                type="text"
+              ></SecretInput>
+            </FormControl>
           )}
         </AutoFormFieldWrapper>
       );
@@ -368,18 +408,22 @@ export const selectGenericFormComponentForProperty = ({
               }
             ></FormFieldMentionInput>
           ) : (
-            <SecretInput
-              ref={field.ref}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={disabled}
-              placeholder={
-                'placeholder' in property ? property.placeholder : undefined
-              }
-              type={
-                property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
-              }
-            ></SecretInput>
+            <FormControl>
+              <SecretInput
+                ref={field.ref}
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled}
+                placeholder={
+                  'placeholder' in property ? property.placeholder : undefined
+                }
+                type={
+                  property.type === PropertyType.SECRET_TEXT
+                    ? 'password'
+                    : 'text'
+                }
+              ></SecretInput>
+            </FormControl>
           )}
         </AutoFormFieldWrapper>
       );

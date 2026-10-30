@@ -1,19 +1,22 @@
 import {
     apId,
     DefaultProjectRole,
+    EDITOR_SESSION_ID_HEADER,
     Flow,
     FlowApprovalRequest,
     FlowApprovalRequestState,
+    FlowOperationType,
     FlowStatus,
     FlowVersion,
     FlowVersionState,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { flowApprovalRequestService } from '../../../../src/app/ee/flows/flow-approval/flow-approval-request.service'
 import { eeFlowPublishHook } from '../../../../src/app/ee/flows/flow-approval/flow-publish-hook'
 import { db } from '../../../helpers/db'
+import { DraftPush, draftPushes } from '../../../helpers/draft-push'
 import {
     createMockFlow,
     createMockFlowVersion,
@@ -91,6 +94,11 @@ async function seedPendingApproval(ctx: TestContext, submitterId: string): Promi
     return { flow, version, approval }
 }
 
+async function readVersionState(versionId: string): Promise<FlowVersionState> {
+    const storedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: versionId })
+    return storedVersion.state
+}
+
 describe('flow-approval — routing', () => {
     it('returns PUBLISH_NOW when environments are disabled', async () => {
         const ctx = await createTestContext(app!, {
@@ -144,14 +152,35 @@ describe('flow-approval — routing', () => {
     })
 })
 
+describe('flow-approval — submit through publish', () => {
+    it('refuses a draft with an empty trigger before it is locked or submitted', async () => {
+        const ctx = await setupSensitiveCtx()
+        const memberCtx = await createMemberContext(app!, ctx, {
+            projectRole: DefaultProjectRole.EDITOR,
+        })
+        const { flow, version } = await createDraftFlow(ctx)
+
+        const response = await memberCtx.post(`/v1/flows/${flow.id}`, {
+            type: FlowOperationType.LOCK_AND_PUBLISH,
+            request: {},
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        expect(await db.findOneBy('flow_approval_request', { flowId: flow.id })).toBeNull()
+        const versionRow = await db.findOneByOrFail<{ state: string }>('flow_version', { id: version.id })
+        expect(versionRow.state).toBe(FlowVersionState.DRAFT)
+    })
+})
+
 describe('flow-approval — submitForApproval race', () => {
     it('two concurrent submits produce exactly one PENDING row', async () => {
         const ctx = await setupSensitiveCtx()
-        const { flow } = await createDraftFlow(ctx)
+        const { flow, version } = await createDraftFlow(ctx)
 
         const results = await Promise.allSettled([
             flowApprovalRequestService(app!.log).submitForApproval({
                 flow,
+                flowVersionToPublish: version,
                 userId: ctx.user.id,
                 projectId: ctx.project.id,
                 platformId: ctx.platform.id,
@@ -159,6 +188,7 @@ describe('flow-approval — submitForApproval race', () => {
             }),
             flowApprovalRequestService(app!.log).submitForApproval({
                 flow,
+                flowVersionToPublish: version,
                 userId: ctx.user.id,
                 projectId: ctx.project.id,
                 platformId: ctx.platform.id,
@@ -180,10 +210,11 @@ describe('flow-approval — submitForApproval race', () => {
 describe('flow-approval — submitForApproval supersession', () => {
     it('resubmitting updates the existing PENDING row in place and re-points it at the newly locked version', async () => {
         const ctx = await setupSensitiveCtx()
-        const { flow } = await createDraftFlow(ctx)
+        const { flow, version } = await createDraftFlow(ctx)
 
         const first = await flowApprovalRequestService(app!.log).submitForApproval({
             flow,
+            flowVersionToPublish: version,
             userId: ctx.user.id,
             projectId: ctx.project.id,
             platformId: ctx.platform.id,
@@ -200,6 +231,7 @@ describe('flow-approval — submitForApproval supersession', () => {
 
         const second = await flowApprovalRequestService(app!.log).submitForApproval({
             flow,
+            flowVersionToPublish: newDraft,
             userId: ctx.user.id,
             projectId: ctx.project.id,
             platformId: ctx.platform.id,
@@ -312,6 +344,73 @@ describe('flow-approval — withdraw', () => {
         expect(row).toBeNull()
         const reloadedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: version.id })
         expect(reloadedVersion.state).toBe(FlowVersionState.DRAFT)
+    })
+
+    describe('Draft Push', () => {
+        afterEach(() => {
+            vi.restoreAllMocks()
+        })
+
+        it('sends a Draft Push with the editor session id after the version returns to DRAFT', async () => {
+            const ctx = await setupSensitiveCtx()
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+            const { flow, version, approval } = await seedPendingApproval(ctx, memberCtx.user.id)
+            const editorSessionId = apId()
+            const pushes: DraftPush[] = []
+            const versionStatesAtPush: Promise<FlowVersionState>[] = []
+            draftPushes.observe((push) => {
+                pushes.push(push)
+                versionStatesAtPush.push(readVersionState(version.id))
+            })
+
+            const response = await memberCtx.inject({
+                method: 'POST',
+                url: `/api/v1/flow-approval-requests/${approval.id}/withdraw`,
+                headers: { [EDITOR_SESSION_ID_HEADER]: editorSessionId },
+                body: {},
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(pushes).toEqual([{
+                room: ctx.project.id,
+                payload: { flowId: flow.id, editorSessionId },
+            }])
+            expect(await Promise.all(versionStatesAtPush)).toEqual([FlowVersionState.DRAFT])
+        })
+
+        it('sends a null editor session id when the request has no header', async () => {
+            const ctx = await setupSensitiveCtx()
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+            const { flow, approval } = await seedPendingApproval(ctx, memberCtx.user.id)
+            const pushes = draftPushes.capture()
+
+            const response = await memberCtx.post(`/v1/flow-approval-requests/${approval.id}/withdraw`, {})
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(pushes).toEqual([{
+                room: ctx.project.id,
+                payload: { flowId: flow.id, editorSessionId: null },
+            }])
+        })
+
+        it('sends no push when the request is no longer pending', async () => {
+            const ctx = await setupSensitiveCtx()
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+            const { approval } = await seedPendingApproval(ctx, memberCtx.user.id)
+            await db.update('flow_approval_request', approval.id, { state: FlowApprovalRequestState.REJECTED })
+            const pushes = draftPushes.capture()
+
+            const response = await memberCtx.post(`/v1/flow-approval-requests/${approval.id}/withdraw`, {})
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(pushes).toEqual([])
+        })
     })
 })
 

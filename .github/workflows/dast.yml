@@ -10,8 +10,7 @@ name: DAST (ZAP) — Staging
 
 on:
   schedule:
-    # 03:00 UTC — inside the staging deploy freeze window (17:00–09:00 UTC), so no deploy
-    # races the scan and the target is stable. See continuous-delivery-stg.yml.
+    # 03:00 UTC, when merges are rare: a merge during the scan redeploys staging under it.
     - cron: '0 3 * * *'
   workflow_dispatch:
 
@@ -46,7 +45,7 @@ jobs:
           # Sign in with the throwaway account. On cloud, an already-onboarded account
           # returns a USER token with a projectId; a fresh account returns an ONBOARDING
           # token (projectId null) which we complete by creating a platform. Mirrors
-          # benchmark/setup.sh.
+          # benchmark/setup.ts.
           SIGNIN=$(curl -s "${BASE_URL}/authentication/sign-in" \
             -H "Content-Type: application/json" \
             -d "{\"email\":\"${DAST_STG_EMAIL}\",\"password\":\"${DAST_STG_PASSWORD}\"}")

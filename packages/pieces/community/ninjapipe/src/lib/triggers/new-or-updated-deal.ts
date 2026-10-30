@@ -1,7 +1,10 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { pollingHelper } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { buildPolling } from './common';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeSchemas } from '../output-schemas';
+import { ninjapipePolling } from './common';
+
+const polling = ninjapipePolling.buildPolling({ path: '/deals', field: 'updated_at' });
 
 export const newOrUpdatedDeal = createTrigger({
   auth: ninjapipeAuth,
@@ -10,21 +13,34 @@ export const newOrUpdatedDeal = createTrigger({
   displayName: 'New or Updated Deal',
   description: 'Triggers when a deal is created or updated.',
   aiMetadata: {
-    description: 'Fires whenever a deal in NinjaPipe is created or has any field changed, detected by polling on the deal last-updated timestamp. The event payload is the current state of the affected deal, including its id, name, value, and updated_at. A given deal can fire this multiple times as it moves through the pipeline; the payload does not distinguish a first creation from a later update.',
+    description:
+      'Fires whenever a NinjaPipe deal is created or changed (value, status, links), found by polling deals sorted by updated_at. The payload is the current deal record. One deal can fire many times as it progresses.',
   },
   type: TriggerStrategy.POLLING,
-  sampleData: { id: '1', name: 'Enterprise Plan', value: 5000, updated_at: '2024-01-01T00:00:00Z' },
+  outputSchema: ninjapipeSchemas.deal,
+  sampleData: {
+    id: 'c5971a27-7db7-4379-afa0-2177e4006c2a',
+    name: 'Enterprise plan',
+    value: 5000,
+    status: 'Open',
+    owner_id: '01a55c1c-96af-4a4f-879b-e317def0769a',
+    contact_id: null,
+    company_id: null,
+    fields: {},
+    created_at: '2026-10-25T15:34:04.263228+00:00',
+    updated_at: '2026-10-25T15:36:24.547+00:00',
+  },
   props: {},
   async test(context) {
-    return await pollingHelper.test(buildPolling('/deals', 'updated_at'), context);
+    return pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(buildPolling('/deals', 'updated_at'), context);
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(buildPolling('/deals', 'updated_at'), context);
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(buildPolling('/deals', 'updated_at'), context);
+    return pollingHelper.poll(polling, context);
   },
 });

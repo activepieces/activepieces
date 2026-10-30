@@ -42,14 +42,14 @@ export function EmailPreview({
 
   const actions = (
     <>
-      <CopyButton textToCopy={content} variant="ghost" className="size-8" />
+      <CopyButton textToCopy={content} variant="ghost" size="icon-sm" />
       <DownloadButton
         fileName={fileName}
         textToDownload={content}
         mimeType="text/plain"
         extension="txt"
         variant="ghost"
-        className="size-8"
+        size="icon-sm"
       />
     </>
   );
@@ -57,8 +57,8 @@ export function EmailPreview({
   const emailBody = (
     <div className="px-4 py-3">
       {subject && (
-        <div className="mb-3 border-b border-border pb-3">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="mb-3 border-b border-gray-6 pb-3">
+          <span className="text-xs font-medium text-gray-11">
             {t('Subject')}
           </span>
           <p className="mt-0.5 text-sm font-semibold">{subject}</p>

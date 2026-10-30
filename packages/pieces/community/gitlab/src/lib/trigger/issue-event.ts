@@ -1,11 +1,20 @@
+import { randomBytes, timingSafeEqual } from 'crypto';
 import {
   createTrigger,
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-
-import { gitlabCommon, makeClient } from '../common';
+import { gitlabCommon } from '../common';
 import { gitlabAuth } from '../auth';
+import { GitlabAuthValue, gitlabToken, projectPath } from '../common/client';
+import {
+  GitlabApiError,
+  isRecord,
+  sendGitlabRequest,
+} from '../common/secret-request';
+import { ProjectWebhook } from '../common/models';
+import { issueEventOutputSchema } from '../output-schemas';
+
 const sampleData = {
   object_kind: 'issue',
   event_type: 'issue',
@@ -99,9 +108,10 @@ export const issuesEventTrigger = createTrigger({
   classification: 'READ',
   displayName: 'New Project Issue Event',
   description:
-    'Triggers on project issue events when an issue is created or when an existing issue is updated, closed, or reopened.',
+    'Triggers on project issue events (including confidential issues) when an issue is created or when an existing issue is updated, closed, or reopened.',
   aiMetadata: {
-    description: 'Fires when an issue event occurs in the configured GitLab project via webhook. The Issue Event prop scopes which actions fire: All, or only Opened, Closed, or Updated. Represents the issue and its change set at the moment of the event.',
+    description:
+      'Fires when an issue event, including on confidential issues, occurs in the configured GitLab project via webhook. The Issue Event prop scopes which actions fire: All, or only Opened, Closed, Reopened, or Updated. Represents the issue and its change set at the moment of the event.',
   },
   props: {
     projectId: gitlabCommon.projectId(),
@@ -116,6 +126,7 @@ export const issuesEventTrigger = createTrigger({
           { label: 'All', value: 'all' },
           { label: 'Opened', value: 'open' },
           { label: 'Closed', value: 'close' },
+          { label: 'Reopened', value: 'reopen' },
           { label: 'Updated', value: 'update' },
         ],
       },
@@ -123,53 +134,154 @@ export const issuesEventTrigger = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: sampleData,
+  outputSchema: issueEventOutputSchema,
 
   async onEnable({ store, auth, propsValue, webhookUrl }) {
-    const projectId = propsValue.projectId!;
-    const client = makeClient({ auth });
-    const res = await client.subscribeProjectWebhook(projectId, {
-      url: webhookUrl,
-      issues_events: true,
-      push_events: false,
+    const projectId = String(propsValue.projectId);
+    const token = randomBytes(32).toString('hex');
+    const response = await sendGitlabRequest<ProjectWebhook>({
+      token: gitlabToken(auth),
+      method: 'POST',
+      path: `${projectPath(projectId)}/hooks`,
+      body: {
+        url: webhookUrl,
+        token,
+        issues_events: true,
+        confidential_issues_events: true,
+        push_events: false,
+        enable_ssl_verification: true,
+      },
     });
-    await store.put<WebhookInformation>('gitlab_issue_trigger', {
-      webhookId: res.id,
-      projectId: projectId as string,
-    });
+    const webhookId = response.body.id;
+    try {
+      await store.put<WebhookInformation>(ISSUE_TRIGGER_STORE_KEY, {
+        webhookId,
+        projectId,
+        token,
+      });
+    } catch (error) {
+      await deleteProjectHook({ auth, projectId, webhookId });
+      throw error;
+    }
   },
 
   async onDisable({ auth, store }) {
-    const response = await store.get<WebhookInformation>(
-      'gitlab_issue_trigger'
-    );
-    if (response !== null && response !== undefined) {
-      const client = makeClient({ auth });
-      client.unsubscribeProjectWebhook(response.projectId, response.webhookId);
+    const stored = await store.get<WebhookInformation>(ISSUE_TRIGGER_STORE_KEY);
+    if (stored === null || stored === undefined) {
+      return;
     }
+    await deleteProjectHook({
+      auth,
+      projectId: String(stored.projectId),
+      webhookId: stored.webhookId,
+    });
+    await store.delete(ISSUE_TRIGGER_STORE_KEY);
   },
 
   async run(context) {
-    const { actiontype } = context.propsValue;
+    const stored = await context.store.get<WebhookInformation>(
+      ISSUE_TRIGGER_STORE_KEY
+    );
     if (
-      isVerificationCall(
-        context.payload.body as Record<string, unknown>,
-        actiontype as string
-      )
+      !isAuthenticDelivery({
+        storedToken: stored?.token,
+        headers: context.payload.headers,
+      })
     ) {
-      return [context.payload.body];
+      return [];
     }
-    return [];
+    const body = context.payload.body;
+    if (
+      !matchesAction({
+        payload: isRecord(body) ? body : undefined,
+        actiontype: String(context.propsValue.actiontype ?? 'all'),
+      })
+    ) {
+      return [];
+    }
+    return [body];
   },
 });
 
-function isVerificationCall(payload: Record<string, any>, actiontype: string) {
-  if (actiontype == 'all') {
+async function deleteProjectHook({
+  auth,
+  projectId,
+  webhookId,
+}: {
+  auth: GitlabAuthValue;
+  projectId: string;
+  webhookId: number | string;
+}): Promise<void> {
+  try {
+    await sendGitlabRequest({
+      token: gitlabToken(auth),
+      method: 'DELETE',
+      path: `${projectPath(projectId)}/hooks/${encodeURIComponent(
+        String(webhookId)
+      )}`,
+    });
+  } catch (error) {
+    if (error instanceof GitlabApiError && error.status === 404) {
+      return;
+    }
+    throw error;
+  }
+}
+
+function headerValue({
+  headers,
+  name,
+}: {
+  headers: Record<string, string> | undefined;
+  name: string;
+}): string | undefined {
+  if (!headers) {
+    return undefined;
+  }
+  const match = Object.keys(headers).find((key) => key.toLowerCase() === name);
+  return match === undefined ? undefined : headers[match];
+}
+
+export function isAuthenticDelivery({
+  storedToken,
+  headers,
+}: {
+  storedToken: string | undefined;
+  headers: Record<string, string> | undefined;
+}): boolean {
+  if (storedToken === undefined || storedToken === '') {
     return true;
   }
-  return payload['object_attributes']['action'] == actiontype;
+  const received = headerValue({ headers, name: 'x-gitlab-token' });
+  if (typeof received !== 'string') {
+    return false;
+  }
+  const expected = Buffer.from(storedToken, 'utf8');
+  const actual = Buffer.from(received, 'utf8');
+  if (expected.length !== actual.length) {
+    return false;
+  }
+  return timingSafeEqual(expected, actual);
+}
+
+function matchesAction({
+  payload,
+  actiontype,
+}: {
+  payload: Record<string, unknown> | undefined;
+  actiontype: string;
+}): boolean {
+  if (actiontype === 'all') {
+    return true;
+  }
+  const attributes = payload?.['object_attributes'];
+  return isRecord(attributes) && attributes['action'] === actiontype;
 }
 
 interface WebhookInformation {
-  webhookId: string;
-  projectId: string;
+  webhookId: number | string;
+  projectId: number | string;
+  token?: string;
 }
+
+export const ISSUE_TRIGGER_STORE_KEY = 'gitlab_issue_trigger';

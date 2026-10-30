@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   HttpResponse,
@@ -13,12 +13,15 @@ export const twilioNewIncomingSms = createTrigger({
   name: 'new_incoming_sms',
   classification: 'READ',
   displayName: 'New Incoming SMS',
-  description: 'Triggers when a new SMS message is received',
+  description: 'Triggers when the selected Twilio number receives an SMS.',
   aiMetadata: {
     description: 'Fires when an inbound SMS message is received on the specified Twilio phone number. Each event represents one incoming text message with its sender, body, and metadata.',
   },
   props: {
-    phone_number: twilioCommon.phone_number,
+    phone_number: twilioCommon.phoneNumberDropdown({
+      displayName: 'Phone Number',
+      description: 'Your Twilio number that receives the texts.',
+    }),
   },
   sampleData: {
     body: 'Hello',
@@ -31,13 +34,13 @@ export const twilioNewIncomingSms = createTrigger({
     uri: '/2010-04-01/Accounts/ACc0ea1238d61fe90d78a69a3de71d45619/Messages/SM8c3920d3f2ac481ba83e639a69dadd63.json',
     account_sid: 'ACc0ea716d61fe90d78a123a3de71d45619',
     num_media: '0',
-    to: '+12184191735',
+    to: '+15017122661',
     date_created: 'Wed, 08 Feb 2023 01:40:50 +0000',
-    status: 'failed',
+    status: 'received',
     sid: 'SM8c3920d3f2ac481ba83e639a69dadd63',
     date_sent: 'Wed, 08 Feb 2023 01:40:51 +0000',
     messaging_service_sid: 'MG88e323e6a88ce67ba3bf12e1bcb7e0b8',
-    error_code: 21211,
+    error_code: null,
     price_unit: 'USD',
     api_version: '2010-04-01',
     subresource_uris: {
@@ -50,12 +53,15 @@ export const twilioNewIncomingSms = createTrigger({
   // Twilio API only allows one webhook per phone number, so we need to poll
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('_new_incoming_sms_trigger'))) {
+      return;
+    }
     const { phone_number } = context.propsValue;
     const account_sid = context.auth.username;
     const auth_token = context.auth.password;
     const response = await callTwilioApi<MessagePaginationResponse>(
       HttpMethod.GET,
-      `Messages.json?PageSize=20&To=${phone_number}`,
+      `Messages.json?PageSize=20&To=${encodeURIComponent(phone_number)}`,
       { account_sid, auth_token },
       {}
     );
@@ -67,6 +73,9 @@ export const twilioNewIncomingSms = createTrigger({
     });
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.put('_new_incoming_sms_trigger', null);
   },
   async run(context) {
@@ -78,13 +87,13 @@ export const twilioNewIncomingSms = createTrigger({
     );
     let currentUri:
       | string
-      | null = `2010-04-01/Accounts/${account_sid}/Messages.json?PageSize=20&To=${context.propsValue.phone_number}`;
+      | null = `/2010-04-01/Accounts/${account_sid}/Messages.json?PageSize=20&To=${encodeURIComponent(context.propsValue.phone_number)}`;
     let firstMessageId = undefined;
     while (currentUri !== undefined && currentUri !== null) {
       const res: HttpResponse<MessagePaginationResponse> =
         await httpClient.sendRequest<MessagePaginationResponse>({
           method: HttpMethod.GET,
-          url: `https://api.twilio.com/${currentUri}`,
+          url: `https://api.twilio.com${currentUri}`,
           authentication: {
             type: AuthenticationType.BASIC,
             username: account_sid,
@@ -108,7 +117,7 @@ export const twilioNewIncomingSms = createTrigger({
       }
     }
     await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
-      lastMessageId: firstMessageId ?? lastMessage!.lastMessageId,
+      lastMessageId: firstMessageId ?? lastMessage?.lastMessageId ?? null,
     });
     return newMessages;
   },

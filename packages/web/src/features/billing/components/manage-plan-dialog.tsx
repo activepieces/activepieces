@@ -7,14 +7,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 
 import { ConfirmPurchaseDialog } from './confirm-purchase-dialog';
 import { PlanSelector } from './plan-selector';
 import { PlanSwitchSuccessDialog } from './plan-switch-success-dialog';
 
 export function ManagePlanDialog() {
-  const { isOpen, closeDialog } = useManagePlanDialogStore();
+  const { isOpen, closeDialog } = billingDialogHooks.useManagePlanDialogStore();
 
   return (
     <>

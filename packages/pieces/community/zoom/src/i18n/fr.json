@@ -1,6 +1,6 @@
 {
   "Video conferencing, web conferencing, webinars, screen sharing": "Vidéo conférence, web conférence, webinaires, partage d'écran",
-  "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **webinar:read:webinar**, and **meeting:write:registrant** as scopes.": "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **webinar:read:webinar**, and **meeting:write:registrant** as scopes.",
+  "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, and **meeting:write:registrant** as scopes.": "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, and **meeting:write:registrant** as scopes.",
   "Create Zoom Meeting": "Créer une réunion de zoom",
   "Create Zoom Meeting Registrant": "Créer une réunion de zoom",
   "Find Zoom Meeting": "Trouver une réunion de zoom",
@@ -8,7 +8,7 @@
   "Custom API Call": "Appel d'API personnalisé",
   "Create a new Zoom Meeting": "Créer une nouvelle réunion de zoom",
   "Create and submit a user's registration to a meeting.": "Créez et soumettez l'inscription d'un utilisateur à une réunion.",
-  "Retrieve the details of an existing meeting or webinar.": "Récupérez les détails d'une réunion ou d'un webinaire existant.",
+  "Retrieve the details of an existing meeting.": "Retrieve the details of an existing meeting.",
   "Update the details of an existing meeting.": "Mettre à jour les détails d'une réunion existante.",
   "Make a custom API call to a specific endpoint": "Passer un appel API personnalisé à un endpoint spécifique",
   "Meeting's topic": "Sujet de la réunion",

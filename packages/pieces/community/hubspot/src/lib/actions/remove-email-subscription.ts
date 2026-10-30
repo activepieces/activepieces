@@ -7,12 +7,13 @@ export const removeEmailSubscriptionAction = createAction({
 	name: 'remove-email-subscription',
 	classification: 'DESTRUCTIVE',
 	displayName: 'Remove Email Subscription',
-	description: 'Removes email subscription.',
+	description: 'Unsubscribes an email address from all HubSpot email subscriptions.',
 	audience: 'both',
 	aiMetadata: { description: 'Unsubscribe an email address from all HubSpot marketing email subscriptions (opt the contact out of every subscription type). Re-running leaves the address in the same unsubscribed state, so it is idempotent.', idempotent: true },
 	props: {
 		email: Property.ShortText({
-			displayName: 'Email',
+			displayName: 'Contact Email',
+			placeholder: 'jane@example.com',
 			required: true,
 		}),
 	},
