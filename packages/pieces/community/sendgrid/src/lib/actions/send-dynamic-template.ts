@@ -74,7 +74,7 @@ export const sendDynamicTemplate = createAction({
           file.extension ? file.extension : ''
         );
         return {
-          filename: name ?? file.filename,
+          filename: name || file.filename,
           content: file?.base64,
           type: lookupResult ? lookupResult : undefined,
         };
@@ -85,8 +85,8 @@ export const sendDynamicTemplate = createAction({
         to: [{ email: (email as string).trim() }],
         dynamic_template_data: template_data,
       })),
-      from: { email: from, name: from_name },
-      reply_to: { email: reply_to ?? from },
+      from: { email: from, name: from_name || undefined },
+      reply_to: { email: reply_to || from },
       template_id,
       ...(attachment_data && attachment_data.length > 0 && { attachments: attachment_data }),
     };

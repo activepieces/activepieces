@@ -90,7 +90,7 @@ export const sendEmail = createAction({
           file.extension ? file.extension : ''
         );
         return {
-          filename: name ?? file.filename,
+          filename: name || file.filename,
           content: file?.base64,
           type: lookupResult ? lookupResult : undefined,
         };
@@ -111,10 +111,10 @@ export const sendEmail = createAction({
         }),
         from: {
           email: from,
-          name: from_name,
+          name: from_name || undefined,
         },
         reply_to: {
-          email: reply_to ?? from,
+          email: reply_to || from,
         },
         subject: subject,
         content: [
