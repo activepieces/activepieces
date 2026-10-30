@@ -3,12 +3,31 @@ import { QueryRunner } from 'typeorm'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { BackgroundMigration } from '../../../../src/app/database/background-migration'
 import {
+    BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS,
     BACKGROUND_MIGRATIONS_TABLE,
     backgroundMigrationRunner,
 } from '../../../../src/app/database/background-migration-runner'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { BackgroundMigrationNotCompleteError, migrationHelpers } from '../../../../src/app/database/migration-helpers'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+const { emittedSpy } = vi.hoisted(() => ({ emittedSpy: vi.fn() }))
+
+vi.mock('@activepieces/server-utils', async (importOriginal) => {
+    const original = await importOriginal<typeof import('@activepieces/server-utils')>()
+    return {
+        ...original,
+        createLogger: (...args: Parameters<typeof original.createLogger>) => {
+            const logger = original.createLogger(...args)
+            const emit = logger.emit.bind(logger)
+            logger.emit = (overrides) => {
+                emittedSpy(logger.getContext())
+                return emit(overrides)
+            }
+            return logger
+        },
+    }
+})
 
 let app: FastifyInstance | null = null
 
@@ -156,6 +175,74 @@ describe('backgroundMigrationRunner', () => {
     })
 })
 
+describe('background migration progress events', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+        emittedSpy.mockClear()
+    })
+
+    it('emits started and completed as their own events, not only inside the job wide event', async () => {
+        const MigrationClass = makeTestMigration({ name: `ProgressHappy${Date.now()}` })
+        const name = new MigrationClass().name
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'completed'])
+        expect(progressEventsFor(name).at(-1)?.migration.elapsedMs).toEqual(expect.any(Number))
+    })
+
+    it('emits failed with the elapsed time when the migration throws', async () => {
+        const MigrationClass = makeTestMigration({
+            name: `ProgressFails${Date.now()}`,
+            up: async () => {
+                throw new Error('canceling statement due to statement timeout')
+            },
+        })
+        const name = new MigrationClass().name
+
+        await expect(
+            backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] }),
+        ).rejects.toThrow(/statement timeout/)
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'failed'])
+        expect(progressEventsFor(name).at(-1)?.error?.message).toMatch(/statement timeout/)
+    })
+
+    it('emits a running heartbeat while a long migration is still in progress', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+        const name = `ProgressHeartbeat${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => {
+                vi.advanceTimersByTime(BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
+                await vi.waitFor(() => expect(progressPhasesFor(name)).toContain('running'))
+            },
+        })
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'running', 'completed'])
+        const heartbeat = progressEventsFor(name).find((event) => event.migration.phase === 'running')
+        expect(heartbeat?.migration.elapsedMs).toEqual(expect.any(Number))
+    })
+
+    it('drops a heartbeat that is still reading progress when the migration finishes', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+        const name = `ProgressLateHeartbeat${Date.now()}`
+        const MigrationClass = makeTestMigration({
+            name,
+            up: async () => {
+                vi.advanceTimersByTime(BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS)
+            },
+        })
+
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [MigrationClass] })
+        await new Promise((resolve) => setTimeout(resolve, 200))
+
+        expect(progressPhasesFor(name)).toEqual(['started', 'completed'])
+    })
+})
+
 describe('runMigrationsWithCatchup', () => {
     afterEach(() => vi.restoreAllMocks())
 
@@ -271,6 +358,20 @@ async function waitFor(predicate: () => boolean, timeoutMs: number): Promise<voi
     }
 }
 
+function progressEventsFor(name: string): ProgressEvent[] {
+    return emittedSpy.mock.calls
+        .map(([context]) => context)
+        .filter((context): context is ProgressEvent => isProgressEvent(context) && context.migration.name === name)
+}
+
+function progressPhasesFor(name: string): string[] {
+    return progressEventsFor(name).map((event) => event.migration.phase)
+}
+
+function isProgressEvent(context: unknown): context is ProgressEvent {
+    return typeof context === 'object' && context !== null && 'event' in context && context.event === 'background-migration.progress'
+}
+
 async function selectByName(name: string): Promise<{ name: string }[]> {
     const rows = await databaseConnection().query(
         `SELECT "name" FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "executed_at" IS NOT NULL`,
@@ -280,4 +381,10 @@ async function selectByName(name: string): Promise<{ name: string }[]> {
 
 async function selectCompletedByName(name: string): Promise<{ name: string }[]> {
     return selectByName(name)
+}
+
+type ProgressEvent = {
+    event: 'background-migration.progress'
+    migration: { name: string, phase: string, elapsedMs?: number }
+    error?: { message: string }
 }
