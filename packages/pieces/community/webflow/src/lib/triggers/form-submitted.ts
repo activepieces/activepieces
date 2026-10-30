@@ -1,14 +1,14 @@
-import { webflowCommon } from '../common/common';
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { webflowAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { webflowAuth } from '../auth';
+import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
+import type { WebflowWebhook } from '../common/types';
 
 const triggerNameInStore = 'webflow_created_form_submissions_trigger';
 
-export const webflowNewSubmission = createTrigger({
+export const formSubmittedTrigger = createTrigger({
 	auth: webflowAuth,
-
 	name: 'new_submission',
 	classification: 'READ',
 	displayName: 'New Submission',
@@ -17,7 +17,7 @@ export const webflowNewSubmission = createTrigger({
 		description: 'Fires when a form on the selected Webflow site receives a new submission, delivering the submitted form data. Optionally scoped to a single form by name; if no form name is given, it fires for submissions from any form on the site.',
 	},
 	props: {
-		site_id: webflowProps.site_id,
+		site_id: webflowProps.siteId({ required: true }),
 		formName: Property.ShortText({
 			displayName: 'Form Name',
 			required: false,
@@ -25,7 +25,6 @@ export const webflowNewSubmission = createTrigger({
 		}),
 	},
 	type: TriggerStrategy.WEBHOOK,
-	// TODO remove and force testing as the data can be custom.
 	sampleData: {
 		name: 'Sample Form',
 		site: '62749158efef318abc8d5a0f',
@@ -36,48 +35,43 @@ export const webflowNewSubmission = createTrigger({
 		_id: '6321ca84df3949bfc6752327',
 	},
 	async onEnable(context) {
-		const formSubmissionTag = 'form_submission';
-
-		const res = await webflowCommon.subscribeWebhook(
-			context.propsValue['site_id']!,
-			formSubmissionTag,
-			context.webhookUrl,
-			getAccessTokenOrThrow(context.auth),
-		);
+		const webhook = await webflowClient.request<WebflowWebhook>({
+			auth: context.auth,
+			method: HttpMethod.POST,
+			path: `/sites/${context.propsValue.site_id}/webhooks`,
+			headers: { 'Content-Type': 'application/json' },
+			query: {},
+			body: {
+				triggerType: 'form_submission',
+				url: context.webhookUrl,
+			},
+		});
 		await context.store?.put<WebhookInformation>(triggerNameInStore, {
-			webhookId: res.body._id,
+			webhookId: webhook._id,
 		});
 	},
 	async onDisable(context) {
 		const response = await context.store?.get<WebhookInformation>(triggerNameInStore);
 		if (response !== null && response !== undefined) {
-			await webflowCommon.unsubscribeWebhook(
-				context.propsValue['site_id']!,
-				response.webhookId,
-				getAccessTokenOrThrow(context.auth),
-			);
+			await webflowClient.request<unknown>({
+				auth: context.auth,
+				method: HttpMethod.DELETE,
+				path: `/sites/${context.propsValue.site_id}/webhooks/${response.webhookId}`,
+				headers: { 'Content-Type': 'application/json' },
+			});
 		}
 	},
 	async run(context) {
-		const body = context.payload.body as PayloadBody;
+		const body = context.payload.body;
 		const { formName } = context.propsValue;
-		//if formName provided, trigger only required formName if it's matched; else trigger all forms in selected webflow site.
 		if (formName) {
-			if (body.name == formName) {
-				return [body];
-			} else {
-				return [];
-			}
-		} else {
-			return [body];
+			const name = typeof body === 'object' && body !== null && 'name' in body ? body.name : undefined;
+			return name == formName ? [body] : [];
 		}
+		return [body];
 	},
 });
 
-interface WebhookInformation {
+type WebhookInformation = {
 	webhookId: string;
-}
-
-type PayloadBody = {
-	name: string;
 };

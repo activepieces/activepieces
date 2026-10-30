@@ -1,8 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { webflowAuth } from '../..';
-import { WebflowApiClient } from '../common/client';
+import { webflowAuth } from '../auth';
+import { webflowApi } from '../common/api';
 
-export const webflowListSites = createAction({
+export const listSitesAction = createAction({
 	auth: webflowAuth,
 	name: 'list_sites',
 	classification: 'SEARCH',
@@ -12,7 +12,6 @@ export const webflowListSites = createAction({
 	aiMetadata: { description: 'Lists all Webflow sites accessible to the authenticated account, returning their IDs and metadata. Use to discover a site ID needed by other actions (collections, orders, form-submission trigger). Read-only and idempotent; takes no input.', idempotent: true },
 	props: {},
 	async run(context) {
-		const client = new WebflowApiClient(context.auth.access_token);
-		return await client.listSites();
+		return await webflowApi.listSites({ auth: context.auth });
 	},
 });

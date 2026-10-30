@@ -1,88 +1,72 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import {
 	DropdownOption,
+	DropdownState,
 	DynamicPropsValue,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
+import { webflowAuth } from '../auth';
+import { webflowApi } from './api';
+import { webflowClient } from './client';
+import type { WebflowCollectionItemsPage, WebflowOrder } from './types';
 
-import { WebflowApiClient } from './client';
-import { webflowAuth } from '../..';
-
-export const webflowProps = {
-	site_id:  Property.Dropdown({
-auth: webflowAuth,
-
-		displayName: 'Site',
-		required: true,
+function siteId<R extends boolean>({ required, displayName = 'Site', description }: PropParams<R>) {
+	return Property.Dropdown({
+		auth: webflowAuth,
+		displayName,
+		description,
+		required,
 		refreshers: [],
 		options: async ({ auth }) => {
 			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect account first.',
-				};
+				return disabledOptions({ placeholder: 'Please connect account first.' });
 			}
-			const authValue = auth;
-			const client = new WebflowApiClient(authValue.access_token);
-
-			const sites = await client.listSites();
-
-			const options: DropdownOption<string>[] = [];
-			for (const site of sites) {
-				options.push({ label: site.name, value: site._id });
-			}
-
+			const sites = await webflowApi.listSites({ auth });
 			return {
 				disabled: false,
-				options,
+				options: sites.map((site) => ({ label: site.name, value: site._id })),
 			};
 		},
-	}),
-	collection_id:  Property.Dropdown({
-auth: webflowAuth,
+	});
+}
 
-		displayName: 'Collection',
-		required: true,
+function collectionId<R extends boolean>({ required, displayName = 'Collection', description }: PropParams<R>) {
+	return Property.Dropdown({
+		auth: webflowAuth,
+		displayName,
+		description,
+		required,
 		refreshers: ['site_id'],
 		options: async ({ auth, site_id }) => {
 			if (!auth || !site_id) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect account first.',
-				};
+				return disabledOptions({ placeholder: 'Please connect account first.' });
 			}
-			const authValue = auth as PiecePropValueSchema<typeof webflowAuth>;
-			const client = new WebflowApiClient(authValue.access_token);
-
-			const collections = await client.listCollections(site_id as string);
-
-			const options: DropdownOption<string>[] = [];
-			for (const collection of collections) {
-				options.push({ label: collection.name, value: collection._id });
-			}
-
+			const collections = await webflowApi.listCollections({ auth, siteId: String(site_id) });
 			return {
 				disabled: false,
-				options,
+				options: collections.map((collection) => ({ label: collection.name, value: collection._id })),
 			};
 		},
-	}),
-	collection_fields: Property.DynamicProperties({
+	});
+}
+
+function collectionFields<R extends boolean>({
+	required,
+	displayName = 'Collection Fields',
+	description,
+}: PropParams<R>) {
+	return Property.DynamicProperties({
 		auth: webflowAuth,
-		displayName: 'Collection Fields',
-		required: true,
+		displayName,
+		description,
+		required,
 		refreshers: ['collection_id'],
 		props: async ({ auth, collection_id }) => {
 			if (!auth) return {};
 			if (!collection_id) return {};
 
 			const collectionFields: DynamicPropsValue = {};
-			const authValue = auth as PiecePropValueSchema<typeof webflowAuth>;
-			const client = new WebflowApiClient(authValue.access_token);
-
-			const { fields } = await client.getCollection(collection_id as unknown as string);
+			const { fields } = await webflowApi.getCollection({ auth, collectionId: String(collection_id) });
 
 			for (const field of fields) {
 				if (field.editable && field.slug !== '_archived' && field.slug !== '_draft') {
@@ -93,7 +77,7 @@ auth: webflowAuth,
 								required: field.required,
 								options: {
 									disabled: false,
-									options: field.validations.options.map((option: { name: string }) => {
+									options: field.validations.options.map((option) => {
 										return {
 											label: option.name,
 											value: option.name,
@@ -161,30 +145,35 @@ auth: webflowAuth,
 			}
 			return collectionFields;
 		},
-	}),
-	collection_item_id:  Property.Dropdown({
-auth: webflowAuth,
+	});
+}
 
-		displayName: 'Collection Item',
-		required: true,
+function collectionItemId<R extends boolean>({
+	required,
+	displayName = 'Collection Item',
+	description,
+}: PropParams<R>) {
+	return Property.Dropdown({
+		auth: webflowAuth,
+		displayName,
+		description,
+		required,
 		refreshers: ['collection_id'],
 		options: async ({ auth, collection_id }) => {
 			if (!auth || !collection_id) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect account first.',
-				};
+				return disabledOptions({ placeholder: 'Please connect account first.' });
 			}
-			const authValue = auth as PiecePropValueSchema<typeof webflowAuth>;
-			const client = new WebflowApiClient(authValue.access_token);
-
 			const options: DropdownOption<string>[] = [];
 
 			let page = 0;
-			let response;
+			let response: WebflowCollectionItemsPage;
 			do {
-				response = await client.listCollectionItems(collection_id as string, page, 100);
+				response = await webflowClient.request<WebflowCollectionItemsPage>({
+					auth,
+					method: HttpMethod.GET,
+					path: `/collections/${String(collection_id)}/items`,
+					query: { offset: String(page), limit: '100' },
+				});
 				page += 100;
 
 				for (const item of response.items) {
@@ -197,30 +186,31 @@ auth: webflowAuth,
 				options,
 			};
 		},
-	}),
-	order_id:  Property.Dropdown({
-auth: webflowAuth,
+	});
+}
 
-		displayName: 'Order',
-		required: true,
+function orderId<R extends boolean>({ required, displayName = 'Order', description }: PropParams<R>) {
+	return Property.Dropdown({
+		auth: webflowAuth,
+		displayName,
+		description,
+		required,
 		refreshers: ['site_id'],
 		options: async ({ auth, site_id }) => {
 			if (!auth || !site_id) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect account first.',
-				};
+				return disabledOptions({ placeholder: 'Please connect account first.' });
 			}
-			const authValue = auth as PiecePropValueSchema<typeof webflowAuth>;
-			const client = new WebflowApiClient(authValue.access_token);
-
 			const options: DropdownOption<string>[] = [];
 
 			let page = 0;
-			let response;
+			let response: WebflowOrder[];
 			do {
-				response = await client.listOrders(site_id as string, page, 100);
+				response = await webflowClient.request<WebflowOrder[]>({
+					auth,
+					method: HttpMethod.GET,
+					path: `/sites/${String(site_id)}/orders`,
+					query: { offset: String(page), limit: '100' },
+				});
 				page += 100;
 
 				for (const order of response) {
@@ -233,5 +223,13 @@ auth: webflowAuth,
 				options,
 			};
 		},
-	}),
-};
+	});
+}
+
+function disabledOptions({ placeholder }: { placeholder: string }): DropdownState<never> {
+	return { disabled: true, options: [], placeholder };
+}
+
+export const webflowProps = { siteId, collectionId, collectionFields, collectionItemId, orderId };
+
+export type PropParams<R extends boolean> = { required: R; displayName?: string; description?: string };

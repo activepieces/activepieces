@@ -1,10 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-
-import { webflowAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
+import { webflowAuth } from '../auth';
+import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
-import { WebflowApiClient } from '../common/client';
 
-export const webflowRefundOrder = createAction({
+export const refundOrderAction = createAction({
 	auth: webflowAuth,
 	name: 'refund_order',
 	classification: 'DESTRUCTIVE',
@@ -13,38 +13,18 @@ export const webflowRefundOrder = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Issues a refund for an existing Webflow Ecommerce order, identified by site ID and order ID. Use to reverse a customer payment. This moves money and is not idempotent — repeating it risks duplicate refund attempts, so call it once per order.', idempotent: false },
 	props: {
-		site_id: webflowProps.site_id,
-		order_id: webflowProps.order_id,
-		// reason: Property.StaticDropdown({
-		// 	displayName: 'Reason',
-		// 	description: 'The reason for the refund',
-		// 	required: false,
-		// 	options: {
-		// 		disabled: false,
-		// 		options: [
-		// 			{
-		// 				label: 'Duplicate',
-		// 				value: 'duplicate',
-		// 			},
-		// 			{
-		// 				label: 'Fraudulent',
-		// 				value: 'fraudulent',
-		// 			},
-		// 			{
-		// 				label: 'Requested',
-		// 				value: 'requested',
-		// 			},
-		// 		],
-		// 	},
-		// }),
+		site_id: webflowProps.siteId({ required: true }),
+		order_id: webflowProps.orderId({ required: true }),
 	},
 
 	async run(context) {
 		const orderId = context.propsValue.order_id;
 		const siteId = context.propsValue.site_id;
 
-		const client = new WebflowApiClient(context.auth.access_token);
-
-		return await client.refundOrder(siteId, orderId);
+		return await webflowClient.request<unknown>({
+			auth: context.auth,
+			method: HttpMethod.POST,
+			path: `/sites/${siteId}/orders/${orderId}/refund`,
+		});
 	},
 });

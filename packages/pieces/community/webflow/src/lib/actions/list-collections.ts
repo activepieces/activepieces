@@ -1,9 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { webflowAuth } from '../..';
+import { webflowAuth } from '../auth';
+import { webflowApi } from '../common/api';
 import { webflowProps } from '../common/props';
-import { WebflowApiClient } from '../common/client';
 
-export const webflowListCollections = createAction({
+export const listCollectionsAction = createAction({
 	auth: webflowAuth,
 	name: 'list_collections',
 	classification: 'SEARCH',
@@ -12,10 +12,9 @@ export const webflowListCollections = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Lists all CMS collections within a given Webflow site, identified by site ID, returning their IDs and metadata. Use to discover a collection ID before reading, creating, or updating collection items. Read-only and idempotent.', idempotent: true },
 	props: {
-		site_id: webflowProps.site_id,
+		site_id: webflowProps.siteId({ required: true }),
 	},
 	async run(context) {
-		const client = new WebflowApiClient(context.auth.access_token);
-		return await client.listCollections(context.propsValue.site_id);
+		return await webflowApi.listCollections({ auth: context.auth, siteId: context.propsValue.site_id });
 	},
 });

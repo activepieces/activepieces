@@ -1,27 +1,20 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { webflowCreateCollectionItemAction } from './lib/actions/create-collection-item';
-import { webflowDeleteCollectionItem } from './lib/actions/delete-collection-item';
-import { webflowFindCollectionItem } from './lib/actions/find-collection-item';
-import { webflowFindOrder } from './lib/actions/find-order';
-import { webflowFulfillOrder } from './lib/actions/fulfill-order';
-import { webflowGetCollectionItem } from './lib/actions/get-collection-item';
-import { webflowRefundOrder } from './lib/actions/refund-order';
-import { webflowUnfulfillOrder } from './lib/actions/unfulfill-order';
-import { webflowUpdateCollectionItem } from './lib/actions/update-collection-item';
-import { webflowPublishCollectionItem } from './lib/actions/publish-collection-item';
-import { webflowListSites } from './lib/actions/list-sites';
-import { webflowListCollections } from './lib/actions/list-collections';
-import { webflowNewSubmission } from './lib/triggers/new-form-submitted';
-
-export const webflowAuth = PieceAuth.OAuth2({
-	description: '',
-	authUrl: 'https://webflow.com/oauth/authorize',
-	tokenUrl: 'https://api.webflow.com/oauth/access_token',
-	required: true,
-	scope: ['webhooks:write', 'forms:read'],
-});
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { createCollectionItemAction } from './lib/actions/create-collection-item';
+import { deleteCollectionItemAction } from './lib/actions/delete-collection-item';
+import { findCollectionItemAction } from './lib/actions/find-collection-item';
+import { findOrderAction } from './lib/actions/find-order';
+import { fulfillOrderAction } from './lib/actions/fulfill-order';
+import { getCollectionItemAction } from './lib/actions/get-collection-item';
+import { listCollectionsAction } from './lib/actions/list-collections';
+import { listSitesAction } from './lib/actions/list-sites';
+import { publishCollectionItemAction } from './lib/actions/publish-collection-item';
+import { refundOrderAction } from './lib/actions/refund-order';
+import { unfulfillOrderAction } from './lib/actions/unfulfill-order';
+import { updateCollectionItemAction } from './lib/actions/update-collection-item';
+import { webflowAuth } from './lib/auth';
+import { webflowClient } from './lib/common/client';
+import { formSubmittedTrigger } from './lib/triggers/form-submitted';
 
 export const webflow = createPiece({
 	displayName: 'Webflow',
@@ -40,25 +33,25 @@ export const webflow = createPiece({
 	],
 	auth: webflowAuth,
 	actions: [
-		webflowCreateCollectionItemAction,
-		webflowDeleteCollectionItem,
-		webflowUpdateCollectionItem,
-		webflowFindCollectionItem,
-		webflowGetCollectionItem,
-		webflowFulfillOrder,
-		webflowUnfulfillOrder,
-		webflowRefundOrder,
-		webflowFindOrder,
-		webflowPublishCollectionItem,
-		webflowListSites,
-		webflowListCollections,
+		createCollectionItemAction,
+		deleteCollectionItemAction,
+		updateCollectionItemAction,
+		findCollectionItemAction,
+		getCollectionItemAction,
+		fulfillOrderAction,
+		unfulfillOrderAction,
+		refundOrderAction,
+		findOrderAction,
+		publishCollectionItemAction,
+		listSitesAction,
+		listCollectionsAction,
 		createCustomApiCallAction({
-			baseUrl: () => 'https://api.webflow.com',
+			baseUrl: () => webflowClient.baseUrl(),
 			auth: webflowAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+				Authorization: `Bearer ${auth.access_token}`,
 			}),
 		}),
 	],
-	triggers: [webflowNewSubmission],
+	triggers: [formSubmittedTrigger],
 });
