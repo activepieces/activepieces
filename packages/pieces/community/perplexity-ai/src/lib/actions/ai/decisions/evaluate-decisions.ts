@@ -58,8 +58,7 @@ export const evaluateDecisionsAction = createAction({
   },
   async run(context) {
     const { model, stateText, state, questions } = context.propsValue;
-    const hasJson =
-      state !== undefined && state !== null && Object.keys(state).length > 0;
+    const hasJson = state !== undefined && state !== null;
     if ((stateText === undefined) === !hasJson) {
       throw new Error(
         'Set exactly one of Content Text (stateText) or Content JSON (state).'

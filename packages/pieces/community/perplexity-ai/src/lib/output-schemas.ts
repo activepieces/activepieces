@@ -543,6 +543,7 @@ export const perplexityAiListSkillRevisionsOutputSchema: OutputSchema = {
         { key: 'created_at', label: 'Created At', format: 'datetime' },
       ],
     },
+    { key: 'next_page_token', label: 'Next Page Token' },
   ],
 };
 
@@ -560,6 +561,7 @@ export const perplexityAiListSkillsOutputSchema: OutputSchema = {
         { key: 'updated_at', label: 'Updated At', format: 'datetime' },
       ],
     },
+    { key: 'next_page_token', label: 'Next Page Token' },
   ],
 };
 
