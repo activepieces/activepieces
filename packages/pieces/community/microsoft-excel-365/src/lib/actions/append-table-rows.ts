@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -8,10 +8,26 @@ export const appendTableRowsAction = createAction({
   auth: excelAuth,
   name: 'append_table_rows',
   classification: 'WRITE',
-  description: 'Append rows to a table',
+  description: 'Add a row to the end of a table.',
   audience: 'both',
   aiMetadata: { description: 'Append a row of values to a defined Excel table (by table id), mapped to the table columns. Use for structured tables that auto-expand; for a plain worksheet without a table use Append Multiple Rows. Not idempotent — re-running adds duplicate rows.', idempotent: false },
-  displayName: 'Append Rows to a Table',
+  displayName: 'Append Row to Table',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId'],
+    },
+    {
+      key: 'new_row',
+      display: 'section',
+      label: 'New Row',
+      icon: 'text',
+      props: ['values'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

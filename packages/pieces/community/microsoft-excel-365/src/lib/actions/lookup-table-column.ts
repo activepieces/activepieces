@@ -2,16 +2,31 @@ import { createAction, OAuth2PropertyValue, Property } from '@activepieces/piece
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
-import { excelCommon } from '../common/common';
 
 export const lookupTableColumnAction = createAction({
   auth: excelAuth,
   name: 'lookup_table_column',
   classification: 'SEARCH',
-  description: 'Lookup a value in a table column in a worksheet',
+  description: 'Look up a value in a table column named by its header.',
   audience: 'both',
   aiMetadata: { description: 'Find rows in a defined Excel table where a named column exactly equals a given value, returning the first match by default or all matches when Return All Matches is enabled. Use to look up table records by a key; throws if the named column does not exist. Read-only and idempotent.', idempotent: true },
-  displayName: 'Lookup Table Column',
+  displayName: 'Look Up Table Column',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId'],
+    },
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['lookup_column', 'lookup_value', 'return_all_matches'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -20,18 +35,22 @@ export const lookupTableColumnAction = createAction({
     worksheetId: commonProps.worksheetId,
     tableId: commonProps.tableId,
     lookup_column: Property.ShortText({
-      displayName: 'Lookup Column',
-      description: 'The column name to lookup the value in',
+      displayName: 'Column Name',
+      description: 'Exact header text.',
+      placeholder: 'Email',
+      width: 'half',
       required: true,
     }),
     lookup_value: Property.ShortText({
-      displayName: 'Lookup Value',
-      description: 'The value to lookup',
+      displayName: 'Value',
+      description: 'Rows whose cell equals this are returned.',
+      placeholder: 'jane@example.com',
+      width: 'half',
       required: true,
     }),
     return_all_matches: Property.Checkbox({
       displayName: 'Return All Matches',
-      description: 'If checked, all matching rows will be returned',
+      description: 'Off returns the first match only.',
       required: false,
       defaultValue: false,
     }),
@@ -60,7 +79,7 @@ export const lookupTableColumnAction = createAction({
 
     const columns = columnsResponse.value;
     const columnIndex = columns.findIndex(
-      (column: any) => column.name === lookupColumn
+      (column: { name: string }) => column.name === lookupColumn
     );
 
     if (columnIndex === -1) {
@@ -68,12 +87,13 @@ export const lookupTableColumnAction = createAction({
     }
 
     const rows = rowsResponse.value;
-    const matchedRows = rows.filter(
-      (row: any) => row.values[0][columnIndex] === lookupValue
-    );
+    const matchedRows = rows.filter((row: { values: unknown[][] }) => {
+      const cell = row.values[0][columnIndex];
+      return cell === lookupValue || String(cell) === lookupValue;
+    });
 
     const matchedValues = matchedRows.map(
-      (row: { values: any[] }) => row.values[0]
+      (row: { values: unknown[][] }) => row.values[0]
     );
 
     if (returnAllMatches) {

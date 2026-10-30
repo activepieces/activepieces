@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelAuth } from '../auth';
@@ -7,10 +7,19 @@ export const convertToRangeAction = createAction({
   auth: excelAuth,
   name: 'convert_to_range',
   classification: 'WRITE',
-  description: 'Converts a table to a range',
+  description: 'Turn a table back into a normal range of cells.',
   audience: 'both',
   aiMetadata: { description: 'Convert an existing Excel table back into a plain cell range, removing table structure while keeping the data and formatting. Pick this as the inverse of Create Table when you no longer need table behavior. Not idempotent: re-running fails once the table no longer exists.', idempotent: false },
   displayName: 'Convert to Range',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId', 'convert_info'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -18,6 +27,10 @@ export const convertToRangeAction = createAction({
     workbookId: commonProps.workbookId,
     worksheetId: commonProps.worksheetId,
     tableId: commonProps.tableId,
+    convert_info: Property.MarkDown({
+      value: 'The table becomes plain cells. Its data and formatting stay.',
+      variant: MarkdownVariant.INFO,
+    }),
   },
   async run({ propsValue, auth }) {
     const { storageSource, siteId, documentId, workbookId, worksheetId, tableId } = propsValue;
