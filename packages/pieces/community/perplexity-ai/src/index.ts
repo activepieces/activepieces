@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { createChatCompletionAction } from './lib/actions/create-chat-completion.action';
+import { createChatCompletionAction } from './lib/actions/create-chat-completion';
 import { perplexityAiAuth } from './lib/auth';
 
 export const perplexityAi = createPiece({

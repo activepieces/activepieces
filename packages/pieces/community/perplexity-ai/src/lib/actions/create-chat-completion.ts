@@ -5,14 +5,12 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 
 import * as z from 'zod/mini'
-import { propsValidation } from '@activepieces/pieces-common';
+import { perplexityAiClient } from '../common/client';
+import type { PerplexityAiChatCompletion, PerplexityAiMessage } from '../common/types';
+
 export const createChatCompletionAction = createAction({
   audience: 'both',
   auth: perplexityAiAuth,
@@ -116,10 +114,10 @@ export const createChatCompletionAction = createAction({
     });
     const maxTokens = context.propsValue.max_tokens;
 
-    const rolesArray = context.propsValue.roles
-      ? (context.propsValue.roles as any)
-      : [];
-    const roles = rolesArray.map((item: any) => {
+    const rolesArray = z
+      .array(z.object({ role: z.string(), content: z.unknown() }))
+      .parse(context.propsValue.roles ? context.propsValue.roles : []);
+    const roles: PerplexityAiMessage[] = rolesArray.map((item) => {
       const rolesEnum = ['system', 'user', 'assistant'];
       if (!rolesEnum.includes(item.role)) {
         throw new Error(
@@ -135,16 +133,10 @@ export const createChatCompletionAction = createAction({
 
     roles.push({ role: 'user', content: context.propsValue.prompt });
 
-    const response = await httpClient.sendRequest({
+    const response = await perplexityAiClient.request<PerplexityAiChatCompletion>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: 'https://api.perplexity.ai/chat/completions',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      path: '/chat/completions',
       body: {
         model: context.propsValue.model,
         messages: roles,
@@ -156,14 +148,9 @@ export const createChatCompletionAction = createAction({
       },
     });
 
-    if (response.status === 200) {
-     
-      return {
-        result:response.body.choices[0].message.content,
-        citations:response.body.citations
-      }
-    }
-
-    return response.body;
+    return {
+      result: response.choices[0].message.content,
+      citations: response.citations,
+    };
   },
 });

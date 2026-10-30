@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createChatCompletionAction } from '../src/lib/actions/create-chat-completion.action';
+import { createChatCompletionAction } from '../src/lib/actions/create-chat-completion';
 
 const sendRequest = vi.fn();
 
