@@ -376,8 +376,15 @@
                     "group": "Setup",
                     "pages": [
                       "admin-guide/guides/general",
-                      "admin-guide/guides/setup-ai-providers",
-                      "admin-guide/guides/ai-capabilities",
+                      {
+                        "group": "AI Center",
+                        "icon": "sparkles",
+                        "pages": [
+                          "admin-guide/guides/setup-ai-providers",
+                          "admin-guide/guides/ai-tiers",
+                          "admin-guide/guides/ai-capabilities"
+                        ]
+                      },
                       "admin-guide/guides/global-connections",
                       "admin-guide/guides/manage-pieces",
                       "admin-guide/guides/templates",
@@ -700,14 +707,6 @@
                                  "endpoints/ai-capabilities/set-up",
                                  "endpoints/ai-capabilities/update",
                                  "endpoints/ai-capabilities/reset"
-                              ]
-                           },
-                           {
-                              "group": "Usage",
-                              "pages": [
-                                 "endpoints/ai-usage/overview",
-                                 "endpoints/ai-usage/list-items",
-                                 "endpoints/ai-usage/get-item"
                               ]
                            },
                            {

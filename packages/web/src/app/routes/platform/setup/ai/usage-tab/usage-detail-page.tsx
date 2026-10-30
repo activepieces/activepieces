@@ -21,7 +21,12 @@ import {
 import { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 
-import { AdminPageHeader, StatCard, StatGrid } from '@/app/components/admin';
+import {
+  AdminPageHeader,
+  StatCard,
+  StatGrid,
+  adminPageResources,
+} from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import { aiUsageHooks } from '@/features/ai-usage';
@@ -80,6 +85,7 @@ export function UsageDetailPage() {
         description={
           data ? usageAdapters.itemSubtitle({ item: data.item }) : undefined
         }
+        resources={adminPageResources.aiUsage}
       >
         <UsageHeaderControls view={view} />
       </AdminPageHeader>

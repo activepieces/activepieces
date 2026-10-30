@@ -1,39 +1,24 @@
 ---
-title: "AI Providers"
-description: "Bring your own AI keys and use them across every project"
+title: "Providers and keys"
+description: "Connect your own AI keys and decide which models and projects each key serves"
 icon: "sparkles"
 ---
 
-AI Providers lets platform administrators connect the AI services that can be used by [<u>AI pieces</u>](https://www.activepieces.com/pieces/ai).
+## Overview
 
-Instead of every user adding their own provider credentials, an administrator can configure supported providers centrally and make them available for use across the platform.
+The **Providers** page in the AI Center is where platform admins connect AI providers. Each connection is a **key**. Chat, agents and [AI pieces](https://www.activepieces.com/pieces/ai) across your platform run on these keys.
 
-### **Why use AI Providers?**
+Connecting keys centrally means:
 
-AI Providers gives organizations one place to control which AI services are connected to Activepieces.
+- Teams use company-managed provider accounts, not personal ones.
+- Credentials are stored once, encrypted, and never shown to builders.
+- You decide which models and which projects each key may use.
 
-This is especially useful for larger teams that want to:
+Go to **Platform admin** → **AI Center** → **Providers**.
 
-- Use company-managed AI provider accounts instead of personal accounts
-- Keep provider credentials managed centrally
-- Standardize which AI providers teams use
-- Apply company security and access policies to AI usage
+![Providers page with keys](/resources/screenshots/ai-center-providers.png)
 
-### **How Connect to an AI Provider**
-
-**Step 1**: Go to **Platform Admin → Catalogue → AI Center → Providers**.
-
-**Step 2:** Find the provider you want to configure.
-
-**Step 3**: Click **Connect**.
-
-**Step 4**: Follow the instructions shown for that provider and enter the required credentials.
-
-**Step 5**: Click **Save**.
-
-Once configured, the provider can be used by supported AI features in Activepieces.
-
-<video src="https://cdn.activepieces.com/videos/docs/Connect-to-AI-Provider.mp4" controls />
+Keys are grouped by provider. Each row shows the key's name, its status, how many models and projects it covers, and how many [tiers](/admin-guide/guides/ai-tiers) use it. Providers you have not connected yet are listed under **Also available**.
 
 ## Supported providers
 
@@ -41,17 +26,17 @@ Once configured, the provider can be used by supported AI features in Activepiec
   <div>
   **Model providers**
 
-  * OpenAI
   * Anthropic
+  * OpenAI
   * Google Gemini
-  * Mistral AI
-  * DeepSeek
-  * xAI
-  * Qwen
-  * Z.ai
-  * MiniMax
-  * Moonshot AI
   * Meta
+  * Mistral AI
+  * xAI
+  * DeepSeek
+  * Qwen
+  * Moonshot AI
+  * MiniMax
+  * Z.ai
 </div>
 
   <div>
@@ -59,6 +44,7 @@ Once configured, the provider can be used by supported AI features in Activepiec
 
   * Azure
   * AWS Bedrock
+  * Google Vertex AI
   * NVIDIA
 
   **Gateways**
@@ -73,76 +59,111 @@ Once configured, the provider can be used by supported AI features in Activepiec
 </Columns>
 
 <Tip>
-  **Other (OpenAI Compatible)** covers any endpoint that speaks the OpenAI API, including self-hosted models and gateways not listed here. Point it at your own base URL.
+  **Other (OpenAI Compatible)** works with any endpoint that speaks the OpenAI API, including self-hosted models (Ollama, LM Studio) and gateways not listed here. Point it at your own base URL.
 </Tip>
+
+## Add a key
+
+<Steps>
+  <Step title="Open the dialog">
+    Click **Add key** at the top of the page, or **Add key** on a provider you already use, or pick a provider under **Also available**.
+  </Step>
+  <Step title="Pick the provider">
+    Search the provider list and pick one. The dialog links to where you get that provider's credentials.
+  </Step>
+  <Step title="Name the key and enter the credentials">
+    Give the key a name your team will recognize, for example `Marketing`. Then fill in what the provider needs, such as an API key, a region or a base URL.
+  </Step>
+  <Step title="Connect">
+    Click **Connect**. Activepieces checks the credentials with the provider before saving. Then the key page opens, so you can pick its models and projects.
+  </Step>
+</Steps>
+
+![Add key dialog with the provider list open](/resources/screenshots/ai-center-add-key.png)
+
+You can add **more than one key for the same provider**. For example, one Anthropic key for production work and another, with its own budget, for the marketing team.
+
+## Key status
+
+Every key shows a status badge:
+
+| Status | What it means |
+| --- | --- |
+| **Active** | The last check or call worked. |
+| **Out of credits** | The provider says the account has no credit or quota left. |
+| **Key rejected** | The provider refused the credentials. Replace them in **Settings**. |
+| **Unreachable** | Activepieces could not reach the provider. |
+
+The status updates on its own when AI calls succeed or fail. To check right now, open the key and click **Recheck**.
+
+## Key page
+
+Click a key to open it. The page has three tabs.
+
+### Models
+
+Choose which of the key's models the platform may use:
+
+- **All models**: every model the provider offers. New models from the provider are added automatically.
+- **Only selected**: only the models you tick.
+
+Search, sort (newest, cheapest, biggest context, name) and filter by tool calling, reasoning, vision or image generation. Each row shows the model's context size and price per million tokens, when known. A model a tier uses shows **Used by** and the tier name, and stays selected until you change the tier.
+
+For **Google Vertex AI**, **Cloudflare AI Gateway** and **Other (OpenAI Compatible)**, you type the model ids yourself, because these providers don't list them.
+
+![Models tab of a key](/resources/screenshots/ai-center-key-models.png)
+
+### Access
+
+Choose which projects may use the key:
+
+- **All**: every project on the platform.
+- **Only selected**: only the projects you tick.
+- **All except**: every project except the ones you tick. New projects get access automatically.
+
+If a narrower list means a tier can no longer run in some projects, Activepieces asks you to confirm before saving.
+
+![Access tab of a key](/resources/screenshots/ai-center-key-access.png)
+
+### Settings
+
+- **Name**: rename the key.
+- **Credentials**: click **Replace** to enter new credentials. Models and project access stay as they are.
+- **Delete this key**: flows and agents that use this key will fail. A key that a tier still uses can't be deleted; remove it from the tier first.
+
+Changes to the models, projects and name are not saved right away. A bar at the bottom lets you **Save** or **Discard** them. Save or discard before you replace the credentials.
+
+## Default chat model
+
+The **Default chat model** card at the top of the page sets the model every new chat starts on. Pick a [tier](/admin-guide/guides/ai-tiers) or a model from one of your keys.
+
+![Default chat model card with the picker open](/resources/screenshots/ai-center-default-chat-model.png)
+
+If the chosen model can't run in a project, for example because its key doesn't serve that project, new chats there fall back to the default tier or another available model. The card shows a warning icon when this happens. If the model was removed, the card shows **Use default** to clear the choice.
+
+## AI credits
+
+On Cloud, your plan includes AI credits through a built-in **Activepieces** provider. You don't add a key for it, and it is not listed with your keys. Credits show up as their own options in the model pickers, and their usage is billed on your plan. You can mix credits and your own keys.
+
+## Plan
+
+Your own AI keys need a plan that includes AI providers. Without it, the page shows a preview and an upgrade prompt.
+
+If your plan changes and no longer includes AI providers, existing keys become **Read-only**. You can't open or edit them, but you can still delete them. Click **Upgrade** to get them back.
 
 ## Cost control and logging
 
-Spend on your own key goes to your provider, so put a gateway in front of it when you want limits and an audit trail:
+Spend on your own key is billed by your provider. To add limits and an audit trail, put a gateway in front of it:
 
-- Set rate limits and budgets
-- Log and monitor every AI request
-- Track usage across projects
+- Set rate limits and budgets.
+- Log and monitor every AI request.
+- Track usage across projects.
 
-**OpenRouter** and **Cloudflare AI Gateway** are set up like any other provider. Any other gateway that speaks the OpenAI API works through **Other (OpenAI Compatible)**, so LiteLLM, Portkey, Helicone, and self-hosted routers are all fine.
+**OpenRouter** and **Cloudflare AI Gateway** are set up like any other provider. Any other gateway that speaks the OpenAI API works through **Other (OpenAI Compatible)**, so LiteLLM, Portkey, Helicone and self-hosted routers are all fine. **Azure** and **AWS Bedrock** give you the same through your cloud account's quotas and logs.
 
-## Supported providers
 
-<Columns cols={2}>
-  <div>
-  **Model providers**
+## Related
 
-  * OpenAI
-  * Anthropic
-  * Google Gemini
-  * Mistral AI
-  * DeepSeek
-  * xAI
-  * Qwen
-  * Z.ai
-  * MiniMax
-  * Moonshot AI
-  * Meta
-</div>
-
-  <div>
-  **Cloud platforms**
-
-  * Azure
-  * AWS Bedrock
-  * NVIDIA
-
-  **Gateways**
-
-  * OpenRouter
-  * Cloudflare AI Gateway
-
-  **Anything else**
-
-  * Other (OpenAI Compatible)
-</div>
-</Columns>
-
-<Tip>
-  **Other (OpenAI Compatible)** covers any endpoint that speaks the OpenAI API, including self-hosted models and gateways not listed here. Point it at your own base URL.
-</Tip>
-
-## Cost control and logging
-
-Spend on your own key goes to your provider, so put a gateway in front of it when you want limits and an audit trail:
-
-- Set rate limits and budgets
-- Log and monitor every AI request
-- Track usage across projects
-
-**OpenRouter** and **Cloudflare AI Gateway** are set up like any other provider. Any other gateway that speaks the OpenAI API works through **Other (OpenAI Compatible)**, so LiteLLM, Portkey, Helicone, and self-hosted routers are all fine.
-
-**Azure** and **AWS Bedrock** give you the same thing through your cloud account's own quotas and logs**Azure** and **AWS Bedrock** give you the same thing through your cloud account's own quotas and logs.
-
-<Tip>
-  You can add several providers at once and pick the model per agent or per step, so the expensive models only run on the work that needs them.
-</Tip>
-
-<Tip>
-  You can add several providers at once and pick the model per agent or per step, so the expensive models only run on the work that needs them.
-</Tip>
+- [Tiers](/admin-guide/guides/ai-tiers): group models from your keys into named choices for builders.
+- [Capabilities](/admin-guide/guides/ai-capabilities): add web search, web scraping, image generation and embeddings.
+- API reference: [list keys](/endpoints/ai-providers/list-keys), [create a key](/endpoints/ai-providers/create-key), [update a key](/endpoints/ai-providers/update-key), [recheck a key](/endpoints/ai-providers/recheck-key), [delete a key](/endpoints/ai-providers/delete-key).
