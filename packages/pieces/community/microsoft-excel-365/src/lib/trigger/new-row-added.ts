@@ -42,7 +42,7 @@ const polling: Polling<
     const currentValues = fetchedValues.map((row: any[], rowIndex: number) => {
       const rowObject: any = {};
       row.forEach((cell: any, cellIndex: number) => {
-        const columnName = String.fromCharCode(65 + cellIndex);
+        const columnName = excelCommon.numberToColumnName(cellIndex + 1);
         rowObject[columnName] = cell;
       });
       return {
@@ -70,11 +70,19 @@ export const readNewRows = createTrigger({
   name: 'new_row',
   classification: 'READ',
   displayName: 'New Row',
-  description:
-    'Trigger when a new row is added, and it can include existing rows as well.',
+  description: 'Fires when a row is added below the last used row.',
   aiMetadata: {
     description: 'Fires when a new row is added to the selected worksheet, and may also surface existing rows on the first run. Each event represents one row and returns its 1-based row number and cell values keyed by column letters (A, B, C...). Use this to react to rows appended to a worksheet.',
   },
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -82,11 +90,15 @@ export const readNewRows = createTrigger({
     workbookId: commonProps.workbookId,
     worksheetId: commonProps.worksheetId,
     max_rows_to_poll: Property.Number({
-      displayName: 'Max Rows to Poll',
-      description:
-        'The maximum number of rows to poll, the rest will be polled on the next run.',
+      displayName: 'Max Rows per Check',
+      description: 'Extra rows arrive on the next check.',
       required: false,
       defaultValue: 10,
+      display: 'stepper',
+      min: 1,
+      max: 10,
+      step: 1,
+      advanced: true,
     }),
   },
   type: TriggerStrategy.POLLING,
