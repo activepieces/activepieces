@@ -13,30 +13,49 @@ export const unsubscribeEmail = createAction({
   description: 'Unsubscribe an email address from an audience',
   audience: 'both',
   aiMetadata: { description: 'Sets an email address to unsubscribed status within an audience (list) via a batch upsert; with "update existing" on, it changes an existing member, otherwise it can add the address as unsubscribed. Use to opt a contact out of a specific audience. Idempotent: repeating converges to the same unsubscribed state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber',
+      icon: 'user',
+      props: ['list_id', 'email_address'],
+    },
+    {
+      key: 'options',
+      display: 'section',
+      label: 'Options',
+      icon: 'sliders',
+      props: ['update_existing'],
+    },
+  ],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email_address: Property.ShortText({
       displayName: 'Email Address',
-      description: 'Email address to unsubscribe',
+      description: 'The address to unsubscribe.',
+      placeholder: 'jane@example.com',
       required: true,
-    }),
-    skip_merge_validation: Property.Checkbox({
-      displayName: 'Skip Merge Validation',
-      description: 'Accept member data without merge field values even if required',
-      required: false,
-      defaultValue: false,
-    }),
-    skip_duplicate_check: Property.Checkbox({
-      displayName: 'Skip Duplicate Check',
-      description: 'Ignore duplicates in the request',
-      required: false,
-      defaultValue: false,
     }),
     update_existing: Property.Checkbox({
       displayName: 'Update Existing',
-      description: 'Change existing members subscription status',
+      description: "Off leaves an existing subscriber's status unchanged.",
       required: false,
       defaultValue: true,
+    }),
+    skip_merge_validation: Property.Checkbox({
+      displayName: 'Skip Merge Validation',
+      description: 'Save the subscriber even if required merge fields are empty.',
+      required: false,
+      defaultValue: false,
+      advanced: true,
+    }),
+    skip_duplicate_check: Property.Checkbox({
+      displayName: 'Skip Duplicate Check',
+      description: "Skip Mailchimp's duplicate-address check.",
+      required: false,
+      defaultValue: false,
+      advanced: true,
     }),
   },
   async run(context) {

@@ -14,11 +14,21 @@ export const archiveSubscriber = createAction({
   description: 'Archive an existing audience member',
   audience: 'both',
   aiMetadata: { description: 'Archives a member from an audience (list); the identifier accepts an MD5 hash of the lowercase email, the raw email (auto-hashed), or a contact_id. Use to remove a contact from active sending while preserving their record. Idempotent: archiving an already-archived or absent member converges to the same state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber to Archive',
+      icon: 'trash',
+      props: ['list_id', 'subscriber_hash'],
+    },
+  ],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     subscriber_hash: Property.ShortText({
-      displayName: 'Subscriber Hash or Email',
-      description: 'MD5 hash of the lowercase email address, email address, or contact_id',
+      displayName: 'Email or Subscriber Hash',
+      description: 'Email address, or the MD5 hash of the lowercase email.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },

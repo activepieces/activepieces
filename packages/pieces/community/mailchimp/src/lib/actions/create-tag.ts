@@ -13,11 +13,21 @@ export const createTag = createAction({
   description: 'Create a new tag in a Mailchimp audience',
   audience: 'both',
   aiMetadata: { description: 'Creates a new tag on an audience (list) so it can later be applied to subscribers. Use to set up a tag ahead of tagging contacts. Not idempotent: calling again with the same name creates a duplicate tag.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'tag',
+      display: 'section',
+      label: 'New Tag',
+      icon: 'tag',
+      props: ['list_id', 'name'],
+    },
+  ],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     name: Property.ShortText({
       displayName: 'Tag Name',
-      description: 'The name of the tag to create',
+      description: 'Must not match an existing tag in this audience.',
+      placeholder: 'Customers',
       required: true,
     }),
   },
