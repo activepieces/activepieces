@@ -739,6 +739,27 @@ describe('agent list across projects', () => {
         expect(noMatch).toStrictEqual([])
     })
 
+    it('lists the agents whose draft or published tools use one of the given connections', async () => {
+        const ctx = await context()
+        const pieceTool = (auth: string) => ({
+            type: 'PIECE',
+            toolName: 'create_issue',
+            pieceMetadata: {
+                pieceName: '@activepieces/piece-github',
+                pieceVersion: '0.1.0',
+                actionName: 'create_issue',
+                predefinedInput: { auth, fields: {} },
+            },
+        })
+        const usesInDraft = await createAgent(ctx, { displayName: 'Draft user', draft: { ...agentBody(ctx.project.id).draft, tools: [pieceTool('{{connections[\'conn-a\']}}')] } })
+        const usesInPublished = await createAgent(ctx, { displayName: 'Published user' })
+        await db.update('agent', usesInPublished.id, { published: { ...agentBody(ctx.project.id).draft, tools: [pieceTool('conn-b')] } })
+        await createAgent(ctx, { displayName: 'Other connection', draft: { ...agentBody(ctx.project.id).draft, tools: [pieceTool('conn-c')] } })
+
+        const listed = (await ctx.get('/v1/agents', { connectionExternalIds: ['conn-a', 'conn-b'] })).json().data
+        expect(listed.map((row: { id: string }) => row.id).sort()).toStrictEqual([usesInDraft.id, usesInPublished.id].sort())
+    })
+
     it('sorts by name when asked, rather than by when it was touched', async () => {
         const ctx = await context()
         const apple = await createAgent(ctx, { displayName: 'Apple duty' })
