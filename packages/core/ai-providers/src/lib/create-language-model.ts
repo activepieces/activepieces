@@ -312,7 +312,7 @@ export function buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHead
 
 const simulatedStreaming = simulateStreamingMiddleware()
 
-export class ForcedToolNotCalledError extends Error {
+class ForcedToolNotCalledError extends Error {
     readonly usage: GenerateResult['usage']
 
     constructor({ toolName, usage }: { toolName: string | undefined, usage: GenerateResult['usage'] }) {

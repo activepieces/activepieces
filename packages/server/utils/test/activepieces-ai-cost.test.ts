@@ -2,7 +2,6 @@ import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCost
 import { EmbeddingModelV4, LanguageModelV4 } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ForcedToolNotCalledError } from '@activepieces/ai-providers'
 import { activepiecesAiCost, UnbilledCallReason } from '../src/activepieces-ai-cost'
 import { Generation } from '../src/openrouter-generation'
 
@@ -157,7 +156,7 @@ describe('what a model call reports back for billing', () => {
 
     it.each(['generate', 'stream'] as const)('bills the tokens of a forced tool call that failed after its retry (%s)', async (path) => {
         const usage = { inputTokens: { total: 9, noCache: 9, cacheRead: undefined, cacheWrite: undefined }, outputTokens: { total: 4, text: 4, reasoning: undefined } }
-        const failure = new ForcedToolNotCalledError({ toolName: 'extractData', usage })
+        const failure = Object.assign(new Error('The model answered in text twice instead of calling the extractData tool'), { name: 'ForcedToolNotCalledError', usage })
         const model = activepiecesAiCost.billedLanguageModel({
             model: {
                 ...modelReturning({}),
