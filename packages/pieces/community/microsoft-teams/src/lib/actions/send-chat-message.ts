@@ -9,7 +9,7 @@ export const sendChatMessageAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Send Chat Message',
 	description: 'Sends a message in an existing chat.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Sends a message into an existing one-on-one or group chat in Microsoft Teams, identified by chat ID, as plain text or HTML. Use when the target chat already exists; to start a fresh chat use Create Chat & Send Message instead. Not idempotent — each call posts another message.',
 		idempotent: false,

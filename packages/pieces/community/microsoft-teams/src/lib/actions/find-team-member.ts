@@ -10,7 +10,7 @@ export const findTeamMemberAction = createAction({
 	classification: 'SEARCH',
 	displayName: 'Find Team Member',
 	description: 'Finds a team member by email or display name.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Searches the members of a Microsoft Teams team (by team ID) for those matching a given email or display name, depending on the selected search mode. Use to resolve a person to their member record/ID before mentioning or messaging them. Idempotent read-only lookup; match is exact on the chosen field.',
 		idempotent: true,

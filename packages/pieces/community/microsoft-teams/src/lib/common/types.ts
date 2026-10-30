@@ -30,6 +30,11 @@ export type MicrosoftTeamsMe = {
   userPrincipalName?: string;
 };
 
+export type MicrosoftTeamsTokenClaims = {
+  oid?: string;
+  tid?: string;
+};
+
 export type MicrosoftTeamsGraphError = {
   statusCode?: number;
   status?: number;

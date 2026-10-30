@@ -10,7 +10,7 @@ export const deleteChatMessageAction = createAction({
     classification: 'DESTRUCTIVE',
     displayName: 'Delete Chat Message',
     description: 'Soft-Deletes a message in chat.You can only delete messages you sent.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: {
         description: 'Soft-deletes a message in a Microsoft Teams chat, identified by chat ID and message ID, on behalf of the authenticated user. Only messages the current user sent can be deleted. Effectively idempotent — re-running on an already-deleted message leaves it deleted.',
         idempotent: true,

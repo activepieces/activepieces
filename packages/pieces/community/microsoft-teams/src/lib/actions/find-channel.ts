@@ -10,7 +10,7 @@ export const findChannelAction = createAction({
 	classification: 'SEARCH',
 	displayName: 'Find Channel',
 	description: 'Finds channels by name.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Searches the channels of a Microsoft Teams team (by team ID) for ones whose display name exactly matches the given name. Use to resolve a channel name to its ID before posting or reading. Idempotent read-only lookup; match is exact, not a substring search.',
 		idempotent: true,

@@ -1,7 +1,12 @@
 import { tryCatch } from '@activepieces/pieces-framework';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Client, ResponseType } from '@microsoft/microsoft-graph-client';
 
-import type { MicrosoftTeamsAuthValue, MicrosoftTeamsGraphError, MicrosoftTeamsPage } from './types';
+import type {
+  MicrosoftTeamsAuthValue,
+  MicrosoftTeamsGraphError,
+  MicrosoftTeamsPage,
+  MicrosoftTeamsTokenClaims,
+} from './types';
 
 function graphUrl({ auth }: { auth: MicrosoftTeamsAuthValue }): string {
   const host = auth.props?.cloud ?? COMMERCIAL_LOGIN_HOST;
@@ -81,6 +86,49 @@ async function paginate<T>({
   return { items, error };
 }
 
+async function list<T>({
+  auth,
+  path,
+  page,
+  filter,
+  nextLink,
+}: {
+  auth: MicrosoftTeamsAuthValue;
+  path: string;
+  page?: { limit: number | undefined; max: number; defaultValue: number };
+  filter?: string;
+  nextLink?: string;
+}): Promise<MicrosoftTeamsPage<T>> {
+  const client = create({ auth });
+  if (nextLink) {
+    return await withRetry(() => client.api(nextLink).get());
+  }
+  let request = client.api(path);
+  if (page) request = request.top(Math.min(Math.max(Math.trunc(page.limit ?? page.defaultValue), 1), page.max));
+  if (filter) request = request.filter(filter);
+  return await withRetry(() => request.get());
+}
+
+async function getText({ auth, path, accept }: { auth: MicrosoftTeamsAuthValue; path: string; accept: string }): Promise<string> {
+  const client = create({ auth });
+  return await withRetry(() => client.api(path).header('Accept', accept).responseType(ResponseType.TEXT).get());
+}
+
+async function getBase64({ auth, path }: { auth: MicrosoftTeamsAuthValue; path: string }): Promise<string> {
+  const client = create({ auth });
+  const bytes: ArrayBuffer = await withRetry(() => client.api(path).responseType(ResponseType.ARRAYBUFFER).get());
+  return Buffer.from(bytes).toString('base64');
+}
+
+async function signedInUser({ auth }: { auth: MicrosoftTeamsAuthValue }): Promise<{ id: string; tenantId: string }> {
+  const payload = auth.access_token.split('.')[1] ?? '';
+  const { data: claims } = await tryCatch(async (): Promise<MicrosoftTeamsTokenClaims> => JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')));
+  if (!claims?.oid || !claims.tid) {
+    throw new Error('Could not read the signed-in user from the connection. Reconnect the Microsoft Teams connection.');
+  }
+  return { id: claims.oid, tenantId: claims.tid };
+}
+
 async function delay({ ms }: { ms: number }): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -125,7 +173,7 @@ function buildGraphErrorMessage({ error }: { error: MicrosoftTeamsGraphError }):
   return `Graph error (${status}${code ? ` ${code}` : ''})${requestId ? ` [request-id: ${requestId}]` : ''}: ${message}`;
 }
 
-export const microsoftTeamsClient = { graphUrl, baseUrl, create, withRetry, paginate };
+export const microsoftTeamsClient = { graphUrl, baseUrl, create, withRetry, paginate, list, getText, getBase64, signedInUser };
 
 const COMMERCIAL_LOGIN_HOST = 'login.microsoftonline.com';
 

@@ -9,7 +9,7 @@ export const getChannelMessageAction = createAction({
 	classification: 'READ',
 	displayName: 'Get Channel Message',
 	description: 'Fetch a specific channel message by team, channel, and message ID (optionally a reply).',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Retrieves a single channel message from Microsoft Teams by team ID, channel ID, and message ID; supply an optional reply ID to fetch a specific reply under that message instead. Use to read the content or metadata of a known channel post. Idempotent read-only lookup.',
 		idempotent: true,
