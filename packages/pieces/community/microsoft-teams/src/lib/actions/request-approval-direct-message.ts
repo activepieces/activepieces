@@ -4,10 +4,12 @@ import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
+import { requestApprovalDirectMessageOutputSchema } from '../output-schemas';
 
 export const requestApprovalDirectMessage = createAction({
   auth: microsoftTeamsAuth,
   name: 'request_approval_direct_message',
+  outputSchema: requestApprovalDirectMessageOutputSchema,
   classification: 'WRITE',
   displayName: 'Request Approval from a User',
   description:

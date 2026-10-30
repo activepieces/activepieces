@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListChannelMessageHostedContentsOutputSchema } from '../../../output-schemas';
 
 export const listChatMessageHostedContents = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_chat_message_hosted_contents',
+  outputSchema: microsoftTeamsListChannelMessageHostedContentsOutputSchema,
   displayName: 'List Chat Message Hosted Contents',
   description: 'Lists the images and code snippets hosted inside a chat message.',
   audience: 'ai',

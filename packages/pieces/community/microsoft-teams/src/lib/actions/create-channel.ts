@@ -2,10 +2,12 @@ import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsCreateChannelOutputSchema } from '../output-schemas';
 
 export const createChannelAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_create_channel',
+	outputSchema: microsoftTeamsCreateChannelOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Channel',
 	description: 'Create a new channel in Microsoft Teams.',

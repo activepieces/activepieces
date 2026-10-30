@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListPinnedChatMessagesOutputSchema } from '../../../output-schemas';
 
 export const listPinnedChatMessages = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_pinned_chat_messages',
+  outputSchema: microsoftTeamsListPinnedChatMessagesOutputSchema,
   displayName: 'List Pinned Chat Messages',
   description: 'Lists the pinned messages of a chat.',
   audience: 'ai',

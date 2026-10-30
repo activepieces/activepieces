@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetChatMemberOutputSchema } from '../../../output-schemas';
 
 export const getTeamMember = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_team_member',
+  outputSchema: microsoftTeamsGetChatMemberOutputSchema,
   displayName: 'Get Team Member',
   description: 'Gets one membership of a team by its membership ID.',
   audience: 'ai',

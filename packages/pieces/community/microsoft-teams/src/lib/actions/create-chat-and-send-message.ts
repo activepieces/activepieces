@@ -4,10 +4,12 @@ import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
 import { isNil } from '@activepieces/pieces-framework';
 import type { Chat, MicrosoftTeamsMe } from '../common/types';
+import { microsoftTeamsCreateChatAndSendMessageOutputSchema } from '../output-schemas';
 
 export const createChatAndSendMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_create_chat_and_send_message',
+	outputSchema: microsoftTeamsCreateChatAndSendMessageOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Chat & Send Message',
 	description: 'Start a new chat and send an initial message.',

@@ -2,10 +2,12 @@ import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsGetChatMessageOutputSchema } from '../output-schemas';
 
 export const sendChatMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_send_chat_message',
+	outputSchema: microsoftTeamsGetChatMessageOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Chat Message',
 	description: 'Sends a message in an existing chat.',

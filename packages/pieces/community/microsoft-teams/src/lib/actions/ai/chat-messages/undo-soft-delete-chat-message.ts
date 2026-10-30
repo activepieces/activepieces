@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsUndoSoftDeleteChatMessageOutputSchema } from '../../../output-schemas';
 
 export const undoSoftDeleteChatMessage = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_undo_soft_delete_chat_message',
+  outputSchema: microsoftTeamsUndoSoftDeleteChatMessageOutputSchema,
   displayName: 'Undo Soft Delete Chat Message',
   description: 'Restores a chat message you soft-deleted.',
   audience: 'ai',

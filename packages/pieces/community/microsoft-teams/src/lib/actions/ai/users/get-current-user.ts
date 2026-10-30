@@ -2,10 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetCurrentUserOutputSchema } from '../../../output-schemas';
 
 export const getCurrentUser = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_current_user',
+  outputSchema: microsoftTeamsGetCurrentUserOutputSchema,
   displayName: 'Get Current User',
   description: 'Gets the profile of the signed-in user.',
   audience: 'ai',

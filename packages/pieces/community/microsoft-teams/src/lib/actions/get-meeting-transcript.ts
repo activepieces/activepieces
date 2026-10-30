@@ -4,6 +4,7 @@ import { ResponseType } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
 import { microsoftTeamsApi } from '../common/api';
+import { microsoftTeamsGetMeetingTranscriptOutputSchema } from '../output-schemas';
 
 export const getMeetingTranscriptAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -13,6 +14,7 @@ export const getMeetingTranscriptAction = createAction({
 	description:
 		'Retrieves transcripts for a Teams meeting. Provide a Transcript to fetch its text content; omit it to list all available transcripts.',
 	audience: 'human',
+	outputSchema: microsoftTeamsGetMeetingTranscriptOutputSchema,
 	aiMetadata: {
 		description: 'Retrieves transcripts for a Microsoft Teams online meeting belonging to the authenticated user, resolved from a meeting identifier (join URL or ID). Operates in two modes: with a transcript ID it fetches that transcript\'s text content (VTT); without one it lists all available transcripts for the meeting. Idempotent read-only operation.',
 		idempotent: true,

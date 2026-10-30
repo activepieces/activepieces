@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListTeamsOutputSchema } from '../../../output-schemas';
 
 const MAX_LIMIT = 999;
 const DEFAULT_LIMIT = 50;
@@ -10,6 +11,7 @@ const DEFAULT_LIMIT = 50;
 export const listTeams = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_teams',
+  outputSchema: microsoftTeamsListTeamsOutputSchema,
   displayName: 'List Teams',
   description: 'Lists teams in the organization, one page at a time.',
   audience: 'ai',

@@ -11,6 +11,7 @@ import type { ChatMessage, MicrosoftTeamsPage } from '../common/types';
 import dayjs from 'dayjs';
 
 import { isNil } from '@activepieces/pieces-framework';
+import { newChatMessageOutputSchema } from '../output-schemas';
 
 type Props = {
 	chatId: string;
@@ -19,6 +20,7 @@ type Props = {
 export const newChatMessageTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-chat-message',
+	outputSchema: newChatMessageOutputSchema,
 	classification: 'READ',
 	displayName: 'New Chat Message',
 	description: 'Triggers when a new message is received in a chat.',

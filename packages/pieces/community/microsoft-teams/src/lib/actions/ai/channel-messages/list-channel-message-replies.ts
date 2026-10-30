@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListChannelMessageRepliesOutputSchema } from '../../../output-schemas';
 
 const MAX_LIMIT = 50;
 const DEFAULT_LIMIT = 20;
@@ -10,6 +11,7 @@ const DEFAULT_LIMIT = 20;
 export const listChannelMessageReplies = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_channel_message_replies',
+  outputSchema: microsoftTeamsListChannelMessageRepliesOutputSchema,
   displayName: 'List Channel Message Replies',
   description: 'Lists the replies in the thread of a channel message, one page at a time.',
   audience: 'ai',

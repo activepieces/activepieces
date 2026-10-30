@@ -3,6 +3,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListChannelMessagesOutputSchema } from '../../../output-schemas';
 
 const MAX_LIMIT = 50;
 const DEFAULT_LIMIT = 20;
@@ -10,6 +11,7 @@ const DEFAULT_LIMIT = 20;
 export const listChannelMessages = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_channel_messages',
+  outputSchema: microsoftTeamsListChannelMessagesOutputSchema,
   displayName: 'List Channel Messages',
   description: 'Lists the top-level messages in a channel, one page at a time.',
   audience: 'ai',

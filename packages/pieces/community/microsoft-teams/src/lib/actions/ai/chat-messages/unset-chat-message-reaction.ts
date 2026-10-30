@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsUnsetChatMessageReactionOutputSchema } from '../../../output-schemas';
 
 export const unsetChatMessageReaction = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_unset_chat_message_reaction',
+  outputSchema: microsoftTeamsUnsetChatMessageReactionOutputSchema,
   displayName: 'Unset Chat Message Reaction',
   description: "Removes the signed-in user's reaction from a chat message.",
   audience: 'ai',

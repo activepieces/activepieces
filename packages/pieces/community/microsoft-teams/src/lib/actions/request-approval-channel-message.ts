@@ -5,10 +5,12 @@ import { microsoftTeamsClient } from '../common/client';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
 import type { ChatMessage } from '../common/types';
+import { requestApprovalDirectMessageOutputSchema } from '../output-schemas';
 
 export const requestApprovalInChannel = createAction({
   auth: microsoftTeamsAuth,
   name: 'request_approval_in_channel',
+  outputSchema: requestApprovalDirectMessageOutputSchema,
   classification: 'WRITE',
   displayName: 'Request Approval in Channel',
   description: 'Send approval message to a channel and then wait until the message is approved or disapproved',

@@ -2,10 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListAssociatedTeamsOutputSchema } from '../../../output-schemas';
 
 export const listAssociatedTeams = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_associated_teams',
+  outputSchema: microsoftTeamsListAssociatedTeamsOutputSchema,
   displayName: 'List Associated Teams',
   description: 'Lists the teams the signed-in user is associated with, including teams reached through shared channels.',
   audience: 'ai',

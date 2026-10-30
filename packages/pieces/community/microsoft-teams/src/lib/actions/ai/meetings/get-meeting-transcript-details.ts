@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetMeetingTranscriptDetailsOutputSchema } from '../../../output-schemas';
 
 export const getMeetingTranscriptDetails = createAction({
   auth: microsoftTeamsAuth,
@@ -10,6 +11,7 @@ export const getMeetingTranscriptDetails = createAction({
   displayName: 'Get Meeting Transcript Details',
   description: "Gets a meeting transcript's details, without its text.",
   audience: 'ai',
+  outputSchema: microsoftTeamsGetMeetingTranscriptDetailsOutputSchema,
   classification: 'READ',
   aiMetadata: {
     description:

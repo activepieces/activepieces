@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetTeamOutputSchema } from '../../../output-schemas';
 
 export const getTeam = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_team',
+  outputSchema: microsoftTeamsGetTeamOutputSchema,
   displayName: 'Get Team',
   description: 'Gets a team by ID, with its settings.',
   audience: 'ai',

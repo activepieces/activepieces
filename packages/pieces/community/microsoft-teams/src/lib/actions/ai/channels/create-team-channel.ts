@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsCreateChannelOutputSchema } from '../../../output-schemas';
 
 const MEMBERSHIP_TYPES: string[] = ['standard', 'private'];
 
 export const createTeamChannel = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_create_team_channel',
+  outputSchema: microsoftTeamsCreateChannelOutputSchema,
   displayName: 'Create Team Channel',
   description: 'Creates a standard or private channel in a team.',
   audience: 'ai',

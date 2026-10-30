@@ -2,10 +2,12 @@ import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsGetChannelMessageOutputSchema } from '../output-schemas';
 
 export const replyToChannelMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_reply_to_channel_message',
+	outputSchema: microsoftTeamsGetChannelMessageOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Reply to Channel Message',
 	description: 'Post a reply to an existing channel message.',

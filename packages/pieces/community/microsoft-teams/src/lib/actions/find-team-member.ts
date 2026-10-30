@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
 import type { ConversationMember, MicrosoftTeamsPage } from '../common/types';
+import { microsoftTeamsFindTeamMemberOutputSchema } from '../output-schemas';
 
 export const findTeamMemberAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_find_team_member',
+	outputSchema: microsoftTeamsFindTeamMemberOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Team Member',
 	description: 'Finds a team member by email or display name.',

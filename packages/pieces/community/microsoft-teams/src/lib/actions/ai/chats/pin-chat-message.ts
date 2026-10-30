@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsPinChatMessageOutputSchema } from '../../../output-schemas';
 
 export const pinChatMessage = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_pin_chat_message',
+  outputSchema: microsoftTeamsPinChatMessageOutputSchema,
   displayName: 'Pin Chat Message',
   description: 'Pins a message in a chat.',
   audience: 'ai',

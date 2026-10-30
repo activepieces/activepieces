@@ -4,10 +4,12 @@ import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
 import { microsoftTeamsUtils } from '../../../common/utils';
+import { microsoftTeamsGetChannelMessageOutputSchema } from '../../../output-schemas';
 
 export const postChannelMessageReply = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_post_channel_message_reply',
+  outputSchema: microsoftTeamsGetChannelMessageOutputSchema,
   displayName: 'Post Channel Message Reply',
   description: 'Posts a reply in the thread of a channel message.',
   audience: 'ai',

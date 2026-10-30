@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsSetChatMessageReactionOutputSchema } from '../../../output-schemas';
 
 export const setChatMessageReaction = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_set_chat_message_reaction',
+  outputSchema: microsoftTeamsSetChatMessageReactionOutputSchema,
   displayName: 'Set Chat Message Reaction',
   description: "Adds the signed-in user's reaction to a chat message.",
   audience: 'ai',

@@ -2,10 +2,12 @@ import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsCreatePrivateChannelOutputSchema } from '../output-schemas';
 
 export const createPrivateChannelAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_create_private_channel',
+	outputSchema: microsoftTeamsCreatePrivateChannelOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Private Channel',
 	description: 'Create a new private channel in a team.',

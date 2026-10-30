@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetPresencesByUserIdsOutputSchema } from '../../../output-schemas';
 
 export const getPresencesByUserIds = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_presences_by_user_ids',
+  outputSchema: microsoftTeamsGetPresencesByUserIdsOutputSchema,
   displayName: 'Get Presences by User IDs',
   description: 'Gets the Teams presence of several users at once.',
   audience: 'ai',

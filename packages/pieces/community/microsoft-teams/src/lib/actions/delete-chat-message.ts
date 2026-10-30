@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
 import type { MicrosoftTeamsMe } from '../common/types';
+import { microsoftTeamsDeleteChatMessageOutputSchema } from '../output-schemas';
 
 export const deleteChatMessageAction = createAction({
     auth: microsoftTeamsAuth,
     name: 'microsoft_teams_delete_chat_message',
+    outputSchema: microsoftTeamsDeleteChatMessageOutputSchema,
     classification: 'DESTRUCTIVE',
     displayName: 'Delete Chat Message',
     description: 'Soft-Deletes a message in chat.You can only delete messages you sent.',

@@ -2,10 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetTeamsLicensingDetailsOutputSchema } from '../../../output-schemas';
 
 export const getTeamsLicensingDetails = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_teams_licensing_details',
+  outputSchema: microsoftTeamsGetTeamsLicensingDetailsOutputSchema,
   displayName: 'Get Teams Licensing Details',
   description: 'Gets whether the signed-in user has a Teams license.',
   audience: 'ai',

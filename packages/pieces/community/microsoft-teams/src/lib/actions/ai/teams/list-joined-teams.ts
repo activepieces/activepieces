@@ -2,10 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListJoinedTeamsOutputSchema } from '../../../output-schemas';
 
 export const listJoinedTeams = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_joined_teams',
+  outputSchema: microsoftTeamsListJoinedTeamsOutputSchema,
   displayName: 'List Joined Teams',
   description: 'Lists the teams the signed-in user is a direct member of.',
   audience: 'ai',

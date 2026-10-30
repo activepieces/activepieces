@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetChatMessageByIdOutputSchema } from '../../../output-schemas';
 
 export const getChatMessageById = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_chat_message_by_id',
+  outputSchema: microsoftTeamsGetChatMessageByIdOutputSchema,
   displayName: 'Get Chat Message by ID',
   description: 'Gets one message in a chat by its ID.',
   audience: 'ai',

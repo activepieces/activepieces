@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
 import type { MicrosoftTeamsMember, MicrosoftTeamsPage } from '../common/types';
+import { microsoftTeamsGetChannelMessageOutputSchema } from '../output-schemas';
 
 export const sendChannelMessageAction = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_send_channel_message',
+  outputSchema: microsoftTeamsGetChannelMessageOutputSchema,
   classification: 'WRITE',
   displayName: 'Send Channel Message',
   description: "Sends a message to a teams's channel.",

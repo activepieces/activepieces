@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListChannelMessageHostedContentsOutputSchema } from '../../../output-schemas';
 
 export const listChannelMessageHostedContents = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_channel_message_hosted_contents',
+  outputSchema: microsoftTeamsListChannelMessageHostedContentsOutputSchema,
   displayName: 'List Channel Message Hosted Contents',
   description: 'Lists the inline images and other hosted content of a channel message or reply.',
   audience: 'ai',

@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsHideChatOutputSchema } from '../../../output-schemas';
 
 export const markChatRead = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_mark_chat_read',
+  outputSchema: microsoftTeamsHideChatOutputSchema,
   displayName: 'Mark Chat Read',
   description: 'Marks a chat as read for the signed-in user.',
   audience: 'ai',

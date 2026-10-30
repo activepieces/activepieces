@@ -3,6 +3,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListMeetingRecordingsOutputSchema } from '../../../output-schemas';
 
 export const listMeetingRecordings = createAction({
   auth: microsoftTeamsAuth,
@@ -10,6 +11,7 @@ export const listMeetingRecordings = createAction({
   displayName: 'List Meeting Recordings',
   description: 'Lists the recordings of an online meeting the signed-in user organized.',
   audience: 'ai',
+  outputSchema: microsoftTeamsListMeetingRecordingsOutputSchema,
   classification: 'SEARCH',
   aiMetadata: {
     description:

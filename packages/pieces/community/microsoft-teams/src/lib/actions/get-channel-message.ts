@@ -2,10 +2,12 @@ import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsGetChannelMessageOutputSchema } from '../output-schemas';
 
 export const getChannelMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_get_channel_message',
+	outputSchema: microsoftTeamsGetChannelMessageOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Channel Message',
 	description: 'Fetch a specific channel message by team, channel, and message ID (optionally a reply).',

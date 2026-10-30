@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsHideChatOutputSchema } from '../../../output-schemas';
 
 const ROLES = ['owner', 'guest'];
 
@@ -12,6 +13,7 @@ export const addChatMember = createAction({
   displayName: 'Add Chat Member',
   description: 'Adds a user to a group chat.',
   audience: 'ai',
+  outputSchema: microsoftTeamsHideChatOutputSchema,
   classification: 'WRITE',
   aiMetadata: {
     description:

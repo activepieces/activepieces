@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListChannelsOutputSchema } from '../../../output-schemas';
 
 export const listChannels = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_channels',
+  outputSchema: microsoftTeamsListChannelsOutputSchema,
   displayName: 'List Channels',
   description: 'Lists the channels of a team.',
   audience: 'ai',

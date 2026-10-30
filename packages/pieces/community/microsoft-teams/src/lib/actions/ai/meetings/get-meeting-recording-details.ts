@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetMeetingRecordingDetailsOutputSchema } from '../../../output-schemas';
 
 export const getMeetingRecordingDetails = createAction({
   auth: microsoftTeamsAuth,
@@ -10,6 +11,7 @@ export const getMeetingRecordingDetails = createAction({
   displayName: 'Get Meeting Recording Details',
   description: "Gets a meeting recording's details, without the video.",
   audience: 'ai',
+  outputSchema: microsoftTeamsGetMeetingRecordingDetailsOutputSchema,
   classification: 'READ',
   aiMetadata: {
     description:

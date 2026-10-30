@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsCreatePrivateChannelOutputSchema } from '../../../output-schemas';
 
 export const getPrimaryChannel = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_primary_channel',
+  outputSchema: microsoftTeamsCreatePrivateChannelOutputSchema,
   displayName: 'Get Primary Channel',
   description: 'Gets the General channel of a team.',
   audience: 'ai',

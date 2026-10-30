@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetChannelMessageByIdOutputSchema } from '../../../output-schemas';
 
 export const getChannelMessageById = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_channel_message_by_id',
+  outputSchema: microsoftTeamsGetChannelMessageByIdOutputSchema,
   displayName: 'Get Channel Message by ID',
   description: 'Gets one channel message, or one reply in its thread.',
   audience: 'ai',

@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetChatOutputSchema } from '../../../output-schemas';
 
 const EXPAND_OPTIONS = ['members', 'lastMessagePreview'];
 
 export const getChat = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_chat',
+  outputSchema: microsoftTeamsGetChatOutputSchema,
   displayName: 'Get Chat',
   description: 'Gets one chat by its ID.',
   audience: 'ai',

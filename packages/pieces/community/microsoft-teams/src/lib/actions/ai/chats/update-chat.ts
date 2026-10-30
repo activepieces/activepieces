@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetChatOutputSchema } from '../../../output-schemas';
 
 export const updateChat = createAction({
   auth: microsoftTeamsAuth,
@@ -10,6 +11,7 @@ export const updateChat = createAction({
   displayName: 'Update Chat',
   description: 'Renames a group chat.',
   audience: 'ai',
+  outputSchema: microsoftTeamsGetChatOutputSchema,
   classification: 'WRITE',
   aiMetadata: {
     description:

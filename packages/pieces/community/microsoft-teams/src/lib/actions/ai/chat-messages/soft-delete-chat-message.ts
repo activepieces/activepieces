@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsSoftDeleteChatMessageOutputSchema } from '../../../output-schemas';
 
 export const softDeleteChatMessage = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_soft_delete_chat_message',
+  outputSchema: microsoftTeamsSoftDeleteChatMessageOutputSchema,
   displayName: 'Soft Delete Chat Message',
   description: 'Deletes a chat message you sent; it can be restored.',
   audience: 'ai',

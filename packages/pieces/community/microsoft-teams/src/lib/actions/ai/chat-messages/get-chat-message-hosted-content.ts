@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetChatMessageHostedContentOutputSchema } from '../../../output-schemas';
 
 export const getChatMessageHostedContent = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_chat_message_hosted_content',
+  outputSchema: microsoftTeamsGetChatMessageHostedContentOutputSchema,
   displayName: 'Get Chat Message Hosted Content',
   description: 'Downloads one hosted content of a chat message as base64.',
   audience: 'ai',

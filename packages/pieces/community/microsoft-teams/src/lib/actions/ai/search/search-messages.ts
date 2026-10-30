@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsSearchMessagesOutputSchema } from '../../../output-schemas';
 
 const MAX_LIMIT = 25;
 const DEFAULT_LIMIT = 25;
@@ -10,6 +11,7 @@ const DEFAULT_LIMIT = 25;
 export const searchMessages = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_search_messages',
+  outputSchema: microsoftTeamsSearchMessagesOutputSchema,
   displayName: 'Search Messages',
   description: 'Searches the chat and channel messages the signed-in user can read.',
   audience: 'ai',

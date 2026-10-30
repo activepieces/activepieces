@@ -4,10 +4,12 @@ import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
 import { microsoftTeamsUtils } from '../../../common/utils';
+import { microsoftTeamsGetChannelMessageByIdOutputSchema } from '../../../output-schemas';
 
 export const postChannelMessage = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_post_channel_message',
+  outputSchema: microsoftTeamsGetChannelMessageByIdOutputSchema,
   displayName: 'Post Channel Message',
   description: 'Posts a new top-level message to a channel.',
   audience: 'ai',

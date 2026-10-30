@@ -3,6 +3,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
 import { microsoftTeamsApi } from '../common/api';
+import { microsoftTeamsGetMeetingRecordingOutputSchema } from '../output-schemas';
 
 export const getMeetingRecordingAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -12,6 +13,7 @@ export const getMeetingRecordingAction = createAction({
 	description:
 		'Retrieves recordings for a Teams meeting. Provide a Recording to fetch its metadata; omit it to list all available recordings.',
 	audience: 'human',
+	outputSchema: microsoftTeamsGetMeetingRecordingOutputSchema,
 	aiMetadata: {
 		description: 'Retrieves recordings for a Microsoft Teams online meeting belonging to the authenticated user, resolved from a meeting identifier (join URL or ID). Operates in two modes: with a recording ID it fetches that recording\'s metadata; without one it lists all available recordings for the meeting. Idempotent read-only operation.',
 		idempotent: true,

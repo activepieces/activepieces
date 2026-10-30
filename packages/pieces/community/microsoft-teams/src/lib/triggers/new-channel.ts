@@ -11,6 +11,7 @@ import type { Channel, MicrosoftTeamsPage } from '../common/types';
 import dayjs from 'dayjs';
 
 import { isNil } from '@activepieces/pieces-framework';
+import { newChannelOutputSchema } from '../output-schemas';
 
 type Props = {
 	teamId: string;
@@ -19,6 +20,7 @@ type Props = {
 export const newChannelTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-channel',
+	outputSchema: newChannelOutputSchema,
 	classification: 'READ',
 	displayName: 'New Channel',
 	description: 'Triggers when a new channel is created in a team.',

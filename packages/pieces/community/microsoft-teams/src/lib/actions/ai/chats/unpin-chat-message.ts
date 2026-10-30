@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsHideChatOutputSchema } from '../../../output-schemas';
 
 export const unpinChatMessage = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_unpin_chat_message',
+  outputSchema: microsoftTeamsHideChatOutputSchema,
   displayName: 'Unpin Chat Message',
   description: 'Unpins a message in a chat.',
   audience: 'ai',

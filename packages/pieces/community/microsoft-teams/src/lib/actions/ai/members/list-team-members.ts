@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsListChatMembersOutputSchema } from '../../../output-schemas';
 
 const MAX_LIMIT = 999;
 const DEFAULT_LIMIT = 100;
@@ -10,6 +11,7 @@ const DEFAULT_LIMIT = 100;
 export const listTeamMembers = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_list_team_members',
+  outputSchema: microsoftTeamsListChatMembersOutputSchema,
   displayName: 'List Team Members',
   description: 'Lists the members of a team, optionally only those with an exact email or display name.',
   audience: 'ai',

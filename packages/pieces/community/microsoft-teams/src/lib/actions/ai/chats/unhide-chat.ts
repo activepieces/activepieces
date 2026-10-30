@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsHideChatOutputSchema } from '../../../output-schemas';
 
 export const unhideChat = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_unhide_chat',
+  outputSchema: microsoftTeamsHideChatOutputSchema,
   displayName: 'Unhide Chat',
   description: 'Unhides a chat for the signed-in user.',
   audience: 'ai',

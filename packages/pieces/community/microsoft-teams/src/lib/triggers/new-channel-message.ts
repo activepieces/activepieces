@@ -11,6 +11,7 @@ import type { ChatMessage, MicrosoftTeamsPage } from '../common/types';
 import dayjs from 'dayjs';
 
 import { isNil } from '@activepieces/pieces-framework';
+import { newChannelMessageOutputSchema } from '../output-schemas';
 type Props = {
 	teamId: string;
 	channelId: string;
@@ -19,6 +20,7 @@ type Props = {
 export const newChannelMessageTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-channel-message',
+	outputSchema: newChannelMessageOutputSchema,
 	classification: 'READ',
 	displayName: 'New Channel Message',
 	description: 'Triggers when a new message is posted in a channel.',

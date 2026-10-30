@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsProps } from '../common/props';
 import { microsoftTeamsClient } from '../common/client';
 import type { Channel, MicrosoftTeamsPage } from '../common/types';
+import { microsoftTeamsFindChannelOutputSchema } from '../output-schemas';
 
 export const findChannelAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_find_channel',
+	outputSchema: microsoftTeamsFindChannelOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Channel',
 	description: 'Finds channels by name.',

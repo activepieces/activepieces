@@ -9,12 +9,14 @@ import { isNil } from '@activepieces/pieces-framework';
 import { microsoftTeamsClient } from '../common/client';
 import type { Chat, MicrosoftTeamsPage } from '../common/types';
 import dayjs from 'dayjs';
+import { newChatOutputSchema } from '../output-schemas';
 
 type Props = Record<string, never>;
 
 export const newChatTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-chat',
+	outputSchema: newChatOutputSchema,
 	classification: 'READ',
 	displayName: 'New Chat',
 	description: 'Triggers when a new chat is created.',

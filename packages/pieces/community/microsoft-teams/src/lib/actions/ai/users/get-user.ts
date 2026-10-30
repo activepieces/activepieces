@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetCurrentUserOutputSchema } from '../../../output-schemas';
 
 export const getUser = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_user',
+  outputSchema: microsoftTeamsGetCurrentUserOutputSchema,
   displayName: 'Get User',
   description: 'Gets a user by ID or user principal name.',
   audience: 'ai',

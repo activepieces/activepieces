@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetMyPresenceOutputSchema } from '../../../output-schemas';
 
 export const getUserPresence = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_user_presence',
+  outputSchema: microsoftTeamsGetMyPresenceOutputSchema,
   displayName: 'Get User Presence',
   description: "Gets a user's Teams presence.",
   audience: 'ai',

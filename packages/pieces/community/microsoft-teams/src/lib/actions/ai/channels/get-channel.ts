@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetChannelOutputSchema } from '../../../output-schemas';
 
 export const getChannel = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_get_channel',
+  outputSchema: microsoftTeamsGetChannelOutputSchema,
   displayName: 'Get Channel',
   description: 'Gets one channel of a team by its ID.',
   audience: 'ai',

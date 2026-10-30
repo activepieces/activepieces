@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsGetMeetingTranscriptContentOutputSchema } from '../../../output-schemas';
 
 const FORMATS: Record<string, string> = {
   vtt: 'text/vtt',
@@ -15,6 +16,7 @@ export const getMeetingTranscriptContent = createAction({
   displayName: 'Get Meeting Transcript Content',
   description: 'Gets the text of a meeting transcript.',
   audience: 'ai',
+  outputSchema: microsoftTeamsGetMeetingTranscriptContentOutputSchema,
   classification: 'READ',
   aiMetadata: {
     description:

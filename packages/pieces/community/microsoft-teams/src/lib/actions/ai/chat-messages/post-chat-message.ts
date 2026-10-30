@@ -4,10 +4,12 @@ import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
 import { microsoftTeamsUtils } from '../../../common/utils';
+import { microsoftTeamsGetChatMessageByIdOutputSchema } from '../../../output-schemas';
 
 export const postChatMessage = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_post_chat_message',
+  outputSchema: microsoftTeamsGetChatMessageByIdOutputSchema,
   displayName: 'Post Chat Message',
   description: 'Sends a message in an existing chat, optionally mentioning people.',
   audience: 'ai',

@@ -2,12 +2,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsClient } from '../../../common/client';
+import { microsoftTeamsCreateChatOutputSchema } from '../../../output-schemas';
 
 const CHAT_TYPES = ['oneOnOne', 'group'];
 
 export const createChat = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_create_chat',
+  outputSchema: microsoftTeamsCreateChatOutputSchema,
   displayName: 'Create Chat',
   description: 'Creates a one-on-one or group chat with the signed-in user and other users.',
   audience: 'ai',

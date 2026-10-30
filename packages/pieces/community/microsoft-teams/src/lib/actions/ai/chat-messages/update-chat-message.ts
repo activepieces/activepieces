@@ -4,10 +4,12 @@ import { microsoftTeamsAuth } from '../../../auth';
 import { microsoftTeamsAiProps } from '../../../common/ai-props';
 import { microsoftTeamsClient } from '../../../common/client';
 import { microsoftTeamsUtils } from '../../../common/utils';
+import { microsoftTeamsUpdateChatMessageOutputSchema } from '../../../output-schemas';
 
 export const updateChatMessage = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_update_chat_message',
+  outputSchema: microsoftTeamsUpdateChatMessageOutputSchema,
   displayName: 'Update Chat Message',
   description: 'Replaces the body of a chat message you sent.',
   audience: 'ai',
