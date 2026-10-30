@@ -235,7 +235,29 @@ async function generateWithAutoToolChoice({ params, model }: MiddlewareCall): Pr
     if (first.content.some((part) => part.type === 'tool-call')) {
         return first
     }
-    return model.doGenerate(withToolInstruction({ params: relaxed, toolName, retry: true }))
+    const retried = await model.doGenerate(withToolInstruction({ params: relaxed, toolName, retry: true }))
+    return { ...retried, usage: addUsage({ a: first.usage, b: retried.usage }) }
+}
+
+function addUsage({ a, b }: { a: GenerateResult['usage'], b: GenerateResult['usage'] }): GenerateResult['usage'] {
+    return {
+        inputTokens: {
+            total: addCounts({ a: a.inputTokens.total, b: b.inputTokens.total }),
+            noCache: addCounts({ a: a.inputTokens.noCache, b: b.inputTokens.noCache }),
+            cacheRead: addCounts({ a: a.inputTokens.cacheRead, b: b.inputTokens.cacheRead }),
+            cacheWrite: addCounts({ a: a.inputTokens.cacheWrite, b: b.inputTokens.cacheWrite }),
+        },
+        outputTokens: {
+            total: addCounts({ a: a.outputTokens.total, b: b.outputTokens.total }),
+            text: addCounts({ a: a.outputTokens.text, b: b.outputTokens.text }),
+            reasoning: addCounts({ a: a.outputTokens.reasoning, b: b.outputTokens.reasoning }),
+        },
+        ...spreadIfDefined('raw', b.raw),
+    }
+}
+
+function addCounts({ a, b }: { a: number | undefined, b: number | undefined }): number | undefined {
+    return isNil(a) && isNil(b) ? undefined : (a ?? 0) + (b ?? 0)
 }
 
 function withoutTools({ params }: { params: MiddlewareCall['params'] }): MiddlewareCall['params'] {
