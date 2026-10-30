@@ -22,10 +22,10 @@
     "@ai-sdk/openai-compatible": "3.0.18",
     "@openrouter/ai-sdk-provider": "3.0.0",
     "ai": "7.0.44",
-    "ai-gateway-provider": "4.0.0"
+    "ai-gateway-provider": "4.0.0",
+    "tslib": "2.6.2"
   },
   "devDependencies": {
-    "tslib": "2.6.2",
     "vitest": "3.2.6"
   }
 }
