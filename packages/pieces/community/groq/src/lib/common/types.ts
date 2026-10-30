@@ -7,7 +7,7 @@ export type GroqAuthValue = {
 
 export type GroqModel = { id: string };
 
-export type GroqModelList = { data: GroqModel[] };
+export type GroqModelList = { object: string; data: GroqModel[] };
 
 export type GroqChatMessage = { role: string; content: unknown };
 

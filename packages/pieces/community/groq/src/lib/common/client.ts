@@ -32,7 +32,26 @@ async function request<T>({
   return response.body;
 }
 
-export const groqClient = { baseUrl, request };
+async function requestBuffer({
+  auth,
+  method,
+  path,
+  body,
+}: RequestParams & { auth: GroqAuthValue }): Promise<Buffer> {
+  const response = await httpClient.sendRequest<ArrayBuffer>({
+    method,
+    url: `${baseUrl()}${path}`,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: auth.secret_text,
+    },
+    body,
+    responseType: 'arraybuffer',
+  });
+  return Buffer.from(response.body);
+}
+
+export const groqClient = { baseUrl, request, requestBuffer };
 
 type RequestParams = {
   method: HttpMethod;

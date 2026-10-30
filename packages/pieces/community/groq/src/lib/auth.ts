@@ -6,9 +6,8 @@ import {
 import { groqApi } from './common/api';
 
 export const groqAuth = PieceAuth.SecretText({
-  description: `To get your API key:
-1. Open [console.groq.com/keys](https://console.groq.com/keys).
-2. Click **Create API Key**, name it, and copy it.`,
+  description:
+    'To get your API key:\n1. Open [console.groq.com/keys](https://console.groq.com/keys).\n2. Click **Create API Key**, name it, and copy it.',
   displayName: 'API Key',
   required: true,
   validate: async ({ auth }) => {

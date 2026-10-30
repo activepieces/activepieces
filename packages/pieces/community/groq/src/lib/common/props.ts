@@ -26,7 +26,7 @@ function chatModel<R extends boolean>({
       }
       const { data: models, error } = await tryCatch(async () => {
         const allModels = await groqApi.listModels({ auth });
-        return allModels.filter(
+        return allModels.data.filter(
           (model) => !model.id.toLowerCase().includes('whisper')
         );
       });
@@ -63,7 +63,7 @@ function whisperModel<R extends boolean>({
       }
       const { data: models, error } = await tryCatch(async () => {
         const allModels = await groqApi.listModels({ auth });
-        return allModels.filter((model) =>
+        return allModels.data.filter((model) =>
           model.id.toLowerCase().includes('whisper')
         );
       });

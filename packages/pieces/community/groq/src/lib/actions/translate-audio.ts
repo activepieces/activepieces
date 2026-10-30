@@ -6,7 +6,7 @@ import { groqProps } from '../common/props';
 import { translateAudioActionOutputSchema } from '../output-schemas';
 
 export const translateAudioAction = createAction({
-  audience: 'both',
+  audience: 'human',
 	auth: groqAuth,
 	name: 'translate-audio',
 	classification: 'READ',

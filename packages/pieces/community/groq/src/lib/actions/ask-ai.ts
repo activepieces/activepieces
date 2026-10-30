@@ -8,7 +8,7 @@ import type { GroqChatCompletion, GroqChatMessage } from '../common/types';
 import { askAiActionOutputSchema } from '../output-schemas';
 
 export const askAiAction = createAction({
-  audience: 'both',
+  audience: 'human',
 	auth: groqAuth,
 	name: 'ask-ai',
 	classification: 'READ',

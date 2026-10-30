@@ -1,5 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { groqAiActions } from './lib/actions/ai';
 import { askAiAction } from './lib/actions/ask-ai';
 import { transcribeAudioAction } from './lib/actions/transcribe-audio';
 import { translateAudioAction } from './lib/actions/translate-audio';
@@ -18,6 +19,7 @@ export const groq = createPiece({
     askAiAction,
     transcribeAudioAction,
     translateAudioAction,
+    ...groqAiActions,
     createCustomApiCallAction({
       auth: groqAuth,
       baseUrl: () => groqClient.baseUrl(),

@@ -6,7 +6,7 @@ import { groqProps } from '../common/props';
 import { transcribeAudioActionOutputSchema } from '../output-schemas';
 
 export const transcribeAudioAction = createAction({
-  audience: 'both',
+  audience: 'human',
 	auth: groqAuth,
 	name: 'transcribe-audio',
 	classification: 'READ',
