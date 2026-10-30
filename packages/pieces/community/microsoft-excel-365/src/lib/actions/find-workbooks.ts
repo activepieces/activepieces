@@ -56,11 +56,11 @@ export const findWorkbookAction = createAction({
       .select('id,name,lastModifiedDateTime,parentReference')
       .get();
 
-    let result: DriveItem[] = [];
+    const result: DriveItem[] = [];
     while (response) {
-      result = (response.value ?? []).filter((item: DriveItem) => item.name === fileNameWithExtension);
+      result.push(...(response.value ?? []).filter((item: DriveItem) => item.name === fileNameWithExtension));
       const nextLink = response['@odata.nextLink'];
-      response = result.length === 0 && nextLink ? await client.api(nextLink).get() : undefined;
+      response = nextLink ? await client.api(nextLink).get() : undefined;
     }
 
     return {
