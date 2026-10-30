@@ -58,7 +58,7 @@ async function findPiecesMissingTranslations({ queryRunner }: { queryRunner: Que
 
 async function fetchOfferedVersions(): Promise<Set<string>> {
     const params = new URLSearchParams({ edition: system.getEdition(), release: apVersionUtil.getCurrentRelease() })
-    const response = await safeHttp.axios.get<unknown>(`${CLOUD_PIECES_URL}/registry?${params.toString()}`)
+    const response = await safeHttp.axios.get<unknown>(`${CLOUD_PIECES_URL}/registry?${params.toString()}`, { timeout: REGISTRY_TIMEOUT_MS })
     const pieces = Array.isArray(response.data) ? response.data.filter(isVersionRef) : []
     return new Set(pieces.map(versionKey))
 }
@@ -66,7 +66,7 @@ async function fetchOfferedVersions(): Promise<Set<string>> {
 async function restoreTranslations({ queryRunner, piece }: RestoreTranslationsParams): Promise<RestoreOutcome> {
     const { data: rows, error } = await tryCatch(async () => {
         const params = new URLSearchParams({ audience: PieceAudienceFilter.ALL, version: piece.version })
-        const response = await safeHttp.axios.get<unknown>(`${CLOUD_PIECES_URL}/${piece.name}?${params.toString()}`)
+        const response = await safeHttp.axios.get<unknown>(`${CLOUD_PIECES_URL}/${piece.name}?${params.toString()}`, { timeout: REGISTRY_TIMEOUT_MS })
         return toTranslationRows({ pieceMetadataId: piece.id, body: response.data })
     })
     if (error) {
@@ -112,6 +112,7 @@ function isMissingPiece(value: unknown): value is MissingPiece {
 
 const CLOUD_PIECES_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const BATCH_SIZE = 5
+const REGISTRY_TIMEOUT_MS = 30_000
 
 type MissingPiece = {
     id: string

@@ -62,6 +62,7 @@ describe('RefetchMissingPieceTranslations', () => {
         await runThroughRunner()
 
         expect(await translationsOf(brokenOffered.id)).toEqual(REGISTRY_I18N)
+        expect(getMock.mock.calls.every(([, config]) => typeof config?.timeout === 'number' && config.timeout > 0)).toBe(true)
     })
 
     it('leaves a version the registry no longer offers in place, untranslated and not fetched', async () => {
