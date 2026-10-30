@@ -5,23 +5,23 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 
 import * as z from 'zod/mini'
-import { propsValidation } from '@activepieces/pieces-common';
+import { perplexityAiClient } from '../common/client';
+import type { PerplexityAiChatCompletion, PerplexityAiMessage } from '../common/types';
+import { askAiOutputSchema } from '../output-schemas';
+
 export const createChatCompletionAction = createAction({
   audience: 'both',
   auth: perplexityAiAuth,
   name: 'ask-ai',
+  outputSchema: askAiOutputSchema,
   classification: 'READ',
   displayName: 'Ask AI',
   description:
     'Ask a question and get an answer sourced from the live web.',
-  aiMetadata: { description: 'Sends a question to a Perplexity Sonar model, which answers from a live web search with source citations rather than model memory alone, choosing between the plain sonar models for fast grounded answers and the sonar-reasoning models for step-by-step reasoning. It is the only action in this piece; pick it when the reply must reflect current web content, and prefer a general LLM vendor piece such as OpenAI or Google Gemini when no web lookup is needed. Runs stateless - earlier turns must be supplied in the optional roles array, which alternates user and assistant after any system message; requires a model and a question, and is not idempotent: each call runs a new search and produces a fresh completion.', idempotent: false },
+  aiMetadata: { description: 'Sends a question to a Perplexity Sonar model, which answers from a live web search with source citations rather than model memory alone, choosing between the plain sonar models for fast grounded answers and the sonar-reasoning models for step-by-step reasoning. Pick it for a quick cited answer; use Create Agent Response to choose any catalogued model or tools, and Search the Web for raw results without an answer. Runs stateless - earlier turns must be supplied in the optional roles array, which alternates user and assistant after any system message; requires a model and a question, and is not idempotent: each call runs a new search and produces a fresh completion.', idempotent: false },
   propertyGroups: [
     { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'max_tokens'] },
     { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt'] },
@@ -43,10 +43,6 @@ export const createChatCompletionAction = createAction({
           {
             label:'Sonar Pro',
             value:'sonar-pro'
-          },
-          {
-            label:'Sonar Reasoning',
-            value:'sonar-reasoning'
           },
           {
             label:'Sonar Reasoning Pro',
@@ -116,10 +112,10 @@ export const createChatCompletionAction = createAction({
     });
     const maxTokens = context.propsValue.max_tokens;
 
-    const rolesArray = context.propsValue.roles
-      ? (context.propsValue.roles as any)
-      : [];
-    const roles = rolesArray.map((item: any) => {
+    const rolesArray = z
+      .array(z.object({ role: z.string(), content: z.unknown() }))
+      .parse(context.propsValue.roles ? context.propsValue.roles : []);
+    const roles: PerplexityAiMessage[] = rolesArray.map((item) => {
       const rolesEnum = ['system', 'user', 'assistant'];
       if (!rolesEnum.includes(item.role)) {
         throw new Error(
@@ -135,16 +131,10 @@ export const createChatCompletionAction = createAction({
 
     roles.push({ role: 'user', content: context.propsValue.prompt });
 
-    const response = await httpClient.sendRequest({
+    const response = await perplexityAiClient.request<PerplexityAiChatCompletion>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: 'https://api.perplexity.ai/chat/completions',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      path: '/chat/completions',
       body: {
         model: context.propsValue.model,
         messages: roles,
@@ -156,14 +146,9 @@ export const createChatCompletionAction = createAction({
       },
     });
 
-    if (response.status === 200) {
-     
-      return {
-        result:response.body.choices[0].message.content,
-        citations:response.body.citations
-      }
-    }
-
-    return response.body;
+    return {
+      result: response.choices[0].message.content,
+      citations: response.citations,
+    };
   },
 });
