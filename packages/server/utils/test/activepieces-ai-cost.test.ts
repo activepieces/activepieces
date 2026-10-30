@@ -2,6 +2,7 @@ import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCost
 import { EmbeddingModelV4, LanguageModelV4 } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ForcedToolNotCalledError } from '@activepieces/ai-providers'
 import { activepiecesAiCost, UnbilledCallReason } from '../src/activepieces-ai-cost'
 import { Generation } from '../src/openrouter-generation'
 
@@ -152,6 +153,31 @@ describe('what a model call reports back for billing', () => {
             outputTokens: 20,
             observedCostUsd: 0.0042,
         })
+    })
+
+    it.each(['generate', 'stream'] as const)('bills the tokens of a forced tool call that failed after its retry (%s)', async (path) => {
+        const usage = { inputTokens: { total: 9, noCache: 9, cacheRead: undefined, cacheWrite: undefined }, outputTokens: { total: 4, text: 4, reasoning: undefined } }
+        const failure = new ForcedToolNotCalledError({ toolName: 'extractData', usage })
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: {
+                ...modelReturning({}),
+                doGenerate: async () => Promise.reject(failure),
+                doStream: async () => Promise.reject(failure),
+            },
+            provider: AIProviderName.META,
+            modelId: 'muse-spark-1.3',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.META }),
+        })
+        if (typeof model === 'string') {
+            throw new Error('expected a model object')
+        }
+
+        const outcome = await (path === 'generate' ? model.doGenerate({ prompt: [] }) : model.doStream({ prompt: [] })).then(() => 'completed', (error: Error) => error.name)
+
+        expect(outcome).toBe('ForcedToolNotCalledError')
+        expect(reported).toHaveLength(1)
+        expect(reported[0].call).toMatchObject({ inputTokens: 9, outputTokens: 4 })
     })
 
     it('bills a call on the customer own key at one fixed credit, whatever it cost us', async () => {

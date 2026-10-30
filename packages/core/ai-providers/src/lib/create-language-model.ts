@@ -236,10 +236,11 @@ async function generateWithAutoToolChoice({ params, model }: MiddlewareCall): Pr
         return first
     }
     const retried = await model.doGenerate(withToolInstruction({ params: relaxed, toolName, retry: true }))
+    const usage = addUsage({ a: first.usage, b: retried.usage })
     if (!callsATool({ result: retried })) {
-        throw new ForcedToolNotCalledError(toolName)
+        throw new ForcedToolNotCalledError({ toolName, usage })
     }
-    return { ...retried, usage: addUsage({ a: first.usage, b: retried.usage }) }
+    return { ...retried, usage }
 }
 
 function addUsage({ a, b }: { a: GenerateResult['usage'], b: GenerateResult['usage'] }): GenerateResult['usage'] {
@@ -311,12 +312,15 @@ export function buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHead
 
 const simulatedStreaming = simulateStreamingMiddleware()
 
-class ForcedToolNotCalledError extends Error {
-    constructor(toolName: string | undefined) {
+export class ForcedToolNotCalledError extends Error {
+    readonly usage: GenerateResult['usage']
+
+    constructor({ toolName, usage }: { toolName: string | undefined, usage: GenerateResult['usage'] }) {
         super(isNil(toolName)
             ? 'The model answered in text twice instead of calling a tool'
             : `The model answered in text twice instead of calling the ${toolName} tool`)
         this.name = 'ForcedToolNotCalledError'
+        this.usage = usage
     }
 }
 
