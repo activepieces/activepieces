@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { groqAuth } from '../..';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { groqAuth } from '../auth';
+import { groqClient } from '../common/client';
+import { groqProps } from '../common/props';
 import { translateAudioActionOutputSchema } from '../output-schemas';
 
-export const translateAudio = createAction({
-  audience: 'both',
+export const translateAudioAction = createAction({
+  audience: 'human',
 	auth: groqAuth,
 	name: 'translate-audio',
 	classification: 'READ',
@@ -23,52 +25,7 @@ export const translateAudio = createAction({
 			description:
 				'flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav or webm.',
 		}),
-		model: Property.Dropdown({
-			displayName: 'Model',
-			required: true,
-			description: 'Use whisper-large-v3; the turbo model cannot translate.',
-			refreshers: [],
-			defaultValue: 'whisper-large-v3',
-			auth: groqAuth,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						placeholder: 'Please connect your Groq account first.',
-						options: [],
-					};
-				}
-				try {
-					const response = await httpClient.sendRequest({
-						url: 'https://api.groq.com/openai/v1/models',
-						method: HttpMethod.GET,
-						authentication: {
-							type: AuthenticationType.BEARER_TOKEN,
-							token: auth.secret_text
-						},
-					});
-					// Filter for whisper models only
-					const models = (response.body.data as Array<{ id: string }>).filter((model) =>
-						model.id.toLowerCase().includes('whisper'),
-					);
-					return {
-						disabled: false,
-						options: models.map((model) => {
-							return {
-								label: model.id,
-								value: model.id,
-							};
-						}),
-					};
-				} catch (error) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: "Couldn't load models. Check your API key or try again.",
-					};
-				}
-			},
-		}),
+		model: groqProps.whisperModel({ required: true, description: 'Use whisper-large-v3; the turbo model cannot translate.' }),
 		prompt: Property.LongText({
 			displayName: 'Prompt',
 			required: false,
@@ -103,29 +60,22 @@ export const translateAudio = createAction({
 	async run({ auth, propsValue }) {
 		const { file, model, prompt, temperature, responseFormat } = propsValue;
 
-		// Create form data
 		const formData = new FormData();
-		formData.append('file', new Blob([file.data] as unknown as BlobPart[]), file.filename);
+		formData.append('file', new Blob([new Uint8Array(file.data)]), file.filename);
 		formData.append('model', model);
 
 		if (prompt) formData.append('prompt', prompt);
 		if (temperature !== undefined) formData.append('temperature', temperature.toString());
 		if (responseFormat) formData.append('response_format', responseFormat);
 
-		// Send request
-		const response = await httpClient.sendRequest({
+		return await groqClient.request({
+			auth,
 			method: HttpMethod.POST,
-			url: 'https://api.groq.com/openai/v1/audio/translations',
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.secret_text
-			},
+			path: '/audio/translations',
 			headers: {
 				'Content-Type': 'multipart/form-data',
 			},
 			body: formData,
 		});
-
-		return response.body;
 	},
 });
