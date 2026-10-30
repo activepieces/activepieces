@@ -1,4 +1,4 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleCloudStorageAuth } from '../common/auth';
 import { gcsCommon } from '../common/client';
 import { projectIdProperty } from '../common/props';
@@ -54,7 +54,7 @@ export const searchBuckets = createAction({
       pageToken,
       maxResults
     } = context.propsValue;
-    const auth = context.auth as OAuth2PropertyValue;
+    const accessToken = await gcsCommon.getAccessToken({ auth: context.auth, server: context.server });
 
     const params = new URLSearchParams();
     params.append('project', projectId!);
@@ -67,7 +67,7 @@ export const searchBuckets = createAction({
     const path = `/b?${params.toString()}`;
 
     try {
-      const response = await gcsCommon.makeRequest(HttpMethod.GET, path, auth.access_token);
+      const response = await gcsCommon.makeRequest(HttpMethod.GET, path, accessToken);
 
       return {
         success: true,
