@@ -10,7 +10,11 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 
-import { AdminPageHeader, adminSurface } from '@/app/components/admin';
+import {
+  AdminPageHeader,
+  adminPageResources,
+  adminSurface,
+} from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { SearchInput } from '@/components/custom/search-input';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -72,6 +76,7 @@ export function UsageListPage() {
               })
             : undefined
         }
+        resources={adminPageResources.aiUsage}
       >
         <UsageHeaderControls view={view} />
       </AdminPageHeader>
