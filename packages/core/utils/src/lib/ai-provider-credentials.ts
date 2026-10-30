@@ -170,6 +170,8 @@ export const AiProviderCredentials = z.discriminatedUnion('provider', [
     z.object({ provider: z.literal(AIProviderName.QWEN), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
     z.object({ provider: z.literal(AIProviderName.MINIMAX), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
     z.object({ provider: z.literal(AIProviderName.MOONSHOT), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
+    z.object({ provider: z.literal(AIProviderName.META), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
+    z.object({ provider: z.literal(AIProviderName.NVIDIA), config: OpenAiCompatibleVendorConfig.partial(), auth: BaseAIProviderAuthConfig.partial() }),
 ])
 export type AiProviderCredentials = z.infer<typeof AiProviderCredentials>
 

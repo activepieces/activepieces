@@ -27,8 +27,10 @@ import { Button } from '@/components/ui/button';
 import { aiUsageHooks } from '@/features/ai-usage';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
+import { AiCenterTrail } from '../components/ai-center-trail';
+
 import { usageAdapters } from './usage-adapters';
-import { relatedSpan, UsageTrail } from './usage-bits';
+import { relatedSpan } from './usage-bits';
 import { UsageEmpty } from './usage-empty';
 import { usageFormat } from './usage-format';
 import {
@@ -60,7 +62,7 @@ export function UsageDetailPage() {
     <>
       <AdminPageHeader
         title={
-          <UsageTrail
+          <AiCenterTrail
             crumbs={[
               { label: t('AI usage'), to: overviewLink },
               {
