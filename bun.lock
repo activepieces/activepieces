@@ -4226,7 +4226,7 @@
     },
     "packages/pieces/community/gravityforms": {
       "name": "@activepieces/piece-gravityforms",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
