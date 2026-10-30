@@ -33,8 +33,8 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarGroup, AvatarGroupCount } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -120,6 +120,16 @@ export function ProvidersTab() {
         }
         toast.error(label ?? t('Could not reach this provider'));
       },
+      onError: (error) => {
+        const data = error.response?.data;
+        toast.error(
+          t(
+            data?.params?.message ??
+              data?.message ??
+              'Could not check this key',
+          ),
+        );
+      },
     });
   const { mutateAsync: updateProvider, isPending: isSaving } =
     aiProviderMutations.useUpdateAiProvider({
@@ -140,11 +150,13 @@ export function ProvidersTab() {
   const openConfig = (id: string) => {
     const next = new URLSearchParams(searchParams);
     next.set('config', id);
+    next.delete(CONFIG_TAB_PARAM);
     setSearchParams(next);
   };
   const closeConfig = () => {
     const next = new URLSearchParams(searchParams);
     next.delete('config');
+    next.delete(CONFIG_TAB_PARAM);
     setSearchParams(next);
   };
   const openConnect = (provider?: AIProviderName) => {
@@ -169,6 +181,9 @@ export function ProvidersTab() {
       openConfig(createdId);
       return;
     }
+    const next = new URLSearchParams(searchParams);
+    next.set(CONFIG_TAB_PARAM, 'settings');
+    setSearchParams(next, { replace: true });
     setCredentialsVersion((version) => version + 1);
   };
 
@@ -203,6 +218,11 @@ export function ProvidersTab() {
           }
           onDelete={() => deleteProvider(activeConfig.id)}
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
+          initialTab={
+            searchParams.get(CONFIG_TAB_PARAM) === 'settings'
+              ? 'settings'
+              : 'models'
+          }
           isRechecking={isRechecking}
           onRecheck={() => recheckProvider(activeConfig.id)}
           onBack={closeConfig}
@@ -222,8 +242,20 @@ export function ProvidersTab() {
     <>
       <AdminPageHeader
         title={t('Providers')}
+        badge={
+          locked && configs.length > 0 ? (
+            <Badge variant="secondary" className="gap-1 rounded-full px-2">
+              <Lock className="size-3" />
+              {t('Read-only')}
+            </Badge>
+          ) : undefined
+        }
         description={
-          configs.length === 0
+          locked && configs.length > 0
+            ? t(
+                "Your plan doesn't include your own AI keys. You can still delete them.",
+              )
+            : configs.length === 0
             ? t(
                 'Connect a provider to turn on chat, agents, and AI steps across your platform.',
               )
@@ -231,7 +263,9 @@ export function ProvidersTab() {
         }
         resources={adminPageResources.aiProviders}
       >
-        {!locked && (
+        {locked ? (
+          configs.length > 0 && <UpgradeButton />
+        ) : (
           <Button
             onClick={() => openConnect()}
             {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
@@ -255,7 +289,6 @@ export function ProvidersTab() {
         <EmptyProviders onConnect={openConnect} />
       ) : (
         <>
-          {locked && <LockedProvidersAlert />}
           {connectedProviders.map((provider) => (
             <ProviderGroup
               key={provider}
@@ -300,36 +333,21 @@ export function ProvidersTab() {
   return page;
 }
 
-function LockedProvidersAlert() {
+function UpgradeButton() {
   const upgradeClick = useUpgradeClick();
   const { featureKey, tier } = PLATFORM_FEATURES.aiProviders;
-
   return (
-    <Alert variant="primary">
-      <Lock />
-      <AlertTitle>
-        {t('Your plan does not include Bring your own AI keys')}
-      </AlertTitle>
-      <AlertDescription className="flex flex-col items-start gap-3">
-        <p>
-          {t(
-            'You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.',
-          )}
-        </p>
-        <Button
-          size="sm"
-          onClick={() =>
-            upgradeClick({
-              feature: featureKey,
-              tier,
-              surface: PlatformAdminSurface.SAMPLE,
-            })
-          }
-        >
-          {t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
-        </Button>
-      </AlertDescription>
-    </Alert>
+    <Button
+      onClick={() =>
+        upgradeClick({
+          feature: featureKey,
+          tier,
+          surface: PlatformAdminSurface.SAMPLE,
+        })
+      }
+    >
+      {t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
+    </Button>
   );
 }
 
@@ -749,6 +767,8 @@ function providerInfoOf({
     (candidate) => candidate.provider === provider,
   );
 }
+
+const CONFIG_TAB_PARAM = 'tab';
 
 const PROVIDER_FACES_SHOWN = 5;
 

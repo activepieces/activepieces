@@ -133,13 +133,16 @@ beforeEach(() => {
 });
 
 describe('providers tab on a plan without aiProvidersEnabled', () => {
-  it('lists existing keys with delete only and an upgrade note', () => {
+  it('lists existing keys with delete only and a read-only header', () => {
     state.providers = [ANTHROPIC_KEY];
 
     renderTab();
 
+    expect(screen.getByText('Read-only')).toBeDefined();
     expect(
-      screen.getByText('Your plan does not include Bring your own AI keys'),
+      screen.getByText(
+        "Your plan doesn't include your own AI keys. You can still delete them.",
+      ),
     ).toBeDefined();
     expect(screen.getAllByText('Trial Anthropic key').length).toBeGreaterThan(
       0,

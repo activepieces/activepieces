@@ -207,16 +207,19 @@ export const platformModelTierMutations = {
         );
         return { previous };
       },
-      onSuccess: (configuration) => {
+      onSuccess: (configuration, defaultChatModel) => {
         queryClient.setQueryData(
           platformConfigurationHooks.queryKey,
           configuration,
         );
         queryClient.invalidateQueries({ queryKey: aiProviderKeys.configs });
         queryClient.invalidateQueries({ queryKey: ['ai-model-options'] });
-        toast.success(t('Default chat model updated'), {
-          duration: TOAST_SUCCESS_MS,
-        });
+        toast.success(
+          defaultChatModel === null
+            ? t('Default chat model cleared')
+            : t('Default chat model updated'),
+          { duration: TOAST_SUCCESS_MS },
+        );
       },
       onError: (error, _variables, context) => {
         if (context?.previous !== undefined) {

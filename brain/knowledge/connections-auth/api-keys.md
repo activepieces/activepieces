@@ -14,6 +14,7 @@ Long-lived platform service credentials (prefixed `sk-`) for machine-to-machine 
 - Service: `add` (generates key, stores hashed/truncated), `getByValue` (lookup by SHA-256 hash, updates `lastUsedAt` — used by auth middleware), `list`, `delete`.
 
 ### Gotchas
+- **A route is only reachable with an API key if its `security` lists `PrincipalType.SERVICE`.** Otherwise the key gets 403. To publish an endpoint: add `SERVICE` to its `securityAccess` call, give it `tags` and a `description` (no `hide: true`) so Fastify Swagger puts it in the OpenAPI spec, add a `docs/endpoints/<area>/<action>.mdx` page with `openapi: <METHOD> <path>`, and test it with a key. From then on its shape is a public contract. Every AI Center route (providers, tiers, capabilities, usage) is `USER`-only as of 2026-10-29, so none of it is public yet.
 - Key generated with `secureApId(61)` + `sk-` prefix = 64 chars; hashed with `cryptoUtils.hashSHA256`.
 - Plaintext is only ever available at creation time.
 
