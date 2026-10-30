@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import type { PerplexityAiList } from '../../../common/types';
+import { perplexityAiListAgentResponseFilesOutputSchema } from '../../../output-schemas';
 
 export const listAgentResponseFilesAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_list_agent_response_files',
+  outputSchema: perplexityAiListAgentResponseFilesOutputSchema,
   displayName: 'List Agent Response Files',
   description: 'List the files an Agent API response produced.',
   audience: 'ai',

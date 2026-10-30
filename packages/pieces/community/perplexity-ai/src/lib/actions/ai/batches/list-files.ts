@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import { perplexityAiUtils } from '../../../common/utils';
+import { perplexityAiListFilesOutputSchema } from '../../../output-schemas';
 
 export const listFilesAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_list_files',
+  outputSchema: perplexityAiListFilesOutputSchema,
   displayName: 'List Batch Files',
   description: 'List batch input, output and error files.',
   audience: 'ai',

@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiDownloadAgentResponseFileOutputSchema } from '../../../output-schemas';
 
 export const downloadFileContentAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_download_file_content',
+  outputSchema: perplexityAiDownloadAgentResponseFileOutputSchema,
   displayName: 'Download Batch File Content',
   description: 'Download a batch input, output or error file.',
   audience: 'ai',

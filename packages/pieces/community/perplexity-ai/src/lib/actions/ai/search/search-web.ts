@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiSearchWebOutputSchema } from '../../../output-schemas';
 
 const SEARCH_TYPES = ['web', 'fast', 'people'];
 const RECENCY_FILTERS = ['hour', 'day', 'week', 'month', 'year'];
@@ -9,6 +10,7 @@ const RECENCY_FILTERS = ['hour', 'day', 'week', 'month', 'year'];
 export const searchWebAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_search_web',
+  outputSchema: perplexityAiSearchWebOutputSchema,
   displayName: 'Search the Web',
   description:
     'Get ranked web search results with page content from Perplexity.',

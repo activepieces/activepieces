@@ -10,11 +10,13 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import * as z from 'zod/mini'
 import { perplexityAiClient } from '../common/client';
 import type { PerplexityAiChatCompletion, PerplexityAiMessage } from '../common/types';
+import { askAiOutputSchema } from '../output-schemas';
 
 export const createChatCompletionAction = createAction({
   audience: 'both',
   auth: perplexityAiAuth,
   name: 'ask-ai',
+  outputSchema: askAiOutputSchema,
   classification: 'READ',
   displayName: 'Ask AI',
   description:

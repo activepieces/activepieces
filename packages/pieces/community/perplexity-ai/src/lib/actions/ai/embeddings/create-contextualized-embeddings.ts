@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiCreateContextualizedEmbeddingsOutputSchema } from '../../../output-schemas';
 
 const MODELS = ['pplx-embed-context-v1-0.6b', 'pplx-embed-context-v1-4b'];
 const ENCODING_FORMATS = ['base64_int8', 'base64_binary'];
@@ -9,6 +10,7 @@ const ENCODING_FORMATS = ['base64_int8', 'base64_binary'];
 export const createContextualizedEmbeddingsAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_create_contextualized_embeddings',
+  outputSchema: perplexityAiCreateContextualizedEmbeddingsOutputSchema,
   displayName: 'Create Contextualized Embeddings',
   description: 'Generate document-aware embeddings for chunks of documents.',
   audience: 'ai',

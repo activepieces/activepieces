@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiGetFileOutputSchema } from '../../../output-schemas';
 
 export const getFileAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_get_file',
+  outputSchema: perplexityAiGetFileOutputSchema,
   displayName: 'Get Batch File',
   description: "Get a batch file's metadata.",
   audience: 'ai',

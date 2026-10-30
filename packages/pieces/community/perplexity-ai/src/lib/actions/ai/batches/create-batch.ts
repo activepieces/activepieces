@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiCreateBatchOutputSchema } from '../../../output-schemas';
 
 export const createBatchAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_create_batch',
+  outputSchema: perplexityAiCreateBatchOutputSchema,
   displayName: 'Create Batch',
   description: 'Start a batch over an uploaded JSONL file.',
   audience: 'ai',

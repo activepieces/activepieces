@@ -3,12 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import type { PerplexityAiAgentResponse } from '../../../common/types';
+import { perplexityAiCreateAgentResponseOutputSchema } from '../../../output-schemas';
 
 const REASONING_EFFORTS = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
 
 export const createAgentResponseAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_create_agent_response',
+  outputSchema: perplexityAiCreateAgentResponseOutputSchema,
   displayName: 'Create Agent Response',
   description:
     'Generate a response with the Perplexity Agent API, optionally using web search and other tools.',

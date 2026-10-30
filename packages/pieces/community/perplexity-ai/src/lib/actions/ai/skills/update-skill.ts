@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiUpdateSkillOutputSchema } from '../../../output-schemas';
 
 export const updateSkillAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_update_skill',
+  outputSchema: perplexityAiUpdateSkillOutputSchema,
   displayName: 'Update Skill',
   description: 'Upload a new zip bundle as a revision of a skill.',
   audience: 'ai',

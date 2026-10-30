@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiGetFileOutputSchema } from '../../../output-schemas';
 
 export const uploadFileAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_upload_file',
+  outputSchema: perplexityAiGetFileOutputSchema,
   displayName: 'Upload Batch File',
   description: 'Upload a JSONL file as batch input.',
   audience: 'ai',

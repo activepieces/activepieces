@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiEvaluateDecisionsOutputSchema } from '../../../output-schemas';
 
 const MODELS = [
   'pplx-decider-flash-v1.2',
@@ -13,6 +14,7 @@ const MODELS = [
 export const evaluateDecisionsAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_evaluate_decisions',
+  outputSchema: perplexityAiEvaluateDecisionsOutputSchema,
   displayName: 'Evaluate Decisions',
   description:
     'Answer named yes/no, choice and score questions about some content.',

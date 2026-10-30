@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiCreateSkillOutputSchema } from '../../../output-schemas';
 
 export const createSkillAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_create_skill',
+  outputSchema: perplexityAiCreateSkillOutputSchema,
   displayName: 'Create Skill',
   description: 'Create a skill from a zip bundle containing SKILL.md.',
   audience: 'ai',

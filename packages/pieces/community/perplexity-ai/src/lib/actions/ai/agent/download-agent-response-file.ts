@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiDownloadAgentResponseFileOutputSchema } from '../../../output-schemas';
 
 export const downloadAgentResponseFileAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_download_agent_response_file',
+  outputSchema: perplexityAiDownloadAgentResponseFileOutputSchema,
   displayName: 'Download Agent Response File',
   description: 'Download a file an Agent API response produced.',
   audience: 'ai',

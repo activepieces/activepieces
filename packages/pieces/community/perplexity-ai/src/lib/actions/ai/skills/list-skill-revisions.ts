@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import { perplexityAiUtils } from '../../../common/utils';
+import { perplexityAiListSkillRevisionsOutputSchema } from '../../../output-schemas';
 
 export const listSkillRevisionsAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_list_skill_revisions',
+  outputSchema: perplexityAiListSkillRevisionsOutputSchema,
   displayName: 'List Skill Revisions',
   description: 'List the revisions of a skill.',
   audience: 'ai',

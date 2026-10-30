@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import { perplexityAiUtils } from '../../../common/utils';
+import { perplexityAiGetSkillDownloadUrlOutputSchema } from '../../../output-schemas';
 
 export const getSkillDownloadUrlAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_get_skill_download_url',
+  outputSchema: perplexityAiGetSkillDownloadUrlOutputSchema,
   displayName: 'Get Skill Download URL',
   description: 'Get a short-lived URL to download a skill bundle.',
   audience: 'ai',

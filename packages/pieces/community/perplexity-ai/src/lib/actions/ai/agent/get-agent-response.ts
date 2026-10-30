@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import type { PerplexityAiAgentResponse } from '../../../common/types';
+import { perplexityAiCreateAgentResponseOutputSchema } from '../../../output-schemas';
 
 export const getAgentResponseAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_get_agent_response',
+  outputSchema: perplexityAiCreateAgentResponseOutputSchema,
   displayName: 'Get Agent Response',
   description: 'Retrieve an Agent API response by its id.',
   audience: 'ai',

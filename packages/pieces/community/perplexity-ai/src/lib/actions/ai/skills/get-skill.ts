@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import { perplexityAiUtils } from '../../../common/utils';
+import { perplexityAiCreateSkillOutputSchema } from '../../../output-schemas';
 
 export const getSkillAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_get_skill',
+  outputSchema: perplexityAiCreateSkillOutputSchema,
   displayName: 'Get Skill',
   description: "Get a skill's metadata.",
   audience: 'ai',

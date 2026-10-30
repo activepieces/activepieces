@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiCreateEmbeddingsOutputSchema } from '../../../output-schemas';
 
 const MODELS = ['pplx-embed-v1-0.6b', 'pplx-embed-v1-4b'];
 const ENCODING_FORMATS = ['base64_int8', 'base64_binary'];
@@ -9,6 +10,7 @@ const ENCODING_FORMATS = ['base64_int8', 'base64_binary'];
 export const createEmbeddingsAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_create_embeddings',
+  outputSchema: perplexityAiCreateEmbeddingsOutputSchema,
   displayName: 'Create Embeddings',
   description: 'Generate vector embeddings for independent texts.',
   audience: 'ai',

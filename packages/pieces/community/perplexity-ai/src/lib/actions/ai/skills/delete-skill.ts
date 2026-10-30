@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import { perplexityAiUtils } from '../../../common/utils';
+import { perplexityAiDeleteSkillOutputSchema } from '../../../output-schemas';
 
 export const deleteSkillAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_delete_skill',
+  outputSchema: perplexityAiDeleteSkillOutputSchema,
   displayName: 'Delete Skill',
   description: 'Permanently delete a skill.',
   audience: 'ai',

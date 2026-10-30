@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import { perplexityAiUtils } from '../../../common/utils';
+import { perplexityAiListBatchesOutputSchema } from '../../../output-schemas';
 
 export const listBatchesAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_list_batches',
+  outputSchema: perplexityAiListBatchesOutputSchema,
   displayName: 'List Batches',
   description: 'List your batches, newest first.',
   audience: 'ai',

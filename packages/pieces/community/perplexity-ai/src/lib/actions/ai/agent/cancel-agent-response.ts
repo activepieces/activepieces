@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiCancelAgentResponseOutputSchema } from '../../../output-schemas';
 
 export const cancelAgentResponseAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_cancel_agent_response',
+  outputSchema: perplexityAiCancelAgentResponseOutputSchema,
   displayName: 'Cancel Agent Response',
   description: 'Request cancellation of a running Agent API response.',
   audience: 'ai',

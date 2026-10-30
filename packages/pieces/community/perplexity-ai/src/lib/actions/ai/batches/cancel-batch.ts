@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
+import { perplexityAiCancelBatchOutputSchema } from '../../../output-schemas';
 
 export const cancelBatchAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_cancel_batch',
+  outputSchema: perplexityAiCancelBatchOutputSchema,
   displayName: 'Cancel Batch',
   description: 'Cancel a running batch.',
   audience: 'ai',

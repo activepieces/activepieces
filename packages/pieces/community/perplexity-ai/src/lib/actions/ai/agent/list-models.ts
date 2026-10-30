@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { perplexityAiAuth } from '../../../auth';
 import { perplexityAiClient } from '../../../common/client';
 import type { PerplexityAiList } from '../../../common/types';
+import { perplexityAiListModelsOutputSchema } from '../../../output-schemas';
 
 export const listModelsAction = createAction({
   auth: perplexityAiAuth,
   name: 'perplexity_ai_list_models',
+  outputSchema: perplexityAiListModelsOutputSchema,
   displayName: 'List Models',
   description: 'List the models available to the Agent API.',
   audience: 'ai',
