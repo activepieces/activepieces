@@ -150,6 +150,9 @@ silently. Worker groups is the last page on the old full-page teaser.
 
 ## Gotchas
 
+- **One purple button per admin page: the header action.** An empty state's own button repeats that action, so it is `variant="outline"` (AI Center Providers "Add key", Tiers "New tier"), and cards below it carry no buttons of their own. Four primaries on one empty Providers page was the complaint that set this.
+- **`AdminEmpty`'s `icon` is boxed in a 40px tile; anything wider goes in `media`.** `icon` renders inside `EmptyMedia variant="icon"`, which clips a logo row or illustration to one square. `media` renders unboxed (the AI Center providers empty state passes an `AvatarGroup` of provider logos there).
+- **A `SettingsPanel` header centres its title against its action only when it has no description.** With a description the title block is two lines, so it stays top-aligned; without one, top alignment left a one-line title floating above a taller button (the AI Center provider cards). Pass no `description` rather than an empty one, or the panel keeps the top alignment.
 - **Adding an admin page is three edits**: the sidebar (`components/sidebar/platform`), the route
   (`platform-routes.tsx`), and global search (`components/global-search/static-pages.ts`). Nothing
   checks the three agree. A page whose locked state is the sample overlay also needs a

@@ -7,7 +7,15 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Bot, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
+import {
+  ChevronRight,
+  Cpu,
+  Layers,
+  LayoutGrid,
+  Lock,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -23,7 +31,10 @@ import {
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { LogoPlate } from '@/components/custom/logo-plate';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarGroup, AvatarGroupCount } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -211,11 +222,6 @@ export function ProvidersTab() {
     <>
       <AdminPageHeader
         title={t('Providers')}
-        badge={
-          <span className="text-sm tabular-nums text-gray-11">
-            {configs.length}
-          </span>
-        }
         description={
           configs.length === 0
             ? t(
@@ -264,26 +270,11 @@ export function ProvidersTab() {
             />
           ))}
           {!locked && available.length > 0 && (
-            <AdminSection
-              title={
-                <span className="flex items-baseline gap-2">
-                  {t('Also available')}
-                  <span className="text-sm font-normal tabular-nums text-gray-11">
-                    {available.length}
-                  </span>
-                </span>
-              }
-              description={t('Bring your own API key to connect any of these.')}
-            >
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {available.map((info) => (
-                  <AvailableProviderCard
-                    key={info.provider}
-                    info={info}
-                    onConnect={() => openConnect(info.provider)}
-                  />
-                ))}
-              </div>
+            <AdminSection title={t('Also available')}>
+              <ProviderTileGrid
+                providers={available}
+                onConnect={(provider) => openConnect(provider)}
+              />
             </AdminSection>
           )}
         </>
@@ -367,17 +358,13 @@ function ProviderGroup({
   }
 
   return (
-    <SettingsPanel
-      flush
-      title={
-        <span className="flex items-center gap-2">
-          <ProviderLogo info={info} size="sm" />
+    <SettingsPanel flush>
+      <header className="flex items-center gap-3 px-4 py-3">
+        <ProviderLogo info={info} />
+        <h2 className="min-w-0 flex-1 truncate text-sm font-medium text-gray-12">
           {info.name}
-        </span>
-      }
-      description={t('configurationsCount', { count: configs.length })}
-      action={
-        locked ? undefined : (
+        </h2>
+        {!locked && (
           <Button
             variant="ghost"
             size="sm"
@@ -387,10 +374,12 @@ function ProviderGroup({
             <Plus className="size-4" />
             {t('Add key')}
           </Button>
-        )
-      }
-    >
-      <p className="px-5 py-2 text-xs font-medium text-gray-11">{t('Keys')}</p>
+        )}
+      </header>
+      <p className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-gray-11">
+        {t('Keys')}
+        <span className="tabular-nums">{configs.length}</span>
+      </p>
       {configs.map((config) => (
         <ConfigRow
           key={config.id}
@@ -456,38 +445,43 @@ function ConfigRow({
         }
       }}
       className={cn(
-        'group flex items-center gap-4 px-5 py-3 transition-colors',
+        'group flex items-center gap-4 px-4 py-3 transition-colors',
         !locked &&
           'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-medium text-gray-12">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <p className="truncate text-sm font-semibold text-gray-12">
             {config.name}
           </p>
           <KeyStatusBadge status={config.status} />
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p className="w-fit truncate text-xs text-gray-11">
-              {modelsLabel}
-              <span aria-hidden> · </span>
-              {projectsLabel}
-              {tierCount > 0 && (
-                <>
-                  <span aria-hidden> · </span>
-                  {t('usedByTiersCount', { count: tierCount })}
-                </>
-              )}
-            </p>
-          </TooltipTrigger>
-          {config.modelIds.length > 0 && (
-            <TooltipContent className="max-w-64">
-              {config.modelIds.join(', ')}
-            </TooltipContent>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-11 [&_svg]:text-gray-9">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1">
+                <Cpu className="size-3.5" />
+                {modelsLabel}
+              </span>
+            </TooltipTrigger>
+            {config.modelIds.length > 0 && (
+              <TooltipContent className="max-w-64">
+                {config.modelIds.join(', ')}
+              </TooltipContent>
+            )}
+          </Tooltip>
+          <span className="inline-flex items-center gap-1">
+            <LayoutGrid className="size-3.5" />
+            {projectsLabel}
+          </span>
+          {tierCount > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Layers className="size-3.5" />
+              {t('usedByTiersCount', { count: tierCount })}
+            </span>
           )}
-        </Tooltip>
+        </div>
       </div>
 
       {config.projectScope !== 'all' && (
@@ -590,85 +584,116 @@ function EmptyProviders({
 }: {
   onConnect: (provider?: AIProviderName) => void;
 }) {
-  const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
-    SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
-  ).filter((info): info is AiProviderInfo => info !== undefined);
-  const others = SUPPORTED_AI_PROVIDERS.filter(
-    ({ provider }) => !RECOMMENDED_PROVIDERS.includes(provider),
-  );
-
   return (
     <>
       <AdminEmpty
-        icon={<Bot />}
-        title={t('Connect your first provider')}
-        description={t(
-          'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
-        )}
+        media={<ProviderFaces />}
+        title={t('No providers yet')}
+        description={t('Add an API key to turn on chat, agents and AI steps.')}
         action={
           <Button
+            variant="outline"
             onClick={() => onConnect()}
             {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
           >
             <Plus className="size-4" />
-            {t('Connect a provider')}
+            {t('Add key')}
           </Button>
         }
       />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {recommended.map((info) => (
-          <AvailableProviderCard
-            key={info.provider}
-            info={info}
-            tagline={recommendedTagline({ provider: info.provider })}
-            recommended
-            onConnect={() => onConnect(info.provider)}
-          />
-        ))}
-      </div>
-      <AdminSection title={t('Or choose another provider')}>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {others.map((info) => (
-            <AvailableProviderCard
-              key={info.provider}
-              info={info}
-              onConnect={() => onConnect(info.provider)}
-            />
-          ))}
-        </div>
+      <AdminSection title={t('Choose a provider')}>
+        <ProviderTileGrid
+          providers={SUPPORTED_AI_PROVIDERS}
+          onConnect={onConnect}
+        />
       </AdminSection>
     </>
   );
 }
 
-function AvailableProviderCard({
+function ProviderFaces() {
+  const ranked = byImportance(SUPPORTED_AI_PROVIDERS);
+  const shown = ranked.slice(0, PROVIDER_FACES_SHOWN);
+  return (
+    <AvatarGroup>
+      {shown.map((info) => (
+        <Avatar key={info.provider} size="lg" className="size-9">
+          <LogoPlate
+            src={info.logoUrl}
+            alt={info.name}
+            border
+            className="size-full rounded-full"
+            innerClassName="p-2"
+          />
+        </Avatar>
+      ))}
+      <AvatarGroupCount className="size-9 border border-gray-6 text-xs font-medium tabular-nums">
+        {t('+{count}', { count: ranked.length - shown.length })}
+      </AvatarGroupCount>
+    </AvatarGroup>
+  );
+}
+
+function ProviderTileGrid({
+  providers,
+  onConnect,
+}: {
+  providers: AiProviderInfo[];
+  onConnect: (provider: AIProviderName) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {byImportance(providers).map((info) => (
+        <ProviderTile
+          key={info.provider}
+          info={info}
+          recommended={RECOMMENDED_PROVIDERS.includes(info.provider)}
+          onConnect={() => onConnect(info.provider)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ProviderTile({
   info,
-  tagline,
   recommended,
   onConnect,
 }: {
   info: AiProviderInfo;
-  tagline?: string;
-  recommended?: boolean;
+  recommended: boolean;
   onConnect: () => void;
 }) {
   return (
-    <div className={cn(adminSurface.card, 'flex items-center gap-4 p-5')}>
+    <button
+      type="button"
+      onClick={onConnect}
+      className={cn(
+        adminSurface.card,
+        'group flex min-w-0 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
+        recommended && 'border-accent-8',
+      )}
+      {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
+    >
       <ProviderLogo info={info} />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-sm font-medium text-gray-12">{info.name}</p>
-        {tagline && <p className="truncate text-xs text-gray-11">{tagline}</p>}
-      </div>
-      <Button
-        size="sm"
-        variant={recommended ? 'default' : 'outline'}
-        onClick={onConnect}
-        {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
-      >
-        {t('Connect')}
-      </Button>
-    </div>
+      <span className="flex min-w-0 flex-1">
+        <TextWithTooltip tooltipMessage={info.name}>
+          <span className="truncate text-sm font-medium text-gray-12">
+            {info.name}
+          </span>
+        </TextWithTooltip>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-gray-9 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
+    </button>
   );
+}
+
+function byImportance(providers: AiProviderInfo[]): AiProviderInfo[] {
+  const rank = (provider: AIProviderName) => {
+    const index = PROVIDERS_BY_IMPORTANCE.indexOf(provider);
+    return index === -1 ? PROVIDERS_BY_IMPORTANCE.length : index;
+  };
+  return [...providers].sort((a, b) => rank(a.provider) - rank(b.provider));
 }
 
 function ProvidersSkeleton() {
@@ -725,22 +750,30 @@ function providerInfoOf({
   );
 }
 
+const PROVIDER_FACES_SHOWN = 5;
+
 const RECOMMENDED_PROVIDERS: AIProviderName[] = [
   AIProviderName.ANTHROPIC,
   AIProviderName.OPENAI,
 ];
 
-function recommendedTagline({
-  provider,
-}: {
-  provider: AIProviderName;
-}): string | undefined {
-  switch (provider) {
-    case AIProviderName.ANTHROPIC:
-      return t('Claude models — strong for chat and agents');
-    case AIProviderName.OPENAI:
-      return t('GPT models — broad ecosystem and tooling');
-    default:
-      return undefined;
-  }
-}
+const PROVIDERS_BY_IMPORTANCE: AIProviderName[] = [
+  AIProviderName.ANTHROPIC,
+  AIProviderName.OPENAI,
+  AIProviderName.GOOGLE,
+  AIProviderName.AZURE,
+  AIProviderName.BEDROCK,
+  AIProviderName.VERTEX,
+  AIProviderName.META,
+  AIProviderName.MISTRAL,
+  AIProviderName.XAI,
+  AIProviderName.DEEPSEEK,
+  AIProviderName.OPENROUTER,
+  AIProviderName.QWEN,
+  AIProviderName.NVIDIA,
+  AIProviderName.MOONSHOT,
+  AIProviderName.MINIMAX,
+  AIProviderName.ZAI,
+  AIProviderName.CLOUDFLARE_GATEWAY,
+  AIProviderName.CUSTOM,
+];

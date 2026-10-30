@@ -105,7 +105,6 @@ export function TiersTab() {
         <SectionHeader
           title={t('Tiers')}
           isPageTitle
-          count={isError ? undefined : liveTiers.length}
           description={t(
             'Named model groups your builders pick. Each one is a main model plus fallbacks.',
           )}
@@ -328,6 +327,7 @@ function NoTiersState({
         </p>
       </div>
       <Button
+        variant="outline"
         onClick={(event) => onCreate(event.currentTarget)}
         {...adminControl(AdminControl.AI_TIER_OPEN)}
       >
