@@ -672,6 +672,9 @@
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
+      "@activepieces/piece-hibira": [
+        "packages/pieces/community/hibira/src/index.ts"
+      ],
       "@activepieces/piece-hootsuite": [
         "packages/pieces/community/hootsuite/src/index.ts"
       ],
