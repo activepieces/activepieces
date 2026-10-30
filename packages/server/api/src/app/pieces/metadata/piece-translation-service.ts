@@ -29,6 +29,17 @@ export const pieceTranslationService = {
             .getRawMany<{ id: string, translations: Record<string, string> | null }>()
         return new Map(rows.flatMap((row) => isNil(row.translations) ? [] : [[row.id, row.translations]]))
     },
+
+    async getAllLocales({ pieceMetadataId }: GetAllLocalesParams): Promise<I18nForPiece | undefined> {
+        const row = await pieceTranslationRepos().manager
+            .createQueryBuilder(PieceMetadataEntity, 'pm')
+            .leftJoin(TABLE, 'pt', 'pt."pieceMetadataId" = pm."id"')
+            .select(ALL_TRANSLATIONS_WITH_LEGACY_FALLBACK, 'i18n')
+            .where('pm."id" = :pieceMetadataId', { pieceMetadataId })
+            .groupBy('pm."id"')
+            .getRawOne<{ i18n: I18nForPiece | null }>()
+        return row?.i18n ?? undefined
+    },
 }
 
 function toRows({ pieceMetadataId, i18n }: Pick<SaveParams, 'pieceMetadataId' | 'i18n'>): PieceTranslationSchema[] {
@@ -43,6 +54,11 @@ const TRANSLATIONS_WITH_LEGACY_FALLBACK = `COALESCE(
     CASE WHEN NOT EXISTS (SELECT 1 FROM "${TABLE}" stored WHERE stored."pieceMetadataId" = pm."id") THEN pm."i18n" -> :locale END
 )`
 
+const ALL_TRANSLATIONS_WITH_LEGACY_FALLBACK = `COALESCE(
+    json_object_agg(pt."locale", pt."translations") FILTER (WHERE pt."locale" IS NOT NULL),
+    CASE WHEN NOT EXISTS (SELECT 1 FROM "${TABLE}" stored WHERE stored."pieceMetadataId" = pm."id") THEN pm."i18n" END
+)`
+
 type SaveParams = {
     pieceMetadataId: string
     i18n: I18nForPiece
@@ -52,4 +68,8 @@ type SaveParams = {
 type GetForLocaleParams = {
     pieceIds: string[]
     locale: LocalesEnum
+}
+
+type GetAllLocalesParams = {
+    pieceMetadataId: string
 }

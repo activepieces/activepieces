@@ -1,3 +1,4 @@
+import { LocalesEnum } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -28,7 +29,7 @@ export const piecesApi = {
   ): Promise<PieceMetadataModel> {
     return api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
       version: request.version ?? undefined,
-      locale: request.locale ?? undefined,
+      locale: request.locale ?? LocalesEnum.ENGLISH,
       projectId: request.projectId ?? undefined,
       audience: request.audience ?? undefined,
     });
