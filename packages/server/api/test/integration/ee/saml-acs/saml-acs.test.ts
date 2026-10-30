@@ -119,19 +119,23 @@ describe('SAML ACS redirect', () => {
     })
 
     it('records a returning SAML sign-in as signed in, not signed up', async () => {
-        await acs({ host: 'apps.customer.example.com' })
-        const events = await savedEvents({ expectedCount: 1 })
+        const before = await settledEvents({ atLeast: 0 })
 
-        expect(events).toEqual(events.map(() => expect.objectContaining({
+        await acs({ host: 'apps.customer.example.com' })
+        const after = await settledEvents({ atLeast: before.length + 1 })
+        const added = after.filter((event) => !before.some((earlier) => earlier.id === event.id))
+
+        expect(added).toEqual([expect.objectContaining({
             action: ApplicationEventName.USER_SIGNED_IN,
             userEmail: SSO_EMAIL,
             data: expect.objectContaining({ method: UserIdentityProvider.SAML }),
-        })))
+        })])
     })
 })
 
-async function savedEvents({ expectedCount }: { expectedCount: number }): Promise<ApplicationEvent[]> {
+async function settledEvents({ atLeast }: { atLeast: number }): Promise<ApplicationEvent[]> {
     const find = async (): Promise<ApplicationEvent[]> => auditLogRepo().find({ where: { platformId }, order: { created: 'ASC' } })
-    await vi.waitUntil(async () => (await find()).length >= expectedCount, { timeout: 5000, interval: 50 })
+    await vi.waitUntil(async () => (await find()).length >= atLeast, { timeout: 5000, interval: 50 })
+    await new Promise((resolve) => setTimeout(resolve, 300))
     return find()
 }
