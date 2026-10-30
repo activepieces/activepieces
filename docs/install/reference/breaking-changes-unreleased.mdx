@@ -8,6 +8,24 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
+
+**Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.
+
+After you upgrade a Send Message step:
+
+- The step returns an object (`success`, `queue`, `exchange`, `routingKey`, `sizeBytes`, `persistent`, `contentType`) instead of `true`.
+- Messages are persistent by default and carry a content type (`application/json`, or `text/plain` for text).
+- The username, password and virtual host in the connection are now URL-encoded for you. If you encoded them by hand to work around the old behavior, enter them as plain text.
+
+#### What you need to do
+
+- Agents that used the Send Message actions as tools: switch to Publish to Queue or Publish to Exchange.
+- If a later step checked the old `true` output, map `success` instead.
+- If your connection holds a hand-encoded password or virtual host (for example `%2F`), edit it to the plain value.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
@@ -473,13 +491,13 @@ To find affected steps after upgrading, search your logs for the structured `Cod
 
 #### Each chat keeps the AI model and key it started on
 
-A chat used to run on whatever key was the **Default AI key** at the time of each message. Now a chat remembers the key and model it first ran on. Changing the Default AI key affects new chats only. An existing chat moves to the new default only when its key is deleted, or no longer covers the chat's project or model.
+A chat used to run on whatever the platform's default key was at the time of each message. Now a chat remembers the key and model it first ran on. Changing the **Default chat model** affects new chats only. An existing chat moves to the new default only when its key is deleted, or no longer covers the chat's project or model.
 
-Message credits for AI agent turns, in chat, agents and flow steps, now follow the key that actually answered the turn. A turn answered by your own key costs one message credit, and a turn answered by Activepieces AI credits costs none (its AI usage is billed as before), whatever the Default AI key is.
+Message credits for AI agent turns, in chat, agents and flow steps, now follow the key that actually answered the turn. A turn answered by your own key costs one message credit, and a turn answered by Activepieces AI credits costs none (its AI usage is billed as before), whatever the Default chat model is.
 
 #### What you need to do
 
-Nothing to configure or migrate. To move an existing chat to another model, pick it in the chat. If you switch the Default AI key to stop using a key, delete that key or narrow its projects so existing chats move too.
+Nothing to configure or migrate. To move an existing chat to another model, pick it in the chat. If you switch the Default chat model to stop using a key, delete that key or narrow its projects so existing chats move too.
 
 #### Firecrawl's Scrape Website stops reusing cached pages, and Crawl keeps its pages when a screenshot fails
 
