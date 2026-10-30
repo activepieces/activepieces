@@ -8,7 +8,7 @@ import {
 export const straleAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description:
-    'Your Strale API key (starts with sk_live_). Get one free at https://strale.dev/signup — includes 2.00 EUR trial credits. Some actions (Search, Trust Profile) work without a key.',
+    'Your Strale API key (starts with sk_live_). Get one free at https://strale.dev/signup. The Search action works without a key, and so do the free capabilities.',
   required: false,
   validate: async ({ auth }) => {
     try {

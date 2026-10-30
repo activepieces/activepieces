@@ -11,7 +11,7 @@ export const searchCapabilities = createAction({
   auth: straleAuth,
   displayName: 'Search Capabilities',
   description:
-    'Search 271 API capabilities by keyword, category, or natural language query. Returns matching capabilities with slug, description, price, and quality score. No API key required.',
+    'Search the Strale catalog by keyword, category, or natural language query. Returns matching capabilities with slug, description and price per call. No API key required.',
   audience: 'both',
   aiMetadata: {
     description:
