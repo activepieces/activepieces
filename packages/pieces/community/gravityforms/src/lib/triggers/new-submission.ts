@@ -23,6 +23,7 @@ export const newSubmissionTrigger = createTrigger({
   classification: 'READ',
   displayName: 'New Submission',
   auth: PieceAuth.None(),
+  requireAuth: false,
   description: 'Triggers when form receives a new submission',
   aiMetadata: {
     description:
