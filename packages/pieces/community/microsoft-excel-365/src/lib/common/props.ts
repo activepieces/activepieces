@@ -87,11 +87,11 @@ const createWorkbookDropdown = <R extends boolean>({
 		options: async (ctx) => {
 			const { auth, storageSource, siteId, documentId } = ctx;
 			if (!auth) {
-				return createEmptyOptions('please connect your account first.');
+				return createEmptyOptions('Connect your account first.');
 			}
 			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
 				return createEmptyOptions(
-					'please select SharePoint site and document library first.'
+					'Choose a SharePoint site and document library first.'
 				);
 			}
 
@@ -108,8 +108,6 @@ const createWorkbookDropdown = <R extends boolean>({
 			const scopedFolderId = folderRefresherKey ? ctx[folderRefresherKey] : undefined;
 
 			if (scopedFolderId) {
-				// Children listing is index-independent, unlike drive search,
-				// so folder-scoped results include just-created workbooks.
 				let response: PageCollection | undefined = await client
 					.api(`${drivePath}/items/${scopedFolderId}/children`)
 					.select('id,name,file')
@@ -131,9 +129,6 @@ const createWorkbookDropdown = <R extends boolean>({
 				};
 			}
 
-			// Drive search can return an empty page that still carries
-			// @odata.nextLink (common on OneDrive personal), so keep following
-			// the link instead of stopping at the first empty page.
 			let response: PageCollection | undefined = await client
 				.api(`${drivePath}/root/search(q='.xlsx')`)
 				.select('id,name')
@@ -148,9 +143,6 @@ const createWorkbookDropdown = <R extends boolean>({
 			}
 
 			if (options.length === 0) {
-				// The consumer OneDrive search index lags behind recently created
-				// files and can return nothing for a drive that has workbooks, so
-				// fall back to walking the drive via children listings.
 				return {
 					disabled: false,
 					options: await listDriveItemsRecursively({ client, drivePath, collect: 'workbooks' }),
@@ -166,53 +158,51 @@ const createWorkbookDropdown = <R extends boolean>({
 
 export const commonProps = {
 	storageSource: Property.StaticDropdown({
-		displayName: 'Excel File Source',
+		displayName: 'Location',
 		required: true,
 		defaultValue: 'onedrive',
+		display: 'cards',
 		options: {
 			disabled: false,
 			options: [
-				{ label: 'OneDrive', value: 'onedrive' },
-				{ label: 'SharePoint', value: 'sharepoint' },
+				{ label: 'OneDrive', value: 'onedrive', icon: 'user' },
+				{ label: 'SharePoint', value: 'sharepoint', icon: 'users' },
 			],
 		},
 	}),
 	isFirstRowHeaders: Property.Checkbox({
-		displayName: 'Does the first row contain headers?',
-		description: 'If the first row is headers',
+		displayName: 'First Row Contains Headers',
+		description: 'Turn on to get one field per column header.',
 		required: true,
 		defaultValue: false,
 	}),
 	siteId: Property.Dropdown({
-		displayName: 'Sharepoint Site',
+		displayName: 'SharePoint Site',
 		auth: excelAuth,
 		refreshers: ['storageSource'],
 		required: false,
 		options: async ({ auth, storageSource }) => {
 			if (!auth) {
-				return createEmptyOptions('please connect your account first.');
+				return createEmptyOptions('Connect your account first.');
 			}
 			if (storageSource !== 'sharepoint') {
-				return createEmptyOptions('please select sharepoint as file source.');
+				return createEmptyOptions('Choose SharePoint as the location first.');
 			}
 			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
 			const client = createMSGraphClient(auth.access_token, cloud);
 
 			const options: DropdownOption<string>[] = [];
 
-			let response: PageCollection = await client
+			let response: PageCollection | undefined = await client
 				.api('/sites?search=*&$select=displayName,id,name')
 				.get();
 
-			while (response.value.length > 0) {
-				for (const site of response.value as Site[]) {
+			while (response) {
+				for (const site of (response.value ?? []) as Site[]) {
 					options.push({ label: site.displayName!, value: site.id! });
 				}
-				if (response['@odata.nextLink']) {
-					response = await client.api(response['@odata.nextLink']).get();
-				} else {
-					break;
-				}
+				const nextLink = response['@odata.nextLink'];
+				response = nextLink ? await client.api(nextLink).get() : undefined;
 			}
 
 			return {
@@ -222,21 +212,21 @@ export const commonProps = {
 		},
 	}),
 	documentId: Property.Dropdown({
-		displayName: 'Sharepoint Document Library',
+		displayName: 'Document Library',
 		auth: excelAuth,
 		refreshers: ['storageSource', 'siteId'],
 		required: false,
 		options: async ({ auth, storageSource, siteId }) => {
 			if (!auth) {
-				return createEmptyOptions('please connect your account first.');
+				return createEmptyOptions('Connect your account first.');
 			}
 
 			if (storageSource !== 'sharepoint') {
-				return createEmptyOptions('please select sharepoint as file source.');
+				return createEmptyOptions('Choose SharePoint as the location first.');
 			}
 
 			if (!siteId) {
-				return createEmptyOptions('please select sharepoint site first.');
+				return createEmptyOptions('Choose a SharePoint site first.');
 			}
 
 			const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
@@ -244,20 +234,17 @@ export const commonProps = {
 
 			const options: DropdownOption<string>[] = [];
 
-			let response: PageCollection = await client
+			let response: PageCollection | undefined = await client
 				.api(`/sites/${siteId}/drives`)
 				.select('id,name')
 				.get();
 
-			while (response.value.length > 0) {
-				for (const drive of response.value as Drive[]) {
+			while (response) {
+				for (const drive of (response.value ?? []) as Drive[]) {
 					options.push({ label: drive.name!, value: drive.id! });
 				}
-				if (response['@odata.nextLink']) {
-					response = await client.api(response['@odata.nextLink']).get();
-				} else {
-					break;
-				}
+				const nextLink = response['@odata.nextLink'];
+				response = nextLink ? await client.api(nextLink).get() : undefined;
 			}
 
 			return {
@@ -270,17 +257,16 @@ export const commonProps = {
 	folderId: Property.Dropdown({
 		auth: excelAuth,
 		displayName: 'Folder',
-		description:
-			'The folder containing the workbook. Leave empty to search the entire drive (up to 1000 folders are listed).',
+		description: 'Narrows the workbook list below.',
 		required: false,
 		refreshers: ['storageSource', 'siteId', 'documentId'],
 		options: async ({ auth, storageSource, siteId, documentId }) => {
 			if (!auth) {
-				return createEmptyOptions('please connect your account first.');
+				return createEmptyOptions('Connect your account first.');
 			}
 			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
 				return createEmptyOptions(
-					'please select SharePoint site and document library first.'
+					'Choose a SharePoint site and document library first.'
 				);
 			}
 
@@ -304,7 +290,7 @@ export const commonProps = {
 	}),
 	destinationWorkbookId: createWorkbookDropdown({
 		displayName: 'Destination Workbook',
-		description: 'The workbook to copy the worksheet into. Leave empty to copy within the source workbook.',
+		description: 'Empty copies within the same workbook.',
 		required: false,
 	}),
 	worksheetId: Property.Dropdown({
@@ -314,16 +300,16 @@ export const commonProps = {
 		refreshers: ['storageSource', 'siteId', 'documentId', 'workbookId'],
 		options: async ({ auth, storageSource, siteId, documentId, workbookId }) => {
 			if (!auth) {
-				return createEmptyOptions('please connect your account first.');
+				return createEmptyOptions('Connect your account first.');
 			}
 
 			if (!workbookId) {
-				return createEmptyOptions('please select a workbook first.');
+				return createEmptyOptions('Choose a workbook first.');
 			}
 
 			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
 				return createEmptyOptions(
-					'please select SharePoint site and document library first.'
+					'Choose a SharePoint site and document library first.'
 				);
 			}
 
@@ -355,7 +341,7 @@ export const commonProps = {
 		Property.DynamicProperties({
 			auth: excelAuth,
 			displayName: 'Values',
-			description: 'The values to insert',
+			description: 'One value per column, starting at column A.',
 			required: true,
 			refreshers: [
 				'storageSource',
@@ -388,6 +374,7 @@ export const commonProps = {
 					return {
 						values: Property.Array({
 							displayName: 'Values',
+							description: 'One value per column, starting at column A.',
 							required: true,
 						}),
 					};
@@ -414,29 +401,18 @@ export const commonProps = {
 				for (const key in firstRow) {
 					columns[key] = Property.ShortText({
 						displayName: firstRow[key].toString(),
-						description: firstRow[key].toString(),
 						required: false,
 						defaultValue: '',
 					});
 				}
 				return columns;
-
-				const fields: DynamicPropsValue = {
-					values: Property.Array({
-						displayName: 'Values',
-						required: true,
-						properties: columns,
-					}),
-				};
-
-				return fields;
 			},
 		}),
 
 	worksheetMultiValues :Property.DynamicProperties({
 			auth: excelAuth,
 			displayName: 'Values',
-			description: 'The values to insert',
+			description: 'One row per item, one value per column.',
 			required: true,
 			refreshers: [
 				'storageSource',
@@ -484,7 +460,6 @@ export const commonProps = {
 				for (const key in firstRow) {
 					columns[key] = Property.ShortText({
 						displayName: firstRow[key].toString(),
-						description: firstRow[key].toString(),
 						required: false,
 						defaultValue: '',
 					});
@@ -493,6 +468,7 @@ export const commonProps = {
 				const fields: DynamicPropsValue = {
 					values: Property.Array({
 						displayName: 'Values',
+						description: 'One row per item, one value per column.',
 						required: true,
 						properties: columns,
 					}),
@@ -509,18 +485,18 @@ export const commonProps = {
 		refreshers: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
 		options: async ({ auth, storageSource, siteId, documentId, workbookId, worksheetId }) => {
 			if (!auth) {
-				return createEmptyOptions('please connect your account first.');
+				return createEmptyOptions('Connect your account first.');
 			}
 			if (!workbookId) {
-				return createEmptyOptions('please select a workbook first.');
+				return createEmptyOptions('Choose a workbook first.');
 			}
 			if (!worksheetId) {
-				return createEmptyOptions('please select a worksheet first.');
+				return createEmptyOptions('Choose a worksheet first.');
 			}
 
 			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
 				return createEmptyOptions(
-					'please select SharePoint site and document library first.'
+					'Choose a SharePoint site and document library first.'
 				);
 			}
 
@@ -549,25 +525,26 @@ export const commonProps = {
 	}),
 
 	filterColumn: Property.Dropdown({
-		displayName: 'Filter Column',
+		displayName: 'Column',
+		description: 'The column the condition checks.',
 		refreshers: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
 		auth: excelAuth,
 		required: false,
 		async options({ auth, storageSource, siteId, workbookId, documentId, worksheetId }) {
 			if (!auth) {
-				return createEmptyOptions('please connect your account first.');
+				return createEmptyOptions('Connect your account first.');
 			}
 
 			if (!workbookId) {
-				return createEmptyOptions('please select a workbook first.');
+				return createEmptyOptions('Choose a workbook first.');
 			}
 			if (!worksheetId) {
-				return createEmptyOptions('please select a worksheet first.');
+				return createEmptyOptions('Choose a worksheet first.');
 			}
 
 			if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
 				return createEmptyOptions(
-					'please select SharePoint site and document library first.'
+					'Choose a SharePoint site and document library first.'
 				);
 			}
 
