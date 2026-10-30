@@ -1,0 +1,95 @@
+---
+title: "Tiers"
+description: "Group models from your keys into named choices, with fallbacks, for your builders"
+icon: "layer-group"
+---
+
+## Overview
+
+A **tier** is a named group of models that builders pick instead of a raw model id, for example **Expert** or **Everyday**. Each tier has:
+
+- A **name**, an **emoji** and a short **description**. Builders see these when they pick a model.
+- A **main model**, tried first.
+- Up to **4 fallbacks**, tried in order when the main model fails. Fallbacks can come from different keys and providers.
+- A **thinking** budget: Default, Off, Low (5,000 tokens), Medium (10,000 tokens) or High (20,000 tokens). Only models that support reasoning use it.
+
+Tiers show up in the model picker for chat, agents, Run Agent steps and AI text steps. When you swap the model behind a tier, every flow and agent that uses the tier moves with it. Nothing needs to be edited.
+
+Go to **Platform admin** → **AI Center** → **Tiers**.
+
+![Tiers page with three tiers](/resources/screenshots/ai-center-tiers.png)
+
+<Note>
+  On Cloud, **Tiers** is in the AI Center menu. On self-hosted, open it by URL: `/platform/ai/tiers`. Tiers are built from your own keys, so add a key on the [Providers](/admin-guide/guides/setup-ai-providers) page first.
+</Note>
+
+## Create a tier
+
+<Steps>
+  <Step title="Start a new tier">
+    Click **New tier**.
+  </Step>
+  <Step title="Name it">
+    Pick an emoji, enter a name (up to 40 characters) and an optional description (up to 120 characters).
+  </Step>
+  <Step title="Pick the main model">
+    Choose the main model from any of your keys. Only models the key allows are listed.
+  </Step>
+  <Step title="Set thinking and save">
+    Choose a thinking budget, then click **Save tier**.
+  </Step>
+  <Step title="Add fallbacks">
+    On the tier card, click **Add fallback** and pick a model. Repeat for up to 4 fallbacks.
+  </Step>
+</Steps>
+
+A fallback is used only when the model before it fails at the provider, for example a rate limit, an outage, an expired key or no credits left. Without a fallback, the tier fails when its main model is unavailable.
+
+To change a model, use the **...** menu on its row: **Change main model**, **Move up**, **Move down** or **Remove**.
+
+## Default and fast tiers
+
+Use the **...** menu on a tier card:
+
+- **Make default**: the tier builders get when they haven't picked a model. It is marked **Default**.
+- **Use as fast model**: chat and agent runs use this tier for quick, light steps. It is marked **Fast**.
+
+The default tier is not the same as the [Default chat model](/admin-guide/guides/setup-ai-providers#default-chat-model). New chats start on the Default chat model, and use the default tier only when that model can't run.
+
+## Reorder and edit
+
+The order of the cards is the order builders see. Use **Move up** and **Move down** in a tier's **...** menu to change it. Use **Edit** to change the name, emoji, description, main model or thinking.
+
+## Delete a tier
+
+Click **Delete** in the tier's **...** menu, then pick a tier under **Move them to**. Everything that used the deleted tier now runs on the tier you picked. If the deleted tier was the default or the fast tier, the tier you picked takes that role.
+
+You can delete your last tier without picking a replacement. Anything still using it stops working until someone picks a new model. If you had hidden specific models, they are shown to builders again, so builders still have something to pick.
+
+## Tiers follow key project access
+
+Each key can be limited to some projects (see [Access](/admin-guide/guides/setup-ai-providers#access)). Tiers respect that:
+
+- A tier is offered in a project only when its **main model's key** serves that project.
+- A **fallback** whose key doesn't serve a project is skipped there.
+
+The tier card warns you when this happens, for example "Not available in 1 project" or "Fallback ... is skipped in 2 projects". To check one project, pick it in the **Preview as project** list at the top of the page. This list shows up when at least one key is limited to some projects.
+
+A key that a tier uses can't be deleted, and you can't remove a tier's model from that key's model list. Change the tier first.
+
+## Specific models
+
+Below the tiers, **Specific models** lists the models on your keys that are not a tier's main model. Builders can pick these directly. Click **Make a tier** on a model to start a tier from it.
+
+Use the **Visible** / **Hidden** switch to choose what builders see:
+
+- **Visible**: builders can pick tiers and specific models.
+- **Hidden**: builders only see tiers. You need at least one tier first.
+
+Hiding specific models only changes the picker. Flows and agents that already use a specific model keep running.
+
+## Related
+
+- [Providers and keys](/admin-guide/guides/setup-ai-providers)
+- [AI usage](/admin-guide/guides/ai-usage)
+- API reference: [list tiers](/endpoints/ai-model-tiers/list), [create](/endpoints/ai-model-tiers/create), [reorder](/endpoints/ai-model-tiers/reorder), [update](/endpoints/ai-model-tiers/update), [delete](/endpoints/ai-model-tiers/delete).
