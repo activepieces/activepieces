@@ -2,7 +2,11 @@ import { AuthenticationType, HttpMethod, httpClient, QueryParams } from '@active
 import type { GravityFormsAuthValue } from './types';
 
 function baseUrl({ auth }: { auth: GravityFormsAuthValue }): string {
-  return `${auth.props.siteUrl.replace(/\/+$/, '')}/wp-json/gf/v2`;
+  const siteUrl = auth.props.siteUrl.trim().replace(/\/+$/, '');
+  if (!siteUrl.toLowerCase().startsWith('https://')) {
+    throw new Error('The Gravity Forms site URL must start with https://.');
+  }
+  return `${siteUrl}/wp-json/gf/v2`;
 }
 
 async function request<T>({ auth, method, path, query, body }: RequestParams & { auth: GravityFormsAuthValue }): Promise<T> {

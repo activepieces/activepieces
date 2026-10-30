@@ -16,7 +16,7 @@ export const submitFormAction = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Submits values to a form through the full submission process: validation, spam checks, saving the entry, add-on feeds, notification emails and confirmations. Returns is_valid with validation_messages when it fails. Use Validate Submission to check values without saving, or Create Entry to save an entry without feeds or emails.',
+      'Submits values to a form through the full submission process: validation, spam checks, saving the entry, add-on feeds, notification emails and confirmations. Invalid values fail the action. Use Validate Submission to check values and get field validation messages without saving, or Create Entry to save an entry without feeds or emails.',
     idempotent: false,
   },
   props: {
