@@ -78,6 +78,19 @@ describe('a turn with many steps', () => {
         expect(capture).toHaveBeenCalledWith({ output: { summary: 'partial' } })
     })
 
+    it('asks a model that rejects forced tool choice to report its structured output, instead of forcing a call the provider refuses', async () => {
+        const capture = vi.fn()
+        const model = searchUntilToldToAnswer({ searches: 10 })
+
+        await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => 100, stepCeiling: 3, model, drainsStream: true, completion: capture, phase: 'build', modelId: 'claude-opus-5-5' })
+
+        const lastCall = model.doStreamCalls.at(-1)
+        expect(lastCall?.toolChoice).toEqual({ type: 'auto' })
+        expect(lastCall?.tools?.map((t) => t.name)).toEqual(['updateTaskStatus'])
+        expect(JSON.stringify(lastCall?.prompt)).toContain('calling the updateTaskStatus tool')
+        expect(capture).toHaveBeenCalledWith({ output: { summary: 'partial' } })
+    })
+
     it('lets chat finish a long job, since credits, time and context already bound the turn', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
 
@@ -99,7 +112,7 @@ describe('a turn that hits its token budget', () => {
     })
 })
 
-async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel(), drainsStream = false, completion, phase = 'discovery' }: {
+async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel(), drainsStream = false, completion, phase = 'discovery', modelId = TIER.modelId }: {
     search: () => Promise<unknown>
     creditsLeft: (pendingCredits: number) => Promise<number | null>
     stepCeiling?: number | null
@@ -107,12 +120,13 @@ async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSe
     drainsStream?: boolean
     completion?: (input: unknown) => void
     phase?: AgentPhase
+    modelId?: string
 }): ReturnType<typeof runAgentTurn> {
     const completionTools = isNil(completion)
         ? {}
         : { updateTaskStatus: tool({ description: 'report the result', inputSchema: z.object({ output: z.object({ summary: z.string() }) }), execute: async (input) => { completion(input); return SEARCH_RESULT } }) }
     return runAgentTurn({
-        models: [{ model, provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
+        models: [{ model, provider: AIProviderName.ANTHROPIC, modelId, thinkingBudget: TIER.thinkingBudget }],
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'research this' }],
         tools: {
@@ -154,14 +168,16 @@ function alwaysSearchingModel({ usage = USAGE }: { usage?: typeof USAGE } = {}):
 function searchUntilToldToAnswer({ searches }: { searches: number }): MockLanguageModelV3 {
     let calls = 0
     return new MockLanguageModelV3({
-        doStream: async ({ toolChoice }) => {
+        doStream: async ({ toolChoice, tools }) => {
             calls++
             const answers = toolChoice?.type === 'none' || calls > searches
-            if (toolChoice?.type === 'tool') {
+            const onlyTool = tools?.length === 1 ? tools[0].name : undefined
+            const reportingTool = toolChoice?.type === 'tool' ? toolChoice.toolName : onlyTool
+            if (!isNil(reportingTool)) {
                 return {
                     stream: convertArrayToReadableStream([
                         { type: 'stream-start' as const, warnings: [] },
-                        { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: toolChoice.toolName, input: '{"output":{"summary":"partial"}}' },
+                        { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: reportingTool, input: '{"output":{"summary":"partial"}}' },
                         { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
                     ]),
                 }
