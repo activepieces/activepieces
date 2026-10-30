@@ -258,6 +258,13 @@ describe('createLanguageModel', () => {
             expect(result.content.some((part) => part.type === 'tool-call')).toBe(false)
         })
 
+        it('counts the tokens of both attempts when it asks again', async () => {
+            const { result } = await replyingWith({ replies: [TEXT_REPLY, TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
+
+            expect(result.usage.inputTokens.total).toBe(2)
+            expect(result.usage.outputTokens.total).toBe(2)
+        })
+
         it('does not ask again once the model calls the tool', async () => {
             const { bodies, result } = await replyingWith({ replies: [TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
 
