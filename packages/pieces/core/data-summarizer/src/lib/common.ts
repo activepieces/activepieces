@@ -19,7 +19,7 @@ type Response = {
 
 export const common = {
     note: Property.MarkDown({
-        value: "If you'd like to use the values with a previous step, click the (X) first, and then select the step you want to use.",
+        value: "To use a list from an earlier step, click **ƒ** next to Values and pick it.",
     }),
     validateArray: function (values: unknown[]): Response {
         const newValues = values.map((value, index) => checkValueIsNumber(value, index))

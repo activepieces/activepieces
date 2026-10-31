@@ -7,19 +7,21 @@ export const countUniques = createAction({
   name: 'countUniques',
   classification: 'READ',
   displayName: 'Count Uniques',
-  description: 'Counts the number of unique values for multiple fields',
+  description: 'Counts the distinct entries in a list, optionally by chosen fields.',
   aiMetadata: { description: 'Counts how many distinct entries an array contains, comparing whole entries when Fields is left empty or only the chosen object keys when Fields is supplied. Use for cardinality or de-duplication checks; prefer Calculate Sum, Calculate Average, or Find Min and Max for numeric aggregation. Values need not be numeric, but in field mode any entry that is not an object, or an object holding none of the chosen keys, collapses into one shared bucket; read-only and idempotent.', idempotent: true },
   props: {
     note: common.note,
     values: Property.Array({
       displayName: "Values",
+      description: 'The entries to count. Repeated entries are counted once.',
       required: true,
     }),
     fieldsExplanation: Property.MarkDown({
-      value: "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty."
+      value: "Counting a list of objects? Add field names below to compare only those fields. Leave empty to compare whole entries."
     }),
     fields: Property.Array({
       displayName: "Fields",
+      description: 'Entries with none of these fields are counted as one.',
       required: false
     })
   },
