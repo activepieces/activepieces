@@ -76,7 +76,7 @@ jobs:
   notify-failure:
     # Only run when any of the shards failed; still evaluate even if they failed
     if: ${{ github.repository == 'activepieces/activepieces' && always() && contains(needs.*.result, 'failure') }}
-    needs: [shard-0, shard-1, shard-2, shard-3, shard-4, shard-5]
+    needs: [shard-0, shard-1, shard-2, shard-3, shard-4, shard-5, finalize]
     runs-on: ubuntu-latest
     steps:
       - name: Notify Discord on shard failure

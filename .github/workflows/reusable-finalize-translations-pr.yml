@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Cache dependencies
         uses: actions/cache@v5
@@ -54,6 +55,27 @@ jobs:
             git checkout -b $BRANCH_NAME origin/main
           fi
 
+      - name: Merge latest main
+        run: |
+          git fetch origin main
+          if ! git merge --no-edit origin/main; then
+            CONFLICTS=$(git diff --name-only --diff-filter=U)
+            for FILE in $CONFLICTS; do
+              if git cat-file -e "origin/main:$FILE" 2>/dev/null; then
+                git checkout --theirs -- "$FILE"
+                git add -- "$FILE"
+              else
+                git rm -q -- "$FILE"
+              fi
+            done
+            git commit --no-edit
+            for FILE in $(echo "$CONFLICTS" | grep '/src/i18n/translation.json$'); do
+              if [ -f "$FILE" ]; then
+                npm run cli pieces generate-translation-file -- "$(basename "$(dirname "$(dirname "$(dirname "$FILE")")")")"
+              fi
+            done
+          fi
+
       - name: Generate translation files for UI
         run: npm run i18n:extract
 
@@ -64,10 +86,10 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git add -A
             git commit -m "feat: update UI translations [skip-changelog]"
-            git push origin $BRANCH_NAME
           else
             echo "No changes for UI translations in react app"
           fi
+          git push origin $BRANCH_NAME
 
       - name: Check branch ahead of main
         id: ahead
@@ -76,13 +98,17 @@ jobs:
         run: |
           git fetch origin
           git checkout $BRANCH_NAME
-          LEFT_RIGHT=$(git rev-list --left-right --count origin/main...HEAD)
-          AHEAD=$(echo $LEFT_RIGHT | awk '{print $2}')
-          if [ "$AHEAD" -gt 0 ]; then
-            echo "changes=true" >> $GITHUB_OUTPUT
-          else
+          if git diff --quiet origin/main HEAD; then
             echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Delete unchanged branch
+        if: steps.ahead.outputs.changes == 'false'
+        env:
+          BRANCH_NAME: ${{ inputs.branch_name }}
+        run: git push origin --delete $BRANCH_NAME
 
       - name: Create Pull Request
         if: steps.ahead.outputs.changes == 'true'
