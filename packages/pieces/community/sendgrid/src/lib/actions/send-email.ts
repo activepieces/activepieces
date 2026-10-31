@@ -17,36 +17,65 @@ export const sendEmail = createAction({
   description: 'Send a text or HTML email',
   audience: 'both',
   aiMetadata: { description: 'Sends a one-off email via SendGrid with subject and body supplied inline, choosing plain-text or HTML content. Use to send transactional or ad-hoc messages where you compose the body directly; for prebuilt designs with merge variables use Send Dynamic Template instead. Requires a verified sender address and at least one recipient; optional file attachments are supported. Not idempotent — each call dispatches a new email.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Sender',
+      icon: 'user',
+      props: ['from', 'from_name'],
+    },
+    {
+      key: 'recipients',
+      display: 'section',
+      label: 'Send to',
+      icon: 'send',
+      props: ['to', 'reply_to'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['subject', 'content_type', 'content'],
+    },
+  ],
   props: {
     to: Property.Array({
       displayName: 'To',
-      description: 'Emails of the recipients',
+      description: "Each address gets its own copy; recipients don't see each other.",
       required: true,
     }),
     from: Property.ShortText({
-      displayName: 'From (Email)',
-      description: 'Sender email, must be on your SendGrid',
+      displayName: 'From',
+      description: 'Must be a verified sender in your SendGrid account.',
+      placeholder: 'you@example.com',
+      width: 'half',
       required: true,
     }),
     from_name: Property.ShortText({
-      displayName: 'From (Name)',
-      description: 'Sender name',
+      displayName: 'Sender Name',
+      description: 'Name recipients see next to the From address.',
+      placeholder: 'Acme Support',
+      width: 'half',
       required: false,
     }),
     reply_to: Property.ShortText({
       displayName: 'Reply To',
-      description: 'Email to receive replies on (defaults to sender)',
+      description: 'Empty: replies go to the From address.',
+      placeholder: 'support@example.com',
       required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: undefined,
+      placeholder: 'Your order has shipped',
       required: true,
     }),
     content_type: Property.Dropdown<'text' | 'html', true, typeof sendgridAuth>({
-      displayName: 'Content Type',
+      displayName: 'Body Type',
       refreshers: [],
       required: true,
+      defaultValue: 'text',
       auth: sendgridAuth,
       options: async () => {
         return {
@@ -59,8 +88,9 @@ export const sendEmail = createAction({
       },
     }),
     content: Property.ShortText({
-      displayName: 'Content',
-      description: 'HTML is only allowed if you selected HTML as type',
+      displayName: 'Body',
+      description: 'Write HTML here when Body Type is HTML.',
+      placeholder: 'Thanks for your order!',
       required: true,
     }),
     attachments: Property.Array({
@@ -69,12 +99,13 @@ export const sendEmail = createAction({
       properties: {
         file: Property.File({
           displayName: 'File',
-          description: 'File to attach to the email you want to send',
+          description: 'Upload a file or paste its URL.',
           required: true,
         }),
         name: Property.ShortText({
-          displayName: 'Attachment Name',
-          description: 'In case you want to change the name of the attachment',
+          displayName: 'File Name',
+          description: "Empty: keeps the file's own name.",
+          placeholder: 'invoice.pdf',
           required: false,
         }),
       }
@@ -90,7 +121,7 @@ export const sendEmail = createAction({
           file.extension ? file.extension : ''
         );
         return {
-          filename: name ?? file.filename,
+          filename: name || file.filename,
           content: file?.base64,
           type: lookupResult ? lookupResult : undefined,
         };
@@ -111,10 +142,10 @@ export const sendEmail = createAction({
         }),
         from: {
           email: from,
-          name: from_name,
+          name: from_name || undefined,
         },
         reply_to: {
-          email: reply_to ?? from,
+          email: reply_to || from,
         },
         subject: subject,
         content: [
