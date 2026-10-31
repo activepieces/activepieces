@@ -1,3 +1,6 @@
+import { bulkWriteAction } from './bulk-write';
+import { deleteOneDocumentAction } from './delete-one-document';
+import { updateOneDocumentAction } from './update-one-document';
 import { aggregateDocumentsAiAction } from './aggregate-documents';
 import { deleteDocumentsAiAction } from './delete-documents';
 import { findAndReplaceDocumentAiAction } from './find-and-replace-document';
@@ -25,9 +28,12 @@ export const mongodbAiActions = [
   findOneDocumentAction,
   insertDocumentsAiAction,
   updateDocumentsAiAction,
+  updateOneDocumentAction,
   findAndUpdateDocumentsAiAction,
   findAndReplaceDocumentAiAction,
   deleteDocumentsAiAction,
+  deleteOneDocumentAction,
+  bulkWriteAction,
   aggregateDocumentsAiAction,
   createCollectionAction,
   dropCollectionAction,
