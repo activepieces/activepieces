@@ -20,7 +20,7 @@ export const updateCollectionItemAction = createAction({
 		site_id: webflowProps.siteId({ required: true }),
 		collection_id: webflowProps.collectionId({ required: true }),
 		collection_item_id: webflowProps.collectionItemId({ required: true }),
-		collection_fields: webflowProps.collectionFields({ required: true }),
+		collection_fields: webflowProps.collectionFields({ required: true, optionalFields: true }),
 		is_archived: Property.Checkbox({
 			displayName: 'Is Archived',
 			description: 'Whether the item is archived or not',

@@ -54,7 +54,8 @@ function collectionFields<R extends boolean>({
 	required,
 	displayName = 'Collection Fields',
 	description,
-}: PropParams<R>) {
+	optionalFields = false,
+}: PropParams<R> & { optionalFields?: boolean }) {
 	return Property.DynamicProperties({
 		auth: webflowAuth,
 		displayName,
@@ -76,7 +77,7 @@ function collectionFields<R extends boolean>({
 					case 'Option':
 						collectionFields[field.slug] = Property.StaticDropdown({
 							displayName: field.displayName,
-							required: field.isRequired,
+							required: !optionalFields && field.isRequired,
 							options: {
 								disabled: false,
 								options: (field.validations?.options ?? []).map((option) => ({
@@ -97,13 +98,13 @@ function collectionFields<R extends boolean>({
 					case 'File':
 						collectionFields[field.slug] = Property.ShortText({
 							displayName: field.displayName,
-							required: field.isRequired,
+							required: !optionalFields && field.isRequired,
 						});
 						break;
 					case 'Image':
 						collectionFields[field.slug] = Property.ShortText({
 							displayName: field.displayName,
-							required: field.isRequired,
+							required: !optionalFields && field.isRequired,
 							description:
 								'Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
 						});
@@ -111,7 +112,7 @@ function collectionFields<R extends boolean>({
 					case 'MultiImage':
 						collectionFields[field.slug] = Property.Array({
 							displayName: field.displayName,
-							required: field.isRequired,
+							required: !optionalFields && field.isRequired,
 							description:
 								' Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
 						});
@@ -119,19 +120,19 @@ function collectionFields<R extends boolean>({
 					case 'MultiReference':
 						collectionFields[field.slug] = Property.Array({
 							displayName: field.displayName,
-							required: field.isRequired,
+							required: !optionalFields && field.isRequired,
 						});
 						break;
 					case 'Number':
 						collectionFields[field.slug] = Property.Number({
 							displayName: field.displayName,
-							required: field.isRequired,
+							required: !optionalFields && field.isRequired,
 						});
 						break;
 					case 'DateTime':
 						collectionFields[field.slug] = Property.DateTime({
 							displayName: field.displayName,
-							required: field.isRequired,
+							required: !optionalFields && field.isRequired,
 						});
 						break;
 					case 'Switch':
