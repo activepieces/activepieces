@@ -32,8 +32,13 @@ function singleStatement({ text, values }: { text: string; values: unknown[] }):
 }
 
 function splitName({ name }: { name: string }): { schema: string | null; name: string } {
-  const dot = name.indexOf('.');
-  return dot === -1 ? { schema: null, name } : { schema: name.slice(0, dot), name: name.slice(dot + 1) };
+  const matches = [...name.matchAll(NAME_PART)];
+  const parts = matches.map((match) => (match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2]));
+  const covered = matches.reduce((total, match) => total + match[0].length, 0);
+  if (covered !== name.length || name.startsWith('.') || parts.length === 0 || parts.length > 2 || parts.some((part) => part === '')) {
+    throw new Error(`"${name}" is not a valid name. Write schema.name, and wrap a part that contains a dot in double quotes, e.g. "my.schema".orders.`);
+  }
+  return parts.length === 1 ? { schema: null, name: parts[0] } : { schema: parts[0], name: parts[1] };
 }
 
 function quoteName({ name }: { name: string }): string {
@@ -55,7 +60,7 @@ async function resolveRelation({ client, name, label }: { client: Client; name: 
 
 async function primaryKeyColumns({ client, oid }: { client: Client; oid: string }): Promise<string[]> {
   const result = await client.query<{ name: string }>(
-    `SELECT a.attname AS name FROM pg_index i JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord) ON true JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum WHERE i.indrelid = $1::oid AND i.indisprimary ORDER BY k.ord`,
+    `SELECT a.attname AS name FROM pg_index i JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord) ON true JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum WHERE i.indrelid = $1::oid AND i.indisprimary AND k.ord <= i.indnkeyatts ORDER BY k.ord`,
     [oid],
   );
   return result.rows.map((row) => row.name);
@@ -136,7 +141,7 @@ async function guardedWrite({ client, quotedTable, where, maxRows, write, verb }
     readOnly: false,
     fn: async () => {
       const counted = await client.query<{ total: string }>(
-        `SELECT count(*) AS total FROM (SELECT 1 FROM ${quotedTable}${where.sql} FOR UPDATE) AS matched`,
+        `SELECT count(*) AS total FROM (SELECT 1 FROM ${quotedTable}${where.sql} LIMIT ${maxRows + 1} FOR UPDATE) AS matched`,
         where.values,
       );
       const total = Number(counted.rows[0]?.total ?? 0);
@@ -172,8 +177,8 @@ function filterToSql({ filter, index }: { filter: Filter; index: number }): SqlF
   if (filter.operator === 'IS NULL' || filter.operator === 'IS NOT NULL') {
     return { sql: `${column} ${filter.operator}`, values: [] };
   }
-  if (filter.value === undefined || filter.value === null || filter.value === '') {
-    throw new Error(`Filter on "${filter.column}" with ${filter.operator} needs a value. Use IS NULL to match empty values.`);
+  if (filter.value === undefined || filter.value === null) {
+    throw new Error(`Filter on "${filter.column}" with ${filter.operator} needs a value. Use IS NULL to match null values, or Run Select Query (WHERE column = '') to match empty text.`);
   }
   if (filter.operator === 'IN') {
     return { sql: `${column} = ANY(${placeholder})`, values: [toArray({ value: filter.value })] };
@@ -222,6 +227,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isFilterOperator(value: string): value is FilterOperator {
   return FILTER_OPERATORS.some((operator) => operator === value);
 }
+
+const NAME_PART = /(?:^|\.)(?:"((?:[^"]|"")*)"|([^."]+))(?=\.|$)/g;
 
 const FILTER_OPERATORS = ['=', '!=', '<', '<=', '>', '>=', 'LIKE', 'NOT LIKE', 'ILIKE', 'NOT ILIKE', 'IN', 'NOT IN', 'IS NULL', 'IS NOT NULL'] as const;
 

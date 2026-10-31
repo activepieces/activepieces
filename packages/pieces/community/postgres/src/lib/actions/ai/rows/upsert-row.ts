@@ -49,14 +49,14 @@ export const upsertRow = createAction({
     }
     const nonKey = columns.filter((column) => !conflict.includes(column));
     const toUpdate = requested.length > 0 ? requested : nonKey.length > 0 ? nonKey : conflict.slice(0, 1);
-    const sql = `INSERT INTO ${postgresAi.quoteName({ name: table })} (${columns.map((column) => format.ident(column)).join(', ')}) VALUES (${columns.map((_, index) => `$${index + 1}`).join(', ')}) ON CONFLICT (${conflict.map((column) => format.ident(column)).join(', ')}) DO UPDATE SET ${toUpdate.map((column) => `${format.ident(column)} = EXCLUDED.${format.ident(column)}`).join(', ')} RETURNING *, (xmax = 0) AS ${INSERTED_FLAG}`;
+    const sql = `INSERT INTO ${postgresAi.quoteName({ name: table })} (${columns.map((column) => format.ident(column)).join(', ')}) VALUES (${columns.map((_, index) => `$${index + 1}`).join(', ')}) ON CONFLICT (${conflict.map((column) => format.ident(column)).join(', ')}) DO UPDATE SET ${toUpdate.map((column) => `${format.ident(column)} = EXCLUDED.${format.ident(column)}`).join(', ')} RETURNING *, (xmax = 0)`;
     const result = await postgresAi.withClient({
       auth: context.auth,
-      fn: (client) => client.query(sql, columns.map((column) => values[column])),
+      fn: (client) => client.query<unknown[]>({ text: sql, values: columns.map((column) => values[column]), rowMode: 'array' }),
     });
-    const { [INSERTED_FLAG]: inserted, ...row } = result.rows[0] ?? {};
-    return { row, inserted: inserted === true };
+    const stored = result.rows[0] ?? [];
+    const rowFields = result.fields.slice(0, -1);
+    const row = Object.fromEntries(rowFields.map((field, index) => [field.name, stored[index]]));
+    return { row, inserted: stored[rowFields.length] === true };
   },
 });
-
-const INSERTED_FLAG = 'ap_upsert_inserted';
