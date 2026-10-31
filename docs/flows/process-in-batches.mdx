@@ -1,0 +1,141 @@
+---
+title: "Process in Batches"
+icon: 'layer-group'
+description: "Split a list into batches and run them in parallel, then continue once every batch has finished"
+---
+
+**Process in Batches** takes a list, splits it into batches, and runs each batch as its own run. The step
+pauses until every batch has finished, then continues with a summary of how they went.
+
+Use it when a list is long enough that running it one item at a time is too slow, and each item's work is
+independent of the others. If the items must be handled in order, or each one depends on the last, use
+**Loop on Items** instead.
+
+## How it works
+
+1. You give the step a **list** and a **batch size**. A list of 1,000 items at a batch size of 10 becomes
+   100 batches.
+2. The steps you nest inside the step are its **body**. Each batch runs the body once, with that batch's
+   slice of the list available as the step's output.
+3. Batches run as separate runs, in parallel, up to whatever your project can run at once.
+4. The step waits for all of them, then continues with a summary.
+
+Inside the body, a batch's items are on the batch step's own output — `{{ step_1.items }}` if the step is
+named `step_1`. Loop over that list with a **Loop on Items** step to handle one item at a time; a batch
+runs its items sequentially.
+
+### What a batch can see
+
+A batch is a separate run, so it does not automatically carry everything the parent knows. Activepieces
+looks at what the body's steps actually reference and sends exactly those step outputs along with the
+batch. A reference to a step above the batch step works as usual.
+
+One reference does not work: a step inside the batch cannot reference a step belonging to an **enclosing
+loop's current iteration** — that value is scoped to the iteration and cannot travel. Move that step above
+the batch step, or copy the value it needs into a step above it.
+
+### What comes back
+
+When every batch has finished, the step continues with a summary:
+
+| Field | Meaning |
+| --- | --- |
+| `barrierId` | the id that identifies this fan-out — quote it when asking an administrator to look a run up |
+| `totalItems`, `batchSize` | what was split, and how. `batchSize` is the size actually used, which may be larger than the one you asked for (see below) |
+| `total` | how many batches the step waited on |
+| `succeeded`, `failed`, `canceled` | how they ended |
+| `notDispatched` | batches that never started, because the step could not dispatch them |
+| `stillRunning` | batches still running when the wait timed out |
+| `rejected` | always `0` for a batch step — the field belongs to the shared wait shape, where it counts declined approvals |
+| `timedOut` | whether the wait ended on its deadline rather than on the last batch |
+| `signals` | one entry per batch, in order: its `sequence` (the batch index), an `outcome` of `SUCCEEDED`, `FAILED`, `CANCELED`, `NOT_DISPATCHED` or `PENDING`, the `runId` of the run it produced (`null` when it never ran), and a `result` |
+| `signalsTruncated` | present and `true` instead of `signals` when the step waited on more than 100 batches |
+
+Unlike the old `exceptions` list, `signals` covers **every** batch, not only the ones that failed — filter it
+on `outcome` to get just the failures. To open a batch's run, use the batch browser on the run detail page
+(below).
+
+By default a failed batch fails the step. Turn on **Continue on Failure** to have the step succeed and
+hand the summary to the steps after it — a Router on `failed` is the usual next move.
+
+## Sizing the batches
+
+Batch size is the one number to get right, and there is no single correct value. Four ceilings decide it,
+in this order.
+
+One hard cap sits above all four: a single step may not dispatch more than 10 000 batches (your
+administrator sets `AP_MAX_BARRIER_SIGNALS`). If your batch size would produce more than that, Activepieces
+**raises the batch size** so the count fits and reports the size it actually used in the summary. It never
+silently drops items.
+
+<Steps>
+  <Step title="What the downstream service tolerates">
+This bites first, almost every time. A wide fan-out sends many requests at once and can rate-limit itself on the very first attempt, not just on a retry. **Larger batches reduce that pressure**, because a batch works through its items one at a time.
+  </Step>
+  <Step title="The point where more batches stop helping">
+How many batches actually run at once is `min(batch count, what your project can run at once)`. So the knee is at:
+
+```text
+batch size ≈ list length ÷ how many runs your project can run at once
+```
+
+Below the knee you leave capacity idle. Above it, wall clock is **flat** — halving the batch size doubles the number of batches but they queue behind the same capacity and finish at the same time — while the overhead of extra runs keeps rising. Ask your administrator what your project's concurrency limit is; on a single-worker self-hosted install it is one.
+  </Step>
+  <Step title="One batch has to finish inside the flow timeout">
+Each batch is bounded by the same flow timeout as any other run. A batch big enough to exceed it will never complete, however many other batches succeed.
+  </Step>
+  <Step title="How much re-runs when something fails">
+A failed batch re-runs **all** of its items. Retrying the run from the failed step re-runs the **whole** list, every batch, including the ones that already succeeded. Bigger batches mean a bigger blast radius.
+  </Step>
+</Steps>
+
+## Watching a run
+
+Open the run and select the Process in Batches step. Its batches are listed there, and each one opens its
+own logs — the same run detail view, for that batch's run. Batches do not appear in the main runs list;
+they are reached from their parent.
+
+## Retrying and cancelling
+
+- **Retry from the failed step** re-runs the whole list. Activepieces warns you before it does; anything a
+  succeeded batch wrote to an external system happens again.
+- **Cancelling the parent** stops batches that are still queued or paused. A batch already running cannot
+  be stopped — it runs to completion or to the flow timeout.
+- A batch cannot be retried or cancelled on its own from the batch list.
+
+## Known behaviour
+
+These are deliberate, not bugs. They are the price of running batches as independent runs.
+
+1. **Retry from the failed step re-runs batches that already succeeded.** With 100 batches and one failure,
+   99 batches of external side effects happen a second time. Retrying many runs at once multiplies it.
+2. **Batches already running cannot be stopped.** Cancelling the parent stops batches that have not been
+   created yet — usually within one batch — and reaches those whose whole chain is still queued or paused.
+   A batch already running is not interrupted, and an approval nested inside one cannot be cancelled at all:
+   it expires with the paused-run timeout.
+3. **Continue on Failure plus a timed-out wait yields a succeeded run with batches still writing.** The
+   only trace is `timedOut: true` and a `stillRunning` count — the summary carries no ids for those
+   batches. An administrator can find them from the summary's `barrierId`.
+4. **A batch's logs can expire before its parent's.** Retention runs from the last write on each run's own
+   log, and the parent's is written last. Normal skew is minutes against a 30-day window; it reaches days
+   only when a batch pauses on an approval. An expired batch shows "Logs no longer available".
+5. **A wedged batch parks the parent paused for up to the paused-run timeout** (30 days by default) rather
+   than surfacing within the hour. The recourse is to cancel the parent, which is paused and therefore
+   cancellable.
+6. **A batch body cannot hold another Process in Batches, but it can call a flow that does.** Activepieces
+   refuses to place the step inside another Process in Batches. Depth is still unbounded through a callable
+   flow: a batch body that calls a flow whose own step processes in batches fans out again, and the per-step
+   cap applies to one step's batches only, so nothing bounds the total across levels. Retrying the outer
+   flow multiplies re-execution by whatever depth and width you built.
+7. **A failure alert can name a batch instead of its parent.** Failure emails are deduplicated per flow
+   version for a day, and batches share their parent's flow version — so whichever fails first claims the
+   alert and the other is silent for 24 hours. The link resolves to a real run, but a batch's run is not
+   listed anywhere on its own.
+8. **The parent's step count under-reports.** Work done inside batches is counted on each batch's run, never
+   aggregated onto the parent.
+9. **A very large list produced far upstream can expire before its batches read it.** Large step outputs are
+   stored with their own retention clock, which starts when they are written and is not extended when the
+   run resumes. A batch that reads an expired value fails that batch with a clear "file not found" error.
+10. **On a single-worker install the step is strictly sequential, and says so nowhere.** It is fully
+    functional at concurrency 1 — correct waiting, correct per-batch isolation, correct retry granularity —
+    it simply buys no speed. Add workers to get the parallelism.
