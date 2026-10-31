@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   Property,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
@@ -11,11 +10,12 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { surrealdbAuth } from '../..';
-import client from '../common';
 import crypto from 'crypto';
+import { surrealdbAuth } from '../auth';
+import { surrealdbApi } from '../common/api';
+import { surrealdbProps } from '../common/props';
+import type { SurrealdbRow } from '../common/types';
 
-// replace auth with piece auth variable
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof surrealdbAuth>,
   {
@@ -26,21 +26,22 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
-    const lastItem = lastItemId as string;
+    const lastItem = typeof lastItemId === 'string' ? lastItemId : undefined;
     const query = constructQuery({
       order_by: propsValue.order_by,
       lastItem: lastItem,
       order_direction: propsValue.order_direction,
     });
 
-    const authProps = auth.props;
-    const result = await client.query(authProps, query, {
-      table: propsValue.table,
+    const result = await surrealdbApi.query<SurrealdbRow[]>({
+      auth,
+      sql: query,
+      args: {
+        table: propsValue.table,
+      },
     });
 
-    const items = result.body[0].result.map(function (
-      row: Record<string, any>
-    ) {
+    const items = result[0].result.map(function (row) {
       const rowHash = crypto
         .createHash('md5')
         .update(JSON.stringify(row))
@@ -66,7 +67,7 @@ function constructQuery({
 }: {
   order_by: string;
   order_direction: 'ASC' | 'DESC' | undefined;
-  lastItem: string;
+  lastItem: string | undefined;
 }): string {
   const lastOrderKey = lastItem ? lastItem.split('|')[0] : null;
   if (lastOrderKey === null) {
@@ -100,7 +101,7 @@ function constructQuery({
   }
 }
 
-export const newRow = createTrigger({
+export const newRowTrigger = createTrigger({
   name: 'new-row',
   classification: 'READ',
   displayName: 'New Row',
@@ -112,42 +113,7 @@ export const newRow = createTrigger({
     description: Property.MarkDown({
       value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached. It's suggested to add a created_at timestamp. \`DEFINE FIELD OVERWRITE createdAt ON schedule VALUE time::now() READONLY;\``,
     }),
-    table: Property.Dropdown({
-      displayName: 'Table name',
-      required: true,
-      refreshers: ['auth'],
-      refreshOnSearch: false,
-      auth: surrealdbAuth,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please authenticate first',
-          };
-        }
-        const authProps = auth.props;
-        try {
-          const result = await client.query(authProps, 'INFO FOR DB');
-          const options = Object.keys(result.body[0].result.tables).map(
-            (row) => ({
-              label: row,
-              value: row,
-            })
-          );
-          return {
-            disabled: false,
-            options,
-          };
-        } catch (e) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: JSON.stringify(e),
-          };
-        }
-      },
-    }),
+    table: surrealdbProps.table({ required: true }),
     order_by: Property.ShortText({
       displayName: 'Column to order by',
       description: 'Use something like a created timestamp.',
