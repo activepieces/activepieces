@@ -6,18 +6,17 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/pieces-framework';
-import { createGraphClient, withGraphRetry } from '../common/graph';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
-import { Chat, ChatType } from '@microsoft/microsoft-graph-types';
+import { microsoftTeamsClient } from '../common/client';
+import type { Chat, MicrosoftTeamsPage } from '../common/types';
 import dayjs from 'dayjs';
+import { newChatOutputSchema } from '../output-schemas';
 
-type Props = {
-	chatType?: ChatType;
-};
+type Props = Record<string, never>;
 
 export const newChatTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-chat',
+	outputSchema: newChatOutputSchema,
 	classification: 'READ',
 	displayName: 'New Chat',
 	description: 'Triggers when a new chat is created.',
@@ -27,16 +26,16 @@ export const newChatTrigger = createTrigger({
 	props: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, { ...context, propsValue: context.propsValue as Props });
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, { ...context, propsValue: context.propsValue as Props });
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context as any);
+		return await pollingHelper.test(polling, context);
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context as any);
+		return await pollingHelper.poll(polling, context);
 	},
 	sampleData: {
 		id: '19:example_chat_id@unq.gbl.spaces',
@@ -51,8 +50,7 @@ export const newChatTrigger = createTrigger({
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
-		const cloud = auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth });
 		const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
 
 		const chats: Chat[] = [];
@@ -61,12 +59,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 				? '$top=10'
 				: `$filter=createdDateTime gt ${lastFetchDate}`;
 
-		let response: PageCollection = await withGraphRetry(() =>
+		let response: MicrosoftTeamsPage<Chat> = await microsoftTeamsClient.withRetry(() =>
 			client.api(`/chats?${filter}`).get(),
 		);
 
 		while (response.value && response.value.length > 0) {
-			for (const channel of response.value as Chat[]) {
+			for (const channel of response.value) {
 				if (isNil(channel.createdDateTime)) {
 					continue;
 				}
@@ -74,7 +72,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAu
 			}
 			const nextLink = response['@odata.nextLink'];
 			if (lastFetchEpochMS !== 0 && nextLink) {
-				response = await withGraphRetry(() => client.api(nextLink).get());
+				response = await microsoftTeamsClient.withRetry(() => client.api(nextLink).get());
 			} else {
 				break;
 			}

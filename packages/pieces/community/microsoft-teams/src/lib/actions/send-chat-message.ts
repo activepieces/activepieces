@@ -1,21 +1,23 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsGetChatMessageOutputSchema } from '../output-schemas';
 
 export const sendChatMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_send_chat_message',
+	outputSchema: microsoftTeamsGetChatMessageOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Chat Message',
 	description: 'Sends a message in an existing chat.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Sends a message into an existing one-on-one or group chat in Microsoft Teams, identified by chat ID, as plain text or HTML. Use when the target chat already exists; to start a fresh chat use Create Chat & Send Message instead. Not idempotent — each call posts another message.',
 		idempotent: false,
 	},
 	props: {
-		chatId: microsoftTeamsCommon.chatId,
+		chatId: microsoftTeamsProps.chatId({ required: true }),
 		contentType: Property.StaticDropdown({
 			displayName: 'Content Type',
 			required: true,
@@ -42,8 +44,7 @@ export const sendChatMessageAction = createAction({
 	async run(context) {
 		const { chatId, contentType, content } = context.propsValue;
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
 		const chatMessage = {
 			body: {

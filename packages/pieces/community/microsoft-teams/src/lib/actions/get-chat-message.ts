@@ -1,21 +1,23 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, withGraphRetry } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsGetChatMessageOutputSchema } from '../output-schemas';
 
 export const getChatMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_get_chat_message',
+	outputSchema: microsoftTeamsGetChatMessageOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Chat Message',
 	description: 'Fetch a specific chat message by chat and message ID.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Retrieves a single message from a Microsoft Teams chat by chat ID and message ID. Use to read the content or metadata of a known chat message. Idempotent read-only lookup.',
 		idempotent: true,
 	},
 	props: {
-		chatId: microsoftTeamsCommon.chatId,
+		chatId: microsoftTeamsProps.chatId({ required: true }),
 		messageId: Property.ShortText({
 			displayName: 'Message ID',
 			required: true,
@@ -25,11 +27,9 @@ export const getChatMessageAction = createAction({
 	async run(context) {
 		const { chatId, messageId } = context.propsValue;
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
-		// https://learn.microsoft.com/graph/api/chatmessage-get?view=graph-rest-1.0
-		return await withGraphRetry(() => client.api(`/chats/${chatId}/messages/${messageId}`).get());
+		return await microsoftTeamsClient.withRetry(() => client.api(`/chats/${chatId}/messages/${messageId}`).get());
 	},
 });
 

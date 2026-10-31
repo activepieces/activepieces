@@ -1,22 +1,24 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
+import type { Channel, MicrosoftTeamsPage } from '../common/types';
+import { microsoftTeamsFindChannelOutputSchema } from '../output-schemas';
 
 export const findChannelAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_find_channel',
+	outputSchema: microsoftTeamsFindChannelOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Channel',
 	description: 'Finds channels by name.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Searches the channels of a Microsoft Teams team (by team ID) for ones whose display name exactly matches the given name. Use to resolve a channel name to its ID before posting or reading. Idempotent read-only lookup; match is exact, not a substring search.',
 		idempotent: true,
 	},
 	props: {
-		teamId: microsoftTeamsCommon.teamId,
+		teamId: microsoftTeamsProps.teamId({ required: true }),
 		channelName: Property.ShortText({
 			displayName: 'Channel Name',
 			required: true,
@@ -25,10 +27,9 @@ export const findChannelAction = createAction({
 	async run(context) {
 		const { teamId, channelName } = context.propsValue;
 
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
-		const response: PageCollection = await client
+		const response: MicrosoftTeamsPage<Channel> = await client
 			.api(`/teams/${teamId}/allChannels`)
 			.filter(`displayName eq '${channelName}'`)
 			.get();
