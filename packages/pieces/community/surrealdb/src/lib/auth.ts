@@ -36,7 +36,7 @@ export const surrealdbAuth = PieceAuth.CustomAuth({
   required: true,
   validate: async ({ auth }) => {
     try {
-      surrealdbApi.query({
+      await surrealdbApi.query({
         auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth },
         sql: 'INFO for db',
       });

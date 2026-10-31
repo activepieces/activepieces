@@ -5,7 +5,7 @@ function baseUrl({ auth }: { auth: SurrealdbAuthValue }): string {
   return auth.props.url;
 }
 
-async function request<T>({ auth, method, path, query, body, headers }: RequestParams & { auth: SurrealdbAuthValue }): Promise<T> {
+async function request<T>({ auth, method, path, query, body, headers, responseType }: RequestParams & { auth: SurrealdbAuthValue }): Promise<T> {
   const { username, password, namespace, database } = auth.props;
   const response = await httpClient.sendRequest<T>({
     method,
@@ -19,6 +19,7 @@ async function request<T>({ auth, method, path, query, body, headers }: RequestP
     },
     queryParams: query,
     body,
+    responseType,
   });
   return response.body;
 }
@@ -31,4 +32,5 @@ type RequestParams = {
   query?: QueryParams;
   body?: unknown;
   headers?: HttpHeaders;
+  responseType?: 'json' | 'text';
 };

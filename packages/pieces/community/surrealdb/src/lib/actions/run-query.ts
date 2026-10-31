@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { surrealdbAuth } from '../auth';
 import { surrealdbApi } from '../common/api';
+import { runQueryOutputSchema } from '../output-schemas';
 
 export const runQueryAction = createAction({
   auth: surrealdbAuth,
   name: 'run-query',
+  outputSchema: runQueryOutputSchema,
   classification: 'WRITE',
   displayName: 'Run Query',
   description: 'Run a query in SurrealDB.',
