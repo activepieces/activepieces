@@ -34,7 +34,7 @@ export const common = {
             hasError: true,
             error: {
                 message: 'The following values are not numbers',
-                errors: newValues.filter((value) => !isNil(value)).map((value) => value.error as ErrorInfo)
+                errors: newValues.flatMap((value) => isNil(value.error) ? [] : [value.error])
             }
         }
     }
