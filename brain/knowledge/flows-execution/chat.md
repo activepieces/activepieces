@@ -77,6 +77,8 @@ A turn is kept alive / reclaimed by three separate mechanisms in `execute-agent-
 
 - **The chat's internal MCP token lives as long as a turn can (2 hours), not 15 minutes.** It's issued once per turn by `issueChatTurnAccessToken` (called from `agentMcp.getCredentials`) and kept in worker memory. `issueInternalAccessToken`, which the `/mcp-server/token` route hands to callers, keeps 15 minutes. With the 15-minute outside-client lifetime, any turn that waited on a card long enough lost every `ap_*` tool with "authentication failed" and stopped half done. Outside MCP clients keep their 15-minute tokens.
 
+- **An `ap_lazy_tool` call always has a step label.** The schema the model sees marks `title`, `activeTitle` and `doneTitle` as required, but validation does not reject a call without them. It fills them from the inner tool's name (`toolCallLabels.withFallbackLabels`, e.g. "Read step code"). The AI SDK hands the validated value to both the live stream and the saved part, so the UI never shows a raw tool name, and a missing label never costs a failed call or a repair round trip.
+
 ### Key files
 Entry point: `agentModule`, the Fastify plugin registered in `packages/server/api/src/app/app.ts`.
 

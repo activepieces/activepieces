@@ -116,7 +116,7 @@ function createSkillTools({ registry, surface, guides, loadedSkills, onSkillLoad
             },
         }),
         [LAZY_TOOL_NAME]: tool({
-            description: 'Run any tool by name. Pass the tool name as `tool` and its arguments as `input`, shaped exactly by that tool\'s input schema. Put the pill labels (title, activeTitle, doneTitle) on this call.',
+            description: 'Run any tool by name. `tool` is the tool name and `input` is that tool\'s arguments, shaped exactly by its input schema, both at the top level: {"tool": "ap_validate_flow", "input": {"flowId": "..."}}. Never wrap them in another object. Numbers, booleans and lists keep their JSON types. Always set title, activeTitle and doneTitle on this call: they are the step label the user sees, so name their thing in plain words, never the tool.',
             inputSchema: lazyToolInputSchema({ registry, canAffordPaidTool }),
             execute: async ({ tool: toolName, input }, options: ToolExecutionOptions<undefined>) => {
                 const target = registry[toolName]
@@ -153,8 +153,8 @@ function lazyToolModelOutput({ output, reroutedTool }: { output: ToolResultPart[
 }
 
 function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSet, canAffordPaidTool: () => boolean }): Schema<LazyToolInput> {
-    const outer = asSchema(LAZY_TOOL_OUTER_SCHEMA)
-    return jsonSchema<LazyToolInput>(async () => plainJsonSchema(await outer.jsonSchema), {
+    const advertised = asSchema(LAZY_TOOL_ADVERTISED_SCHEMA)
+    return jsonSchema<LazyToolInput>(async () => plainJsonSchema(await advertised.jsonSchema), {
         validate: async (value) => {
             const parsed = LAZY_TOOL_OUTER_SCHEMA.safeParse(value)
             if (!parsed.success) {
@@ -172,7 +172,7 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
             if (!inner.success) {
                 return { success: false, error: new Error(`Invalid input for "${toolName}": ${inner.error.message}\nInput schema: ${JSON.stringify(await jsonSchemaOf(target))}`) }
             }
-            return { success: true, value: { ...parsed.data, input: inner.value } }
+            return { success: true, value: { ...toolCallLabels.withFallbackLabels({ input: parsed.data, toolName }), tool: toolName, input: inner.value } }
         },
     })
 }
@@ -273,15 +273,46 @@ function paidToolRefusal(toolName: string): string {
     return `"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`
 }
 
+function withFallbackLabels<T extends Record<string, unknown>>({ input, toolName }: { input: T, toolName: string }): T & ToolCallLabelSet {
+    const fallback = readableToolName(toolName)
+    return {
+        ...input,
+        title: labelOr({ value: input['title'], fallback }),
+        activeTitle: labelOr({ value: input['activeTitle'], fallback }),
+        doneTitle: labelOr({ value: input['doneTitle'], fallback }),
+    }
+}
+
+function labelOr({ value, fallback }: { value: unknown, fallback: string }): string {
+    return typeof value === 'string' && value.trim().length > 0 ? value : fallback
+}
+
+function readableToolName(toolName: string): string {
+    const words = toolName.replace(/^mcp__[^_]+__/, '').replace(/^ap_/, '').replace(/[_-]+/g, ' ').trim()
+    return words.length === 0 ? 'Working on it' : `${words[0].toUpperCase()}${words.slice(1)}`
+}
+
 const OTHER_TOOLS_HEADING = '## Other tools you have'
+
 const LAZY_TOOL_OUTER_SCHEMA = z.object({
     tool: z.string().describe('The tool name, e.g. "ap_add_step"'),
     input: z.record(z.string(), z.unknown()).describe('The tool\'s arguments, matching its input schema'),
     ...cardTitleFields,
 })
+
+const LAZY_TOOL_ADVERTISED_SCHEMA = LAZY_TOOL_OUTER_SCHEMA.extend({
+    title: z.string().min(1).describe('The 2-4 word label the user sees for this step, about their thing, e.g. "Your Gmail inbox".'),
+    activeTitle: z.string().min(1).describe('The label while it runs, -ing form, e.g. "Reading your Gmail inbox".'),
+    doneTitle: z.string().min(1).describe('The same label in past tense, e.g. "Read your Gmail inbox".'),
+})
+
 const LABEL_FIELDS = new Set(Object.keys(cardTitleFields))
 const LABEL_SCHEMA = asSchema(z.object(cardTitleFields))
 const SCHEMA_NOISE_KEYS = new Set(['$schema', 'additionalProperties'])
+
+export const toolCallLabels = {
+    withFallbackLabels,
+}
 
 export type LazyToolChunkResult = {
     emit: unknown[]
@@ -298,4 +329,10 @@ export type SkillSurfaceResult = {
     coreToolNames: string[]
     attachedToolNames: () => string[]
     catalogNote: string
+}
+
+type ToolCallLabelSet = {
+    title: string
+    activeTitle: string
+    doneTitle: string
 }
