@@ -1,20 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mongodbAuth } from '../..';
+import { mongodbAuth } from '../auth';
 import { findAndUpdateDocumentsOutputSchema } from '../output-schemas';
-import { mongodbCommon, mongodbConnect } from '../common';
+import { mongodbApi } from '../common/api';
+import { mongodbClient } from '../common/client';
+import { mongodbProps } from '../common/props';
 
-export default createAction({
+export const findAndUpdateDocumentsAction = createAction({
   auth: mongodbAuth,
   name: 'find_and_update_documents',
   classification: 'WRITE',
   displayName: 'Find and Update Documents',
   description: 'Find documents and update them, returning the updated documents',
-  audience: 'both',
+  audience: 'human',
   outputSchema: findAndUpdateDocumentsOutputSchema,
   aiMetadata: { description: 'Applies MongoDB update operators to all documents matching a filter via updateMany, then optionally re-reads and returns the matched documents in their post-update state. Choose this over plain Update Documents when the agent needs to see the resulting documents, not just counts. Filter and update are required; supports upsert. Not idempotent: it mutates state and operators like $inc compound on each call.', idempotent: false },
   props: {
-    database: mongodbCommon.database,
-    collection: mongodbCommon.collection(),
+    database: mongodbProps.database({ required: false }),
+    collection: mongodbProps.collection({ required: true }),
     filter: Property.Json({
       displayName: 'Filter',
       description: 'MongoDB query to select documents to update (e.g., {"status": "pending"})',
@@ -39,7 +41,7 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = await mongodbConnect(context.auth);
+    const client = await mongodbClient.create({ auth: context.auth });
 
     try {
       if (!context.propsValue.collection) {
@@ -66,20 +68,13 @@ export default createAction({
       const upsert = context.propsValue.upsert || false;
       const returnUpdated = context.propsValue.returnUpdated !== false;
 
-      const updateResult = await collection.updateMany(filter, update, { upsert });
-
-      let documents: Record<string, unknown>[] = [];
-      if (returnUpdated) {
-        documents = await collection.find(filter).toArray();
-      }
-
-      return {
-        matchedCount: updateResult.matchedCount,
-        modifiedCount: updateResult.modifiedCount,
-        upsertedCount: updateResult.upsertedCount,
-        upsertedId: updateResult.upsertedId,
-        documents: returnUpdated ? documents : undefined,
-      };
+      return await mongodbApi.findAndUpdateDocuments({
+        collection,
+        filter,
+        update,
+        upsert,
+        returnUpdated,
+      });
     } finally {
       await client.close();
     }
