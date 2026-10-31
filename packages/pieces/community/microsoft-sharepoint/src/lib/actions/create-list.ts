@@ -4,10 +4,12 @@ import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { List } from '@microsoft/microsoft-graph-types';
+import { microsoftSharepointCreateListOutputSchema } from '../output-schemas';
 
 export const createListAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_create_list',
+  outputSchema: microsoftSharepointCreateListOutputSchema,
   classification: 'WRITE',
   displayName: 'Create List',
   description: 'Creates a new list.',

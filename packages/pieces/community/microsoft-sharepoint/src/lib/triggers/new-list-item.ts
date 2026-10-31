@@ -11,6 +11,7 @@ import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { ListItem } from '@microsoft/microsoft-graph-types';
+import { newListItemOutputSchema } from '../output-schemas';
 
 type Props = {
 	siteId: string;
@@ -32,9 +33,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 
 		const items = [];
 
-		const filter =
-			lastFetchEpochMS === 0 ? `$filter=createdDateTime gt ${dayjs().toISOString()}` : '$top=10';
-
+		const filter = '$top=10';
 
 		let response: PageCollection = await client
 			.api(`/sites/${siteId}/lists/${listId}/items?${filter}`)
@@ -75,6 +74,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 export const newListItemTrigger = createTrigger({
 	auth: microsoftSharePointAuth,
 	name: 'new_list_item',
+	outputSchema: newListItemOutputSchema,
 	classification: 'READ',
 	displayName: 'New List Item',
 	description: 'Triggers when a new item is created in a SharePoint list.',

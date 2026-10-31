@@ -12,6 +12,7 @@ import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
+import { newOrUpdatedFolderOutputSchema } from '../output-schemas';
 
 type Props = {
 	siteId: string;
@@ -90,6 +91,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 export const newOrUpdatedFolderTrigger = createTrigger({
 	auth: microsoftSharePointAuth,
 	name: 'new_or_updated_folder',
+	outputSchema: newOrUpdatedFolderOutputSchema,
 	classification: 'READ',
 	displayName: 'New or Updated Folder',
 	description: 'Triggers when a folder is created or updated (e.g., name change).',

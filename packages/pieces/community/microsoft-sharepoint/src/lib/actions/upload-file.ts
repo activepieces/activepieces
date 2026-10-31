@@ -6,6 +6,7 @@ import { httpClient, HttpMethod, AuthenticationType, HttpResponse, streamUtils }
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { microsoftSharepointReplaceFileContentOutputSchema } from '../output-schemas';
 
 const SIMPLE_UPLOAD_LIMIT = 250 * 1024 * 1024;
 const CHUNK_SIZE = 10 * 1024 * 1024;
@@ -13,6 +14,7 @@ const CHUNK_SIZE = 10 * 1024 * 1024;
 export const uploadFile = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_upload_file',
+  outputSchema: microsoftSharepointReplaceFileContentOutputSchema,
   classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Uploads a new file at path you specify.',
@@ -53,7 +55,8 @@ export const uploadFile = createAction({
       baseUrl,
     });
 
-    const parentIdResponse = await client.api(`/sites/${siteId}/drives/${driveId}/root:${parentFolder}`).get()
+    const parentPath = parentFolder === '/' ? 'root' : `root:${parentFolder}`;
+    const parentIdResponse = await client.api(`/sites/${siteId}/drives/${driveId}/${parentPath}`).get()
     const parentId = parentIdResponse.id ?? "test";
     const itemPath = `/sites/${siteId}/drives/${driveId}/items/${parentId}:/${fileName}`;
 

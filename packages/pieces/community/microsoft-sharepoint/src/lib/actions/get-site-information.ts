@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { microsoftSharepointGetRootSiteOutputSchema } from '../output-schemas';
 
 export const getSiteInformationAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_get_site_information',
+  outputSchema: microsoftSharepointGetRootSiteOutputSchema,
   classification: 'READ',
   displayName: 'Get Site Information',
   description: 'Fetch metadata of a SharePoint site (site ID, title, URL, description, etc.).',
