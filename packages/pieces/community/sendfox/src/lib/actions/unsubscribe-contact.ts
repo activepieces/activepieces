@@ -2,6 +2,7 @@ import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-fr
 import { HttpMethod } from '@activepieces/pieces-common';
 import { sendfoxAuth } from '../auth';
 import { sendfoxClient } from '../common/client';
+import { unsubscribeContactOutputSchema } from '../output-schemas';
 
 export const unsubscribeContactAction = createAction({
   name: 'unsubscribe',
@@ -11,6 +12,7 @@ export const unsubscribeContactAction = createAction({
   description: 'Stop all SendFox emails to a contact',
   audience: 'both',
   aiMetadata: { description: 'Unsubscribes a contact from SendFox by email so they stop receiving emails. Use to honor an opt-out or remove someone from sends. Effectively idempotent in outcome (the contact ends up unsubscribed), but flagged not idempotent because each call issues a state-changing request.', idempotent: false },
+  outputSchema: unsubscribeContactOutputSchema,
   props: {
     info: Property.MarkDown({
       value:

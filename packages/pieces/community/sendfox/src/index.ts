@@ -2,6 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createContactAction } from './lib/actions/create-contact';
 import { createListAction } from './lib/actions/create-list';
+import { sendfoxAiActions } from './lib/actions/ai';
 import { unsubscribeContactAction } from './lib/actions/unsubscribe-contact';
 import { sendfoxAuth } from './lib/auth';
 import { sendfoxClient } from './lib/common/client';
@@ -19,6 +20,7 @@ export const sendfox = createPiece({
     createListAction,
     unsubscribeContactAction,
     createContactAction,
+    ...sendfoxAiActions,
     createCustomApiCallAction({
       baseUrl: () => sendfoxClient.baseUrl(),
       auth: sendfoxAuth,

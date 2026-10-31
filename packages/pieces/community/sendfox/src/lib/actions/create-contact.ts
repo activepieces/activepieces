@@ -1,16 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { sendfoxAuth } from '../auth';
-import { sendfoxClient } from '../common/client';
+import { sendfoxApi } from '../common/api';
 import { sendfoxProps } from '../common/props';
+import { createContactOutputSchema } from '../output-schemas';
 
 export const createContactAction = createAction({
   name: 'create-contact',
+  outputSchema: createContactOutputSchema,
   classification: 'WRITE',
   auth: sendfoxAuth,
   displayName: 'Create Contact',
   description: 'Add a contact to SendFox, optionally to one of your lists',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Adds a new contact (subscriber) to SendFox by email, optionally setting first/last name and assigning the contact to a list. Use to add or onboard a subscriber. Not idempotent: each call posts the contact, so repeating may create or re-add the entry.', idempotent: false },
   propertyGroups: [
     {
@@ -53,16 +54,12 @@ export const createContactAction = createAction({
   },
   async run(context) {
     const { email, firstname, lastname, list } = context.propsValue;
-    return await sendfoxClient.request<unknown>({
+    return await sendfoxApi.createContact({
       auth: context.auth,
-      method: HttpMethod.POST,
-      path: '/contacts',
-      body: {
-        email,
-        ...(firstname ? { first_name: firstname } : {}),
-        ...(lastname ? { last_name: lastname } : {}),
-        ...(list ? { lists: [list] } : {}),
-      },
+      email,
+      firstName: firstname,
+      lastName: lastname,
+      lists: list ? [list] : undefined,
     });
   },
 });

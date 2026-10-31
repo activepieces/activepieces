@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { sendfoxAuth } from '../auth';
 import { sendfoxClient } from '../common/client';
+import { createListOutputSchema } from '../output-schemas';
 
 export const createListAction = createAction({
   name: 'create-list',
@@ -11,6 +12,7 @@ export const createListAction = createAction({
   description: 'Create a contact list in SendFox',
   audience: 'both',
   aiMetadata: { description: 'Creates a new contact list in SendFox with the given name. Use to set up a list before adding subscribers to it. Not idempotent: each call creates a new list even if one with the same name already exists.', idempotent: false },
+  outputSchema: createListOutputSchema,
   props: {
     task_name: Property.ShortText({
       displayName: 'List Name',
