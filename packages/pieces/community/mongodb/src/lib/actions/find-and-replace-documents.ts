@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mongodbAuth } from '../auth';
 import { findAndReplaceDocumentsOutputSchema } from '../output-schemas';
+import { mongodbApi } from '../common/api';
 import { mongodbClient } from '../common/client';
 import { mongodbProps } from '../common/props';
 
@@ -10,7 +11,7 @@ export const findAndReplaceDocumentsAction = createAction({
   classification: 'WRITE',
   displayName: 'Find and Replace Documents',
   description: 'Replace documents that match a filter with a new document',
-  audience: 'both',
+  audience: 'human',
   outputSchema: findAndReplaceDocumentsOutputSchema,
   aiMetadata: { description: 'Replaces the first document matching a filter with an entirely new document via replaceOne (the whole document is overwritten, not patched), and can return either the before or after version. Choose this over Update Documents when swapping a full document rather than applying field-level operators. Filter and replacement are required; supports upsert. Mutating and not idempotent.', idempotent: false },
   props: {
@@ -73,35 +74,13 @@ export const findAndReplaceDocumentsAction = createAction({
       const upsert = context.propsValue.upsert || false;
       const returnDocumentPreference = context.propsValue.returnDocument || 'after';
 
-      let beforeDocument = null;
-      if (returnDocumentPreference === 'before') {
-        beforeDocument = await collection.findOne(filter);
-      }
-
-      const replaceResult = await collection.replaceOne(
+      return await mongodbApi.findAndReplaceDocument({
+        collection,
         filter,
         replacement,
-        {
-          upsert
-        }
-      );
-
-      let afterDocument = null;
-      if (returnDocumentPreference === 'after' || (!beforeDocument && replaceResult.matchedCount > 0)) {
-        const query = replaceResult.upsertedId
-          ? { _id: replaceResult.upsertedId }
-          : filter;
-        afterDocument = await collection.findOne(query);
-      }
-
-      const document = returnDocumentPreference === 'before' ? beforeDocument : afterDocument;
-
-      return {
-        matchedCount: replaceResult.matchedCount,
-        modifiedCount: replaceResult.modifiedCount,
-        upsertedId: replaceResult.upsertedId,
-        document,
-      };
+        upsert,
+        returnDocumentPreference,
+      });
     } finally {
       await client.close();
     }

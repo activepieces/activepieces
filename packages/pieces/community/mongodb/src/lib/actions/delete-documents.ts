@@ -10,7 +10,7 @@ export const deleteDocumentsAction = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Documents',
   description: 'Delete documents from a collection',
-  audience: 'both',
+  audience: 'human',
   outputSchema: deleteDocumentsOutputSchema,
   aiMetadata: { description: 'Removes every document matching a filter from a MongoDB collection via deleteMany. Use to delete records in bulk; an empty filter would match and delete all documents in the collection, so scope the filter carefully. The filter is required. Mutating and destructive; repeating the call deletes whatever now matches, so it is not idempotent.', idempotent: false },
   props: {
