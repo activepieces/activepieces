@@ -25,7 +25,8 @@ const REGISTRY_I18N = {
 }
 
 const brokenOffered = officialPiece({ name: '@activepieces/piece-refetch-offered', version: '0.23.1', created: '2023-06-05T00:00:00.000Z' })
-const brokenWithdrawn = officialPiece({ name: '@activepieces/piece-refetch-withdrawn', version: '0.1.0' })
+const brokenGoneFromCloud = officialPiece({ name: '@activepieces/piece-refetch-gone', version: '0.1.0' })
+const brokenMismatched = officialPiece({ name: '@activepieces/piece-refetch-mismatched', version: '5.0.0' })
 const brokenFetchFails = officialPiece({ name: '@activepieces/piece-refetch-unreachable', version: '1.0.0' })
 const untranslatedUpstream = officialPiece({ name: '@activepieces/piece-refetch-untranslated', version: '2.0.0' })
 const alreadyTranslated = officialPiece({ name: '@activepieces/piece-refetch-translated', version: '3.0.0', i18n: REGISTRY_I18N })
@@ -46,7 +47,7 @@ beforeEach(async () => {
     process.env.AP_PIECES_SYNC_MODE = PieceSyncMode.OFFICIAL_AUTO
     await databaseConnection().getRepository('piece_metadata').createQueryBuilder().delete().execute()
     await databaseConnection().query('DELETE FROM "background_migrations" WHERE "name" = $1', [new RefetchMissingPieceTranslations1879000000000().name])
-    for (const piece of [brokenOffered, brokenWithdrawn, brokenFetchFails, untranslatedUpstream, alreadyTranslated, customPiece]) {
+    for (const piece of [brokenOffered, brokenGoneFromCloud, brokenMismatched, brokenFetchFails, untranslatedUpstream, alreadyTranslated, customPiece]) {
         await pieceMetadataService(app!.log).create({ pieceMetadata: piece, packageType: PackageType.REGISTRY, pieceType: piece.pieceType, publishCacheRefresh: false })
     }
     getMock.mockImplementation(async (url: string) => stubRegistry(url))
@@ -65,12 +66,27 @@ describe('RefetchMissingPieceTranslations', () => {
         expect(getMock.mock.calls.every(([, config]) => typeof config?.timeout === 'number' && config.timeout > 0)).toBe(true)
     })
 
-    it('leaves a version the registry no longer offers in place, untranslated and not fetched', async () => {
+    it('fetches every broken version directly instead of filtering by the instance\'s registry list', async () => {
         await runThroughRunner()
 
-        expect(await rowExists(brokenWithdrawn.id)).toBe(true)
-        expect(await translationsOf(brokenWithdrawn.id)).toEqual({})
-        expect(fetchedVersions()).not.toContain(`${brokenWithdrawn.name}@${brokenWithdrawn.version}`)
+        expect(getMock.mock.calls.some(([url]) => String(url).includes('/registry'))).toBe(false)
+        expect(fetchedVersions()).toEqual(expect.arrayContaining([
+            `${brokenOffered.name}@${brokenOffered.version}`,
+            `${brokenGoneFromCloud.name}@${brokenGoneFromCloud.version}`,
+        ]))
+    })
+
+    it('leaves a version cloud can no longer serve in place and untranslated', async () => {
+        await runThroughRunner()
+
+        expect(await rowExists(brokenGoneFromCloud.id)).toBe(true)
+        expect(await translationsOf(brokenGoneFromCloud.id)).toEqual({})
+    })
+
+    it('does not attach translations when the registry answers with a different version', async () => {
+        await runThroughRunner()
+
+        expect(await translationsOf(brokenMismatched.id)).toEqual({})
     })
 
     it('skips a version whose fetch fails and still completes, so it cannot block later migrations', async () => {
@@ -105,11 +121,14 @@ function officialPiece({ name, version, created, i18n }: { name: string, version
 }
 
 function stubRegistry(url: string): { data: unknown } {
-    if (url.includes('/registry?')) {
-        return { data: [brokenOffered, brokenFetchFails, untranslatedUpstream, alreadyTranslated].map(({ name, version }) => ({ name, version })) }
-    }
     if (url.includes(brokenFetchFails.name)) {
         throw new Error('connect ETIMEDOUT')
+    }
+    if (url.includes(brokenGoneFromCloud.name)) {
+        throw new Error('Request failed with status code 404')
+    }
+    if (url.includes(brokenMismatched.name)) {
+        return { data: { name: brokenMismatched.name, version: '5.0.1', i18n: REGISTRY_I18N } }
     }
     if (url.includes(untranslatedUpstream.name)) {
         return { data: { name: untranslatedUpstream.name, version: untranslatedUpstream.version } }
