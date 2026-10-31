@@ -289,7 +289,7 @@ export const generatePresentations = createAction({
           return statusResp;
         }
 
-        if (statusResp.status === 'failed') {
+        if (statusResp.status === 'failed' || statusResp.status === 'error') {
           throw new Error(
             `Presentation generation failed: ${JSON.stringify(statusResp)}`
           );
