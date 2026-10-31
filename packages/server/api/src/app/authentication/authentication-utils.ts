@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, Platform, PlatformRole, PlatformWithoutSensitiveData, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, Platform, PlatformRole, PlatformWithoutSensitiveData, PrincipalType, Project, ProjectType, SignInMethods, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -321,12 +321,6 @@ type ProvisionOrOnboardParams = {
 export type AuthenticationResult = {
     response: AuthenticationResponse
     signedUp: boolean
-}
-
-export type SignInMethods = {
-    email: boolean
-    google: boolean
-    sso: boolean
 }
 
 type GetSignInMethodsParams = {

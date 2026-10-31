@@ -1,3 +1,4 @@
+import { isNil, tryCatch } from '@activepieces/core-utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -5,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -18,6 +20,10 @@ import { samlSsoApi } from '@/features/platform-admin';
 import { formatUtils } from '@/lib/format-utils';
 
 import { useStartSamlLogin } from '../hooks/use-start-saml-login';
+import {
+  signInDiscoveryUtils,
+  TurnedOffMethod,
+} from '../utils/sign-in-discovery-utils';
 
 const FormValues = z.object({
   email: z.string().regex(formatUtils.emailRegex, t('Email is invalid')),
@@ -27,6 +33,7 @@ type FormValues = z.infer<typeof FormValues>;
 
 type SamlLoginFormProps = {
   onBack: () => void;
+  onMethodTurnedOff: (turnedOff: TurnedOffMethod) => void;
   // The auth card supplies its own back affordance, so it opts out of this
   // one rather than showing two.
   showBackButton?: boolean;
@@ -34,6 +41,7 @@ type SamlLoginFormProps = {
 
 export const SamlLoginForm = ({
   onBack,
+  onMethodTurnedOff,
   showBackButton = true,
 }: SamlLoginFormProps) => {
   const startSamlLogin = useStartSamlLogin();
@@ -45,6 +53,23 @@ export const SamlLoginForm = ({
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (values: FormValues) => {
+      const { data: discovery } = await tryCatch(() =>
+        authenticationApi.discoverSignInMethods({
+          domain: signInDiscoveryUtils.domainOf(values.email),
+        }),
+      );
+      if (
+        !isNil(discovery) &&
+        discovery.domainOwned &&
+        !discovery.methods.sso
+      ) {
+        onMethodTurnedOff({
+          email: values.email.trim(),
+          method: 'sso',
+          methods: discovery.methods,
+        });
+        return;
+      }
       const domain = values.email.trim().toLowerCase().split('@')[1];
       const { platformId } = await samlSsoApi.discover(domain);
       if (!platformId) {

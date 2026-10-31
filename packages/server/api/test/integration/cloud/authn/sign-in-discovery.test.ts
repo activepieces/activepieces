@@ -1,13 +1,15 @@
-import { SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
+import { DiscoverSignInMethodsRequest, DiscoverSignInMethodsResponse, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyInstance, LightMyRequestResponse } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { authenticationService } from '../../../../src/app/authentication/authentication.service'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
+let app: FastifyInstance
 let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
-    const app = await setupTestEnvironment()
+    app = await setupTestEnvironment()
     mockLog = app.log
 })
 
@@ -78,6 +80,41 @@ describe('Sign-in discovery', () => {
     })
 })
 
+describe('POST /v1/authentication/discover', () => {
+    it('returns the methods of the platform that owns the domain', async () => {
+        await saveDomainOwnerPlatform({ domain: 'http-owned.example.com', status: SsoDomainVerificationStatus.VERIFIED, ssoEnabled: true, emailAuthEnabled: false, samlConfigured: true })
+        const response = await postDiscover({ domain: 'http-owned.example.com' })
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json()).toEqual({ domainOwned: true, methods: { email: false, google: false, sso: true } })
+    })
+
+    it('returns exactly domainOwned: false for a domain nobody owns', async () => {
+        const response = await postDiscover({ domain: 'http-unowned.example.com' })
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json()).toEqual({ domainOwned: false })
+    })
+
+    it('rejects a blank domain', async () => {
+        const response = await postDiscover({ domain: '' })
+        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+    })
+
+    it.each([
+        { reason: 'the domain owner has SAML', domain: 'parity-saml.example.com', lookup: 'parity-saml.example.com', samlConfigured: true },
+        { reason: 'the domain owner has no SAML', domain: 'parity-no-saml.example.com', lookup: 'parity-no-saml.example.com', samlConfigured: false },
+        { reason: 'nobody owns the domain', domain: 'parity-claimed.example.com', lookup: 'parity-unclaimed.example.com', samlConfigured: true },
+    ])('agrees with /v1/authn/saml/discover on SSO when $reason', async ({ domain, lookup, samlConfigured }) => {
+        await saveDomainOwnerPlatform({ domain, status: SsoDomainVerificationStatus.VERIFIED, ssoEnabled: true, emailAuthEnabled: true, samlConfigured })
+        const discovery: DiscoverSignInMethodsResponse = (await postDiscover({ domain: lookup })).json()
+        const samlDiscovery: SamlDiscovery = (await app.inject({ method: 'POST', url: '/api/v1/authn/saml/discover', body: { domain: lookup } })).json()
+        expect(discovery.domainOwned && discovery.methods.sso).toBe(samlDiscovery.platformId !== null)
+    })
+})
+
+function postDiscover({ domain }: DiscoverSignInMethodsRequest): Promise<LightMyRequestResponse> {
+    return app.inject({ method: 'POST', url: '/api/v1/authentication/discover', body: { domain } })
+}
+
 async function saveDomainOwnerPlatform({ domain, status, ssoEnabled, emailAuthEnabled, samlConfigured, googleAuthEnabled = true }: SaveDomainOwnerPlatformParams): Promise<void> {
     await mockAndSaveBasicSetup({
         platform: {
@@ -104,4 +141,8 @@ type SaveDomainOwnerPlatformParams = {
     emailAuthEnabled: boolean
     samlConfigured: boolean
     googleAuthEnabled?: boolean
+}
+
+type SamlDiscovery = {
+    platformId: string | null
 }

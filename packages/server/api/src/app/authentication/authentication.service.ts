@@ -1,6 +1,6 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ApEdition, ApEnvironment, ApFlagId, AuthenticationResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, ApFlagId, AuthenticationResponse, DiscoverSignInMethodsResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../flags/flag.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -9,7 +9,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
-import { AuthenticationResult, authenticationUtils, SignInMethods } from './authentication-utils'
+import { AuthenticationResult, authenticationUtils } from './authentication-utils'
 import { zerobounce } from './lib/zerobounce'
 import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
@@ -208,7 +208,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
-    async discoverSignInMethods({ domain }: DiscoverSignInMethodsParams): Promise<SignInDiscovery> {
+    async discoverSignInMethods({ domain }: DiscoverSignInMethodsParams): Promise<DiscoverSignInMethodsResponse> {
         const domainOwnerPlatformId = await verifiedDomainHooks.get(log).findPlatformIdByDomain({ domain })
         if (isNil(domainOwnerPlatformId)) {
             return { domainOwned: false }
@@ -344,7 +344,3 @@ type SwitchPlatformParams = {
 type DiscoverSignInMethodsParams = {
     domain: string
 }
-
-export type SignInDiscovery =
-    | { domainOwned: true, methods: SignInMethods }
-    | { domainOwned: false }

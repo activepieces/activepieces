@@ -1,4 +1,4 @@
-import { ErrorCode, isNil } from '@activepieces/core-utils';
+import { ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   ApFlagId,
   CreateOtpRequestBody,
@@ -34,6 +34,7 @@ import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
 import { FullLogo } from '@/components/custom/full-logo';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -46,6 +47,10 @@ import {
 import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { authMutations } from '@/features/authentication/hooks/auth-hooks';
 import { captchaUtils } from '@/features/authentication/utils/captcha-utils';
+import {
+  signInDiscoveryUtils,
+  TurnedOffMethod,
+} from '@/features/authentication/utils/sign-in-discovery-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { HttpError, api } from '@/lib/api';
@@ -99,6 +104,8 @@ export function AuthDrawerBody({ initialMode }: AuthDrawerBodyProps) {
     invitedEmail.length > 0 ? 'signup' : initialMode,
   );
   const [emailForCode, setEmailForCode] = useState('');
+  const [turnedOffMethod, setTurnedOffMethod] =
+    useState<TurnedOffMethod | null>(null);
   const [checkEmailNote, setCheckEmailNote] = useState(false);
   const { capture } = useTelemetry();
   const [captchaToken, setCaptchaToken] = useState<string | undefined>();
@@ -144,6 +151,8 @@ export function AuthDrawerBody({ initialMode }: AuthDrawerBodyProps) {
             setMode={setMode}
             emailForCode={emailForCode}
             setEmailForCode={setEmailForCode}
+            turnedOffMethod={turnedOffMethod}
+            setTurnedOffMethod={setTurnedOffMethod}
             checkEmailNote={checkEmailNote}
             setCheckEmailNote={setCheckEmailNote}
             invitedEmail={invitedEmail}
@@ -203,6 +212,8 @@ function AuthStep({
   setMode,
   emailForCode,
   setEmailForCode,
+  turnedOffMethod,
+  setTurnedOffMethod,
   checkEmailNote,
   setCheckEmailNote,
   invitedEmail,
@@ -242,6 +253,38 @@ function AuthStep({
     setStep('method');
   }, [setStep]);
 
+  const showMethodTurnedOff = (turnedOff: TurnedOffMethod) => {
+    setTurnedOffMethod(turnedOff);
+    setSamlOpen(false);
+    setStep('turned-off');
+  };
+
+  if (step === 'turned-off' && !isNil(turnedOffMethod)) {
+    const everyMethodOff = Object.values(turnedOffMethod.methods).every(
+      (on) => !on,
+    );
+    return (
+      <DrawerShell>
+        {everyMethodOff ? (
+          <SignInTurnedOffStep
+            email={turnedOffMethod.email}
+            onChangeEmail={() => setStep('method')}
+          />
+        ) : (
+          <UseAnotherMethodStep
+            turnedOff={turnedOffMethod}
+            isSignUp={effectiveMode === 'signup'}
+            onChangeEmail={() => setStep('method')}
+            onContinueWithSso={() => {
+              setStep('method');
+              setSamlOpen(true);
+            }}
+          />
+        )}
+      </DrawerShell>
+    );
+  }
+
   if (samlOpen) {
     return (
       <DrawerShell>
@@ -249,6 +292,7 @@ function AuthStep({
         <Heading title={t('Single sign-on')} />
         <SamlLoginForm
           onBack={() => setSamlOpen(false)}
+          onMethodTurnedOff={showMethodTurnedOff}
           showBackButton={false}
         />
       </DrawerShell>
@@ -315,9 +359,10 @@ function AuthStep({
           <SignUpForm
             showCheckYourEmailNote={checkEmailNote}
             setShowCheckYourEmailNote={setCheckEmailNote}
+            onMethodTurnedOff={showMethodTurnedOff}
           />
         ) : (
-          <SignInForm />
+          <SignInForm onMethodTurnedOff={showMethodTurnedOff} />
         )}
         {!firstUser && <ModeSwitch mode={mode} onSwitch={setMode} />}
       </DrawerShell>
@@ -339,9 +384,13 @@ function AuthStep({
           <SignUpForm
             showCheckYourEmailNote={checkEmailNote}
             setShowCheckYourEmailNote={setCheckEmailNote}
+            onMethodTurnedOff={showMethodTurnedOff}
           />
         ) : (
-          <SignInForm onForgotPassword={() => setStep('reset')} />
+          <SignInForm
+            onForgotPassword={() => setStep('reset')}
+            onMethodTurnedOff={showMethodTurnedOff}
+          />
         )}
       </DrawerShell>
     );
@@ -405,6 +454,7 @@ function AuthStep({
           setEmailForCode(email);
           setStep('code');
         }}
+        onMethodTurnedOff={showMethodTurnedOff}
       />
       <div className="mt-5 flex items-center justify-center gap-2.5 text-xs text-gray-11">
         <button
@@ -500,6 +550,7 @@ function EmailStep({
   captchaRequired,
   onCaptchaSpent,
   onCodeSent,
+  onMethodTurnedOff,
 }: EmailStepProps) {
   const form = useForm<EmailSchema>({
     resolver: zodResolver(EmailZodSchema),
@@ -532,8 +583,22 @@ function EmailStep({
     },
   });
 
-  const onSubmit: SubmitHandler<EmailSchema> = (data) => {
+  const onSubmit: SubmitHandler<EmailSchema> = async (data) => {
     form.clearErrors('root.serverError');
+    const email = data.email.trim();
+    const { data: discovery } = await tryCatch(() =>
+      authenticationApi.discoverSignInMethods({
+        domain: signInDiscoveryUtils.domainOf(email),
+      }),
+    );
+    if (
+      !isNil(discovery) &&
+      discovery.domainOwned &&
+      !discovery.methods.email
+    ) {
+      onMethodTurnedOff({ email, method: 'email', methods: discovery.methods });
+      return;
+    }
     // The same box serves sign-in; only a sign-up attempt belongs in the funnel.
     if (mode === 'signup') {
       capture({
@@ -544,7 +609,7 @@ function EmailStep({
         },
       });
     }
-    mutate({ email: data.email.trim(), captchaToken });
+    mutate({ email, captchaToken });
   };
 
   return (
@@ -578,14 +643,16 @@ function EmailStep({
                   />
                   <Button
                     type="submit"
-                    loading={isPending}
+                    loading={isPending || form.formState.isSubmitting}
                     disabled={captchaRequired && isNil(captchaToken)}
                     aria-label={t('Continue')}
                     data-testid="auth-continue"
                     size="icon"
                     className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md"
                   >
-                    {!isPending && <ArrowRight className="size-4" />}
+                    {!isPending && !form.formState.isSubmitting && (
+                      <ArrowRight className="size-4" />
+                    )}
                   </Button>
                 </div>
                 {emailError ? (
@@ -679,6 +746,118 @@ function ResetStep() {
         </form>
       </Form>
     </>
+  );
+}
+
+function SignInTurnedOffStep({
+  email,
+  onChangeEmail,
+}: SignInTurnedOffStepProps) {
+  const domain = signInDiscoveryUtils.domainOf(email).toLowerCase();
+  return (
+    <>
+      <Heading
+        title={t('Sign-in is turned off')}
+        subtitle={t(
+          'Your organization hasn’t turned on a way to sign in for {domain} accounts yet. Ask your admin to turn one on.',
+          { domain },
+        )}
+      />
+      <EmailRow email={email} onChange={onChangeEmail} />
+      <div className="mt-4 flex flex-col gap-2 rounded-xl border p-4">
+        <p className="text-sm font-semibold">{t('Are you the admin?')}</p>
+        <p className="text-xs text-gray-11">
+          {t(
+            'Turned every method off by mistake? Support can turn email sign-in back on once you confirm you own {domain}.',
+            { domain },
+          )}
+        </p>
+        <Button variant="outline" className="mt-1 rounded-xl" asChild>
+          <a
+            href={`${SUPPORT_MAIL_TO}?subject=${encodeURIComponent(
+              `Sign-in is turned off for ${domain}`,
+            )}`}
+          >
+            {t('Contact support')}
+          </a>
+        </Button>
+      </div>
+    </>
+  );
+}
+
+function UseAnotherMethodStep({
+  turnedOff,
+  isSignUp,
+  onChangeEmail,
+  onContinueWithSso,
+}: UseAnotherMethodStepProps) {
+  const domain = signInDiscoveryUtils.domainOf(turnedOff.email).toLowerCase();
+  return (
+    <>
+      <Heading
+        title={t('Use another way to sign in')}
+        subtitle={
+          turnedOff.method === 'sso'
+            ? t(
+                'Your organization hasn’t turned on single sign-on for {domain} accounts.',
+                { domain },
+              )
+            : t(
+                'Your organization has turned off email sign-in for {domain} accounts.',
+                { domain },
+              )
+        }
+      />
+      <EmailRow email={turnedOff.email} onChange={onChangeEmail} />
+      <div className="mt-4 flex flex-col gap-2">
+        {turnedOff.methods.google && (
+          <ThirdPartyLogin
+            isSignUp={isSignUp}
+            onSamlClick={onContinueWithSso}
+            hideSaml
+          />
+        )}
+        {turnedOff.methods.sso && (
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full rounded-xl font-normal"
+            onClick={onContinueWithSso}
+          >
+            {t('Continue with SSO')}
+          </Button>
+        )}
+        {turnedOff.methods.email && (
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full rounded-xl font-normal"
+            onClick={onChangeEmail}
+          >
+            {t('Continue with email')}
+          </Button>
+        )}
+      </div>
+    </>
+  );
+}
+
+function EmailRow({ email, onChange }: EmailRowProps) {
+  return (
+    <div className="flex h-12 items-center gap-2.5 rounded-xl border px-3.5">
+      <Mail className="size-4.5 shrink-0 text-gray-11" />
+      <TextWithTooltip tooltipMessage={email}>
+        <p className="min-w-0 grow truncate text-sm">{email}</p>
+      </TextWithTooltip>
+      <button
+        type="button"
+        onClick={onChange}
+        className="shrink-0 text-sm font-medium text-gray-12 hover:underline"
+      >
+        {t('Change')}
+      </button>
+    </div>
   );
 }
 
@@ -1054,6 +1233,8 @@ function codeErrorMessage(error: HttpError): string {
 
 const VERIFIED_HOLD_MS = 1100;
 
+const SUPPORT_MAIL_TO = 'mailto:support@activepieces.com';
+
 const PERSONAL_EMAIL_DOMAINS = new Set([
   'gmail.com',
   'googlemail.com',
@@ -1112,6 +1293,24 @@ type EmailStepProps = {
   captchaRequired: boolean;
   onCaptchaSpent: () => void;
   onCodeSent: (email: string) => void;
+  onMethodTurnedOff: (turnedOff: TurnedOffMethod) => void;
+};
+
+type SignInTurnedOffStepProps = {
+  email: string;
+  onChangeEmail: () => void;
+};
+
+type UseAnotherMethodStepProps = {
+  turnedOff: TurnedOffMethod;
+  isSignUp: boolean;
+  onChangeEmail: () => void;
+  onContinueWithSso: () => void;
+};
+
+type EmailRowProps = {
+  email: string;
+  onChange: () => void;
 };
 
 type NameStepProps = {
@@ -1131,6 +1330,8 @@ type AuthStepProps = {
   setMode: Dispatch<SetStateAction<AuthMode>>;
   emailForCode: string;
   setEmailForCode: Dispatch<SetStateAction<string>>;
+  turnedOffMethod: TurnedOffMethod | null;
+  setTurnedOffMethod: Dispatch<SetStateAction<TurnedOffMethod | null>>;
   checkEmailNote: boolean;
   setCheckEmailNote: Dispatch<SetStateAction<boolean>>;
   invitedEmail: string;
@@ -1139,6 +1340,13 @@ type AuthStepProps = {
   onCaptchaSpent: () => void;
 };
 
-type Step = 'method' | 'code' | 'verified' | 'name' | 'password' | 'reset';
+type Step =
+  | 'method'
+  | 'code'
+  | 'verified'
+  | 'name'
+  | 'password'
+  | 'reset'
+  | 'turned-off';
 
 export type AuthMode = 'signin' | 'signup';

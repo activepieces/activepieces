@@ -3,6 +3,8 @@ import {
   CreateOtpRequestBody,
   GetCurrentProjectMemberRoleQuery,
   CompleteSignUpRequest,
+  DiscoverSignInMethodsRequest,
+  DiscoverSignInMethodsResponse,
   RequestEmailCodeRequest,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
@@ -29,6 +31,12 @@ export const authenticationApi = {
   signUp(request: SignUpRequest) {
     return api.post<AuthenticationResponse>(
       '/v1/authentication/sign-up',
+      request,
+    );
+  },
+  discoverSignInMethods(request: DiscoverSignInMethodsRequest) {
+    return api.post<DiscoverSignInMethodsResponse>(
+      '/v1/authentication/discover',
       request,
     );
   },

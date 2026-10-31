@@ -3702,5 +3702,14 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Sign-in is turned off": "Sign-in is turned off",
+  "Your organization hasn’t turned on a way to sign in for {domain} accounts yet. Ask your admin to turn one on.": "Your organization hasn’t turned on a way to sign in for {domain} accounts yet. Ask your admin to turn one on.",
+  "Are you the admin?": "Are you the admin?",
+  "Turned every method off by mistake? Support can turn email sign-in back on once you confirm you own {domain}.": "Turned every method off by mistake? Support can turn email sign-in back on once you confirm you own {domain}.",
+  "Use another way to sign in": "Use another way to sign in",
+  "Your organization has turned off email sign-in for {domain} accounts.": "Your organization has turned off email sign-in for {domain} accounts.",
+  "Your organization hasn’t turned on single sign-on for {domain} accounts.": "Your organization hasn’t turned on single sign-on for {domain} accounts.",
+  "Continue with SSO": "Continue with SSO",
+  "Continue with email": "Continue with email"
 }

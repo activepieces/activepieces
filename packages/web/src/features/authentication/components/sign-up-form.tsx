@@ -1,4 +1,4 @@
-import { ErrorCode, isNil } from '@activepieces/core-utils';
+import { ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   OtpType,
   ApEdition,
@@ -11,6 +11,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -49,6 +50,10 @@ import {
 import { authMutations } from '../hooks/auth-hooks';
 import { captchaUtils } from '../utils/captcha-utils';
 import { passwordValidation } from '../utils/password-validation-utils';
+import {
+  signInDiscoveryUtils,
+  TurnedOffMethod,
+} from '../utils/sign-in-discovery-utils';
 
 import {
   TurnstileWidget,
@@ -58,9 +63,11 @@ import {
 const SignUpForm = ({
   showCheckYourEmailNote,
   setShowCheckYourEmailNote,
+  onMethodTurnedOff,
 }: {
   showCheckYourEmailNote: boolean;
   setShowCheckYourEmailNote: (value: boolean) => void;
+  onMethodTurnedOff: (turnedOff: TurnedOffMethod) => void;
 }) => {
   const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -199,10 +206,27 @@ const SignUpForm = ({
   }, [capture]);
   const captchaRequired = !isNil(useTurnstileSiteKey()) && !captchaUnavailable;
 
-  const onSubmit: SubmitHandler<SignUpSchema> = (data) => {
+  const onSubmit: SubmitHandler<SignUpSchema> = async (data) => {
     form.setError('root.serverError', {
       message: undefined,
     });
+    const { data: discovery } = await tryCatch(() =>
+      authenticationApi.discoverSignInMethods({
+        domain: signInDiscoveryUtils.domainOf(data.email),
+      }),
+    );
+    if (
+      !isNil(discovery) &&
+      discovery.domainOwned &&
+      !discovery.methods.email
+    ) {
+      onMethodTurnedOff({
+        email: data.email.trim(),
+        method: 'email',
+        methods: discovery.methods,
+      });
+      return;
+    }
     capture({
       name: TelemetryEventName.SIGN_UP_SUBMITTED,
       payload: {
@@ -399,7 +423,7 @@ const SignUpForm = ({
             resetSignal={captchaReset}
           />
           <Button
-            loading={isPending}
+            loading={isPending || form.formState.isSubmitting}
             disabled={captchaRequired && isNil(captchaToken)}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
             data-testid="sign-up-button"

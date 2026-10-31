@@ -1,12 +1,14 @@
-import { FastifyBaseLogger } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../../../src/app/authentication/authentication-utils'
 import { authenticationService } from '../../../../src/app/authentication/authentication.service'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
+let app: FastifyInstance
 let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
-    const app = await setupTestEnvironment()
+    app = await setupTestEnvironment()
     mockLog = app.log
 })
 
@@ -31,5 +33,11 @@ describe('Sign-in discovery', () => {
             platform: { emailAuthEnabled: false, googleAuthEnabled: true, federatedAuthProviders: { saml: {} } },
         })
         expect(methods).toEqual({ email: true, google: false, sso: false })
+    })
+
+    it('answers POST /v1/authentication/discover with exactly domainOwned: false', async () => {
+        const response = await app.inject({ method: 'POST', url: '/api/v1/authentication/discover', body: { domain: 'community.example.com' } })
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json()).toEqual({ domainOwned: false })
     })
 })

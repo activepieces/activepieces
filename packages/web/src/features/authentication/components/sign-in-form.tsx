@@ -1,4 +1,4 @@
-import { ErrorCode, isNil } from '@activepieces/core-utils';
+import { ErrorCode, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   OtpType,
   ApEdition,
@@ -33,6 +33,11 @@ import {
   useRedirectAfterLogin,
 } from '@/lib/navigation-utils';
 
+import {
+  signInDiscoveryUtils,
+  TurnedOffMethod,
+} from '../utils/sign-in-discovery-utils';
+
 import { CheckEmailNote } from './check-email-note';
 
 const SignInSchema = z.object({
@@ -42,7 +47,10 @@ const SignInSchema = z.object({
 
 type SignInSchema = z.infer<typeof SignInSchema>;
 
-const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
+const SignInForm = ({
+  onForgotPassword,
+  onMethodTurnedOff,
+}: SignInFormProps) => {
   const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<SignInSchema>({
@@ -139,10 +147,27 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
     },
   });
 
-  const onSubmit: SubmitHandler<SignInRequest> = (data) => {
+  const onSubmit: SubmitHandler<SignInRequest> = async (data) => {
     form.setError('root.serverError', {
       message: undefined,
     });
+    const { data: discovery } = await tryCatch(() =>
+      authenticationApi.discoverSignInMethods({
+        domain: signInDiscoveryUtils.domainOf(data.email),
+      }),
+    );
+    if (
+      !isNil(discovery) &&
+      discovery.domainOwned &&
+      !discovery.methods.email
+    ) {
+      onMethodTurnedOff({
+        email: data.email.trim(),
+        method: 'email',
+        methods: discovery.methods,
+      });
+      return;
+    }
     capture({
       name: TelemetryEventName.SIGN_IN_SUBMITTED,
       payload: { method: 'email' },
@@ -243,7 +268,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             </FormMessage>
           )}
           <Button
-            loading={isPending}
+            loading={isPending || form.formState.isSubmitting}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
             tabIndex={3}
             data-testid="sign-in-button"
@@ -271,4 +296,5 @@ export { SignInForm };
 
 type SignInFormProps = {
   onForgotPassword?: () => void;
+  onMethodTurnedOff: (turnedOff: TurnedOffMethod) => void;
 };

@@ -1,7 +1,8 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, attributionUtils, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpMethod, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
+import { ApplicationEventName, attributionUtils, CompleteSignUpRequest, DiscoverSignInMethodsRequest, DiscoverSignInMethodsResponse, PrincipalType, SignInRequest, SignUpMethod, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { authnRateLimit } from '../core/security/rate-limit'
 import { applicationEvents } from '../helper/application-events'
@@ -147,6 +148,10 @@ export const authenticationController: FastifyPluginAsyncZod = async (
         })
     })
 
+    app.post('/discover', DiscoverSignInMethodsRequestOptions, async (request) => {
+        return authenticationService(request.log).discoverSignInMethods({ domain: request.body.domain })
+    })
+
 }
 
 
@@ -192,5 +197,18 @@ const SignInRequestOptions = {
     },
     schema: {
         body: SignInRequest,
+    },
+}
+
+const DiscoverSignInMethodsRequestOptions = {
+    config: {
+        security: securityAccess.public(),
+        rateLimit: authnRateLimit,
+    },
+    schema: {
+        body: DiscoverSignInMethodsRequest,
+        response: {
+            [StatusCodes.OK]: DiscoverSignInMethodsResponse,
+        },
     },
 }
