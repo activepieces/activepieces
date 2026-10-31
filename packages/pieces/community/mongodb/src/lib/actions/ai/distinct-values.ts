@@ -5,10 +5,12 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbDistinctValuesOutputSchema } from '../../output-schemas';
 
 export const distinctValuesAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_distinct_values',
+  outputSchema: mongodbDistinctValuesOutputSchema,
   displayName: 'Get Distinct Values',
   description: 'Get the distinct values of a field across matching documents.',
   audience: 'ai',

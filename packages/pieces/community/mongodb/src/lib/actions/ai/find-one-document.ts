@@ -5,10 +5,12 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbFindOneDocumentOutputSchema } from '../../output-schemas';
 
 export const findOneDocumentAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_find_one_document',
+  outputSchema: mongodbFindOneDocumentOutputSchema,
   displayName: 'Find One Document',
   description: 'Get a single document by its _id or by a filter.',
   audience: 'ai',

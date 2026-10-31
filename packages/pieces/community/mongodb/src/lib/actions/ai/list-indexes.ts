@@ -3,10 +3,12 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbListIndexesOutputSchema } from '../../output-schemas';
 
 export const listIndexesAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_list_indexes',
+  outputSchema: mongodbListIndexesOutputSchema,
   displayName: 'List Indexes',
   description: 'List the indexes on a collection.',
   audience: 'ai',

@@ -3,17 +3,19 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbCreateCollectionOutputSchema } from '../../output-schemas';
 
 export const createCollectionAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_create_collection',
+  outputSchema: mongodbCreateCollectionOutputSchema,
   displayName: 'Create Collection',
   description: 'Create a new collection in a database.',
   audience: 'ai',
   classification: 'WRITE',
   aiMetadata: {
-    description: 'Creates an empty collection. It fails when a collection with that name already exists, so check List Collections first. Inserting into a missing collection also creates it, so this is only needed for an empty one.',
-    idempotent: false,
+    description: 'Creates an empty collection. On MongoDB 7.0 and later, creating a collection that already exists succeeds without changing it; older servers return an error. Inserting into a missing collection also creates it, so this is only needed for an empty one.',
+    idempotent: true,
   },
   props: {
     database: mongodbAiProps.database({ required: false }),

@@ -3,10 +3,12 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbDropCollectionOutputSchema } from '../../output-schemas';
 
 export const dropCollectionAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_drop_collection',
+  outputSchema: mongodbDropCollectionOutputSchema,
   displayName: 'Drop Collection',
   description: 'Permanently delete a collection with all its documents and indexes.',
   audience: 'ai',

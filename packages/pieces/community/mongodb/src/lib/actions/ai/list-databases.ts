@@ -1,10 +1,12 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { mongodbAuth } from '../../auth';
 import { mongodbClient } from '../../common/client';
+import { mongodbListDatabasesOutputSchema } from '../../output-schemas';
 
 export const listDatabasesAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_list_databases',
+  outputSchema: mongodbListDatabasesOutputSchema,
   displayName: 'List Databases',
   description: 'List the databases on the MongoDB server.',
   audience: 'ai',

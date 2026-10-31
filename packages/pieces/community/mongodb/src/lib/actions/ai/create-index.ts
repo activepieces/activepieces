@@ -4,10 +4,12 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbCreateIndexOutputSchema } from '../../output-schemas';
 
 export const createIndexAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_create_index',
+  outputSchema: mongodbCreateIndexOutputSchema,
   displayName: 'Create Index',
   description: 'Create an index on a collection.',
   audience: 'ai',

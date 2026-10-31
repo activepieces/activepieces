@@ -5,10 +5,12 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbCountDocumentsOutputSchema } from '../../output-schemas';
 
 export const countDocumentsAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_count_documents',
+  outputSchema: mongodbCountDocumentsOutputSchema,
   displayName: 'Count Documents',
   description: 'Count the documents in a collection that match a filter.',
   audience: 'ai',

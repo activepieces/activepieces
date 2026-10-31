@@ -3,10 +3,12 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbListCollectionsOutputSchema } from '../../output-schemas';
 
 export const listCollectionsAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_list_collections',
+  outputSchema: mongodbListCollectionsOutputSchema,
   displayName: 'List Collections',
   description: 'List the collections in a database.',
   audience: 'ai',

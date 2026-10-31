@@ -3,10 +3,12 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbDropIndexOutputSchema } from '../../output-schemas';
 
 export const dropIndexAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_drop_index',
+  outputSchema: mongodbDropIndexOutputSchema,
   displayName: 'Drop Index',
   description: 'Remove an index from a collection.',
   audience: 'ai',

@@ -5,10 +5,12 @@ import { mongodbAuth } from '../../auth';
 import { mongodbAiProps } from '../../common/ai-props';
 import { mongodbClient } from '../../common/client';
 import { mongodbUtils } from '../../common/utils';
+import { mongodbBulkWriteOutputSchema } from '../../output-schemas';
 
 export const bulkWriteAction = createAction({
   auth: mongodbAuth,
   name: 'mongodb_bulk_write',
+  outputSchema: mongodbBulkWriteOutputSchema,
   displayName: 'Bulk Write',
   description: 'Run up to 500 single-document inserts, updates, replaces and deletes in one call.',
   audience: 'ai',
