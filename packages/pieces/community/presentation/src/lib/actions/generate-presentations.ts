@@ -234,75 +234,79 @@ export const generatePresentations = createAction({
       trigger_webhook,
     } = propsValue;
 
-    const body: any = {};
+    const slidesMarkdown = presentonClient.toStringArray(slides_markdown);
+    const fileIds = presentonClient.toStringArray(files);
 
-    if (content) body['content'] = content;
-    if (slides_markdown)
-      body['slides_markdown'] = slides_markdown as unknown as string[];
-    if (instructions) body['instructions'] = instructions;
-    if (tone) body['tone'] = tone;
-    if (verbosity) body['verbosity'] = verbosity;
-    body['markdown_emphasis'] = markdown_emphasis ?? true;
-    body['web_search'] = web_search ?? false;
-    if (image_type) body['image_type'] = image_type;
-    if (theme) body['theme'] = theme;
-    body['n_slides'] = Number(n_slides ?? 8);
-    body['language'] = language ?? 'English';
-    body['template'] = template ?? 'general';
-    body['include_table_of_contents'] = include_table_of_contents ?? false;
-    body['include_title_slide'] = include_title_slide ?? true;
-    body['allow_access_to_user_info'] = allow_access_to_user_info ?? true;
-    if (files) body['files'] = files as unknown as string[];
-    body['export_as'] = export_as ?? 'pptx';
-    body['trigger_webhook'] = trigger_webhook ?? false;
+    const body: Record<string, unknown> = {
+      ...(content ? { content } : {}),
+      ...(slidesMarkdown ? { slides_markdown: slidesMarkdown } : {}),
+      ...(instructions ? { instructions } : {}),
+      ...(tone ? { tone } : {}),
+      ...(verbosity ? { verbosity } : {}),
+      markdown_emphasis: markdown_emphasis ?? true,
+      web_search: web_search ?? false,
+      ...(image_type ? { image_type } : {}),
+      ...(theme ? { theme } : {}),
+      n_slides: Number(n_slides ?? 8),
+      language: language ?? 'English',
+      template: template ?? 'general',
+      include_table_of_contents: include_table_of_contents ?? false,
+      include_title_slide: include_title_slide ?? true,
+      allow_access_to_user_info: allow_access_to_user_info ?? true,
+      ...(fileIds ? { files: fileIds } : {}),
+      export_as: export_as ?? 'pptx',
+      trigger_webhook: trigger_webhook ?? false,
+    };
 
-    try {
-      const response = await presentonClient.request<{ id?: string; status?: string }>({
+    const response = await presentonClient.request<{
+      id?: string;
+      status?: string;
+    }>({
+      auth: apiKey,
+      method: HttpMethod.POST,
+      path: '/api/v1/ppt/presentation/generate/async',
+      body,
+    });
+
+    const pollIntervalSeconds = 5;
+
+    const taskId = response.id;
+    if (!taskId) {
+      throw new Error(
+        `Presenton did not return a task id: ${JSON.stringify(response)}`
+      );
+    }
+
+    const start = Date.now();
+    const timeoutMs = 120 * 1000;
+
+    const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+    while (Date.now() - start < timeoutMs) {
+      const statusResp = await presentonClient.request<{
+        id?: string;
+        status?: string;
+      }>({
         auth: apiKey,
-        method: HttpMethod.POST,
-        path: '/api/v1/ppt/presentation/generate/async',
-        body,
+        method: HttpMethod.GET,
+        path: `/api/v1/ppt/presentation/status/${taskId}`,
       });
-     
-      const pollIntervalSeconds = 5;
 
-      const taskId = response.id;
-      if (!taskId) {
+      if (statusResp.status === 'completed') {
+        return statusResp;
+      }
+
+      if (statusResp.status === 'failed' || statusResp.status === 'error') {
         throw new Error(
-          `Presenton did not return a task id: ${JSON.stringify(response)}`
+          `Presentation generation failed: ${JSON.stringify(statusResp)}`
         );
       }
 
-      const start = Date.now();
-      const timeoutMs = 120 * 1000;
-
-      const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-      while (Date.now() - start < timeoutMs) {
-        const statusResp = await presentonClient.request<{ id?: string; status?: string }>({
-          auth: apiKey,
-          method: HttpMethod.GET,
-          path: `/api/v1/ppt/presentation/status/${taskId}`,
-        });
-
-        if (statusResp.status === 'completed') {
-          return statusResp;
-        }
-
-        if (statusResp.status === 'failed' || statusResp.status === 'error') {
-          throw new Error(
-            `Presentation generation failed: ${JSON.stringify(statusResp)}`
-          );
-        }
-
-        await sleep(pollIntervalSeconds * 1000);
-      }
-
-      throw new Error(
-        `Timed out waiting for presentation generation after 120 seconds`
-      );
-    } catch (err) {
-      throw new Error(`Presenton API error: ${err}`);
+      await sleep(pollIntervalSeconds * 1000);
     }
+
+    throw new Error(
+      `Timed out waiting for presentation generation after 120 seconds`
+    );
   },
 });
