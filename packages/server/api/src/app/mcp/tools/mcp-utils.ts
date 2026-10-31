@@ -1,6 +1,6 @@
 import { applyFunctionToValuesSync, connectionTemplate, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -596,6 +596,26 @@ async function fillDefaultsForMissingOptionalProps({ settings, platformId, log }
     }
 }
 
+const ERROR_HANDLING_ACTION_TYPES = [FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.PROCESS_IN_BATCHES]
+
+function validateErrorHandlingSupport({ stepType, stepLabel, continueOnFailure, retryOnFailure }: {
+    stepType: FlowActionType
+    stepLabel: string
+    continueOnFailure?: boolean
+    retryOnFailure?: boolean
+}): McpToolResult | null {
+    if (continueOnFailure === undefined && retryOnFailure === undefined) {
+        return null
+    }
+    if (!ERROR_HANDLING_ACTION_TYPES.includes(stepType)) {
+        return { content: [{ type: 'text', text: `❌ continueOnFailure/retryOnFailure can only be set on ${ERROR_HANDLING_ACTION_TYPES.join(', ')} steps, but ${stepLabel} is type ${stepType}.` }] }
+    }
+    if (retryOnFailure === true && stepType === FlowActionType.PROCESS_IN_BATCHES) {
+        return { content: [{ type: 'text', text: `❌ retryOnFailure is not supported on ${FlowActionType.PROCESS_IN_BATCHES} steps — a retry re-dispatches every batch. Set continueOnFailure instead and branch on the batch summary.` }] }
+    }
+    return null
+}
+
 function buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }: {
     continueOnFailure?: boolean
     retryOnFailure?: boolean
@@ -946,6 +966,7 @@ export const mcpUtils = {
     folderSuffix,
     resolveFolder,
     fillDefaultsForMissingOptionalProps,
+    validateErrorHandlingSupport,
     buildErrorHandlingOptions,
     resolveLatestPieceVersion,
     resolvePlatformId,
