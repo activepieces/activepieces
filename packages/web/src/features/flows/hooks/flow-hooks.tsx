@@ -27,6 +27,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -405,16 +406,24 @@ export const flowHooks = {
     isForManualTrigger: boolean;
   }) => {
     const socket = useSocket();
+    const abortRef = useRef<AbortController>(undefined);
+    useEffect(() => {
+      return () => {
+        abortRef.current?.abort();
+      };
+    }, [socket]);
     return useMutation<void>({
-      mutationFn: () =>
-        flowRunsApi.subscribeToTestFlowOrManualRun(
+      mutationFn: () => {
+        abortRef.current?.abort();
+        abortRef.current = new AbortController();
+        return flowRunsApi.subscribeToTestFlowOrManualRun({
           socket,
-          {
-            flowVersionId,
-          },
-          onUpdateRun,
+          request: { flowVersionId },
+          onUpdate: onUpdateRun,
           isForManualTrigger,
-        ),
+          signal: abortRef.current.signal,
+        });
+      },
     });
   },
 
