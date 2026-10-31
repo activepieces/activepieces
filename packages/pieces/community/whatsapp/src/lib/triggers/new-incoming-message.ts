@@ -21,6 +21,10 @@ export const newIncomingMessage = createTrigger({
 		verify_token: whatsappWebhook.verifyToken,
 		phone_number_id: phoneNumberDropdown({ required: false }),
 	},
+	propertyGroups: [
+		{ key: 'webhook', display: 'section', label: 'Webhook', icon: 'send', props: ['instructions', 'verify_token'] },
+		{ key: 'watch', display: 'section', label: 'Where to Watch', icon: 'inbox', props: ['phone_number_id'] },
+	],
 	sampleData: {
 		message_id: 'wamid.HBgMOTYyNzgyNTUwMjEzFQIAEhgUM0E3RjM1QjQ1RTk0RkY1RkQ4QjcA',
 		from: '962782550213',

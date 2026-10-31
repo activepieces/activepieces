@@ -27,8 +27,8 @@ export const sendContact = createAction({
 			description: 'Display name shown on the card.',
 			required: true,
 		}),
-		first_name: Property.ShortText({ displayName: 'First Name', required: false }),
-		last_name: Property.ShortText({ displayName: 'Last Name', required: false }),
+		first_name: Property.ShortText({ displayName: 'First Name', required: false, width: 'half' }),
+		last_name: Property.ShortText({ displayName: 'Last Name', required: false, width: 'half' }),
 		phones: Property.Array({
 			displayName: 'Phone Numbers',
 			description: 'One entry per number the recipient can call or message.',
@@ -74,11 +74,18 @@ export const sendContact = createAction({
 				}),
 			},
 		}),
-		company: Property.ShortText({ displayName: 'Company', required: false }),
-		job_title: Property.ShortText({ displayName: 'Job Title', required: false }),
+		company: Property.ShortText({ displayName: 'Company', required: false, width: 'half' }),
+		job_title: Property.ShortText({ displayName: 'Job Title', required: false, width: 'half' }),
 		website: Property.ShortText({ displayName: 'Website', required: false }),
 		reply_to_message_id: whatsappProps.replyToMessageId,
 	},
+	propertyGroups: [
+		{ key: 'route', display: 'section', label: 'From & To', icon: 'send', props: ['phone_number_id', 'to'] },
+		{ key: 'name', display: 'section', label: 'Name', icon: 'user', props: ['formatted_name', 'first_name', 'last_name'] },
+		{ key: 'details', display: 'section', label: 'Contact Details', icon: 'inbox', props: ['phones', 'emails'] },
+		{ key: 'work', display: 'section', label: 'Work', icon: 'tag', props: ['company', 'job_title', 'website'] },
+		{ key: 'reply', display: 'section', label: 'Reply To', icon: 'reply', props: ['reply_to_message_id'] },
+	],
 	async run(context) {
 		const {
 			phone_number_id,

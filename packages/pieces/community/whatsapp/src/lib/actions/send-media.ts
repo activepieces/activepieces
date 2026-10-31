@@ -60,6 +60,10 @@ export const sendMedia = createAction({
 			advanced: true,
 		}),
 	},
+	propertyGroups: [
+		{ key: 'route', display: 'section', label: 'From & To', icon: 'send', props: ['phone_number_id', 'to'] },
+		{ key: 'media', display: 'section', label: 'Media', icon: 'paperclip', props: ['type', 'media', 'caption'] },
+	],
 	async run(context) {
 		const { to, caption, media, type, filename, phone_number_id } = context.propsValue;
 		const { access_token } = context.auth.props;

@@ -27,6 +27,10 @@ export const sendMessage = createAction({
 			required: true,
 		}),
 	},
+	propertyGroups: [
+		{ key: 'route', display: 'section', label: 'From & To', icon: 'send', props: ['phone_number_id', 'to'] },
+		{ key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['text'] },
+	],
 	async run(context) {
 		const { to, text, phone_number_id } = context.propsValue;
 		const { access_token } = context.auth.props;

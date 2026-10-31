@@ -28,6 +28,10 @@ export const sendReaction = createAction({
 			required: false,
 		}),
 	},
+	propertyGroups: [
+		{ key: 'route', display: 'section', label: 'From & To', icon: 'send', props: ['phone_number_id', 'to'] },
+		{ key: 'reaction', display: 'section', label: 'Reaction', icon: 'reply', props: ['message_id', 'emoji'] },
+	],
 	async run(context) {
 		const { phone_number_id, to, message_id, emoji } = context.propsValue;
 		return whatsappClient.sendMessage({

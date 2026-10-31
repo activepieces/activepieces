@@ -23,15 +23,21 @@ export const createMessageTemplate = createAction({
 			displayName: 'Name',
 			description: 'Lowercase letters, digits and underscores only, for example order_update.',
 			required: true,
+			width: 'half',
 		}),
 		language: Property.ShortText({
 			displayName: 'Language',
 			description: 'Language and locale code, for example en_US.',
 			required: true,
+			width: 'half',
 		}),
 		category: whatsappProps.templateCategory,
 		components: whatsappProps.templateComponents,
 	},
+	propertyGroups: [
+		{ key: 'template', display: 'section', label: 'Template', icon: 'file', props: ['name', 'language', 'category'] },
+		{ key: 'content', display: 'section', label: 'Content', icon: 'code', props: ['components'] },
+	],
 	async run(context) {
 		const { name, language, category, components } = context.propsValue;
 		return whatsappClient.request<{ id: string; status: string; category: string }>({
