@@ -53,6 +53,13 @@ export const presentation = createPiece({
     createCustomApiCallAction({
       auth: presentonAuth,
       baseUrl: () => 'https://api.presenton.ai/api/v1',
+      props: {
+        url: {
+          description:
+            'Full URL, or a path relative to https://api.presenton.ai/api/v1',
+          placeholder: '/ppt/presentation/all',
+        },
+      },
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth.secret_text}`,
