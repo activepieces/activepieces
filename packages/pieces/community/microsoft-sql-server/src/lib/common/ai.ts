@@ -212,6 +212,9 @@ function assertReadOnlyQuery({ query }: { query: string }): void {
     );
   }
   const words = new Set((code.match(/[A-Za-z_]+/g) ?? []).map((word) => word.toUpperCase()));
+  if (/;\s*\S/.test(code)) {
+    throw new Error('Only one statement is allowed in a read-only query; remove everything after the first semicolon.');
+  }
   const blocked = WRITE_KEYWORDS.filter((keyword) => words.has(keyword));
   if (blocked.length > 0) {
     throw new Error(
@@ -221,12 +224,12 @@ function assertReadOnlyQuery({ query }: { query: string }): void {
 }
 
 function stripLiterals({ query }: { query: string }): string {
-  return query
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/--[^\n]*/g, ' ')
-    .replace(/N?'(?:[^']|'')*'/g, "''")
-    .replace(/\[(?:[^\]]|\]\])*\]/g, '[x]')
-    .replace(/"(?:[^"]|"")*"/g, '[x]');
+  return query.replace(LEXICAL_TOKENS, (token) => {
+    if (token.startsWith('/*') || token.startsWith('--')) {
+      return ' ';
+    }
+    return token.startsWith('[') || token.startsWith('"') ? '[x]' : "''";
+  });
 }
 
 function parseFilters({ filters }: { filters: unknown }): Filter[] {
@@ -247,8 +250,11 @@ function filterToSql({ filter, index }: { filter: Filter; index: number }): SqlF
   if (filter.operator === 'IS NULL' || filter.operator === 'IS NOT NULL') {
     return { sql: `${column} ${filter.operator}`, params: {} };
   }
-  if (isNil(filter.value) || filter.value === '') {
-    throw new Error(`Filter on "${filter.column}" with ${filter.operator} needs a value. Use IS NULL to match empty values.`);
+  if (filter.operator === 'IS EMPTY' || filter.operator === 'IS NOT EMPTY') {
+    return { sql: `${column} ${filter.operator === 'IS EMPTY' ? '=' : '<>'} N''`, params: {} };
+  }
+  if (isNil(filter.value)) {
+    throw new Error(`Filter on "${filter.column}" with ${filter.operator} needs a value. Use IS NULL to match NULL, or IS EMPTY to match empty text.`);
   }
   if (filter.operator === 'IN' || filter.operator === 'NOT IN') {
     const list = Array.isArray(filter.value) ? filter.value : parseList({ text: String(filter.value) });
@@ -319,7 +325,9 @@ function typeLabel({ type, maxLength, precision, scale }: { type: string; maxLen
   }
 }
 
-const FILTER_OPERATORS = ['=', '!=', '<', '<=', '>', '>=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'IS NULL', 'IS NOT NULL'] as const;
+const LEXICAL_TOKENS = /\/\*[\s\S]*?\*\/|--[^\n]*|N?'(?:[^']|'')*'|\[(?:[^\]]|\]\])*\]|"(?:[^"]|"")*"/g;
+
+const FILTER_OPERATORS = ['=', '!=', '<', '<=', '>', '>=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'IS NULL', 'IS NOT NULL', 'IS EMPTY', 'IS NOT EMPTY'] as const;
 
 const WRITE_KEYWORDS = [
   'INSERT', 'UPDATE', 'DELETE', 'MERGE', 'TRUNCATE', 'DROP', 'ALTER', 'CREATE', 'GRANT', 'REVOKE', 'DENY',
@@ -381,7 +389,7 @@ export const mssqlAiProps = {
   filters: ({ required }: { required: boolean }) =>
     Property.Array({
       displayName: 'Filters',
-      description: `Conditions combined with AND. Each has a column, an operator (${FILTER_OPERATORS.join(', ')}) and a value. For IN / NOT IN pass a JSON list such as ["a", "b"] or comma-separated values; IS NULL / IS NOT NULL take no value.${required ? ' At least one filter is required.' : ''}`,
+      description: `Conditions combined with AND. Each has a column, an operator (${FILTER_OPERATORS.join(', ')}) and a value. For IN / NOT IN pass a JSON list such as ["a", "b"] or comma-separated values; IS NULL, IS NOT NULL, IS EMPTY and IS NOT EMPTY take no value; use IS EMPTY to match empty text.${required ? ' At least one filter is required.' : ''}`,
       required,
       properties: {
         column: Property.ShortText({ displayName: 'Column', required: true }),
