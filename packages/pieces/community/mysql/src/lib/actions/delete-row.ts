@@ -8,7 +8,7 @@ export default createAction({
   name: 'delete_row',
   displayName: 'Delete Row',
   description: 'Deletes one or more rows from a table',
-  audience: 'both',
+  audience: 'human',
   outputSchema: deleteRowOutputSchema,
   aiMetadata: { description: 'Deletes every row in a MySQL table whose search column equals a given value. Use to remove records matched by a single column. Idempotent: once the matching rows are gone, re-running with the same input deletes nothing further.', idempotent: true },
   props: {
