@@ -112,7 +112,10 @@ export const upsertRowAction = createAction({
         'The first matching row is updated: empty fields keep their value and checkboxes are saved as shown. With no match, a new row is created.',
       variant: MarkdownVariant.INFO,
     }),
-    table_fields: baserowCommon.tableFields(true),
+    table_fields: baserowCommon.tableFields({
+      required: true,
+      withLinkBy: true,
+    }),
     create_missing_select_options: Property.Checkbox({
       displayName: 'Create Missing Select Options',
       description: 'Adds any select option the column does not have yet.',
@@ -127,12 +130,9 @@ export const upsertRowAction = createAction({
     const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id!);
 
-    const fieldTypeMap: Record<string, string> = {};
-    for (const column of tableSchema) {
-      fieldTypeMap[column.name] = column.type;
-    }
-
-    const formattedFields = formatFieldValues(table_fields!, fieldTypeMap, {
+    const formattedFields = formatFieldValues({
+      input: table_fields!,
+      fields: tableSchema,
       skipEmpty: true,
     });
 
