@@ -9,6 +9,7 @@ import { securityAccess } from '../core/security/authorization/fastify-security'
 import { findFlowRunOrThrow } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { projectService } from '../project/project-service'
+import { webhookResponse } from '../webhooks/webhook-response'
 import { barrierService } from './barrier-service'
 import { resumePageHooks, ResumePageTheme } from './resume-page-hooks'
 import { resumeService } from './resume-service'
@@ -262,7 +263,7 @@ async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryPa
         payload: { body, headers, queryParams },
         correlationId,
     })
-    await reply.status(response.status).headers(response.headers).send(response.body)
+    await webhookResponse.send({ reply, response })
 }
 
 async function handleLegacyAsyncResume({ flowRunId, body, headers, queryParams, log, reply }: LegacyResumeHandlerParams): Promise<void> {
@@ -279,7 +280,7 @@ async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, l
         payload: { body, headers, queryParams },
         correlationId,
     })
-    await reply.status(response.status).headers(response.headers).send(response.body)
+    await webhookResponse.send({ reply, response })
 }
 
 /**
