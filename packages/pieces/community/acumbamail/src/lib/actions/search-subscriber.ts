@@ -11,9 +11,8 @@ export const searchSubscriberAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_search_subscriber',
   classification: 'READ',
-  displayName: 'Search Subscriber',
-  description:
-    "Returns the subscriber's advanced data in each list to which they belong.",
+  displayName: 'Find Subscriber',
+  description: 'Finds a subscriber by email in every list they belong to.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -23,13 +22,14 @@ export const searchSubscriberAction = createAction({
   props: {
     subscriber: Property.ShortText({
       displayName: 'Subscriber Email',
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },
   async run(context) {
     const { subscriber } = context.propsValue;
     const request: HttpRequest = {
-      method: HttpMethod.DELETE,
+      method: HttpMethod.GET,
       url: acumbamailCommon.baseUrl + '/searchSubscriber/',
       queryParams: { auth_token: context.auth.secret_text, subscriber: subscriber },
     };

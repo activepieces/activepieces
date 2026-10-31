@@ -13,8 +13,7 @@ export const duplicateTemplateAction = createAction({
   name: 'acumbamail_duplicate_template',
   classification: 'WRITE',
   displayName: 'Duplicate Template',
-  description:
-    'Duplicates an existing template to use it on a email marketing campaign shipping.',
+  description: 'Copies an existing email template under a new name.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -22,11 +21,12 @@ export const duplicateTemplateAction = createAction({
     idempotent: false,
   },
   props: {
+    templateId: acumbamailCommon.templateId,
     template_name: Property.ShortText({
       displayName: 'New Template Name',
       required: true,
+      placeholder: 'Spring sale (copy)',
     }),
-    templateId: acumbamailCommon.templateId,
   },
   async run(context) {
     const { templateId, template_name } = context.propsValue;

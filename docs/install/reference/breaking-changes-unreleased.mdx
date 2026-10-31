@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Acumbamail 0.3.0: Double Opt-In on Add or Update Subscriber now sends the confirmation email
+
+The **Double Opt-In** toggle (shown before as **Double Option**) never reached Acumbamail, so subscribers were always added without a confirmation email. It now works: when the toggle is on, Acumbamail emails the subscriber, and they join the list only after they confirm.
+
+#### What you need to do
+
+- If a flow has the toggle on but expects the subscriber to be active straight away, turn the toggle off.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
 
 **Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.

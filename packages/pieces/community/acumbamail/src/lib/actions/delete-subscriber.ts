@@ -1,5 +1,9 @@
 import { acumbamailAuth } from '../auth';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import {
+  MarkdownVariant,
+  Property,
+  createAction,
+} from '@activepieces/pieces-framework';
 import { acumbamailCommon } from '../common';
 import {
   HttpRequest,
@@ -12,8 +16,7 @@ export const removeSubscribeAction = createAction({
   name: 'acumbamail_remove_subscriber',
   classification: 'DESTRUCTIVE',
   displayName: 'Remove Subscriber',
-  description:
-    'Removes a subscriber from a list',
+  description: 'Deletes a subscriber from a list.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -21,11 +24,17 @@ export const removeSubscribeAction = createAction({
     idempotent: true,
   },
   props: {
-    email: Property.ShortText({
-      displayName: 'Email',
-      required: true,
+    removal_info: Property.MarkDown({
+      value:
+        'Deletes the subscriber from this list. To keep them but stop emails, use Unsubscribe Subscriber.',
+      variant: MarkdownVariant.INFO,
     }),
     listId: acumbamailCommon.listId,
+    email: Property.ShortText({
+      displayName: 'Subscriber Email',
+      placeholder: 'jane@example.com',
+      required: true,
+    }),
   },
   async run(context) {
     const { listId, email } = context.propsValue;
