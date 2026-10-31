@@ -57,26 +57,21 @@ export const createNotesState = (
           id,
         },
       });
-      const notes = get().flowVersion.notes;
-      const noteIndex = notes.findIndex((note) => note.id === id);
-      if (noteIndex !== -1) {
-        notes[noteIndex] = {
-          ...notes[noteIndex],
-          ownerId: authenticationSession.getCurrentUserId() ?? null,
-        };
-      }
-      notes[noteIndex].ownerId =
-        authenticationSession.getCurrentUserId() ?? null;
-      set(() => {
-        return {
-          flowVersion: {
-            ...get().flowVersion,
-            notes,
-          },
-          draggedNote: null,
-          noteDragOverlayMode: null,
-        };
-      });
+      set((state) => ({
+        flowVersion: {
+          ...state.flowVersion,
+          notes: state.flowVersion.notes.map((note) =>
+            note.id === id
+              ? {
+                  ...note,
+                  ownerId: authenticationSession.getCurrentUserId() ?? null,
+                }
+              : note,
+          ),
+        },
+        draggedNote: null,
+        noteDragOverlayMode: null,
+      }));
     },
     updateContent: (id: string, content: string) => {
       const note = get().getNoteById(id);
