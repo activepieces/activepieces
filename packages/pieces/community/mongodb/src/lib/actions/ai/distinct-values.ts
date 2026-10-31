@@ -16,7 +16,7 @@ export const distinctValuesAction = createAction({
   audience: 'ai',
   classification: 'SEARCH',
   aiMetadata: {
-    description: 'Returns the unique values of one field across the documents that match a filter; array fields contribute each element. Use it to discover categories, statuses or other enumerations in a collection. Returns at most the limit (default 100, max 1000).',
+    description: 'Returns the unique values of one field across the documents that match a filter; array fields contribute each element, an explicit null counts as a value, and documents without the field are skipped. Use it to discover categories, statuses or other enumerations in a collection. Returns at most the limit (default 100, max 1000).',
     idempotent: true,
   },
   props: {
@@ -41,7 +41,8 @@ export const distinctValuesAction = createAction({
         .collection(context.propsValue.collection)
         .aggregate([
           { $match: filter },
-          { $unwind: `$${field}` },
+          { $unwind: { path: `$${field}`, preserveNullAndEmptyArrays: true } },
+          { $match: { [field]: { $exists: true } } },
           { $group: { _id: `$${field}` } },
           { $sort: { _id: 1 } },
           { $limit: mongodbUtils.limit({ value: context.propsValue.limit }) },

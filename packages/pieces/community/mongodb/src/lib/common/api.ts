@@ -42,31 +42,19 @@ async function findAndReplaceDocument({
   upsert: boolean;
   returnDocumentPreference: string;
 }) {
-  const beforeDocument = await collection.findOne(filter);
-
-  const replaceResult = await collection.replaceOne(filter, replacement, {
+  const result = await collection.findOneAndReplace(filter, replacement, {
     upsert,
+    returnDocument: returnDocumentPreference === 'before' ? 'before' : 'after',
+    includeResultMetadata: true,
   });
 
-  let afterDocument = null;
-  if (
-    returnDocumentPreference === 'after' ||
-    (!beforeDocument && replaceResult.matchedCount > 0)
-  ) {
-    const replacedId = replaceResult.upsertedId ?? beforeDocument?._id;
-    afterDocument = await collection.findOne(
-      replacedId === undefined ? filter : { _id: replacedId },
-    );
-  }
-
-  const document =
-    returnDocumentPreference === 'before' ? beforeDocument : afterDocument;
+  const matchedCount = result.lastErrorObject?.['updatedExisting'] ? 1 : 0;
 
   return {
-    matchedCount: replaceResult.matchedCount,
-    modifiedCount: replaceResult.modifiedCount,
-    upsertedId: replaceResult.upsertedId,
-    document,
+    matchedCount,
+    modifiedCount: matchedCount,
+    upsertedId: result.lastErrorObject?.['upserted'] ?? null,
+    document: result.value,
   };
 }
 
