@@ -7491,6 +7491,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/prooftell": {
+      "name": "@activepieces/piece-prooftell",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/provenexpert": {
       "name": "@activepieces/piece-provenexpert",
       "version": "0.1.0",
@@ -12550,6 +12563,8 @@
     "@activepieces/piece-prompthub": ["@activepieces/piece-prompthub@workspace:packages/pieces/community/prompthub"],
 
     "@activepieces/piece-promptmate": ["@activepieces/piece-promptmate@workspace:packages/pieces/community/promptmate"],
+
+    "@activepieces/piece-prooftell": ["@activepieces/piece-prooftell@workspace:packages/pieces/community/prooftell"],
 
     "@activepieces/piece-provenexpert": ["@activepieces/piece-provenexpert@workspace:packages/pieces/community/provenexpert"],
 

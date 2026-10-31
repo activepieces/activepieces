@@ -1088,6 +1088,9 @@
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
       ],
+      "@activepieces/piece-prooftell": [
+        "packages/pieces/community/prooftell/src/index.ts"
+      ],
       "@activepieces/piece-provenexpert": [
         "packages/pieces/community/provenexpert/src/index.ts"
       ],
