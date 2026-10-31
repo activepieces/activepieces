@@ -1,16 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
-import { senjaApiCall, INTEGRATION_OPTIONS, mapTestimonial } from '../common';
+import { fetchTestimonials, INTEGRATION_OPTIONS, mapTestimonial } from '../common';
 import { findTestimonialsActionOutputSchema } from '../output-schemas';
 
 export const findTestimonialsAction = createAction({
   auth: senjaAuth,
   name: 'find_testimonials',
+  classification: 'SEARCH',
   displayName: 'Find Testimonials',
   description: 'Search and list testimonials from your Senja project.',
   audience: 'ai',
-  aiMetadata: { description: 'Searches and lists Senja testimonials, returning all of them or only those matching optional filters (full-text query, approval status, type, rating, source platform, tags, language) with sorting and pagination. Pick this over Get Testimonial when you do not yet have a testimonial ID — it is the resolver that returns the IDs the get/update/delete atomics require. Read-only.', idempotent: true },
+  aiMetadata: { description: 'Searches and lists Senja testimonials, returning all of them or only those matching optional filters (full-text query, approval status, type, rating, source platform, tags, language) with sorting and pagination, or every page at once with Get All Testimonials. Pick this over Get Testimonial when you do not yet have a testimonial ID — it is the resolver that returns the IDs the get/update/delete atomics require. Read-only.', idempotent: true },
   outputSchema: findTestimonialsActionOutputSchema,
   props: {
     query: Property.ShortText({
@@ -83,7 +83,7 @@ export const findTestimonialsAction = createAction({
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'Filter testimonials that have all of the specified tags.',
+      description: 'Filter testimonials that have at least one of the specified tags.',
       required: false,
     }),
     lang: Property.ShortText({
@@ -91,6 +91,13 @@ export const findTestimonialsAction = createAction({
       description:
         'Filter by language using an ISO 639 code (e.g. "en", "fr", "de").',
       required: false,
+    }),
+    fetch_all: Property.Checkbox({
+      displayName: 'Get All Testimonials',
+      description:
+        'Check to get every matching testimonial, going through all the pages. Limit and Page are then ignored.',
+      required: false,
+      defaultValue: false,
     }),
     limit: Property.Number({
       displayName: 'Limit',
@@ -115,6 +122,7 @@ export const findTestimonialsAction = createAction({
       integration,
       tags,
       lang,
+      fetch_all,
       limit,
       page,
     } = context.propsValue;
@@ -140,16 +148,11 @@ export const findTestimonialsAction = createAction({
       });
     }
 
-    const response = await senjaApiCall<{
-      testimonials: Record<string, unknown>[];
-    }>({
+    const testimonials = await fetchTestimonials({
       token: context.auth.secret_text,
-      method: HttpMethod.GET,
-      path: '/testimonials',
       queryParams,
+      fetchAll: fetch_all === true,
     });
-
-    const testimonials = response.body.testimonials ?? [];
 
     return testimonials.map((t) => mapTestimonial({ testimonial: t }));
   },

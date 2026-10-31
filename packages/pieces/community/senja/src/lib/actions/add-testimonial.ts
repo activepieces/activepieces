@@ -1,12 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
-import { senjaApiCall, INTEGRATION_OPTIONS, mapTestimonial } from '../common';
+import {
+  senjaApiCall,
+  INTEGRATION_OPTIONS,
+  mapTestimonial,
+  toMediaItems,
+} from '../common';
 import { testimonialActionOutputSchema } from '../output-schemas';
 
 export const addTestimonialAction = createAction({
   auth: senjaAuth,
   name: 'add_testimonial',
+  classification: 'WRITE',
   displayName: 'Add Testimonial',
   description: 'Add a new testimonial to your Senja project.',
   audience: 'ai',
@@ -134,9 +140,20 @@ export const addTestimonialAction = createAction({
     }),
     media: Property.Array({
       displayName: 'Media (Images)',
-      description:
-        'List of image URLs to attach to this testimonial. Each entry must be a JSON object with a "url" field and optionally "alt" text, e.g. {"url": "https://...", "alt": "description"}.',
+      description: 'Images to attach to this testimonial. Add one entry per image.',
       required: false,
+      properties: {
+        url: Property.ShortText({
+          displayName: 'Image URL',
+          description: 'Direct link to the image.',
+          required: true,
+        }),
+        alt: Property.ShortText({
+          displayName: 'Alt Text',
+          description: 'A short description of the image, read by screen readers.',
+          required: false,
+        }),
+      },
     }),
   },
   async run(context) {
@@ -189,22 +206,27 @@ export const addTestimonialAction = createAction({
     if (tags && Array.isArray(tags) && tags.length > 0) body['tags'] = tags;
     if (thumbnail_url) body['thumbnail_url'] = thumbnail_url;
     if (form_id) body['form_id'] = form_id;
-    if (media && Array.isArray(media) && media.length > 0) {
-      body['media'] = media.map((item) => {
-        if (typeof item === 'string') {
-          try { return JSON.parse(item); } catch { return { url: item }; }
-        }
-        return item;
-      });
-    }
+    const mediaItems = toMediaItems({ media });
+    if (mediaItems.length > 0) body['media'] = mediaItems;
 
-    const response = await senjaApiCall<Record<string, unknown>>({
+    const created = await senjaApiCall<Record<string, unknown>>({
       token: context.auth.secret_text,
       method: HttpMethod.POST,
       path: '/testimonials',
       body,
     });
 
-    return mapTestimonial({ testimonial: response.body });
+    const createdId = created.body['id'];
+    if (typeof createdId !== 'string') {
+      return mapTestimonial({ testimonial: created.body });
+    }
+
+    const response = await senjaApiCall<{ testimonial: Record<string, unknown> }>({
+      token: context.auth.secret_text,
+      method: HttpMethod.GET,
+      path: `/testimonials/${createdId}`,
+    });
+
+    return mapTestimonial({ testimonial: response.body.testimonial });
   },
 });
