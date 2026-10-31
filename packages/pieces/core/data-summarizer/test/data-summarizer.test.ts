@@ -62,6 +62,23 @@ describe('calculateSum', () => {
     });
     await expect(calculateSum.run(ctx)).rejects.toThrow();
   });
+
+  test('lists only the offending values in the error', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { note: '', values: ['abc', 1, 'x'] },
+    });
+    const error = await calculateSum.run(ctx).then(
+      () => null,
+      (e: Error) => e,
+    );
+    expect(JSON.parse(error?.message ?? '{}')).toEqual({
+      message: 'The following values are not numbers',
+      errors: [
+        { value: 'abc', location: 0 },
+        { value: 'x', location: 2 },
+      ],
+    });
+  });
 });
 
 describe('countUniques', () => {
