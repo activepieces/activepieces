@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../auth';
-import { callsendfoxApi, sendfoxCommon } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { sendfoxAuth } from '../auth';
+import { sendfoxClient } from '../common/client';
+import { sendfoxProps } from '../common/props';
 
-export const createContact = createAction({
+export const createContactAction = createAction({
   name: 'create-contact',
   classification: 'WRITE',
   auth: sendfoxAuth,
@@ -45,29 +46,23 @@ export const createContact = createAction({
       placeholder: 'Doe',
       width: 'half',
     }),
-    list: sendfoxCommon.lists,
+    list: sendfoxProps.list({
+      required: false,
+      description: 'Leave empty to add the contact without a list.',
+    }),
   },
   async run(context) {
-    const authentication = context.auth;
-    const accessToken = authentication.secret_text;
-    const email = context.propsValue.email;
-    const firstname = context.propsValue.firstname;
-    const lastname = context.propsValue.lastname;
-    const list = context.propsValue.list;
-
-    const request_body: { [key: string]: any } = { email: email };
-    if (firstname) request_body['first_name'] = firstname;
-    if (lastname) request_body['last_name'] = lastname;
-    if (list) request_body['lists'] = [list];
-
-    const response = (
-      await callsendfoxApi(
-        HttpMethod.POST,
-        'contacts',
-        accessToken,  
-        request_body
-      )
-    ).body;
-    return response;
+    const { email, firstname, lastname, list } = context.propsValue;
+    return await sendfoxClient.request<unknown>({
+      auth: context.auth,
+      method: HttpMethod.POST,
+      path: '/contacts',
+      body: {
+        email,
+        ...(firstname ? { first_name: firstname } : {}),
+        ...(lastname ? { last_name: lastname } : {}),
+        ...(list ? { lists: [list] } : {}),
+      },
+    });
   },
 });

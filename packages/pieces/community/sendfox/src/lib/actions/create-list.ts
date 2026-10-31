@@ -1,9 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../auth';
-import { callsendfoxApi } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { sendfoxAuth } from '../auth';
+import { sendfoxClient } from '../common/client';
 
-export const createList = createAction({
+export const createListAction = createAction({
   name: 'create-list',
   classification: 'WRITE',
   auth: sendfoxAuth,
@@ -19,14 +19,12 @@ export const createList = createAction({
     }),
   },
   async run(context) {
-    const authentication = context.auth;
-    const accessToken = authentication.secret_text; 
-    const task_name = context.propsValue.task_name;
-    const response = (
-      await callsendfoxApi(HttpMethod.POST, 'lists', accessToken, {
-        name: task_name,
-      })
-    ).body;
+    const response = await sendfoxClient.request<unknown>({
+      auth: context.auth,
+      method: HttpMethod.POST,
+      path: '/lists',
+      body: { name: context.propsValue.task_name },
+    });
     return [response];
   },
 });

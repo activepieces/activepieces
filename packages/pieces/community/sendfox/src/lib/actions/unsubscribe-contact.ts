@@ -1,9 +1,9 @@
 import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../auth';
-import { callsendfoxApi } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { sendfoxAuth } from '../auth';
+import { sendfoxClient } from '../common/client';
 
-export const unsubscribe = createAction({
+export const unsubscribeContactAction = createAction({
   name: 'unsubscribe',
   classification: 'DESTRUCTIVE',
   auth: sendfoxAuth,
@@ -24,14 +24,12 @@ export const unsubscribe = createAction({
     }),
   },
   async run(context) {
-    const authentication = context.auth;
-    const accessToken = authentication.secret_text;
-    const email = context.propsValue.email;
-    const response = (
-      await callsendfoxApi(HttpMethod.PATCH, 'unsubscribe', accessToken, {
-        email: email,
-      })
-    ).body;
+    const response = await sendfoxClient.request<unknown>({
+      auth: context.auth,
+      method: HttpMethod.PATCH,
+      path: '/unsubscribe',
+      body: { email: context.propsValue.email },
+    });
     return [response];
   },
 });
