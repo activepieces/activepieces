@@ -1,5 +1,7 @@
+import { HttpError } from '@activepieces/pieces-common';
 import { AppConnectionType, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { surrealdbApi } from './common/api';
+import { surrealdbUtils } from './common/utils';
 
 export const surrealdbAuth = PieceAuth.CustomAuth({
   props: {
@@ -36,14 +38,15 @@ export const surrealdbAuth = PieceAuth.CustomAuth({
   required: true,
   validate: async ({ auth }) => {
     try {
-      await surrealdbApi.query({
+      const statements = await surrealdbApi.query({
         auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth },
         sql: 'INFO for db',
       });
+      surrealdbUtils.lastStatementResult({ statements });
     } catch (e) {
       return {
         valid: false,
-        error: JSON.stringify(e),
+        error: e instanceof Error && !(e instanceof HttpError) ? e.message : JSON.stringify(e),
       };
     }
     return {
