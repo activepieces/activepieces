@@ -8,6 +8,8 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
+import { userService } from '../../../user/user-service'
+import { mcpAccess } from '../../mcp-access'
 import { mcpListingUtils } from '../../mcp-listing-utils'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
@@ -149,6 +151,10 @@ export const mcpOAuthTokenService = {
             if (revoked) {
                 return { status: 'invalid' }
             }
+        }
+        if (!await userService(log).isActiveOnPlatform({ id: payload.sub, platformId: payload.platformId })
+            || !await mcpAccess.hasProjectRole({ userId: payload.sub, projectId: payload.projectId, log })) {
+            return { status: 'invalid' }
         }
         return { status: 'ok', payload }
     },
