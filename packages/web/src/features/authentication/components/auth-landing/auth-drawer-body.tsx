@@ -259,6 +259,11 @@ function AuthStep({
     setStep('turned-off');
   };
 
+  const changeEmail = () => {
+    setTurnedOffMethod(null);
+    setStep('method');
+  };
+
   if (step === 'turned-off' && !isNil(turnedOffMethod)) {
     const everyMethodOff = Object.values(turnedOffMethod.methods).every(
       (on) => !on,
@@ -268,13 +273,14 @@ function AuthStep({
         {everyMethodOff ? (
           <SignInTurnedOffStep
             email={turnedOffMethod.email}
-            onChangeEmail={() => setStep('method')}
+            onChangeEmail={changeEmail}
           />
         ) : (
           <UseAnotherMethodStep
             turnedOff={turnedOffMethod}
             isSignUp={effectiveMode === 'signup'}
-            onChangeEmail={() => setStep('method')}
+            onChangeEmail={changeEmail}
+            onContinueWithEmail={() => setStep('method')}
             onContinueWithSso={() => {
               setStep('method');
               setSamlOpen(true);
@@ -293,6 +299,7 @@ function AuthStep({
         <SamlLoginForm
           onBack={() => setSamlOpen(false)}
           onMethodTurnedOff={showMethodTurnedOff}
+          defaultEmail={turnedOffMethod?.email}
           showBackButton={false}
         />
       </DrawerShell>
@@ -446,7 +453,7 @@ function AuthStep({
       )}
       <EmailStep
         mode={effectiveMode}
-        invitedEmail={invitedEmail}
+        defaultEmail={turnedOffMethod?.email ?? invitedEmail}
         captchaToken={captchaToken}
         captchaRequired={captchaRequired}
         onCaptchaSpent={onCaptchaSpent}
@@ -545,7 +552,7 @@ function WorkEmailHint() {
 
 function EmailStep({
   mode,
-  invitedEmail,
+  defaultEmail,
   captchaToken,
   captchaRequired,
   onCaptchaSpent,
@@ -554,7 +561,7 @@ function EmailStep({
 }: EmailStepProps) {
   const form = useForm<EmailSchema>({
     resolver: zodResolver(EmailZodSchema),
-    defaultValues: { email: invitedEmail },
+    defaultValues: { email: defaultEmail },
     // Never call an address invalid before the user has actually tried to
     // continue — not while typing, not on blur. After a failed submit it
     // corrects live as they fix it.
@@ -790,6 +797,7 @@ function UseAnotherMethodStep({
   turnedOff,
   isSignUp,
   onChangeEmail,
+  onContinueWithEmail,
   onContinueWithSso,
 }: UseAnotherMethodStepProps) {
   const domain = signInDiscoveryUtils.domainOf(turnedOff.email).toLowerCase();
@@ -833,7 +841,7 @@ function UseAnotherMethodStep({
             variant="outline"
             size="lg"
             className="w-full rounded-xl font-normal"
-            onClick={onChangeEmail}
+            onClick={onContinueWithEmail}
           >
             {t('Continue with email')}
           </Button>
@@ -1288,7 +1296,7 @@ type CodeStepProps = {
 
 type EmailStepProps = {
   mode: AuthMode;
-  invitedEmail: string;
+  defaultEmail: string;
   captchaToken: string | undefined;
   captchaRequired: boolean;
   onCaptchaSpent: () => void;
@@ -1305,6 +1313,7 @@ type UseAnotherMethodStepProps = {
   turnedOff: TurnedOffMethod;
   isSignUp: boolean;
   onChangeEmail: () => void;
+  onContinueWithEmail: () => void;
   onContinueWithSso: () => void;
 };
 
