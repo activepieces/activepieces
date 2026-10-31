@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { surrealdbAuth } from '../..';
-import surrealClient from '../common';
+import { surrealdbAuth } from '../auth';
+import { surrealdbApi } from '../common/api';
 
-export const runQuery = createAction({
+export const runQueryAction = createAction({
   auth: surrealdbAuth,
   name: 'run-query',
   classification: 'WRITE',
@@ -49,14 +49,15 @@ export const runQuery = createAction({
   async run(context) {
     try {
       const { query, args } = context.propsValue;
-      const response = await surrealClient.query(
-        context.auth.props,
-        query,
-        args as Record<string, string>
-      );
-      return response.body;
+      return await surrealdbApi.query({
+        auth: context.auth,
+        sql: query,
+        args: args
+          ? Object.fromEntries(Object.entries(args).map(([key, value]) => [key, String(value)]))
+          : undefined,
+      });
     } catch (error) {
-      throw new Error(`Query execution failed: ${(error as Error).message}`);
+      throw new Error(`Query execution failed: ${error instanceof Error ? error.message : undefined}`);
     }
   },
 });
