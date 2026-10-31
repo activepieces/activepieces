@@ -86,7 +86,10 @@ export type AirtableFieldType =
   | 'button'
   | 'createdBy'
   | 'lastModifiedBy'
-  | 'externalSyncSource';
+  | 'externalSyncSource'
+  | 'singleCollaborator'
+  | 'multipleCollaborators'
+  | 'aiText';
 
 export const AirtableEnterpriseFields = [
   'singleCollaborator',

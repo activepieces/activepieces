@@ -7,7 +7,7 @@ export const airtableGetBaseSchemaAiAction = createAction({
   auth: airtableAuth,
   name: 'get_base_schema_ai',
   classification: 'READ',
-  displayName: 'Get Base Schema (Agent)',
+  displayName: 'Get Base Schema',
   description: 'Get every table and field in a base.',
   audience: 'ai',
   outputSchema: getBaseSchemaAiActionOutputSchema,
@@ -20,7 +20,7 @@ export const airtableGetBaseSchemaAiAction = createAction({
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
   },

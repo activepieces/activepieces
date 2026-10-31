@@ -8,7 +8,7 @@ export const airtableCreateBaseAiAction = createAction({
   auth: airtableAuth,
   name: 'create_base_ai',
   classification: 'WRITE',
-  displayName: 'Create Base (Agent)',
+  displayName: 'Create Base',
   description: 'Create a new base in a workspace.',
   audience: 'ai',
   outputSchema: createBaseAiActionOutputSchema,

@@ -14,32 +14,32 @@ export const airtableSearchRecordsAction = createAction({
   auth: airtableAuth,
   name: 'search_records',
   classification: 'SEARCH',
-  displayName: 'Search Records (Agent)',
+  displayName: 'Search Records',
   description: 'Find records where a field matches a value.',
   audience: 'ai',
   outputSchema: searchRecordsActionOutputSchema,
   aiMetadata: {
     description:
-      'Finds records in a table where a single field contains or exactly equals a value — the simple "find the record where X = Y" path that builds the Airtable formula for you. Use this by default to resolve a record ID from a known field value; for complex formula filters or sorting use List Records (Agent). Read-only and idempotent.',
+      'Finds records in a table where a single field contains or exactly equals a value — the simple "find the record where X = Y" path that builds the Airtable formula for you. Use this by default to resolve a record ID from a known field value; for complex formula filters or sorting use List Records. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     table_id_or_name: Property.ShortText({
       displayName: 'Table ID or Name',
       description:
-        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema (Agent).',
+        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema.',
       required: true,
     }),
     search_field: Property.ShortText({
       displayName: 'Search Field',
       description:
-        'The exact name of the field to match against. Resolve names with Get Base Schema (Agent).',
+        'The exact name of the field to match against. Resolve names with Get Base Schema.',
       required: true,
     }),
     search_value: Property.ShortText({
@@ -157,7 +157,7 @@ export const airtableSearchRecordsAction = createAction({
       }
       if (status === 404) {
         throw new Error(
-          `Base "${base_id}" or table "${table_id_or_name}" was not found. Verify the IDs with List Bases (Agent) and Get Base Schema (Agent).`
+          `Base "${base_id}" or table "${table_id_or_name}" was not found. Verify the IDs with List Bases and Get Base Schema.`
         );
       }
       if (status === 422) {
