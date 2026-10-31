@@ -15,7 +15,7 @@ export const listFormsAction = createAction({
   classification: 'SEARCH',
   aiMetadata: {
     description:
-      'Returns one page of signup forms with their IDs, titles, URLs and the lists they add contacts to. Optionally filters by a search term. Use it to find a form ID for Get Form.',
+      'Returns one page of signup forms with their IDs, titles, URLs and redirect URLs. Optionally filters by a search term. Use it to find a form ID for Get Form.',
     idempotent: true,
   },
   props: {

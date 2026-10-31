@@ -15,7 +15,7 @@ export const listAutomationsAction = createAction({
   classification: 'SEARCH',
   aiMetadata: {
     description:
-      'Returns one page of automations with their IDs, titles, active state, triggers and steps. Use it to find an automation ID for Get Automation.',
+      'Returns one page of automations with their IDs, titles and active state. Use it to find an automation ID for Get Automation.',
     idempotent: true,
   },
   props: {

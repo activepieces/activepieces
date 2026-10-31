@@ -14,7 +14,7 @@ export const getCurrentUserAction = createAction({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Returns the SendFox account behind this connection: its ID, name, email, contact count and contact limit. Use it to check which account is connected or how close it is to its contact limit.',
+      'Returns the SendFox account behind this connection: its ID, name, email, country, timezone and language. Use it to check which account is connected.',
     idempotent: true,
   },
   props: {
