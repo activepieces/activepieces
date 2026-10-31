@@ -8,6 +8,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { AdminPageHeader, adminPageResources } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,8 +28,6 @@ import {
 import { projectCollectionUtils } from '@/features/projects';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-
-import { SectionHeader } from '../components/section-header';
 
 import { DeleteTierDialog } from './delete-tier-dialog';
 import { SpecificModelsSection } from './specific-models-section';
@@ -101,15 +100,13 @@ export function TiersTab() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-3">
-        <SectionHeader
-          title={t('Tiers')}
-          isPageTitle
-          count={isError ? undefined : liveTiers.length}
-          description={t(
-            'Named model groups your builders pick. Each one is a main model plus fallbacks.',
-          )}
-        />
+      <AdminPageHeader
+        title={t('Tiers')}
+        description={t(
+          'Named model groups your builders pick. Each one is a main model plus fallbacks.',
+        )}
+        resources={adminPageResources.aiTiers}
+      >
         {!isError && !noKeys && (
           <div className="flex shrink-0 items-center gap-2">
             {showPreview && (
@@ -150,7 +147,7 @@ export function TiersTab() {
             </Button>
           </div>
         )}
-      </div>
+      </AdminPageHeader>
 
       {isError ? (
         <DataFetchErrorState entity={t('tiers')} onRetry={retry} />
@@ -328,6 +325,7 @@ function NoTiersState({
         </p>
       </div>
       <Button
+        variant="outline"
         onClick={(event) => onCreate(event.currentTarget)}
         {...adminControl(AdminControl.AI_TIER_OPEN)}
       >

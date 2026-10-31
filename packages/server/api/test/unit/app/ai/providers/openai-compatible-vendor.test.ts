@@ -45,6 +45,18 @@ describe('openAiCompatibleVendor', () => {
         expect(requestedUrl()).toBe('https://api.z.ai/api/paas/v4/models')
     })
 
+    it.each([
+        { provider: AIProviderName.META, url: 'https://api.meta.ai/v1/models' },
+        { provider: AIProviderName.NVIDIA, url: 'https://integrate.api.nvidia.com/v1/models' },
+    ])('lists $provider models from its own endpoint', async ({ provider, url }) => {
+        respondWith(['some-model'])
+        const vendor = openAiCompatibleVendor({ name: provider, provider })
+
+        await vendor.listModels({ apiKey: 'k' }, {})
+
+        expect(requestedUrl()).toBe(url)
+    })
+
     it('authenticates with the configured key', async () => {
         respondWith(['deepseek-chat'])
         const vendor = openAiCompatibleVendor({ name: 'DeepSeek', provider: AIProviderName.DEEPSEEK })

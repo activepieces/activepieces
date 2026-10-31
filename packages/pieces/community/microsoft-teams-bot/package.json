@@ -9,9 +9,7 @@
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
     "@microsoft/microsoft-graph-client": "3.0.7",
-    "@microsoft/microsoft-graph-types": "2.40.0"
-  },
-  "devDependencies": {
+    "@microsoft/microsoft-graph-types": "2.40.0",
     "tslib": "2.6.2"
   },
   "scripts": {

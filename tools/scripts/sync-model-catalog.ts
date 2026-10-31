@@ -25,6 +25,8 @@ const MODELS_DEV_PROVIDER: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.QWEN]: 'alibaba',
     [AIProviderName.MINIMAX]: 'minimax',
     [AIProviderName.MOONSHOT]: 'moonshotai',
+    [AIProviderName.META]: 'meta',
+    [AIProviderName.NVIDIA]: 'nvidia',
 }
 
 const ALIASED_AT_LOOKUP: AIProviderName[] = [AIProviderName.ACTIVEPIECES]

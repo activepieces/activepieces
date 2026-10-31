@@ -100,7 +100,7 @@
     },
     "packages/core/ai-providers": {
       "name": "@activepieces/ai-providers",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -114,9 +114,9 @@
         "@openrouter/ai-sdk-provider": "3.0.0",
         "ai": "7.0.44",
         "ai-gateway-provider": "4.0.0",
+        "tslib": "2.6.2",
       },
       "devDependencies": {
-        "tslib": "2.6.2",
         "vitest": "3.2.6",
       },
     },
@@ -154,7 +154,7 @@
     },
     "packages/core/piece-types": {
       "name": "@activepieces/core-piece-types",
-      "version": "0.12.3",
+      "version": "0.13.0",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "tslib": "2.6.2",
@@ -167,7 +167,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.211.0",
+      "version": "0.213.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -190,7 +190,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.11.0",
+      "version": "0.12.1",
       "dependencies": {
         "deepmerge-ts": "8.0.2",
         "ipaddr.js": "2.3.0",
@@ -221,10 +221,10 @@
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "form-data": "4.0.6",
+        "tslib": "2.6.2",
         "zod": "4.3.6",
       },
       "devDependencies": {
-        "tslib": "2.6.2",
         "vitest": "3.2.6",
       },
     },
@@ -350,7 +350,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.15.0",
+      "version": "0.15.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3123,8 +3123,6 @@
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-      },
-      "devDependencies": {
         "tslib": "2.6.2",
       },
     },
@@ -4774,10 +4772,10 @@
         "dayjs": "1.11.9",
         "intercom-client": "6.2.0",
         "string-strip-html": "8.5.0",
+        "tslib": "2.6.2",
         "undici": "7.29.1",
       },
       "devDependencies": {
-        "tslib": "2.6.2",
         "vitest": "3.2.6",
       },
     },
@@ -6131,8 +6129,6 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@microsoft/microsoft-graph-client": "3.0.7",
         "@microsoft/microsoft-graph-types": "2.40.0",
-      },
-      "devDependencies": {
         "tslib": "2.6.2",
       },
     },
@@ -7725,18 +7721,19 @@
     },
     "packages/pieces/community/rabbitmq": {
       "name": "@activepieces/piece-rabbitmq",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "amqplib": "0.10.7",
-        "dayjs": "1.11.9",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "@types/amqplib": "0.10.7",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/raia-ai": {
@@ -8637,10 +8634,10 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@slack/web-api": "7.9.0",
         "slackify-markdown": "4.4.0",
+        "tslib": "2.6.2",
         "zod": "4.3.6",
       },
       "devDependencies": {
-        "tslib": "2.6.2",
         "vitest": "3.2.6",
       },
     },
@@ -8888,9 +8885,9 @@
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "tslib": "2.6.2",
       },
       "devDependencies": {
-        "tslib": "2.6.2",
         "vitest": "3.2.6",
       },
     },
@@ -11014,11 +11011,11 @@
         "@activepieces/core-utils": "workspace:*",
         "ai": "^6.0.0",
         "semver": "7.6.0",
+        "tslib": "2.6.2",
         "zod": "4.3.6",
       },
       "devDependencies": {
         "@types/semver": "7.5.6",
-        "tslib": "2.6.2",
         "vitest": "3.2.6",
       },
     },
@@ -11032,6 +11029,11 @@
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/engine": "workspace:*",
+        "@activepieces/piece-facebook-leads": "workspace:*",
+        "@activepieces/piece-intercom": "workspace:*",
+        "@activepieces/piece-microsoft-teams-bot": "workspace:*",
+        "@activepieces/piece-slack": "workspace:*",
+        "@activepieces/piece-square": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/server-utils": "workspace:*",
@@ -11134,11 +11136,6 @@
         "zod": "4.3.6",
       },
       "devDependencies": {
-        "@activepieces/piece-facebook-leads": "workspace:*",
-        "@activepieces/piece-intercom": "workspace:*",
-        "@activepieces/piece-microsoft-teams-bot": "workspace:*",
-        "@activepieces/piece-slack": "workspace:*",
-        "@activepieces/piece-square": "workspace:*",
         "@faker-js/faker": "10.5.0",
         "@types/bcrypt": "5.0.0",
         "@types/content-disposition": "0.5.9",

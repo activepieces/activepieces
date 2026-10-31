@@ -376,8 +376,15 @@
                     "group": "Setup",
                     "pages": [
                       "admin-guide/guides/general",
-                      "admin-guide/guides/setup-ai-providers",
-                      "admin-guide/guides/ai-capabilities",
+                      {
+                        "group": "AI Center",
+                        "icon": "sparkles",
+                        "pages": [
+                          "admin-guide/guides/setup-ai-providers",
+                          "admin-guide/guides/ai-tiers",
+                          "admin-guide/guides/ai-capabilities"
+                        ]
+                      },
                       "admin-guide/guides/global-connections",
                       "admin-guide/guides/manage-pieces",
                       "admin-guide/guides/templates",
@@ -664,6 +671,50 @@
                            "endpoints/variables/list",
                            "endpoints/variables/update",
                            "endpoints/variables/delete"
+                        ]
+                     },
+                     {
+                        "group": "AI Center",
+                        "icon": "sparkles",
+                        "pages": [
+                           {
+                              "group": "Providers",
+                              "pages": [
+                                 "endpoints/ai-providers/list-keys",
+                                 "endpoints/ai-providers/list-key-models",
+                                 "endpoints/ai-providers/list-suggested-models",
+                                 "endpoints/ai-providers/list-model-options",
+                                 "endpoints/ai-providers/create-key",
+                                 "endpoints/ai-providers/recheck-key",
+                                 "endpoints/ai-providers/update-key",
+                                 "endpoints/ai-providers/delete-key"
+                              ]
+                           },
+                           {
+                              "group": "Model Tiers",
+                              "pages": [
+                                 "endpoints/ai-model-tiers/list",
+                                 "endpoints/ai-model-tiers/create",
+                                 "endpoints/ai-model-tiers/reorder",
+                                 "endpoints/ai-model-tiers/update",
+                                 "endpoints/ai-model-tiers/delete"
+                              ]
+                           },
+                           {
+                              "group": "Capabilities",
+                              "pages": [
+                                 "endpoints/ai-capabilities/list",
+                                 "endpoints/ai-capabilities/set-up",
+                                 "endpoints/ai-capabilities/update",
+                                 "endpoints/ai-capabilities/reset"
+                              ]
+                           },
+                           {
+                              "group": "Platform Configuration",
+                              "pages": [
+                                 "endpoints/platform-configuration/update"
+                              ]
+                           }
                         ]
                      },
                      {

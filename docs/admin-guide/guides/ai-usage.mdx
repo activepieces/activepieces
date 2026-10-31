@@ -1,0 +1,79 @@
+---
+title: "AI usage"
+description: "See where your AI spend goes across projects, flows, agents, chat, keys and models"
+icon: "chart-pie"
+---
+
+## Overview
+
+**AI usage** answers one question: where is your AI money going? It covers every AI call on the platform, from flow steps, agents, chat and knowledge bases, on your own keys and on Activepieces credits.
+
+Open it at `/platform/ai/usage`.
+
+![AI usage overview](/resources/screenshots/ai-center-usage.png)
+
+<Note>
+  AI usage is available on Cloud and self-hosted Enterprise. It is not in the menu yet, so open it by URL. Community Edition doesn't have it. On self-hosted Enterprise, the page needs a billing connection; without one it says AI usage isn't available.
+</Note>
+
+New usage shows up a few minutes after the AI call.
+
+## Period and scope
+
+Two controls sit next to the page title, on every usage page:
+
+- **Scope**: **Production** (the default) counts live flows, agents and chat. **Testing** counts test runs from the flow builder and the agent builder. **All** counts both.
+- **Period**: the last hour, 6 hours, 12 hours, 24 hours, 7 days, 30 days or 90 days, this month or last month.
+
+The whole page follows both. They stay in the URL, so you can share a view.
+
+## Overview page
+
+From top to bottom:
+
+1. **Tiles**: the pace of spend, AI calls and tokens.
+   - For a period of a day or less, the pace is a **Daily run rate**: the spend of the period, scaled to a full day.
+   - For longer periods it is the **Average per day**.
+   - For **This month** it is a **Month-end forecast**, with the daily pace it is based on.
+2. **Chart**: total spend for the period, the change from the previous period, and a line chart. The solid line is this period, the dashed line the previous one. Switch between **Spend**, **Calls** and **Tokens**.
+3. **Spend by source**: what kind of work spends: **Flow AI steps**, **Run Agent steps**, **Agents**, **Chat** and **Knowledge base**.
+4. **Top lists**: the top five **Projects**, **Flows**, **Agents**, **Users**, **Providers & keys** and **Models**. The bar under each row is its share of all AI spend in the period.
+
+"Previous period" is the same length of time right before. **This month** compares with the same days of last month, and **Last month** with the month before it. If tracking started after the previous period began, the change is hidden, so a new platform never shows fake growth.
+
+## Lists and details
+
+Click **See all** on a card to see the full list. Search by name, click a column header to sort, and page through the results.
+
+Click any row to open its detail page. It shows the same chart, the top five of the other lists (for example, a flow's models and keys), and one extra card for its type:
+
+| Detail page | Extra card |
+| --- | --- |
+| Project | Spend, with its number of flows and agents |
+| Flow | Runs and cost per run |
+| Key | Cost reported by the provider vs estimated, and a link to the provider's dashboard |
+| Model | List price per million tokens |
+
+The page title is a breadcrumb, for example **AI usage / Flows / Lead enrichment**. Click a part of it to go back.
+
+A Run Agent step counts under both its flow and its agent, so flows and agents together can add up to more than a project's total.
+
+## Estimated vs exact cost
+
+All amounts are in dollars. Activepieces credits are converted to their dollar value.
+
+Click **Estimated** next to the spend to see why:
+
+- Most providers return how many tokens a call used, not what it cost. Activepieces multiplies the tokens by the model's list price.
+- Discounts, cached tokens, batch rates and price changes on your account can make your real bill a few percent different.
+- When a provider does return the exact cost, it is used as is. A key's detail page shows how much was reported and how much was estimated.
+- Activepieces credits are always exact.
+
+For billing, your provider's own dashboard is the source of truth.
+
+## Related
+
+- [Providers and keys](/admin-guide/guides/setup-ai-providers)
+- [Tiers](/admin-guide/guides/ai-tiers)
+- [Usage](/admin-guide/guides/usage) for runs and credits on your plan.
+- API reference: [overview](/endpoints/ai-usage/overview), [list items](/endpoints/ai-usage/list-items), [get an item](/endpoints/ai-usage/get-item).
