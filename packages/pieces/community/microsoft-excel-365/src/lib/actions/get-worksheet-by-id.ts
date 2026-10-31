@@ -7,16 +7,25 @@ export const getWorksheetAction = createAction({
     auth: excelAuth,
     name: 'get_worksheet',
     classification: 'READ',
-    displayName: 'Get Worksheet by ID',
-    description: 'Retrieve metadata of a worksheet by its ID.',
+    displayName: 'Get Worksheet',
+    description: "Retrieve a worksheet's details.",
     audience: 'both',
     aiMetadata: { description: 'Fetch a single worksheet by its id (or name), returning that sheet metadata such as id, name, position, and visibility. Use when you already know which sheet you want; to list all sheets use Get Worksheets, or to search by name use Find Worksheet. Read-only and idempotent.', idempotent: true },
+    propertyGroups: [
+        {
+            key: 'workbook',
+            display: 'section',
+            label: 'Workbook',
+            icon: 'file',
+            props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+        },
+    ],
     props: {
         storageSource: commonProps.storageSource,
         siteId: commonProps.siteId,
         documentId: commonProps.documentId,
         workbookId: commonProps.workbookId,
-        worksheetId: commonProps.worksheetId, // This dropdown provides the worksheet name as its value
+        worksheetId: commonProps.worksheetId,
     },
     async run(context) {
         const { storageSource, siteId, documentId, workbookId, worksheetId } = context.propsValue;
@@ -28,14 +37,11 @@ export const getWorksheetAction = createAction({
         }
         const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-        // The worksheet_id prop from excelCommon returns the worksheet's name,
-        // which can be used to identify it in the API URL as per the documentation ({id|name}).
         const client = createMSGraphClient(access_token, cloud);
         const response = await client
             .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}`)
             .get();
 
-        // The response body contains the workbookWorksheet object with its metadata.
         return response;
     },
 });

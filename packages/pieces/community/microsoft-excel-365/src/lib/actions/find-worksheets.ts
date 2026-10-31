@@ -11,9 +11,25 @@ export const findWorksheetAction = createAction({
   name: 'find-worksheet',
   classification: 'SEARCH',
   displayName: 'Find Worksheet',
-  description: 'Finds an existing worksheet by name.',
+  description: 'Find worksheets by name.',
   audience: 'both',
   aiMetadata: { description: 'Search a workbook for worksheets whose name matches a search string, returning a found flag plus the matching sheets. By default matches sheets that contain the string (case-insensitive); enable Exact Match for an exact-name match only. Use to locate a sheet by name; to list every sheet use Get Worksheets. Read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId'],
+    },
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['sheetName', 'exactMatch'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -21,12 +37,12 @@ export const findWorksheetAction = createAction({
     workbookId: commonProps.workbookId,
     sheetName: Property.ShortText({
       displayName: 'Worksheet Name',
+      placeholder: 'Sheet1',
       required: true,
     }),
     exactMatch: Property.Checkbox({
       displayName: 'Exact Match',
-      description:
-        'If true, only return worksheets that exactly match the name. If false, return worksheets that contain the name.',
+      description: 'Off also finds names that contain the text.',
       required: false,
       defaultValue: false,
     }),

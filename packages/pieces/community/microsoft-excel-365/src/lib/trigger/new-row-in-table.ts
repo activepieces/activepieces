@@ -21,7 +21,6 @@ interface TableRow {
     values: [[string | number | boolean]];
 }
 
-// Helper function to get all rows from a specific table
 async function getTableRows(auth: OAuth2PropertyValue, workbookId: string, tableId: string, drivePath: string): Promise<TableRow[]> {
     try {
         const cloud = auth.props?.['cloud'] as string | undefined;
@@ -69,26 +68,24 @@ const polling: Polling<
                     workbookId,
                     auth.access_token,
                     worksheetId,
-                    tableId
+                    tableId,
+                    auth.props?.['cloud']
                 );
                 await store.put('table_headers', headers);
             } catch (error) {
                 headers = []
             }
         }
-        
 
         const processedRows = rows.map(row => {
             let rowData: Record<string, unknown> = {};
 
             if (propsValue.has_headers && headers.length > 0) {
-                // Map values to header keys
                 rowData = headers.reduce((acc, header, index) => {
                     acc[header] = row.values[0]?.[index] ?? null;
                     return acc;
                 }, {} as Record<string, unknown>);
             } else {
-                // Use default column letter keys (A, B, C...)
                 rowData = row.values[0]?.reduce((acc, value, index) => {
                     acc[excelCommon.numberToColumnName(index + 1)] = value;
                     return acc;
@@ -96,7 +93,7 @@ const polling: Polling<
             }
 
             return {
-                id: row.index, // The row's zero-based index is its unique ID
+                id: row.index,
                 data: {
                     rowIndex: row.index,
                     values: rowData
@@ -104,9 +101,9 @@ const polling: Polling<
             };
         });
 
-        // The polling helper will filter for new rows where the ID (row.index) is greater than lastItemId
-        const newItems = processedRows.filter(item => isNil(lastItemId) || item.id > (lastItemId as number));
-        return newItems;
+        return processedRows
+            .filter(item => isNil(lastItemId) || item.id > (lastItemId as number))
+            .sort((a, b) => b.id - a.id);
     }
 };
 
@@ -119,6 +116,22 @@ export const newRowInTableTrigger = createTrigger({
     aiMetadata: {
         description: 'Fires when a new row is appended to a specific Excel table inside a worksheet. Each event represents one newly detected table row, returning its zero-based row index and the cell values (keyed by the table header names when headers are enabled, otherwise by column letters). Use this to react to records added to a structured Excel table.',
     },
+    propertyGroups: [
+        {
+            key: 'workbook',
+            display: 'section',
+            label: 'Workbook',
+            icon: 'file',
+            props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId'],
+        },
+        {
+            key: 'rows',
+            display: 'section',
+            label: 'Rows',
+            icon: 'markdown',
+            props: ['has_headers'],
+        },
+    ],
     props: {
         storageSource: commonProps.storageSource,
         siteId: commonProps.siteId,
@@ -127,8 +140,8 @@ export const newRowInTableTrigger = createTrigger({
         worksheetId: commonProps.worksheetId,
         tableId: commonProps.tableId,
         has_headers: Property.Checkbox({
-            displayName: "My table has headers",
-            description: "Enable this if the first row of your table is a header row.",
+            displayName: "Use Header Names",
+            description: "When off, values are keyed by column letter.",
             required: true,
             defaultValue: true,
         })

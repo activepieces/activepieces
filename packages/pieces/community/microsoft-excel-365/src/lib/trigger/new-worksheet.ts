@@ -4,7 +4,6 @@ import {
   createTrigger
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { excelCommon } from '../common/common';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelAuth } from '../auth';
@@ -72,6 +71,15 @@ export const newWorksheetTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a new worksheet (tab) is added to the selected Excel workbook. Each event represents one newly created worksheet and returns its id, name, position, and visibility. Use this to react to sheets being added to a workbook.',
   },
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

@@ -11,6 +11,22 @@ export const getWorksheetsAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'List the worksheets (tabs) in a workbook, returning metadata such as id, name, and position for each sheet. Use to discover available sheets before reading or writing; to look up a sheet by name use Find Worksheet. Read-only and idempotent; returns up to the given limit unless Return All is enabled.', idempotent: true },
   displayName: 'Get Worksheets',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'filter',
+      props: ['returnAll', 'limit'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -18,13 +34,13 @@ export const getWorksheetsAction = createAction({
     workbookId: commonProps.workbookId,
     returnAll: Property.Checkbox({
       displayName: 'Return All',
-      description: 'If checked, all worksheets will be returned',
+      description: 'Off returns up to the limit below.',
       required: false,
       defaultValue: false,
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Limit the number of worksheets returned',
+      description: 'Used when Return All is off. Empty returns all.',
       required: false,
       defaultValue: 10,
     }),
@@ -47,14 +63,9 @@ export const getWorksheetsAction = createAction({
 
     const worksheets = response.value;
 
-    if (returnAll) {
+    if (returnAll || limit === null || limit === undefined) {
       return worksheets;
-    } else {
-      const limitedWorksheets = [];
-      for (let i = 0; i < Math.min(worksheets['length'], limit ?? 0); i++) {
-        limitedWorksheets.push(worksheets[i]);
-      }
-      return limitedWorksheets;
     }
+    return worksheets.slice(0, Math.max(0, limit));
   },
 });

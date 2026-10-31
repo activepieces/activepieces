@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -11,11 +11,24 @@ export const deleteWorkbookAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Permanently delete an entire Excel workbook file from OneDrive or a SharePoint document library. Pick this to remove a whole file, not a single sheet (use Delete Worksheet for that). Destructive and irreversible; idempotent by stable workbook id, so re-running after deletion has no further effect.', idempotent: true },
   displayName: 'Delete Workbook',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'recycle_info'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
     documentId: commonProps.documentId,
     workbookId: commonProps.workbookId,
+    recycle_info: Property.MarkDown({
+      value: 'The workbook moves to the recycle bin of its drive.',
+      variant: MarkdownVariant.INFO,
+    }),
   },
   async run({ propsValue, auth }) {
     const { storageSource, siteId, documentId, workbookId } = propsValue;

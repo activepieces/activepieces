@@ -8,6 +8,21 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Microsoft Excel 365 0.9.0: trigger outputs and Get Worksheets change
+
+- **New Row in Table** now keys `values` by the table's header names when Use Header Names is on. Before, the header lookup failed silently and the keys were column letters. The trigger also stops re-sending rows it has already sent.
+- **Updated Row** no longer sends every existing row as `added` on its first check after you turn the flow on.
+- **New Row** names columns past Z as `AA`, `AB` and so on, instead of `[`, `\` and other characters.
+- **Get Worksheets** with an empty Limit now returns every worksheet, instead of none.
+
+#### What you need to do
+
+- If a later step reads New Row in Table values by column letter, map the header names instead.
+- If a later step reads New Row columns past Z, remap them to the new keys.
+- If you relied on an empty Limit in Get Worksheets returning nothing, set the Limit you want.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
 
 **Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.

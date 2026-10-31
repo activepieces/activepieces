@@ -11,6 +11,15 @@ export const getTableColumnsAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'List the column names of a specific named table in a worksheet, optionally capped by a limit. Pick this to discover a table schema before mapping fields for row reads or writes. Use Get Worksheet Columns instead when the data is loose cells rather than a formal table. Read-only and idempotent.', idempotent: true },
   displayName: 'Get Table Columns',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -20,8 +29,9 @@ export const getTableColumnsAction = createAction({
     tableId: commonProps.tableId,
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Limit the number of columns retrieved',
+      description: 'Empty returns all columns.',
       required: false,
+      advanced: true,
     }),
   },
   async run({ propsValue, auth }) {
@@ -41,12 +51,17 @@ export const getTableColumnsAction = createAction({
       apiCall = apiCall.top(limit);
     }
 
-    const response = await apiCall.get();
+    const columnNames: unknown[] = [];
+    let response = await apiCall.get();
+    while (response) {
+      columnNames.push(...response.value.map((column: { name: unknown }) => column.name));
+      if (limit && columnNames.length >= limit) {
+        break;
+      }
+      const nextLink = response['@odata.nextLink'];
+      response = nextLink ? await client.api(nextLink).get() : undefined;
+    }
 
-    const columnNames = response.value.map(
-      (column: { name: any }) => column.name
-    );
-
-    return columnNames;
+    return limit ? columnNames.slice(0, limit) : columnNames;
   },
 });

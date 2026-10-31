@@ -7,10 +7,19 @@ export const getWorksheetColumnsAction = createAction({
     displayName: 'Get Worksheet Columns',
     name: 'get-worksheet-columns',
     classification: 'READ',
-    description: 'List columns of a worksheet.',
+    description: 'Returns the header names in row 1.',
     audience: 'both',
     aiMetadata: { description: 'List the header/column values from the first row of a worksheet (read from the used range across A1:ZZ1). Pick this to inspect loose-cell sheet headers before appending or mapping rows. Use Get Table Columns instead when the data is a formal Excel table. Read-only and idempotent.', idempotent: true },
     auth: excelAuth,
+    propertyGroups: [
+        {
+            key: 'workbook',
+            display: 'section',
+            label: 'Workbook',
+            icon: 'file',
+            props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+        },
+    ],
     props: {
         storageSource: commonProps.storageSource,
         siteId: commonProps.siteId,

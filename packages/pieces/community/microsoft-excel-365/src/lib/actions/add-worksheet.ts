@@ -1,5 +1,4 @@
 import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import {} from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -11,7 +10,23 @@ export const addWorksheetAction = createAction({
   description: 'Add a worksheet to a workbook',
   audience: 'both',
   aiMetadata: { description: 'Add a new worksheet (tab) to an existing workbook, optionally with a chosen name. Pick this to create a sheet before writing rows or tables into it. Not idempotent: each run adds another worksheet, and re-running can create duplicate or auto-named sheets.', idempotent: false },
-  displayName: 'Add a Worksheet to a Workbook',
+  displayName: 'Add Worksheet',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId'],
+    },
+    {
+      key: 'new_worksheet',
+      display: 'section',
+      label: 'New Worksheet',
+      icon: 'file',
+      props: ['worksheet_name'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -19,7 +34,8 @@ export const addWorksheetAction = createAction({
     workbookId: commonProps.workbookId,
     worksheet_name: Property.ShortText({
       displayName: 'Worksheet Name',
-      description: 'The name of the new worksheet',
+      description: 'Must be unique in the workbook.',
+      placeholder: 'Sheet2',
       required: false,
       defaultValue: 'Sheet',
     }),

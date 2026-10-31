@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -8,9 +8,25 @@ export const clearRangeAction = createAction({
   name: 'clear_range',
   classification: 'DESTRUCTIVE',
   displayName: 'Clear Cells by Range',
-  description: 'Clear a block of cells (range) content or formatting.',
+  description: 'Clear the contents or formatting of a range.',
   audience: 'both',
   aiMetadata: { description: 'Clear a block of cells in A1 notation, choosing to remove contents only, formatting only, or both. Pick this to wipe cell values or styles in place without deleting the worksheet or shifting cells. Idempotent: clearing the same range repeatedly yields the same emptied state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId']
+    },
+    {
+      key: 'range',
+      display: 'section',
+      label: 'Range',
+      icon: 'markdown',
+      props: ['range', 'applyTo', 'clear_warning']
+    }
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -19,31 +35,38 @@ export const clearRangeAction = createAction({
     worksheetId: commonProps.worksheetId,
     range: Property.ShortText({
       displayName: 'Range',
-      description:
-        'The range of cells to clear, in A1 notation (e.g., "A1:C5").',
+      description: 'Cells in A1 notation, in capitals.',
+      placeholder: 'A1:C10',
       required: true
     }),
     applyTo: Property.StaticDropdown({
-      displayName: 'Clear Type',
-      description: 'Specify what to clear from the range.',
+      displayName: 'What to Clear',
       required: true,
       defaultValue: 'All',
+      display: 'cards',
       options: {
         options: [
           {
-            label: 'All (Contents and Formatting)',
-            value: 'All'
+            label: 'Everything',
+            value: 'All',
+            icon: 'trash'
           },
           {
-            label: 'Contents Only',
-            value: 'Contents'
+            label: 'Contents',
+            value: 'Contents',
+            icon: 'text'
           },
           {
-            label: 'Formats Only',
-            value: 'Formats'
+            label: 'Formatting',
+            value: 'Formats',
+            icon: 'sliders'
           }
         ]
       }
+    }),
+    clear_warning: Property.MarkDown({
+      value: 'Cleared cells cannot be restored.',
+      variant: MarkdownVariant.WARNING
     })
   },
   async run(context) {
@@ -65,7 +88,6 @@ export const clearRangeAction = createAction({
       .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')/clear`)
       .post({ applyTo: applyTo });
 
-    // A successful request returns a 200 OK with no body.
     return {};
   }
 });

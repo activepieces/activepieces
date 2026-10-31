@@ -11,16 +11,32 @@ import {
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
+import { getGraphBaseUrl } from '../common/microsoft-cloud';
 
 export const findRowAction = createAction({
   auth: excelAuth,
   name: 'find_row',
   classification: 'SEARCH',
   displayName: 'Find Row',
-  description:
-    'Locate a row by specifying a lookup column and value (e.g. find a row where “ID” = 123).',
+  description: 'Filter a table by a column you pick and return the matching rows.',
   audience: 'both',
   aiMetadata: { description: 'Search a table for rows where a chosen column matches a given value, returning the matching rows. Pick this to look up rows by content rather than position (use Get Row by ID when the index is known). Applies a temporary column filter and clears it afterward; read-only with respect to data and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId']
+    },
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['lookup_column', 'lookup_value']
+    }
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -30,23 +46,22 @@ export const findRowAction = createAction({
     tableId: commonProps.tableId,
     lookup_column: Property.Dropdown({
       auth: excelAuth,
-      displayName: 'Lookup Column',
-      description: 'The column to search in.',
+      displayName: 'Column',
       required: true,
-      refreshers: ['storageSource', 'siteId', 'documentId', 'workbookId', 'tableId'],
+      refreshers: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId'],
       options: async ({ auth, storageSource, siteId, documentId, workbookId, tableId }) => {
         if (!auth || !workbookId || !tableId) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please select a workbook and table first.'
+            placeholder: 'Choose a workbook and table first.'
           };
         }
         if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'please select SharePoint site and document library first.'
+            placeholder: 'Choose a SharePoint site and document library first.'
           };
         }
         const authProp = auth as OAuth2PropertyValue;
@@ -55,7 +70,7 @@ export const findRowAction = createAction({
           value: { id: string; name: string }[];
         }>({
           method: HttpMethod.GET,
-          url: `${drivePath}/items/${workbookId}/workbook/tables/${tableId}/columns`,
+          url: `${getGraphBaseUrl(authProp.props?.['cloud'])}/v1.0${drivePath}/items/${workbookId}/workbook/tables/${tableId}/columns`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: authProp.access_token
@@ -72,8 +87,9 @@ export const findRowAction = createAction({
       }
     }),
     lookup_value: Property.ShortText({
-      displayName: 'Lookup Value',
-      description: 'The value to find in the lookup column.',
+      displayName: 'Value',
+      description: 'Rows whose cell equals this are returned.',
+      placeholder: 'jane@example.com',
       required: true
     })
   },
@@ -93,25 +109,19 @@ export const findRowAction = createAction({
 
     const client = createMSGraphClient(access_token, cloud);
 
-    // Define the URL to clear the filter, which will be used in the 'finally' block
     const clearFilterUrl = `${drivePath}/items/${workbookId}/workbook/tables/${tableId}/columns/${columnId}/filter/clear`;
 
     try {
-      // Step 1: Apply the filter to the specified column
       await client
         .api(`${drivePath}/items/${workbookId}/workbook/tables/${tableId}/columns/${columnId}/filter/apply`)
         .post({ criteria: { criterion1: `=${sanitizedValue}`, filterOn: 'Custom' } });
 
-      // Step 2: Get the visible rows (i.e., the filtered results)
       const foundRowsResponse = await client
         .api(`${drivePath}/items/${workbookId}/workbook/tables/${tableId}/range/visibleView/rows`)
         .get();
 
-      // The result is the array of rows that matched the filter
       return foundRowsResponse.value;
     } finally {
-      // Step 3: Clear the filter to restore the table to its original state.
-      // This runs regardless of whether the previous steps succeeded or failed.
       await client.api(clearFilterUrl).post({});
     }
   }

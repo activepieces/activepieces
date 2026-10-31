@@ -2,7 +2,6 @@ import { createAction, OAuth2PropertyValue, Property } from '@activepieces/piece
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
-import { excelCommon } from '../common/common';
 
 export const createTableAction = createAction({
   auth: excelAuth,
@@ -12,6 +11,22 @@ export const createTableAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Create a structured Excel table from a cell range in a worksheet. Pick this to formalize raw cells into a named table so row/column actions can target it. Choose the range automatically from the worksheet used range or supply it manually in A1 notation, and indicate whether the first row holds column headers. Not idempotent: each run adds a new table.', idempotent: false },
   displayName: 'Create Table',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+    },
+    {
+      key: 'table_range',
+      display: 'section',
+      label: 'Table Range',
+      icon: 'sliders',
+      props: ['selectRange', 'range', 'hasHeaders'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -19,35 +34,34 @@ export const createTableAction = createAction({
     workbookId: commonProps.workbookId,
     worksheetId: commonProps.worksheetId,
     selectRange: Property.StaticDropdown({
-      displayName: 'Select Range',
-      description: 'How to select the range for the table',
+      displayName: 'Range Source',
       required: true,
-                defaultValue: 'auto',
-      options:  {
-          disabled: false,
-          options: [
-            {
-              label: 'Automatically',
-              value: 'auto',
-            },
-            {
-              label: 'Manually',
-              value: 'manual',
-            },
-          ],
-        }
-      
+      defaultValue: 'auto',
+      display: 'cards',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Automatic',
+            value: 'auto',
+            icon: 'file',
+          },
+          {
+            label: 'Manual',
+            value: 'manual',
+            icon: 'type',
+          },
+        ],
+      },
     }),
     range: Property.ShortText({
       displayName: 'Range',
-      description:
-        'The range of cells in A1 notation (e.g., A2:B2) that will be converted to a table',
+      description: 'Only used when Range Source is Manual.',
       required: false,
       defaultValue: 'A1:B2',
     }),
     hasHeaders: Property.Checkbox({
-      displayName: 'Has Headers',
-      description: 'Whether the range has column labels',
+      displayName: 'First Row Contains Headers',
       required: true,
       defaultValue: true,
     }),

@@ -9,10 +9,26 @@ export const appendRowAction = createAction({
 	auth: excelAuth,
 	name: 'append_row',
 	classification: 'WRITE',
-	description: 'Append row of values to a worksheet',
+	description: 'Add a row of values below the last used row.',
 	audience: 'both',
 	aiMetadata: { description: 'Append a new row of values immediately after the last used row of a worksheet. Pick this to add data without specifying a target cell; values can be mapped by header (when the first row holds headers) or written positionally. Not idempotent: each run inserts an additional row.', idempotent: false },
 	displayName: 'Append Row to Worksheet',
+	propertyGroups: [
+		{
+			key: 'workbook',
+			display: 'section',
+			label: 'Workbook',
+			icon: 'file',
+			props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+		},
+		{
+			key: 'new_row',
+			display: 'section',
+			label: 'New Row',
+			icon: 'text',
+			props: ['isFirstRowHeaders', 'values'],
+		},
+	],
 	props: {
 		storageSource: commonProps.storageSource,
 		siteId: commonProps.siteId,

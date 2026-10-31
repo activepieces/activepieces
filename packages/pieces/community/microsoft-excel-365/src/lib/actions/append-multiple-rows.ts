@@ -41,10 +41,33 @@ export const appendMultipleRowsAction = createAction({
 	auth: excelAuth,
 	name: 'append_multiple_rows',
 	classification: 'WRITE',
-	description: 'Appends multiple row of values to a worksheet.',
+	description: 'Append several rows to a worksheet.',
 	audience: 'both',
 	aiMetadata: { description: 'Append several rows of cell values to the bottom of a worksheet in one call, after the last used row. Use for bulk inserts into a plain (non-table) worksheet; for a defined Excel table use Append Rows to a Table instead. Not idempotent — re-running adds duplicate rows. Supports an optional filter to insert only rows whose chosen column matches/does not match a value.', idempotent: false },
 	displayName: 'Append Multiple Rows',
+	propertyGroups: [
+		{
+			key: 'workbook',
+			display: 'section',
+			label: 'Workbook',
+			icon: 'file',
+			props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+		},
+		{
+			key: 'rows',
+			display: 'section',
+			label: 'Rows',
+			icon: 'text',
+			props: ['values'],
+		},
+		{
+			key: 'filter',
+			display: 'section',
+			label: 'Filter',
+			icon: 'filter',
+			props: ['filterMarkdown', 'filterColumn', 'filterType', 'filterValue'],
+		},
+	],
 	props: {
 		storageSource: commonProps.storageSource,
 		siteId: commonProps.siteId,
@@ -52,83 +75,38 @@ export const appendMultipleRowsAction = createAction({
 		workbookId: commonProps.workbookId,
 		worksheetId: commonProps.worksheetId,
 		values: commonProps.worksheetMultiValues,
-		// values: Property.DynamicProperties({
-		// 	auth: excelAuth,
-		// 	displayName: 'Values',
-		// 	required: true,
-		// 	refreshers: ['workbook_id', 'worksheet_id'],
-		// 	props: async ({ auth, workbook_id, worksheet_id }) => {
-		// 		if (
-		// 			!auth ||
-		// 			(workbook_id ?? '').toString().length === 0 ||
-		// 			(worksheet_id ?? '').toString().length === 0
-		// 		) {
-		// 			return {};
-		// 		}
-
-		// 		const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-
-		// 		const firstRow = await excelCommon.getHeaders(
-		// 			workbook_id as unknown as string,
-		// 			authProp['access_token'],
-		// 			worksheet_id as unknown as string
-		// 		);
-
-		// 		const fields: DynamicPropsValue = {};
-
-		// 		const columns: {
-		// 			[key: string]: any;
-		// 		} = {};
-		// 		for (const key in firstRow) {
-		// 			columns[key] = Property.ShortText({
-		// 				displayName: firstRow[key].toString(),
-		// 				description: firstRow[key].toString(),
-		// 				required: false,
-		// 				defaultValue: '',
-		// 			});
-		// 		}
-
-		// 		fields['values'] = Property.Array({
-		// 			displayName: 'Values',
-		// 			required: true,
-		// 			properties: columns,
-		// 		});
-
-		// 		return fields;
-		// 	},
-		// }),
 		filterMarkdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `Use below Filter properties to insert only the rows that meet your conditions.`,
+			value: 'Optional. Only rows that pass the condition are written.',
 		}),
 		filterColumn: commonProps.filterColumn,
 		filterType: Property.StaticDropdown({
-			displayName: 'Filter Type',
+			displayName: 'Condition',
 			required: false,
 			options: {
 				disabled: false,
 				options: [
 					{
-						label: '(Text) Exactly matches',
+						label: 'Exactly matches',
 						value: FilterOperator.TEXT_EXACTLY_MATCHES,
 					},
 					{
-						label: '(Text) Does not exactly match',
+						label: 'Does not exactly match',
 						value: FilterOperator.TEXT_DOES_NOT_EXACTLY_MATCH,
 					},
 					{
-						label: '(Text) Matches any of',
+						label: 'Matches any of',
 						value: FilterOperator.TEXT_MATCHES_ANY_OF,
 					},
 					{
-						label: '(Text) Matches none of',
+						label: 'Matches none of',
 						value: FilterOperator.TEXT_MATCHES_NONE_OF,
 					},
 				],
 			},
 		}),
 		filterValue: Property.DynamicProperties({
-			displayName: 'Filter Value',
+			displayName: 'Value',
 			refreshers: ['filterType'],
 			auth: excelAuth,
 			required: false,
@@ -143,14 +121,14 @@ export const appendMultipleRowsAction = createAction({
 					case FilterOperator.TEXT_EXACTLY_MATCHES:
 					case FilterOperator.TEXT_DOES_NOT_EXACTLY_MATCH:
 						props['value'] = Property.ShortText({
-							displayName: 'Filter Value',
+							displayName: 'Value',
 							required: false,
 						});
 						break;
 					case FilterOperator.TEXT_MATCHES_ANY_OF:
 					case FilterOperator.TEXT_MATCHES_NONE_OF:
 						props['value'] = Property.Array({
-							displayName: 'Filter Value',
+							displayName: 'Value',
 							required: false,
 						});
 						break;

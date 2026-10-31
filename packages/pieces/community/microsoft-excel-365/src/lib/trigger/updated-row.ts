@@ -1,6 +1,7 @@
 import {
     AppConnectionValueForAuthProperty,
     Property,
+    Store,
     createTrigger,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
@@ -22,8 +23,7 @@ function createRowHash(rowData: unknown[]): string {
     return createHmac('sha1', 'activepieces').update(rowString).digest('hex');
 }
 
-// Helper function to get all worksheet rows with error handling
-async function getWorksheetRows(auth: AppConnectionValueForAuthProperty<typeof excelAuth>, workbookId: string, worksheetId: string, drivePath: string): Promise<(string | number | boolean)[][]> {
+async function getWorksheetRows(auth: ExcelAuthValue, workbookId: string, worksheetId: string, drivePath: string): Promise<(string | number | boolean)[][]> {
     try {
         return await excelCommon.getAllRows(workbookId, worksheetId, auth.access_token, drivePath, auth.props?.['cloud']);
     } catch (error) {
@@ -31,76 +31,63 @@ async function getWorksheetRows(auth: AppConnectionValueForAuthProperty<typeof e
     }
 }
 
-// Polling implementation using the framework's best practices
-const polling: Polling<
-    AppConnectionValueForAuthProperty<typeof excelAuth>,
-    {
-        storageSource: string;
-        siteId?: string;
-        documentId?: string;
-        workbookId: string;
-        worksheetId: string;
-        has_headers: boolean;
+async function getChangedRows({ auth, propsValue, store }: { auth: ExcelAuthValue; propsValue: UpdatedRowProps; store: Store }): Promise<Array<{ epochMilliSeconds: number; data: unknown }>> {
+    const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
+    const drivePath = getDrivePath(storageSource, siteId, documentId);
+    const allRows = await getWorksheetRows(auth, workbookId, worksheetId, drivePath);
+
+    if (allRows.length === 0) {
+        return [];
     }
-> = {
-    strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, propsValue, store }) => {
-        const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
-        const drivePath = getDrivePath(storageSource, siteId, documentId);
-        const allRows = await getWorksheetRows(auth, workbookId, worksheetId, drivePath);
-        
-        if (allRows.length === 0) {
-            return [];
-        }
 
-        // Get stored row hashes from previous run
-        const oldHashes = await store.get<Record<number, string>>('row_hashes') ?? {};
-        
-        const headers = (propsValue.has_headers && allRows.length > 0) ? allRows[0] : [];
-        const dataRows = (propsValue.has_headers && allRows.length > 0) ? allRows.slice(1) : allRows;
+    const oldHashes = await store.get<Record<number, string>>('row_hashes') ?? {};
 
-        const currentHashes: Record<number, string> = {};
-        const changedItems: Array<{ epochMilliSeconds: number; data: unknown }> = [];
-        const currentTime = Date.now();
+    const headers = (propsValue.has_headers && allRows.length > 0) ? allRows[0] : [];
+    const dataRows = (propsValue.has_headers && allRows.length > 0) ? allRows.slice(1) : allRows;
 
-        // Process each data row
-        dataRows.forEach((row, index) => {
-            const rowIndex = propsValue.has_headers ? index + 1 : index;
-            const newHash = createRowHash(row);
-            currentHashes[rowIndex] = newHash;
+    const currentHashes: Record<number, string> = {};
+    const changedItems: Array<{ epochMilliSeconds: number; data: unknown }> = [];
+    const currentTime = Date.now();
 
-            const oldHash = oldHashes[rowIndex];
-            
-            // Row has changed or is new
-            if (oldHash !== newHash) {
-                const formattedRow: Record<string, unknown> = {};
-                
-                if (propsValue.has_headers && headers.length > 0) {
-                    headers.forEach((header, colIndex) => {
-                        formattedRow[String(header)] = row[colIndex] ?? null;
-                    });
-                } else {
-                    row.forEach((cell, colIndex) => {
-                        formattedRow[excelCommon.numberToColumnName(colIndex + 1)] = cell;
-                    });
-                }
+    dataRows.forEach((row, index) => {
+        const rowIndex = propsValue.has_headers ? index + 1 : index;
+        const newHash = createRowHash(row);
+        currentHashes[rowIndex] = newHash;
 
-                changedItems.push({
-                    epochMilliSeconds: currentTime,
-                    data: {
-                        rowIndex: rowIndex + 1, // Make it 1-based for user readability
-                        values: formattedRow,
-                        changeType: oldHash ? 'updated' : 'added'
-                    }
+        const oldHash = oldHashes[rowIndex];
+
+        if (oldHash !== newHash) {
+            const formattedRow: Record<string, unknown> = {};
+
+            if (propsValue.has_headers && headers.length > 0) {
+                headers.forEach((header, colIndex) => {
+                    formattedRow[String(header)] = row[colIndex] ?? null;
+                });
+            } else {
+                row.forEach((cell, colIndex) => {
+                    formattedRow[excelCommon.numberToColumnName(colIndex + 1)] = cell;
                 });
             }
-        });
 
-        // Update stored hashes for next run
-        await store.put('row_hashes', currentHashes);
+            changedItems.push({
+                epochMilliSeconds: currentTime,
+                data: {
+                    rowIndex: rowIndex + 1,
+                    values: formattedRow,
+                    changeType: oldHash ? 'updated' : 'added'
+                }
+            });
+        }
+    });
 
-        return changedItems;
-    }
+    await store.put('row_hashes', currentHashes);
+
+    return changedItems;
+}
+
+const polling: Polling<ExcelAuthValue, UpdatedRowProps> = {
+    strategy: DedupeStrategy.TIMEBASED,
+    items: getChangedRows,
 };
 
 export const updatedRowTrigger = createTrigger({
@@ -108,10 +95,26 @@ export const updatedRowTrigger = createTrigger({
     name: triggerName,
     classification: 'READ',
     displayName: 'Updated Row',
-    description: 'Fires when a row (in a worksheet) is added or updated.',
+    description: 'Fires when a worksheet row is added or changed.',
     aiMetadata: {
         description: 'Fires when a row in the selected worksheet is added or its cell values change, detected by comparing row content hashes between polls. Each event represents one changed row and returns its 1-based row index, the cell values (keyed by header names when headers are enabled, otherwise by column letters), and a changeType of "added" or "updated". Use this to react to edits or new entries in worksheet rows.',
     },
+    propertyGroups: [
+        {
+            key: 'workbook',
+            display: 'section',
+            label: 'Workbook',
+            icon: 'file',
+            props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+        },
+        {
+            key: 'rows',
+            display: 'section',
+            label: 'Rows',
+            icon: 'markdown',
+            props: ['has_headers'],
+        },
+    ],
     props: {
         storageSource: commonProps.storageSource,
         siteId: commonProps.siteId,
@@ -119,8 +122,8 @@ export const updatedRowTrigger = createTrigger({
         workbookId: commonProps.workbookId,
         worksheetId: commonProps.worksheetId,
         has_headers: Property.Checkbox({
-            displayName: "First row has headers",
-            description: "Enable this if the first row of your worksheet should be treated as headers.",
+            displayName: "First Row Contains Headers",
+            description: "When off, values are keyed by column letter.",
             required: true,
             defaultValue: false,
         })
@@ -128,7 +131,8 @@ export const updatedRowTrigger = createTrigger({
     type: TriggerStrategy.POLLING,
     sampleData: {
         "rowIndex": 1,
-        "values": { "ID": 101, "Product": "Widget", "Price": 19.99 }
+        "values": { "ID": 101, "Product": "Widget", "Price": 19.99 },
+        "changeType": "updated"
     },
 
     onEnable: async (context) => {
@@ -137,10 +141,15 @@ export const updatedRowTrigger = createTrigger({
             throw new Error('please select SharePoint site and document library.');
         }
         await pollingHelper.onEnable(polling, context);
+        const storedHashes = context.isRepublish
+            ? await context.store.get<Record<number, string>>('row_hashes')
+            : null;
+        if (storedHashes === null || storedHashes === undefined) {
+            await getChangedRows({ auth: context.auth, propsValue: context.propsValue, store: context.store });
+        }
     },
 
     onDisable: async (context) => {
-
         await pollingHelper.onDisable(polling, context);
     },
 
@@ -152,3 +161,14 @@ export const updatedRowTrigger = createTrigger({
         return await pollingHelper.test(polling, context);
     },
 });
+
+type ExcelAuthValue = AppConnectionValueForAuthProperty<typeof excelAuth>;
+
+type UpdatedRowProps = {
+    storageSource: string;
+    siteId?: string;
+    documentId?: string;
+    workbookId: string;
+    worksheetId: string;
+    has_headers: boolean;
+};

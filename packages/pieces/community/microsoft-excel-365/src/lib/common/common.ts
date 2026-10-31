@@ -170,14 +170,14 @@ export const excelCommon = {
 	tableValues: Property.DynamicProperties({
 		auth: excelAuth,
 		displayName: 'Values',
-		description: 'The values to insert',
+		description: 'One value per table column.',
 		required: true,
-		refreshers: ['storageSource','siteId','documentId','workbook_id', 'worksheet_id', 'tableId'],
-		props: async ({ auth, storageSource, siteId, documentId, workbook_id, worksheet_id, tableId }) => {
+		refreshers: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId'],
+		props: async ({ auth, storageSource, siteId, documentId, workbookId, worksheetId, tableId }) => {
 			if (
 				!auth ||
-				(workbook_id ?? '').toString().length === 0 ||
-				(worksheet_id ?? '').toString().length === 0 ||
+				(workbookId ?? '').toString().length === 0 ||
+				(worksheetId ?? '').toString().length === 0 ||
 				(tableId ?? '').toString().length === 0
 			) {
 				return {};
@@ -190,10 +190,11 @@ export const excelCommon = {
 
 			const headers = await excelCommon.getTableHeaders(
 				drivePath,
-				workbook_id as unknown as string,
+				workbookId as unknown as string,
 				authProp['access_token'],
-				worksheet_id as unknown as string,
-				tableId as unknown as string
+				worksheetId as unknown as string,
+				tableId as unknown as string,
+				authProp.props?.['cloud']
 			);
 
 			const properties: {
@@ -202,7 +203,6 @@ export const excelCommon = {
 			for (const key in headers) {
 				properties[key] = Property.ShortText({
 					displayName: headers[key].toString(),
-					description: headers[key].toString(),
 					required: false,
 					defaultValue: '',
 				});
@@ -270,11 +270,13 @@ export const excelCommon = {
 		workbookId: string,
 		accessToken: string,
 		worksheetId: string,
-		tableId: string
+		tableId: string,
+		cloudProp?: unknown
 	) {
+		const cloud = typeof cloudProp === 'string' ? cloudProp : undefined;
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.GET,
-			url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`,
+			url: `${getGraphBaseUrl(cloud)}/v1.0${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,

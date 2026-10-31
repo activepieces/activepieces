@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -11,6 +11,15 @@ export const deleteTableAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Delete a defined Excel table (by table id) from a worksheet, removing the table object while leaving the underlying cell values in place. Use to drop table formatting/structure, not to clear data. Idempotent in effect — once the table is gone, re-running on the same id targets a non-existent table.', idempotent: true },
   displayName: 'Delete Table',
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId', 'delete_warning'],
+    },
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -18,6 +27,10 @@ export const deleteTableAction = createAction({
     workbookId: commonProps.workbookId,
     worksheetId: commonProps.worksheetId,
     tableId: commonProps.tableId,
+    delete_warning: Property.MarkDown({
+      value: 'The table cannot be restored once deleted.',
+      variant: MarkdownVariant.WARNING,
+    }),
   },
   async run({ propsValue, auth }) {
     const { storageSource, siteId, documentId, workbookId, worksheetId, tableId } = propsValue;

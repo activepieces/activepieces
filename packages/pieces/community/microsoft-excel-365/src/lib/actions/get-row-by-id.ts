@@ -10,10 +10,26 @@ export const getRowAction = createAction({
   auth: excelAuth,
   name: 'getRowById',
   classification: 'READ',
-  displayName: 'Get Row by ID',
-  description: '  Retrieve the entire content of a row by its row ID.',
+  displayName: 'Get Table Row',
+  description: 'Retrieve a table row by its position.',
   audience: 'both',
   aiMetadata: { description: 'Retrieve the full contents of a single table row by its zero-based index within the table. Pick this when you already know the row position; use Find Row instead to locate a row by a column value. Read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'workbook',
+      display: 'section',
+      label: 'Workbook',
+      icon: 'file',
+      props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId', 'tableId']
+    },
+    {
+      key: 'target_row',
+      display: 'section',
+      label: 'Row',
+      icon: 'markdown',
+      props: ['row_id']
+    }
+  ],
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,
@@ -22,9 +38,8 @@ export const getRowAction = createAction({
     worksheetId: commonProps.worksheetId,
     tableId: commonProps.tableId,
     row_id: Property.Number({
-      displayName: 'Row ID (Index)',
-      description:
-        'The zero-based index of the row to retrieve (e.g., 0 for the first row, 1 for the second).',
+      displayName: 'Row Index',
+      description: 'Position in the table. 0 is the first data row.',
       required: true
     })
   },

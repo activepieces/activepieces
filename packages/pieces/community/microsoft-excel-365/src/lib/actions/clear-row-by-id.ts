@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
 import { getDrivePath, createMSGraphClient } from '../common/helpers';
@@ -7,10 +7,26 @@ export const clearRowAction = createAction({
     auth: excelAuth,
     name: 'clear_row',
     classification: 'DESTRUCTIVE',
-    displayName: 'Clear Row by ID',
-    description: 'Clear contents/formatting of an entire row by its ID.',
+    displayName: 'Clear Row',
+    description: 'Clear the contents or formatting of a row.',
     audience: 'both',
     aiMetadata: { description: 'Clear an entire row in a worksheet by its 1-based row number. Choose what to remove via Clear Type: contents, formats, or both. Clears in place without deleting the row or shifting cells up — use Delete Row when you need the row removed and rows below shifted. Idempotent — re-running on an already-cleared row has no further effect.', idempotent: true },
+    propertyGroups: [
+        {
+            key: 'workbook',
+            display: 'section',
+            label: 'Workbook',
+            icon: 'file',
+            props: ['storageSource', 'siteId', 'documentId', 'workbookId', 'worksheetId'],
+        },
+        {
+            key: 'target_row',
+            display: 'section',
+            label: 'Row',
+            icon: 'markdown',
+            props: ['row_id', 'applyTo', 'clear_warning'],
+        },
+    ],
     props: {
         storageSource: commonProps.storageSource,
         siteId: commonProps.siteId,
@@ -19,31 +35,38 @@ export const clearRowAction = createAction({
         worksheetId: commonProps.worksheetId,
         row_id: Property.Number({
             displayName: 'Row Number',
-            description: 'The number of the row to be cleared (e.g., 5 for the 5th row).',
+            description: 'Row 1 is the first row of the worksheet.',
             required: true,
         }),
         applyTo: Property.StaticDropdown({
-            displayName: "Clear Type",
-            description: "Specify what to clear from the row.",
+            displayName: 'What to Clear',
             required: true,
             defaultValue: 'All',
+            display: 'cards',
             options: {
                 options: [
                     {
-                        label: 'All (Contents and Formatting)',
-                        value: 'All'
+                        label: 'Everything',
+                        value: 'All',
+                        icon: 'trash'
                     },
                     {
-                        label: 'Contents Only',
-                        value: 'Contents'
+                        label: 'Contents',
+                        value: 'Contents',
+                        icon: 'text'
                     },
                     {
-                        label: 'Formats Only',
-                        value: 'Formats'
+                        label: 'Formatting',
+                        value: 'Formats',
+                        icon: 'sliders'
                     }
                 ]
             }
-        })
+        }),
+        clear_warning: Property.MarkDown({
+            value: 'Cleared cells cannot be restored.',
+            variant: MarkdownVariant.WARNING,
+        }),
     },
     async run(context) {
         const { storageSource, siteId, documentId, workbookId, worksheetId, row_id, applyTo } = context.propsValue;
@@ -56,11 +79,9 @@ export const clearRowAction = createAction({
         const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
         if (typeof row_id !== 'number' || !Number.isInteger(row_id) || row_id < 1) {
-            throw new Error('Row index must be a positive integer.');
+            throw new Error('Row number must be a positive integer.');
         }
 
-
-        // Construct the range address for the entire row, e.g., '5:5'
         const rowAddress = `${row_id}:${row_id}`;
 
         const client = createMSGraphClient(access_token, cloud);
@@ -68,7 +89,6 @@ export const clearRowAction = createAction({
             .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rowAddress}')/clear`)
             .post({ applyTo: applyTo });
 
-        // A successful request returns a 200 OK with no body.
         return {};
     },
 });
