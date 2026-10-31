@@ -24,10 +24,11 @@ export const listIndexes = createAction({
     const rows: Record<string, unknown>[] = await mysqlAi.withConnection({
       auth: context.auth,
       fn: async (conn) => {
-        const schema = await mysqlAi.resolveDatabase({ conn, database });
+        const { schema: tableSchema, name } = mysqlAi.splitTable({ table });
+        const schema = tableSchema ?? (await mysqlAi.resolveDatabase({ conn, database }));
         return conn.query(
           "SELECT index_name AS name, non_unique AS nonUnique, index_type AS type, column_name AS columnName FROM information_schema.statistics WHERE table_schema = ? AND table_name = ? ORDER BY index_name <> 'PRIMARY', index_name, seq_in_index",
-          [schema, table],
+          [schema, name],
         );
       },
     });

@@ -25,6 +25,11 @@ async function inTransaction<T>({ conn, readOnly, fn }: { conn: Connection; read
   }
 }
 
+function splitTable({ table }: { table: string }): { schema: string | null; name: string } {
+  const dot = table.indexOf('.');
+  return dot === -1 ? { schema: null, name: table } : { schema: table.slice(0, dot), name: table.slice(dot + 1) };
+}
+
 async function resolveDatabase({ conn, database }: { conn: Connection; database: string | undefined }): Promise<string> {
   if (database !== undefined && database !== '') {
     return database;
@@ -108,6 +113,7 @@ async function guardedWrite({ conn, quotedTable, where, maxRows, write, verb }: 
   if (where.sql === '') {
     throw new Error(`Provide at least one filter; this action never ${verb} a whole table.`);
   }
+  await conn.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
   return inTransaction({
     conn,
     readOnly: false,
@@ -134,7 +140,7 @@ function assertReadOnlyQuery({ query }: { query: string }): void {
   if (!READ_ONLY_FIRST_WORDS.includes(firstWord)) {
     throw new Error(`Only read-only statements are allowed here (${READ_ONLY_FIRST_WORDS.join(', ')}); the query starts with "${firstWord || code.slice(0, 20)}". Use Run Query or the row actions to change data.`);
   }
-  if (/\bINTO\s+(OUTFILE|DUMPFILE)\b/i.test(code)) {
+  if (/\bINTO\b[\s\S]*\b(OUTFILE|DUMPFILE)\b/i.test(code)) {
     throw new Error('SELECT ... INTO OUTFILE / DUMPFILE is not allowed here.');
   }
 }
@@ -178,10 +184,23 @@ function filterToSql({ filter }: { filter: Filter }): SqlFragment {
     throw new Error(`Filter on "${filter.column}" with ${filter.operator} needs a value. Use IS NULL to match empty values.`);
   }
   if (filter.operator === 'IN' || filter.operator === 'NOT IN') {
-    const list = Array.isArray(filter.value) ? filter.value : String(filter.value).split(',').map((item) => item.trim());
+    const list = Array.isArray(filter.value) ? filter.value : parseList({ text: String(filter.value) });
     return { sql: `${column} ${filter.operator} (${list.map(() => '?').join(', ')})`, values: list };
   }
   return { sql: `${column} ${filter.operator} ?`, values: [toBindValue({ value: filter.value })] };
+}
+
+function parseList({ text }: { text: string }): unknown[] {
+  const parsed = text.trim().startsWith('[') ? parseJson({ text }) : undefined;
+  return Array.isArray(parsed) ? parsed : text.split(',').map((item) => item.trim());
+}
+
+function parseJson({ text }: { text: string }): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 function toList({ value, label }: { value: unknown; label: string }): unknown[] {
@@ -216,6 +235,7 @@ const WRITE_GUARD_MAX = 10000;
 export const mysqlAi = {
   withConnection,
   inTransaction,
+  splitTable,
   resolveDatabase,
   buildWhere,
   buildOrderBy,
@@ -252,7 +272,7 @@ export const mysqlAiProps = {
   filters: ({ required }: { required: boolean }) =>
     Property.Array({
       displayName: 'Filters',
-      description: `Conditions combined with AND. Each has a column, an operator (${FILTER_OPERATORS.join(', ')}) and a value. For IN / NOT IN pass a list or comma-separated values; IS NULL / IS NOT NULL take no value.${required ? ' At least one filter is required.' : ''}`,
+      description: `Conditions combined with AND. Each has a column, an operator (${FILTER_OPERATORS.join(', ')}) and a value. For IN / NOT IN pass a JSON list such as ["a", "b"] or comma-separated values; IS NULL / IS NOT NULL take no value.${required ? ' At least one filter is required.' : ''}`,
       required,
       properties: {
         column: Property.ShortText({ displayName: 'Column', required: true }),

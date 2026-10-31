@@ -14,7 +14,7 @@ export const upsertRow = createAction({
   audience: 'ai',
   classification: 'WRITE',
   aiMetadata: {
-    description: 'Inserts a row, or updates the row that already has the same primary or unique key (INSERT ... ON DUPLICATE KEY UPDATE). Values must include every column of at least one primary or unique key (see List Indexes); it fails otherwise. Update Columns limits which columns change on an existing row. affectedRows is 1 for an insert and 2 for an update. Safe to retry.',
+    description: 'Inserts a row, or updates the row that already has the same primary or unique key (INSERT ... ON DUPLICATE KEY UPDATE). Values must give a non-null value for every column of at least one primary or unique key (see List Indexes); it fails otherwise. Update Columns limits which columns change on an existing row. affectedRows is 1 for an insert and 2 for an update. Safe to retry.',
     idempotent: true,
   },
   props: {
@@ -35,7 +35,7 @@ export const upsertRow = createAction({
     const values = mysqlAi.parseValues({ value: context.propsValue.values, label: 'Values' });
     const columns = Object.keys(values);
     const toUpdate = (updateColumns ?? []).length > 0 ? (updateColumns ?? []).map((column) => String(column)) : columns;
-    const missing = toUpdate.filter((column) => !columns.includes(column));
+    const missing = toUpdate.filter((column) => !hasColumn({ columns, column }));
     if (missing.length > 0) {
       throw new Error(`Update Columns must also be in Values; missing: ${missing.join(', ')}.`);
     }
@@ -45,7 +45,7 @@ export const upsertRow = createAction({
     const result: MysqlOkPacket = await mysqlAi.withConnection({
       auth: context.auth,
       fn: async (conn) => {
-        await assertKeyCovered({ conn, table, columns });
+        await assertKeyCovered({ conn, table, values });
         return conn.query(sql, columns.map((column) => mysqlAi.toBindValue({ value: values[column] })));
       },
     });
@@ -53,8 +53,9 @@ export const upsertRow = createAction({
   },
 });
 
-async function assertKeyCovered({ conn, table, columns }: { conn: Connection; table: string; columns: string[] }): Promise<void> {
-  const [schema, name] = table.includes('.') ? table.split('.', 2) : [null, table];
+async function assertKeyCovered({ conn, table, values }: { conn: Connection; table: string; values: Record<string, unknown> }): Promise<void> {
+  const { schema, name } = mysqlAi.splitTable({ table });
+  const identifying = Object.keys(values).filter((column) => values[column] !== null && values[column] !== undefined);
   const rows: Record<string, unknown>[] = await conn.query(
     'SELECT index_name AS indexName, column_name AS columnName FROM information_schema.statistics WHERE table_schema = COALESCE(?, DATABASE()) AND table_name = ? AND non_unique = 0',
     [schema, name],
@@ -67,9 +68,13 @@ async function assertKeyCovered({ conn, table, columns }: { conn: Connection; ta
   if (keyList.length === 0) {
     throw new Error(`Table "${table}" has no primary or unique key, so an upsert would always insert. Use Insert Rows instead.`);
   }
-  const covered = keyList.some(([, keyColumns]) => keyColumns.every((column) => columns.includes(column)));
+  const covered = keyList.some(([, keyColumns]) => keyColumns.every((column) => hasColumn({ columns: identifying, column })));
   if (!covered) {
     const described = keyList.map(([indexName, keyColumns]) => `${indexName} (${keyColumns.join(', ')})`).join('; ');
-    throw new Error(`Values must include every column of a primary or unique key: ${described}.`);
+    throw new Error(`Values must give a non-null value for every column of a primary or unique key: ${described}.`);
   }
+}
+
+function hasColumn({ columns, column }: { columns: string[]; column: string }): boolean {
+  return columns.some((candidate) => candidate.toLowerCase() === column.toLowerCase());
 }
