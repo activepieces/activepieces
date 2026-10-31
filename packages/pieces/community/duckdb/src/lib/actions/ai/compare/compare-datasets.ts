@@ -97,7 +97,7 @@ export const duckdbCompareDatasets = createAction({
         });
         const pairs = (
           await connection.runAndReadAll(
-            `SELECT b.i, a.i, b.r IS DISTINCT FROM a.r FROM before_rows b JOIN after_rows a ON ${match} ORDER BY a.i`
+            `SELECT b.i, a.i, b.j IS DISTINCT FROM a.j FROM before_rows b JOIN after_rows a ON ${match} ORDER BY a.i`
           )
         ).getRows();
 
@@ -162,20 +162,19 @@ function changedColumns({
   const columns = [...new Set([...Object.keys(beforeRow), ...Object.keys(afterRow)])];
   return columns.filter(
     (column) =>
-      canonicalJson({ value: beforeRow[column] ?? null }) !==
-      canonicalJson({ value: afterRow[column] ?? null })
+      columnState({ row: beforeRow, column }) !==
+      columnState({ row: afterRow, column })
   );
 }
 
-function canonicalJson({ value }: { value: unknown }): string {
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => canonicalJson({ value: item })).join(',')}]`;
-  }
-  if (duckdbClient.isPlainObject(value)) {
-    return `{${Object.keys(value)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${canonicalJson({ value: value[key] })}`)
-      .join(',')}}`;
-  }
-  return JSON.stringify(value);
+function columnState({
+  row,
+  column,
+}: {
+  row: Record<string, unknown>;
+  column: string;
+}): string {
+  return column in row
+    ? duckdbClient.canonicalJson({ value: row[column] })
+    : 'missing';
 }

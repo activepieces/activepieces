@@ -29,10 +29,10 @@ export const duckdbRunQuery = createAction({
         'One DuckDB SQL statement over the tables above, e.g. SELECT c.name, sum(o.total) AS spent FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY ALL. Quote table or column names that are not plain identifiers with double quotes.',
       required: true,
     }),
-    params: Property.Array({
+    params: Property.Json({
       displayName: 'Parameters',
       description:
-        'Values bound to $1, $2, … in the query, in order. Strings, numbers, booleans or null.',
+        'A JSON array of values bound to $1, $2, … in the query, in order, e.g. ["IN", 10, null]. Strings, numbers, booleans or null.',
       required: false,
     }),
   },
@@ -43,7 +43,7 @@ export const duckdbRunQuery = createAction({
         'tables must be a JSON object mapping each table name to an array of row objects.'
       );
     }
-    const values = parseParams({ params: params ?? [] });
+    const values = parseParams({ params });
     return duckdbClient.withDatabase({
       run: async (connection) => {
         for (const [name, value] of Object.entries(tables)) {
@@ -65,7 +65,17 @@ export const duckdbRunQuery = createAction({
   },
 });
 
-function parseParams({ params }: { params: unknown[] }): DuckDBValue[] {
+function parseParams({ params }: { params: unknown }): DuckDBValue[] {
+  if (
+    params === undefined ||
+    params === null ||
+    (duckdbClient.isPlainObject(params) && Object.keys(params).length === 0)
+  ) {
+    return [];
+  }
+  if (!Array.isArray(params)) {
+    throw new Error('params must be a JSON array of values.');
+  }
   const badIndex = params.findIndex((param) => !isScalar(param));
   if (badIndex !== -1) {
     throw new Error(

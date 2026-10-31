@@ -85,12 +85,29 @@ async function loadIndexedRows({
   await connection.run(
     `CREATE TABLE ${quotedIdentifier(
       name
-    )} AS SELECT x.i AS i, x.r AS r FROM (SELECT UNNEST(JSON_TRANSFORM($data, $schema)) AS x) t`,
+    )} AS SELECT x.i AS i, x.r AS r, x.j AS j FROM (SELECT UNNEST(JSON_TRANSFORM($data, $schema)) AS x) t`,
     {
-      data: JSON.stringify(rows.map((row, i) => ({ i, r: row }))),
-      schema: JSON.stringify([{ i: 'UBIGINT', r: structure }]),
+      data: JSON.stringify(
+        rows.map((row, i) => ({ i, r: row, j: canonicalJson({ value: row }) }))
+      ),
+      schema: JSON.stringify([{ i: 'UBIGINT', r: structure, j: 'VARCHAR' }]),
     }
   );
+}
+
+function canonicalJson({ value }: { value: unknown }): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => canonicalJson({ value: item })).join(',')}]`;
+  }
+  if (isPlainObject(value)) {
+    return `{${Object.keys(value)
+      .sort()
+      .map(
+        (key) => `${JSON.stringify(key)}:${canonicalJson({ value: value[key] })}`
+      )
+      .join(',')}}`;
+  }
+  return JSON.stringify(value);
 }
 
 function readRows({
@@ -208,6 +225,7 @@ export const duckdbClient = {
   detectRowStructure,
   loadTable,
   loadIndexedRows,
+  canonicalJson,
   readRows,
   readColumns,
   readIndexes,

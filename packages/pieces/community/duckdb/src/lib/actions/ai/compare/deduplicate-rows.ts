@@ -77,7 +77,7 @@ export const duckdbDeduplicateRows = createAction({
                   duckdbClient.keyExpression({ alias: 't', column })
                 )
                 .join(', ')
-            : 't.r';
+            : 't.j';
         const direction = keep === 'first' ? 'ASC' : 'DESC';
         const kept = duckdbClient.readIndexes({
           reader: await connection.runAndReadAll(
