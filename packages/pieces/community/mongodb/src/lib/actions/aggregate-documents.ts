@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mongodbAuth } from '../..';
+import { mongodbAuth } from '../auth';
 import { aggregateDocumentsOutputSchema } from '../output-schemas';
-import { mongodbCommon, mongodbConnect } from '../common';
+import { mongodbClient } from '../common/client';
+import { mongodbProps } from '../common/props';
 
-export default createAction({
+export const aggregateDocumentsAction = createAction({
   auth: mongodbAuth,
   name: 'aggregate_documents',
   classification: 'WRITE',
@@ -13,8 +14,8 @@ export default createAction({
   outputSchema: aggregateDocumentsOutputSchema,
   aiMetadata: { description: 'Runs a MongoDB aggregation pipeline over a collection and returns the resulting documents. Use for grouping, joining, computed fields, faceting, or any read that goes beyond a simple find filter. The pipeline must be an array of stage objects (e.g. $match, $group, $sort). Read-only and idempotent for read-only pipelines (avoid write stages like $out/$merge).', idempotent: true },
   props: {
-    database: mongodbCommon.database,
-    collection: mongodbCommon.collection(),
+    database: mongodbProps.database({ required: false }),
+    collection: mongodbProps.collection({ required: true }),
     pipeline: Property.Json({
       displayName: 'Aggregation Pipeline',
       description: 'Array of aggregation stages (e.g., [{"$match": {"status": "active"}}, {"$group": {"_id": "$category", "count": {"$sum": 1}}}])',
@@ -22,8 +23,7 @@ export default createAction({
     }),
   },
   async run(context) {
- 
-    const client = await mongodbConnect(context.auth);
+    const client = await mongodbClient.create({ auth: context.auth });
 
     try {
       if (!context.propsValue.collection) {
@@ -34,8 +34,6 @@ export default createAction({
         throw new Error('Aggregation pipeline is required');
       }
 
-      // Use the database from auth
-      // Use the database from props or auth
       const databaseName = context.propsValue.database || context.auth.props.database;
       if (!databaseName) {
         throw new Error('Database is required. Please specify it in the connection settings or in this action.');

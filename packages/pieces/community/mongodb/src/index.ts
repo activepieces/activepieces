@@ -1,91 +1,12 @@
-import {
-  PiecePropValueSchema,
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
-import { propsValidation } from '@activepieces/pieces-common';
-import * as z from 'zod/mini'
-
-import actions from './lib/actions';
-import { mongodbConnect } from './lib/common';
-
-export const mongodbAuth = PieceAuth.CustomAuth({
-  validate: async ({ auth }) => {
-    try {
-      await validateAuth(auth);
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: (e as Error)?.message,
-      };
-    }
-  },
-  props: {
-    host: Property.ShortText({
-      displayName: 'Host',
-      required: true,
-      description:
-        'The hostname or address of the MongoDB server (e.g., localhost:27017 or cluster.example.mongodb.net)',
-    }),
-    useAtlasUrl: Property.Checkbox({
-      displayName: 'Use MongoDB Atlas URL Format',
-      description:
-        'Enable this if connecting to MongoDB Atlas (uses mongodb+srv:// protocol)',
-      required: true,
-      defaultValue: false,
-    }),
-    database: Property.ShortText({
-      displayName: 'Database',
-      required: false,
-      description:
-        'The MongoDB database to connect to (can be specified per action if left empty)',
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      required: true,
-      description: 'The username to use for connecting to the MongoDB server',
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      description: 'The password to use to identify at the MongoDB server',
-      required: true,
-    }),
-    authSource: Property.ShortText({
-      displayName: 'Auth Source',
-      required: false,
-      description: 'The database to authenticate against (default: admin)',
-      defaultValue: 'admin',
-    }),
-  },
-  required: true,
-});
-
-const validateAuth = async (auth: PiecePropValueSchema<typeof mongodbAuth>) => {
-  await propsValidation.validateZod(auth, {
-    host: z.string().check(z.minLength(1)),
-    useAtlasUrl: z.boolean(),
-    database: z.optional(z.string()),
-    username: z.string().check(z.minLength(1)),
-    password: z.optional(z.string()),
-    authSource: z.optional(z.string()),
-  });
-
-  const client = await mongodbConnect({
-    props: auth,
-    type: AppConnectionType.CUSTOM_AUTH,
-  });
-
-  await client.db('admin').command({ ping: 1 });
-
-  await client.close();
-
-  console.log('MongoDB validation successful');
-};
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { mongodbAuth } from './lib/auth';
+import { findDocumentsAction } from './lib/actions/find-documents';
+import { insertDocumentsAction } from './lib/actions/insert-documents';
+import { updateDocumentsAction } from './lib/actions/update-documents';
+import { deleteDocumentsAction } from './lib/actions/delete-documents';
+import { findAndUpdateDocumentsAction } from './lib/actions/find-and-update-documents';
+import { findAndReplaceDocumentsAction } from './lib/actions/find-and-replace-documents';
+import { aggregateDocumentsAction } from './lib/actions/aggregate-documents';
 
 export const mongodb = createPiece({
   displayName: 'MongoDB',
@@ -94,6 +15,14 @@ export const mongodb = createPiece({
   categories: [PieceCategory.DEVELOPER_TOOLS],
   logoUrl: 'https://cdn.activepieces.com/pieces/mongodb.png',
   authors: ['denieler'],
-  actions,
+  actions: [
+    findDocumentsAction,
+    insertDocumentsAction,
+    updateDocumentsAction,
+    deleteDocumentsAction,
+    findAndUpdateDocumentsAction,
+    findAndReplaceDocumentsAction,
+    aggregateDocumentsAction,
+  ],
   triggers: [],
 });

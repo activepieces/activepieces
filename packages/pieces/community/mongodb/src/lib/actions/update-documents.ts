@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mongodbAuth } from '../..';
+import { mongodbAuth } from '../auth';
 import { updateDocumentsOutputSchema } from '../output-schemas';
-import { mongodbCommon, mongodbConnect } from '../common';
+import { mongodbClient } from '../common/client';
+import { mongodbProps } from '../common/props';
 
-export default createAction({
+export const updateDocumentsAction = createAction({
   auth: mongodbAuth,
   name: 'update_documents',
   classification: 'WRITE',
@@ -13,8 +14,8 @@ export default createAction({
   outputSchema: updateDocumentsOutputSchema,
   aiMetadata: { description: 'Applies MongoDB update operators (e.g. $set, $inc) to every document matching a filter via updateMany; optionally upserts a new document when nothing matches. Use to modify existing records in bulk. Both filter and update are required. Not idempotent in general: operators like $inc change state on each call and upsert can insert, though a pure $set repeated on the same matches yields the same end state.', idempotent: false },
   props: {
-    database: mongodbCommon.database,
-    collection: mongodbCommon.collection(),
+    database: mongodbProps.database({ required: false }),
+    collection: mongodbProps.collection({ required: true }),
     filter: Property.Json({
       displayName: 'Filter',
       description: 'MongoDB query to select documents to update (e.g., {"status": "pending"})',
@@ -33,7 +34,7 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = await mongodbConnect(context.auth);
+    const client = await mongodbClient.create({ auth: context.auth });
 
     try {
       if (!context.propsValue.collection) {

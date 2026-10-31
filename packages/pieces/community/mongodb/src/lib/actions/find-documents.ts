@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mongodbAuth } from '../..';
+import type { Document } from 'mongodb';
+import { mongodbAuth } from '../auth';
 import { findDocumentsOutputSchema } from '../output-schemas';
-import { mongodbCommon, mongodbConnect } from '../common';
+import { mongodbClient } from '../common/client';
+import { mongodbProps } from '../common/props';
 
-export default createAction({
+export const findDocumentsAction = createAction({
   auth: mongodbAuth,
   name: 'find_documents',
   classification: 'SEARCH',
@@ -13,8 +15,8 @@ export default createAction({
   outputSchema: findDocumentsOutputSchema,
   aiMetadata: { description: 'Reads documents from a MongoDB collection, optionally filtered by a query, with projection, sort, limit, and skip. An empty query returns all documents in the collection; pass a query object to filter to matching documents. Use to look up or list records when you need raw documents rather than aggregated results. Requires a collection (and a database, from the action or the connection). Read-only and idempotent.', idempotent: true },
   props: {
-    database: mongodbCommon.database,
-    collection: mongodbCommon.collection(),
+    database: mongodbProps.database({ required: false }),
+    collection: mongodbProps.collection({ required: true }),
     query: Property.Json({
       displayName: 'Query',
       description: 'MongoDB query to filter documents (e.g., {"status": "active"})',
@@ -46,7 +48,7 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = await mongodbConnect(context.auth);
+    const client = await mongodbClient.create({ auth: context.auth });
 
     try {
       if (!context.propsValue.collection) {
@@ -62,17 +64,14 @@ export default createAction({
 
       const query = context.propsValue.query || {};
       const projection = context.propsValue.projection || {};
-      const sort = context.propsValue.sort || {};
+      const sort: Document = context.propsValue.sort || {};
       const limit = context.propsValue.limit || 0;
       const skip = context.propsValue.skip || 0;
 
       let cursor = collection.find(query, { projection });
 
       if (Object.keys(sort).length > 0) {
-        // MongoDB sort needs to be handled with care due to typing constraints
-        // We'll use a type assertion but in a safer way than 'any'
-        // The MongoDB driver expects a document with field names and sort direction (1 or -1)
-        cursor = cursor.sort(sort as Record<string, 1 | -1>);
+        cursor = cursor.sort(sort);
       }
 
       if (skip > 0) {

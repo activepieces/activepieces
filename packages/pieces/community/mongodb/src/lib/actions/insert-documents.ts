@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mongodbAuth } from '../..';
+import { mongodbAuth } from '../auth';
 import { insertDocumentsOutputSchema } from '../output-schemas';
-import { mongodbCommon, mongodbConnect } from '../common';
+import { mongodbClient } from '../common/client';
+import { mongodbProps } from '../common/props';
 
-export default createAction({
+export const insertDocumentsAction = createAction({
   auth: mongodbAuth,
   name: 'insert_documents',
   classification: 'WRITE',
@@ -13,8 +14,8 @@ export default createAction({
   outputSchema: insertDocumentsOutputSchema,
   aiMetadata: { description: 'Inserts new documents into a MongoDB collection; accepts either a single document object or an array of documents. Use to add records. Not idempotent: each call creates new documents with fresh _id values, so repeating it appends duplicates.', idempotent: false },
   props: {
-    database: mongodbCommon.database,
-    collection: mongodbCommon.collection(),
+    database: mongodbProps.database({ required: false }),
+    collection: mongodbProps.collection({ required: true }),
     documents: Property.Json({
       displayName: 'Documents',
       description: 'Document(s) to insert. Can be a single document object or an array of documents.',
@@ -22,7 +23,7 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = await mongodbConnect(context.auth);
+    const client = await mongodbClient.create({ auth: context.auth });
 
     try {
       if (!context.propsValue.collection) {
@@ -44,7 +45,6 @@ export default createAction({
       let result;
 
       if (Array.isArray(documents)) {
-        // Insert many documents
         if (documents.length === 0) {
           return { insertedCount: 0, insertedIds: [] };
         }
@@ -54,7 +54,6 @@ export default createAction({
           insertedIds: result.insertedIds,
         };
       } else {
-        // Insert a single document
         result = await collection.insertOne(documents);
         return {
           insertedId: result.insertedId,
