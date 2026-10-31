@@ -3,9 +3,11 @@ import { createAction } from '@activepieces/pieces-framework';
 import { webflowAuth } from '../auth';
 import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
+import { orderOutputSchema } from '../output-schemas';
 
 export const findOrderAction = createAction({
 	auth: webflowAuth,
+	outputSchema: orderOutputSchema,
 	name: 'find_order',
 	classification: 'READ',
 	description: 'Find order',
@@ -24,7 +26,7 @@ export const findOrderAction = createAction({
 		return await webflowClient.request<unknown>({
 			auth: context.auth,
 			method: HttpMethod.GET,
-			path: `/sites/${siteId}/orders/${orderId}`,
+			path: `/v2/sites/${encodeURIComponent(siteId)}/orders/${encodeURIComponent(orderId)}`,
 		});
 	},
 });

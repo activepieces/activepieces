@@ -3,9 +3,11 @@ import { createAction } from '@activepieces/pieces-framework';
 import { webflowAuth } from '../auth';
 import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
+import { orderOutputSchema } from '../output-schemas';
 
 export const refundOrderAction = createAction({
 	auth: webflowAuth,
+	outputSchema: orderOutputSchema,
 	name: 'refund_order',
 	classification: 'DESTRUCTIVE',
 	description: 'Refund order',
@@ -24,7 +26,7 @@ export const refundOrderAction = createAction({
 		return await webflowClient.request<unknown>({
 			auth: context.auth,
 			method: HttpMethod.POST,
-			path: `/sites/${siteId}/orders/${orderId}/refund`,
+			path: `/v2/sites/${encodeURIComponent(siteId)}/orders/${encodeURIComponent(orderId)}/refund`,
 		});
 	},
 });

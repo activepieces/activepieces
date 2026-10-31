@@ -3,9 +3,11 @@ import { createAction } from '@activepieces/pieces-framework';
 import { webflowAuth } from '../auth';
 import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
+import { orderOutputSchema } from '../output-schemas';
 
 export const unfulfillOrderAction = createAction({
 	auth: webflowAuth,
+	outputSchema: orderOutputSchema,
 	name: 'unfulfill_order',
 	classification: 'WRITE',
 	description: 'Unfulfill order',
@@ -24,7 +26,7 @@ export const unfulfillOrderAction = createAction({
 		return await webflowClient.request<unknown>({
 			auth: context.auth,
 			method: HttpMethod.POST,
-			path: `/sites/${siteId}/orders/${orderId}/unfulfill`,
+			path: `/v2/sites/${encodeURIComponent(siteId)}/orders/${encodeURIComponent(orderId)}/unfulfill`,
 		});
 	},
 });

@@ -1,17 +1,20 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { webflowAuth } from '../auth';
 import { webflowApi } from '../common/api';
 import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
+import { webflowUtils } from '../common/utils';
+import { createCollectionItemOutputSchema } from '../output-schemas';
 
 export const createCollectionItemAction = createAction({
 	auth: webflowAuth,
 	name: 'create_collection_item',
+	outputSchema: createCollectionItemOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Collection Item',
 	description: 'Creates new collection item.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new item in a Webflow CMS collection. Provide the collection ID and the field values (keyed by field slug); optionally mark the item as archived or draft. Use to add CMS content like blog posts or products. Each call creates a distinct item, so it is not idempotent.', idempotent: false },
 	props: {
 		site_id: webflowProps.siteId({ required: true }),
@@ -34,39 +37,19 @@ export const createCollectionItemAction = createAction({
 		const isDraft = context.propsValue.is_draft;
 		const collectionInputFields = context.propsValue.collection_fields;
 
-		const { fields: CollectionFields } = await webflowApi.getCollection({
+		const { fields } = await webflowApi.getCollection({
 			auth: context.auth,
 			collectionId,
 		});
 
-		const formattedCollectionFields: DynamicPropsValue = {};
-		for (const field of CollectionFields) {
-			const fieldValue = collectionInputFields[field.slug];
-
-			if (fieldValue !== undefined && fieldValue !== '') {
-				switch (field.type) {
-					case 'ImageRef':
-					case 'FileRef':
-						formattedCollectionFields[field.slug] = { url: fieldValue };
-						break;
-					case 'Set':
-						formattedCollectionFields[field.slug] = fieldValue.map((url: string) => ({ url: url }));
-						break;
-					case 'Number':
-						formattedCollectionFields[field.slug] = Number(fieldValue);
-						break;
-					default:
-						formattedCollectionFields[field.slug] = fieldValue;
-				}
-			}
-		}
-
 		return await webflowClient.request<unknown>({
 			auth: context.auth,
 			method: HttpMethod.POST,
-			path: `/collections/${collectionId}/items`,
+			path: `/v2/collections/${encodeURIComponent(collectionId)}/items`,
 			body: {
-				fields: { ...formattedCollectionFields, _archived: isArchived, _draft: isDraft },
+				isArchived: isArchived ?? false,
+				isDraft: isDraft ?? false,
+				fieldData: webflowUtils.formatFieldData({ fields, values: collectionInputFields }),
 			},
 		});
 	},

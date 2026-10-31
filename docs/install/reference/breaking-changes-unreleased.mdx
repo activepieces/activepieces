@@ -8,6 +8,27 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Webflow 0.4.0: moves to Webflow API v2, connections need reconnecting, and step outputs change
+
+Webflow switched off its v1 API, which every Webflow action and the New Submission trigger used. They now call v2, and the connection asks for the v2 permissions (CMS, sites, pages, forms, assets, custom code, comments, components and ecommerce).
+
+After you upgrade a Webflow step:
+
+- Collection item steps return `id`, `isDraft`, `isArchived` and the field values under `fieldData` (before: `_id`, `_draft`, `_archived` and the fields at the top level). Find Collection Item returns items in the same shape.
+- List Sites and List Collections return `id` and `displayName` instead of `_id` and `name`.
+- Delete Collection Item returns `success` and `collectionItemId`.
+- Update Collection Item changes only the fields you fill in, instead of replacing the whole item.
+- New Submission delivers `siteId`, `submittedAt`, `id` and `formId` (before: `site`, `d` and `_id`). The submitted values stay under `data`.
+- List Sites, List Collections and the collection item actions are now shown only in the flow builder; AI agents and MCP clients get the new Webflow AI actions instead.
+
+#### What you need to do
+
+- Reconnect each Webflow connection once, and pick the sites it may reach on the Webflow consent screen.
+- Remap later steps that read `_id`, `name`, `_draft`, `_archived`, `site`, `d` or item fields at the top level.
+- Turn flows that use New Submission off and on again so the webhook is registered through v2.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
 
 **Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.

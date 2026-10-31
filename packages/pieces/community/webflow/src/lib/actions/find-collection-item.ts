@@ -4,14 +4,16 @@ import { webflowAuth } from '../auth';
 import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
 import type { WebflowCollectionItemsPage } from '../common/types';
+import { findCollectionItemOutputSchema } from '../output-schemas';
 
 export const findCollectionItemAction = createAction({
 	auth: webflowAuth,
 	name: 'find_collection_item',
+	outputSchema: findCollectionItemOutputSchema,
 	classification: 'SEARCH',
 	description: 'Find collection item in a collection by field',
 	displayName: 'Find a Collection Item by Field',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Searches a Webflow CMS collection for items whose given field name exactly matches the supplied value, optionally capped by a max-results limit. Use to look up an item by a known field value (e.g. slug or name) before reading or updating it. Read-only and idempotent. Note: matching is an exact equality filter applied client-side over the fetched items, not a fuzzy or paginated server search.', idempotent: true },
 	props: {
 		site_id: webflowProps.siteId({ required: true }),
@@ -43,13 +45,13 @@ export const findCollectionItemAction = createAction({
 			const res = await webflowClient.request<WebflowCollectionItemsPage>({
 				auth: configValue.auth,
 				method: HttpMethod.GET,
-				path: `/collections/${collectionId}/items`,
+				path: `/v2/collections/${encodeURIComponent(collectionId)}/items`,
 			});
 
 			const items = res.items;
 			const matches = items
 				.filter((item) => {
-					return item.fields[fieldName] === fieldValue;
+					return item.fieldData[fieldName] === fieldValue;
 				})
 				.slice(0, maxResults);
 

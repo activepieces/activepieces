@@ -12,6 +12,7 @@ import { publishCollectionItemAction } from './lib/actions/publish-collection-it
 import { refundOrderAction } from './lib/actions/refund-order';
 import { unfulfillOrderAction } from './lib/actions/unfulfill-order';
 import { updateCollectionItemAction } from './lib/actions/update-collection-item';
+import { webflowAiActions } from './lib/actions/ai';
 import { webflowAuth } from './lib/auth';
 import { webflowClient } from './lib/common/client';
 import { formSubmittedTrigger } from './lib/triggers/form-submitted';
@@ -19,7 +20,7 @@ import { formSubmittedTrigger } from './lib/triggers/form-submitted';
 export const webflow = createPiece({
 	displayName: 'Webflow',
 	description: 'Design, build, and launch responsive websites visually',
-	minimumSupportedRelease: '0.5.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/webflow.png',
 	categories: [PieceCategory.MARKETING],
 	authors: [
@@ -45,6 +46,7 @@ export const webflow = createPiece({
 		publishCollectionItemAction,
 		listSitesAction,
 		listCollectionsAction,
+		...webflowAiActions,
 		createCustomApiCallAction({
 			baseUrl: () => webflowClient.baseUrl(),
 			auth: webflowAuth,

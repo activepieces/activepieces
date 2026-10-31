@@ -3,9 +3,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { webflowAuth } from '../auth';
 import { webflowClient } from '../common/client';
 import { webflowProps } from '../common/props';
+import { orderOutputSchema } from '../output-schemas';
 
 export const fulfillOrderAction = createAction({
 	auth: webflowAuth,
+	outputSchema: orderOutputSchema,
 	name: 'fulfill_order',
 	classification: 'WRITE',
 	description: 'Fulfill order',
@@ -30,7 +32,7 @@ export const fulfillOrderAction = createAction({
 		return await webflowClient.request<unknown>({
 			auth: context.auth,
 			method: HttpMethod.POST,
-			path: `/sites/${siteId}/orders/${orderId}/fulfill`,
+			path: `/v2/sites/${encodeURIComponent(siteId)}/orders/${encodeURIComponent(orderId)}/fulfill`,
 			body: { sendOrderFulfilledEmail },
 		});
 	},

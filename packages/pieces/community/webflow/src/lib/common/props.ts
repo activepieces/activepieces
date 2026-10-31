@@ -8,7 +8,7 @@ import {
 import { webflowAuth } from '../auth';
 import { webflowApi } from './api';
 import { webflowClient } from './client';
-import type { WebflowCollectionItemsPage, WebflowOrder } from './types';
+import type { WebflowCollectionItemsPage, WebflowOrdersPage } from './types';
 
 function siteId<R extends boolean>({ required, displayName = 'Site', description }: PropParams<R>) {
 	return Property.Dropdown({
@@ -24,7 +24,7 @@ function siteId<R extends boolean>({ required, displayName = 'Site', description
 			const sites = await webflowApi.listSites({ auth });
 			return {
 				disabled: false,
-				options: sites.map((site) => ({ label: site.name, value: site._id })),
+				options: sites.map((site) => ({ label: site.displayName, value: site.id })),
 			};
 		},
 	});
@@ -44,7 +44,7 @@ function collectionId<R extends boolean>({ required, displayName = 'Collection',
 			const collections = await webflowApi.listCollections({ auth, siteId: String(site_id) });
 			return {
 				disabled: false,
-				options: collections.map((collection) => ({ label: collection.name, value: collection._id })),
+				options: collections.map((collection) => ({ label: collection.displayName, value: collection.id })),
 			};
 		},
 	});
@@ -69,78 +69,77 @@ function collectionFields<R extends boolean>({
 			const { fields } = await webflowApi.getCollection({ auth, collectionId: String(collection_id) });
 
 			for (const field of fields) {
-				if (field.editable && field.slug !== '_archived' && field.slug !== '_draft') {
-					switch (field.type) {
-						case 'Option':
-							collectionFields[field.slug] = Property.StaticDropdown({
-								displayName: field.name,
-								required: field.required,
-								options: {
-									disabled: false,
-									options: field.validations.options.map((option) => {
-										return {
-											label: option.name,
-											value: option.name,
-										};
-									}),
-								},
-							});
-							break;
-						case 'RichText':
-						case 'Email':
-						case 'PlainText':
-						case 'Phone':
-						case 'Link':
-						case 'Video':
-						case 'Color':
-						case 'ItemRef':
-						case 'FileRef':
-							collectionFields[field.slug] = Property.ShortText({
-								displayName: field.name,
-								required: field.required,
-							});
-							break;
-						case 'ImageRef':
-							collectionFields[field.slug] = Property.ShortText({
-								displayName: field.name,
-								required: field.required,
-								description:
-									'Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
-							});
-							break;
-						case 'Set':
-							collectionFields[field.slug] = Property.Array({
-								displayName: field.name,
-								required: field.required,
-								description:
-									' Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
-							});
-							break;
-						case 'ItemRefSet':
-							collectionFields[field.slug] = Property.Array({
-								displayName: field.name,
-								required: field.required,
-							});
-							break;
-						case 'Number':
-							collectionFields[field.slug] = Property.Number({
-								displayName: field.name,
-								required: field.required,
-							});
-							break;
-						case 'Date':
-							collectionFields[field.slug] = Property.DateTime({
-								displayName: field.name,
-								required: field.required,
-							});
-							break;
-						case 'Bool':
-							collectionFields[field.slug] = Property.Checkbox({
-								displayName: field.name,
-								required: false,
-							});
-							break;
-					}
+				if (!field.isEditable) {
+					continue;
+				}
+				switch (field.type) {
+					case 'Option':
+						collectionFields[field.slug] = Property.StaticDropdown({
+							displayName: field.displayName,
+							required: field.isRequired,
+							options: {
+								disabled: false,
+								options: (field.validations?.options ?? []).map((option) => ({
+									label: option.name,
+									value: option.name,
+								})),
+							},
+						});
+						break;
+					case 'RichText':
+					case 'Email':
+					case 'PlainText':
+					case 'Phone':
+					case 'Link':
+					case 'VideoLink':
+					case 'Color':
+					case 'Reference':
+					case 'File':
+						collectionFields[field.slug] = Property.ShortText({
+							displayName: field.displayName,
+							required: field.isRequired,
+						});
+						break;
+					case 'Image':
+						collectionFields[field.slug] = Property.ShortText({
+							displayName: field.displayName,
+							required: field.isRequired,
+							description:
+								'Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
+						});
+						break;
+					case 'MultiImage':
+						collectionFields[field.slug] = Property.Array({
+							displayName: field.displayName,
+							required: field.isRequired,
+							description:
+								' Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
+						});
+						break;
+					case 'MultiReference':
+						collectionFields[field.slug] = Property.Array({
+							displayName: field.displayName,
+							required: field.isRequired,
+						});
+						break;
+					case 'Number':
+						collectionFields[field.slug] = Property.Number({
+							displayName: field.displayName,
+							required: field.isRequired,
+						});
+						break;
+					case 'DateTime':
+						collectionFields[field.slug] = Property.DateTime({
+							displayName: field.displayName,
+							required: field.isRequired,
+						});
+						break;
+					case 'Switch':
+						collectionFields[field.slug] = Property.Checkbox({
+							displayName: field.displayName,
+							required: false,
+						});
+						break;
 				}
 			}
 			return collectionFields;
@@ -165,21 +164,21 @@ function collectionItemId<R extends boolean>({
 			}
 			const options: DropdownOption<string>[] = [];
 
-			let page = 0;
+			let offset = 0;
 			let response: WebflowCollectionItemsPage;
 			do {
 				response = await webflowClient.request<WebflowCollectionItemsPage>({
 					auth,
 					method: HttpMethod.GET,
-					path: `/collections/${String(collection_id)}/items`,
-					query: { offset: String(page), limit: '100' },
+					path: `/v2/collections/${encodeURIComponent(String(collection_id))}/items`,
+					query: { offset: String(offset), limit: String(PAGE_SIZE) },
 				});
-				page += 100;
+				offset += PAGE_SIZE;
 
 				for (const item of response.items) {
-					options.push({ label: item.name, value: item._id });
+					options.push({ label: item.fieldData.name ?? item.id, value: item.id });
 				}
-			} while (response.items.length > 0);
+			} while (response.items.length > 0 && offset < Math.min(response.pagination.total, MAX_OPTIONS));
 
 			return {
 				disabled: false,
@@ -202,21 +201,21 @@ function orderId<R extends boolean>({ required, displayName = 'Order', descripti
 			}
 			const options: DropdownOption<string>[] = [];
 
-			let page = 0;
-			let response: WebflowOrder[];
+			let offset = 0;
+			let response: WebflowOrdersPage;
 			do {
-				response = await webflowClient.request<WebflowOrder[]>({
+				response = await webflowClient.request<WebflowOrdersPage>({
 					auth,
 					method: HttpMethod.GET,
-					path: `/sites/${String(site_id)}/orders`,
-					query: { offset: String(page), limit: '100' },
+					path: `/v2/sites/${encodeURIComponent(String(site_id))}/orders`,
+					query: { offset: String(offset), limit: String(PAGE_SIZE) },
 				});
-				page += 100;
+				offset += PAGE_SIZE;
 
-				for (const order of response) {
+				for (const order of response.orders) {
 					options.push({ label: order.orderId, value: order.orderId });
 				}
-			} while (response.length > 0);
+			} while (response.orders.length > 0 && offset < Math.min(response.pagination.total, MAX_OPTIONS));
 
 			return {
 				disabled: false,
@@ -231,5 +230,8 @@ function disabledOptions({ placeholder }: { placeholder: string }): DropdownStat
 }
 
 export const webflowProps = { siteId, collectionId, collectionFields, collectionItemId, orderId };
+
+const PAGE_SIZE = 100;
+const MAX_OPTIONS = 2000;
 
 export type PropParams<R extends boolean> = { required: R; displayName?: string; description?: string };

@@ -27,7 +27,20 @@ async function request<T>({
 	return response.body;
 }
 
-export const webflowClient = { baseUrl, request };
+async function uploadFile({ url, fields, data, fileName, contentType }: UploadFileParams): Promise<void> {
+	const form = new FormData();
+	for (const [key, value] of Object.entries(fields)) {
+		form.append(key, String(value));
+	}
+	form.append('file', new Blob([new Uint8Array(data)], { type: contentType ?? 'application/octet-stream' }), fileName);
+	await httpClient.sendRequest({
+		method: HttpMethod.POST,
+		url,
+		body: form,
+	});
+}
+
+export const webflowClient = { baseUrl, request, uploadFile };
 
 type RequestParams = {
 	method: HttpMethod;
@@ -35,4 +48,12 @@ type RequestParams = {
 	query?: QueryParams;
 	body?: unknown;
 	headers?: HttpHeaders;
+};
+
+type UploadFileParams = {
+	url: string;
+	fields: Record<string, unknown>;
+	data: Buffer;
+	fileName: string;
+	contentType: string | undefined;
 };
