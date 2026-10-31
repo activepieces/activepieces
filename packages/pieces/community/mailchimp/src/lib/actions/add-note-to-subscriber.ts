@@ -8,19 +8,36 @@ export const addNoteToSubscriber = createAction({
   name: 'add_note_to_subscriber',
   classification: 'WRITE',
   displayName: 'Add Note to Subscriber',
-  description: 'Add a note to a subscriber in your Mailchimp audience.',
+  description: 'Add a note to a subscriber in your Mailchimp audience',
   audience: 'both',
   aiMetadata: { description: 'Appends an internal note to a subscriber, identified by email within a given audience (list). Use to record context or annotations on a contact. Not idempotent: each call adds a new note even if the content is identical.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber',
+      icon: 'user',
+      props: ['list_id', 'email'],
+    },
+    {
+      key: 'note',
+      display: 'section',
+      label: 'Note',
+      icon: 'text',
+      props: ['note'],
+    },
+  ],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
       displayName: 'Email Address',
-      description: 'The email address of the subscriber to add a note to',
+      description: 'Must already be in the audience.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     note: Property.LongText({
-      displayName: 'Note Content',
-      description: 'The note content to add to the subscriber',
+      displayName: 'Note',
+      description: "Shown on the subscriber's profile in Mailchimp.",
       required: true,
     }),
   },
@@ -47,21 +64,17 @@ export const addNoteToSubscriber = createAction({
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        
-        try {
-          const errorText = await response.text();
-          if (errorText && errorText.trim()) {
+        const errorText = await response.text();
+        if (errorText && errorText.trim()) {
+          try {
             const errorData = JSON.parse(errorText);
             errorMessage = errorData.detail || errorData.title || errorData.message || errorText;
-          }
-        } catch (parseError) {
-          const errorText = await response.text();
-          if (errorText && errorText.trim()) {
+          } catch {
             errorMessage = errorText;
           }
         }
 
-        throw new Error(`Failed to add note to subscriber: ${errorMessage}`);
+        throw new Error(errorMessage);
       }
 
       let result;

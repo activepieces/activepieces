@@ -10,20 +10,33 @@ export const getCampaignReport = createAction({
   name: 'get_campaign_report',
   classification: 'READ',
   displayName: 'Get Campaign Report',
-  description: 'Get comprehensive report details for a specific sent campaign including opens, clicks, bounces, and performance metrics',
+  description: 'Get opens, clicks, bounces and other results of a sent campaign',
   audience: 'both',
   aiMetadata: { description: 'Retrieves the analytics report for a single sent campaign by campaign ID, covering opens, clicks, bounces, unsubscribes, and engagement metrics; optional field include/exclude lists narrow the payload. Use to read performance for a campaign that has already been sent. Read-only and idempotent. Returns a not-found result if the campaign has not been sent or the ID is wrong.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'report',
+      display: 'section',
+      label: 'Report',
+      icon: 'filter',
+      props: ['campaign_id'],
+    },
+  ],
   props: {
     campaign_id: mailchimpCommon.mailChimpCampaignIdDropdown,
     fields: Property.LongText({
       displayName: 'Include Fields',
-      description: 'Comma-separated list of fields to return (e.g., "opens.unique_opens,clicks.click_rate")',
+      description: 'Comma-separated, in dot notation. Empty returns every field.',
+      placeholder: 'opens.unique_opens,clicks.click_rate',
       required: false,
+      advanced: true,
     }),
     exclude_fields: Property.LongText({
       displayName: 'Exclude Fields',
-      description: 'Comma-separated list of fields to exclude (e.g., "timeseries,_links")',
+      description: 'Comma-separated, in dot notation.',
+      placeholder: 'timeseries,_links',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
