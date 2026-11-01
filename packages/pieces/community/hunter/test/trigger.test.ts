@@ -23,6 +23,27 @@ describe('new lead trigger', () => {
     expect(again).toEqual([]);
   });
 
+  test('a lead added between page requests does not emit a shifted lead twice', async () => {
+    let all = Array.from({ length: 100 }, (_, index) => ({ id: 150 - index }));
+    all = [...all, { id: 50 }];
+    stubFetch((request: SeenRequest) => {
+      const offset = Number(request.query.get('offset'));
+      const limit = Number(request.query.get('limit'));
+      const leads = all.slice(offset, offset + limit);
+      if (offset === 0) {
+        all = [{ id: 151 }, ...all];
+      }
+      return { body: { data: { leads } } };
+    });
+    const store = memoryStore({ [LAST_LEAD_ID_KEY]: 50 });
+    const output = await newLeadTrigger.run(fakeContext({ store }));
+    const ids = output.map((lead) => lead['id']);
+    expect(ids).toHaveLength(100);
+    expect(new Set(ids).size).toBe(100);
+    expect(ids[0]).toBe(51);
+    expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(150);
+  });
+
   test('an empty account enabled at 0 emits every lead of a first bulk import', async () => {
     const all = Array.from({ length: 150 }, (_, index) => ({ id: 150 - index }));
     stubFetch((request: SeenRequest) => {

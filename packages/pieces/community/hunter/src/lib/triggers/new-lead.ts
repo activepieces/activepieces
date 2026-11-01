@@ -94,13 +94,19 @@ async function pollNewLeads({ apiKey, store }: { apiKey: string; store: Store })
 }
 
 async function collectNewer({ apiKey, lastSeen }: { apiKey: string; lastSeen: number }): Promise<HunterRecord[]> {
-  const collected: HunterRecord[] = [];
+  // Offsets shift when a lead is added between page requests, so the same lead can appear on two pages; keep one copy per ID.
+  const collected = new Map<number, HunterRecord>();
   for (let offset = 0; offset < MAX_PAGED_LEADS; offset += PAGE_SIZE) {
     const page = await hunterRequests.listLeadsPage({ apiKey, limit: PAGE_SIZE, offset });
     const newer = page.filter((lead) => (leadIdOf(lead) ?? 0) > lastSeen);
-    collected.push(...newer);
+    for (const lead of newer) {
+      const id = leadIdOf(lead);
+      if (id !== undefined && !collected.has(id)) {
+        collected.set(id, lead);
+      }
+    }
     if (page.length < PAGE_SIZE || newer.length < page.length) {
-      return collected;
+      return [...collected.values()];
     }
   }
   throw new Error(`More than ${MAX_PAGED_LEADS} new Hunter leads since the last check; the trigger stopped so none are skipped. Disable and re-enable it to start from the newest lead.`);

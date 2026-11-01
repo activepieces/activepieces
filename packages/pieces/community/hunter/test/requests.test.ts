@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { hunterRequests } from '../src/lib/common/requests';
+import { hunterApi } from '../src/lib/common/client';
 import { API_KEY, replies, stubFetch } from './helpers';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -95,6 +96,26 @@ describe('lookups', () => {
     await expect(
       hunterRequests.verifyEmail({ apiKey: API_KEY, email: 'a@example.com', wait: async (ms) => { clock += ms; }, now: () => clock }),
     ).rejects.toThrow('still verifying');
+  });
+
+  test('verify caps each request timeout to the time left and drops a late result', async () => {
+    let clock = 0;
+    stubFetch((_request, index) => {
+      clock += index === 0 ? 50_000 : 9_000;
+      return index === 0 ? { status: 202, body: {} } : { body: { data: { status: 'valid' } } };
+    });
+    await expect(
+      hunterRequests.verifyEmail({ apiKey: API_KEY, email: 'a@example.com', wait: async (ms) => { clock += ms; }, now: () => clock }),
+    ).rejects.toThrow('still verifying');
+    expect(clock).toBe(64_000);
+  });
+
+  test('verify passes the remaining time as the request timeout', async () => {
+    const spy = vi.spyOn(hunterApi, 'request').mockResolvedValueOnce({ status: 202, body: {} }).mockResolvedValueOnce({ status: 200, body: { data: { status: 'valid' } } });
+    let clock = 0;
+    await hunterRequests.verifyEmail({ apiKey: API_KEY, email: 'a@example.com', wait: async (ms) => { clock += ms; }, now: () => clock });
+    expect(spy.mock.calls.map(([args]) => args.timeoutMs)).toEqual([60_000, 55_000]);
+    spy.mockRestore();
   });
 
   test('enrichment 404 is a documented empty result', async () => {

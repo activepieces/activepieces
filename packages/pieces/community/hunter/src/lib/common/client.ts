@@ -172,7 +172,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function request<T = HunterRecord>({ apiKey, method, path, operation, query, body, wait = sleep }: HunterRequest): Promise<HunterResponse<T>> {
+async function request<T = HunterRecord>({ apiKey, method, path, operation, query, body, wait = sleep, timeoutMs = REQUEST_TIMEOUT_MS }: HunterRequest): Promise<HunterResponse<T>> {
   if (!path.startsWith('/') || path.startsWith('//') || path.includes('..')) {
     throw new Error(`Internal error: Hunter path must be relative (${operation}).`);
   }
@@ -180,7 +180,7 @@ async function request<T = HunterRecord>({ apiKey, method, path, operation, quer
     method,
     url: `${BASE_URL}${path}${buildQuery(query)}`,
     headers: { ...authHeaders(apiKey), Accept: 'application/json' },
-    timeout: REQUEST_TIMEOUT_MS,
+    timeout: Math.max(1, Math.min(timeoutMs, REQUEST_TIMEOUT_MS)),
     followRedirects: false,
   };
   if (body !== undefined) {
@@ -226,6 +226,7 @@ export type HunterRequest = {
   query?: Record<string, QueryValue>;
   body?: unknown;
   wait?: (ms: number) => Promise<void>;
+  timeoutMs?: number;
 };
 
 export type HunterResponse<T> = {

@@ -316,16 +316,24 @@ async function findEmail({ apiKey, query }: { apiKey: string; query: Record<stri
 
 async function verifyEmail({ apiKey, email, wait = hunterApi.sleep, now = Date.now }: { apiKey: string; email: string; wait?: (ms: number) => Promise<void>; now?: () => number }): Promise<HunterRecord> {
   const deadline = now() + VERIFY_DEADLINE_MS;
+  const stillVerifying = (): Error => new Error('Hunter is still verifying this email after 60 seconds. Run the step again later; repeat checks of the same email are not charged again.');
   for (;;) {
-    const response = await hunterApi.request({ apiKey, method: HttpMethod.GET, path: '/email-verifier', operation: 'verify email', query: { email } });
+    const remainingMs = deadline - now();
+    if (remainingMs <= 0) {
+      throw stillVerifying();
+    }
+    const response = await hunterApi.request({ apiKey, method: HttpMethod.GET, path: '/email-verifier', operation: 'verify email', query: { email }, timeoutMs: remainingMs });
     if (response.status === 222) {
       throw new HunterApiError({ operation: 'verify email', status: 222, responseBody: response.body });
+    }
+    if (now() > deadline) {
+      throw stillVerifying();
     }
     if (response.status !== 202) {
       return dataOf(response.body);
     }
     if (now() + VERIFY_POLL_MS > deadline) {
-      throw new Error('Hunter is still verifying this email after 60 seconds. Run the step again later; repeat checks of the same email are not charged again.');
+      throw stillVerifying();
     }
     await wait(VERIFY_POLL_MS);
   }
