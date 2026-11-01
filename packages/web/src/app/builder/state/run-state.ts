@@ -9,6 +9,7 @@ import {
   FlowVersion,
   LoopStepOutput,
   SampleDataFileType,
+  StepOutput,
   StepRunResponse,
   TestStepProgressEvent,
   WebsocketClientEvent,
@@ -33,7 +34,13 @@ export type RunState = {
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
   loopsIndexes: Record<string, number>;
-  setLoopIndex: (stepName: string, index: number) => void;
+  setLoopIndex: (params: {
+    stepName: string;
+    index: number;
+    steps: Record<string, StepOutput>;
+  }) => void;
+  batchesIndexes: Record<string, number>;
+  setBatchIndex: (params: { stepName: string; index: number }) => void;
   selectFailedStep: () => void;
   addActionTestListener: ({
     runId,
@@ -75,6 +82,32 @@ export const createRunState = (
   return {
     revertSampleDataLocallyCallbacks: {},
     run: initialState.run,
+    batchesIndexes: {},
+    setBatchIndex: ({ stepName, index }) =>
+      set((state) => {
+        if (state.batchesIndexes[stepName] === index) {
+          return state;
+        }
+        const loopNamesInBatch = flowStructureUtil
+          .getAllChildSteps(
+            flowStructureUtil.getStepOrThrow(
+              stepName,
+              state.flowVersion.trigger,
+            ),
+          )
+          .filter((step) => step.type === FlowActionType.LOOP_ON_ITEMS)
+          .map((step) => step.name);
+        return {
+          batchesIndexes: { ...state.batchesIndexes, [stepName]: index },
+          loopsIndexes: Object.fromEntries(
+            Object.entries(state.loopsIndexes).filter(
+              ([loopName]) => !loopNamesInBatch.includes(loopName),
+            ),
+          ),
+          userManuallySelectedStepDuringRun:
+            state.userManuallySelectedStepDuringRun || !isNil(state.run),
+        };
+      }),
     loopsIndexes:
       initialState.run && initialState.run.steps
         ? flowRunUtils.pinLoopsToIterationsWithFailedStep(initialState.run, {})
@@ -93,6 +126,7 @@ export const createRunState = (
         );
         return {
           loopsIndexes,
+          batchesIndexes: isNewRun ? {} : state.batchesIndexes,
           run,
           flowVersion,
           readonly: true,
@@ -120,11 +154,12 @@ export const createRunState = (
         run: null,
         readonly: !userHasPermissionToEditFlow,
         loopsIndexes: {},
+        batchesIndexes: {},
         selectedBranchIndex: null,
         userManuallySelectedStepDuringRun: false,
         isStepDataPanelOpen: false,
       }),
-    setLoopIndex: (stepName: string, index: number) => {
+    setLoopIndex: ({ stepName, index, steps }) => {
       set((state) => {
         const parentLoop = flowStructureUtil.getStepOrThrow(
           stepName,
@@ -148,7 +183,7 @@ export const createRunState = (
           const childLoopOutput = flowRunUtils.extractStepOutput(
             childLoop.name,
             loopsIndexes,
-            state.run?.steps ?? {},
+            steps,
           ) as LoopStepOutput | undefined;
 
           if (isNil(childLoopOutput) || isNil(childLoopOutput.output)) {
