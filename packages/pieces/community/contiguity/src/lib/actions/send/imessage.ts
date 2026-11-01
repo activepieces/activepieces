@@ -57,7 +57,7 @@ export const send_iMessage = createAction({
             required: true,
             refreshers: ['fallback'],
             props: async (propsValue): Promise<InputPropertyMap> => {
-                const fallback = propsValue['fallback'] === true;
+                const fallback = isFallbackOn(propsValue['fallback']);
 
                 if (!fallback){
                     return{}
@@ -136,7 +136,7 @@ export const send_iMessage = createAction({
         });
 
         const { to, from, message, attachments, fallback } = context.propsValue;
-        const fallbackOptions = fallback === true ? await resolveFallback(context.propsValue.fallback_when) : undefined;
+        const fallbackOptions = isFallbackOn(fallback) ? await resolveFallback(context.propsValue.fallback_when) : undefined;
 
         const body: SendIMessageBody = {
             to,
@@ -170,6 +170,10 @@ async function resolveFallback(fallbackWhen: unknown): Promise<FallbackOptions> 
     const when = rawWhen.filter(isFallbackCondition);
 
     return { when, ...(rawFrom ? { from: rawFrom } : {}) };
+}
+
+function isFallbackOn(value: unknown): boolean {
+    return value === true || value === 'true';
 }
 
 function isFallbackCondition(value: unknown): value is FallbackCondition {
