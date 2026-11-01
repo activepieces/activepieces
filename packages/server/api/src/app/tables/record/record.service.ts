@@ -159,6 +159,7 @@ export const recordService = {
         return transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
                 where: { projectId, tableId, id },
+                lock: { mode: 'pessimistic_write' },
             })
 
             if (isNil(record)) {

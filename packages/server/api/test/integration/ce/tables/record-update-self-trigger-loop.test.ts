@@ -40,6 +40,24 @@ describe('A Record Updated flow that marks its own record as processed', () => {
         expect(oneExternalEdit?.statusCode).toBe(StatusCodes.OK)
         expect(runs).toBe(2)
     })
+
+    it('starts one run when two saves write the same new value at once', async () => {
+        const handleWebhook = vi.spyOn(webhookService, 'handleWebhook').mockResolvedValue({ status: StatusCodes.OK, body: {}, headers: {} })
+        const ctx = await createTestContext(app!)
+        const { table, field } = await createTableWithField(ctx)
+        const record = await saveRecordWithValue({ ctx, tableId: table.id, fieldId: field.id, value: 'new' })
+        const flow = await subscribeFlow({ ctx, tableId: table.id })
+        const saveProcessed = () => ctx.post(`/v1/records/${record.id}`, {
+            tableId: table.id,
+            cells: [{ fieldId: field.id, value: 'processed' }],
+        })
+
+        const responses = await Promise.all([saveProcessed(), saveProcessed()])
+        await new Promise((resolve) => setTimeout(resolve, QUIET_MS))
+
+        expect(responses.map((response) => response?.statusCode)).toEqual([StatusCodes.OK, StatusCodes.OK])
+        expect(handleWebhook.mock.calls.filter(([params]) => params.flowId === flow.id)).toHaveLength(1)
+    })
 })
 
 async function runTheFlowForEveryEvent({ runsStartedForFlow, runFlow }: { runsStartedForFlow: () => number, runFlow: () => Promise<unknown> }): Promise<number> {
