@@ -34,7 +34,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
 vi.mock('@/features/platform-admin/hooks/platform-user-hooks', () => ({
   platformUserKeys: { users: ['users'], invitations: ['invitations'] },
   platformUserHooks: {
-    useAllUsers: (params: unknown) => allUsers(params),
+    useAllUsers: () => allUsers(),
     useInvitesReservingSeats: () => ({
       data: invitations,
       refetch: () => Promise.resolve(),
@@ -153,18 +153,6 @@ describe('DeactivateUsersDialog preselection', () => {
     expect(submitButton().disabled).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(refetch).toHaveBeenCalled());
-  });
-
-  it('asks for the users without the embedded ones when told to hide them', () => {
-    renderDialog({ targetSeats: 1, currentUsers: 1, hideEmbeddedUsers: true });
-
-    expect(allUsers).toHaveBeenCalledWith({ excludeEmbedded: true });
-  });
-
-  it('asks for every user by default', () => {
-    renderDialog({ targetSeats: 1, currentUsers: 1 });
-
-    expect(allUsers).toHaveBeenCalledWith({ excludeEmbedded: false });
   });
 
   it('starts with the preselected users ticked and labels them', () => {
