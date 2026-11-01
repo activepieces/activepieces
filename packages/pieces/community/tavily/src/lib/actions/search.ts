@@ -15,7 +15,7 @@ export const searchAction = createAction({
   propertyGroups: [
     { key: 'search', display: 'section', label: 'Search', icon: 'text', props: ['query', 'search_depth', 'topic'] },
     { key: 'time', display: 'section', label: 'Time Window', icon: 'calendar', props: ['time_range', 'days'] },
-    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['max_results', 'include_answer', 'include_raw_content', 'include_images'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['max_results', 'include_answer', 'include_raw_content', 'include_images', 'include_image_descriptions'] },
     { key: 'domains', display: 'section', label: 'Domains', icon: 'filter', props: ['include_domains', 'exclude_domains'] },
   ],
   props: {
@@ -81,10 +81,6 @@ export const searchAction = createAction({
       description: 'Number of results to return, from 0 to 20.',
       required: false,
       defaultValue: 5,
-      display: 'stepper',
-      min: 0,
-      max: 20,
-      step: 1,
     }),
     include_answer: Property.Checkbox({
       displayName: 'Include AI Answer',
@@ -103,11 +99,10 @@ export const searchAction = createAction({
       description: 'Add images related to the query.',
       required: false,
       defaultValue: false,
-      reveals: ['include_image_descriptions'],
     }),
     include_image_descriptions: Property.Checkbox({
       displayName: 'Include Image Descriptions',
-      description: 'Add a short description to each image.',
+      description: 'Add a short description to each image. Needs Include Images.',
       required: false,
       defaultValue: false,
     }),
