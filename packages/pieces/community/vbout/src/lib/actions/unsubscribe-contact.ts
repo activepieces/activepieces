@@ -16,11 +16,14 @@ export const unsubscribeContactAction = createAction({
   },
   props: {
     email: Property.ShortText({
-      displayName: 'Contact Email',
+      displayName: 'Email',
+      placeholder: 'jane@example.com',
       required: true,
-      description: 'Contact email for update.',
     }),
-    listid: vboutCommon.listid(true),
+    listid: vboutCommon.listid({
+      required: true,
+      description: 'The contact is unsubscribed from this list.',
+    }),
   },
   async run(context) {
     const client = makeClient(context.auth.secret_text);
@@ -33,12 +36,13 @@ export const unsubscribeContactAction = createAction({
 
     if ('errorCode' in contact) {
       return res;
-    } else {
-      const contactId = contact[0].id;
-      return await client.updateContact({
-        id: contactId,
-        status: ContactStatusValues.UNSUBSCRIBE,
-      });
     }
+    if (contact.length === 0) {
+      throw new Error('No contact with this email was found in the selected list.');
+    }
+    return await client.updateContact({
+      id: contact[0].id,
+      status: ContactStatusValues.UNSUBSCRIBE,
+    });
   },
 });
