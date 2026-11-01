@@ -76,10 +76,8 @@ export const backgroundMigrationRunner = {
         const { data, error } = await tryCatch(async () => {
             const ds = dataSource ?? databaseConnection()
             const source = migrations ?? getBackgroundMigrations()
-            await ensureBackgroundMigrationsTable(ds)
-            const completed = await getCompletedNames(ds)
             const sourceNames = source.map(MigrationClass => new MigrationClass().name)
-            const pendingCount = sourceNames.filter(name => !completed.has(name)).length
+            const pendingCount = (await backgroundMigrationRunner.listPending({ migrations: source, dataSource: ds })).length
             const failedMigration = await getLatestFailure(ds, sourceNames)
             return {
                 pendingCount,
@@ -92,6 +90,20 @@ export const backgroundMigrationRunner = {
             return { pendingCount: 0, completedCount: 0, error: error instanceof Error ? error.message : String(error), failedMigration: null }
         }
         return data
+    },
+
+    async listPending({
+        migrations,
+        dataSource,
+    }: {
+        migrations?: (new () => BackgroundMigration)[]
+        dataSource?: DataSource
+    } = {}): Promise<string[]> {
+        const ds = dataSource ?? databaseConnection()
+        const source = migrations ?? getBackgroundMigrations()
+        await ensureBackgroundMigrationsTable(ds)
+        const completed = await getCompletedNames(ds)
+        return source.map(MigrationClass => new MigrationClass().name).filter(name => !completed.has(name))
     },
 }
 

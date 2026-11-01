@@ -163,6 +163,23 @@ describe('backgroundMigrationRunner', () => {
         expect(status.completedCount).toBeGreaterThanOrEqual(1)
     })
 
+    it('listPending names every unfinished migration, including one whose pod died without recording a failure', async () => {
+        const done = makeTestMigration({ name: `PendingDone${Date.now()}` })
+        const failed = makeTestMigration({
+            name: `PendingFailed${Date.now()}`,
+            up: async () => {
+                throw new Error('canceling statement due to statement timeout')
+            },
+        })
+        const killedMidRun = makeTestMigration({ name: `PendingKilled${Date.now()}` })
+        await backgroundMigrationRunner.run({ log: app!.log, migrations: [done] })
+        await expect(backgroundMigrationRunner.run({ log: app!.log, migrations: [failed] })).rejects.toThrow(/statement timeout/)
+
+        const pending = await backgroundMigrationRunner.listPending({ migrations: [done, failed, killedMidRun] })
+
+        expect(pending).toEqual([new failed().name, new killedMidRun().name])
+    })
+
     it('getStatus returns error-shape instead of throwing on DB failure', async () => {
         const ds = databaseConnection()
         const spy = vi.spyOn(ds, 'query').mockRejectedValueOnce(new Error('db down'))

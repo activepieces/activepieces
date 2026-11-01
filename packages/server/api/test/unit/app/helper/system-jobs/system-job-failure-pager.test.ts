@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SystemJobName } from '../../../../../src/app/helper/system-jobs/common'
 import { systemJobFailurePager } from '../../../../../src/app/helper/system-jobs/system-job-failure-pager'
 
-const { pageMock, onCallServiceMock } = vi.hoisted(() => {
+const { pageMock, onCallServiceMock, listPendingMock } = vi.hoisted(() => {
     const pageMock = vi.fn()
-    return { pageMock, onCallServiceMock: vi.fn(() => ({ page: pageMock })) }
+    return { pageMock, onCallServiceMock: vi.fn(() => ({ page: pageMock })), listPendingMock: vi.fn() }
 })
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => {
@@ -17,13 +17,19 @@ vi.mock('@activepieces/server-utils', async (importOriginal) => {
     }
 })
 
+vi.mock('../../../../../src/app/database/background-migration-runner', () => ({
+    backgroundMigrationRunner: { listPending: listPendingMock },
+}))
+
 const log = { error: vi.fn() } as unknown as FastifyBaseLogger
 const WEBHOOK_URL = 'https://oncall.example.com/hook'
+const PENDING = ['ReshapeFlowRunListIndexesForBarrierChildren1871000000000', 'BackfillPieceTranslation1874000000000']
 
 describe('systemJobFailurePager.pageOnFinalFailure', () => {
     beforeEach(() => {
         process.env.AP_PAGE_ONCALL_WEBHOOK = WEBHOOK_URL
         pageMock.mockResolvedValue(undefined)
+        listPendingMock.mockResolvedValue(PENDING)
     })
 
     afterEach(() => {
@@ -31,7 +37,7 @@ describe('systemJobFailurePager.pageOnFinalFailure', () => {
         vi.clearAllMocks()
     })
 
-    it('pages on-call when the background migrations job gives up, including a stalled worker', () => {
+    it('pages on-call with the pending migrations and the next step when the job gives up, including a stalled worker', async () => {
         systemJobFailurePager.pageOnFinalFailure({
             jobName: SystemJobName.RUN_BACKGROUND_MIGRATIONS,
             jobId: 'run-background-migrations',
@@ -40,15 +46,40 @@ describe('systemJobFailurePager.pageOnFinalFailure', () => {
             log,
         })
 
+        await vi.waitFor(() => expect(pageMock).toHaveBeenCalled())
         expect(onCallServiceMock).toHaveBeenCalledWith(log, WEBHOOK_URL)
-        expect(pageMock).toHaveBeenCalledWith({
-            code: 'SYSTEM_JOB_FAILED',
-            message: expect.stringContaining('job stalled more than allowable limit'),
-            params: { jobName: SystemJobName.RUN_BACKGROUND_MIGRATIONS, jobId: 'run-background-migrations', attemptsMade: 28 },
+        const [payload] = pageMock.mock.calls[0]
+        expect(payload.code).toBe('SYSTEM_JOB_FAILED')
+        expect(payload.message).toContain('job stalled more than allowable limit')
+        expect(payload.message).toContain(PENDING.join(', '))
+        expect(payload.message).toContain('Restart an API pod or deploy to retry them')
+        expect(payload.params).toEqual({
+            jobName: SystemJobName.RUN_BACKGROUND_MIGRATIONS,
+            jobId: 'run-background-migrations',
+            attemptsMade: 28,
+            error: 'job stalled more than allowable limit',
+            pendingMigrations: PENDING,
         })
     })
 
-    it('does not page for system jobs outside the paged set', () => {
+    it('still pages, saying the pending list is unknown, when background_migrations cannot be read', async () => {
+        listPendingMock.mockRejectedValue(new Error('connection terminated'))
+
+        systemJobFailurePager.pageOnFinalFailure({
+            jobName: SystemJobName.RUN_BACKGROUND_MIGRATIONS,
+            jobId: 'run-background-migrations',
+            attemptsMade: 10,
+            error: new Error('canceling statement due to statement timeout'),
+            log,
+        })
+
+        await vi.waitFor(() => expect(pageMock).toHaveBeenCalled())
+        const [payload] = pageMock.mock.calls[0]
+        expect(payload.message).toContain('Pending: unknown')
+        expect(payload.params.pendingMigrations).toBeNull()
+    })
+
+    it('does not page for system jobs outside the paged set', async () => {
         systemJobFailurePager.pageOnFinalFailure({
             jobName: SystemJobName.FILE_CLEANUP_TRIGGER,
             jobId: 'file-cleanup-trigger',
@@ -57,6 +88,8 @@ describe('systemJobFailurePager.pageOnFinalFailure', () => {
             log,
         })
 
+        await new Promise((resolve) => setTimeout(resolve, 20))
+        expect(listPendingMock).not.toHaveBeenCalled()
         expect(pageMock).not.toHaveBeenCalled()
     })
 

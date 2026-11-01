@@ -1,6 +1,8 @@
+import { tryCatch } from '@activepieces/core-utils'
 import { onCallService } from '@activepieces/server-utils'
 import { UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { backgroundMigrationRunner } from '../../database/background-migration-runner'
 import { system } from '../system/system'
 import { AppSystemProp } from '../system/system-props'
 import { SystemJobName } from './common'
@@ -14,14 +16,25 @@ export const systemJobFailurePager = {
         if (!PAGED_SYSTEM_JOBS.has(jobName)) {
             return
         }
-        onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
-            code: 'SYSTEM_JOB_FAILED',
-            message: `System job "${jobName}" gave up after ${attemptsMade} attempts and will not run again until the next API boot: ${error.message}`,
-            params: { jobName, jobId, attemptsMade },
-        }).catch((pageError) => {
-            log.error({ pageError }, '[systemJob#worker] Failed to send on-call page for a failed system job')
-        })
+        listPendingMigrations({ log })
+            .then((pendingMigrations) => onCallService(log, system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK)).page({
+                code: 'SYSTEM_JOB_FAILED',
+                message: `Background migrations stopped: "${jobName}" gave up after ${attemptsMade} attempts (${error.message}). Pending: ${pendingMigrations?.join(', ') ?? 'unknown, background_migrations could not be read'}. Restart an API pod or deploy to retry them.`,
+                params: { jobName, jobId, attemptsMade, error: error.message, pendingMigrations: pendingMigrations ?? null },
+            }))
+            .catch((pageError) => {
+                log.error({ pageError }, '[systemJob#worker] Failed to send on-call page for a failed system job')
+            })
     },
+}
+
+async function listPendingMigrations({ log }: { log: FastifyBaseLogger }): Promise<string[] | undefined> {
+    const { data, error } = await tryCatch(async () => backgroundMigrationRunner.listPending())
+    if (error) {
+        log.error({ error: error.message }, '[systemJob#worker] Could not list pending background migrations for the on-call page')
+        return undefined
+    }
+    return data
 }
 
 const PAGED_SYSTEM_JOBS = new Set<string>([SystemJobName.RUN_BACKGROUND_MIGRATIONS])
