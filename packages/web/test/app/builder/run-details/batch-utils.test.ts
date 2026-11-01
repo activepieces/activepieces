@@ -133,6 +133,28 @@ describe('batchUtils.childState', () => {
   });
 });
 
+describe('batchUtils.isDispatchComplete', () => {
+  it('is false while the barrier is still pending, so polling keeps running', () => {
+    expect(batchUtils.isDispatchComplete(pausedOutput)).toBe(false);
+    expect(batchUtils.isDispatchComplete(null)).toBe(false);
+  });
+
+  it('is true once the released summary exists, so polling can stop', () => {
+    expect(
+      batchUtils.isDispatchComplete({
+        ...pausedOutput,
+        total: 10,
+        succeeded: 10,
+        failed: 0,
+        rejected: 0,
+        canceled: 0,
+        notDispatched: 0,
+        stillRunning: 0,
+      }),
+    ).toBe(true);
+  });
+});
+
 describe('batchUtils.headerState', () => {
   it('has no tiles while the barrier is still pending', () => {
     expect(batchUtils.headerState(pausedOutput)).toEqual({
