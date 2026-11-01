@@ -29,6 +29,12 @@ export const tavily = createPiece({
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.tavily.com',
 			auth: tavilyAuth,
+			props: {
+				url: {
+					description: 'Full URL, or a path relative to https://api.tavily.com',
+					placeholder: '/usage',
+				},
+			},
 			authMapping: async (auth) => ({ Authorization: `Bearer ${auth.secret_text}` }),
 		})
 	],
