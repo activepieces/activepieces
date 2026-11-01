@@ -17,3 +17,6 @@ dist
 **/dist
 docs
 **/node_modules
+# turbo cache: build outputs from the host must not reach the image
+.turbo
+**/.turbo

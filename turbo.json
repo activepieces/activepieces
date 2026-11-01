@@ -54,7 +54,9 @@
         "!src/**/*.test.ts",
         "!src/**/*.test.tsx",
         "!test/**",
-        "!vitest.config.*"
+        "!vitest.config.*",
+        "!**/*.md",
+        "!.eslintrc.json"
       ]
     },
     "api#build": {
@@ -138,37 +140,37 @@
       "outputs": ["coverage/**"]
     },
     "lint": {
-      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "$TURBO_ROOT$/.eslintrc.json", "$TURBO_ROOT$/.eslintrc.base.json", "$TURBO_ROOT$/packages/server/.eslintrc.json"],
       "outputs": []
     },
     "web#lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "$TURBO_ROOT$/.eslintrc.json", "$TURBO_ROOT$/.eslintrc.base.json", "$TURBO_ROOT$/packages/server/.eslintrc.json"],
       "outputs": []
     },
     "@activepieces/shared#lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "$TURBO_ROOT$/.eslintrc.json", "$TURBO_ROOT$/.eslintrc.base.json", "$TURBO_ROOT$/packages/server/.eslintrc.json"],
       "outputs": []
     },
     "api#lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "$TURBO_ROOT$/.eslintrc.json", "$TURBO_ROOT$/.eslintrc.base.json", "$TURBO_ROOT$/packages/server/.eslintrc.json"],
       "outputs": []
     },
     "@activepieces/engine#lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "$TURBO_ROOT$/.eslintrc.json", "$TURBO_ROOT$/.eslintrc.base.json", "$TURBO_ROOT$/packages/server/.eslintrc.json"],
       "outputs": []
     },
     "@activepieces/sandbox#lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "$TURBO_ROOT$/.eslintrc.json", "$TURBO_ROOT$/.eslintrc.base.json", "$TURBO_ROOT$/packages/server/.eslintrc.json"],
       "outputs": []
     },
     "worker#lint": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "$TURBO_ROOT$/.eslintrc.json", "$TURBO_ROOT$/.eslintrc.base.json", "$TURBO_ROOT$/packages/server/.eslintrc.json"],
       "outputs": []
     },
     "test": {

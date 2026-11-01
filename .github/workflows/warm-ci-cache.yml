@@ -22,10 +22,10 @@ jobs:
           turbo-s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
 
       # Seeds the turbo cache with main's builds, so a PR's first run rebuilds only what it changed.
-      # Best effort: a piece broken on main must not stop the rest of the cache from filling, or
-      # turn main red. The filter list is assigned first so set -e stops on a failed lookup.
-      - continue-on-error: true
-        run: |
+      # --continue: a piece broken on main must not stop the rest of the cache from filling. The job
+      # still fails then, so a broken main or an expired cache secret is visible. The filter list is
+      # assigned first so set -e stops on a failed lookup.
+      - run: |
           set -euo pipefail
           FILTERS=$(npx tsx tools/scripts/test-filters.ts)
           npx turbo run build $FILTERS --filter=api --filter=worker --continue=dependencies-successful
