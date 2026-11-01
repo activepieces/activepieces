@@ -1,13 +1,11 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { makeClient } from './common';
 
-const markdown = `
-To obtain your API key, follow these steps:
+const markdown = `To get your API key:
 
-1.Go to **settings** by clicking your profile-pic (top-right).\n
-2.Navigate to **API Integrations** section.\n
-3.Under **API USER KEY** ,copy API key.\n
-`;
+1. In VBOUT, click your profile picture (top right) and open **Settings**.
+2. Open **API Integrations**.
+3. Copy the key under **API USER KEY**.`;
 
 export const vboutAuth = PieceAuth.SecretText({
   displayName: 'API Key',
