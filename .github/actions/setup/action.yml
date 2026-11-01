@@ -14,6 +14,10 @@ inputs:
   turbo-s3-secret-access-key:
     description: S3 secret access key for the turbo remote cache
     required: true
+  turbo-cleanup:
+    description: Evict old turbo cache entries in the post step. Listing the bucket takes 30 s or more, so only the main-branch warm job does it.
+    required: false
+    default: 'false'
 
 runs:
   using: composite
@@ -52,5 +56,5 @@ runs:
         s3-endpoint: ${{ inputs.turbo-s3-endpoint }}
         s3-access-key-id: ${{ inputs.turbo-s3-access-key-id }}
         s3-secret-access-key: ${{ inputs.turbo-s3-secret-access-key }}
-        max-age: 3w
-        max-size: 20gb
+        max-age: ${{ inputs.turbo-cleanup == 'true' && '3w' || '' }}
+        max-size: ${{ inputs.turbo-cleanup == 'true' && '20gb' || '' }}
