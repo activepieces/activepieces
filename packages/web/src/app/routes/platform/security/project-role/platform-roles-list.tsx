@@ -1,67 +1,73 @@
 import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
+import { SettingsPanel, SettingsRow } from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
 import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemTitle,
-} from '@/components/ui/item';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { RoleAvatar } from './role-avatar';
 
 export function PlatformRolesList() {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const newMemberSettings = platformHooks.useNewMemberSettings();
 
   return (
-    <div className="flex flex-col gap-3">
-      <ItemGroup className="gap-2">
+    <div className="flex flex-col gap-4">
+      <SettingsPanel flush>
         {roleCopy
           .platformRoles({
-            personalProjectsEnabled: platform.autoCreatePersonalProjects,
+            personalProjectsEnabled: newMemberSettings.personalProjectsActive,
+            hasDefaultProjects:
+              newMemberSettings.activeDefaultProjectIds.length > 0,
           })
           .map((platformRole) => (
-            <Item
+            <SettingsRow
               key={platformRole.role}
-              variant="outline"
-              size="sm"
-              className="flex-nowrap bg-background dark:bg-muted/50"
-            >
-              <RoleAvatar name={platformRole.label} tone={platformRole.tone} />
-              <ItemContent className="min-w-0">
-                <ItemTitle className="min-w-0 max-w-full flex-wrap">
+              media={
+                <RoleAvatar
+                  name={platformRole.label}
+                  tone={platformRole.tone}
+                  className="rounded-lg"
+                />
+              }
+              title={
+                <>
                   {platformRole.label}
-                  <Badge
-                    variant="accent"
-                    className="text-xss uppercase tracking-wider"
-                  >
-                    {t('Built in')}
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        tabIndex={0}
+                        variant="secondary"
+                        className="focus-visible:ring-[1px] focus-visible:ring-gray-8/50 focus-visible:outline-none"
+                      >
+                        {t('Built in')}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t('Platform roles cannot be added or changed')}
+                    </TooltipContent>
+                  </Tooltip>
                   {platformRole.isDefaultForNewMembers && (
-                    <Badge
-                      variant="inverted"
-                      className="text-xss uppercase tracking-wider"
-                    >
-                      {t('Default for new people')}
-                    </Badge>
+                    <Badge variant="info">{t('Default for new people')}</Badge>
                   )}
-                </ItemTitle>
-                <ItemDescription>{platformRole.description}</ItemDescription>
-              </ItemContent>
-            </Item>
+                </>
+              }
+              description={platformRole.description}
+            />
           ))}
-      </ItemGroup>
-      <p className="text-xs text-muted-foreground">
+      </SettingsPanel>
+      <p className="text-xs text-gray-11">
         {t("Everyone has exactly one. To change someone's, open")}{' '}
         <Link
           to="/platform/users"
-          className="text-primary underline underline-offset-4"
+          className="text-accent-11 underline underline-offset-4"
         >
-          {t('Users')} →
+          {t('Members')} →
         </Link>
       </p>
     </div>

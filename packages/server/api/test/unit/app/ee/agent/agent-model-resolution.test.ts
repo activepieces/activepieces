@@ -107,7 +107,7 @@ describe('resolveModelIdForProvider', () => {
 
     it('falls back to the first curated model when the tier has no provider equivalent', () => {
         expect(resolve({ provider: AIProviderName.OPENAI, selectedModel: 'smart' })).toBe('gpt-5.5')
-        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'smart' })).toBe('gemini-2.5-pro')
+        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'smart' })).toBe('gemini-3.7-flash')
     })
 
     it('gives each tier the native model it declares, rather than one derived from its id', () => {
@@ -123,7 +123,7 @@ describe('resolveModelIdForProvider', () => {
 
     it('has no native model for a tier the release never shipped, so a curated provider takes its first model', () => {
         expect(agentModelResolution.nativeModelIdFor({ tier: publishedTierReaders.chat.resolveTier({ tierId: 'turbo' }) })).toBeNull()
-        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'turbo', surface: 'chat' })).toBe('gemini-2.5-pro')
+        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'turbo', surface: 'chat' })).toBe('gemini-3.7-flash')
     })
 
     it('never sends another provider stale selection through', () => {
@@ -151,9 +151,35 @@ describe('resolveModelIdForProvider', () => {
     })
 })
 
+describe('resolvePinnedModelId', () => {
+    const pinned = ({ provider, modelName, modelScope, modelIds }: { provider: AIProviderName, modelName: string, modelScope?: 'all' | 'selected', modelIds?: string[] }) =>
+        agentModelResolution.resolvePinnedModelId({ provider, modelName, modelScope, modelIds, log })
+
+    it('refuses a managed tier the catalog no longer publishes, instead of running the default', () => {
+        expect(pinned({ provider: AIProviderName.ACTIVEPIECES, modelName: 'a-retired-tier' })).toBeNull()
+        expect(pinned({ provider: AIProviderName.OPENROUTER, modelName: 'a-retired-tier' })).toBeNull()
+    })
+
+    it('refuses a managed tier whose model the key no longer allows', () => {
+        const modelId = pinned({ provider: AIProviderName.OPENROUTER, modelName: 'smart' })
+        expect(modelId).not.toBeNull()
+        expect(pinned({ provider: AIProviderName.OPENROUTER, modelName: 'smart', modelScope: 'selected', modelIds: ['some/other-model'] })).toBeNull()
+        expect(pinned({ provider: AIProviderName.OPENROUTER, modelName: 'smart', modelScope: 'selected', modelIds: [modelId ?? ''] })).toBe(modelId)
+    })
+})
+
 describe('resolveModelIdForAnalytics', () => {
-    const forAnalytics = ({ provider, selectedModel, surface = 'chat' }: { provider: AIProviderName | null, selectedModel: string | null, surface?: ModelTierSurface }) =>
-        agentModelResolution.resolveModelIdForAnalytics({ provider, selectedModel, surface })
+    const forAnalytics = ({ provider, selectedModel, surface = 'chat', pinned = false }: { provider: AIProviderName | null, selectedModel: string | null, surface?: ModelTierSurface, pinned?: boolean }) =>
+        agentModelResolution.resolveModelIdForAnalytics({ provider, selectedModel, surface, pinned })
+
+    it('reports a pinned model as stored, even on a key with no curated list', () => {
+        expect(forAnalytics({ provider: AIProviderName.CUSTOM, selectedModel: 'my-model', pinned: true })).toBe('my-model')
+        expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'smart', pinned: true })).toBe('gpt-5.5')
+    })
+
+    it('reports nothing instead of throwing when the provider has no model to name', () => {
+        expect(forAnalytics({ provider: AIProviderName.CUSTOM, selectedModel: 'my-model' })).toBeNull()
+    })
 
     it('reports the model the turn ran on when the provider is known', () => {
         expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'gpt-4.1' })).toBe('gpt-4.1')
@@ -263,6 +289,17 @@ describe('resolveNamedModelId', () => {
         const { error } = tryCatchSync(() => named({ provider: AIProviderName.ACTIVEPIECES, modelName, ...(surface ? { surface } : {}), ...scope }))
         return error instanceof ActivepiecesError ? error.error : undefined
     }
+
+    it('refuses an own-key model the key no longer allows, even when its name looks like a tier id', () => {
+        const refusal = (modelName: string) => {
+            const { error } = tryCatchSync(() => named({ provider: AIProviderName.OPENAI, modelName, modelScope: 'selected', modelIds: ['gpt-4o'] }))
+            return error instanceof ActivepiecesError ? error.error.code : undefined
+        }
+        expect(named({ provider: AIProviderName.OPENAI, modelName: 'gpt-4o', modelScope: 'selected', modelIds: ['gpt-4o'] })).toBe('gpt-4o')
+        expect(refusal('gpt-4o-mini')).toBe(ErrorCode.ENTITY_NOT_FOUND)
+        expect(refusal('smart')).toBe(ErrorCode.ENTITY_NOT_FOUND)
+        expect(named({ provider: AIProviderName.OPENAI, modelName: 'gpt-4o-mini' })).toBe('gpt-4o-mini')
+    })
 
     it('lets a managed run name any model on the managed allow-list', () => {
         for (const modelId of aiProviderUtils.managedChatModelIds()) {

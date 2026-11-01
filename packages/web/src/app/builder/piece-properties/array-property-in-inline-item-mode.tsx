@@ -44,7 +44,10 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
     useFixInlineArrayPropertyValue(inputName, props);
     return (
       <div
-        className={cn('w-full', textMentionUtils.listMapperModeInputCssClass)}
+        className={cn(
+          'w-full',
+          textMentionUtils.listMapperModeInputCssClassSelector,
+        )}
       >
         {props.arrayProperties ? (
           <div

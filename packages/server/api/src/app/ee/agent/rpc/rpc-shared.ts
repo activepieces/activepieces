@@ -66,6 +66,7 @@ export async function configuredToolConversationOrThrow({ conversationId }: { co
         platformId: conversation.platformId,
         userId: conversation.userId,
         source: conversation.source,
+        modelTierId: conversation.modelTierId ?? null,
         ...spreadIfDefined('agent', isNil(conversation.agentId) ? undefined : {
             id: conversation.agentId,
             ...spreadIfDefined('displayName', conversation.agent?.displayName),
@@ -73,8 +74,9 @@ export async function configuredToolConversationOrThrow({ conversationId }: { co
     }
 }
 
-export async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName, agentId, flowRunId }: {
+export async function loadOrStartConversation({ conversationId, runId, platformId, userId, source, projectId, modelName, agentId, flowRunId, waitpointId }: {
     conversationId: string
+    runId?: string
     platformId: string
     userId: string
     source?: AgentRunSource
@@ -82,30 +84,18 @@ export async function loadOrStartConversation({ conversationId, platformId, user
     modelName?: string | null
     agentId?: string
     flowRunId?: string
+    waitpointId?: string
 }): Promise<AgentConversation> {
     if (source !== AgentRunSource.FLOW_STEP) {
         return agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
     }
-    const existing = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
-    if (!isNil(existing)) {
-        if (existing.platformId !== platformId || existing.userId !== userId || existing.source !== AgentRunSource.FLOW_STEP) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That conversation belongs to someone else' } })
-        }
-        return existing
+    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+        ?? await insertFlowStepConversation({ conversationId, runId, platformId, userId, projectId, modelName, agentId, flowRunId, waitpointId })
+    const ownedByThisRun = conversation.platformId === platformId && conversation.userId === userId && conversation.source === AgentRunSource.FLOW_STEP
+    if (!ownedByThisRun) {
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That conversation belongs to someone else' } })
     }
-    return agentHelpers.conversationRepo().save({
-        id: conversationId,
-        platformId,
-        projectId: projectId ?? null,
-        userId,
-        source: AgentRunSource.FLOW_STEP,
-        agentId: agentId ?? null,
-        flowRunId: flowRunId ?? null,
-        title: null,
-        modelName: modelName ?? null,
-        messages: [],
-        status: AgentConversationStatus.IDLE,
-    })
+    return conversation
 }
 
 export async function confinedRunFor({ conversationId }: { conversationId?: string }): Promise<ConfinedRun> {
@@ -200,6 +190,7 @@ export type ConfiguredToolRun = {
     platformId: string
     userId: string
     source: AgentRunSource
+    modelTierId: string | null
     agent?: { id: string, displayName?: string }
 }
 
@@ -292,6 +283,35 @@ export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcom
         connection: {},
         log,
     })
+}
+
+async function insertFlowStepConversation({ conversationId, runId, platformId, userId, projectId, modelName, agentId, flowRunId, waitpointId }: {
+    conversationId: string
+    runId?: string
+    platformId: string
+    userId: string
+    projectId?: string | null
+    modelName?: string | null
+    agentId?: string
+    flowRunId?: string
+    waitpointId?: string
+}): Promise<AgentConversation> {
+    await agentHelpers.conversationRepo().createQueryBuilder().insert().values({
+        id: conversationId,
+        platformId,
+        projectId: projectId ?? null,
+        userId,
+        source: AgentRunSource.FLOW_STEP,
+        agentId: agentId ?? null,
+        flowRunId: flowRunId ?? null,
+        waitpointId: waitpointId ?? null,
+        title: null,
+        modelName: modelName ?? null,
+        messages: [],
+        status: AgentConversationStatus.IDLE,
+        activeRunId: runId ?? null,
+    }).orIgnore().execute()
+    return agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId })
 }
 
 function turnReadKey({ conversationId, runId }: { conversationId: string, runId: string }): string {

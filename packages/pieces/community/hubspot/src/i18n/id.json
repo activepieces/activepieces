@@ -311,5 +311,6 @@
   "Note": "Note",
   "Task": "Task",
   "Meeting": "Meeting",
-  "Call": "Call"
+  "Call": "Call",
+  "Fields left empty keep their current value.": "Kolom yang dibiarkan kosong tetap memakai nilai saat ini."
 }

@@ -77,7 +77,7 @@ export const newCompanyTrigger = createTrigger({
 	name: 'new-company',
 	classification: 'READ',
 	displayName: 'New Company',
-	description: 'Trigger when a new company is added.',
+	description: 'Triggers when a new company is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new company is created in HubSpot. Each event represents one company record with properties such as name, domain, industry, address, employee count, revenue, and lifecycle stage. Polls for companies by creation date; does not fire on updates to existing companies.',
@@ -85,15 +85,13 @@ export const newCompanyTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                
-                  name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies
-                                
-                  **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},

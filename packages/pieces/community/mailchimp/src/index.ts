@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { addMemberToList } from './lib/actions/add-member-to-list';
 import { addNoteToSubscriber } from './lib/actions/add-note-to-subscriber';
 import { removeSubscriberFromTag } from './lib/actions/remove-subscriber-from-tag';
@@ -34,6 +35,25 @@ export const mailchimpAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://login.mailchimp.com/oauth2/token',
   required: true,
   scope: [],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<MailchimpMetadata>({
+        method: HttpMethod.GET,
+        url: 'https://login.mailchimp.com/oauth2/metadata',
+        headers: { Authorization: `OAuth ${auth.access_token}` },
+        timeout: 5000,
+      });
+      const metadata = response.body;
+      return (
+        metadata.login?.email ||
+        metadata.login?.login_email ||
+        metadata.accountname ||
+        undefined
+      );
+    } catch {
+      return undefined;
+    }
+  },
 });
 
 export const mailchimp = createPiece({
@@ -75,3 +95,8 @@ export const mailchimp = createPiece({
     mailChimpNewSegmentTagSubscriberTrigger,
   ],
 });
+
+type MailchimpMetadata = {
+  accountname?: string;
+  login?: { email?: string; login_email?: string };
+};

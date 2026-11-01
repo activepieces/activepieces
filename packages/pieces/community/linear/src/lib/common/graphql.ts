@@ -1,0 +1,412 @@
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { linearAuth } from '../..';
+import { makeClient } from './client';
+import { LinearIssueLabel, LinearIssueLabelConnection, LinearIssueNode } from './mappers';
+import {
+  GET_ISSUE_QUERY,
+  ISSUE_ID_LOOKUP_QUERY,
+  ISSUE_LABELS_PAGE_QUERY,
+  ISSUE_REMOVE_LABEL_MUTATION,
+  PARENT_TITLE_LOOKUP_QUERY,
+} from './queries';
+
+async function request<T>({ auth, query, variables }: RequestParams): Promise<T> {
+  try {
+    const result = await makeClient(auth).typedRequest<T>(query, variables);
+    if (result.data === undefined || result.data === null) {
+      throw new Error('Linear returned an empty response.');
+    }
+    return result.data;
+  } catch (error) {
+    throw toActionError(error);
+  }
+}
+
+function toActionError(error: unknown): Error {
+  if (!isLinearError(error)) {
+    return error instanceof Error ? error : new Error(String(error));
+  }
+  const detail = (firstGraphqlMessage(error) ?? error.message).trim().replace(/\.+$/, '');
+  const notFound = NOT_FOUND_PATTERN.exec(detail);
+  if (notFound) {
+    return new Error(`No Linear ${describeEntity(notFound[1])} found with that ID. Check the ID and that this API key can see it.`);
+  }
+  switch (error.type) {
+    case 'AuthenticationError':
+      return new Error(
+        'Linear did not accept the API key of this connection. Create a new personal API key in Linear (Settings, Security & access) and update the connection.',
+      );
+    case 'Forbidden':
+      if (PLAN_LIMIT_PATTERN.test(detail)) {
+        return new Error(`Linear refused this request: ${detail}.`);
+      }
+      return new Error(
+        `Linear refused this request: ${detail}. The API key may be missing the Write or Admin permission, or may not have access to this team.`,
+      );
+    case 'Ratelimited':
+      return new Error('Linear rate limit reached. Wait a minute and try again.');
+    case 'InvalidInput':
+      return new Error(`Linear rejected the input: ${detail}.`);
+    case 'FeatureNotAccessible':
+      return new Error(`This Linear feature is not available on the workspace plan: ${detail}`);
+    default:
+      return new Error(`Linear API error: ${detail}`);
+  }
+}
+
+function isNotFoundError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return error.message.startsWith('No Linear ') || NOT_FOUND_PATTERN.test(error.message);
+}
+
+function describeEntity(typeName: string): string {
+  if (typeName === 'ProjectUpdate') return 'project status update';
+  return typeName.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+}
+
+async function removeIssueLabel({ auth, id, labelId }: { auth: LinearAuth; id: string; labelId: string }): Promise<LinearIssueNode> {
+  try {
+    const data = await request<{ issueRemoveLabel: { success: boolean; issue: LinearIssueNode | null } }>({
+      auth,
+      query: ISSUE_REMOVE_LABEL_MUTATION,
+      variables: { id, labelId },
+    });
+    const payload = requireSuccess({ payload: data.issueRemoveLabel, what: 'label change' });
+    if (!payload.issue) {
+      throw new Error('Linear did not return the updated issue.');
+    }
+    return await withAllIssueLabels({ auth, issue: payload.issue });
+  } catch (error) {
+    if (!(error instanceof Error) || !LABEL_NOT_ON_ISSUE_PATTERN.test(error.message)) {
+      throw error;
+    }
+    const current = await request<{ issue: LinearIssueNode | null }>({ auth, query: GET_ISSUE_QUERY, variables: { id } });
+    if (!current.issue) {
+      throw error;
+    }
+    return withAllIssueLabels({ auth, issue: current.issue });
+  }
+}
+
+async function withAllIssueLabels({ auth, issue }: { auth: LinearAuth; issue: LinearIssueNode }): Promise<LinearIssueNode> {
+  if (issue.labels?.pageInfo?.hasNextPage !== true) {
+    return issue;
+  }
+  const firstPage = uniqueLabels({ labels: issue.labels.nodes });
+  return { ...issue, labels: await readAllIssueLabels({ auth, issueId: issue.id, known: firstPage }) };
+}
+
+async function readAllIssueLabels({
+  auth,
+  issueId,
+  known,
+}: {
+  auth: LinearAuth;
+  issueId: string;
+  known: LinearIssueLabel[];
+}): Promise<LinearIssueLabelConnection> {
+  const read = new Map<string, LinearIssueLabel>();
+  for (let page = 0; page < MAX_LABEL_PAGES; page += 1) {
+    const readIds = [...read.keys()];
+    const data: IssueLabelsPage | undefined = await request<IssueLabelsPage>({
+      auth,
+      query: ISSUE_LABELS_PAGE_QUERY,
+      variables: { id: issueId, first: LABEL_PAGE_SIZE, ...(readIds.length > 0 ? { filter: { id: { nin: readIds } } } : {}) },
+    }).catch(() => undefined);
+    const connection = data?.issue?.labels;
+    if (!connection) {
+      break;
+    }
+    const fresh = uniqueLabels({ labels: connection.nodes }).filter((label) => !read.has(label.id));
+    fresh.forEach((label) => read.set(label.id, label));
+    if (fresh.length < connection.nodes.length) {
+      break;
+    }
+    if (connection.pageInfo?.hasNextPage !== true) {
+      return { nodes: [...read.values()], pageInfo: { hasNextPage: false, endCursor: null } };
+    }
+    if (fresh.length === 0) {
+      break;
+    }
+  }
+  return { nodes: uniqueLabels({ labels: [...read.values(), ...known] }), pageInfo: { hasNextPage: true, endCursor: null } };
+}
+
+function uniqueLabels({ labels }: { labels: LinearIssueLabel[] }): LinearIssueLabel[] {
+  const seen = new Set<string>();
+  return labels.filter((label) => {
+    if (seen.has(label.id)) {
+      return false;
+    }
+    seen.add(label.id);
+    return true;
+  });
+}
+
+async function withAllIssuesLabels({ auth, issues }: { auth: LinearAuth; issues: LinearIssueNode[] }): Promise<LinearIssueNode[]> {
+  return mapWithConcurrency({ items: issues, limit: FOLLOW_UP_CONCURRENCY, map: (issue) => withAllIssueLabels({ auth, issue }) });
+}
+
+async function mapWithConcurrency<TItem, TResult>({
+  items,
+  limit,
+  map,
+}: {
+  items: TItem[];
+  limit: number;
+  map: (item: TItem) => Promise<TResult>;
+}): Promise<TResult[]> {
+  const results: TResult[] = new Array(items.length);
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await map(items[index]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
+  return results;
+}
+
+function isUuid(value: string): boolean {
+  return UUID_PATTERN.test(value);
+}
+
+function isIssueIdentifier(value: string): boolean {
+  return ISSUE_IDENTIFIER_PATTERN.test(value);
+}
+
+async function resolveIssueId({ auth, value }: { auth: LinearAuth; value: unknown }): Promise<string> {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  if (trimmed.length === 0) {
+    throw new Error('An issue ID or identifier (for example ENG-123) is required.');
+  }
+  if (isUuid(trimmed)) {
+    return trimmed;
+  }
+  if (!isIssueIdentifier(trimmed)) {
+    throw new Error(`"${trimmed}" is not an issue UUID or an identifier like ENG-123.`);
+  }
+  const data = await request<{ issue: { id: string } | null }>({
+    auth,
+    query: ISSUE_ID_LOOKUP_QUERY,
+    variables: { id: trimmed.toUpperCase() },
+  }).catch((error: unknown) => {
+    if (isNotFoundError(error)) {
+      throw new Error(`No Linear issue found for ${trimmed}.`);
+    }
+    throw error;
+  });
+  if (!data.issue?.id) {
+    throw new Error(`No Linear issue found for ${trimmed}.`);
+  }
+  return data.issue.id;
+}
+
+async function resolveParentIssueId({
+  auth,
+  value,
+  teamId,
+}: {
+  auth: LinearAuth;
+  value: string;
+  teamId: string | undefined;
+}): Promise<string> {
+  const trimmed = value.trim();
+  if (isUuid(trimmed)) {
+    return trimmed;
+  }
+  const [identifierResult, titleResult] = await Promise.allSettled([
+    isIssueIdentifier(trimmed) ? findIssueIdByIdentifier({ auth, identifier: trimmed }) : Promise.resolve(undefined),
+    findIssuesByExactTitle({ auth, title: trimmed, teamId }),
+  ]);
+  if (identifierResult.status === 'rejected') {
+    throw identifierResult.reason;
+  }
+  const byIdentifier = identifierResult.value;
+  if (titleResult.status === 'rejected') {
+    if (byIdentifier) {
+      return byIdentifier;
+    }
+    throw titleResult.reason;
+  }
+  const byTitle = titleResult.value;
+  const candidates = [
+    ...(byIdentifier ? [{ id: byIdentifier, label: `${trimmed.toUpperCase()} (identifier)` }] : []),
+    ...byTitle.filter((issue) => issue.id !== byIdentifier).map((issue) => ({ id: issue.id, label: `${issue.identifier} (title)` })),
+  ];
+  if (candidates.length === 1) {
+    return candidates[0].id;
+  }
+  if (candidates.length === 0) {
+    throw new Error(
+      `No issue with the identifier or exact title "${trimmed}" was found${teamId ? ' in this team' : ''}. Use its identifier (for example ENG-123) or ID.`,
+    );
+  }
+  throw new Error(
+    `"${trimmed}" matches more than one issue: ${candidates.map((candidate) => candidate.label).join(', ')}. Use the ID of the one you mean.`,
+  );
+}
+
+async function findIssueIdByIdentifier({ auth, identifier }: { auth: LinearAuth; identifier: string }): Promise<string | undefined> {
+  const data = await request<{ issue: { id: string } | null }>({
+    auth,
+    query: ISSUE_ID_LOOKUP_QUERY,
+    variables: { id: identifier.toUpperCase() },
+  }).catch((error: unknown) => {
+    if (isNotFoundError(error)) {
+      return { issue: null };
+    }
+    throw error;
+  });
+  return data.issue?.id ?? undefined;
+}
+
+async function findIssuesByExactTitle({
+  auth,
+  title,
+  teamId,
+}: {
+  auth: LinearAuth;
+  title: string;
+  teamId: string | undefined;
+}): Promise<Array<{ id: string; identifier: string }>> {
+  const data = await request<{ issues: { nodes: Array<{ id: string; identifier: string; title: string }> } }>({
+    auth,
+    query: PARENT_TITLE_LOOKUP_QUERY,
+    variables: {
+      first: PARENT_TITLE_MATCH_LIMIT,
+      filter: {
+        title: { eqIgnoreCase: title },
+        ...(teamId ? { team: { id: { eq: teamId } } } : {}),
+      },
+    },
+  });
+  return data.issues.nodes;
+}
+
+function toTimelessDate({ value, fieldName }: { value: unknown; fieldName: string }): string | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  if (typeof value !== 'string') {
+    throw new Error(`${fieldName} must be a date in YYYY-MM-DD format.`);
+  }
+  const match = /^(\d{4}-\d{2}-\d{2})(?:$|T)/.exec(value.trim());
+  if (!match || Number.isNaN(Date.parse(match[1]))) {
+    throw new Error(`${fieldName} must be a date in YYYY-MM-DD format, got "${value}".`);
+  }
+  return match[1];
+}
+
+function definedOnly(input: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(input).filter(([, value]) => {
+      if (value === undefined || value === null) return false;
+      if (typeof value === 'string' && value.trim() === '') return false;
+      return true;
+    }),
+  );
+}
+
+function toStringArray(value: unknown): string[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  const items = (Array.isArray(value) ? value : [value])
+    .filter((item): item is string | number => typeof item === 'string' || typeof item === 'number')
+    .map((item) => String(item).trim())
+    .filter((item) => item.length > 0);
+  return items.length > 0 ? items : undefined;
+}
+
+function toOptionalNumber({ value, fieldName }: { value: unknown; fieldName: string }): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${fieldName} must be a number.`);
+  }
+  return parsed;
+}
+
+function toOptionalInteger({ value, fieldName }: { value: unknown; fieldName: string }): number | undefined {
+  const parsed = toOptionalNumber({ value, fieldName });
+  if (parsed !== undefined && !Number.isInteger(parsed)) {
+    throw new Error(`${fieldName} must be a whole number.`);
+  }
+  return parsed;
+}
+
+function clampLimit({ value, fallback, max }: { value: unknown; fallback: number; max: number }): number {
+  const parsed = toOptionalNumber({ value, fieldName: 'Limit' });
+  if (parsed === undefined) return fallback;
+  if (parsed < 1) return 1;
+  return Math.min(Math.floor(parsed), max);
+}
+
+function requireSuccess<T extends { success: boolean }>({ payload, what }: { payload: T | null | undefined; what: string }): T {
+  if (!payload || payload.success !== true) {
+    throw new Error(`Linear did not confirm the ${what}.`);
+  }
+  return payload;
+}
+
+function isLinearError(error: unknown): error is LinearErrorLike {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    ('type' in error || 'errors' in error)
+  );
+}
+
+function firstGraphqlMessage(error: LinearErrorLike): string | undefined {
+  return error.errors?.find((e) => typeof e.message === 'string' && e.message.length > 0)?.message;
+}
+
+const PARENT_TITLE_MATCH_LIMIT = 2;
+const FOLLOW_UP_CONCURRENCY = 5;
+const LABEL_PAGE_SIZE = 250;
+const MAX_LABEL_PAGES = 20;
+const NOT_FOUND_PATTERN = /Could not find referenced (\w+)/i;
+const PLAN_LIMIT_PATTERN = /\b(plan|upgrade)\b/i;
+const LABEL_NOT_ON_ISSUE_PATTERN = /is not on issue/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ISSUE_IDENTIFIER_PATTERN = /^[A-Za-z][A-Za-z0-9_]*-\d+$/;
+
+export const linearGraphql = {
+  request,
+  toActionError,
+  resolveIssueId,
+  resolveParentIssueId,
+  isUuid,
+  isIssueIdentifier,
+  toTimelessDate,
+  definedOnly,
+  toStringArray,
+  toOptionalNumber,
+  toOptionalInteger,
+  clampLimit,
+  requireSuccess,
+  removeIssueLabel,
+  isNotFoundError,
+  withAllIssueLabels,
+  withAllIssuesLabels,
+  mapWithConcurrency,
+  FOLLOW_UP_CONCURRENCY,
+};
+
+export type LinearAuth = AppConnectionValueForAuthProperty<typeof linearAuth>;
+
+type RequestParams = {
+  auth: LinearAuth;
+  query: string;
+  variables?: Record<string, unknown>;
+};
+
+type IssueLabelsPage = { issue: { labels: LinearIssueLabelConnection | null } | null };
+
+type LinearErrorLike = {
+  type?: string;
+  message: string;
+  errors?: Array<{ message?: string }>;
+};

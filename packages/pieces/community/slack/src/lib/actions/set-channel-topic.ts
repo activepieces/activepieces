@@ -14,6 +14,22 @@ export const setChannelTopicAction = createAction({
 	audience: 'human',
 	aiMetadata: { description: 'Set (overwrite) the topic of a selected channel. Idempotent: re-running with the same topic leaves the channel in the same state. The bot must be a member of the channel.', idempotent: true },
 	outputSchema: channelResponseOutputSchema,
+	propertyGroups: [
+		{
+			key: 'channel_picker',
+			display: 'section',
+			label: 'Channel',
+			icon: 'markdown',
+			props: ['info', 'onlyBotChannels', 'channel'],
+		},
+		{
+			key: 'topic_text',
+			display: 'section',
+			label: 'Topic',
+			icon: 'type',
+			props: ['topic'],
+		},
+	],
 	props: {
 		info: singleSelectChannelInfo,
 		onlyBotChannels,

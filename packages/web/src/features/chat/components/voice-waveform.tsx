@@ -12,7 +12,7 @@ function VoiceWaveformBars() {
       {BARS.map((bar, i) => (
         <span
           key={i}
-          className="w-[3px] h-full rounded-full bg-foreground origin-center animate-[voice-bar_ease-in-out_infinite_alternate]"
+          className="w-[3px] h-full rounded-full bg-gray-12 origin-center animate-[voice-bar_ease-in-out_infinite_alternate]"
           style={{
             animationDuration: bar.duration,
             animationDelay: bar.delay,

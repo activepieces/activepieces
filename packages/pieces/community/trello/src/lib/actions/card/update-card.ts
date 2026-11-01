@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpRequest,
@@ -18,26 +18,45 @@ export const updateCard = createAction({
   audience: 'human',
   outputSchema: updateCardActionOutputSchema,
   aiMetadata: { description: 'Updates fields on an existing Trello card identified by card_id, including name, description, due date, labels, position, and archived (closed) state, and can move it to a different list. Use to edit, archive, or relocate a card. Requires card_id; only provided fields change. Repeating with the same inputs converges to the same card state.', idempotent: true },
+  propertyGroups: [
+    { key: 'card', display: 'section', label: 'Card to Update', icon: 'tag', props: ['card_id', 'board_id'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'sliders', props: ['changes_info', 'name', 'description', 'due', 'closed', 'position', 'labels', 'list_id'] },
+  ],
   props: {
     card_id: Property.ShortText({
-      description: 'The ID of the card to update',
+      description: "From an earlier step, or the code after /c/ in the card's URL.",
       displayName: 'Card ID',
+      placeholder: 'aBcD1234',
       required: true,
     }),
+    board_id: trelloCommon.board_id_opt,
+    changes_info: Property.MarkDown({
+      value: 'Fields left empty keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     name: Property.ShortText({
-      description: 'The new name of the card',
       displayName: 'Card Name',
       required: false,
     }),
     description: Property.LongText({
-      description: 'The new description of the card',
+      description: 'Markdown formatting is supported.',
       displayName: 'Card Description',
       required: false,
     }),
-    board_id: trelloCommon.board_id_opt,
-    list_id: trelloCommon.list_id_opt,
+    due: Property.DateTime({
+      displayName: 'Due Date',
+      placeholder: '2026-12-31',
+      required: false,
+      width: 'half',
+    }),
+    closed: Property.Checkbox({
+      description: 'On archives the card. Off keeps it open or restores it.',
+      displayName: 'Archived',
+      required: false,
+      width: 'half',
+    }),
     position: Property.StaticDropdown({
-      description: 'Move the card to a new position',
+      description: 'Empty keeps the card where it is in its list.',
       displayName: 'Position',
       required: false,
       options: {
@@ -47,17 +66,8 @@ export const updateCard = createAction({
         ],
       },
     }),
-    labels: trelloCommon.board_labels,
-    closed: Property.Checkbox({
-      description: 'Archive or unarchive the card',
-      displayName: 'Archived',
-      required: false,
-    }),
-    due: Property.DateTime({
-      description: 'Set a due date for the card',
-      displayName: 'Due Date',
-      required: false,
-    }),
+    labels: trelloCommon.board_labels_replace,
+    list_id: trelloCommon.move_to_list,
   },
 
   async run(context) {
@@ -79,8 +89,9 @@ export const updateCard = createAction({
       body.pos = context.propsValue['position'];
     }
     
-    if (context.propsValue['labels']) {
-      body.idLabels = context.propsValue['labels'];
+    const labels = context.propsValue['labels'];
+    if (Array.isArray(labels) && labels.length > 0) {
+      body.idLabels = labels;
     }
     
     if (context.propsValue['closed'] !== undefined) {

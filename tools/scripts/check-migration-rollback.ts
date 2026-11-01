@@ -23,7 +23,9 @@ function getChangedMigrationFiles(): string[] {
     return diffOutput
         .split('\n')
         .filter((file) =>
-            MIGRATION_DIRS.some((dir) => file.startsWith(dir)) && file.endsWith('.ts'),
+            MIGRATION_DIRS.some((dir) => file.startsWith(dir))
+            && !file.includes('/background/')
+            && file.endsWith('.ts'),
         )
 }
 

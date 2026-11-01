@@ -4,7 +4,7 @@
   "Run Workflow": "ワークフローを実行",
   "Run Workflow (Async)": "ワークフローを実行（非同期）",
   "Get Execution": "実行を取得",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Execute an AirOps workflow synchronously.": "AirOpsワークフローを同期して実行します。",
   "Queue an AirOps workflow for asynchronous execution.": "非同期実行のために、AirOpsワークフローをキューに入れます。",
   "Get an execution by UUID.": "UUID で実行を取得します。",

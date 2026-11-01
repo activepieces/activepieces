@@ -20,7 +20,8 @@ export const youtubeGetVideoAction = createAction({
     videoIds: Property.ShortText({
       displayName: 'Video ID',
       description:
-        'The video ID, or a comma-separated list of IDs. This is the `v` parameter in a YouTube URL (e.g. `dQw4w9WgXcQ`).',
+        'A video ID, or several separated by commas: the v= value in the URL.',
+      placeholder: 'dQw4w9WgXcQ',
       required: true,
     }),
   },

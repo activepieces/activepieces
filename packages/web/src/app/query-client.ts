@@ -3,7 +3,7 @@ import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { StatusCodes } from 'http-status-codes';
 
 import { internalErrorToast } from '@/components/ui/sonner';
-import { useManagePlanDialogStore } from '@/features/billing';
+import { billingDialogHooks } from '@/features/billing';
 import { api } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 
@@ -50,7 +50,8 @@ export const queryClient = new QueryClient({
         return;
       }
       if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
-        const { openDialog } = useManagePlanDialogStore.getState();
+        const { openDialog } =
+          billingDialogHooks.useManagePlanDialogStore.getState();
         openDialog();
       } else {
         internalErrorToast();

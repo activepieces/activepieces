@@ -114,6 +114,29 @@ export const getRowsAction = createAction({
     idempotent: false,
   },
   displayName: 'Get Next Rows',
+  propertyGroups: [
+    {
+      key: 'spreadsheet',
+      display: 'section',
+      label: 'Spreadsheet',
+      icon: 'file',
+      props: ['spreadsheetId', 'sheetId'],
+    },
+    {
+      key: 'target_rows',
+      display: 'section',
+      label: 'Rows',
+      icon: 'markdown',
+      props: ['startRow', 'groupSize', 'headerRow'],
+    },
+    {
+      key: 'memory',
+      display: 'section',
+      label: 'Memory',
+      icon: 'inbox',
+      props: ['markdown', 'memKey'],
+    },
+  ],
   props: {
     ...commonProps,
     startRow: Property.Number({

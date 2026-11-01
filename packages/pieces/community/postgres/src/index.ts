@@ -19,51 +19,48 @@ export const postgresAuth = PieceAuth.CustomAuth({
     host: Property.ShortText({
       displayName: 'Host',
       required: true,
-      description:
-        ' A string indicating the hostname of the PostgreSQL server to connect to.',
+      description: "The server's hostname or IP address.",
+      placeholder: 'db.example.com',
     }),
     port: Property.Number({
       displayName: 'Port',
       defaultValue: 5432,
-      description:
-        'An integer indicating the port of the PostgreSQL server to connect to.',
+      description: 'The port the server listens on, usually 5432.',
       required: true,
     }),
     user: Property.ShortText({
       displayName: 'User',
       required: true,
-      description:
-        'A string indicating the user to authenticate as when connecting to the PostgreSQL server.',
+      description: 'The database user to sign in as.',
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description:
-        'A string indicating the password to use for authentication.',
+      description: 'The password for that user.',
       required: true,
     }),
     database: Property.ShortText({
       displayName: 'Database',
-      description:
-        'A string indicating the name of the database to connect to.',
+      description: 'The name of the database to connect to.',
       required: true,
     }),
     enable_ssl: Property.Checkbox({
       displayName: 'Enable SSL',
-      description: 'Connect to the postgres database over SSL',
+      description: 'Encrypt the connection. Most hosted databases require it.',
       required: true,
       defaultValue: true,
     }),
     reject_unauthorized: Property.Checkbox({
-      displayName: 'Verify server certificate',
+      displayName: 'Verify Server Certificate',
       description:
-        'Verify the server certificate against trusted CAs or a CA provided in the certificate field below. This will fail if the database server is using a self signed certificate.',
+        "Check the server's certificate. Self-signed servers need a CA below.",
       required: true,
       defaultValue: false,
     }),
     certificate: Property.LongText({
       displayName: 'Certificate',
       description:
-        'The CA certificate to use for verification of server certificate.',
+        'The CA certificate (PEM) to trust when verifying the server.',
+      placeholder: '-----BEGIN CERTIFICATE-----',
       defaultValue: '',
       required: false,
     }),
@@ -80,7 +77,7 @@ export const postgresAuth = PieceAuth.CustomAuth({
     catch (e) {
       return {
         valid: false,
-        error: JSON.stringify(e)
+        error: e instanceof Error && e.message ? e.message : JSON.stringify(e)
       };
     }
     return {
@@ -92,7 +89,7 @@ export const postgresAuth = PieceAuth.CustomAuth({
 export const postgres = createPiece({
   displayName: 'Postgres',
   description: "The world's most advanced open-source relational database",
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
   authors: ["AbdullahBitar", "Willianwg", "dentych", "kishanprmr", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud"],

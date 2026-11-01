@@ -17,6 +17,22 @@ export const discordCreateGuildRole = createAction({
   audience: 'human',
   aiMetadata: { description: 'Creates a new role in a guild with the given name and optional color, hoist, and mentionable settings, identified by guild ID. Use to provision a role before assigning it to members. Requires the bot to have Manage Roles permission; not idempotent, since each call creates a separate role even with the same name.', idempotent: false },
   outputSchema: discordRoleActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'server',
+      display: 'section',
+      label: 'Server',
+      icon: 'users',
+      props: ['guild_id'],
+    },
+    {
+      key: 'role',
+      display: 'section',
+      label: 'Role',
+      icon: 'tag',
+      props: ['role_name'],
+    },
+  ],
   props: {
     guild_id: discordCommon.guilds,
     role_name: Property.ShortText({

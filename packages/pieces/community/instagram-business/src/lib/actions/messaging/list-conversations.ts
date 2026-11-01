@@ -17,9 +17,18 @@ export const listConversations = createAction({
       'Lists the Instagram direct message threads belonging to the connected professional account, newest activity first, with the participants and the time of the last message. Use it to find a conversation id before reading or replying to a thread. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'account', display: 'section', label: 'Account', icon: 'user', props: ['page'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit'] },
+  ],
   props: {
     page: instagramCommon.page,
-    limit: Property.Number({ displayName: 'Limit', required: false }),
+    limit: Property.Number({
+      displayName: 'Max Results',
+      description: 'Conversations to return per run, up to 100.',
+      required: false,
+      defaultValue: 25,
+    }),
     cursor: instagramCommon.cursor,
   },
   async run({ propsValue }) {

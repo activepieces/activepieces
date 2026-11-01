@@ -16,10 +16,26 @@ export const listSubscribersAction = createAction({
 		idempotent: true,
 	},
 	outputSchema: listSubscribersOutputSchema,
+	propertyGroups: [
+		{
+			key: 'filter',
+			display: 'section',
+			label: 'Filter',
+			icon: 'filter',
+			props: ['status'],
+		},
+		{
+			key: 'paging',
+			display: 'section',
+			label: 'Paging',
+			icon: 'sliders',
+			props: ['limit', 'cursor'],
+		},
+	],
 	props: {
 		status: Property.StaticDropdown({
 			displayName: 'Status',
-			description: 'Only return subscribers with this status',
+			description: 'Only return subscribers with this status.',
 			required: false,
 			options: {
 				options: [
@@ -33,14 +49,16 @@ export const listSubscribersAction = createAction({
 		}),
 		limit: Property.Number({
 			displayName: 'Limit',
-			description: 'Subscribers to return (1-1000, default 25).',
+			description: 'How many subscribers to return per page, up to 1000.',
 			required: false,
 			defaultValue: 25,
+			width: 'half',
 		}),
 		cursor: Property.ShortText({
 			displayName: 'Cursor',
-			description: 'The meta.next_cursor value from the previous page. Leave empty for the first page.',
+			description: 'meta.next_cursor from the previous run. Empty: first page.',
 			required: false,
+			width: 'half',
 		}),
 	},
 	async run(context) {

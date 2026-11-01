@@ -1,21 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import FormData from 'form-data';
 import { confluenceAuth } from '../auth';
-import { confluenceRawRequest } from '../common';
-import { pageIdProp, spaceIdProp } from '../common/props';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { uploadAttachmentOutputSchema } from '../output-schemas';
 
 export const uploadAttachmentAction = createAction({
 	auth: confluenceAuth,
 	name: 'upload-attachment',
+	outputSchema: uploadAttachmentOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Upload Attachment',
 	description: 'Uploads a file as an attachment to a page.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Uploads a file as an attachment on a Confluence page via multipart form upload, with an optional version comment and a minor-edit flag to suppress watcher notifications. Use to attach a document or image to a page. Requires the page ID and the file. Uploading the same filename again creates a new version rather than a duplicate, but each call still mutates state, so treat as not idempotent.', idempotent: false },
 	props: {
-		spaceId: spaceIdProp,
-		pageId: pageIdProp,
+		spaceId: confluenceProps.spaceId({ required: true }),
+		pageId: confluenceProps.pageId({ required: true }),
 		file: Property.File({
 			displayName: 'File',
 			required: true,
@@ -35,23 +35,12 @@ export const uploadAttachmentAction = createAction({
 	async run(context) {
 		const { pageId, file, comment, minorEdit } = context.propsValue;
 
-		const formData = new FormData();
-		const buffer = Buffer.from(file.base64, 'base64');
-		formData.append('file', buffer, file.filename);
-		if (comment) formData.append('comment', comment);
-		formData.append('minorEdit', String(minorEdit ?? true));
-
-		return await confluenceRawRequest({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.POST,
-			url: `/wiki/rest/api/content/${pageId}/child/attachment`,
-			headers: {
-				'X-Atlassian-Token': 'no-check',
-				...formData.getHeaders(),
-			},
-			body: formData,
+		return await confluenceApi.uploadAttachment({
+			auth: context.auth,
+			pageId,
+			file,
+			comment,
+			minorEdit,
 		});
 	},
 });

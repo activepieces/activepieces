@@ -1,13 +1,15 @@
 import { intercomAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
-import { intercomClient } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { intercomRequest } from '../common';
 import {
 	companyIdProp,
 	contactIdProp,
 	ticketPropertiesProp,
 	ticketTypeIdProp,
 } from '../common/props';
-import dayjs from 'dayjs';
+import { getTicketTypeAttributes, toTicketAttributes } from '../common/ticket-attributes';
+import { ticketOutputSchema } from '../output-schemas';
 
 export const createTicketAction = createAction({
 	auth: intercomAuth,
@@ -15,14 +17,15 @@ export const createTicketAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Ticket',
 	description: 'Creates a new ticket.',
-	audience: 'both',
-	aiMetadata: { description: 'Create a new ticket of a given ticket type for a contact, optionally tied to a company, with type-specific ticket attributes (date-like strings are converted to timestamps). Always creates a new ticket, so it is not idempotent. To change an existing ticket instead, use Update Ticket.', idempotent: false },
+	audience: 'human',
+	aiMetadata: { description: 'Create a new ticket of a given ticket type for a contact, optionally tied to a company, with type-specific ticket attributes (only attributes the ticket type defines as date-time are converted to timestamps; text and list values are sent as given). Always creates a new ticket, so it is not idempotent. To change an existing ticket instead, use Update Ticket.', idempotent: false },
 	props: {
 		ticketTypeId: ticketTypeIdProp('Ticket Type', true),
 		contactId: contactIdProp('Contact ID', null, true),
 		companyId: companyIdProp('Company ID', false),
 		ticketProperties: ticketPropertiesProp('Ticket Properties', true),
 	},
+	outputSchema: ticketOutputSchema,
 	async run(context) {
 		const { ticketTypeId, contactId, companyId } = context.propsValue;
 		const ticketProperties = context.propsValue.ticketProperties ?? {};
@@ -35,26 +38,20 @@ export const createTicketAction = createAction({
 			throw new Error('Contact ID is required');
 		}
 
-		const client = intercomClient(context.auth);
+		const attributes = await getTicketTypeAttributes({ auth: context.auth, ticketTypeId });
+		const formattedProperties = toTicketAttributes({ attributes, values: ticketProperties });
 
-		const formattedProperties: Record<string, any> = {};
-		for (const key in ticketProperties) {
-			const value = ticketProperties[key];
-
-			// Check if value is a valid date string and convert it to a timestamp
-			if (typeof value === 'string' && dayjs(value).isValid()) {
-				formattedProperties[key] = dayjs(value).unix(); // Convert to timestamp
-			} else {
-				formattedProperties[key] = value;
-			}
-		}
-		const response = await client.tickets.create({
-			ticket_type_id: ticketTypeId,
-			contacts: [{ id: contactId }],
-			company_id: companyId,
-			ticket_attributes: formattedProperties,
+		return intercomRequest<Record<string, unknown>>({
+			auth: context.auth,
+			method: HttpMethod.POST,
+			path: ['tickets'],
+			body: {
+				ticket_type_id: ticketTypeId,
+				contacts: [{ id: contactId }],
+				company_id: companyId || undefined,
+				ticket_attributes: formattedProperties,
+			},
+			operation: 'create the ticket',
 		});
-
-		return response;
 	},
 });

@@ -50,7 +50,7 @@ describe('trackedEventsCatalog', () => {
 
     expect(groupIds).not.toContain('emailCodes');
     expect(groupIds).not.toContain('billing');
-    expect(groupIds).toEqual(['accounts', 'flows', 'mcp']);
+    expect(groupIds).toEqual(['accounts', 'flows', 'mcp', 'platformAdmin']);
   });
 
   it('keeps only the self-hosted invitation events in the accounts group', () => {

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-pdfcrowd",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -9,7 +9,8 @@
     "@activepieces/pieces-framework": "workspace:*",
     "form-data": "^4.0.6",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "@activepieces/core-utils": "workspace:*",
+    "undici": "7.29.1"
   },
   "devDependencies": {
     "tslib": "^2.3.0"

@@ -1,9 +1,6 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import {
-  createTask,
-  getContacts,
-  getUsers,
-} from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { createTask } from '../common';
+import { leadConnectorProps } from '../common/props';
 import { leadConnectorAuth } from '../..';
 
 export const createTaskAction = createAction({
@@ -14,70 +11,43 @@ export const createTaskAction = createAction({
   description: 'Create a new task.',
   audience: 'both',
   aiMetadata: { description: 'Creates a task attached to a GoHighLevel/LeadConnector contact, with a title, due date, optional description, assignee, and completed flag. Use to schedule follow-up work against a contact. Requires contact, title, and due date; not idempotent — each call creates a separate task.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'task',
+      display: 'section',
+      label: 'Task',
+      icon: 'file',
+      props: ['contact', 'title', 'description'],
+    },
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Due date and owner',
+      icon: 'calendar',
+      props: ['dueDate', 'assignedTo', 'completed'],
+    },
+  ],
   props: {
-    contact: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'Contact',
-      description: 'The contact to use.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
-
-        return {
-          options: contacts.map((contact) => {
-            return {
-              label: contact.contactName,
-              value: contact.id,
-            };
-          }),
-        };
-      },
-    }),
+    contact: leadConnectorProps.contact({ required: true }),
     title: Property.ShortText({
       displayName: 'Title',
-      required: true,
-    }),
-    dueDate: Property.DateTime({
-      displayName: 'Due Date',
       required: true,
     }),
     description: Property.ShortText({
       displayName: 'Description',
       required: false,
     }),
-    assignedTo: Property.Dropdown({
-  auth: leadConnectorAuth,
+    dueDate: Property.DateTime({
+      displayName: 'Due Date',
+      required: true,
+    }),
+    assignedTo: leadConnectorProps.user({
       displayName: 'Assigned To',
       required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const users = await getUsers(auth as OAuth2PropertyValue);
-        return {
-          options: users.map((user: any) => {
-            return {
-              label: `${user.firstName} ${user.lastName}`,
-              value: user.id,
-            };
-          }),
-        };
-      },
     }),
     completed: Property.Checkbox({
       displayName: 'Completed',
-      required: true,
+      required: false,
       defaultValue: false,
     }),
   },
@@ -88,7 +58,6 @@ export const createTaskAction = createAction({
 
     return await createTask(auth.access_token, contact, {
       title: title,
-      // Needs to be ISO string without milliseconds
       dueDate: new Date(dueDate).toISOString().split('.')[0] + 'Z',
       body: description,
       assignedTo: assignedTo,

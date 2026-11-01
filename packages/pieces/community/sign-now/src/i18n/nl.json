@@ -75,7 +75,7 @@
   "One entry per signer role defined in the template. Each signer must have an email and a role name (e.g. \"Signer 1\").": "Eén item per signer rol gedefinieerd in het sjabloon. Elke ondertekenaar moet een e-mail en een rolnaam hebben (bijv. \"Signer 1\").",
   "Default email subject sent to all signers. Overridden by per-signer subject if set.": "Standaard e-mail onderwerp verzonden naar alle signers. Indien ingesteld overschreven door per ondertekenaar.",
   "Default email body sent to all signers. Overridden by per-signer message if set.": "Standaard e-mailbericht verzonden naar alle ondertekenaars. Indien ingesteld wordt dit overschreven door per ondertekenaar.",
-  "Number of days before the invite expires (3–180). Defaults to 30.": "Aantal dagen voordat de uitnodiging vervalt (3–180). Standaard ingesteld op 30.",
+  "Number of days before the invite expires (1-180). Defaults to 30.": "Number of days before the invite expires (1-180). Defaults to 30.",
   "The unique ID of the document group template.": "Het unieke ID van de documentgroepsjabloon.",
   "Name for the new document group.": "Naam voor de nieuwe documentgroep.",
   "One entry per signer. Each signer needs an email, role name, and the document they are signing within the group. Signing order determines the step sequence.": "Eén vermelding per ondertekenaar. Elke ondertekenaar heeft een e-mail, rolnaam en het document dat ze binnen de groep ondertekenen. Het ondertekenen van een order bepaalt de stappenreeks.",

@@ -59,16 +59,18 @@ export async function getcontacts(accessToken: string) {
 }
 
 export const sendfoxCommon = {
+  baseUrl: 'https://api.sendfox.com',
   lists: Property.Dropdown({
     auth: sendfoxAuth,
-    displayName: 'Lists',
+    displayName: 'List',
+    description: 'Leave empty to add the contact without a list.',
     required: false,
     refreshers: ['auth'],
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'connect your account first',
+          placeholder: 'Please connect your account first',
           options: [],
         };
       }
@@ -76,21 +78,36 @@ export const sendfoxCommon = {
       if (!authentication) {
         return {
           disabled: true,
-          placeholder: 'connect your account first',
+          placeholder: 'Please connect your account first',
           options: [],
         };
       }
       const accessToken = authentication;
-      const list_of_lists = await getLists(accessToken);
-      return {
-        disabled: false,
-        options: list_of_lists.flat().map((list) => {
+      try {
+        const lists = (await getLists(accessToken)).flat();
+        if (lists.length === 0) {
           return {
-            label: list.name,
-            value: list.id,
+            disabled: false,
+            placeholder: 'No lists found. Create one in SendFox first.',
+            options: [],
           };
-        }),
-      };
+        }
+        return {
+          disabled: false,
+          options: lists.map((list) => {
+            return {
+              label: list.name,
+              value: list.id,
+            };
+          }),
+        };
+      } catch {
+        return {
+          disabled: true,
+          placeholder: 'Failed to load lists. Check your connection.',
+          options: [],
+        };
+      }
     },
   }),
 };
@@ -103,7 +120,7 @@ export async function callsendfoxApi<T extends HttpMessageBody>(
 ): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
     method: method,
-    url: `https://api.sendfox.com/${apiUrl}`,
+    url: `${sendfoxCommon.baseUrl}/${apiUrl}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: accessToken,

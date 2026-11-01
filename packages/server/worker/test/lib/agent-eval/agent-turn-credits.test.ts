@@ -1,5 +1,5 @@
-import { AIProviderName } from '@activepieces/core-utils'
-import { PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
+import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { AgentPhase, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
 import { describe, expect, it, vi } from 'vitest'
@@ -50,28 +50,83 @@ describe('a turn that runs out of credits', () => {
     })
 })
 
-async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel() }: {
+describe('a turn with many steps', () => {
+    it('ends a saved agent\'s step budget with a reply instead of a silent stop', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = searchUntilToldToAnswer({ searches: 10 })
+
+        const turn = await runTurn({ search, creditsLeft: async () => 100, stepCeiling: 3, model, drainsStream: true })
+
+        const toolChoices = model.doStreamCalls.map((call) => call.toolChoice?.type)
+        expect(search).toHaveBeenCalledTimes(2)
+        expect(toolChoices.at(-1)).toBe('none')
+        expect(JSON.stringify(model.doStreamCalls.at(-1)?.prompt)).toContain('last step of this run')
+        expect(turn.uiParts.at(-1)?.type).toBe(PersistedAgentPartType.TEXT)
+    })
+
+    it('makes a flow-step agent report its structured output on the last step, so the flow still gets a result', async () => {
+        const capture = vi.fn()
+        const model = searchUntilToldToAnswer({ searches: 10 })
+
+        await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => 100, stepCeiling: 3, model, drainsStream: true, completion: capture, phase: 'build' })
+
+        const thinkingPerCall = model.doStreamCalls.map((call) => JSON.stringify(call.providerOptions).includes('"enabled"'))
+        const lastCall = model.doStreamCalls.at(-1)
+        expect(lastCall?.toolChoice).toEqual({ type: 'tool', toolName: 'updateTaskStatus' })
+        expect(thinkingPerCall.slice(1, -1).every(Boolean)).toBe(true)
+        expect(thinkingPerCall.at(-1)).toBe(false)
+        expect(capture).toHaveBeenCalledWith({ output: { summary: 'partial' } })
+    })
+
+    it('lets chat finish a long job, since credits, time and context already bound the turn', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+
+        await runTurn({ search, creditsLeft: async () => 1_000, stepCeiling: null, model: searchUntilToldToAnswer({ searches: 60 }), drainsStream: true })
+
+        expect(search).toHaveBeenCalledTimes(60)
+    })
+})
+
+describe('a turn that hits its token budget', () => {
+    it('stops at the step that crossed the budget, instead of running every step', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = alwaysSearchingModel({ usage: OVER_BUDGET_USAGE })
+
+        const turn = await runTurn({ search, creditsLeft: async () => 1_000, model })
+
+        expect(search).toHaveBeenCalledTimes(1)
+        expect(turn.budgetExceeded).toBe(true)
+    })
+})
+
+async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel(), drainsStream = false, completion, phase = 'discovery' }: {
     search: () => Promise<unknown>
     creditsLeft: (pendingCredits: number) => Promise<number | null>
-    stepCeiling?: number
+    stepCeiling?: number | null
     model?: MockLanguageModelV3
+    drainsStream?: boolean
+    completion?: (input: unknown) => void
+    phase?: AgentPhase
 }): ReturnType<typeof runAgentTurn> {
+    const completionTools = isNil(completion)
+        ? {}
+        : { updateTaskStatus: tool({ description: 'report the result', inputSchema: z.object({ output: z.object({ summary: z.string() }) }), execute: async (input) => { completion(input); return SEARCH_RESULT } }) }
     return runAgentTurn({
-        model,
-        provider: AIProviderName.ANTHROPIC,
+        models: [{ model, provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'research this' }],
         tools: {
             ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }),
             ap_fetch_url: tool({ description: 'read a page', inputSchema: z.object({ url: z.string() }), execute: async () => SEARCH_RESULT }),
+            ...completionTools,
         },
-        allToolNames: ['ap_web_search', 'ap_fetch_url'],
+        allToolNames: ['ap_web_search', 'ap_fetch_url', ...Object.keys(completionTools)],
         tier: TIER,
-        modelId: TIER.modelId,
-        phaseState: { phase: 'discovery' },
+        phaseState: { phase },
         abortSignal: new AbortController().signal,
         log: SILENT_LOG,
-        stepCeiling,
+        ...spreadIfDefined('stepCeiling', stepCeiling ?? undefined),
+        ...(drainsStream ? { sinks: { drainStream: async (result) => { await result.consumeStream(); return undefined } } } : {}),
         creditsLeft,
     })
 }
@@ -80,7 +135,7 @@ async function failingCreditCheck(): Promise<number | null> {
     throw new Error('rpc down')
 }
 
-function alwaysSearchingModel(): MockLanguageModelV3 {
+function alwaysSearchingModel({ usage = USAGE }: { usage?: typeof USAGE } = {}): MockLanguageModelV3 {
     let calls = 0
     return new MockLanguageModelV3({
         doStream: async () => {
@@ -89,8 +144,42 @@ function alwaysSearchingModel(): MockLanguageModelV3 {
                 stream: convertArrayToReadableStream([
                     { type: 'stream-start' as const, warnings: [] },
                     { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
-                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage },
                 ]),
+            }
+        },
+    })
+}
+
+function searchUntilToldToAnswer({ searches }: { searches: number }): MockLanguageModelV3 {
+    let calls = 0
+    return new MockLanguageModelV3({
+        doStream: async ({ toolChoice }) => {
+            calls++
+            const answers = toolChoice?.type === 'none' || calls > searches
+            if (toolChoice?.type === 'tool') {
+                return {
+                    stream: convertArrayToReadableStream([
+                        { type: 'stream-start' as const, warnings: [] },
+                        { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: toolChoice.toolName, input: '{"output":{"summary":"partial"}}' },
+                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
+                    ]),
+                }
+            }
+            return {
+                stream: convertArrayToReadableStream(answers
+                    ? [
+                        { type: 'stream-start' as const, warnings: [] },
+                        { type: 'text-start' as const, id: 'answer' },
+                        { type: 'text-delta' as const, id: 'answer', delta: 'Here is what I found so far.' },
+                        { type: 'text-end' as const, id: 'answer' },
+                        { type: 'finish' as const, finishReason: 'stop' as const, usage: USAGE },
+                    ]
+                    : [
+                        { type: 'stream-start' as const, warnings: [] },
+                        { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
+                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
+                    ]),
             }
         },
     })
@@ -101,3 +190,7 @@ const SEARCH_RESULT = { content: [{ type: 'text', text: 'ok' }] }
 const TIER = { id: 'fast', thinkingBudget: 5_000, modelId: 'anthropic/claude-haiku-4.5' }
 
 const SILENT_LOG = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined }
+
+const USAGE = { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } }
+
+const OVER_BUDGET_USAGE = { ...USAGE, inputTokens: { total: Number.MAX_SAFE_INTEGER, noCache: Number.MAX_SAFE_INTEGER, cacheRead: 0, cacheWrite: 0 } }

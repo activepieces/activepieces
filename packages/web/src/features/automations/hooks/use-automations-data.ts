@@ -1,9 +1,11 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
+  AgentSummary,
   FlowStatus,
   FolderDto,
   PopulatedFlow,
   Table,
+  MAX_AGENT_PAGE_SIZE,
   UncategorizedFolderId,
 } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +13,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { useAgentsNavVisible } from '@/features/agents';
+import { agentsApi } from '@/features/agents/api/agents';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { foldersApi } from '@/features/folders/api/folders-api';
 import { tablesApi } from '@/features/tables/api/tables-api';
@@ -44,6 +48,7 @@ export function useAutomationsData({
   const queryClient = useQueryClient();
   const { embedState } = useEmbedding();
   const hideTables = embedState.hideTables;
+  const agentsVisible = useAgentsNavVisible() && !embedState.isEmbedded;
   const isFiltered = hasNonFolderFilters(filters);
 
   const [rootPage, setRootPage] = useState(0);
@@ -70,6 +75,27 @@ export function useAutomationsData({
   const skipTables =
     (filters.typeFilter.length > 0 && !filters.typeFilter.includes('table')) ||
     hasConnectionFilter;
+  const skipAgents =
+    !agentsVisible ||
+    (filters.typeFilter.length > 0 && !filters.typeFilter.includes('agent')) ||
+    hasConnectionFilter ||
+    filters.statusFilter.length > 0;
+
+  const agentsQuery = useQuery({
+    queryKey: ['agents', 'automations', projectId],
+    queryFn: () => listAllProjectAgents(projectId),
+    enabled: !skipAgents,
+    staleTime: STALE_TIME,
+    refetchOnMount: 'always',
+  });
+  const allAgents = useMemo(
+    () => (skipAgents ? [] : agentsQuery.data ?? []),
+    [skipAgents, agentsQuery.data],
+  );
+  const agentsByFolder = useMemo(
+    () => groupAgentsByFolder(allAgents),
+    [allAgents],
+  );
 
   const folderCounts = useMemo(() => {
     const folders = foldersQuery.data ?? [];
@@ -77,10 +103,11 @@ export function useAutomationsData({
       folders.map((folder) => [
         folder.id,
         (skipFlows ? 0 : folder.numberOfFlows) +
-          (hideTables || skipTables ? 0 : folder.numberOfTables),
+          (hideTables || skipTables ? 0 : folder.numberOfTables) +
+          (agentsByFolder.get(folder.id)?.length ?? 0),
       ]),
     );
-  }, [foldersQuery.data, hideTables, skipFlows, skipTables]);
+  }, [foldersQuery.data, hideTables, skipFlows, skipTables, agentsByFolder]);
 
   const folderContentsQuery = useQuery<FolderContentsMap>({
     queryKey: ['all-folder-contents', projectId, folderIds, hideTables],
@@ -103,7 +130,11 @@ export function useAutomationsData({
               cursor: undefined,
             }),
       ]);
-      return buildFolderContentsMap(folders, flowsPage.data, tablesPage.data);
+      return buildFolderContentsMap({
+        folders,
+        flows: flowsPage.data,
+        tables: tablesPage.data,
+      });
     },
     enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
     staleTime: STALE_TIME,
@@ -194,8 +225,18 @@ export function useAutomationsData({
     let folders = foldersQuery.data ?? [];
     let rootFlows = rootFlowsQuery.data?.data ?? [];
     let rootTables = rootTablesQuery.data?.data ?? [];
+    let rootAgents = matchingAgents({
+      agents: allAgents,
+      searchTerm: filters.searchTerm,
+      onlyUnfiled: !isFiltered,
+    });
     const folderContents = filterFolderContents({
-      folderContents: folderContentsQuery.data ?? new Map(),
+      folderContents: new Map(
+        [...(folderContentsQuery.data ?? [])].map(([folderId, content]) => [
+          folderId,
+          { ...content, agents: agentsByFolder.get(folderId) ?? [] },
+        ]),
+      ),
       skipFlows,
       skipTables,
       connectionFilter: filters.connectionFilter,
@@ -204,7 +245,9 @@ export function useAutomationsData({
       ? new Map(
           [...folderContents].map(([folderId, content]) => [
             folderId,
-            content.flows.length + content.tables.length,
+            content.flows.length +
+              content.tables.length +
+              content.agents.length,
           ]),
         )
       : folderCounts;
@@ -220,11 +263,15 @@ export function useAutomationsData({
         rootTables = rootTables.filter(
           (t) => t.folderId && folderSet.has(t.folderId),
         );
+        rootAgents = rootAgents.filter(
+          (a) => a.folderId && folderSet.has(a.folderId),
+        );
       }
 
       const { items, totalItems } = buildFilteredTreeItems({
         flows: rootFlows,
         tables: rootTables,
+        agents: rootAgents,
         folders,
         folderVisibleCounts,
         page: rootPage,
@@ -243,12 +290,14 @@ export function useAutomationsData({
       folders = folders.filter((f) => folderSet.has(f.id));
       rootFlows = [];
       rootTables = [];
+      rootAgents = [];
     }
 
     const { items, totalRootItems } = buildTreeItems({
       folders,
       rootFlows,
       rootTables,
+      rootAgents,
       folderContents,
       folderCounts,
       folderVisibleCounts,
@@ -263,6 +312,8 @@ export function useAutomationsData({
     foldersQuery.data,
     rootFlowsQuery.data,
     rootTablesQuery.data,
+    allAgents,
+    agentsByFolder,
     folderContentsQuery.data,
     folderCounts,
     folderVisibleCounts,
@@ -296,12 +347,14 @@ export function useAutomationsData({
     foldersQuery.isLoading ||
     (rootFlowsQuery.isLoading && !skipFlows) ||
     (rootTablesQuery.isLoading && !skipTables && !hideTables) ||
+    (agentsQuery.isLoading && !skipAgents) ||
     folderContentsQuery.isLoading;
 
   const isError =
     foldersQuery.isError ||
     (rootFlowsQuery.isError && !skipFlows) ||
     (rootTablesQuery.isError && !skipTables && !hideTables) ||
+    (agentsQuery.isError && !skipAgents) ||
     folderContentsQuery.isError;
 
   const invalidateAll = useCallback(() => {
@@ -310,18 +363,21 @@ export function useAutomationsData({
       queryClient.invalidateQueries({ queryKey: ['root-flows'] }),
       queryClient.invalidateQueries({ queryKey: ['root-tables'] }),
       queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] }),
+      queryClient.invalidateQueries({ queryKey: ['agents'] }),
     ]);
   }, [queryClient]);
 
   const invalidateRoot = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['root-flows'] });
     queryClient.invalidateQueries({ queryKey: ['root-tables'] });
+    queryClient.invalidateQueries({ queryKey: ['agents'] });
   }, [queryClient]);
 
   const invalidateFolder = useCallback(
     (_folderId: string) => {
       queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] });
       queryClient.invalidateQueries({ queryKey: ['folders'] });
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
     },
     [queryClient],
   );
@@ -331,6 +387,8 @@ export function useAutomationsData({
     folders: foldersQuery.data ?? [],
     rootFlows: rootFlowsQuery.data?.data ?? [],
     rootTables: rootTablesQuery.data?.data ?? [],
+    agents: allAgents,
+    agentsVisible,
     isLoading,
     isError,
     isFiltered,
@@ -363,13 +421,65 @@ function sortOrder(sort: AutomationsSort): 'ASC' | 'DESC' | undefined {
 
 type FolderContentsMap = Map<string, FolderContent>;
 
-function buildFolderContentsMap(
-  folders: FolderDto[],
-  flows: PopulatedFlow[],
-  tables: Table[],
-): FolderContentsMap {
+async function listAllProjectAgents(
+  projectId: string,
+): Promise<AgentSummary[]> {
+  const agents: AgentSummary[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const page: SeekPage<AgentSummary> = await agentsApi.list({
+      projectId,
+      limit: MAX_AGENT_PAGE_SIZE,
+      ...(cursor ? { cursor } : {}),
+    });
+    agents.push(...page.data);
+    cursor = page.next ?? undefined;
+  } while (cursor);
+  return agents;
+}
+
+function groupAgentsByFolder(
+  agents: AgentSummary[],
+): Map<string, AgentSummary[]> {
+  return agents.reduce((byFolder, agent) => {
+    if (agent.folderId) {
+      byFolder.set(agent.folderId, [
+        ...(byFolder.get(agent.folderId) ?? []),
+        agent,
+      ]);
+    }
+    return byFolder;
+  }, new Map<string, AgentSummary[]>());
+}
+
+function matchingAgents({
+  agents,
+  searchTerm,
+  onlyUnfiled,
+}: {
+  agents: AgentSummary[];
+  searchTerm: string;
+  onlyUnfiled: boolean;
+}): AgentSummary[] {
+  const term = searchTerm.trim().toLowerCase();
+  return agents.filter(
+    (agent) =>
+      (!onlyUnfiled || !agent.folderId) &&
+      (term.length === 0 || agent.displayName.toLowerCase().includes(term)),
+  );
+}
+
+function buildFolderContentsMap({
+  folders,
+  flows,
+  tables,
+}: {
+  folders: FolderDto[];
+  flows: PopulatedFlow[];
+  tables: Table[];
+}): FolderContentsMap {
   const map: FolderContentsMap = new Map(
-    folders.map((folder) => [folder.id, { flows: [], tables: [] }]),
+    folders.map((folder) => [folder.id, { flows: [], tables: [], agents: [] }]),
   );
   flows.forEach((flow) => {
     if (flow.folderId) {
@@ -410,6 +520,7 @@ function filterFolderContents({
       {
         flows: skipFlows ? [] : content.flows.filter(keepFlow),
         tables: skipTables ? [] : content.tables,
+        agents: content.agents,
       },
     ]),
   );

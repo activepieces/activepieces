@@ -76,8 +76,8 @@ export function AgentFlowToolDialog({
         </DialogHeader>
 
         <div className="px-4 py-3 border-b">
-          <div className="relative border rounded-sm">
-            <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
+          <div className="relative border rounded-md">
+            <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
             <Input
               placeholder={t('Search')}
               value={searchQuery}

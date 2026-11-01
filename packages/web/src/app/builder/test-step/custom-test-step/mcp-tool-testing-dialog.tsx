@@ -172,7 +172,7 @@ function McpToolTestingDialog({
                             />
 
                             {fieldError && (
-                              <p className="text-xs text-destructive font-medium">
+                              <p className="text-xs text-danger-11 font-medium">
                                 {fieldError.message?.toString()}
                               </p>
                             )}
@@ -182,8 +182,8 @@ function McpToolTestingDialog({
                     )}
                   </div>
                 ) : (
-                  <div className="p-4 rounded-lg text-center">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="p-4 rounded-xl text-center">
+                    <p className="text-sm text-gray-11">
                       {t('No input fields defined in the schema')}
                     </p>
                   </div>

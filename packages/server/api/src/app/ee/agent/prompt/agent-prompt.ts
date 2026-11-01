@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { isNil } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentToolType, Project, ProjectType } from '@activepieces/shared'
+import { Agent, AGENT_SKILLS, AgentConfig, AgentToolType, Project, ProjectType } from '@activepieces/shared'
 
 function loadPromptTemplate(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
 }
 
-const GUIDE_TOPICS = ['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai', 'about_activepieces'] as const
+const GUIDE_TOPICS = AGENT_SKILLS.flatMap((skill) => skill.guideTopic ?? [])
 
 const PROMPT_TEMPLATES = {
     system: loadPromptTemplate('chat-system-prompt.md'),
@@ -20,6 +20,11 @@ const GUIDES: Record<string, string> = Object.fromEntries(
     GUIDE_TOPICS.map((topic) => [topic, loadPromptTemplate(`guides/${topic}.md`)]),
 )
 
+const TASK_TEMPLATE = loadPromptTemplate('task-subagent-prompt.md')
+
+const SUBAGENTS_NOTE = loadPromptTemplate('chat-subagents-note.md').trim()
+const RESEARCH_NOTE = loadPromptTemplate('chat-research-note.md').trim()
+
 function sanitizeProjectName(name: string): string {
     return name.replace(/[^a-zA-Z0-9 \-_.]/g, '').slice(0, 64)
 }
@@ -28,15 +33,9 @@ function projectDisplayName(project: Project): string {
     return project.type === ProjectType.PERSONAL ? 'Personal Project' : project.displayName
 }
 
-function buildProjectListBlock({ projects, frontendUrl }: {
-    projects: Project[]
-    frontendUrl: string
-}): string {
+function buildProjectListBlock({ projects }: { projects: Project[] }): string {
     if (projects.length === 0) return 'No projects available.'
-    return projects.map((p) => {
-        const url = `${frontendUrl}/projects/${p.id}`
-        return `- **${sanitizeProjectName(projectDisplayName(p))}** (ID: ${p.id}) — [Open](${url})`
-    }).join('\n')
+    return projects.map((p) => `- **${sanitizeProjectName(projectDisplayName(p))}** (ID: ${p.id})`).join('\n')
 }
 
 function buildProjectContextBlockFromTemplates({ project, frontendUrl, selectedTemplate, noProjectTemplate }: {
@@ -69,9 +68,17 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templ
     const noProjectTemplate = templates?.noProject ?? PROMPT_TEMPLATES.noProject
 
     return systemTemplate
-        .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects, frontendUrl }))
+        .replace('{{PROJECT_LIST}}', buildProjectListBlock({ projects }))
         .replace('{{PROJECT_CONTEXT}}', buildProjectContextBlockFromTemplates({ project: currentProject, frontendUrl, selectedTemplate, noProjectTemplate }))
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
+}
+
+function buildTaskSystemPrompt({ projects, currentProjectId, frontendUrl }: {
+    projects: Project[]
+    currentProjectId: string | null
+    frontendUrl: string
+}): string {
+    return buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templates: { system: TASK_TEMPLATE } })
 }
 
 function buildBuilderSystemPrompt({ agent }: { agent: Agent | null }): string {
@@ -99,7 +106,10 @@ function describeTools(tools: AgentConfig['tools']): string {
 export const agentPrompt = {
     buildSystemPrompt: buildAgentSystemPrompt,
     buildBuilderSystemPrompt,
+    buildTaskSystemPrompt,
     guides: GUIDES,
+    subagentsNote: SUBAGENTS_NOTE,
+    researchNote: RESEARCH_NOTE,
     projectDisplayName,
     sources: {
         ...PROMPT_TEMPLATES,

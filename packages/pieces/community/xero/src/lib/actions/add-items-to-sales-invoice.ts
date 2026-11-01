@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroAddItemsToSalesInvoice = createAction({
   auth: xeroAuth,
@@ -14,12 +15,13 @@ export const xeroAddItemsToSalesInvoice = createAction({
   classification: 'WRITE',
   displayName: 'Add Items to Existing Sales Invoice',
   description: 'Adds line items to an existing sales invoice (ACCREC).',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Append new line items to an existing ACCREC sales invoice, preserving its current lines (the action fetches the invoice and merges). Pick this to add charges to an invoice without touching existing lines; to edit or replace existing lines use Update Sales Invoice instead. Not idempotent: re-running appends the same items again. AUTHORISED invoices require the allow-authorised flag.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.invoiceEnvelope,
   props: {
     tenant_id: props.tenant_id,
     invoice_id: props.invoice_id(true),

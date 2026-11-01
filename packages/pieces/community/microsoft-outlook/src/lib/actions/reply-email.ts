@@ -1,8 +1,8 @@
-import { ApFile, createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
+import { messageIdDropdown } from '../common/props';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { replyEmailActionOutputSchema } from '../output-schemas';
 
 export const replyEmailAction = createAction({
@@ -10,72 +10,48 @@ export const replyEmailAction = createAction({
   name: 'reply-email',
   classification: 'WRITE',
   displayName: 'Reply to Email',
-  description: 'Reply to an outlook email.',
+  description: 'Reply to an Outlook email, or save the reply as a draft.',
   audience: 'human',
   aiMetadata: { description: 'Replies to an existing Outlook message (identified by message ID), supporting added CC/BCC recipients and attachments. Set the Create Draft flag to stage the reply without sending; otherwise it is sent immediately. Not idempotent when sending: each call creates and dispatches a new reply.', idempotent: false },
   outputSchema: replyEmailActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'recipients',
+      display: 'tabs',
+      label: 'Cc and Bcc',
+      props: ['ccRecipients', 'bccRecipients'],
+    },
+  ],
   props: {
-    messageId: Property.Dropdown({
-      auth: microsoftOutlookAuth,
+    messageId: messageIdDropdown({
       displayName: 'Email',
-      description: 'Select the email message to reply to.',
+      description: 'The email to reply to.',
       required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-          };
-        }
-
-        const client = outlookCommon.createClient(auth as OAuth2PropertyValue);
-
-        try {
-          const response: PageCollection = await client
-            .api(`${outlookCommon.mailboxPrefix(auth as OAuth2PropertyValue)}/messages?$top=50&$select=id,subject,from,receivedDateTime`)
-            .orderby('receivedDateTime desc')
-            .get();
-
-          const messages = response.value as Message[];
-
-          return {
-            disabled: false,
-            options: messages.map((message) => ({
-              label: `${message.subject || 'No Subject'} - ${message.from?.emailAddress?.name || message.from?.emailAddress?.address || 'Unknown Sender'}`,
-              value: message.id || '',
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            options: [],
-          };
-        }
-      },
     }),
     bodyFormat: Property.StaticDropdown({
       displayName: 'Body Format',
+      description: 'How the text in Body is interpreted.',
       required: true,
       defaultValue: 'text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
-          { label: 'HTML', value: 'html' },
-          { label: 'Text', value: 'text' },
+          { label: 'Plain Text', value: 'text', description: 'Sent as written', icon: 'text' },
+          { label: 'HTML', value: 'html', description: 'Tags are rendered', icon: 'code' },
         ],
       },
     }),
     replyBody: Property.LongText({
-      displayName: 'Reply Body',
+      displayName: 'Body',
       required: true,
     }),
     ccRecipients: Property.Array({
-      displayName: 'CC Recipients',
+      displayName: 'Cc',
       required: false,
     }),
     bccRecipients: Property.Array({
-      displayName: 'BCC Recipients',
+      displayName: 'Bcc',
       required: false,
     }),
     attachments: Property.Array({
@@ -88,22 +64,22 @@ export const replyEmailAction = createAction({
           required: true,
         }),
         fileName: Property.ShortText({
-          displayName: 'File Name',
+          displayName: 'Attachment Name',
+          description: 'Overrides the uploaded file name.',
+          placeholder: 'report.pdf',
           required: false,
         }),
       },
     }),
     draft: Property.Checkbox({
-      displayName: 'Create Draft',
-      description: 'If enabled, creates draft without sending.',
-      required: true,
+      displayName: 'Save as Draft',
+      description: 'Save the reply to Drafts instead of sending it.',
+      required: false,
       defaultValue: false,
     }),
   },
   async run(context) {
     const { replyBody, bodyFormat, messageId, draft } = context.propsValue;
-    const ccRecipients = (context.propsValue.ccRecipients ?? []) as string[];
-    const bccRecipients = (context.propsValue.bccRecipients ?? []) as string[];
     const attachments = (context.propsValue.attachments ?? []) as Array<{
       file: ApFile;
       fileName: string;
@@ -113,16 +89,8 @@ export const replyEmailAction = createAction({
         content: replyBody,
         contentType: bodyFormat as BodyType,
       },
-      ccRecipients: ccRecipients.map((mail) => ({
-        emailAddress: {
-          address: mail,
-        },
-      })),
-      bccRecipients: bccRecipients.map((mail) => ({
-        emailAddress: {
-          address: mail,
-        },
-      })),
+      ccRecipients: outlookCommon.toRecipients(context.propsValue.ccRecipients),
+      bccRecipients: outlookCommon.toRecipients(context.propsValue.bccRecipients),
       attachments: attachments.map((attachment) => ({
         '@odata.type': '#microsoft.graph.fileAttachment',
         name: attachment.fileName || attachment.file.filename,

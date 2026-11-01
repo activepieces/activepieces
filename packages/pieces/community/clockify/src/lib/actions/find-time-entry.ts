@@ -1,26 +1,25 @@
-import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { QueryParams } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
-import { clockifyApiCall } from '../common/client';
-import { projectId, taskId, workspaceId } from '../common/props';
+import { clockifyApi } from '../common/api';
+import { clockifyProps } from '../common/props';
+import { foundTimeEntriesOutputSchema } from '../output-schemas';
 
 export const findTimeEntryAction = createAction({
 	auth: clockifyAuth,
 	name: 'find-time-entry',
+	outputSchema: foundTimeEntriesOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Time Entry',
 	description: 'Finds a time entry by description, start datetime or end datetime.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			"Searches the authenticated user's time entries on a workspace, optionally filtered by description, start/end datetime, project, or task. With no filters it returns recent entries; supplied filters narrow the results. Use to locate an existing entry or verify logged time. Read-only and idempotent.",
 		idempotent: true,
 	},
 	props: {
-		workspaceId: workspaceId({
-			displayName: 'Workspace',
-			required: true,
-		}),
+		workspaceId: clockifyProps.workspaceId({ required: true }),
 		start: Property.DateTime({
 			displayName: 'Start Datetime',
 			required: false,
@@ -33,41 +32,27 @@ export const findTimeEntryAction = createAction({
 			displayName: 'Entry Description',
 			required: false,
 		}),
-		projectId: projectId({
-			displayName: 'Project',
-			required: false,
-		}),
-		taskId: taskId({
-			displayName: 'Task',
-			required: false,
-		}),
+		projectId: clockifyProps.projectId({ required: false }),
+		taskId: clockifyProps.taskId({ required: false }),
 	},
 	async run(context) {
 		const { workspaceId, projectId, start, end, description, taskId } = context.propsValue;
 
-		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/user`,
-		});
-
-		const userId = currentUserResponse.id;
+		const currentUser = await clockifyApi.getCurrentUser({ auth: context.auth });
 
 		const qs: QueryParams = { hydrated: 'true' };
 
 		if (description) qs['description'] = description;
 		if (start) qs['start'] = start;
 		if (end) qs['end'] = end;
-		if (projectId) qs['project'] = projectId as string;
-		if (taskId) qs['task'] = taskId as string;
+		if (projectId) qs['project'] = projectId;
+		if (taskId) qs['task'] = taskId;
 
-		const response = await clockifyApiCall({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
+		return await clockifyApi.listUserTimeEntries({
+			auth: context.auth,
+			workspaceId,
+			userId: currentUser.id,
 			query: qs,
 		});
-
-		return response;
 	},
 });

@@ -29,6 +29,10 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             ...ApIdSchema,
             nullable: true,
         },
+        waitpointId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         aiCredits: {
             type: Number,
             nullable: true,
@@ -48,6 +52,14 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
         },
         modelName: {
             type: String,
+            nullable: true,
+        },
+        modelTierId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        providerConfigId: {
+            ...ApIdSchema,
             nullable: true,
         },
         status: {
@@ -101,6 +113,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             name: 'idx_agent_conversation_streaming_updated',
             columns: ['updated'],
             where: `status = '${AgentConversationStatus.STREAMING}'`,
+        },
+        {
+            name: 'idx_agent_conversation_platform_provider_config',
+            columns: ['platformId', 'providerConfigId'],
+            where: '"providerConfigId" IS NOT NULL',
         },
     ],
     relations: {

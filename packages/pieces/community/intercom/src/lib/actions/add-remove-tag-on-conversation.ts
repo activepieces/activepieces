@@ -2,6 +2,7 @@ import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { conversationIdProp, tagIdProp } from '../common/props';
 import { intercomClient } from '../common';
+import { tagOutputSchema } from '../output-schemas';
 
 export const addOrRemoveTagOnConversationAction = createAction({
 	auth: intercomAuth,
@@ -9,8 +10,8 @@ export const addOrRemoveTagOnConversationAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Add/Remove Tag on Conversation',
 	description: 'Attach or remove a tag from a specific conversation.',
-	audience: 'both',
-	aiMetadata: { description: 'Tag or untag a conversation by conversation ID and tag ID; set the Untag flag to remove rather than add. Mutates the conversation, so it is not idempotent. Requires an existing tag ID (use List Tags to discover one).', idempotent: false },
+	audience: 'human',
+	aiMetadata: { description: 'Tag or untag a conversation by conversation ID and tag ID; set the Untag flag to remove rather than add. Adding a tag that is already there changes nothing; removing a tag that is gone can fail, so it is not marked idempotent. Requires an existing tag ID (use List Tags to discover one).', idempotent: false },
 	props: {
 		conversationId: conversationIdProp('Conversation ID', true),
 		tagId: tagIdProp('Tag', true),
@@ -20,8 +21,9 @@ export const addOrRemoveTagOnConversationAction = createAction({
 			defaultValue: false,
 		}),
 	},
+	outputSchema: tagOutputSchema,
 	async run(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const admin = await client.admins.identify();
 		const adminId = admin.id;

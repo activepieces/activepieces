@@ -12,6 +12,22 @@ export const googleDriveCreateNewTextFile = createAction({
   audience: 'human',
   aiMetadata: { description: 'Creates a new file in Google Drive from inline text content as plain text, CSV, or XML, optionally inside a parent folder. Use when an agent has generated text it needs to persist as a Drive file. Not idempotent: each call creates a new file.', idempotent: false },
   displayName: 'Create File from Text',
+  propertyGroups: [
+    {
+      key: 'file',
+      display: 'section',
+      label: 'New file',
+      icon: 'file',
+      props: ['fileName', 'text', 'fileType'],
+    },
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Save to',
+      icon: 'location',
+      props: ['parentFolder', 'include_team_drives'],
+    },
+  ],
   props: {
     fileName: Property.ShortText({
       displayName: 'File Name',

@@ -1,60 +1,34 @@
 import {
-  createTrigger,
-  TriggerStrategy,
-  AppConnectionValueForAuthProperty,
+	AppConnectionValueForAuthProperty,
+	createTrigger,
+	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
-import { confluenceAuth, confluenceAuthValue } from '../auth';
-import { confluenceApiCall, PaginatedResponse } from '../common';
-import { pageIdProp, spaceIdProp } from '../common/props';
-
-interface ConfluenceComment {
-  id: string;
-  status: string;
-  pageId: string;
-  version: {
-    number: number;
-    createdAt: string;
-  };
-  body: unknown;
-}
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { confluenceAuth } from '../auth';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { newCommentOutputSchema } from '../output-schemas';
 
 const props = {
-  spaceId: spaceIdProp,
-  pageId: pageIdProp,
+  spaceId: confluenceProps.spaceId({ required: true }),
+  pageId: confluenceProps.pageId({ required: true }),
 };
 
 const polling: Polling<
-  confluenceAuthValue,
+	AppConnectionValueForAuthProperty<typeof confluenceAuth>,
   { spaceId?: string; pageId?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, propsValue }) {
-    const response = await confluenceApiCall<
-      PaginatedResponse<ConfluenceComment>
-    >({
-      domain: auth.props.confluenceDomain,
-      username: auth.props.username,
-      password: auth.props.password,
-      version: 'v2',
-      method: HttpMethod.GET,
-      resourceUri: `/pages/${propsValue.pageId}/footer-comments`,
-      query: {
-        limit: '100',
-        sort: '-created-date',
-        'body-format': 'storage',
-      },
+    const results = await confluenceApi.listPageComments({
+      auth,
+      pageId: propsValue.pageId,
+      commentType: 'footer',
+      bodyFormat: 'storage',
+      sort: '-created-date',
     });
 
-    if (isNil(response.results)) return [];
-
-    return response.results
+    return results
       .filter((c) => c.version.number === 1)
       .map((comment) => ({
         epochMilliSeconds: new Date(comment.version.createdAt).getTime(),
@@ -65,6 +39,7 @@ const polling: Polling<
 
 export const newCommentTrigger = createTrigger({
   name: 'new-comment',
+  outputSchema: newCommentOutputSchema,
   classification: 'READ',
   displayName: 'New Comment on Page',
   description:
