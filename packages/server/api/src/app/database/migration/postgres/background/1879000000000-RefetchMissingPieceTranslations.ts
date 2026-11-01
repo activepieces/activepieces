@@ -1,6 +1,8 @@
-import { chunk, isObject, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
+import { chunk, groupBy, isNil, isObject, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
 import { ApEdition, PieceAudienceFilter, PieceSyncMode } from '@activepieces/shared'
+import { isAxiosError } from 'axios'
+import semver from 'semver'
 import { QueryRunner } from 'typeorm'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
@@ -15,27 +17,26 @@ export class RefetchMissingPieceTranslations1879000000000 implements BackgroundM
         if (system.getEdition() === ApEdition.CLOUD || system.get(AppSystemProp.PIECES_SYNC_MODE) !== PieceSyncMode.OFFICIAL_AUTO) {
             return
         }
-        const missing = await findPiecesMissingTranslations({ queryRunner })
-        if (missing.length === 0) {
+        const versions = await listOfficialVersions({ queryRunner })
+        const candidates = selectCandidates({ versions })
+        if (candidates.length === 0) {
             return
         }
-        const outcomes = await chunk(missing, BATCH_SIZE).reduce<Promise<RestoreOutcome[]>>(
+        await assertRegistryServesTranslations({ versions })
+        const outcomes = await chunk(candidates, BATCH_SIZE).reduce<Promise<RestoreOutcome[]>>(
             async (previous, batch) => [
                 ...await previous,
                 ...await Promise.all(batch.map((piece) => restoreTranslations({ queryRunner, piece }))),
             ],
             Promise.resolve([]),
         )
+        const counts = countOutcomes({ outcomes })
         system.globalLogger().info({
-            migration: {
-                name: this.name,
-                missing: missing.length,
-                restored: outcomes.filter((outcome) => outcome === 'restored').length,
-                untranslated: outcomes.filter((outcome) => outcome === 'untranslated').length,
-                mismatched: outcomes.filter((outcome) => outcome === 'mismatched').length,
-                failed: outcomes.filter((outcome) => outcome === 'failed').length,
-            },
+            migration: { name: this.name, untranslatedVersions: versions.filter((version) => !version.translated).length, candidates: candidates.length, ...counts },
         }, '[RefetchMissingPieceTranslations] Restored translations for piece versions synced without them')
+        if (counts.transient > Math.max(MAX_SKIPPED_TRANSIENT_FAILURES, candidates.length * MAX_SKIPPED_TRANSIENT_RATIO)) {
+            throw new Error(`Registry failed transiently for ${counts.transient} of ${candidates.length} piece versions; retrying the remaining ones later`)
+        }
     }
 
     public async down(): Promise<void> {
@@ -43,26 +44,47 @@ export class RefetchMissingPieceTranslations1879000000000 implements BackgroundM
     }
 }
 
-async function findPiecesMissingTranslations({ queryRunner }: { queryRunner: QueryRunner }): Promise<MissingPiece[]> {
+async function listOfficialVersions({ queryRunner }: { queryRunner: QueryRunner }): Promise<OfficialVersion[]> {
     const rows: unknown = await queryRunner.query(`
-        SELECT pm."id", pm."name", pm."version"
+        SELECT pm."id", pm."name", pm."version",
+               (pm."i18n" IS NOT NULL OR EXISTS (SELECT 1 FROM "piece_translation" t WHERE t."pieceMetadataId" = pm."id")) AS "translated"
           FROM "piece_metadata" pm
          WHERE pm."pieceType" = 'OFFICIAL'
-           AND pm."i18n" IS NULL
-           AND NOT EXISTS (SELECT 1 FROM "piece_translation" t WHERE t."pieceMetadataId" = pm."id")
     `)
-    return Array.isArray(rows) ? rows.filter(isMissingPiece) : []
+    return Array.isArray(rows) ? rows.filter(isOfficialVersion) : []
+}
+
+function selectCandidates({ versions }: { versions: OfficialVersion[] }): OfficialVersion[] {
+    return Object.values(groupBy(versions, (version) => version.name)).flatMap((pieceVersions) => {
+        const newestTranslated = newestVersion({ versions: pieceVersions.filter((version) => version.translated) })
+        return pieceVersions.filter((version) => !version.translated
+            && (isNil(newestTranslated) || isNil(semver.valid(version.version)) || semver.gt(version.version, newestTranslated.version)))
+    })
+}
+
+async function assertRegistryServesTranslations({ versions }: { versions: OfficialVersion[] }): Promise<void> {
+    const canary = newestVersion({ versions: versions.filter((version) => version.translated) })
+    if (isNil(canary)) {
+        system.globalLogger().warn('[RefetchMissingPieceTranslations] No translated piece version installed, skipping the registry canary check')
+        return
+    }
+    const { data: body, error } = await tryCatch(async () => fetchPieceVersion({ piece: canary }))
+    if (error) {
+        throw new Error(`Registry canary ${versionKey(canary)} failed (${error.message}); retrying later`)
+    }
+    if (toTranslationRows({ pieceMetadataId: canary.id, body }).length === 0) {
+        throw new Error(`Registry returned ${versionKey(canary)} without translations although it is translated here; the registry may be serving a build without them, retrying later`)
+    }
 }
 
 async function restoreTranslations({ queryRunner, piece }: RestoreTranslationsParams): Promise<RestoreOutcome> {
-    const { data: body, error } = await tryCatch(async () => {
-        const params = new URLSearchParams({ audience: PieceAudienceFilter.ALL, version: piece.version })
-        const response = await safeHttp.axios.get<unknown>(`${CLOUD_PIECES_URL}/${piece.name}?${params.toString()}`, { timeout: REGISTRY_TIMEOUT_MS })
-        return response.data
-    })
+    const { data: body, error } = await tryCatch(async () => fetchPieceVersion({ piece }))
     if (error) {
-        system.globalLogger().warn({ piece: { name: piece.name, version: piece.version }, error: error.message }, '[RefetchMissingPieceTranslations] Could not fetch piece from the registry, leaving it untranslated')
-        return 'failed'
+        const outcome = classifyFailure({ error })
+        system.globalLogger().warn({ piece: { name: piece.name, version: piece.version }, outcome, error: error.message }, outcome === 'transient'
+            ? '[RefetchMissingPieceTranslations] Registry request failed, the run retries if too many fail'
+            : '[RefetchMissingPieceTranslations] Registry will not serve this version, leaving it untranslated')
+        return outcome
     }
     if (!isVersionRef(body) || versionKey(body) !== versionKey(piece)) {
         system.globalLogger().warn({ piece: { name: piece.name, version: piece.version } }, '[RefetchMissingPieceTranslations] Registry returned a different piece version, leaving it untranslated')
@@ -81,6 +103,20 @@ async function restoreTranslations({ queryRunner, piece }: RestoreTranslationsPa
     return 'restored'
 }
 
+async function fetchPieceVersion({ piece }: { piece: OfficialVersion }): Promise<unknown> {
+    const params = new URLSearchParams({ audience: PieceAudienceFilter.ALL, version: piece.version })
+    const response = await safeHttp.axios.get<unknown>(`${CLOUD_PIECES_URL}/${piece.name}?${params.toString()}`, { timeout: REGISTRY_TIMEOUT_MS })
+    return response.data
+}
+
+function classifyFailure({ error }: { error: Error }): 'notFound' | 'rejected' | 'transient' {
+    const status = isAxiosError(error) ? error.response?.status : undefined
+    if (isNil(status) || status === 408 || status === 429 || status >= 500) {
+        return 'transient'
+    }
+    return status === 404 ? 'notFound' : 'rejected'
+}
+
 function toTranslationRows({ pieceMetadataId, body }: { pieceMetadataId: string, body: unknown }): TranslationRow[] {
     if (!isObject(body) || !('i18n' in body)) {
         return []
@@ -94,6 +130,23 @@ function toTranslationRows({ pieceMetadataId, body }: { pieceMetadataId: string,
     )
 }
 
+function newestVersion({ versions }: { versions: OfficialVersion[] }): OfficialVersion | undefined {
+    return versions
+        .filter((version) => !isNil(semver.valid(version.version)))
+        .reduce<OfficialVersion | undefined>((newest, version) => isNil(newest) || semver.gt(version.version, newest.version) ? version : newest, undefined)
+}
+
+function countOutcomes({ outcomes }: { outcomes: RestoreOutcome[] }): Record<RestoreOutcome, number> {
+    return {
+        restored: outcomes.filter((outcome) => outcome === 'restored').length,
+        untranslated: outcomes.filter((outcome) => outcome === 'untranslated').length,
+        mismatched: outcomes.filter((outcome) => outcome === 'mismatched').length,
+        notFound: outcomes.filter((outcome) => outcome === 'notFound').length,
+        rejected: outcomes.filter((outcome) => outcome === 'rejected').length,
+        transient: outcomes.filter((outcome) => outcome === 'transient').length,
+    }
+}
+
 function versionKey({ name, version }: { name: string, version: string }): string {
     return `${name}@${version}`
 }
@@ -102,25 +155,28 @@ function isVersionRef(value: unknown): value is { name: string, version: string 
     return isObject(value) && 'name' in value && typeof value.name === 'string' && 'version' in value && typeof value.version === 'string'
 }
 
-function isMissingPiece(value: unknown): value is MissingPiece {
-    return isVersionRef(value) && 'id' in value && typeof value.id === 'string'
+function isOfficialVersion(value: unknown): value is OfficialVersion {
+    return isVersionRef(value) && 'id' in value && typeof value.id === 'string' && 'translated' in value && typeof value.translated === 'boolean'
 }
 
 const CLOUD_PIECES_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const BATCH_SIZE = 5
 const REGISTRY_TIMEOUT_MS = 30_000
+const MAX_SKIPPED_TRANSIENT_FAILURES = 5
+const MAX_SKIPPED_TRANSIENT_RATIO = 0.05
 
-type MissingPiece = {
+type OfficialVersion = {
     id: string
     name: string
     version: string
+    translated: boolean
 }
 
-type RestoreOutcome = 'restored' | 'untranslated' | 'mismatched' | 'failed'
+type RestoreOutcome = 'restored' | 'untranslated' | 'mismatched' | 'notFound' | 'rejected' | 'transient'
 
 type RestoreTranslationsParams = {
     queryRunner: QueryRunner
-    piece: MissingPiece
+    piece: OfficialVersion
 }
 
 type TranslationRow = {
