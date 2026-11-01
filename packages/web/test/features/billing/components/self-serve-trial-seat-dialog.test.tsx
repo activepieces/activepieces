@@ -150,7 +150,6 @@ describe('seat dialog after the trial', () => {
     expect(props.targetSeats).toBe(2);
     expect(props.currentUsers).toBe(9);
     expect(props.preselectedUserIds).toEqual(['u1', 'u2']);
-    expect(props.hideEmbeddedUsers).toBe(true);
     expect(screen.getByText('Leaves Oct 26')).toBeDefined();
     expect(
       screen.getByText(
@@ -271,7 +270,6 @@ type DialogProps = {
   description?: string;
   preselectedUserIds?: string[];
   preselectedLabel?: string;
-  hideEmbeddedUsers?: boolean;
   actions?: React.ReactNode;
   onConfirmed: () => void;
 };

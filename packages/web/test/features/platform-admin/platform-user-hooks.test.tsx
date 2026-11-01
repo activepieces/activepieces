@@ -66,22 +66,6 @@ describe('platformUserHooks', () => {
     );
   });
 
-  it('asks the server to leave embedded users out when told to', async () => {
-    listUsers.mockResolvedValueOnce({ data: [{ id: 'member' }], next: null });
-
-    const { result } = renderHook(
-      () => platformUserHooks.useAllUsers({ excludeEmbedded: true }),
-      { wrapper },
-    );
-
-    await waitFor(() =>
-      expect(result.current.data).toEqual([{ id: 'member' }]),
-    );
-    expect(listUsers).toHaveBeenCalledWith(
-      expect.objectContaining({ excludeEmbedded: true }),
-    );
-  });
-
   it('loads every page of invites that hold a seat', async () => {
     listReservingSeats
       .mockResolvedValueOnce({ data: [{ id: 'invite-1' }], next: 'page-2' })

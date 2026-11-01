@@ -41,7 +41,6 @@ export const DeactivateUsersDialog = ({
   actions,
   preselectedUserIds,
   preselectedLabel,
-  hideEmbeddedUsers,
   onConfirmed,
 }: DeactivateUsersDialogProps) => {
   return (
@@ -57,7 +56,6 @@ export const DeactivateUsersDialog = ({
           actions={actions}
           preselectedUserIds={preselectedUserIds}
           preselectedLabel={preselectedLabel}
-          hideEmbeddedUsers={hideEmbeddedUsers}
           onConfirmed={onConfirmed}
           onOpenChange={onOpenChange}
         />
@@ -75,14 +73,11 @@ function DeactivateUsersForm({
   actions,
   preselectedUserIds = [],
   preselectedLabel,
-  hideEmbeddedUsers = false,
   onConfirmed,
   onOpenChange,
 }: DeactivateUsersFormProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const usersQuery = platformUserHooks.useAllUsers({
-    excludeEmbedded: hideEmbeddedUsers,
-  });
+  const usersQuery = platformUserHooks.useAllUsers();
   const invitationsQuery = platformUserHooks.useInvitesReservingSeats();
   const users = usersQuery.data;
   const invitations = invitationsQuery.data;
@@ -372,7 +367,6 @@ type DeactivateUsersDialogProps = {
   actions?: ReactNode;
   preselectedUserIds?: string[];
   preselectedLabel?: string;
-  hideEmbeddedUsers?: boolean;
   onConfirmed: () => void;
 };
 
