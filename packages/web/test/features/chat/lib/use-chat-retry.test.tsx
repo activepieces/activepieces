@@ -44,6 +44,18 @@ describe('useAgentChat retryLastMessage', () => {
     expect(sentFileNames()).toEqual([['notes.txt'], ['notes.txt']]);
   });
 
+  it('retries the message that failed, not an older one from the transcript', async () => {
+    const { result } = renderHook(() => useAgentChat(), { wrapper });
+    const file = new File(['hello'], 'notes.txt', { type: 'text/plain' });
+
+    await act(() => result.current.sendMessage('New question', [file]));
+    await act(() => result.current.retryLastMessage('Older question'));
+
+    await waitFor(() => expect(sentContents()).toHaveLength(2));
+    expect(sentContents()[1]).toBe('New question');
+    expect(sentFileNames()[1]).toEqual(['notes.txt']);
+  });
+
   it('retries a message that only had a file', async () => {
     const { result } = renderHook(() => useAgentChat(), { wrapper });
     const file = new File(['hello'], 'notes.txt', { type: 'text/plain' });
@@ -55,6 +67,12 @@ describe('useAgentChat retryLastMessage', () => {
     expect(sentFileNames()[1]).toEqual(['notes.txt']);
   });
 });
+
+function sentContents(): string[] {
+  return vi
+    .mocked(chatApi.sendMessage)
+    .mock.calls.map(([params]) => params.content);
+}
 
 function sentFileNames(): string[][] {
   return vi
