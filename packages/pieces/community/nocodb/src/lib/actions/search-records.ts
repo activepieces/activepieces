@@ -10,7 +10,7 @@ export const searchRecordsAction = createAction({
   classification: 'SEARCH',
   outputSchema: nocodbSearchRecordsOutputSchema,
   displayName: 'Search Records',
-  description: 'Returns a list of records matching the where condition.',
+  description: 'Finds records in a table, with an optional filter and sort.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -25,21 +25,50 @@ export const searchRecordsAction = createAction({
     whereCondition: Property.LongText({
       displayName: 'Where',
       required: false,
-      description: `Enables you to define specific conditions for filtering records.See docs [here](https://docs.nocodb.com/0.109.7/developer-resources/rest-apis/#comparison-operators).`,
+      description: 'Filter in NocoDB syntax. Leave empty to return all records.',
+      placeholder: '(Status,eq,Active)~and(Price,gt,100)',
     }),
     limit: Property.Number({
-      displayName: 'Limit',
+      displayName: 'Maximum Records',
       required: true,
       defaultValue: 10,
-      description:
-        'Enables you to set a limit on the number of records you want to retrieve.',
+      description: 'NocoDB returns at most 1000 records per search.',
+      display: 'stepper',
+      min: 1,
+      max: 1000,
+      step: 1,
     }),
     sort: Property.LongText({
       displayName: 'Sort',
       required: false,
-      description: `Comma separated field names without space.Example: **field1,-field2** will sort the records first by 'field1' in ascending order and then by 'field2' in descending order.`,
+      description:
+        'Comma-separated field names. Put - before a name to sort descending.',
+      placeholder: 'Name,-CreatedAt',
     }),
   },
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table',
+      icon: 'location',
+      props: ['workspaceId', 'baseId', 'tableId'],
+    },
+    {
+      key: 'filter',
+      display: 'section',
+      label: 'Filter',
+      icon: 'filter',
+      props: ['whereCondition', 'sort'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['columnId', 'limit'],
+    },
+  ],
   async run(context) {
     const { baseId, tableId, columnId, limit, whereCondition, sort } =
       context.propsValue;

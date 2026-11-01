@@ -22,6 +22,22 @@ export const createRecordAction = createAction({
 		tableId: nocodbCommon.tableId,
 		tableColumns: nocodbCommon.tableColumns,
 	},
+	propertyGroups: [
+		{
+			key: 'table',
+			display: 'section',
+			label: 'Table',
+			icon: 'location',
+			props: ['workspaceId', 'baseId', 'tableId'],
+		},
+		{
+			key: 'record',
+			display: 'section',
+			label: 'Record',
+			icon: 'file',
+			props: ['tableColumns'],
+		},
+	],
 	async run(context) {
 		const { baseId, tableId, tableColumns } = context.propsValue;
 		const recordInput: DynamicPropsValue = {};
