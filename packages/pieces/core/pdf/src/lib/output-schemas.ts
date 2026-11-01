@@ -52,3 +52,88 @@ export const convertToImageActionOutputSchema: OutputSchema = {
     },
   ],
 };
+
+export const fillPdfFormActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'file',
+      label: 'File',
+      format: 'url',
+      description:
+        'The filled PDF, ready to merge, attach to an email or upload.',
+    },
+    { key: 'fileName', label: 'File Name' },
+  ],
+};
+
+export const inspectPdfFormActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'kind',
+      label: 'Form Kind',
+      description:
+        'acroform: a fillable form Fill PDF Form can fill. xfa: an Adobe XFA form, which it cannot fill. flat: no form fields. encrypted: password-protected, so the fields cannot be read.',
+    },
+    {
+      key: 'pageCount',
+      label: 'Page Count',
+      format: 'number',
+      description: 'Empty when the PDF could not be opened.',
+    },
+    {
+      key: 'fields',
+      label: 'Fields',
+      labelKey: 'name',
+      description:
+        'In page order, top to bottom. Empty unless the kind is acroform.',
+      listItems: [
+        {
+          key: 'name',
+          label: 'Name',
+          description: "The key to use in Fill PDF Form's Data (JSON).",
+        },
+        {
+          key: 'label',
+          label: 'Label',
+          description:
+            'The tooltip the form shows for this field, if it has one.',
+        },
+        {
+          key: 'type',
+          label: 'Type',
+          description:
+            'text, checkbox, radio, dropdown, list, button or signature.',
+        },
+        { key: 'page', label: 'Page', format: 'number' },
+        { key: 'required', label: 'Required', format: 'boolean' },
+        { key: 'readOnly', label: 'Read-Only', format: 'boolean' },
+        {
+          key: 'maxLength',
+          label: 'Max Length',
+          format: 'number',
+          description:
+            'The most characters a text field takes, if it has a limit.',
+        },
+        { key: 'multiline', label: 'Multiline', format: 'boolean' },
+        {
+          key: 'multiSelect',
+          label: 'Multiple Choices',
+          format: 'boolean',
+          description: 'Whether a dropdown or list takes more than one option.',
+        },
+        {
+          key: 'options',
+          label: 'Options',
+          description: 'The allowed values of a radio, dropdown or list field.',
+        },
+      ],
+    },
+    {
+      key: 'emptyData',
+      label: 'Empty Data',
+      dynamicKey: true,
+      description:
+        "Every fillable field set to null. Paste it into Fill PDF Form's Data (JSON) and replace the nulls with values.",
+    },
+  ],
+};
