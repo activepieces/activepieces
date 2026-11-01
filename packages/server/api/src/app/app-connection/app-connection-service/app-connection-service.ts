@@ -297,26 +297,25 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const flows = await flowService(log).list({
             projectIds: [projectId],
             cursorRequest: null,
-            limit: flowIds.length,
             folderId: undefined,
             name: undefined,
             status: undefined,
             flowIds,
         })
-        const foundFlowIds = new Set(flows.data.map((flow) => flow.id))
-        const missingFlowIds = unique(flowIds).filter((flowId) => !foundFlowIds.has(flowId))
-        if (missingFlowIds.length > 0) {
+        if (flows.data.length !== unique(flowIds).length) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: `Flows not found in this project: ${missingFlowIds.join(', ')}`,
+                    message: `Flows not found in this project: ${unique(flowIds).filter((flowId) => !flows.data.some((flow) => flow.id === flowId)).join(', ')}`,
                 },
             })
         }
-        await appConnectionHandler(log).replaceConnectionInFlows(flows.data, {
+        await appConnectionHandler(log).replaceConnectionInFlows({
+            flows: flows.data,
             appConnection: sourceAppConnection,
             newAppConnection: targetAppConnection,
             userId,
+            platformId,
             applyToPublishedVersions,
         })
         log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length, applyToPublishedVersions }, 'App connection replaced')

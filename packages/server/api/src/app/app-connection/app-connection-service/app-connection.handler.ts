@@ -11,7 +11,6 @@ import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/fl
 import { encryptUtils } from '../../helper/encryption'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { AppConnectionSchema } from '../app-connection.entity'
 import { appConnectionsRepo } from './app-connection-service'
@@ -19,21 +18,15 @@ import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 
 export const appConnectionHandler = (log: FastifyBaseLogger) => ({
-    async replaceConnectionInFlows(flows: PopulatedFlow[], params: ReplaceConnectionInFlowsParams): Promise<void> {
-        const { appConnection, newAppConnection, userId, applyToPublishedVersions } = params
+    async replaceConnectionInFlows({ flows, appConnection, newAppConnection, userId, platformId, applyToPublishedVersions }: ReplaceConnectionInFlowsParams): Promise<void> {
         const flowIdsToRepublish = applyToPublishedVersions
             ? await findFlowIdsToRepublish({ flows, externalId: appConnection.externalId })
             : new Set<FlowId>()
 
         await Promise.all(flows.map(async (flow) => {
-            const project = await projectService(log).getOneOrThrow(flow.projectId)
-            const latestVersion = await flowVersionService(log).getFlowVersionOrThrow({
-                flowId: flow.id,
-                versionId: undefined,
-            })
-            const replaceParams = { flow, latestVersion, userId, platformId: project.platformId, appConnection, newAppConnection, log }
+            const replaceParams = { flow, latestVersion: flow.version, userId, platformId, appConnection, newAppConnection, log }
             if (flowIdsToRepublish.has(flow.id)) {
-                await replaceConnectionInPublishedVersion(replaceParams)
+                await replaceConnectionInPublishedAndDraft(replaceParams)
                 return
             }
             await replaceConnectionInDraft(replaceParams)
@@ -338,7 +331,7 @@ async function findFlowIdsToRepublish({ flows, externalId }: FindFlowIdsToRepubl
     return new Set(rows.map((row) => row.flowId))
 }
 
-async function replaceConnectionInPublishedVersion(params: ReplaceConnectionInPublishedVersionParams): Promise<void> {
+async function replaceConnectionInPublishedAndDraft(params: ReplaceConnectionInPublishedAndDraftParams): Promise<void> {
     const { flow, latestVersion, userId, platformId, appConnection, newAppConnection, log } = params
     const projectId = flow.projectId
     const publishedVersionId = flow.publishedVersionId
@@ -425,9 +418,11 @@ type ReplaceConnectionInFlowVersionParams = {
 }
 
 type ReplaceConnectionInFlowsParams = {
+    flows: PopulatedFlow[]
     appConnection: AppConnectionWithoutSensitiveData
     newAppConnection: AppConnectionWithoutSensitiveData
     userId: UserId
+    platformId: PlatformId
     applyToPublishedVersions: boolean
 }
 
@@ -447,6 +442,6 @@ type ReplaceConnectionInDraftParams = {
     log: FastifyBaseLogger
 }
 
-type ReplaceConnectionInPublishedVersionParams = ReplaceConnectionInDraftParams & {
+type ReplaceConnectionInPublishedAndDraftParams = ReplaceConnectionInDraftParams & {
     flow: PopulatedFlow
 }
