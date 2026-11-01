@@ -866,7 +866,10 @@ export function useAgentChat({
           setOptimisticUserMessage(null);
           updateSendStatus({
             type: 'error',
-            message: convError.message ?? 'Failed to start conversation',
+            message: api.extractServerErrorMessage(
+              convError,
+              'Failed to start conversation',
+            ),
           });
           return;
         }
@@ -928,7 +931,10 @@ export function useAgentChat({
         } else {
           updateSendStatus({
             type: 'error',
-            message: sendError.message ?? 'Failed to send message',
+            message: api.extractServerErrorMessage(
+              sendError,
+              'Failed to send message',
+            ),
           });
         }
       }
