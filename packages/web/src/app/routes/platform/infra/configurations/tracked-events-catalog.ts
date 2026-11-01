@@ -156,7 +156,7 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
   },
   [TelemetryEventName.PLATFORM_ADMIN_CONTROL_CLICKED]: {
     group: 'platformAdmin',
-    label: t('Clicked a button on a platform administration page'),
+    label: t('Clicked an administration or billing button'),
   },
 });
 

@@ -15,6 +15,7 @@ import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
+import { AdminControlClicksLayout } from '../components/admin-control-clicks-layout';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { RouteErrorBoundary } from '../components/global-error-boundary';
 import { ProjectDashboardLayout } from '../components/project-layout';
@@ -132,8 +133,16 @@ const routesWithErrorBoundary = routes.map((route) => ({
   ...route,
 }));
 
-export const memoryRouter = createMemoryRouter(routesWithErrorBoundary);
-const browserRouter = createBrowserRouter(routesWithErrorBoundary);
+const appRoutes = [
+  {
+    errorElement: <RouteErrorBoundary />,
+    element: <AdminControlClicksLayout routes={routesWithErrorBoundary} />,
+    children: routesWithErrorBoundary,
+  },
+];
+
+export const memoryRouter = createMemoryRouter(appRoutes);
+const browserRouter = createBrowserRouter(appRoutes);
 
 const ApRouter = () => {
   const { embedState } = useEmbedding();
