@@ -144,7 +144,14 @@ export const query = createAction({
           httpsAgent,
         });
 
-        const proxied_response = await axiosClient.request(request);
+        const proxied_response = await axiosClient.request({
+          method: request.method,
+          url: request.url,
+          params: request.queryParams,
+          headers: { 'Content-Type': 'application/json', ...request.headers },
+          data: request.body,
+          timeout: request.timeout,
+        });
         return proxied_response.data;
       }
       return await httpClient.sendRequest(request);
