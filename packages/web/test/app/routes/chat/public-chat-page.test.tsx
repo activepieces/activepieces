@@ -5,6 +5,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { ChatDrawerSource } from '@/app/builder/types';
 import { ChatPage } from '@/app/routes/chat';
 
 const { useGetFlow } = vi.hoisted(() => ({
@@ -38,7 +39,9 @@ describe('public chat page', () => {
   it('opens the draft chat when the link asks for it', () => {
     renderAt('/chats/flow-1?useDraft=true');
 
-    expect(screen.queryByText('chat mode: null')).toBeNull();
+    expect(
+      screen.getByText(`chat mode: ${ChatDrawerSource.TEST_FLOW}`),
+    ).toBeTruthy();
     expect(useGetFlow).not.toHaveBeenCalled();
   });
 });
