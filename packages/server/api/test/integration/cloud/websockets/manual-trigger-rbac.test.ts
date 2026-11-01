@@ -75,3 +75,37 @@ describe('Websocket MANUAL_TRIGGER_RUN_STARTED RBAC', () => {
         expect(await didStartManualRun(editor)).toBe(true)
     })
 })
+
+async function didStartTestRun(ctx: TestContext): Promise<boolean> {
+    const test = vi.fn().mockResolvedValue({ id: apId() })
+    vi.spyOn(flowRunServiceModule, 'flowRunService').mockReturnValue(
+        { test } as unknown as ReturnType<typeof flowRunServiceModule.flowRunService>,
+    )
+
+    const { socket, handlers } = buildFakeSocket(ctx.token, ctx.project.id)
+    await websocketService.init(socket, app.log)
+
+    const handler = handlers[WebsocketServerEvent.TEST_FLOW_RUN]
+    await handler({ flowVersionId: apId() })
+
+    return test.mock.calls.length > 0
+}
+
+describe('Websocket TEST_FLOW_RUN RBAC', () => {
+    async function setup(): Promise<{ viewer: TestContext, editor: TestContext }> {
+        const admin = await createTestContext(app)
+        const viewer = await createMemberContext(app, admin, { projectRole: DefaultProjectRole.VIEWER })
+        const editor = await createMemberContext(app, admin, { projectRole: DefaultProjectRole.EDITOR })
+        return { viewer, editor }
+    }
+
+    it('blocks a Viewer from starting a test run', async () => {
+        const { viewer } = await setup()
+        expect(await didStartTestRun(viewer)).toBe(false)
+    })
+
+    it('allows an Editor to start a test run', async () => {
+        const { editor } = await setup()
+        expect(await didStartTestRun(editor)).toBe(true)
+    })
+})
