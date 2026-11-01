@@ -1,4 +1,4 @@
-import { chunk, groupBy, isNil, isObject, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
+import { chunk, isNil, isObject, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
 import { ApEdition, PieceAudienceFilter, PieceSyncMode } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
@@ -18,7 +18,7 @@ export class RefetchMissingPieceTranslations1879000000000 implements BackgroundM
             return
         }
         const versions = await listOfficialVersions({ queryRunner })
-        const candidates = selectCandidates({ versions })
+        const candidates = versions.filter((version) => !version.translated)
         if (candidates.length === 0) {
             return
         }
@@ -32,7 +32,7 @@ export class RefetchMissingPieceTranslations1879000000000 implements BackgroundM
         )
         const counts = countOutcomes({ outcomes })
         system.globalLogger().info({
-            migration: { name: this.name, untranslatedVersions: versions.filter((version) => !version.translated).length, candidates: candidates.length, ...counts },
+            migration: { name: this.name, candidates: candidates.length, ...counts },
         }, '[RefetchMissingPieceTranslations] Restored translations for piece versions synced without them')
         if (counts.transient > Math.max(MAX_SKIPPED_TRANSIENT_FAILURES, candidates.length * MAX_SKIPPED_TRANSIENT_RATIO)) {
             throw new Error(`Registry failed transiently for ${counts.transient} of ${candidates.length} piece versions; retrying the remaining ones later`)
@@ -52,14 +52,6 @@ async function listOfficialVersions({ queryRunner }: { queryRunner: QueryRunner 
          WHERE pm."pieceType" = 'OFFICIAL'
     `)
     return Array.isArray(rows) ? rows.filter(isOfficialVersion) : []
-}
-
-function selectCandidates({ versions }: { versions: OfficialVersion[] }): OfficialVersion[] {
-    return Object.values(groupBy(versions, (version) => version.name)).flatMap((pieceVersions) => {
-        const [oldestTranslated] = sortBySemver({ versions: pieceVersions.filter((version) => version.translated) })
-        return pieceVersions.filter((version) => !version.translated
-            && (isNil(oldestTranslated) || isNil(semver.valid(version.version)) || semver.gt(version.version, oldestTranslated.version)))
-    })
 }
 
 async function assertRegistryServesTranslations({ versions }: { versions: OfficialVersion[] }): Promise<void> {

@@ -68,11 +68,21 @@ describe('RefetchMissingPieceTranslations', () => {
         expect(getMock.mock.calls.every(([, config]) => typeof config?.timeout === 'number' && config.timeout > 0)).toBe(true)
     })
 
-    it('does not fetch untranslated versions older than the first translated version of the same piece', async () => {
+    it('fetches every untranslated version, including ones older than a translated version of the same piece', async () => {
         await runThroughRunner()
 
-        expect(fetchedVersions()).not.toContain(key(untranslatedBeforeLastGoodSync))
-        expect(fetchedVersions()).not.toContain(key(lastGoodSync))
+        expect(fetchedVersions()).toContain(key(untranslatedBeforeLastGoodSync))
+        expect(await translationsOf(untranslatedBeforeLastGoodSync.id)).toEqual(REGISTRY_I18N)
+    })
+
+    it('does not fetch versions that are already translated, except as a canary', async () => {
+        const translatedOlder = officialPiece({ name: '@activepieces/piece-refetch-slack', version: '0.20.0', i18n: REGISTRY_I18N })
+        await seed({ pieces: [translatedOlder] })
+
+        await runThroughRunner()
+
+        expect(fetchedVersions()).not.toContain(key(translatedOlder))
+        expect(fetchedVersions().filter((fetched) => fetched === key(lastGoodSync)).length).toBeLessThanOrEqual(1)
     })
 
     it('repairs a broken version even after sync installed a newer translated version once the cloud fix was live', async () => {
@@ -82,7 +92,6 @@ describe('RefetchMissingPieceTranslations', () => {
         await runThroughRunner()
 
         expect(await translationsOf(brokenAfterLastGoodSync.id)).toEqual(REGISTRY_I18N)
-        expect(fetchedVersions()).not.toContain(key(untranslatedBeforeLastGoodSync))
     })
 
     it('repairs on the retry a broken version that failed while a newer one was restored', async () => {
