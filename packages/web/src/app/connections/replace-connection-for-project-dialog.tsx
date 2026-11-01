@@ -28,6 +28,7 @@ import {
 import { Form } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+  appConnectionsApi,
   appConnectionsMutations,
   appConnectionsQueries,
 } from '@/features/connections';
@@ -35,7 +36,7 @@ import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { flowHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 
-import { DeleteReplacedConnectionDialog } from './delete-replaced-connection-dialog';
+import { DeleteConnectionsDialog } from './delete-connections-dialog';
 import {
   ReplaceConnectionSelection,
   ReplaceConnectionSelectionFields,
@@ -66,12 +67,20 @@ const ReplaceConnectionForProjectDialog = ({
         </DialogContent>
       </Dialog>
       {connectionToDelete && (
-        <DeleteReplacedConnectionDialog
-          connection={connectionToDelete}
-          projectId={projectId}
-          onClose={() => {
-            setConnectionToDelete(null);
-            onConnectionMerged();
+        <DeleteConnectionsDialog
+          connections={[connectionToDelete]}
+          title={t('Delete the old connection?')}
+          message={t(
+            'The replace is done. Delete {name} now, or keep it to use later.',
+            { name: connectionToDelete.displayName },
+          )}
+          mutationFn={() => appConnectionsApi.delete(connectionToDelete.id)}
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setConnectionToDelete(null);
+              onConnectionMerged();
+            }
           }}
         />
       )}
@@ -98,6 +107,15 @@ function ReplaceConnectionForProjectForm({
       staleTime: 0,
     });
 
+  const { mutate: checkConnectionInUse } =
+    appConnectionsMutations.useCheckConnectionInUse({
+      onChecked: (inUse) => {
+        if (!inUse && sourceConnection) {
+          onOfferToDeleteSource(sourceConnection);
+        }
+      },
+    });
+
   const { mutate: replaceConnections, isPending: isReplacing } =
     appConnectionsMutations.useReplaceConnections({
       setDialogOpen,
@@ -105,7 +123,7 @@ function ReplaceConnectionForProjectForm({
       refetch: () => {
         onConnectionMerged();
         if (sourceConnection && canDeleteSource) {
-          onOfferToDeleteSource(sourceConnection);
+          checkConnectionInUse(sourceConnection);
         }
       },
     });

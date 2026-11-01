@@ -827,7 +827,7 @@
   "Select a piece": "Select a piece",
   "Connection to replace": "Connection to replace",
   "Choose connection to replace": "Choose connection to replace",
-  "Replaced With": "Replaced With",
+  "Replace with": "Replace with",
   "Choose connection to replace with": "Choose connection to replace with",
   "No flows use this connection yet": "No flows use this connection yet",
   "flowsUsingConnection": "{count, plural, =1 {1 flow uses this connection} other {# flows use this connection}}",
@@ -836,10 +836,6 @@
   "Draft only": "Draft only",
   "Draft and published": "Draft and published",
   "This project needs approval to publish. Each affected flow gets a new publish request, which replaces any request that is already waiting for that flow.": "This project needs approval to publish. Each affected flow gets a new publish request, which replaces any request that is already waiting for that flow.",
-  "After replacing": "After replacing",
-  "Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. In a project that needs approval to publish, delete it after the flows are approved. Global connections can only be deleted from the platform admin page.": "Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. In a project that needs approval to publish, delete it after the flows are approved. Global connections can only be deleted from the platform admin page.",
-  "Keep the old connection": "Keep the old connection",
-  "Delete the old connection": "Delete the old connection",
   "Disable Secret Manager": "Disable Secret Manager",
   "Use Secret Manager": "Use Secret Manager",
   "Select connection": "Select connection",
@@ -3722,6 +3718,6 @@
   "Available on self-hosted Activepieces. Talk to sales to set it up.": "Available on self-hosted Activepieces. Talk to sales to set it up.",
   "Delete the old connection?": "Delete the old connection?",
   "The replace is done. Delete {name} now, or keep it to use later.": "The replace is done. Delete {name} now, or keep it to use later.",
-  "These still use the connection and stop working if you delete it:": "These still use the connection and stop working if you delete it:",
-  "A replace changes up to {max} flows.": "A replace changes up to {max} flows."
+  "A replace changes up to {max} flows.": "A replace changes up to {max} flows.",
+  "These still use the connection and stop working if you delete it:": "These still use the connection and stop working if you delete it:"
 }

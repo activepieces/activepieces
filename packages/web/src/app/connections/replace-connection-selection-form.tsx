@@ -125,7 +125,7 @@ const ReplaceConnectionSelectionFields = ({
             }}
             render={({ field }) => (
               <div className="flex flex-col gap-2">
-                <Label>{t('Replaced With')}</Label>
+                <Label>{t('Replace with')}</Label>
                 <SearchableSelect
                   value={field.value}
                   loading={loading}

@@ -6,23 +6,26 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { DeleteConnectionWarning } from '@/components/custom/global-connection-utils';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  appConnectionsApi,
-  appConnectionsQueries,
-} from '@/features/connections';
+import { appConnectionsQueries } from '@/features/connections';
+import { AdminControl } from '@/lib/admin-control';
 
-function DeleteReplacedConnectionDialog({
-  connection,
-  projectId,
-  onClose,
-}: DeleteReplacedConnectionDialogProps) {
+function DeleteConnectionsDialog({
+  connections,
+  title,
+  message,
+  mutationFn,
+  open,
+  onOpenChange,
+  controlId,
+  children,
+}: DeleteConnectionsDialogProps) {
   const {
     data: usage,
     isLoading,
     isError,
-  } = appConnectionsQueries.useFlowsAndAgentsUsingConnection({
-    projectId,
-    externalId: connection.externalId,
+  } = appConnectionsQueries.useFlowsAndAgentsUsingConnections({
+    connections,
+    enabled: open,
   });
   const flows = usage?.flows ?? [];
   const agents = usage?.agents ?? [];
@@ -30,17 +33,10 @@ function DeleteReplacedConnectionDialog({
 
   return (
     <ConfirmationDeleteDialog
-      open
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-        }
-      }}
-      title={t('Delete the old connection?')}
-      message={t(
-        'The replace is done. Delete {name} now, or keep it to use later.',
-        { name: connection.displayName },
-      )}
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      message={message}
       warning={
         isError ? (
           <DeleteConnectionWarning />
@@ -76,19 +72,27 @@ function DeleteReplacedConnectionDialog({
           </div>
         ) : undefined
       }
-      mutationFn={() => appConnectionsApi.delete(connection.id)}
+      mutationFn={mutationFn}
       entityName={t('connection')}
       buttonText={t('Delete')}
-      confirmDisabled={isLoading}
+      confirmDisabled={isLoading || isError}
+      controlId={controlId}
       showToast
-    />
+    >
+      {children}
+    </ConfirmationDeleteDialog>
   );
 }
 
-export { DeleteReplacedConnectionDialog };
+export { DeleteConnectionsDialog };
 
-type DeleteReplacedConnectionDialogProps = {
-  connection: AppConnectionWithoutSensitiveData;
-  projectId: string;
-  onClose: () => void;
+type DeleteConnectionsDialogProps = {
+  connections: AppConnectionWithoutSensitiveData[];
+  title: string;
+  message: string;
+  mutationFn: () => Promise<void>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  controlId?: AdminControl;
+  children?: React.ReactNode;
 };
