@@ -34,8 +34,7 @@ export const fillPdfForm = createAction({
     fields: Property.DynamicProperties({
       auth: PieceAuth.None(),
       displayName: 'Fields',
-      description:
-        'One input per form field. They appear once the PDF Form is set, or mapped from a step you have tested.',
+      description: 'One input per form field, shown once the PDF Form is set.',
       required: false,
       refreshers: ['file'],
       props: async ({ file }) => formFields(file),
@@ -43,13 +42,13 @@ export const fillPdfForm = createAction({
     data: Property.Json({
       displayName: 'Data (JSON)',
       description:
-        "Optional. An object of field names and values, such as Inspect PDF Form's Empty Data with the nulls replaced. It wins over the inputs above for the same field.",
+        'Field names and values as one object. Wins over the inputs above.',
       required: false,
     }),
     flatten: Property.Checkbox({
       displayName: 'Flatten Form',
       description:
-        'Lock the values into the page so they can no longer be edited. Keep it on before Merge PDFs, which drops form fields.',
+        'Lock the values into the page. Keep it on before Merge PDFs.',
       required: false,
       defaultValue: true,
     }),

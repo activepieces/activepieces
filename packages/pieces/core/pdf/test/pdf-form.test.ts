@@ -799,16 +799,24 @@ describe('fillPdfForm text size', () => {
     const pdf = await buildPdf({
       build: ({ form, pages }) => {
         const page = pages[0];
-        const add = (name: string, y: number, width: number) => {
+        const add = ({
+          name,
+          y,
+          width,
+        }: {
+          name: string;
+          y: number;
+          width: number;
+        }) => {
           const field = form.createTextField(name);
           field.addToPage(page, { x: 50, y, width, height: 20 });
           field.setFontSize(12);
           return field;
         };
-        add('short', 740, 200);
-        add('long', 700, 120);
-        add('notes', 660, 60).enableMultiline();
-        const comb = add('comb', 620, 60);
+        add({ name: 'short', y: 740, width: 200 });
+        add({ name: 'long', y: 700, width: 120 });
+        add({ name: 'notes', y: 660, width: 60 }).enableMultiline();
+        const comb = add({ name: 'comb', y: 620, width: 60 });
         comb.setMaxLength(5);
         comb.enableCombing();
       },
