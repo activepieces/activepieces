@@ -79,6 +79,26 @@ describe('systemJobFailurePager.pageOnFinalFailure', () => {
         expect(payload.params.pendingMigrations).toBeNull()
     })
 
+    it('still pages, saying the pending list is unknown, when the lookup hangs on an exhausted database pool', async () => {
+        vi.useFakeTimers({ toFake: ['setTimeout'] })
+        listPendingMock.mockReturnValue(new Promise(() => undefined))
+
+        systemJobFailurePager.pageOnFinalFailure({
+            jobName: SystemJobName.RUN_BACKGROUND_MIGRATIONS,
+            jobId: 'run-background-migrations',
+            attemptsMade: 10,
+            error: new Error('job stalled more than allowable limit'),
+            log,
+        })
+        await vi.advanceTimersByTimeAsync(5_000)
+        vi.useRealTimers()
+
+        await vi.waitFor(() => expect(pageMock).toHaveBeenCalled())
+        const [payload] = pageMock.mock.calls[0]
+        expect(payload.message).toContain('Pending: unknown')
+        expect(payload.params.pendingMigrations).toBeNull()
+    })
+
     it('does not page for system jobs outside the paged set', async () => {
         systemJobFailurePager.pageOnFinalFailure({
             jobName: SystemJobName.FILE_CLEANUP_TRIGGER,

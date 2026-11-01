@@ -29,7 +29,10 @@ export const systemJobFailurePager = {
 }
 
 async function listPendingMigrations({ log }: { log: FastifyBaseLogger }): Promise<string[] | undefined> {
-    const { data, error } = await tryCatch(async () => backgroundMigrationRunner.listPending())
+    const { data, error } = await tryCatch(async () => Promise.race([
+        backgroundMigrationRunner.listPending(),
+        rejectAfter({ ms: PENDING_LOOKUP_TIMEOUT_MS }),
+    ]))
     if (error) {
         log.error({ error: error.message }, '[systemJob#worker] Could not list pending background migrations for the on-call page')
         return undefined
@@ -37,7 +40,14 @@ async function listPendingMigrations({ log }: { log: FastifyBaseLogger }): Promi
     return data
 }
 
+function rejectAfter({ ms }: { ms: number }): Promise<never> {
+    return new Promise((_resolve, reject) => {
+        setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms).unref()
+    })
+}
+
 const PAGED_SYSTEM_JOBS = new Set<string>([SystemJobName.RUN_BACKGROUND_MIGRATIONS])
+const PENDING_LOOKUP_TIMEOUT_MS = 5_000
 
 type GaveUpParams = {
     attemptsMade: number
