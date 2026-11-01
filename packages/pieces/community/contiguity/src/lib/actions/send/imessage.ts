@@ -5,6 +5,7 @@ import {
 import { contiguityAuth } from '../../..';
 import {
     InputPropertyMap,
+    MarkdownVariant,
     Property,
     createAction,
 } from '@activepieces/pieces-framework';
@@ -16,39 +17,47 @@ export const send_iMessage = createAction({
     name: 'send_imessage',
     classification: 'WRITE',
     displayName: 'Send iMessage',
-    description: 'Send an iMessage',
+    description: 'Send an iMessage, with an optional SMS/RCS fallback.',
     audience: 'both',
     aiMetadata: { description: 'Sends an outbound iMessage through Contiguity to a recipient phone number, optionally with attachments (up to 10 HTTPS file URLs) and an SMS/RCS fallback that can trigger when iMessage is unsupported and/or fails. Choose this to message Apple/iMessage recipients; the recipient number must be in E.164 format and the message body is required. Not idempotent: each call dispatches a new message.', idempotent: false },
     props: {
+        numbers_note: Property.MarkDown({
+            value: 'Use international format: a + followed by the country code and number.',
+            variant: MarkdownVariant.INFO,
+        }),
         to: Property.ShortText({
             displayName: 'To',
-            description: 'Recipient phone number in E.164 format',
+            description: 'The mobile number that receives the message.',
+            placeholder: '+15555550123',
+            width: 'half',
             required: true,
         }),
         from: Property.ShortText({
             displayName: 'From',
-            description: 'Your leased iMessage number.',
+            description: 'A number you lease from Contiguity.',
+            placeholder: '+15555550123',
+            width: 'half',
             required: false,
         }),
         message: Property.LongText({
             displayName: 'Message',
-            description: 'iMessage content',
+            description: 'Plain text. Formatting is not supported.',
             required: true,
         }),
         fallback: Property.Checkbox({
-            displayName: 'SMS/RCS Fallback',
-            description: 'Fallback to SMS/RCS when iMessage fails or unsupported',
+            displayName: 'Use SMS/RCS Fallback',
+            description: 'Send as SMS/RCS instead when iMessage cannot be delivered.',
             required: false,
             defaultValue: false,
         }),
         fallback_when: Property.DynamicProperties({
             auth: contiguityAuth,
-            displayName: "When to fallback",
-            description: 'Conditions that trigger SMS/RCS fallback',
+            displayName: 'Fallback Options',
+            description: 'When to fall back, and which number sends the SMS/RCS.',
             required: true,
             refreshers: ['fallback'],
             props: async (propsValue): Promise<InputPropertyMap> => {
-                const fallback = propsValue['fallback'] as unknown as boolean;
+                const fallback = propsValue['fallback'] === true;
 
                 if (!fallback){
                     return{}
@@ -57,19 +66,20 @@ export const send_iMessage = createAction({
                 if (fallback){
                     return{
                         when: Property.StaticMultiSelectDropdown({
-                            displayName: "When to fallback",
-                            description: "Conditions that trigger SMS/RCS fallback",
+                            displayName: 'Fall Back When',
+                            description: 'Pick one or both.',
                             required: true,
                             options: {
                                 options:[
-                                    { label: 'iMessage Unsupported', value: 'imessage_unsupported' },
-                                    { label: 'iMessage Fails', value: 'imessage_fails' },
+                                    { label: 'Recipient has no iMessage', value: 'imessage_unsupported' },
+                                    { label: 'iMessage delivery fails', value: 'imessage_fails' },
                                 ]
                             }
                         }),
                         from: Property.ShortText({
-                            displayName: 'Fallback From Number',
-                            description: 'SMS/RCS number for fallback',
+                            displayName: 'Fallback From',
+                            description: 'A number you lease from Contiguity for the SMS/RCS.',
+                            placeholder: '+15555550123',
                             required: false,
                         }),
                     };
@@ -79,17 +89,41 @@ export const send_iMessage = createAction({
         }),
         attachments: Property.Array({
             displayName: 'Attachments',
-            description: 'File URLs (max 10, 50MB total, HTTPS required)',
+            description: 'Up to 10 HTTPS file links, 50 MB in total.',
             required: false,
             properties: {
                 url: Property.ShortText({
                     displayName: 'File URL',
-                    description: 'HTTPS URL with file extension',
+                    description: 'Must start with https:// and end in a file extension.',
+                    placeholder: 'https://example.com/photo.png',
                     required: true,
                 }),
             },
         }),
     },
+    propertyGroups: [
+        {
+            key: 'numbers',
+            display: 'section',
+            label: 'Phone Numbers',
+            icon: 'send',
+            props: ['numbers_note', 'to', 'from'],
+        },
+        {
+            key: 'content',
+            display: 'section',
+            label: 'Content',
+            icon: 'text',
+            props: ['message', 'attachments'],
+        },
+        {
+            key: 'fallback',
+            display: 'section',
+            label: 'Fallback',
+            icon: 'reply',
+            props: ['fallback', 'fallback_when'],
+        },
+    ],
     async run(context) {
         await propsValidation.validateZod(context.propsValue, {
             to: z.string().check(z.regex(/^\+\d{1,4}\d+$/, 'Invalid E.164 format')),
