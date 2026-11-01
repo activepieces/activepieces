@@ -26,6 +26,7 @@
     "AP_OPENAI_API_KEY",
     "AP_PIECES_SYNC_MODE"
   ],
+  "globalDependencies": ["tsconfig.base.json", "packages/server/tsconfig.server.json"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -42,13 +43,15 @@
     "web#build": {
       "dependsOn": ["^build"],
       "outputs": ["../../dist/packages/web/**"],
+      "env": ["AP_BUILD_SOURCEMAP"],
       "inputs": [
-        "src/**",
-        "tsconfig*.json",
-        "package.json",
-        "vite.config.*",
+        "$TURBO_DEFAULT$",
         "!src/**/*.spec.ts",
-        "!src/**/*.test.ts"
+        "!src/**/*.spec.tsx",
+        "!src/**/*.test.ts",
+        "!src/**/*.test.tsx",
+        "!test/**",
+        "!vitest.config.*"
       ]
     },
     "api#build": {
@@ -56,6 +59,7 @@
       "outputs": ["dist/**"],
       "inputs": [
         "src/**",
+        "types/**",
         "tsconfig*.json",
         "package.json",
         "!src/**/*.spec.ts",
@@ -63,10 +67,17 @@
       ]
     },
     "@activepieces/engine#build": {
-      "dependsOn": [],
+      "dependsOn": ["^build"],
       "outputs": ["../../../dist/packages/engine/**"],
       "inputs": [
         "src/**",
+        "$TURBO_ROOT$/packages/core/shared/src/**",
+        "$TURBO_ROOT$/packages/pieces/framework/src/**",
+        "$TURBO_ROOT$/packages/pieces/common/src/**",
+        "$TURBO_ROOT$/packages/core/utils/src/**",
+        "$TURBO_ROOT$/packages/core/piece-types/src/**",
+        "$TURBO_ROOT$/packages/core/formula/src/**",
+        "$TURBO_ROOT$/packages/core/execution/src/**",
         "tsconfig*.json",
         "package.json",
         "esbuild.config.mjs",
@@ -84,6 +95,11 @@
       ],
       "outputs": ["../../../dist/packages/ee/embed-sdk/**"],
       "cache": false
+    },
+    "ee-embed-sdk#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["../../../dist/packages/ee/embed-sdk/**"],
+      "inputs": ["src/**", "tsconfig*.json", "package.json", "!src/**/*.spec.ts", "!src/**/*.test.ts"]
     },
     "@activepieces/cli#build": {
       "dependsOn": ["^build"],
