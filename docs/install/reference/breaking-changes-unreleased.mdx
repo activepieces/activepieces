@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Audit logs: SAML and embedded sign-ins no longer send `user.signed.up` on every sign-in
+
+`user.signed.up` used to fire on every SAML and embedded (JWT) sign-in, even for existing members. It now fires once, when the member is created. Every later sign-in, by any method, sends the new `user.signed.in` event, which carries the sign-in method.
+
+#### What you need to do
+
+- If an Event Streaming destination used `user.signed.up` to track logins, subscribe it to `user.signed.in` as well.
+
 #### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
 
 **Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.
