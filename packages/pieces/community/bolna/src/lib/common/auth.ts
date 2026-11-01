@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { makeRequest } from './client';
+import { BolnaApiError, bolnaClient } from './client';
 
 export const bolnaaiAuth = PieceAuth.SecretText({
   displayName: 'Bolna AI API Key',
@@ -14,22 +14,27 @@ To get your API Key:
 `,
   required: true,
   validate: async ({ auth }) => {
-    if (auth) {
-      try {
-        await makeRequest(auth, HttpMethod.GET, '/agent/all');
-        return {
-          valid: true,
-        };
-      } catch (error) {
-        return {
-          valid: false,
-          error: 'Invalid Api Key',
-        };
-      }
+    if (!auth) {
+      return { valid: false, error: 'Invalid Api Key' };
     }
-    return {
-      valid: false,
-      error: 'Invalid Api Key',
-    };
+    try {
+      await bolnaClient.makeRequest({
+        apiKey: auth,
+        method: HttpMethod.GET,
+        path: '/user/me',
+      });
+      return { valid: true };
+    } catch (error) {
+      if (
+        error instanceof BolnaApiError &&
+        (error.status === 401 || error.status === 403)
+      ) {
+        return { valid: false, error: 'Invalid Api Key' };
+      }
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
   },
 });

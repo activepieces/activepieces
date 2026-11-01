@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bolnaaiAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { bolnaClient } from '../common/client';
+import { bolnaSchemas } from '../common/schemas';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { agentId } from '../common/props';
 
@@ -14,9 +15,10 @@ export const makePhoneCall = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Place an outbound voice call to a recipient using a Bolna AI agent. Requires an agent ID and a recipient phone number in E.164 format; optionally set a from-number, schedule the call for a future ISO 8601 time (omit to dial immediately), and pass dynamic user variables referenced in the agent prompt. Each call is not idempotent — repeating it places another call.',
+      'Place an outbound voice call to a recipient using a Bolna AI agent. Requires an agent ID and a recipient phone number in E.164 format; optionally set a from-number, schedule the call for a future ISO 8601 time (omit to dial immediately), and pass dynamic user variables referenced in the agent prompt. Returns an execution_id to pass to Get Call Execution or Stop Call. Each call is not idempotent — repeating it places another call.',
     idempotent: false,
   },
+  outputSchema: bolnaSchemas.callResponseSchema,
   props: {
     agentId: agentId,
     recipientPhoneNumber: Property.ShortText({
@@ -63,7 +65,11 @@ export const makePhoneCall = createAction({
       payload['user_data'] = context.propsValue.userData;
     }
 
-    const response = await makeRequest(auth, HttpMethod.POST, '/call', payload);
-    return response;
+    return bolnaClient.makeRequest<Record<string, unknown>>({
+      apiKey: auth,
+      method: HttpMethod.POST,
+      path: '/call',
+      body: payload,
+    });
   },
 });
