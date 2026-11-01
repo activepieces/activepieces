@@ -22,7 +22,7 @@ import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
-import { shouldBlockRunOnCredits } from '../../platform/billing-provider'
+import { CreditCheckSpeed, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
@@ -114,7 +114,8 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             const creditsExhausted = await shouldBlockRunOnCredits({
                 platformId,
                 environment,
-                log,
+                creditCheckSpeed: CreditCheckSpeed.BACKGROUND,
+                log: log.child({ rpc: 'submitPayloads', flowVersion: { id: flowVersionId } }),
             })
 
             const flowRuns = await Promise.all(
