@@ -129,23 +129,24 @@ export const send_iMessage = createAction({
             to: z.string().check(z.regex(/^\+\d{1,4}\d+$/, 'Invalid E.164 format')),
             from: z.optional(z.string().check(z.regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format'))),
             message: z.string().check(z.minLength(1, 'Message cannot be empty')),
-            fallback: z.optional(z.object({
-                when: z.array(z.enum(['imessage_unsupported', 'imessage_fails'])).check(z.minLength(1, 'Select at least one fallback condition')),
-                from: z.optional(z.string().check(z.regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format'))),
-            })),
+            fallback: z.optional(z.union([z.boolean(), z.string()])),
             attachments: z.optional(z.array(z.object({
                     url: z.string().check(z.url('Invalid URL format'), z.regex(/^https:\/\/.*\.[a-zA-Z0-9]+$/, 'Must be HTTPS URL with file extension'))
                 })).check(z.maxLength(10, 'Maximum 10 attachments'))),
         });
 
-        const { to, from, message, attachments } = context.propsValue;
+        const { to, from, message, attachments, fallback } = context.propsValue;
+        const fallbackOptions = fallback === true ? await resolveFallback(context.propsValue.fallback_when) : undefined;
 
-        const body: any = { to, message };
-
-        if (from) body.from = from;
-        if (attachments?.length) {
-            body.attachments = attachments.map(attachment => (attachment as {url: string}).url);
-        }
+        const body: SendIMessageBody = {
+            to,
+            message,
+            ...(from ? { from } : {}),
+            ...(attachments?.length
+                ? { attachments: attachments.map(attachment => (attachment as { url: string }).url) }
+                : {}),
+            ...(fallbackOptions ? { fallback: fallbackOptions } : {}),
+        };
 
         return await _fetch({
             method: HttpMethod.POST,
@@ -155,3 +156,37 @@ export const send_iMessage = createAction({
         });
     },
 });
+
+async function resolveFallback(fallbackWhen: unknown): Promise<FallbackOptions> {
+    const raw = typeof fallbackWhen === 'object' && fallbackWhen !== null ? fallbackWhen : {};
+    const rawWhen = 'when' in raw && Array.isArray(raw.when) ? raw.when : [];
+    const rawFrom = 'from' in raw && typeof raw.from === 'string' && raw.from.length > 0 ? raw.from : undefined;
+
+    await propsValidation.validateZod({ when: rawWhen, from: rawFrom }, {
+        when: z.array(z.enum(['imessage_unsupported', 'imessage_fails'])).check(z.minLength(1, 'Select at least one fallback condition')),
+        from: z.optional(z.string().check(z.regex(/^\+\d{1,4}\d+$/, 'Must be E.164 format'))),
+    });
+
+    const when = rawWhen.filter(isFallbackCondition);
+
+    return { when, ...(rawFrom ? { from: rawFrom } : {}) };
+}
+
+function isFallbackCondition(value: unknown): value is FallbackCondition {
+    return value === 'imessage_unsupported' || value === 'imessage_fails';
+}
+
+type FallbackCondition = 'imessage_unsupported' | 'imessage_fails';
+
+type FallbackOptions = {
+    when: FallbackCondition[];
+    from?: string;
+};
+
+type SendIMessageBody = {
+    to: string;
+    message: string;
+    from?: string;
+    attachments?: string[];
+    fallback?: FallbackOptions;
+};
