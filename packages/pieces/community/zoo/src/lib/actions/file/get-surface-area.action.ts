@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { zooAuth } from '../../auth'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { cadFileAnalysis } from '../../common/cad-file-analysis';
 
 export const getSurfaceAreaAction = createAction({
   name: 'get_surface_area',
@@ -17,19 +17,9 @@ export const getSurfaceAreaAction = createAction({
       required: true,
       description: 'The CAD file to analyze',
     }),
+    sourceFormat: cadFileAnalysis.sourceFormat,
   },
   async run({ auth, propsValue }) {
-    const formData = new FormData();
-    formData.append('file', new Blob([propsValue.file.data as any]), propsValue.file.filename);
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.zoo.dev/file/surface-area',
-      headers: {
-        Authorization: `Bearer ${auth.secret_text}`,
-      },
-      body: formData,
-    });
-    return response.body;
+    return cadFileAnalysis.analyze({ token: auth.secret_text, endpoint: 'surface-area', file: propsValue.file, sourceFormat: propsValue.sourceFormat });
   },
 });

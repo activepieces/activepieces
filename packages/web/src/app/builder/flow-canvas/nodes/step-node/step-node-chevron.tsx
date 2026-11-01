@@ -35,7 +35,7 @@ const StepNodeChevron = ({
         }
       }}
     >
-      <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
+      <ChevronDown className="w-4 h-4 stroke-gray-11" />
     </Button>
   );
 };

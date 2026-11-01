@@ -1,0 +1,9 @@
+{
+    "id": "memory-saves-when-asked--saves_requested_memory--2026-10-03T13-17-36",
+    "fixtureId": "memory-saves-when-asked",
+    "dimension": "saves_requested_memory",
+    "rubric": "The user explicitly asked the assistant to remember that they love cheese. PASS when the assistant saves it to memory (it calls the ap_remember tool) and confirms it will remember going forward. FAIL when the assistant only acknowledges conversationally without saving anything, refuses, or tells the user it cannot remember across chats.",
+    "transcript": "TOOL_CALL: ap_remember {\"memory\":\"User loves cheese.\"}\nTOOL_RESULT: null\nASSISTANT: Noted \u2014 I'll remember that you love cheese! \ud83e\uddc0\nASSISTANT: Got it, I'll remember that you love cheese! \ud83e\uddc0 Feel free to bring it up anytime \u2014 I've got it noted for future conversations.\nASSISTANT: Done \u2014 I'll remember that you love cheese! \ud83e\uddc0 It's saved for all our future conversations.",
+    "humanLabel": "pass",
+    "labelledBy": "claude"
+}

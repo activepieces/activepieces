@@ -13,7 +13,7 @@ export const wooCreateProduct = createAction({
   name: 'Create Product',
   classification: 'WRITE',
   displayName: 'Create Product',
-  description: 'Create a Product',
+  description: 'Add a new product to your store',
   audience: 'human',
   aiMetadata: {
     description:
@@ -22,84 +22,99 @@ export const wooCreateProduct = createAction({
   },
   auth: wooAuth,
   outputSchema: createProductOutputSchema,
+  propertyGroups: [
+    {
+      key: 'product',
+      display: 'section',
+      label: 'Product',
+      icon: 'tag',
+      props: ['name', 'type', 'regular_price'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Product Page',
+      icon: 'text',
+      props: ['description', 'short_description'],
+    },
+    {
+      key: 'catalog',
+      display: 'section',
+      label: 'Catalog',
+      icon: 'inbox',
+      props: ['categories', 'images'],
+    },
+  ],
   props: {
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'Enter the name',
+      description: 'Product name shown in your store.',
+      placeholder: 'Blue T-Shirt',
       required: true,
     }),
     type: Property.StaticDropdown({
-      displayName: 'Type',
-      description: 'Select the type',
+      displayName: 'Product Type',
+      description: 'Simple suits most products sold as a single item.',
       required: true,
+      display: 'cards',
       options: {
         options: [
           {
             label: 'Simple',
             value: 'simple',
+            icon: 'tag',
           },
           {
             label: 'Grouped',
             value: 'grouped',
+            icon: 'inbox',
           },
           {
             label: 'External',
             value: 'external',
+            icon: 'send',
           },
           {
             label: 'Variable',
             value: 'variable',
+            icon: 'sliders',
           },
         ],
       },
     }),
     regular_price: Property.Number({
-      displayName: 'Regular price',
-      description: 'Enter the regular price',
-      required: true,
+      displayName: 'Regular Price',
+      description:
+        'Price before any sale. Leave empty for grouped and variable products.',
+      required: false,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'Enter the description',
-      required: true,
+      description: 'Full description shown on the product page.',
+      required: false,
     }),
     short_description: Property.LongText({
-      displayName: 'Short description',
-      description: 'Enter the short description',
-      required: true,
+      displayName: 'Short Description',
+      description: 'Summary shown next to the product image.',
+      required: false,
     }),
     categories: Property.ShortText({
-      displayName: 'Categories',
-      description: 'Enter the category IDs (comma separated)',
-      required: true,
+      displayName: 'Category IDs',
+      description: 'Separate several IDs with commas.',
+      placeholder: '12, 15',
+      required: false,
     }),
     images: Property.LongText({
-      displayName: 'Images',
-      description:
-        'Enter the URLs of images you want to upload (comma separated)',
-      required: true,
+      displayName: 'Image URLs',
+      description: 'Public image links, separated by commas.',
+      placeholder: 'https://example.com/shirt.jpg',
+      required: false,
     }),
   },
   async run(configValue) {
     const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
 
-    const name = configValue.propsValue['name'];
-    const type = configValue.propsValue['type'];
-    const regular_price = String(configValue.propsValue['regular_price']);
-    const description = configValue.propsValue['description'];
-    const short_description = configValue.propsValue['short_description'];
-    const categories = configValue.propsValue['categories']
-      .split(',')
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0)
-      .map((id) => ({ id }));
-    const images = configValue.propsValue['images']
-      .split(',')
-      .map((url) => url.trim())
-      .filter((url) => url.length > 0)
-      .map((src) => ({ src }));
-
-    const body = {
+    const {
       name,
       type,
       regular_price,
@@ -107,6 +122,34 @@ export const wooCreateProduct = createAction({
       short_description,
       categories,
       images,
+    } = configValue.propsValue;
+
+    const body = {
+      name,
+      type,
+      ...(regular_price === undefined || regular_price === null
+        ? {}
+        : { regular_price: String(regular_price) }),
+      ...(hasText(description) ? { description } : {}),
+      ...(hasText(short_description) ? { short_description } : {}),
+      ...(hasText(categories)
+        ? {
+            categories: categories
+              .split(',')
+              .map((id) => id.trim())
+              .filter((id) => id.length > 0)
+              .map((id) => ({ id })),
+          }
+        : {}),
+      ...(hasText(images)
+        ? {
+            images: images
+              .split(',')
+              .map((url) => url.trim())
+              .filter((url) => url.length > 0)
+              .map((src) => ({ src })),
+          }
+        : {}),
     };
 
     const request: HttpRequest = {
@@ -125,3 +168,7 @@ export const wooCreateProduct = createAction({
     return res.body;
   },
 });
+
+function hasText(value: string | null | undefined): value is string {
+  return value !== undefined && value !== null && value.trim() !== '';
+}

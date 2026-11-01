@@ -1,76 +1,35 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { discourseAuth } from '../auth';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { discourseOps } from '../common/operations';
+import { discourseProps } from '../common/props';
+import { discourseSchemas } from '../common/schemas';
 
 export const changeUserTrustLevel = createAction({
   auth: discourseAuth,
   name: 'change_user_trust_level',
   classification: 'WRITE',
-  description: 'Change the trust level of a user',
-  audience: 'both',
-  aiMetadata: { description: 'Set a Discourse user account to a specific trust level, identified by the numeric user ID. Use when an agent needs to promote or demote a member to control their permissions. Because it sets an absolute target level rather than incrementing, repeating the same call leaves the user at the same level.', idempotent: true },
+  description: 'Change the trust level of a user (needs an admin API key)',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Set a Discourse user to a trust level picked from a dropdown, by numeric user ID. Agents should use Set User Trust Level. Sets an absolute level, so repeating the call leaves the user unchanged.',
+    idempotent: true,
+  },
   displayName: 'Change User Trust Level',
   props: {
     user_id: Property.ShortText({
-      description: 'ID of the user',
+      description: 'Numeric ID of the user',
       displayName: 'User ID',
       required: true,
     }),
-    new_trust_level: Property.Dropdown({
-      description: 'New trust level of the user',
-      displayName: 'New Trust Level',
-      auth: discourseAuth,
-      required: true,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please connect your discourse account',
-          };
-        }
-        const response = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${auth.props.website_url.trim()}/site.json`,
-          headers: {
-            'Api-Key': auth.props.api_key,
-            'Api-Username': auth.props.api_username,
-          },
-        });
-
-        const result: { name: string; value: number }[] = [];
-        const trust_levels = response.body['trust_levels'];
-        for (const key in trust_levels) {
-          result.push({ name: key, value: trust_levels[key] });
-        }
-
-        const options = result.map((res) => {
-          return {
-            label: res.name,
-            value: res.value,
-          };
-        });
-        return {
-          options: options,
-          disabled: false,
-        };
-      },
-      refreshers: [],
-    }),
+    new_trust_level: discourseProps.trustLevelDropdown(),
   },
-  async run(context) {
-    const { user_id, new_trust_level } = context.propsValue;
-    return await httpClient.sendRequest({
-      method: HttpMethod.PUT,
-      url: `${context.auth.props.website_url.trim()}/u/${user_id}.json`,
-      headers: {
-        'Api-Key': context.auth.props.api_key,
-        'Api-Username': context.auth.props.api_username,
-      },
-      body: {
-        trust_level: new_trust_level,
-      },
+  outputSchema: discourseSchemas.trustLevel,
+  async run({ auth, propsValue }) {
+    return discourseOps.setTrustLevel({
+      auth: auth.props,
+      userId: propsValue.user_id,
+      level: propsValue.new_trust_level,
     });
   },
 });

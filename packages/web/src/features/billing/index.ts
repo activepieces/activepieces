@@ -28,9 +28,10 @@ export {
   DROP_TO_FREE_WARNING,
   planSelectorUtils,
 } from './components/plan-selector-utils';
-export { useManagePlanDialogStore } from './stores/manage-plan-dialog-state';
+export { billingDialogHooks } from './hooks/billing-dialog-hooks';
 export { AutomaticTrialActivation } from './components/automatic-trial-activation';
 export { useFeatureGate, UpgradeFeatureDialog } from './hooks/use-feature-gate';
+export { useUpgradeClick } from './hooks/use-upgrade-click';
 export type { PlatformFeature } from './hooks/use-feature-gate';
 export { RequestTrial } from './components/request-trial';
 export type { FeatureKey } from './components/request-trial';

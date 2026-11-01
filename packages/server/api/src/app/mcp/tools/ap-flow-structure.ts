@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { BranchCondition, BranchExecutionType, FlowActionType, flowCanvasUtils, flowStructureUtil, FlowTriggerType, McpToolDefinition, Note, ProjectScopedMcpServer, StepLocationRelativeToParent } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, FlowActionType, flowCanvasUtils, flowStructureUtil, FlowTrigger, FlowTriggerType, McpToolDefinition, Note, ProjectScopedMcpServer, StepLocationRelativeToParent } from '@activepieces/shared'
 import type { Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -19,8 +19,8 @@ type StepInfo = {
     configStatus: string
 }
 
-function getConfigStatus(step: Step): string {
-    if ((step as { skip?: boolean }).skip) return 'skipped'
+function getConfigStatus({ step, skippedStepNames }: { step: Step, skippedStepNames: Set<string> }): string {
+    if (skippedStepNames.has(step.name)) return 'skipped'
     if (step.valid) return 'configured'
     const s = step.settings as { triggerName?: string, actionName?: string }
     switch (step.type) {
@@ -114,8 +114,9 @@ function formatBranchConditions(conditions: BranchCondition[][]): string {
     return groups.join(' OR ')
 }
 
-function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName: Map<string, Step> } {
+function buildFlowStructure(trigger: FlowTrigger): { structure: StepInfo[], stepByName: Map<string, Step> } {
     const allSteps = flowStructureUtil.getAllSteps(trigger)
+    const skippedStepNames = flowStructureUtil.getSkippedStepNames({ trigger })
     const stepByName = new Map(allSteps.map(s => [s.name, s]))
     const structure = allSteps.map((step): StepInfo => {
         if (flowStructureUtil.isTrigger(step.type)) {
@@ -126,8 +127,8 @@ function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName:
                 parentName: null,
                 relationship: 'trigger',
                 valid: step.valid,
-                skip: (step as { skip?: boolean }).skip,
-                configStatus: getConfigStatus(step),
+                skip: skippedStepNames.has(step.name),
+                configStatus: getConfigStatus({ step, skippedStepNames }),
             }
         }
         let parentName: string | null = null
@@ -177,8 +178,8 @@ function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName:
             relationship,
             ...(relationship === 'branch' && { branchIndex, branchName }),
             valid: step.valid,
-            skip: (step as { skip?: boolean }).skip,
-            configStatus: getConfigStatus(step),
+            skip: skippedStepNames.has(step.name),
+            configStatus: getConfigStatus({ step, skippedStepNames }),
         }
     })
     return { structure, stepByName }

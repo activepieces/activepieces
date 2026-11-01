@@ -10,7 +10,7 @@ export const deleteTaskAction = createAction({
 	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Task',
 	description: 'Deletes an existing task.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Permanently deletes a TickTick task identified by its list (project) ID and task ID. Use to remove a task you no longer need; this is destructive and cannot be undone. Idempotent on the end state: re-deleting the same task leaves it gone.',

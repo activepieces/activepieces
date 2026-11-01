@@ -1,48 +1,41 @@
-import {
-	httpClient,
-	HttpMessageBody,
-	HttpMethod,
-	HttpRequest,
-	QueryParams,
-} from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import type { ClockifyAuthValue } from './types';
 
-export type ClockifyApiCallParams = {
-	apiKey: string;
-	method: HttpMethod;
-	resourceUri: string;
-	query?: Record<string, string | number | string[] | undefined>;
-	body?: any;
-};
+function baseUrl(): string {
+	return HOSTS.api;
+}
 
-export const BASE_URL = 'https://api.clockify.me/api/v1';
-
-export async function clockifyApiCall<T extends HttpMessageBody>({
-	apiKey,
+async function request<T>({
+	auth,
 	method,
-	resourceUri,
+	path,
 	query,
 	body,
-}: ClockifyApiCallParams): Promise<T> {
-	const qs: QueryParams = {};
-
-	if (query) {
-		for (const [key, value] of Object.entries(query)) {
-			if (value !== null && value !== undefined) {
-				qs[key] = String(value);
-			}
-		}
-	}
-
-	const request: HttpRequest = {
+	host = 'api',
+}: RequestParams & { auth: ClockifyAuthValue }): Promise<T> {
+	const response = await httpClient.sendRequest<T>({
 		method,
-		url: BASE_URL + resourceUri,
+		url: `${HOSTS[host]}${path}`,
 		headers: {
-			'X-Api-Key': apiKey,
+			'X-Api-Key': auth.secret_text,
 		},
-		queryParams: qs,
+		queryParams: query ?? {},
 		body,
-	};
-
-	const response = await httpClient.sendRequest<T>(request);
+	});
 	return response.body;
 }
+
+export const clockifyClient = { baseUrl, request };
+
+const HOSTS = {
+	api: 'https://api.clockify.me/api/v1',
+	reports: 'https://reports.api.clockify.me/v1',
+};
+
+type RequestParams = {
+	method: HttpMethod;
+	path: string;
+	query?: QueryParams;
+	body?: unknown;
+	host?: keyof typeof HOSTS;
+};

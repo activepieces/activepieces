@@ -30,9 +30,14 @@ vi.mock('@/app/components/project-settings/mcp-server/utils/mcp-hooks', () => ({
     useUpdateMcpServer: () => ({ mutate: () => undefined, isPending: false }),
   },
 }));
-vi.mock('@/app/components/project-settings/mcp-server/mcp-tools', () => ({
-  McpTools: () => null,
-}));
+vi.mock(
+  '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list',
+  () => ({
+    McpToolTierList: ({ projectId }: { projectId?: string }) => (
+      <div data-tier-list-project={projectId} />
+    ),
+  }),
+);
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: false }) },
 }));
@@ -115,5 +120,31 @@ describe('ToolsTab, Run action on the Pieces segment', () => {
     });
     expect(panel?.getAttribute('data-run-action-off')).toBe('false');
     expect(panel?.getAttribute('data-run-action-off-by-platform')).toBe('true');
+  });
+});
+
+describe('ToolsTab, Built-in segment', () => {
+  it('gives the tool tiers the selected project, not the session project', () => {
+    server.disabledTools = [];
+    server.platformDisabledTools = [];
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    act(() => {
+      root.render(
+        <ToolsTab
+          projectId="project-1"
+          reachableProjectIds={null}
+          segment="built-in"
+          onSelectProject={() => undefined}
+          onSelectSegment={() => undefined}
+        />,
+      );
+    });
+
+    expect(
+      container
+        .querySelector('[data-tier-list-project]')
+        ?.getAttribute('data-tier-list-project'),
+    ).toBe('project-1');
   });
 });

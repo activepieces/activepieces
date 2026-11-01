@@ -4,10 +4,12 @@ import { S3 } from '@aws-sdk/client-s3';
 import * as openpgp from 'openpgp';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { createS3, createSecretsManagerClient, getTemporaryCredentials, isOidcAuth } from '../common';
+import { readFileOutputSchema } from '../output-schemas';
 
 export const decryptPgpFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'decrypt-pgp-file',
+  outputSchema: readFileOutputSchema,
   classification: 'READ',
   displayName: 'Decrypt PGP File',
   description: 'Decrypt a PGP encrypted file from S3 using a private key stored in AWS Secrets Manager',

@@ -1,29 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluenceApiCall } from '../common';
-import { pageIdProp, spaceIdProp } from '../common/props';
-
-type CurrentPage = {
-	id: string;
-	status: string;
-	title: string;
-	spaceId: string;
-	version: { number: number };
-	body?: { storage?: { value: string; representation: string } };
-};
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { updatePageOutputSchema } from '../output-schemas';
 
 export const updatePageAction = createAction({
 	auth: confluenceAuth,
 	name: 'update-page',
+	outputSchema: updatePageOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Update Page',
 	description: 'Updates the title, body, or status of an existing page.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Updates an existing Confluence page identified by page ID, changing its title, body, and/or status; blank title or body fields keep the current values. Reads the current version first and bumps the version number on save. Use to edit a known page. Not strictly idempotent: each call increments the page version even when content is unchanged.', idempotent: false },
 	props: {
-		spaceId: spaceIdProp,
-		pageId: pageIdProp,
+		spaceId: confluenceProps.spaceId({ required: true }),
+		pageId: confluenceProps.pageId({ required: true }),
 		title: Property.ShortText({
 			displayName: 'Title',
 			description: 'Leave blank to keep the current title.',
@@ -62,35 +54,20 @@ export const updatePageAction = createAction({
 	async run(context) {
 		const { pageId, title, bodyFormat, body, status } = context.propsValue;
 
-		const current = await confluenceApiCall<CurrentPage>({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.GET,
-			version: 'v2',
-			resourceUri: `/pages/${pageId}`,
-			query: { 'body-format': 'storage' },
+		const current = await confluenceApi.getPage({
+			auth: context.auth,
+			pageId,
+			bodyFormat: 'storage',
 		});
 
-		return await confluenceApiCall({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.PUT,
-			version: 'v2',
-			resourceUri: `/pages/${pageId}`,
-			body: {
-				id: pageId,
-				status: status ?? current.status,
-				title: title ?? current.title,
-				body: {
-					representation: bodyFormat,
-					value: body ?? current.body?.storage?.value ?? '',
-				},
-				version: {
-					number: current.version.number + 1,
-				},
-			},
+		return await confluenceApi.updatePage({
+			auth: context.auth,
+			pageId,
+			status: status ?? current.status,
+			title: title ?? current.title,
+			representation: bodyFormat,
+			value: body ?? current.body?.storage?.value ?? '',
+			versionNumber: current.version.number + 1,
 		});
 	},
 });

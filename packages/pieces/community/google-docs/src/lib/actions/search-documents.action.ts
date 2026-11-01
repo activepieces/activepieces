@@ -2,6 +2,7 @@ import { googleDocsAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
 import { searchDocumentsActionOutputSchema } from '../output-schemas';
+import { driveQuery } from '../common/drive-query';
 
 export const searchDocuments = createAction({
 	auth: googleDocsAuth,
@@ -74,12 +75,12 @@ export const searchDocuments = createAction({
 		const matchClauses: string[] = [];
 		if (name_contains) {
 			matchClauses.push(
-				`name contains '${name_contains.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+				`name contains '${driveQuery.escapeLiteral(name_contains)}'`
 			);
 		}
 		if (full_text_contains) {
 			matchClauses.push(
-				`fullText contains '${full_text_contains.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+				`fullText contains '${driveQuery.escapeLiteral(full_text_contains)}'`
 			);
 		}
 

@@ -1,229 +1,76 @@
 import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { zohoBookingsAuth, zohoBookingsCommon } from '../common';
+import * as z from 'zod/mini';
+import { zohoBookingsAuth } from '../auth';
+import { zohoBookingsApi } from '../common/api';
+import { zohoBookingsProps } from '../common/props';
+import { fetchAvailabilityOutputSchema } from '../output-schemas';
 
-export const fetchAvailability = createAction({
+export const fetchAvailabilityAction = createAction({
   auth: zohoBookingsAuth,
   name: 'fetchAvailability',
+  outputSchema: fetchAvailabilityOutputSchema,
+  classification: 'SEARCH',
   displayName: 'Fetch Availability',
   description: 'Fetch availability of appointments across services',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Look up open appointment slots for a service in a Zoho Bookings workspace on a given date. Scope the lookup to exactly one of staff, group, or resource (the call fails if none is supplied). Use this before booking to find valid times. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
-    workspace_id: Property.Dropdown({
-      auth: zohoBookingsAuth,
-      displayName: 'Workspace',
+    workspace_id: zohoBookingsProps.workspaceId({
+      required: true,
       description: 'Select the workspace to fetch availability for',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Authentication required',
-            options: [],
-          };
-        }
-
-        try {
-          const location = (auth as any).props?.['location'] || 'zoho.com';
-          const workspaces = await zohoBookingsCommon.fetchWorkspaces(
-            (auth as any).access_token,
-            location
-          );
-
-          return {
-            options: workspaces.map((workspace: any) => ({
-              label: workspace.name,
-              value: workspace.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Failed to load workspaces',
-            options: [],
-          };
-        }
-      },
     }),
-    service_id: Property.Dropdown({
-      auth: zohoBookingsAuth,
-      displayName: 'Service',
+    service_id: zohoBookingsProps.serviceId({
+      required: true,
       description: 'Select the service for which availability is to be fetched',
-      required: true,
-      refreshers: ['workspace_id'],
-      options: async ({ auth, workspace_id }) => {
-        if (!workspace_id || !auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please enter workspace ID first',
-            options: [],
-          };
-        }
-
-        try {
-          const location = (auth as any).props?.['location'] || 'zoho.com';
-          const services = await zohoBookingsCommon.fetchServices(
-            (auth as any).access_token,
-            location,
-            workspace_id as string
-          );
-
-          return {
-            options: services.map((service: any) => ({
-              label: `${service.name} (${service.duration})`,
-              value: service.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Failed to load services',
-            options: [],
-          };
-        }
-      },
     }),
-    staff_id: Property.Dropdown({
-      auth: zohoBookingsAuth,
-      displayName: 'Staff',
-      description: 'Select the staff member (use this OR group_id OR resource_id)',
+    staff_id: zohoBookingsProps.staffId({
       required: false,
-      refreshers: ['service_id'],
-      options: async ({ auth, service_id }) => {
-        if (!service_id || !auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please select service first',
-            options: [],
-          };
-        }
-
-        try {
-          const location = (auth as any).props?.['location'] || 'zoho.com';
-          const staff = await zohoBookingsCommon.fetchStaff(
-            (auth as any).access_token,
-            location,
-            service_id as string
-          );
-
-          return {
-            options: staff.map((member: any) => ({
-              label: `${member.name} - ${member.designation || 'Staff'}`,
-              value: member.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Failed to load staff',
-            options: [],
-          };
-        }
-      },
+      description: 'Select the staff member (use this OR group_id OR resource_id)',
     }),
     group_id: Property.ShortText({
       displayName: 'Group ID',
-      description: 'The unique ID of the staff group associated with the service (use this OR staff_id OR resource_id)',
+      description:
+        'The unique ID of the staff group associated with the service (use this OR staff_id OR resource_id)',
       required: false,
     }),
-    resource_id: Property.Dropdown({
-      auth: zohoBookingsAuth,
-      displayName: 'Resource',
-      description: 'Select the resource (use this OR staff_id OR group_id)',
-      required: false,
-      refreshers: ['service_id'],
-      options: async ({ auth, service_id }) => {
-        if (!service_id || !auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please select service first',
-            options: [],
-          };
-        }
-
-        try {
-          const location = (auth as any).props?.['location'] || 'zoho.com';
-          const resources = await zohoBookingsCommon.fetchResources(
-            (auth as any).access_token,
-            location,
-            service_id as string
-          );
-
-          return {
-            options: resources.map((resource: any) => ({
-              label: resource.name,
-              value: resource.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Failed to load resources',
-            options: [],
-          };
-        }
-      },
-    }),
+    resource_id: zohoBookingsProps.resourceId({ required: false }),
     selected_date: Property.DateTime({
       displayName: 'Selected Date',
-      description: 'The date on which services are checked for availability (format: mm-dd-yyyy)',
+      description:
+        'The date on which services are checked for availability (format: mm-dd-yyyy)',
       required: true,
     }),
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const location = auth.props?.['location'] as string || 'zoho.com';
 
-    // Validate props using Zod schema
-    await propsValidation.validateZod(propsValue, zohoBookingsCommon.fetchAvailabilitySchema);
+    await propsValidation.validateZod(propsValue, schema);
 
-    // Validate that at least one of staff_id, group_id, or resource_id is provided
     if (!propsValue.staff_id && !propsValue.group_id && !propsValue.resource_id) {
       throw new Error('Either staff_id, group_id, or resource_id must be provided');
     }
 
-    // Format date to YYYY-MM-DD format
-    const formatDate = (date: string) => {
-      const d = new Date(date);
-      const year = d.getFullYear();
-      const month = (d.getMonth() + 1).toString().padStart(2, '0');
-      const day = d.getDate().toString().padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    // Prepare query parameters
-    const queryParams: Record<string, string> = {
-      service_id: propsValue.service_id,
-      selected_date: formatDate(propsValue.selected_date),
-    };
-
-    // Add the staff/group/resource ID (only one should be provided)
-    if (propsValue.staff_id) {
-      queryParams['staff_id'] = propsValue.staff_id;
-    }
-    if (propsValue.group_id) {
-      queryParams['group_id'] = propsValue.group_id;
-    }
-    if (propsValue.resource_id) {
-      queryParams['resource_id'] = propsValue.resource_id;
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${zohoBookingsCommon.baseUrl(location)}/availableslots`,
-      headers: {
-        Authorization: `Zoho-oauthtoken ${auth.access_token}`,
-      },
-      queryParams,
+    return await zohoBookingsApi.getAvailableSlots({
+      auth,
+      serviceId: propsValue.service_id,
+      selectedDate: propsValue.selected_date,
+      staffId: propsValue.staff_id,
+      groupId: propsValue.group_id,
+      resourceId: propsValue.resource_id,
     });
-
-    return response.body;
   },
 });
+
+const schema = {
+  workspace_id: z.string().check(z.minLength(1)),
+  service_id: z.string().check(z.minLength(1)),
+  staff_id: z.optional(z.string()),
+  group_id: z.optional(z.string()),
+  resource_id: z.optional(z.string()),
+  selected_date: z.string(),
+};

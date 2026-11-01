@@ -8,8 +8,7 @@ export const stripeDeactivatePaymentLink = createAction({
   classification: 'DESTRUCTIVE',
   auth: stripeAuth,
   displayName: 'Deactivate Payment Link',
-  description:
-    'Disable or deactivate a Payment Link so it can no longer be used.',
+  description: 'Turn off a payment link so no one can pay with it.',
   audience: 'human',
   aiMetadata: {
     description:

@@ -1,0 +1,8 @@
+---
+title: 'Delete Variable'
+openapi: DELETE /v1/variables/{id}
+---
+
+<Warning>
+Deleting a variable does not update the flows that reference it. Any step that still uses `{{variables['NAME']}}` fails the next time it runs.
+</Warning>

@@ -1,10 +1,13 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
+import { iloveSchemas } from '../common/schemas';
 import {
+  acceptDelivery,
   matchesEvent,
   matchesToolFilter,
   toolFilterProperty,
   webhookInstructions,
+  webhookSecretProperty,
 } from './common';
 import { taskFailedSample } from './sample-payloads';
 
@@ -24,8 +27,10 @@ export const taskFailedTrigger = createTrigger({
     instructions: Property.MarkDown({
       value: webhookInstructions('Task Failed (task.failed)'),
     }),
+    webhook_secret: webhookSecretProperty,
     tools: toolFilterProperty,
   },
+  outputSchema: iloveSchemas.taskEvent,
   sampleData: taskFailedSample,
   async onEnable() {
     return;
@@ -43,6 +48,11 @@ export const taskFailedTrigger = createTrigger({
     const tools = (context.propsValue.tools ?? []) as string[] | undefined;
     if (!matchesToolFilter({ envelope, tools })) return [];
 
-    return [envelope];
+    return acceptDelivery({
+      envelope,
+      store: context.store,
+      queryParams: context.payload.queryParams,
+      secret: context.propsValue.webhook_secret,
+    });
   },
 });

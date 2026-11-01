@@ -1,11 +1,13 @@
 import { AiProviderKeyStatus, AIProviderName } from '@activepieces/core-utils'
 import { modelTierCatalog } from '@activepieces/server-utils'
-import { AIProviderModel, CreateAIProviderRequest, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
+import { AIProviderModel, AIProviderWithoutSensitiveData, CreateAIProviderRequest, ModelOptions, ModelOptionsSurface, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { aiModelOptionsService } from './ai-model-options-service'
 import { aiProviderService } from './ai-provider-service'
 
 export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
@@ -24,10 +26,31 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             configId: request.params.id,
         })
     })
+    app.get('/configs/:id/suggested-models', ListSuggestedModelsForConfig, async (request) => {
+        return aiProviderService(app.log).suggestModelsForConfig({
+            platformId: request.principal.platform.id,
+            configId: request.params.id,
+        })
+    })
     app.get('/tiers', ListModelTiers, async () => ({
         flow: modelTierCatalog.current('flow'),
         chat: modelTierCatalog.current('chat'),
     }))
+    app.get('/model-options', ListModelOptions, async (request) => {
+        return aiModelOptionsService(app.log).list({
+            platformId: request.principal.platform.id,
+            projectId: request.projectId,
+            surface: request.query.surface,
+            tierId: request.query.tierId,
+        })
+    })
+    app.get('/model-options/platform', ListPlatformModelOptions, async (request) => {
+        return aiModelOptionsService(app.log).listForPlatform({
+            platformId: request.principal.platform.id,
+            surface: request.query.surface,
+            platformDefault: null,
+        })
+    })
     app.get('/:provider/models', ListModels, async (request) => {
         return aiProviderService(app.log).listModels({
             platformId: request.principal.platform.id,
@@ -49,7 +72,9 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     })
     app.post('/:id', UpdateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
-        return aiProviderService(app.log).update(platformId, request.params.id, request.body)
+        const service = aiProviderService(app.log)
+        await service.update(platformId, request.params.id, request.body)
+        return service.getConfig({ platformId, configId: request.params.id })
     })
     app.delete('/:id', DeleteAIProvider, async (request, reply) => {
         const platformId = request.principal.platform.id
@@ -71,20 +96,48 @@ const ListAIProvidersForProject = {
 
 const ListAIProviderConfigs = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['ai-providers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List the AI provider keys connected to the platform. Secrets are never returned.',
+        response: {
+            [StatusCodes.OK]: z.array(AIProviderWithoutSensitiveData),
+        },
     },
 }
 
 const ListModelsForConfig = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
+        tags: ['ai-providers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List the models an AI provider key can run.',
         params: z.object({
             id: z.string(),
         }),
         response: {
             [StatusCodes.OK]: z.array(AIProviderModel),
+        },
+    },
+}
+
+const ListSuggestedModelsForConfig = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['ai-providers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Suggest model ids for a key whose provider has no model list (Other, OpenAI compatible).',
+        params: z.object({
+            id: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: z.array(z.string()),
         },
     },
 }
@@ -112,6 +165,39 @@ const ListModelTiers = {
     },
 }
 
+const ListModelOptions = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER], undefined, { type: ProjectResourceType.QUERY }),
+    },
+    schema: {
+        querystring: z.object({
+            projectId: z.string().optional(),
+            surface: ModelOptionsSurface,
+            tierId: z.string().optional(),
+        }),
+        response: {
+            [StatusCodes.OK]: ModelOptions,
+        },
+    },
+}
+
+const ListPlatformModelOptions = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['ai-providers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List every model the platform can offer for a surface (chat or flows), grouped by key.',
+        querystring: z.object({
+            surface: ModelOptionsSurface,
+        }),
+        response: {
+            [StatusCodes.OK]: ModelOptions,
+        },
+    },
+}
+
 const ListModels = {
     config: {
         security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, { type: ProjectResourceType.QUERY }),
@@ -132,18 +218,28 @@ const ListModels = {
 
 const CreateAIProvider = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
+    preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
+        tags: ['ai-providers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Connect a new AI provider key. The credentials are checked with the provider before saving.',
         body: CreateAIProviderRequest,
+        response: {
+            [StatusCodes.OK]: AIProviderWithoutSensitiveData,
+        },
     },
 }
 
 const RecheckAIProvider = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
+        tags: ['ai-providers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Check an AI provider key against its provider again and return its status.',
         params: z.object({
             id: z.string(),
         }),
@@ -157,23 +253,35 @@ const RecheckAIProvider = {
 
 const UpdateAIProvider = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
+        tags: ['ai-providers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update an AI provider key: its name, credentials, model scope or project access.',
         params: z.object({
             id: z.string(),
         }),
         body: UpdateAIProviderRequest,
+        response: {
+            [StatusCodes.OK]: AIProviderWithoutSensitiveData,
+        },
     },
 }
 
 const DeleteAIProvider = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
+        tags: ['ai-providers'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Delete an AI provider key. Fails while a tier still uses it.',
         params: z.object({
             id: z.string(),
         }),
+        response: {
+            [StatusCodes.NO_CONTENT]: z.never(),
+        },
     },
 }

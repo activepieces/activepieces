@@ -1,10 +1,12 @@
 import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { commonProps, intercomClient } from '../common';
+import { commonProps, intercomRequest } from '../common';
+import { resolveAdminId } from '../common/client';
 import { ticketIdProp, ticketPropertiesProp, ticketTypeIdProp } from '../common/props';
-import { UpdateTicketRequest } from 'intercom-client/api';
-
+import { HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
+import { getTicketTypeAttributes, toTicketAttributes } from '../common/ticket-attributes';
+import { ticketOutputSchema } from '../output-schemas';
 
 export const updateTicketAction = createAction({
 	auth: intercomAuth,
@@ -12,7 +14,7 @@ export const updateTicketAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Update Ticket',
 	description: 'Updates an existing ticket.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Modify an existing ticket by ID: change its open flag, state (in progress / waiting on customer / resolved), snooze time, assigned admin, and ticket-type attributes. Updating with the same values converges on the same result, so it is effectively idempotent. To create a new ticket instead, use Create Ticket.', idempotent: true },
 	props: {
 		ticketTypeId: ticketTypeIdProp('Ticket Type', true),
@@ -49,6 +51,7 @@ export const updateTicketAction = createAction({
 		}),
 		assignedAdminId: commonProps.admins({ displayName: 'Assigned Admin', required: false }),
 	},
+	outputSchema: ticketOutputSchema,
 	async run(context) {
 		const { ticketTypeId, ticketId, isOpen, state, snoozedTill, assignedAdminId } =
 			context.propsValue;
@@ -62,42 +65,30 @@ export const updateTicketAction = createAction({
 			throw new Error('Ticket ID is required');
 		}
 
-		const client = intercomClient(context.auth);
+		const assignment = assignedAdminId
+			? { assignee_id: assignedAdminId, admin_id: await resolveAdminId({ auth: context.auth, adminId: undefined }) }
+			: undefined;
 
-		const request: UpdateTicketRequest = {
-			ticket_id: ticketId,
-			open: isOpen,
-			state: state as 'in_progress' | 'waiting_on_customer' | 'resolved' | undefined,
-		};
+		const ticketAttributes =
+			Object.keys(ticketProperties).length > 0
+				? toTicketAttributes({
+						attributes: await getTicketTypeAttributes({ auth: context.auth, ticketTypeId }),
+						values: ticketProperties,
+				  })
+				: undefined;
 
-		if (snoozedTill) {
-			request.snoozed_until = dayjs(snoozedTill).unix();
-		}
-		if (assignedAdminId) {
-			const admin = await client.admins.identify();
-			request.assignment = {
-				assignee_id: assignedAdminId,
-				admin_id: admin.id,
-			};
-		}
-
-		if (Object.keys(ticketProperties).length > 0) {
-			const formattedProperties: Record<string, any> = {};
-			for (const key in ticketProperties) {
-				const value = ticketProperties[key];
-
-				// Check if value is a valid date string and convert it to a timestamp
-				if (typeof value === 'string' && dayjs(value).isValid()) {
-					formattedProperties[key] = dayjs(value).unix(); // Convert to timestamp
-				} else {
-					formattedProperties[key] = value;
-				}
-			}
-			request.ticket_attributes = formattedProperties;
-		}
-
-		const response = await client.tickets.update(request);
-
-		return response;
+		return intercomRequest<Record<string, unknown>>({
+			auth: context.auth,
+			method: HttpMethod.PUT,
+			path: ['tickets', ticketId],
+			body: {
+				open: isOpen,
+				state: state || undefined,
+				snoozed_until: snoozedTill ? dayjs(snoozedTill).unix() : undefined,
+				assignment,
+				ticket_attributes: ticketAttributes,
+			},
+			operation: 'update the ticket',
+		});
 	},
 });

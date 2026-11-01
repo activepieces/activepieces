@@ -1,42 +1,37 @@
-import { fathomAuth, getFathomClient } from '../common/auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { ListTeamMembersRequest } from 'fathom-typescript/dist/esm/sdk/models/operations';
+import { fathomAuth } from '../common/auth';
+import { fathomInputs } from '../common/props';
+import { fathomLegacy } from '../common/legacy';
+import { fathomOutputSchemas } from '../output-schemas';
 
 export const findTeamMember = createAction({
   name: 'findTeamMember',
   classification: 'SEARCH',
   displayName: 'Find Team Member',
-  description: 'Find team member based on email',
+  description: 'List the members of your Fathom account, optionally only those of one team. To look up one person, use Find Team Member by Email.',
   audience: 'both',
-  aiMetadata: { description: 'List team members in the connected Fathom workspace, optionally narrowed to a single team by name; with no team supplied it returns members across all teams. Use to look up who belongs to a team. Read-only and repeatable; use the cursor for pagination.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Lists members (name, email, join date) of the Fathom account, optionally only those of one team given by exact team name, one page per call with a cursor. Use Find Team Member by Email for a single-person lookup. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: fathomAuth,
   props: {
     team: Property.ShortText({
       displayName: 'Team',
       description: 'Team name to filter by',
-      required: false
+      required: false,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
       description: 'Cursor for pagination (from previous response)',
-      required: false
-    })
+      required: false,
+    }),
   },
+  outputSchema: fathomOutputSchemas.legacyTeamMembers,
   async run({ auth, propsValue }) {
-    const fathom = getFathomClient(auth);
-
-    const params: Partial<ListTeamMembersRequest> = {};
-
-    if (propsValue.team) {
-      params.team = propsValue.team;
-    }
-
-    if (propsValue.cursor) {
-      params.cursor = propsValue.cursor;
-    }
-
-    const response = await fathom.listTeamMembers(params);
-
-    return response;
-  }
+    const team = fathomInputs.optionalText({ value: propsValue.team });
+    const cursor = fathomInputs.optionalText({ value: propsValue.cursor });
+    return fathomLegacy.listInSdkShape({ auth, path: 'team_members', query: { team, cursor }, fields: ['name', 'email'] });
+  },
 });

@@ -8,20 +8,25 @@ export const uploadFile = createAction({
   name: 'upload-file',
   classification: 'WRITE',
   displayName: 'Upload File',
-  description: 'Upload a file to Supabase Storage',
+  description: 'Uploads a file to a Storage bucket.',
   audience: 'both',
   aiMetadata: { description: 'Uploads a file (provided as base64 or a URL) to a Supabase Storage bucket at a given path, then returns its public URL. Use to persist binary content (images, documents, exports) in object storage rather than a database table. Not idempotent: each call writes the object and will error if the path already exists in the bucket.', idempotent: false },
   props: {
-    filePath: Property.ShortText({
-      displayName: 'File path',
-      required: true,
-    }),
     bucket: Property.ShortText({
       displayName: 'Bucket',
+      description: "The bucket's name, as shown in Storage.",
+      placeholder: 'avatars',
+      required: true,
+    }),
+    filePath: Property.ShortText({
+      displayName: 'File Path',
+      description: 'Where to save it in the bucket, including the file name.',
+      placeholder: 'folder/report.pdf',
       required: true,
     }),
     file: Property.File({
-      displayName: 'Base64 or URL',
+      displayName: 'File',
+      description: 'A file from an earlier step, or a URL to download.',
       required: true,
     }),
   },

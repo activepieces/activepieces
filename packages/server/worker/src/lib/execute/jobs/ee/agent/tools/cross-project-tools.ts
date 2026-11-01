@@ -8,7 +8,6 @@ import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecisio
 function createProgressGuard() {
     const failureCounts = new Map<string, number>()
     const succeededWrites = new Set<string>()
-    const loadedGuides = new Set<string>()
 
     const actionKey = ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): string =>
         `${pieceName}::${actionName}::${stableStringify(input ?? {})}`
@@ -41,20 +40,15 @@ function createProgressGuard() {
             }
             failureCounts.set(key, (failureCounts.get(key) ?? 0) + 1)
         },
-        markGuideLoaded: (topic: string): boolean => {
-            if (loadedGuides.has(topic)) return true
-            loadedGuides.add(topic)
-            return false
-        },
     }
 }
 
-export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
+export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, isDeclaredReadOnly, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
-    guides: Record<string, string>
+    isDeclaredReadOnly?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
     taintState: TaintState
 }): ToolSet {
     const progressGuard = createProgressGuard()
@@ -110,12 +104,16 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         return guardResult
                     }
                 }
-                const needsPreview = agentToolClassification.requiresActionPreview({
+                const { data: declaredReadOnly } = await tryCatch(async () => isDeclaredReadOnly?.({ pieceName: toolInput.pieceName, actionName: toolInput.actionName }))
+                const executedInputs = isBatch ? toolInput.items! : [toolInput.input ?? {}]
+                const gatedInputs = executedInputs.filter((input) => agentToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
-                    input: toolInput.input,
+                    input,
                     needsConfirmation: toolInput.needsConfirmation,
                     tainted: taintState.tainted,
-                })
+                    declaredReadOnly: declaredReadOnly ?? undefined,
+                }))
+                const needsPreview = gatedInputs.length > 0
                 taintState.tainted = true
 
                 if (needsPreview) {
@@ -127,7 +125,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         input: toolInput.input ?? {},
                         isBatch: !!isBatch,
                         batchCount: isBatch ? toolInput.items!.length : undefined,
-                        batchSamples: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                        batchSamples: isBatch ? gatedInputs.slice(0, 3) : undefined,
                     }
                     eventEmitter.emitActionPreview(previewData)
                     if (onGateOpened) {
@@ -139,7 +137,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                                 pieceName: toolInput.pieceName,
                                 actionName: toolInput.actionName,
                                 input: toolInput.input ?? {},
-                                items: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                                items: isBatch ? gatedInputs.slice(0, 3) : undefined,
                                 batchCount: isBatch ? toolInput.items!.length : undefined,
                             },
                         }))
@@ -180,6 +178,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 const isReadOnly = agentToolClassification.isReadOnlyActionCall({
                     actionName: toolInput.actionName,
                     input: toolInput.input,
+                    declaredReadOnly: declaredReadOnly ?? undefined,
                 })
                 if (!isReadOnly) {
                     eventEmitter.emitActionReceipt({
@@ -219,9 +218,6 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
-                if (!agentToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
-                    return agentToolClassification.readOnlyRejection(toolInput.actionName)
-                }
                 taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)
@@ -262,23 +258,6 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                     return { text, producedFiles }
                 }
                 return truncateLargeResult(rawResult)
-            },
-        }),
-
-        ap_load_guide: tool({
-            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists), control_flow (routers/conditions & loops — exact operators and gotchas), state (remembering data across runs: Store vs Tables vs Sheets, dedup/idempotency), tables (the built-in Tables database), ai (native AI steps and their output shapes), about_activepieces (what Activepieces is — open source, self-hosting, editions/pricing, security, how integrations work, how you work).',
-            inputSchema: z.object({
-                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai', 'about_activepieces']).describe('Which guide to load'),
-            }),
-            execute: async (toolInput) => {
-                const guide = guides[toolInput.topic]
-                if (!guide) {
-                    return `No guide found for "${toolInput.topic}".`
-                }
-                if (progressGuard.markGuideLoaded(toolInput.topic)) {
-                    return `You already loaded the "${toolInput.topic}" guide earlier in this turn — re-read it from the conversation above instead of reloading.`
-                }
-                return guide
             },
         }),
 

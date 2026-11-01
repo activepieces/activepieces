@@ -16,7 +16,7 @@
   "Retrieve a list of deployed Carbone templates with filtering and pagination.": "フィルタリングとページネーションを使用して配備済みのCarboneテンプレートのリストを取得します。",
   "List all categories used to organize your Carbone templates.": "Carboneテンプレートの整理に使用されるすべてのカテゴリを一覧表示します。",
   "List all tags used to organize your Carbone templates.": "Carboneテンプレートの整理に使用されるすべてのタグを一覧表示します。",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Template ID": "テンプレートID",
   "Data (JSON)": "データ (JSON)",
   "Convert To (optional)": "変換先 (オプション)",

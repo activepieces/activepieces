@@ -1,28 +1,26 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastefyCommon } from '../common';
-import { pastefyAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { pastefyAuth } from '../common/auth';
+import { pastefyOutputSchemas } from '../common/output-schemas';
+import { pastefyProps } from '../common/props';
+import { pastefyRequests } from '../common/requests';
 
 export default createAction({
   auth: pastefyAuth,
   name: 'create_folder',
   classification: 'WRITE',
   displayName: 'Create Folder',
-  description: 'Creates a new folder',
-  audience: 'both',
-  aiMetadata: { description: 'Creates a new folder on a Pastefy instance to organize pastes, optionally nested under a parent folder. Use before placing pastes into a folder. Creates a new folder with a new ID on every call, so it is not idempotent.', idempotent: false },
-  props: {
-    name: Property.ShortText({
-      displayName: 'Name',
-      required: true,
-    }),
-    parent_id: pastefyCommon.folder_id(false, 'Parent Folder'),
+  description: 'Creates a new folder.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Creates a folder, optionally inside a parent folder picked from a dropdown. Creates a new folder with a new ID on every call, so it is not idempotent. Needs an API key in the Pastefy connection.',
+    idempotent: false,
   },
-  async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const res = await client.createFolder({
-      name: context.propsValue.name as string,
-      parent: context.propsValue.parent_id,
-    });
-    return res.folder;
+  props: {
+    name: Property.ShortText({ displayName: 'Name', required: true }),
+    parent_id: pastefyProps.folderDropdown({ required: false, displayName: 'Parent Folder', description: 'Create the folder inside this folder.' }),
+  },
+  outputSchema: pastefyOutputSchemas.folder,
+  async run({ auth, propsValue }) {
+    return pastefyRequests.createFolder({ auth, name: propsValue.name, parentId: propsValue.parent_id });
   },
 });

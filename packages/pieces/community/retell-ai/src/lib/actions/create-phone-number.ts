@@ -1,8 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { retellAiApiCall } from '../common/client';
 import { retellAiAuth } from '../common/auth';
+import { apiKeyOf, retellApiCall } from '../common/client';
+import { retellInput } from '../common/input';
 import { agentIdDropdown, numberProviderDropdown } from '../common/props';
+import { retellSchemas } from '../common/schemas';
 
 export const createPhoneNumber = createAction({
   auth: retellAiAuth,
@@ -10,27 +12,28 @@ export const createPhoneNumber = createAction({
   classification: 'WRITE',
   displayName: 'Create Phone Number',
   description: 'Buys a new phone number and binds agents.',
-  audience: 'both',
-  aiMetadata: { description: 'Purchase a new US/Canada phone number from Retell and bind inbound and/or outbound AI agents to it. Either request a number by area code or pass a specific number in E.164 format; toll-free can be requested. Use to provision a callable number for an agent. Not idempotent: each call purchases a new number and incurs cost.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Buys a new Retell phone number (monthly fee) and binds inbound/outbound agents. Each run buys another number.',
+    idempotent: false,
+  },
   props: {
-    inboundAgentId: agentIdDropdown('Inbound Agent'),
-    outboundAgentId: agentIdDropdown('Outbound Agent'),
+    inboundAgentId: agentIdDropdown({ displayName: 'Inbound Agent' }),
+    outboundAgentId: agentIdDropdown({ displayName: 'Outbound Agent' }),
     inboundAgentVersion: Property.Number({
       displayName: 'Inbound Agent Version',
-      description:
-        'Version of the inbound agent to bind to the number. If not provided, will default to latest version.',
+      description: 'Version of the inbound agent to bind to the number. If not provided, will default to latest version.',
       required: false,
     }),
     outboundAgentVersion: Property.Number({
       displayName: 'Outbound Agent Version',
-      description:
-        'Version of the outbound agent to bind to the number. If not provided, will default to latest version.',
+      description: 'Version of the outbound agent to bind to the number. If not provided, will default to latest version.',
       required: false,
     }),
     areaCode: Property.Number({
       displayName: 'Area Code',
-      description:
-        'Area code of the number to obtain. Format is a 3 digit integer. Currently only supports US area code.',
+      description: '3-digit US area code. Leave empty when Phone Number is set.',
       required: false,
     }),
     nickname: Property.ShortText({
@@ -65,84 +68,84 @@ export const createPhoneNumber = createAction({
     }),
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
-      description:
-        'The number you are trying to purchase in E.164 format of the number (+country code then number with no space and no special characters).',
+      description: 'Exact E.164 number to buy. Leave empty when Area Code is set.',
       required: false,
     }),
   },
+  outputSchema: retellSchemas.rawPhoneNumber,
   async run({ propsValue, auth }) {
-    const {
-      inboundAgentId,
-      outboundAgentId,
-      inboundAgentVersion,
-      outboundAgentVersion,
-      areaCode,
-      nickname,
-      inboundWebhookUrl,
-      numberProvider,
-      countryCode,
-      tollFree,
-      phoneNumber,
-    } = propsValue;
-
-    // Validate phone number if provided
-    if (phoneNumber) {
-      const e164Regex = /^\+[1-9]\d{1,14}$/;
-      if (!e164Regex.test(phoneNumber)) {
-        throw new Error('Phone Number must be in E.164 format (e.g., +14157774444)');
-      }
-    }
-
-    const body: Record<string, unknown> = {
-      nickname,
-    };
-
-    // Add optional fields to the request body
-    if (inboundAgentId !== undefined) {
-      body['inbound_agent_id'] = inboundAgentId || null;
-    }
-
-    if (outboundAgentId !== undefined) {
-      body['outbound_agent_id'] = outboundAgentId || null;
-    }
-
-    if (inboundAgentVersion !== undefined) {
-      body['inbound_agent_version'] = inboundAgentVersion;
-    }
-
-    if (outboundAgentVersion !== undefined) {
-      body['outbound_agent_version'] = outboundAgentVersion;
-    }
-
-    if (areaCode !== undefined) {
-      body['area_code'] = areaCode;
-    }
-
-    if (inboundWebhookUrl !== undefined) {
-      body['inbound_webhook_url'] = inboundWebhookUrl;
-    }
-
-    if (numberProvider !== undefined) {
-      body['number_provider'] = numberProvider;
-    }
-
-    if (countryCode !== undefined) {
-      body['country_code'] = countryCode;
-    }
-
-    if (tollFree !== undefined) {
-      body['toll_free'] = tollFree;
-    }
-
-    if (phoneNumber !== undefined) {
-      body['phone_number'] = phoneNumber;
-    }
-
-    return await retellAiApiCall({
+    return retellApiCall({
+      apiKey: apiKeyOf(auth),
       method: HttpMethod.POST,
-      url: '/create-phone-number',
-      auth: auth,
-      body,
+      path: '/create-phone-number',
+      body: buildBuyNumberBody({
+        inboundAgentId: propsValue.inboundAgentId,
+        inboundAgentVersion: propsValue.inboundAgentVersion,
+        outboundAgentId: propsValue.outboundAgentId,
+        outboundAgentVersion: propsValue.outboundAgentVersion,
+        areaCode: propsValue.areaCode,
+        phoneNumber: propsValue.phoneNumber,
+        nickname: propsValue.nickname,
+        inboundWebhookUrl: propsValue.inboundWebhookUrl,
+        numberProvider: propsValue.numberProvider,
+        countryCode: propsValue.countryCode,
+        tollFree: propsValue.tollFree,
+      }),
     });
   },
 });
+
+export function buildBuyNumberBody(input: {
+  inboundAgentId: unknown;
+  inboundAgentVersion: unknown;
+  outboundAgentId: unknown;
+  outboundAgentVersion: unknown;
+  areaCode: unknown;
+  phoneNumber: unknown;
+  nickname: unknown;
+  inboundWebhookUrl: unknown;
+  numberProvider: unknown;
+  countryCode: unknown;
+  tollFree: unknown;
+}): Record<string, unknown> {
+  const areaCode = retellInput.optionalInteger({ value: input.areaCode, label: 'Area Code', min: 100, max: 999 });
+  const phoneNumber = retellInput.optionalE164({ value: input.phoneNumber, label: 'Phone Number' });
+  if (areaCode !== undefined && phoneNumber !== undefined) {
+    throw new Error('Set either Area Code or Phone Number, not both.');
+  }
+  const body: Record<string, unknown> = {};
+  const inbound = retellInput.singleAgent({ agentId: input.inboundAgentId, version: input.inboundAgentVersion, label: 'Inbound Agent' });
+  if (inbound !== undefined) {
+    body['inbound_agents'] = inbound;
+  }
+  const outbound = retellInput.singleAgent({ agentId: input.outboundAgentId, version: input.outboundAgentVersion, label: 'Outbound Agent' });
+  if (outbound !== undefined) {
+    body['outbound_agents'] = outbound;
+  }
+  if (areaCode !== undefined) {
+    body['area_code'] = areaCode;
+  }
+  if (phoneNumber !== undefined) {
+    body['phone_number'] = phoneNumber;
+  }
+  const nickname = retellInput.optionalText(input.nickname);
+  if (nickname !== undefined) {
+    body['nickname'] = nickname;
+  }
+  const webhookUrl = retellInput.optionalText(input.inboundWebhookUrl);
+  if (webhookUrl !== undefined) {
+    body['inbound_webhook_url'] = webhookUrl;
+  }
+  const provider = retellInput.optionalText(input.numberProvider);
+  if (provider !== undefined) {
+    body['number_provider'] = provider;
+  }
+  const country = retellInput.optionalText(input.countryCode);
+  if (country !== undefined) {
+    body['country_code'] = country;
+  }
+  if (typeof input.tollFree === 'boolean') {
+    body['toll_free'] = input.tollFree;
+  }
+  return body;
+}

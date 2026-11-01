@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
+import { leadConvertedTriggerOutputSchema } from '../output-schemas';
 
 export const leadConvertedToUserTrigger = createTrigger({
   auth: intercomAuth,
@@ -9,12 +10,13 @@ export const leadConvertedToUserTrigger = createTrigger({
   displayName: 'Lead Converted To User',
   description: 'Triggers when a lead is converted to a user.',
   aiMetadata: {
-    description: 'Fires when a lead is converted into a user in Intercom, typically when the lead signs up or is otherwise identified and promoted from role "lead" to role "user". Outputs the resulting user contact object.',
+    description: 'Fires when a lead becomes a user in Intercom: when the lead signs up (contact.lead.signed_up) and when a lead is merged into a user (contact.merged). Outputs the resulting user contact; merge events also carry merged_from with the lead ID.',
   },
   props: {},
+  outputSchema: leadConvertedTriggerOutputSchema,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {
-    const client = intercomClient(context.auth);
+    const client = await intercomClient(context.auth);
     const response = await client.admins.identify();
 
     if (!response.app?.id_code) {
@@ -22,15 +24,15 @@ export const leadConvertedToUserTrigger = createTrigger({
     }
 
     context.app.createListeners({
-      events: ['contact.merged'],
+      events: ['contact.lead.signed_up', 'contact.merged'],
       identifierValue: response['app']['id_code'],
     });
   },
-  async onDisable(context) {
-    // implement webhook deletion logic
-  },
+  async onDisable() {
+		return;
+	},
   async test(context) {
-      const client = intercomClient(context.auth);
+      const client = await intercomClient(context.auth);
 
       const response = await client.contacts.search({
         query:{

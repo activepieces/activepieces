@@ -22,7 +22,7 @@
   "API Token": "API Token",
   "Navigate to the API Access Tokens menu within your account.Click the Create API Access Token button to initiate the token creation process.": "アカウント内の[API アクセストークン]メニューに移動します。[API アクセストークンの作成]ボタンをクリックして、トークンの作成プロセスを開始します。",
   "Ampeco Platform": "Ampeco Platform",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Actions - Charge Point - Change Availability": "アクション - チャージポイント - 可用性の変更",
   "Actions - Charge Point - Change Owner": "アクション - チャージポイント - 所有者の変更",
   "Actions - Charge Point - Clear Charging Profile": "アクション - 充電ポイント - 充電プロファイルをクリア",

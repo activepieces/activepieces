@@ -1,15 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluencePaginatedApiCall } from '../common';
+import { confluenceApi } from '../common/api';
+import { listSpacesOutputSchema } from '../output-schemas';
 
 export const listSpacesAction = createAction({
 	auth: confluenceAuth,
 	name: 'list-spaces',
+	outputSchema: listSpacesOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'List Spaces',
 	description: 'Lists all spaces the authenticated user can access.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Lists the Confluence spaces the authenticated user can access (paginated through all results), optionally filtered by space type (global, personal, collaboration, knowledge base) and status (current or archived). Use to discover available spaces or resolve a space to its ID. Read-only and idempotent.', idempotent: true },
 	props: {
 		type: Property.StaticDropdown({
@@ -45,15 +46,7 @@ export const listSpacesAction = createAction({
 		if (type) query['type'] = type;
 		if (status) query['status'] = status;
 
-		const spaces = await confluencePaginatedApiCall<Record<string, unknown>>({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.GET,
-			version: 'v2',
-			resourceUri: '/spaces',
-			query,
-		});
+		const spaces = await confluenceApi.listSpaces({ auth: context.auth, query });
 
 		return { count: spaces.length, results: spaces };
 	},

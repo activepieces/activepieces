@@ -26,10 +26,10 @@ ROUTER: EXISTS {{step_N['output'].body}} → success | Otherwise → failure
 With `continueOnFailure` off, the run halts at the failing step with prior outputs intact. `ap_retry_run` offers **FROM_FAILED_STEP** (resume at the failure, reuse prior outputs — cheap) or **ON_LATEST_VERSION** (re-run from the start against the published flow).
 
 ## Human approvals block indefinitely
-Approval actions (Slack/Gmail request-approval, Todos "create and wait") pause until a human decides — **no built-in timeout** (paused time doesn't count against the 600 s budget). The return shape varies by piece (`approved` boolean vs a `status` string like `Accepted`/`Rejected`) — **verify with `ap_test_step` before routing on it.** For a timeout, run a separate scheduled "kill-switch" flow, or pre-score with AI and only escalate borderline cases (`ap_load_guide('ai')`).
+Approval actions (Slack/Gmail request-approval, Todos "create and wait") pause until a human decides — **no built-in timeout** (paused time doesn't count against the 600 s budget). The return shape varies by piece (`approved` boolean vs a `status` string like `Accepted`/`Rejected`) — **verify with `ap_test_step` before routing on it.** For a timeout, run a separate scheduled "kill-switch" flow, or pre-score with AI and only escalate borderline cases (`ap_load_skill('ai')`).
 
 ## Scale & decomposition — the 600 s ceiling
 Split a flow when it risks the runtime ceiling or gets unwieldy (>~25 steps, >2 nesting levels, a loop over hundreds of items):
-- **Free path:** child flows with webhook triggers; the parent's last step POSTs to the child (fire-and-forget → the child must be idempotent — `ap_load_guide('state')`). Each child gets its own 600 s budget.
+- **Free path:** child flows with webhook triggers; the parent's last step POSTs to the child (fire-and-forget → the child must be idempotent — `ap_load_skill('state')`). Each child gets its own 600 s budget.
 - **Sub Flows piece:** a synchronous call with a return value (may require a specific plan — confirm availability before recommending).
 - **Chunk big loops:** loop over chunks of N in the parent, dispatch each chunk to a child flow.

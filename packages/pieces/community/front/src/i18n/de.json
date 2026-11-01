@@ -117,7 +117,7 @@
   "List of BCC recipient handles.": "Liste der BCC-Empfängerhandlungen.",
   "The subject of the draft.": "Das Thema des Entwurfs.",
   "The body of the draft message.": "Der Wortlaut des Entwurfs.",
-  "List of attachment URLs.": "Liste der Anhang-URLs.",
+  "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.": "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.",
   "Mode of the draft reply": "Modus des Entwurfs der Antwort",
   "The ID of the signature to use for the draft reply (if applicable).": "Die ID der Unterschrift, die für den Antwortentwurf verwendet werden soll (falls zutreffend).",
   "Whether to append the default signature to the draft reply (if applicable).": "Gibt an, ob die Standardsignatur dem Entwurf der Antwort angefügt werden soll (falls zutreffend).",

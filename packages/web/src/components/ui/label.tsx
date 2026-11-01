@@ -8,7 +8,7 @@ type LabelProps = React.ComponentProps<typeof LabelPrimitive.Root> & {
 };
 
 function RequiredFieldAsterisk() {
-  return <span className="text-destructive">*</span>;
+  return <span className="text-danger-11">*</span>;
 }
 
 function Label({

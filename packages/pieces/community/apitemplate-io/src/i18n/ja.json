@@ -18,7 +18,7 @@
   "Delete Object": "オブジェクトを削除",
   "Get Account Information": "アカウント情報を取得",
   "List Objects": "オブジェクトの一覧",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Creates an image from a template with provided data.": "指定されたデータでテンプレートから画像を作成します。",
   "Creates a PDF from HTML.": "HTML から PDF を作成します。",
   "Creates a PDF from a webpage URL.": "Web ページの URL から PDF を作成します。",

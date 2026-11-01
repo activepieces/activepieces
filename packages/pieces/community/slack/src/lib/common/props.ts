@@ -335,3 +335,11 @@ export const threadCursor = Property.ShortText({
   required: false,
   advanced: true,
 });
+
+export const customBlocks = Property.Json({
+  displayName: 'Blocks',
+  description:
+    'Optional Block Kit blocks rendered above the action buttons, e.g. dropdowns. Give each interactive element a block_id and action_id so its selection appears under payload.state.values when an action is clicked. Do not use the block_id "actions", it is reserved for the action buttons. See https://api.slack.com/block-kit',
+  required: false,
+  defaultValue: [],
+});

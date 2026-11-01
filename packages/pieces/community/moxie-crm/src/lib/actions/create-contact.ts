@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
 import { moxieCRMAuth } from '../auth';
+import { moxieDropdowns } from '../common/dropdowns';
 import { createContactActionOutputSchema } from '../output-schemas';
 
 export const moxieCreateContactAction = createAction({
@@ -33,26 +34,9 @@ export const moxieCreateContactAction = createAction({
       displayName: 'Phone',
       required: false,
     }),
-    clientName: Property.Dropdown({
-      auth: moxieCRMAuth,
-      displayName: 'Client',
-      description: 'The client this contact belongs to.',
+    clientName: moxieDropdowns.clientName({
       required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please connect your account first',
-          };
-        }
-        const client = await makeClient(auth);
-        const clients = await client.listClients();
-        return {
-          options: clients.map((c) => ({ label: c.name, value: c.name })),
-        };
-      },
+      description: 'The client this contact belongs to.',
     }),
     defaultContact: Property.Checkbox({
       displayName: 'Default Contact',

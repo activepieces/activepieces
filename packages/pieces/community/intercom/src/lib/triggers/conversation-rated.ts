@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomAuth } from '../auth';
 import { intercomClient, TriggerPayload } from '../common';
+import { conversationTriggerOutputSchema } from '../output-schemas';
 
 export const conversationRated = createTrigger({
 	name: 'conversationRated',
@@ -12,9 +13,10 @@ export const conversationRated = createTrigger({
 	},
 	props: {},
 	auth: intercomAuth,
+	outputSchema: conversationTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -26,11 +28,11 @@ export const conversationRated = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.conversations.list({ per_page: 10 });
 

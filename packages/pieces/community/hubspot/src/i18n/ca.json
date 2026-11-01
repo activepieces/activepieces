@@ -311,5 +311,6 @@
   "Note": "Note",
   "Task": "Task",
   "Meeting": "Meeting",
-  "Call": "Call"
+  "Call": "Call",
+  "Fields left empty keep their current value.": "Els camps que deixis buits conserven el valor actual."
 }

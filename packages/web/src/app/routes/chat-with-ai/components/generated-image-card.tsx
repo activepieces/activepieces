@@ -14,7 +14,7 @@ export function GeneratedImageCard({ image }: { image: ImageGeneratedEvent }) {
   return (
     <>
       <motion.div
-        className="max-w-md overflow-hidden rounded-xl border bg-card"
+        className="max-w-md overflow-hidden rounded-xl border bg-panel"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -27,9 +27,7 @@ export function GeneratedImageCard({ image }: { image: ImageGeneratedEvent }) {
           <img src={image.url} alt={caption} className="h-auto w-full" />
         </button>
         <div className="flex items-center justify-between gap-2 p-2">
-          <p className="min-w-0 truncate text-xs text-muted-foreground">
-            {caption}
-          </p>
+          <p className="min-w-0 truncate text-xs text-gray-11">{caption}</p>
           <a href={image.url} download target="_blank" rel="noreferrer">
             <Button variant="ghost" size="icon-sm">
               <Download className="size-4" />

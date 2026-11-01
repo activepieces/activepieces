@@ -6,5 +6,12 @@
   "Booking Rescheduled": "Reserva reagendada",
   "Create a webhook to monitor when Booking Cancelled": "Criar um webhook para monitorar quando a reserva foi cancelada",
   "Create a webhook to monitor when Booking Created": "Criar um webhook para monitorar quando agendar criação",
-  "Create a webhook to monitor when Booking Rescheduled": "Criar um webhook para monitorar quando agendar novamente"
+  "Create a webhook to monitor when Booking Rescheduled": "Criar um webhook para monitorar quando agendar novamente",
+  "To get your API key:\n1. Open [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) in Cal.com.\n2. Create a new key and choose when it expires.\n3. Copy the key (it starts with `cal_`) and paste it here.": "Para obter sua chave de API:\n1. Abra [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) no Cal.com.\n2. Crie uma nova chave e escolha quando ela expira.\n3. Copie a chave (começa com `cal_`) e cole aqui.",
+  "Add cal-api-version (2026-05-01 for /bookings). Auth is added for you.": "Adicione cal-api-version (2026-05-01 para /bookings). A autenticação é adicionada para você.",
+  "New Booking": "Nova reserva",
+  "Triggers when a Cal.com booking is cancelled.": "É acionado quando uma reserva do Cal.com é cancelada.",
+  "Triggers when someone books a meeting with you on Cal.com.": "É acionado quando alguém agenda uma reunião com você no Cal.com.",
+  "Triggers when a Cal.com booking is moved to a new time.": "É acionado quando uma reserva do Cal.com é remarcada para outro horário.",
+  "This webhook is added to your Cal.com account when you publish the flow and removed when you turn it off. It fires for bookings on the account that owns the API key.": "Este webhook é adicionado à sua conta do Cal.com quando você publica o fluxo e removido quando você o desativa. Ele é acionado para reservas da conta dona da chave de API."
 }

@@ -3,12 +3,12 @@ import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces
 import { baseUrl } from './common/common';
 
 export const openaiAuth = PieceAuth.SecretText({
-  description: `Follow these instructions to get your OpenAI API Key:
+  description: `To get your API key:
 
-1. Visit the following website: https://platform.openai.com/account/api-keys.
-2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
+1. Go to https://platform.openai.com/api-keys
+2. Click **Create new secret key** and copy it.
 
-It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
+Add credit to your OpenAI account first, or every request fails with a 429 quota error.
 `,
   displayName: 'API Key',
   required: true,

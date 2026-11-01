@@ -11,11 +11,27 @@ export const addContactToWorkflowAction = createAction({
     description:'Adds a contact to a specified workflow in your HubSpot account.',
     audience: 'both',
     aiMetadata: { description: 'Enroll a contact (identified by email) into a specific HubSpot automation workflow. Only works with API-enrollable workflows. Re-enrolling an already-enrolled contact does not duplicate the enrollment, so it is effectively idempotent.', idempotent: true },
+    propertyGroups: [
+        {
+            key: 'workflow',
+            display: 'section',
+            label: 'Workflow',
+            icon: 'sliders',
+            props: ['workflowId'],
+        },
+        {
+            key: 'contact',
+            display: 'section',
+            label: 'Contact',
+            icon: 'user',
+            props: ['email'],
+        },
+    ],
     props:{
         workflowId : workflowIdDropdown,
         email:Property.ShortText({
-            displayName:"Contact's Email",
-            description:'The email of the contact to add to the workflow.',
+            displayName:'Contact Email',
+            placeholder:'jane@example.com',
             required:true
         }),
     },

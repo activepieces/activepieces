@@ -11,27 +11,28 @@ export const mysqlAuth = PieceAuth.CustomAuth({
     host: Property.ShortText({
       displayName: 'Host',
       required: true,
-      description: 'The hostname or address of the mysql server',
+      description: "The server's hostname or IP address.",
+      placeholder: 'db.example.com',
     }),
     port: Property.Number({
       displayName: 'Port',
       defaultValue: 3306,
-      description: 'The port to use for connecting to the mysql server',
+      description: 'The port the server listens on, usually 3306.',
       required: true,
     }),
     user: Property.ShortText({
       displayName: 'Username',
       required: true,
-      description: 'The username to use for connecting to the mysql server',
+      description: 'The database user to sign in as.',
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description: 'The password to use to identify at the mysql server',
+      description: 'The password for that user.',
       required: true,
     }),
     database: Property.ShortText({
       displayName: 'Database',
-      description: 'The name of the database to use. Required if you are not using the "Execute Query" Action',
+      description: 'The database to use. Only Run Query works without one.',
       required: false,
     }),
   },
@@ -42,7 +43,7 @@ export const mysql = createPiece({
   displayName: 'MySQL',
   description: "The world's most popular open-source database",
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/mysql.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ["JanHolger","kishanprmr","khaledmashaly","abuaboud"],

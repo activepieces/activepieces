@@ -12,6 +12,15 @@ export const getRecord = createAction({
   description: 'Get a single record by its ID.',
   aiMetadata: { description: 'Fetches one Activepieces Table record by its record ID and returns its cell values. Pick this when the exact record ID is already in hand, for example from a table trigger payload or an earlier Find Records step; use Find Records to look rows up by column value instead. Requires both the table ID and the record ID, and cannot search by column content; read-only and idempotent.', idempotent: true },
   auth: PieceAuth.None(),
+  propertyGroups: [
+    {
+      key: 'record',
+      display: 'section',
+      label: 'Record to get',
+      icon: 'tag',
+      props: ['table_id', 'record_id'],
+    },
+  ],
   props: {
     table_id: tablesCommon.table_id,
     record_id: tablesCommon.record_id,

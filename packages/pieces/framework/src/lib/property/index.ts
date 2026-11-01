@@ -29,6 +29,7 @@ export { NumberProperty } from './input/number-property';
 export { ObjectProperty } from './input/object-property';
 export { OAuth2Props } from './authentication/oauth2-prop';
 export { OAuth2AuthorizationMethod } from './authentication/oauth2-prop';
+export { OAuth2Discovery } from './authentication/oauth2-prop';
 export { BasicAuthPropertyValue } from './authentication/basic-auth-prop';
 export { StaticMultiSelectDropdownProperty } from './input/dropdown/static-dropdown';
 export { StaticDropdownProperty } from './input/dropdown/static-dropdown';

@@ -9,44 +9,64 @@ export const createClickupChannel = createAction({
   auth: clickupAuth,
   name: 'create_channel',
   classification: 'WRITE',
-  description: 'Creates a channel in a ClickUp workspace',
+  description: 'Create a chat channel in a workspace.',
   audience: 'both',
   aiMetadata: { description: 'Create a standalone Chat channel in a ClickUp workspace with a name and visibility. Each call creates a new channel, so it is not idempotent. Use this for a workspace-level channel; to tie the channel to a space, folder, or list, use Create Channel in Space/Folder/List instead.', idempotent: false },
   displayName: 'Create Channel',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     name: Property.ShortText({
-      description: 'Name of the channel',
-      displayName: 'Channel Name',
+      description: 'Name people see in the sidebar.',
+      displayName: 'Name',
       required: true,
       defaultValue: '',
+      placeholder: 'e.g. launch-team',
     }),
     description: Property.ShortText({
-      description: 'Description of the channel',
-      displayName: 'Channel Description',
+      description: 'What the channel is for.',
+      displayName: 'Description',
       required: false,
       defaultValue: '',
+      width: 'half',
     }),
     topic: Property.ShortText({
-      description: 'Topic of the channel',
-      displayName: 'Channel Topic',
+      description: 'A short line shown at the top of the channel.',
+      displayName: 'Topic',
       required: false,
       defaultValue: '',
+      width: 'half',
     }),
-    // TODO: add user ids
     visibility: Property.StaticDropdown({
-      description: 'Visibility of the channel',
-      displayName: 'Channel Visibility',
+      description: 'Who can see and join the channel.',
+      displayName: 'Visibility',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Public', value: 'PUBLIC' },
-          { label: 'Private', value: 'PRIVATE' },
+          {
+            label: 'Public',
+            value: 'PUBLIC',
+            icon: 'users',
+          },
+          {
+            label: 'Private',
+            value: 'PRIVATE',
+            icon: 'user',
+          },
         ],
       },
-      defaultValue: 'public',
+      defaultValue: 'PUBLIC',
     }),
   },
+  propertyGroups: [
+    {
+      key: 'channel',
+      display: 'section',
+      label: 'Channel',
+      icon: 'text',
+      props: ['workspace_id', 'name', 'description', 'topic', 'visibility'],
+    },
+  ],
 
   outputSchema: channelOutputSchema,
   async run(configValue) {

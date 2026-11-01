@@ -28,12 +28,13 @@ export const publishedFlowsUsingAgent = async ({ projectId, agentExternalId, nam
     const [total, named] = await Promise.all([
         referencing().getCount(),
         referencing()
-            .select('flow_version."displayName"', 'displayName')
+            .select('flow_version_flow.id', 'id')
+            .addSelect('flow_version."displayName"', 'displayName')
             .orderBy('flow_version."displayName"', 'ASC')
             .limit(nameLimit)
-            .getRawMany<{ displayName: string }>(),
+            .getRawMany<{ id: string, displayName: string }>(),
     ])
-    return { total, names: named.map((row) => row.displayName) }
+    return { total, names: named.map((flow) => flow.displayName), flows: named }
 }
 
 export const flowVersionService = (log: FastifyBaseLogger) => ({
@@ -434,4 +435,5 @@ type ApplyOperationParams = {
 export type PublishedFlowsUsingAgent = {
     total: number
     names: string[]
+    flows: { id: string, displayName: string }[]
 }
