@@ -7,6 +7,7 @@ export const prooftellAuth = PieceAuth.SecretText({
   description:
     'Create a key in the ProofTell dashboard (Developers → Integrations), named after this platform. A `pt_test_` key is the free sandbox: simulated, deterministic answers. A `pt_live_` key spends the account\'s balance.',
   required: true,
+  getConnectionIdentifier: async ({ auth }) => (auth.startsWith('pt_test_') ? 'Sandbox' : 'Live'),
   validate: async ({ auth }) => {
     try {
       await prooftellApi.request({

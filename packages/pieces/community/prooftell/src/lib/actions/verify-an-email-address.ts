@@ -13,7 +13,7 @@ export const verifyEmailAddress = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Verify one email address with ProofTell: deliverable, undeliverable, risky or unknown, with the reason, the flags and a did-you-mean suggestion. To read an email with a phone or an IP as one risk score, use Assess the risk of an identity instead. A deliverable or undeliverable answer is charged from the balance; a retry is charged again.',
+      'Verify one email address with ProofTell: deliverable, undeliverable, risky or unknown, with the reason, the flags and a did-you-mean suggestion. To read an email with a phone or an IP as one risk score, use Assess the risk of an identity instead. Charged when the address was judged (deliverable, undeliverable or risky); unknown, a syntax error and a greylisted mailbox are free; a retry is charged again.',
     idempotent: true,
   },
   props: {
