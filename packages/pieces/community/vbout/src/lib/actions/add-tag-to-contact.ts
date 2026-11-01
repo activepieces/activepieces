@@ -6,8 +6,8 @@ export const addTagToContactAction = createAction({
   auth: vboutAuth,
   name: 'vbout_add_tag',
   classification: 'WRITE',
-  displayName: 'Add Tag to Contact',
-  description: 'Adds the tag to the contact.',
+  displayName: 'Add Tags to Contact',
+  description: 'Adds tags to a contact.',
   audience: 'both',
   aiMetadata: {
     description: 'Adds one or more tags to an existing VBOUT contact identified by email. Use to label or segment a contact. Accepts a list of tag names; not idempotent, as it appends tags on each call.',
@@ -15,11 +15,12 @@ export const addTagToContactAction = createAction({
   },
   props: {
     email: Property.ShortText({
-      displayName: 'Email Address',
+      displayName: 'Email',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     tagname: Property.Array({
-      displayName: 'Tag Name',
+      displayName: 'Tags',
       required: true,
     }),
   },
