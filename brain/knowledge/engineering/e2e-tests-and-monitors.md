@@ -6,6 +6,8 @@ icon: 🎭
 
 One Playwright suite in `packages/tests-e2e` feeds three consumers that fail independently: CI on a fresh throwaway instance, Checkly monitors against **production Cloud**, and a single BetterStack monitor. A change that only breaks one of them looks green everywhere else, so it is worth knowing which reads what.
 
+How to write a spec lives in one place: "Writing a spec" in `packages/tests-e2e/README.md`. This page holds the gotchas only.
+
 **Local / CI suite** — `playwright.config.ts` runs every `scenarios/**/*.spec.ts`; `AP_EDITION=ce` skips `scenarios/ee`. Boots the whole stack itself via the `webServer` block unless `E2E_INSTANCE_URL` is set. Global setup signs in once and saves the session to `.auth/user.json`, so specs start signed in.
 **Checkly monitors** — `checkly.config.ts` picks up the *same* `**/scenarios/**/*.spec.ts` files and runs them every 10 minutes with `baseURL: https://cloud.activepieces.com`, signing in with `E2E_EMAIL` / `E2E_PASSWORD`.
 **BetterStack monitor** — one standalone file, `scenarios/betterstack/*.flat.spec.js`.
