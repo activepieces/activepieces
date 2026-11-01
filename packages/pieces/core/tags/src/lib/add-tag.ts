@@ -1,18 +1,13 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
-const markdown = `
-This action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.
-<br>
-<br>
-**Note:** If you are looking to use it in the user interface, please open a feature request.
-`;
+const markdown = `Tags this run so you can find it later. Runs can be filtered by tag through the API; the Runs page does not show tags yet.`;
 
 export const addTag = createAction({
   audience: 'both',
   name: 'add_tag',
   classification: 'READ',
   displayName: 'Add Tag',
-  description: 'Add a tag to the current execution',
+  description: 'Tag the current run so you can filter runs by it later.',
   aiMetadata: { description: 'Attaches a label to the flow run that is currently executing, so that run can later be located or grouped by that tag when listing runs through the Activepieces API. Pick this to mark a run with a business identifier or a branch it took (e.g. a customer id, "retry", "escalated"); it affects only the current run and the tag is surfaced through the API rather than the run UI. Requires a tag name; idempotent, since the run holds a de-duplicated set of tags, so adding the same name again leaves the same end state.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
@@ -28,7 +23,8 @@ export const addTag = createAction({
     }),
     name: Property.ShortText({
       displayName: 'Tag Name',
-      description: undefined,
+      description: 'Type a word or map a value from an earlier step, like a customer ID.',
+      placeholder: 'escalated',
       required: true,
     }),
   },
