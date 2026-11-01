@@ -20,27 +20,19 @@ export const listTranscripts = createAction({
   props,
   propertyGroups: [
     {
-      key: 'status',
-      display: 'builder',
-      label: 'Status',
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
       icon: 'filter',
-      props: ['status', 'throttled_only'],
+      props: ['status', 'created_on', 'before_id', 'after_id', 'throttled_only'],
     },
     {
-      key: 'date',
-      display: 'builder',
-      label: 'Date',
-      icon: 'calendar',
-      props: ['created_on'],
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit'],
     },
-    {
-      key: 'position',
-      display: 'builder',
-      label: 'Position',
-      icon: 'tag',
-      props: ['before_id', 'after_id'],
-    },
-    { key: 'footer', display: 'footer', props: ['limit'] },
   ],
   async run(context) {
     const client = getAssemblyAIClient(context);

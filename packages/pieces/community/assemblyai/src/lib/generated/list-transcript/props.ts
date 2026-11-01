@@ -4,17 +4,12 @@ export const props = {
     displayName: 'Limit',
     required: false,
     description: 'Most transcripts to return, up to 200.',
-    display: 'stepper',
-    min: 1,
-    max: 200,
-    step: 1,
     defaultValue: 10,
   }),
   status: Property.StaticDropdown({
     displayName: 'Status',
     required: false,
     description: 'Only transcripts with this status.',
-    icon: 'filter',
     options: {
       options: [
         {
@@ -40,27 +35,25 @@ export const props = {
     displayName: 'Created On',
     required: false,
     description: 'Only transcripts created on this date.',
-    icon: 'calendar',
   }),
   before_id: Property.ShortText({
     displayName: 'Created Before',
     required: false,
     description: 'Only transcripts created before this transcript ID.',
-    icon: 'tag',
+    width: 'half',
     placeholder: 'Transcript ID',
   }),
   after_id: Property.ShortText({
     displayName: 'Created After',
     required: false,
     description: 'Only transcripts created after this transcript ID.',
-    icon: 'tag',
+    width: 'half',
     placeholder: 'Transcript ID',
   }),
   throttled_only: Property.Checkbox({
     displayName: 'Throttled Only',
     required: false,
     description: 'Only throttled transcripts. Ignores the status filter.',
-    icon: 'filter',
     defaultValue: false,
   }),
 };

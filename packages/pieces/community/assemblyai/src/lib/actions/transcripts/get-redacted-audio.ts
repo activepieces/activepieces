@@ -23,7 +23,7 @@ export const getRedactedAudio = createAction({
       display: 'section',
       label: 'Redacted Audio',
       icon: 'file',
-      props: ['id', 'download_file'],
+      props: ['id', 'download_file', 'download_file_name'],
     },
   ],
   props: {
@@ -33,11 +33,10 @@ export const getRedactedAudio = createAction({
       description: 'Save a copy of the bleeped audio to the flow.',
       required: true,
       defaultValue: false,
-      reveals: ['download_file_name'],
     }),
     download_file_name: Property.ShortText({
       displayName: 'File Name',
-      description: 'Include the file extension.',
+      description: 'Used when Save Audio File is on. Include the file extension.',
       required: false,
       defaultValue: 'redacted-audio.mp3',
     }),

@@ -79,10 +79,6 @@ export const props = {
     displayName: 'Max Output Size',
     required: false,
     description: 'Longest answer in tokens, up to 4000.',
-    display: 'stepper',
-    min: 1,
-    max: 4000,
-    step: 100,
   }),
   temperature: Property.Number({
     displayName: 'Temperature',
