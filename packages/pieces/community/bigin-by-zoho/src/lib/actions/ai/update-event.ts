@@ -49,7 +49,7 @@ export const biginUpdateEventAi = createAction({
       All_day: propsValue.allDay === undefined || propsValue.allDay === null ? undefined : propsValue.allDay === 'yes',
       Venue: propsValue.venue ?? undefined,
       Related_To: biginRecords.lookup(propsValue.relatedId ?? undefined),
-      $related_module: propsValue.relatedId ? propsValue.relatedModule : undefined,
+      $related_module: propsValue.relatedId ? biginRecords.relatedModuleForApi(propsValue.relatedModule) : undefined,
       Participants: Array.isArray(propsValue.participantIds) && propsValue.participantIds.length > 0 ? propsValue.participantIds.map((id) => ({ type: 'contact', participant: String(id) })) : undefined,
       Owner: biginRecords.lookup(propsValue.ownerId ?? undefined),
       Description: propsValue.description ?? undefined,

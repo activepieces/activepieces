@@ -167,6 +167,32 @@ function readWriteItem(body: Record<string, unknown>): Record<string, unknown> {
   return item['details'];
 }
 
+// Bigin already saved the write; the re-read only enriches the result. If it fails
+// (timeout, rate limit), return the confirmed write details so a retry does not duplicate.
+async function readBackOrDetails({
+  connection,
+  module,
+  id,
+  details,
+}: {
+  connection: BiginConnection;
+  module: string;
+  id: string;
+  details: Record<string, unknown>;
+}): Promise<BiginRecord> {
+  try {
+    return await getRecord({ connection, module, id });
+  } catch {
+    return { ...details, id };
+  }
+}
+
+// The dropdown exposes deals as 'Pipelines'; Bigin's $related_module expects 'Deals'.
+function relatedModuleForApi(module: string | null | undefined): string | undefined {
+  if (!module) return undefined;
+  return module === 'Pipelines' ? 'Deals' : module;
+}
+
 async function createRecord({
   connection,
   module,
@@ -184,7 +210,7 @@ async function createRecord({
   });
   const details = readWriteItem(body);
   const id = String(details['id']);
-  const saved = await getRecord({ connection, module, id });
+  const saved = await readBackOrDetails({ connection, module, id, details });
   return {
     id,
     created_time: typeof details['Created_Time'] === 'string' ? details['Created_Time'] : null,
@@ -210,7 +236,7 @@ async function updateRecord({
     body: { data: [{ ...record, id }] },
   });
   const details = readWriteItem(body);
-  const saved = await getRecord({ connection, module, id });
+  const saved = await readBackOrDetails({ connection, module, id, details });
   return {
     id,
     modified_time: typeof details['Modified_Time'] === 'string' ? details['Modified_Time'] : null,
@@ -335,6 +361,7 @@ type BiginUpdateResult = {
 };
 
 export const biginRecords = {
+  relatedModuleForApi,
   get: getRecord,
   find: findRecord,
   list: listRecords,

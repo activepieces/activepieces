@@ -204,6 +204,7 @@ export const updatePipelineRecord = createAction({
        api_domain,
        { data: [payload] }
      );
+      assertWriteSucceeded(response.data?.[0]);
 
       if (
         propsValue.secondaryContacts &&
@@ -214,7 +215,7 @@ export const updatePipelineRecord = createAction({
           .filter((id: string) => id !== propsValue.contactName);
 
         if (secondaries.length > 0) {
-          await biginApiService.updatePipelineRecord(
+          const contactsResponse = await biginApiService.updatePipelineRecord(
             access_token,
             api_domain,
             {
@@ -226,10 +227,10 @@ export const updatePipelineRecord = createAction({
               ],
             }
           );
+          assertWriteSucceeded(contactsResponse.data?.[0]);
         }
       }
 
-      assertWriteSucceeded(response.data?.[0]);
       return {
         message: 'Pipeline record updated successfully',
         pipelineRecord: response.data[0],

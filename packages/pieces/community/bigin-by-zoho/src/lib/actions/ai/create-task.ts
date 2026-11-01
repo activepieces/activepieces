@@ -43,7 +43,7 @@ export const biginCreateTaskAi = createAction({
       Priority: propsValue.priority ?? undefined,
       Owner: biginRecords.lookup(propsValue.ownerId ?? undefined),
       Related_To: biginRecords.lookup(propsValue.relatedId ?? undefined),
-      $related_module: propsValue.relatedId ? propsValue.relatedModule : undefined,
+      $related_module: propsValue.relatedId ? biginRecords.relatedModuleForApi(propsValue.relatedModule) : undefined,
       Description: propsValue.description ?? undefined,
       },
       additionalFields: propsValue.additionalFields,

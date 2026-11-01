@@ -233,7 +233,7 @@ export const createPipelineRecord = createAction({
           .filter((id: string) => id !== propsValue.contactName);
 
         if (secondaries.length > 0) {
-          await biginApiService.updatePipelineRecord(
+          const contactsResponse = await biginApiService.updatePipelineRecord(
             access_token,
             api_domain,
             {
@@ -245,6 +245,7 @@ export const createPipelineRecord = createAction({
               ],
             }
           );
+          assertWriteSucceeded(contactsResponse.data?.[0]);
         }
       }
 

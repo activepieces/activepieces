@@ -266,3 +266,68 @@ describe('tags dropdown', () => {
     expect(res.placeholder).toContain('NOT_SUPPORTED_FEATURE');
   });
 });
+
+describe('deal links on AI tasks and events', () => {
+  const ok = { status: 201, headers: {}, body: { data: [{ status: 'success', details: { id: '5' } }] } };
+  const read = { status: 200, headers: {}, body: { data: [{ id: '5' }] } };
+  it.each([
+    ['create-task', 'biginCreateTaskAi', { subject: 'S' }],
+    ['update-task', 'biginUpdateTaskAi', { recordId: '5' }],
+    ['create-event', 'biginCreateEventAi', { title: 'E', start: '2026-11-02T09:00:00Z', end: '2026-11-02T10:00:00Z' }],
+    ['update-event', 'biginUpdateEventAi', { recordId: '5' }],
+  ])('%s sends $related_module Deals for Pipelines', async (file, name, extra) => {
+    const mod = (await import(`../src/lib/actions/ai/${file}`)) as Record<string, { run: (c: unknown) => Promise<unknown> }>;
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(ok).mockResolvedValueOnce(read);
+    await mod[name].run({ auth, propsValue: { ...extra, relatedModule: 'Pipelines', relatedId: '99' } } as never);
+    const sent = spy.mock.calls[0][0].body.data[0];
+    expect(sent.$related_module).toBe('Deals');
+    expect(sent.Related_To ?? sent.What_Id).toEqual({ id: '99' });
+  });
+});
+
+describe('records write read-back', () => {
+  const connection = getBiginConnection(auth as never);
+  it('create returns the confirmed write when the re-read fails', async () => {
+    vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 201, headers: {}, body: { data: [{ status: 'success', details: { id: '8', Created_Time: '2026-11-01T10:00:00+00:00' } }] } })
+      .mockRejectedValueOnce(new Error('timeout'));
+    const result = await biginRecords.create({ connection, module: 'Contacts', record: { Last_Name: 'X' } });
+    expect(result.id).toBe('8');
+    expect(result.created_time).toBe('2026-11-01T10:00:00+00:00');
+    expect(result.record).toMatchObject({ id: '8' });
+  });
+  it('update returns the confirmed write when the re-read fails', async () => {
+    vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: [{ status: 'success', details: { id: '8', Modified_Time: 'm' } }] } })
+      .mockRejectedValueOnce(new Error('rate limited'));
+    const result = await biginRecords.update({ connection, module: 'Contacts', id: '8', record: { Last_Name: 'Y' } });
+    expect(result).toMatchObject({ id: '8', modified_time: 'm', record: { id: '8' } });
+  });
+});
+
+describe('pipeline secondary contacts', () => {
+  const okWrite = { status: 200, headers: {}, body: { data: [{ status: 'success', details: { id: '9' } }] } };
+  const errWrite = { status: 202, headers: {}, body: { data: [{ status: 'error', code: 'INVALID_DATA', message: 'bad contact', details: {} }] } };
+  it('update checks the main write before touching contacts', async () => {
+    const { updatePipelineRecord } = await import('../src/lib/actions/update-pipeline-record');
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(errWrite).mockResolvedValueOnce(okWrite);
+    await expect(
+      updatePipelineRecord.run({ auth, propsValue: { pipelineRecordId: JSON.stringify({ id: '9' }), pipelineDetails: {}, secondaryContacts: ['2'] } } as never),
+    ).rejects.toThrow();
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+  it('update fails when the secondary-contacts write is rejected', async () => {
+    const { updatePipelineRecord } = await import('../src/lib/actions/update-pipeline-record');
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(okWrite).mockResolvedValueOnce(errWrite);
+    await expect(
+      updatePipelineRecord.run({ auth, propsValue: { pipelineRecordId: JSON.stringify({ id: '9' }), pipelineDetails: {}, secondaryContacts: ['2'] } } as never),
+    ).rejects.toThrow();
+  });
+  it('create fails when the secondary-contacts write is rejected', async () => {
+    const { createPipelineRecord } = await import('../src/lib/actions/create-pipeline-record');
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce({ ...okWrite, status: 201 }).mockResolvedValueOnce(errWrite);
+    await expect(
+      createPipelineRecord.run({ auth, propsValue: { pipelineDetails: { dealName: 'D' }, subPipeline: 'S', stage: 'Qualification', secondaryContacts: ['2'] } } as never),
+    ).rejects.toThrow();
+  });
+});
