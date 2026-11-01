@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { httpClient } from '@activepieces/pieces-common';
 import { updateCardAi } from '../src/lib/actions/ai/update-card-ai';
+import { PropertyType } from '@activepieces/pieces-framework';
 
 vi.mock('@activepieces/pieces-common', async (importOriginal) => {
   const actual = await importOriginal<
@@ -65,5 +66,17 @@ describe('update_card_ai closed tri-state', () => {
 
   it('renaming does not touch the archived state', async () => {
     expect(await runWith({ name: 'New name' })).toEqual({ name: 'New name' });
+  });
+});
+
+describe('update_card_ai closed prop shape', () => {
+  it('keeps Archived as an optional tri-state StaticDropdown', () => {
+    const closed = updateCardAi.props.closed;
+    expect(closed.type).toBe(PropertyType.STATIC_DROPDOWN);
+    expect(closed.required).toBe(false);
+    const values = (
+      closed as { options: { options: { value: string }[] } }
+    ).options.options.map((o) => o.value);
+    expect(values).toEqual(['yes', 'no', 'unchanged']);
   });
 });
