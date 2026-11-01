@@ -221,15 +221,25 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         await scheduleHardDeleteProjectJob({ id: personalProject.id, platformId, log })
     },
 
-    async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
-        const result = await projectRepo()
+    async markForDeletion({ id, platformId, enforceDefaultGuard = false }: DeleteProjectParams): Promise<void> {
+        const query = projectRepo()
             .createQueryBuilder()
             .softDelete()
             .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
-            .returning('id')
-            .execute()
+        if (enforceDefaultGuard) {
+            query.andWhere('"isDefault" = false')
+        }
+        const result = await query.returning('id').execute()
         const deletedRows: unknown[] = result.raw ?? []
         if (deletedRows.length === 0) {
+            if (enforceDefaultGuard && await projectRepo().existsBy({ id, platformId, isDefault: true })) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Remove this project from default projects before deleting it',
+                    },
+                })
+            }
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -390,6 +400,7 @@ type CreateProjectParams = {
 type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
+    enforceDefaultGuard?: boolean
 }
 
 type ScheduleHardDeleteProjectJobParams = {
