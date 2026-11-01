@@ -387,6 +387,7 @@ export function useAgentChat({
     { name: string; mimeType: AgentAllowedMimeType; data: string }[] | undefined
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
+  const lastSentFilesRef = useRef<File[] | undefined>(undefined);
   const conversationIdRef = useRef<string | null>(null);
   const modelPickRef = useRef<ChatModelPick | null>(null);
   const savedPickRef = useRef<ChatModelPick | null>(null);
@@ -810,6 +811,7 @@ export function useAgentChat({
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
+      lastSentFilesRef.current = files;
 
       const optimisticUser: ChatUIMessage = {
         id: `optimistic-${Date.now()}`,
@@ -950,6 +952,11 @@ export function useAgentChat({
     ],
   );
 
+  const retryLastMessage = useCallback(
+    (content: string) => sendMessage(content, lastSentFilesRef.current),
+    [sendMessage],
+  );
+
   const setConversationId = useCallback(
     async (id: string) => {
       if (
@@ -969,6 +976,7 @@ export function useAgentChat({
 
       pendingFilesRef.current = undefined;
       lastSentFileNamesRef.current = [];
+      lastSentFilesRef.current = undefined;
       setOptimisticUserMessage(null);
 
       setIsLoadingHistory(true);
@@ -1136,6 +1144,7 @@ export function useAgentChat({
     isLoadingHistory,
     error,
     sendMessage,
+    retryLastMessage,
     cancelStream,
     setConversationId,
     setModelPick,
