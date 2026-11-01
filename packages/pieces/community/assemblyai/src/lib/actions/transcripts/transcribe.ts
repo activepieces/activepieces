@@ -2,6 +2,7 @@ import {
   ActionContext,
   CreateWaitpointResult,
   createAction,
+  MarkdownVariant,
   Property,
 } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
@@ -12,15 +13,19 @@ import { props } from '../../generated/transcribe/props';
 
 const transcribeProps = {
   ...props,
+  result_info: Property.MarkDown({
+    value: 'Waiting cannot be combined with a webhook URL or redacted audio.',
+    variant: MarkdownVariant.INFO,
+  }),
   wait_until_ready: Property.Checkbox({
-    displayName: 'Wait until transcript is ready',
-    description: `Wait until the transcript status is "completed" or "error" before moving on to the next step.`,
+    displayName: 'Wait for Transcript',
+    description: 'Pause the flow until the transcript is ready.',
     required: true,
     defaultValue: true,
   }),
   throw_on_error: Property.Checkbox({
-    displayName: 'Throw if transcript status is error',
-    description: `If the transcript status is "error", throw an error.`,
+    displayName: 'Fail on Error',
+    description: 'Fail the step if transcription fails.',
     required: true,
     defaultValue: true,
   }),
@@ -35,7 +40,7 @@ export const transcribe = createAction({
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Transcribe',
-  description: 'Transcribe an audio or video file using AssemblyAI.',
+  description: 'Turn an audio or video file into text.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -43,6 +48,72 @@ export const transcribe = createAction({
     idempotent: false,
   },
   props: transcribeProps,
+  propertyGroups: [
+    {
+      key: 'audio',
+      display: 'section',
+      label: 'Audio',
+      icon: 'file',
+      props: ['audio_url', 'audio_start_from', 'audio_end_at'],
+    },
+    {
+      key: 'result',
+      display: 'section',
+      label: 'Result',
+      icon: 'send',
+      props: ['result_info', 'wait_until_ready', 'throw_on_error'],
+    },
+    {
+      key: 'language',
+      display: 'section',
+      label: 'Language',
+      icon: 'type',
+      props: ['language_code', 'language_detection', 'speech_model'],
+    },
+    {
+      key: 'speakers',
+      display: 'section',
+      label: 'Speakers',
+      icon: 'users',
+      props: ['speaker_labels'],
+    },
+    {
+      key: 'privacy',
+      display: 'section',
+      label: 'Privacy',
+      icon: 'filter',
+      props: ['redact_pii'],
+    },
+    {
+      key: 'summary',
+      display: 'section',
+      label: 'Summary',
+      icon: 'text',
+      props: ['summarization'],
+    },
+    {
+      key: 'analysis',
+      display: 'section',
+      label: 'Analysis',
+      icon: 'sliders',
+      props: [
+        'auto_highlights',
+        'sentiment_analysis',
+        'entity_detection',
+        'iab_categories',
+        'auto_chapters',
+        'content_safety',
+        'custom_topics',
+      ],
+    },
+    {
+      key: 'vocabulary',
+      display: 'section',
+      label: 'Vocabulary',
+      icon: 'tag',
+      props: ['word_boost', 'boost_param', 'custom_spelling'],
+    },
+  ],
   async run(context: TranscribeContext) {
     const client = getAssemblyAIClient(context);
     if (context.executionType === ExecutionType.BEGIN) {
@@ -78,6 +149,8 @@ function createTranscriptParams(context: TranscribeContext): TranscriptParams {
     delete transcriptParams['wait_until_ready'];
   if ('throw_on_error' in transcriptParams)
     delete transcriptParams['throw_on_error'];
+  if ('result_info' in transcriptParams)
+    delete transcriptParams['result_info'];
   if ('auth' in transcriptParams) delete transcriptParams['auth'];
   return transcriptParams as TranscriptParams;
 }
@@ -89,7 +162,7 @@ async function handleWebhookUrl(
     const isWebhookUrlConfigured = transcriptParams.webhook_url?.trim();
     if (isWebhookUrlConfigured) {
       throw new Error(
-        `The "Wait until transcript is ready" and "Webhook URL" fields are mutually exclusive. Please remove the "Webhook URL" field to use the "Wait until transcript is ready" field.`
+        `Wait for Transcript and Webhook URL cannot be used together. Turn off Wait for Transcript to use your own webhook URL.`
       );
     }
     const waitpoint = await context.run.createWaitpoint({
@@ -109,7 +182,7 @@ function handlePiiAudio(context: TranscribeContext) {
     context.propsValue.redact_pii_audio === true
   ) {
     throw new Error(
-      `The "Wait until transcript is ready" and "Redact PII audio" fields are mutually exclusive. Set the "Wait until transcript is ready" or "Redact PII audio" to false.`
+      `Wait for Transcript and Redact Audio Too cannot be used together. Turn off Wait for Transcript to get redacted audio.`
     );
   }
 }

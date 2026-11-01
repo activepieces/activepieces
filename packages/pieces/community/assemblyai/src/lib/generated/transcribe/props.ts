@@ -3,12 +3,13 @@ export const props = {
   audio_url: Property.ShortText({
     displayName: 'Audio URL',
     required: true,
-    description: 'The URL of the audio or video file to transcribe.',
+    description: 'Public link to the audio or video file.',
+    placeholder: 'https://example.com/call.mp3',
   }),
   language_code: Property.StaticDropdown({
-    displayName: 'Language Code',
+    displayName: 'Language',
     required: false,
-    description: `The language of your audio file. Possible values are found in [Supported Languages](https://www.assemblyai.com/docs/concepts/supported-languages).\nThe default value is 'en_us'.\n`,
+    description: 'Spoken language. Empty: US English, unless detection is on.',
     options: {
       options: [
         {
@@ -423,22 +424,21 @@ export const props = {
     },
   }),
   language_detection: Property.Checkbox({
-    displayName: 'Language Detection',
+    displayName: 'Detect Language',
     required: false,
-    description: `Enable [Automatic language detection](https://www.assemblyai.com/docs/models/speech-recognition#automatic-language-detection), either true or false.`,
+    description: 'Let AssemblyAI work out the spoken language.',
+    reveals: ['language_confidence_threshold'],
     defaultValue: false,
   }),
   language_confidence_threshold: Property.Number({
-    displayName: 'Language Confidence Threshold',
+    displayName: 'Minimum Confidence',
     required: false,
-    description:
-      'The confidence threshold for the automatically detected language.\nAn error will be returned if the language confidence is below this threshold.\nDefaults to 0.\n',
+    description: 'Fail if detection is less sure than this, from 0 to 1.',
   }),
   speech_model: Property.StaticDropdown({
     displayName: 'Speech Model',
     required: false,
-    description:
-      'The speech model to use for the transcription. When `null`, the "best" model is used.',
+    description: 'Empty uses Best. Nano is faster and cheaper.',
     options: {
       options: [
         {
@@ -455,74 +455,78 @@ export const props = {
   punctuate: Property.Checkbox({
     displayName: 'Punctuate',
     required: false,
-    description: 'Enable Automatic Punctuation, can be true or false',
+    description: 'Add punctuation to the text.',
+    advanced: true,
     defaultValue: true,
   }),
   format_text: Property.Checkbox({
     displayName: 'Format Text',
     required: false,
-    description: 'Enable Text Formatting, can be true or false',
+    description: 'Format numbers, dates and casing.',
+    advanced: true,
     defaultValue: true,
   }),
   disfluencies: Property.Checkbox({
-    displayName: 'Disfluencies',
+    displayName: 'Keep Filler Words',
     required: false,
-    description:
-      'Transcribe Filler Words, like "umm", in your media file; can be true or false',
+    description: 'Keep words like "umm" and "uh" in the text.',
+    advanced: true,
     defaultValue: false,
   }),
   dual_channel: Property.Checkbox({
     displayName: 'Dual Channel',
     required: false,
-    description: `Enable [Dual Channel](https://www.assemblyai.com/docs/models/speech-recognition#dual-channel-transcription) transcription, can be true or false.`,
+    description: 'Transcribe each audio channel separately.',
+    advanced: true,
     defaultValue: false,
   }),
   webhook_url: Property.ShortText({
     displayName: 'Webhook URL',
     required: false,
-    description:
-      'The URL to which we send webhook requests.\nWe sends two different types of webhook requests.\nOne request when a transcript is completed or failed, and one request when the redacted audio is ready if redact_pii_audio is enabled.\n',
+    description: 'AssemblyAI calls this URL when the transcript is done.',
+    advanced: true,
+    placeholder: 'https://example.com/webhook',
   }),
   webhook_auth_header_name: Property.ShortText({
-    displayName: 'Webhook Auth Header Name',
+    displayName: 'Webhook Header Name',
     required: false,
-    description:
-      'The header name to be sent with the transcript completed or failed webhook requests',
+    description: 'Header sent with each webhook call.',
+    advanced: true,
+    placeholder: 'X-Webhook-Secret',
   }),
   webhook_auth_header_value: Property.ShortText({
-    displayName: 'Webhook Auth Header Value',
+    displayName: 'Webhook Header Value',
     required: false,
-    description:
-      'The header value to send back with the transcript completed or failed webhook requests for added security',
+    description: 'Value of the webhook header.',
+    advanced: true,
   }),
   auto_highlights: Property.Checkbox({
     displayName: 'Key Phrases',
     required: false,
-    description: 'Enable Key Phrases, either true or false',
+    description: 'Pick out the most important words and phrases.',
     defaultValue: false,
   }),
   audio_start_from: Property.Number({
-    displayName: 'Audio Start From',
+    displayName: 'Start At',
     required: false,
-    description:
-      'The point in time, in milliseconds, to begin transcribing in your media file',
+    description: 'Milliseconds into the file to start transcribing.',
+    width: 'half',
   }),
   audio_end_at: Property.Number({
-    displayName: 'Audio End At',
+    displayName: 'End At',
     required: false,
-    description:
-      'The point in time, in milliseconds, to stop transcribing in your media file',
+    description: 'Milliseconds into the file to stop transcribing.',
+    width: 'half',
   }),
   word_boost: Property.Array({
-    displayName: 'Word Boost',
+    displayName: 'Words to Boost',
     required: false,
-    description:
-      'The list of custom vocabulary to boost transcription probability for',
+    description: 'Uncommon words or names to recognize more often.',
   }),
   boost_param: Property.StaticDropdown({
-    displayName: 'Word Boost Level',
+    displayName: 'Boost Level',
     required: false,
-    description: 'How much to boost specified words',
+    description: 'How strongly to favor the words to boost.',
     options: {
       options: [
         {
@@ -543,27 +547,27 @@ export const props = {
   filter_profanity: Property.Checkbox({
     displayName: 'Filter Profanity',
     required: false,
-    description:
-      'Filter profanity from the transcribed text, can be true or false',
+    description: 'Replace swear words with asterisks.',
+    advanced: true,
     defaultValue: false,
   }),
   redact_pii: Property.Checkbox({
-    displayName: 'Redact PII',
+    displayName: 'Redact Personal Data',
     required: false,
-    description:
-      'Redact PII from the transcribed text using the Redact PII model, can be true or false',
+    description: 'Remove personal data from the transcript text.',
+    reveals: ['redact_pii_policies', 'redact_pii_sub', 'redact_pii_audio', 'redact_pii_audio_quality'],
     defaultValue: false,
   }),
   redact_pii_audio: Property.Checkbox({
-    displayName: 'Redact PII Audio',
+    displayName: 'Redact Audio Too',
     required: false,
-    description: `Generate a copy of the original media file with spoken PII "beeped" out, can be true or false. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.`,
+    description: 'Also make a copy of the audio with personal data bleeped.',
     defaultValue: false,
   }),
   redact_pii_audio_quality: Property.StaticDropdown({
-    displayName: 'Redact PII Audio Quality',
+    displayName: 'Redacted Audio Format',
     required: false,
-    description: `Controls the filetype of the audio created by redact_pii_audio. Currently supports mp3 (default) and wav. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.`,
+    description: 'File format of the bleeped audio.',
     options: {
       options: [
         {
@@ -578,9 +582,9 @@ export const props = {
     },
   }),
   redact_pii_policies: Property.StaticMultiSelectDropdown({
-    displayName: 'Redact PII Policies',
+    displayName: 'Data to Redact',
     required: false,
-    description: `The list of PII Redaction policies to enable. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.`,
+    description: 'Kinds of personal data to remove.',
     options: {
       options: [
         {
@@ -644,7 +648,7 @@ export const props = {
           value: 'filename',
         },
         {
-          label: 'Gender Sexuality',
+          label: 'Gender and Sexuality',
           value: 'gender_sexuality',
         },
         {
@@ -763,9 +767,9 @@ export const props = {
     },
   }),
   redact_pii_sub: Property.StaticDropdown({
-    displayName: 'Redact PII Substitution',
+    displayName: 'Replace With',
     required: false,
-    description: `The replacement logic for detected PII, can be "entity_type" or "hash". See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.`,
+    description: 'Show removed data as its type, such as [PERSON_NAME], or as ####.',
     options: {
       options: [
         {
@@ -780,74 +784,83 @@ export const props = {
     },
   }),
   speaker_labels: Property.Checkbox({
-    displayName: 'Speaker Labels',
+    displayName: 'Identify Speakers',
     required: false,
-    description: `Enable [Speaker diarization](https://www.assemblyai.com/docs/models/speaker-diarization), can be true or false`,
+    description: 'Label who is speaking in each part of the text.',
+    reveals: ['speakers_expected'],
     defaultValue: false,
   }),
   speakers_expected: Property.Number({
-    displayName: 'Speakers Expected',
+    displayName: 'Number of Speakers',
     required: false,
-    description: `Tells the speaker label model how many speakers it should attempt to identify, up to 10. See [Speaker diarization](https://www.assemblyai.com/docs/models/speaker-diarization) for more details.`,
+    description: 'How many speakers to expect, up to 10.',
+    display: 'stepper',
+    min: 1,
+    max: 10,
+    step: 1,
   }),
   content_safety: Property.Checkbox({
     displayName: 'Content Moderation',
     required: false,
-    description: `Enable [Content Moderation](https://www.assemblyai.com/docs/models/content-moderation), can be true or false`,
+    description: 'Flag sensitive content such as violence or hate speech.',
+    reveals: ['content_safety_confidence'],
     defaultValue: false,
   }),
   content_safety_confidence: Property.Number({
-    displayName: 'Content Moderation Confidence',
+    displayName: 'Minimum Confidence',
     required: false,
-    description:
-      'The confidence threshold for the Content Moderation model. Values must be between 25 and 100.',
+    description: 'Only flag content found with at least this confidence, 25 to 100.',
+    display: 'stepper',
+    min: 25,
+    max: 100,
+    step: 5,
   }),
   iab_categories: Property.Checkbox({
     displayName: 'Topic Detection',
     required: false,
-    description: `Enable [Topic Detection](https://www.assemblyai.com/docs/models/topic-detection), can be true or false`,
+    description: 'Tag the transcript with standard topic categories.',
     defaultValue: false,
   }),
   custom_spelling: Property.Json({
     displayName: 'Custom Spellings',
     required: false,
-    description:
-      'Customize how words are spelled and formatted using to and from values.\nUse a JSON array of objects of the following format:\n```\n[\n  {\n    "from": ["original", "spelling"],\n    "to": "corrected"\n  }\n]\n```\n',
+    description: 'Rules to change spellings, as a JSON list of from and to pairs.',
   }),
   sentiment_analysis: Property.Checkbox({
     displayName: 'Sentiment Analysis',
     required: false,
-    description: `Enable [Sentiment Analysis](https://www.assemblyai.com/docs/models/sentiment-analysis), can be true or false`,
+    description: 'Rate each sentence as positive, neutral or negative.',
     defaultValue: false,
   }),
   auto_chapters: Property.Checkbox({
     displayName: 'Auto Chapters',
     required: false,
-    description: `Enable [Auto Chapters](https://www.assemblyai.com/docs/models/auto-chapters), can be true or false`,
+    description: 'Split the transcript into chapters with summaries.',
     defaultValue: false,
   }),
   entity_detection: Property.Checkbox({
     displayName: 'Entity Detection',
     required: false,
-    description: `Enable [Entity Detection](https://www.assemblyai.com/docs/models/entity-detection), can be true or false`,
+    description: 'Find names, places, companies and other entities.',
     defaultValue: false,
   }),
   speech_threshold: Property.Number({
-    displayName: 'Speech Threshold',
+    displayName: 'Minimum Speech',
     required: false,
-    description:
-      'Reject audio files that contain less than this fraction of speech.\nValid values are in the range [0, 1] inclusive.\n',
+    description: 'Reject files with less speech than this share, from 0 to 1.',
+    advanced: true,
   }),
   summarization: Property.Checkbox({
-    displayName: 'Enable Summarization',
+    displayName: 'Summarize',
     required: false,
-    description: `Enable [Summarization](https://www.assemblyai.com/docs/models/summarization), can be true or false`,
+    description: 'Add a summary of the transcript.',
+    reveals: ['summary_model', 'summary_type'],
     defaultValue: false,
   }),
   summary_model: Property.StaticDropdown({
-    displayName: 'Summary Model',
+    displayName: 'Summary Style',
     required: false,
-    description: 'The model to summarize the transcript',
+    description: 'Empty uses Informative.',
     options: {
       options: [
         {
@@ -866,9 +879,9 @@ export const props = {
     },
   }),
   summary_type: Property.StaticDropdown({
-    displayName: 'Summary Type',
+    displayName: 'Summary Format',
     required: false,
-    description: 'The type of summary',
+    description: 'Empty uses Bullets.',
     options: {
       options: [
         {
@@ -895,14 +908,15 @@ export const props = {
     },
   }),
   custom_topics: Property.Checkbox({
-    displayName: 'Enable Custom Topics',
+    displayName: 'Custom Topics',
     required: false,
-    description: 'Enable custom topics, either true or false',
+    description: 'Tag the transcript with your own topics.',
+    reveals: ['topics'],
     defaultValue: false,
   }),
   topics: Property.Array({
-    displayName: 'Custom Topics',
+    displayName: 'Topics',
     required: false,
-    description: 'The list of custom topics',
+    description: 'Topics to look for.',
   }),
 };
