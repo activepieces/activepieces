@@ -54,7 +54,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
                 type: PauseType.BARRIER,
                 version: params.version,
                 status: WaitpointStatus.PENDING,
-                resumeDateTime: defaultBarrierDeadline({ flowRunCreated: flowRun.created }),
+                resumeDateTime: resolveDeadline({ flowRunCreated: flowRun.created, timeoutSeconds: params.timeoutSeconds }),
                 responseToSend: params.responseToSend ?? null,
                 workerHandlerId: params.workerHandlerId ?? null,
                 httpRequestId: params.httpRequestId ?? null,
@@ -375,9 +375,14 @@ function assertSignalCountWithinLimit({ signalCount, maxSignals }: AssertSignalC
     }
 }
 
-function defaultBarrierDeadline({ flowRunCreated }: DefaultBarrierDeadlineParams): string {
+function resolveDeadline({ flowRunCreated, timeoutSeconds }: ResolveDeadlineParams): string {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-    return dayjs(flowRunCreated).add(maxDurationInDays, 'day').toISOString()
+    const cap = dayjs(flowRunCreated).add(maxDurationInDays, 'day')
+    if (isNil(timeoutSeconds)) {
+        return cap.toISOString()
+    }
+    const requested = dayjs().add(timeoutSeconds, 'second')
+    return (requested.isBefore(cap) ? requested : cap).toISOString()
 }
 
 const SIGNAL_INSERT_BATCH_SIZE = 500
@@ -410,6 +415,7 @@ export type CreateBarrierParams = {
         items: unknown[]
         seedSteps: Record<string, unknown>
     }
+    timeoutSeconds?: number
 }
 
 export type CreateBarrierResult = {
@@ -555,6 +561,7 @@ type AssertSignalCountWithinLimitParams = {
     maxSignals: number
 }
 
-type DefaultBarrierDeadlineParams = {
+type ResolveDeadlineParams = {
     flowRunCreated: string
+    timeoutSeconds?: number
 }
