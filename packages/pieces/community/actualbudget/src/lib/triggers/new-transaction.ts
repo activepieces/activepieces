@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Store, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { actualBudgetAuth } from '../common/auth';
 import { ActualApi, ActualAuthProps, withBudget } from '../common/client';
@@ -164,7 +165,7 @@ export async function loadSeenIds({
   const ids: string[] = [];
   for (let index = 0; index < checkpoint.chunks; index++) {
     const chunk = await store.get<string[]>(
-      chunkKey({ slot: checkpoint.slot, index })
+      chunkKey({ generation: checkpoint.generation, index })
     );
     if (!Array.isArray(chunk)) {
       throw new Error(
@@ -187,24 +188,42 @@ export async function saveSeenIds({
   if (ids === null) {
     await store.delete(SEEN_KEY);
     if (previous !== null) {
-      await deleteChunks({ store, slot: previous.slot, from: 0, to: previous.chunks });
+      await deleteChunks({
+        store,
+        generation: previous.generation,
+        from: 0,
+        to: previous.chunks,
+      });
     }
     return;
   }
-  const slot = previous?.slot === 0 ? 1 : 0;
+  // Every save writes under a fresh generation ID instead of reusing two slots.
+  // Overlapping polls (one overrunning the polling interval) each write their own
+  // keys and delete only the generation they read before writing, which can never
+  // be one a later save made live. An overlap leaves orphaned chunks at worst.
+  const generation = randomUUID();
   const chunks = Math.ceil(ids.length / SEEN_CHUNK_SIZE);
-  for (let index = 0; index < chunks; index++) {
-    await store.put(
-      chunkKey({ slot, index }),
-      ids.slice(index * SEEN_CHUNK_SIZE, (index + 1) * SEEN_CHUNK_SIZE)
+  let written = 0;
+  try {
+    for (; written < chunks; written++) {
+      await store.put(
+        chunkKey({ generation, index: written }),
+        ids.slice(written * SEEN_CHUNK_SIZE, (written + 1) * SEEN_CHUNK_SIZE)
+      );
+    }
+  } catch (error) {
+    // Nothing points at this generation yet, so dropping its partial chunks is safe.
+    await deleteChunks({ store, generation, from: 0, to: written + 1 }).catch(
+      () => undefined
     );
+    throw error;
   }
-  const checkpoint: SeenCheckpoint = { slot, chunks };
+  const checkpoint: SeenCheckpoint = { generation, chunks };
   await store.put(SEEN_KEY, checkpoint);
   if (previous !== null) {
     await deleteChunks({
       store,
-      slot: previous.slot,
+      generation: previous.generation,
       from: 0,
       to: previous.chunks,
     }).catch(() => undefined);
@@ -213,30 +232,42 @@ export async function saveSeenIds({
 
 async function deleteChunks({
   store,
-  slot,
+  generation,
   from,
   to,
 }: {
   store: Store;
-  slot: number;
+  generation: string;
   from: number;
   to: number;
 }): Promise<void> {
   for (let index = from; index < to; index++) {
-    await store.delete(chunkKey({ slot, index }));
+    await store.delete(chunkKey({ generation, index }));
   }
 }
 
 function readCheckpoint({ value }: { value: unknown }): SeenCheckpoint | null {
   if (typeof value !== 'object' || value === null) return null;
-  const slot = Reflect.get(value, 'slot');
+  const generation = Reflect.get(value, 'generation');
   const chunks = Reflect.get(value, 'chunks');
-  if ((slot !== 0 && slot !== 1) || typeof chunks !== 'number') return null;
-  return { slot, chunks };
+  if (
+    typeof generation !== 'string' ||
+    generation === '' ||
+    typeof chunks !== 'number'
+  ) {
+    return null;
+  }
+  return { generation, chunks };
 }
 
-function chunkKey({ slot, index }: { slot: number; index: number }): string {
-  return `${SEEN_KEY}_${slot}_${index}`;
+function chunkKey({
+  generation,
+  index,
+}: {
+  generation: string;
+  index: number;
+}): string {
+  return `${SEEN_KEY}_${generation}_${index}`;
 }
 
 async function fetchWindow({
@@ -263,4 +294,4 @@ async function fetchWindow({
   });
 }
 
-type SeenCheckpoint = { slot: 0 | 1; chunks: number };
+type SeenCheckpoint = { generation: string; chunks: number };

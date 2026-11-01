@@ -177,6 +177,36 @@ describe('seen ID cleanup', () => {
   });
 });
 
+describe('seen ID storage with overlapping polls', () => {
+  test('a poll that overruns while others save never deletes the live chunks', async () => {
+    const { store } = memoryStore();
+    await saveSeenIds({ store, ids: ['t0'] });
+    let releaseA: () => void = () => undefined;
+    const aPaused = new Promise<void>((resolve) => (releaseA = resolve));
+    let markSwitched: () => void = () => undefined;
+    const aSwitched = new Promise<void>((resolve) => (markSwitched = resolve));
+    // Poll A stops right after switching the pointer, before deleting old chunks.
+    const storeA: Store = {
+      ...store,
+      async delete(key: string): Promise<void> {
+        markSwitched();
+        await aPaused;
+        return store.delete(key);
+      },
+    };
+    const pollA = saveSeenIds({ store: storeA, ids: ['a1', 'a2'] });
+    await aSwitched;
+    // Poll B saves twice meanwhile, so the pointer moves past A's checkpoint.
+    await saveSeenIds({ store, ids: ['b1'] });
+    await saveSeenIds({ store, ids: ['b1', 'b2'] });
+    releaseA();
+    await pollA;
+    expect(await loadSeenIds({ store })).toEqual(['b1', 'b2']);
+    await saveSeenIds({ store, ids: ['b3'] });
+    expect(await loadSeenIds({ store })).toEqual(['b3']);
+  });
+});
+
 describe('trigger lifecycle', () => {
   test('republish keeps the checkpoint; a fresh enable re-baselines', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
