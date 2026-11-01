@@ -1,5 +1,5 @@
 import { ApId, SeekPage } from '@activepieces/core-utils'
-import { ApplicationEventName, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ApplicationEventName, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, Permission, PrincipalType, ProjectRelease, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -101,7 +101,7 @@ const DiffProjectReleaseRequest = {
     config: {
         security: securityAccess.project(
             [PrincipalType.USER],
-            undefined,
+            Permission.WRITE_PROJECT_RELEASE,
             {
                 type: ProjectResourceType.BODY,
             },
@@ -116,7 +116,7 @@ const CreateProjectReleaseRequest = {
     config: {
         security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
-            undefined,
+            Permission.WRITE_PROJECT_RELEASE,
             {
                 type: ProjectResourceType.BODY,
             },

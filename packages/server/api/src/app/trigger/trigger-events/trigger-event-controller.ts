@@ -1,6 +1,7 @@
 
 import {
     ListTriggerEventsRequest,
+    Permission,
     PrincipalType,
     SaveTriggerEventRequest,
 } from '@activepieces/shared'
@@ -56,7 +57,7 @@ const SaveTriggerEventRequestParams = {
         body: SaveTriggerEventRequest,
     },
     config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_FLOW, {
             type: ProjectResourceType.BODY,
         }),
     },

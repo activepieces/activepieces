@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Testing in the builder and creating releases now check project permissions
+
+Testing a step, a trigger or a whole flow, and saving trigger sample data, now need the **Edit flows** permission. Creating or previewing a project release now needs **Write releases**. Viewers never saw these buttons in the app, so nothing changes there. A direct API call from a role without these permissions now gets `403`.
+
+#### What you need to do
+
+If a script or API key calls these routes as a member with a custom role, give that role **Edit flows** (and **Write releases** for releases).
+
 #### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
 
 **Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.

@@ -1,4 +1,4 @@
-import { CancelTestTriggerRequestBody, PrincipalType, TestTriggerRequestBody } from '@activepieces/shared'
+import { CancelTestTriggerRequestBody, Permission, PrincipalType, TestTriggerRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -36,7 +36,7 @@ const TestTriggerRequest = {
         body: TestTriggerRequestBody,
     },
     config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_FLOW, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -47,7 +47,7 @@ const CancelTestTriggerRequest = {
         body: CancelTestTriggerRequestBody,
     },
     config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_FLOW, {
             type: ProjectResourceType.BODY,
         }),
     },
