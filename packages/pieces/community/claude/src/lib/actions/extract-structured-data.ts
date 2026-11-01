@@ -5,7 +5,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import Ajv from 'ajv';
 import mime from 'mime-types';
-import { modelDropdown } from '../common/common';
+import {
+  modelDropdown,
+  resolveModelId,
+  supportsForcedToolChoice,
+} from '../common/common';
 import { extractStructuredDataActionOutputSchema } from '../output-schemas';
 
 export const extractStructuredDataAction = createAction({
@@ -252,8 +256,16 @@ export const extractStructuredDataAction = createAction({
         });
       }
     }
+    const resolvedModel = resolveModelId(model);
+    const forceTool = supportsForcedToolChoice(resolvedModel);
     const response = await anthropic.messages.create({
-      model: model,
+      model: resolvedModel,
+      ...(forceTool
+        ? {}
+        : {
+            system:
+              'Always answer by calling the extract_structured_data tool exactly once.',
+          }),
       messages,
       tools: [
         {
@@ -262,7 +274,9 @@ export const extractStructuredDataAction = createAction({
           input_schema: params,
         },
       ],
-      tool_choice: { type: 'tool', name: 'extract_structured_data' },
+      tool_choice: forceTool
+        ? { type: 'tool', name: 'extract_structured_data' }
+        : { type: 'auto' },
       max_tokens: maxTokens ?? 2000,
     });
 
@@ -279,12 +293,12 @@ export const extractStructuredDataAction = createAction({
         role: 'assistant',
       }));
 
-    const args = toolCall.input;
+    const args = toolCall?.input;
     if (isNil(args)) {
       throw new Error(
         JSON.stringify({
           message:
-            choices[0].content ??
+            choices[0]?.content ??
             'Failed to extract structured data from the input.',
         })
       );

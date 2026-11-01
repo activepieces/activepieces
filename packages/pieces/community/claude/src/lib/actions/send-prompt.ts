@@ -6,12 +6,18 @@ import {
 import Anthropic from '@anthropic-ai/sdk';
 import mime from 'mime-types';
 import { claudeAuth } from '../auth';
-import { TextBlock } from '@anthropic-ai/sdk/resources';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { spreadIfDefined } from '@activepieces/pieces-framework';
-import { billingIssueMessage, modelDropdown, unauthorizedMessage } from '../common/common';
+import {
+  billingIssueMessage,
+  modelDropdown,
+  resolveModelId,
+  supportsTemperature,
+  THINKING_MODEL,
+  unauthorizedMessage,
+} from '../common/common';
 import { askClaudeActionOutputSchema } from '../output-schemas';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({
@@ -21,7 +27,7 @@ export const askClaude = createAction({
   classification: 'READ',
   displayName: 'Ask Claude',
   description: 'Send a question or instruction to Claude and get a text reply.',
-  aiMetadata: { description: 'Sends a free-form question or instruction to a chosen Anthropic Claude model and returns the reply as plain text, optionally with an image attached for vision and earlier user/assistant turns supplied as Roles for multi-turn context; enabling Extended Thinking Mode routes the call to Claude 3.7 Sonnet with a separate reasoning token budget. Prefer the sibling Extract Structured Data action when the answer must be constrained to defined fields rather than prose. Requires a model and a question, with temperature between 0 and 1; not idempotent, since each call is a fresh generation that can return different text.', idempotent: false },
+  aiMetadata: { description: 'Sends a free-form question or instruction to a chosen Anthropic Claude model and returns the reply as plain text, optionally with an image attached for vision and earlier user/assistant turns supplied as Roles for multi-turn context; enabling Extended Thinking Mode routes the call to Claude Sonnet 5.5 with adaptive thinking. Prefer the sibling Extract Structured Data action when the answer must be constrained to defined fields rather than prose. Requires a model and a question, with temperature between 0 and 1; not idempotent, since each call is a fresh generation that can return different text.', idempotent: false },
   propertyGroups: [
     { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'maxTokens'] },
     { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt', 'systemPrompt', 'image'] },
@@ -71,7 +77,7 @@ export const askClaude = createAction({
       advanced: true,
       defaultValue: false,
       description:
-        'Lets Claude reason first. Uses Claude 3.7 Sonnet, regardless of Model.',
+        'Lets Claude reason first. Uses Claude Sonnet 5.5, regardless of Model.',
     }),
     thinkingModeParams: Property.DynamicProperties({
       auth: claudeAuth,
@@ -89,7 +95,7 @@ export const askClaude = createAction({
           required: true,
           defaultValue: DEFAULT_TOKENS_FOR_THINKING_MODE,
           description:
-            'Tokens Claude may spend reasoning. Must be below Maximum Tokens.',
+            'No longer used: Claude Sonnet 5.5 sets its own reasoning budget (adaptive thinking).',
         });
 
         return props;
@@ -107,12 +113,8 @@ export const askClaude = createAction({
     });
     let billingIssue = false;
     let unauthorized = false;
-    let model = 'claude-3-haiku-20240307';
-
-    if (propsValue.model) {
-      model = propsValue.model;
-    }
-    const temperature = isNil(propsValue.temperature)
+    const model = resolveModelId(propsValue.model);
+    const temperature = isNil(propsValue.temperature) || !supportsTemperature(model)
       ? undefined
       : Number(propsValue.temperature);
     let maxTokens = 1000;
@@ -173,24 +175,15 @@ export const askClaude = createAction({
     while (retries < maxRetries) {
       try {
         if (propsValue.thinkingMode) {
-          const budgetTokens = propsValue.thinkingModeParams
-            ? propsValue.thinkingModeParams['budgetTokens']
-            : 1024;
-
           const req = await anthropic.messages.create({
-            model: 'claude-3-7-sonnet-20250219',
+            model: THINKING_MODEL,
             max_tokens: maxTokens,
             system: systemPrompt,
-            thinking: {
-              type: 'enabled',
-              budget_tokens: budgetTokens ?? DEFAULT_TOKENS_FOR_THINKING_MODE,
-            },
+            thinking: { type: 'adaptive' },
             messages: roles,
-          });
+          } as unknown as Anthropic.Messages.MessageCreateParamsNonStreaming);
 
-          response = req.content
-            .filter((block) => block.type === 'text')[0]
-            .text.trim();
+          response = extractReplyText(req);
         } else {
           const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
             model: model,
@@ -201,7 +194,7 @@ export const askClaude = createAction({
           };
           const req = await anthropic.messages.create(params);
 
-          response = (req.content[0] as TextBlock).text?.trim();
+          response = extractReplyText(req);
         }
 
         break; // Break out of the loop if the request is successful
@@ -248,4 +241,17 @@ export const askClaude = createAction({
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function extractReplyText(message: Anthropic.Messages.Message): string {
+  const text = message.content
+    .flatMap((block) => (block.type === 'text' ? [block.text] : []))
+    .join('\n')
+    .trim();
+  if (text.length === 0) {
+    throw new Error(
+      `Claude returned no text (stop_reason: ${message.stop_reason ?? 'unknown'}). Try raising Max Tokens or rephrasing the prompt.`
+    );
+  }
+  return text;
 }
