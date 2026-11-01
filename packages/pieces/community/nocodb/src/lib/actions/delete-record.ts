@@ -22,6 +22,7 @@ export const deleteRecordAction = createAction({
 		tableId: nocodbCommon.tableId,
 		recordId: Property.Number({
 			displayName: 'Record ID',
+			description: "The number in the record's Id field.",
 			required: true,
 		}),
 	},
