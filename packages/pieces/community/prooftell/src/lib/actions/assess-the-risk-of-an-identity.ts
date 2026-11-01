@@ -7,14 +7,17 @@ export const assessIdentityRisk = createAction({
   auth: prooftellAuth,
   name: 'assess_identity_risk',
   classification: 'READ',
+  errorHandlingOptions: {
+    retryOnFailure: { defaultValue: true },
+    continueOnFailure: { defaultValue: false },
+  },
   displayName: 'Assess the risk of an identity',
   description:
-    'A phone number, an email address and an IP address read together: a 0–100 score, a verdict (allow, review or deny) and its reasons, with each signal\'s result. Charged per signal from your balance; the sandbox is free.',
+    'Any mix of a phone number, an email address and an IP address, read together: a 0–100 score, a verdict (allow, review or deny) and its reasons, with each signal\'s result. Charged per signal from your balance; the sandbox is free.',
   audience: 'both',
   aiMetadata: {
     description:
       'Assess an identity with ProofTell from any mix of a phone number, an email address and an IP address: a 0–100 risk score, a verdict of allow, review or deny, the reasons with their points, and each signal\'s own result. Use it over the single lookups when more than one of the three is known. Give at least one of the three. Each signal that answers is charged from the balance; a retry is charged again.',
-    idempotent: true,
   },
   props: {
     phone: Property.ShortText({

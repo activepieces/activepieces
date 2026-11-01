@@ -7,6 +7,10 @@ export const verifyEmailAddress = createAction({
   auth: prooftellAuth,
   name: 'verify_email_address',
   classification: 'READ',
+  errorHandlingOptions: {
+    retryOnFailure: { defaultValue: true },
+    continueOnFailure: { defaultValue: false },
+  },
   displayName: 'Verify an email address',
   description:
     'Whether the address is deliverable, with the reason, the flags (disposable, role, free provider, catch-all) and a suggestion for a typo. Charged per check from your balance; the sandbox is free.',
@@ -14,7 +18,6 @@ export const verifyEmailAddress = createAction({
   aiMetadata: {
     description:
       'Verify one email address with ProofTell: deliverable, undeliverable, risky or unknown, with the reason, the flags and a did-you-mean suggestion. To read an email with a phone or an IP as one risk score, use Assess the risk of an identity instead. Charged when the address was judged (deliverable, undeliverable or risky); unknown, a syntax error and a greylisted mailbox are free; a retry is charged again.',
-    idempotent: true,
   },
   props: {
     email: Property.ShortText({

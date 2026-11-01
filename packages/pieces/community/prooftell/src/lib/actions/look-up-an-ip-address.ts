@@ -7,6 +7,10 @@ export const lookUpIpAddress = createAction({
   auth: prooftellAuth,
   name: 'look_up_ip_address',
   classification: 'READ',
+  errorHandlingOptions: {
+    retryOnFailure: { defaultValue: true },
+    continueOnFailure: { defaultValue: false },
+  },
   displayName: 'Look up an IP address',
   description:
     'Whether the address is Tor, a VPN or a datacenter, with its country, city and network. Charged per check from your balance; the sandbox is free.',
@@ -14,7 +18,6 @@ export const lookUpIpAddress = createAction({
   aiMetadata: {
     description:
       'Look up one IPv4 or IPv6 address with ProofTell: the Tor, VPN, datacenter and anonymous flags, the country, region and city, the ASN and its organization. To read an IP with a phone or an email as one risk score, use Assess the risk of an identity instead. A routable address is charged from the balance; a retry is charged again.',
-    idempotent: true,
   },
   props: {
     ip: Property.ShortText({
