@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
+import { channelNotFoundMessage } from '../common';
 import { Channel } from '../common/models';
 import { discordFindChannelActionOutputSchema } from '../output-schemas';
 
@@ -17,7 +18,7 @@ export const discordFindChannelAi = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Looks up a channel in a guild by exact name and returns its channel ID (GET /guilds/{guild_id}/channels, client-side match). Use this resolver before any channel-scoped action (Send Message, Rename Channel, Delete Channel). Read-only and idempotent; returns the first exact-name match.',
+      'Looks up a channel in a guild by exact name and returns its channel ID (GET /guilds/{guild_id}/channels, client-side match). Use this resolver before any channel-scoped action (Send Message, Rename Channel, Delete Channel). Read-only and idempotent; returns the first exact-name match. Only channels the bot has View Channel permission on are visible; found=false means the channel does not exist or the bot cannot view it (see message).',
     idempotent: true,
   },
   outputSchema: discordFindChannelActionOutputSchema,
@@ -53,6 +54,9 @@ export const discordFindChannelAi = createAction({
         found: !!channel,
         channel_id: channel?.id,
         name: channel?.name,
+        message: channel
+          ? null
+          : channelNotFoundMessage(configValue.propsValue.name),
       };
     } catch (error: any) {
       const status = error?.response?.status;
