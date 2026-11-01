@@ -387,9 +387,7 @@ export function useAgentChat({
     { name: string; mimeType: AgentAllowedMimeType; data: string }[] | undefined
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
-  const lastSentRef = useRef<{ content: string; files?: File[] } | null>(
-    null,
-  );
+  const lastSentRef = useRef<{ content: string; files?: File[] } | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const modelPickRef = useRef<ChatModelPick | null>(null);
   const savedPickRef = useRef<ChatModelPick | null>(null);
