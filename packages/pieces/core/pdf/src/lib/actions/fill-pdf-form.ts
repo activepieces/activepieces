@@ -154,10 +154,7 @@ async function formFields(file: unknown): Promise<DynamicPropsValue> {
 
 function toFieldProperty(field: PdfFormField): DynamicPropsValue[string] {
   const name = field.label ?? field.name;
-  const shortName =
-    name.length <= MAX_NAME_LENGTH
-      ? name
-      : `${name.slice(0, MAX_NAME_LENGTH - 1).replace(/\s+\S*$/, '')}…`;
+  const shortName = pdfForm.shortLabel(name);
   const common = {
     displayName: shortName,
     description:
@@ -252,5 +249,3 @@ function fieldsNotice(message: string): DynamicPropsValue {
 class MissingFormError extends Error {}
 
 const MAX_FIELDS = 200;
-
-const MAX_NAME_LENGTH = 80;

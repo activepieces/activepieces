@@ -49,6 +49,7 @@ describe('inspectPdfForm', () => {
           ...textField({ name: 'agree', page: 2 }),
           type: 'checkbox',
           multiline: null,
+          value: false,
         },
       ],
       emptyData: { 'entity.name': null, city: null, state: null, agree: null },
@@ -148,6 +149,92 @@ describe('inspectPdfForm', () => {
         },
       })
     );
+  });
+
+  test('reports the value each field holds now, in the shape Data (JSON) takes', async () => {
+    const pdf = await buildPdf({
+      build: ({ form, pages }) => {
+        const page = pages[0];
+        const name = form.createTextField('name');
+        name.setText('Acme LLC');
+        name.addToPage(page, { x: 50, y: 740, width: 200, height: 20 });
+        form
+          .createTextField('blank')
+          .addToPage(page, { x: 300, y: 740, width: 200, height: 20 });
+        const agree = form.createCheckBox('agree');
+        agree.addToPage(page, { x: 50, y: 700, width: 12, height: 12 });
+        agree.check();
+        form
+          .createCheckBox('optOut')
+          .addToPage(page, { x: 80, y: 700, width: 12, height: 12 });
+        const size = form.createRadioGroup('size');
+        size.addOptionToPage('Small', page, {
+          x: 50,
+          y: 660,
+          width: 12,
+          height: 12,
+        });
+        size.addOptionToPage('Large', page, {
+          x: 80,
+          y: 660,
+          width: 12,
+          height: 12,
+        });
+        size.select('Large');
+        const state = form.createDropdown('state');
+        state.setOptions(['TX', 'CA']);
+        state.addToPage(page, { x: 50, y: 620, width: 60, height: 20 });
+        state.select('CA');
+        const services = form.createOptionList('services');
+        services.setOptions(['Filing', 'Agent', 'Mail']);
+        services.enableMultiselect();
+        services.addToPage(page, { x: 50, y: 560, width: 100, height: 40 });
+        services.select(['Agent', 'Mail']);
+        const office = form.createOptionList('office');
+        office.setOptions(['Austin', 'Dallas']);
+        office.addToPage(page, { x: 200, y: 560, width: 100, height: 40 });
+      },
+    });
+
+    const result = await runInspect(pdf);
+
+    expect(
+      Object.fromEntries(result.fields.map(({ name, value }) => [name, value]))
+    ).toEqual({
+      name: 'Acme LLC',
+      blank: null,
+      agree: true,
+      optOut: false,
+      size: 'Large',
+      state: 'CA',
+      services: ['Agent', 'Mail'],
+      office: null,
+    });
+  });
+
+  test('reads back the values Fill PDF Form wrote into a copy that is not flattened', async () => {
+    const pdf = await buildPdf({
+      build: ({ form, pages }) => {
+        form
+          .createTextField('name')
+          .addToPage(pages[0], { x: 50, y: 740, width: 200, height: 20 });
+        form
+          .createCheckBox('agree')
+          .addToPage(pages[0], { x: 50, y: 700, width: 12, height: 12 });
+      },
+    });
+    const { written } = await runFill({
+      pdf,
+      flatten: false,
+      data: { name: 'Harbor Lane Logistics LLC', agree: true },
+    });
+
+    const result = await runInspect(written[0].data);
+
+    expect(result.fields.map(({ name, value }) => ({ name, value }))).toEqual([
+      { name: 'name', value: 'Harbor Lane Logistics LLC' },
+      { name: 'agree', value: true },
+    ]);
   });
 
   test.each([
@@ -340,6 +427,29 @@ describe('inspectPdfForm labels from the XFA template', () => {
     const result = await runInspect(pdf);
 
     expect(result.fields.map(({ label }) => label)).toEqual(['Real label']);
+  });
+
+  test('keeps the labels in a filled copy that is not flattened', async () => {
+    const pdf = await buildHybridPdf({
+      fields: ['form1[0].name[0]', 'form1[0].city[0]'],
+      tooltips: { 'form1[0].city[0]': 'City from the tooltip' },
+      template: `<template><subform name="form1">
+        <field name="name"><caption><value><text>Legal name</text></value></caption></field>
+        <field name="city"><caption><value><text>City caption</text></value></caption></field>
+      </subform></template>`,
+    });
+
+    const { written } = await runFill({
+      pdf,
+      flatten: false,
+      data: { 'form1[0].name[0]': 'Acme' },
+    });
+
+    const result = await runInspect(written[0].data);
+    expect(result.fields.map(({ name, label }) => ({ name, label }))).toEqual([
+      { name: 'form1[0].name[0]', label: 'Legal name' },
+      { name: 'form1[0].city[0]', label: 'City from the tooltip' },
+    ]);
   });
 });
 
@@ -623,6 +733,52 @@ describe('fillPdfForm checks', () => {
         'The PDF form was not filled. Fix these 2 fields and try again:',
         '- "city": the form\'s font cannot draw "Ł". Only Latin characters are supported.',
         '- "offices": the form\'s font cannot draw "Ł" in this list\'s options. Only Latin characters are supported.',
+      ].join('\n')
+    );
+  });
+
+  test('names each field by its label too, cut at a word when the label is long', async () => {
+    const pdf = await buildPdf({
+      build: ({ form, pages }) => {
+        const name = form.createTextField('f1_01');
+        name.acroField.dict.set(
+          PDFName.of('TU'),
+          PDFHexString.fromText(
+            'Name of entity or individual. An entry is required. For a sole proprietor, enter the owner name on line 1.'
+          )
+        );
+        name.addToPage(pages[0], { x: 50, y: 740, width: 200, height: 20 });
+        const state = form.createTextField('f1_02');
+        state.acroField.dict.set(PDFName.of('TU'), PDFHexString.fromText('State'));
+        state.setMaxLength(2);
+        state.addToPage(pages[0], { x: 300, y: 740, width: 40, height: 20 });
+        const initial = form.createTextField('Middle initial:');
+        initial.acroField.dict.set(
+          PDFName.of('TU'),
+          PDFHexString.fromText('Middle initial:')
+        );
+        initial.setMaxLength(1);
+        initial.addToPage(pages[0], { x: 50, y: 700, width: 20, height: 20 });
+      },
+    });
+
+    await expect(
+      runFill({
+        pdf,
+        data: {
+          f1_01: '株式会社',
+          f1_02: 'Texas',
+          'Middle initial:': 'JK',
+          f1_99: 'x',
+        },
+      })
+    ).rejects.toThrow(
+      [
+        'The PDF form was not filled. Fix these 4 fields and try again:',
+        '- "f1_01" (Name of entity or individual. An entry is required. For a sole proprietor,…): the form\'s font cannot draw "株". Only Latin characters are supported.',
+        '- "f1_02" (State): the value has 5 characters, but this field takes at most 2.',
+        '- "Middle initial:": the value has 2 characters, but this field takes at most 1.',
+        '- "f1_99": this PDF has no field with this name. Run Inspect PDF Form to see the field names.',
       ].join('\n')
     );
   });
@@ -1315,6 +1471,7 @@ function textField({
     multiline: false,
     multiSelect: null,
     options: null,
+    value: null,
   };
 }
 

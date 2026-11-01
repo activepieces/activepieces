@@ -9,6 +9,7 @@ import {
   PDFDict,
   PDFField,
   PDFFont,
+  PDFForm,
   PDFHexString,
   PDFName,
   PDFOptionList,
@@ -28,6 +29,7 @@ export const pdfForm = {
   fill,
   isFillable,
   isEmpty,
+  shortLabel,
   unfillableMessage,
 };
 
@@ -90,13 +92,18 @@ async function fill({
   const pen = { font, drawableCharacters: new Set(font.getCharacterSet()) };
   const models = new Map(opened.fields.map((field) => [field.name, field]));
   const problems = entries.flatMap(([name, value]) => {
+    const model = models.get(name);
     const problem = findProblem({
-      model: models.get(name),
+      model,
       field: form.getFieldMaybe(name),
       value,
       pen,
     });
-    return problem ? [`- "${name}": ${problem}`] : [];
+    const label =
+      model?.label && model.label !== name
+        ? ` (${shortLabel(model.label)})`
+        : '';
+    return problem ? [`- "${name}"${label}: ${problem}`] : [];
   });
   if (problems.length > 0) {
     throw new Error(
@@ -116,8 +123,28 @@ async function fill({
   if (flatten) {
     form.flatten();
     removeMissingAnnotations(opened.document);
+  } else {
+    keepLabels({ form, fields: opened.fields });
   }
   return Buffer.from(await opened.document.save());
+}
+
+function keepLabels({
+  form,
+  fields,
+}: {
+  form: PDFForm;
+  fields: PdfFormField[];
+}): void {
+  fields.forEach((model) => {
+    const field = form.getFieldMaybe(model.name);
+    if (model.label !== null && field && readLabel(field) === null) {
+      field.acroField.dict.set(
+        PDFName.of('TU'),
+        PDFHexString.fromText(model.label)
+      );
+    }
+  });
 }
 
 function removeMissingAnnotations(document: PDFDocument): void {
@@ -524,6 +551,7 @@ function readField({
         ? field.isMultiselect()
         : null,
     options: fieldOptions(field),
+    value: readValue(field),
     position: {
       page: page ?? Number.MAX_SAFE_INTEGER,
       top: rectangle ? rectangle.y + rectangle.height : 0,
@@ -565,12 +593,35 @@ function fieldOptions(field: PDFField): string[] | null {
   return null;
 }
 
+function readValue(field: PDFField): PdfFormValue {
+  if (field instanceof PDFCheckBox) {
+    return field.isChecked();
+  }
+  if (field instanceof PDFRadioGroup) {
+    return field.getSelected() ?? null;
+  }
+  if (field instanceof PDFDropdown || field instanceof PDFOptionList) {
+    const selected = field.getSelected();
+    return field.isMultiselect() ? selected : selected[0] ?? null;
+  }
+  if (field instanceof PDFTextField) {
+    return field.acroField.getValue()?.decodeText() || null;
+  }
+  return null;
+}
+
 function readLabel(field: PDFField): string | null {
   const label = field.acroField.dict.lookup(PDFName.of('TU'));
   if (label instanceof PDFString || label instanceof PDFHexString) {
     return label.decodeText().trim() || null;
   }
   return null;
+}
+
+function shortLabel(label: string): string {
+  return label.length <= MAX_LABEL_LENGTH
+    ? label
+    : `${label.slice(0, MAX_LABEL_LENGTH - 1).replace(/\s+\S*$/, '')}…`;
 }
 
 function unfillableMessage(kind: Exclude<PdfFormKind, 'acroform'>): string {
@@ -633,6 +684,8 @@ const AUTO_FONT_SIZE = 0;
 
 const MIN_FONT_SIZE = 4;
 
+const MAX_LABEL_LENGTH = 80;
+
 const LATIN_ONLY = 'Only Latin characters are supported.';
 
 const UNFILLABLE_KIND_MESSAGES: Record<
@@ -682,7 +735,10 @@ export type PdfFormField = {
   multiline: boolean | null;
   multiSelect: boolean | null;
   options: string[] | null;
+  value: PdfFormValue;
 };
+
+type PdfFormValue = string | string[] | boolean | null;
 
 type PdfFormKind = 'acroform' | 'xfa' | 'flat' | 'encrypted';
 

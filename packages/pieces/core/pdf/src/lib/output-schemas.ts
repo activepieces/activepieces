@@ -96,7 +96,7 @@ export const inspectPdfFormActionOutputSchema: OutputSchema = {
           key: 'label',
           label: 'Label',
           description:
-            'The tooltip the form shows for this field, if it has one.',
+            "The field's tooltip, or the caption printed by it in the form's XFA part. Empty when the form has neither.",
         },
         {
           key: 'type',
@@ -125,6 +125,12 @@ export const inspectPdfFormActionOutputSchema: OutputSchema = {
           key: 'options',
           label: 'Options',
           description: 'The allowed values of a radio, dropdown or list field.',
+        },
+        {
+          key: 'value',
+          label: 'Value',
+          description:
+            "What the field holds now, in the shape Fill PDF Form's Data (JSON) takes: text, true or false for a checkbox, the chosen option, or a list for a multi-select list. Empty when nothing is filled in.",
         },
       ],
     },
