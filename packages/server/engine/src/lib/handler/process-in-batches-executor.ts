@@ -1,10 +1,9 @@
-import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { extractMustacheTokens, isNil, isString, spreadIfDefined } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { BarrierFanOutSource, BarrierSummary, DEFAULT_BATCH_SIZE, ExecutionError, ExecutionErrorType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, PauseType, ProcessInBatchesAction, StepOutputStatus } from '@activepieces/shared'
+import { BarrierFanOutSource, BarrierSummary, DEFAULT_BATCH_SIZE, ExecutionError, ExecutionErrorType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, PauseType, ProcessInBatchesAction, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { z } from 'zod'
 import { waitpointClient } from '../piece-context/waitpoint-client'
 import { utils } from '../utils'
-import { extractReferencedStepNames } from '../variables/props-resolver'
 import { BaseExecutor, failStep } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
@@ -41,6 +40,7 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
         const items = resolvedInput.items
         const requestedBatchSize = action.settings.batchSize ?? DEFAULT_BATCH_SIZE
         const bodyEntryStep = action.firstLoopAction
+        const seedSteps = buildSeed({ action, executionState, constants })
 
         if (!isNil(constants.stepNameToTest)) {
             return succeed({ action, executionState, stepOutput, output: { items: items.slice(0, requestedBatchSize) }, stepStartTime })
@@ -63,7 +63,7 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
                     batchStepName: action.name,
                     batchSize: requestedBatchSize,
                     items: [...items],
-                    seedSteps: buildSeed({ action, executionState, constants }),
+                    seedSteps,
                 },
                 ...spreadIfDefined('timeoutSeconds', action.settings.timeoutSeconds),
             },
@@ -91,14 +91,15 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
 
 async function resumeWithSummary({ action, executionState, constants }: ExecuteParams): Promise<FlowExecutorContext> {
     const stepStartTime = performance.now()
-    const pausedOutput = executionState.getStepOutput(action.name)
+    const pausedStep = executionState.getStepOutput(action.name)
     const stepOutput = GenericStepOutput.create({
-        input: pausedOutput?.input ?? {},
+        input: pausedStep?.input ?? {},
         type: FlowActionType.PROCESS_IN_BATCHES,
         status: StepOutputStatus.RUNNING,
     })
     const released = BarrierSummary.safeParse(constants.resumePayload?.body)
-    if (!released.success) {
+    const paused = PausedOutput.safeParse(pausedStep?.output)
+    if (!released.success || !paused.success) {
         return failStep({
             action,
             executionState,
@@ -107,8 +108,7 @@ async function resumeWithSummary({ action, executionState, constants }: ExecuteP
             durationMs: performance.now() - stepStartTime,
         })
     }
-    const pending = PendingBatches.safeParse(pausedOutput?.output).data ?? NOTHING_PENDING
-    const summary: BatchStepSummary = { ...pending, ...released.data }
+    const summary: BatchStepSummary = { ...paused.data, ...released.data }
     const unsuccessful = summary.failed + summary.rejected + summary.canceled + summary.notDispatched
     const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value ?? false
 
@@ -118,7 +118,7 @@ async function resumeWithSummary({ action, executionState, constants }: ExecuteP
             executionState,
             stepOutput: stepOutput.setOutput(summary),
             error: summary.timedOut
-                ? userError({ name: 'ProcessInBatchesTimedOut', message: `Process in Batches timed out with ${summary.stillRunning} batches still running.` })
+                ? userError({ name: 'ProcessInBatchesTimedOut', message: `Process in Batches timed out with ${summary.stillRunning + summary.notDispatched} of ${summary.total} batches unfinished.` })
                 : userError({ name: 'ProcessInBatchesBatchFailed', message: `${unsuccessful} of ${summary.total} batches did not succeed.` }),
             durationMs: performance.now() - stepStartTime,
         })
@@ -127,21 +127,54 @@ async function resumeWithSummary({ action, executionState, constants }: ExecuteP
 }
 
 function buildSeed({ action, executionState, constants }: ExecuteParams): BarrierFanOutSource['seedSteps'] {
-    const referenced = flowStructureUtil.getAllChildSteps(action)
-        .filter((step) => step.name !== action.name)
-        .flatMap((step) => Array.from(extractReferencedStepNames(step.settings, constants.stepNames)))
+    const stepNames = new Set(constants.stepNames)
+    const bodySteps = flowStructureUtil.getAllChildSteps(action).filter((step) => step.name !== action.name)
+    const skippedStepNames = new Set(bodySteps
+        .filter((step) => 'skip' in step && step.skip === true)
+        .flatMap((step) => flowStructureUtil.getAllChildSteps(step).map((child) => child.name)))
+    const referenced = bodySteps
+        .filter((step) => !skippedStepNames.has(step.name))
+        .flatMap((step) => findReferencedStepNames({ settings: step.settings, stepNames }))
+    const [topLevelSteps, ...iterationSteps] = executionState.stepMapsAlongPath()
+    const enclosingLoopNames = new Set(executionState.currentPath.path.map(([loopName]) => loopName))
     return Array.from(new Set(referenced)).reduce<BarrierFanOutSource['seedSteps']>((seed, stepName) => {
-        const topLevelOutput = executionState.steps[stepName]
+        assertNotScopedToEnclosingIteration({ stepName, iterationSteps })
+        const topLevelOutput = topLevelSteps[stepName]
         if (isNil(topLevelOutput)) {
-            assertNotScopedToEnclosingIteration({ stepName, executionState })
             return seed
         }
-        return { ...seed, [stepName]: { ...topLevelOutput } }
+        return { ...seed, [stepName]: enclosingLoopNames.has(stepName) ? withoutPastIterations(topLevelOutput) : { ...topLevelOutput } }
     }, {})
 }
 
-function assertNotScopedToEnclosingIteration({ stepName, executionState }: AssertNotScopedParams): void {
-    if (isNil(executionState.getStepOutput(stepName))) {
+function findReferencedStepNames({ settings, stepNames }: FindReferencedStepNamesParams): string[] {
+    return Object.entries(settings)
+        .filter(([key]) => key !== 'sampleData')
+        .flatMap(([, value]) => collectStrings(value))
+        .flatMap((text) => extractMustacheTokens(text))
+        .flatMap(({ inner }) => inner.match(IDENTIFIER) ?? [])
+        .filter((identifier) => stepNames.has(identifier))
+}
+
+function collectStrings(value: unknown): string[] {
+    if (isString(value)) {
+        return [value]
+    }
+    if (Array.isArray(value)) {
+        return value.flatMap(collectStrings)
+    }
+    if (typeof value === 'object' && value !== null) {
+        return Object.values(value).flatMap(collectStrings)
+    }
+    return []
+}
+
+function withoutPastIterations(loopOutput: StepOutput): SeedStep {
+    return { ...loopOutput, output: LoopPosition.parse(loopOutput.output) }
+}
+
+function assertNotScopedToEnclosingIteration({ stepName, iterationSteps }: AssertNotScopedParams): void {
+    if (iterationSteps.every((steps) => isNil(steps[stepName]))) {
         return
     }
     throw userError({ name: 'ProcessInBatchesIterationScopedReference', message: `A step inside this batch references "${stepName}", which belongs to the enclosing loop iteration and cannot travel to a batch. Move that step outside the loop, or copy the value it needs into a step above the batch.` })
@@ -178,19 +211,22 @@ async function succeed({ action, executionState, stepOutput, output, stepStartTi
         .setVerdict({ status: FlowRunStatus.RUNNING })
 }
 
-const PendingBatches = z.object({
+const IDENTIFIER = /[a-zA-Z_][a-zA-Z0-9_]*/g
+
+const LoopPosition = z.object({
+    item: z.unknown(),
+    index: z.number(),
+})
+
+const PausedOutput = z.object({
     barrierId: z.string().nullable().default(null),
     totalItems: z.number().int().nonnegative(),
     batchSize: z.number().int().positive(),
 })
 
-const NOTHING_PENDING: PendingBatches = {
-    barrierId: null,
-    totalItems: 0,
-    batchSize: 1,
-}
+type PausedOutput = z.infer<typeof PausedOutput>
 
-type PendingBatches = z.infer<typeof PendingBatches>
+type SeedStep = BarrierFanOutSource['seedSteps'][string]
 
 type ResolvedSettings = {
     items: readonly unknown[]
@@ -202,9 +238,14 @@ type ExecuteParams = {
     constants: EngineConstants
 }
 
+type FindReferencedStepNamesParams = {
+    settings: Record<string, unknown>
+    stepNames: Set<string>
+}
+
 type AssertNotScopedParams = {
     stepName: string
-    executionState: FlowExecutorContext
+    iterationSteps: Readonly<Record<string, StepOutput>>[]
 }
 
 type UserErrorParams = {
@@ -225,4 +266,4 @@ type SucceedParams = {
     stepStartTime: number
 }
 
-export type BatchStepSummary = PendingBatches & BarrierSummary
+type BatchStepSummary = PausedOutput & BarrierSummary

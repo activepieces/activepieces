@@ -45,6 +45,22 @@ async function insideLoopIteration({ stepName, executionState }: { stepName: str
     }).setOutput({ scoped: true }))
 }
 
+async function insideNestedLoopIteration({ outerStepName }: { outerStepName: string }): Promise<FlowExecutorContext> {
+    const withOuterLoop = await FlowExecutorContext.empty().upsertStep('outer_loop', LoopStepOutput.init({ input: {} })
+        .setItemAndIndex({ item: 1, index: 1 })
+        .addIteration())
+    const inOuterIteration = withOuterLoop.setCurrentPath(withOuterLoop.currentPath.loopIteration({ loopName: 'outer_loop', iteration: 0 }))
+    const withOuterStep = await inOuterIteration.upsertStep(outerStepName, GenericStepOutput.create({
+        input: {},
+        type: FlowActionType.CODE,
+        status: StepOutputStatus.SUCCEEDED,
+    }).setOutput({ scoped: true }))
+    const withInnerLoop = await withOuterStep.upsertStep('inner_loop', LoopStepOutput.init({ input: {} })
+        .setItemAndIndex({ item: 1, index: 1 })
+        .addIteration())
+    return withInnerLoop.setCurrentPath(withInnerLoop.currentPath.loopIteration({ loopName: 'inner_loop', iteration: 0 }))
+}
+
 async function pausedStateFor({ stepName, totalItems, batchSize }: {
     stepName: string
     totalItems: number
@@ -138,7 +154,7 @@ describe('process in batches executor', () => {
         expect(result.steps['batches'].output).toMatchObject({ batchSize: 3, total: 2 })
     })
 
-    it('path-keys the barrier inside a loop iteration but hands over the bare batch step name', async () => {
+    it('keys the barrier by the loop iteration path but sends the bare batch step name', async () => {
         const action = buildProcessInBatchesAction({
             name: 'batches',
             items: '{{ [1] }}',
@@ -200,10 +216,113 @@ describe('process in batches executor', () => {
 
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
         expect(JSON.stringify(result.verdict)).toContain('inner')
+        expect(JSON.stringify(result.verdict)).toContain('which belongs to the enclosing loop iteration')
         expect(mockCreateWaitpoint).not.toHaveBeenCalled()
     })
 
-    it('seeds a top-level reference normally from inside a loop-nested container', async () => {
+    it('fails the hand-over naming a step from an outer loop iteration when loops are nested', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: { value: '{{ outer_step.output }}' } }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: await insideNestedLoopIteration({ outerStepName: 'outer_step' }),
+            constants: generateMockEngineConstants({ stepNames: ['outer_step'] }),
+        })
+
+        expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(JSON.stringify(result.verdict)).toContain('outer_step')
+        expect(JSON.stringify(result.verdict)).toContain('which belongs to the enclosing loop iteration')
+        expect(mockCreateWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('does not mistake a step whose name starts with a loop-scoped step name for a reference to it', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: { value: '{{ step_10.output }}' } }),
+        })
+        const executionState = await insideLoopIteration({
+            stepName: 'step_1',
+            executionState: await FlowExecutorContext.empty().upsertStep('step_10', GenericStepOutput.create({
+                input: {},
+                type: FlowActionType.CODE,
+                status: StepOutputStatus.SUCCEEDED,
+            }).setOutput({ rows: [1] })),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState,
+            constants: generateMockEngineConstants({ stepNames: ['step_1', 'step_10'] }),
+        })
+
+        expect(result.verdict).toEqual({ status: FlowRunStatus.PAUSED })
+        expect(Object.keys(mockCreateWaitpoint.mock.calls[0][0].barrier.fanOut.seedSteps)).toEqual(['step_10'])
+    })
+
+    it('ignores a loop-scoped step name outside an expression or in a skipped step', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({
+                name: 'echo_step',
+                input: { inner: 'inner' },
+                nextAction: buildCodeAction({ name: 'echo_step_1', input: { value: '{{ inner.output }}' }, skip: true }),
+            }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: await insideLoopIteration({ stepName: 'inner' }),
+            constants: generateMockEngineConstants({ stepNames: ['inner'] }),
+        })
+
+        expect(result.verdict).toEqual({ status: FlowRunStatus.PAUSED })
+    })
+
+    it('seeds the enclosing loop with its current item only, not its past iterations', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: { value: '{{ loop.item }}' } }),
+        })
+
+        await flowExecutor.execute({
+            action,
+            executionState: await insideLoopIteration({ stepName: 'inner' }),
+            constants: generateMockEngineConstants({ stepNames: ['inner', 'loop'] }),
+        })
+
+        expect(mockCreateWaitpoint.mock.calls[0][0].barrier.fanOut.seedSteps.loop.output).toEqual({ item: 1, index: 1 })
+    })
+
+    it('refuses a loop-scoped reference when testing the step too', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: { value: '{{ inner.output }}' } }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: await insideLoopIteration({ stepName: 'inner' }),
+            constants: generateMockEngineConstants({ stepNames: ['inner'], stepNameToTest: 'batches' }),
+        })
+
+        expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(mockCreateWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('seeds a top-level reference when the batch step is inside a loop', async () => {
         const action = buildProcessInBatchesAction({
             name: 'batches',
             items: '{{ [1] }}',
@@ -259,7 +378,7 @@ describe('process in batches executor', () => {
         expect(mockCreateWaitpoint).not.toHaveBeenCalled()
     })
 
-    it('does not claim an items array when the container has no body', async () => {
+    it('succeeds with an empty summary and no barrier when the batch step has no body', async () => {
         const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1,2,3] }}', batchSize: 2 })
 
         const result = await flowExecutor.execute({
@@ -367,7 +486,7 @@ describe('process in batches executor', () => {
         })
     })
 
-    it('fails the step when a batch was rejected, even with continue on failure off', async () => {
+    it('fails the step when a batch was rejected and continue on failure is off', async () => {
         const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1] }}', batchSize: 1 })
 
         const result = await flowExecutor.execute({
@@ -379,6 +498,7 @@ describe('process in batches executor', () => {
         })
 
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(JSON.stringify(result.verdict)).toContain('1 of 1 batches did not succeed')
     })
 
     it('fails the step on a failed batch when continue on failure is off', async () => {
@@ -393,9 +513,10 @@ describe('process in batches executor', () => {
         })
 
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(JSON.stringify(result.verdict)).toContain('1 of 1 batches did not succeed')
     })
 
-    it('fails the step when a batch never dispatched, even with continue on failure off', async () => {
+    it('fails the step when a batch never dispatched and continue on failure is off', async () => {
         const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1] }}', batchSize: 1 })
 
         const result = await flowExecutor.execute({
@@ -407,9 +528,10 @@ describe('process in batches executor', () => {
         })
 
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(JSON.stringify(result.verdict)).toContain('1 of 1 batches did not succeed')
     })
 
-    it('fails the step when a batch was canceled, even with continue on failure off', async () => {
+    it('fails the step when a batch was canceled and continue on failure is off', async () => {
         const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1] }}', batchSize: 1 })
 
         const result = await flowExecutor.execute({
@@ -421,6 +543,7 @@ describe('process in batches executor', () => {
         })
 
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(JSON.stringify(result.verdict)).toContain('1 of 1 batches did not succeed')
     })
 
     it('fails the step when the deadline fired, even with no failed batch', async () => {
@@ -435,7 +558,37 @@ describe('process in batches executor', () => {
         })
 
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
-        expect(JSON.stringify(result.verdict)).toContain('timed out')
+        expect(JSON.stringify(result.verdict)).toContain('timed out with 1 of 1 batches unfinished')
+    })
+
+    it('counts batches never dispatched as unfinished when the deadline fired', async () => {
+        const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1,2] }}', batchSize: 1 })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: await pausedStateFor({ stepName: 'batches', totalItems: 2, batchSize: 1 }),
+            constants: generateMockEngineConstants({
+                resumePayload: releasedSummary({ total: 2, succeeded: 0, notDispatched: 2, timedOut: true }),
+            }),
+        })
+
+        expect(JSON.stringify(result.verdict)).toContain('timed out with 2 of 2 batches unfinished')
+    })
+
+    it('succeeds with the summary when a batch failed and continue on failure is on', async () => {
+        const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1] }}', batchSize: 1, continueOnFailure: true })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: await pausedStateFor({ stepName: 'batches', totalItems: 1, batchSize: 1 }),
+            constants: generateMockEngineConstants({
+                resumePayload: releasedSummary({ total: 1, succeeded: 0, failed: 1, timedOut: true }),
+            }),
+        })
+
+        expect(result.verdict).toEqual({ status: FlowRunStatus.RUNNING })
+        expect(result.steps['batches'].status).toEqual(StepOutputStatus.SUCCEEDED)
+        expect(result.steps['batches'].output).toMatchObject({ failed: 1, timedOut: true })
     })
 
     it('fails the step when the resume payload carries no summary', async () => {
@@ -448,5 +601,24 @@ describe('process in batches executor', () => {
         })
 
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(JSON.stringify(result.verdict)).toContain('resumed without a batch summary')
+    })
+
+    it('fails the step when it resumes without the output it paused with', async () => {
+        const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1] }}', batchSize: 1 })
+        const executionState = await FlowExecutorContext.empty().upsertStep('batches', GenericStepOutput.create({
+            input: {},
+            type: FlowActionType.PROCESS_IN_BATCHES,
+            status: StepOutputStatus.PAUSED,
+        }))
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState,
+            constants: generateMockEngineConstants({ resumePayload: releasedSummary() }),
+        })
+
+        expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(JSON.stringify(result.verdict)).toContain('resumed without a batch summary')
     })
 })
