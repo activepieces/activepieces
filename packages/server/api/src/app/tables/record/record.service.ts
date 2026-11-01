@@ -154,7 +154,7 @@ export const recordService = {
         id,
         projectId,
         request,
-    }: UpdateParams): Promise<PopulatedRecord> {
+    }: UpdateParams): Promise<UpdateRecordResult> {
         const { tableId } = request
         return transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
@@ -171,6 +171,7 @@ export const recordService = {
                 })
             }
 
+            let changed = false
             if (request.cells && request.cells.length > 0) {
                 const existingFields = await entityManager
                     .getRepository(FieldEntity)
@@ -183,22 +184,26 @@ export const recordService = {
                     existingFields.some((field) => field.id === cellData.fieldId),
                 )
 
-                // Prepare cells for upsert
-                const cellsToUpsert = validCells.map((cellData) => {
-                    return {
+                const currentCells = await entityManager
+                    .getRepository(CellEntity)
+                    .find({ where: { projectId, recordId: id } })
+                const currentValueByField = new Map(currentCells.map((cell) => [cell.fieldId, cell.value]))
+
+                const cellsToUpsert = validCells
+                    .map((cellData) => ({
                         recordId: id,
                         fieldId: cellData.fieldId,
                         projectId,
                         value: cellData.value ?? '',
                         id: apId(),
-                    }
-                })
+                    }))
+                    .filter((cell) => currentValueByField.get(cell.fieldId) !== cell.value)
 
-                // Perform bulk upsert only for valid cells
                 if (cellsToUpsert.length > 0) {
                     await entityManager
                         .getRepository(CellEntity)
                         .upsert(cellsToUpsert, ['projectId', 'fieldId', 'recordId'])
+                    changed = true
                 }
             }
 
@@ -221,7 +226,7 @@ export const recordService = {
             }
 
             const result = await formatRecordsAndFetchField({ records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId })
-            return result[0]
+            return { record: result[0], changed }
         })
     },
 
@@ -519,6 +524,11 @@ type UpdateParams = {
     id: string
     projectId: string
     request: UpdateRecordRequest
+}
+
+type UpdateRecordResult = {
+    record: PopulatedRecord
+    changed: boolean
 }
 
 type DeleteParams = {
