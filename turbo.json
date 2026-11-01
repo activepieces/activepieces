@@ -26,12 +26,13 @@
     "AP_OPENAI_API_KEY",
     "AP_PIECES_SYNC_MODE"
   ],
-  "globalDependencies": ["tsconfig.base.json", "packages/server/tsconfig.server.json"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
       "inputs": [
+        "$TURBO_ROOT$/tsconfig.base.json",
+        "$TURBO_ROOT$/packages/server/tsconfig.server.json",
         "src/**",
         "tsconfig*.json",
         "package.json",
@@ -45,6 +46,8 @@
       "outputs": ["../../dist/packages/web/**"],
       "env": ["AP_BUILD_SOURCEMAP"],
       "inputs": [
+        "$TURBO_ROOT$/tsconfig.base.json",
+        "$TURBO_ROOT$/packages/server/tsconfig.server.json",
         "$TURBO_DEFAULT$",
         "!src/**/*.spec.ts",
         "!src/**/*.spec.tsx",
@@ -58,6 +61,8 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
       "inputs": [
+        "$TURBO_ROOT$/tsconfig.base.json",
+        "$TURBO_ROOT$/packages/server/tsconfig.server.json",
         "src/**",
         "types/**",
         "tsconfig*.json",
@@ -67,17 +72,26 @@
       ]
     },
     "@activepieces/engine#build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "outputs": ["../../../dist/packages/engine/**"],
       "inputs": [
+        "$TURBO_ROOT$/tsconfig.base.json",
+        "$TURBO_ROOT$/packages/server/tsconfig.server.json",
         "src/**",
         "$TURBO_ROOT$/packages/core/shared/src/**",
+        "$TURBO_ROOT$/packages/core/shared/package.json",
         "$TURBO_ROOT$/packages/pieces/framework/src/**",
+        "$TURBO_ROOT$/packages/pieces/framework/package.json",
         "$TURBO_ROOT$/packages/pieces/common/src/**",
+        "$TURBO_ROOT$/packages/pieces/common/package.json",
         "$TURBO_ROOT$/packages/core/utils/src/**",
+        "$TURBO_ROOT$/packages/core/utils/package.json",
         "$TURBO_ROOT$/packages/core/piece-types/src/**",
+        "$TURBO_ROOT$/packages/core/piece-types/package.json",
         "$TURBO_ROOT$/packages/core/formula/src/**",
+        "$TURBO_ROOT$/packages/core/formula/package.json",
         "$TURBO_ROOT$/packages/core/execution/src/**",
+        "$TURBO_ROOT$/packages/core/execution/package.json",
         "tsconfig*.json",
         "package.json",
         "esbuild.config.mjs",
@@ -99,12 +113,12 @@
     "ee-embed-sdk#build": {
       "dependsOn": ["^build"],
       "outputs": ["../../../dist/packages/ee/embed-sdk/**"],
-      "inputs": ["src/**", "tsconfig*.json", "package.json", "!src/**/*.spec.ts", "!src/**/*.test.ts"]
+      "inputs": ["$TURBO_ROOT$/tsconfig.base.json", "src/**", "tsconfig*.json", "package.json", "!src/**/*.spec.ts", "!src/**/*.test.ts"]
     },
     "@activepieces/cli#build": {
       "dependsOn": ["^build"],
       "outputs": ["../../dist/packages/cli/**"],
-      "inputs": ["src/**", "tsconfig*.json", "package.json", "!src/**/*.spec.ts", "!src/**/*.test.ts"]
+      "inputs": ["$TURBO_ROOT$/tsconfig.base.json", "src/**", "tsconfig*.json", "package.json", "!src/**/*.spec.ts", "!src/**/*.test.ts"]
     },
     "bundle": {
       "dependsOn": ["build", "@activepieces/cli#build"],
@@ -124,6 +138,11 @@
       "outputs": ["coverage/**"]
     },
     "lint": {
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "outputs": []
+    },
+    "web#lint": {
+      "dependsOn": ["^build"],
       "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
       "outputs": []
     },
@@ -154,7 +173,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
+      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*", "package.json"],
       "outputs": ["coverage/**"]
     },
     "test-unit": {
@@ -192,6 +211,7 @@
     },
     "typecheck": {
       "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.base.json", "$TURBO_ROOT$/packages/server/tsconfig.server.json"],
       "outputs": []
     }
   }
