@@ -10,7 +10,7 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 #### Audit logs: SAML and embedded sign-ins no longer send `user.signed.up` on every sign-in
 
-`user.signed.up` used to fire on every SAML and embedded (JWT) sign-in, even for existing members. It now fires once, when the member is created. Later SAML sign-ins, and sign-ins with email, Google or GitHub, send the new `user.signed.in` event, which carries the sign-in method. Later embedded sign-ins send no event.
+`user.signed.up` used to fire on every SAML and embedded (JWT) sign-in, even for existing members. It now fires once, when the member is created. Later SAML sign-ins, and sign-ins with email or Google, send the new `user.signed.in` event, which carries the sign-in method. Later embedded sign-ins send no event.
 
 #### What you need to do
 
