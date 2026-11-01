@@ -9,7 +9,7 @@ export const getTranscript = createAction({
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Get Transcript',
-  description: 'Retrieves a transcript by its ID.',
+  description: 'Get a transcript and its status by ID.',
   audience: 'both',
   aiMetadata: {
     description:

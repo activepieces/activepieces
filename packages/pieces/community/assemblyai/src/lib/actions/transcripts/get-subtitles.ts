@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { SubtitleFormat } from 'assemblyai';
 import { assemblyaiAuth } from '../../auth';
 import { getAssemblyAIClient } from '../../client';
+import { transcriptIdProp } from './shared-props';
 
 export const getSubtitles = createAction({
   name: 'getSubtitles',
@@ -16,13 +17,20 @@ export const getSubtitles = createAction({
       'Exports an existing transcript, identified by its ID, as a subtitle file in either SRT or VTT format (selectable). Use this to produce captions from a completed transcript, optionally capping characters per caption. Requires a valid transcript ID; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'subtitles',
+      display: 'section',
+      label: 'Subtitles',
+      icon: 'text',
+      props: ['id', 'format', 'chars_per_caption'],
+    },
+  ],
   props: {
-    id: Property.ShortText({
-      displayName: 'Transcript ID',
-      required: true,
-    }),
+    id: transcriptIdProp,
     format: Property.StaticDropdown({
-      displayName: 'Subtitles Format',
+      displayName: 'Format',
+      display: 'cards',
       required: true,
       defaultValue: 'srt',
       options: {
@@ -30,17 +38,21 @@ export const getSubtitles = createAction({
           {
             label: 'SRT',
             value: 'srt',
+            description: 'Most players',
+            icon: 'text',
           },
           {
             label: 'VTT',
             value: 'vtt',
+            description: 'Web players',
+            icon: 'code',
           },
         ],
       },
     }),
     chars_per_caption: Property.Number({
-      displayName: 'Number of Characters per Caption',
-      description: 'The maximum number of characters per caption',
+      displayName: 'Max Characters per Caption',
+      description: 'Longest caption line in characters.',
       required: false,
     }),
   },

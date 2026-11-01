@@ -8,22 +8,29 @@ export const wordSearch = createAction({
   classification: 'SEARCH',
   auth: assemblyaiAuth,
   requireAuth: true,
-  displayName: 'Search words in transcript',
-  description:
-    'Search through the transcript for keywords. ' +
-    'You can search for individual words, numbers, or phrases containing up to five words or numbers.',
+  displayName: 'Search Words in Transcript',
+  description: 'Find where words or short phrases are said in a transcript.',
   audience: 'both',
   aiMetadata: {
     description:
       'Searches an existing transcript, identified by its ID, for one or more keywords and returns where each match occurs (individual words, numbers, or short phrases of up to five tokens). Use this to locate specific terms within a completed transcript. Requires a valid transcript ID and a list of search terms; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['id', 'words'],
+    },
+  ],
   props: {
     id: transcriptIdProp,
     words: Property.Array({
       displayName: 'Words',
       required: true,
-      description: 'Keywords to search for',
+      description: 'Words or phrases of up to five words to look for.',
     }),
   },
   async run(context) {

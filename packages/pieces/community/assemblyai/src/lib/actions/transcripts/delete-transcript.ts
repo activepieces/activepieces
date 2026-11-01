@@ -8,8 +8,8 @@ export const deleteTranscript = createAction({
   classification: 'DESTRUCTIVE',
   auth: assemblyaiAuth,
   requireAuth: true,
-  displayName: 'Delete transcript',
-  description: 'Remove the data from the transcript and mark it as deleted.',
+  displayName: 'Delete Transcript',
+  description: "Delete a transcript's text and mark it as deleted.",
   audience: 'both',
   aiMetadata: {
     description:

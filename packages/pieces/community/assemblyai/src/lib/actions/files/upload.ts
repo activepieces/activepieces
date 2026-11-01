@@ -18,7 +18,7 @@ export const uploadFile = createAction({
   props: {
     file: Property.File({
       displayName: 'Audio File',
-      description: 'The File or URL of the audio or video file.',
+      description: 'Audio or video file to upload, then pass its URL to Transcribe.',
       required: true,
     }),
   },
