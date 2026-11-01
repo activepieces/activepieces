@@ -19,10 +19,10 @@ export function makeClient(auth: AppConnectionValueForAuthProperty<typeof nocodb
 export const nocodbCommon = {
   workspaceId: Property.Dropdown({
  auth:nocodbAuth,
-    displayName: 'Workspace ID',
+    displayName: 'Workspace',
     refreshers: [],
     required: false,
-    description: 'For self-hosted instances,select "No Workspace".',
+    description: 'Cloud only. Leave empty for self-hosted NocoDB.',
     options: async ({ auth }) => {
       if (!auth) {
         return {
@@ -61,7 +61,7 @@ export const nocodbCommon = {
   }),
   baseId: Property.Dropdown({
  auth:nocodbAuth,
-    displayName: 'Base ID',
+    displayName: 'Base',
     refreshers: ['workspaceId'],
     required: true,
     options: async ({ auth, workspaceId }) => {
@@ -104,14 +104,21 @@ export const nocodbCommon = {
   }),
   tableId: Property.Dropdown({
  auth:nocodbAuth,
-    displayName: 'Table ID',
+    displayName: 'Table',
     refreshers: ['workspaceId', 'baseId'],
     required: true,
     options: async ({ auth, baseId }) => {
-      if (!auth || !baseId) {
+      if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Please connect your account first and select base.',
+          placeholder: 'Please connect your account first.',
+          options: [],
+        };
+      }
+      if (!baseId) {
+        return {
+          disabled: true,
+          placeholder: 'Select a base first.',
           options: [],
         };
       }
@@ -137,16 +144,29 @@ export const nocodbCommon = {
   }),
   columnId: Property.MultiSelectDropdown({
     auth:nocodbAuth,
-    displayName: 'Fields',
-    description:
-      'Allows you to specify the fields that you wish to include in your API response. By default, all the fields are included in the response.',
+    displayName: 'Fields to Return',
+    description: 'Leave empty to return every field.',
     refreshers: ['workspaceId', 'baseId', 'tableId'],
     required: false,
     options: async ({ auth, baseId, tableId }) => {
-      if (!auth || !baseId || !tableId) {
+      if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Please connect your account first and select base.',
+          placeholder: 'Please connect your account first.',
+          options: [],
+        };
+      }
+      if (!baseId) {
+        return {
+          disabled: true,
+          placeholder: 'Select a base first.',
+          options: [],
+        };
+      }
+      if (!tableId) {
+        return {
+          disabled: true,
+          placeholder: 'Select a table first.',
           options: [],
         };
       }
@@ -190,7 +210,7 @@ export const nocodbCommon = {
   }),
   tableColumns: Property.DynamicProperties({
     auth:nocodbAuth,
-    displayName: 'Table Columns',
+    displayName: 'Fields',
     refreshers: ['baseId', 'tableId'],
     required: true,
     props: async ({ auth, baseId, tableId }) => {
@@ -259,7 +279,7 @@ export const nocodbCommon = {
           case 'Checkbox':
             fields[column.title] = Property.Checkbox({
               displayName: column.title,
-              required: true,
+              required: false,
             });
             break;
           case 'MultiSelect': {
@@ -332,7 +352,7 @@ export const nocodbCommon = {
               displayName: column.title,
               required: false,
               description: columnMeta?.['date_format']
-                ? `Please provide date in ${columnMeta['date_format']} format.`
+                ? `Format: ${columnMeta['date_format']}.`
                 : '',
             });
             break;}
@@ -340,7 +360,7 @@ export const nocodbCommon = {
             fields[column.title] = Property.ShortText({
               displayName: column.title,
               required: false,
-              description: 'Please provide time in HH:mm:ss format.',
+              description: 'Format: HH:mm:ss.',
             });
             break;
           case 'DateTime':
