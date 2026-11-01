@@ -94,7 +94,6 @@ async function pollNewLeads({ apiKey, store }: { apiKey: string; store: Store })
 }
 
 async function collectNewer({ apiKey, lastSeen }: { apiKey: string; lastSeen: number }): Promise<HunterRecord[]> {
-  // Offsets shift when a lead is added between page requests, so the same lead can appear on two pages; keep one copy per ID.
   const collected = new Map<number, HunterRecord>();
   for (let offset = 0; offset < MAX_PAGED_LEADS; offset += PAGE_SIZE) {
     const page = await hunterRequests.listLeadsPage({ apiKey, limit: PAGE_SIZE, offset });
