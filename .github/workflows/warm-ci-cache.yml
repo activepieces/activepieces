@@ -20,3 +20,6 @@ jobs:
           turbo-s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
           turbo-s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
           turbo-s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+
+      # Seeds the turbo cache with main's builds, so a PR's first run rebuilds only what it changed.
+      - run: npx turbo run build $(npx tsx tools/scripts/test-filters.ts) --filter=api --filter=worker

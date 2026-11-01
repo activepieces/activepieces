@@ -29,7 +29,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [],
+      "outputs": ["dist/**"],
       "inputs": [
         "src/**",
         "tsconfig*.json",
@@ -37,13 +37,11 @@
         "!src/**/*.spec.ts",
         "!src/**/*.test.ts",
         "!vitest.config.*"
-      ],
-      "cache": false
+      ]
     },
     "web#build": {
       "dependsOn": ["^build"],
       "outputs": ["../../dist/packages/web/**"],
-      "cache": false,
       "inputs": [
         "src/**",
         "tsconfig*.json",
@@ -56,7 +54,6 @@
     "api#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
-      "cache": false,
       "inputs": [
         "src/**",
         "tsconfig*.json",
@@ -68,7 +65,6 @@
     "@activepieces/engine#build": {
       "dependsOn": [],
       "outputs": ["../../../dist/packages/engine/**"],
-      "cache": false,
       "inputs": [
         "src/**",
         "tsconfig*.json",
@@ -89,6 +85,11 @@
       "outputs": ["../../../dist/packages/ee/embed-sdk/**"],
       "cache": false
     },
+    "@activepieces/cli#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["../../dist/packages/cli/**"],
+      "inputs": ["src/**", "tsconfig*.json", "package.json", "!src/**/*.spec.ts", "!src/**/*.test.ts"]
+    },
     "bundle": {
       "dependsOn": ["build", "@activepieces/cli#build"],
       "inputs": ["src/**", "package.json"],
@@ -107,12 +108,36 @@
       "outputs": ["coverage/**"]
     },
     "lint": {
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "outputs": []
+    },
+    "@activepieces/shared#lint": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "outputs": []
+    },
+    "api#lint": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "outputs": []
+    },
+    "@activepieces/engine#lint": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "outputs": []
+    },
+    "@activepieces/sandbox#lint": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "outputs": []
+    },
+    "worker#lint": {
       "dependsOn": ["^build"],
       "inputs": ["src/**", "test/**", "scripts/**", ".eslintrc.json", "../../.eslintrc.json"],
       "outputs": []
     },
     "test": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build"],
       "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
       "outputs": ["coverage/**"]
     },
