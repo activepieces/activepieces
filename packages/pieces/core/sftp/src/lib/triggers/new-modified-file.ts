@@ -70,7 +70,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof sftpAuth>, { pat
         newFiles.push({
           data: {
             ...file,
-            path: `${propsValue.path}/${file.name}`,
+            path: `${propsValue.path.replace(/\/+$/, '')}/${file.name}`,
           },
           epochMilliSeconds: modifyTime,
         });
