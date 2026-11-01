@@ -2,6 +2,7 @@ import { FlowStatus, RunEnvironment } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WebhookFlowVersionToRun } from '../../../../src/app/webhooks/webhook.service'
+import { CreditCheckSpeed } from '../../../../src/app/platform/billing-provider'
 
 const { mockShouldBlockRunOnCredits, mockStart, mockCreateQuotaExceededRun, mockFindOneBy, mockOneTimeListener } = vi.hoisted(() => ({
     mockShouldBlockRunOnCredits: vi.fn(),
@@ -24,7 +25,8 @@ vi.mock('../../../../src/app/helper/system/system', () => ({
     },
 }))
 
-vi.mock('../../../../src/app/platform/billing-provider', () => ({
+vi.mock('../../../../src/app/platform/billing-provider', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../../../../src/app/platform/billing-provider')>()),
     shouldBlockRunOnCredits: mockShouldBlockRunOnCredits,
 }))
 
@@ -160,6 +162,7 @@ describe('sync webhook credit gate', () => {
         expect(mockShouldBlockRunOnCredits.mock.calls[0][0]).toMatchObject({
             platformId: 'plat-1',
             environment: RunEnvironment.PRODUCTION,
+            creditCheckSpeed: CreditCheckSpeed.FAST,
         })
     })
 })

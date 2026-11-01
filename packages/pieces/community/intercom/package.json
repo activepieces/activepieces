@@ -11,10 +11,10 @@
     "string-strip-html": "8.5.0",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
-    "undici": "7.29.1"
+    "undici": "7.29.1",
+    "tslib": "2.6.2"
   },
   "devDependencies": {
-    "tslib": "2.6.2",
     "vitest": "3.2.6"
   },
   "scripts": {
