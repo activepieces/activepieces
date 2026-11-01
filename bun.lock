@@ -1212,7 +1212,7 @@
     },
     "packages/pieces/community/bigin-by-zoho": {
       "name": "@activepieces/piece-bigin-by-zoho",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1221,6 +1221,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/bika": {

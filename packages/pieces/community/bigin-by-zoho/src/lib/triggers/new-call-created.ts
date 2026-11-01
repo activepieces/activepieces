@@ -1,70 +1,21 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { ZOHO_WEBHOOK_TOKEN } from '../common/constants';
 import { biginAuth } from '../auth';
-import { biginApiService } from '../common/request';
-
-const CACHE_KEY = 'bigin_new_call_created_trigger';
+import { biginOutputSchemas } from '../common/output-schemas';
+import { biginWebhook } from '../common/webhook';
 
 export const newCallCreated = createTrigger({
   auth: biginAuth,
   name: 'newCallCreated',
-  classification: 'READ',
   displayName: 'New Call Created',
   description: 'Triggers when a new call log is created',
   aiMetadata: {
-    description: 'Fires when a new call log entry is created in Bigin CRM, via a Calls.create webhook. Represents a newly recorded phone interaction.',
+    description:
+      'Fires when a new call log entry is created in Bigin CRM, via a Calls.create webhook. Represents a newly recorded phone interaction. The output includes the notified record ids and the fetched records.',
   },
+  classification: 'READ',
   props: {},
-  sampleData: {},
+  outputSchema: biginOutputSchemas.triggerPayload,
+  sampleData: biginWebhook.sampleData({ module: 'Calls', event: 'create' }),
   type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    try {
-      const channel_id = Date.now().toString();
-      const { api_domain } = context.auth.data;
-
-      const webhookData = {
-        watch: [
-          {
-            channel_id,
-            events: ['Calls.create'],
-            notify_url: context.webhookUrl,
-            token: ZOHO_WEBHOOK_TOKEN,
-          },
-        ],
-      };
-
-      await biginApiService.createWebhook(
-        context.auth.access_token,
-        webhookData,
-        api_domain
-      );
-
-      await context.store.put(CACHE_KEY, channel_id);
-    } catch (error) {
-      console.error('Failed to enable Zoho webhook');
-    }
-  },
-  async onDisable(context) {
-    const channel_id = (await context.store.get(CACHE_KEY)) as string;
-    if (!channel_id) return;
-
-    const { api_domain } = context.auth.data;
-
-    await biginApiService.deleteWebhook(
-      context.auth.access_token,
-      api_domain,
-      channel_id
-    );
-
-    await context.store.delete(CACHE_KEY);
-  },
-  async run(context) {
-    const { token } = context.payload.body as any;
-
-    if (token !== ZOHO_WEBHOOK_TOKEN) {
-      throw new Error('Invalid webhook token');
-    }
-
-    return [context.payload.body];
-  },
+  ...biginWebhook.hooks({ module: 'Calls', event: 'create', storeKey: 'bigin_new_call_created_trigger' }),
 });

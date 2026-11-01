@@ -1,3 +1,5 @@
+import { assertWriteSucceeded } from '../common/request';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, InputPropertyMap, Property } from '@activepieces/pieces-framework';
 import { companyDropdown, contactsDropdown, layoutsDropdown, multiContactsDropdown, pipelineRecordsDropdown, productsDropdown, SubPipelineorStageDropdown, tagsDropdown, usersDropdown } from '../common/props';
@@ -10,7 +12,8 @@ export const createPipelineRecord = createAction({
   classification: 'WRITE',
   displayName: 'Create Pipeline',
   description: 'Creates a new pipeline record in Bigin',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyAckRaw,
   aiMetadata: { description: 'Creates a new pipeline record (deal) in Bigin CRM with a deal name, pipeline, sub-pipeline, stage, and closing date, plus optional amount, owner, company, contact, secondary contacts, associated products, tags, and module-defined fields. Use to open a new sales opportunity. Not idempotent: each call creates a new deal.', idempotent: false },
   props: {
     dealName: Property.ShortText({
@@ -58,7 +61,8 @@ export const createPipelineRecord = createAction({
       required: false,
       props: async ({ auth }): Promise<InputPropertyMap> => {
         if (!auth) return {} as InputPropertyMap;
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const fieldsResp = await biginApiService.fetchModuleFields(
           access_token,
@@ -206,7 +210,7 @@ export const createPipelineRecord = createAction({
       }
     }
 
-    try {
+    
       const { access_token, data } = auth;
       const api_domain = data['api_domain'];
 
@@ -216,6 +220,7 @@ export const createPipelineRecord = createAction({
         { data: [payload] }
       );
 
+      assertWriteSucceeded(response.data?.[0]);
       const created = response.data[0];
 
       if (
@@ -244,13 +249,6 @@ export const createPipelineRecord = createAction({
       }
 
       return created;
-    } catch (error) {
-      console.error('Error creating pipeline:', error);
-      throw new Error(
-        error instanceof Error
-          ? `Failed to create pipeline: ${error.message}`
-          : 'Failed to create pipeline due to an unknown error'
-      );
-    }
+    
   },
 });
