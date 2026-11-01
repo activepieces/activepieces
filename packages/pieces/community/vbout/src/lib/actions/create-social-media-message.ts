@@ -6,19 +6,19 @@ export const createSocialMediaMessageAction = createAction({
   name: 'vbout_create_social_media_message',
   classification: 'WRITE',
   displayName: 'Create Social Media Message',
-  description: 'Post a message to one of your social media channel.',
+  description: 'Posts a message to one of your social media accounts.',
   audience: 'both',
   aiMetadata: {
     description: 'Publishes a message to one connected VBOUT social media account on a chosen channel (Twitter, LinkedIn, or Facebook). Use to post content to social media. Requires the message text, the channel, and the specific account/profile ID on that channel; not idempotent, as each call creates a new post.',
     idempotent: false,
   },
   props: {
+    channel: vboutCommon.socialMediaChannel,
+    channelid: vboutCommon.socialMediaProfile,
     message: Property.LongText({
       displayName: 'Message',
       required: true,
     }),
-    channel: vboutCommon.socialMediaChannel,
-    channelid: vboutCommon.socialMediaProfile,
   },
   async run(context) {
     const client = makeClient(context.auth.secret_text);

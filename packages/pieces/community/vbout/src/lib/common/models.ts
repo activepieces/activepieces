@@ -88,15 +88,15 @@ export interface SocialMediaProfile {
   name: string;
 }
 export interface SocialMediaChannelListResponse {
-  Facebook: {
+  Facebook?: {
     count: number;
     pages: SocialMediaProfile[];
   };
-  Twitter: {
+  Twitter?: {
     count: number;
     profiles: SocialMediaProfile[];
   };
-  Linkedin: {
+  Linkedin?: {
     count: number;
     profiles: SocialMediaProfile[];
     companies: SocialMediaProfile[];

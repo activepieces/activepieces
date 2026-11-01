@@ -17,58 +17,72 @@ export const createEmailListAction = createAction({
     name: Property.ShortText({
       required: true,
       displayName: 'Name',
-      description: 'The name of the list.',
     }),
     email_subject: Property.LongText({
       required: false,
       displayName: 'Email Subject',
-      description: 'The default subscription subject.',
+      description: "Default subject of this list's subscription emails.",
     }),
     reply_to: Property.ShortText({
       required: false,
       displayName: 'Reply To',
-      description: 'The Reply to email of the list.',
+      placeholder: 'support@example.com',
     }),
     fromemail: Property.ShortText({
       required: false,
       displayName: 'From Email',
-      description: 'The From email of the list.',
+      placeholder: 'news@acme.com',
+      width: 'half',
     }),
     from_name: Property.ShortText({
       required: false,
       displayName: 'From Name',
-      description: 'The From name of the list.',
+      placeholder: 'Jane from Acme',
+      width: 'half',
     }),
     notify_email: Property.ShortText({
       required: false,
       displayName: 'Notify Email',
-      description: 'Notification Email.',
+      description: 'Receives a notification when someone subscribes.',
+      placeholder: 'you@example.com',
     }),
     success_email: Property.ShortText({
       required: false,
       displayName: 'Success Email',
-      description: 'Subscription Success Email.',
+      description: 'Email sent when someone subscribes.',
     }),
     success_message: Property.ShortText({
       required: false,
       displayName: 'Success Message',
-      description: 'Subscription Success Message.',
+      description: 'Shown after someone subscribes.',
     }),
     error_message: Property.ShortText({
       required: false,
       displayName: 'Error Message',
-      description: 'Subscription Error Message.',
+      description: 'Shown when a subscription fails.',
     }),
     confirmation_email: Property.ShortText({
       required: false,
       displayName: 'Confirmation Email',
-      description: 'Confirmation Email Message.',
+      description: 'Email asking new subscribers to confirm.',
     }),
     confirmation_message: Property.ShortText({
       required: false,
       displayName: 'Confirmation Message',
+      description: 'Shown after someone confirms their subscription.',
     }),
   },
+  propertyGroups: [
+    { key: 'list', display: 'section', label: 'List', icon: 'users', props: ['name', 'notify_email'] },
+    { key: 'sender', display: 'section', label: 'Sender', icon: 'send', props: ['from_name', 'fromemail', 'reply_to', 'email_subject'] },
+    {
+      key: 'messages',
+      display: 'section',
+      label: 'Subscription Messages',
+      icon: 'inbox',
+      props: ['success_email', 'success_message', 'error_message', 'confirmation_email', 'confirmation_message'],
+    },
+  ],
 
   async run({ auth, propsValue }) {
     const client = makeClient(auth.secret_text);

@@ -7,7 +7,7 @@ export const removeTagFromContactAction = createAction({
   name: 'vbout_remove_tag',
   classification: 'WRITE',
   displayName: 'Remove Tags from Contact',
-  description: 'Removes tags from an existing contact.',
+  description: 'Removes tags from a contact.',
   audience: 'both',
   aiMetadata: {
     description: 'Removes one or more tags from an existing VBOUT contact identified by email. Use to unlabel or re-segment a contact. Tag names are passed as a comma-separated string; idempotent, since removing already-absent tags yields the same end state.',
@@ -15,13 +15,15 @@ export const removeTagFromContactAction = createAction({
   },
   props: {
     email: Property.ShortText({
-      displayName: 'Email Address',
+      displayName: 'Email',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     tagname: Property.ShortText({
-      displayName: 'Tag Name',
+      displayName: 'Tags',
       required: true,
-      description: `use comma for multiple tag e.g. **tag1,tag2**.`,
+      description: 'Separate several tags with commas.',
+      placeholder: 'vip,newsletter',
     }),
   },
   async run(context) {

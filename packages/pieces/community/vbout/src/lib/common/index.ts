@@ -12,10 +12,17 @@ export function makeClient(apiKey: string): VboutClient {
 
 export const vboutCommon = {
   baseUrl: 'https://api.vbout.com/1',
-  listid: (required = true) =>
+  listid: ({
+    required,
+    description,
+  }: {
+    required: boolean;
+    description?: string;
+  }) =>
     Property.Dropdown({
       auth: vboutAuth,
-      displayName: 'List ID',
+      displayName: 'Email List',
+      description,
       required: required,
       refreshers: [],
       options: async ({ auth }) => {
@@ -28,29 +35,33 @@ export const vboutCommon = {
         }
         const client = makeClient(auth.secret_text);
         const res = await client.listEmailLists();
+        const options = res.lists.items.map((list) => {
+          return {
+            label: list.name,
+            value: list.id,
+          };
+        });
+        if (options.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No email lists found. Create one in VBOUT first.',
+          };
+        }
         return {
           disabled: false,
-          options: res.lists.items.map((list) => {
-            return {
-              label: list.name,
-              value: list.id,
-            };
-          }),
+          options: options,
         };
       },
     }),
   listFields: Property.DynamicProperties({
     auth: vboutAuth,
-    displayName: 'Fields',
+    displayName: 'List Fields',
     required: true,
     refreshers: ['listid'],
     props: async ({ auth, listid }) => {
       if (!auth || !listid) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your account and select Email List.',
-        };
+        return {};
       }
       const fields: DynamicPropsValue = {};
       const client = makeClient(auth.secret_text);
@@ -67,10 +78,17 @@ export const vboutCommon = {
       return fields;
     },
   }),
-  contactStatus: (required = true) =>
+  contactStatus: ({
+    required,
+    width,
+  }: {
+    required: boolean;
+    width?: 'half';
+  }) =>
     Property.StaticDropdown({
       displayName: 'Contact Status',
       required: required,
+      width,
       options: {
         disabled: false,
         options: [
@@ -83,7 +101,7 @@ export const vboutCommon = {
             value: ContactStatusValues.ACTIVE,
           },
           {
-            label: 'Unsubscribe',
+            label: 'Unsubscribed',
             value: ContactStatusValues.UNSUBSCRIBE,
           },
           {
@@ -94,29 +112,33 @@ export const vboutCommon = {
       },
     }),
   socialMediaChannel: Property.StaticDropdown({
-    displayName: 'Social Media Channel',
+    displayName: 'Network',
     required: true,
+    display: 'cards',
     options: {
       disabled: false,
       options: [
         {
-          label: 'Twitter',
+          label: 'X (Twitter)',
           value: SocialMediaChannelValues.TWITTER,
+          description: 'Your profiles',
         },
         {
           label: 'LinkedIn',
           value: SocialMediaChannelValues.LINKEDIN,
+          description: 'Pages and profiles',
         },
         {
           label: 'Facebook',
           value: SocialMediaChannelValues.FACEBOOK,
+          description: 'Pages you manage',
         },
       ],
     },
   }),
   socialMediaProfile: Property.Dropdown({
     auth: vboutAuth,
-    displayName: 'Social Media Account',
+    displayName: 'Account',
     required: true,
     refreshers: ['channel'],
     options: async ({ auth, channel }) => {
@@ -124,8 +146,7 @@ export const vboutCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder:
-            'Please connect your account and select social media channel.',
+          placeholder: 'Pick a network first.',
         };
       }
       const client = makeClient(auth.secret_text);
@@ -135,25 +156,32 @@ export const vboutCommon = {
         case SocialMediaChannelValues.TWITTER: {
           options = [
             ...options,
-            ...mapSocialMediaProfile(channels.Twitter.profiles),
+            ...mapSocialMediaProfile(channels.Twitter?.profiles ?? []),
           ];
           break;
         }
         case SocialMediaChannelValues.FACEBOOK: {
           options = [
             ...options,
-            ...mapSocialMediaProfile(channels.Facebook.pages),
+            ...mapSocialMediaProfile(channels.Facebook?.pages ?? []),
           ];
           break;
         }
         case SocialMediaChannelValues.LINKEDIN: {
           options = [
             ...options,
-            ...mapSocialMediaProfile(channels.Linkedin.companies),
-            ...mapSocialMediaProfile(channels.Linkedin.profiles),
+            ...mapSocialMediaProfile(channels.Linkedin?.companies ?? []),
+            ...mapSocialMediaProfile(channels.Linkedin?.profiles ?? []),
           ];
           break;
         }
+      }
+      if (options.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No accounts found for this network.',
+        };
       }
       return {
         disabled: false,

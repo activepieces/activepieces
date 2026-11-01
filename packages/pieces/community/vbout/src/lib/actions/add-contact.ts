@@ -15,17 +15,40 @@ export const addContactAction = createAction({
   },
   props: {
     email: Property.ShortText({
-      displayName: 'Email Address',
+      displayName: 'Email',
+      placeholder: 'jane@example.com',
       required: true,
     }),
-    listid: vboutCommon.listid(true),
-    status: vboutCommon.contactStatus(true),
+    status: vboutCommon.contactStatus({ required: true, width: 'half' }),
     ipaddress: Property.ShortText({
       displayName: 'IP Address',
+      description: 'Where the contact signed up from.',
+      placeholder: '203.0.113.7',
       required: false,
+      width: 'half',
+    }),
+    listid: vboutCommon.listid({
+      required: true,
+      description: "The list's custom fields appear below once you pick it.",
     }),
     fields: vboutCommon.listFields,
   },
+  propertyGroups: [
+    {
+      key: 'contact',
+      display: 'section',
+      label: 'Contact',
+      icon: 'user',
+      props: ['email', 'status', 'ipaddress'],
+    },
+    {
+      key: 'email_list',
+      display: 'section',
+      label: 'Email List',
+      icon: 'inbox',
+      props: ['listid', 'fields'],
+    },
+  ],
   async run(context) {
     const client = makeClient(context.auth.secret_text);
     return await client.addContact(context.propsValue);
