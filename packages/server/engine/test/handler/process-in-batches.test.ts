@@ -110,6 +110,23 @@ describe('process in batches executor', () => {
         })
     })
 
+    it('hands over the waiting webhook caller so a response step after the batch still answers it', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+        })
+
+        await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ workerHandlerId: 'worker-1', httpRequestId: 'request-1' }),
+        })
+
+        expect(mockCreateWaitpoint.mock.calls[0][0]).toMatchObject({ workerHandlerId: 'worker-1', httpRequestId: 'request-1' })
+    })
+
     it('pauses carrying the barrier id and the sizing the run detail browses batches with', async () => {
         const action = buildProcessInBatchesAction({
             name: 'batches',

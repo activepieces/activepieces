@@ -54,6 +54,8 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
             engineToken: constants.engineToken,
             flowRunId: constants.flowRunId,
             projectId: constants.projectId,
+            workerHandlerId: constants.workerHandlerId ?? undefined,
+            httpRequestId: constants.httpRequestId ?? undefined,
             stepName: executionState.currentPath.waitpointKeyFor({ stepName: action.name }),
             type: PauseType.BARRIER,
             version: 'V1',
