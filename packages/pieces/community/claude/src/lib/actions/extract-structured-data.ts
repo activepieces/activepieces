@@ -19,7 +19,7 @@ export const extractStructuredDataAction = createAction({
   classification: 'READ',
   displayName: 'Extract Structured Data',
   description: 'Pull the fields you define out of text, an image or a PDF.',
-  aiMetadata: { description: 'Runs a Claude model over supplied text, an image, or a PDF and returns only the fields you defined, using a forced tool call so the output matches your schema. The Field Definition prop switches between Simple mode (a list of named fields with types and required flags) and Advanced mode (a raw JSON Schema object); prefer the sibling Ask Claude action when you want free-form prose instead of typed fields. Requires a model, the field definitions, and at least one of Text, or an Image or PDF; not idempotent, since each call re-runs the model and extraction can vary.', idempotent: false },
+  aiMetadata: { description: 'Runs a Claude model over supplied text, an image, or a PDF and returns only the fields you defined by having the model call an extraction tool whose input is your schema. Older models are forced to call the tool; newer 5.5-family models are instructed to call it, and if the model replies with text only the step fails with a clear error that includes the reply text. The Field Definition prop switches between Simple mode (a list of named fields with types and required flags) and Advanced mode (a raw JSON Schema object); prefer the sibling Ask Claude action when you want free-form prose instead of typed fields. Requires a model, the field definitions, and at least one of Text, or an Image or PDF; not idempotent, since each call re-runs the model and extraction can vary.', idempotent: false },
   propertyGroups: [
     { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'maxTokens'] },
     { key: 'source', display: 'section', label: 'Extract from', icon: 'file', props: ['sourceInfo', 'text', 'image'] },
@@ -297,9 +297,9 @@ export const extractStructuredDataAction = createAction({
     if (isNil(args)) {
       throw new Error(
         JSON.stringify({
-          message:
-            choices[0]?.content ??
-            'Failed to extract structured data from the input.',
+          message: choices[0]?.content
+            ? `Claude did not return structured data (it replied with text instead of calling the extraction tool). Claude's reply: ${choices[0].content}`
+            : 'Failed to extract structured data from the input.',
         })
       );
     }

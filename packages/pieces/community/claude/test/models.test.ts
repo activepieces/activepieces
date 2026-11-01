@@ -107,6 +107,6 @@ describe('actions use resolved models', () => {
     create.mockResolvedValue({ content: [{ type: 'text', text: 'cannot' }] });
     await expect(
       extractStructuredDataAction.run({ ...createMockActionContext({ propsValue: extractProps('claude-opus-5-5') }), auth })
-    ).rejects.toThrow('cannot');
+    ).rejects.toThrow(/did not return structured data.*cannot/);
   });
 });
