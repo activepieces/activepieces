@@ -7,6 +7,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ChatMessageList } from '@/features/chat';
 
+vi.mock('@/components/providers/theme-provider', () => ({
+  useTheme: () => ({ theme: 'light' }),
+}));
+
 describe('flow chat error bubble', () => {
   it('resends the failed message when the retry button is clicked', () => {
     const sendMessage = vi.fn();
