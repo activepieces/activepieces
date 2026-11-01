@@ -14,7 +14,7 @@ export const listEntityRecords = createAction({
       { key: 'records', label: 'Records', labelKey: 'id', listItems: base44Common.recordFields },
     ],
   },
-  aiMetadata: { description: 'Lists records of a given entity type in a Base44 app, optionally sorted (e.g. "-created_date" for newest first), returning up to "limit" records (default 50, max 500) after skipping "skip" records for paging. Use to discover record IDs or browse data when no filter is known; use Find Entity Record to filter by field values. Read-only and idempotent.', idempotent: true },
+  aiMetadata: { description: 'Lists records of a given entity type in a Base44 app, optionally sorted (e.g. "-created_date" for newest first), returning up to "limit" records (default 50, max 500) after skipping "skip" records for paging. Use to discover record IDs or browse data when no filter is known; use Find Entity Record to filter by field values. Read-only and idempotent. Returned records include the built-in fields plus every app-defined field of the entity (e.g. name, status) as top-level keys.', idempotent: true },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',

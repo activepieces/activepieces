@@ -9,7 +9,7 @@ export const getEntityRecord = createAction({
   description: 'Retrieves a single entity record by its ID',
   audience: 'both',
   outputSchema: base44Common.recordOutputSchema,
-  aiMetadata: { description: 'Fetches one record of a given entity type from a Base44 app by its record ID and returns all of its fields. Use when you already know the record ID (from List Entity Records, Find Entity Record, or a trigger) and need its current values. Fails with a not-found error if the ID or entity type is wrong. Read-only and idempotent.', idempotent: true },
+  aiMetadata: { description: 'Fetches one record of a given entity type from a Base44 app by its record ID and returns all of its fields. Use when you already know the record ID (from List Entity Records, Find Entity Record, or a trigger) and need its current values. Fails with a not-found error if the ID or entity type is wrong. Read-only and idempotent. Returned records include the built-in fields plus every app-defined field of the entity (e.g. name, status) as top-level keys.', idempotent: true },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',

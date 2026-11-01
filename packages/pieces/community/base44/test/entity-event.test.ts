@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@base44/sdk', () => ({ createClient: vi.fn() }));
+const { createClient } = vi.hoisted(() => ({ createClient: vi.fn() }));
+vi.mock('@base44/sdk', () => ({ createClient }));
 
 import { entityEvent, entityEventInternals } from '../src/lib/triggers/entity-event';
 
@@ -57,5 +58,95 @@ describe('entity event selection', () => {
 
   it('declares an outputSchema', () => {
     expect(entityEvent.outputSchema?.fields.map((f) => f.key)).toContain('_eventType');
+  });
+});
+
+describe('entity event full-precision update detection', () => {
+  it('treats a sub-millisecond edit as an update (create vs read formats)', () => {
+    const result = entityEventInternals.selectEventRecords({
+      records: [{ id: 'f', created_date: '2026-11-01T12:56:20.141000', updated_date: '2026-11-01T12:56:20.141562Z' }],
+      eventType: 'updated',
+      lastFetchEpochMS: 0,
+    });
+    expect(result.map(({ record }) => record['id'])).toEqual(['f']);
+  });
+
+  it('treats the same instant in different formats/offsets as never edited', () => {
+    const result = entityEventInternals.selectEventRecords({
+      records: [
+        { id: 'a', created_date: '2026-11-01T12:56:20.141000', updated_date: '2026-11-01T12:56:20.141000Z' },
+        { id: 'b', created_date: '2026-11-01T12:56:20.141562Z', updated_date: '2026-11-01T14:56:20.141562+02:00' },
+        { id: 'c', created_date: '2026-11-01T12:56:20.141Z', updated_date: '2026-11-01T12:56:20.141000' },
+      ],
+      eventType: 'updated',
+      lastFetchEpochMS: 0,
+    });
+    expect(result).toEqual([]);
+  });
+
+  it('parses microseconds', () => {
+    expect(entityEventInternals.toEpochMicros('2026-11-01T12:56:20.141562Z')).toBe(
+      Date.UTC(2026, 10, 1, 12, 56, 20, 141) * 1000 + 562,
+    );
+  });
+});
+
+describe('entity event scheduled poll (run)', () => {
+  const lastPoll = Date.UTC(2026, 10, 1, 12, 0, 0);
+  function setup(list: ReturnType<typeof vi.fn>) {
+    const handler = { list };
+    const entities = new Proxy({}, { get: () => handler });
+    createClient.mockReturnValue({ entities, asServiceRole: { entities } });
+    const data: Record<string, unknown> = { lastPoll };
+    const store = {
+      get: vi.fn(async (key: string) => data[key] ?? null),
+      put: vi.fn(async (key: string, value: unknown) => {
+        data[key] = value;
+        return value;
+      }),
+      delete: vi.fn(async () => undefined),
+    };
+    return { store, data };
+  }
+  function ctx(store: unknown, eventType: string) {
+    return {
+      store,
+      auth: { props: { appId: 'app', token: 'tok' } },
+      propsValue: { entityType: 'Product', eventType },
+      files: {},
+    } as unknown as Parameters<typeof entityEvent.run>[0];
+  }
+
+  it('created mode lists by -created_date with limit 500 and emits new records', async () => {
+    const list = vi.fn().mockResolvedValue([
+      { id: 'new', name: 'Widget', created_date: '2026-11-01T12:56:20.141000', updated_date: '2026-11-01T12:56:20.141000' },
+      { id: 'old', created_date: '2026-11-01T11:00:00.000000', updated_date: '2026-11-01T11:00:00.000000' },
+    ]);
+    const { store, data } = setup(list);
+    const items = (await entityEvent.run(ctx(store, 'created'))) as Record<string, unknown>[];
+    expect(list).toHaveBeenCalledWith('-created_date', 500);
+    expect(items.map((i) => i['id'])).toEqual(['new']);
+    expect(items[0]).toMatchObject({ name: 'Widget', _eventType: 'created', _entityType: 'Product' });
+    expect(data['lastPoll']).toBe(Date.UTC(2026, 10, 1, 12, 56, 20, 141));
+  });
+
+  it('updated mode lists by -updated_date with limit 500 and skips never-edited records', async () => {
+    const list = vi.fn().mockResolvedValue([
+      { id: 'edited', created_date: '2026-11-01T12:56:20.141000', updated_date: '2026-11-01T12:56:20.141562Z' },
+      { id: 'fresh', created_date: '2026-11-01T12:30:00.000000', updated_date: '2026-11-01T12:30:00.000000' },
+    ]);
+    const { store } = setup(list);
+    const items = (await entityEvent.run(ctx(store, 'updated'))) as Record<string, unknown>[];
+    expect(list).toHaveBeenCalledWith('-updated_date', 500);
+    expect(items.map((i) => i['id'])).toEqual(['edited']);
+    expect(items[0]['_eventType']).toBe('updated');
+  });
+
+  it('propagates a rejected SDK request', async () => {
+    const list = vi.fn().mockRejectedValue(Object.assign(new Error('Request failed'), { status: 500 }));
+    const { store, data } = setup(list);
+    await expect(entityEvent.run(ctx(store, 'created'))).rejects.toThrow();
+    expect(list).toHaveBeenCalledWith('-created_date', 500);
+    expect(data['lastPoll']).toBe(lastPoll);
   });
 });

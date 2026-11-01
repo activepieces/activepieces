@@ -9,7 +9,7 @@ export const updateEntityRecord = createAction({
   description: 'Updates fields of an existing entity record',
   audience: 'both',
   outputSchema: base44Common.recordOutputSchema,
-  aiMetadata: { description: 'Updates an existing record of a given entity type in a Base44 app by record ID. Only the fields present in the JSON data are changed; other fields keep their values. Use when a known record needs new values (e.g. change an Order status). Returns the updated record. Setting the same values again yields the same result, so it is idempotent.', idempotent: true },
+  aiMetadata: { description: 'Updates an existing record of a given entity type in a Base44 app by record ID. Only the fields present in the JSON data are changed; other fields keep their values. Use when a known record needs new values (e.g. change an Order status). Returns the updated record. Setting the same values again yields the same result, so it is idempotent. Returned records include the built-in fields plus every app-defined field of the entity (e.g. name, status) as top-level keys.', idempotent: true },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',

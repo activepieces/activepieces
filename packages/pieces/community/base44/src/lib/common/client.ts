@@ -128,8 +128,10 @@ class Base44ActionError extends Error {
   }
 }
 
+// Built-in Base44 fields only. Records also carry every app-defined field of the
+// entity (e.g. name, status) as top-level keys; those vary per app and are not fixed here.
 const recordFields: OutputSchema['fields'] = [
-  { key: 'id', label: 'Record ID' },
+  { key: 'id', label: 'Record ID', description: 'Built-in record ID. Records also include every app-defined field of the entity (e.g. name, status) as top-level keys, referenced by their field name.' },
   { key: 'created_date', label: 'Created Date', format: 'datetime' },
   { key: 'updated_date', label: 'Updated Date', format: 'datetime' },
   { key: 'created_by_id', label: 'Created By ID' },

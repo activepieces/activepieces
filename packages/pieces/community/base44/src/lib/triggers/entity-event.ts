@@ -19,6 +19,18 @@ function toEpoch(value: unknown): number {
   return new Date(normalized).getTime();
 }
 
+// Full-precision instant in microseconds since epoch. Date only keeps milliseconds,
+// so the fractional seconds are read separately (padded/truncated to 6 digits).
+function toEpochMicros(value: unknown): number {
+  const epochMs = toEpoch(value);
+  if (Number.isNaN(epochMs) || typeof value !== 'string') {
+    return epochMs * 1000;
+  }
+  const fraction = /T\d{2}:\d{2}:\d{2}\.(\d+)/.exec(value)?.[1] ?? '';
+  const subMillisecond = Number(fraction.padEnd(6, '0').slice(3, 6));
+  return epochMs * 1000 + subMillisecond;
+}
+
 function selectEventRecords({
   records,
   eventType,
@@ -34,7 +46,7 @@ function selectEventRecords({
       if (eventType === 'created') {
         return true;
       }
-      return toEpoch(record['updated_date']) !== toEpoch(record['created_date']);
+      return toEpochMicros(record['updated_date']) !== toEpochMicros(record['created_date']);
     })
     .map((record) => ({ epochMilliSeconds: toEpoch(record[timeKey]), record }))
     .filter(({ epochMilliSeconds }) => !Number.isNaN(epochMilliSeconds) && epochMilliSeconds > lastFetchEpochMS);
@@ -65,7 +77,7 @@ export const entityEvent = createTrigger({
   displayName: 'Entity Event',
   description: 'Triggers when an entity is created or updated',
   aiMetadata: {
-    description: 'Fires when a record of a chosen entity type is created or updated in a Base44 app, polling on the selected event type (created vs. updated). "Updated" only fires for records whose updated date differs from their created date. Each emitted item is one record with all its fields plus _eventType and _entityType.',
+    description: 'Fires when a record of a chosen entity type is created or updated in a Base44 app, polling on the selected event type (created vs. updated). "Updated" only fires for records whose updated date differs from their created date. Each emitted item is one record with its built-in fields (id, created_date, updated_date, created_by_id, is_sample), every app-defined field of that entity (e.g. name, status) as a top-level key, plus _eventType and _entityType.',
   },
   props: {
     entityType: Property.ShortText({
@@ -124,4 +136,4 @@ const POLL_LIMIT = 500;
 
 type Base44AuthType = AppConnectionValueForAuthProperty<typeof base44Auth>;
 
-export const entityEventInternals = { selectEventRecords };
+export const entityEventInternals = { selectEventRecords, toEpochMicros };

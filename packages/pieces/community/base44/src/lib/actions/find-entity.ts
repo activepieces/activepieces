@@ -15,7 +15,7 @@ export const findEntity = createAction({
       { key: 'results', label: 'Results', labelKey: 'id', listItems: base44Common.recordFields },
     ],
   },
-  aiMetadata: { description: 'Searches a Base44 app for records of a given entity type that match a JSON filter query (exact field values, or operators such as $in, $gt, $regex), returning up to "limit" matches (default 50, max 500). Use when you need to look up existing records by field values (e.g. find a User by email) without modifying anything. Requires the exact entity-type name. Read-only and idempotent.', idempotent: true },
+  aiMetadata: { description: 'Searches a Base44 app for records of a given entity type that match a JSON filter query (exact field values, or operators such as $in, $gt, $regex), returning up to "limit" matches (default 50, max 500). Use when you need to look up existing records by field values (e.g. find a User by email) without modifying anything. Requires the exact entity-type name. Read-only and idempotent. Returned records include the built-in fields plus every app-defined field of the entity (e.g. name, status) as top-level keys.', idempotent: true },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',

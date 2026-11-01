@@ -9,7 +9,7 @@ export const createEntity = createAction({
   description: 'Creates an entity (record) in your Base44 app',
   audience: 'both',
   outputSchema: base44Common.recordOutputSchema,
-  aiMetadata: { description: 'Creates a new record of a given entity type in a Base44 app, with the field values supplied as a JSON object. Use when you need to add a new item (e.g. a Product, User, or Order) to a Base44 database. Requires the exact entity-type name (case-sensitive, as defined in the Base44 app) and matching field data. Returns the stored record including its generated id. Each call inserts a fresh record, so it is not idempotent.', idempotent: false },
+  aiMetadata: { description: 'Creates a new record of a given entity type in a Base44 app, with the field values supplied as a JSON object. Use when you need to add a new item (e.g. a Product, User, or Order) to a Base44 database. Requires the exact entity-type name (case-sensitive, as defined in the Base44 app) and matching field data. Returns the stored record including its generated id. Each call inserts a fresh record, so it is not idempotent. Returned records include the built-in fields plus every app-defined field of the entity (e.g. name, status) as top-level keys.', idempotent: false },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',
