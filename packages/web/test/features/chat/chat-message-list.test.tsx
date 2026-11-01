@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ChatMessageList } from '@/features/chat';
 
 vi.mock('@/components/providers/theme-provider', () => ({
-  useTheme: () => ({ theme: 'light' }),
+  useTheme: () => ({ resolvedTheme: 'light' }),
 }));
 
 describe('flow chat error bubble', () => {
