@@ -3,6 +3,62 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ModelInfo } from '@anthropic-ai/sdk/resources';
 import { claudeAuth } from '../auth';
 
+const RETIRED_MODEL_REPLACEMENTS: Record<string, string> = {
+  'claude-sonnet-4-5': 'claude-sonnet-5-5',
+  'claude-sonnet-4-5-20250929': 'claude-sonnet-5-5',
+  'claude-sonnet-4-20250514': 'claude-sonnet-5-5',
+  'claude-sonnet-4-0': 'claude-sonnet-5-5',
+  'claude-3-7-sonnet-20250219': 'claude-sonnet-5-5',
+  'claude-3-7-sonnet-latest': 'claude-sonnet-5-5',
+  'claude-3-5-sonnet-20241022': 'claude-sonnet-5-5',
+  'claude-3-5-sonnet-20240620': 'claude-sonnet-5-5',
+  'claude-3-5-sonnet-latest': 'claude-sonnet-5-5',
+  'claude-3-sonnet-20240229': 'claude-sonnet-5-5',
+  'claude-opus-4-1-20250805': 'claude-opus-5-5',
+  'claude-opus-4-1': 'claude-opus-5-5',
+  'claude-opus-4-20250514': 'claude-opus-5-5',
+  'claude-opus-4-0': 'claude-opus-5-5',
+  'claude-3-opus-20240229': 'claude-opus-5-5',
+  'claude-3-opus-latest': 'claude-opus-5-5',
+  'claude-3-5-haiku-20241022': 'claude-haiku-5-5',
+  'claude-3-5-haiku-latest': 'claude-haiku-5-5',
+  'claude-3-haiku-20240307': 'claude-haiku-5-5',
+  'claude-2.1': 'claude-sonnet-5-5',
+  'claude-2.0': 'claude-sonnet-5-5',
+};
+
+export function resolveModelId(model: string | undefined | null): string {
+  if (!model) {
+    return DEFAULT_MODEL;
+  }
+  return RETIRED_MODEL_REPLACEMENTS[model] ?? model;
+}
+
+export function isRetiredModel(model: string): boolean {
+  return model in RETIRED_MODEL_REPLACEMENTS;
+}
+
+const STRICT_MODEL_PREFIXES = [
+  'claude-fable-5-1',
+  'claude-mythos-5-1',
+  'claude-opus-5-5',
+  'claude-sonnet-5-5',
+  'claude-haiku-5-5',
+];
+
+function isStrictModel(model: string): boolean {
+  const id = model.toLowerCase().replace(/\./g, '-');
+  return STRICT_MODEL_PREFIXES.some((prefix) => id.startsWith(prefix));
+}
+
+export function supportsForcedToolChoice(model: string): boolean {
+  return !isStrictModel(model);
+}
+
+export function supportsTemperature(model: string): boolean {
+  return !isStrictModel(model);
+}
+
 export const baseUrl = 'https://api.anthropic.com/v1';
 
 export const billingIssueMessage = `Error Occurred: 429 \n
@@ -64,59 +120,3 @@ export const modelDropdown = Property.Dropdown({
 
 export const DEFAULT_MODEL = 'claude-sonnet-5-5';
 export const THINKING_MODEL = 'claude-sonnet-5-5';
-
-const RETIRED_MODEL_REPLACEMENTS: Record<string, string> = {
-  'claude-sonnet-4-5': 'claude-sonnet-5-5',
-  'claude-sonnet-4-5-20250929': 'claude-sonnet-5-5',
-  'claude-sonnet-4-20250514': 'claude-sonnet-5-5',
-  'claude-sonnet-4-0': 'claude-sonnet-5-5',
-  'claude-3-7-sonnet-20250219': 'claude-sonnet-5-5',
-  'claude-3-7-sonnet-latest': 'claude-sonnet-5-5',
-  'claude-3-5-sonnet-20241022': 'claude-sonnet-5-5',
-  'claude-3-5-sonnet-20240620': 'claude-sonnet-5-5',
-  'claude-3-5-sonnet-latest': 'claude-sonnet-5-5',
-  'claude-3-sonnet-20240229': 'claude-sonnet-5-5',
-  'claude-opus-4-1-20250805': 'claude-opus-5-5',
-  'claude-opus-4-1': 'claude-opus-5-5',
-  'claude-opus-4-20250514': 'claude-opus-5-5',
-  'claude-opus-4-0': 'claude-opus-5-5',
-  'claude-3-opus-20240229': 'claude-opus-5-5',
-  'claude-3-opus-latest': 'claude-opus-5-5',
-  'claude-3-5-haiku-20241022': 'claude-haiku-5-5',
-  'claude-3-5-haiku-latest': 'claude-haiku-5-5',
-  'claude-3-haiku-20240307': 'claude-haiku-5-5',
-  'claude-2.1': 'claude-sonnet-5-5',
-  'claude-2.0': 'claude-sonnet-5-5',
-};
-
-export function resolveModelId(model: string | undefined | null): string {
-  if (!model) {
-    return DEFAULT_MODEL;
-  }
-  return RETIRED_MODEL_REPLACEMENTS[model] ?? model;
-}
-
-export function isRetiredModel(model: string): boolean {
-  return model in RETIRED_MODEL_REPLACEMENTS;
-}
-
-const STRICT_MODEL_PREFIXES = [
-  'claude-fable-5-1',
-  'claude-mythos-5-1',
-  'claude-opus-5-5',
-  'claude-sonnet-5-5',
-  'claude-haiku-5-5',
-];
-
-function isStrictModel(model: string): boolean {
-  const id = model.toLowerCase().replace(/\./g, '-');
-  return STRICT_MODEL_PREFIXES.some((prefix) => id.startsWith(prefix));
-}
-
-export function supportsForcedToolChoice(model: string): boolean {
-  return !isStrictModel(model);
-}
-
-export function supportsTemperature(model: string): boolean {
-  return !isStrictModel(model);
-}
