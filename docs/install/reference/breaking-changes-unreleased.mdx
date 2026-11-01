@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Tables: saving a row without changing it no longer triggers Record Updated
+
+A **Record Updated** flow now runs only when at least one cell's value changes. Saving the values a row already has, from the table editor, a flow's Update Record step or the API, no longer starts a run. This stops flows that update their own row from re-triggering themselves without end.
+
+#### What you need to do
+
+Nothing for most flows. If a flow relied on re-saving the same value to run again, change a value (for example a "last checked" column) instead.
+
 #### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
 
 **Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.
