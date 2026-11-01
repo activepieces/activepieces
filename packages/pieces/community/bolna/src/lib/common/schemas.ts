@@ -21,6 +21,8 @@ const executionFields: OutputSchemaField[] = [
     format: 'number',
   },
   { key: 'total_cost', label: 'Total Cost (cents)', format: 'number' },
+  { key: 'cost_breakdown', label: 'Cost Breakdown' },
+  { key: 'usage_breakdown', label: 'Usage Breakdown' },
   { key: 'transcript', label: 'Transcript' },
   { key: 'summary', label: 'Summary' },
   { key: 'extracted_data', label: 'Extracted Data' },
@@ -28,6 +30,7 @@ const executionFields: OutputSchemaField[] = [
   { key: 'user_number', label: 'User Number' },
   { key: 'agent_number', label: 'Agent Number' },
   { key: 'provider', label: 'Provider' },
+  { key: 'transfer_call_data', label: 'Transfer Call Data' },
   {
     key: 'telephony_data',
     label: 'Telephony Data',

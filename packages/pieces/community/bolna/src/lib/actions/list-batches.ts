@@ -34,7 +34,7 @@ export const listBatches = createAction({
   },
   aiMetadata: {
     description:
-      'Lists the batch (bulk) calling campaigns of one Bolna agent with their status, schedule and contact counts. Use List Agents to find the agent ID. A batch ID can filter List Agent Executions.',
+      'Lists the batch (bulk) calling campaigns of one Bolna agent with their status, schedule and contact counts. Use List Agents to find the agent ID.',
     idempotent: true,
   },
   props: {
