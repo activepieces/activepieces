@@ -1,8 +1,7 @@
-import { flowStructureUtil, unique } from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
-import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -23,7 +22,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -31,30 +29,37 @@ import {
   appConnectionsMutations,
   appConnectionsQueries,
 } from '@/features/connections';
-import { piecesHooks } from '@/features/pieces';
+import { PieceIconWithPieceName } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
 
 const ReplaceConnectionForFlowDialog = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  sourceConnection,
+  open,
+  onOpenChange,
+}: ReplaceConnectionForFlowDialogProps) => {
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex flex-col">
         <DialogHeader>
-          <DialogTitle>{t('Replace connection')}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <PieceIconWithPieceName
+              pieceName={sourceConnection.pieceName}
+              size="sm"
+              border={false}
+            />
+            {t('Replace {name}', { name: sourceConnection.displayName })}
+          </DialogTitle>
           <DialogDescription>
             {t(
-              'Switch the steps of this flow from one connection to another. Other flows are not changed.',
+              'Every step in this flow that uses {name} will switch to the connection you pick below.',
+              { name: sourceConnection.displayName },
             )}
           </DialogDescription>
         </DialogHeader>
         <ReplaceConnectionForFlowForm
-          key={dialogOpen ? 'open' : 'closed'}
-          setDialogOpen={setDialogOpen}
+          key={open ? 'open' : 'closed'}
+          sourceConnection={sourceConnection}
+          setDialogOpen={onOpenChange}
         />
       </DialogContent>
     </Dialog>
@@ -62,8 +67,10 @@ const ReplaceConnectionForFlowDialog = ({
 };
 
 function ReplaceConnectionForFlowForm({
+  sourceConnection,
   setDialogOpen,
 }: {
+  sourceConnection: AppConnectionWithoutSensitiveData;
   setDialogOpen: (open: boolean) => void;
 }) {
   const [flow, savePendingEdits, showsNewestVersion] = useBuilderStateContext(
@@ -72,17 +79,12 @@ function ReplaceConnectionForFlowForm({
   const refreshDraft = flowCanvasHooks.useRefreshDraftAndMakeNewDraftEditable();
   const { switchToDraft } = flowCanvasHooks.useSwitchToDraft();
   const projectId = authenticationSession.getProjectId()!;
-  const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
   const { data: connections, isLoading: connectionsLoading } =
     appConnectionsQueries.useAppConnections({
       request: { projectId, limit: 1000 },
       extraKeys: [projectId],
       staleTime: 0,
     });
-  const {
-    data: draftAndPublishedVersions,
-    isLoading: draftAndPublishedVersionsLoading,
-  } = flowCanvasHooks.useDraftAndPublishedVersions();
   const { mutate: replaceConnections, isPending: isReplacing } =
     appConnectionsMutations.useReplaceConnections({
       setDialogOpen,
@@ -109,26 +111,14 @@ function ReplaceConnectionForFlowForm({
   const form = useForm<FlowReplaceFormValues>({
     defaultValues: {
       ...replaceConnectionSelectionUtils.emptySelection(),
+      pieceName: sourceConnection.pieceName,
+      sourceConnectionId: sourceConnection.id,
       applyToPublishedVersions: false,
     },
     mode: 'onSubmit',
   });
 
   const projectConnections = connections?.data ?? [];
-  const flowConnectionExternalIds = unique(
-    (draftAndPublishedVersions ?? []).flatMap((flowVersion) =>
-      flowStructureUtil.extractConnectionIds(flowVersion),
-    ),
-  );
-  const flowConnections = projectConnections.filter((connection) =>
-    flowConnectionExternalIds.includes(connection.externalId),
-  );
-  const flowPieceNames = new Set(
-    flowConnections.map((connection) => connection.pieceName),
-  );
-  const flowPieces =
-    pieces?.filter((piece) => flowPieceNames.has(piece.name)) ?? [];
-
   return (
     <Form {...form}>
       <form
@@ -139,20 +129,17 @@ function ReplaceConnectionForFlowForm({
           <Info className="size-4" />
           <AlertDescription>
             {t(
-              'Steps that use the replaced connection keep their settings. Test your flow to make sure nothing breaks.',
+              'Test the flow after the replace to make sure every step still works.',
             )}
           </AlertDescription>
         </Alert>
         <ReplaceConnectionVersionsField />
         <ReplaceConnectionSelectionFields
-          pieces={flowPieces}
-          sourceConnections={flowConnections}
+          pieces={[]}
+          sourceConnections={[sourceConnection]}
           targetConnections={projectConnections}
-          loading={
-            piecesLoading ||
-            connectionsLoading ||
-            draftAndPublishedVersionsLoading
-          }
+          loading={connectionsLoading}
+          hideSourceFields
         />
         <DialogFooter>
           <DialogClose asChild>
@@ -174,4 +161,10 @@ export { ReplaceConnectionForFlowDialog };
 
 type FlowReplaceFormValues = ReplaceConnectionSelection & {
   applyToPublishedVersions: boolean;
+};
+
+type ReplaceConnectionForFlowDialogProps = {
+  sourceConnection: AppConnectionWithoutSensitiveData;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };

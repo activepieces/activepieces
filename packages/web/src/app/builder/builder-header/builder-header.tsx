@@ -11,6 +11,7 @@ import { ChevronDown, CircleHelp, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
+  useLocation,
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
@@ -45,11 +46,13 @@ import { cn } from '@/lib/utils';
 import FlowActionMenu from '../../components/flow-actions-menu';
 import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 
+import { FlowConnectionsPopover } from './flow-connections-popover';
 import { BuilderFlowStatusSection } from './flow-status';
 
 export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
+  const isRunsPage = useLocation().pathname.includes('/runs');
   const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
@@ -150,7 +153,6 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
                     }}
                     insideBuilder={true}
                     savePendingEdits={savePendingEdits}
-                    isFlowLocked={isFlowLocked}
                     flow={flow}
                     flowVersion={flowVersion}
                     readonly={readonly}
@@ -176,6 +178,9 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
 
   const rightContent = (
     <div className="flex items-center justify-center gap-4">
+      {isLatestVersion && !isRunsPage && !embedState.hideReplaceConnection && (
+        <FlowConnectionsPopover isFlowLocked={isFlowLocked} />
+      )}
       {showSupport && (
         <Button variant="ghost" onClick={() => openNewWindow(supportUrl)}>
           <CircleHelp className="w-4 h-4"></CircleHelp>
