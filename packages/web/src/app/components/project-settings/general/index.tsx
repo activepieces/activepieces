@@ -1,6 +1,8 @@
 import {
+  ApEdition,
   ApFlagId,
   ColorName,
+  getConcurrentJobsLimitForCloudPlan,
   PICKABLE_COLOR_NAMES,
   PlatformRole,
   PROJECT_COLOR_PALETTE,
@@ -60,6 +62,14 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
   const { data: defaultConcurrentJobsLimit } = flagsHooks.useFlag<number>(
     ApFlagId.DEFAULT_CONCURRENT_JOBS_LIMIT,
   );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
+  const planConcurrentJobsLimit = getConcurrentJobsLimitForCloudPlan(
+    platform.plan.plan,
+  );
+  const concurrentJobsPlaceholderValue = isCloud
+    ? planConcurrentJobsLimit
+    : defaultConcurrentJobsLimit;
   const showGeneralSettings = project.type === ProjectType.TEAM;
   const showExternalIdSettings =
     platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN;
@@ -219,19 +229,27 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                     id="maxConcurrentJobs"
                     type="number"
                     min={1}
+                    max={isCloud ? planConcurrentJobsLimit : undefined}
                     placeholder={
-                      defaultConcurrentJobsLimit
+                      concurrentJobsPlaceholderValue
                         ? t('Default ({value})', {
-                            value: defaultConcurrentJobsLimit,
+                            value: concurrentJobsPlaceholderValue,
                           })
                         : t('Default')
                     }
                     value={field.value ?? ''}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      if (!e.target.value) {
+                        field.onChange(null);
+                        return;
+                      }
+                      const value = Number(e.target.value);
                       field.onChange(
-                        e.target.value ? Number(e.target.value) : null,
-                      )
-                    }
+                        isCloud
+                          ? Math.min(value, planConcurrentJobsLimit)
+                          : value,
+                      );
+                    }}
                     onClear={() => field.onChange(null)}
                     disabled={form.formState.disabled || !isRateLimiterEnabled}
                   />
@@ -239,6 +257,11 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                     {isRateLimiterEnabled === false
                       ? t(
                           'The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.',
+                        )
+                      : isCloud
+                      ? t(
+                          'Maximum number of flows that can run at the same time for this project, up to the {value} allowed by your plan',
+                          { value: planConcurrentJobsLimit },
                         )
                       : t(
                           'Maximum number of flows that can run at the same time for this project',
