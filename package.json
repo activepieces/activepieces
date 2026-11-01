@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.93.0",
-  "packageManager": "bun@1.4.0",
+  "packageManager": "bun@1.4.4",
   "trustedDependencies": [
     "sqlite3",
     "isolated-vm",
