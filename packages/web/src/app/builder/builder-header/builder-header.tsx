@@ -120,7 +120,7 @@ export const BuilderHeader = () => {
               <BreadcrumbPage>
                 <div
                   className={cn('flex items-center gap-1 text-sm', {
-                    'max-w-[500px]': !isEditingFlowName,
+                    'max-w-[500px]': !isEditingFlowName || readonly,
                   })}
                 >
                   <EditableText
@@ -140,7 +140,7 @@ export const BuilderHeader = () => {
                         },
                       );
                     }}
-                    isEditing={isEditingFlowName}
+                    isEditing={isEditingFlowName && !readonly}
                     setIsEditing={setIsEditingFlowName}
                     tooltipContent=""
                   />
