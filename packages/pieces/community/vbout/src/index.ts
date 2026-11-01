@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { addContactAction } from './lib/actions/add-contact';
 import { addTagToContactAction } from './lib/actions/add-tag-to-contact';
@@ -10,22 +10,13 @@ import { getEmailListAction } from './lib/actions/get-email-list';
 import { removeTagFromContactAction } from './lib/actions/remove-tag-from-contact';
 import { unsubscribeContactAction } from './lib/actions/unsubscribe-contact';
 import { updateContactAction } from './lib/actions/update-contact';
-import { makeClient } from './lib/common';
 import { vboutAuth } from './lib/auth';
-
-const markdown = `
-To obtain your API key, follow these steps:
-
-1.Go to **settings** by clicking your profile-pic (top-right).\n
-2.Navigate to **API Integrations** section.\n
-3.Under **API USER KEY** ,copy API key.\n
-`;
 
 export const vbout = createPiece({
   displayName: 'VBOUT',
   description: 'Marketing automation platform for agencies',
   auth: vboutAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/vbout.png',
   authors: ["kishanprmr","abuaboud"],
   categories: [PieceCategory.MARKETING],
