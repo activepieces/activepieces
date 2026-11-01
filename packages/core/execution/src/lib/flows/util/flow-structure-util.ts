@@ -280,10 +280,15 @@ function isAgentPiece(action: Step) {
 }
 
 function extractConnectionIds(flowVersion: FlowVersion): string[] {
-    const stepAuthIds = getAllSteps(flowVersion.trigger).flatMap((step) =>
-        step.settings?.input?.auth ? extractConnectionIdsFromAuth(step.settings.input.auth) : [],
-    )
-    return unique([...stepAuthIds, ...extractAgentToolsConnectionIds(flowVersion)])
+    return unique(getAllSteps(flowVersion.trigger).flatMap(extractStepConnectionIds))
+}
+
+function extractStepConnectionIds(step: Step): string[] {
+    const stepConnectionExternalIds = step.settings?.input?.auth ? extractConnectionIdsFromAuth(step.settings.input.auth) : []
+    const agentToolConnectionExternalIds = getAgentToolsInlinedInStep(step)
+        .map(getAgentToolConnectionId)
+        .filter((connectionExternalId): connectionExternalId is string => !isNil(connectionExternalId) && connectionExternalId !== '')
+    return unique([...stepConnectionExternalIds, ...agentToolConnectionExternalIds])
 }
 
 function getAgentToolConnectionId(tool: unknown): string | undefined {
@@ -381,6 +386,7 @@ export const flowStructureUtil = {
     getSkippedStepNames,
     isSkipped,
     extractConnectionIds,
+    extractStepConnectionIds,
     isAgentPiece,
     isBranchedAction,
     extractAgentIds,

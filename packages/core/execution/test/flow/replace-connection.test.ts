@@ -125,6 +125,31 @@ describe('flowStructureUtil.replaceConnection', () => {
     })
 })
 
+describe('flowStructureUtil.extractStepConnectionIds', () => {
+    it('returns the connections of one step, from its auth and its agent tools', () => {
+        const step = pieceStep({ name: 'step_1', auth: "{{connections['slack']}}" })
+        const agentStep: PieceAction = {
+            ...pieceStep({ name: 'step_2' }),
+            settings: {
+                pieceName: '@activepieces/piece-ai',
+                pieceVersion: '0.6.0',
+                actionName: 'run_agent',
+                input: {
+                    agentTools: [
+                        slackTool({ toolName: 'send', auth: 'old' }),
+                        slackTool({ toolName: 'reply', auth: "{{connections['old']}}" }),
+                        mcpTool,
+                    ],
+                },
+                propertySettings: {},
+            },
+        }
+        expect(flowStructureUtil.extractStepConnectionIds(step)).toEqual(['slack'])
+        expect(flowStructureUtil.extractStepConnectionIds(agentStep)).toEqual(['old'])
+        expect(flowStructureUtil.extractStepConnectionIds(pieceStep({ name: 'step_3' }))).toEqual([])
+    })
+})
+
 describe('flowStructureUtil.replaceAgentToolConnection', () => {
     it('points a piece tool that uses the source connection, in plain or wrapped form, at the target connection', () => {
         const tools = [
