@@ -238,15 +238,21 @@ function OnboardingPill({
 
   return (
     <span className="relative inline-grid max-w-full">
-      <span
-        aria-hidden
-        className="invisible col-start-1 row-start-1 overflow-hidden whitespace-pre px-3.5 py-1.5"
-      >
-        {value || (rotating ? example : ariaLabel)}
-      </span>
+      {[...examples, value || (rotating ? '' : ariaLabel)].map(
+        (text, index) => (
+          <span
+            key={index}
+            aria-hidden
+            className="invisible col-start-1 row-start-1 overflow-hidden whitespace-pre px-3.5 py-1.5"
+          >
+            {text}
+          </span>
+        ),
+      )}
       <input
         ref={inputRef}
         type="text"
+        size={1}
         role="combobox"
         value={value}
         onChange={(e) => {
