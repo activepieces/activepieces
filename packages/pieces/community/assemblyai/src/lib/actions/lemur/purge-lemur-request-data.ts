@@ -8,9 +8,8 @@ export const purgeLemurRequestData = createAction({
   classification: 'DESTRUCTIVE',
   auth: assemblyaiAuth,
   requireAuth: true,
-  displayName: 'Purge LeMUR request data',
-  description: `Delete the data for a previously submitted LeMUR request.
-The LLM response data, as well as any context provided in the original request will be removed.`,
+  displayName: 'Purge LeMUR Request Data',
+  description: 'Delete the prompt, context and answer of a LeMUR request.',
   audience: 'both',
   aiMetadata: {
     description:
