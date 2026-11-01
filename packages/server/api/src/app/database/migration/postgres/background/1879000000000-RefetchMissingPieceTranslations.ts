@@ -56,25 +56,28 @@ async function listOfficialVersions({ queryRunner }: { queryRunner: QueryRunner 
 
 function selectCandidates({ versions }: { versions: OfficialVersion[] }): OfficialVersion[] {
     return Object.values(groupBy(versions, (version) => version.name)).flatMap((pieceVersions) => {
-        const newestTranslated = newestVersion({ versions: pieceVersions.filter((version) => version.translated) })
+        const [oldestTranslated] = sortBySemver({ versions: pieceVersions.filter((version) => version.translated) })
         return pieceVersions.filter((version) => !version.translated
-            && (isNil(newestTranslated) || isNil(semver.valid(version.version)) || semver.gt(version.version, newestTranslated.version)))
+            && (isNil(oldestTranslated) || isNil(semver.valid(version.version)) || semver.gt(version.version, oldestTranslated.version)))
     })
 }
 
 async function assertRegistryServesTranslations({ versions }: { versions: OfficialVersion[] }): Promise<void> {
-    const canary = newestVersion({ versions: versions.filter((version) => version.translated) })
-    if (isNil(canary)) {
-        system.globalLogger().warn('[RefetchMissingPieceTranslations] No translated piece version installed, skipping the registry canary check')
+    const canaries = sortBySemver({ versions: versions.filter((version) => version.translated) }).reverse().slice(0, MAX_CANARIES)
+    for (const canary of canaries) {
+        const { data: body, error } = await tryCatch(async () => fetchPieceVersion({ piece: canary }))
+        if (error && classifyFailure({ error }) === 'transient') {
+            throw new Error(`Registry canary ${versionKey(canary)} failed (${error.message}); retrying later`)
+        }
+        if (error || !isVersionRef(body) || versionKey(body) !== versionKey(canary)) {
+            continue
+        }
+        if (toTranslationRows({ pieceMetadataId: canary.id, body }).length === 0) {
+            throw new Error(`Registry returned ${versionKey(canary)} without translations although it is translated here; the registry may be serving a build without them, retrying later`)
+        }
         return
     }
-    const { data: body, error } = await tryCatch(async () => fetchPieceVersion({ piece: canary }))
-    if (error) {
-        throw new Error(`Registry canary ${versionKey(canary)} failed (${error.message}); retrying later`)
-    }
-    if (toTranslationRows({ pieceMetadataId: canary.id, body }).length === 0) {
-        throw new Error(`Registry returned ${versionKey(canary)} without translations although it is translated here; the registry may be serving a build without them, retrying later`)
-    }
+    system.globalLogger().warn({ triedCanaries: canaries.map(versionKey) }, '[RefetchMissingPieceTranslations] No translated piece version installed that the registry still serves, skipping the registry canary check')
 }
 
 async function restoreTranslations({ queryRunner, piece }: RestoreTranslationsParams): Promise<RestoreOutcome> {
@@ -130,10 +133,10 @@ function toTranslationRows({ pieceMetadataId, body }: { pieceMetadataId: string,
     )
 }
 
-function newestVersion({ versions }: { versions: OfficialVersion[] }): OfficialVersion | undefined {
+function sortBySemver({ versions }: { versions: OfficialVersion[] }): OfficialVersion[] {
     return versions
         .filter((version) => !isNil(semver.valid(version.version)))
-        .reduce<OfficialVersion | undefined>((newest, version) => isNil(newest) || semver.gt(version.version, newest.version) ? version : newest, undefined)
+        .sort((left, right) => semver.compare(left.version, right.version))
 }
 
 function countOutcomes({ outcomes }: { outcomes: RestoreOutcome[] }): Record<RestoreOutcome, number> {
@@ -161,6 +164,7 @@ function isOfficialVersion(value: unknown): value is OfficialVersion {
 
 const CLOUD_PIECES_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const BATCH_SIZE = 5
+const MAX_CANARIES = 5
 const REGISTRY_TIMEOUT_MS = 30_000
 const MAX_SKIPPED_TRANSIENT_FAILURES = 5
 const MAX_SKIPPED_TRANSIENT_RATIO = 0.05

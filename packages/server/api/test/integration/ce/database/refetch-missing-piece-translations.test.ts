@@ -68,11 +68,51 @@ describe('RefetchMissingPieceTranslations', () => {
         expect(getMock.mock.calls.every(([, config]) => typeof config?.timeout === 'number' && config.timeout > 0)).toBe(true)
     })
 
-    it('does not fetch untranslated versions older than the newest translated version of the same piece', async () => {
+    it('does not fetch untranslated versions older than the first translated version of the same piece', async () => {
         await runThroughRunner()
 
         expect(fetchedVersions()).not.toContain(key(untranslatedBeforeLastGoodSync))
         expect(fetchedVersions()).not.toContain(key(lastGoodSync))
+    })
+
+    it('repairs a broken version even after sync installed a newer translated version once the cloud fix was live', async () => {
+        const syncedAfterFix = officialPiece({ name: '@activepieces/piece-refetch-slack', version: '0.24.0', i18n: REGISTRY_I18N })
+        await seed({ pieces: [syncedAfterFix] })
+
+        await runThroughRunner()
+
+        expect(await translationsOf(brokenAfterLastGoodSync.id)).toEqual(REGISTRY_I18N)
+        expect(fetchedVersions()).not.toContain(key(untranslatedBeforeLastGoodSync))
+    })
+
+    it('repairs on the retry a broken version that failed while a newer one was restored', async () => {
+        const firstGood = officialPiece({ name: '@activepieces/piece-refetch-retry', version: '1.0.0', i18n: REGISTRY_I18N })
+        const brokenFailsFirst = officialPiece({ name: '@activepieces/piece-refetch-retry', version: '1.0.1' })
+        const brokenRestoredFirst = officialPiece({ name: '@activepieces/piece-refetch-retry', version: '1.0.2' })
+        const outage = Array.from({ length: 6 }, (_, index) => officialPiece({ name: `@activepieces/piece-refetch-retry-outage-${index}`, version: '1.0.0' }))
+        await seed({ pieces: [firstGood, brokenFailsFirst, brokenRestoredFirst, ...outage] })
+        const serve = ({ url }: { url: string }): { data: unknown } => {
+            const version = new URL(url).searchParams.get('version')
+            const piece = [brokenFailsFirst, brokenRestoredFirst, ...outage].find((candidate) => url.includes(`${candidate.name}?`) && candidate.version === version)
+            return piece ? { data: { name: piece.name, version, i18n: REGISTRY_I18N } } : stubRegistry({ url })
+        }
+        getMock.mockImplementation(async (url: string) => {
+            const failing = outage.some((piece) => url.includes(`${piece.name}?`)) || (url.includes(`${brokenFailsFirst.name}?`) && url.includes(`version=${brokenFailsFirst.version}`))
+            if (failing) {
+                throw httpError({ status: 503 })
+            }
+            return serve({ url })
+        })
+
+        await expect(runThroughRunner()).rejects.toThrow(/failed transiently/)
+        expect(await translationsOf(brokenRestoredFirst.id)).toEqual(REGISTRY_I18N)
+        expect(await translationsOf(brokenFailsFirst.id)).toEqual({})
+
+        getMock.mockImplementation(async (url: string) => serve({ url }))
+        await runThroughRunner()
+
+        expect(await translationsOf(brokenFailsFirst.id)).toEqual(REGISTRY_I18N)
+        expect(await markedComplete()).toBe(true)
     })
 
     it('fetches versions directly, without the instance\'s registry list', async () => {
@@ -190,6 +230,47 @@ describe('RefetchMissingPieceTranslations', () => {
         await expect(runThroughRunner()).rejects.toThrow(/canary/)
         expect(await translationsOf(brokenAfterLastGoodSync.id)).toEqual({})
         expect(await markedComplete()).toBe(false)
+    })
+
+    it('tries the next translated version when cloud no longer serves the first canary', async () => {
+        getMock.mockImplementation(async (url: string) => url.includes(canary.name)
+            ? Promise.reject(httpError({ status: 404 }))
+            : stubRegistry({ url }))
+
+        await runThroughRunner()
+
+        expect(fetchedVersions()).toEqual(expect.arrayContaining([key(canary), key(lastGoodSync)]))
+        expect(await translationsOf(brokenAfterLastGoodSync.id)).toEqual(REGISTRY_I18N)
+        expect(await markedComplete()).toBe(true)
+    })
+
+    it('still fails the run when a later canary is served without translations', async () => {
+        getMock.mockImplementation(async (url: string) => {
+            if (url.includes(canary.name)) {
+                throw httpError({ status: 404 })
+            }
+            if (url.includes(lastGoodSync.name) && url.includes(`version=${lastGoodSync.version}`)) {
+                return { data: { name: lastGoodSync.name, version: lastGoodSync.version } }
+            }
+            return stubRegistry({ url })
+        })
+
+        await expect(runThroughRunner()).rejects.toThrow(/without translations/)
+        expect(await markedComplete()).toBe(false)
+    })
+
+    it('skips the canary check and still repairs when cloud serves none of the translated versions', async () => {
+        getMock.mockImplementation(async (url: string) => {
+            if (url.includes(canary.name) || (url.includes(lastGoodSync.name) && url.includes(`version=${lastGoodSync.version}`))) {
+                throw httpError({ status: 400 })
+            }
+            return stubRegistry({ url })
+        })
+
+        await runThroughRunner()
+
+        expect(await translationsOf(brokenAfterLastGoodSync.id)).toEqual(REGISTRY_I18N)
+        expect(await markedComplete()).toBe(true)
     })
 
     it('skips the canary check when no translated version is installed', async () => {
