@@ -21,6 +21,7 @@ import {
   TextAlignment,
   layoutMultilineText,
 } from 'pdf-lib';
+import { xfaTemplate } from './xfa-template';
 
 export const pdfForm = {
   open,
@@ -55,7 +56,12 @@ async function analyze(data: Buffer): Promise<PdfForm> {
   if (xfa.needsRendering) {
     return { kind: 'xfa', pageCount, fields: [], document: null };
   }
-  const fields = readFields(document);
+  const fields = readFields({
+    document,
+    templateLabels: xfa.present
+      ? await xfaTemplate.readLabels(document)
+      : new Map(),
+  });
   if (xfa.present && !fields.some(isFillable)) {
     return { kind: 'xfa', pageCount, fields: [], document: null };
   }
@@ -441,12 +447,29 @@ function isEmpty(value: unknown): boolean {
   );
 }
 
-function readFields(document: PDFDocument): PdfFormField[] {
+function readFields({
+  document,
+  templateLabels,
+}: {
+  document: PDFDocument;
+  templateLabels: Map<string, string | null>;
+}): PdfFormField[] {
   const pageByWidget = mapWidgetsToPages(document);
-  return document
-    .getForm()
-    .getFields()
-    .map((field) => readField({ doc: document, field, pageByWidget }))
+  const fields = document.getForm().getFields();
+  const templateMatches = fields
+    .filter((field) => !UNFILLABLE_TYPES.includes(fieldType(field)))
+    .every((field) => templateLabels.has(field.getName()));
+  return fields
+    .map((field) =>
+      readField({
+        doc: document,
+        field,
+        pageByWidget,
+        templateLabel: templateMatches
+          ? templateLabels.get(field.getName()) ?? null
+          : null,
+      })
+    )
     .sort(
       (first, second) =>
         first.position.page - second.position.page ||
@@ -476,17 +499,19 @@ function readField({
   doc,
   field,
   pageByWidget,
+  templateLabel,
 }: {
   doc: PDFDocument;
   field: PDFField;
   pageByWidget: Map<string, number>;
+  templateLabel: string | null;
 }): PositionedField {
   const widget = field.acroField.getWidgets()[0];
   const page = widget ? findPage({ doc, widget, pageByWidget }) : null;
   const rectangle = widget?.getRectangle();
   return {
     name: field.getName(),
-    label: readLabel(field),
+    label: readLabel(field) ?? templateLabel,
     type: fieldType(field),
     page: page === null ? null : page + 1,
     required: field.isRequired(),

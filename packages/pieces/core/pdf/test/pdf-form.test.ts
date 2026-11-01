@@ -12,6 +12,7 @@ import {
   PDFName,
   PDFPage,
   PDFRef,
+  PDFString,
 } from 'pdf-lib';
 import { extractText, getDocumentProxy } from 'unpdf';
 import { fillPdfForm } from '../src/lib/actions/fill-pdf-form';
@@ -205,6 +206,140 @@ describe('inspectPdfForm', () => {
     await expect(runInspect(Buffer.from('not a pdf'))).rejects.toThrow(
       'This file could not be read as a PDF.'
     );
+  });
+});
+
+describe('inspectPdfForm labels from the XFA template', () => {
+  test('labels each field with its caption when the form has an XFA template and no tooltips', async () => {
+    const pdf = await buildHybridPdf({
+      fields: [
+        'form1[0].Page1[0].name[0]',
+        'form1[0].Page1[0].kind[0]',
+        'form1[0].Page1[0].kind[1]',
+        'form1[0].Page1[0].start[0]',
+      ],
+      template: `<template xmlns="http://www.xfa.org/schema/xfa-template/3.3/">
+        <subform name="form1">
+          <subform name="Page1">
+            <field name="name">
+              <caption><value><exData contentType="text/html">
+                <body xmlns="http://www.w3.org/1999/xhtml"><p>1 Legal name <span>of the</span> entity</p></body>
+              </exData></value></caption>
+            </field>
+            <subform>
+              <field name="kind"><caption><value><text>Individual</text></value></caption></field>
+              <field name="kind"><caption><value><text>Company &amp; partnership</text></value></caption></field>
+            </subform>
+            <field name="start"
+              ><caption><value><exData contentType="text/html"
+                ><body xmlns="http://www.w3.org/1999/xhtml"><p>First date of<br
+                />employment</p></body
+              ></exData></value></caption
+            ></field>
+          </subform>
+        </subform>
+      </template>`,
+    });
+
+    const result = await runInspect(pdf);
+
+    expect(result.fields.map(({ name, label }) => ({ name, label }))).toEqual([
+      {
+        name: 'form1[0].Page1[0].name[0]',
+        label: '1 Legal name of the entity',
+      },
+      { name: 'form1[0].Page1[0].kind[0]', label: 'Individual' },
+      { name: 'form1[0].Page1[0].kind[1]', label: 'Company & partnership' },
+      { name: 'form1[0].Page1[0].start[0]', label: 'First date of employment' },
+    ]);
+  });
+
+  test('prefers the field tooltip, then the XFA tooltip, then a caption with words, then the screen-reader text', async () => {
+    const pdf = await buildHybridPdf({
+      fields: [
+        'form1[0].withTooltip[0]',
+        'form1[0].dollar[0]',
+        'form1[0].noCaption[0]',
+        'form1[0].withTu[0]',
+        'form1[0].bare[0]',
+      ],
+      tooltips: { 'form1[0].withTu[0]': 'From the field tooltip' },
+      template: `<template>
+        <subform name="form1">
+          <field name="withTooltip">
+            <caption><value><text>Caption text</text></value></caption>
+            <assist><toolTip>Tooltip text</toolTip><speak>Speak text</speak></assist>
+          </field>
+          <field name="dollar">
+            <caption><value><text>$</text></value></caption>
+            <assist><speak disable="1">4(c). Extra withholding. $.</speak></assist>
+          </field>
+          <field name="noCaption"><assist><speak>Exempt from withholding</speak></assist></field>
+          <field name="withTu"><caption><value><text>Caption under a tooltip</text></value></caption></field>
+          <field name="bare" />
+        </subform>
+      </template>`,
+    });
+
+    const result = await runInspect(pdf);
+
+    expect(result.fields.map(({ label }) => label)).toEqual([
+      'Tooltip text',
+      '4(c). Extra withholding. $.',
+      'Exempt from withholding',
+      'From the field tooltip',
+      null,
+    ]);
+  });
+
+  test('ignores the XFA labels when a fillable field is missing from the template', async () => {
+    const pdf = await buildHybridPdf({
+      fields: ['form1[0].a[0]', 'form1[0].extra[0]'],
+      template: `<template><subform name="form1">
+        <field name="a"><caption><value><text>Label A</text></value></caption></field>
+      </subform></template>`,
+    });
+
+    const result = await runInspect(pdf);
+
+    expect(result.fields.map(({ label }) => label)).toEqual([null, null]);
+  });
+
+  test('keeps the XFA labels when only a button is missing from the template', async () => {
+    const pdf = await buildHybridPdf({
+      fields: ['form1[0].a[0]'],
+      buttons: ['form1[0].print[0]'],
+      template: `<template><subform name="form1">
+        <field name="a"><caption><value><text>Label A</text></value></caption></field>
+      </subform></template>`,
+    });
+
+    const result = await runInspect(pdf);
+
+    expect(result.fields.map(({ name, label }) => ({ name, label }))).toEqual([
+      { name: 'form1[0].a[0]', label: 'Label A' },
+      { name: 'form1[0].print[0]', label: null },
+    ]);
+  });
+
+  test('reads the template from a single XDP stream and skips prototypes and comments', async () => {
+    const pdf = await buildHybridPdf({
+      fields: ['form1[0].a[0]'],
+      layout: 'single-stream',
+      template: `<template xmlns="http://www.xfa.org/schema/xfa-template/3.3/">
+        <!-- <field name="a"><caption><value><text>Commented out</text></value></caption></field> -->
+        <subform name="form1">
+          <proto>
+            <field name="a"><caption><value><text>Prototype</text></value></caption></field>
+          </proto>
+          <field name="a"><caption><value><text>Real label</text></value></caption></field>
+        </subform>
+      </template>`,
+    });
+
+    const result = await runInspect(pdf);
+
+    expect(result.fields.map(({ label }) => label)).toEqual(['Real label']);
   });
 });
 
@@ -635,6 +770,30 @@ describe('fillPdfForm fields', () => {
     });
   });
 
+  test('names an input after a long label cut at a word, and keeps the whole label in its description', async () => {
+    const label =
+      'Part I. Taxpayer Identification Number (T I N). Enter your T I N in the appropriate box. Social security number. First 3 digits.';
+    const pdf = await buildHybridPdf({
+      fields: ['form1[0].tin[0]', 'form1[0].name[0]'],
+      template: `<template><subform name="form1">
+        <field name="tin"><assist><speak>${label}</speak></assist></field>
+        <field name="name"><caption><value><text>Name</text></value></caption></field>
+      </subform></template>`,
+    });
+
+    const props = await listFields(new ApFile('form.pdf', pdf, 'pdf'));
+
+    expect(props['form1[0].tin[0]']).toMatchObject({
+      displayName:
+        'Part I. Taxpayer Identification Number (T I N). Enter your T I N in the…',
+      description: `${label} Field "form1[0].tin[0]" on page 1.`,
+    });
+    expect(props['form1[0].name[0]']).toMatchObject({
+      displayName: 'Name',
+      description: 'Field "form1[0].name[0]" on page 1.',
+    });
+  });
+
   test('reads the form from a data URI', async () => {
     const pdf = await buildFieldsForm();
 
@@ -1062,7 +1221,71 @@ async function buildXfaPdf({
   if (needsRendering) {
     doc.catalog.set(PDFName.of('NeedsRendering'), PDFBool.True);
   }
-  return Buffer.from(await doc.save());
+  return Buffer.from(await doc.save({ updateFieldAppearances: false }));
+}
+
+async function buildHybridPdf({
+  fields,
+  template,
+  tooltips = {},
+  buttons = [],
+  layout = 'parts',
+}: {
+  fields: string[];
+  template: string;
+  tooltips?: Record<string, string>;
+  buttons?: string[];
+  layout?: 'parts' | 'single-stream';
+}): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([612, 792]);
+  const form = doc.getForm();
+  fields.forEach((name, index) => {
+    const field = form.createTextField(name);
+    const tooltip = tooltips[name];
+    if (tooltip !== undefined) {
+      field.acroField.dict.set(
+        PDFName.of('TU'),
+        PDFHexString.fromText(tooltip)
+      );
+    }
+    field.addToPage(page, {
+      x: 50,
+      y: 740 - index * 40,
+      width: 200,
+      height: 20,
+    });
+  });
+  buttons.forEach((name, index) =>
+    form.createButton(name).addToPage('Print', page, {
+      x: 50,
+      y: 100 + index * 40,
+      width: 60,
+      height: 20,
+    })
+  );
+  const xdp = `<?xml version="1.0" encoding="UTF-8"?><xdp:xdp xmlns:xdp="http://ns.adobe.com/xdp/">`;
+  const config =
+    '<config><present><pdf><version>1.7</version></pdf></present></config>';
+  const end = '<datasets></datasets></xdp:xdp>';
+  const stream = (xml: string) =>
+    doc.context.register(doc.context.flateStream(xml));
+  form.acroForm.dict.set(
+    PDFName.of('XFA'),
+    layout === 'single-stream'
+      ? stream(`${xdp}${config}${template}${end}`)
+      : doc.context.obj([
+          PDFString.of('preamble'),
+          stream(xdp),
+          PDFString.of('config'),
+          stream(config),
+          PDFString.of('template'),
+          stream(template),
+          PDFString.of('postamble'),
+          stream(end),
+        ])
+  );
+  return Buffer.from(await doc.save({ updateFieldAppearances: false }));
 }
 
 async function buildEncryptedPdf(): Promise<Buffer> {
