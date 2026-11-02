@@ -290,9 +290,10 @@ export async function runFlowAsTool({ flow, properties, payload, returnsResponse
 }
 
 function registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, log }: RegisterStaticToolsParams): void {
+    const disabledTools = [...(mcp.disabledTools ?? []), ...platformDisabledTools]
     const tools = filterEnabledTools({
-        tools: activepiecesTools({ ...mcp, projectId }, userId, log),
-        disabledTools: [...(mcp.disabledTools ?? []), ...platformDisabledTools],
+        tools: activepiecesTools({ ...mcp, projectId, disabledTools }, userId, log),
+        disabledTools,
     })
 
     tools.forEach((tool) => {
