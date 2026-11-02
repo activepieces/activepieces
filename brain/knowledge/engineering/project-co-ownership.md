@@ -96,7 +96,7 @@ Two projects, ending 2026-12-04. For each concern, record where it first appears
 - **Area lead is the Owner or the Co-Owner** — a different area lead breaks a tie.
 - **No PM** — the note names the product decider; with no name, the Owner decides product questions.
 - **AC changes mid-build** — the PM agrees, the affected tickets go back to Backlog, and the Co-Owner writes "Scope change approved". An approach change that keeps the AC needs only a line in Decisions.
-- **New ticket inside the approved scope** — a follow-up or gap ticket that cites an approved AC ID goes to Todo with no new approval.
+- **New ticket inside the approved scope** — a follow-up or gap ticket that cites an approved AC ID needs no new "Scope approved"; the Owner moves it to Todo.
 - **Bug or hotfix filed in a co-owned project** — the normal ticket rule applies, not the gate.
 - **PM or founder concern after the window** — a follow-up ticket like any other. To change the scope now, they accept the cost on the ticket: the work to redo and the new date.
 - **Two areas changed** — the Co-Owner comes from the area with the most change. A PR in the other area also needs that area's code owner.
