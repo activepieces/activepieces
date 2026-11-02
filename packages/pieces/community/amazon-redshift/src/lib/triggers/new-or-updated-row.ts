@@ -4,7 +4,8 @@ import { redshiftAuth } from '../auth';
 import { redshiftClient } from '../common/client';
 import { redshiftProps } from '../common/props';
 import { redshiftUtils } from '../common/utils';
-import type { RedshiftAuthValue } from '../common/types';
+import { newOrUpdatedRowOutputSchema } from '../output-schemas';
+import type { RedshiftAuthValue, RedshiftRow } from '../common/types';
 
 const props = {
   table: redshiftProps.table({ required: true }),
@@ -25,19 +26,36 @@ const polling: Polling<RedshiftAuthValue, StaticPropsValue<typeof props>> = {
     }
     const from = redshiftUtils.qualifiedName({ table: propsValue.table });
     const column = redshiftUtils.quoteIdentifier({ name: propsValue.timestamp_column });
-    const isTest = lastFetchEpochMS === 0;
+    const toEvents = (rows: RedshiftRow[]) =>
+      rows.flatMap((row) => {
+        const epochMilliSeconds = toEpochMs({ value: row[propsValue.timestamp_column] });
+        return epochMilliSeconds === undefined ? [] : [{ epochMilliSeconds, data: row }];
+      });
+    if (lastFetchEpochMS === 0) {
+      const { rows } = await redshiftClient.runSql({ auth, server, sql: `SELECT * FROM ${from} WHERE ${column} IS NOT NULL ORDER BY ${column} DESC LIMIT 5` });
+      return toEvents(rows);
+    }
     const { rows } = await redshiftClient.runSql({
       auth,
       server,
-      sql: isTest
-        ? `SELECT * FROM ${from} WHERE ${column} IS NOT NULL ORDER BY ${column} DESC LIMIT 5`
-        : `SELECT * FROM ${from} WHERE ${column} > $1 ORDER BY ${column} ASC LIMIT ${MAX_ROWS}`,
-      params: isTest ? [] : [new Date(lastFetchEpochMS).toISOString().replace('T', ' ').replace('Z', '')],
+      sql: `SELECT * FROM ${from} WHERE ${column} > $1 ORDER BY ${column} ASC LIMIT ${MAX_ROWS}`,
+      params: [toSqlTimestamp({ epochMs: lastFetchEpochMS })],
     });
-    return rows.flatMap((row) => {
-      const epochMilliSeconds = toEpochMs({ value: row[propsValue.timestamp_column] });
-      return epochMilliSeconds === undefined ? [] : [{ epochMilliSeconds, data: row }];
+    const events = toEvents(rows);
+    if (rows.length < MAX_ROWS || events.length === 0) {
+      return events;
+    }
+    const lastEpochMs = events[events.length - 1].epochMilliSeconds;
+    if (events[0].epochMilliSeconds !== lastEpochMs) {
+      return events.filter((event) => event.epochMilliSeconds !== lastEpochMs);
+    }
+    const { rows: sameMillisecond } = await redshiftClient.runSql({
+      auth,
+      server,
+      sql: `SELECT * FROM ${from} WHERE ${column} >= $1 AND ${column} < $2 ORDER BY ${column} ASC`,
+      params: [toSqlTimestamp({ epochMs: lastEpochMs }), toSqlTimestamp({ epochMs: lastEpochMs + 1 })],
     });
+    return toEvents(sameMillisecond);
   },
 };
 
@@ -52,6 +70,7 @@ export const newOrUpdatedRow = createTrigger({
   },
   props,
   sampleData: { id: 1, name: 'Example', updated_at: '2026-01-01 00:00:00' },
+  outputSchema: newOrUpdatedRowOutputSchema,
   type: TriggerStrategy.POLLING,
   async test(context) {
     return await pollingHelper.test(polling, context);
@@ -66,6 +85,10 @@ export const newOrUpdatedRow = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
+
+function toSqlTimestamp({ epochMs }: { epochMs: number }): string {
+  return new Date(epochMs).toISOString().replace('T', ' ').replace('Z', '');
+}
 
 function toEpochMs({ value }: { value: unknown }): number | undefined {
   if (value instanceof Date) {

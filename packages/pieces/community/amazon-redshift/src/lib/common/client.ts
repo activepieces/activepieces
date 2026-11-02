@@ -9,10 +9,13 @@ import {
   SqlParameter,
 } from '@aws-sdk/client-redshift-data';
 import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
-import { Client, TypeOverrides } from 'pg';
+import { Client, CustomTypesConfig, QueryConfig, types } from 'pg';
 import type { RedshiftAuthValue, RedshiftIamProps, RedshiftPasswordProps, RedshiftQueryResult, RedshiftRow } from './types';
 
 async function runSql({ auth, server, sql, params = [] }: RunSqlParams & { auth: RedshiftAuthValue; server: AnyServerContext }): Promise<RedshiftQueryResult> {
+  if (hasMultipleStatements({ sql })) {
+    throw new Error('Run one SQL statement per step. Split the statements over several steps.');
+  }
   if (auth.type === AppConnectionType.OIDC) {
     return await runWithDataApi({ props: auth.props, server, sql, params });
   }
@@ -29,22 +32,36 @@ async function runWithPg({ props, sql, params }: SqlStatement & { props: Redshif
     ssl: props.enable_ssl ? { rejectUnauthorized: true } : undefined,
     connectionTimeoutMillis: CONNECT_TIMEOUT_MS,
     query_timeout: QUERY_TIMEOUT_MS,
-    types: rawDateTimeTypes(),
+    types: redshiftTypeParsers(),
   });
   client.on('error', () => undefined);
   await client.connect();
   try {
-    const result = await client.query<RedshiftRow>(sql, params);
+    const query: QueryConfig & { queryMode: 'extended' } = { text: sql, values: params, queryMode: 'extended' };
+    const result = await client.query<RedshiftRow>(query);
     return { rows: result.rows, rowCount: result.rowCount ?? result.rows.length };
   } finally {
     await client.end();
   }
 }
 
-function rawDateTimeTypes(): TypeOverrides {
-  const overrides = new TypeOverrides();
-  RAW_TEXT_TYPE_OIDS.forEach((oid) => overrides.setTypeParser(oid, (value: string) => value));
-  return overrides;
+function redshiftTypeParsers(): CustomTypesConfig {
+  return {
+    getTypeParser: (oid: number, format?: 'text' | 'binary') => {
+      if (RAW_TEXT_TYPE_OIDS.includes(oid)) {
+        return (value: string) => value;
+      }
+      if (oid === BIGINT_TYPE_OID) {
+        return parseBigint;
+      }
+      return types.getTypeParser(oid, format);
+    },
+  };
+}
+
+function parseBigint(value: string): number | string {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : value;
 }
 
 async function runWithDataApi({ props, server, sql, params }: SqlStatement & { props: RedshiftIamProps; server: AnyServerContext }): Promise<RedshiftQueryResult> {
@@ -109,10 +126,14 @@ function fieldValue({ field }: { field: Field }): unknown {
 
 function toNamedParameters({ sql, params }: { sql: string; params: unknown[] }): { text: string; parameters: SqlParameter[] } {
   const used = new Set<number>();
-  const text = sql.replace(/\$(\d+)/g, (placeholder, digits: string) => {
-    const index = Number(digits) - 1;
+  const text = sql.replace(SQL_TOKENS, (match: string) => {
+    const placeholder = ARG_PLACEHOLDER.exec(match);
+    if (!placeholder) {
+      return match;
+    }
+    const index = Number(placeholder[1]) - 1;
     if (index < 0 || index >= params.length) {
-      throw new Error(`The query uses ${placeholder} but only ${params.length} argument(s) were given.`);
+      throw new Error(`The query uses ${match} but only ${params.length} argument(s) were given.`);
     }
     const value = params[index];
     if (value === null || value === undefined) {
@@ -123,6 +144,10 @@ function toNamedParameters({ sql, params }: { sql: string; params: unknown[] }):
   });
   const parameters = [...used].map((index) => ({ name: `p${index + 1}`, value: toText({ value: params[index] }) }));
   return { text, parameters };
+}
+
+function hasMultipleStatements({ sql }: { sql: string }): boolean {
+  return sql.replace(SKIPPED_SQL, ' ').replace(/[\s;]+$/, '').includes(';');
 }
 
 function toText({ value }: { value: unknown }): string {
@@ -207,6 +232,11 @@ function sweepExpiredCredentials(): void {
 export const redshiftClient = { runSql };
 
 const RAW_TEXT_TYPE_OIDS = [1082, 1083, 1114, 1184, 1266];
+const BIGINT_TYPE_OID = 20;
+const SKIPPED_SQL_TEXT = String.raw`'(?:[^']|'')*'|"(?:[^"]|"")*"|\$(?<tag>[A-Za-z_]*)\$[\s\S]*?\$\k<tag>\$|--[^\n]*|\/\*[\s\S]*?\*\/`;
+const SKIPPED_SQL = new RegExp(SKIPPED_SQL_TEXT, 'g');
+const SQL_TOKENS = new RegExp(`${SKIPPED_SQL_TEXT}|\\$\\d+`, 'g');
+const ARG_PLACEHOLDER = /^\$(\d+)$/;
 const CONNECT_TIMEOUT_MS = 30_000;
 const QUERY_TIMEOUT_MS = 300_000;
 const STATEMENT_POLL_INTERVAL_MS = 1_000;

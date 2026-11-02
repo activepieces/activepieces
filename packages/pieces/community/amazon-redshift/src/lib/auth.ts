@@ -73,6 +73,7 @@ Activepieces acts as an OIDC identity provider. AWS trusts it and issues tempora
 \`\`\`
 3. Attach the **AmazonRedshiftDataFullAccess** policy to the role and paste the **Role ARN** below.
 4. Fill in **Workgroup Name** for Serverless, or **Cluster Identifier** for a provisioned cluster.
+5. For Serverless, add a tag with the key \`RedshiftDataFullAccess\` (any value) to your workgroup. **AmazonRedshiftDataFullAccess** only lets the role sign in to workgroups that carry this tag.
 
 For Serverless, the role signs in to the database as \`IAMR:<role name>\`. Grant that user access to your tables, for example \`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO "IAMR:MyRole";\`.
 `;

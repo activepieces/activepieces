@@ -19,6 +19,30 @@ export const findRowsOutputSchema: OutputSchema = {
   ],
 };
 
+export const newRowOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'row',
+      label: 'Row',
+      value: '',
+      dynamicKey: true,
+      description: 'One new row of the table you selected, with every column it has. Date and time columns arrive as text, exactly as Redshift stores them.',
+    },
+  ],
+};
+
+export const newOrUpdatedRowOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'row',
+      label: 'Row',
+      value: '',
+      dynamicKey: true,
+      description: 'One new or updated row of the table you selected, with every column it has. Date and time columns arrive as text, exactly as Redshift stores them.',
+    },
+  ],
+};
+
 export const runQueryOutputSchema: OutputSchema = {
   fields: [
     { key: 'rows', label: 'Rows', description: 'The rows the query returned. Empty for INSERT, UPDATE, DELETE and DDL.' },
