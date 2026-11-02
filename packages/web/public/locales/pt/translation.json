@@ -1617,8 +1617,6 @@
   "No trigger data available": "Sem dados de gatilho disponíveis",
   "Trigger health information will appear here": "Disparar informações de saúde aparecerá aqui",
   "trigger status": "trigger status",
-  "Unlock worker groups": "",
-  "Set aside servers for specific projects or flows, so a busy project never slows down the rest.": "",
   "Check the health of your workers": "Verifique a saúde de seus workers",
   "Upgrade to Dedicated Workers": "Atualize para os Trabalhadores Dedicados",
   "Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.": "Suas automações são executadas em funcionários compartilhados, onde a área restrita adiciona maior profundidade a cada execução. Trabalhadores dedicados lhe dão sua própria pool de execução que permanece quente e pronto, para que suas automações comecem muito mais rápido.",

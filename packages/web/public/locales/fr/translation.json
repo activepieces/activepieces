@@ -1617,8 +1617,6 @@
   "No trigger data available": "Aucune donnée de déclencheur disponible",
   "Trigger health information will appear here": "Les informations sur la santé du déclencheur apparaîtront ici",
   "trigger status": "trigger status",
-  "Unlock worker groups": "",
-  "Set aside servers for specific projects or flows, so a busy project never slows down the rest.": "",
   "Check the health of your workers": "Vérifiez la santé de vos employés",
   "Upgrade to Dedicated Workers": "Mettre à niveau vers des employés dédiés",
   "Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.": "Vos automatisations fonctionnent sur des employés partagés où la boxe à sable stricte ajoute des frais à chaque exécution. Des employés dévoués vous donnent votre propre bassin d'exécution qui reste chaud et prêt, afin que vos automatisations commencent beaucoup plus rapidement.",
