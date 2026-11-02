@@ -85,6 +85,61 @@ const buildFor = (provider: AIProviderName, options?: Record<string, unknown>) =
 
 const supportedProviders = Object.values(AIProviderName).filter((p) => p !== AIProviderName.CLOUDFLARE_GATEWAY)
 
+const forcedCall = {
+    tools: [{ type: 'function' as const, name: 'extractData', inputSchema: { type: 'object' as const, properties: {} } }],
+    toolChoice: { type: 'tool' as const, toolName: 'extractData' },
+    prompt: [{ role: 'user' as const, content: [{ type: 'text' as const, text: 'hi' }] }],
+}
+
+async function replyingWith<T>({ replies, send }: {
+    replies: Record<string, unknown>[]
+    send: (model: ReturnType<typeof createLanguageModel>) => Promise<T>
+}): Promise<{ bodies: Record<string, unknown>[], result: T }> {
+    const original = globalThis.fetch
+    const bodies: Record<string, unknown>[] = []
+    globalThis.fetch = (_input, init) => {
+        bodies.push(typeof init?.body === 'string' ? JSON.parse(init.body) : {})
+        const reply = replies[Math.min(bodies.length - 1, replies.length - 1)]
+        return Promise.resolve(new Response(JSON.stringify(reply), { headers: { 'content-type': 'application/json' } }))
+    }
+    try {
+        const result = await send(buildFor(AIProviderName.META))
+        return { bodies, result }
+    }
+    finally {
+        globalThis.fetch = original
+    }
+}
+
+async function readStream(stream: ReadableStream<{ type: string }>): Promise<{ type: string }[]> {
+    const parts: { type: string }[] = []
+    const reader = stream.getReader()
+    for (let next = await reader.read(); !next.done; next = await reader.read()) {
+        parts.push(next.value)
+    }
+    return parts
+}
+
+const RESPONSE_BASE = {
+    id: 'resp_1',
+    object: 'response',
+    created_at: 1,
+    model: 'muse-spark-1.3',
+    status: 'completed',
+    incomplete_details: null,
+    usage: { input_tokens: 1, output_tokens: 1, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } },
+}
+
+const TEXT_REPLY = {
+    ...RESPONSE_BASE,
+    output: [{ type: 'message', id: 'msg_1', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: 'Here is the data.', annotations: [] }] }],
+}
+
+const TOOL_REPLY = {
+    ...RESPONSE_BASE,
+    output: [{ type: 'function_call', id: 'fc_1', call_id: 'call_1', name: 'extractData', arguments: '{}', status: 'completed' }],
+}
+
 describe('AIProviderConfig union', () => {
     it('keeps every Vertex field instead of losing them to a looser member', () => {
         const config = {
@@ -134,11 +189,121 @@ describe('createLanguageModel', () => {
         expect(headers.has('x-amz-security-token')).toBe(false)
     })
 
-    it.each([AIProviderName.OPENAI, AIProviderName.AZURE])('sends %s to the Responses API without storing the conversation', async (provider) => {
+    it.each([AIProviderName.OPENAI, AIProviderName.AZURE, AIProviderName.META])('sends %s to the Responses API without storing the conversation', async (provider) => {
         const request = await generateHi(buildFor(provider))
 
         expect(new URL(request.url).pathname).toMatch(/\/responses$/)
         expect(request.body.store).toBe(false)
+    })
+
+    it('sends Meta to the Meta Model API and NVIDIA to the NVIDIA chat completions endpoint', async () => {
+        const meta = await generateHi(buildFor(AIProviderName.META))
+        const nvidia = await generateHi(buildFor(AIProviderName.NVIDIA))
+
+        expect(meta.url).toBe('https://api.meta.ai/v1/responses')
+        expect(meta.headers.get('authorization')).toBe('Bearer test-key')
+        expect(nvidia.url).toBe('https://integrate.api.nvidia.com/v1/chat/completions')
+    })
+
+    describe('Meta, which only accepts tool_choice auto', () => {
+        const tools = [
+            { type: 'function' as const, name: 'extractData', inputSchema: { type: 'object' as const, properties: {} } },
+            { type: 'function' as const, name: 'search', inputSchema: { type: 'object' as const, properties: {} } },
+        ]
+        const sendToMeta = (toolChoice: Parameters<ReturnType<typeof createLanguageModel>['doGenerate']>[0]['toolChoice']) => {
+            const model = buildFor(AIProviderName.META)
+            return captureSentRequest(() => model.doGenerate({ tools, toolChoice, prompt: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] }))
+        }
+        const toolNames = (body: Record<string, unknown>) => (Array.isArray(body.tools) ? body.tools.map((tool: { name: string }) => tool.name) : [])
+
+        it('turns required into auto and keeps every tool', async () => {
+            const { body } = await sendToMeta({ type: 'required' })
+
+            expect(body.tool_choice).toBe('auto')
+            expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
+
+        it('turns a forced tool into auto with only that tool offered', async () => {
+            const { body } = await sendToMeta({ type: 'tool', toolName: 'extractData' })
+
+            expect(body.tool_choice).toBe('auto')
+            expect(toolNames(body)).toEqual(['extractData'])
+        })
+
+        it('turns none into a request with no tools', async () => {
+            const { body } = await sendToMeta({ type: 'none' })
+
+            expect(body.tools).toBeUndefined()
+            expect(body.tool_choice).toBeUndefined()
+        })
+
+        it('leaves auto alone', async () => {
+            const { body } = await sendToMeta({ type: 'auto' })
+
+            expect(body.tool_choice).toBe('auto')
+            expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
+
+        it('tells the model to call the forced tool', async () => {
+            const { body } = await sendToMeta({ type: 'tool', toolName: 'extractData' })
+
+            expect(JSON.stringify(body.input)).toContain('Reply only by calling the extractData tool')
+        })
+
+        it('asks once more when the model answers a forced call in text', async () => {
+            const { bodies, result } = await replyingWith({ replies: [TEXT_REPLY, TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
+
+            expect(bodies).toHaveLength(2)
+            expect(JSON.stringify(bodies[1].input)).toContain('Your previous reply did not call a tool')
+            expect(result.content).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
+        })
+
+        it('fails instead of completing when the model answers in text twice', async () => {
+            const { bodies, result } = await replyingWith({
+                replies: [TEXT_REPLY, TEXT_REPLY],
+                send: (model) => model.doGenerate(forcedCall).then(() => 'completed', (error: Error) => error.message),
+            })
+
+            expect(bodies).toHaveLength(2)
+            expect(result).toBe('The model answered in text twice instead of calling the extractData tool')
+        })
+
+        it('fails a forced streamed call when the model answers in text twice', async () => {
+            const { result } = await replyingWith({
+                replies: [TEXT_REPLY, TEXT_REPLY],
+                send: (model) => model.doStream(forcedCall).then(() => 'completed', (error: Error) => error.name),
+            })
+
+            expect(result).toBe('ForcedToolNotCalledError')
+        })
+
+        it('counts the tokens of both attempts when it asks again', async () => {
+            const { result } = await replyingWith({ replies: [TEXT_REPLY, TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
+
+            expect(result.usage.inputTokens.total).toBe(2)
+            expect(result.usage.outputTokens.total).toBe(2)
+        })
+
+        it('does not ask again once the model calls the tool', async () => {
+            const { bodies, result } = await replyingWith({ replies: [TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
+
+            expect(bodies).toHaveLength(1)
+            expect(result.content).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
+        })
+
+        it('serves a forced streamed call from the retried generate call', async () => {
+            const { bodies, result } = await replyingWith({
+                replies: [TEXT_REPLY, TOOL_REPLY],
+                send: async (model) => {
+                    const { stream } = await model.doStream(forcedCall)
+                    return readStream(stream)
+                },
+            })
+
+            expect(bodies).toHaveLength(2)
+            expect(bodies.every((body) => body.stream !== true)).toBe(true)
+            expect(result).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
+        })
     })
 
     it.each([
