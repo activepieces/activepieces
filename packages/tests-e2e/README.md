@@ -19,7 +19,7 @@ packages/tests-e2e/
 
 This section is the one set of E2E guidelines, for people and agents. Other pages link here instead of repeating it.
 
-Checkly runs every `scenarios/**/*.spec.ts` against production Cloud every 10 minutes, so a spec must pass whatever the project already holds: nothing, many flows, or another run's flows. It must never change data it did not create.
+Staging runs the CE specs in a shared, long-lived account after each deploy, and CI runs specs in parallel in one project, so a spec must pass whatever the project already holds: nothing, many flows, or another run's flows. It must never change data it did not create.
 
 Start from `scenarios/flows/flow-journey.spec.ts` and `pages/builder.page.ts`. Locators and actions live in a page object under `pages/`; the spec holds the steps and the expected outcomes.
 
@@ -67,12 +67,6 @@ A spec is flaky when it fails and then passes on a retry, or fails with no produ
 ```bash
 # Local Playwright run
 npm run test:e2e
-
-# Checkly (video recordings — preferred for debugging)
-npx turbo run test-checkly --filter=tests-e2e
-
-# Deploy to Checkly (CI does this automatically)
-npx turbo run deploy-checkly --filter=tests-e2e
 ```
 
 ## Environment
@@ -90,7 +84,7 @@ PRs do not run E2E unless they change the suite or carry the `ready-for-e2e` lab
 - `.github/workflows/e2e-matrix.yml` — the only E2E suite that gates a release: builds the image and runs the suite in four CE/EE configurations. Runs on PRs that touch `packages/tests-e2e/**`, and from the Cloud gate.
 - `.github/workflows/e2e.yml` — runs `e2e-matrix.yml` on a PR with the `ready-for-e2e` label, and again on each push while the label stays
 - `.github/workflows/continuous-delivery-stg.yml` — runs the CE specs against staging after each deploy
-- `.github/workflows/e2e-tests-checkly.yml` — scheduled Checkly run (optional)
+- `.github/workflows/emergency-cloud-deploy.yml` — the only workflow that deploys the specs to Checkly, by hand. Nothing calls `e2e-tests-checkly.yml`, so Checkly runs the specs from its last deploy, not the specs on `main`.
 
 ## Related documentation
 

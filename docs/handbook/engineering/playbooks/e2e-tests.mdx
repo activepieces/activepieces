@@ -13,6 +13,5 @@ The guidelines for writing a spec live in one place: the [`packages/tests-e2e` R
 
 ## Debugging a failed spec
 
-- **Checkly**: every run records a video and step-by-step logs. Open the run in the Checkly dashboard, or run the suite through Checkly locally with `npx turbo run test-checkly --filter=tests-e2e`.
 - **Trace viewer**: the E2E matrix uploads `test-results/` as a run artifact, and a spec that failed and retried holds a `trace.zip`. Open it with `npx playwright show-trace <trace.zip>` to see each action, the DOM and the network calls.
 - **VS Code**: the **Playwright Test for VSCode** extension (by Microsoft) runs a single spec with breakpoints and shows its trace.
