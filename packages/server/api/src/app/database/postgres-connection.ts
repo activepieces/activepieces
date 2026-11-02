@@ -482,8 +482,8 @@ const getSslConfig = (): boolean | TlsOptions => {
 export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
     return [
         AddAgentConversationProviderConfigIdIndex1869000000000,
-        ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
         BackfillPieceTranslation1874000000000,
+        ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
     ]
 }
 
