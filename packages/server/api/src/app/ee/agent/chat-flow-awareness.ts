@@ -19,7 +19,7 @@ export const chatFlowAwareness = (log: FastifyBaseLogger) => ({
             const target = flowToolTargets.targetOf({ toolName: toolTitle, input: args })
             const before = isNil(flowId) ? null : await loadFlowState({ conversationId, projectId, flowId, log })
             const userChanges = isNil(before) || isNil(before.stored) ? [] : flowStepDiff.diff({ before: before.stored, after: before.current })
-            const conflict = isNil(before) ? undefined : findConflict({ userChanges, target, flow: before.flow })
+            const conflict = isNil(before) ? undefined : findConflict({ userChanges, target, flow: before.flow, branchIndex: numberArg({ args, key: 'branchIndex' }) })
             if (!isNil(flowId) && !isNil(conflict)) {
                 return staleWriteResult({ flowId, changes: userChanges })
             }
@@ -60,26 +60,31 @@ async function loadFlowState({ conversationId, projectId, flowId, log }: {
     }
 }
 
-function findConflict({ userChanges, target, flow }: {
+function findConflict({ userChanges, target, flow, branchIndex }: {
     userChanges: FlowStepChange[]
     target: FlowToolTarget | null
     flow: PopulatedFlow
+    branchIndex: number | null
 }): FlowStepChange | undefined {
     if (isNil(target) || !('stepName' in target) || !WRITE_KINDS.has(target.kind)) {
         return undefined
     }
     const guardedSteps = target.kind === 'removing'
-        ? stepWithChildren({ flow, stepName: target.stepName })
+        ? removedSteps({ flow, stepName: target.stepName, branchIndex })
         : [target.stepName]
     return userChanges.find((change) => guardedSteps.includes(change.stepName) && change.kind !== 'added')
 }
 
-function stepWithChildren({ flow, stepName }: { flow: PopulatedFlow, stepName: string }): string[] {
+function removedSteps({ flow, stepName, branchIndex }: { flow: PopulatedFlow, stepName: string, branchIndex: number | null }): string[] {
     const step = flowStructureUtil.getStep(stepName, flow.version.trigger)
     if (isNil(step)) {
         return [stepName]
     }
-    return flowStructureUtil.getAllChildSteps(step).map((child) => child.name)
+    if (isNil(branchIndex)) {
+        return flowStructureUtil.getAllChildSteps(step).map((child) => child.name)
+    }
+    const branchStart = 'children' in step ? step.children[branchIndex] : null
+    return isNil(branchStart) ? [] : flowStructureUtil.getAllSteps(branchStart).map((child) => child.name)
 }
 
 async function nextSnapshot({ before, target, userChanges, projectId, flowId, log }: {
@@ -152,6 +157,11 @@ function staleWriteResult({ flowId, changes }: { flowId: string, changes: FlowSt
 function structuredFlowId(result: McpToolResult): string | null {
     const value = result.structuredContent?.['flowId']
     return typeof value === 'string' ? value : null
+}
+
+function numberArg({ args, key }: { args: Record<string, unknown>, key: string }): number | null {
+    const value = args[key]
+    return typeof value === 'number' && Number.isInteger(value) ? value : null
 }
 
 function stringArg({ args, key }: { args: Record<string, unknown>, key: string }): string | null {
