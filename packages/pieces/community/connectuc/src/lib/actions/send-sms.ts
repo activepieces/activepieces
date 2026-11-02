@@ -45,7 +45,7 @@ export const sendSmsAction = createAction({
             const urlStr = String(url);
             return {
                 url: urlStr,
-                filename: urlStr.split('/').pop() ?? 'attachment',
+                filename: urlStr.split('?')[0].split('/').pop() || 'attachment',
             };
         }) : [];
 
