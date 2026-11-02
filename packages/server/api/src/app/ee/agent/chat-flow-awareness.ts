@@ -84,7 +84,8 @@ function removedSteps({ flow, stepName, branchIndex }: { flow: PopulatedFlow, st
         return flowStructureUtil.getAllChildSteps(step).map((child) => child.name)
     }
     const branchStart = 'children' in step ? step.children[branchIndex] : null
-    return isNil(branchStart) ? [] : flowStructureUtil.getAllSteps(branchStart).map((child) => child.name)
+    const branchSteps = isNil(branchStart) ? [] : flowStructureUtil.getAllSteps(branchStart).map((child) => child.name)
+    return [stepName, ...branchSteps]
 }
 
 async function nextSnapshot({ before, target, userChanges, projectId, flowId, log }: {
