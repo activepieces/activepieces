@@ -35,7 +35,8 @@ function ManageMemoriesContent() {
   });
 
   const forget = useMutation({
-    mutationFn: (next: string[]) => chatApi.saveMemory({ memories: next }),
+    mutationFn: ({ next, base }: { next: string[]; base: string[] }) =>
+      chatApi.saveMemory({ memories: { next, base } }),
     onSuccess: invalidate,
     onError: () => toast.error(t('Could not update memory')),
   });
@@ -56,7 +57,10 @@ function ManageMemoriesContent() {
           <RememberedFacts
             memories={memories}
             onForget={(index) =>
-              forget.mutate(memories.filter((_, i) => i !== index))
+              forget.mutate({
+                next: memories.filter((_, i) => i !== index),
+                base: memories,
+              })
             }
           />
         </ScrollArea>

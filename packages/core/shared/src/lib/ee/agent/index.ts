@@ -286,7 +286,10 @@ export type GetAgentMemoryResponse = z.infer<typeof GetAgentMemoryResponse>
 
 export const UpdateAgentMemoryRequest = z.object({
     instructions: Nullable(z.string()),
-    memories: z.optional(z.array(z.string())),
+    memories: z.optional(z.object({
+        next: z.array(z.string()),
+        base: z.array(z.string()),
+    })),
 })
 export type UpdateAgentMemoryRequest = z.infer<typeof UpdateAgentMemoryRequest>
 

@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
-import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, ShouldBlockOnCreditsParams, TrackFeatureParams } from '../../../../platform/billing-provider'
+import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditCheckSpeed, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, ShouldBlockOnCreditsParams, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
 
@@ -14,10 +14,14 @@ const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
 const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 15
 const CUSTOMER_STATE_MISS_DEBOUNCE_SECONDS = 60
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
-const CREDITS_CACHE_READ_TIMEOUT_MS = 400
-const FAST_CREDIT_CHECK_READ_TIMEOUT_MS = 25
+const CREDITS_CACHE_READ_TIMEOUT_MS: Record<CreditCheckSpeed, number> = {
+    [CreditCheckSpeed.FAST]: 25,
+    [CreditCheckSpeed.NORMAL]: 400,
+    [CreditCheckSpeed.BACKGROUND]: 5000,
+}
 const SLOW_CREDITS_CACHE_READ_LOG_MS = 25
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
+const USAGE_EVENTS_PAGE_SIZE = 5000
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
@@ -156,12 +160,11 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     isBillingEnforced: async (platformId: string) => {
         return (await distributedStore.get<boolean>(getBillingEnforcedKey(platformId))) ?? false
     },
-    shouldBlockOnCredits: async ({ platformId, fastCreditCheck }: ShouldBlockOnCreditsParams) => {
-        const readTimeoutMs = fastCreditCheck ? FAST_CREDIT_CHECK_READ_TIMEOUT_MS : CREDITS_CACHE_READ_TIMEOUT_MS
-        return (await computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs })).credits.blocked
+    shouldBlockOnCredits: async ({ platformId, creditCheckSpeed }: ShouldBlockOnCreditsParams) => {
+        return (await computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs: CREDITS_CACHE_READ_TIMEOUT_MS[creditCheckSpeed] })).credits.blocked
     },
     getCreditsAndAppSumoState: async (platformId: string) => {
-        return computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs: CREDITS_CACHE_READ_TIMEOUT_MS })
+        return computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs: CREDITS_CACHE_READ_TIMEOUT_MS[CreditCheckSpeed.NORMAL] })
     },
     getConsumablesUsage: async (platformId: string) => {
         const { credits, appSumo } = await resolveCreditsCache(log, platformId)
@@ -172,6 +175,22 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
     getCreditUsage: async ({ platformId, startDate, endDate }) => {
         return autumnUtils.getCreditUsage(log, platformId, startDate, endDate)
+    },
+    listUsageEvents: async ({ platformId, startMs, endMs, cursor }) => {
+        const client = await autumnUtils.resolveClientForPlatform(log, platformId)
+        if (isNil(client)) {
+            return { events: [], nextCursor: null }
+        }
+        const page = await client.listEvents({
+            featureId: ConsumableFeatureId.AP_CREDITS,
+            customRange: { start: startMs, end: endMs },
+            limit: USAGE_EVENTS_PAGE_SIZE,
+            startCursor: cursor ?? '',
+        })
+        return {
+            events: page.list.map((event) => ({ id: event.id, timestamp: event.timestamp, properties: event.properties })),
+            nextCursor: page.nextCursor,
+        }
     },
 })
 
@@ -313,7 +332,7 @@ async function computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs }:
     wideEvent.set({ creditsGate: { readMs, readTimeoutMs, timedOut: error instanceof CreditsReadTimeoutError } })
     if (isNil(snapshot)) {
         log.warn({ error, platform: { id: platformId }, creditsGate: { readMs, readTimeoutMs } }, 'Credits gate cache read timed out or failed; failing open without gating this request')
-        read.then(() => log.info({ platform: { id: platformId }, creditsGate: { readMs: elapsedMs(startedAt), readTimeoutMs } }, 'Credits gate cache read finished after the timeout')).catch(() => undefined)
+        read.then(() => log.info({ platform: { id: platformId }, creditsGate: { lateReadMs: elapsedMs(startedAt), readTimeoutMs } }, 'Credits gate cache read finished after the timeout')).catch(() => undefined)
         return {
             credits: computeCreditState({ balance: null, enforced: false }),
             appSumo: computeCreditState({ balance: null, enforced: true }),

@@ -23,7 +23,8 @@ export function SettingsPanel({
         <header
           className={cn(
             adminSurface.panelHeader,
-            'flex items-start justify-between gap-4 p-5',
+            'flex justify-between gap-4 p-5',
+            description ? 'items-start' : 'items-center',
           )}
         >
           <div className="flex min-w-0 flex-col gap-1">

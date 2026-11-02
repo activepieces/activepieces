@@ -121,3 +121,47 @@ describe('dataSelectorUtils.filterBy — searchable value of containers', () => 
     ).toHaveLength(1);
   });
 });
+
+describe('dataSelectorUtils.shouldShowStepAsFlatList — inline items (list-mapper mode)', () => {
+  it('flattens a step whose output is a list of objects', () => {
+    expect(
+      dataSelectorUtils.shouldShowStepAsFlatList({
+        isFocusInsideListMapperModeInput: true,
+        stepOutput: [{ name: 'first' }, { name: 'second' }],
+      }),
+    ).toBe(true);
+  });
+
+  it('flattens a step whose output has a list of objects nested inside', () => {
+    expect(
+      dataSelectorUtils.shouldShowStepAsFlatList({
+        isFocusInsideListMapperModeInput: true,
+        stepOutput: { total: 2, results: [{ id: 1 }, { id: 2 }] },
+      }),
+    ).toBe(true);
+  });
+
+  it('keeps steps without a list of objects in their friendly shape', () => {
+    expect(
+      dataSelectorUtils.shouldShowStepAsFlatList({
+        isFocusInsideListMapperModeInput: true,
+        stepOutput: { customer: { id: 7 }, tags: ['a', 'b'] },
+      }),
+    ).toBe(false);
+    expect(
+      dataSelectorUtils.shouldShowStepAsFlatList({
+        isFocusInsideListMapperModeInput: true,
+        stepOutput: 'hello',
+      }),
+    ).toBe(false);
+  });
+
+  it('never flattens outside list-mapper mode', () => {
+    expect(
+      dataSelectorUtils.shouldShowStepAsFlatList({
+        isFocusInsideListMapperModeInput: false,
+        stepOutput: [{ name: 'first' }, { name: 'second' }],
+      }),
+    ).toBe(false);
+  });
+});

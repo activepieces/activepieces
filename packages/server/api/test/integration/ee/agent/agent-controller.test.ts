@@ -88,6 +88,21 @@ describe('agent crud', () => {
         }
     })
 
+    it('fills in the default tier on a fresh platform whose Activepieces credits row was never listed', async () => {
+        process.env.AP_OPENROUTER_PROVISION_KEY = 'test-provision-key'
+        try {
+            const ctx = await context()
+
+            const agent = await createAgent(ctx)
+
+            expect(agent.draft.modelName).toBe('smart')
+            expect(agent.draft.provider).toBe(AIProviderName.ACTIVEPIECES)
+        }
+        finally {
+            delete process.env.AP_OPENROUTER_PROVISION_KEY
+        }
+    })
+
     it('keeps a model the request did name, even where a default was available', async () => {
         const ctx = await context()
         await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
@@ -1166,5 +1181,37 @@ describe('updating an agent while someone else changes it', () => {
         const stored = await db.findOneByOrFail<Agent>('agent', { id: agent.id })
         expect(stored.displayName).toBe('Renamed')
         expectKept(stored)
+    })
+})
+
+describe('forgetting memories from a list that is out of date', () => {
+    async function memoryContext(memories: string[]): Promise<TestContext> {
+        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+        expect((await ctx.post('/v1/agents/memory', { memories: { next: memories, base: [] } })).statusCode).toBe(StatusCodes.OK)
+        return ctx
+    }
+
+    it('applies both of two quick forgets made from the same list', async () => {
+        const ctx = await memoryContext(['A', 'B', 'C'])
+
+        await ctx.post('/v1/agents/memory', { memories: { next: ['A', 'C'], base: ['A', 'B', 'C'] } })
+        await ctx.post('/v1/agents/memory', { memories: { next: ['A', 'B'], base: ['A', 'B', 'C'] } })
+
+        expect((await ctx.get('/v1/agents/memory')).json().memories).toEqual(['A'])
+    })
+
+    it('keeps a fact the assistant remembered while the list was open', async () => {
+        const ctx = await memoryContext(['A', 'B'])
+        await ctx.post('/v1/agents/memory', { memories: { next: ['A', 'B', 'D'], base: ['A', 'B'] } })
+
+        await ctx.post('/v1/agents/memory', { memories: { next: ['A'], base: ['A', 'B'] } })
+
+        expect((await ctx.get('/v1/agents/memory')).json().memories).toEqual(['A', 'D'])
+    })
+    it('refuses a bare list, so no client can overwrite memories it never saw', async () => {
+        const ctx = await memoryContext(['A', 'B'])
+
+        expect((await ctx.post('/v1/agents/memory', { memories: ['A'] })).statusCode).toBe(StatusCodes.BAD_REQUEST)
+        expect((await ctx.get('/v1/agents/memory')).json().memories).toEqual(['A', 'B'])
     })
 })
