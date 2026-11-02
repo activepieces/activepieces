@@ -22,138 +22,162 @@ import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { PieceIconWithPieceName } from '@/features/pieces';
 
 const ReplaceConnectionSelectionFields = ({
-  pieces,
-  sourceConnections,
+  source,
   targetConnections,
   loading,
-  hideSourceFields = false,
 }: ReplaceConnectionSelectionFieldsProps) => {
   const form = useFormContext<ReplaceConnectionSelection>();
-  const selectedPiece = useWatch({ control: form.control, name: 'pieceName' });
-  const sourceConnectionId = useWatch({
+  const selectedPieceName = useWatch({
+    control: form.control,
+    name: 'pieceName',
+  });
+  const selectedSourceConnectionId = useWatch({
     control: form.control,
     name: 'sourceConnectionId',
   });
-
-  const pieceSourceConnections = sourceConnections.filter(
-    (connection) => connection.pieceName === selectedPiece,
-  );
+  const isSourceFixed = source.kind === ReplaceConnectionSourceKind.FIXED;
+  const pieceName = isSourceFixed
+    ? source.connection.pieceName
+    : selectedPieceName;
+  const sourceConnectionId = isSourceFixed
+    ? source.connection.id
+    : selectedSourceConnectionId;
   const pieceTargetConnections = targetConnections.filter(
     (connection) =>
-      connection.pieceName === selectedPiece &&
+      connection.pieceName === pieceName &&
       connection.id !== sourceConnectionId,
   );
 
   return (
     <>
-      {!hideSourceFields && (
+      {source.kind === ReplaceConnectionSourceKind.CHOOSE && (
+        <SourceSelectionFields
+          pieces={source.pieces}
+          connections={source.connections}
+          loading={loading}
+        />
+      )}
+      {pieceName && (
         <FormField
           control={form.control}
-          name="pieceName"
-          rules={{ required: t('Please select a piece') }}
+          name="targetConnectionId"
+          rules={{
+            required: t('Please select a connection to replace with'),
+          }}
           render={({ field }) => (
             <div className="flex flex-col gap-2">
-              <Label>{t('Piece')}</Label>
+              <Label>{t('Replace with')}</Label>
               <SearchableSelect
                 value={field.value}
-                onChange={(value) => {
-                  field.onChange(value);
-                  form.setValue('sourceConnectionId', '');
-                  form.setValue('targetConnectionId', '');
-                }}
-                options={pieces.map((piece) => ({
-                  label: piece.displayName,
-                  value: piece.name,
-                }))}
-                placeholder={t('Select a piece')}
                 loading={loading}
-                valuesRendering={(value) => {
-                  const piece = pieces.find(
-                    (candidate) => candidate.name === value,
-                  );
-                  return (
-                    <div className="flex gap-2 items-center">
-                      <PieceIconWithPieceName
-                        pieceName={piece!.name}
-                        size="xs"
-                        border={false}
-                      />
-                      <span>{piece!.displayName}</span>
-                    </div>
-                  );
-                }}
+                onChange={(value) => field.onChange(value ?? '')}
+                options={toOptions(pieceTargetConnections)}
+                placeholder={t('Choose connection to replace with')}
+                valuesRendering={(value) => (
+                  <ConnectionLabel
+                    connection={pieceTargetConnections.find(
+                      (connection) => connection.id === value,
+                    )}
+                  />
+                )}
               />
               <FormMessage />
             </div>
           )}
         />
       )}
-
-      {selectedPiece && (
-        <>
-          {!hideSourceFields && (
-            <FormField
-              control={form.control}
-              name="sourceConnectionId"
-              rules={{ required: t('Please select a connection to replace') }}
-              render={({ field }) => (
-                <div className="flex flex-col gap-2">
-                  <Label>{t('Connection to replace')}</Label>
-                  <SearchableSelect
-                    value={field.value}
-                    loading={loading}
-                    onChange={(value) => {
-                      field.onChange(value ?? '');
-                      form.setValue('targetConnectionId', '');
-                    }}
-                    options={toOptions(pieceSourceConnections)}
-                    placeholder={t('Choose connection to replace')}
-                    valuesRendering={(value) => (
-                      <ConnectionLabel
-                        connection={pieceSourceConnections.find(
-                          (connection) => connection.id === value,
-                        )}
-                      />
-                    )}
-                  />
-                  <FormMessage />
-                </div>
-              )}
-            />
-          )}
-
-          <FormField
-            control={form.control}
-            name="targetConnectionId"
-            rules={{
-              required: t('Please select a connection to replace with'),
-            }}
-            render={({ field }) => (
-              <div className="flex flex-col gap-2">
-                <Label>{t('Replace with')}</Label>
-                <SearchableSelect
-                  value={field.value}
-                  loading={loading}
-                  onChange={(value) => field.onChange(value ?? '')}
-                  options={toOptions(pieceTargetConnections)}
-                  placeholder={t('Choose connection to replace with')}
-                  valuesRendering={(value) => (
-                    <ConnectionLabel
-                      connection={pieceTargetConnections.find(
-                        (connection) => connection.id === value,
-                      )}
-                    />
-                  )}
-                />
-                <FormMessage />
-              </div>
-            )}
-          />
-        </>
-      )}
     </>
   );
 };
+
+function SourceSelectionFields({
+  pieces,
+  connections,
+  loading,
+}: SourceSelectionFieldsProps) {
+  const form = useFormContext<ReplaceConnectionSelection>();
+  const selectedPieceName = useWatch({
+    control: form.control,
+    name: 'pieceName',
+  });
+  const pieceConnections = connections.filter(
+    (connection) => connection.pieceName === selectedPieceName,
+  );
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="pieceName"
+        rules={{ required: t('Please select a piece') }}
+        render={({ field }) => (
+          <div className="flex flex-col gap-2">
+            <Label>{t('Piece')}</Label>
+            <SearchableSelect
+              value={field.value}
+              onChange={(value) => {
+                field.onChange(value);
+                form.setValue('sourceConnectionId', '');
+                form.setValue('targetConnectionId', '');
+              }}
+              options={pieces.map((piece) => ({
+                label: piece.displayName,
+                value: piece.name,
+              }))}
+              placeholder={t('Select a piece')}
+              loading={loading}
+              valuesRendering={(value) => {
+                const piece = pieces.find(
+                  (candidate) => candidate.name === value,
+                );
+                return (
+                  <div className="flex gap-2 items-center">
+                    <PieceIconWithPieceName
+                      pieceName={piece!.name}
+                      size="xs"
+                      border={false}
+                    />
+                    <span>{piece!.displayName}</span>
+                  </div>
+                );
+              }}
+            />
+            <FormMessage />
+          </div>
+        )}
+      />
+      {selectedPieceName && (
+        <FormField
+          control={form.control}
+          name="sourceConnectionId"
+          rules={{ required: t('Please select a connection to replace') }}
+          render={({ field }) => (
+            <div className="flex flex-col gap-2">
+              <Label>{t('Connection to replace')}</Label>
+              <SearchableSelect
+                value={field.value}
+                loading={loading}
+                onChange={(value) => {
+                  field.onChange(value ?? '');
+                  form.setValue('targetConnectionId', '');
+                }}
+                options={toOptions(pieceConnections)}
+                placeholder={t('Choose connection to replace')}
+                valuesRendering={(value) => (
+                  <ConnectionLabel
+                    connection={pieceConnections.find(
+                      (connection) => connection.id === value,
+                    )}
+                  />
+                )}
+              />
+              <FormMessage />
+            </div>
+          )}
+        />
+      )}
+    </>
+  );
+}
 
 function ConnectionLabel({
   connection,
@@ -185,8 +209,8 @@ function toOptions(connections: AppConnectionWithoutSensitiveData[]) {
   }));
 }
 
-function ReplaceConnectionVersionsField() {
-  const form = useFormContext<{ applyToPublishedVersions: boolean }>();
+function ReplaceConnectionFlowVersionsField() {
+  const form = useFormContext<ReplaceConnectionFlowVersionsSelection>();
   const publishNeedsApproval = flowApprovalsHooks.usePublishNeedsApproval();
   return (
     <FormField
@@ -230,7 +254,7 @@ function ReplaceConnectionVersionsField() {
 
 ReplaceConnectionSelectionFields.displayName =
   'ReplaceConnectionSelectionFields';
-export { ReplaceConnectionSelectionFields, ReplaceConnectionVersionsField };
+export { ReplaceConnectionSelectionFields, ReplaceConnectionFlowVersionsField };
 
 export const replaceConnectionSelectionUtils = {
   emptySelection: (): ReplaceConnectionSelection => ({
@@ -240,16 +264,40 @@ export const replaceConnectionSelectionUtils = {
   }),
 };
 
+export enum ReplaceConnectionSourceKind {
+  CHOOSE = 'CHOOSE',
+  FIXED = 'FIXED',
+}
+
 export type ReplaceConnectionSelection = {
   pieceName: string;
   sourceConnectionId: string;
   targetConnectionId: string;
 };
 
+export type ReplaceConnectionFlowVersionsSelection = {
+  applyToPublishedVersions: boolean;
+};
+
+type ReplaceConnectionSource =
+  | {
+      kind: ReplaceConnectionSourceKind.CHOOSE;
+      pieces: PieceMetadataModelSummary[];
+      connections: AppConnectionWithoutSensitiveData[];
+    }
+  | {
+      kind: ReplaceConnectionSourceKind.FIXED;
+      connection: AppConnectionWithoutSensitiveData;
+    };
+
 type ReplaceConnectionSelectionFieldsProps = {
-  pieces: PieceMetadataModelSummary[];
-  sourceConnections: AppConnectionWithoutSensitiveData[];
+  source: ReplaceConnectionSource;
   targetConnections: AppConnectionWithoutSensitiveData[];
   loading: boolean;
-  hideSourceFields?: boolean;
+};
+
+type SourceSelectionFieldsProps = {
+  pieces: PieceMetadataModelSummary[];
+  connections: AppConnectionWithoutSensitiveData[];
+  loading: boolean;
 };

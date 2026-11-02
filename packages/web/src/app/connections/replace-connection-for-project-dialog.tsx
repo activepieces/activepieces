@@ -31,10 +31,12 @@ import { piecesHooks } from '@/features/pieces';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 import {
+  ReplaceConnectionFlowVersionsField,
+  ReplaceConnectionFlowVersionsSelection,
   ReplaceConnectionSelection,
   ReplaceConnectionSelectionFields,
   replaceConnectionSelectionUtils,
-  ReplaceConnectionVersionsField,
+  ReplaceConnectionSourceKind,
 } from './replace-connection-selection-form';
 
 const ReplaceConnectionForProjectDialog = ({
@@ -170,8 +172,11 @@ function ReplaceConnectionForProjectForm({
           {step === ProjectReplaceStep.CHOOSE_CONNECTIONS ? (
             <>
               <ReplaceConnectionSelectionFields
-                pieces={replaceablePieces}
-                sourceConnections={projectConnections}
+                source={{
+                  kind: ReplaceConnectionSourceKind.CHOOSE,
+                  pieces: replaceablePieces,
+                  connections: projectConnections,
+                }}
                 targetConnections={projectConnections}
                 loading={piecesLoading || connectionsLoading}
               />
@@ -244,7 +249,7 @@ function ReplaceConnectionForProjectForm({
                 </Collapsible>
               )}
 
-              <ReplaceConnectionVersionsField />
+              <ReplaceConnectionFlowVersionsField />
 
               <span className="text-xs text-gray-11">
                 {t('A replace changes up to {max} flows.', {
@@ -315,9 +320,8 @@ type ReplaceConnectionForProjectFormProps = {
   setDialogOpen: (open: boolean) => void;
 };
 
-type ProjectReplaceFormValues = ReplaceConnectionSelection & {
-  applyToPublishedVersions: boolean;
-};
+type ProjectReplaceFormValues = ReplaceConnectionSelection &
+  ReplaceConnectionFlowVersionsSelection;
 
 enum ProjectReplaceStep {
   CHOOSE_CONNECTIONS = 'CHOOSE_CONNECTIONS',

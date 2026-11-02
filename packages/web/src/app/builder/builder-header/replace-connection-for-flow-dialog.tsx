@@ -7,10 +7,10 @@ import { useForm } from 'react-hook-form';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import {
-  ReplaceConnectionSelection,
+  ReplaceConnectionFlowVersionsField,
+  ReplaceConnectionFlowVersionsSelection,
   ReplaceConnectionSelectionFields,
-  replaceConnectionSelectionUtils,
-  ReplaceConnectionVersionsField,
+  ReplaceConnectionSourceKind,
 } from '@/app/connections/replace-connection-selection-form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -103,16 +103,14 @@ function ReplaceConnectionForFlowForm({
       replaceConnections({
         flowIds: [flow.id],
         projectId,
-        sourceAppConnectionId: values.sourceConnectionId,
+        sourceAppConnectionId: sourceConnection.id,
         targetAppConnectionId: values.targetConnectionId,
         applyToPublishedVersions: values.applyToPublishedVersions,
       }),
   });
   const form = useForm<FlowReplaceFormValues>({
     defaultValues: {
-      ...replaceConnectionSelectionUtils.emptySelection(),
-      pieceName: sourceConnection.pieceName,
-      sourceConnectionId: sourceConnection.id,
+      targetConnectionId: '',
       applyToPublishedVersions: false,
     },
     mode: 'onSubmit',
@@ -133,13 +131,14 @@ function ReplaceConnectionForFlowForm({
             )}
           </AlertDescription>
         </Alert>
-        <ReplaceConnectionVersionsField />
+        <ReplaceConnectionFlowVersionsField />
         <ReplaceConnectionSelectionFields
-          pieces={[]}
-          sourceConnections={[sourceConnection]}
+          source={{
+            kind: ReplaceConnectionSourceKind.FIXED,
+            connection: sourceConnection,
+          }}
           targetConnections={projectConnections}
           loading={connectionsLoading}
-          hideSourceFields
         />
         <DialogFooter>
           <DialogClose asChild>
@@ -159,8 +158,8 @@ function ReplaceConnectionForFlowForm({
 ReplaceConnectionForFlowDialog.displayName = 'ReplaceConnectionForFlowDialog';
 export { ReplaceConnectionForFlowDialog };
 
-type FlowReplaceFormValues = ReplaceConnectionSelection & {
-  applyToPublishedVersions: boolean;
+type FlowReplaceFormValues = ReplaceConnectionFlowVersionsSelection & {
+  targetConnectionId: string;
 };
 
 type ReplaceConnectionForFlowDialogProps = {
