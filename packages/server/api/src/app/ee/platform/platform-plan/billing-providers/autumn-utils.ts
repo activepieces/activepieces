@@ -598,9 +598,6 @@ type PlatformPlanFlags = Required<Pick<PlatformPlanLimits, PlatformPlanFlagId>>
 type NotProjectedFromAutumn =
     | 'licenseKey'
     | 'licenseExpiresAt'
-    | 'dedicatedWorkers'
-    | 'canary'
-    | 'customDomainsEnabled'
     | 'workerGroupId'
 
 type PlatformPlanProjection = Required<Pick<PlatformPlanLimits, Exclude<keyof PlatformPlanLimits, NotProjectedFromAutumn>>>

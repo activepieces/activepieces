@@ -100,9 +100,6 @@ export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
-    dedicatedWorkers: null,
-    canary: false,
-    customDomainsEnabled: false,
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
@@ -129,9 +126,6 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
     secretManagersEnabled: false,
     scimEnabled: false,
-    dedicatedWorkers: null,
-    canary: false,
-    customDomainsEnabled: false,
 }
 
 export const isCloudPlanButNotEnterprise = (plan?: string | null): boolean => {
