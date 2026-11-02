@@ -87,7 +87,7 @@ export const newOrUpdatedRow = createTrigger({
 });
 
 function toSqlTimestamp({ epochMs }: { epochMs: number }): string {
-  return new Date(epochMs).toISOString().replace('T', ' ').replace('Z', '');
+  return new Date(epochMs).toISOString();
 }
 
 function toEpochMs({ value }: { value: unknown }): number | undefined {

@@ -68,6 +68,14 @@ function parseBigint(value: string): number | string {
 async function runWithDataApi({ props, server, sql, params }: SqlStatement & { props: RedshiftIamProps; server: AnyServerContext }): Promise<RedshiftQueryResult> {
   const credentials = await getTemporaryCredentials({ props, server });
   const client = new RedshiftDataClient({ region: props.region, credentials });
+  client.middlewareStack.add(
+    (next) => async (args) => {
+      const result = await next(args);
+      await keepLargeIntegersAsText({ response: result.response });
+      return result;
+    },
+    { step: 'deserialize', priority: 'low', name: 'keepLargeIntegersAsText' },
+  );
   const { text, parameters } = toNamedParameters({ sql, params });
   const started = await client.send(
     new ExecuteStatementCommand({
@@ -89,6 +97,25 @@ async function runWithDataApi({ props, server, sql, params }: SqlStatement & { p
   }
   const rows = await readRows({ client, id: started.Id });
   return { rows, rowCount: rows.length };
+}
+
+async function keepLargeIntegersAsText({ response }: { response: unknown }): Promise<void> {
+  if (typeof response !== 'object' || response === null || !('body' in response) || !isByteStream(response.body)) {
+    return;
+  }
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of response.body) {
+    chunks.push(chunk);
+  }
+  response.body = Buffer.from(
+    Buffer.concat(chunks)
+      .toString('utf8')
+      .replace(LONG_VALUE_FIELD, (match: string, digits: string) => (Number.isSafeInteger(Number(digits)) ? match : `"stringValue":"${digits}"`)),
+  );
+}
+
+function isByteStream(body: unknown): body is AsyncIterable<Uint8Array> {
+  return typeof body === 'object' && body !== null && Symbol.asyncIterator in body;
 }
 
 async function waitForStatement({ client, id, deadline }: { client: RedshiftDataClient; id: string; deadline: number }): Promise<DescribeStatementResponse> {
@@ -239,7 +266,8 @@ export const redshiftClient = { runSql };
 
 const RAW_TEXT_TYPE_OIDS = [1082, 1083, 1114, 1184, 1266];
 const BIGINT_TYPE_OID = 20;
-const SKIPPED_SQL_TEXT = String.raw`'(?:[^']|'')*'|"(?:[^"]|"")*"|\$(?<tag>[A-Za-z_]*)\$[\s\S]*?\$\k<tag>\$|--[^\n]*|\/\*[\s\S]*?\*\/`;
+const LONG_VALUE_FIELD = /"longValue":(-?\d+)/g;
+const SKIPPED_SQL_TEXT = String.raw`'(?:[^']|'')*'|"(?:[^"]|"")*"|\$(?<tag>[A-Za-z_][A-Za-z_0-9]*|)\$[\s\S]*?\$\k<tag>\$|--[^\n]*|\/\*[\s\S]*?\*\/`;
 const SKIPPED_SQL = new RegExp(SKIPPED_SQL_TEXT, 'g');
 const SQL_TOKENS = new RegExp(`${SKIPPED_SQL_TEXT}|\\$\\d+`, 'g');
 const ARG_PLACEHOLDER = /^\$(\d+)$/;
