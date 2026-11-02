@@ -167,7 +167,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.213.0",
+      "version": "0.214.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -4318,12 +4318,13 @@
     },
     "packages/pieces/community/groq": {
       "name": "@activepieces/piece-groq",
-      "version": "0.5.2",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "zod": "4.3.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
