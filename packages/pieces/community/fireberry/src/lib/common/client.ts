@@ -1,9 +1,10 @@
 import { HttpMethod, httpClient, HttpRequest } from '@activepieces/pieces-common';
 
 const FIREBERRY_API_BASE_URL = 'https://api.fireberry.com';
-const MAX_ATTEMPTS = 3;
-const RETRY_DELAY_MS = 1000;
-const MAX_RETRY_DELAY_MS = 10000;
+const MAX_ATTEMPTS = 3; // 1 try + one retry per RETRY_DELAYS_MS entry
+// Fixed backoff for retried reads (429/5xx): wait 2s, then 4s. The shared httpClient's HttpError
+// only carries status and body, so a Retry-After header is not readable on the error path and is not used.
+const RETRY_DELAYS_MS = [2000, 4000];
 const REQUEST_TIMEOUT_MS = 30000;
 const MAX_PAGE_SIZE = 50;
 const MAX_PAGE_NUMBER = 10;
@@ -51,20 +52,11 @@ function extractVendorMessage(body: unknown): string | undefined {
   return undefined;
 }
 
-function retryDelayMs({ attempt, headers }: { attempt: number; headers: unknown }): number {
-  const backoff = Math.min(RETRY_DELAY_MS * 2 ** (attempt - 1), MAX_RETRY_DELAY_MS);
-  if (!isRecord(headers)) {
-    return backoff;
-  }
-  const raw = headers['retry-after'] ?? headers['Retry-After'];
-  const seconds = Number(Array.isArray(raw) ? raw[0] : raw);
-  if (Number.isFinite(seconds) && seconds >= 0) {
-    return Math.min(seconds * 1000, MAX_RETRY_DELAY_MS);
-  }
-  return backoff;
+function retryDelayMs(attempt: number): number {
+  return RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length) - 1];
 }
 
-function readHttpFailure(error: unknown): { status: number; body: unknown; headers?: unknown } | undefined {
+function readHttpFailure(error: unknown): { status: number; body: unknown } | undefined {
   if (!isRecord(error)) {
     return undefined;
   }
@@ -72,7 +64,7 @@ function readHttpFailure(error: unknown): { status: number; body: unknown; heade
   if (!isRecord(response) || typeof response['status'] !== 'number') {
     return undefined;
   }
-  return { status: response['status'], body: response['body'], headers: response['headers'] };
+  return { status: response['status'], body: response['body'] };
 }
 
 function errorMessage(error: unknown): string {
@@ -254,7 +246,7 @@ export class FireberryClient {
           return assertSuccess(response.body);
         }
         if (canRetry && shouldRetry(response.status) && attempt < MAX_ATTEMPTS) {
-          await delay(retryDelayMs({ attempt, headers: response.headers }));
+          await delay(retryDelayMs(attempt));
           continue;
         }
         throw buildError({ status: response.status, body: response.body });
@@ -264,7 +256,7 @@ export class FireberryClient {
           throw error;
         }
         if (canRetry && shouldRetry(failure.status) && attempt < MAX_ATTEMPTS) {
-          await delay(retryDelayMs({ attempt, headers: failure.headers }));
+          await delay(retryDelayMs(attempt));
           continue;
         }
         throw buildError(failure);

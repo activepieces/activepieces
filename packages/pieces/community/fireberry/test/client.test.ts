@@ -1,6 +1,9 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { FireberryClient, fireberryUtils } from '../src/lib/common/client';
+import { fireberryProps } from '../src/lib/common/props';
+
+const PICKLIST_TYPE = 'b4919f2e-2996-48e4-a03c-ba39fb64386c';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -107,5 +110,43 @@ describe('toRecordResult', () => {
 
   it('uses the fallback id when none is present', () => {
     expect(fireberryUtils.toRecordResult({ body: {}, objectSystemName: 'Account', fallbackId: 'x' }).id).toBe('x');
+  });
+});
+
+describe('picklist fallback', () => {
+  it('falls back to a text field when one picklist request fails, keeping the others', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.url.endsWith('/fields')) {
+        return { status: 200, headers: {}, body: { success: true, data: [
+          { fieldName: 'statuscode', label: 'Status', systemFieldTypeId: PICKLIST_TYPE },
+          { fieldName: 'industrycode', label: 'Industry', systemFieldTypeId: PICKLIST_TYPE },
+        ] } };
+      }
+      if (request.url.includes('/statuscode/values')) {
+        throw new HttpError({}, { status: 403, responseBody: { Message: 'Forbidden' } });
+      }
+      return { status: 200, headers: {}, body: { success: true, data: { values: [{ name: 'Tech', value: '1' }] } } };
+    });
+    const props = await fireberryProps.buildRecordFieldProps({ token: 't', objectType: 'Account', forUpdate: false });
+    expect(props['statuscode'].type).toBe('SHORT_TEXT');
+    expect(props['industrycode'].type).toBe('STATIC_DROPDOWN');
+  });
+});
+
+describe('retry backoff', () => {
+  it('waits a fixed 2s then 4s between retried reads', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new HttpError({}, { status: 429, responseBody: {} }));
+    const promise = new FireberryClient('t').getObjectsMetadata().catch((e) => e);
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(spy).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(spy).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(3999);
+    expect(spy).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(spy).toHaveBeenCalledTimes(3);
+    expect(await promise).toMatchObject({ status: 429 });
+    vi.useRealTimers();
   });
 });

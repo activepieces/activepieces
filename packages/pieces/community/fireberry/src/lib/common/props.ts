@@ -107,11 +107,12 @@ async function buildRecordFieldProps({ token, objectType, forUpdate }: { token: 
   );
   const picklistEntries = await Promise.all(
     picklistFields.map(async (field) => {
-      const values = await client.getPicklistValues({ objectSystemName, fieldName: field.fieldName });
-      return [field.fieldName, values] satisfies [string, FireberryPicklistValue[]];
+      // One failing picklist (permissions, rate limit) must not block the whole form: that field falls back to a text input.
+      const values = await client.getPicklistValues({ objectSystemName, fieldName: field.fieldName }).catch(() => undefined);
+      return [field.fieldName, values] satisfies [string, FireberryPicklistValue[] | undefined];
     }),
   );
-  const picklists = new Map<string, FireberryPicklistValue[]>(picklistEntries);
+  const picklists = new Map<string, FireberryPicklistValue[] | undefined>(picklistEntries);
   for (const field of fields) {
     props[field.fieldName] = buildFieldProp({ field, picklistValues: picklists.get(field.fieldName), forUpdate });
   }
@@ -159,5 +160,6 @@ export const updateFields = Property.DynamicProperties({
 
 export const fireberryProps = {
   objectTypeValue,
+  buildRecordFieldProps,
   recordOptions,
 };

@@ -99,3 +99,68 @@ describe('fetchSince', () => {
     await expect(fireberryRecordPolling.fetchSince({ client: new FireberryClient('t'), objectSystemName: 'Account', field: 'modifiedon', since: null })).rejects.toMatchObject({ status: 401 });
   });
 });
+
+function fakeFireberry(dataset: Record<string, unknown>[]) {
+  return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+    if (request.url.includes('/metadata/records')) {
+      return { status: 200, headers: {}, body: { success: true, data: [{ name: 'Account', systemName: 'Account', objectType: '1' }] } };
+    }
+    const body = request.body as { query?: string; sort_type: string; page_size: number; page_number: number };
+    const second = body.query ? /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})/.exec(body.query)?.[1] ?? '' : '';
+    const filtered = dataset.filter((r) => String(r['modifiedon']).slice(0, 19) >= second);
+    const sorted = body.sort_type === 'desc' ? [...filtered].reverse() : filtered;
+    const start = (body.page_number - 1) * body.page_size;
+    const Data = sorted.slice(start, start + body.page_size);
+    return { status: 200, headers: {}, body: { success: true, data: { PrimaryKey: 'accountid', IsLastPage: start + body.page_size >= sorted.length, Data } } };
+  });
+}
+
+describe('bulk records inside one second', () => {
+  const ts = '2026-11-01T10:00:00.500';
+  const before = rec('older', '2026-11-01T09:00:00.000');
+
+  it('pages past the normal 10-page budget while still inside the cursor second (600 records)', async () => {
+    const dataset = [before, ...Array.from({ length: 600 }, (_, i) => rec(`r${i}`, ts))];
+    fakeFireberry(dataset);
+    const client = new FireberryClient('t');
+    const first = await fireberryRecordPolling.pollOnce({ client, objectSystemName: 'Account', field: 'modifiedon', cursor: { timestamp: '2026-11-01T10:00:00.000', ids: [] }, triggerType: 'both' });
+    expect(new Set(first.items.map((r) => r.accountid)).size).toBe(600);
+    expect(first.items).toHaveLength(600);
+    const second = await fireberryRecordPolling.pollOnce({ client, objectSystemName: 'Account', field: 'modifiedon', cursor: first.cursor, triggerType: 'both' });
+    expect(second.items).toHaveLength(0);
+  });
+
+  it('hitting the hard page cap resumes on the next poll: 600 records over two polls, each emitted once', async () => {
+    const dataset = Array.from({ length: 600 }, (_, i) => rec(`r${i}`, ts));
+    fakeFireberry(dataset);
+    const client = new FireberryClient('t');
+    const emitted: unknown[] = [];
+    let cursor: Parameters<typeof fireberryRecordPolling.pollOnce>[0]['cursor'] = { timestamp: '2026-11-01T10:00:00.000', ids: [] };
+    const first = await fireberryRecordPolling.pollOnce({ client, objectSystemName: 'Account', field: 'modifiedon', cursor, triggerType: 'both', maxPages: 8 });
+    expect(first.items).toHaveLength(400);
+    expect(first.cursor?.resumePage).toBe(8);
+    emitted.push(...first.items.map((r) => r.accountid));
+    cursor = first.cursor;
+    const second = await fireberryRecordPolling.pollOnce({ client, objectSystemName: 'Account', field: 'modifiedon', cursor, triggerType: 'both', maxPages: 8 });
+    emitted.push(...second.items.map((r) => r.accountid));
+    expect(emitted).toHaveLength(600);
+    expect(new Set(emitted).size).toBe(600);
+    expect(second.cursor?.resumePage).toBeUndefined();
+    const third = await fireberryRecordPolling.pollOnce({ client, objectSystemName: 'Account', field: 'modifiedon', cursor: second.cursor, triggerType: 'both', maxPages: 8 });
+    expect(third.items).toHaveLength(0);
+  });
+});
+
+describe('latestCursor with many tied records', () => {
+  it('records all 120 ids tied at the newest timestamp so the first poll emits 0', async () => {
+    const ts = '2026-11-01T10:00:00.500';
+    const dataset = [rec('older', '2026-11-01T09:00:00.000'), ...Array.from({ length: 120 }, (_, i) => rec(`t${i}`, ts))];
+    fakeFireberry(dataset);
+    const client = new FireberryClient('t');
+    const cursor = await fireberryRecordPolling.latestCursor({ client, objectSystemName: 'Account', field: 'modifiedon' });
+    expect(cursor?.timestamp).toBe(ts);
+    expect(cursor?.ids).toHaveLength(120);
+    const poll = await fireberryRecordPolling.pollOnce({ client, objectSystemName: 'Account', field: 'modifiedon', cursor, triggerType: 'both' });
+    expect(poll.items).toHaveLength(0);
+  });
+});

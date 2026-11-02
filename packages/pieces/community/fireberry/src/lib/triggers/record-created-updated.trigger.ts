@@ -6,6 +6,7 @@ import { FireberryClient, FIREBERRY_LIMITS } from '../common/client';
 const CURSOR_KEY = 'fireberry_record_cursor';
 const LEGACY_KEY = 'lastPollTime';
 const CREATE_STAMP_TOLERANCE_MS = 2000;
+const MAX_PAGES_PER_POLL = 100;
 
 function timestampField(triggerType: string | undefined): 'createdon' | 'modifiedon' {
   return triggerType === 'created' ? 'createdon' : 'modifiedon';
@@ -105,21 +106,34 @@ function selectNewRecords({
   };
 }
 
+function sameQuerySecond({ timestamp, since }: { timestamp: string | undefined; since: string }): boolean {
+  return timestamp !== undefined && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.exec(timestamp)?.[0] === toQueryTimestamp(since);
+}
+
+// Fireberry filters to the second, so a burst of records inside the cursor's second always comes back
+// from page 1. Normal reads stop after FIREBERRY_LIMITS.MAX_PAGE_NUMBER pages; while the last record read
+// is still inside the cursor's second we keep paging (the stored cursor could not move past it otherwise),
+// up to MAX_PAGES_PER_POLL. If even that is hit, the next poll resumes at the last page read (one page of
+// overlap, deduplicated by the cursor ids) instead of re-reading the same pages forever.
 async function fetchSince({
   client,
   objectSystemName,
   field,
   since,
+  startPage = 1,
+  maxPages = MAX_PAGES_PER_POLL,
 }: {
   client: FireberryClient;
   objectSystemName: string;
   field: string;
   since: string | null;
-}): Promise<{ records: Record<string, unknown>[]; primaryKey: string }> {
+  startPage?: number;
+  maxPages?: number;
+}): Promise<{ records: Record<string, unknown>[]; primaryKey: string; resumePage?: number }> {
   const objectType = await client.resolveObjectTypeNumber(objectSystemName);
   const records: Record<string, unknown>[] = [];
   let primaryKey = '';
-  for (let page = 1; page <= FIREBERRY_LIMITS.MAX_PAGE_NUMBER; page++) {
+  for (let read = 0, page = startPage; ; read++, page++) {
     const result = await client.query({
       objecttype: objectType,
       query: since ? `(${field} >= ${toQueryTimestamp(since)})` : undefined,
@@ -131,22 +145,87 @@ async function fetchSince({
     primaryKey = result.PrimaryKey || primaryKey;
     records.push(...result.Data);
     if (result.IsLastPage || result.Data.length < FIREBERRY_LIMITS.MAX_PAGE_SIZE) {
+      return { records, primaryKey };
+    }
+    const last = result.Data[result.Data.length - 1];
+    const stillInCursorSecond = since !== null && sameQuerySecond({ timestamp: readString({ record: last, key: field }), since });
+    if (!stillInCursorSecond && read + 1 >= FIREBERRY_LIMITS.MAX_PAGE_NUMBER) {
+      return { records, primaryKey };
+    }
+    if (stillInCursorSecond && read + 1 >= maxPages) {
+      return { records, primaryKey, resumePage: page };
+    }
+  }
+}
+
+// Builds the starting cursor from the newest records, paging (newest first) until the timestamp changes
+// or the last page, so every id tied at the newest timestamp is recorded and none fires on the first poll.
+async function latestCursor({
+  client,
+  objectSystemName,
+  field,
+  maxPages = MAX_PAGES_PER_POLL,
+}: {
+  client: FireberryClient;
+  objectSystemName: string;
+  field: string;
+  maxPages?: number;
+}): Promise<RecordCursor | null> {
+  const objectType = await client.resolveObjectTypeNumber(objectSystemName);
+  const records: Record<string, unknown>[] = [];
+  let primaryKey = '';
+  for (let page = 1; page <= maxPages; page++) {
+    const result = await client.query({
+      objecttype: objectType,
+      sort_by: field,
+      sort_type: 'desc',
+      page_size: FIREBERRY_LIMITS.MAX_PAGE_SIZE,
+      page_number: page,
+    });
+    primaryKey = result.PrimaryKey || primaryKey;
+    records.push(...result.Data);
+    if (result.IsLastPage || result.Data.length < FIREBERRY_LIMITS.MAX_PAGE_SIZE) {
+      break;
+    }
+    const newest = readString({ record: records[0], key: field });
+    const last = readString({ record: result.Data[result.Data.length - 1], key: field });
+    if (!newest || !last || compareTimestamps({ a: last, b: newest }) !== 0) {
       break;
     }
   }
-  return { records, primaryKey };
+  return cursorFromNewest({ records, field, primaryKey });
 }
 
-async function latestCursor({ client, objectSystemName, field }: { client: FireberryClient; objectSystemName: string; field: string }): Promise<RecordCursor | null> {
-  const objectType = await client.resolveObjectTypeNumber(objectSystemName);
-  const result = await client.query({
-    objecttype: objectType,
-    sort_by: field,
-    sort_type: 'desc',
-    page_size: FIREBERRY_LIMITS.MAX_PAGE_SIZE,
-    page_number: 1,
+async function pollOnce({
+  client,
+  objectSystemName,
+  field,
+  cursor,
+  triggerType,
+  maxPages,
+}: {
+  client: FireberryClient;
+  objectSystemName: string;
+  field: string;
+  cursor: RecordCursor | null;
+  triggerType: string | undefined;
+  maxPages?: number;
+}): Promise<{ items: Record<string, unknown>[]; cursor: RecordCursor | null }> {
+  const { records, primaryKey, resumePage } = await fetchSince({
+    client,
+    objectSystemName,
+    field,
+    since: cursor?.timestamp ?? null,
+    startPage: cursor?.resumePage ?? 1,
+    maxPages,
   });
-  return cursorFromNewest({ records: result.Data, field, primaryKey: result.PrimaryKey });
+  const base = cursor ? { timestamp: cursor.timestamp, ids: cursor.ids } : null;
+  const selection = selectNewRecords({ records, cursor: base, field, primaryKey, triggerType });
+  const next = selection.cursor ? { timestamp: selection.cursor.timestamp, ids: selection.cursor.ids } : null;
+  if (next && resumePage !== undefined) {
+    return { items: selection.items, cursor: { ...next, resumePage } };
+  }
+  return { items: selection.items, cursor: next };
 }
 
 function cursorFromNewest({ records, field, primaryKey }: { records: Record<string, unknown>[]; field: string; primaryKey: string }): RecordCursor | null {
@@ -240,23 +319,18 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
       await store.put(CURSOR_KEY, { cursor });
       return [];
     }
-    const { records, primaryKey } = await fetchSince({
-      client,
-      objectSystemName: propsValue.objectType,
-      field,
-      since: stored.cursor?.timestamp ?? null,
-    });
-    const selection = selectNewRecords({ records, cursor: stored.cursor, field, primaryKey, triggerType: propsValue.triggerType });
+    const selection = await pollOnce({ client, objectSystemName: propsValue.objectType, field, cursor: stored.cursor, triggerType: propsValue.triggerType });
     await store.put(CURSOR_KEY, { cursor: selection.cursor });
     return selection.items;
   },
 });
 
-export const fireberryRecordPolling = { selectNewRecords, fetchSince, compareTimestamps, toQueryTimestamp, cursorFromNewest };
+export const fireberryRecordPolling = { selectNewRecords, fetchSince, compareTimestamps, toQueryTimestamp, cursorFromNewest, latestCursor, pollOnce };
 
 type RecordCursor = {
   timestamp: string;
   ids: string[];
+  resumePage?: number;
 };
 
 type StoredCursor = {
