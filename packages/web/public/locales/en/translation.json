@@ -3724,10 +3724,10 @@
   "usedInStepsCount": "{count, plural, =1 {Used in 1 step} other {Used in # steps}}",
   "Replace {name}": "Replace {name}",
   "Every step in this flow that uses {name} will switch to the connection you pick below.": "Every step in this flow that uses {name} will switch to the connection you pick below.",
-  "Test the flow after the replace to make sure every step still works.": "Test the flow after the replace to make sure every step still works.",
   "Switch to {newName}?": "Switch to {newName}?",
   "Replace in all steps": "Replace in all steps",
   "{stepCount, plural, =1 {To keep your inputs, replace the connection in the step that uses {oldName} instead.} other {To keep your inputs, replace the connection in all # steps that use {oldName} instead.}}": "{stepCount, plural, =1 {To keep your inputs, replace the connection in the step that uses {oldName} instead.} other {To keep your inputs, replace the connection in all # steps that use {oldName} instead.}}",
   "Switching can clear {inputs} in this step's settings, if the new connection doesn't have access to them.": "Switching can clear {inputs} in this step's settings, if the new connection doesn't have access to them.",
-  "Switch": "Switch"
+  "Switch": "Switch",
+  "{flowCount, plural, =1 {We recommend testing the flow after the replace. If {newName} can't access the same data as {oldName}, the flow could break.} other {We recommend testing these flows after the replace. If {newName} can't access the same data as {oldName}, they could break.}}": "{flowCount, plural, =1 {We recommend testing the flow after the replace. If {newName} can't access the same data as {oldName}, the flow could break.} other {We recommend testing these flows after the replace. If {newName} can't access the same data as {oldName}, they could break.}}"
 }

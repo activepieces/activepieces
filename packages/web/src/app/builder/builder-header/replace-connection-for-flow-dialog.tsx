@@ -1,7 +1,6 @@
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -11,8 +10,8 @@ import {
   ReplaceConnectionFlowVersionsSelection,
   ReplaceConnectionSelectionFields,
   ReplaceConnectionSourceKind,
+  ReplaceConnectionTestFlowsAlert,
 } from '@/app/connections/replace-connection-selection-form';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -127,14 +126,6 @@ function ReplaceConnectionForFlowForm({
         onSubmit={form.handleSubmit((values) => saveEditsThenReplace(values))}
         className="flex flex-col gap-4"
       >
-        <Alert>
-          <Info className="size-4" />
-          <AlertDescription>
-            {t(
-              'Test the flow after the replace to make sure every step still works.',
-            )}
-          </AlertDescription>
-        </Alert>
         <ReplaceConnectionFlowVersionsField />
         <ReplaceConnectionSelectionFields
           source={{
@@ -143,6 +134,11 @@ function ReplaceConnectionForFlowForm({
           }}
           targetConnections={projectConnections}
           loading={connectionsLoading}
+        />
+        <ReplaceConnectionTestFlowsAlert
+          sourceConnection={sourceConnection}
+          targetConnections={projectConnections}
+          flowCount={1}
         />
         <DialogFooter>
           <DialogClose asChild>

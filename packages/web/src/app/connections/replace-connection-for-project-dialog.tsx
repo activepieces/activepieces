@@ -37,6 +37,7 @@ import {
   ReplaceConnectionSelectionFields,
   replaceConnectionSelectionUtils,
   ReplaceConnectionSourceKind,
+  ReplaceConnectionTestFlowsAlert,
 } from './replace-connection-selection-form';
 
 const ReplaceConnectionForProjectDialog = ({
@@ -247,6 +248,14 @@ function ReplaceConnectionForProjectForm({
                     </ScrollArea>
                   </CollapsibleContent>
                 </Collapsible>
+              )}
+
+              {affectedFlows.length > 0 && (
+                <ReplaceConnectionTestFlowsAlert
+                  sourceConnection={sourceConnection}
+                  targetConnections={projectConnections}
+                  flowCount={affectedFlows.length}
+                />
               )}
 
               <ReplaceConnectionFlowVersionsField />

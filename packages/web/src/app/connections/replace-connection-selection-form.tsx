@@ -252,9 +252,66 @@ function ReplaceConnectionFlowVersionsField() {
   );
 }
 
+function ReplaceConnectionTestFlowsAlert({
+  sourceConnection,
+  targetConnections,
+  flowCount,
+}: ReplaceConnectionTestFlowsAlertProps) {
+  const form = useFormContext<ReplaceConnectionSelection>();
+  const targetConnectionId = useWatch({
+    control: form.control,
+    name: 'targetConnectionId',
+  });
+  const targetConnection = targetConnections.find(
+    (connection) => connection.id === targetConnectionId,
+  );
+  if (!targetConnection || !sourceConnection) {
+    return null;
+  }
+  const names: Record<string, string> = {
+    [NEW_NAME_PLACEHOLDER]: targetConnection.displayName,
+    [OLD_NAME_PLACEHOLDER]: sourceConnection.displayName,
+  };
+  const parts = t(
+    "{flowCount, plural, =1 {We recommend testing the flow after the replace. If {newName} can't access the same data as {oldName}, the flow could break.} other {We recommend testing these flows after the replace. If {newName} can't access the same data as {oldName}, they could break.}}",
+    {
+      flowCount,
+      newName: NEW_NAME_PLACEHOLDER,
+      oldName: OLD_NAME_PLACEHOLDER,
+    },
+  ).split(NAME_PLACEHOLDER_PATTERN);
+  return (
+    <Alert>
+      <Info className="size-4" />
+      <AlertDescription>
+        <span>
+          {parts.map((part, index) =>
+            part in names ? (
+              <strong key={index} className="font-semibold">
+                {names[part]}
+              </strong>
+            ) : (
+              part
+            ),
+          )}
+        </span>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 ReplaceConnectionSelectionFields.displayName =
   'ReplaceConnectionSelectionFields';
-export { ReplaceConnectionSelectionFields, ReplaceConnectionFlowVersionsField };
+export {
+  ReplaceConnectionSelectionFields,
+  ReplaceConnectionFlowVersionsField,
+  ReplaceConnectionTestFlowsAlert,
+};
+
+const NEW_NAME_PLACEHOLDER = '__AP_NEW_CONNECTION_NAME__';
+const OLD_NAME_PLACEHOLDER = '__AP_OLD_CONNECTION_NAME__';
+const NAME_PLACEHOLDER_PATTERN =
+  /(__AP_NEW_CONNECTION_NAME__|__AP_OLD_CONNECTION_NAME__)/;
 
 export const replaceConnectionSelectionUtils = {
   emptySelection: (): ReplaceConnectionSelection => ({
@@ -294,6 +351,12 @@ type ReplaceConnectionSelectionFieldsProps = {
   source: ReplaceConnectionSource;
   targetConnections: AppConnectionWithoutSensitiveData[];
   loading: boolean;
+};
+
+type ReplaceConnectionTestFlowsAlertProps = {
+  sourceConnection: AppConnectionWithoutSensitiveData | undefined;
+  targetConnections: AppConnectionWithoutSensitiveData[];
+  flowCount: number;
 };
 
 type SourceSelectionFieldsProps = {
