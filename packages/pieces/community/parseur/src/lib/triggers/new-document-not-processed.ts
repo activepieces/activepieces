@@ -6,6 +6,7 @@ import { WebhookInformation } from '../common/types';
 export const newDocumentNotProcessed = createTrigger({
   auth: parseurAuth,
   name: 'newDocumentNotProcessed',
+  classification: 'READ',
   displayName: 'New Document Not Processed',
   description:
     'Fires when Parseur fails to parse a document (e.g. no matching template).',

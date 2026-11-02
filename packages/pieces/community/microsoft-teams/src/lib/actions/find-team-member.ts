@@ -7,6 +7,7 @@ import { createGraphClient } from '../common/graph';
 export const findTeamMemberAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_find_team_member',
+	classification: 'SEARCH',
 	displayName: 'Find Team Member',
 	description: 'Finds a team member by email or display name.',
 	audience: 'both',

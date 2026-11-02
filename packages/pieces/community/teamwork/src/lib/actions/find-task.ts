@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findTask = createAction({
 	name: 'find_task',
+	classification: 'SEARCH',
 	displayName: 'Find Task',
 	description: 'Search for tasks.',
 	audience: 'both',

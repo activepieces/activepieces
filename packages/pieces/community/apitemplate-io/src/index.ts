@@ -7,6 +7,11 @@ import { deleteObject } from './lib/actions/delete-object';
 import { listObjects } from './lib/actions/list-objects';
 import { createPdfFromHtml } from './lib/actions/create-pdf-from-html';
 import { createPdfFromUrl } from './lib/actions/create-pdf-from-url';
+import { createPdfFromMarkdown } from './lib/actions/create-pdf-from-markdown';
+import { listTemplates } from './lib/actions/list-templates';
+import { getTemplate } from './lib/actions/get-template';
+import { updateTemplate } from './lib/actions/update-template';
+import { mergePdfs } from './lib/actions/merge-pdfs';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { ApitemplateAuthConfig, ApitemplateRegion, getRegionalBaseUrl } from './lib/common/client';
@@ -14,7 +19,7 @@ import { ApitemplateAuthConfig, ApitemplateRegion, getRegionalBaseUrl } from './
 export const apitemplateIo = createPiece({
   displayName: 'APITemplate.io',
   auth: ApitemplateAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitemplate-io.png',
   categories: [PieceCategory.CONTENT_AND_FILES, PieceCategory.PRODUCTIVITY],
   authors: ['Sanket6652'],
@@ -26,6 +31,11 @@ export const apitemplateIo = createPiece({
     deleteObject,
     getAccountInformation,
     listObjects,
+    createPdfFromMarkdown,
+    listTemplates,
+    getTemplate,
+    updateTemplate,
+    mergePdfs,
     createCustomApiCallAction({
       auth: ApitemplateAuth,
       baseUrl: (auth) => {

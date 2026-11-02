@@ -7,6 +7,7 @@ import { StreakUser } from '../common/types';
 export const getCurrentUserAction = createAction({
   auth: streakAuth,
   name: 'get_current_user',
+  classification: 'READ',
   displayName: 'Get Current User',
   description: 'Get the Streak user associated with the connected API key.',
   audience: 'both',

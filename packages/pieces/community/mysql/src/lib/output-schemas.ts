@@ -14,6 +14,18 @@ export const insertRowOutputSchema: OutputSchema = {
   ],
 };
 
+export const insertRowsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'affectedRows', label: 'Inserted Rows', format: 'number' },
+    {
+      key: 'firstInsertId',
+      label: 'First Insert ID',
+      format: 'number',
+      description: 'Auto-increment id of the first inserted row (0 when the table has no auto-increment column). MySQL reports only this one id; the other rows follow it in sequence.',
+    },
+  ],
+};
+
 export const updateRowOutputSchema: OutputSchema = {
   fields: [
     {

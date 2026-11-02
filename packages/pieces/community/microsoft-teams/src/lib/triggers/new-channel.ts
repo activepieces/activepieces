@@ -20,6 +20,7 @@ type Props = {
 export const newChannelTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-channel',
+	classification: 'READ',
 	displayName: 'New Channel',
 	description: 'Triggers when a new channel is created in a team.',
 	aiMetadata: {
@@ -30,18 +31,10 @@ export const newChannelTrigger = createTrigger({
 	},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

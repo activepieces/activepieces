@@ -7,6 +7,7 @@ import { legacyFindUserOutputSchema } from '../output-schemas';
 export const findUserAction = createAction({
     auth:jiraCloudAuth,
     name:'find-user',
+    classification: 'SEARCH',
     displayName:'Find User',
     description:'Finds an existing user.',
     audience: 'human',
@@ -19,6 +20,8 @@ export const findUserAction = createAction({
     props:{
         keyword:Property.ShortText({
             displayName:'Keyword',
+            description: 'Matches part of a name or email address.',
+            placeholder: 'jane@example.com',
             required:true,
         })
     },

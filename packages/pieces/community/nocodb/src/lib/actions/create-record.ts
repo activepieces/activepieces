@@ -1,10 +1,13 @@
 import { nocodbAuth } from '../auth';
 import { createAction, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { makeClient, nocodbCommon } from '../common';
+import { nocodbCreateRecordOutputSchema } from '../output-schemas';
 
 export const createRecordAction = createAction({
 	auth: nocodbAuth,
 	name: 'nocodb-create-record',
+	classification: 'WRITE',
+	outputSchema: nocodbCreateRecordOutputSchema,
 	displayName: 'Create a Record',
 	description: 'Creates a new record in the given table.',
 	audience: 'both',

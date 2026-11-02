@@ -6,6 +6,7 @@ import { parallelClient } from '../common/client';
 export const searchAction = createAction({
   auth: parallelAuth,
   name: 'search',
+  classification: 'SEARCH',
   displayName: 'Search the Web',
   description:
     'Search the web with natural-language objectives. Returns LLM-optimized excerpts with citations.',

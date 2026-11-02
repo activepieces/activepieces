@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const listCompanies = createAction({
   auth: villageAuth,
   name: 'list_companies',
+  classification: 'SEARCH',
   displayName: 'List Companies',
   description:
     'Get your top-connected companies ranked by network strength. Returns a paginated list with connection score, label, LinkedIn URL, domain, and enrichment data.',

@@ -6,6 +6,7 @@ import { folkProps } from '../common/props';
 export const createCompany = createAction({
   auth: folkAuth,
   name: 'createCompany',
+  classification: 'WRITE',
   displayName: 'Create Company',
   description: 'Create a new company in your Folk workspace. You can add emails, links, phone numbers, and assign it to a group.',
   audience: 'both',

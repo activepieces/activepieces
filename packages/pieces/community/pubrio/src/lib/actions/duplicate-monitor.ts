@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const duplicateMonitor = createAction({
   auth: pubrioAuth,
   name: 'duplicate_monitor',
+  classification: 'WRITE',
   displayName: 'Duplicate Monitor',
   description: 'Duplicate an existing monitor',
   audience: 'both',

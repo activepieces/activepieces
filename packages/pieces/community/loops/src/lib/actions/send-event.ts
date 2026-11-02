@@ -4,6 +4,7 @@ import { loopsAuth, LOOPS_BASE_URL } from '../auth';
 
 export const sendEvent = createAction({
   name: 'send_event',
+  classification: 'WRITE',
   displayName: 'Send Event',
   description:
     'Sends an event to Loops for a contact. Events can trigger email automations configured in your Loops dashboard.',

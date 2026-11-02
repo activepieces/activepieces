@@ -4,6 +4,10 @@ import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  TypeToConfirm,
+  useTypeToConfirm,
+} from '@/components/custom/type-to-confirm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 interface ConfirmationDeleteDialogProps {
   title: string;
@@ -30,6 +35,11 @@ interface ConfirmationDeleteDialogProps {
   onError?: (error: Error) => void;
   warning?: React.ReactNode | string;
   confirmDisabled?: boolean;
+  confirmText?: string;
+  controlId?: AdminControl;
+  contentClassName?: string;
+  keepOpenOnOutsideClick?: boolean;
+  confirmVariant?: 'destructive' | 'default';
 }
 
 export const ConfirmationDeleteDialog = ({
@@ -46,11 +56,18 @@ export const ConfirmationDeleteDialog = ({
   onOpenChange,
   warning,
   confirmDisabled,
+  confirmText,
+  controlId,
+  contentClassName,
+  keepOpenOnOutsideClick = false,
+  confirmVariant = 'destructive',
 }: ConfirmationDeleteDialogProps) => {
   const [isControlled] = useState(
     open !== undefined && onOpenChange !== undefined,
   );
   const [isUncontrolledOpen, setIsUncontrolledOpen] = useState(false);
+  const isOpen = isControlled ? open : isUncontrolledOpen;
+  const typed = useTypeToConfirm({ open: !!isOpen, text: confirmText });
 
   const { mutate, isPending } = useMutation({
     mutationFn,
@@ -71,8 +88,6 @@ export const ConfirmationDeleteDialog = ({
     }
   };
 
-  const isOpen = isControlled ? open : isUncontrolledOpen;
-
   return (
     <Dialog
       open={isOpen}
@@ -80,7 +95,15 @@ export const ConfirmationDeleteDialog = ({
     >
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
-      <DialogContent onClick={(e) => e.stopPropagation()}>
+      <DialogContent
+        className={contentClassName}
+        onClick={(e) => e.stopPropagation()}
+        onInteractOutside={(event) => {
+          if (keepOpenOnOutsideClick) {
+            event.preventDefault();
+          }
+        }}
+      >
         <DialogHeader className="min-w-0">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="pt-2 break-words">
@@ -93,6 +116,14 @@ export const ConfirmationDeleteDialog = ({
             <AlertDescription>{warning}</AlertDescription>
           </Alert>
         )}
+        {confirmText && !confirmDisabled && (
+          <TypeToConfirm
+            id="delete-confirm-text"
+            text={confirmText}
+            value={typed.value}
+            onChange={typed.setValue}
+          />
+        )}
         <DialogFooter className="mt-3">
           <Button
             variant="outline"
@@ -102,10 +133,11 @@ export const ConfirmationDeleteDialog = ({
             {t('Cancel')}
           </Button>
           <Button
-            variant="destructive"
+            variant={confirmVariant}
             loading={isPending}
-            disabled={confirmDisabled}
+            disabled={confirmDisabled || !typed.confirmed}
             onClick={() => mutate()}
+            {...adminControl(controlId)}
           >
             {isDanger && <TriangleAlert className="size-4 mr-2" />}
             {buttonText || t('Remove')}

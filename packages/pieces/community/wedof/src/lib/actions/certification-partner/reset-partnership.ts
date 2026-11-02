@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const resetPartnership = createAction({
   auth: wedofAuth,
   name: 'resetPartnership',
+  classification: 'WRITE',
   displayName: "Réinitialiser un partenariat",
   description: "Permet de réinitialiser les données du partenariat en état 'Demande en traitement'",
   audience: 'both',

@@ -4,29 +4,12 @@ description: "How pieces are packaged, distributed, and pinned to flow versions"
 icon: "puzzle-piece"
 ---
 
+import { PieceVersionChecker } from '/snippets/piece-version-checker.jsx';
+
 Pieces are standard [npm packages](https://www.npmjs.com/search?q=%40activepieces%2Fpiece-). Two facts follow from that:
 
 - **No server upgrade is needed for new pieces.** A sync job pulls fresh versions on its own.
 - **Each step is pinned to an exact version.** Flows never auto-upgrade. Version bumps are explicit, through the builder.
-
-```mermaid
-flowchart LR
-    REG["npm registry<br/>(@activepieces/piece-*)"]
-    CAT["Local piece catalog"]
-    STEP["Flow step<br/>pieceVersion: 0.5.3"]
-    UI["Builder version dialog"]
-
-    REG -- "hourly sync<br/>(OFFICIAL_AUTO)" --> CAT
-    CAT -- "exact version on add" --> STEP
-    UI -- "explicit upgrade" --> STEP
-
-    classDef src fill:#eef,stroke:#88a
-    classDef catalog fill:#efe,stroke:#7a7
-    classDef flow fill:#fee,stroke:#a77
-    class REG src
-    class CAT catalog
-    class STEP,UI flow
-```
 
 ## Packaging
 
@@ -49,6 +32,17 @@ Custom and private pieces are never touched by the sync job.
 ## Server compatibility
 
 Every piece declares a `minimumSupportedRelease` (and optional `maximumSupportedRelease`) in its definition: the range of Activepieces server releases it works on. The catalog filters pieces against the running server's release, so an out-of-range piece is never listed in the builder and never served from the registry.
+
+On every sync:
+
+1. Your instance sends its release to the registry.
+2. The registry returns only the piece versions that can work on that release.
+3. Your instance installs the new piece versions.
+4. Your instance discards the piece versions that the registry didn't return.
+
+The example below uses the Slack piece. Drag the slider to see which Slack versions an instance receives:
+
+<PieceVersionChecker />
 
 <Warning>
 **Self-hosted: upgrade to `0.82.0` or newer.** Every new piece now declares `minimumSupportedRelease ≥ 0.82.0`, the floor that came in with the latest piece-context version. Servers below `0.82.0` will not pick up any newly published pieces or bug fixes. Cloud is always on the latest release.

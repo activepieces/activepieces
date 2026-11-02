@@ -17,6 +17,7 @@ const clientState = 'activepieces_sharepoint_trigger';
 export const newFileInFolderTrigger = createTrigger({
   auth: microsoftSharePointAuth,
   name: 'new_file_in_folder',
+  classification: 'READ',
   displayName: 'New File in Folder',
   description: 'Fires when a new file is created or added in a specific folder.',
   aiMetadata: {

@@ -6,6 +6,7 @@ import { podioApiCall, getAccessToken, dynamicAppProperty, dynamicItemProperty, 
 export const findItemAction = createAction({
   auth: podioAuth,
   name: 'find_item',
+  classification: 'SEARCH',
   displayName: 'Find Item',
   description: 'Retrieve a single item by ID or field value.',
   audience: 'both',

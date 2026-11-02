@@ -28,6 +28,7 @@ const { interval, ...telemetryApiDateInputPropsWithoutInterval } = telemetryApiD
 const telemetryApiCustomQueryAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-custom-query',
+	classification: 'WRITE',
 	displayName: 'Telemetry : Custom Query',
 	description: 'Query DIMO Telemetry API using a custom GraphQL query.',
 	audience: 'both',
@@ -79,6 +80,7 @@ const telemetryApiCustomQueryAction = createAction({
 const availableSignalsAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-available-signals',
+	classification: 'READ',
 	displayName: 'Telemetry : Available Signals',
 	description: 'Get a list of available signals for a specific vehicle.',
 	audience: 'both',
@@ -123,6 +125,7 @@ const availableSignalsAction = createAction({
 const signalsAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-signals',
+	classification: 'READ',
 	displayName: 'Telemetry : Signals',
 	description: 'Get a selection of available signals for a specific vehicle.',
 	audience: 'both',
@@ -172,6 +175,7 @@ const signalsAction = createAction({
 const getDailyAvgSpeedOfVehicleAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-daily-avg-speed',
+	classification: 'READ',
 	displayName: 'Telemetry : Daily Avg Speed',
 	description: 'Get the average speed of a vehicle over a specific time period.',
 	audience: 'both',
@@ -220,6 +224,7 @@ const getDailyAvgSpeedOfVehicleAction = createAction({
 const getEvents = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-event',
+	classification: 'SEARCH',
 	displayName: 'Telemetry: Events',
 	description: 'Get the vehicle events over a specific time period.',
 	audience: 'both',
@@ -268,6 +273,7 @@ const getEvents = createAction({
 const getMaxSpeedOfVehicleAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-max-speed',
+	classification: 'READ',
 	displayName: 'Telemetry : Max Speed',
 	description: 'Get the maximum speed of a vehicle over a specific time period.',
 	audience: 'both',
@@ -317,6 +323,7 @@ const getMaxSpeedOfVehicleAction = createAction({
 const getVinVcLatestAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-vin-vc-latest',
+	classification: 'READ',
 	displayName: 'Telemetry : VIN VC Latest',
 	description: 'Get the latest VIN and Vehicle Configuration for a specific vehicle.',
 	audience: 'both',

@@ -9,6 +9,7 @@ import { assertIdPrefix } from '../../common/validation';
 export const updateTopic = createAction({
   auth: hedyAuth,
   name: 'update-topic',
+  classification: 'WRITE',
   displayName: 'Update Topic',
   description: 'Update an existing topic.',
   audience: 'both',

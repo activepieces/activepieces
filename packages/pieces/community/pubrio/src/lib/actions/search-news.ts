@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const searchNews = createAction({
   auth: pubrioAuth,
   name: 'search_news',
+  classification: 'SEARCH',
   displayName: 'Search News',
   description: 'Search company news and press releases',
   audience: 'both',

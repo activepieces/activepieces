@@ -6,6 +6,7 @@ import { apAddStepTool } from './ap-add-step'
 import { apBuildFlowTool } from './ap-build-flow'
 import { apChangeFlowStatusTool } from './ap-change-flow-status'
 import { apCreateFlowTool } from './ap-create-flow'
+import { apCreateFolderTool } from './ap-create-folder'
 import { apCreateTableTool } from './ap-create-table'
 import { apDeleteBranchTool } from './ap-delete-branch'
 import { apDeleteFlowTool } from './ap-delete-flow'
@@ -21,11 +22,13 @@ import { apInsertRecordsTool } from './ap-insert-records'
 import { apListAiModelsTool } from './ap-list-ai-models'
 import { apListConnectionsTool } from './ap-list-connections'
 import { apListFlowsTool } from './ap-list-flows'
+import { apListFoldersTool } from './ap-list-folders'
 import { apListRunsTool } from './ap-list-runs'
 import { apListTablesTool } from './ap-list-tables'
 import { apLockAndPublishTool } from './ap-lock-and-publish'
 import { apManageFieldsTool } from './ap-manage-fields'
 import { apManageNotesTool } from './ap-manage-notes'
+import { apMoveFlowToFolderTool } from './ap-move-flow-to-folder'
 import { apReadStepCodeTool } from './ap-read-step-code'
 import { apReadStepSettingsTool } from './ap-read-step-settings'
 import { apRenameFlowTool } from './ap-rename-flow'
@@ -66,6 +69,7 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_connections',
     'ap_list_ai_models',
     'ap_list_tables',
+    'ap_list_folders',
     'ap_find_records',
     'ap_list_runs',
     'ap_get_run',
@@ -76,7 +80,6 @@ export const PLATFORM_LEVEL_TOOL_NAMES = [
     'ap_research_pieces',
     'ap_search_actions',
     'ap_search_triggers',
-    'ap_list_ai_models',
     'ap_get_piece_props',
 ] as const
 
@@ -86,8 +89,10 @@ export const PLATFORM_LEVEL_TOOL_NAMES = [
 export const ALL_CONTROLLABLE_TOOL_NAMES = [
     'ap_build_flow',
     'ap_create_flow',
+    'ap_create_folder',
     'ap_duplicate_flow',
     'ap_rename_flow',
+    'ap_move_flow_to_folder',
     'ap_update_trigger',
     'ap_add_step',
     'ap_update_step',
@@ -114,13 +119,16 @@ export const ALL_CONTROLLABLE_TOOL_NAMES = [
 export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | undefined, log: FastifyBaseLogger): McpToolDefinition[] => [
     apBuildFlowTool({ mcp, userId }, log),
     apCreateFlowTool({ mcp, userId }, log),
+    apCreateFolderTool(mcp, log),
     apDuplicateFlowTool({ mcp, userId }, log),
     apRenameFlowTool({ mcp, userId }, log),
+    apMoveFlowToFolderTool({ mcp, userId }, log),
     apListFlowsTool(mcp, log),
+    apListFoldersTool(mcp, log),
     apFlowStructureTool(mcp, log),
     apReadStepCodeTool(mcp, log),
     apReadStepSettingsTool(mcp, log),
-    apValidateFlowTool(mcp, log),
+    apValidateFlowTool({ mcp, userId }, log),
     apResearchPiecesTool(mcp, log),
     // Tool-search engine — gated behind the AP_TOOL_SEARCH_ENABLED rollout flag (default off).
     ...(isToolSearchEnabled() ? [apSearchActionsTool(mcp, log), apSearchTriggersTool(mcp, log)] : []),

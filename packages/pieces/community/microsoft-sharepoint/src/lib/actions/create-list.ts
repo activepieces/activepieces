@@ -8,6 +8,7 @@ import { List } from '@microsoft/microsoft-graph-types';
 export const createListAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_create_list',
+  classification: 'WRITE',
   displayName: 'Create List',
   description: 'Creates a new list.',
   audience: 'both',

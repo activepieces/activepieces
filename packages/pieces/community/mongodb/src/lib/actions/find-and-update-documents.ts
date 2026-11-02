@@ -6,6 +6,7 @@ import { mongodbCommon, mongodbConnect } from '../common';
 export default createAction({
   auth: mongodbAuth,
   name: 'find_and_update_documents',
+  classification: 'WRITE',
   displayName: 'Find and Update Documents',
   description: 'Find documents and update them, returning the updated documents',
   audience: 'both',

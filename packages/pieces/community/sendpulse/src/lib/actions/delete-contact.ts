@@ -6,6 +6,7 @@ import { sendpulseAuth } from '../common/auth';
 export const deleteContactAction = createAction({
   auth: sendpulseAuth,
   name: 'delete-contact',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Contact',
   description: 'Permanently delete contact from all mailing lists',
   audience: 'both',

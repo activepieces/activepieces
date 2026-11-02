@@ -4,6 +4,7 @@ import { createServiceNowClient, servicenowAuth } from '../common/props';
 export const deleteAttachmentAction = createAction({
   auth: servicenowAuth,
   name: 'delete_attachment',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Attachment',
   description: 'Delete an attachment by its sys_id',
   audience: 'both',

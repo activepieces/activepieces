@@ -107,7 +107,7 @@ describe('which version a conversation runs', () => {
         await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
         const agent = await createAgent(ctx, { modelName: CONFIGURED_MODEL, provider: AIProviderName.OPENROUTER })
         const cleared = await ctx.post(`/v1/agents/${agent.id}`, {
-            draft: { ...agent.draft, provider: null, modelName: null },
+            draft: { ...agent.draft, provider: null, providerConfigId: null, modelName: null },
         })
         expect(cleared.statusCode).toBe(StatusCodes.OK)
         expect(cleared.json().published.modelName).toBeNull()
@@ -158,7 +158,7 @@ describe('the model an agent answers on', () => {
         // The tier resolver returns the default tier for anything it does not recognise as a tier
         // id, so routing a concrete model id through it comes back as a different model with no
         // error. The two must differ for the accepting test above to mean anything.
-        const chatDefault = agentHelpers.resolveTier({ tierId: null }).modelId
+        const chatDefault = agentHelpers.resolveTier({ tierId: null, surface: 'chat' }).modelId
 
         expect(CONFIGURED_MODEL).not.toBe(chatDefault)
     })

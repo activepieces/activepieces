@@ -7,6 +7,7 @@ import { mailboxIdDropdown, userIdDropdown } from '../common/props';
 export const createConversation = createAction({
   auth: helpScoutAuth,
   name: 'create_conversation',
+  classification: 'WRITE',
   displayName: 'Create Conversation',
   description: 'Start a new conversation.',
   audience: 'both',

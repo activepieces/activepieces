@@ -6,6 +6,7 @@ import type { Datastore } from 'contextual-client/resources/datastores';
 export const ingestDocumentAction = createAction({
   auth: contextualAiAuth,
   name: 'ingest_document',
+  classification: 'WRITE',
   displayName: 'Ingest Document',
   description: 'Upload and ingest a document into a Contextual AI datastore',
   audience: 'both',

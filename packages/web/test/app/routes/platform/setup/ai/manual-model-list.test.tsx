@@ -26,16 +26,26 @@ const selectMock = vi.hoisted(() => ({
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, onClick, title }: any) => (
-    <button onClick={onClick} title={title}>
+  Button: ({ children, onClick, title, disabled, ...rest }: any) => (
+    <button
+      onClick={onClick}
+      title={title}
+      disabled={disabled}
+      aria-label={rest['aria-label']}
+    >
       {children}
     </button>
   ),
 }));
 
 vi.mock('@/components/ui/input', () => ({
-  Input: ({ value, onChange, placeholder }: any) => (
-    <input value={value} onChange={onChange} placeholder={placeholder} />
+  Input: ({ value, onChange, placeholder, list }: any) => (
+    <input
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      list={list}
+    />
   ),
 }));
 
@@ -67,10 +77,21 @@ describe('ManualModelList', () => {
   let root: Root;
   let onChange: ReturnType<typeof vi.fn>;
 
-  const render = (models: ProviderModelConfig[]) => {
+  const render = (
+    models: ProviderModelConfig[],
+    suggestedModelIds?: string[],
+    tiersByModel?: Map<string, string[]>,
+  ) => {
     onChange = vi.fn();
     act(() => {
-      root.render(<ManualModelList models={models} onChange={onChange} />);
+      root.render(
+        <ManualModelList
+          models={models}
+          suggestedModelIds={suggestedModelIds}
+          tiersByModel={tiersByModel}
+          onChange={onChange}
+        />,
+      );
     });
   };
 
@@ -135,6 +156,27 @@ describe('ManualModelList', () => {
     ]);
   });
 
+  it('suggests the models the server listed, minus the ones already added', () => {
+    render(
+      [
+        {
+          modelId: 'llama-4',
+          modelName: 'llama-4',
+          modelType: AIProviderModelType.TEXT,
+        },
+      ],
+      ['llama-4', 'qwen3-32b'],
+    );
+
+    const input = container.querySelector('input');
+    const suggestions = Array.from(
+      container.querySelectorAll(
+        `datalist[id="${input?.getAttribute('list')}"] option`,
+      ),
+    ).map((option) => option.getAttribute('value'));
+    expect(suggestions).toEqual(['qwen3-32b']);
+  });
+
   it('flips the type of a model that is already saved, keeping its name', () => {
     render([
       {
@@ -152,5 +194,25 @@ describe('ManualModelList', () => {
         modelType: AIProviderModelType.IMAGE,
       },
     ]);
+  });
+
+  it('keeps a model a tier uses: labelled, and its remove button disabled', () => {
+    render(
+      [
+        {
+          modelId: 'gemini-pro',
+          modelName: 'gemini-pro',
+          modelType: AIProviderModelType.TEXT,
+        },
+      ],
+      undefined,
+      new Map([['gemini-pro', ['Smart']]]),
+    );
+
+    expect(container.textContent).toContain('Used by {tiers}');
+    const remove = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Remove"]',
+    );
+    expect(remove?.disabled).toBe(true);
   });
 });

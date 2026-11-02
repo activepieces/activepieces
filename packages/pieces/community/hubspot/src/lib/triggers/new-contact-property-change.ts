@@ -138,7 +138,7 @@ export const newContactPropertyChangeTrigger = createTrigger({
 		propertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.CONTACT,
-				displayName: 'Property Name',
+				displayName: 'Property',
 				required: true,
 			},
 			true,

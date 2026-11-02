@@ -21,42 +21,88 @@ function clientNamed(key: string, isCloud: boolean) {
     .find((client) => client.key === key);
 }
 
-describe('mcpClientCatalog cloud overrides', () => {
-  it('sends Claude to the directory listing on cloud only', () => {
-    expect(clientNamed('claude', true)?.instructions[0].action?.href).toBe(
-      'https://claude.ai/directory/cloud-activepieces-com',
-    );
-    expect(clientNamed('claude', false)?.instructions[0].action?.href).toContain(
-      'add-custom-connector',
+function firstStep(key: string, methodKey: string, isCloud = false) {
+  return clientNamed(key, isCloud)?.methods.find(
+    (method) => method.key === methodKey,
+  )?.instructions[0];
+}
+
+function methodKeys(key: string, isCloud: boolean) {
+  return clientNamed(key, isCloud)?.methods.map((method) => method.key);
+}
+
+describe('mcpClientCatalog methods', () => {
+  it('leads Claude and ChatGPT with one click on cloud only', () => {
+    expect(methodKeys('claude', true)).toEqual(['directory', 'connector']);
+    expect(methodKeys('claude', false)).toEqual(['connector']);
+    expect(methodKeys('chatgpt', true)).toEqual(['app', 'connector']);
+    expect(methodKeys('chatgpt', false)).toEqual(['connector']);
+  });
+
+  it('puts the easiest method first, then the agent prompt, then the config file', () => {
+    expect(methodKeys('cursor', false)).toEqual([
+      'deeplink',
+      'agent',
+      'config',
+    ]);
+    expect(methodKeys('claude-code', false)).toEqual([
+      'terminal',
+      'agent',
+      'config',
+    ]);
+    expect(methodKeys('gemini-cli', false)).toEqual([
+      'terminal',
+      'agent',
+      'config',
+    ]);
+  });
+
+  it('gives every coding agent and editor a copyable agent prompt', () => {
+    [
+      'claude-code',
+      'codex',
+      'gemini-cli',
+      'opencode',
+      'cursor',
+      'vscode',
+      'windsurf',
+    ].forEach((key) =>
+      expect(firstStep(key, 'agent')?.agentPrompt).toBeTruthy(),
     );
   });
 
-  it('leaves clients without a cloud override untouched', () => {
-    expect(clientNamed('codex', true)).toEqual(clientNamed('codex', false));
+  it('gives chat apps no agent prompt', () => {
+    expect(methodKeys('claude', false)).not.toContain('agent');
+    expect(methodKeys('unknown', false)).not.toContain('agent');
   });
 
-  it('keeps the Cursor deep link on cloud and only swaps the docs link', () => {
-    const cloudCursor = clientNamed('cursor', true);
-    expect(cloudCursor?.docsUrl).toBe(
-      'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor',
-    );
-    expect(cloudCursor?.instructions[0]).toEqual(
-      clientNamed('cursor', false)?.instructions[0],
-    );
+  it('gives Windsurf a serverUrl config', () => {
+    expect(
+      JSON.parse(firstStep('windsurf', 'config')?.snippet ?? '{}'),
+    ).toEqual({ mcpServers: { activepieces: { serverUrl: SERVER_URL } } });
+  });
+
+  it('signs Gemini CLI in with /mcp auth', () => {
+    const geminiSignIn = clientNamed('gemini-cli', false)?.methods[0]
+      .instructions[1];
+    expect(geminiSignIn?.command).toBe('/mcp auth activepieces');
+  });
+
+  it('signs Codex in from the terminal', () => {
+    const codexSignIn = clientNamed('codex', false)?.methods[0].instructions[1];
+    expect(codexSignIn?.command).toBe('codex mcp login activepieces');
   });
 });
 
 describe('mcpClientCatalog generated commands', () => {
   it('encodes the server url into the Cursor deep link', () => {
-    const href =
-      clientNamed('cursor', false)?.instructions[0].action?.href ?? '';
+    const href = firstStep('cursor', 'deeplink')?.action?.href ?? '';
     const config = new URL(href).searchParams.get('config') ?? '';
     expect(JSON.parse(atob(config))).toEqual({ url: SERVER_URL });
   });
 
   it('encodes the server url into the VS Code deep link', () => {
-    const href =
-      clientNamed('vscode', false)?.instructions[0].action?.href ?? '';
+    const href = firstStep('vscode', 'deeplink')?.action?.href ?? '';
     expect(JSON.parse(decodeURIComponent(href.split('?')[1]))).toEqual({
       name: 'activepieces',
       type: 'http',
@@ -65,8 +111,33 @@ describe('mcpClientCatalog generated commands', () => {
   });
 
   it('builds the Claude Code add command', () => {
-    expect(clientNamed('claude-code', false)?.instructions[0].command).toBe(
+    expect(firstStep('claude-code', 'terminal')?.command).toBe(
       `claude mcp add --transport http activepieces ${SERVER_URL}`,
     );
+  });
+});
+
+describe('mcpClientCatalog keys', () => {
+  it('lists the same clients as before', () => {
+    expect(
+      mcpClientCatalog
+        .clients({
+          serverUrl: SERVER_URL,
+          websiteName: 'Activepieces',
+          isCloud: false,
+        })
+        .map((client) => client.key),
+    ).toEqual([
+      'claude-code',
+      'codex',
+      'gemini-cli',
+      'opencode',
+      'windsurf',
+      'cursor',
+      'vscode',
+      'claude',
+      'chatgpt',
+      'unknown',
+    ]);
   });
 });

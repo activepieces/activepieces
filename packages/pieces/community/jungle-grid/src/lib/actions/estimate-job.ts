@@ -6,6 +6,7 @@ import { jungleGridCommon } from '../common';
 export const estimateJob = createAction({
   auth: jungleGridAuth,
   name: 'estimate_job',
+  classification: 'READ',
   displayName: 'Estimate Job',
   description: 'Estimate the cost, duration, and resources for a Jungle Grid job.',
   audience: 'both',

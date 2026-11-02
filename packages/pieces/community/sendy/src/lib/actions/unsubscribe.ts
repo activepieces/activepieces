@@ -10,6 +10,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const unsubscribeAction = createAction({
   name: 'unsubscribe',
+  classification: 'DESTRUCTIVE',
   auth: sendyAuth,
   displayName: 'Unsubscribe',
   description: 'Unsubscribe a subscriber from a list',

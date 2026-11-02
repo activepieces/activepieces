@@ -9,23 +9,39 @@ export const githubCreateIssueAction = createAction({
   name: 'github_create_issue',
   classification: 'WRITE',
   displayName: 'Create Issue',
-  description: 'Create Issue in GitHub Repository',
+  description: 'Opens a new issue in a repository.',
   audience: 'human',
   aiMetadata: {
     description:
       'Opens a new issue in a GitHub repository with a title and optional body, labels, and assignees. Use to file a bug, task, or request in a specified repo. Not idempotent: each call creates a separate issue even with identical input.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'issue',
+      display: 'section',
+      label: 'Issue',
+      icon: 'inbox',
+      props: ['repository', 'title', 'description'],
+    },
+    {
+      key: 'organize',
+      display: 'section',
+      label: 'Labels and people',
+      icon: 'tag',
+      props: ['labels', 'assignees'],
+    },
+  ],
   props: {
     repository: githubCommon.repositoryDropdown,
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the issue',
+      placeholder: 'Login page shows an error',
       required: true,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'The description of the issue',
+      description: 'Markdown is supported.',
       required: false,
     }),
     labels: githubCommon.labelDropDown(),

@@ -14,8 +14,7 @@ export const retrieveDatabase = createAction({
   name: 'retrieve_database',
   classification: 'READ',
   displayName: 'Retrieve Database Structure',
-  description:
-    "Get a database's properties, field types and options.",
+  description: "Get a database's properties, field types and options.",
   audience: 'human',
   aiMetadata: {
     description:

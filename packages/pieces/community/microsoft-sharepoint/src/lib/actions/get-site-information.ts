@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const getSiteInformationAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_get_site_information',
+  classification: 'READ',
   displayName: 'Get Site Information',
   description: 'Fetch metadata of a SharePoint site (site ID, title, URL, description, etc.).',
   audience: 'both',

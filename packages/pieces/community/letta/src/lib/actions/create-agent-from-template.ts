@@ -10,6 +10,7 @@ import type {
 export const createAgentFromTemplate = createAction({
   auth: lettaAuth,
   name: 'createAgentFromTemplate',
+  classification: 'WRITE',
   displayName: 'Create Agent From Template',
   description: 'Creates an agent from a template',
   audience: 'both',

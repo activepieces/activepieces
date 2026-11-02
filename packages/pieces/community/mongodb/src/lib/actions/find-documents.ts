@@ -6,6 +6,7 @@ import { mongodbCommon, mongodbConnect } from '../common';
 export default createAction({
   auth: mongodbAuth,
   name: 'find_documents',
+  classification: 'SEARCH',
   displayName: 'Find Documents',
   description: 'Find documents in a collection',
   audience: 'both',

@@ -6,6 +6,7 @@ import { folkProps } from '../common/props';
 export const updatePerson = createAction({
   auth: folkAuth,
   name: 'updatePerson',
+  classification: 'WRITE',
   displayName: 'Update Person',
   description:
     'Update an existing person in your Folk workspace with new information.',

@@ -87,9 +87,7 @@ const PiecesSettings = () => {
     isTableQuery: true,
   });
 
-  const { data: pieceSet } = pieceSetQueries.usePieceSet(
-    project.pieceSetId ?? '',
-  );
+  const { data: pieceSet } = pieceSetQueries.useProjectPieceSet(project.id);
 
   const customFilters = useMemo(
     () => [

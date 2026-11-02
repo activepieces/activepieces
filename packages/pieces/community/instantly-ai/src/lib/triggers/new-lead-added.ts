@@ -61,6 +61,7 @@ const polling: Polling<
 export const newLeadAddedTrigger = createTrigger({
   auth: instantlyAiAuth,
   name: 'new_lead_added',
+  classification: 'READ',
   displayName: 'New Lead Added',
   description: 'Triggers when a new lead is added to a campaign',
   aiMetadata: {
@@ -69,18 +70,10 @@ export const newLeadAddedTrigger = createTrigger({
   props: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
     return await pollingHelper.test(polling, context);

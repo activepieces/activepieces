@@ -332,7 +332,7 @@ export const triggers = [
     name: 'product_created',
     topic: 'product.created',
     displayName: 'Product Created',
-    description: 'Triggers when new product is created.',
+    description: 'Triggers when a new product is created.',
     aiMetadata: {
       description:
         'Fires when a new product is created in the WooCommerce store, emitting the new product record.',
@@ -371,7 +371,7 @@ export const triggers = [
     name: 'order_created',
     topic: 'order.created',
     displayName: 'Order Created',
-    description: 'Triggers when new order is created.',
+    description: 'Triggers when a new order is created.',
     aiMetadata: {
       description:
         'Fires when a new order is placed in the WooCommerce store, emitting the new order record including line items, totals, and customer details.',
@@ -410,7 +410,7 @@ export const triggers = [
     name: 'coupon_created',
     topic: 'coupon.created',
     displayName: 'Coupon Created',
-    description: 'Triggers when new coupon is created.',
+    description: 'Triggers when a new coupon is created.',
     aiMetadata: {
       description:
         'Fires when a new discount coupon is created in the WooCommerce store, emitting the new coupon record.',
@@ -449,7 +449,7 @@ export const triggers = [
     name: 'customer_created',
     topic: 'customer.created',
     displayName: 'Customer Created',
-    description: 'Triggers when new customer is created.',
+    description: 'Triggers when a new customer is created.',
     aiMetadata: {
       description:
         'Fires when a new customer account is created in the WooCommerce store, emitting the new customer record.',

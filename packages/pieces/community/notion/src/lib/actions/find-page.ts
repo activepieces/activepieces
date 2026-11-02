@@ -9,14 +9,29 @@ export const findPage = createAction({
   name: 'find_page',
   classification: 'SEARCH',
   displayName: 'Find Page',
-  description:
-    'Find pages by title, with exact or partial matching.',
+  description: 'Find pages by title, with exact or partial matching.',
   audience: 'human',
   aiMetadata: {
     description:
       'Searches the workspace for pages whose title matches a query, supporting exact or partial matching. Use when an agent needs to locate a page id by name before reading or modifying it; requires a title query and only searches pages shared with the integration. Idempotent read-only search.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['title', 'exact_match'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit'],
+    },
+  ],
   props: {
     title: Property.ShortText({
       displayName: 'Title',
@@ -26,8 +41,7 @@ export const findPage = createAction({
     }),
     exact_match: Property.Checkbox({
       displayName: 'Exact Match',
-      description:
-        'Only return pages whose title equals the search exactly.',
+      description: 'Only return pages whose title equals the search exactly.',
       required: false,
       defaultValue: false,
     }),

@@ -12,6 +12,7 @@ const polling = createQuickbooksCdcPolling<QuickbooksPayment>({
 export const paymentReceived = createTrigger({
 	auth: quickbooksAuth,
 	name: 'payment_received',
+	classification: 'READ',
 	displayName: 'Payment Received',
 	description: 'Triggers when a new customer payment is recorded in QuickBooks.',
 	aiMetadata: {

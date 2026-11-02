@@ -6,7 +6,7 @@
   "Create FAQ": "FAQを作成",
   "Create Chatbot Reply": "チャットボットの返信を作成",
   "Start Training": "トレーニングを開始",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Adds a YouTube video URL as knowledge to the Aidbase knowledge base.": "Aidbaseナレッジベースに知識としてYouTube動画URLを追加します。",
   "Adds a website URL as a knowledge source for Aidbase.": "Aidbase のナレッジソースとしてウェブサイト URL を追加します。",
   "Adds a new question/answer item to an existing FAQ; supports categories.": "既存のFAQに新しい質問/回答項目を追加します。カテゴリをサポートします。",

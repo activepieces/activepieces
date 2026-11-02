@@ -26,6 +26,7 @@ export const smsInbound = createTrigger({
   },
   displayName: 'New Incoming SMS',
   name: 'new_incoming_sms',
+  classification: 'READ',
   props: {
     from: Property.ShortText({
       displayName: 'Phone Number',

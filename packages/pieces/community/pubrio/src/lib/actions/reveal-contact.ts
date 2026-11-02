@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const revealContact = createAction({
   auth: pubrioAuth,
   name: 'reveal_contact',
+  classification: 'READ',
   displayName: 'Reveal Contact',
   description: 'Reveal email or phone number for a person (uses credits)',
   audience: 'both',

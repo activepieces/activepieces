@@ -5,6 +5,7 @@ import { insightoAuth } from '../..';
 
 export const makeOutboundCallAction = createAction({
   name: 'make_outbound_call',
+  classification: 'WRITE',
   displayName: 'Make Outbound Call',
   description: 'Initiate an outbound call to a phone number using a configured widget',
   audience: 'both',

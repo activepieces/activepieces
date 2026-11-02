@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const listDiscountsAction = createAction({
   name: 'list_discounts',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Discounts',
   description:

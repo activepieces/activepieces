@@ -21,7 +21,8 @@ vi.mock('@/hooks/authorization-hooks', () => ({
   useAuthorization: () => ({ checkAccess: () => true }),
 }));
 vi.mock('@/features/agents', () => ({
-  AIModelSelector: () => <div data-testid="model" />,
+  ModelPicker: () => <div data-testid="model" />,
+  useKnowledgeBaseEmbeddingSource: () => ({ data: undefined }),
   AgentStructuredOutput: () => <div data-testid="structured" />,
   KnowledgeBaseSection: () => <div data-testid="knowledge" />,
   useAgentsAvailable: () => true,

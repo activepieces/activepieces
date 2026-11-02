@@ -1,11 +1,14 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 
-import { ghostAuth } from '../..';
-import { common } from '../common';
+import { ghostAuth } from '../auth';
+import { ghostWebhook } from '../common/webhooks';
+import { ghostMemberEditedTriggerOutputSchema } from '../output-schemas';
 
 export const memberEdited = createTrigger({
   auth: ghostAuth,
   name: 'member_edited',
+  outputSchema: ghostMemberEditedTriggerOutputSchema,
+  classification: 'READ',
   displayName: 'Member Edited',
   description: 'Triggers when a member is edited',
   aiMetadata: {
@@ -14,26 +17,24 @@ export const memberEdited = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
-    const webhookData: any = await common.subscribeWebhook(
-      context.auth,
-      'member.edited',
-      context.webhookUrl
-    );
-
-    await context.store?.put('_member_edited_trigger', {
-      webhookId: webhookData.webhooks[0].id,
+    await ghostWebhook.enable({
+      auth: context.auth,
+      event: 'member.edited',
+      webhookUrl: context.webhookUrl,
+      store: context.store,
+      storeKey: '_member_edited_trigger',
     });
   },
   async onDisable(context) {
-    const response: {
-      webhookId: string;
-    } | null = await context.store?.get('_member_edited_trigger');
-
-    if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
-    }
+    await ghostWebhook.disable({ auth: context.auth, store: context.store, storeKey: '_member_edited_trigger' });
   },
   async run(context) {
+    await ghostWebhook.assertSigned({
+      store: context.store,
+      storeKey: '_member_edited_trigger',
+      rawBody: context.payload.rawBody,
+      headers: context.payload.headers,
+    });
     const payload = context.payload.body as any;
     if (payload.event != 'member.edited') {
       return [];

@@ -1,5 +1,5 @@
 import { spreadIfDefined } from '@activepieces/core-utils'
-import { AiStepFile, ExtractStructuredDataJobData, GenerateImageJobData } from '@activepieces/shared'
+import { AiStepFile, ExtractStructuredDataJobData, GenerateImageJobData, ReadFlowStepFileResponse } from '@activepieces/shared'
 import pLimit from 'p-limit'
 import { JobContext } from '../../types'
 
@@ -22,10 +22,14 @@ async function resolveAiFile({ ctx, data, file }: {
         platformId: data.platformId,
         fileId: file.fileId,
     })
+    return toResolvedAiFile({ stored, mimeType: file.mimeType, filename: file.filename })
+}
+
+export function toResolvedAiFile({ stored, mimeType, filename }: { stored: ReadFlowStepFileResponse, mimeType?: string, filename?: string }): ResolvedAiFile {
     return {
-        mimeType: file.mimeType ?? stored.mimeType ?? UNKNOWN_MIME_TYPE,
+        mimeType: mimeType ?? stored.mimeType ?? UNKNOWN_MIME_TYPE,
         base64: stored.data.toString('base64'),
-        ...spreadIfDefined('filename', file.filename ?? stored.fileName),
+        ...spreadIfDefined('filename', filename ?? stored.fileName),
     }
 }
 

@@ -7,6 +7,7 @@ import { crispApiCall } from '../common/client';
 export const addNoteToConversationAction = createAction({
 	auth: crispAuth,
 	name: 'add_note',
+	classification: 'WRITE',
 	displayName: 'Add Note to Conversation',
 	description: 'Adds an internal note to a conversation.',
 	audience: 'both',

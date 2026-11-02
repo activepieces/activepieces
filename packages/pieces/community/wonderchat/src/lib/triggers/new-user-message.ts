@@ -53,6 +53,7 @@ const polling: Polling<
 export const newUserMessage = createTrigger({
   auth: wonderchatAuth,
   name: 'newUserMessage',
+  classification: 'READ',
   displayName: 'New User Message',
   description:
     'Triggers when a new message is sent by a user in a specific chatlog.',
@@ -76,17 +77,15 @@ export const newUserMessage = createTrigger({
   type: TriggerStrategy.POLLING,
 
   async test(context) {
-    return await pollingHelper.poll(polling, context);
+    return await pollingHelper.test(polling, context);
   },
 
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

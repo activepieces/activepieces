@@ -6,6 +6,7 @@ import { ProductUnit } from '../../common/constants';
 export const updateProductAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_update_product',
+  classification: 'WRITE',
   displayName: 'Update Product',
   description: 'Updates an existing product in store.',
   audience: 'both',

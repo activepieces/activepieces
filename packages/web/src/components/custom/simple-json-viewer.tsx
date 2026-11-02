@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
+import { syntaxTheme } from '@/lib/syntax-theme';
 
 interface SimpleJsonViewerProps {
   data: any;
@@ -23,7 +24,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
   fontSize = '14px',
 }) => {
   const [copied, setCopied] = useState(false);
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   const formattedJson =
     typeof data === 'string' ? data : JSON.stringify(data, null, 2);
@@ -40,11 +41,11 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
     }, 3000);
   };
 
-  const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
+  const viewerTheme = syntaxTheme.jsonView(resolvedTheme);
 
   return (
     <div
-      className="w-full relative text-foreground overflow-hidden"
+      className="w-full relative text-gray-12 overflow-hidden"
       style={{
         maxWidth: '100%',
       }}
@@ -52,19 +53,15 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
       {!hideCopyButton && (
         <div className="absolute top-2 right-5 z-10">
           <Button
-            variant="transparent"
+            variant="ghost"
             size="sm"
             onClick={handleCopy}
-            className="p-0 "
+            className="p-0 text-accent-11 hover:bg-transparent"
           >
             {copied ? (
-              <Check className="w-4 h-4 text-success" />
+              <Check className="w-4 h-4 text-success-11" />
             ) : (
-              <Copy
-                className={`w-4 h-4 ${
-                  theme === 'dark' ? 'text-white' : 'text-black'
-                }`}
-              />
+              <Copy className="w-4 h-4 text-gray-12" />
             )}
           </Button>
         </div>
@@ -92,6 +89,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
               style={{
                 overflowX: 'auto',
                 padding: '0.5rem',
+                backgroundColor: 'transparent',
                 fontSize,
                 width: '100%',
                 minWidth: 0,

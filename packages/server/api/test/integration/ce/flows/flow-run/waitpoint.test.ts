@@ -3,6 +3,7 @@ import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@act
 import { FastifyInstance } from 'fastify'
 import { systemJobIds } from '../../../../../src/app/helper/system-jobs/common'
 import * as systemJobModule from '../../../../../src/app/helper/system-jobs/system-job'
+import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
@@ -543,6 +544,103 @@ describe('Waitpoint service', () => {
             await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
 
             expect(await originalSystemJobsSchedule(app.log).getJob(jobId)).toBeUndefined()
+        })
+    })
+
+    describe('deleteForFinishedRun', () => {
+        it('keeps the link a finished step handed out when the run fails, so a retry from the failed step can still use it', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+            const { waitpoint: handedOut } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'step_1',
+                type: PauseType.WEBHOOK,
+            })
+            const { waitpoint: failedStepWaitpoint } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'step_3',
+                type: PauseType.WEBHOOK,
+            })
+
+            await waitpointService(app.log).deleteForFinishedRun({
+                flowRun: { ...flowRun, status: FlowRunStatus.FAILED, failedStep: { name: 'step_3', displayName: 'Wait for Approval', message: 'failed' } },
+            })
+
+            expect(await db.findOneBy('waitpoint', { id: handedOut.id })).not.toBeNull()
+            expect(await db.findOneBy('waitpoint', { id: failedStepWaitpoint.id })).toBeNull()
+            expect(await originalSystemJobsSchedule(app.log).getJob(systemJobIds.resumeDelay({ waitpointId: handedOut.id }))).toBeDefined()
+            expect(await originalSystemJobsSchedule(app.log).getJob(systemJobIds.resumeDelay({ waitpointId: failedStepWaitpoint.id }))).toBeUndefined()
+        })
+
+        it('matches the failed step in every loop iteration, not only at the top level', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+            const { waitpoint: handedOut } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'step_1:0/step_2',
+                type: PauseType.WEBHOOK,
+            })
+            const { waitpoint: failedInLoop } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'step_1:1/step_3',
+                type: PauseType.WEBHOOK,
+            })
+
+            await waitpointService(app.log).deleteForFinishedRun({
+                flowRun: { ...flowRun, status: FlowRunStatus.FAILED, failedStep: { name: 'step_3', displayName: 'Ask the AI', message: 'failed' } },
+            })
+
+            expect(await db.findOneBy('waitpoint', { id: handedOut.id })).not.toBeNull()
+            expect(await db.findOneBy('waitpoint', { id: failedInLoop.id })).toBeNull()
+        })
+
+        it('deletes the barrier of a failed run so a retry starts a fresh one', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+            const { barrier } = await barrierService(app.log).create({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                platformId: ctx.platform.id,
+                stepName: 'step_2',
+                version: 'V1',
+                policy: { requiredSuccesses: 1 },
+                signalLabels: ['a@example.com'],
+            })
+
+            await waitpointService(app.log).deleteForFinishedRun({
+                flowRun: { ...flowRun, status: FlowRunStatus.FAILED, failedStep: { name: 'step_3', displayName: 'Send Email', message: 'failed' } },
+            })
+
+            expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
+        })
+
+        it('deletes every waitpoint of a run that succeeded', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'step_1',
+                type: PauseType.WEBHOOK,
+            })
+
+            await waitpointService(app.log).deleteForFinishedRun({ flowRun: { ...flowRun, status: FlowRunStatus.SUCCEEDED } })
+
+            expect(await db.findOneBy('waitpoint', { flowRunId: flowRun.id })).toBeNull()
+        })
+
+        it('deletes every waitpoint of a failed run that names no failed step', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'step_1',
+                type: PauseType.WEBHOOK,
+            })
+
+            await waitpointService(app.log).deleteForFinishedRun({ flowRun: { ...flowRun, status: FlowRunStatus.TIMEOUT, failedStep: undefined } })
+
+            expect(await db.findOneBy('waitpoint', { flowRunId: flowRun.id })).toBeNull()
         })
     })
 

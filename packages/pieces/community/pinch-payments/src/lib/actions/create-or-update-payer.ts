@@ -5,6 +5,7 @@ import { createOrUpdatePayer, listPayers } from '../common/client';
 export const createOrUpdatePayerAction = createAction({
   auth: pinchPaymentsAuth,
   name: 'create_or_update_payer',
+  classification: 'WRITE',
   displayName: 'Create or Update Payer',
   description: 'Create a new payer or update an existing one',
   audience: 'both',

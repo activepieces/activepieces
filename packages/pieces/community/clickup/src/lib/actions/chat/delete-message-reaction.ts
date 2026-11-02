@@ -8,21 +8,22 @@ export const deleteClickupMessageReaction = createAction({
   auth: clickupAuth,
   name: 'delete_message_reaction',
   classification: 'WRITE',
-  description: 'Deletes a reaction from a message in a ClickUp channel',
+  description: 'Remove an emoji reaction from a chat message.',
   audience: 'both',
   aiMetadata: { description: 'Remove a specific reaction from a Chat message in a ClickUp workspace, identified by workspace, message, and reaction IDs. This mutates the message; once the reaction is gone, repeating the call has no further effect, but it is a destructive operation against the current state.', idempotent: false },
   displayName: 'Delete Message Reaction',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     message_id: Property.ShortText({
-      description: 'ID of the message to delete reaction from',
+      description: 'Returned by Get Channel Messages or Create Message.',
       displayName: 'Message ID',
       required: true,
     }),
     reaction_id: Property.ShortText({
-      description: 'Emoji shortcode of the reaction to delete, without colons, e.g. heart or tada',
-      displayName: 'Reaction',
+      description: "The emoji's name, without the colons.",
+      displayName: 'Emoji',
       required: true,
+      placeholder: 'e.g. thumbsup',
     }),
   },
 

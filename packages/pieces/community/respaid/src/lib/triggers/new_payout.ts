@@ -25,6 +25,7 @@ type PayoutTriggerPayload = Partial<{
 
 export const newPayout = createTrigger({
     name: 'new_payout',
+    classification: 'READ',
     displayName: 'New Payout',
     description: "Triggers when a payout is successfully sent to your bank account.",
     aiMetadata: {

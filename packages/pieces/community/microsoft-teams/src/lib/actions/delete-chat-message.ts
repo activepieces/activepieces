@@ -6,6 +6,7 @@ import { createGraphClient } from '../common/graph';
 export const deleteChatMessageAction = createAction({
     auth: microsoftTeamsAuth,
     name: 'microsoft_teams_delete_chat_message',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Chat Message',
     description: 'Soft-Deletes a message in chat.You can only delete messages you sent.',
     audience: 'both',

@@ -13,6 +13,7 @@ import {
 export const createItemAction = createAction({
   auth: podioAuth,
   name: 'create_item',
+  classification: 'WRITE',
   displayName: 'Create Item',
   description: 'Create a new record in a Podio app with specified field values.',
   audience: 'both',

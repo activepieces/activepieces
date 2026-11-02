@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAsyncOperationAction = createAction({
   name: 'get_async_operation',
+  classification: 'READ',
   displayName: 'Get Async Operation',
   description: 'Retrieve details of an asynchronous operation',
   audience: 'both',

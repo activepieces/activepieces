@@ -6,5 +6,12 @@
   "Booking Rescheduled": "Buchung neu geplant",
   "Create a webhook to monitor when Booking Cancelled": "Erstellen Sie einen Webhook zum Überwachen bei Stornierung der Buchung",
   "Create a webhook to monitor when Booking Created": "Erstellen Sie einen Webhook zum Überwachen bei der Buchung",
-  "Create a webhook to monitor when Booking Rescheduled": "Erstellen Sie einen Webhook um zu überwachen, wenn die Buchung neu geplant wird"
+  "Create a webhook to monitor when Booking Rescheduled": "Erstellen Sie einen Webhook um zu überwachen, wenn die Buchung neu geplant wird",
+  "To get your API key:\n1. Open [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) in Cal.com.\n2. Create a new key and choose when it expires.\n3. Copy the key (it starts with `cal_`) and paste it here.": "So erhalten Sie Ihren API-Schlüssel:\n1. Öffnen Sie in Cal.com [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys).\n2. Erstellen Sie einen neuen Schlüssel und legen Sie fest, wann er abläuft.\n3. Kopieren Sie den Schlüssel (er beginnt mit `cal_`) und fügen Sie ihn hier ein.",
+  "Add cal-api-version (2026-05-01 for /bookings). Auth is added for you.": "Fügen Sie cal-api-version hinzu (2026-05-01 für /bookings). Die Authentifizierung wird automatisch ergänzt.",
+  "New Booking": "Neue Buchung",
+  "Triggers when a Cal.com booking is cancelled.": "Wird ausgelöst, wenn eine Cal.com-Buchung storniert wird.",
+  "Triggers when someone books a meeting with you on Cal.com.": "Wird ausgelöst, wenn jemand auf Cal.com einen Termin bei Ihnen bucht.",
+  "Triggers when a Cal.com booking is moved to a new time.": "Wird ausgelöst, wenn eine Cal.com-Buchung auf eine neue Zeit verschoben wird.",
+  "This webhook is added to your Cal.com account when you publish the flow and removed when you turn it off. It fires for bookings on the account that owns the API key.": "Dieser Webhook wird beim Veröffentlichen des Flows zu Ihrem Cal.com-Konto hinzugefügt und beim Ausschalten wieder entfernt. Er wird für Buchungen des Kontos ausgelöst, dem der API-Schlüssel gehört."
 }

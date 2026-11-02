@@ -38,6 +38,7 @@ function isValidSignature(
 export const postEvent = createTrigger({
   auth: letmepostAuth,
   name: 'post_event',
+  classification: 'READ',
   displayName: 'Post Event',
   description:
     'Triggers instantly when a post changes state (published, failed, rejected, and more)',

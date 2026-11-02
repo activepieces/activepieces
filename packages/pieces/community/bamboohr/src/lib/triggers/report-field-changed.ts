@@ -177,6 +177,13 @@ export const reportFieldChanged = createTrigger({
       throw new Error(`Field "${fieldToMonitor}" not found in report.`);
     }
 
+    if (
+      context.isRepublish &&
+      !isNil(await context.store.get('lastReportState'))
+    ) {
+      return;
+    }
+
     // Store all field values per employee (employee may appear multiple times due to duplicate records)
     const currentState: Record<string, string[]> = {};
 
@@ -192,6 +199,9 @@ export const reportFieldChanged = createTrigger({
   },
 
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('lastReportState');
   },
 

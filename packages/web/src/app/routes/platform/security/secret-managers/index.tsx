@@ -12,15 +12,19 @@ import {
   Trash,
   Globe,
   Activity,
-  XIcon,
 } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  StatusDot,
+  adminPageResources,
+} from '@/app/components/admin';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +36,7 @@ import {
 import { PieceIcon } from '@/features/pieces';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -101,17 +106,9 @@ const SecretManagersPage = () => {
       cell: ({ row }) => {
         const connection = row.original;
         if (connection.scope === SecretManagerConnectionScope.PLATFORM) {
-          return (
-            <Badge variant="outline" className="text-xs">
-              {t('Platform')}
-            </Badge>
-          );
+          return <Badge variant="outline">{t('Platform')}</Badge>;
         }
-        return (
-          <Badge variant="outline" className="text-xs">
-            {t('Project')}
-          </Badge>
-        );
+        return <Badge variant="outline">{t('Project')}</Badge>;
       },
     },
     {
@@ -127,28 +124,12 @@ const SecretManagersPage = () => {
       cell: ({ row }) => {
         const { configured, connected } = row.original.connection;
         if (!configured) {
-          return (
-            <Badge variant="outline" className="text-xs text-muted-foreground">
-              {t('Not configured')}
-            </Badge>
-          );
+          return <StatusDot tone="neutral">{t('Not configured')}</StatusDot>;
         }
         if (connected) {
-          return (
-            <StatusIconWithText
-              icon={Activity}
-              text={t('Connected')}
-              variant="success"
-            />
-          );
+          return <StatusDot tone="success">{t('Connected')}</StatusDot>;
         }
-        return (
-          <StatusIconWithText
-            icon={XIcon}
-            text={t('Disconnected')}
-            variant="error"
-          />
-        );
+        return <StatusDot tone="danger">{t('Disconnected')}</StatusDot>;
       },
     },
     {
@@ -158,7 +139,14 @@ const SecretManagersPage = () => {
         return (
           <div className="flex items-center gap-1 justify-end">
             <AddEditSecretManagerConnectionDialog connection={connection}>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t('Edit')}
+                {...adminControl(
+                  AdminControl.SECRET_MANAGERS_CONNECTION_EDIT_OPEN,
+                )}
+              >
                 <Pencil className="size-4" />
               </Button>
             </AddEditSecretManagerConnectionDialog>
@@ -172,13 +160,21 @@ const SecretManagersPage = () => {
                 'Deleting this secret manager connection will break all flows/app connections using it.',
               )}
               entityName={connection.name}
+              controlId={AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_CONFIRM}
               mutationFn={async () => deleteConnection(connection.id)}
             >
               <div>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Trash className="size-4 text-destructive" />
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t('Delete')}
+                      {...adminControl(
+                        AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_OPEN,
+                      )}
+                    >
+                      <Trash className="size-4 text-danger-11" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t('Delete')}</TooltipContent>
@@ -192,23 +188,28 @@ const SecretManagersPage = () => {
   ];
 
   return (
-    <div className="flex-col w-full">
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Secret Managers')}
         description={t('Manage Secret Manager connections')}
+        resources={adminPageResources.secretManagers}
       >
         <AddEditSecretManagerConnectionDialog>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <AnimatedIconButton
+            icon={PlusIcon}
+            iconSize={16}
+            {...adminControl(AdminControl.SECRET_MANAGERS_CONNECTION_OPEN)}
+          >
             {t('New Connection')}
           </AnimatedIconButton>
         </AddEditSecretManagerConnectionDialog>
-      </DashboardPageHeader>
-      <DataTable
+      </AdminPageHeader>
+      <AdminDataTable
         emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(
           'Add a secret manager connection to manage your secrets',
         )}
-        emptyStateIcon={<KeyRound className="size-14" />}
+        emptyStateIcon={<KeyRound />}
         columns={columns}
         page={page}
         isLoading={isSample ? false : isLoading}
@@ -217,7 +218,7 @@ const SecretManagersPage = () => {
         onRetry={refetchConnections}
         hidePagination={true}
       />
-    </div>
+    </AdminPage>
   );
 };
 
@@ -235,9 +236,11 @@ const SecretManagerClearCacheButton = ({
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-sm"
           loading={isClearingCache}
+          aria-label={t('Clear Cache')}
           onClick={() => clearCache(connection.id)}
+          {...adminControl(AdminControl.SECRET_MANAGERS_CACHE_RUN)}
         >
           <RefreshCcw className="size-4" />
         </Button>

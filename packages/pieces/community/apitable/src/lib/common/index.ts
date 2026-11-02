@@ -1,4 +1,4 @@
-import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, PiecePropValueSchema, Property, tryCatch } from '@activepieces/pieces-framework';
 import { APITableAuth } from '../auth';
 import { AITableClient } from './client';
 import { AITableFieldType, AITableNumericFieldTypes } from './constants';
@@ -12,6 +12,7 @@ export const APITableCommon = {
 	space_id: Property.Dropdown({
 		auth: APITableAuth,
 		displayName: 'Space',
+		description: 'The AITable workspace that holds your datasheet.',
 		required: true,
 		refreshers: [],
 		options: async ({ auth }) => {
@@ -19,11 +20,25 @@ export const APITableCommon = {
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Connect your account first',
+					placeholder: 'Connect your AITable account first',
 				};
 			}
 			const client = makeClient(auth.props);
-			const res = await client.listSpaces();
+			const { data: res, error } = await tryCatch(() => client.listSpaces());
+			if (error) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: "Couldn't load spaces. Check your connection.",
+				};
+			}
+			if (res.data.spaces.length === 0) {
+				return {
+					disabled: false,
+					options: [],
+					placeholder: 'No spaces found for this account.',
+				};
+			}
 			return {
 				disabled: false,
 				options: res.data.spaces.map((space) => {
@@ -38,18 +53,40 @@ export const APITableCommon = {
 	datasheet_id: Property.Dropdown({
 		auth: APITableAuth,
 		displayName: 'Datasheet',
+		description: 'The table inside the space.',
 		required: true,
 		refreshers: ['space_id'],
 		options: async ({ auth, space_id }) => {
-			if (!auth || !space_id) {
+			if (!auth) {
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Connect your account first and select space.',
+					placeholder: 'Connect your AITable account first',
+				};
+			}
+			if (!space_id) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Select a space first',
 				};
 			}
 			const client = makeClient(auth.props);
-			const res = await client.listDatasheets(space_id as string);
+			const { data: res, error } = await tryCatch(() => client.listDatasheets(space_id as string));
+			if (error) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: "Couldn't load datasheets. Check your connection.",
+				};
+			}
+			if (res.data.nodes.length === 0) {
+				return {
+					disabled: false,
+					options: [],
+					placeholder: 'No datasheets in this space.',
+				};
+			}
 			return {
 				disabled: false,
 				options: res.data.nodes.map((datasheet) => {
@@ -61,14 +98,14 @@ export const APITableCommon = {
 			};
 		},
 	}),
-	fields: Property.DynamicProperties({
+	fields: ({ description }: { description: string }) => Property.DynamicProperties({
 		auth: APITableAuth,
 		displayName: 'Fields',
-		description: 'The fields to add to the record.',
+		description,
 		required: true,
 		refreshers: ['auth', 'datasheet_id'],
 		props: async ({ auth, datasheet_id }) => {
-			if(!auth)
+			if(!auth || !datasheet_id)
 			{
 				return {}
 			}
@@ -177,6 +214,7 @@ export const APITableCommon = {
 						case AITableFieldType.TWO_WAY_LINK:
 							props[field.name] = Property.Array({
 								displayName: field.name,
+								description: 'IDs of the records to link, like rec2T5ppW1Mal.',
 								required: false,
 							});
 							break;
@@ -229,8 +267,13 @@ export async function createNewFields(
 		  // Handle member fields
 		  else if(field.type === AITableFieldType.MEMBER)
 		  {
+			const value = fields[key];
+			const selected = Array.isArray(value) ? value.map(String) : [String(value)];
+			if (selected.length === 0) {
+				continue;
+			}
 			newFields[key] = field.property?.options?.filter(
-				(member) => member.id === `${fields[key]}`,
+				(member) => selected.includes(member.id),
 			);
 		  }
 		  // Handle multi-select and two-way-link fields

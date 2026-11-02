@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const conversationClosed = createTrigger({
   auth: oncehubAuth,
   name: 'conversationClosed',
+  classification: 'READ',
   displayName: 'Conversation Closed',
   description:
     'Triggered when: Website visitor reaches the end of the conversation flow and when Website visitor starts a new conversation with a different chatbot',

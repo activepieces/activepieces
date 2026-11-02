@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findContactAction = createAction({
   auth: kommoAuth,
   name: 'find_contact',
+  classification: 'SEARCH',
   displayName: 'Find Contact',
   description: 'Finds an existing contact.',
   audience: 'both',

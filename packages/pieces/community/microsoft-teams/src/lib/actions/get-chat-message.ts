@@ -6,6 +6,7 @@ import { createGraphClient, withGraphRetry } from '../common/graph';
 export const getChatMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_get_chat_message',
+	classification: 'READ',
 	displayName: 'Get Chat Message',
 	description: 'Fetch a specific chat message by chat and message ID.',
 	audience: 'both',

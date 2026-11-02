@@ -5,6 +5,7 @@ import { folkClient } from '../common/client';
 export const findPerson = createAction({
   auth: folkAuth,
   name: 'findPerson',
+  classification: 'SEARCH',
   displayName: 'List People',
   description: 'Retrieve a paginated list of people in your Folk workspace with optional filtering.',
   audience: 'both',

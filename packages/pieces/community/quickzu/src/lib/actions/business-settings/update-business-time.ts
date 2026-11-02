@@ -6,6 +6,7 @@ import { BusinessTimingInput } from '../../common/types';
 export const updateBusinessTimeAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_update_business_time',
+  classification: 'WRITE',
   displayName: 'Update Business Time',
   description: 'Updates business hours.',
   audience: 'both',

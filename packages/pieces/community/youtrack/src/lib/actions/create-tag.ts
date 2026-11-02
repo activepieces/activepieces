@@ -7,6 +7,7 @@ import { createTagActionOutputSchema } from '../output-schemas';
 export const createTagAction = createAction({
   auth: youtrackAuth,
   name: 'create_tag',
+  classification: 'WRITE',
   outputSchema: createTagActionOutputSchema,
   displayName: 'Create Tag',
   description: 'Creates a new tag in YouTrack.',

@@ -1,5 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AIProviderModelType, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { modelTierCatalog } from '@activepieces/server-utils'
+import { AIProviderModelType, aiProviderUtils, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -14,7 +15,7 @@ const listAiModelsInput = z.object({
 export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_list_ai_models',
-        description: 'List configured AI providers and their available models. Use this to discover valid provider and model values for configuring Run Agent steps. The output shows provider names and model IDs needed for the aiProviderModel input.',
+        description: 'List configured AI providers and their available models. Use this to discover valid provider and model values for AI steps (Ask AI, Summarize, Classify, Extract and Run Agent). The output shows provider names and model IDs needed for the aiProviderModel input.',
         inputSchema: listAiModelsInput.shape,
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
@@ -50,7 +51,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     filteredProviders.map(async (p) => {
                         try {
                             const models = await service.listModels({ platformId, provider: p.provider, scope: { type: 'project', projectId: mcp.projectId } })
-                            const textModels = models.filter(m => m.type === AIProviderModelType.TEXT)
+                            const textModels = models.filter(m => m.type === AIProviderModelType.TEXT && runAgentCanCall({ provider: p.provider, modelId: m.id }))
                             const capped = textModels.slice(0, MAX_MODELS_PER_PROVIDER)
                             structuredProviders.push({
                                 provider: p.provider,
@@ -76,7 +77,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 return {
                     content: [{
                         type: 'text',
-                        text: `Configured AI Providers:\n\n${sections.join('\n\n')}\n\nUsage: Set aiProviderModel to {"provider": "<provider>", "model": "<model id>"} when configuring a Run Agent step.`,
+                        text: `Configured AI Providers:\n\n${sections.join('\n\n')}\n\nUsage: Set aiProviderModel to {"provider": "<provider>", "model": "<model id>"} when configuring an AI step (Ask AI, Summarize, Classify, Extract or Run Agent).`,
                     }],
                     structuredContent: { providers: structuredProviders },
                 }
@@ -87,4 +88,10 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
             }
         },
     }
+}
+
+function runAgentCanCall({ provider, modelId }: { provider: AIProviderName, modelId: string }): boolean {
+    return provider !== AIProviderName.ACTIVEPIECES
+        || aiProviderUtils.isManagedChatModelId({ modelId })
+        || modelTierCatalog.current('flow').tiers.some((tier) => tier.modelId === modelId)
 }

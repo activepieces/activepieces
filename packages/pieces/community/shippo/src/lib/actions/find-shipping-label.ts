@@ -4,6 +4,7 @@ import { ShippoClient } from "../../lib/client";
 
 export const findShippingLabel = createAction({
   name: 'find_shipping_label',
+  classification: 'READ',
   displayName: 'Find Shipping Label',
   description: 'Search for a shipping label by its ID',
   audience: 'both',

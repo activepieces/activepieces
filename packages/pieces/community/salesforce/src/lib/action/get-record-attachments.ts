@@ -12,8 +12,9 @@ interface QueryResult {
 export const getRecordAttachments = createAction({
     auth: salesforceAuth,
     name: 'get_record_attachments',
+    classification: 'SEARCH',
     displayName: 'Get Record Attachments',
-    description: 'Get all attachments (both classic and modern Files) for a record.',
+    description: 'Lists the files and classic attachments on a record.',
     audience: 'both',
     aiMetadata: { description: 'List the files attached to a record, covering both legacy Attachment objects and modern Files (ContentDocument) in one read-only call. Use to discover what is attached to a record by its ID; it returns metadata only, not the file contents.', idempotent: true },
     outputSchema: getRecordAttachmentsOutputSchema,

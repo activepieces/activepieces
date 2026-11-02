@@ -19,8 +19,7 @@ export const updatedPage = createTrigger({
   name: 'updated_page',
   classification: 'READ',
   displayName: 'Updated Page',
-  description:
-    'Triggers when any page shared with the integration is edited.',
+  description: 'Triggers when any page shared with the integration is edited.',
   aiMetadata: {
     description:
       'Fires whenever any page shared with the integration in the Notion workspace is modified, emitting the updated page. Use to track content changes workspace-wide rather than within a single database or page.',
@@ -139,34 +138,16 @@ export const updatedPage = createTrigger({
 
   type: TriggerStrategy.POLLING,
   async test(ctx) {
-    return await pollingHelper.test(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-      files: ctx.files,
-    });
+    return await pollingHelper.test(polling, ctx);
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onEnable(polling, ctx);
   },
   async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onDisable(polling, ctx);
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-      files: ctx.files,
-    });
+    return await pollingHelper.poll(polling, ctx);
   },
 });
 

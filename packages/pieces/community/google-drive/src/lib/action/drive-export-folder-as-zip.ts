@@ -459,6 +459,29 @@ export const driveExportFolderAsZip = createAction({
       'Recursively downloads every file in a Drive folder (including subfolders) and packages them into a single zip whose internal paths mirror the folder hierarchy. Native Google Docs/Sheets/Slides are converted per user-chosen format (PDF/Office format) or skipped. Fails the whole action if any single file cannot be downloaded/exported. Optionally password-protects the zip.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Folder to export',
+      icon: 'location',
+      props: ['folderId', 'includeTeamDrives'],
+    },
+    {
+      key: 'conversion',
+      display: 'section',
+      label: 'Convert Google files',
+      icon: 'file',
+      props: ['googleDocsFormat', 'googleSheetsFormat', 'googleSlidesFormat'],
+    },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'paperclip',
+      props: ['duplicatePathWarning', 'outputFileName'],
+    },
+  ],
   props: {
     folderId: Property.Dropdown({
       displayName: 'Folder',

@@ -7,6 +7,7 @@ import { freshserviceCommon } from '../common/props';
 export const deleteChangeTask = createAction({
   auth: freshserviceAuth,
   name: 'delete_change_task',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Change Task',
   description: 'Deletes a task from a change request in Freshservice.',
   audience: 'both',

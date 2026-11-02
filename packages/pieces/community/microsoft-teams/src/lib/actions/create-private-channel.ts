@@ -6,6 +6,7 @@ import { createGraphClient, withGraphRetry } from '../common/graph';
 export const createPrivateChannelAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_create_private_channel',
+	classification: 'WRITE',
 	displayName: 'Create Private Channel',
 	description: 'Create a new private channel in a team.',
 	audience: 'both',

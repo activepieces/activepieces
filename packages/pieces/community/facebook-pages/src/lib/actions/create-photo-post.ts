@@ -13,6 +13,10 @@ export const createPhotoPost = createAction({
   audience: 'human',
   aiMetadata: { description: 'Publishes a photo post to a Facebook Page the connected account manages by uploading an image from a publicly reachable URL, with an optional caption. Choose this when the post is an image rather than plain text or video. Requires a managed page and a photo URL that Facebook can fetch; not idempotent, as each call creates a new photo post.', idempotent: false },
   outputSchema: createPhotoPostActionOutputSchema,
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Post to', icon: 'send', props: ['page'] },
+    { key: 'post', display: 'section', label: 'Post', icon: 'file', props: ['photo', 'caption'] },
+  ],
   props: {
     page: facebookPagesCommon.page,
     photo: facebookPagesCommon.photo,

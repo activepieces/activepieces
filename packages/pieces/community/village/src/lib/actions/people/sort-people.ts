@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const sortPeople = createAction({
   auth: villageAuth,
   name: 'sort_people',
+  classification: 'READ',
   displayName: 'Sort People',
   description:
     'Rank a list of LinkedIn profile URLs by how well-connected you are to them. Returns each person sorted by connection strength (highest first), with score (0-100) and score_label.',

@@ -1,4 +1,5 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActionClassification, isReadOnlyClassification } from '@activepieces/pieces-framework'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -17,6 +18,7 @@ import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
 import { agentApprovalGate } from '../agent-approval-gate'
+import { readConversationFile } from '../agent-file-utils'
 import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
 import { agentAudit, agentService } from '../agent-service'
@@ -627,12 +629,13 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         case 'ap_run_code': {
             return runAgentCode({ toolInput, projects, platformId, userId, conversationId, log })
         }
+        case '__action_read_only': {
+            const { pieceName, actionName } = runActionInput.pick({ pieceName: true, actionName: true }).parse(toolInput)
+            const target = await resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log })
+            return 'error' in target ? null : target.declared.readOnly ?? null
+        }
         case 'ap_explore_data': {
-            const { actionName, input: exploreInput } = runActionInput.parse(toolInput)
-            if (!agentToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
-                return agentToolClassification.readOnlyRejection(actionName)
-            }
-            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, readOnlyOnly: true, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -667,9 +670,10 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
 // A large successful read (e.g. a 1.4MB Attio query) is persisted as a .json file and replaced in
 // the model context with a compact shape preview + the fileId. The agent then processes the FULL
 // data in ap_run_code (inputFileIds → inputs.data) — the blob never floods the context.
-function buildActionRunOffload({ projectId, platformId, pieceName, actionName, log }: {
+function buildActionRunOffload({ projectId, platformId, conversationId, pieceName, actionName, log }: {
     projectId: string
     platformId?: string
+    conversationId?: string
     pieceName: string
     actionName: string
     log: FastifyBaseLogger
@@ -690,7 +694,7 @@ function buildActionRunOffload({ projectId, platformId, pieceName, actionName, l
                 type: FileType.FLOW_STEP_FILE,
                 fileName,
                 compression: FileCompression.NONE,
-                metadata: { mimetype: 'application/json' },
+                metadata: { mimetype: 'application/json', ...spreadIfDefined('conversationId', conversationId) },
             }))
             if (error || isNil(saved)) {
                 log.warn({ error, pieceName, actionName }, '[agent] large-result offload failed; falling back to inline truncation')
@@ -701,7 +705,7 @@ function buildActionRunOffload({ projectId, platformId, pieceName, actionName, l
     }
 }
 
-async function runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
+async function runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, readOnlyOnly, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
@@ -709,29 +713,17 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
     platformId?: string
     userId: string
     requireWritePermission?: boolean
+    readOnlyOnly?: boolean
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const { pieceName, actionName, input: parsedInput } = runActionInput.parse(toolInput)
-
-    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
-    let connectionExternalId: string | undefined
-    let connectionLabel: string | undefined
-    let connectionProjectId: string | undefined
-    if (conversationId) {
-        const selected = await agentApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
-        if (selected) {
-            connectionExternalId = selected.externalId
-            connectionLabel = selected.label
-            connectionProjectId = selected.projectId
-        }
+    const target = await resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log })
+    if ('error' in target) {
+        return { success: false, error: target.error }
     }
-
-    const resolvedProjectId = connectionProjectId ?? projects[0]?.id
-    if (!resolvedProjectId) {
-        return { success: false, error: 'No projects available. Create a project first.' }
-    }
-    if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
-        return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
+    const { normalizedPiece, projectId: resolvedProjectId, connectionExternalId, connectionLabel, declared } = target
+    if (readOnlyOnly && !agentToolClassification.isReadOnlyActionCall({ actionName, input: parsedInput, declaredReadOnly: declared.readOnly })) {
+        return agentToolClassification.readOnlyRejection(actionName)
     }
     if (requireWritePermission) {
         const denial = await checkWriteRunPermission({ userId, projectId: resolvedProjectId, toolName: 'ap_execute_action', log })
@@ -746,7 +738,7 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
         actionName,
         input: parsedInput,
         connectionExternalId,
-        ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, pieceName: normalizedPiece, actionName, log })),
+        ...spreadIfDefined('offload', buildActionRunOffload({ projectId: resolvedProjectId, platformId, conversationId, pieceName: normalizedPiece, actionName, log })),
         log,
     })
 
@@ -754,8 +746,9 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
     const structured = !isNil(resultObj) && isObject(resultObj.structuredContent) ? resultObj.structuredContent : undefined
     const errorSummary = typeof structured?.errorSummary === 'string' ? structured.errorSummary : undefined
 
-    await recordChatAction({
+    recordChatAction({
         piece: { pieceName: normalizedPiece, actionName },
+        declared,
         input: parsedInput ?? {},
         projectId: resolvedProjectId,
         userId,
@@ -817,15 +810,11 @@ async function runAgentCode({ toolInput, projects, platformId, userId, conversat
         : []
     const inputFiles: { name: string, mimeType: string, base64: string }[] = []
     for (const fileId of inputFileIds) {
-        const { data: file, error: lookupError } = await tryCatch(() => fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE }))
-        // Confine to the current conversation's project, not just the platform — otherwise a
-        // model-supplied fileId from another project on the same platform could be read.
-        if (lookupError || isNil(file) || file.platformId !== platformId || file.projectId !== projectId) {
+        const { data: fileData } = await tryCatch(() => isNil(conversationId)
+            ? fileService(log).getDataOrThrow({ projectId, fileId, type: FileType.FLOW_STEP_FILE })
+            : readConversationFile({ platformId, conversationId, accessibleProjectIds: projects.map((project) => project.id), fileId, log }))
+        if (isNil(fileData)) {
             return { text: `❌ Couldn't load attachment ${fileId}. If this is an image you generated, pass its URL into the code and fetch() it instead of using inputFileIds.`, producedFiles: [] }
-        }
-        const { data: fileData, error: dataError } = await tryCatch(() => fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE }))
-        if (dataError || isNil(fileData)) {
-            return { text: `❌ Couldn't read attachment ${fileId}.`, producedFiles: [] }
         }
         const mimeType = isObject(fileData.metadata) && typeof fileData.metadata.mimetype === 'string' ? fileData.metadata.mimetype : 'application/octet-stream'
         inputFiles.push({ name: fileData.fileName ?? fileId, mimeType, base64: fileData.data.toString('base64') })
@@ -851,7 +840,7 @@ async function runAgentCode({ toolInput, projects, platformId, userId, conversat
         return { text: `❌ ${reason}`, producedFiles: [] }
     }
 
-    return persistProducedFiles({ output: result.output, projectId, platformId, log })
+    return persistProducedFiles({ output: result.output, projectId, platformId, conversationId, log })
 }
 
 function extractFilesFromOutput(output: unknown): { files: RawProducedFile[], rest: unknown } {
@@ -871,10 +860,11 @@ function decodeBase64(value: string): Buffer | undefined {
     return buffer.length > 0 ? buffer : undefined
 }
 
-async function persistProducedFiles({ output, projectId, platformId, log }: {
+async function persistProducedFiles({ output, projectId, platformId, conversationId, log }: {
     output: unknown
     projectId: string
     platformId: string
+    conversationId?: string
     log: FastifyBaseLogger
 }): Promise<RunCodeToolResult> {
     const { files, rest } = extractFilesFromOutput(output)
@@ -892,7 +882,7 @@ async function persistProducedFiles({ output, projectId, platformId, log }: {
             type: FileType.FLOW_STEP_FILE,
             fileName: file.name,
             compression: FileCompression.NONE,
-            metadata: { mimetype: file.mimeType },
+            metadata: { mimetype: file.mimeType, ...spreadIfDefined('conversationId', conversationId) },
         })
         const url = await filesService.constructReadUrl({ fileId: saved.id, fileType: saved.type, platformId })
         producedFiles.push({ fileId: saved.id, url, mediaType: file.mimeType, fileName: file.name, byteSize: buffer.length })
@@ -973,8 +963,9 @@ type RunCodeToolResult = {
 
 export { executeCrossProjectTool, findConnectionsForPiece }
 
-async function recordChatAction({ piece, input, projectId, platformId, userId, conversationId, connection, outcome, log }: {
+function recordChatAction({ piece, declared, input, projectId, platformId, userId, conversationId, connection, outcome, log }: {
     piece: { pieceName: string, actionName: string }
+    declared: DeclaredAction
     input: Record<string, unknown>
     projectId: string
     platformId?: string
@@ -983,21 +974,83 @@ async function recordChatAction({ piece, input, projectId, platformId, userId, c
     connection: { externalId?: string, label?: string }
     outcome: AgentActionOutcome
     log: FastifyBaseLogger
-}): Promise<void> {
+}): void {
     if (isNil(platformId)) {
         return
     }
-    const { data: metadata } = await tryCatch(() => pieceMetadataService(log).get({ name: piece.pieceName, projectId, platformId }))
-    const action = metadata?.actions?.[piece.actionName]
     recordAgentAction({
         run: { projectId, platformId, userId, source: AgentRunSource.CHAT },
         piece,
         resolvedInput: input,
-        names: { action: action?.displayName ?? piece.actionName, piece: metadata?.displayName ?? piece.pieceName },
+        names: { action: declared.actionDisplayName ?? piece.actionName, piece: declared.pieceDisplayName ?? piece.pieceName },
         outcome,
         connection,
         log,
         ...spreadIfDefined('conversationId', conversationId),
-        ...spreadIfDefined('classification', action?.classification),
+        ...spreadIfDefined('classification', declared.classification),
     })
+}
+
+async function resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log }: {
+    pieceName: string
+    actionName: string
+    projects: Project[]
+    availableProjectIds: string[]
+    conversationId?: string
+    platformId?: string
+    log: FastifyBaseLogger
+}): Promise<ActionTarget | { error: string }> {
+    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+    const selected = isNil(conversationId) ? null : await agentApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+    const connectionProjectId = selected?.projectId
+    const projectId = connectionProjectId ?? projects[0]?.id
+    if (!projectId) {
+        return { error: 'No projects available. Create a project first.' }
+    }
+    if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
+        return { error: `Project ${connectionProjectId} is not accessible.` }
+    }
+    const declared = await declaredActionOf({ pieceName: normalizedPiece, actionName, projectId, platformId, log })
+    return {
+        normalizedPiece,
+        projectId,
+        ...spreadIfDefined('connectionExternalId', selected?.externalId),
+        ...spreadIfDefined('connectionLabel', selected?.label),
+        declared,
+    }
+}
+
+async function declaredActionOf({ pieceName, actionName, projectId, platformId, log }: {
+    pieceName: string
+    actionName: string
+    projectId?: string
+    platformId?: string
+    log: FastifyBaseLogger
+}): Promise<DeclaredAction> {
+    if (isNil(platformId)) {
+        return {}
+    }
+    const { data: metadata } = await tryCatch(() => pieceMetadataService(log).get({ name: pieceName, projectId, platformId }))
+    const action = metadata?.actions?.[actionName]
+    return {
+        ...spreadIfDefined('pieceDisplayName', metadata?.displayName),
+        ...spreadIfDefined('actionDisplayName', action?.displayName),
+        ...spreadIfDefined('classification', action?.classification),
+        ...spreadIfDefined('readOnly', isNil(action?.classification) ? undefined : isReadOnlyClassification(action.classification)),
+    }
+}
+
+type ActionTarget = {
+    normalizedPiece: string
+    projectId: string
+    connectionExternalId?: string
+    connectionLabel?: string
+    declared: DeclaredAction
+}
+
+type DeclaredAction = {
+    pieceDisplayName?: string
+    actionDisplayName?: string
+    classification?: ActionClassification
+    readOnly?: boolean
 }

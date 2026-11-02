@@ -5,6 +5,7 @@ import { NetSuiteClient } from '../common/client';
 
 export const executeDataset = createAction({
   name: 'executeDataset',
+  classification: 'SEARCH',
   auth: netsuiteAuth,
   displayName: 'Execute Dataset',
   description: 'Execute Dataset on NetSuite.',

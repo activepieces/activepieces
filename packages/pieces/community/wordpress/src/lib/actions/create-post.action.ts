@@ -22,6 +22,36 @@ export const createWordPressPost = createAction({
   aiMetadata: { description: 'Publishes a new blog post on a WordPress site via the REST API, with optional status (draft/publish/etc.), categories, tags, excerpt, featured image, and custom ACF fields. Choose this to add fresh content; for editing an existing post use Update Post. Requires a title and HTML content; not idempotent — each call creates a separate post.', idempotent: false },
   displayName: 'Create Post',
   outputSchema: createPostActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Content',
+      icon: 'text',
+      props: ['title', 'content', 'excerpt'],
+    },
+    {
+      key: 'publishing',
+      display: 'section',
+      label: 'Publishing',
+      icon: 'calendar',
+      props: ['status', 'date'],
+    },
+    {
+      key: 'organize',
+      display: 'section',
+      label: 'Categories and Tags',
+      icon: 'tag',
+      props: ['categories', 'tags'],
+    },
+    {
+      key: 'image',
+      display: 'section',
+      label: 'Image',
+      icon: 'paperclip',
+      props: ['featured_media', 'featured_media_file'],
+    },
+  ],
   props: {
     title: Property.ShortText({
       displayName: 'Title',

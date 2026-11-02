@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findOrCreateAttachment = createAction({
   auth: meistertaskAuth,
   name: 'find_or_create_attachment',
+  classification: 'WRITE',
   displayName: 'Find or Create Attachment',
   description: 'Finds an attachment by searching, or creates one if it doesn\'t exist',
   audience: 'both',

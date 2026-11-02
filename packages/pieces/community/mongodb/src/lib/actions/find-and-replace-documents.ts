@@ -6,6 +6,7 @@ import { mongodbCommon, mongodbConnect } from '../common';
 export default createAction({
   auth: mongodbAuth,
   name: 'find_and_replace_documents',
+  classification: 'WRITE',
   displayName: 'Find and Replace Documents',
   description: 'Replace documents that match a filter with a new document',
   audience: 'both',

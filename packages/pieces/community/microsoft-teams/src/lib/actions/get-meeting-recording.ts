@@ -6,6 +6,7 @@ import { createGraphClient, resolveMeetingId, withGraphRetry } from '../common/g
 export const getMeetingRecordingAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_get_meeting_recording',
+	classification: 'SEARCH',
 	displayName: 'Get Meeting Recording',
 	description:
 		'Retrieves recordings for a Teams meeting. Provide a Recording to fetch its metadata; omit it to list all available recordings.',

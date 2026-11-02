@@ -3,10 +3,12 @@ import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { templateIdDropdown } from '../common/props';
+import { createImageOutputSchema } from '../output-schemas';
 
 export const createPdf = createAction({
   auth: ApitemplateAuth,
   name: 'createPdf',
+  outputSchema: createImageOutputSchema,
   classification: 'WRITE',
   displayName: 'Create PDF',
   description: 'Creates a PDF from a template with provided data.',

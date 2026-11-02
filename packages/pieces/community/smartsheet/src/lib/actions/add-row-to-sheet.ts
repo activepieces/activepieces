@@ -5,6 +5,7 @@ import { smartsheetCommon, addRowToSmartsheet } from '../common';
 export const addRowToSheet = createAction({
 	auth: smartsheetAuth,
 	name: 'add_row_to_sheet',
+	classification: 'WRITE',
 	displayName: 'Add Row to Sheet',
 	description:'Adds new row to a sheet.',
 	audience: 'both',

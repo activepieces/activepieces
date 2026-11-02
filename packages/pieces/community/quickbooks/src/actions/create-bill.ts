@@ -7,6 +7,7 @@ import { QuickbooksBill, QuickbooksVendor, QuickbooksRef, QuickbooksPreferences 
 export const createBillAction = createAction({
 	auth: quickbooksAuth,
 	name: 'create_bill',
+	classification: 'WRITE',
 	displayName: 'Create Bill',
 	description: 'Creates a bill (accounts payable) in QuickBooks.',
 	audience: 'both',

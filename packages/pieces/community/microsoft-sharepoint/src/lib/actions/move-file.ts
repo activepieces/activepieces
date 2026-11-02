@@ -14,6 +14,7 @@ import { DriveItem } from '@microsoft/microsoft-graph-types';
 export const moveFileAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_move_file',
+  classification: 'WRITE',
   displayName: 'Move File',
   description: 'Move a file from one folder to another within the same drive.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { pocketbaseAuthenticate, normalizeHost } from '../common/client';
 
 export const getList = createAction({
   name: 'getList',
+  classification: 'SEARCH',
   displayName: 'Get List',
   description: 'Gets a paginated list of records from a collection',
   audience: 'both',

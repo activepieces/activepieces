@@ -69,6 +69,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof simplybookAuth>,
 export const newOffer = createTrigger({
   auth: simplybookAuth,
   name: 'new_offer',
+  classification: 'READ',
   displayName: 'New Offer',
   description: 'Triggers when a new offer (proposal or quote) is created (bookings with promo: false)',
   aiMetadata: {

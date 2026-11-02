@@ -42,6 +42,7 @@ const newLabelPolling: Polling<
 export const newLabel = createTrigger({
   auth: meistertaskAuth,
   name: 'new_label',
+  classification: 'READ',
   displayName: 'New Label',
   description: 'Triggers when a label is created.',
   aiMetadata: {

@@ -19,6 +19,7 @@ interface NewPaidTriggerPayload {
 
 export const newSuccessfulCollectionViaRespaid = createTrigger({
     name: 'new_successful_collection_via_respaid',
+    classification: 'READ',
     displayName: 'New Successful Collection via Respaid',
     description: "Triggers when a debt is paid online via Respaid's payment link.",
     aiMetadata: {

@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const voidPayment = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'void_payment',
+    classification: 'DESTRUCTIVE',
     displayName: 'Void Payment',
     description: 'Voids a payment by setting the void date.',
     audience: 'both',

@@ -1,6 +1,6 @@
 name: Warm CI cache
 # GitHub only lets a pull request restore caches created on the same PR or on the base branch.
-# CI v2 runs on pull requests only, so this seeds the base-branch copies (bun downloads and the
+# CI runs on pull requests only, so this seeds the base-branch copies (bun downloads and the
 # compiled redis-memory-server binary) that every new PR's first run restores.
 on:
   push:

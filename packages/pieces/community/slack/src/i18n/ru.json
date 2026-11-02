@@ -160,5 +160,6 @@
   "If no channel is selected, the flow will be triggered for username mentions in all channels": "Если канал не выбран, поток будет срабатывать для упоминания имени пользователя во всех каналах",
   "Select emojis to trigger on": "Выберите emojis для запуска",
   "List of valid commands that the bot should respond to (e.g., help, ocr, remind)": "Список допустимых команд, которые бот должен отвечать (например, help, ocr, remind)",
-  "If no channel is selected, the flow will be triggered for commands in all channels": "Если канал не выбран, поток будет срабатывать для команд во всех каналах"
+  "If no channel is selected, the flow will be triggered for commands in all channels": "Если канал не выбран, поток будет срабатывать для команд во всех каналах",
+  "Empty fields keep their current value.": "Пустые поля сохраняют текущее значение."
 }

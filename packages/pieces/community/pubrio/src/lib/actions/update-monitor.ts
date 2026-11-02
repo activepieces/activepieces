@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const updateMonitor = createAction({
   auth: pubrioAuth,
   name: 'update_monitor',
+  classification: 'WRITE',
   displayName: 'Update Monitor',
   description: 'Update an existing signal monitor',
   audience: 'both',

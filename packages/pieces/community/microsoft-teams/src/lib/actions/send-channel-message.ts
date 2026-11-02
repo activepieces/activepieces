@@ -8,6 +8,7 @@ import { createGraphClient, withGraphRetry } from '../common/graph';
 export const sendChannelMessageAction = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_send_channel_message',
+  classification: 'WRITE',
   displayName: 'Send Channel Message',
   description: "Sends a message to a teams's channel.",
   audience: 'both',

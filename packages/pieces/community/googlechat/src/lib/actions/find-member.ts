@@ -7,6 +7,7 @@ import { googleChatAPIService } from '../common/requests';
 export const findMember = createAction({
   auth: googleChatApiAuth,
   name: 'findMember',
+  classification: 'READ',
   displayName: 'Find Member',
   description: 'Search space member by email',
   audience: 'both',

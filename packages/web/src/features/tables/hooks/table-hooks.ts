@@ -1,4 +1,5 @@
 import {
+  CreateFieldRequest,
   FieldType,
   SharedTemplate,
   TableTemplate,
@@ -91,18 +92,18 @@ export const tableHooks = {
     template: SharedTemplate;
     existingTableId: string;
     maxRecords?: number;
-  }): Promise<Table> => {
-    const tables = template.tables || [];
-    if (tables.length === 0) {
-      throw new Error('Template has no tables');
-    }
-    if (tables.length > 1) {
+  }): Promise<ImportedTable> => {
+    const tables = template.tables ?? [];
+    if (tables.length !== 1) {
       throw new Error(
         'Template must contain exactly one table when importing into existing table',
       );
     }
-
-    const tableTemplate = tables[0];
+    const [tableTemplate] = tables;
+    const fieldsToCreate = parseFieldsToCreate({
+      tableTemplate,
+      tableId: existingTableId,
+    });
 
     const [, existingFields] = await Promise.all([
       tablesApi.clear(existingTableId),
@@ -117,19 +118,9 @@ export const tableHooks = {
       name: tableTemplate.name,
     });
 
-    await Promise.all(
-      tableTemplate.fields.map((fieldState, position) =>
-        fieldsApi.create({
-          name: fieldState.name,
-          type: fieldState.type as any,
-          tableId: existingTableId,
-          data: fieldState.data as any,
-          externalId: fieldState.externalId,
-          position,
-        }),
-      ),
-    );
+    await Promise.all(fieldsToCreate.map((field) => fieldsApi.create(field)));
 
+    let importedRecordsCount = 0;
     if (tableTemplate.data && tableTemplate.data.rows.length > 0) {
       const createdFields = await fieldsApi.list({ tableId: existingTableId });
 
@@ -142,7 +133,7 @@ export const tableHooks = {
         maxRecords ?? 1000,
       );
 
-      await recordsApi.create({
+      const importedRecords = await recordsApi.create({
         tableId: existingTableId,
         records: recordsToImport.map((record) =>
           record
@@ -159,9 +150,12 @@ export const tableHooks = {
             .filter((cell) => cell !== null),
         ),
       });
+      importedRecordsCount = importedRecords.length;
     }
 
-    return tablesApi.getById(existingTableId);
+    return tablesApi
+      .getById(existingTableId)
+      .then((table) => ({ table, importedRecordsCount }));
   },
   importTablesFromTemplates: async ({
     templates,
@@ -173,7 +167,7 @@ export const tableHooks = {
     projectId: string;
     maxRecords?: number;
     folderId?: string;
-  }): Promise<Table[]> => {
+  }): Promise<ImportedTable[]> => {
     if (templates.length === 0) {
       return [];
     }
@@ -186,26 +180,21 @@ export const tableHooks = {
       tableTemplate: TableTemplate;
     }> = [];
 
-    for (const template of templates) {
-      const tables = template.tables || [];
-      if (tables.length === 0) {
-        continue;
-      }
+    for (const tableTemplate of templates.flatMap(
+      (template) => template.tables ?? [],
+    )) {
+      const table = await tablesApi.create({
+        projectId,
+        name: tableTemplate.name,
+        externalId: tableTemplate.externalId,
+        fields: tableTemplate.fields,
+        folderId: targetFolderId,
+      });
 
-      for (const tableTemplate of tables) {
-        const table = await tablesApi.create({
-          projectId,
-          name: tableTemplate.name,
-          externalId: tableTemplate.externalId,
-          fields: tableTemplate.fields,
-          folderId: targetFolderId,
-        });
-
-        allTablesToImport.push({
-          table,
-          tableTemplate,
-        });
-      }
+      allTablesToImport.push({
+        table,
+        tableTemplate,
+      });
     }
 
     const importPromises = allTablesToImport.map(
@@ -222,7 +211,7 @@ export const tableHooks = {
             maxRecords ?? 1000,
           );
 
-          await recordsApi.create({
+          const importedRecords = await recordsApi.create({
             tableId: table.id,
             records: recordsToImport.map((record) =>
               record
@@ -239,12 +228,34 @@ export const tableHooks = {
                 .filter((cell) => cell !== null),
             ),
           });
+          return { table, importedRecordsCount: importedRecords.length };
         }
 
-        return table;
+        return { table, importedRecordsCount: 0 };
       },
     );
 
     return await Promise.all(importPromises);
   },
+};
+
+function parseFieldsToCreate({
+  tableTemplate,
+  tableId,
+}: {
+  tableTemplate: TableTemplate;
+  tableId: string;
+}): CreateFieldRequest[] {
+  return CreateFieldRequest.array().parse(
+    tableTemplate.fields.map((field, position) => ({
+      ...field,
+      tableId,
+      position,
+    })),
+  );
+}
+
+type ImportedTable = {
+  table: Table;
+  importedRecordsCount: number;
 };

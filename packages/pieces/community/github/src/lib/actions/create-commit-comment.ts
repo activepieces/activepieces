@@ -1,5 +1,9 @@
 import { githubAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createCommitCommentActionOutputSchema } from '../output-schemas';
@@ -9,7 +13,7 @@ export const githubCreateCommitCommentAction = createAction({
   name: 'github_create_commit_comment',
   classification: 'WRITE',
   displayName: 'Create Commit Comment',
-  description: 'Creates a comment on a commit in a GitHub repository',
+  description: 'Comments on a commit, or on one line of its diff.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -20,25 +24,57 @@ export const githubCreateCommitCommentAction = createAction({
     repository: githubCommon.repositoryDropdown,
     sha: Property.ShortText({
       displayName: 'Commit SHA',
-      description: 'The SHA of the commit to comment on',
+      description: 'The full or short commit hash.',
+      placeholder: '6dcb09b',
       required: true,
     }),
     body: Property.LongText({
-      displayName: 'Comment Body',
-      description: 'The content of the comment',
+      displayName: 'Comment',
+      description: 'Markdown is supported.',
       required: true,
+    }),
+    lineNote: Property.MarkDown({
+      value: 'Leave both empty to comment on the whole commit.',
+      variant: MarkdownVariant.INFO,
     }),
     path: Property.ShortText({
       displayName: 'File Path',
-      description: 'The relative path to the file to comment on (optional)',
+      description: 'Relative to the repository root.',
+      placeholder: 'src/index.ts',
       required: false,
+      width: 'half',
     }),
     position: Property.Number({
       displayName: 'Position',
-      description: 'The line index in the diff to comment on (optional)',
+      description:
+        'Lines down from the first @@ hunk header. Needs a file path.',
       required: false,
+      width: 'half',
     }),
   },
+  propertyGroups: [
+    {
+      key: 'commit',
+      display: 'section',
+      label: 'Commit',
+      icon: 'code',
+      props: ['repository', 'sha'],
+    },
+    {
+      key: 'comment',
+      display: 'section',
+      label: 'Comment',
+      icon: 'reply',
+      props: ['body'],
+    },
+    {
+      key: 'line',
+      display: 'section',
+      label: 'Line in the diff',
+      icon: 'file',
+      props: ['lineNote', 'path', 'position'],
+    },
+  ],
   outputSchema: createCommitCommentActionOutputSchema,
   async run({ auth, propsValue }) {
     const { sha, body, path, position } = propsValue;
