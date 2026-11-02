@@ -123,9 +123,15 @@ export function MultiQuestionForm({
   }
 
   function handleSkip() {
+    const answersWithoutSkipped = withoutStep({
+      record: answers,
+      step: currentStep,
+    });
+    setAnswers(answersWithoutSkipped);
+    setAnswerValues((prev) => withoutStep({ record: prev, step: currentStep }));
     if (isLastStep) {
       if (submitted) return;
-      const lines = buildRecap(answers);
+      const lines = buildRecap(answersWithoutSkipped);
       if (lines.length === 0) {
         onDismiss?.();
         return;
@@ -525,5 +531,17 @@ function ChoiceBody({
         </>
       )}
     </div>
+  );
+}
+
+function withoutStep<T>({
+  record,
+  step,
+}: {
+  record: Record<number, T>;
+  step: number;
+}): Record<number, T> {
+  return Object.fromEntries(
+    Object.entries(record).filter(([key]) => Number(key) !== step),
   );
 }
