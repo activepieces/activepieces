@@ -431,7 +431,7 @@ async function claimConversationForRun({ conversationId, runId }: { conversation
 
 async function acquireStreamingLock({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<StreamingLockResult> {
     if (!isNil(runId)) {
-        const firstDelivery = await distributedStore.putIfAbsent(`agent-run-started:${conversationId}:${runId}`, true, STARTED_RUN_MARKER_TTL_SECONDS)
+        const firstDelivery = await distributedStore.putIfAbsent(startedRunMarkerKey({ conversationId, runId }), true, STARTED_RUN_MARKER_TTL_SECONDS)
         if (!firstDelivery) {
             return 'duplicate'
         }
@@ -455,6 +455,24 @@ async function acquireStreamingLock({ conversationId, runId }: { conversationId:
         return 'busy'
     }
     return current.activeRunId === runId ? 'duplicate' : 'superseded'
+}
+
+async function releaseStreamingLock({ conversationId, runId }: { conversationId: string, runId: string }): Promise<void> {
+    const result = await conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: AgentConversationStatus.IDLE })
+        .where('id = :id AND status = :streaming AND "activeRunId" = :runId', { id: conversationId, streaming: AgentConversationStatus.STREAMING, runId })
+        .returning('id')
+        .execute()
+    const releasedRows: unknown[] = result.raw ?? []
+    if (releasedRows.length > 0) {
+        await distributedStore.delete(startedRunMarkerKey({ conversationId, runId }))
+    }
+}
+
+function startedRunMarkerKey({ conversationId, runId }: { conversationId: string, runId: string }): string {
+    return `agent-run-started:${conversationId}:${runId}`
 }
 
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
@@ -519,6 +537,7 @@ export const agentHelpers = {
     jobFieldsFromConfig,
     claimConversationForRun,
     acquireStreamingLock,
+    releaseStreamingLock,
     resolveFlowTools,
     agentsSurfaceAvailable,
     assertAgentsSurfaceAvailable,

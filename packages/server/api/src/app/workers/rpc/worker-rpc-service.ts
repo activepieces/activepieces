@@ -1,11 +1,12 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
+import { AgentRunSource, ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { aiRpcHandlers } from '../../ai/ai-rpc-handlers'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
+import { agentHelpers } from '../../ee/agent/agent-helpers'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
 import { eventDestinationRpcHandlers } from '../../event-destinations/event-destinations-rpc-handlers'
@@ -344,7 +345,14 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
 
         async getAgentConfig(input) {
-            return agentRpcHandlers(agentRpcLog(log, input)).getAgentConfig(input)
+            const config = await agentRpcHandlers(agentRpcLog(log, input)).getAgentConfig(input)
+            const { conversationId, runId, source } = input
+            const flowStepReplyUndeliverable = socket?.connected === false && source === AgentRunSource.FLOW_STEP && !isNil(runId)
+            if (flowStepReplyUndeliverable) {
+                log.warn({ conversation: { id: conversationId }, run: { id: runId } }, '[workerRpc#getAgentConfig] Worker disconnected before the config reply, releasing the lock for the redelivered copy')
+                await agentHelpers.releaseStreamingLock({ conversationId, runId })
+            }
+            return config
         },
 
         async saveAgentMessages(input) {
