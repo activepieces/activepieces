@@ -2,6 +2,7 @@ import { Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   FlowOperationType,
+  FlowVersionState,
   supportUrl,
   UncategorizedFolderId,
 } from '@activepieces/shared';
@@ -87,6 +88,9 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
     flow.folderId ?? UncategorizedFolderId,
   );
 
+  const isLatestVersion =
+    flowVersion.state === FlowVersionState.DRAFT ||
+    flowVersion.id === flow.publishedVersionId;
   const [isEditingFlowName, setIsEditingFlowName] = useState(false);
   useEffect(() => {
     setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
