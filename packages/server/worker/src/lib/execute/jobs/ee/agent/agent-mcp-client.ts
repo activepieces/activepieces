@@ -1,5 +1,5 @@
 import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { agentAiUtils, mcpTransport, MODEL_RESULT_OFFLOAD_BYTES, toolResultView } from '@activepieces/server-utils'
+import { agentAiUtils, MAX_TOOL_RESULT_BYTES, mcpTransport, MODEL_RESULT_OFFLOAD_BYTES, toolResultView } from '@activepieces/server-utils'
 import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
@@ -349,6 +349,9 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                 const offloaded = await maybeOffloadMcpResult({ result: toolResult, toolName: name, saveLargeResult })
                 if (offloaded !== null) {
                     return offloaded
+                }
+                if ((toolResultView.modelVisibleBytes(toolResult) ?? Infinity) <= MAX_TOOL_RESULT_BYTES) {
+                    return toolResult
                 }
                 return agentWorkerTools.truncateLargeResult(toolResult)
             },
