@@ -7,6 +7,21 @@ import { insertRowsOutputSchema } from '../output-schemas';
 
 const MAX_ROWS = 500;
 
+function buildValues({ records, columns }: { records: Record<string, unknown>[]; columns: string[] }): { tuples: string[]; params: unknown[] } {
+  const params: unknown[] = [];
+  const tuples = records.map((record) => {
+    const cells = columns.map((name) => {
+      if (!(name in record)) {
+        return 'DEFAULT';
+      }
+      params.push(record[name]);
+      return `$${params.length}`;
+    });
+    return `(${cells.join(', ')})`;
+  });
+  return { tuples, params };
+}
+
 export const insertRows = createAction({
   auth: redshiftAuth,
   name: 'insert_rows',
@@ -43,18 +58,3 @@ export const insertRows = createAction({
     return { rowCount };
   },
 });
-
-function buildValues({ records, columns }: { records: Record<string, unknown>[]; columns: string[] }): { tuples: string[]; params: unknown[] } {
-  const params: unknown[] = [];
-  const tuples = records.map((record) => {
-    const cells = columns.map((name) => {
-      if (!(name in record)) {
-        return 'DEFAULT';
-      }
-      params.push(record[name]);
-      return `$${params.length}`;
-    });
-    return `(${cells.join(', ')})`;
-  });
-  return { tuples, params };
-}

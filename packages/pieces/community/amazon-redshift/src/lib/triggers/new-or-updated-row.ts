@@ -59,6 +59,24 @@ const polling: Polling<RedshiftAuthValue, StaticPropsValue<typeof props>> = {
   },
 };
 
+function toSqlTimestamp({ epochMs }: { epochMs: number }): string {
+  return new Date(epochMs).toISOString();
+}
+
+function toEpochMs({ value }: { value: unknown }): number | undefined {
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  if (typeof value !== 'string' || value.trim() === '') {
+    return undefined;
+  }
+  const text = value.trim().replace(' ', 'T');
+  const withTime = /^\d{4}-\d{2}-\d{2}$/.test(text) ? `${text}T00:00:00` : text;
+  const withZone = /([zZ]|[+-]\d{2}(:?\d{2})?)$/.test(withTime) ? withTime.replace(/([+-]\d{2})$/, '$1:00') : `${withTime}Z`;
+  const epoch = Date.parse(withZone);
+  return Number.isNaN(epoch) ? undefined : epoch;
+}
+
 export const newOrUpdatedRow = createTrigger({
   auth: redshiftAuth,
   name: 'new_or_updated_row',
@@ -85,21 +103,3 @@ export const newOrUpdatedRow = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
-
-function toSqlTimestamp({ epochMs }: { epochMs: number }): string {
-  return new Date(epochMs).toISOString();
-}
-
-function toEpochMs({ value }: { value: unknown }): number | undefined {
-  if (value instanceof Date) {
-    return value.getTime();
-  }
-  if (typeof value !== 'string' || value.trim() === '') {
-    return undefined;
-  }
-  const text = value.trim().replace(' ', 'T');
-  const withTime = /^\d{4}-\d{2}-\d{2}$/.test(text) ? `${text}T00:00:00` : text;
-  const withZone = /([zZ]|[+-]\d{2}(:?\d{2})?)$/.test(withTime) ? withTime.replace(/([+-]\d{2})$/, '$1:00') : `${withTime}Z`;
-  const epoch = Date.parse(withZone);
-  return Number.isNaN(epoch) ? undefined : epoch;
-}

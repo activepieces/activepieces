@@ -39,6 +39,20 @@ const polling: Polling<RedshiftAuthValue, StaticPropsValue<typeof props>> = {
   },
 };
 
+async function fetchNewItems({ auth, server, from, column, keyOf, filter, params }: FetchNewItemsParams): Promise<{ id: string; data: RedshiftRow }[]> {
+  const toItems = (rows: RedshiftRow[]) => rows.map((row) => ({ id: keyOf(row), data: row }));
+  const { rows } = await redshiftClient.runSql({ auth, server, sql: `SELECT * FROM ${from} WHERE ${filter} ORDER BY ${column} ASC LIMIT ${MAX_ROWS}`, params });
+  if (rows.length < MAX_ROWS) {
+    return toItems(rows).reverse();
+  }
+  const lastKey = keyOf(rows[rows.length - 1]);
+  if (keyOf(rows[0]) !== lastKey) {
+    return toItems(rows.filter((row) => keyOf(row) !== lastKey)).reverse();
+  }
+  const { rows: sameKey } = await redshiftClient.runSql({ auth, server, sql: `SELECT * FROM ${from} WHERE ${column} = $1`, params: [lastKey] });
+  return toItems(sameKey);
+}
+
 export const newRow = createTrigger({
   auth: redshiftAuth,
   name: 'new_row',
@@ -68,20 +82,6 @@ export const newRow = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
-
-async function fetchNewItems({ auth, server, from, column, keyOf, filter, params }: FetchNewItemsParams): Promise<{ id: string; data: RedshiftRow }[]> {
-  const toItems = (rows: RedshiftRow[]) => rows.map((row) => ({ id: keyOf(row), data: row }));
-  const { rows } = await redshiftClient.runSql({ auth, server, sql: `SELECT * FROM ${from} WHERE ${filter} ORDER BY ${column} ASC LIMIT ${MAX_ROWS}`, params });
-  if (rows.length < MAX_ROWS) {
-    return toItems(rows).reverse();
-  }
-  const lastKey = keyOf(rows[rows.length - 1]);
-  if (keyOf(rows[0]) !== lastKey) {
-    return toItems(rows.filter((row) => keyOf(row) !== lastKey)).reverse();
-  }
-  const { rows: sameKey } = await redshiftClient.runSql({ auth, server, sql: `SELECT * FROM ${from} WHERE ${column} = $1`, params: [lastKey] });
-  return toItems(sameKey);
-}
 
 type FetchNewItemsParams = {
   auth: RedshiftAuthValue;
