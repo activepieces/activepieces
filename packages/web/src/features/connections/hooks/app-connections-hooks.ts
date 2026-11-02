@@ -52,6 +52,7 @@ import {
 type UseReplaceConnectionsProps = {
   setDialogOpen: (isOpen: boolean) => void;
   refetch: () => void;
+  onReplaced?: (request: ReplaceAppConnectionsRequestBody) => void;
   connections: AppConnectionWithoutSensitiveData[];
 };
 
@@ -324,6 +325,7 @@ export const appConnectionsMutations = {
   useReplaceConnections: ({
     setDialogOpen,
     refetch,
+    onReplaced,
     connections,
   }: UseReplaceConnectionsProps) => {
     return useMutation({
@@ -343,6 +345,7 @@ export const appConnectionsMutations = {
             },
           ),
         });
+        onReplaced?.(request);
         setDialogOpen(false);
         refetch();
       },

@@ -1,8 +1,13 @@
+import {
+  ConnectionReplaceSource,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, WorkflowIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,9 +50,23 @@ const ReplaceConnectionForProjectDialog = ({
   children,
   projectId,
 }: ReplaceConnectionForProjectDialogProps) => {
+  const { capture } = useTelemetry();
   const [dialogOpen, setDialogOpen] = useState(false);
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+    <Dialog
+      open={dialogOpen}
+      onOpenChange={(open) => {
+        if (open) {
+          capture({
+            name: TelemetryEventName.CONNECTION_REPLACE_OPENED,
+            payload: {
+              source: ConnectionReplaceSource.PROJECT_CONNECTIONS_PAGE,
+            },
+          });
+        }
+        setDialogOpen(open);
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="flex flex-col">
         <ReplaceConnectionForProjectForm
@@ -67,6 +86,7 @@ function ReplaceConnectionForProjectForm({
   setDialogOpen,
 }: ReplaceConnectionForProjectFormProps) {
   const openNewWindow = useNewWindow();
+  const { capture } = useTelemetry();
   const [step, setStep] = useState<ProjectReplaceStep>(
     ProjectReplaceStep.CHOOSE_CONNECTIONS,
   );
@@ -82,6 +102,16 @@ function ReplaceConnectionForProjectForm({
     appConnectionsMutations.useReplaceConnections({
       setDialogOpen,
       connections: connections?.data ?? [],
+      onReplaced: (request) =>
+        capture({
+          name: TelemetryEventName.CONNECTION_REPLACE_COMPLETED,
+          payload: {
+            source: ConnectionReplaceSource.PROJECT_CONNECTIONS_PAGE,
+            pieceName: form.getValues('pieceName'),
+            flowCount: request.flowIds.length,
+            applyToPublishedVersions: request.applyToPublishedVersions ?? false,
+          },
+        }),
       refetch: onConnectionMerged,
     });
 

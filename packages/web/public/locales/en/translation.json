@@ -3727,6 +3727,9 @@
   "Replace in all steps": "Replace in all steps",
   "Switch": "Switch",
   "{flowCount, plural, =1 {We recommend testing the flow after the replace. If {newName} can't access the same data as {oldName}, the flow could break.} other {We recommend testing these flows after the replace. If {newName} can't access the same data as {oldName}, they could break.}}": "{flowCount, plural, =1 {We recommend testing the flow after the replace. If {newName} can't access the same data as {oldName}, the flow could break.} other {We recommend testing these flows after the replace. If {newName} can't access the same data as {oldName}, they could break.}}",
+  "Chose an option when switching a step's connection": "Chose an option when switching a step's connection",
+  "Opened the replace connection dialog": "Opened the replace connection dialog",
+  "Replaced a connection": "Replaced a connection",
   "Switching can clear {inputs} in this step's settings, if the {newConnectionDisplayName} connection doesn't have access to them.": "Switching can clear {inputs} in this step's settings, if the {newConnectionDisplayName} connection doesn't have access to them.",
   "Switch to {newConnectionDisplayName}?": "Switch to {newConnectionDisplayName}?"
 }
