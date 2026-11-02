@@ -2,7 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ntfyAuth } from '../auth';
 import { ntfyClient, NtfyMessage } from '../common/client';
-import { ntfyProps } from '../common/props';
+import { ntfyProps, TOPIC_DESCRIPTIONS } from '../common/props';
 import { sequenceEventOutputSchema } from '../output-schemas';
 
 export const clearNotification = createAction({
@@ -10,8 +10,7 @@ export const clearNotification = createAction({
   name: 'clear_notification',
   classification: 'WRITE',
   displayName: 'Clear Notification',
-  description:
-    'Mark a notification as read and dismiss it from phones and the web app. Requires ntfy server v2.16.0 or later.',
+  description: 'Mark a notification read and dismiss it everywhere. Needs ntfy v2.16+.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,10 +18,8 @@ export const clearNotification = createAction({
     idempotent: true,
   },
   props: {
-    topic: ntfyProps.topic(),
-    sequence_id: ntfyProps.sequenceId(
-      'The notification to clear: the Message ID returned when it was sent, or the Sequence ID you gave it, e.g. backup-job-42.'
-    ),
+    topic: ntfyProps.topic({ description: TOPIC_DESCRIPTIONS.existing }),
+    sequence_id: ntfyProps.sequenceId({ description: 'Message ID or your own Sequence ID.' }),
   },
   outputSchema: sequenceEventOutputSchema,
   async run({ auth, propsValue }) {
