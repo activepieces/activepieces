@@ -53,7 +53,7 @@ function createMockLogger(): ApLogger {
 function createTestProcessMaker() {
     let client: ClientSocket | null = null
     let child: (ChildProcess & EventEmitter) | null = null
-    let handshake: { pingTimeout: number } | null = null
+    let handshake: { pingTimeout: number, pingInterval: number } | null = null
 
     const maker: SandboxProcessMaker = {
         create: vi.fn(async (params) => {
@@ -429,6 +429,18 @@ describe('createSandbox', () => {
             const handshake = testPM.getHandshake()
             expect(handshake).not.toBeNull()
             expect(handshake!.pingTimeout).toBeGreaterThanOrEqual(defaultOptions.timeLimitSeconds * 1000)
+        })
+
+        it('keeps the heartbeat timer within what Node can schedule when the time limit is huge', async () => {
+            testPM = createTestProcessMaker()
+            const thirtyDaysSeconds = 30 * 24 * 60 * 60
+            sandbox = createSandbox(createMockLogger(), 'sb-heartbeat-cap', { ...defaultOptions, timeLimitSeconds: thirtyDaysSeconds }, testPM.maker)
+
+            await sandbox.start(startOptions)
+
+            const handshake = testPM.getHandshake()!
+            expect(handshake.pingInterval + handshake.pingTimeout).toBeLessThanOrEqual(2 ** 31 - 1)
+            expect(sandbox.isReady()).toBe(true)
         })
 
         it('is idempotent when already connected', async () => {
