@@ -1,4 +1,4 @@
-import { aiDevtools, evlogSetup } from '@activepieces/server-utils'
+import { aiDevtools, aiObservability, evlogSetup } from '@activepieces/server-utils'
 import { ApEnvironment } from '@activepieces/shared'
 import { getApiUrl, getSocketUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
@@ -35,6 +35,7 @@ async function main(): Promise<void> {
             process.exit(1)
         }, 30_000)
         await worker.stop()
+        await aiObservability.flush()
         clearTimeout(timeout)
         process.exit(0)
     }

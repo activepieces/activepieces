@@ -1,5 +1,5 @@
 import { AIProviderName, isNil, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
-import { apVersionUtil } from '@activepieces/server-utils'
+import { apVersionUtil, POSTHOG_HOST, POSTHOG_PROJECT_TOKEN } from '@activepieces/server-utils'
 import { ApEdition, ApEnvironment, AppInstance, AttributionParams, attributionUtils, DeploymentConfig, DeploymentKind, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, SignUpMethod, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
@@ -12,8 +12,8 @@ import { AppSystemProp } from './system/system-props'
 let posthogInstance: PostHog | null = null
 function getPostHog(): PostHog {
     if (!posthogInstance) {
-        posthogInstance = new PostHog('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
-            host: 'https://us.i.posthog.com',
+        posthogInstance = new PostHog(POSTHOG_PROJECT_TOKEN, {
+            host: POSTHOG_HOST,
             maxQueueSize: POSTHOG_MAX_QUEUE_SIZE,
         })
     }
