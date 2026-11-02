@@ -498,7 +498,11 @@ function ChoiceBody({
                   firstOptionRef.current?.focus();
                   return;
                 }
-                if (e.key === 'Enter' && (answer ?? '').trim()) {
+                if (
+                  e.key === 'Enter' &&
+                  !e.nativeEvent.isComposing &&
+                  (answer ?? '').trim()
+                ) {
                   e.preventDefault();
                   onPick((answer ?? '').trim());
                 }
