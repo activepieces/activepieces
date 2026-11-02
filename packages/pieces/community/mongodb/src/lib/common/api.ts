@@ -1,3 +1,4 @@
+import { tryCatch } from '@activepieces/pieces-framework';
 import { MongoServerError } from 'mongodb';
 import type { ClientSession, Collection, Document, MongoClient, WithId } from 'mongodb';
 
@@ -223,12 +224,20 @@ async function chooseUpdateMode({
   if (!replicated) {
     return 'per-document';
   }
-  const info = await client
-    .db(collection.dbName)
-    .listCollections({ name: collection.collectionName }, { nameOnly: false })
-    .next();
+  const { data: info, error } = await tryCatch(() =>
+    client
+      .db(collection.dbName)
+      .listCollections({ name: collection.collectionName }, { nameOnly: false })
+      .next(),
+  );
+  if (error) {
+    return 'per-document';
+  }
   const plainCollection =
-    info !== null && info.type === 'collection' && info.options?.['capped'] !== true;
+    info !== null &&
+    info !== undefined &&
+    info.type === 'collection' &&
+    info.options?.['capped'] !== true;
   return plainCollection ? 'transaction' : 'per-document';
 }
 
