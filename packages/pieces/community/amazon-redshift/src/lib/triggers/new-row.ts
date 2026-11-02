@@ -12,7 +12,7 @@ const props = {
   order_by: redshiftProps.column({
     required: true,
     displayName: 'Order By Column',
-    description: 'A column that grows with every new row, like an auto-increment id or a created timestamp.',
+    description: 'A unique column that grows with every new row, ideally an auto-increment id. Rows that share a value with an earlier row, or that commit after a row with a higher value, can be missed, so avoid timestamps.',
   }),
 };
 
