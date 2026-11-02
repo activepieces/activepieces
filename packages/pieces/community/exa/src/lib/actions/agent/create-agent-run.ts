@@ -19,49 +19,53 @@ export const createAgentRunAction = createAction({
   },
   auth: exaAuth,
   outputSchema: agentRunOutputSchema,
+  propertyGroups: [
+    { key: 'task', display: 'section', label: 'Task', icon: 'text', props: ['query', 'systemPrompt'] },
+    { key: 'cost', display: 'section', label: 'Cost', icon: 'sliders', props: ['effort', 'maxCostDollars'] },
+  ],
   props: {
     query: Property.LongText({
       displayName: 'Task',
-      description:
-        'What the agent should research or build, in plain language. Example: "List 10 Series A climate-tech startups in Europe founded after 2022, with their website and lead investor."',
+      description: 'What the agent should research or build, in plain words.',
+      placeholder: 'List 10 Series A climate-tech startups in Europe with their websites',
       required: true,
     }),
     effort: Property.StaticDropdown({
       displayName: 'Effort',
-      description:
-        'How hard the agent works, which sets the price per run. Minimal to Extra High are fixed prices. Auto and Ultra are metered by usage and can cost up to $5 and $20 per run unless you set Max Cost. Defaults to Low.',
+      description: 'Sets the price per run. Auto and Ultra are metered by usage.',
       required: false,
       defaultValue: agentEfforts.DEFAULT,
       options: { options: agentEfforts.OPTIONS },
     }),
     systemPrompt: Property.LongText({
       displayName: 'Instructions',
-      description:
-        'Extra guidance for the agent, such as preferred sources or rules like "only use official company websites".',
+      description: 'Extra rules for the agent, such as which sources to use.',
+      placeholder: 'Only use official company websites',
       required: false,
     }),
     outputSchema: Property.Json({
       displayName: 'Output Schema',
-      description:
-        'Optional JSON Schema for a structured result, returned in Structured Output. Example: {"type":"object","properties":{"companies":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"website":{"type":"string"}}}}}}',
+      description: 'JSON Schema for a structured result, returned in Structured Output.',
       required: false,
+      advanced: true,
     }),
     maxCostDollars: Property.Number({
-      displayName: 'Max Cost (USD)',
-      description:
-        'Spending cap for one run, between 1 and 100. Only applies when Effort is Auto or Ultra; fixed efforts already have a fixed price.',
+      displayName: 'Max Cost',
+      description: 'Spending cap in US dollars, 1 to 100. Only for Auto and Ultra.',
       required: false,
     }),
     previousRunId: Property.ShortText({
       displayName: 'Previous Run ID',
-      description:
-        'Continue from an earlier run so the agent builds on its findings. Use the ID returned by Start Agent Run, e.g. "agent_run_01k4d9w6y3h7p2m8".',
+      description: "Continue from an earlier run's findings. Use its Run ID.",
+      placeholder: 'agent_run_01k4d9w6y3h7p2m8',
       required: false,
+      advanced: true,
     }),
     metadata: Property.Object({
       displayName: 'Metadata',
-      description: 'Optional key-value labels stored with the run, e.g. {"flow": "lead-research"}.',
+      description: 'Key-value labels stored with the run.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
