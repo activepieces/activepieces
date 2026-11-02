@@ -16,6 +16,7 @@ How a ticket in the Engineering (ENG) Linear team is written, so people and agen
 **Decisions** — one decision per bullet with a one-line why. Out of scope is a decision: "Not X, because Y."
 **no-e2e** — the ticket label for one or more criteria with no E2E test. The bullet markers are the source; the label follows them.
 **Done** — the PR is merged.
+**Scope approved** — the Co-Owner's comment on a co-owned project; only then do its tickets leave Backlog for Todo. See *project-co-ownership*.
 **PR link** — the ticket line in a PR description: `Fixes <KEY>-123` on the last PR of a ticket, `Refs <KEY>-123` on an earlier one. Any team key works. The `Linear ticket check` workflow fails a PR that names no ticket, or one that does not exist or is canceled; it does not read the ticket's content.
 **Customer report** — a ticket that comes from a Pylon issue. It links that issue as the attachment "Pylon NNNN (customer report)".
 

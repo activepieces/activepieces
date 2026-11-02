@@ -94,6 +94,7 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 ## Pull Requests
 
 - When creating a PR with `gh pr create`, always pass `--assignee @me` so the PR is assigned to its author.
+- When the ticket belongs to a co-owned Linear project (two members), pass `--reviewer <login>` with the GitHub login of the one member who is not the Lead (the Co-Owner), and add the `### Project` section from `brain/knowledge/engineering/project-co-ownership.md` under "Linear ticket". Ask the engineer when you cannot match the Co-Owner to a login.
 - When creating a PR with `gh pr create`, always apply exactly one of these labels based on the nature of the change:
   - **`🌟 feature`** — new functionality
   - **`🐛 bug`** — bug fix
