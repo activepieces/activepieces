@@ -1,6 +1,8 @@
 import { AIProviderName, isNil, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apVersionUtil, POSTHOG_HOST, POSTHOG_PROJECT_TOKEN } from '@activepieces/server-utils'
 import { ApEdition, ApEnvironment, AppInstance, AttributionParams, attributionUtils, DeploymentConfig, DeploymentKind, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, SignUpMethod, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { instrument } from '@posthog/mcp'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
@@ -10,6 +12,7 @@ import { system } from './system/system'
 import { AppSystemProp } from './system/system-props'
 
 let posthogInstance: PostHog | null = null
+let mcpPosthogInstance: PostHog | null = null
 function getPostHog(): PostHog {
     if (!posthogInstance) {
         posthogInstance = new PostHog(POSTHOG_PROJECT_TOKEN, {
@@ -125,10 +128,18 @@ export async function flushLicenseKeyPostHogEvents(): Promise<void> {
     }
 }
 
-export async function shutdownTelemetry(): Promise<void> {
-    if (posthogInstance) {
-        await posthogInstance.shutdown()
+export function instrumentMcpServer({ server, userId, platformId }: InstrumentMcpServerParams): void {
+    if (system.getEdition() !== ApEdition.CLOUD) {
+        return
     }
+    mcpPosthogInstance ??= new PostHog(POSTHOG_PROJECT_TOKEN, { host: POSTHOG_HOST })
+    instrument(server, mcpPosthogInstance, {
+        identify: isNil(userId) ? null : { distinctId: userId, groups: isNil(platformId) ? undefined : { [PLATFORM_GROUP_TYPE]: platformId } },
+    })
+}
+
+export async function shutdownTelemetry(): Promise<void> {
+    await Promise.all([posthogInstance?.shutdown(), mcpPosthogInstance?.shutdown()])
 }
 
 const DEDUPE_MAX_ENTRIES = 50_000
@@ -330,4 +341,10 @@ type CaptureUserEventParams = {
     platformId: string | null
     event: TelemetryEvent
     log: FastifyBaseLogger
+}
+
+type InstrumentMcpServerParams = {
+    server: McpServer
+    userId?: string
+    platformId?: string
 }

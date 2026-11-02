@@ -6,7 +6,7 @@ import { flowService } from '../flows/flow/flow.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { telemetry } from '../helper/telemetry.utils'
+import { instrumentMcpServer, telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { McpActivityContext, withActivityRecording } from './activity/mcp-activity-recorder'
 import { mcpAccess } from './mcp-access'
@@ -71,6 +71,10 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
     }, {
         instructions: MCP_SERVER_INSTRUCTIONS,
     })
+
+    if (!isInAppChat) {
+        instrumentMcpServer({ server, userId, platformId })
+    }
 
     const billing = await mcpUsageTracker(log).resolveCallBilling({ mcp, clientId })
 
