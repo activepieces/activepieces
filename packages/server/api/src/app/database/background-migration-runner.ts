@@ -223,22 +223,33 @@ async function readBackendPid({ queryRunner }: { queryRunner: QueryRunner }): Pr
 }
 
 async function readCreateIndexProgress({ backendPid }: { backendPid: number }): Promise<unknown[] | undefined> {
-    const { data } = await tryCatch(async () => {
-        const executionDs = await migrationDatabaseConnection()
-        const rows: unknown = await executionDs.query(
-            `SELECT p."phase",
-                    p."index_relid"::regclass::text AS "indexName",
-                    p."blocks_done" AS "blocksDone",
-                    p."blocks_total" AS "blocksTotal",
-                    p."tuples_done" AS "tuplesDone",
-                    p."tuples_total" AS "tuplesTotal"
-               FROM pg_stat_progress_create_index p
-              WHERE p."pid" = $1`,
-            [backendPid],
-        )
-        return Array.isArray(rows) && rows.length > 0 ? rows : undefined
-    })
+    const { data } = await tryCatch(async () => Promise.race([
+        queryCreateIndexProgress({ backendPid }),
+        rejectAfter({ ms: BACKGROUND_MIGRATION_PROGRESS_READ_TIMEOUT_MS }),
+    ]))
     return data ?? undefined
+}
+
+async function queryCreateIndexProgress({ backendPid }: { backendPid: number }): Promise<unknown[] | undefined> {
+    const executionDs = await migrationDatabaseConnection()
+    const rows: unknown = await executionDs.query(
+        `SELECT p."phase",
+                p."index_relid"::regclass::text AS "indexName",
+                p."blocks_done" AS "blocksDone",
+                p."blocks_total" AS "blocksTotal",
+                p."tuples_done" AS "tuplesDone",
+                p."tuples_total" AS "tuplesTotal"
+           FROM pg_stat_progress_create_index p
+          WHERE p."pid" = $1`,
+        [backendPid],
+    )
+    return Array.isArray(rows) && rows.length > 0 ? rows : undefined
+}
+
+function rejectAfter({ ms }: { ms: number }): Promise<never> {
+    return new Promise((_resolve, reject) => {
+        setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms).unref()
+    })
 }
 
 async function ensureBackgroundMigrationsTable(dataSource: DataSource): Promise<void> {
@@ -294,6 +305,7 @@ const MAX_CATCHUP_ATTEMPTS = 10
 export const backgroundMigrationLockKey = (migrationName: string): string => `background_migration:${migrationName}`
 export const BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS = 240
 export const BACKGROUND_MIGRATION_HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000
+export const BACKGROUND_MIGRATION_PROGRESS_READ_TIMEOUT_MS = 10_000
 
 export const BACKGROUND_MIGRATIONS_TABLE = 'background_migrations'
 
