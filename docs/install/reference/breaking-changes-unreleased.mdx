@@ -8,6 +8,19 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Help Scout 0.3.0: five actions are no longer AI agent tools, and Find Conversation searches every status
+
+**Create Conversation**, **Send Reply**, **Add Note**, **Update Customer Properties** and **Find Conversation** are now shown only in the flow builder. AI agents and MCP clients get new ID-based actions instead, including Search Conversations, Get Conversation, Update Conversation and the list actions for mailboxes, users and tags.
+
+When Status is left empty, **Find Conversation** now searches every status. It used to fall back to Help Scout's default of active only, so closed and pending conversations were never found.
+
+#### What you need to do
+
+- Agents that used the old Help Scout actions as tools: switch to the new agent actions.
+- If a flow relied on Find Conversation returning only active conversations, set Status to Active.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Audit logs: SAML and embedded sign-ins no longer send `user.signed.up` on every sign-in
 
 `user.signed.up` used to fire on every SAML and embedded (JWT) sign-in, even for existing members. It now fires once, when the member is created. Later SAML sign-ins, and sign-ins with email or Google, send the new `user.signed.in` event, which carries the sign-in method. Later embedded sign-ins send no event.
