@@ -1,5 +1,6 @@
 import { AgentRunSource, FlowOperationType, FlowStatus } from '@activepieces/core-execution'
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { UserIdentityProvider } from '../../core/authentication/user-identity'
 import {
     AgentActionExecutedEvent,
     AgentActionKind,
@@ -28,6 +29,7 @@ import {
     ProjectRoleEvent,
     SigningKeyEvent,
     SignUpEvent,
+    UserSignedInEvent,
     VariableEvent,
 } from './index'
 
@@ -263,7 +265,14 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             }
             return mock
         }
-        case ApplicationEventName.USER_SIGNED_IN:
+        case ApplicationEventName.USER_SIGNED_IN: {
+            const mock: UserSignedInEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.USER_SIGNED_IN,
+                data: { user, method: UserIdentityProvider.EMAIL },
+            }
+            return mock
+        }
         case ApplicationEventName.USER_PASSWORD_RESET:
         case ApplicationEventName.USER_EMAIL_VERIFIED: {
             const mock: AuthenticationEvent = {
@@ -277,7 +286,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             const mock: SignUpEvent = {
                 ...baseEnvelope,
                 action: ApplicationEventName.USER_SIGNED_UP,
-                data: { source: 'credentials', user },
+                data: { source: 'credentials', method: UserIdentityProvider.EMAIL, user },
             }
             return mock
         }
