@@ -10,6 +10,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { BackgroundMigrationNotCompleteError, migrationHelpers } from '../../../../src/app/database/migration-helpers'
 import { BackfillPieceTranslation1874000000000 } from '../../../../src/app/database/migration/postgres/background/1874000000000-BackfillPieceTranslation'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from '../../../../src/app/database/migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
+import { RefetchMissingPieceTranslations1879000000000 } from '../../../../src/app/database/migration/postgres/background/1879000000000-RefetchMissingPieceTranslations'
 import { getBackgroundMigrations } from '../../../../src/app/database/postgres-connection'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -166,6 +167,13 @@ describe('getBackgroundMigrations', () => {
         expect(order.indexOf(BackfillPieceTranslation1874000000000)).toBeGreaterThanOrEqual(0)
         expect(order.indexOf(BackfillPieceTranslation1874000000000)).toBeLessThan(order.indexOf(ReshapeFlowRunListIndexesForBarrierChildren1871000000000))
         expect(order.at(-1)).toBe(ReshapeFlowRunListIndexesForBarrierChildren1871000000000)
+    })
+
+    it('runs the translation repair after the backfill and before the flow_run index reshape', () => {
+        const order = getBackgroundMigrations()
+
+        expect(order.indexOf(RefetchMissingPieceTranslations1879000000000)).toBeGreaterThan(order.indexOf(BackfillPieceTranslation1874000000000))
+        expect(order.indexOf(RefetchMissingPieceTranslations1879000000000)).toBeLessThan(order.indexOf(ReshapeFlowRunListIndexesForBarrierChildren1871000000000))
     })
 })
 
