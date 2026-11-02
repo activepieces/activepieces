@@ -183,7 +183,7 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
             if (!inner.success) {
                 return { success: false, error: new Error(`Invalid input for "${toolName}": ${inner.error.message}\nInput schema: ${JSON.stringify(await jsonSchemaOf(target))}`) }
             }
-            return { success: true, value: { ...toolCallLabels.withFallbackLabels({ input: parsed.data, toolName }), tool: toolName, input: inner.value } }
+            return { success: true, value: { ...parsed.data, input: inner.value } }
         },
     })
 }
@@ -284,25 +284,6 @@ function paidToolRefusal(toolName: string): string {
     return `"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`
 }
 
-function withFallbackLabels<T extends Record<string, unknown>>({ input, toolName }: { input: T, toolName: string }): T & ToolCallLabelSet {
-    const fallback = readableToolName(toolName)
-    return {
-        ...input,
-        title: labelOr({ value: input['title'], fallback }),
-        activeTitle: labelOr({ value: input['activeTitle'], fallback }),
-        doneTitle: labelOr({ value: input['doneTitle'], fallback }),
-    }
-}
-
-function labelOr({ value, fallback }: { value: unknown, fallback: string }): string {
-    return typeof value === 'string' && value.trim().length > 0 ? value : fallback
-}
-
-function readableToolName(toolName: string): string {
-    const words = toolName.replace(/^mcp__[^_]+__/, '').replace(/^ap_/, '').replace(/[_-]+/g, ' ').trim()
-    return words.length === 0 ? 'Working on it' : `${words[0].toUpperCase()}${words.slice(1)}`
-}
-
 const OTHER_TOOLS_HEADING = '## Other tools you have'
 
 const FLOW_BUILDING_SKILL = 'flow_building'
@@ -325,10 +306,6 @@ const LABEL_FIELDS = new Set(Object.keys(cardTitleFields))
 const LABEL_SCHEMA = asSchema(z.object(cardTitleFields))
 const SCHEMA_NOISE_KEYS = new Set(['$schema', 'additionalProperties'])
 
-export const toolCallLabels = {
-    withFallbackLabels,
-}
-
 export type LazyToolChunkResult = {
     emit: unknown[]
     hold?: { callId: string, chunk: Record<string, unknown> }
@@ -344,10 +321,4 @@ export type SkillSurfaceResult = {
     coreToolNames: string[]
     attachedToolNames: () => string[]
     catalogNote: string
-}
-
-type ToolCallLabelSet = {
-    title: string
-    activeTitle: string
-    doneTitle: string
 }

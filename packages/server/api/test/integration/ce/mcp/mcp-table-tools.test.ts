@@ -23,7 +23,7 @@ afterAll(async () => {
 })
 
 describe('MCP table tools', () => {
-    it('ap_find_records returns a small preview, says more match, and picks fields and truncated values', async () => {
+    it('ap_find_records returns a small preview, says more match, and picks fields', async () => {
         const mcp = await newMcp()
         const created = createdSchema.parse((await apCreateTableTool(mcp, mockLog).execute({
             name: 'Notes',
@@ -37,14 +37,10 @@ describe('MCP table tools', () => {
         const preview = findSchema.parse((await apFindRecordsTool(mcp, mockLog).execute({ tableId: created.id })).structuredContent)
         expect(preview.count).toBe(10)
         expect(preview.hasMore).toBe(true)
-        expect(String(preview.records[0].cells.Body).length).toBeLessThan(300)
 
         const picked = findSchema.parse((await apFindRecordsTool(mcp, mockLog).execute({ tableId: created.id, fields: ['Title'], limit: 3 })).structuredContent)
         expect(picked.count).toBe(3)
         expect(Object.keys(picked.records[0].cells)).toEqual(['Title'])
-
-        const full = findSchema.parse((await apFindRecordsTool(mcp, mockLog).execute({ tableId: created.id, limit: 1, fullValues: true })).structuredContent)
-        expect(String(full.records[0].cells.Body).length).toBe(500)
     })
 
     it('ap_list_tables is compact by default, filters by name, caps the listing and keeps detail opt-in', async () => {

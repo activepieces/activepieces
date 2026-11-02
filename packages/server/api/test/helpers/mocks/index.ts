@@ -132,6 +132,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
         sensitive: project?.sensitive ?? false,
+        isDefault: project?.isDefault ?? false,
         notifyFlowOwnerOnFailure: project?.notifyFlowOwnerOnFailure ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,

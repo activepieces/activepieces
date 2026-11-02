@@ -1,5 +1,5 @@
 import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { agentAiUtils, mcpTransport, MODEL_RESULT_OFFLOAD_BYTES, toolResultView } from '@activepieces/server-utils'
+import { agentAiUtils, MAX_TOOL_RESULT_BYTES, mcpTransport, MODEL_RESULT_OFFLOAD_BYTES, toolResultView } from '@activepieces/server-utils'
 import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
@@ -364,7 +364,7 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                     return buildReconnectGuidance({ connectorUuid })
                 }
                 const offloaded = await maybeOffloadMcpResult({ result: toolResult, toolName: name, saveLargeResult })
-                const finalResult = offloaded ?? agentWorkerTools.truncateLargeResult(toolResult)
+                const finalResult = offloaded ?? ((toolResultView.modelVisibleBytes(toolResult) ?? Infinity) <= MAX_TOOL_RESULT_BYTES ? toolResult : agentWorkerTools.truncateLargeResult(toolResult))
                 if (cacheKey !== undefined && !(isObject(toolResult) && toolResult['isError'] === true)) {
                     readCache.set(cacheKey, finalResult)
                 }

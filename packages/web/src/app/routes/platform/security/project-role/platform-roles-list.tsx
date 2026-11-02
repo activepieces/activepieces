@@ -14,14 +14,16 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { RoleAvatar } from './role-avatar';
 
 export function PlatformRolesList() {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const newMemberSettings = platformHooks.useNewMemberSettings();
 
   return (
     <div className="flex flex-col gap-4">
       <SettingsPanel flush>
         {roleCopy
           .platformRoles({
-            personalProjectsEnabled: platform.autoCreatePersonalProjects,
+            personalProjectsEnabled: newMemberSettings.personalProjectsActive,
+            hasDefaultProjects:
+              newMemberSettings.activeDefaultProjectIds.length > 0,
           })
           .map((platformRole) => (
             <SettingsRow

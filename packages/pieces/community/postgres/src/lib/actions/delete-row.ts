@@ -1,5 +1,5 @@
 import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
-import { postgresAuth } from '../..';
+import { postgresAuth } from '../auth';
 import { pgClient, postgresCommon, postgresUtils } from '../common';
 import { deleteRowOutputSchema } from '../output-schemas';
 
@@ -9,7 +9,7 @@ export const deleteRow = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Row',
   description: 'Deletes one or more rows from a table',
-  audience: 'both',
+  audience: 'human',
   outputSchema: deleteRowOutputSchema,
   aiMetadata: {
     description: 'Deletes every row in a PostgreSQL table whose search column equals a given value, and returns how many rows were removed. Use to remove records matched by a single column. Enable Return Deleted Rows to also get the deleted rows back, but leave it off when the delete can match many rows. Idempotent: once the matching rows are gone, re-running with the same input deletes nothing further.',

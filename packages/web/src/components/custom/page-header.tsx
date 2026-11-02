@@ -23,8 +23,8 @@ export const PageHeader = ({
         className,
       )}
     >
-      <div className="flex items-center gap-1 grow">
-        <div className="grow">
+      <div className="flex items-center gap-1 grow min-w-0">
+        <div className="grow min-w-0">
           {typeof title === 'string' ? (
             <h1 className="text-base font-semibold">{title}</h1>
           ) : (
