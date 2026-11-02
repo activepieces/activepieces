@@ -84,6 +84,7 @@ export const findAndUpdateDocumentsAction = createAction({
       const returnUpdated = context.propsValue.returnUpdated !== false;
 
       return await mongodbApi.findAndUpdateDocuments({
+        client,
         collection,
         filter,
         update,
