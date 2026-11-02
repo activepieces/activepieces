@@ -13,11 +13,22 @@ async function findAndUpdateDocuments({
   upsert: boolean;
   returnUpdated: boolean;
 }) {
+  const matchedIds = returnUpdated
+    ? (await collection.find(filter, { projection: { _id: 1 } }).toArray()).map(
+        (document) => document._id,
+      )
+    : [];
+
   const updateResult = await collection.updateMany(filter, update, { upsert });
 
   let documents: Record<string, unknown>[] = [];
   if (returnUpdated) {
-    documents = await collection.find(filter).toArray();
+    const upsertedId = updateResult.upsertedId;
+    const ids =
+      upsertedId === null || upsertedId === undefined
+        ? matchedIds
+        : [...matchedIds, upsertedId];
+    documents = await collection.find({ _id: { $in: ids } }).toArray();
   }
 
   return {
