@@ -349,8 +349,8 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             const { conversationId, runId, source } = input
             const flowStepReplyUndeliverable = socket?.connected === false && source === AgentRunSource.FLOW_STEP && !isNil(runId)
             if (flowStepReplyUndeliverable) {
-                log.warn({ conversation: { id: conversationId }, run: { id: runId } }, '[workerRpc#getAgentConfig] Worker disconnected before the config reply, releasing the lock for the redelivered copy')
-                await agentHelpers.releaseStreamingLock({ conversationId, runId })
+                log.warn({ conversation: { id: conversationId }, run: { id: runId } }, '[workerRpc#getAgentConfig] Worker disconnected before the config reply, handing the lock to the redelivered copy')
+                await agentHelpers.handLockToRedelivery({ conversationId, runId })
             }
             return config
         },
