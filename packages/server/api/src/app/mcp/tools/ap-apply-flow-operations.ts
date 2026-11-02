@@ -54,7 +54,7 @@ export const apApplyFlowOperationsTool = ({ mcp, userId }: McpToolContext, log: 
 
             if (!isNil(failure)) {
                 const failedLine = `❌ Operation ${failure.index + 1} (${failure.type}) failed: ${failure.reason}`
-                const { error: rollbackError } = applied.length === 0
+                const { error: rollbackError } = applied.length === 0 && !failure.ran
                     ? { error: null }
                     : await tryCatch(() => restoreDraft({ flow, projectId: mcp.projectId, platformId: project.platformId, userId, log }))
                 const deletedTestData = applied.some((operation) => operation.type === 'delete_step' || operation.type === 'delete_branch')
@@ -99,14 +99,16 @@ async function applyInOrder({ flowId, operations, toolsByType, disabledTools, lo
     for (const [index, { type, ...fields }] of operations.entries()) {
         const toolName = `ap_${type}`
         if (disabledTools.includes(toolName)) {
-            return { applied, failure: { index, type, reason: `${toolName} is disabled on this MCP server.` } }
+            return { applied, failure: { index, type, reason: `${toolName} is disabled on this MCP server.`, ran: false } }
         }
-        const targeted = type === 'delete_branch' || type === 'update_branch' ? await withBranchTarget({ type, fields, loadTrigger }) : fields
-        const { data, error } = await tryCatch(() => toolsByType[type].execute({ ...targeted, flowId }))
+        const { data, error } = await tryCatch(async () => {
+            const targeted = type === 'delete_branch' || type === 'update_branch' ? await withBranchTarget({ type, fields, loadTrigger }) : fields
+            return toolsByType[type].execute({ ...targeted, flowId })
+        })
         const result = isNil(error) && !isNil(data) ? data : mcpUtils.mcpToolError('Invalid operation', error)
         const text = toolResultView.textOf(result) ?? ''
         if (result.isError === true || agentToolClassification.hasFailureTextPrefix(text)) {
-            return { applied, failure: { index, type, reason: text.replace(/^❌\s*/, '') } }
+            return { applied, failure: { index, type, reason: text.replace(/^❌\s*/, ''), ran: true } }
         }
         applied.push({ index, type, result: text.replace(publishedWarning, '').trim() })
     }
@@ -207,4 +209,4 @@ const applyFlowOperationsInput = z.object({
 type OperationType = typeof OPERATION_TYPES[number]
 type Operation = z.infer<typeof applyFlowOperationsInput>['operations'][number]
 type AppliedOperation = { index: number, type: OperationType, result: string }
-type FailedOperation = { index: number, type: OperationType, reason: string }
+type FailedOperation = { index: number, type: OperationType, reason: string, ran: boolean }
