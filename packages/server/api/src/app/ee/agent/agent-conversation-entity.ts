@@ -1,14 +1,13 @@
-import { Agent, AgentConversation, AgentConversationStatus, AgentRunSource, Platform, Project, User } from '@activepieces/shared'
+import { Agent, AgentConversation, AgentConversationStatus, AgentRunSource, FlowSnapshot, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
-import { type StoredFlowSnapshot } from './chat-flow-awareness'
 
 export type AgentConversationWithRelations = AgentConversation & {
     platform: Platform
     project: Project
     user: User
     agent: Agent
-    flowSnapshots: Record<string, StoredFlowSnapshot> | null
+    flowSnapshots: Record<string, FlowSnapshot> | null
 }
 
 export const AgentConversationEntity = new EntitySchema<AgentConversationWithRelations>({

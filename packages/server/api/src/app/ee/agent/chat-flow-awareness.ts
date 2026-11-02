@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { FlowSnapshot, FlowStepChange, flowStepDiff, flowToolTargets, McpToolDefinition, McpToolResult, PopulatedFlow } from '@activepieces/shared'
+import { FlowSnapshot, FlowStepChange, flowStepDiff, flowStructureUtil, FlowToolTarget, flowToolTargets, McpToolDefinition, McpToolResult, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowService } from '../../flows/flow/flow.service'
@@ -16,18 +16,18 @@ export const chatFlowAwareness = (log: FastifyBaseLogger) => ({
     }): McpToolDefinition['execute'] {
         return async (args) => {
             const flowId = stringArg({ args, key: 'flowId' })
-            const stored = isNil(flowId) ? null : await storedSnapshot({ conversationId, projectId, flowId })
-            const userChanges = isNil(flowId) || isNil(stored) ? [] : await changesSince({ stored, projectId, flowId, log })
             const target = flowToolTargets.targetOf({ toolName: toolTitle, input: args })
-            const targetStep = target?.kind === 'editing' ? target.stepName : null
-            const conflict = userChanges.find((change) => change.stepName === targetStep && change.kind !== 'added')
+            const before = isNil(flowId) ? null : await loadFlowState({ conversationId, projectId, flowId, log })
+            const userChanges = isNil(before) || isNil(before.stored) ? [] : flowStepDiff.diff({ before: before.stored, after: before.current })
+            const conflict = isNil(before) ? undefined : findConflict({ userChanges, target, flow: before.flow })
             if (!isNil(flowId) && !isNil(conflict)) {
                 return staleWriteResult({ flowId, changes: userChanges })
             }
             const result = await execute(args)
             const touchedFlowId = flowId ?? structuredFlowId(result)
             if (!isNil(touchedFlowId)) {
-                await recordSnapshot({ conversationId, projectId, flowId: touchedFlowId, stored: touchedFlowId === flowId ? stored : null, log })
+                const snapshot = await nextSnapshot({ before: touchedFlowId === flowId ? before : null, target, userChanges, projectId, flowId: touchedFlowId, log })
+                await recordSnapshot({ conversationId, projectId, flowId: touchedFlowId, snapshot, log })
             }
             if (isNil(flowId) || userChanges.length === 0) {
                 return result
@@ -40,42 +40,96 @@ export const chatFlowAwareness = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function storedSnapshot({ conversationId, projectId, flowId }: {
+async function loadFlowState({ conversationId, projectId, flowId, log }: {
     conversationId: string
-    projectId: string
-    flowId: string
-}): Promise<StoredFlowSnapshot | null> {
-    const conversation = await conversationRepo().findOne({ where: { id: conversationId, projectId }, select: ['id', 'flowSnapshots'] })
-    return conversation?.flowSnapshots?.[flowId] ?? null
-}
-
-async function changesSince({ stored, projectId, flowId, log }: {
-    stored: StoredFlowSnapshot
     projectId: string
     flowId: string
     log: FastifyBaseLogger
-}): Promise<FlowStepChange[]> {
-    const flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
-    if (isNil(flow) || isSameVersion({ stored, flow })) {
-        return []
+}): Promise<FlowState | null> {
+    const [conversation, flow] = await Promise.all([
+        conversationRepo().findOne({ where: { id: conversationId, projectId }, select: ['id', 'flowSnapshots'] }),
+        flowService(log).getOnePopulated({ id: flowId, projectId }),
+    ])
+    if (isNil(flow)) {
+        return null
     }
-    return flowStepDiff.diff({ before: stored, after: flowStepDiff.takeSnapshot({ trigger: flow.version.trigger, versionId: flow.version.id }) })
+    return {
+        flow,
+        stored: conversation?.flowSnapshots?.[flowId] ?? null,
+        current: snapshotOf(flow),
+    }
 }
 
-async function recordSnapshot({ conversationId, projectId, flowId, stored, log }: {
+function findConflict({ userChanges, target, flow }: {
+    userChanges: FlowStepChange[]
+    target: FlowToolTarget | null
+    flow: PopulatedFlow
+}): FlowStepChange | undefined {
+    if (isNil(target) || !('stepName' in target) || !WRITE_KINDS.has(target.kind)) {
+        return undefined
+    }
+    const guardedSteps = target.kind === 'removing'
+        ? stepWithChildren({ flow, stepName: target.stepName })
+        : [target.stepName]
+    return userChanges.find((change) => guardedSteps.includes(change.stepName) && change.kind !== 'added')
+}
+
+function stepWithChildren({ flow, stepName }: { flow: PopulatedFlow, stepName: string }): string[] {
+    const step = flowStructureUtil.getStep(stepName, flow.version.trigger)
+    if (isNil(step)) {
+        return [stepName]
+    }
+    return flowStructureUtil.getAllChildSteps(step).map((child) => child.name)
+}
+
+async function nextSnapshot({ before, target, userChanges, projectId, flowId, log }: {
+    before: FlowState | null
+    target: FlowToolTarget | null
+    userChanges: FlowStepChange[]
+    projectId: string
+    flowId: string
+    log: FastifyBaseLogger
+}): Promise<FlowSnapshot | null> {
+    const wroteSteps = isNil(before) || (!isNil(target) && WRITE_KINDS.has(target.kind))
+    const base = wroteSteps ? await currentSnapshot({ projectId, flowId, log }) : before.current
+    if (isNil(base) || isNil(before) || isNil(before.stored)) {
+        return base
+    }
+    const stored = before.stored
+    const unreadSteps = userChanges
+        .filter((change) => change.kind === 'changed' && change.stepName in base.steps && !readsStep({ target, stepName: change.stepName }))
+        .map((change) => [change.stepName, stored.steps[change.stepName]])
+    return { ...base, steps: { ...base.steps, ...Object.fromEntries(unreadSteps) } }
+}
+
+function readsStep({ target, stepName }: { target: FlowToolTarget | null, stepName: string }): boolean {
+    if (isNil(target)) {
+        return false
+    }
+    if (target.kind === 'reading-flow') {
+        return true
+    }
+    return target.kind === 'reading' && target.stepName === stepName
+}
+
+async function currentSnapshot({ projectId, flowId, log }: { projectId: string, flowId: string, log: FastifyBaseLogger }): Promise<FlowSnapshot | null> {
+    const flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
+    return isNil(flow) ? null : snapshotOf(flow)
+}
+
+function snapshotOf(flow: PopulatedFlow): FlowSnapshot {
+    return flowStepDiff.takeSnapshot({ trigger: flow.version.trigger, versionId: flow.version.id })
+}
+
+async function recordSnapshot({ conversationId, projectId, flowId, snapshot, log }: {
     conversationId: string
     projectId: string
     flowId: string
-    stored: StoredFlowSnapshot | null
+    snapshot: FlowSnapshot | null
     log: FastifyBaseLogger
 }): Promise<void> {
-    const flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
-    if (isNil(flow) || (!isNil(stored) && isSameVersion({ stored, flow }))) {
+    if (isNil(snapshot)) {
         return
-    }
-    const snapshot: StoredFlowSnapshot = {
-        ...flowStepDiff.takeSnapshot({ trigger: flow.version.trigger, versionId: flow.version.id }),
-        updated: flow.version.updated,
     }
     const { error } = await tryCatch(() => conversationRepo().createQueryBuilder()
         .update()
@@ -86,10 +140,6 @@ async function recordSnapshot({ conversationId, projectId, flowId, stored, log }
     if (error) {
         log.warn({ error, flow: { id: flowId } }, '[chatFlowAwareness] Failed to record the flow snapshot')
     }
-}
-
-function isSameVersion({ stored, flow }: { stored: StoredFlowSnapshot, flow: PopulatedFlow }): boolean {
-    return flow.version.id === stored.versionId && flow.version.updated === stored.updated
 }
 
 function staleWriteResult({ flowId, changes }: { flowId: string, changes: FlowStepChange[] }): McpToolResult {
@@ -109,6 +159,10 @@ function stringArg({ args, key }: { args: Record<string, unknown>, key: string }
     return typeof value === 'string' && value.length > 0 ? value : null
 }
 
-export type StoredFlowSnapshot = FlowSnapshot & {
-    updated: string
+const WRITE_KINDS = new Set<FlowToolTarget['kind']>(['editing', 'removing', 'adding-after'])
+
+type FlowState = {
+    flow: PopulatedFlow
+    stored: FlowSnapshot | null
+    current: FlowSnapshot
 }

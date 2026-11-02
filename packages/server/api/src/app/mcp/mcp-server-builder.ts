@@ -298,15 +298,16 @@ function registerStaticTools({ server, mcp, projectId, userId, platformDisabledT
     })
 
     tools.forEach((tool) => {
+        const billedExecute = withCallBilling({ execute: tool.execute, toolName: tool.title, projectId, billing })
+        const awareExecute = isNil(chatConversationId)
+            ? billedExecute
+            : chatFlowAwareness(log).wrap({ execute: billedExecute, toolTitle: tool.title, conversationId: chatConversationId, projectId })
         const execute = permissionChecker.wrapExecute({
-            execute: withCallBilling({ execute: tool.execute, toolName: tool.title, projectId, billing }),
+            execute: awareExecute,
             permission: tool.permission,
             toolTitle: tool.title,
         })
-        const awareExecute = isNil(chatConversationId)
-            ? execute
-            : chatFlowAwareness(log).wrap({ execute, toolTitle: tool.title, conversationId: chatConversationId, projectId })
-        const recordedExecute = withActivityRecording({ execute: awareExecute, tool, resolveContext: () => Promise.resolve(activityContext), log })
+        const recordedExecute = withActivityRecording({ execute, tool, resolveContext: () => Promise.resolve(activityContext), log })
         server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => recordedExecute(args))
     })
 }

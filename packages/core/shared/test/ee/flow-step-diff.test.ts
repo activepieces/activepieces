@@ -63,4 +63,25 @@ describe('flowStepDiff', () => {
         const kinds = flowStepDiff.diff({ before, after }).map((change) => `${change.kind}:${change.stepName}`)
         expect(kinds).toEqual(['moved:step_2', 'moved:step_1'])
     })
+
+    it('reports a step moved out of a loop even when the step order stays the same', () => {
+        const inner = slackStep({ name: 'step_2', channel: '#a' })
+        const before = snapshot(buildTrigger(loopStep({ name: 'step_1', firstLoopAction: inner })))
+        const after = snapshot(buildTrigger(loopStep({ name: 'step_1', next: inner })))
+        const kinds = flowStepDiff.diff({ before, after }).map((change) => `${change.kind}:${change.stepName}`)
+        expect(kinds).toEqual(['moved:step_2'])
+    })
 })
+
+function loopStep({ name, firstLoopAction, next }: { name: string, firstLoopAction?: Record<string, unknown>, next?: Record<string, unknown> }): Record<string, unknown> {
+    return {
+        name,
+        displayName: 'Loop',
+        type: FlowActionType.LOOP_ON_ITEMS,
+        valid: true,
+        lastUpdatedDate: '2026-10-14T00:00:00.000Z',
+        settings: { items: '{{trigger}}' },
+        ...(firstLoopAction ? { firstLoopAction } : {}),
+        ...(next ? { nextAction: next } : {}),
+    }
+}

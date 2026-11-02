@@ -1,15 +1,16 @@
-import { flowStructureUtil, FlowTrigger, Step } from '@activepieces/core-execution'
-import { deepEquals, isObject, prune } from '@activepieces/core-utils'
+import { FlowActionType, flowStructureUtil, FlowTrigger, Step } from '@activepieces/core-execution'
+import { deepEquals, isNil, isObject, prune } from '@activepieces/core-utils'
 
 const IGNORED_SETTING_KEYS = new Set(['sampleData', 'inputUiInfo', 'propertySettings'])
 const MAX_VALUE_LENGTH = 80
 
 function takeSnapshot({ trigger, versionId }: { trigger: FlowTrigger, versionId: string }): FlowSnapshot {
     const steps = flowStructureUtil.getAllSteps(trigger)
+    const locations = Object.fromEntries(stepLocations({ step: trigger, location: 'flow' }))
     return {
         versionId,
         order: steps.map((step) => step.name),
-        steps: Object.fromEntries(steps.map((step) => [step.name, stepContent(step)])),
+        steps: Object.fromEntries(steps.map((step) => [step.name, stepContent({ step, location: locations[step.name] })])),
     }
 }
 
@@ -47,9 +48,10 @@ function describe({ changes, flowId }: { changes: FlowStepChange[], flowId: stri
     return [`The user edited flow ${flowId} in the builder since you last looked at it:`, ...lines].join('\n')
 }
 
-function stepContent(step: Step): FlowStepSnapshot {
+function stepContent({ step, location }: { step: Step, location: string }): FlowStepSnapshot {
     const settings = Object.fromEntries(Object.entries(step.settings).filter(([key]) => !IGNORED_SETTING_KEYS.has(key)))
     return {
+        location,
         displayName: step.displayName,
         type: step.type,
         skip: 'skip' in step ? step.skip === true : false,
@@ -86,8 +88,35 @@ function movedStepNames({ before, after }: { before: FlowSnapshot, after: FlowSn
     return afterOrder.filter((name, index) => {
         const previousNow = afterOrder[index - 1]
         const previousBefore = beforeOrder[beforeOrder.indexOf(name) - 1]
-        return previousNow !== previousBefore
+        const changedPlace = before.steps[name].location !== after.steps[name].location
+        return previousNow !== previousBefore || changedPlace
     })
+}
+
+function stepLocations({ step, location }: { step: Step | null | undefined, location: string }): [string, string][] {
+    if (isNil(step)) {
+        return []
+    }
+    const inner = innerChains(step).flatMap(({ key, first }) => stepLocations({ step: first, location: `${step.name}.${key}` }))
+    return [[step.name, location], ...inner, ...stepLocations({ step: step.nextAction, location })]
+}
+
+function innerChains(step: Step): { key: string, first: Step | null | undefined }[] {
+    switch (step.type) {
+        case FlowActionType.LOOP_ON_ITEMS:
+            return [{ key: 'loop', first: step.firstLoopAction }]
+        case FlowActionType.ROUTER:
+        case FlowActionType.AI_ROUTER:
+            return step.children.map((first, index) => ({ key: `branch ${index + 1}`, first }))
+        case FlowActionType.CODE:
+        case FlowActionType.PIECE:
+            return [
+                { key: 'on success', first: step.continueOnFailureBranches?.onSuccess },
+                { key: 'on failure', first: step.continueOnFailureBranches?.onFailure },
+            ]
+        default:
+            return []
+    }
 }
 
 function formatValue(value: unknown): string {
@@ -109,6 +138,7 @@ export const flowStepDiff = {
 }
 
 export type FlowStepSnapshot = {
+    location: string
     displayName: string
     type: string
     skip: boolean

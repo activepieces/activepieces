@@ -1,4 +1,4 @@
-import { FlowActionType, FlowOperationType, McpToolResult, PopulatedFlow } from '@activepieces/shared'
+import { FlowActionType, FlowOperationType, McpToolResult, PopulatedFlow, StepLocationRelativeToParent } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -71,7 +71,63 @@ describe('chat flow awareness', () => {
 
         expect(textOf(next)).toBe('done')
     })
+
+    it('keeps protecting a step the user changed until the agent reads it', async () => {
+        const { ctx, flow, execute, wrap } = await setup()
+        await wrap({ toolTitle: 'ap_flow_structure' })({ flowId: flow.id })
+
+        await userEditsStep({ ctx, flowId: flow.id, name: 'step_1', code: 'user version' })
+        await wrap({ toolTitle: 'ap_update_step' })({ flowId: flow.id, stepName: 'step_2' })
+        execute.mockClear()
+        const blindWrite = await wrap({ toolTitle: 'ap_update_step' })({ flowId: flow.id, stepName: 'step_1' })
+        await wrap({ toolTitle: 'ap_read_step_settings' })({ flowId: flow.id, stepName: 'step_1' })
+        const informedWrite = await wrap({ toolTitle: 'ap_update_step' })({ flowId: flow.id, stepName: 'step_1' })
+
+        expect(blindWrite.isError).toBe(true)
+        expect(informedWrite.isError).toBeUndefined()
+        expect(execute).toHaveBeenCalledTimes(2)
+    })
+
+    it('refuses deleting a loop whose inner step the user changed', async () => {
+        const { ctx, conversationId, execute } = await setup()
+        const flow = await flowWithLoop(ctx)
+        const wrap = ({ toolTitle }: { toolTitle: string }): ((args: Record<string, unknown>) => Promise<McpToolResult>) => chatFlowAwareness(app.log).wrap({ execute, toolTitle, conversationId, projectId: ctx.project.id })
+        await wrap({ toolTitle: 'ap_flow_structure' })({ flowId: flow.id })
+
+        await userEditsStep({ ctx, flowId: flow.id, name: 'step_2', code: 'user version' })
+        execute.mockClear()
+        const deleteLoop = await wrap({ toolTitle: 'ap_delete_step' })({ flowId: flow.id, stepName: 'step_1' })
+
+        expect(deleteLoop.isError).toBe(true)
+        expect(execute).not.toHaveBeenCalled()
+    })
+
+    it('reports an edit the user made while a test run was going', async () => {
+        const { ctx, flow, conversationId } = await setup()
+        const awareness = chatFlowAwareness(app.log)
+        const read = async (): Promise<McpToolResult> => ({ content: [{ type: 'text', text: 'done' }] })
+        const testRunWhileUserEdits = async (): Promise<McpToolResult> => {
+            await userEditsStep({ ctx, flowId: flow.id, name: 'step_1', code: 'edited during the run' })
+            return { content: [{ type: 'text', text: 'run finished' }] }
+        }
+
+        await awareness.wrap({ execute: read, toolTitle: 'ap_flow_structure', conversationId, projectId: ctx.project.id })({ flowId: flow.id })
+        await awareness.wrap({ execute: testRunWhileUserEdits, toolTitle: 'ap_test_flow', conversationId, projectId: ctx.project.id })({ flowId: flow.id })
+        const next = await awareness.wrap({ execute: read, toolTitle: 'ap_list_runs', conversationId, projectId: ctx.project.id })({ flowId: flow.id })
+
+        expect(textOf(next)).toContain('"edited during the run"')
+    })
 })
+
+async function flowWithLoop(ctx: TestContext): Promise<PopulatedFlow> {
+    const created = await ctx.post('/v1/flows', { displayName: 'loop flow', projectId: ctx.project.id }, { query: { projectId: ctx.project.id } })
+    const flow: PopulatedFlow = created.json()
+    const loop = { type: FlowActionType.LOOP_ON_ITEMS, displayName: 'Loop', name: 'step_1', settings: { items: '{{trigger}}' }, valid: true, skip: false }
+    await ctx.post(`/v1/flows/${flow.id}`, { type: FlowOperationType.ADD_ACTION, request: { parentStep: 'trigger', action: loop } })
+    const inner = await ctx.post(`/v1/flows/${flow.id}`, { type: FlowOperationType.ADD_ACTION, request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP, action: codeStep({ name: 'step_2', code: 'a' }) } })
+    expect(inner.statusCode).toBe(StatusCodes.OK)
+    return flow
+}
 
 async function setup(): Promise<{
     ctx: TestContext
