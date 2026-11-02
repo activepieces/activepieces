@@ -51,6 +51,7 @@ import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { authnSsoSamlService } from './ee/authentication/saml-authn/authn-sso-saml-service'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
+import { embedSubdomainService } from './ee/embed-subdomain/embed-subdomain.service'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { flowApprovalModule } from './ee/flows/flow-approval/flow-approval.module'
 import { eeFlowPublishHook } from './ee/flows/flow-approval/flow-publish-hook'
@@ -401,7 +402,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             billingProvider.set(autumnBillingProvider)
             await aiUsageJobs.register(app.log)
             await app.register(aiUsageModule)
-            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            resumePageHooks.set((log) => ({
+                getTheme: (params) => appearanceHelper.getTheme({ ...params, log }),
+                getPublicApiBaseUrl: (params) => embedSubdomainService(log).getPublicApiBaseUrl(params),
+            }))
             verifiedDomainHooks.set(authnSsoSamlService)
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
@@ -448,7 +452,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             billingProvider.set(autumnBillingProvider)
             await aiUsageJobs.register(app.log)
             await app.register(aiUsageModule)
-            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            resumePageHooks.set((log) => ({
+                getTheme: (params) => appearanceHelper.getTheme({ ...params, log }),
+                getPublicApiBaseUrl: (params) => embedSubdomainService(log).getPublicApiBaseUrl(params),
+            }))
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
