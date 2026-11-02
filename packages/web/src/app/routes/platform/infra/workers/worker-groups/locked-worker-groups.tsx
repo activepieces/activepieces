@@ -140,10 +140,10 @@ function lockCopy(reason: WorkerGroupsLockReason): LockCopy {
       return {
         title: t('Worker groups run on your own servers'),
         description: t(
-          'Available on self-hosted Activepieces. Talk to us to set it up.',
+          'Available on self-hosted Activepieces. Talk to sales to set it up.',
         ),
         secondary: setupGuide,
-        primary: { label: t('Talk to us') },
+        primary: talkToSales,
       };
     case 'community':
       return {

@@ -3714,11 +3714,10 @@
   "How to switch": "How to switch",
   "Enterprise plan": "Enterprise plan",
   "Self-hosted": "Self-hosted",
-  "Available on self-hosted Activepieces. Talk to us to set it up.": "Available on self-hosted Activepieces. Talk to us to set it up.",
-  "Talk to us": "Talk to us",
   "Add your license key to use worker groups": "Add your license key to use worker groups",
   "Worker groups come with an Enterprise license. Add yours in Billing.": "Worker groups come with an Enterprise license. Add yours in Billing.",
   "Add license key": "Add license key",
   "Your license doesn’t include worker groups": "Your license doesn’t include worker groups",
-  "Ask us to add them to your license, then follow the setup guide to start your first group.": "Ask us to add them to your license, then follow the setup guide to start your first group."
+  "Ask us to add them to your license, then follow the setup guide to start your first group.": "Ask us to add them to your license, then follow the setup guide to start your first group.",
+  "Available on self-hosted Activepieces. Talk to sales to set it up.": "Available on self-hosted Activepieces. Talk to sales to set it up."
 }
