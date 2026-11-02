@@ -40,7 +40,6 @@ import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
 import { ReplaceIcon } from '@/components/icons/replace';
-import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -51,6 +50,7 @@ import {
   EditGlobalConnectionDialog,
   RenameConnectionDialog,
   RevalidateConnectionButton,
+  appConnectionsHooks,
   appConnectionsMutations,
   appConnectionsQueries,
   appConnectionUtils,
@@ -70,7 +70,6 @@ function AppConnectionsPage() {
   >([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { checkAccess } = useAuthorization();
-  const { embedState } = useEmbedding();
   const userPlatformRole = userHooks.getCurrentUserPlatformRole();
   const location = useLocation();
   const { pieces } = piecesHooks.usePieces({});
@@ -128,9 +127,10 @@ function AppConnectionsPage() {
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
-  const userHasPermissionToReplaceAppConnection = checkAccess(
-    Permission.REPLACE_APP_CONNECTION,
-  );
+  const {
+    showReplace,
+    hasPermissionToReplace: userHasPermissionToReplaceAppConnection,
+  } = appConnectionsHooks.useReplaceConnectionAccess();
   const { data: owners } = appConnectionsQueries.useConnectionsOwners();
   const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] =
     ownerColumnHooks.useOwnerColumnFilter<AppConnectionWithoutSensitiveData>(
@@ -394,7 +394,7 @@ function AppConnectionsPage() {
 
   const toolbarButtons = useMemo(
     () => [
-      ...(embedState.hideReplaceConnection
+      ...(!showReplace
         ? []
         : [
             <PermissionNeededTooltip
@@ -444,7 +444,7 @@ function AppConnectionsPage() {
     [
       userHasPermissionToWriteAppConnection,
       userHasPermissionToReplaceAppConnection,
-      embedState.hideReplaceConnection,
+      showReplace,
       refresh,
     ],
   );

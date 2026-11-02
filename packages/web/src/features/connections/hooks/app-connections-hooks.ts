@@ -1,5 +1,6 @@
 import {
   ApErrorParams,
+  Permission,
   ErrorCode,
   isNil,
   SeekPage,
@@ -36,6 +37,7 @@ import { agentsApi } from '@/features/agents/api/agents';
 import { useAgentsAvailable } from '@/features/agents/hooks/agents-hooks';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { projectMembersApi } from '@/features/members/api/project-members-api';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -77,6 +79,21 @@ type UseUpsertAppConnectionProps = {
     open: boolean,
     connection?: AppConnectionWithoutSensitiveData,
   ) => void;
+};
+
+function useReplaceConnectionAccess() {
+  const { embedState } = useEmbedding();
+  const hasPermissionToReplace = useAuthorization().checkAccess(
+    Permission.REPLACE_APP_CONNECTION,
+  );
+  return {
+    showReplace: !embedState.hideReplaceConnection,
+    hasPermissionToReplace,
+  };
+}
+
+export const appConnectionsHooks = {
+  useReplaceConnectionAccess,
 };
 
 export const appConnectionsMutations = {

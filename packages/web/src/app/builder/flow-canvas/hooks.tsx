@@ -336,7 +336,8 @@ const useFlowConnections = () => {
   const stepConnectionExternalIds = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .map((step) => flowStructureUtil.extractStepConnectionIds(step));
-  const flowConnections = (connections?.data ?? [])
+  const projectConnections = connections?.data ?? [];
+  const flowConnections = projectConnections
     .map((connection) => ({
       connection,
       stepCount: stepConnectionExternalIds.filter((connectionExternalIds) =>
@@ -344,7 +345,7 @@ const useFlowConnections = () => {
       ).length,
     }))
     .filter(({ stepCount }) => stepCount > 0);
-  return { flowConnections, isLoading };
+  return { flowConnections, projectConnections, isLoading };
 };
 
 export const flowCanvasHooks = {

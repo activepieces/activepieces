@@ -1,0 +1,322 @@
+import { connectionTemplate, isNil } from '@activepieces/core-utils';
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+  PiecePropertyMap,
+  PropertyType,
+} from '@activepieces/pieces-framework';
+import {
+  AppConnectionWithoutSensitiveData,
+  PieceAction,
+  PieceTrigger,
+  PropertyExecutionType,
+  PropertySettings,
+} from '@activepieces/shared';
+import i18next, { t } from 'i18next';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+
+import { ReplaceConnectionForFlowDialog } from '@/app/builder/builder-header/replace-connection-for-flow-dialog';
+import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
+import { ConnectionSelect } from '@/app/connections/connection-select';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { appConnectionsHooks } from '@/features/connections';
+
+export function ConnectionSelectWithSwitchConfirmation({
+  piece,
+  stepProps,
+  value,
+  onChange,
+  disabled,
+}: ConnectionSelectWithSwitchConfirmationProps) {
+  const form = useFormContext<PieceAction | PieceTrigger>();
+  const { flowConnections, projectConnections } =
+    flowCanvasHooks.useFlowConnections();
+  const { showReplace, hasPermissionToReplace } =
+    appConnectionsHooks.useReplaceConnectionAccess();
+  const [pendingSwitch, setPendingSwitch] = useState<PendingSwitch | null>(
+    null,
+  );
+  const [connectionsToReplace, setConnectionsToReplace] =
+    useState<ConnectionsToReplace | null>(null);
+
+  const findConnection = (connectionValue: string | undefined) =>
+    projectConnections.find(
+      (connection) =>
+        connection.externalId ===
+        connectionTemplate.unwrapExternalId(connectionValue),
+    );
+
+  const handleChange = (newValue: string) => {
+    const currentExternalId = connectionTemplate.unwrapExternalId(value);
+    const isSwitch =
+      !isNil(currentExternalId) &&
+      currentExternalId !== connectionTemplate.unwrapExternalId(newValue);
+    if (!isSwitch) {
+      onChange(newValue);
+      return;
+    }
+    const { settings } = form.getValues();
+    const clearedInputs = listInputsClearedBySwitch({
+      props: stepProps,
+      input: settings.input,
+      propertySettings: settings.propertySettings,
+    });
+    if (clearedInputs.length === 0) {
+      onChange(newValue);
+      return;
+    }
+    setPendingSwitch({ newValue, clearedInputs });
+  };
+
+  const sourceConnection = findConnection(value);
+  const targetConnection = pendingSwitch
+    ? findConnection(pendingSwitch.newValue)
+    : undefined;
+  const canReplace =
+    showReplace && hasPermissionToReplace && !isNil(sourceConnection);
+
+  return (
+    <>
+      <ConnectionSelect
+        piece={piece}
+        value={value}
+        onChange={handleChange}
+        disabled={disabled}
+      />
+      {pendingSwitch && (
+        <SwitchConnectionConfirmationDialog
+          oldName={sourceConnection?.displayName ?? ''}
+          newName={targetConnection?.displayName ?? ''}
+          stepCount={
+            flowConnections.find(
+              ({ connection }) => connection.id === sourceConnection?.id,
+            )?.stepCount ?? 1
+          }
+          clearedInputs={pendingSwitch.clearedInputs}
+          onReplace={
+            canReplace && sourceConnection
+              ? () => {
+                  setPendingSwitch(null);
+                  setConnectionsToReplace({
+                    source: sourceConnection,
+                    target: targetConnection,
+                  });
+                }
+              : undefined
+          }
+          onCancel={() => setPendingSwitch(null)}
+          onConfirm={() => {
+            setPendingSwitch(null);
+            onChange(pendingSwitch.newValue);
+          }}
+        />
+      )}
+      {connectionsToReplace && (
+        <ReplaceConnectionForFlowDialog
+          sourceConnection={connectionsToReplace.source}
+          targetConnection={connectionsToReplace.target}
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setConnectionsToReplace(null);
+            }
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+function SwitchConnectionConfirmationDialog({
+  oldName,
+  newName,
+  stepCount,
+  clearedInputs,
+  onReplace,
+  onCancel,
+  onConfirm,
+}: SwitchConnectionConfirmationDialogProps) {
+  const [beforeInputs, afterInputs] = t(
+    "Switching clears {inputs} in this step's settings, because they depend on the connection.",
+    { inputs: INPUTS_PLACEHOLDER },
+  ).split(INPUTS_PLACEHOLDER);
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onCancel();
+        }
+      }}
+    >
+      <DialogContent className="flex flex-col">
+        <DialogHeader>
+          <DialogTitle>{t('Switch to {newName}?', { newName })}</DialogTitle>
+        </DialogHeader>
+        <DialogDescription className="text-gray-12">
+          {beforeInputs}
+          <InputNames names={clearedInputs.map((input) => input.displayName)} />
+          {afterInputs}
+        </DialogDescription>
+        {onReplace && (
+          <DialogDescription className="text-gray-12">
+            {t(
+              '{stepCount, plural, =1 {To keep your inputs, replace the connection in the step that uses {oldName} instead.} other {To keep your inputs, replace the connection in all # steps that use {oldName} instead.}}',
+              { stepCount, oldName },
+            )}
+          </DialogDescription>
+        )}
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            {t('Cancel')}
+          </Button>
+          {onReplace && (
+            <Button type="button" variant="outline" onClick={onReplace}>
+              {t('Replace in all steps')}
+            </Button>
+          )}
+          <Button type="button" onClick={onConfirm}>
+            {t('Switch and clear')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function InputNames({ names }: { names: string[] }) {
+  const parts = new Intl.ListFormat(i18next.language, {
+    type: 'conjunction',
+  }).formatToParts(names);
+  return parts.map((part, index) =>
+    part.type === 'element' ? (
+      <strong key={index} className="font-semibold text-gray-12">
+        {part.value}
+      </strong>
+    ) : (
+      part.value
+    ),
+  );
+}
+
+function listInputsClearedBySwitch({
+  props,
+  input,
+  propertySettings,
+}: ListInputsClearedBySwitchParams): ClearedInput[] {
+  return Object.entries(props).flatMap(([propertyName, property]) => {
+    if (
+      propertySettings[propertyName]?.type === PropertyExecutionType.DYNAMIC
+    ) {
+      return [];
+    }
+    switch (property.type) {
+      case PropertyType.DROPDOWN:
+      case PropertyType.MULTI_SELECT_DROPDOWN:
+        return hasValue(input[propertyName])
+          ? [
+              {
+                path: propertyName,
+                displayName: property.displayName,
+              },
+            ]
+          : [];
+      case PropertyType.DYNAMIC:
+        return listDynamicChildrenWithValues({
+          propertyName,
+          schema: propertySettings[propertyName]?.schema,
+          value: input[propertyName],
+        });
+      default:
+        return [];
+    }
+  });
+}
+
+function listDynamicChildrenWithValues({
+  propertyName,
+  schema,
+  value,
+}: {
+  propertyName: string;
+  schema: unknown;
+  value: unknown;
+}): ClearedInput[] {
+  const children = PiecePropertyMap.safeParse(schema);
+  if (!children.success || !isRecord(value)) {
+    return [];
+  }
+  return Object.entries(children.data)
+    .filter(([childName]) => hasValue(value[childName]))
+    .map(([childName, child]) => ({
+      path: `${propertyName}.${childName}`,
+      displayName: child.displayName,
+    }));
+}
+
+function hasValue(value: unknown): boolean {
+  if (isNil(value) || value === '') {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+  if (isRecord(value)) {
+    return Object.keys(value).length > 0;
+  }
+  return true;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && !isNil(value) && !Array.isArray(value);
+}
+
+const INPUTS_PLACEHOLDER = '\u0000inputs\u0000';
+
+type ConnectionSelectWithSwitchConfirmationProps = {
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  stepProps: PiecePropertyMap;
+  value: string | undefined;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+};
+
+type PendingSwitch = {
+  newValue: string;
+  clearedInputs: ClearedInput[];
+};
+
+type ConnectionsToReplace = {
+  source: AppConnectionWithoutSensitiveData;
+  target: AppConnectionWithoutSensitiveData | undefined;
+};
+
+type SwitchConnectionConfirmationDialogProps = {
+  oldName: string;
+  newName: string;
+  stepCount: number;
+  clearedInputs: ClearedInput[];
+  onReplace: (() => void) | undefined;
+  onCancel: () => void;
+  onConfirm: () => void;
+};
+
+type ClearedInput = {
+  path: string;
+  displayName: string;
+};
+
+type ListInputsClearedBySwitchParams = {
+  props: PiecePropertyMap;
+  input: Record<string, unknown>;
+  propertySettings: Record<string, PropertySettings>;
+};

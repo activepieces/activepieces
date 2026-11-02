@@ -152,7 +152,7 @@ export function ConnectionSelect({
         key={value ?? ''}
         open={selectConnectionOpen}
         onOpenChange={setSelectConnectionOpen}
-        defaultValue={value}
+        value={value ?? ''}
         onValueChange={onChange}
         disabled={disabled}
       >

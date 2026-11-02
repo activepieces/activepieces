@@ -34,6 +34,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 const ReplaceConnectionForFlowDialog = ({
   sourceConnection,
+  targetConnection,
   open,
   onOpenChange,
 }: ReplaceConnectionForFlowDialogProps) => {
@@ -59,6 +60,7 @@ const ReplaceConnectionForFlowDialog = ({
         <ReplaceConnectionForFlowForm
           key={open ? 'open' : 'closed'}
           sourceConnection={sourceConnection}
+          targetConnection={targetConnection}
           setDialogOpen={onOpenChange}
         />
       </DialogContent>
@@ -68,9 +70,11 @@ const ReplaceConnectionForFlowDialog = ({
 
 function ReplaceConnectionForFlowForm({
   sourceConnection,
+  targetConnection,
   setDialogOpen,
 }: {
   sourceConnection: AppConnectionWithoutSensitiveData;
+  targetConnection?: AppConnectionWithoutSensitiveData;
   setDialogOpen: (open: boolean) => void;
 }) {
   const [flow, savePendingEdits, showsNewestVersion] = useBuilderStateContext(
@@ -110,7 +114,7 @@ function ReplaceConnectionForFlowForm({
   });
   const form = useForm<FlowReplaceFormValues>({
     defaultValues: {
-      targetConnectionId: '',
+      targetConnectionId: targetConnection?.id ?? '',
       applyToPublishedVersions: false,
     },
     mode: 'onSubmit',
@@ -164,6 +168,7 @@ type FlowReplaceFormValues = ReplaceConnectionFlowVersionsSelection & {
 
 type ReplaceConnectionForFlowDialogProps = {
   sourceConnection: AppConnectionWithoutSensitiveData;
+  targetConnection?: AppConnectionWithoutSensitiveData;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };

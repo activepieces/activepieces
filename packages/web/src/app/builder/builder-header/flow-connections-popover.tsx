@@ -1,4 +1,3 @@
-import { Permission } from '@activepieces/core-utils';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plug } from 'lucide-react';
@@ -7,7 +6,6 @@ import { useState } from 'react';
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -18,8 +16,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { appConnectionsHooks } from '@/features/connections';
 import { PieceIconWithPieceName } from '@/features/pieces';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { ReplaceConnectionForFlowDialog } from './replace-connection-for-flow-dialog';
 
@@ -29,10 +27,8 @@ export const FlowConnectionsPopover = ({
   isFlowLocked: boolean;
 }) => {
   const { flowConnections } = flowCanvasHooks.useFlowConnections();
-  const showReplace = !useEmbedding().embedState.hideReplaceConnection;
-  const hasPermissionToReplace = useAuthorization().checkAccess(
-    Permission.REPLACE_APP_CONNECTION,
-  );
+  const { showReplace, hasPermissionToReplace } =
+    appConnectionsHooks.useReplaceConnectionAccess();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [connectionToReplace, setConnectionToReplace] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
