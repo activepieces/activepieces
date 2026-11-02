@@ -181,12 +181,18 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         resolvedPieceName = versionResult.normalizedPieceName
                     }
 
-                    const stepUnknown = await knownStepInput({ step, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, platformId, log })
+                    const pieceAction = step.type === FlowActionType.PIECE && !isNil(resolvedPieceName) && !isNil(resolvedPieceVersion) && !isNil(step.actionName)
+                        ? { pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, componentName: step.actionName, componentType: 'action' as const }
+                        : undefined
+                    const authInput = step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}
+                    const stepUnknown = isNil(pieceAction) ? { input: step.input, unknownKeys: [], message: '' } : await mcpUtils.dropUnknownInputProps({ ...pieceAction, input: step.input, platformId, log })
                     const rewritten = mcpUtils.rewriteAllReferences({ input: stepUnknown.input, loopItems: step.loopItems, conditions: step.branches, trigger: latestTrigger })
-                    const labels = await stepLabels({ step, stepName, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, input: rewritten.input, projectId, platformId, log })
-                    const stepInput = await inputWithOptionalDefaults({ step, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, input: labels.input, platformId, log })
+                    const labels = isNil(pieceAction) || isNil(rewritten.input)
+                        ? { input: rewritten.input, resolved: [], problems: [] }
+                        : await buildFlowReview.resolveDropdownLabels({ ...pieceAction, stepName, input: { ...rewritten.input, ...authInput }, projectId, platformId, log })
+                    const stepInput = isNil(pieceAction) ? labels.input : await withOptionalDefaults({ pieceAction, input: labels.input, platformId, log })
                     const rewrittenStep = { ...step, input: stepInput, loopItems: rewritten.loopItems, branches: rewritten.conditions }
-                    const propertySettings = await stepPropertySettings({ actionName: step.actionName, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, input: { ...(stepInput ?? {}), ...(step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}) }, projectId, platformId, log })
+                    const propertySettings = isNil(pieceAction) ? {} : await mcpUtils.resolveDynamicPropertySettings({ ...pieceAction, input: { ...(stepInput ?? {}), ...authInput }, projectId, platformId, log })
                     const skeleton = buildSkeleton({ step: rewrittenStep, name: stepName, resolvedPieceVersion, resolvedPieceName, propertySettings })
                     const parseResult = UpdateActionRequest.safeParse(skeleton)
                     if (!parseResult.success) {
@@ -196,7 +202,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
 
                     const location = step.stepLocationRelativeToParent ?? StepLocationRelativeToParent.AFTER
                     const defaultParent = lastTopLevelStepName ?? allSteps[allSteps.length - 1].name
-                    const requestedParent = resolveParentStepName({ requested: step.parentStepName, stepNameByDisplayName, existingStepNames: allSteps.map((s) => s.name) })
+                    const requestedParent = isNil(step.parentStepName) || allSteps.some((s) => s.name === step.parentStepName) ? step.parentStepName : stepNameByDisplayName.get(step.parentStepName)
                     if (!isNil(step.parentStepName) && isNil(requestedParent)) {
                         const why = skippedDisplayNames.has(step.parentStepName) ? 'was skipped' : 'is not in this flow'
                         skip({ displayName: step.displayName, reason: `its parent "${step.parentStepName}" ${why}; add it after fixing the parent` })
@@ -331,20 +337,6 @@ function parentsFirst<T extends { displayName: string, parentStepName?: string }
     return ordered
 }
 
-function resolveParentStepName({ requested, stepNameByDisplayName, existingStepNames }: {
-    requested: string | undefined
-    stepNameByDisplayName: Map<string, string>
-    existingStepNames: string[]
-}): string | undefined {
-    if (isNil(requested)) {
-        return undefined
-    }
-    if (existingStepNames.includes(requested)) {
-        return requested
-    }
-    return stepNameByDisplayName.get(requested)
-}
-
 function branchPlacementFor({ location, branchIndex, parent }: {
     location: StepLocationRelativeToParent
     branchIndex: number | undefined
@@ -397,78 +389,24 @@ function reviewDetails({ stepSummaries, resolvedLabels, problems }: {
     return sections.filter((section) => section.length > 0).join('\n')
 }
 
-async function stepLabels({ step, stepName, pieceName, pieceVersion, input, projectId, platformId, log }: {
-    step: z.infer<typeof stepSpec>
-    stepName: string
-    pieceName: string | undefined
-    pieceVersion: string | undefined
-    input: Record<string, unknown> | undefined
-    projectId: string
-    platformId: string
-    log: FastifyBaseLogger
-}): Promise<{ input: Record<string, unknown> | undefined, resolved: string[], problems: FlowProblem[] }> {
-    const actionName = step.actionName
-    if (step.type !== FlowActionType.PIECE || isNil(pieceName) || isNil(pieceVersion) || isNil(actionName) || isNil(input)) {
-        return { input, resolved: [], problems: [] }
-    }
-    const auth = step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}
-    return buildFlowReview.resolveDropdownLabels({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', stepName, input: { ...input, ...auth }, projectId, platformId, log })
-}
-
 function fallbackBranchName({ requested, conditionBranchNames }: { requested: string | undefined, conditionBranchNames: string[] }): string {
     const clashes = !isNil(requested) && conditionBranchNames.some((name) => name.trim().toLowerCase() === requested.trim().toLowerCase())
     return isNil(requested) || clashes ? DEFAULT_FALLBACK_BRANCH_NAME : requested
 }
 
-async function inputWithOptionalDefaults({ step, pieceName, pieceVersion, input, platformId, log }: {
-    step: z.infer<typeof stepSpec>
-    pieceName: string | undefined
-    pieceVersion: string | undefined
+async function withOptionalDefaults({ pieceAction, input, platformId, log }: {
+    pieceAction: { pieceName: string, pieceVersion: string, componentName: string }
     input: Record<string, unknown> | undefined
     platformId: string
     log: FastifyBaseLogger
 }): Promise<Record<string, unknown> | undefined> {
-    if (step.type !== FlowActionType.PIECE || isNil(pieceName) || isNil(pieceVersion) || isNil(step.actionName)) {
-        return input
-    }
-    const settings: Record<string, unknown> = { pieceName, pieceVersion, actionName: step.actionName, input: input ?? {} }
+    const settings: Record<string, unknown> = { pieceName: pieceAction.pieceName, pieceVersion: pieceAction.pieceVersion, actionName: pieceAction.componentName, input: input ?? {} }
     await mcpUtils.fillDefaultsForMissingOptionalProps({ settings, platformId, log })
     return isObject(settings.input) ? settings.input : input
 }
 
 function describeInvalidStep({ name, reasons }: { name: string, reasons: string[] }): string {
     return reasons.length === 0 ? name : `${name} (${reasons.join('; ')})`
-}
-
-async function stepPropertySettings({ actionName, pieceName, pieceVersion, input, projectId, platformId, log }: {
-    actionName: string | undefined
-    pieceName: string | undefined
-    pieceVersion: string | undefined
-    input: Record<string, unknown>
-    projectId: string
-    platformId: string
-    log: FastifyBaseLogger
-}): Promise<Record<string, unknown>> {
-    const isPieceAction = !isNil(pieceName) && !isNil(pieceVersion) && !isNil(actionName)
-    if (!isPieceAction) {
-        return {}
-    }
-    return mcpUtils.resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', input, projectId, platformId, log })
-}
-
-async function knownStepInput({ step, pieceName, pieceVersion, platformId, log }: {
-    step: z.infer<typeof stepSpec>
-    pieceName: string | undefined
-    pieceVersion: string | undefined
-    platformId: string
-    log: FastifyBaseLogger
-}): Promise<{ input: Record<string, unknown> | undefined, unknownKeys: string[], message: string }> {
-    const actionName = step.actionName
-    const isPieceAction = step.type === FlowActionType.PIECE && !isNil(pieceName) && !isNil(pieceVersion) && !isNil(actionName)
-    if (!isPieceAction) {
-        return { input: step.input, unknownKeys: [], message: '' }
-    }
-    return mcpUtils.dropUnknownInputProps({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', input: step.input, platformId, log })
 }
 
 function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName, propertySettings }: {

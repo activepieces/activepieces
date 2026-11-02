@@ -116,6 +116,10 @@ function choose({ options, match }: { options: ChainOption[], match: string | un
     if (options.length === 1) {
         return { picked: options[0], reason: 'only-option', candidates: [] }
     }
+    return bestMatch({ options, match })
+}
+
+function bestMatch({ options, match }: { options: ChainOption[], match: string | undefined }): OptionChoice {
     if (isNil(match) || match.trim().length === 0) {
         return { candidates: [] }
     }
@@ -166,6 +170,7 @@ export const propertyChainResolver = {
 
 export const propertyOptionMatch = {
     choose,
+    bestMatch,
 }
 
 type ResolveParams = {
