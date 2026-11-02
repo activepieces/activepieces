@@ -17,7 +17,7 @@
 
 Fixes ENG-
 
-<!-- In a co-owned project, add a "### Project" section here: the approach note link, the AC this PR covers, and the file to start reading at. -->
+<!-- In a co-owned project, add a "### Project" section under "Linear ticket": the approach note link, the AC IDs this PR covers, and the file to start reading at. -->
 
 ### Breaking change?  (required — CI fails if this is left unedited)
 
