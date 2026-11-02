@@ -42,6 +42,6 @@ export const aiUpdateCustomerProperties = createAction({
       auth,
       body: updates,
     });
-    return { customerId: String(propsValue.customerId), updated: updates.map((u) => u.path.slice(1)) };
+    return { success: true, customerId: String(propsValue.customerId), updated: updates.map((u) => u.path.slice(1)) };
   },
 });

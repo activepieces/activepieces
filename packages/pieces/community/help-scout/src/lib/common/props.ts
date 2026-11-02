@@ -40,29 +40,37 @@ async function loadOptions({
   embedKey,
   label,
   queryParams,
+  searchValue,
 }: {
   auth: { access_token: string } | undefined;
   path: string;
   embedKey: string;
   label: (item: Record<string, unknown>) => string;
   queryParams?: Record<string, string>;
+  searchValue?: unknown;
 }) {
   if (!auth) {
     return { disabled: true, options: [], placeholder: 'Please connect your account first.' };
   }
   try {
-    const { items } = await helpScoutApi.fetchPaged({
+    const search = typeof searchValue === 'string' ? searchValue.replace(/"/g, '').trim() : '';
+    const { items, truncated } = await helpScoutApi.fetchPaged({
       auth,
       path,
       embedKey,
-      queryParams,
+      queryParams: search ? { ...queryParams, query: search } : queryParams,
       limit: DROPDOWN_LIMIT,
     });
+    const options = items
+      .filter((item) => stringOf(item['id']).length > 0)
+      .map((item) => ({ label: label(item), value: stringOf(item['id']) }));
     return {
       disabled: false,
-      options: items
-        .filter((item) => stringOf(item['id']).length > 0)
-        .map((item) => ({ label: label(item), value: stringOf(item['id']) })),
+      options,
+      placeholder:
+        truncated && !search
+          ? `Showing the newest ${DROPDOWN_LIMIT} - type to search for older records.`
+          : undefined,
     };
   } catch {
     return {
@@ -78,8 +86,9 @@ export const customerIdDropdown = Property.Dropdown({
   refreshers: [],
   auth: helpScoutAuth,
   required: true,
-  options: async ({ auth }) =>
-    loadOptions({ auth, path: '/customers', embedKey: 'customers', label: personLabel }),
+  refreshOnSearch: true,
+  options: async ({ auth }, { searchValue }) =>
+    loadOptions({ auth, path: '/customers', embedKey: 'customers', label: personLabel, searchValue }),
 });
 
 export const userIdDropdown = (displayName: string) =>
@@ -97,9 +106,11 @@ export const conversationIdDropdown = Property.Dropdown({
   refreshers: [],
   required: false,
   auth: helpScoutAuth,
-  options: async ({ auth }) =>
+  refreshOnSearch: true,
+  options: async ({ auth }, { searchValue }) =>
     loadOptions({
       auth,
+      searchValue,
       path: '/conversations',
       embedKey: 'conversations',
       label: conversationLabel,
