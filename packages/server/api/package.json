@@ -109,15 +109,15 @@
     "typeorm": "0.3.31",
     "typeorm-pglite": "0.3.2",
     "unpdf": "1.4.0",
-    "zod": "4.3.6"
-  },
-  "devDependencies": {
-    "deno": "2.9.3",
+    "zod": "4.3.6",
     "@activepieces/piece-facebook-leads": "workspace:*",
     "@activepieces/piece-intercom": "workspace:*",
     "@activepieces/piece-microsoft-teams-bot": "workspace:*",
     "@activepieces/piece-slack": "workspace:*",
-    "@activepieces/piece-square": "workspace:*",
+    "@activepieces/piece-square": "workspace:*"
+  },
+  "devDependencies": {
+    "deno": "2.9.3",
     "@faker-js/faker": "10.5.0",
     "@types/bcrypt": "5.0.0",
     "@types/content-disposition": "0.5.9",

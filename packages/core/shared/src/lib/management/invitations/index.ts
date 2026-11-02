@@ -28,9 +28,17 @@ export type UserInvitation = z.infer<typeof UserInvitation>
 
 export const UserInvitationWithLink = UserInvitation.extend({
     link: z.string().optional(),
+    addedNow: z.boolean().optional(),
 })
 
 export type UserInvitationWithLink = z.infer<typeof UserInvitationWithLink>
+
+export const RemoveProjectFromInvitationResponse = z.object({
+    revoked: z.boolean(),
+    invitation: UserInvitation.nullable(),
+})
+
+export type RemoveProjectFromInvitationResponse = z.infer<typeof RemoveProjectFromInvitationResponse>
 
 export const SendUserInvitationRequest = z.union([
     z.object({
@@ -43,6 +51,8 @@ export const SendUserInvitationRequest = z.union([
         type: z.literal(InvitationType.PLATFORM),
         email: z.string(),
         platformRole: z.nativeEnum(PlatformRole),
+        projectId: z.string().optional(),
+        projectRole: z.string().optional(),
     }),
 ])
 

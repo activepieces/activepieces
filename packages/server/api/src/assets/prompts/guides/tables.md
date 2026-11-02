@@ -28,7 +28,7 @@ Tables belong to a project, so a project must be selected before you create or w
 | `ap_list_tables` | List tables, compact (name, ids, `Field:TYPE`). Pass `name` to filter, `detailed: true` for field ids/externalIds. **Call this first.** |
 | `ap_create_table` | Create a table with an initial set of fields. Types: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN`. |
 | `ap_manage_fields` | Add, rename, or delete fields (max 100 fields per table). |
-| `ap_find_records` | Query records (default 10, long values cut, says when more match). `fields` picks columns; raise `limit` or set `fullValues` for more. |
+| `ap_find_records` | Query records (default 10, says when more match). `fields` picks columns; raise `limit` for more. |
 | `ap_insert_records` | Insert one or more records (max 50 per call). |
 | `ap_update_record` | Update specific cells of a single record. |
 | `ap_delete_records` | Delete records by id. |

@@ -1,11 +1,10 @@
 import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { PiecePropertyMap } from '@activepieces/pieces-framework'
 import { toolResultView } from '@activepieces/server-utils'
-import { AppConnectionStatus, EngineResponse, EngineResponseStatus, FlowVersion, McpToolDefinition, ProjectScopedMcpServer, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
+import { EngineResponse, EngineResponseStatus, FlowVersion, McpToolDefinition, ProjectScopedMcpServer, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains } from 'typeorm'
 import { z } from 'zod'
-import { appConnectionService, appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { getPiecePackageWithoutArchive } from '../../pieces/metadata/piece-metadata-service'
@@ -128,29 +127,7 @@ async function describeComponent({ mcp, request, platformId, log }: {
     return {
         content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${component.name}":${descLine}${aiHintLine}${expertLine}${cardinalityLine}${idempotentLine}${requiredLine}\n${JSON.stringify(textResult)}${outputSection}${sampleSection}${exampleSection}` }],
         structuredContent: structured,
-        ...(requiresAuth && { authPiece: normalized }),
     }
-}
-
-async function describeConnections({ mcp, platformId, results, log }: {
-    mcp: ProjectScopedMcpServer
-    platformId: string
-    results: ComponentDescription[]
-    log: FastifyBaseLogger
-}): Promise<{ text: string, byPiece?: Record<string, PieceConnection[]> }> {
-    const pieceNames = [...new Set(results.flatMap((result) => isNil(result.authPiece) ? [] : [result.authPiece]))]
-    if (pieceNames.length === 0) {
-        return { text: '' }
-    }
-    if (!mcpUtils.isProjectScoped(mcp)) {
-        return { text: '🔌 Select a project with ap_set_project_context to see available connections.' }
-    }
-    const { data: byPiece, error } = await tryCatch(() => pieceConnections.listForPieces({ projectId: mcp.projectId, platformId, pieceNames }))
-    if (error) {
-        log.debug({ error, piece: { name: pieceNames.join(',') } }, 'Failed to list connections for piece props')
-        return { text: '🔌 Use ap_list_connections to find connections.' }
-    }
-    return { text: pieceConnections.formatSection({ connectionsByPiece: byPiece }), byPiece }
 }
 
 function compactSample(sampleData: unknown): string | undefined {
@@ -179,7 +156,7 @@ function resultText(result: ComponentDescription): string {
 export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_get_piece_props',
-        description: 'Get the input schema of one or several piece actions/triggers (pass several as items in ONE call), with AI guidance, output field paths (reference as {{step[\'output\'].path}}), a sample payload for triggers, and the project connections for each piece that needs auth. Pass auth to resolve dynamic dropdowns and dynamic sub-fields.',
+        description: 'Get the input schema of one or several piece actions/triggers (pass several as items in ONE call), with AI guidance, output field paths (reference as {{step[\'output\'].path}}), a sample payload for triggers. Pass auth to resolve dynamic dropdowns and dynamic sub-fields.',
         inputSchema: getPiecePropsInput.shape,
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
         execute: async (args) => {
@@ -188,40 +165,22 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
                 if (!isNil(parsed.items) && parsed.items.length > 0) {
                     const results = await Promise.all(parsed.items.map((item) => describeComponent({ mcp, request: item, platformId, log })))
-                    const connections = await describeConnections({ mcp, platformId, results, log })
                     return {
-                        content: [{ type: 'text', text: [...results.map(resultText), connections.text].filter((part) => part.length > 0).join('\n\n---\n\n') }],
-                        structuredContent: {
-                            results: results.map((result) => result.structuredContent ?? { error: resultText(result) }),
-                            ...spreadIfDefined('connections', connections.byPiece),
-                        },
+                        content: [{ type: 'text', text: results.map(resultText).join('\n\n---\n\n') }],
+                        structuredContent: { results: results.map((result) => result.structuredContent ?? { error: resultText(result) }) },
                     }
                 }
                 const single = componentRequest.safeParse(parsed)
                 if (!single.success) {
                     return { content: [{ type: 'text', text: '❌ Pass pieceName, actionOrTriggerName and type for one action, or a list of them as items.' }] }
                 }
-                const { authPiece, ...result } = await describeComponent({ mcp, request: single.data, platformId, log })
-                if (isNil(authPiece)) {
-                    return result
-                }
-                const connections = await describeConnections({ mcp, platformId, results: [{ ...result, authPiece }], log })
-                return {
-                    content: [{ type: 'text', text: [resultText(result), connections.text].filter((part) => part.length > 0).join('\n\n') }],
-                    structuredContent: { ...result.structuredContent, ...spreadIfDefined('connections', connections.byPiece) },
-                }
+                return await describeComponent({ mcp, request: single.data, platformId, log })
             }
             catch (err) {
                 return mcpUtils.mcpToolError('Failed to get piece props', err)
             }
         },
     }
-}
-
-export const pieceConnections = {
-    listForPieces,
-    groupByPiece,
-    formatSection,
 }
 
 async function resolvePropertyOptions({ props, componentProps, pieceName, pieceVersion, actionOrTriggerName, auth, flowId, providedInput, projectId, platformId, log }: ResolvePropertyOptionsParams): Promise<void> {
@@ -316,41 +275,6 @@ async function validateAuthOwnership({ auth, pieceName, projectId, platformId, l
     return null
 }
 
-async function listForPieces({ projectId, platformId, pieceNames }: {
-    projectId: string
-    platformId: string
-    pieceNames: string[]
-}): Promise<ConnectionsByPiece> {
-    const rows = await Promise.all(pieceNames.map((pieceName) => appConnectionsRepo().find({
-        select: { externalId: true, displayName: true, status: true, pieceName: true },
-        where: { platformId, projectIds: ArrayContains([projectId]), pieceName },
-        order: { created: 'DESC' },
-        take: MAX_PER_PIECE,
-    })))
-    return groupByPiece({ pieceNames, connections: rows.flat() })
-}
-
-function groupByPiece({ pieceNames, connections }: { pieceNames: string[], connections: ConnectionRow[] }): ConnectionsByPiece {
-    return Object.fromEntries(pieceNames.map((pieceName) => [
-        pieceName,
-        connections
-            .filter((connection) => connection.pieceName === pieceName)
-            .slice(0, MAX_PER_PIECE)
-            .map(({ externalId, displayName, status }) => ({ externalId, displayName, status })),
-    ]))
-}
-
-function formatSection({ connectionsByPiece }: { connectionsByPiece: ConnectionsByPiece }): string {
-    const lines = Object.entries(connectionsByPiece).map(([pieceName, connections]) => {
-        if (connections.length === 0) {
-            return `- ${pieceName}: none yet. The user must connect an account before this piece can run.`
-        }
-        const listed = connections.map((connection) => `"${connection.displayName}" = ${connection.externalId}${connection.status === AppConnectionStatus.ACTIVE ? '' : ` (${connection.status})`}`)
-        return `- ${pieceName}: ${listed.join('; ')}`
-    })
-    return lines.length === 0 ? '' : `🔌 Project connections (externalId is the auth value; use the one the user picked):\n${lines.join('\n')}`
-}
-
 const { withTimeout } = mcpUtils
 
 const MAX_BATCH_ITEMS = 10
@@ -374,8 +298,6 @@ const MAX_SAMPLE_CHARS = 1500
 
 const MAX_TEXT_OPTIONS = 25
 
-const MAX_PER_PIECE = 10
-
 type ResolvePropertyOptionsParams = {
     props: PropSummary[]
     componentProps: PiecePropertyMap
@@ -395,16 +317,4 @@ type ComponentRequest = z.infer<typeof componentRequest>
 type ComponentDescription = {
     content: Array<{ type: 'text', text: string }>
     structuredContent?: Record<string, unknown>
-    authPiece?: string
 }
-
-type ConnectionRow = {
-    externalId: string
-    displayName: string
-    status: AppConnectionStatus
-    pieceName: string
-}
-
-type PieceConnection = Omit<ConnectionRow, 'pieceName'>
-
-type ConnectionsByPiece = Record<string, PieceConnection[]>

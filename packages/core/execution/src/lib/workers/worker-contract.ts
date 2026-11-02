@@ -167,8 +167,12 @@ export type AgentConfigResponse = {
     fastModelId: string
     imageModelId?: string
     searchCredentials?: AiProviderCredentials
+    searchProviderConfigId?: string
     searchModelId?: string
     imageCredentials?: AiProviderCredentials
+    imageProviderConfigId?: string
+    agentId?: string
+    projectId?: string
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
@@ -246,6 +250,7 @@ export type ReadAgentFileRequest = {
     projectId?: string
     conversationId: string
     fileId: string
+    markReadForRunId?: string
 }
 
 export type SaveAgentFileResponse = {
@@ -532,6 +537,7 @@ export type SaveFlowStepFileRequest = {
 export type ReportAiUsageRequest = {
     billing: ActivepiecesAiBilling
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     idempotencyKey: string
     usage: AiUsageCharge
@@ -539,6 +545,10 @@ export type ReportAiUsageRequest = {
     generationId?: string
     inputTokens?: number
     outputTokens?: number
+    cacheReadTokens?: number
+    cacheWriteTokens?: number
+    reasoningTokens?: number
+    observedCostUsd?: number
     requestId?: string
     flowRun?: AiUsageFlowRunContext
     chat?: AiUsageChatContext
@@ -558,6 +568,7 @@ export type AiUsageChatContext = {
 export type AiUsageCharge =
     | { type: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: number }
     | { type: AiChargeBasis.FIXED_CREDITS, credits: number }
+    | { type: AiChargeBasis.USAGE_ONLY }
 
 export type ReadFlowStepFileRequest = {
     projectId: string

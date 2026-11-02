@@ -190,6 +190,19 @@ describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
     })
 })
 
+describe('agentMcpClient.withToolTimeouts large results', () => {
+    it('returns a result whose visible text fits unchanged, however big its structuredContent', async () => {
+        const result = { content: [{ type: 'text', text: 'Found 3 records' }], structuredContent: { rows: 'x'.repeat(300_000) } }
+        const wrapped = agentMcpClient.withToolTimeouts({
+            mcpToolSet: { [ATTIO_TOOL]: { execute: async () => result } },
+            brokenConnectors: new Set<string>(),
+            taintState: { tainted: false },
+        }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
+
+        expect(await wrapped[ATTIO_TOOL].execute({})).toBe(result)
+    })
+})
+
 function createTestLogger(): { log: FastifyBaseLogger, warnCalls: unknown[][] } {
     const warnCalls: unknown[][] = []
     const log: FastifyBaseLogger = {
@@ -372,45 +385,5 @@ describe('agentMcpClient — the auth config never reaches a log line', () => {
 
         expect(warnCalls).toHaveLength(1)
         expect(JSON.stringify(warnCalls)).not.toContain(secret)
-    })
-})
-
-describe('agentMcpClient.withToolTimeouts read cache', () => {
-    function countingTool(): { tool: { execute: (args: unknown) => Promise<unknown> }, calls: () => number } {
-        let count = 0
-        return {
-            tool: { execute: async () => ({ content: [{ type: 'text', text: `call ${++count}` }] }) },
-            calls: () => count,
-        }
-    }
-
-    async function runTool({ tools, name, args }: { tools: Record<string, unknown>, name: string, args: Record<string, unknown> }): Promise<unknown> {
-        const target = tools[name]
-        if (typeof target !== 'object' || target === null || !('execute' in target) || typeof target.execute !== 'function') {
-            throw new Error(`no tool ${name}`)
-        }
-        return target.execute(args)
-    }
-
-    it('serves a repeated flow structure read from cache until a flow edit runs', async () => {
-        const structure = countingTool()
-        const addStep = countingTool()
-        const tools = agentMcpClient.withToolTimeouts({
-            mcpToolSet: { ap_flow_structure: structure.tool, ap_add_step: addStep.tool },
-            brokenConnectors: new Set(),
-            taintState: { tainted: false },
-        })
-
-        const first = await runTool({ tools, name: 'ap_flow_structure', args: { flowId: 'f1', title: 'a' } })
-        const second = await runTool({ tools, name: 'ap_flow_structure', args: { flowId: 'f1', title: 'b' } })
-        expect(second).toEqual(first)
-        expect(structure.calls()).toBe(1)
-
-        await runTool({ tools, name: 'ap_flow_structure', args: { flowId: 'f2' } })
-        expect(structure.calls()).toBe(2)
-
-        await runTool({ tools, name: 'ap_add_step', args: { flowId: 'f1' } })
-        await runTool({ tools, name: 'ap_flow_structure', args: { flowId: 'f1' } })
-        expect(structure.calls()).toBe(3)
     })
 })

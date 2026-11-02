@@ -132,21 +132,6 @@ export function createResultTools({ readFile, taintState }: {
     readFile: (fileId: string) => Promise<Buffer>
     taintState: TaintState
 }): ToolSet {
-    const parsedFiles = new Map<string, unknown>()
-    const loadFile = async (fileId: string): Promise<unknown> => {
-        const cached = parsedFiles.get(fileId)
-        if (cached !== undefined) {
-            return cached
-        }
-        const text = (await readFile(fileId)).toString('utf8')
-        const { data: parsed } = tryCatchSync((): unknown => JSON.parse(text))
-        const stored = parsed ?? text
-        parsedFiles.set(fileId, stored)
-        if (parsedFiles.size > MAX_CACHED_RESULT_FILES) {
-            parsedFiles.delete(parsedFiles.keys().next().value ?? '')
-        }
-        return stored
-    }
     return {
         ap_read_result: tool({
             description: 'Read part of a large tool result that was saved as a file (its preview names the fileId). Pick a JSON path and fields, page with offset/limit, or search. Use this instead of calling the tool again or writing code to look at the result.',
@@ -160,7 +145,7 @@ export function createResultTools({ readFile, taintState }: {
             }),
             execute: async ({ fileId, path, fields, offset, limit, search }) => {
                 taintState.tainted = true
-                const { data: stored, error } = await tryCatch(() => loadFile(fileId))
+                const { data: stored, error } = await tryCatch(() => loadResultFile({ readFile, fileId }))
                 if (error || isNil(stored)) {
                     return { error: `Could not read file ${fileId}. Use a fileId from a large-result preview in this conversation.` }
                 }
@@ -257,6 +242,12 @@ export function createStructuredOutputTool({ fields, capture }: {
     }
 }
 
+async function loadResultFile({ readFile, fileId }: { readFile: (fileId: string) => Promise<Buffer>, fileId: string }): Promise<unknown> {
+    const text = (await readFile(fileId)).toString('utf8')
+    const { data: parsed } = tryCatchSync((): unknown => JSON.parse(text))
+    return parsed ?? text
+}
+
 function schemaForOutputField(field: AgentOutputField): z.ZodType {
     switch (field.type) {
         case AgentOutputFieldType.NUMBER:
@@ -305,7 +296,6 @@ function readableLabel(name: string): string {
     return `${words.charAt(0).toUpperCase()}${words.slice(1)}`
 }
 
-const MAX_CACHED_RESULT_FILES = 5
 const MISSING_CARD_NOTE = 'No build card is showing. Call ap_set_build_plan now with phase "building", a short flowName, tagline and iconName; its rows fill in from what you build.'
 
 const AGENT_CHANGE_LABELS: Record<string, string> = {

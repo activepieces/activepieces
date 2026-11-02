@@ -1,4 +1,4 @@
-import { isNil, isObject, tryCatchSync } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatchSync } from '@activepieces/core-utils'
 import { largeResultUtils } from './large-result-utils'
 
 function textOf(result: unknown): string | null {
@@ -16,37 +16,34 @@ function modelVisibleBytes(result: unknown): number | null {
 }
 
 function read({ stored, fileId, path, fields, offset = 0, limit, search }: ReadParams): string {
-    const { text, json, whole } = payloadOf(stored)
-    const wantsJson = json !== null && (whole || !isNil(path) || (fields?.length ?? 0) > 0)
+    const { text, json, textIsJson } = payloadOf(stored)
+    const wantsJson = json !== null && (isNil(text) || textIsJson || !isNil(path) || (fields?.length ?? 0) > 0)
     if (!wantsJson) {
         return readText({ text: text ?? '', fileId, offset, limit: limit ?? DEFAULT_LINE_LIMIT, search: search || undefined, budget: READ_BYTES })
     }
-    return readJson({ payload: json, fileId, path: path || undefined, fields, offset, limit: limit ?? DEFAULT_ITEM_LIMIT, search: search || undefined, budget: READ_BYTES })
+    return readJson({ payload: json, fileId, path: path || undefined, fields, offset, limit, search: search || undefined, budget: READ_BYTES })
 }
 
 function textPreview({ text, fileId, byteSize, label }: { text: string, fileId: string, byteSize: number, label: string }): string {
-    const { json, note } = payloadOf(text)
-    const header = `${label}: ~${Math.round(byteSize / 1024)}KB, shown in part.${note.length > 0 ? `\n${note}` : ''}`
+    const json = parseJson(text)
+    const header = `${label}: ~${Math.round(byteSize / 1024)}KB, shown in part.`
     const budget = PREVIEW_BYTES - Buffer.byteLength(header, 'utf8')
     const body = json === null
         ? readText({ text, fileId, offset: 0, limit: DEFAULT_LINE_LIMIT, budget })
-        : readJson({ payload: json, fileId, offset: 0, limit: DEFAULT_ITEM_LIMIT, budget })
+        : readJson({ payload: json, fileId, offset: 0, budget })
     return `${header}\n${body}\n\n[The full result is saved as ${fileId}: read any part with ap_read_result (path, fields, offset, search). Do not call ${label} again for this.]`
 }
 
-function payloadOf(stored: unknown): { text: string | null, json: unknown, whole: boolean, note: string } {
+function payloadOf(stored: unknown): { text: string | null, json: unknown, textIsJson: boolean } {
     const text = typeof stored === 'string' ? stored : textOf(stored)
     if (text === null) {
-        return { text, json: stored, whole: true, note: '' }
+        return { text, json: stored, textIsJson: false }
     }
-    const start = text.search(/[[{]/)
-    const end = Math.max(text.lastIndexOf('}'), text.lastIndexOf(']')) + 1
-    const json = start === -1 || end <= start ? null : parseJson(text.slice(start, end))
-    if (json === null) {
-        return { text, json, whole: false, note: '' }
+    const parsed = parseJson(text)
+    if (parsed !== null) {
+        return { text, json: parsed, textIsJson: true }
     }
-    const note = `${text.slice(0, start).trim()}\n${text.slice(end).trim()}`.trim().slice(0, MAX_NOTE_CHARS)
-    return { text, json, whole: note.length === 0, note }
+    return { text, json: isObject(stored) ? stored['structuredContent'] ?? null : null, textIsJson: false }
 }
 
 function readText({ text, fileId, path, offset, limit, search, budget }: { text: string, fileId: string, path?: string, offset: number, limit: number, search?: string, budget: number }): string {
@@ -62,16 +59,16 @@ function readText({ text, fileId, path, offset, limit, search, budget }: { text:
     }
     const kept = linesWithinBudget({ lines, start: offset, maxLines: limit, budget })
     const end = offset + kept.length
-    return `Lines ${offset + 1}–${end} of ${lines.length}:\n${kept.join('\n')}${more({ fileId, path, offset: end, total: lines.length })}`
+    return `Lines ${offset + 1}–${end} of ${lines.length}:\n${kept.join('\n')}${more({ fileId, path, offset: end, total: lines.length, limit })}`
 }
 
-function readJson({ payload, fileId, path, fields, offset, limit, search, budget }: { payload: unknown, fileId: string, path?: string, fields?: string[], offset: number, limit: number, search?: string, budget: number }): string {
+function readJson({ payload, fileId, path, fields, offset, limit, search, budget }: { payload: unknown, fileId: string, path?: string, fields?: string[], offset: number, limit?: number, search?: string, budget: number }): string {
     const target = isNil(path) ? payload : valueAt({ value: payload, path })
     if (target === undefined) {
         return `Nothing at "${path}". ${describeKeys(payload)}`
     }
     if (typeof target === 'string') {
-        return readText({ text: target, fileId, path, offset, limit: DEFAULT_LINE_LIMIT, search, budget })
+        return readText({ text: target, fileId, path, offset, limit: limit ?? DEFAULT_LINE_LIMIT, search, budget })
     }
     const where = isNil(path) ? 'the root' : `"${path}"`
     if (!Array.isArray(target)) {
@@ -79,10 +76,17 @@ function readJson({ payload, fileId, path, fields, offset, limit, search, budget
     }
     const needle = search?.toLowerCase()
     const matching = isNil(needle) ? target : target.filter((item) => (JSON.stringify(item) ?? '').toLowerCase().includes(needle))
-    const page = matching.slice(offset, offset + limit).map((item) => pick({ value: item, fields }))
+    const page = pageThatFits({ items: matching.slice(offset, offset + (limit ?? DEFAULT_ITEM_LIMIT)).map((item) => pick({ value: item, fields })), budget: budget - PAGE_FRAME_BYTES })
     const end = offset + page.length
     const header = `Items ${offset + 1}–${end} of ${matching.length}${isNil(search) ? '' : ` matching "${search}"`} at ${where}:`
-    return fitted({ header, value: page, footer: more({ fileId, path, offset: end, total: matching.length }), budget })
+    return fitted({ header, value: page, footer: more({ fileId, path, fields, search, offset: end, total: matching.length, limit }), budget })
+}
+
+function pageThatFits({ items, budget }: { items: unknown[], budget: number }): unknown[] {
+    if (items.length <= 1 || (largeResultUtils.byteSizeOf(items) ?? 0) <= budget) {
+        return items
+    }
+    return pageThatFits({ items: items.slice(0, Math.ceil(items.length / 2)), budget })
 }
 
 function fitted({ header, value, footer, budget }: { header: string, value: unknown, footer: string, budget: number }): string {
@@ -94,8 +98,19 @@ function fitted({ header, value, footer, budget }: { header: string, value: unkn
         ?? `${header} too large to show. ${describeKeys(value)}${footer}`
 }
 
-function more({ fileId, path, offset, total }: { fileId: string, path?: string, offset: number, total: number }): string {
-    return offset < total ? `\n\n[More: ap_read_result({ fileId: '${fileId}'${isNil(path) ? '' : `, path: '${path}'`}, offset: ${offset} })]` : ''
+function more({ fileId, path, fields, search, offset, total, limit }: { fileId: string, path?: string, fields?: string[], search?: string, offset: number, total: number, limit?: number }): string {
+    if (offset >= total) {
+        return ''
+    }
+    const args = {
+        fileId,
+        ...spreadIfDefined('path', path),
+        ...spreadIfDefined('fields', fields),
+        ...spreadIfDefined('search', search),
+        offset,
+        ...spreadIfDefined('limit', limit),
+    }
+    return `\n\n[More: ap_read_result(${JSON.stringify(args)})]`
 }
 
 function valueAt({ value, path }: { value: unknown, path: string }): unknown {
@@ -147,9 +162,9 @@ const PATH_TOKEN = /[^.[\]]+/g
 const DEFAULT_LINE_LIMIT = 200
 const DEFAULT_ITEM_LIMIT = 20
 const MAX_LINE_CHARS = 2_000
-const MAX_NOTE_CHARS = 2_000
 const READ_BYTES = 24 * 1024
 const PREVIEW_BYTES = 16 * 1024
+const PAGE_FRAME_BYTES = 1024
 
 export const MODEL_RESULT_OFFLOAD_BYTES = 32 * 1024
 

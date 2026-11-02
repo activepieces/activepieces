@@ -62,15 +62,8 @@ async function findProblems({ trigger, invalidReasons, labelProblems, platformId
         .filter((issue) => issue.severity !== 'info' && issue.category !== 'step_validity')
         .map((issue) => ({ step: issue.stepName, message: issue.message }))
     const all: FlowProblem[] = [...labelProblems, ...stepProblems.flat(), ...flowIssues]
-    const seen = new Set<string>()
-    return all.filter((problem) => {
-        const key = isNil(problem.field) ? `${problem.step}:${problem.message}` : `${problem.step}.${problem.field}`
-        if (seen.has(key)) {
-            return false
-        }
-        seen.add(key)
-        return true
-    })
+    const keys = all.map((problem) => isNil(problem.field) ? `${problem.step}:${problem.message}` : `${problem.step}.${problem.field}`)
+    return all.filter((_, index) => keys.indexOf(keys[index]) === index)
 }
 
 function flowStepStates({ trigger, problemStepNames, skippedDisplayNames = [] }: {
@@ -200,7 +193,7 @@ function pickOption({ options, label }: { options: DropdownOption[], label: stri
     if (!isNil(byKey)) {
         return { value: byKey.value, changed: true }
     }
-    const choice = propertyOptionMatch.choose({ options: options.length === 1 ? [...options, UNMATCHABLE_OPTION] : options, match: label })
+    const choice = propertyOptionMatch.bestMatch({ options, match: label })
     if (!isNil(choice.picked)) {
         return { value: choice.picked.value, changed: true }
     }
@@ -296,7 +289,6 @@ const DROPDOWN_TYPES = new Set<PropertyType>([
 ])
 const MAX_SHOWN_OPTIONS = 15
 const OBJECT_KEY_FIELDS = ['id', 'key', 'value']
-const UNMATCHABLE_OPTION = { label: '', value: undefined }
 const REASON_PATTERN = /^(\S+) (is missing|has an invalid value)$/
 
 type PieceProperty = PiecePropertyMap[string]

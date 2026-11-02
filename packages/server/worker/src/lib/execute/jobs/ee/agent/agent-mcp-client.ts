@@ -1,15 +1,14 @@
 import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { agentAiUtils, mcpTransport, MODEL_RESULT_OFFLOAD_BYTES, toolResultView } from '@activepieces/server-utils'
+import { agentAiUtils, MAX_TOOL_RESULT_BYTES, mcpTransport, MODEL_RESULT_OFFLOAD_BYTES, toolResultView } from '@activepieces/server-utils'
 import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { agentWorkerTools } from './agent-worker-tools'
-import { cardTitleFields, plainJsonSchema, stableStringify, TaintState } from './tools/tool-primitives'
+import { cardTitleFields, plainJsonSchema, TaintState } from './tools/tool-primitives'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
-const CACHED_READ_TOOLS = new Set(['ap_flow_structure'])
 const CARD_TITLE_SCHEMA = asSchema(z.object(cardTitleFields))
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
@@ -246,10 +245,6 @@ function buildReconnectGuidance({ connectorUuid, alreadyFlagged }: { connectorUu
 // empty options and pushes the agent off the native path onto raw custom_api_call).
 const AUTH_INJECTABLE_TOOLS = new Set(['ap_get_piece_props', 'ap_resolve_property_options', 'ap_resolve_property_chain'])
 
-function withoutCardTitles(args: unknown): unknown {
-    return isObject(args) ? Object.fromEntries(Object.entries(args).filter(([key]) => !(key in cardTitleFields))) : args
-}
-
 function injectSelectedAuth({ name, args, getSelectedAuth }: {
     name: string
     args: unknown
@@ -318,7 +313,6 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
     onToolResult?: (params: { toolName: string, result: unknown }) => string | undefined
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
-    const readCache = new Map<string, unknown>()
 
     for (const [name, tool] of Object.entries(mcpToolSet)) {
         if (typeof tool !== 'object' || tool === null || !hasExecute(tool)) {
@@ -335,25 +329,14 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
                 }
-                const cacheKey = CACHED_READ_TOOLS.has(name) ? `${name}:${stableStringify(withoutCardTitles(args))}` : undefined
-                if (cacheKey !== undefined && readCache.has(cacheKey)) {
-                    return readCache.get(cacheKey)
-                }
                 if (agentToolPhases.taintsTurn(name)) {
                     taintState.tainted = true
-                }
-                const mutates = agentToolPhases.isBuildOnlyTool(name)
-                if (mutates) {
-                    readCache.clear()
                 }
                 const { data: toolResult, error } = await tryCatch(() => agentWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
                     timeoutMs: agentWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,
                     toolName: name,
                 }))
-                if (mutates) {
-                    readCache.clear()
-                }
                 if (error) {
                     const { isAuthError, connectorUuid } = classifyMcpAuthError({ error, toolName: name })
                     if (isAuthError) {
@@ -374,11 +357,13 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                 const note = onToolResult?.({ toolName: name, result: toolResult })
                 const notedResult = isNil(note) ? toolResult : withAppendedText({ result: toolResult, text: note })
                 const offloaded = await maybeOffloadMcpResult({ result: notedResult, toolName: name, saveLargeResult })
-                const finalResult = offloaded ?? agentWorkerTools.truncateLargeResult(notedResult)
-                if (cacheKey !== undefined && !(isObject(toolResult) && toolResult['isError'] === true)) {
-                    readCache.set(cacheKey, finalResult)
+                if (offloaded !== null) {
+                    return offloaded
                 }
-                return finalResult
+                if ((toolResultView.modelVisibleBytes(notedResult) ?? Infinity) <= MAX_TOOL_RESULT_BYTES) {
+                    return notedResult
+                }
+                return agentWorkerTools.truncateLargeResult(notedResult)
             },
         })
     }
