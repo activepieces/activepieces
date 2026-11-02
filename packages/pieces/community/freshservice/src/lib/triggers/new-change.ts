@@ -4,13 +4,13 @@ import {
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  HttpMethod,
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
-import { freshserviceApiCall } from '../common/client';
+import { freshserviceListPages } from '../common/client';
+import { freshserviceSchemas } from '../common/schemas';
 import { FreshserviceChange } from '../common/props';
 
 const polling: Polling<
@@ -19,22 +19,25 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
-    const response = await freshserviceApiCall<{
-      changes: FreshserviceChange[];
-    }>({
-      method: HttpMethod.GET,
-      endpoint: 'changes',
-      auth,
-      queryParams: {
-        order_by: 'created_at',
-        order_type: 'desc',
-        per_page: lastFetchEpochMS === 0 ? '10' : '100',
-      },
-    });
-
-    return response.body.changes.map((change) => ({
-      epochMilliSeconds: new Date(change.created_at).getTime(),
-      data: change,
+    const records =
+      lastFetchEpochMS === 0
+        ? await freshserviceListPages<FreshserviceChange>({
+            auth,
+            endpoint: 'changes',
+            key: 'changes',
+            perPage: 10,
+            maxPages: 1,
+            queryParams: {},
+          })
+        : await freshserviceListPages<FreshserviceChange>({
+            auth,
+            endpoint: 'changes',
+            key: 'changes',
+            queryParams: { updated_since: new Date(lastFetchEpochMS).toISOString() },
+          });
+    return records.map((record) => ({
+      epochMilliSeconds: new Date(record.created_at).getTime(),
+      data: record,
     }));
   },
 };
@@ -43,10 +46,11 @@ export const newChange = createTrigger({
   auth: freshserviceAuth,
   name: 'new_change',
   classification: 'READ',
+  outputSchema: freshserviceSchemas.change,
   displayName: 'New Change',
   description: 'Triggers when a new change request is created in Freshservice.',
   aiMetadata: {
-    description: 'Fires when a new change request is created in Freshservice, representing a freshly proposed IT change entering change management. Polls newest-first by creation time across all changes in the account.',
+    description: 'Fires when a new change request is created in Freshservice, representing a freshly proposed IT change entering change management. Polls every page of records since the last check, by creation time across all changes in the account.',
   },
   props: {},
   sampleData: {

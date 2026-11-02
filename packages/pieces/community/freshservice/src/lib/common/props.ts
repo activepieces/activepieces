@@ -32,7 +32,47 @@ interface FreshserviceTicket {
   subject: string;
 }
 
+function joinName({ first, last }: { first: string | null; last: string | null }): string {
+  return [first, last].filter((part) => typeof part === 'string' && part.trim().length > 0).join(' ');
+}
+
 export const freshserviceCommon = {
+  idNumber: <R extends boolean>({
+    displayName,
+    required,
+    description,
+  }: {
+    displayName: string;
+    required: R;
+    description?: string;
+  }) =>
+    Property.Number({
+      displayName,
+      description,
+      required,
+    }),
+
+  yesNo: <R extends boolean>({
+    displayName,
+    required,
+    description,
+  }: {
+    displayName: string;
+    required: R;
+    description: string;
+  }) =>
+    Property.StaticDropdown<string, R>({
+      displayName,
+      description,
+      required,
+      options: {
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+        ],
+      },
+    }),
+
   change: (required = true) =>
     Property.Dropdown({
       auth: freshserviceAuth,
@@ -126,7 +166,7 @@ export const freshserviceCommon = {
         return {
           disabled: false,
           options: response.body.requesters.map((r) => ({
-            label: `${r.first_name} ${r.last_name} (${r.primary_email})`,
+            label: `${joinName({ first: r.first_name, last: r.last_name })} (${r.primary_email})`,
             value: r.id,
           })),
         };
@@ -158,7 +198,7 @@ export const freshserviceCommon = {
         return {
           disabled: false,
           options: response.body.agents.map((a) => ({
-            label: `${a.first_name} ${a.last_name} (${a.email})`,
+            label: `${joinName({ first: a.first_name, last: a.last_name })} (${a.email})`,
             value: a.id,
           })),
         };

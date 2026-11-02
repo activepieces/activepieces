@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from '../common/client';
 import { freshserviceCommon } from '../common/props';
+import { freshserviceSchemas } from '../common/schemas';
 
 export const updateChange = createAction({
   auth: freshserviceAuth,
@@ -10,7 +11,8 @@ export const updateChange = createAction({
   classification: 'WRITE',
   displayName: 'Update Change',
   description: 'Updates an existing change request in Freshservice.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: freshserviceSchemas.change,
   aiMetadata: {
     description: 'Modifies fields on an existing Freshservice change request identified by change id (e.g. subject, status, priority, risk, planned dates, assignment). Use to progress or revise a change; at least one field must be supplied or the call errors. Idempotent — re-sending the same field values leaves the change in the same state.',
     idempotent: true,

@@ -8,6 +8,17 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Freshservice 0.3.0: the existing actions are no longer AI agent tools
+
+**Create Ticket**, **Add Note to Ticket**, **Create Requester**, **Request Ticket Approval**, **Create Change**, **Update Change**, **Delete Change**, **Add Note to Change**, **Create Change Task**, **Update Change Task** and **Delete Change Task** are now shown only in the flow builder, with their dropdowns unchanged. AI agents and MCP clients get new ID-based actions instead: Create, Update, Get and Search Tickets, Add Ticket Note, Reply to Ticket, Request Ticket Approval, Create and Find Requester, List Agents, Groups and Departments, Get, List, Create, Update and Delete Change, Add Change Note, and Create, Update and Delete Change Task.
+
+#### What you need to do
+
+- Agents that used the old Freshservice actions as tools: switch to the new agent actions.
+- Flow steps keep working unchanged.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Audit logs: SAML and embedded sign-ins no longer send `user.signed.up` on every sign-in
 
 `user.signed.up` used to fire on every SAML and embedded (JWT) sign-in, even for existing members. It now fires once, when the member is created. Later SAML sign-ins, and sign-ins with email or Google, send the new `user.signed.in` event, which carries the sign-in method. Later embedded sign-ins send no event.

@@ -4,13 +4,13 @@ import {
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  HttpMethod,
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
-import { freshserviceApiCall } from '../common/client';
+import { freshserviceListPages } from '../common/client';
+import { freshserviceSchemas } from '../common/schemas';
 
 interface FreshserviceTicket {
   id: number;
@@ -34,22 +34,25 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
-    const response = await freshserviceApiCall<{
-      tickets: FreshserviceTicket[];
-    }>({
-      method: HttpMethod.GET,
-      endpoint: 'tickets',
-      auth,
-      queryParams: {
-        order_by: 'updated_at',
-        order_type: 'desc',
-        per_page: lastFetchEpochMS === 0 ? '10' : '100',
-      },
-    });
-
-    return response.body.tickets.map((ticket) => ({
-      epochMilliSeconds: new Date(ticket.updated_at).getTime(),
-      data: ticket,
+    const records =
+      lastFetchEpochMS === 0
+        ? await freshserviceListPages<FreshserviceTicket>({
+            auth,
+            endpoint: 'tickets',
+            key: 'tickets',
+            perPage: 10,
+            maxPages: 1,
+            queryParams: { order_type: 'desc' },
+          })
+        : await freshserviceListPages<FreshserviceTicket>({
+            auth,
+            endpoint: 'tickets',
+            key: 'tickets',
+            queryParams: { updated_since: new Date(lastFetchEpochMS).toISOString() },
+          });
+    return records.map((record) => ({
+      epochMilliSeconds: new Date(record.updated_at).getTime(),
+      data: record,
     }));
   },
 };
@@ -58,10 +61,11 @@ export const updatedTicket = createTrigger({
   auth: freshserviceAuth,
   name: 'updated_ticket',
   classification: 'READ',
+  outputSchema: freshserviceSchemas.ticket,
   displayName: 'Updated Ticket',
   description: 'Triggers when an existing ticket is updated in Freshservice.',
   aiMetadata: {
-    description: 'Fires when an existing ticket is modified in Freshservice (e.g. status, priority, assignment, or content change), representing the latest state of that ticket. Polls newest-first by last-updated time across all tickets in the account.',
+    description: 'Fires when an existing ticket is modified in Freshservice (e.g. status, priority, assignment, or content change), representing the latest state of that ticket. Polls every page of records since the last check, by last-updated time across all tickets in the account.',
   },
   props: {},
   sampleData: {
