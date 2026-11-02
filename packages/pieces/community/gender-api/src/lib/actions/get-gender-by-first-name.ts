@@ -1,6 +1,11 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { genderApiAuth } from '../common/auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  genderApiClient,
+  genderResultOutputSchema,
+  normalizeGenderResult,
+} from '../common/client';
 
 export const getGenderByFirstName = createAction({
   auth: genderApiAuth,
@@ -11,7 +16,7 @@ export const getGenderByFirstName = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Predicts the likely gender of a person from a single first name via the Gender API. Use when you have only a given name (not a full name); optionally pass a country code and/or locale to improve accuracy for region-specific names. Read-only lookup that is safe to repeat.',
+      'Predicts the likely gender of a person from a single first name via the Gender API. Use when you have only a given name (not a full name); optionally pass an ISO 3166-1 alpha-2 country code and/or locale to improve accuracy for region-specific names. Costs 1 credit. Read-only lookup that is safe to repeat.',
     idempotent: true,
   },
   props: {
@@ -31,29 +36,21 @@ export const getGenderByFirstName = createAction({
       required: false,
     }),
   },
-  async run(context) {
-    const payload: any = {
-      first_name: context.propsValue.first_name,
-    };
-
-    if (context.propsValue.country_code) {
-      payload.country_code = context.propsValue.country_code;
+  outputSchema: genderResultOutputSchema,
+  async run({ auth, propsValue }) {
+    const body: Record<string, unknown> = { first_name: propsValue.first_name };
+    if (propsValue.country_code) {
+      body['country'] = propsValue.country_code.trim().toUpperCase();
     }
-
-    if (context.propsValue.locale) {
-      payload.locale = context.propsValue.locale;
+    if (propsValue.locale) {
+      body['locale'] = propsValue.locale.trim();
     }
-
-    const response = await httpClient.sendRequest({
+    const response = await genderApiClient.request<unknown>({
+      apiKey: auth.secret_text,
       method: HttpMethod.POST,
-      url: 'https://gender-api.com/v2/gender',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${context.auth.secret_text}`,
-      },
-      body: payload,
+      path: '/gender',
+      body,
     });
-
-    return response.body;
+    return normalizeGenderResult(response);
   },
 });
