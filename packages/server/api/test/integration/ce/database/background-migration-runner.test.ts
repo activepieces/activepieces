@@ -9,6 +9,9 @@ import {
 } from '../../../../src/app/database/background-migration-runner'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { BackgroundMigrationNotCompleteError, migrationHelpers } from '../../../../src/app/database/migration-helpers'
+import { BackfillPieceTranslation1874000000000 } from '../../../../src/app/database/migration/postgres/background/1874000000000-BackfillPieceTranslation'
+import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from '../../../../src/app/database/migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
+import { getBackgroundMigrations } from '../../../../src/app/database/postgres-connection'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const { emittedSpy } = vi.hoisted(() => ({ emittedSpy: vi.fn() }))
@@ -257,6 +260,16 @@ describe('background migration progress events', () => {
         await new Promise((resolve) => setTimeout(resolve, 200))
 
         expect(progressPhasesFor(name)).toEqual(['started', 'completed'])
+    })
+})
+
+describe('getBackgroundMigrations', () => {
+    it('runs the quick piece-translation backfill before the hours-long flow_run index reshape', () => {
+        const order = getBackgroundMigrations()
+
+        expect(order.indexOf(BackfillPieceTranslation1874000000000)).toBeGreaterThanOrEqual(0)
+        expect(order.indexOf(BackfillPieceTranslation1874000000000)).toBeLessThan(order.indexOf(ReshapeFlowRunListIndexesForBarrierChildren1871000000000))
+        expect(order.at(-1)).toBe(ReshapeFlowRunListIndexesForBarrierChildren1871000000000)
     })
 })
 

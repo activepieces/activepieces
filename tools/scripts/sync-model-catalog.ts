@@ -25,6 +25,8 @@ const MODELS_DEV_PROVIDER: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.QWEN]: 'alibaba',
     [AIProviderName.MINIMAX]: 'minimax',
     [AIProviderName.MOONSHOT]: 'moonshotai',
+    [AIProviderName.META]: 'meta',
+    [AIProviderName.NVIDIA]: 'nvidia',
 }
 
 const ALIASED_AT_LOOKUP: AIProviderName[] = [AIProviderName.ACTIVEPIECES]
@@ -121,6 +123,8 @@ function toMetadata(model: ModelsDevModel): ModelMetadata {
         releaseDate: model.release_date,
         inputCostPerMillionTokens: roundCost(model.cost?.input),
         outputCostPerMillionTokens: roundCost(model.cost?.output),
+        cacheReadCostPerMillionTokens: roundCost(model.cost?.cache_read),
+        cacheWriteCostPerMillionTokens: roundCost(model.cost?.cache_write),
         supportsToolCalling: model.tool_call,
         supportsReasoning: model.reasoning,
         supportsVision: model.modalities?.input?.includes('image'),
@@ -199,6 +203,8 @@ type ModelMetadata = {
     releaseDate?: string
     inputCostPerMillionTokens?: number
     outputCostPerMillionTokens?: number
+    cacheReadCostPerMillionTokens?: number
+    cacheWriteCostPerMillionTokens?: number
     supportsToolCalling?: boolean
     supportsReasoning?: boolean
     supportsVision?: boolean
@@ -217,7 +223,7 @@ type ModelsDevModel = {
     tool_call?: boolean
     reasoning?: boolean
     limit?: { context?: number, output?: number }
-    cost?: { input?: number, output?: number }
+    cost?: { input?: number, output?: number, cache_read?: number, cache_write?: number }
     modalities?: { input?: string[] }
 }
 

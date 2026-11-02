@@ -382,6 +382,14 @@ const NON_CHAT_MODEL_ID_FRAGMENTS = [
     'moderation',
     'speech',
     'voice',
+    'guard',
+    'safety',
+    'reward',
+    'parse',
+    'clip',
+    'detector',
+    'calibration',
+    'deplot',
 ]
 
 const NON_CHAT_MODEL_ID_TOKENS = ['tts', 'asr']
@@ -400,6 +408,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
     [AIProviderName.MISTRAL]: 128_000,
+    [AIProviderName.META]: 1_048_576,
 }
 
 function getMaxContextTokens({ provider }: { provider: AIProviderName | undefined }): number {
@@ -431,6 +440,8 @@ const NO_IMAGE_GENERATION_PROVIDERS = new Set<AIProviderName>([
     AIProviderName.QWEN,
     AIProviderName.MINIMAX,
     AIProviderName.MOONSHOT,
+    AIProviderName.META,
+    AIProviderName.NVIDIA,
 ])
 
 export const OPENAI_COMPATIBLE_VENDOR_BASE_URLS: Record<OpenAiCompatibleVendor, string> = {
@@ -440,6 +451,8 @@ export const OPENAI_COMPATIBLE_VENDOR_BASE_URLS: Record<OpenAiCompatibleVendor, 
     [AIProviderName.QWEN]: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
     [AIProviderName.MINIMAX]: 'https://api.minimax.io/v1',
     [AIProviderName.MOONSHOT]: 'https://api.moonshot.ai/v1',
+    [AIProviderName.META]: 'https://api.meta.ai/v1',
+    [AIProviderName.NVIDIA]: 'https://integrate.api.nvidia.com/v1',
 }
 
 function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabilities {
@@ -498,6 +511,8 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.QWEN]: buildProviderCapabilities(AIProviderName.QWEN),
     [AIProviderName.MINIMAX]: buildProviderCapabilities(AIProviderName.MINIMAX),
     [AIProviderName.MOONSHOT]: buildProviderCapabilities(AIProviderName.MOONSHOT),
+    [AIProviderName.META]: buildProviderCapabilities(AIProviderName.META),
+    [AIProviderName.NVIDIA]: buildProviderCapabilities(AIProviderName.NVIDIA),
 }
 
 export const aiProviderUtils = {
@@ -525,6 +540,8 @@ export type OpenAiCompatibleVendor =
     | AIProviderName.QWEN
     | AIProviderName.MINIMAX
     | AIProviderName.MOONSHOT
+    | AIProviderName.META
+    | AIProviderName.NVIDIA
 
 export type AIProviderCapabilities = {
     chatModels?: readonly string[] | undefined

@@ -1,34 +1,23 @@
-import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { getNotebooksDropdown } from '../common';
-import { oneNoteAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { microsoftOneNoteAuth } from '../auth';
+import { microsoftOneNoteClient } from '../common/client';
+import { microsoftOneNoteProps } from '../common/props';
+import type { OnenoteSection } from '../common/types';
+import { createSectionOutputSchema } from '../output-schemas';
 
-export const createSection = createAction({
-	auth: oneNoteAuth,
+export const createSectionAction = createAction({
+	auth: microsoftOneNoteAuth,
 	name: 'create_section',
+	outputSchema: createSectionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Section',
 	description: 'Creates a new section in notebook.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new section inside a chosen OneNote notebook, given a display name. Use to organize a notebook before adding pages; the name must be unique within the notebook, under 50 characters, and avoid characters such as ?*/:<>|&#\'%~. Not idempotent: each call attempts to create another section.', idempotent: false },
 	props: {
-		notebook_id: Property.Dropdown({
-			auth: oneNoteAuth,
-			displayName: 'Notebook',
-			description: 'The notebook to create the section in.',
+		notebook_id: microsoftOneNoteProps.notebookId({
 			required: true,
-			refreshers: [],
-			options: async ({ auth }) => {
-				if (!(auth as OAuth2PropertyValue)?.access_token) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				return await getNotebooksDropdown(auth as OAuth2PropertyValue);
-			},
+			description: 'The notebook to create the section in.',
 		}),
 		displayName: Property.ShortText({
 			displayName: 'Section Name',
@@ -40,21 +29,14 @@ export const createSection = createAction({
 		const { auth, propsValue } = context;
 		const { notebook_id, displayName } = propsValue;
 
-		const authValue = auth as OAuth2PropertyValue;
-		const cloud = authValue.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(authValue.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = microsoftOneNoteClient.create({ auth });
 
 		const sectionBody = {
 			displayName,
 		};
 
 		try {
-			const response = await client.api(`/me/onenote/notebooks/${notebook_id}/sections`).post(sectionBody);
+			const response: OnenoteSection = await client.api(`/me/onenote/notebooks/${notebook_id}/sections`).post(sectionBody);
 
 			return {
 				id: response.id,
@@ -68,8 +50,8 @@ export const createSection = createAction({
 				links: response.links,
 				self: response.self,
 			};
-		} catch (error: any) {
-			throw new Error(`Failed to create section: ${error.message || 'Unknown error'}`);
+		} catch (error) {
+			throw new Error(`Failed to create section: ${(error instanceof Error && error.message) || 'Unknown error'}`);
 		}
 	},
 });

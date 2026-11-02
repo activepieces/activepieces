@@ -12,7 +12,7 @@ The chat LLM loop runs in the **worker**, not the API. Send path: `agent-convers
 ### Entities & services
 - **ChatPersonalization** (`chat_personalization`) — first-run onboarding: role + company, background research, researched empty-state cards. See [chat personalization](./chat-personalization.md).
 - **AgentConversation** (`agent_conversation`) — per-user, per-platform, optionally per-project; `status` STREAMING/IDLE/ERROR, `activeRunId`, `messages` (ModelMessage[] JSONB), `uiMessages`, `summary`/`summarizedUpToIndex` for compaction.
-- **UserMemory** (`user_memory`) — one row per (platformId, userId): `instructions` (nullable text) + `memories` (jsonb string[]); capped at 50 facts × 280 chars and 4000 chars of instructions (`agentHelpers.capMemories`).
+- **UserMemory** (`user_memory`) — one row per (platformId, userId): `instructions` (nullable text) + `memories` (jsonb string[]); capped at 50 facts × 280 chars and 4000 chars of instructions (`agentHelpers.capMemories`). Every write to `memories` is `{ next, base }` and goes through a three-way merge under a row lock (`agentHelpers.saveUserMemory`); there is no blind overwrite, so a writer working from a stale list can't resurrect removed facts or wipe ones saved meanwhile.
 - Tool logic in `ee/agent/`; shared tool phase/classification in `core/shared/.../ee/agent/`.
 
 ### How it works

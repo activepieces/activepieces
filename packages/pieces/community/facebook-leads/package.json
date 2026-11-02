@@ -12,9 +12,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
-  },
-  "devDependencies": {
+    "@activepieces/core-utils": "workspace:*",
     "tslib": "2.6.2"
   }
 }

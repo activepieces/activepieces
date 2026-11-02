@@ -48,7 +48,7 @@ const AnimatedTab = ({
     <TabsTrigger
       value={tab.to}
       variant="outline"
-      className="pb-3"
+      className="pb-3 whitespace-nowrap"
       onClick={onClick}
       data-state={isActive ? 'active' : 'inactive'}
       onMouseEnter={() => iconRef.current?.startAnimation()}
@@ -147,7 +147,7 @@ export const ProjectDashboardLayoutHeader = () => {
     <div className="flex flex-col">
       {!isEmbedded && <ProjectDashboardPageHeader />}
       {!embedState.hideSideNav && (
-        <Tabs className="px-3 pt-2 border-b">
+        <Tabs className="px-3 pt-2 border-b overflow-x-auto scrollbar-none">
           <TabsList variant="outline">
             {visiblePrimaryTabs.map((tab) => (
               <AnimatedTab
