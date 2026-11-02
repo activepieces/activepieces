@@ -93,6 +93,9 @@
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
+      "@activepieces/piece-antwork": [
+        "packages/pieces/community/antwork/src/index.ts"
+      ],
       "@activepieces/piece-anyhook-graphql": [
         "packages/pieces/community/anyhook-graphql/src/index.ts"
       ],
