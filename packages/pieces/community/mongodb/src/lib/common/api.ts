@@ -44,15 +44,13 @@ async function findAndUpdateDocuments({
     };
   }
 
-  const outcomes = await updateEachById({ collection, filter, update, ids: matchedIds });
-  const updated = outcomes.filter((outcome) => outcome.matched);
-
+  const batchResult = await updateEachById({ collection, filter, update, ids: matchedIds });
   return {
-    matchedCount: updated.length,
-    modifiedCount: updated.reduce((total, outcome) => total + outcome.modifiedCount, 0),
+    matchedCount: batchResult.matchedCount,
+    modifiedCount: batchResult.modifiedCount,
     upsertedCount: 0,
     upsertedId: null,
-    documents: updated.flatMap((outcome) => (outcome.document === null ? [] : [outcome.document])),
+    documents: batchResult.documents,
   };
 }
 
@@ -66,35 +64,22 @@ async function updateEachById({
   filter: Document;
   update: Document;
   ids: WithId<Document>['_id'][];
-}): Promise<UpdateOutcome[]> {
-  const outcomes: UpdateOutcome[] = [];
+}): Promise<BatchResult> {
+  let matchedCount = 0;
+  let modifiedCount = 0;
+  const documents: Document[] = [];
   for (let start = 0; start < ids.length; start += ID_BATCH_SIZE) {
     const batch = ids.slice(start, start + ID_BATCH_SIZE);
-    const batchOutcomes = await Promise.all(
-      batch.map((id) => updateOneById({ collection, filter, update, id })),
+    const result = await collection.updateMany(
+      { $and: [filter, { _id: { $in: batch } }] },
+      update,
     );
-    outcomes.push(...batchOutcomes);
+    matchedCount += result.matchedCount;
+    modifiedCount += result.modifiedCount;
+    const batchDocuments = await collection.find({ _id: { $in: batch } }).toArray();
+    documents.push(...batchDocuments);
   }
-  return outcomes;
-}
-
-async function updateOneById({
-  collection,
-  filter,
-  update,
-  id,
-}: {
-  collection: Collection<Document>;
-  filter: Document;
-  update: Document;
-  id: WithId<Document>['_id'];
-}): Promise<UpdateOutcome> {
-  const result = await collection.updateOne({ $and: [filter, { _id: id }] }, update);
-  if (result.matchedCount === 0) {
-    return { matched: false, modifiedCount: 0, document: null };
-  }
-  const document = await collection.findOne({ _id: id });
-  return { matched: true, modifiedCount: result.modifiedCount, document };
+  return { matchedCount, modifiedCount, documents };
 }
 
 async function findAndReplaceDocument({
@@ -128,10 +113,10 @@ async function findAndReplaceDocument({
 
 export const mongodbApi = { findAndUpdateDocuments, findAndReplaceDocument };
 
-const ID_BATCH_SIZE = 50;
+const ID_BATCH_SIZE = 500;
 
-type UpdateOutcome = {
-  matched: boolean;
+type BatchResult = {
+  matchedCount: number;
   modifiedCount: number;
-  document: Document | null;
+  documents: Document[];
 };
