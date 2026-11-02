@@ -80,7 +80,6 @@ export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
     eventStreamingEnabled: false,
     includedCredits: 1000,
     activeFlowsLimit: undefined,
-    projectsLimit: 1,
     embeddingEnabled: false,
     aiProvidersEnabled: false,
     chatEnabled: true,

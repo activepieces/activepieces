@@ -598,7 +598,6 @@ type PlatformPlanFlags = Required<Pick<PlatformPlanLimits, PlatformPlanFlagId>>
 type NotProjectedFromAutumn =
     | 'licenseKey'
     | 'licenseExpiresAt'
-    | 'projectsLimit'
     | 'dedicatedWorkers'
     | 'canary'
     | 'customDomainsEnabled'

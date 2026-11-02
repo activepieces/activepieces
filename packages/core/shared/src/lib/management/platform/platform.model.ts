@@ -135,7 +135,6 @@ export const PlatformPlan = z.object({
     licenseKey: Nullable(z.string()),
     licenseExpiresAt: Nullable(DateOrString),
 
-    projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
 
     /** @deprecated use workerGroupId instead — will be removed in 0.83.0 */
