@@ -182,6 +182,71 @@ describe('bulk records inside one second', () => {
   });
 });
 
+describe('10,000-record cap boundaries', () => {
+  const ts = '2026-11-01T10:00:00.500';
+  const start = { timestamp: '2026-11-01T10:00:00.000', ids: [] as string[] };
+  type Cursor = Parameters<typeof fireberryRecordPolling.pollOnce>[0]['cursor'];
+  const poll = (client: FireberryClient, cursor: Cursor, maxPages = 100) =>
+    fireberryRecordPolling.pollOnce({ client, objectSystemName: 'Account', field: 'modifiedon', cursor, triggerType: 'both', maxPages });
+
+  async function drain(dataset: Record<string, unknown>[], maxPages: number) {
+    fakeFireberry(dataset);
+    const client = new FireberryClient('t');
+    const emitted: unknown[] = [];
+    let cursor: Cursor = start;
+    for (let i = 0; i < 6; i++) {
+      const result = await poll(client, cursor, maxPages);
+      emitted.push(...result.items.map((r) => r.accountid));
+      cursor = result.cursor;
+    }
+    return { emitted, cursor };
+  }
+
+  it('exactly 10,000 tied + 1 newer: all emitted once across polls, cursor advances, no throw', async () => {
+    const dataset = [...Array.from({ length: 10_000 }, (_, i) => rec(`r${i}`, ts)), rec('later', '2026-11-01T10:00:05.000')];
+    const { emitted, cursor } = await drain(dataset, 100);
+    expect(emitted).toHaveLength(10_001);
+    expect(new Set(emitted).size).toBe(10_001);
+    expect(emitted[emitted.length - 1]).toBe('later');
+    expect(cursor?.timestamp).toBe('2026-11-01T10:00:05.000');
+    expect(cursor?.scanned).toBeUndefined();
+  });
+
+  it('exactly 10,000 tied and nothing newer: no throw, all emitted once', async () => {
+    const { emitted, cursor } = await drain(Array.from({ length: 10_000 }, (_, i) => rec(`r${i}`, ts)), 100);
+    expect(new Set(emitted).size).toBe(10_000);
+    expect(emitted).toHaveLength(10_000);
+    expect(cursor?.timestamp).toBe(ts);
+  });
+
+  it('exactly 10,000 tied + a full page of newer records: emits them all and moves on', async () => {
+    const dataset = [
+      ...Array.from({ length: 10_000 }, (_, i) => rec(`r${i}`, ts)),
+      ...Array.from({ length: 120 }, (_, i) => rec(`n${i}`, `2026-11-01T10:00:0${5 + Math.floor(i / 60)}.000`)),
+    ];
+    const { emitted, cursor } = await drain(dataset, 100);
+    expect(emitted).toHaveLength(10_120);
+    expect(new Set(emitted).size).toBe(10_120);
+    expect(cursor?.timestamp).toBe('2026-11-01T10:00:06.000');
+  });
+
+  it('10,001 tied: throws a clear error', async () => {
+    fakeFireberry([...Array.from({ length: 10_001 }, (_, i) => rec(`r${i}`, ts)), rec('later', '2026-11-01T10:00:05.000')]);
+    const client = new FireberryClient('t');
+    const first = await poll(client, start);
+    expect(first.items).toHaveLength(5_000);
+    await expect(poll(client, first.cursor)).rejects.toThrow(/More than 10000 Fireberry records/);
+  });
+
+  it('9,999 tied + 1 newer: no throw, all emitted once', async () => {
+    const dataset = [...Array.from({ length: 9_999 }, (_, i) => rec(`r${i}`, ts)), rec('later', '2026-11-01T10:00:05.000')];
+    const { emitted, cursor } = await drain(dataset, 100);
+    expect(new Set(emitted).size).toBe(10_000);
+    expect(emitted).toHaveLength(10_000);
+    expect(cursor?.timestamp).toBe('2026-11-01T10:00:05.000');
+  });
+});
+
 describe('latestCursor with many tied records', () => {
   it('records all 120 ids tied at the newest timestamp so the first poll emits 0', async () => {
     const ts = '2026-11-01T10:00:00.500';

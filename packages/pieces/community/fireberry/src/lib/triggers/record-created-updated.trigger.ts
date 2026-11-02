@@ -156,10 +156,26 @@ async function fetchSince({
       return { records, primaryKey };
     }
     if (stillInCursorSecond && page >= pageBudget) {
-      if (records.length >= MAX_RECORDS_IN_ONE_SECOND) {
-        throw new Error(
-          `More than ${MAX_RECORDS_IN_ONE_SECOND} Fireberry records share the ${field} second ${toQueryTimestamp(since)}. Fireberry filters by whole seconds, so the trigger cannot page through a bulk change this large without skipping records. Split the bulk update or import into smaller batches.`,
-        );
+      const tied = records.filter((record) => sameQuerySecond({ timestamp: readString({ record, key: field }), since })).length;
+      if (tied >= MAX_RECORDS_IN_ONE_SECOND) {
+        // At the cap: only fail if the next record is confirmed to still be in the same second.
+        const peek = await client.query({
+          objecttype: objectType,
+          query: `(${field} >= ${toQueryTimestamp(since)})`,
+          sort_by: field,
+          sort_type: 'asc',
+          page_size: FIREBERRY_LIMITS.MAX_PAGE_SIZE,
+          page_number: page + 1,
+        });
+        const next = peek.Data[0];
+        if (next !== undefined && sameQuerySecond({ timestamp: readString({ record: next, key: field }), since })) {
+          throw new Error(
+            `More than ${MAX_RECORDS_IN_ONE_SECOND} Fireberry records share the ${field} second ${toQueryTimestamp(since)}. Fireberry filters by whole seconds, so the trigger cannot page through a bulk change this large without skipping records. Split the bulk update or import into smaller batches.`,
+          );
+        }
+        // The tied second ends here; keep the newer records read so the cursor moves past the second.
+        records.push(...peek.Data);
+        return { records, primaryKey: peek.PrimaryKey || primaryKey };
       }
       return { records, primaryKey, incomplete: true };
     }
