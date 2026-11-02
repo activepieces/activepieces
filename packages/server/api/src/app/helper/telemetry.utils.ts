@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
+import { AIProviderName, isNil, omit, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apVersionUtil, POSTHOG_HOST, POSTHOG_PROJECT_TOKEN } from '@activepieces/server-utils'
 import { ApEdition, ApEnvironment, AppInstance, AttributionParams, attributionUtils, DeploymentConfig, DeploymentKind, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, SignUpMethod, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -135,6 +135,10 @@ export function instrumentMcpServer({ server, userId, platformId }: InstrumentMc
     mcpPosthogInstance ??= new PostHog(POSTHOG_PROJECT_TOKEN, { host: POSTHOG_HOST })
     instrument(server, mcpPosthogInstance, {
         identify: isNil(userId) ? null : { distinctId: userId, groups: isNil(platformId) ? undefined : { [PLATFORM_GROUP_TYPE]: platformId } },
+        context: false,
+        captureModel: false,
+        enableConversationId: false,
+        beforeSend: (event) => ({ ...event, properties: omit(event.properties, ['$mcp_response']) }),
     })
 }
 
