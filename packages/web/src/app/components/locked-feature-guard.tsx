@@ -34,8 +34,6 @@ export const LockedFeatureGuard = ({
   );
 };
 
-export default LockedFeatureGuard;
-
 type LockedFeatureGuardProps = {
   children: React.ReactNode;
   featureKey: FeatureKey;
