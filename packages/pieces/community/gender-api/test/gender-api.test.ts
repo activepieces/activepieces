@@ -41,15 +41,27 @@ describe('gender-api', () => {
     expect(req.body).toEqual({ first_name: 'Andrea', country: 'IT', locale: 'it-IT' });
     expect(req.headers).toMatchObject({ Authorization: 'Bearer key-123' });
     expect(result).toEqual({
-      gender: 'male', probability: 0.97, result_found: true, first_name: 'Andrea',
+      ...genderBody,
       last_name: null, samples: 3000, country: 'IT', credits_used: 1,
     });
   });
 
-  it('maps null gender to unknown', async () => {
-    send.mockResolvedValue(ok({ ...genderBody, gender: null, result_found: false, probability: null }));
-    const result = await getGenderByFirstName.run(ctx({ first_name: 'Xqzv' }));
-    expect(result).toMatchObject({ gender: 'unknown', result_found: false });
+  it('keeps raw details and input for existing name actions (backward compatible)', async () => {
+    send.mockResolvedValue(ok(genderBody));
+    const first = await getGenderByFirstName.run(ctx({ first_name: 'Andrea' }));
+    expect(first).toMatchObject({ details: { samples: 3000, country: 'IT' }, input: genderBody.input, samples: 3000 });
+    send.mockResolvedValue(ok({ ...genderBody, last_name: 'Rossi' }));
+    const full = await getGenderByFullName.run(ctx({ full_name: 'Andrea Rossi' }));
+    expect(full).toMatchObject({ details: { samples: 3000, country: 'IT' }, last_name: 'Rossi' });
+  });
+
+  it('keeps raw null gender on existing actions and maps it to unknown on email lookup', async () => {
+    const notFound = { ...genderBody, gender: null, result_found: false, probability: null };
+    send.mockResolvedValue(ok(notFound));
+    const first = await getGenderByFirstName.run(ctx({ first_name: 'Xqzv' }));
+    expect(first).toMatchObject({ gender: null, result_found: false });
+    const email = await getGenderByEmail.run(ctx({ email: 'xqzv@example.com' }));
+    expect(email).toMatchObject({ gender: 'unknown', result_found: false });
   });
 
   it('omits optional fields when empty', async () => {

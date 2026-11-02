@@ -3,8 +3,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { genderApiAuth } from '../common/auth';
 import {
   genderApiClient,
-  genderResultOutputSchema,
-  normalizeGenderResult,
+  genderResultWithRawOutputSchema,
+  normalizeGenderResultKeepingRaw,
 } from '../common/client';
 
 export const getGenderByFirstName = createAction({
@@ -36,7 +36,7 @@ export const getGenderByFirstName = createAction({
       required: false,
     }),
   },
-  outputSchema: genderResultOutputSchema,
+  outputSchema: genderResultWithRawOutputSchema,
   async run({ auth, propsValue }) {
     const body: Record<string, unknown> = { first_name: propsValue.first_name };
     if (propsValue.country_code) {
@@ -51,6 +51,6 @@ export const getGenderByFirstName = createAction({
       path: '/gender',
       body,
     });
-    return normalizeGenderResult(response);
+    return normalizeGenderResultKeepingRaw(response);
   },
 });

@@ -33,6 +33,7 @@ export const getStatistics = createAction({
         date: toText(usage['date']),
         credits_used: toNumber(usage['credits_used']),
       },
+      ...data,
     };
   },
 });

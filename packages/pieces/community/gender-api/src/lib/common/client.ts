@@ -143,6 +143,10 @@ function normalizeGenderResult(body: unknown): GenderResult {
   };
 }
 
+function normalizeGenderResultKeepingRaw(body: unknown): Record<string, unknown> {
+  return { ...normalizeGenderResult(body), ...toRecord(body) };
+}
+
 const GENDER_API_BASE_URL = 'https://gender-api.com/v2';
 
 const genderApiClient = { request };
@@ -160,6 +164,44 @@ const genderResultFields: OutputSchemaField[] = [
 
 const genderResultOutputSchema: OutputSchema = { fields: genderResultFields };
 
+const rawGenderFields: OutputSchemaField[] = [
+  {
+    key: 'input',
+    label: 'Input',
+    description: 'The request parameters echoed back by Gender API',
+    children: [
+      { key: 'first_name', label: 'First Name' },
+      { key: 'last_name', label: 'Last Name' },
+      { key: 'full_name', label: 'Full Name' },
+      { key: 'country', label: 'Country' },
+      { key: 'locale', label: 'Locale' },
+    ],
+  },
+  {
+    key: 'details',
+    label: 'Details',
+    description: 'Lookup details as returned by Gender API',
+    children: [
+      { key: 'credits_used', label: 'Credits Used', format: 'number' },
+      { key: 'samples', label: 'Samples', format: 'number' },
+      { key: 'country', label: 'Country' },
+      { key: 'first_name_sanitized', label: 'First Name Sanitized' },
+      { key: 'duration', label: 'Duration' },
+    ],
+  },
+];
+
+const genderResultWithRawOutputSchema: OutputSchema = {
+  fields: [
+    ...genderResultFields.map((field) =>
+      field.key === 'gender'
+        ? { ...field, description: 'Predicted gender: male, female, or null when the name is not found' }
+        : field
+    ),
+    ...rawGenderFields,
+  ],
+};
+
 type GenderResult = {
   gender: string;
   probability: number | null;
@@ -176,7 +218,9 @@ export {
   GenderApiError,
   genderApiClient,
   genderResultOutputSchema,
+  genderResultWithRawOutputSchema,
   normalizeGenderResult,
+  normalizeGenderResultKeepingRaw,
   toNumber,
   toRecord,
   toText,
