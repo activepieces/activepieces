@@ -3727,7 +3727,7 @@
   "Test the flow after the replace to make sure every step still works.": "Test the flow after the replace to make sure every step still works.",
   "Switch to {newName}?": "Switch to {newName}?",
   "Replace in all steps": "Replace in all steps",
-  "Switch and clear": "Switch and clear",
-  "Switching clears {inputs} in this step's settings, because they depend on the connection.": "Switching clears {inputs} in this step's settings, because they depend on the connection.",
-  "{stepCount, plural, =1 {To keep your inputs, replace the connection in the step that uses {oldName} instead.} other {To keep your inputs, replace the connection in all # steps that use {oldName} instead.}}": "{stepCount, plural, =1 {To keep your inputs, replace the connection in the step that uses {oldName} instead.} other {To keep your inputs, replace the connection in all # steps that use {oldName} instead.}}"
+  "{stepCount, plural, =1 {To keep your inputs, replace the connection in the step that uses {oldName} instead.} other {To keep your inputs, replace the connection in all # steps that use {oldName} instead.}}": "{stepCount, plural, =1 {To keep your inputs, replace the connection in the step that uses {oldName} instead.} other {To keep your inputs, replace the connection in all # steps that use {oldName} instead.}}",
+  "Switching can clear {inputs} in this step's settings, if the new connection doesn't have access to them.": "Switching can clear {inputs} in this step's settings, if the new connection doesn't have access to them.",
+  "Switch": "Switch"
 }

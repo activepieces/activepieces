@@ -28,7 +28,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { appConnectionsHooks } from '@/features/connections';
+import {
+  appConnectionsHooks,
+  appConnectionsQueries,
+} from '@/features/connections';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export function ConnectionSelectWithSwitchConfirmation({
   piece,
@@ -38,8 +42,14 @@ export function ConnectionSelectWithSwitchConfirmation({
   disabled,
 }: ConnectionSelectWithSwitchConfirmationProps) {
   const form = useFormContext<PieceAction | PieceTrigger>();
-  const { flowConnections, projectConnections } =
-    flowCanvasHooks.useFlowConnections();
+  const { flowConnections } = flowCanvasHooks.useFlowConnections();
+  const projectId = authenticationSession.getProjectId()!;
+  const { data: pieceConnections } = appConnectionsQueries.useAppConnections({
+    request: { pieceName: piece.name, projectId, limit: 1000 },
+    pieceAuth: piece.auth,
+    extraKeys: [piece.name, projectId],
+    staleTime: 0,
+  });
   const { showReplace, hasPermissionToReplace } =
     appConnectionsHooks.useReplaceConnectionAccess();
   const [pendingSwitch, setPendingSwitch] = useState<PendingSwitch | null>(
@@ -49,7 +59,7 @@ export function ConnectionSelectWithSwitchConfirmation({
     useState<ConnectionsToReplace | null>(null);
 
   const findConnection = (connectionValue: string | undefined) =>
-    projectConnections.find(
+    pieceConnections?.data.find(
       (connection) =>
         connection.externalId ===
         connectionTemplate.unwrapExternalId(connectionValue),
@@ -146,7 +156,7 @@ function SwitchConnectionConfirmationDialog({
   onConfirm,
 }: SwitchConnectionConfirmationDialogProps) {
   const [beforeInputs, afterInputs] = t(
-    "Switching clears {inputs} in this step's settings, because they depend on the connection.",
+    "Switching can clear {inputs} in this step's settings, if the new connection doesn't have access to them.",
     { inputs: INPUTS_PLACEHOLDER },
   ).split(INPUTS_PLACEHOLDER);
   return (
@@ -185,7 +195,7 @@ function SwitchConnectionConfirmationDialog({
             </Button>
           )}
           <Button type="button" onClick={onConfirm}>
-            {t('Switch and clear')}
+            {t('Switch')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -251,16 +261,21 @@ function listDynamicChildrenWithValues({
   schema: unknown;
   value: unknown;
 }): ClearedInput[] {
-  const children = PiecePropertyMap.safeParse(schema);
-  if (!children.success || !isRecord(value)) {
+  if (!isRecord(schema) || !isRecord(value)) {
     return [];
   }
-  return Object.entries(children.data)
-    .filter(([childName]) => hasValue(value[childName]))
-    .map(([childName, child]) => ({
-      path: `${propertyName}.${childName}`,
-      displayName: child.displayName,
-    }));
+  return Object.entries(schema).flatMap(([childName, child]) =>
+    hasValue(value[childName]) &&
+    isRecord(child) &&
+    typeof child.displayName === 'string'
+      ? [
+          {
+            path: `${propertyName}.${childName}`,
+            displayName: child.displayName,
+          },
+        ]
+      : [],
+  );
 }
 
 function hasValue(value: unknown): boolean {
