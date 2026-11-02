@@ -245,15 +245,18 @@ async function fetchPaged({
       queryParams: { ...(queryParams ?? {}), page: String(page) },
     });
     const pageItems = getEmbeddedList({ body: response.body, key: embedKey });
+    totalPages = getTotalPages(response.body);
+    if (pageItems.length === 0) {
+      return { items, truncated: false };
+    }
     for (const item of pageItems) {
       if (items.length >= cap) {
         return { items, truncated: true };
       }
       items.push(stripLinks(item));
     }
-    totalPages = getTotalPages(response.body);
-    if (pageItems.length === 0) {
-      return { items, truncated: false };
+    if (items.length >= cap) {
+      return { items, truncated: page < totalPages };
     }
     page += 1;
   } while (page <= totalPages && page <= MAX_PAGES);
@@ -485,7 +488,8 @@ function readTagNames(conversation: unknown): string[] {
 
 function findFirst({ body, key }: { body: unknown; key: string }): { found: boolean; data: Record<string, unknown> } {
   const list = getEmbeddedList({ body, key });
-  return list.length > 0 ? { found: true, data: stripLinks(list[0]) } : { found: false, data: {} };
+  // Keeps _links: the pre-0.3.0 find actions returned the raw item and saved flows may reference it.
+  return list.length > 0 ? { found: true, data: list[0] } : { found: false, data: {} };
 }
 
 function uniqueOrThrow({ values, label }: { values: string[]; label: string }): string[] {

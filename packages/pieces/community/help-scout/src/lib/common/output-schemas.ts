@@ -129,7 +129,7 @@ export const helpScoutOutputSchemas: Record<string, OutputSchema> = {
   findConversation: { fields: [{ key: 'found', label: 'Found', format: 'boolean' }, { key: 'data', label: 'Conversation', children: conversationFields }] },
   findCustomer: { fields: [{ key: 'found', label: 'Found', format: 'boolean' }, { key: 'data', label: 'Customer', children: customerFields }] },
   findUser: { fields: [{ key: 'found', label: 'Found', format: 'boolean' }, { key: 'data', label: 'User', children: userFields }] },
-  updateCustomerProperties: { fields: [{ key: 'customerId', label: 'Customer ID' }, { key: 'updated', label: 'Updated Property Slugs' }] },
+  updateCustomerProperties: { fields: [{ key: 'success', label: 'Success', format: 'boolean' }, { key: 'customerId', label: 'Customer ID' }, { key: 'updated', label: 'Updated Property Slugs' }] },
   searchConversations: { fields: [{ key: 'conversations', label: 'Conversations', labelKey: 'subject', listItems: conversationFields }, { key: 'count', label: 'Count', format: 'number' }, { key: 'truncated', label: 'Truncated', format: 'boolean' }] },
   listThreads: { fields: [{ key: 'threads', label: 'Threads', labelKey: 'type', listItems: threadFields }, { key: 'count', label: 'Count', format: 'number' }, { key: 'truncated', label: 'Truncated', format: 'boolean' }] },
   updateConversation: { fields: [{ key: 'conversationId', label: 'Conversation ID' }, { key: 'applied', label: 'Applied Changes' }] },

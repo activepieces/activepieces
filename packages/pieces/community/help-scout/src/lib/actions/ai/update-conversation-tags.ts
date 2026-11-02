@@ -13,7 +13,7 @@ export const updateConversationTags = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Adds tags to, removes tags from, or replaces all tags of a Help Scout conversation. add and remove keep the other existing tags; replace sets exactly the given list (empty list clears all tags). Unknown tag names are created. Returns the resulting tag list. Idempotent: repeating converges to the same tags.',
+      'Adds tags to, removes tags from, or replaces all tags of a Help Scout conversation. add and remove keep the other existing tags; replace sets exactly the given list (empty list clears all tags). Unknown tag names are created. Returns the resulting tag list. Idempotent: repeating converges to the same tags. Help Scout has no conditional tag update, so the action re-reads the tags after writing and re-applies once if a concurrent change was detected; a change made in the same instant can still be lost.',
     idempotent: true,
   },
   outputSchema: helpScoutOutputSchemas['updateConversationTags'],
@@ -42,13 +42,32 @@ export const updateConversationTags = createAction({
     const path = `/conversations/${helpScoutApi.encodeId(propsValue.conversationId)}`;
     const requested = helpScoutApi.toStringList(propsValue.tags);
     const mode = propsValue.mode === 'remove' || propsValue.mode === 'replace' ? propsValue.mode : 'add';
-    let current: string[] = [];
-    if (mode !== 'replace') {
+    const readTags = async (): Promise<string[]> => {
       const response = await helpScoutApi.request({ method: HttpMethod.GET, path, auth });
-      current = helpScoutApi.readTagNames(response.body);
+      return helpScoutApi.readTagNames(response.body);
+    };
+    const writeTags = async (tags: string[]): Promise<void> => {
+      await helpScoutApi.request({ method: HttpMethod.PUT, path: `${path}/tags`, auth, body: { tags } });
+    };
+    if (mode === 'replace') {
+      const replaced = helpScoutApi.mergeTags({ current: [], requested, mode });
+      await writeTags(replaced);
+      return { conversationId: String(propsValue.conversationId), tags: replaced };
     }
-    const tags = helpScoutApi.mergeTags({ current, requested, mode });
-    await helpScoutApi.request({ method: HttpMethod.PUT, path: `${path}/tags`, auth, body: { tags } });
-    return { conversationId: String(propsValue.conversationId), tags };
+    // Help Scout's tags endpoint replaces the whole list and has no ETag/If-Match or per-tag add/remove,
+    // so read right before writing, then re-read once and re-apply our change on top of whatever is there now.
+    const before = await readTags();
+    await writeTags(helpScoutApi.mergeTags({ current: before, requested, mode }));
+    const after = await readTags();
+    const reconciled = helpScoutApi.mergeTags({ current: after, requested, mode });
+    if (!sameTags(reconciled, after)) {
+      await writeTags(reconciled);
+    }
+    return { conversationId: String(propsValue.conversationId), tags: reconciled };
   },
 });
+
+function sameTags(a: string[], b: string[]): boolean {
+  const key = (tags: string[]) => tags.map((tag) => tag.trim().toLowerCase()).sort().join('\n');
+  return key(a) === key(b);
+}

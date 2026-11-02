@@ -76,6 +76,16 @@ describe('helpScoutApi.fetchPaged', () => {
     const result = await helpScoutApi.fetchPaged({ auth, path: '/conversations', embedKey: 'conversations', limit: 50 });
     expect(result.truncated).toBe(false);
   });
+  it('does not fetch another page when the limit lands on a page boundary', async () => {
+    const ids = (from: number) => Array.from({ length: 25 }, (_, i) => from + i);
+    const spy = vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce(pageResponse({ ids: ids(1), totalPages: 4 }))
+      .mockResolvedValueOnce(pageResponse({ ids: ids(26), totalPages: 4 }));
+    const result = await helpScoutApi.fetchPaged({ auth, path: '/conversations', embedKey: 'conversations', limit: 50 });
+    expect(result.items).toHaveLength(50);
+    expect(result.truncated).toBe(true);
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
   it('stops at totalPages without truncation', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest')
       .mockResolvedValueOnce(pageResponse({ ids: [1], totalPages: 2 }))
