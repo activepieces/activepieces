@@ -38,8 +38,8 @@ const polling: Polling<RedshiftAuthValue, StaticPropsValue<typeof props>> = {
     const { rows } = await redshiftClient.runSql({
       auth,
       server,
-      sql: `SELECT * FROM ${from} WHERE ${column} > $1 ORDER BY ${column} ASC LIMIT ${MAX_ROWS}`,
-      params: [toSqlTimestamp({ epochMs: lastFetchEpochMS })],
+      sql: `SELECT * FROM ${from} WHERE ${column} >= $1 ORDER BY ${column} ASC LIMIT ${MAX_ROWS}`,
+      params: [toSqlTimestamp({ epochMs: lastFetchEpochMS + 1 })],
     });
     const events = toEvents(rows);
     if (rows.length < MAX_ROWS || events.length === 0) {

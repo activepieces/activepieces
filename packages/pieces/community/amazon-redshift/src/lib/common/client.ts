@@ -1,5 +1,6 @@
-import { AppConnectionType, AuthValidationServerContext, ServerContext } from '@activepieces/pieces-framework';
+import { AppConnectionType, AuthValidationServerContext, ServerContext, tryCatch } from '@activepieces/pieces-framework';
 import {
+  CancelStatementCommand,
   DescribeStatementCommand,
   DescribeStatementResponse,
   ExecuteStatementCommand,
@@ -99,7 +100,12 @@ async function waitForStatement({ client, id, deadline }: { client: RedshiftData
     throw new Error(statement.Error ?? `The query was ${statement.Status.toLowerCase()}.`);
   }
   if (Date.now() > deadline) {
-    throw new Error(`The query did not finish within ${QUERY_TIMEOUT_MS / 1000} seconds.`);
+    const { error } = await tryCatch(() => client.send(new CancelStatementCommand({ Id: id })));
+    throw new Error(
+      error
+        ? `The query did not finish within ${QUERY_TIMEOUT_MS / 1000} seconds and could not be cancelled, so it may still complete in Redshift (statement id ${id}).`
+        : `The query did not finish within ${QUERY_TIMEOUT_MS / 1000} seconds and was cancelled.`,
+    );
   }
   await new Promise((resolve) => setTimeout(resolve, STATEMENT_POLL_INTERVAL_MS));
   return await waitForStatement({ client, id, deadline });
