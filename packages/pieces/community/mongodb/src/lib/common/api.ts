@@ -1,3 +1,4 @@
+import { MongoServerError } from 'mongodb';
 import type { ClientSession, Collection, Document, MongoClient, WithId } from 'mongodb';
 
 async function findAndUpdateDocuments({
@@ -46,14 +47,14 @@ async function findAndUpdateDocuments({
     };
   }
 
-  const transactional = await supportsTransactions({ client });
+  const mode = await chooseUpdateMode({ client, collection });
   const batchResult = await updateEachById({
     client,
     collection,
     filter,
     update,
     ids: matchedIds,
-    transactional,
+    mode,
   });
   return {
     matchedCount: batchResult.matchedCount,
@@ -70,23 +71,30 @@ async function updateEachById({
   filter,
   update,
   ids,
-  transactional,
+  mode,
 }: {
   client: MongoClient;
   collection: Collection<Document>;
   filter: Document;
   update: Document;
   ids: WithId<Document>['_id'][];
-  transactional: boolean;
+  mode: UpdateMode;
 }): Promise<BatchResult> {
+  let currentMode = mode;
   let matchedCount = 0;
   let modifiedCount = 0;
   const documents: Document[] = [];
   for (let start = 0; start < ids.length; start += ID_BATCH_SIZE) {
     const batch = ids.slice(start, start + ID_BATCH_SIZE);
-    const batchResult = transactional
-      ? await runBatchInTransaction({ client, collection, filter, update, batch })
-      : await updateBatch({ collection, filter, update, batch, session: undefined });
+    const transactionResult =
+      currentMode === 'transaction'
+        ? await tryBatchInTransaction({ client, collection, filter, update, batch })
+        : null;
+    if (currentMode === 'transaction' && transactionResult === null) {
+      currentMode = 'per-document';
+    }
+    const batchResult =
+      transactionResult ?? (await updateBatchPerDocument({ collection, filter, update, batch }));
     matchedCount += batchResult.matchedCount;
     modifiedCount += batchResult.modifiedCount;
     documents.push(...batchResult.documents);
@@ -94,7 +102,7 @@ async function updateEachById({
   return { matchedCount, modifiedCount, documents };
 }
 
-async function runBatchInTransaction({
+async function tryBatchInTransaction({
   client,
   collection,
   filter,
@@ -106,12 +114,17 @@ async function runBatchInTransaction({
   filter: Document;
   update: Document;
   batch: WithId<Document>['_id'][];
-}): Promise<BatchResult> {
+}): Promise<BatchResult | null> {
   const session = client.startSession();
   try {
     return await session.withTransaction((activeSession) =>
       updateBatch({ collection, filter, update, batch, session: activeSession }),
     );
+  } catch (error) {
+    if (isTransactionUnsupported({ error })) {
+      return null;
+    }
+    throw error;
   } finally {
     await session.endSession();
   }
@@ -128,7 +141,7 @@ async function updateBatch({
   filter: Document;
   update: Document;
   batch: WithId<Document>['_id'][];
-  session: ClientSession | undefined;
+  session: ClientSession;
 }): Promise<BatchResult> {
   const stillMatching = (
     await collection
@@ -147,9 +160,80 @@ async function updateBatch({
   return { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount, documents };
 }
 
-async function supportsTransactions({ client }: { client: MongoClient }): Promise<boolean> {
+async function updateBatchPerDocument({
+  collection,
+  filter,
+  update,
+  batch,
+}: {
+  collection: Collection<Document>;
+  filter: Document;
+  update: Document;
+  batch: WithId<Document>['_id'][];
+}): Promise<BatchResult> {
+  let matchedCount = 0;
+  let modifiedCount = 0;
+  const documents: Document[] = [];
+  for (let start = 0; start < batch.length; start += PER_DOCUMENT_CONCURRENCY) {
+    const slice = batch.slice(start, start + PER_DOCUMENT_CONCURRENCY);
+    const outcomes = await Promise.all(
+      slice.map((id) => updateOneById({ collection, filter, update, id })),
+    );
+    for (const outcome of outcomes) {
+      if (outcome.matched) {
+        matchedCount += 1;
+        modifiedCount += outcome.modifiedCount;
+        if (outcome.document !== null) {
+          documents.push(outcome.document);
+        }
+      }
+    }
+  }
+  return { matchedCount, modifiedCount, documents };
+}
+
+async function updateOneById({
+  collection,
+  filter,
+  update,
+  id,
+}: {
+  collection: Collection<Document>;
+  filter: Document;
+  update: Document;
+  id: WithId<Document>['_id'];
+}): Promise<DocumentOutcome> {
+  const result = await collection.updateOne({ $and: [filter, { _id: id }] }, update);
+  if (result.matchedCount === 0) {
+    return { matched: false, modifiedCount: 0, document: null };
+  }
+  const document = await collection.findOne({ _id: id });
+  return { matched: true, modifiedCount: result.modifiedCount, document };
+}
+
+async function chooseUpdateMode({
+  client,
+  collection,
+}: {
+  client: MongoClient;
+  collection: Collection<Document>;
+}): Promise<UpdateMode> {
   const hello = await client.db('admin').command({ hello: 1 });
-  return typeof hello['setName'] === 'string' || hello['msg'] === 'isdbgrid';
+  const replicated = typeof hello['setName'] === 'string' || hello['msg'] === 'isdbgrid';
+  if (!replicated) {
+    return 'per-document';
+  }
+  const info = await client
+    .db(collection.dbName)
+    .listCollections({ name: collection.collectionName }, { nameOnly: false })
+    .next();
+  const plainCollection =
+    info !== null && info.type === 'collection' && info.options?.['capped'] !== true;
+  return plainCollection ? 'transaction' : 'per-document';
+}
+
+function isTransactionUnsupported({ error }: { error: unknown }): boolean {
+  return error instanceof MongoServerError && (error.code === 20 || error.code === 263);
 }
 
 async function findAndReplaceDocument({
@@ -185,8 +269,18 @@ export const mongodbApi = { findAndUpdateDocuments, findAndReplaceDocument };
 
 const ID_BATCH_SIZE = 500;
 
+const PER_DOCUMENT_CONCURRENCY = 50;
+
 type BatchResult = {
   matchedCount: number;
   modifiedCount: number;
   documents: Document[];
+};
+
+type UpdateMode = 'transaction' | 'per-document';
+
+type DocumentOutcome = {
+  matched: boolean;
+  modifiedCount: number;
+  document: Document | null;
 };
