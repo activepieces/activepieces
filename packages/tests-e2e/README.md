@@ -44,7 +44,8 @@ Start from `scenarios/flows/flow-journey.spec.ts` and `pages/builder.page.ts`. L
 
 - Wait for a visible result with a web-first assertion (`await expect(locator).toBeVisible()`), or for the API call with `page.waitForResponse()`. Never wait for a fixed time, `waitForSelector`, or `networkidle`.
 - Assert the outcome the ticket asks for, such as a run status, a step output, or a webhook response. A visible page or button is not an outcome.
-- Do not branch with `if` in a spec. A page object branches only between app states that are both valid, such as an empty project and a full one.
+- Keep `if` out of specs. A spec runs the same steps on every run, so a green run always proves the same thing.
+- A page object may branch only when the app can correctly be in either of two states and the spec cannot choose which, such as an empty project or one with flows (see `AutomationsPage.createFlow`). Never branch to work around a bug or a flaky step: that hides the failure the spec exists to catch.
 - Name a page object method that asserts `expect…`, so lint counts it as an assertion.
 
 ### Proving the spec
