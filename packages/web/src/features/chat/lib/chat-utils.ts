@@ -104,14 +104,6 @@ function cleanMcpToolName(raw: string): string {
   return formatUtils.convertEnumToHumanReadable(mcpMatch[1]);
 }
 
-function labelToolName(part: AnyToolPart): string {
-  const raw = chatPartUtils.getToolPartName(part);
-  if (raw !== LAZY_TOOL_NAME || !isObject(part.input)) return raw;
-  const wrapped = isObject(part.input.input) ? part.input.input : undefined;
-  const inner = part.input.tool ?? wrapped?.tool;
-  return typeof inner === 'string' && inner.length > 0 ? inner : raw;
-}
-
 function labelForRawToolName(raw: string, variant: 'active' | 'done'): string {
   if (raw.startsWith('mcp__')) {
     return cleanMcpToolName(raw);
@@ -141,7 +133,7 @@ function formatToolName({
     return input.title;
   }
 
-  const raw = labelToolName(part);
+  const raw = chatPartUtils.getToolPartName(part);
   const baseName = labelForRawToolName(raw, 'active');
 
   if (!includeContext) return baseName;
@@ -379,7 +371,7 @@ function formatToolActiveTitle({ part }: { part: AnyToolPart }): string {
   if (input && typeof input.activeTitle === 'string' && input.activeTitle) {
     return input.activeTitle;
   }
-  const raw = labelToolName(part);
+  const raw = chatPartUtils.getToolPartName(part);
   return labelForRawToolName(raw, 'active');
 }
 
@@ -388,7 +380,7 @@ function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
   if (input && typeof input.doneTitle === 'string' && input.doneTitle) {
     return input.doneTitle;
   }
-  const raw = labelToolName(part);
+  const raw = chatPartUtils.getToolPartName(part);
   return labelForRawToolName(raw, 'done');
 }
 
