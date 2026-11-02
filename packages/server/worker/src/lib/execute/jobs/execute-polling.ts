@@ -34,6 +34,11 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
         }
         const flowVersion: FlowVersion = resolved.flowVersion
 
+        const debugSlowPollMs = 90_000
+        ctx.log.warn({ ...pollingLogFields, debugSlowPollMs }, '[GIT-2058 repro] sleeping before engine execute to simulate a slow poll')
+        await new Promise((resolve) => setTimeout(resolve, debugSlowPollMs))
+        ctx.log.warn(pollingLogFields, '[GIT-2058 repro] done sleeping, calling engine execute now')
+
         try {
             const result = await ctx.runtime.execute({
                 workerIndex: ctx.workerIndex,
