@@ -1617,8 +1617,6 @@
   "No trigger data available": "No trigger data available",
   "Trigger health information will appear here": "Trigger health information will appear here",
   "trigger status": "trigger status",
-  "Unlock worker groups": "Unlock worker groups",
-  "Set aside servers for specific projects or flows, so a busy project never slows down the rest.": "Set aside servers for specific projects or flows, so a busy project never slows down the rest.",
   "Check the health of your workers": "Check the health of your workers",
   "Upgrade to Dedicated Workers": "Upgrade to Dedicated Workers",
   "Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.": "Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.",
@@ -3709,5 +3707,17 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Worker groups run on your own servers": "Worker groups run on your own servers",
+  "Worker groups need the Enterprise edition": "Worker groups need the Enterprise edition",
+  "Switch your Activepieces to the Enterprise edition to use them.": "Switch your Activepieces to the Enterprise edition to use them.",
+  "How to switch": "How to switch",
+  "Enterprise plan": "Enterprise plan",
+  "Self-hosted": "Self-hosted",
+  "Add your license key to use worker groups": "Add your license key to use worker groups",
+  "Worker groups come with an Enterprise license. Add yours in Billing.": "Worker groups come with an Enterprise license. Add yours in Billing.",
+  "Add license key": "Add license key",
+  "Your license doesn’t include worker groups": "Your license doesn’t include worker groups",
+  "Ask us to add them to your license, then follow the setup guide to start your first group.": "Ask us to add them to your license, then follow the setup guide to start your first group.",
+  "Available on self-hosted Activepieces. Talk to sales to set it up.": "Available on self-hosted Activepieces. Talk to sales to set it up."
 }

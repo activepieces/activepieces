@@ -1617,8 +1617,6 @@
   "No trigger data available": "No trigger data available",
   "Trigger health information will appear here": "Trigger health information will appear here",
   "trigger status": "trigger status",
-  "Unlock worker groups": "",
-  "Set aside servers for specific projects or flows, so a busy project never slows down the rest.": "",
   "Check the health of your workers": "Check the health of your workers",
   "Upgrade to Dedicated Workers": "Upgrade to Dedicated Workers",
   "Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.": "Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.",
