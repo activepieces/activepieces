@@ -3740,7 +3740,7 @@
     },
     "packages/pieces/community/gistly": {
       "name": "@activepieces/piece-gistly",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
