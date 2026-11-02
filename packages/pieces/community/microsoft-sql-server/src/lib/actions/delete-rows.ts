@@ -10,7 +10,7 @@ export const deleteRowsAction = createAction({
   name: 'delete_rows',
   displayName: 'Delete Rows',
   description: 'Deletes every row whose search column matches a value',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Deletes every row in a SQL Server table whose search column equals a given value, and returns the rows that were removed. Use to delete records matched on a single column; for anything more complex use Run Query. Idempotent: once the matching rows are gone, re-running deletes nothing further.',

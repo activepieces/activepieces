@@ -167,7 +167,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.213.0",
+      "version": "0.214.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -2881,7 +2881,7 @@
     },
     "packages/pieces/community/duckdb": {
       "name": "@activepieces/piece-duckdb",
-      "version": "0.0.9",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4225,7 +4225,7 @@
     },
     "packages/pieces/community/gravityforms": {
       "name": "@activepieces/piece-gravityforms",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4319,12 +4319,13 @@
     },
     "packages/pieces/community/groq": {
       "name": "@activepieces/piece-groq",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "zod": "4.3.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
@@ -6089,7 +6090,7 @@
     },
     "packages/pieces/community/microsoft-sql-server": {
       "name": "@activepieces/piece-microsoft-sql-server",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6105,7 +6106,7 @@
     },
     "packages/pieces/community/microsoft-teams": {
       "name": "@activepieces/piece-microsoft-teams",
-      "version": "0.7.4",
+      "version": "0.8.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6288,7 +6289,7 @@
     },
     "packages/pieces/community/mongodb": {
       "name": "@activepieces/piece-mongodb",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6436,7 +6437,7 @@
     },
     "packages/pieces/community/mysql": {
       "name": "@activepieces/piece-mysql",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7099,12 +7100,13 @@
     },
     "packages/pieces/community/perplexity-ai": {
       "name": "@activepieces/piece-perplexity-ai",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "form-data": "4.0.6",
         "zod": "4.3.6",
       },
       "devDependencies": {
@@ -7332,7 +7334,7 @@
     },
     "packages/pieces/community/postgres": {
       "name": "@activepieces/piece-postgres",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8295,7 +8297,7 @@
     },
     "packages/pieces/community/sendfox": {
       "name": "@activepieces/piece-sendfox",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9002,7 +9004,7 @@
     },
     "packages/pieces/community/surrealdb": {
       "name": "@activepieces/piece-surrealdb",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
