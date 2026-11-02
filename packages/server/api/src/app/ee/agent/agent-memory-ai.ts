@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiUsageEnvironment, AiUsageOrigin, isNil, parseToJsonIfPossible, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiUsageEnvironment, AiUsageOrigin, isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { GetAgentMemoryResponse } from '@activepieces/shared'
 import { generateText } from 'ai'
@@ -46,13 +46,13 @@ function naiveSplit(text: string): GetAgentMemoryResponse {
     return agentHelpers.capMemories({ instructions: null, memories })
 }
 
-function memoryBillingOf({ platformId, userId }: { platformId: string, userId?: string }): ActivepiecesAiBilling {
+function memoryBillingOf({ platformId, userId }: { platformId: string, userId: string }): ActivepiecesAiBilling {
     return {
         source: ActivepiecesAiConsumerSource.CHAT,
         platformId,
         projectId: null,
-        conversationId: MEMORY_USAGE_CONVERSATION,
-        context: { origin: AiUsageOrigin.CHAT, environment: AiUsageEnvironment.PRODUCTION, ...spreadIfDefined('userId', userId) },
+        conversationId: `${MEMORY_USAGE_CONVERSATION}:${userId}`,
+        context: { origin: AiUsageOrigin.CHAT, environment: AiUsageEnvironment.PRODUCTION, userId },
     }
 }
 
@@ -65,8 +65,8 @@ async function runMemoryLlm<T>({ platformId, userId, instructions, prompt, schem
     log: FastifyBaseLogger
 }): Promise<T | null> {
     const { data, error } = await tryCatch(async () => {
-        const billing = memoryBillingOf({ platformId })
-        const { text: raw } = await generateText({ model: await agentHelpers.resolvePlatformFastModel({ platformId, billing, log }), instructions, prompt, temperature: 0, ...agentAiUtils.buildTelemetry({ functionId: 'agent-memory', billing: memoryBillingOf({ platformId, userId }) }) })
+        const billing = memoryBillingOf({ platformId, userId })
+        const { text: raw } = await generateText({ model: await agentHelpers.resolvePlatformFastModel({ platformId, billing, log }), instructions, prompt, temperature: 0, ...agentAiUtils.buildTelemetry({ functionId: 'agent-memory', billing }) })
         return parseJsonObject(raw, schema)
     })
     if (!isNil(error)) {

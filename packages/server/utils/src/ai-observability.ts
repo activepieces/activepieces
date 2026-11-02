@@ -16,8 +16,8 @@ function init({ enabled }: { enabled: boolean }): void {
         url: `${POSTHOG_HOST}/i/v0/ai/otel`,
         headers: { Authorization: `Bearer ${POSTHOG_PROJECT_TOKEN}` },
     })
-    const processor = new BatchSpanProcessor(exporter, { maxExportBatchSize: 32, maxQueueSize: 512 })
-    const tracer = new BasicTracerProvider({ spanProcessors: [processor] }).getTracer('activepieces-ai')
+    const processor = new BatchSpanProcessor(exporter, { maxExportBatchSize: 8, maxQueueSize: 128 })
+    const tracer = new BasicTracerProvider({ spanProcessors: [processor], spanLimits: { attributeValueLengthLimit: 100_000 } }).getTracer('activepieces-ai')
     tracing = { processor, integration: new OpenTelemetry({ tracer, enrichSpan }) }
 }
 
