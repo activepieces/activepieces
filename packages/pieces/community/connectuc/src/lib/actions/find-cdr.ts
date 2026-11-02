@@ -7,14 +7,15 @@ export const findCdrAction = createAction({
     auth: connectucAuth,
     name: 'find-cdr',
     classification: 'READ',
-    displayName: 'Find CDR',
-    description: 'Find a Call Detail Record (CDR) by original call ID',
+    displayName: 'Find Call Record',
+    description: "Find a call's detail record by its original call ID.",
     audience: 'both',
     aiMetadata: { description: 'Looks up a single Call Detail Record (CDR) for the authenticated user by its original call ID (origCallid). Use when an agent has a call ID and needs that call\'s details, such as before updating its notes. Idempotent: it is a read-only lookup that does not modify anything.', idempotent: true },
     props: {
         origCallid: Property.ShortText({
             displayName: 'Original Call ID',
-            description: 'The original call ID (origCallid) to search for',
+            description: 'The Original Call ID from a New Call Record trigger.',
+            placeholder: '8c0spnvbfr8gltgqfseo',
             required: true,
         }),
     },
