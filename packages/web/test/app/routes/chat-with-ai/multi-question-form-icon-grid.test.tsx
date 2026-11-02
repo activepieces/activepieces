@@ -28,6 +28,14 @@ describe('MultiQuestionForm icon grid', () => {
     expect(onSubmit).toHaveBeenCalledWith('- **Which inbox?** Fastmail');
   });
 
+  it('keeps arrow keys working in the answer field under the icon grid', () => {
+    render(<MultiQuestionForm questions={[ICON_QUESTION]} onSubmit={vi.fn()} />);
+    const input = screen.getByPlaceholderText('Type your answer...');
+
+    expect(fireEvent.keyDown(input, { key: 'ArrowUp' })).toBe(true);
+    expect(fireEvent.keyDown(input, { key: 'ArrowDown' })).toBe(true);
+  });
+
   it('shows Skip under the icon grid', () => {
     render(
       <MultiQuestionForm questions={[ICON_QUESTION]} onSubmit={vi.fn()} />,

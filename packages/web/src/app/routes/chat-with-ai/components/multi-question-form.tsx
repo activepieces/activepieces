@@ -490,14 +490,14 @@ function ChoiceBody({
               }}
               onChange={(e) => setAnswer(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'ArrowUp') {
+                if (e.key === 'ArrowUp' && lastOptionRef.current) {
                   e.preventDefault();
-                  lastOptionRef.current?.focus();
+                  lastOptionRef.current.focus();
                   return;
                 }
-                if (e.key === 'ArrowDown') {
+                if (e.key === 'ArrowDown' && firstOptionRef.current) {
                   e.preventDefault();
-                  firstOptionRef.current?.focus();
+                  firstOptionRef.current.focus();
                   return;
                 }
                 if (e.key === 'Enter' && (answer ?? '').trim()) {
