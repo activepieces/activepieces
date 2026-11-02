@@ -34,6 +34,11 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
         }
         const flowVersion: FlowVersion = resolved.flowVersion
 
+        // TEMP GIT-2058 repro instrumentation — simulates a slow poll (e.g. HubSpot paging a large
+        // form) so we can observe whether a second scheduled tick overlaps it. Not part of any fix.
+        ctx.log.warn({ flowVersion: { id: data.flowVersionId } }, '[GIT-2058 repro] sleeping 90s before engine execute')
+        await new Promise((resolve) => setTimeout(resolve, 90_000))
+
         try {
             const result = await ctx.runtime.execute({
                 workerIndex: ctx.workerIndex,
