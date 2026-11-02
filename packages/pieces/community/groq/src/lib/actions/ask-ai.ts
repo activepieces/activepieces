@@ -120,7 +120,7 @@ export const askAiAction = createAction({
 			method: HttpMethod.POST,
 			path: '/chat/completions',
 			body: {
-				model: model,
+				model: RETIRED_MODEL_REPLACEMENTS[model] ?? model,
 				messages: [...roles, ...messageHistory],
 				temperature: temperature,
 				top_p: topP,
@@ -156,3 +156,11 @@ export const askAiAction = createAction({
 		];
 	},
 });
+
+const RETIRED_MODEL_REPLACEMENTS: Record<string, string> = {
+	'llama-3.1-70b-versatile': 'openai/gpt-oss-120b',
+	'llama-3.3-70b-versatile': 'openai/gpt-oss-120b',
+	'meta-llama/llama-4-scout-17b-16e-instruct': 'openai/gpt-oss-120b',
+	'qwen/qwen3-32b': 'openai/gpt-oss-120b',
+	'llama-3.1-8b-instant': 'openai/gpt-oss-20b',
+};

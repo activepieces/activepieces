@@ -17,7 +17,7 @@ function chatModel<R extends boolean>({
     required,
     description,
     refreshers: [],
-    defaultValue: 'llama-3.1-70b-versatile',
+    defaultValue: 'openai/gpt-oss-120b',
     options: async ({ auth }) => {
       if (!auth) {
         return disabledOptions({

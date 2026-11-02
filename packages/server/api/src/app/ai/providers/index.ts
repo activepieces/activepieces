@@ -30,6 +30,8 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     [AIProviderName.QWEN]: openAiCompatibleVendor({ name: 'Qwen', provider: AIProviderName.QWEN }),
     [AIProviderName.MINIMAX]: openAiCompatibleVendor({ name: 'MiniMax', provider: AIProviderName.MINIMAX }),
     [AIProviderName.MOONSHOT]: openAiCompatibleVendor({ name: 'Moonshot AI', provider: AIProviderName.MOONSHOT }),
+    [AIProviderName.META]: openAiCompatibleVendor({ name: 'Meta', provider: AIProviderName.META }),
+    [AIProviderName.NVIDIA]: openAiCompatibleVendor({ name: 'NVIDIA', provider: AIProviderName.NVIDIA }),
     [AIProviderName.ACTIVEPIECES]: {
         ...openRouterProvider,
         name: 'Activepieces',

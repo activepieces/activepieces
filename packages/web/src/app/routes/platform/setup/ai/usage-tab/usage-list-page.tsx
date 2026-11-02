@@ -10,7 +10,11 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 
-import { AdminPageHeader, adminSurface } from '@/app/components/admin';
+import {
+  AdminPageHeader,
+  adminPageResources,
+  adminSurface,
+} from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { SearchInput } from '@/components/custom/search-input';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -23,8 +27,10 @@ import {
 import { aiUsageHooks } from '@/features/ai-usage';
 import { cn } from '@/lib/utils';
 
+import { AiCenterTrail } from '../components/ai-center-trail';
+
 import { usageAdapters } from './usage-adapters';
-import { DeltaChip, ItemIcon, USAGE_LIST_GRID, UsageTrail } from './usage-bits';
+import { DeltaChip, ItemIcon, USAGE_LIST_GRID } from './usage-bits';
 import { UsageEmpty } from './usage-empty';
 import { usageFormat } from './usage-format';
 import {
@@ -53,7 +59,7 @@ export function UsageListPage() {
     <>
       <AdminPageHeader
         title={
-          <UsageTrail
+          <AiCenterTrail
             crumbs={[
               { label: t('AI usage'), to: `/platform/ai/usage${view.search}` },
             ]}
@@ -70,6 +76,7 @@ export function UsageListPage() {
               })
             : undefined
         }
+        resources={adminPageResources.aiUsage}
       >
         <UsageHeaderControls view={view} />
       </AdminPageHeader>
