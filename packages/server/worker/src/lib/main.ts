@@ -20,7 +20,7 @@ process.on('unhandledRejection', (reason) => {
 function flushLogsThenExit(): void {
     worker.stopPolling()
     setTimeout(() => process.exit(1), LOG_FLUSH_TIMEOUT_MS)
-    evlogSetup.flush().catch(() => undefined).finally(() => process.exit(1))
+    Promise.all([evlogSetup.flush(), aiObservability.flush()]).catch(() => undefined).finally(() => process.exit(1))
 }
 
 async function main(): Promise<void> {
