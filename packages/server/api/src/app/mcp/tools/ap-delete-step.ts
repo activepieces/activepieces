@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { buildFlowReview } from './build-flow-review'
 import { mcpUtils } from './mcp-utils'
 
 const deleteStepInput = z.object({
@@ -51,7 +52,7 @@ export const apDeleteStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             }
 
             try {
-                await flowService(log).update({
+                const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId,
@@ -62,6 +63,7 @@ export const apDeleteStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                 const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
                 return {
                     content: [{ type: 'text', text: `✅ Successfully deleted step "${stepName}" from flow.${draftWarning}` }],
+                    structuredContent: buildFlowReview.flowState(updatedFlow),
                 }
             }
             catch (err) {

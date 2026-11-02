@@ -77,10 +77,11 @@ function flowStepStates({ trigger, problemStepNames, skippedDisplayNames = [] }:
     ]
 }
 
-function flowState(flow: PopulatedFlow): { flowId: string, displayName: string, flowSteps: FlowStepState[] } {
+function flowState(flow: PopulatedFlow): { flowId: string, flowName: string, flowSteps: FlowStepState[] } {
     const { trigger } = flow.version
-    const problemStepNames = new Set(flowStructureUtil.getAllSteps(trigger).filter((step) => !step.valid).map((step) => step.name))
-    return { flowId: flow.id, displayName: flow.version.displayName, flowSteps: flowStepStates({ trigger, problemStepNames }) }
+    const invalidStepNames = flowStructureUtil.getAllSteps(trigger).filter((step) => !step.valid).map((step) => step.name)
+    const flowIssueStepNames = flowValidation.validateFlow({ trigger }).issues.filter((issue) => issue.severity !== 'info').map((issue) => issue.stepName)
+    return { flowId: flow.id, flowName: flow.version.displayName, flowSteps: flowStepStates({ trigger, problemStepNames: new Set([...invalidStepNames, ...flowIssueStepNames]) }) }
 }
 
 function labelNote(resolution: LabelResolution): string {

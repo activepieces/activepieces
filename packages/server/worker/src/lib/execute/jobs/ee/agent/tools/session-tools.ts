@@ -266,7 +266,7 @@ function builtFlowOf({ result }: { result: unknown }): BuiltFlow | null {
     }
     return {
         flowId: structured['flowId'],
-        name: typeof structured['displayName'] === 'string' ? structured['displayName'] : 'Automation',
+        name: [structured['flowName'], structured['displayName']].find((name): name is string => typeof name === 'string') ?? 'Automation',
         steps: structured['flowSteps'].flatMap((step) => isObject(step) && typeof step['displayName'] === 'string'
             ? [{ label: readableLabel(step['displayName']), done: step['state'] === 'ok' }]
             : []),
