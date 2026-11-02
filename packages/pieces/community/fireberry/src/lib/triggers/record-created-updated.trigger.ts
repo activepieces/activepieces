@@ -7,6 +7,7 @@ const CURSOR_KEY = 'fireberry_record_cursor';
 const LEGACY_KEY = 'lastPollTime';
 const CREATE_STAMP_TOLERANCE_MS = 2000;
 const MAX_PAGES_PER_POLL = 100;
+const MAX_RECORDS_IN_ONE_SECOND = 10_000;
 
 function timestampField(triggerType: string | undefined): 'createdon' | 'modifiedon' {
   return triggerType === 'created' ? 'createdon' : 'modifiedon';
@@ -112,28 +113,30 @@ function sameQuerySecond({ timestamp, since }: { timestamp: string | undefined; 
 
 // Fireberry filters to the second, so a burst of records inside the cursor's second always comes back
 // from page 1. Normal reads stop after FIREBERRY_LIMITS.MAX_PAGE_NUMBER pages; while the last record read
-// is still inside the cursor's second we keep paging (the stored cursor could not move past it otherwise),
-// up to MAX_PAGES_PER_POLL. If even that is hit, the next poll resumes at the last page read (one page of
-// overlap, deduplicated by the cursor ids) instead of re-reading the same pages forever.
+// is still inside the cursor's second we keep paging (the stored cursor could not move past it otherwise).
+// If the per-poll budget runs out inside that second, the poll is marked incomplete: the next poll re-reads
+// the second from page 1 (never from a saved page number, which deletions between polls would shift) with
+// a budget covering every record already scanned plus maxPages more, and the cursor ids skip what was emitted.
 async function fetchSince({
   client,
   objectSystemName,
   field,
   since,
-  startPage = 1,
+  alreadyScanned = 0,
   maxPages = MAX_PAGES_PER_POLL,
 }: {
   client: FireberryClient;
   objectSystemName: string;
   field: string;
   since: string | null;
-  startPage?: number;
+  alreadyScanned?: number;
   maxPages?: number;
-}): Promise<{ records: Record<string, unknown>[]; primaryKey: string; resumePage?: number }> {
+}): Promise<{ records: Record<string, unknown>[]; primaryKey: string; incomplete?: boolean }> {
   const objectType = await client.resolveObjectTypeNumber(objectSystemName);
   const records: Record<string, unknown>[] = [];
+  const pageBudget = Math.ceil(alreadyScanned / FIREBERRY_LIMITS.MAX_PAGE_SIZE) + maxPages;
   let primaryKey = '';
-  for (let read = 0, page = startPage; ; read++, page++) {
+  for (let page = 1; ; page++) {
     const result = await client.query({
       objecttype: objectType,
       query: since ? `(${field} >= ${toQueryTimestamp(since)})` : undefined,
@@ -149,11 +152,16 @@ async function fetchSince({
     }
     const last = result.Data[result.Data.length - 1];
     const stillInCursorSecond = since !== null && sameQuerySecond({ timestamp: readString({ record: last, key: field }), since });
-    if (!stillInCursorSecond && read + 1 >= FIREBERRY_LIMITS.MAX_PAGE_NUMBER) {
+    if (!stillInCursorSecond && page >= FIREBERRY_LIMITS.MAX_PAGE_NUMBER) {
       return { records, primaryKey };
     }
-    if (stillInCursorSecond && read + 1 >= maxPages) {
-      return { records, primaryKey, resumePage: page };
+    if (stillInCursorSecond && page >= pageBudget) {
+      if (records.length >= MAX_RECORDS_IN_ONE_SECOND) {
+        throw new Error(
+          `More than ${MAX_RECORDS_IN_ONE_SECOND} Fireberry records share the ${field} second ${toQueryTimestamp(since)}. Fireberry filters by whole seconds, so the trigger cannot page through a bulk change this large without skipping records. Split the bulk update or import into smaller batches.`,
+        );
+      }
+      return { records, primaryKey, incomplete: true };
     }
   }
 }
@@ -211,19 +219,20 @@ async function pollOnce({
   triggerType: string | undefined;
   maxPages?: number;
 }): Promise<{ items: Record<string, unknown>[]; cursor: RecordCursor | null }> {
-  const { records, primaryKey, resumePage } = await fetchSince({
+  const { records, primaryKey, incomplete } = await fetchSince({
     client,
     objectSystemName,
     field,
     since: cursor?.timestamp ?? null,
-    startPage: cursor?.resumePage ?? 1,
+    alreadyScanned: cursor?.scanned ?? 0,
     maxPages,
   });
   const base = cursor ? { timestamp: cursor.timestamp, ids: cursor.ids } : null;
   const selection = selectNewRecords({ records, cursor: base, field, primaryKey, triggerType });
   const next = selection.cursor ? { timestamp: selection.cursor.timestamp, ids: selection.cursor.ids } : null;
-  if (next && resumePage !== undefined) {
-    return { items: selection.items, cursor: { ...next, resumePage } };
+  if (next && incomplete) {
+    // Every record read sits in the cursor's second, so the cursor stays inside that unfinished second.
+    return { items: selection.items, cursor: { ...next, scanned: records.length } };
   }
   return { items: selection.items, cursor: next };
 }
@@ -330,7 +339,7 @@ export const fireberryRecordPolling = { selectNewRecords, fetchSince, compareTim
 type RecordCursor = {
   timestamp: string;
   ids: string[];
-  resumePage?: number;
+  scanned?: number;
 };
 
 type StoredCursor = {
