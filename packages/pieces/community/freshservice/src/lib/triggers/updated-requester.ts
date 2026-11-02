@@ -42,6 +42,7 @@ const polling: Polling<
             key: 'requesters',
             perPage: 10,
             maxPages: 1,
+            allowTruncation: true,
             queryParams: {},
           })
         : await freshserviceListPages<FreshserviceRequester>({

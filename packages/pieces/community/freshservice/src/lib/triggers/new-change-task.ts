@@ -32,6 +32,7 @@ const polling: Polling<
             key: 'tasks',
             perPage: 10,
             maxPages: 1,
+            allowTruncation: true,
             queryParams: {},
           })
         : await freshserviceListPages<FreshserviceChangeTask>({

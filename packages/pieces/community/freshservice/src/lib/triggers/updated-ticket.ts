@@ -42,13 +42,14 @@ const polling: Polling<
             key: 'tickets',
             perPage: 10,
             maxPages: 1,
+            allowTruncation: true,
             queryParams: { order_type: 'desc' },
           })
         : await freshserviceListPages<FreshserviceTicket>({
             auth,
             endpoint: 'tickets',
             key: 'tickets',
-            queryParams: { updated_since: new Date(lastFetchEpochMS).toISOString() },
+            queryParams: { updated_since: new Date(lastFetchEpochMS).toISOString(), order_type: 'asc' },
           });
     return records.map((record) => ({
       epochMilliSeconds: new Date(record.updated_at).getTime(),

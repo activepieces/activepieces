@@ -27,6 +27,7 @@ const polling: Polling<
             key: 'changes',
             perPage: 10,
             maxPages: 1,
+            allowTruncation: true,
             queryParams: {},
           })
         : await freshserviceListPages<FreshserviceChange>({

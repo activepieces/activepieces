@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { httpClient, HttpError } from '@activepieces/pieces-common';
 import { freshservice, freshserviceAuth } from '../src';
-import { freshserviceApiCall, normalizeDomain } from '../src/lib/common/client';
+import { freshserviceApiCall, MAX_POLL_PAGES, normalizeDomain } from '../src/lib/common/client';
+import { updatedTicket } from '../src/lib/triggers/updated-ticket';
 import { newTicket } from '../src/lib/triggers/new-ticket';
 import { updatedChange } from '../src/lib/triggers/updated-change';
 import { aiSearchTickets } from '../src/lib/actions/ai/ai-search-tickets';
@@ -114,6 +115,39 @@ describe('triggers', () => {
     expect(firstQuery).toMatchObject({ updated_since: '2026-10-01T00:00:00.000Z', page: '1', per_page: '100' });
     expect(firstQuery).not.toHaveProperty('order_by');
     expect(spy.mock.calls[1][0].queryParams).toMatchObject({ page: '2' });
+  });
+
+  it('updated ticket requests oldest-first and returns every record when the last page is short', async () => {
+    const lastPoll = Date.parse('2026-10-01T00:00:00Z');
+    const rows = (count: number, offset: number) =>
+      Array.from({ length: count }, (_, i) => ({ id: offset + i, updated_at: new Date(lastPoll + (offset + i + 1) * 1000).toISOString() }));
+    const spy = vi
+      .spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce(okResponse({ tickets: rows(100, 0) }))
+      .mockResolvedValueOnce(okResponse({ tickets: rows(100, 100) }))
+      .mockResolvedValueOnce(okResponse({ tickets: rows(7, 200) }));
+    const result = await updatedTicket.run({ auth, propsValue: {}, store: makeStore({ lastPoll }), files: {} });
+    expect(result).toHaveLength(207);
+    expect(spy).toHaveBeenCalledTimes(3);
+    for (const call of spy.mock.calls) {
+      expect(call[0].queryParams).toMatchObject({ order_type: 'asc', updated_since: '2026-10-01T00:00:00.000Z' });
+    }
+  });
+
+  it('throws instead of emitting a partial set when the page cap is hit with a full last page', async () => {
+    const lastPoll = Date.parse('2026-10-01T00:00:00Z');
+    const store = makeStore({ lastPoll });
+    let n = 0;
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async () =>
+      okResponse({
+        tickets: Array.from({ length: 100 }, () => ({ id: ++n, updated_at: new Date(lastPoll + n * 1000).toISOString() })),
+      }) as never
+    );
+    await expect(updatedTicket.run({ auth, propsValue: {}, store, files: {} })).rejects.toThrow(
+      /More than 20000 Freshservice records changed since the last poll/
+    );
+    expect(spy).toHaveBeenCalledTimes(MAX_POLL_PAGES);
+    expect(await store.get('lastPoll')).toBe(lastPoll);
   });
 
   it('rethrows API errors instead of returning nothing', async () => {

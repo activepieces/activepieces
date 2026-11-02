@@ -208,6 +208,7 @@ async function freshserviceListPages<T>({
   queryParams,
   perPage = 100,
   maxPages = MAX_POLL_PAGES,
+  allowTruncation = false,
 }: {
   auth: FreshserviceAuth;
   endpoint: string;
@@ -215,6 +216,9 @@ async function freshserviceListPages<T>({
   queryParams?: QueryParams;
   perPage?: number;
   maxPages?: number;
+  // Only for sample/first-run fetches. Polls must see every record, otherwise
+  // pollingHelper advances lastPoll past records that were never read.
+  allowTruncation?: boolean;
 }): Promise<T[]> {
   const results: T[] = [];
   for (let page = 1; page <= maxPages; page++) {
@@ -231,8 +235,13 @@ async function freshserviceListPages<T>({
     const items = response.body[key] ?? [];
     results.push(...items);
     if (items.length < perPage) {
-      break;
+      return results;
     }
+  }
+  if (!allowTruncation) {
+    throw new Error(
+      `More than ${maxPages * perPage} Freshservice records changed since the last poll. Nothing was emitted so no update is lost; narrow the trigger or try again later.`
+    );
   }
   return results;
 }
@@ -313,7 +322,7 @@ function clampPage(value: number | null | undefined): number {
   return Math.max(Math.floor(value), 1);
 }
 
-const MAX_POLL_PAGES = 20;
+const MAX_POLL_PAGES = 200;
 
 type FreshserviceAuth = AppConnectionValueForAuthProperty<typeof freshserviceAuth>;
 
