@@ -1,14 +1,14 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, RequestEmailCodeRequest, SignUpMethod, TelemetryEventName, VerifyEmailCodeRequest } from '@activepieces/shared'
+import { RequestEmailCodeRequest, SignUpMethod, TelemetryEventName, UserIdentityProvider, VerifyEmailCodeRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { authnRateLimit, emailCodeRateLimit } from '../core/security/rate-limit'
-import { applicationEvents } from '../helper/application-events'
 import { networkUtils } from '../helper/network-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformUtils } from '../platform/platform.utils'
+import { authenticationSideEffects } from './authentication-side-effects'
 import { passwordlessAuthService } from './passwordless-auth.service'
 
 export const passwordlessAuthController: FastifyPluginAsyncZod = async (
@@ -42,16 +42,13 @@ export const passwordlessAuthController: FastifyPluginAsyncZod = async (
             }), request.log)
         }
 
+        authenticationSideEffects(request.log).onSignIn({
+            response,
+            signedUp,
+            method: UserIdentityProvider.EMAIL,
+            ip: networkUtils.clientIp(request),
+        })
         if (!isNil(response.platformId)) {
-            applicationEvents(request.log).sendUserEvent({
-                platformId: response.platformId,
-                userId: response.id,
-                projectId: response.projectId ?? undefined,
-                ip: networkUtils.clientIp(request),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_IN,
-                data: {},
-            })
             rejectedPromiseHandler(telemetry(request.log).trackUser({
                 userId: response.id,
                 platformId: response.platformId,
