@@ -23,7 +23,8 @@ export function SettingsPanel({
         <header
           className={cn(
             adminSurface.panelHeader,
-            'flex items-start justify-between gap-4 p-5',
+            'flex justify-between gap-4 p-5',
+            description ? 'items-start' : 'items-center',
           )}
         >
           <div className="flex min-w-0 flex-col gap-1">
@@ -80,27 +81,34 @@ export function SettingsRow({
       {...rest}
     >
       <div className="flex flex-wrap items-center gap-4">
-        {media && <div className="flex shrink-0 items-center">{media}</div>}
-        {icon && (
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-gray-3 text-gray-12 [&_svg:not([class*='size-'])]:size-4">
-            {icon}
-          </div>
-        )}
-        <div className="flex min-w-0 flex-1 basis-56 flex-col gap-1">
-          <div
-            id={titleId}
-            className="flex items-center gap-2 text-sm font-medium text-gray-12"
-          >
-            {title}
-          </div>
-          {description && (
-            <div id={descriptionId} className="text-sm text-gray-11">
-              {description}
+        <div
+          className={cn(
+            'flex min-w-0 flex-1 items-center gap-4',
+            media || icon ? 'basis-68' : 'basis-56',
+          )}
+        >
+          {media && <div className="flex shrink-0 items-center">{media}</div>}
+          {icon && (
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-gray-3 text-gray-12 [&_svg:not([class*='size-'])]:size-4">
+              {icon}
             </div>
           )}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div
+              id={titleId}
+              className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-gray-12"
+            >
+              {title}
+            </div>
+            {description && (
+              <div id={descriptionId} className="text-sm text-gray-11">
+                {description}
+              </div>
+            )}
+          </div>
         </div>
         {children && (
-          <div className="flex max-w-full shrink-0 items-center gap-2">
+          <div className="ml-auto flex max-w-full shrink-0 items-center gap-2">
             {children}
           </div>
         )}

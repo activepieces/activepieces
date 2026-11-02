@@ -304,8 +304,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         return agentHelpers.saveUserMemory({
             platformId,
             userId,
-            memories: [...current.memories, ...draft.memories],
-            baseMemories: current.memories,
+            memories: { next: [...current.memories, ...draft.memories], base: current.memories },
         })
     })
 

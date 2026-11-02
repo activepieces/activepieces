@@ -43,11 +43,12 @@ function createProgressGuard() {
     }
 }
 
-export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, taintState }: {
+export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, isDeclaredReadOnly, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    isDeclaredReadOnly?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
     taintState: TaintState
 }): ToolSet {
     const progressGuard = createProgressGuard()
@@ -103,12 +104,16 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         return guardResult
                     }
                 }
-                const needsPreview = agentToolClassification.requiresActionPreview({
+                const { data: declaredReadOnly } = await tryCatch(async () => isDeclaredReadOnly?.({ pieceName: toolInput.pieceName, actionName: toolInput.actionName }))
+                const executedInputs = isBatch ? toolInput.items! : [toolInput.input ?? {}]
+                const gatedInputs = executedInputs.filter((input) => agentToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
-                    input: toolInput.input,
+                    input,
                     needsConfirmation: toolInput.needsConfirmation,
                     tainted: taintState.tainted,
-                })
+                    declaredReadOnly: declaredReadOnly ?? undefined,
+                }))
+                const needsPreview = gatedInputs.length > 0
                 taintState.tainted = true
 
                 if (needsPreview) {
@@ -120,7 +125,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         input: toolInput.input ?? {},
                         isBatch: !!isBatch,
                         batchCount: isBatch ? toolInput.items!.length : undefined,
-                        batchSamples: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                        batchSamples: isBatch ? gatedInputs.slice(0, 3) : undefined,
                     }
                     eventEmitter.emitActionPreview(previewData)
                     if (onGateOpened) {
@@ -132,7 +137,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                                 pieceName: toolInput.pieceName,
                                 actionName: toolInput.actionName,
                                 input: toolInput.input ?? {},
-                                items: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                                items: isBatch ? gatedInputs.slice(0, 3) : undefined,
                                 batchCount: isBatch ? toolInput.items!.length : undefined,
                             },
                         }))
@@ -173,6 +178,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 const isReadOnly = agentToolClassification.isReadOnlyActionCall({
                     actionName: toolInput.actionName,
                     input: toolInput.input,
+                    declaredReadOnly: declaredReadOnly ?? undefined,
                 })
                 if (!isReadOnly) {
                     eventEmitter.emitActionReceipt({
@@ -212,9 +218,6 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
-                if (!agentToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
-                    return agentToolClassification.readOnlyRejection(toolInput.actionName)
-                }
                 taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)

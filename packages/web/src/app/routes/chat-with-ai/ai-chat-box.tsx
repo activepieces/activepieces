@@ -137,6 +137,7 @@ function ChatBoxContent({
     isLoadingHistory,
     error,
     sendMessage,
+    retryLastMessage,
     cancelStream,
     setConversationId,
     setModelPick,
@@ -255,8 +256,8 @@ function ChatBoxContent({
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
     if (lastUser && !pickUnavailable)
-      void sendMessage(getTextFromParts(lastUser.parts));
-  }, [messages, sendMessage, pickUnavailable]);
+      retryLastMessage(getTextFromParts(lastUser.parts)).catch(() => undefined);
+  }, [messages, retryLastMessage, pickUnavailable]);
 
   const lastMessage = messages[messages.length - 1];
   const lastAssistantMessage = useMemo(

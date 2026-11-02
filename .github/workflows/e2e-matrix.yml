@@ -9,6 +9,10 @@ on:
         description: 'Image to test, e.g. ghcr.io/activepieces/activepieces-cloud:<tag>. Empty builds the checked-out commit.'
         type: string
         default: ''
+      ref:
+        description: 'Commit to take the specs and pieces from. Empty uses the commit that triggered the run.'
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       image:
@@ -32,6 +36,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Build the image from this commit
         if: ${{ !inputs.image }}
@@ -135,6 +141,8 @@ jobs:
       PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/packages/tests-e2e/test-results/results.json
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
 
       # The Playwright image ships Chromium and its system libraries, so no apt mirror is involved.
       # Its pull runs in the background while the app image loads and the stack boots.
