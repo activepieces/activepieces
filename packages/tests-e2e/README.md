@@ -35,9 +35,10 @@ Start from `scenarios/flows/flow-journey.spec.ts` and `pages/builder.page.ts`. L
 
 ### Selecting elements
 
-- Select by role and accessible name (`getByRole(…, { name })`, `getByLabel`). Never select by a CSS class, XPath, the text around a field, or a position (`nth()`, `first()`, `last()`).
-- When an element has no accessible name, give it one in `packages/web`: link its `FormLabel` through `FormControl`, or add an `aria-label` with an existing translation key. This change is part of the spec's task and goes in the same PR.
-- Use a `data-testid` only when no accessible name fits.
+- Select by test id (`getByTestId`). When the element has none, add a `data-testid` in `packages/web` in the same PR. Name it in kebab-case, area first: `sign-in-email`, `test-step-button`.
+- Use role and accessible name (`getByRole(…, { name })`, `getByLabel`) only where a test id does not fit, such as a row you find by the unique name of your data.
+- Never select by a CSS class, XPath, the text around a field, or a position (`nth()`, `first()`, `last()`).
+- A test id does not replace a role and an accessible name. When you add one, also follow "Accessible markup" in `packages/web/AGENTS.md`.
 
 ### Waiting and asserting
 
