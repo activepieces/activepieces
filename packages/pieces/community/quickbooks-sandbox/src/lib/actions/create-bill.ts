@@ -1,8 +1,9 @@
-import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../lib/auth';
-import { quickbooksApiCall, quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
-import { QuickbooksBill, QuickbooksVendor, QuickbooksRef, QuickbooksPreferences } from '../lib/types';
+import { quickbooksAuth } from '../auth';
+import { quickbooksClient } from '../common/client';
+import { quickbooksProps } from '../common/props';
+import type { QuickbooksAuthValue, QuickbooksBill, QuickbooksFault, QuickbooksPreferences } from '../common/types';
 
 export const createBillAction = createAction({
 	auth: quickbooksAuth,
@@ -15,43 +16,7 @@ export const createBillAction = createAction({
 		idempotent: false,
 	},
 	props: {
-		vendorRef: Property.Dropdown({
-			auth: quickbooksAuth,
-			displayName: 'Vendor',
-			required: true,
-			refreshers: [],
-			options: async ({ auth }) => {
-				if (!auth) {
-					return { disabled: true, placeholder: 'Connect your account first', options: [] };
-				}
-				const { access_token, props } = auth as OAuth2PropertyValue;
-				const companyId = props?.['companyId'];
-				const query = `SELECT Id, DisplayName FROM Vendor STARTPOSITION 1 MAXRESULTS 1000`;
-				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
-				const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksVendor>>({
-					accessToken: access_token,
-					companyId,
-					query,
-				});
-
-				if (response.Fault) {
-					throw new Error(
-						`QuickBooks API Error fetching vendors: ${response.Fault.Error.map(
-							(e: { Message: string }) => e.Message,
-						).join(', ')}`,
-					);
-				}
-
-				const vendors = response.QueryResponse?.['Vendor'] ?? [];
-				return {
-					disabled: false,
-					options: vendors.map((vendor) => ({
-						label: vendor.DisplayName,
-						value: vendor.Id,
-					})),
-				};
-			},
-		}),
+		vendorRef: quickbooksProps.vendorRef({ required: true }),
 		lineItems: Property.Array({
 			displayName: 'Line Items',
 			description: 'Details of the bill (expense categories). At least one line is required.',
@@ -114,17 +79,17 @@ export const createBillAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { access_token } = context.auth;
-		const companyId = context.auth.props?.['companyId'] as string;
-
 		const props = context.propsValue;
 
-		const classTrackingPerLineEnabled = await isClassTrackingPerLineEnabled({
-			accessToken: access_token,
-			companyId,
-		});
+		const classTrackingPerLineEnabled = await isClassTrackingPerLineEnabled({ auth: context.auth });
 
-		const lines = (props['lineItems'] as any[]).map((line) => {
+		const lines = (props['lineItems'] as {
+			amount: number;
+			description?: string;
+			detailType: string;
+			expenseAccountId?: string;
+			classId?: string;
+		}[]).map((line) => {
 			if (!line['expenseAccountId']) {
 				throw new Error('Expense Category/Account ID is required for each line.');
 			}
@@ -133,9 +98,9 @@ export const createBillAction = createAction({
 				Description: line['description'],
 				DetailType: line['detailType'],
 				AccountBasedExpenseLineDetail: {
-					AccountRef: { value: line['expenseAccountId'] } as QuickbooksRef,
+					AccountRef: { value: line['expenseAccountId'] },
 					...(classTrackingPerLineEnabled &&
-						line['classId'] && { ClassRef: { value: line['classId'] } as QuickbooksRef }),
+						line['classId'] && { ClassRef: { value: line['classId'] } }),
 				},
 			};
 		});
@@ -144,8 +109,8 @@ export const createBillAction = createAction({
 			throw new Error('At least one line item is required.');
 		}
 
-		const billPayload: Partial<QuickbooksBill> = {
-			VendorRef: { value: props['vendorRef'] } as QuickbooksRef,
+		const billPayload = {
+			VendorRef: { value: props['vendorRef'] },
 			Line: lines,
 			...(props['txnDate'] && { TxnDate: props['txnDate'].split('T')[0] }),
 			...(props['dueDate'] && { DueDate: props['dueDate'].split('T')[0] }),
@@ -153,24 +118,22 @@ export const createBillAction = createAction({
 			...(props['privateNote'] && { PrivateNote: props['privateNote'] }),
 		};
 
-		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/bill#create-a-bill
-		const response = await quickbooksApiCall<{
+		const response = await quickbooksClient.request<{
 			Bill: QuickbooksBill;
 			time: string;
-			Fault?: { Error: { Message: string; Detail?: string; code: string }[]; type: string };
+			Fault?: QuickbooksFault;
 		}>({
-			accessToken: access_token,
-			companyId,
+			auth: context.auth,
 			method: HttpMethod.POST,
-			resourceUri: '/bill',
+			path: '/bill',
 			body: billPayload,
 		});
 
 		if (response.Fault) {
 			throw new Error(
 				`QuickBooks API Error creating bill: ${response.Fault.Error.map(
-					(e: any) => e.Message,
-				).join(', ')} - Detail: ${response.Fault.Error.map((e: any) => e.Detail).join(', ')}`,
+					(e) => e.Message,
+				).join(', ')} - Detail: ${response.Fault.Error.map((e) => e.Detail).join(', ')}`,
 			);
 		}
 
@@ -178,20 +141,12 @@ export const createBillAction = createAction({
 	},
 });
 
-async function isClassTrackingPerLineEnabled({
-	accessToken,
-	companyId,
-}: {
-	accessToken: string;
-	companyId: string;
-}): Promise<boolean> {
+async function isClassTrackingPerLineEnabled({ auth }: { auth: QuickbooksAuthValue }): Promise<boolean> {
 	try {
-		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/preferences
-		const response = await quickbooksApiCall<{ Preferences?: QuickbooksPreferences }>({
-			accessToken,
-			companyId,
+		const response = await quickbooksClient.request<{ Preferences?: QuickbooksPreferences }>({
+			auth,
 			method: HttpMethod.GET,
-			resourceUri: '/preferences',
+			path: '/preferences',
 		});
 		return Boolean(response.Preferences?.AccountingInfoPrefs?.ClassTrackingPerTxnLine);
 	} catch {

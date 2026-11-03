@@ -1,17 +1,16 @@
 import {
   TriggerStrategy,
   createTrigger,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { quickbooksAuth } from '../lib/auth';
+import { quickbooksAuth } from '../auth';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
-import { QuickbooksPurchase } from '../lib/types';
+import { quickbooksApi } from '../common/api';
+import type { QuickbooksEntityResponse, QuickbooksPurchase } from '../common/types';
 import dayjs from 'dayjs';
 
 const polling: Polling<
@@ -20,9 +19,6 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
-    const { access_token } = auth;
-    const companyId = auth.props?.['companyId'] as string;
-
     const query =
       lastFetchEpochMS === 0
         ? `SELECT * FROM Purchase ORDERBY Metadata.CreateTime DESC MAXRESULTS 10`
@@ -30,12 +26,10 @@ const polling: Polling<
             lastFetchEpochMS
           ).toISOString()}' ORDERBY Metadata.CreateTime DESC`;
 
-    // https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/purchase#query-a-purchase
-    const response = await quickbooksQuery<
+    const response = await quickbooksApi.query<
       QuickbooksEntityResponse<QuickbooksPurchase>
     >({
-      accessToken: access_token,
-      companyId,
+      auth,
       query,
     });
 

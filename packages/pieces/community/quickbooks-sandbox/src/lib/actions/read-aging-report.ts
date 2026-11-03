@@ -1,8 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../lib/auth';
-import { quickbooksApiCall } from '../lib/common';
-import { QuickbooksReport } from '../lib/types';
+import { quickbooksAuth } from '../auth';
+import { quickbooksClient } from '../common/client';
+import type {
+	QuickbooksFault,
+	QuickbooksReport,
+	QuickbooksReportColData,
+	QuickbooksReportRow,
+} from '../common/types';
 
 export const readAgingReportAction = createAction({
 	auth: quickbooksAuth,
@@ -62,22 +67,14 @@ export const readAgingReportAction = createAction({
 	},
 	async run(context) {
 		const { reportType, reportDate, agingPeriod, numPeriods, agingMethod, pastDue } = context.propsValue;
-		const companyId = context.auth.props?.['companyId'];
-
-		if (!companyId) {
+		if (!context.auth.props?.['companyId']) {
 			throw new Error('Realm ID not found in authentication data. Please reconnect your account.');
 		}
 
-		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/reports/agedreceivables
-		const response = await quickbooksApiCall<
-			QuickbooksReport & {
-				Fault?: { Error: { Message: string; Detail?: string; code: string }[]; type: string };
-			}
-		>({
-			accessToken: context.auth.access_token,
-			companyId: companyId as string,
+		const response = await quickbooksClient.request<QuickbooksReport & { Fault?: QuickbooksFault }>({
+			auth: context.auth,
 			method: HttpMethod.GET,
-			resourceUri: `/reports/${reportType}`,
+			path: `/reports/${reportType}`,
 			query: {
 				...(reportDate && { report_date: reportDate.split('T')[0] }),
 				...(agingPeriod != null && { aging_period: String(agingPeriod) }),
@@ -115,7 +112,7 @@ function toColumnKey(title: string | undefined, index: number): string {
 }
 
 function flattenAgingReportRows(report: QuickbooksReport): Record<string, string | number>[] {
-	const columns = ((report.Columns as { Column?: QuickbooksReportColumn[] } | undefined)?.Column) ?? [];
+	const columns = report.Columns?.Column ?? [];
 	const headers = columns.map((column, index) => toColumnKey(column.ColTitle ?? column.ColType, index));
 
 	const flatRows: Record<string, string | number>[] = [];
@@ -146,23 +143,7 @@ function flattenAgingReportRows(report: QuickbooksReport): Record<string, string
 		}
 	};
 
-	walk((report.Rows as { Row?: QuickbooksReportRow[] } | undefined)?.Row);
+	walk(report.Rows?.Row);
 
 	return flatRows;
-}
-
-interface QuickbooksReportColumn {
-	ColTitle?: string;
-	ColType?: string;
-}
-
-interface QuickbooksReportColData {
-	value?: string;
-	id?: string;
-}
-
-interface QuickbooksReportRow {
-	ColData?: QuickbooksReportColData[];
-	Rows?: { Row?: QuickbooksReportRow[] };
-	Summary?: { ColData?: QuickbooksReportColData[] };
 }

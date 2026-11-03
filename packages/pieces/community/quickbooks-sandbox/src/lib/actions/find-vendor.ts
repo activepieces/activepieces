@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { quickbooksAuth } from '../lib/auth';
-import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
-import { QuickbooksVendor } from '../lib/types';
+import { quickbooksAuth } from '../auth';
+import { quickbooksApi } from '../common/api';
+import type { QuickbooksAuthValue, QuickbooksEntityResponse, QuickbooksVendor } from '../common/types';
 
 export const findVendorAction = createAction({
 	auth: quickbooksAuth,
@@ -34,20 +34,17 @@ export const findVendorAction = createAction({
 	},
 	async run(context) {
 		const { searchBy, search_term } = context.propsValue;
-		const companyId = context.auth.props?.['companyId'];
-
-		if (!companyId) {
+		if (!context.auth.props?.['companyId']) {
 			throw new Error('Realm ID not found in authentication data. Please reconnect your account.');
 		}
 
-		const accessToken = context.auth.access_token;
+		const auth = context.auth;
 
 		const vendor =
 			searchBy === 'Email'
-				? await findVendorByEmail({ accessToken, companyId: companyId as string, email: search_term })
+				? await findVendorByEmail({ auth, email: search_term })
 				: await findVendorByField({
-						accessToken,
-						companyId: companyId as string,
+						auth,
 						field: searchBy === 'AcctNum' ? 'AcctNum' : 'DisplayName',
 						value: search_term,
 				  });
@@ -61,22 +58,18 @@ export const findVendorAction = createAction({
 });
 
 async function findVendorByField({
-	accessToken,
-	companyId,
+	auth,
 	field,
 	value,
 }: {
-	accessToken: string;
-	companyId: string;
+	auth: QuickbooksAuthValue;
 	field: 'DisplayName' | 'AcctNum';
 	value: string;
 }): Promise<QuickbooksVendor | undefined> {
 	const query = `SELECT * FROM Vendor WHERE ${field} = '${value.replace(/'/g, "\\'")}' MAXRESULTS 1`;
 
-	// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
-	const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksVendor>>({
-		accessToken,
-		companyId,
+	const response = await quickbooksApi.query<QuickbooksEntityResponse<QuickbooksVendor>>({
+		auth,
 		query,
 	});
 
@@ -84,20 +77,16 @@ async function findVendorByField({
 }
 
 async function findVendorByEmail({
-	accessToken,
-	companyId,
+	auth,
 	email,
 }: {
-	accessToken: string;
-	companyId: string;
+	auth: QuickbooksAuthValue;
 	email: string;
 }): Promise<QuickbooksVendor | undefined> {
 	try {
 		const escapedEmail = email.replace(/'/g, "\\'");
-		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
-		const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksVendor>>({
-			accessToken,
-			companyId,
+		const response = await quickbooksApi.query<QuickbooksEntityResponse<QuickbooksVendor>>({
+			auth,
 			query: `SELECT * FROM Vendor WHERE PrimaryEmailAddr = '${escapedEmail}' MAXRESULTS 1`,
 		});
 
@@ -108,14 +97,21 @@ async function findVendorByEmail({
 			}
 		}
 	} catch {
-		// QuickBooks does not document filtering Vendor by the nested PrimaryEmailAddr field consistently
-		// across companies/sandboxes, so a rejected query falls back to a client-side scan below.
+		return await findVendorByEmailScan({ auth, email });
 	}
 
-	// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
-	const listResponse = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksVendor>>({
-		accessToken,
-		companyId,
+	return await findVendorByEmailScan({ auth, email });
+}
+
+async function findVendorByEmailScan({
+	auth,
+	email,
+}: {
+	auth: QuickbooksAuthValue;
+	email: string;
+}): Promise<QuickbooksVendor | undefined> {
+	const listResponse = await quickbooksApi.query<QuickbooksEntityResponse<QuickbooksVendor>>({
+		auth,
 		query: `SELECT * FROM Vendor WHERE Active = true MAXRESULTS 1000`,
 	});
 

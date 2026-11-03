@@ -1,8 +1,9 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../lib/auth';
-import { quickbooksApiCall, quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
-import { QuickbooksCustomer, QuickbooksPayment, QuickbooksRef } from '../lib/types';
+import { quickbooksAuth } from '../auth';
+import { quickbooksClient } from '../common/client';
+import { quickbooksProps } from '../common/props';
+import type { QuickbooksFault, QuickbooksPayment } from '../common/types';
 
 export const recordPaymentAction = createAction({
 	auth: quickbooksAuth,
@@ -15,47 +16,7 @@ export const recordPaymentAction = createAction({
 		idempotent: false,
 	},
 	props: {
-		customerRef: Property.Dropdown({
-			auth: quickbooksAuth,
-			displayName: 'Customer',
-			required: true,
-			refreshers: [],
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				const { access_token, props } = auth as OAuth2PropertyValue;
-				const companyId = props?.['companyId'];
-				const query = `SELECT Id, DisplayName FROM Customer STARTPOSITION 1 MAXRESULTS 1000`;
-				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/customer#query-a-customer
-				const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksCustomer>>({
-					accessToken: access_token,
-					companyId,
-					query,
-				});
-
-				if (response.Fault) {
-					throw new Error(
-						`QuickBooks API Error: ${response.Fault.Error.map(
-							(e: { Message: string }) => e.Message,
-						).join(', ')}`,
-					);
-				}
-
-				const customers = response.QueryResponse?.['Customer'] ?? [];
-				return {
-					disabled: false,
-					options: customers.map((customer) => ({
-						label: customer.DisplayName,
-						value: customer.Id,
-					})),
-				};
-			},
-		}),
+		customerRef: quickbooksProps.customerRef({ required: true }),
 		totalAmount: Property.Number({
 			displayName: 'Total Amount',
 			description: 'The total amount of the payment received.',
@@ -102,46 +63,41 @@ export const recordPaymentAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { access_token } = context.auth;
-		const companyId = context.auth.props?.['companyId'] as string;
-
 		const props = context.propsValue;
 
-		const lines = ((props['lineItems'] as any[]) ?? []).map((line) => ({
+		const lines = ((props['lineItems'] as { invoiceId: string; amount: number }[] | undefined) ?? []).map((line) => ({
 			Amount: line['amount'],
 			LinkedTxn: [{ TxnId: line['invoiceId'], TxnType: 'Invoice' }],
 		}));
 
-		const paymentPayload: Partial<QuickbooksPayment> = {
-			CustomerRef: { value: props['customerRef'] } as QuickbooksRef,
+		const paymentPayload = {
+			CustomerRef: { value: props['customerRef'] },
 			TotalAmt: props['totalAmount'],
 			...(lines.length > 0 && { Line: lines }),
 			...(props['depositToAccountId'] && {
-				DepositToAccountRef: { value: props['depositToAccountId'] } as QuickbooksRef,
+				DepositToAccountRef: { value: props['depositToAccountId'] },
 			}),
 			...(props['txnDate'] && { TxnDate: props['txnDate'].split('T')[0] }),
 			...(props['paymentRefNum'] && { PaymentRefNum: props['paymentRefNum'] }),
 			...(props['privateNote'] && { PrivateNote: props['privateNote'] }),
 		};
 
-		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/payment#create-a-payment
-		const response = await quickbooksApiCall<{
+		const response = await quickbooksClient.request<{
 			Payment: QuickbooksPayment;
 			time: string;
-			Fault?: { Error: { Message: string; Detail?: string; code: string }[]; type: string };
+			Fault?: QuickbooksFault;
 		}>({
-			accessToken: access_token,
-			companyId,
+			auth: context.auth,
 			method: HttpMethod.POST,
-			resourceUri: '/payment',
+			path: '/payment',
 			body: paymentPayload,
 		});
 
 		if (response.Fault) {
 			throw new Error(
 				`QuickBooks API Error recording payment: ${response.Fault.Error.map(
-					(e: any) => e.Message,
-				).join(', ')} - Detail: ${response.Fault.Error.map((e: any) => e.Detail).join(', ')}`,
+					(e) => e.Message,
+				).join(', ')} - Detail: ${response.Fault.Error.map((e) => e.Detail).join(', ')}`,
 			);
 		}
 

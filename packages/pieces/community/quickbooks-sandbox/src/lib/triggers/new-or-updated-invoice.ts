@@ -1,13 +1,26 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { pollingHelper } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../lib/auth';
-import { createQuickbooksCdcPolling } from '../lib/cdc-polling';
-import { QuickbooksInvoice } from '../lib/types';
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import dayjs from 'dayjs';
+import { quickbooksAuth } from '../auth';
+import { quickbooksApi } from '../common/api';
+import type { QuickbooksInvoice } from '../common/types';
 
-const polling = createQuickbooksCdcPolling<QuickbooksInvoice>({
-	entity: 'Invoice',
-	newOnly: false,
-});
+const polling: Polling<AppConnectionValueForAuthProperty<typeof quickbooksAuth>, Record<string, unknown>> = {
+	strategy: DedupeStrategy.TIMEBASED,
+	async items({ auth, lastFetchEpochMS }) {
+		const records = await quickbooksApi.listChangedEntities<QuickbooksInvoice>({
+			auth,
+			entity: 'Invoice',
+			lastFetchEpochMS,
+			newOnly: false,
+		});
+
+		return records.map((record) => ({
+			epochMilliSeconds: dayjs(record.MetaData?.LastUpdatedTime ?? record.MetaData?.CreateTime).valueOf(),
+			data: record,
+		}));
+	},
+};
 
 export const newOrUpdatedInvoice = createTrigger({
 	auth: quickbooksAuth,

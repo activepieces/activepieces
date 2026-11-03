@@ -1,6 +1,27 @@
+export type QuickbooksAuthValue = {
+    access_token: string;
+    props?: Record<string, unknown>;
+};
+
+export interface QuickbooksLinkedTxn {
+    TxnId: string;
+    TxnType: string;
+}
+
+export interface QuickbooksTaxLine {
+    DetailType: string;
+    Amount?: number;
+    TaxLineDetail?: {
+        TaxRateRef?: QuickbooksRef;
+        PercentBased?: boolean;
+        TaxPercent?: number;
+        NetAmountTaxable?: number;
+    };
+}
+
 export interface QuickbooksRef {
     value: string;
-    name?: string; // Optional based on context
+    name?: string;
 }
 
 export interface QuickbooksAddress {
@@ -41,7 +62,7 @@ export interface QuickbooksCustomField {
     Type: 'BooleanType' | 'DateType' | 'NumberType' | 'StringType';
     StringValue?: string;
     BooleanValue?: boolean;
-    DateValue?: string; // YYYY-MM-DD
+    DateValue?: string;
     NumberValue?: number;
 }
 
@@ -88,9 +109,9 @@ export interface QuickbooksInvoice {
     DocNumber?: string;
     TxnDate?: string;
     CurrencyRef?: QuickbooksCurrencyRef;
-    LinkedTxn?: any[]; 
+    LinkedTxn?: QuickbooksLinkedTxn[];
     Line: QuickbooksInvoiceLine[];
-    TxnTaxDetail?: { TotalTax?: number; TaxLine?: any[]; };
+    TxnTaxDetail?: { TotalTax?: number; TaxLine?: QuickbooksTaxLine[] };
     CustomerRef: QuickbooksRef;
     CustomerMemo?: { value: string };
     BillAddr?: QuickbooksAddress;
@@ -119,7 +140,7 @@ export interface QuickbooksInvoiceLine {
     LineNum?: number;
     Description?: string;
     Amount: number;
-    LinkedTxn?: any[];
+    LinkedTxn?: QuickbooksLinkedTxn[];
     DetailType: 'SalesItemLineDetail' | 'GroupLineDetail' | 'DescriptionOnly' | 'DiscountLineDetail' | 'SubTotalLineDetail';
     SalesItemLineDetail?: {
         ItemRef: QuickbooksRef;
@@ -149,10 +170,10 @@ export interface QuickbooksItem {
     PurchaseDesc?: string;
     PurchaseCost?: number;
     ExpenseAccountRef?: QuickbooksRef;
-    AssetAccountRef?: QuickbooksRef; // For Inventory type
-    TrackQtyOnHand?: boolean; // For Inventory type
-    QtyOnHand?: number; // For Inventory type
-    InvStartDate?: string; // For Inventory type
+    AssetAccountRef?: QuickbooksRef;
+    TrackQtyOnHand?: boolean;
+    QtyOnHand?: number;
+    InvStartDate?: string;
     SubItem?: boolean;
     ParentRef?: QuickbooksRef;
     Level?: number;
@@ -165,9 +186,9 @@ export interface QuickbooksItem {
 export interface QuickbooksAccount {
     Id: string;
     Name: string;
-    AccountType: string; // e.g., 'Bank', 'Credit Card', 'Accounts Receivable', 'Expense', 'Income'
+    AccountType: string;
     AccountSubType?: string;
-    Classification?: string; // e.g., 'Asset', 'Liability', 'Equity', 'Revenue', 'Expense'
+    Classification?: string;
     Active?: boolean;
     CurrencyRef?: QuickbooksCurrencyRef;
     CurrentBalance?: number;
@@ -207,15 +228,15 @@ export interface QuickbooksPurchase {
     CurrencyRef?: QuickbooksCurrencyRef;
     PrivateNote?: string;
     Line: QuickbooksPurchaseLine[];
-    AccountRef: QuickbooksRef; // Account money came from (Bank/CC)
-    EntityRef?: QuickbooksRef; // Payee (Vendor)
+    AccountRef: QuickbooksRef;
+    EntityRef?: QuickbooksRef;
     PaymentType: 'Cash' | 'Check' | 'CreditCard';
     TotalAmt: number;
     PrintStatus?: string;
     ExchangeRate?: number;
     GlobalTaxCalculation?: string;
     TransactionLocationType?: string;
-    Credit?: boolean; // Specifies if this is a vendor credit
+    Credit?: boolean;
     domain?: string;
     sparse?: boolean;
 }
@@ -225,11 +246,11 @@ export interface QuickbooksPurchaseLine {
     LineNum?: number;
     Description?: string;
     Amount: number;
-    LinkedTxn?: any[];
-    DetailType: 'AccountBasedExpenseLineDetail' | 'ItemBasedExpenseLineDetail'; // Add others if needed
+    LinkedTxn?: QuickbooksLinkedTxn[];
+    DetailType: 'AccountBasedExpenseLineDetail' | 'ItemBasedExpenseLineDetail';
     AccountBasedExpenseLineDetail?: {
-        AccountRef: QuickbooksRef; // Expense Account
-        ClassRef?: QuickbooksRef; // Plus/Advanced subscriptions only
+        AccountRef: QuickbooksRef;
+        ClassRef?: QuickbooksRef;
         BillableStatus?: string;
         CustomerRef?: QuickbooksRef;
         TaxCodeRef?: QuickbooksRef;
@@ -238,12 +259,12 @@ export interface QuickbooksPurchaseLine {
         ItemRef: QuickbooksRef;
         Qty?: number;
         UnitPrice?: number;
-        ClassRef?: QuickbooksRef; // Plus/Advanced subscriptions only
+        ClassRef?: QuickbooksRef;
         BillableStatus?: string;
         CustomerRef?: QuickbooksRef;
         TaxCodeRef?: QuickbooksRef;
     };
-    // Add other detail types if needed
+
 }
 
 export interface QuickbooksBill {
@@ -290,8 +311,8 @@ export interface QuickbooksPayment {
 
 export interface QuickbooksReport {
     Header?: Record<string, unknown>;
-    Columns?: Record<string, unknown>;
-    Rows?: Record<string, unknown>;
+    Columns?: { Column?: QuickbooksReportColumn[] };
+    Rows?: { Row?: QuickbooksReportRow[] };
 }
 
 export interface QuickbooksEstimate {
@@ -302,21 +323,12 @@ export interface QuickbooksEstimate {
     DocNumber?: string;
     TxnDate?: string;
     CurrencyRef?: QuickbooksCurrencyRef;
-    LinkedTxn?: any[];
+    LinkedTxn?: QuickbooksLinkedTxn[];
     Line: QuickbooksInvoiceLine[];
     TxnTaxDetail?: {
         TxnTaxCodeRef?: QuickbooksRef;
         TotalTax?: number;
-        TaxLine?: {
-            DetailType: 'TaxLineDetail';
-            Amount?: number;
-            TaxLineDetail?: {
-                TaxRateRef?: QuickbooksRef;
-                PercentBased?: boolean;
-                TaxPercent?: number;
-                NetAmountTaxable?: number;
-            }
-        }[];
+        TaxLine?: QuickbooksTaxLine[];
     };
     CustomerRef: QuickbooksRef;
     CustomerMemo?: { value: string };
@@ -385,4 +397,57 @@ export interface QuickbooksPreferences {
     };
     domain?: string;
     sparse?: boolean;
+}
+
+
+export interface QuickbooksFault {
+    Error: { Message: string; Detail?: string; code: string }[];
+    type: string;
+}
+
+export interface QuickbooksEntityResponse<T> {
+    QueryResponse?: {
+        startPosition?: number;
+        maxResults?: number;
+        totalCount?: number;
+    } & {
+        [key: string]: T[] | undefined;
+    };
+    Fault?: QuickbooksFault;
+    time?: string;
+}
+
+export type QuickbooksCdcEntityBlock<T> = {
+    startPosition?: number;
+    maxResults?: number;
+} & {
+    [entityName: string]: T[] | undefined;
+};
+
+export interface QuickbooksCdcResponse<T> {
+    CDCResponse?: { QueryResponse: QuickbooksCdcEntityBlock<T>[] }[];
+    Fault?: QuickbooksFault;
+    time?: string;
+}
+
+export interface QuickbooksCompanyInfo {
+    CompanyName?: string;
+    LegalName?: string;
+    Email?: { Address?: string };
+}
+
+export interface QuickbooksReportColumn {
+    ColTitle?: string;
+    ColType?: string;
+}
+
+export interface QuickbooksReportColData {
+    value?: string;
+    id?: string;
+}
+
+export interface QuickbooksReportRow {
+    ColData?: QuickbooksReportColData[];
+    Rows?: { Row?: QuickbooksReportRow[] };
+    Summary?: { ColData?: QuickbooksReportColData[] };
 }
