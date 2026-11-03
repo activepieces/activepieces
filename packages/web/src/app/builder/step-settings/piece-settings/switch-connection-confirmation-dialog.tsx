@@ -1,4 +1,9 @@
-import { connectionTemplate, isNil } from '@activepieces/core-utils';
+import {
+  connectionTemplate,
+  isEmpty,
+  isNil,
+  isObject,
+} from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -218,7 +223,7 @@ function listInputsClearedBySwitch({
     switch (property.type) {
       case PropertyType.DROPDOWN:
       case PropertyType.MULTI_SELECT_DROPDOWN:
-        return hasValue(input[propertyName])
+        return !isEmpty(input[propertyName])
           ? [
               {
                 path: propertyName,
@@ -229,6 +234,7 @@ function listInputsClearedBySwitch({
       case PropertyType.DYNAMIC:
         return listDynamicChildrenWithValues({
           propertyName,
+          propertyDisplayName: property.displayName,
           schema: propertySettings[propertyName]?.schema,
           value: input[propertyName],
         });
@@ -240,19 +246,26 @@ function listInputsClearedBySwitch({
 
 function listDynamicChildrenWithValues({
   propertyName,
+  propertyDisplayName,
   schema,
   value,
 }: {
   propertyName: string;
+  propertyDisplayName: string;
   schema: unknown;
   value: unknown;
 }): ClearedInput[] {
-  if (!isRecord(schema) || !isRecord(value)) {
+  if (!isObject(value)) {
     return [];
   }
+  if (!isObject(schema)) {
+    return Object.values(value).some((childValue) => !isEmpty(childValue))
+      ? [{ path: propertyName, displayName: propertyDisplayName }]
+      : [];
+  }
   return Object.entries(schema).flatMap(([childName, child]) =>
-    hasValue(value[childName]) &&
-    isRecord(child) &&
+    !isEmpty(value[childName]) &&
+    isObject(child) &&
     typeof child.displayName === 'string'
       ? [
           {
@@ -262,23 +275,6 @@ function listDynamicChildrenWithValues({
         ]
       : [],
   );
-}
-
-function hasValue(value: unknown): boolean {
-  if (isNil(value) || value === '') {
-    return false;
-  }
-  if (Array.isArray(value)) {
-    return value.length > 0;
-  }
-  if (isRecord(value)) {
-    return Object.keys(value).length > 0;
-  }
-  return true;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && !isNil(value) && !Array.isArray(value);
 }
 
 const INPUTS_PLACEHOLDER = '\u0000inputs\u0000';
