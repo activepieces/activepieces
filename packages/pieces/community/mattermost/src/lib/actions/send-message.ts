@@ -2,12 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { mattermostAuth } from '../auth';
 import { mattermostClient } from '../common/client';
-import { mattermostCreatePostOutputSchema } from '../output-schemas';
+import { mattermostSendMessageOutputSchema } from '../output-schemas';
 
 export const sendMessageAction = createAction({
   auth: mattermostAuth,
   name: 'send_message',
-  outputSchema: mattermostCreatePostOutputSchema,
+  outputSchema: mattermostSendMessageOutputSchema,
   classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send a message to a Mattermost channel',
@@ -27,7 +27,7 @@ export const sendMessageAction = createAction({
   },
   async run(context) {
     try {
-      return await mattermostClient.request<unknown>({
+      return await mattermostClient.send<unknown>({
         auth: context.auth,
         method: HttpMethod.POST,
         path: '/posts',

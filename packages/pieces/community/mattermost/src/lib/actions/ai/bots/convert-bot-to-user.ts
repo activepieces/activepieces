@@ -63,6 +63,7 @@ export const convertBotToUserAction = createAction({
       auth: context.auth,
       method: HttpMethod.POST,
       path: `/bots/${encodeURIComponent(p.botUserId)}/convert_to_user`,
+      redactBodyInErrors: true,
       query: systemAdmin !== undefined ? { set_system_admin: String(systemAdmin) } : undefined,
       body: {
         email: p.email,

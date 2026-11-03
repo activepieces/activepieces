@@ -55,6 +55,7 @@ export const createUserAction = createAction({
       auth: context.auth,
       method: HttpMethod.POST,
       path: '/users',
+      redactBodyInErrors: true,
       body: {
         email,
         username,

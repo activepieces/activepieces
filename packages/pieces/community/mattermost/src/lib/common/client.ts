@@ -2,6 +2,7 @@ import {
   AuthenticationType,
   HttpHeaders,
   HttpMethod,
+  HttpResponse,
   httpClient,
   QueryParams,
 } from '@activepieces/pieces-common';
@@ -11,15 +12,16 @@ function baseUrl({ auth }: { auth: MattermostAuthValue }): string {
   return `${auth.props.workspace_url.replace(/\/$/, '')}/api/v4`;
 }
 
-async function request<T>({
+async function send<T>({
   auth,
   method,
   path,
   query,
   body,
   headers,
-}: RequestParams & { auth: MattermostAuthValue }): Promise<T> {
-  const response = await httpClient.sendRequest<T>({
+  redactBodyInErrors,
+}: RequestParams & { auth: MattermostAuthValue }): Promise<HttpResponse<T>> {
+  return await httpClient.sendRequest<T>({
     method,
     url: `${baseUrl({ auth })}${path}`,
     authentication: {
@@ -29,7 +31,12 @@ async function request<T>({
     headers,
     queryParams: query,
     body,
+    redactBodyInErrors,
   });
+}
+
+async function request<T>(params: RequestParams & { auth: MattermostAuthValue }): Promise<T> {
+  const response = await send<T>(params);
   return response.body;
 }
 
@@ -75,7 +82,7 @@ function fileNameFromDisposition({
   return plain ? plain[1] : undefined;
 }
 
-export const mattermostClient = { baseUrl, request, download };
+export const mattermostClient = { baseUrl, send, request, download };
 
 type RequestParams = {
   method: HttpMethod;
@@ -83,6 +90,7 @@ type RequestParams = {
   query?: QueryParams;
   body?: unknown;
   headers?: HttpHeaders;
+  redactBodyInErrors?: boolean;
 };
 
 type DownloadParams = {

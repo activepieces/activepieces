@@ -948,3 +948,10 @@ export const mattermostUploadFileOutputSchema: OutputSchema = {
 };
 
 export const mattermostUpsertDraftOutputSchema: OutputSchema = { fields: draftFields };
+
+export const mattermostSendMessageOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'status', label: 'HTTP Status', format: 'number' },
+    { key: 'body', label: 'Post', children: postWithRemoteFields },
+  ],
+};
