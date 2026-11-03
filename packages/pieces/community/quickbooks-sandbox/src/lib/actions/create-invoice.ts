@@ -4,13 +4,15 @@ import { quickbooksAuth } from '../auth';
 import { quickbooksClient } from '../common/client';
 import { quickbooksProps } from '../common/props';
 import type { QuickbooksFault, QuickbooksInvoice } from '../common/types';
+import { createInvoiceOutputSchema } from '../output-schemas';
 
 export const createInvoiceAction = createAction({
 	auth: quickbooksAuth,
 	name: 'create_invoice',
+	outputSchema: createInvoiceOutputSchema,
 	displayName: 'Create Invoice',
 	description: 'Creates an invoice in QuickBooks.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Create a new QuickBooks invoice for a customer with one or more line items (each line needs an amount and an Item/product Id). Optionally set due date, transaction date, invoice number, memos, and email status; setting email status to "Needs To Be Sent" requires a billing email. Not idempotent: each call creates a new invoice, so guard against duplicates.',
 		idempotent: false,

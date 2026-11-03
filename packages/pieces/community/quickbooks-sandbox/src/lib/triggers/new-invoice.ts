@@ -12,6 +12,7 @@ import {
 import { quickbooksApi } from '../common/api';
 import dayjs from 'dayjs';
 import type { QuickbooksEntityResponse, QuickbooksInvoice } from '../common/types';
+import { newInvoiceOutputSchema } from '../output-schemas';
 
 const polling: Polling<
  AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
@@ -45,6 +46,7 @@ const polling: Polling<
 export const newInvoice = createTrigger({
   auth: quickbooksAuth,
   name: 'new_invoice',
+  outputSchema: newInvoiceOutputSchema,
   displayName: 'New Invoice',
   description: 'Triggers when an invoice is created .',
   aiMetadata: {

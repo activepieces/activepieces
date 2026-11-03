@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { quickbooksAuth } from '../auth';
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksBill } from '../common/types';
+import { newBillOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof quickbooksAuth>, Record<string, unknown>> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -25,6 +26,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
 export const newBill = createTrigger({
 	auth: quickbooksAuth,
 	name: 'new_bill',
+	outputSchema: newBillOutputSchema,
 	displayName: 'New Bill',
 	description: 'Triggers when a new bill (accounts payable) is created in QuickBooks.',
 	aiMetadata: {

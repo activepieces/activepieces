@@ -1,4 +1,4 @@
-import { AuthenticationType, httpClient, HttpMessageBody, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, httpClient, HttpMessageBody, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import type { QuickbooksAuthValue } from './types';
 
 function baseUrl({ auth }: { auth: QuickbooksAuthValue }): string {
@@ -12,6 +12,8 @@ async function request<T extends HttpMessageBody>({
 	query,
 	body,
 	timeout,
+	accept = 'application/json',
+	responseType,
 }: RequestParams & { auth: QuickbooksAuthValue }): Promise<T> {
 	const queryParams: Record<string, string> = { minorversion: MINOR_VERSION };
 	for (const [key, value] of Object.entries(query ?? {})) {
@@ -29,11 +31,12 @@ async function request<T extends HttpMessageBody>({
 			token: auth.access_token,
 		},
 		headers: {
-			Accept: 'application/json',
+			Accept: accept,
 			...(body !== undefined && { 'Content-Type': 'application/json' }),
 		},
 		body,
 		timeout,
+		responseType,
 	});
 
 	return response.body;
@@ -50,4 +53,6 @@ type RequestParams = {
 	query?: Record<string, string | number | boolean | undefined>;
 	body?: unknown;
 	timeout?: number;
+	accept?: string;
+	responseType?: HttpRequest['responseType'];
 };

@@ -4,13 +4,15 @@ import { quickbooksAuth } from '../auth';
 import { quickbooksClient } from '../common/client';
 import { quickbooksProps } from '../common/props';
 import type { QuickbooksFault, QuickbooksPayment } from '../common/types';
+import { paymentReceivedOutputSchema } from '../output-schemas';
 
 export const recordPaymentAction = createAction({
 	auth: quickbooksAuth,
 	name: 'record_payment',
+	outputSchema: paymentReceivedOutputSchema,
 	displayName: 'Record Payment',
 	description: 'Records a customer payment in QuickBooks, optionally applying it to invoices.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Record a payment received from a customer for a given total amount. Optionally apply the payment to one or more specific invoices by their transaction Id, set the deposit-to account, payment date, and reference number. If no invoices are specified, QuickBooks leaves the amount unapplied. Not idempotent: each call creates a new payment, so guard against duplicates.',
 		idempotent: false,

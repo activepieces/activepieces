@@ -451,3 +451,33 @@ export interface QuickbooksReportRow {
     Rows?: { Row?: QuickbooksReportRow[] };
     Summary?: { ColData?: QuickbooksReportColData[] };
 }
+
+export type QuickbooksRecord = {
+    Id: string;
+    SyncToken?: string;
+    [field: string]: unknown;
+};
+
+export type QuickbooksEntityEnvelope = {
+    time?: string;
+} & {
+    [entityName: string]: QuickbooksRecord | undefined;
+};
+
+export type QuickbooksQueryEnvelope = {
+    QueryResponse?: {
+        startPosition?: number;
+        maxResults?: number;
+        totalCount?: number;
+    } & {
+        [entityName: string]: QuickbooksRecord[] | undefined;
+    };
+    time?: string;
+};
+
+export type QuickbooksRecurringEnvelope = {
+    RecurringTransaction?: {
+        [transactionType: string]: QuickbooksRecord | undefined;
+    };
+    time?: string;
+};

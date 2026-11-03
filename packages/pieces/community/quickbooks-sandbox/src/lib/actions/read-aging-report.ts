@@ -8,13 +8,15 @@ import type {
 	QuickbooksReportColData,
 	QuickbooksReportRow,
 } from '../common/types';
+import { readAgingReportOutputSchema } from '../output-schemas';
 
 export const readAgingReportAction = createAction({
 	auth: quickbooksAuth,
 	name: 'read_aging_report',
+	outputSchema: readAgingReportOutputSchema,
 	displayName: 'Read AR/AP Aging',
 	description: 'Reads an accounts receivable or accounts payable aging report from QuickBooks.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Fetch an aging report showing outstanding receivables (money owed to the company) or payables (money the company owes), bucketed by how overdue they are. Choose the report type, optionally set the as-of date, the number of days per aging bucket, the number of buckets, the aging method, and a minimum past-due days filter. Returns both the raw QuickBooks report and a flattened "rows" array (one object per report line, columns as keys) ready for reconciliation or spreadsheet export. Read-only and idempotent.',
 		idempotent: true,

@@ -22,11 +22,12 @@ import { newBill } from "./lib/triggers/new-bill";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { quickbooksClient } from "./lib/common/client";
 import { quickbooksAuth } from './lib/auth';
+import { quickbooksSandboxAiActions } from './lib/actions/ai';
 
 export const quickbooksSandbox = createPiece({
   displayName: "QuickBooks Online (Sandbox)",
   auth: quickbooksAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: "https://cdn.activepieces.com/pieces/quickbooks.png",
   authors: [ 'onyedikachi-david', 'sanket-a11y'],
   actions: [
@@ -42,6 +43,7 @@ export const quickbooksSandbox = createPiece({
     recordPaymentAction,
     recordBillPaymentAction,
     readAgingReportAction,
+    ...quickbooksSandboxAiActions,
     createCustomApiCallAction({
       auth:quickbooksAuth,
       baseUrl: (auth) => (auth ? quickbooksClient.baseUrl({ auth }) : ''),

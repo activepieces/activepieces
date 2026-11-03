@@ -2,13 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { quickbooksAuth } from '../auth';
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksAccount, QuickbooksEntityResponse } from '../common/types';
+import { findAccountOutputSchema } from '../output-schemas';
 
 export const findAccountAction = createAction({
 	auth: quickbooksAuth,
 	name: 'find_account',
+	outputSchema: findAccountOutputSchema,
 	displayName: 'Find Account',
 	description: 'List or search the chart of accounts to get an account Id (e.g. an expense account for a bill).',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'List QuickBooks chart-of-accounts entries to resolve an account name to its Id. Optionally filter by a name substring and/or account type (e.g. Expense, Bank, Accounts Payable). Use this to find the expense-account Id required by Create Bill / Create Expense line items. Read-only and idempotent.',
 		idempotent: true,

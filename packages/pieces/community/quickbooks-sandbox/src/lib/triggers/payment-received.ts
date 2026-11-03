@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { quickbooksAuth } from '../auth';
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksPayment } from '../common/types';
+import { paymentReceivedOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof quickbooksAuth>, Record<string, unknown>> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -25,6 +26,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
 export const paymentReceived = createTrigger({
 	auth: quickbooksAuth,
 	name: 'payment_received',
+	outputSchema: paymentReceivedOutputSchema,
 	displayName: 'Payment Received',
 	description: 'Triggers when a new customer payment is recorded in QuickBooks.',
 	aiMetadata: {
