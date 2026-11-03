@@ -469,6 +469,7 @@ import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migrat
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
 import { RefetchMissingPieceTranslations1879000000000 } from './migration/postgres/background/1879000000000-RefetchMissingPieceTranslations'
+import { postgresUrl } from './postgres-url'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -478,6 +479,10 @@ const getSslConfig = (): boolean | TlsOptions => {
         }
     }
     return false
+}
+
+const resolveUrl = (url: string): string => {
+    return getSslConfig() === false ? url : postgresUrl.dropSslModeParams({ url })
 }
 
 export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
@@ -975,7 +980,7 @@ export const createPostgresDataSource = (): DataSource => {
     if (!isNil(url)) {
         return new DataSource({
             type: 'postgres',
-            url,
+            url: resolveUrl(url),
             ssl: getSslConfig(),
             ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
@@ -1013,7 +1018,7 @@ export const createPostgresMigrationDataSource = (): DataSource | null => {
     if (isNil(url)) return null
     return new DataSource({
         type: 'postgres',
-        url,
+        url: resolveUrl(url),
         ssl: getSslConfig(),
         poolSize: 2,
         migrationsRun: false,
