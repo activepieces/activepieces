@@ -78,13 +78,8 @@ export const recordFields = Property.DynamicProperties({
       return {};
     }
     const props: DynamicPropsValue = {};
-    let fields: KnackField[];
-    try {
-      const response = await knackGetObject({ auth, objectKey: object });
-      fields = response.object.fields;
-    } catch {
-      return {};
-    }
+    const response = await knackGetObject({ auth, objectKey: object });
+    const fields: KnackField[] = response.object.fields ?? [];
 
     for (const field of fields) {
       switch (field.type) {

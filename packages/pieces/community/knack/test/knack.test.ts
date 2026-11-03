@@ -108,9 +108,11 @@ describe('recordFields', () => {
     expect(optionValues({ props, key: 'field_31' })).toEqual([]);
   });
 
-  it('returns {} when the object fetch fails', async () => {
-    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(httpError({ status: 404, body: '' }));
-    expect(await callRun({ fn: recordFields.props, propsValue: { object: 'object_x' }, asProps: true })).toEqual({});
+  it('surfaces the Knack error when the object fetch fails', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(httpError({ status: 401, body: { message: 'Invalid API key' } }));
+    await expect(
+      callRun({ fn: recordFields.props, propsValue: { object: 'object_x' }, asProps: true })
+    ).rejects.toThrow('Knack API error (HTTP 401): Invalid API key');
   });
 });
 
@@ -175,6 +177,18 @@ describe('search_records', () => {
     expect((await runSearch({ rows_per_page: 0 })).query['rows_per_page']).toBe('1');
     vi.restoreAllMocks();
     expect((await runSearch({ sort_field: 'field_1' })).query['sort_order']).toBe('asc');
+  });
+
+  it('keeps the wrapped match when the match prop is unset, and lets an explicit prop win', async () => {
+    const rules = [{ field: 'field_1', operator: 'is', value: 'x' }];
+    const wrapped = await runSearch({ rules: { match: 'or', rules } });
+    expect(JSON.parse(wrapped.query['filters'] ?? '')).toEqual({ match: 'or', rules });
+    vi.restoreAllMocks();
+    const explicit = await runSearch({ match: 'and', rules: { match: 'or', rules } });
+    expect(JSON.parse(explicit.query['filters'] ?? '').match).toBe('and');
+    vi.restoreAllMocks();
+    const plain = await runSearch({ rules });
+    expect(JSON.parse(plain.query['filters'] ?? '').match).toBe('and');
   });
 
   it('accepts a {match,rules} object and rejects malformed rules', async () => {

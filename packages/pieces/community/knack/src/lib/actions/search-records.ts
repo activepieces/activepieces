@@ -27,7 +27,6 @@ export const searchRecordsAction = createAction({
       displayName: 'Match',
       description: 'Whether a record must match all rules ("and") or any rule ("or").',
       required: false,
-      defaultValue: 'and',
       options: {
         options: [
           { label: 'All rules (and)', value: 'and' },
@@ -67,8 +66,8 @@ export const searchRecordsAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const rules = parseRules(propsValue.rules);
-    const match = propsValue.match === 'or' ? 'or' : 'and';
+    const { rules, match: wrappedMatch } = parseRules(propsValue.rules);
+    const match = resolveMatch({ explicit: propsValue.match, wrapped: wrappedMatch });
     const page = clampInteger({ value: propsValue.page, min: 1, max: Number.MAX_SAFE_INTEGER, fallback: 1 });
     const rowsPerPage = clampInteger({ value: propsValue.rows_per_page, min: 1, max: 1000, fallback: 25 });
     const sortField = propsValue.sort_field?.trim();
@@ -95,18 +94,28 @@ export const searchRecordsAction = createAction({
   },
 });
 
-function parseRules(value: unknown): unknown[] {
+function parseRules(value: unknown): ParsedRules {
   if (value === undefined || value === null || value === '') {
-    return [];
+    return { rules: [], match: undefined };
   }
   const parsed: unknown = typeof value === 'string' ? safeJsonParse(value) : value;
   if (Array.isArray(parsed)) {
-    return parsed;
+    return { rules: parsed, match: undefined };
   }
   if (typeof parsed === 'object' && parsed !== null && 'rules' in parsed && Array.isArray(parsed.rules)) {
-    return parsed.rules;
+    const wrapped = 'match' in parsed ? parsed.match : undefined;
+    return { rules: parsed.rules, match: typeof wrapped === 'string' ? wrapped : undefined };
   }
   throw new Error('Filter Rules must be a JSON array of rules, e.g. [{"field":"field_1","operator":"is","value":"x"}].');
+}
+
+function resolveMatch({ explicit, wrapped }: { explicit: string | undefined; wrapped: string | undefined }): 'and' | 'or' {
+  for (const candidate of [explicit, wrapped]) {
+    if (candidate === 'and' || candidate === 'or') {
+      return candidate;
+    }
+  }
+  return 'and';
 }
 
 function clampInteger({ value, min, max, fallback }: { value: number | undefined; min: number; max: number; fallback: number }): number {
@@ -115,6 +124,11 @@ function clampInteger({ value, min, max, fallback }: { value: number | undefined
   }
   return Math.min(max, Math.max(min, Math.floor(value)));
 }
+
+type ParsedRules = {
+  rules: unknown[];
+  match: string | undefined;
+};
 
 type KnackRecordsPage = {
   records?: Record<string, unknown>[];
