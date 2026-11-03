@@ -1,6 +1,6 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { aiCostReporter, apDayjs, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { aiCostReporter, aiObservability, apDayjs, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuditLogRetentionUpdatedEvent, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
@@ -516,6 +516,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const pieces = process.env.AP_DEV_PIECES
 
     assertReleaseReadable(app.log)
+    aiObservability.init({ enabled: system.getEdition() === ApEdition.CLOUD })
     aiCostReporter.install({
         log: app.log,
         report: (request) => aiUsageService(app.log).report(request),
