@@ -156,8 +156,8 @@ async function listEntities({
 	limit?: number;
 	startPosition?: number;
 }): Promise<QuickbooksListResult> {
-	const maxResults = Math.min(Math.max(limit ?? DEFAULT_LIST_LIMIT, 1), MAX_LIST_LIMIT);
-	const start = Math.max(startPosition ?? 1, 1);
+	const maxResults = Math.min(Math.max(Math.trunc(limit ?? DEFAULT_LIST_LIMIT), 1), MAX_LIST_LIMIT);
+	const start = Math.max(Math.trunc(startPosition ?? 1), 1);
 	const clauses = [
 		`SELECT * FROM ${entity}`,
 		...(where ? [`WHERE ${where}`] : []),
