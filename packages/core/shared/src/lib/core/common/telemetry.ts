@@ -176,6 +176,10 @@ type ConnectionSwitchDecided = {
     replaceAvailable: boolean
 }
 
+type MemoryImportNudge = {
+    conversationId: string
+}
+
 type ConnectionReplaceOpened = {
     source: ConnectionReplaceSource
     pieceName?: string
@@ -233,6 +237,9 @@ export enum TelemetryEventName {
     CONNECTION_SWITCH_DECIDED = 'connection.switch.decided',
     CONNECTION_REPLACE_OPENED = 'connection.replace.opened',
     CONNECTION_REPLACE_COMPLETED = 'connection.replace.completed',
+    MEMORY_IMPORT_NUDGE_SHOWN = 'chat.memory_nudge.shown',
+    MEMORY_IMPORT_NUDGE_CLICKED = 'chat.memory_nudge.clicked',
+    MEMORY_IMPORT_NUDGE_IMPORTED = 'chat.memory_nudge.imported',
 }
 
 export enum ConnectionSwitchChoice {
@@ -298,6 +305,9 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.CONNECTION_SWITCH_DECIDED, ConnectionSwitchDecided>
     | BaseTelemetryEvent<TelemetryEventName.CONNECTION_REPLACE_OPENED, ConnectionReplaceOpened>
     | BaseTelemetryEvent<TelemetryEventName.CONNECTION_REPLACE_COMPLETED, ConnectionReplaceCompleted>
+    | BaseTelemetryEvent<TelemetryEventName.MEMORY_IMPORT_NUDGE_SHOWN, MemoryImportNudge>
+    | BaseTelemetryEvent<TelemetryEventName.MEMORY_IMPORT_NUDGE_CLICKED, MemoryImportNudge>
+    | BaseTelemetryEvent<TelemetryEventName.MEMORY_IMPORT_NUDGE_IMPORTED, MemoryImportNudge>
 
 export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
     TelemetryEventName.ONBOARDING_COMPLETED,

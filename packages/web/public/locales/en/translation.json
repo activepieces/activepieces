@@ -3733,5 +3733,12 @@
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
   "{count} hours ago": "{count} hours ago",
-  "Use this URL to connect any MCP client, like Claude, Cursor or VS Code.": "Use this URL to connect any MCP client, like Claude, Cursor or VS Code."
+  "Use this URL to connect any MCP client, like Claude, Cursor or VS Code.": "Use this URL to connect any MCP client, like Claude, Cursor or VS Code.",
+  "Chat works better when it knows you": "Chat works better when it knows you",
+  "Bring what ChatGPT or Claude already know about you, so chat starts from there.": "Bring what ChatGPT or Claude already know about you, so chat starts from there.",
+  "Bring my memory": "Bring my memory",
+  "Not now": "Not now",
+  "Saw the memory import suggestion": "Saw the memory import suggestion",
+  "Opened memory import from chat": "Opened memory import from chat",
+  "Imported memory from chat": "Imported memory from chat"
 }

@@ -18,6 +18,7 @@ import {
   ChatContainerScrollAnchor,
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
@@ -46,6 +47,7 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import { OnboardingWelcome } from './components/onboarding-welcome';
 import {
@@ -271,6 +273,17 @@ function ChatBoxContent({
     [messages],
   );
 
+  const { embedState } = useEmbedding();
+  const onFirstReplyOfMainChat =
+    !incognito &&
+    !embedState.isEmbedded &&
+    isNil(agentId) &&
+    !builder &&
+    !isNil(conversationId) &&
+    !isAwaitingResponse &&
+    !failed &&
+    messages.filter((m) => m.role === 'assistant').length === 1;
+
   const hasBlockingCard = useChatStoreContext((s) =>
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
@@ -446,6 +459,10 @@ function ChatBoxContent({
                       />
                     </div>
                   )}
+
+                {onFirstReplyOfMainChat && (
+                  <MemoryImportNudgeCard conversationId={conversationId} />
+                )}
 
                 {wasCancelled && (
                   <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">

@@ -356,6 +356,23 @@ async function getUserMemory({ platformId, userId }: { platformId: string, userI
     return { instructions: row?.instructions ?? null, memories: row?.memories ?? [] }
 }
 
+async function memoryImportNudgeEligible({ platformId, userId }: { platformId: string, userId: string }): Promise<boolean> {
+    const [row, chats] = await Promise.all([
+        userMemoryRepo().findOneBy({ platformId, userId }),
+        conversationRepo().find({ select: { id: true }, where: { platformId, userId, source: AgentRunSource.CHAT }, take: 2 }),
+    ])
+    const memoryIsEmpty = isNil(row?.instructions) && (row?.memories.length ?? 0) === 0
+    const neverShown = isNil(row?.importNudgeShownAt)
+    const onFirstChat = chats.length === 1
+    return memoryIsEmpty && neverShown && onFirstChat
+}
+
+async function markMemoryImportNudgeShown({ platformId, userId }: { platformId: string, userId: string }): Promise<void> {
+    await withLockedMemoryRow({ platformId, userId }, async ({ repo }) => {
+        await repo.update({ platformId, userId }, { importNudgeShownAt: new Date().toISOString() })
+    })
+}
+
 function capMemories({ instructions, memories }: { instructions: string | null, memories: string[] }): GetAgentMemoryResponse {
     const trimmedInstructions = instructions?.trim()
     return {
@@ -556,6 +573,8 @@ export const agentHelpers = {
     incrementAndCheckLimit,
     conversationRepo,
     getUserMemory,
+    memoryImportNudgeEligible,
+    markMemoryImportNudgeShown,
     capMemories,
     mergeMemories,
     saveUserMemory,
