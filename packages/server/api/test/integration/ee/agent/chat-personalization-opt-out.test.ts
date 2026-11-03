@@ -8,13 +8,16 @@ import { db } from '../../../helpers/db'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
-const { mockEnqueueResearchJob } = vi.hoisted(() => ({ mockEnqueueResearchJob: vi.fn().mockResolvedValue(undefined) }))
+const { mockEnqueueResearchJob, mockGuardsAllowResearch } = vi.hoisted(() => ({
+    mockEnqueueResearchJob: vi.fn().mockResolvedValue(undefined),
+    mockGuardsAllowResearch: vi.fn().mockResolvedValue(true),
+}))
 
 vi.mock('../../../../src/app/ee/agent/personalization/personalization-research', async (importOriginal) => {
     const original = await importOriginal<typeof import('../../../../src/app/ee/agent/personalization/personalization-research')>()
     return {
         ...original,
-        guardsAllowResearch: vi.fn().mockResolvedValue(true),
+        guardsAllowResearch: mockGuardsAllowResearch,
         enqueueResearchJob: mockEnqueueResearchJob,
     }
 })
@@ -108,18 +111,7 @@ describe('changing the role on finished personalization', () => {
     it('starts new research for the new role instead of keeping the old cards', async () => {
         const ctx = await createTestContext(app)
         await saveResearchedCompany(ctx)
-        await db.save('chat_personalization', {
-            id: apId(),
-            platformId: ctx.platform.id,
-            userId: ctx.user.id,
-            domain: 'acme.com',
-            companyText: null,
-            role: 'Sales',
-            status: ChatPersonalizationStatus.READY,
-            researchToken: null,
-            profile: null,
-            useCases: USE_CASES,
-        })
+        await saveReadyUserRow({ ctx, role: 'Sales' })
 
         await service().upsert({ platformId: ctx.platform.id, userId: ctx.user.id, role: 'Engineer', personalize: true })
 
@@ -128,10 +120,39 @@ describe('changing the role on finished personalization', () => {
         expect(userRow.status).toBe(ChatPersonalizationStatus.PENDING)
         expect(mockEnqueueResearchJob).toHaveBeenCalledWith(expect.objectContaining({ userId: ctx.user.id, role: 'Engineer', researchToken: userRow.researchToken }))
     })
+
+    it('keeps the current cards and saves the new role when research cannot run', async () => {
+        const ctx = await createTestContext(app)
+        await saveResearchedCompany(ctx)
+        await saveReadyUserRow({ ctx, role: 'Sales' })
+        mockGuardsAllowResearch.mockResolvedValueOnce(false)
+
+        await service().upsert({ platformId: ctx.platform.id, userId: ctx.user.id, role: 'Engineer', personalize: true })
+
+        const userRow = await db.findOneByOrFail<{ role: string, status: string, useCases: unknown }>('chat_personalization', { platformId: ctx.platform.id, userId: ctx.user.id })
+        expect(userRow.role).toBe('Engineer')
+        expect(userRow.status).toBe(ChatPersonalizationStatus.READY)
+        expect(userRow.useCases).toEqual(USE_CASES)
+    })
 })
 
 function service() {
     return chatPersonalizationService(app.log)
+}
+
+async function saveReadyUserRow({ ctx, role }: { ctx: TestContext, role: string }): Promise<void> {
+    await db.save('chat_personalization', {
+        id: apId(),
+        platformId: ctx.platform.id,
+        userId: ctx.user.id,
+        domain: 'acme.com',
+        companyText: null,
+        role,
+        status: ChatPersonalizationStatus.READY,
+        researchToken: null,
+        profile: null,
+        useCases: USE_CASES,
+    })
 }
 
 async function saveResearchedCompany(ctx: TestContext): Promise<void> {
