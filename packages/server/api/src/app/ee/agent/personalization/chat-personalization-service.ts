@@ -159,10 +159,9 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         if (!isNil(userRow) && keepsCurrentRow({ userRow, role })) {
             return this.getEffectiveView({ platformId, userId })
         }
-        const allowed = await guardsAllowResearch({ platformId, log })
-        const keepsCardsUntilResearchCanRun = !allowed && userRow?.status === ChatPersonalizationStatus.READY
-        if (keepsCardsUntilResearchCanRun) {
-            await personalizationRepo().update({ platformId, userId }, { role })
+        const refreshesReadyCards = userRow?.status === ChatPersonalizationStatus.READY
+        const researchBlockedForReadyCards = refreshesReadyCards && !await guardsAllowResearch({ platformId, log })
+        if (researchBlockedForReadyCards) {
             return this.getEffectiveView({ platformId, userId })
         }
         if (!isNil(userRow)) {
@@ -185,6 +184,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 return this.getEffectiveView({ platformId, userId })
             }
         }
+        const allowed = refreshesReadyCards || await guardsAllowResearch({ platformId, log })
         if (!allowed) {
             await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.SKIPPED })
             return this.getEffectiveView({ platformId, userId })

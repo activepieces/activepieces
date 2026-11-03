@@ -121,18 +121,19 @@ describe('changing the role on finished personalization', () => {
         expect(mockEnqueueResearchJob).toHaveBeenCalledWith(expect.objectContaining({ userId: ctx.user.id, role: 'Engineer', researchToken: userRow.researchToken }))
     })
 
-    it('keeps the current cards and saves the new role when research cannot run', async () => {
+    it('keeps the current cards when research cannot run, and retries the same role later', async () => {
         const ctx = await createTestContext(app)
         await saveResearchedCompany(ctx)
         await saveReadyUserRow({ ctx, role: 'Sales' })
         mockGuardsAllowResearch.mockResolvedValueOnce(false)
 
         await service().upsert({ platformId: ctx.platform.id, userId: ctx.user.id, role: 'Engineer', personalize: true })
+        const blocked = await db.findOneByOrFail<{ role: string, status: string, useCases: unknown }>('chat_personalization', { platformId: ctx.platform.id, userId: ctx.user.id })
+        expect(blocked).toMatchObject({ role: 'Sales', status: ChatPersonalizationStatus.READY, useCases: USE_CASES })
 
-        const userRow = await db.findOneByOrFail<{ role: string, status: string, useCases: unknown }>('chat_personalization', { platformId: ctx.platform.id, userId: ctx.user.id })
-        expect(userRow.role).toBe('Engineer')
-        expect(userRow.status).toBe(ChatPersonalizationStatus.READY)
-        expect(userRow.useCases).toEqual(USE_CASES)
+        await service().upsert({ platformId: ctx.platform.id, userId: ctx.user.id, role: 'Engineer', personalize: true })
+        const retried = await db.findOneByOrFail<{ role: string, status: string }>('chat_personalization', { platformId: ctx.platform.id, userId: ctx.user.id })
+        expect(retried).toMatchObject({ role: 'Engineer', status: ChatPersonalizationStatus.PENDING })
     })
 })
 
