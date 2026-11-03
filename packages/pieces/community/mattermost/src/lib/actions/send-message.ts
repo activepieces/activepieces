@@ -1,16 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { mattermostAuth } from '../auth';
 import { mattermostClient } from '../common/client';
+import { mattermostCreatePostOutputSchema } from '../output-schemas';
 
 export const sendMessageAction = createAction({
   auth: mattermostAuth,
   name: 'send_message',
+  outputSchema: mattermostCreatePostOutputSchema,
   classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send a message to a Mattermost channel',
-  audience: 'both',
-  aiMetadata: { description: 'Post a new text message to a Mattermost channel, identified by its channel ID (not name). Use when an agent needs to notify or post into a specific channel. Not idempotent: each call creates a separate post, so repeating it sends duplicate messages.', idempotent: false },
+  audience: 'human',
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',
@@ -25,14 +26,23 @@ export const sendMessageAction = createAction({
     }),
   },
   async run(context) {
-    return await mattermostClient.request<unknown>({
-      auth: context.auth,
-      method: HttpMethod.POST,
-      path: '/posts',
-      body: {
-        channel_id: context.propsValue.channel_id,
-        message: context.propsValue.text,
-      },
-    });
+    try {
+      return await mattermostClient.request<unknown>({
+        auth: context.auth,
+        method: HttpMethod.POST,
+        path: '/posts',
+        body: {
+          channel_id: context.propsValue.channel_id,
+          message: context.propsValue.text,
+        },
+      });
+    } catch (e) {
+      if (e instanceof HttpError && e.response.status === 403) {
+        throw new Error(
+          'Please make sure you have the correct bot token and channel ID.'
+        );
+      }
+      throw e;
+    }
   },
 });

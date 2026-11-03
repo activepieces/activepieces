@@ -573,7 +573,7 @@
     },
     "packages/pieces/community/amazon-redshift": {
       "name": "@activepieces/piece-amazon-redshift",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
