@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -28,6 +29,7 @@ export const FlowConnectionsPopover = ({
   isFlowLocked: boolean;
 }) => {
   const { flowConnections } = flowCanvasHooks.useFlowConnections();
+  const showReplace = !useEmbedding().embedState.hideReplaceConnection;
   const hasPermissionToReplace = useAuthorization().checkAccess(
     Permission.REPLACE_APP_CONNECTION,
   );
@@ -52,9 +54,11 @@ export const FlowConnectionsPopover = ({
         <PopoverContent align="end" className="w-[340px] p-0">
           <PopoverHeader className="border-b px-4 py-3">
             <PopoverTitle>{t('Connections in this flow')}</PopoverTitle>
-            <PopoverDescription className="text-xs">
-              {t('Replacing a connection updates every step that uses it.')}
-            </PopoverDescription>
+            {showReplace && (
+              <PopoverDescription className="text-xs">
+                {t('Replacing a connection updates every step that uses it.')}
+              </PopoverDescription>
+            )}
           </PopoverHeader>
           <ScrollArea viewPortClassName="max-h-[320px]">
             <div className="flex flex-col gap-1 p-2">
@@ -78,21 +82,23 @@ export const FlowConnectionsPopover = ({
                       {t('usedInStepsCount', { count: stepCount })}
                     </span>
                   </div>
-                  <PermissionNeededTooltip
-                    hasPermission={hasPermissionToReplace}
-                  >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!hasPermissionToReplace || isFlowLocked}
-                      onClick={() => {
-                        setPopoverOpen(false);
-                        setConnectionToReplace(connection);
-                      }}
+                  {showReplace && (
+                    <PermissionNeededTooltip
+                      hasPermission={hasPermissionToReplace}
                     >
-                      {t('Replace')}
-                    </Button>
-                  </PermissionNeededTooltip>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!hasPermissionToReplace || isFlowLocked}
+                        onClick={() => {
+                          setPopoverOpen(false);
+                          setConnectionToReplace(connection);
+                        }}
+                      >
+                        {t('Replace')}
+                      </Button>
+                    </PermissionNeededTooltip>
+                  )}
                 </div>
               ))}
             </div>

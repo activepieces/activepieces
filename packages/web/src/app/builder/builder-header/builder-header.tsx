@@ -182,9 +182,11 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
 
   const rightContent = (
     <div className="flex items-center justify-center gap-4">
-      {isLatestVersion && !isRunsPage && !embedState.hideReplaceConnection && (
-        <FlowConnectionsPopover isFlowLocked={isFlowLocked} />
-      )}
+      {isLatestVersion &&
+        !isRunsPage &&
+        !embedState.hideConnectionsInBuilder && (
+          <FlowConnectionsPopover isFlowLocked={isFlowLocked} />
+        )}
       {showSupport && (
         <Button variant="ghost" onClick={() => openNewWindow(supportUrl)}>
           <CircleHelp className="w-4 h-4"></CircleHelp>
