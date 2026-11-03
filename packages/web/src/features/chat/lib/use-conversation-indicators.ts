@@ -30,14 +30,16 @@ export function useConversationIndicators({
 
   const conversationsRef = useRef(conversations);
   conversationsRef.current = conversations;
-  const seededScopesRef = useRef(new Set<string>());
+  const firstLoadBaselineRef = useRef(new Map<string, string>());
 
   useEffect(() => {
     if (!loaded) return;
-    const initialLoad = !seededScopesRef.current.has(scope);
-    seededScopesRef.current.add(scope);
+    const baseline =
+      firstLoadBaselineRef.current.get(scope) ??
+      newestUpdated({ conversations });
+    firstLoadBaselineRef.current.set(scope, baseline);
     setLastSeen((prev) => {
-      const next = seedLastSeen({ prev, conversations, initialLoad });
+      const next = seedLastSeen({ prev, conversations, baseline });
       if (next === prev) return prev;
       writeLastSeen(next);
       return next;
@@ -154,19 +156,30 @@ export function useConversationIndicators({
 function seedLastSeen({
   prev,
   conversations,
-  initialLoad,
+  baseline,
 }: {
   prev: Record<string, string>;
   conversations: Pick<AgentConversation, 'id' | 'updated'>[];
-  initialLoad: boolean;
+  baseline: string;
 }): Record<string, string> {
   const unseen = conversations.filter((conv) => prev[conv.id] === undefined);
   if (unseen.length === 0) return prev;
   const seeded = unseen.map((conv) => [
     conv.id,
-    initialLoad ? conv.updated : NEVER_SEEN,
+    conv.updated > baseline ? NEVER_SEEN : conv.updated,
   ]);
   return { ...prev, ...Object.fromEntries(seeded) };
+}
+
+function newestUpdated({
+  conversations,
+}: {
+  conversations: Pick<AgentConversation, 'updated'>[];
+}): string {
+  return conversations.reduce(
+    (newest, conv) => (conv.updated > newest ? conv.updated : newest),
+    NEVER_SEEN,
+  );
 }
 
 function readLastSeen(): Record<string, string> {
