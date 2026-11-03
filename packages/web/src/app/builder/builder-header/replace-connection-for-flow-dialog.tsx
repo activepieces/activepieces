@@ -66,13 +66,10 @@ function ReplaceConnectionForFlowForm({
 }: {
   setDialogOpen: (open: boolean) => void;
 }) {
-  const [flow, savePendingEdits, refreshDraft, showsNewestVersion] =
-    useBuilderStateContext((state) => [
-      state.flow,
-      state.savePendingEdits,
-      state.refreshDraft,
-      state.showsNewestVersion,
-    ]);
+  const [flow, savePendingEdits, showsNewestVersion] = useBuilderStateContext(
+    (state) => [state.flow, state.savePendingEdits, state.showsNewestVersion],
+  );
+  const refreshDraft = flowCanvasHooks.useRefreshDraftAndMakeNewDraftEditable();
   const { switchToDraft } = flowCanvasHooks.useSwitchToDraft();
   const projectId = authenticationSession.getProjectId()!;
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
