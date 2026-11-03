@@ -12,7 +12,7 @@ export const amazonRedshift = createPiece({
   displayName: 'Amazon Redshift',
   description: 'Fully managed cloud data warehouse from AWS.',
   minimumSupportedRelease: '0.90.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/amazon-redshift.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/amazon-redshift.jpg',
   categories: [PieceCategory.DEVELOPER_TOOLS, PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['kishanprmr'],
   auth: redshiftAuth,
