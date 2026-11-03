@@ -60,6 +60,7 @@ const useListenToExistingRun = () => {
       }
       const flowRun = await flowRunsApi.getPopulated(run.id);
       setRun(flowRun, flowVersion);
+      return flowRun;
     },
     enabled:
       !isNil(run) &&
