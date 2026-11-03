@@ -5505,7 +5505,7 @@
     },
     "packages/pieces/community/loops": {
       "name": "@activepieces/piece-loops",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5513,6 +5513,7 @@
         "@activepieces/pieces-framework": "workspace:*",
       },
       "devDependencies": {
+        "vitest": "3.2.6",
         "tslib": "2.6.2",
       },
     },
