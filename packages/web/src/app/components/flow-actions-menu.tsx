@@ -15,7 +15,6 @@ import {
   GalleryVerticalEnd,
   Import,
   Pencil,
-  Replace,
   Share2,
   Trash2,
   UploadCloud,
@@ -25,7 +24,6 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { ReplaceConnectionForFlowDialog } from '@/app/builder/builder-header/replace-connection-for-flow-dialog';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -68,13 +66,11 @@ type FlowActionMenuProps = {
       insideBuilder: true;
       onVersionsListClick: () => void;
       savePendingEdits: () => Promise<void>;
-      isFlowLocked: boolean;
     }
   | {
       insideBuilder: false;
       onVersionsListClick: null;
       savePendingEdits: null;
-      isFlowLocked?: undefined;
     }
 );
 
@@ -91,12 +87,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onVersionsListClick,
   insideBuilder,
   savePendingEdits,
-  isFlowLocked,
 }) => {
   const isRunsPage = useLocation().pathname.includes('/runs');
-  const showsDraftOrPublishedVersion =
-    flowVersion.state === FlowVersionState.DRAFT ||
-    flowVersion.id === flow.publishedVersionId;
   const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
@@ -106,9 +98,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteFolder = checkAccess(Permission.WRITE_FOLDER);
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToReplaceAppConnection = checkAccess(
-    Permission.REPLACE_APP_CONNECTION,
-  );
   const userHasPermissionToPushToGit = checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
@@ -329,28 +318,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               </div>
             </DropdownMenuItem>
           )}
-          {insideBuilder &&
-            !isRunsPage &&
-            showsDraftOrPublishedVersion &&
-            !embedState.hideReplaceConnection && (
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToReplaceAppConnection}
-              >
-                <ReplaceConnectionForFlowDialog>
-                  <DropdownMenuItem
-                    disabled={
-                      !userHasPermissionToReplaceAppConnection || isFlowLocked
-                    }
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <div className="flex cursor-pointer flex-row gap-2 items-center">
-                      <Replace className="h-4 w-4" />
-                      <span>{t('Replace connection')}</span>
-                    </div>
-                  </DropdownMenuItem>
-                </ReplaceConnectionForFlowDialog>
-              </PermissionNeededTooltip>
-            )}
           {!readonly &&
             insideBuilder &&
             !embedState.hideExportAndImportFlow && (

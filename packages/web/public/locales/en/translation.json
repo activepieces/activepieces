@@ -832,8 +832,6 @@
   "Choose connection to replace with": "Choose connection to replace with",
   "No flows use this connection yet": "No flows use this connection yet",
   "flowsUsingConnection": "{count, plural, =1 {1 flow uses this connection} other {# flows use this connection}}",
-  "Switch the steps of this flow from one connection to another. Other flows are not changed.": "Switch the steps of this flow from one connection to another. Other flows are not changed.",
-  "Steps that use the replaced connection keep their settings. Test your flow to make sure nothing breaks.": "Steps that use the replaced connection keep their settings. Test your flow to make sure nothing breaks.",
   "Which versions to update": "Which versions to update",
   "Draft only updates your working copy. Live flows keep using the old connection until you publish them again. Draft and published republishes affected flows now, which can interrupt running automations.": "Draft only updates your working copy. Live flows keep using the old connection until you publish them again. Draft and published republishes affected flows now, which can interrupt running automations.",
   "Draft only": "Draft only",
@@ -3720,5 +3718,11 @@
   "Ask us to add them to your license, then follow the setup guide to start your first group.": "Ask us to add them to your license, then follow the setup guide to start your first group.",
   "Available on self-hosted Activepieces. Talk to sales to set it up.": "Available on self-hosted Activepieces. Talk to sales to set it up.",
   "A replace changes up to {max} flows.": "A replace changes up to {max} flows.",
-  "These still use the connection and stop working if you delete it:": "These still use the connection and stop working if you delete it:"
+  "These still use the connection and stop working if you delete it:": "These still use the connection and stop working if you delete it:",
+  "Connections in this flow": "Connections in this flow",
+  "Replacing a connection updates every step that uses it.": "Replacing a connection updates every step that uses it.",
+  "usedInStepsCount": "{count, plural, =1 {Used in 1 step} other {Used in # steps}}",
+  "Replace {name}": "Replace {name}",
+  "Every step in this flow that uses {name} will switch to the connection you pick below.": "Every step in this flow that uses {name} will switch to the connection you pick below.",
+  "Test the flow after the replace to make sure every step still works.": "Test the flow after the replace to make sure every step still works."
 }

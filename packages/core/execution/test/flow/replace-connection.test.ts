@@ -67,7 +67,7 @@ describe('flowStructureUtil.replaceConnection', () => {
         expect(authOf(result, 'step_2')).toBe("{{connections['other']}}")
         expect(authOf(result, 'step_3')).toBe("{{connections['new']}}")
         expect(flowStructureUtil.getStepOrThrow('step_1', result.trigger).settings.input.channel).toBe('general')
-        expect(flowStructureUtil.extractConnectionIds(result)).toEqual(['new', 'other'])
+        expect(flowStructureUtil.extractFlowConnectionIds(result)).toEqual(['new', 'other'])
     })
 
     it('does not change a step whose auth points at a connection that only starts with the source name', () => {
@@ -98,7 +98,7 @@ describe('flowStructureUtil.replaceConnection', () => {
         }
         const flowVersion = flowWith(agentStep)
         expect(flowStructureUtil.extractAgentToolsConnectionIds(flowVersion)).toEqual(['old', 'other'])
-        expect(flowStructureUtil.extractConnectionIds(flowVersion)).toEqual(['old', 'other'])
+        expect(flowStructureUtil.extractFlowConnectionIds(flowVersion)).toEqual(['old', 'other'])
 
         const result = flowStructureUtil.replaceConnection({ flowVersion, sourceExternalId: 'old', targetExternalId: 'new' })
 
@@ -122,6 +122,31 @@ describe('flowStructureUtil.replaceConnection', () => {
         const result = flowStructureUtil.replaceConnection({ flowVersion, sourceExternalId: 'old', targetExternalId: 'new' })
 
         expect(flowStructureUtil.getStepOrThrow('step_1', result.trigger).settings.input.agentTools).toEqual([slackTool({ toolName: 'send', auth: 'old' })])
+    })
+})
+
+describe('flowStructureUtil.extractStepConnectionIds', () => {
+    it('returns the connections of one step, from its auth and its agent tools', () => {
+        const step = pieceStep({ name: 'step_1', auth: "{{connections['slack']}}" })
+        const agentStep: PieceAction = {
+            ...pieceStep({ name: 'step_2' }),
+            settings: {
+                pieceName: '@activepieces/piece-ai',
+                pieceVersion: '0.6.0',
+                actionName: 'run_agent',
+                input: {
+                    agentTools: [
+                        slackTool({ toolName: 'send', auth: 'old' }),
+                        slackTool({ toolName: 'reply', auth: "{{connections['old']}}" }),
+                        mcpTool,
+                    ],
+                },
+                propertySettings: {},
+            },
+        }
+        expect(flowStructureUtil.extractStepConnectionIds(step)).toEqual(['slack'])
+        expect(flowStructureUtil.extractStepConnectionIds(agentStep)).toEqual(['old'])
+        expect(flowStructureUtil.extractStepConnectionIds(pieceStep({ name: 'step_3' }))).toEqual([])
     })
 })
 

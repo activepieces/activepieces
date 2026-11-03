@@ -3,6 +3,7 @@ import {
   FlowDraftUpdatedEvent,
   FlowRunStatus,
   FlowVersionState,
+  flowStructureUtil,
   WebsocketClientEvent,
   RunEnvironment,
   isFlowRunStateTerminal,
@@ -17,9 +18,11 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { editorSession } from '@/lib/editor-session';
 
 import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
@@ -321,31 +324,27 @@ function isActiveElementInsideListMapperModeInput(): boolean {
   );
 }
 
-const useDraftAndPublishedVersions = () => {
-  const [flowId, savePendingEdits] = useBuilderStateContext((state) => [
-    state.flow.id,
-    state.savePendingEdits,
-  ]);
-  return useQuery({
-    queryKey: ['draft-and-published-versions', flowId],
-    queryFn: async () => {
-      await savePendingEdits();
-      const draftFlow = await flowsApi.get(flowId);
-      const publishedVersionId = draftFlow.publishedVersionId;
-      if (
-        isNil(publishedVersionId) ||
-        publishedVersionId === draftFlow.version.id
-      ) {
-        return [draftFlow.version];
-      }
-      const publishedFlow = await flowsApi.get(flowId, {
-        versionId: publishedVersionId,
-      });
-      return [draftFlow.version, publishedFlow.version];
-    },
-    staleTime: 0,
-    gcTime: 0,
-  });
+const useFlowConnections = () => {
+  const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
+  const projectId = authenticationSession.getProjectId()!;
+  const { data: connections, isLoading } =
+    appConnectionsQueries.useAppConnections({
+      request: { projectId, limit: 1000 },
+      extraKeys: [projectId],
+      staleTime: 0,
+    });
+  const stepConnectionExternalIds = flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .map((step) => flowStructureUtil.extractStepConnectionIds(step));
+  const flowConnections = (connections?.data ?? [])
+    .map((connection) => ({
+      connection,
+      stepCount: stepConnectionExternalIds.filter((connectionExternalIds) =>
+        connectionExternalIds.includes(connection.externalId),
+      ).length,
+    }))
+    .filter(({ stepCount }) => stepCount > 0);
+  return { flowConnections, isLoading };
 };
 
 export const flowCanvasHooks = {
@@ -360,5 +359,5 @@ export const flowCanvasHooks = {
   useResizeCanvas,
   useSwitchToDraft,
   useListenToExistingRun,
-  useDraftAndPublishedVersions,
+  useFlowConnections,
 };
