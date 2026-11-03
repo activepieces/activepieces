@@ -42,6 +42,7 @@ import { DataFetchErrorState } from '../data-fetch-error-state';
 import { DataTableBulkActions } from './data-table-bulk-actions';
 import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFilter, DataTableFilterProps } from './data-table-filter';
+import { dataTableFilterUtils } from './data-table-filter-utils';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 
@@ -294,7 +295,15 @@ export function DataTable<
         const value = searchParams.get(filter.accessorKey);
         if (value) column.setFilterValue(value);
       } else {
-        const values = searchParams.getAll(filter.accessorKey);
+        const values =
+          filter.type === 'select'
+            ? dataTableFilterUtils.getSelectedValues({
+                searchParams,
+                key: filter.accessorKey,
+                allowedValues: filter.options.map((option) => option.value),
+                defaultValues: filter.defaultValues,
+              })
+            : searchParams.getAll(filter.accessorKey);
         if (values.length) column.setFilterValue(values);
       }
     });
