@@ -350,25 +350,6 @@ export const appConnectionsMutations = {
       },
     });
   },
-
-  useCheckConnectionInUse: ({
-    onChecked,
-  }: {
-    onChecked: (inUse: boolean) => void;
-  }) => {
-    const agentsAvailable = useAgentsAvailable();
-    return useMutation({
-      mutationFn: async (connection: ConnectionToCheck) => {
-        const usage = await listFlowsAndAgentsUsingConnections({
-          connections: [connection],
-          agentsAvailable,
-        });
-        return usage.flows.length > 0 || usage.agents.length > 0;
-      },
-      onSuccess: onChecked,
-      onError: () => undefined,
-    });
-  },
 };
 
 type UseConnectionsProps = {

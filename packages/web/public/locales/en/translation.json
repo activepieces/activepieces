@@ -3716,8 +3716,6 @@
   "Your license doesn’t include worker groups": "Your license doesn’t include worker groups",
   "Ask us to add them to your license, then follow the setup guide to start your first group.": "Ask us to add them to your license, then follow the setup guide to start your first group.",
   "Available on self-hosted Activepieces. Talk to sales to set it up.": "Available on self-hosted Activepieces. Talk to sales to set it up.",
-  "Delete the old connection?": "Delete the old connection?",
-  "The replace is done. Delete {name} now, or keep it to use later.": "The replace is done. Delete {name} now, or keep it to use later.",
   "A replace changes up to {max} flows.": "A replace changes up to {max} flows.",
   "These still use the connection and stop working if you delete it:": "These still use the connection and stop working if you delete it:"
 }

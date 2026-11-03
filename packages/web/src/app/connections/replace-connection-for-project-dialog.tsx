@@ -1,7 +1,3 @@
-import {
-  AppConnectionScope,
-  AppConnectionWithoutSensitiveData,
-} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, WorkflowIcon } from 'lucide-react';
 import React, { useState } from 'react';
@@ -28,15 +24,12 @@ import {
 import { Form } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  appConnectionsApi,
   appConnectionsMutations,
   appConnectionsQueries,
 } from '@/features/connections';
-import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { flowHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 
-import { DeleteConnectionsDialog } from './delete-connections-dialog';
 import {
   ReplaceConnectionSelection,
   ReplaceConnectionSelectionFields,
@@ -50,52 +43,27 @@ const ReplaceConnectionForProjectDialog = ({
   projectId,
 }: ReplaceConnectionForProjectDialogProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [connectionToDelete, setConnectionToDelete] =
-    useState<AppConnectionWithoutSensitiveData | null>(null);
   return (
-    <>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="flex flex-col">
-          <ReplaceConnectionForProjectForm
-            key={dialogOpen ? 'open' : 'closed'}
-            projectId={projectId}
-            onConnectionMerged={onConnectionMerged}
-            onOfferToDeleteSource={setConnectionToDelete}
-            setDialogOpen={setDialogOpen}
-          />
-        </DialogContent>
-      </Dialog>
-      {connectionToDelete && (
-        <DeleteConnectionsDialog
-          connections={[connectionToDelete]}
-          title={t('Delete the old connection?')}
-          message={t(
-            'The replace is done. Delete {name} now, or keep it to use later.',
-            { name: connectionToDelete.displayName },
-          )}
-          mutationFn={() => appConnectionsApi.delete(connectionToDelete.id)}
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setConnectionToDelete(null);
-              onConnectionMerged();
-            }
-          }}
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="flex flex-col">
+        <ReplaceConnectionForProjectForm
+          key={dialogOpen ? 'open' : 'closed'}
+          projectId={projectId}
+          onConnectionMerged={onConnectionMerged}
+          setDialogOpen={setDialogOpen}
         />
-      )}
-    </>
+      </DialogContent>
+    </Dialog>
   );
 };
 
 function ReplaceConnectionForProjectForm({
   projectId,
   onConnectionMerged,
-  onOfferToDeleteSource,
   setDialogOpen,
 }: ReplaceConnectionForProjectFormProps) {
   const navigate = useNavigate();
-  const publishNeedsApproval = flowApprovalsHooks.usePublishNeedsApproval();
   const [step, setStep] = useState<ProjectReplaceStep>(
     ProjectReplaceStep.CHOOSE_CONNECTIONS,
   );
@@ -107,25 +75,11 @@ function ReplaceConnectionForProjectForm({
       staleTime: 0,
     });
 
-  const { mutate: checkConnectionInUse } =
-    appConnectionsMutations.useCheckConnectionInUse({
-      onChecked: (inUse) => {
-        if (!inUse && sourceConnection) {
-          onOfferToDeleteSource(sourceConnection);
-        }
-      },
-    });
-
   const { mutate: replaceConnections, isPending: isReplacing } =
     appConnectionsMutations.useReplaceConnections({
       setDialogOpen,
       connections: connections?.data ?? [],
-      refetch: () => {
-        onConnectionMerged();
-        if (sourceConnection && canDeleteSource) {
-          checkConnectionInUse(sourceConnection);
-        }
-      },
+      refetch: onConnectionMerged,
     });
 
   const {
@@ -174,9 +128,6 @@ function ReplaceConnectionForProjectForm({
       ? [...draftFlows, ...publishedOnlyFlows]
       : draftFlows
   ).slice(0, MAX_FLOWS_PER_REPLACE);
-  const canDeleteSource =
-    !publishNeedsApproval &&
-    sourceConnection?.scope === AppConnectionScope.PROJECT;
 
   const handleSubmit = (values: ProjectReplaceFormValues) => {
     if (step === ProjectReplaceStep.CHOOSE_CONNECTIONS) {
@@ -361,9 +312,6 @@ type ReplaceConnectionForProjectDialogProps = {
 type ReplaceConnectionForProjectFormProps = {
   projectId: string;
   onConnectionMerged: () => void;
-  onOfferToDeleteSource: (
-    connection: AppConnectionWithoutSensitiveData,
-  ) => void;
   setDialogOpen: (open: boolean) => void;
 };
 
