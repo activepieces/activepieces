@@ -300,6 +300,7 @@ function ReplaceConnectionForProjectForm({
                 <Button
                   type="button"
                   variant="secondary"
+                  disabled={isReplacing}
                   onClick={() => {
                     form.setValue('applyToPublishedVersions', false);
                     setStep(ProjectReplaceStep.CHOOSE_CONNECTIONS);
