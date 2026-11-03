@@ -33,6 +33,63 @@ async function deleteStaleData({ request, session }: { request: APIRequestContex
   return { flows: staleFlows.length, connections: staleConnections.length };
 }
 
+async function describeFlow({ request, session, flowId }: { request: APIRequestContext; session: E2eSession; flowId: string }) {
+  const flow = await readJson<FlowState>({ request, session, path: `/api/v1/flows/${flowId}`, params: {} });
+  const runs = await readJson<{ data: RunSummary[] }>({
+    request,
+    session,
+    path: '/api/v1/flow-runs',
+    params: { projectId: session.projectId, flowId, limit: 5 },
+  });
+  const flowLine = 'error' in flow
+    ? flow.error
+    : JSON.stringify({
+      status: flow.body.status,
+      operationStatus: flow.body.operationStatus,
+      publishedVersionId: flow.body.publishedVersionId,
+      versionState: flow.body.version.state,
+      trigger: flow.body.version.trigger.settings.triggerName,
+      triggerInput: flow.body.version.trigger.settings.input,
+    });
+  const runsLine = 'error' in runs
+    ? runs.error
+    : JSON.stringify(runs.body.data.map(({ status, environment, created }) => ({ status, environment, created })));
+  return redact({ session, text: `flow: ${flowLine}\nruns: ${runsLine}` });
+}
+
+async function describeRun({ request, session, runId }: { request: APIRequestContext; session: E2eSession; runId: string }) {
+  const run = await readJson<RunDetails>({ request, session, path: `/api/v1/flow-runs/${runId}`, params: {} });
+  if ('error' in run) {
+    return redact({ session, text: run.error });
+  }
+  const failedSteps = Object.entries(run.body.steps ?? {})
+    .filter(([, step]) => step.status === 'FAILED')
+    .map(([name, step]) => `${name}: ${(step.errorMessage ?? 'no error message').slice(0, 500)}`);
+  return redact({ session, text: [`run ${run.body.status}`, ...failedSteps].join('; ') });
+}
+
+async function readJson<T>({ request, session, path, params }: {
+  request: APIRequestContext;
+  session: E2eSession;
+  path: string;
+  params: Record<string, string | number>;
+}): Promise<{ body: T } | { error: string }> {
+  const response = await request
+    .get(path, { headers: { Authorization: `Bearer ${session.token}` }, params })
+    .catch((error: unknown) => new Error(String(error)));
+  if (response instanceof Error) {
+    return { error: `GET ${path} failed: ${response.message}` };
+  }
+  if (!response.ok()) {
+    return { error: `GET ${path} returned ${response.status()}` };
+  }
+  return { body: await response.json() };
+}
+
+function redact({ session, text }: { session: E2eSession; text: string }) {
+  return text.replaceAll(session.token, '***');
+}
+
 async function deleteById({ request, session, resource, id }: { request: APIRequestContext; session: E2eSession; resource: Resource; id: string }) {
   const response = await request.delete(`/api/v1/${resource}/${id}`, {
     headers: { Authorization: `Bearer ${session.token}` },
@@ -67,11 +124,19 @@ const STALE_AFTER_MS = 60 * 60 * 1000;
 
 export const STORAGE_STATE = path.join(__dirname, '..', '.auth', 'user.json');
 export const E2E_PREFIX = 'E2E ';
-export const e2eApi = { readSession, deleteFlow, deleteConnection, deleteStaleData };
+export const e2eApi = { readSession, deleteFlow, deleteConnection, deleteStaleData, describeFlow, describeRun };
 
 export type E2eSession = { token: string; projectId: string };
 
 type Resource = 'flows' | 'app-connections';
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
+type FlowState = {
+  status: string;
+  operationStatus: string;
+  publishedVersionId: string | null;
+  version: { state: string; trigger: { settings: { triggerName?: string; input?: unknown } } };
+};
+type RunSummary = { status: string; environment: string; created: string };
+type RunDetails = { status: string; steps?: Record<string, { status: string; errorMessage?: string }> };
 type StorageState = { origins: { localStorage: { name: string; value: string }[] }[] };

@@ -16,8 +16,8 @@ export const test = base.extend<CustomFixtures>({
     await use(new AutomationsPage(page));
   },
 
-  builderPage: async ({ page }, use) => {
-    await use(new BuilderPage(page));
+  builderPage: async ({ page, request, session }, use) => {
+    await use(new BuilderPage({ page, describeRun: (runId) => e2eApi.describeRun({ request, session, runId }) }));
   },
 
   runsPage: async ({ page }, use) => {

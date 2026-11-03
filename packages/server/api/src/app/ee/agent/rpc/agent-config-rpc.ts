@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, aiUtils, modelCatalog } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { LanguageModel, ModelMessage, UserContent } from 'ai'
@@ -280,8 +280,16 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
             const previous = compactionState
+            const compactionBilling: ActivepiecesAiBilling = {
+                source: ActivepiecesAiConsumerSource.CHAT,
+                platformId: conversation.platformId,
+                projectId: runProjectId,
+                conversationId: conversation.id,
+                context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: runProjectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId, userId: conversation.userId }),
+            }
             compactionState = await onFirstModelThatAnswers({
                 models: compactionModels,
+                billing: compactionBilling,
                 log,
                 run: (model) => agentCompaction.compactMessages({
                     messages: llmHistory,
@@ -291,6 +299,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                     reservedTokens: payloadReservedTokens,
                     model,
                     log,
+                    billing: compactionBilling,
                 }),
             })
             await agentHelpers.conversationRepo().update(conversationId, {
@@ -327,8 +336,12 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             fastModelId,
             ...spreadIfDefined('imageModelId', imageModelId),
             ...spreadIfDefined('searchCredentials', chosen.search?.credentials),
+            ...spreadIfDefined('searchProviderConfigId', chosen.search?.credentials.configId),
             ...spreadIfDefined('searchModelId', chosen.search?.modelId),
             ...spreadIfDefined('imageCredentials', chosen.image?.credentials),
+            ...spreadIfDefined('imageProviderConfigId', chosen.image?.credentials.configId),
+            ...spreadIfDefined('agentId', conversation.agentId ?? undefined),
+            ...spreadIfDefined('projectId', runProjectId ?? undefined),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
@@ -367,9 +380,9 @@ function smallestContextProvider({ configs }: { configs: GetProviderConfigRespon
     return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
 }
 
-async function onFirstModelThatAnswers<T>({ models, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], billing: ActivepiecesAiBilling, run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
     for (const [index, candidate] of models.entries()) {
-        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId })))
+        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true })))
         if (attempt.error === null) {
             return attempt.data
         }

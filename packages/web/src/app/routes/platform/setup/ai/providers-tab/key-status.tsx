@@ -2,14 +2,22 @@ import { isNil } from '@activepieces/core-utils';
 import { AiProviderKeyStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { StatusDot, StatusTone } from '@/app/components/admin';
+import { Badge } from '@/components/ui/badge';
 
 export function KeyStatusBadge({ status }: { status: AiProviderKeyStatus }) {
   const badge = badgeOf({ status });
   if (isNil(badge)) {
     return null;
   }
-  return <StatusDot tone={badge.tone}>{badge.text}</StatusDot>;
+  return (
+    <Badge
+      variant={badge.variant}
+      className="gap-1.5 rounded-full border-transparent px-2"
+    >
+      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      {badge.text}
+    </Badge>
+  );
 }
 
 export function keyStatusText({
@@ -22,17 +30,17 @@ export function keyStatusText({
 
 function badgeOf({ status }: { status: AiProviderKeyStatus }): {
   text: string;
-  tone: StatusTone;
+  variant: 'success' | 'warning' | 'destructive' | 'secondary';
 } | null {
   switch (status) {
     case 'active':
-      return { text: t('Active'), tone: 'success' };
+      return { text: t('Active'), variant: 'success' };
     case 'out_of_credits':
-      return { text: t('Out of credits'), tone: 'warning' };
+      return { text: t('Out of credits'), variant: 'warning' };
     case 'rejected':
-      return { text: t('Key rejected'), tone: 'danger' };
+      return { text: t('Key rejected'), variant: 'destructive' };
     case 'unreachable':
-      return { text: t('Unreachable'), tone: 'neutral' };
+      return { text: t('Unreachable'), variant: 'secondary' };
     default:
       return null;
   }
