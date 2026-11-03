@@ -1,13 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpError,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { mattermostAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { mattermostAuth } from '../auth';
+import { mattermostClient } from '../common/client';
 
-export const sendMessage = createAction({
+export const sendMessageAction = createAction({
   auth: mattermostAuth,
   name: 'send_message',
   classification: 'WRITE',
@@ -29,32 +25,14 @@ export const sendMessage = createAction({
     }),
   },
   async run(context) {
-    // Remove trailing slash from workspace URL
-    const baseUrl = context.auth.props.workspace_url.replace(/\/$/, '');
-    try {
-      return await httpClient.sendRequest({
-        url: `${baseUrl}/api/v4/posts`,
-        method: HttpMethod.POST,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.props.token,
-        },
-        body: {
-          channel_id: context.propsValue.channel_id,
-          message: context.propsValue.text,
-        },
-      });
-    } catch (e: HttpError | unknown) {
-      if (e instanceof HttpError) {
-        const httpError = e as HttpError;
-        console.log(httpError);
-        if (httpError?.response.status === 403) {
-          throw new Error(
-            'Please make sure you have the correct bot token and channel ID.'
-          );
-        }
-      }
-      throw e;
-    }
+    return await mattermostClient.request<unknown>({
+      auth: context.auth,
+      method: HttpMethod.POST,
+      path: '/posts',
+      body: {
+        channel_id: context.propsValue.channel_id,
+        message: context.propsValue.text,
+      },
+    });
   },
 });
