@@ -281,6 +281,7 @@ function ChatBoxContent({
     !builder &&
     !isNil(conversationId) &&
     !isAwaitingResponse &&
+    !wasCancelled &&
     !failed &&
     messages.filter((m) => m.role === 'assistant').length === 1;
 
