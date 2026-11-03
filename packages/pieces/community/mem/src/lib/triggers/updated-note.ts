@@ -26,10 +26,10 @@ export const updatedNoteTrigger = createTrigger({
   auth: memAuth,
   name: 'updated_note',
   displayName: 'Updated Note',
-  description: 'Triggers when a note is created or updated in Mem. Each poll handles up to 1,000 new or changed notes.',
+  description: 'Triggers when a note is created or updated in Mem. Each poll reads every page of changes since the last poll.',
   classification: 'READ',
   aiMetadata: {
-    description: 'Fires each time a Mem note is created or updated after the trigger was enabled, optionally only notes in one collection. Polls the note list by updated_at and emits the note list item (id, title, snippet, collection IDs, timestamps); use Get Note for the full content. One poll handles up to 1,000 new or changed notes, newest first.',
+    description: 'Fires each time a Mem note is created or updated after the trigger was enabled, optionally only notes in one collection. Polls the note list by updated_at and emits the note list item (id, title, snippet, collection IDs, timestamps); use Get Note for the full content. Each poll follows every page of changes since the last poll, so no note is skipped.',
   },
   props: {
     collection_id: memProps.collectionDropdown({

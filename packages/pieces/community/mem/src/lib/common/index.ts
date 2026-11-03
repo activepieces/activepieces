@@ -8,7 +8,7 @@ import { OutputSchema, OutputSchemaField } from '@activepieces/pieces-framework'
 
 const BASE_URL = 'https://api.mem.ai/v2';
 
-const MAX_POLL_PAGES = 10;
+const MAX_POLL_PAGES = 200;
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -177,7 +177,14 @@ async function pollNotes({
   const since = isSample ? undefined : new Date(lastFetchEpochMS).toISOString();
   const seen = new Map<string, NoteListItem>();
   let page: string | undefined;
-  for (let i = 0; i < (isSample ? 1 : MAX_POLL_PAGES); i++) {
+  let pagesFetched = 0;
+  for (;;) {
+    if (pagesFetched >= MAX_POLL_PAGES) {
+      throw new Error(
+        `Mem returned more than ${MAX_POLL_PAGES} pages of notes changed since ${since}. Stopped so that no notes are silently skipped; disable and re-enable the trigger to start from now.`
+      );
+    }
+    pagesFetched++;
     const response = await request<NoteListResponse>({
       apiKey,
       method: HttpMethod.GET,
@@ -193,7 +200,7 @@ async function pollNotes({
     for (const note of response.results) {
       seen.set(`${note.id}:${note[timestampField]}`, note);
     }
-    if (!response.next_page) break;
+    if (isSample || !response.next_page) break;
     page = response.next_page;
   }
   return [...seen.values()]

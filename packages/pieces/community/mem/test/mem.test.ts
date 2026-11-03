@@ -194,15 +194,30 @@ describe('pollNotes', () => {
     expect(calls[1].queryParams).toMatchObject({ page: 'p2' });
   });
 
-  it('stops after 10 pages even when next_page keeps coming', async () => {
+  it('drains every page in the window', async () => {
     const pages = Array.from({ length: 11 }, (_, index) => ({
-      results: [{ id: `n${index}`, title: 'T', created_at: '2026-11-02T00:00:00.000Z', updated_at: '2026-11-02T00:00:00.000Z' }],
+      results: [{ id: `n${index}`, title: 'T', created_at: `2026-11-02T00:00:${String(index).padStart(2, '0')}.000Z`, updated_at: '2026-11-02T00:00:00.000Z' }],
       total: 11,
-      next_page: `p${index + 1}`,
+      next_page: index < 10 ? `p${index + 1}` : null,
     }));
     const calls = mockResponses(pages);
-    await memClient.pollNotes({ apiKey: 'k', timestampField: 'created_at', lastFetchEpochMS: 1, collectionId: undefined });
-    expect(calls).toHaveLength(10);
+    const items = await memClient.pollNotes({ apiKey: 'k', timestampField: 'created_at', lastFetchEpochMS: 1, collectionId: undefined });
+    expect(calls).toHaveLength(11);
+    expect(items).toHaveLength(11);
+    expect(calls.every((call) => call.queryParams?.['filter_by_created_after'] === '1970-01-01T00:00:00.001Z')).toBe(true);
+    expect(calls[10].queryParams).toMatchObject({ page: 'p10' });
+  });
+
+  it('throws instead of returning partial data when the safety cap is hit', async () => {
+    const calls: HttpRequest[] = [];
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      calls.push(request);
+      return { status: 200, headers: {}, body: { results: [], total: 0, next_page: `p${calls.length}` } };
+    });
+    await expect(
+      memClient.pollNotes({ apiKey: 'k', timestampField: 'updated_at', lastFetchEpochMS: 1, collectionId: undefined })
+    ).rejects.toThrow('more than 200 pages');
+    expect(calls).toHaveLength(200);
   });
 
   it('rethrows API failures instead of returning an empty list', async () => {
