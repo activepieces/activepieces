@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Leexi 0.3.0: Get Call is no longer an AI agent tool
+
+**Get Call** is now shown only in the flow builder. AI agents and MCP clients get **Fetch Call Details** instead, which takes up to 20 call IDs at once.
+
+#### What you need to do
+
+- Agents that used Get Call as a tool: switch to Fetch Call Details.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Webflow 0.4.0: moves to Webflow API v2, connections need reconnecting, and step outputs change
 
 Webflow switched off its v1 API, which every Webflow action and the New Submission trigger used. They now call v2, and the connection asks for the v2 permissions (CMS, sites, pages, forms, assets, custom code, comments, components and ecommerce).
