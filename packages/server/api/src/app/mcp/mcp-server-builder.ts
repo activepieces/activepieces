@@ -70,6 +70,7 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
         ],
     }, {
         instructions: MCP_SERVER_INSTRUCTIONS,
+        maxToolInputElements: MCP_MAX_TOOL_INPUT_ELEMENTS,
     })
 
     if (!isInAppChat) {
@@ -348,6 +349,7 @@ function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
 export const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
 export const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: true }
 export const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
+export const MCP_MAX_TOOL_INPUT_ELEMENTS = 50_000
 
 type RegisterToolsParams = {
     server: McpServer
