@@ -14,7 +14,7 @@ export const runQueryAction = createAction({
 	classification: 'SEARCH',
 	aiMetadata: {
 		description:
-			'Runs one raw QuickBooks query statement against any entity, including SELECT COUNT(*) and selected columns. Pick it over a List action for counts or entities with no List action. Results are capped at 1000 rows per call; page with STARTPOSITION and MAXRESULTS in the statement.',
+			'Runs one raw QuickBooks query statement against any entity, including SELECT COUNT(*) and selected columns. Pick it over a List action for counts or entities with no List action. Returns QuickBooks\' QueryResponse as-is: an array named after the entity (e.g. QueryResponse.Invoice) with startPosition and maxResults, or totalCount for a COUNT(*). Results are capped at 1000 rows per call; page with STARTPOSITION and MAXRESULTS in the statement.',
 		idempotent: true,
 	},
 	props: {
@@ -33,6 +33,6 @@ export const runQueryAction = createAction({
 		if (!response.QueryResponse) {
 			throw new Error('QuickBooks returned no QueryResponse for this query.');
 		}
-		return response.QueryResponse;
+		return response;
 	},
 });

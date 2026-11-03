@@ -744,18 +744,10 @@ const purchaseOrderFields: OutputSchema['fields'] = [
   { key: 'Memo', label: 'Memo' },
 ];
 
-const recurringTransactionBillFields: OutputSchema['fields'] = [
-  { key: 'DueDate', label: 'Due Date', format: 'date' },
-  { key: 'Balance', label: 'Balance', format: 'currency' },
-  { key: 'domain', label: 'Domain' },
-  { key: 'sparse', label: 'Sparse Update', format: 'boolean' },
+const recurringTemplateFields: OutputSchema['fields'] = [
   { key: 'Id', label: 'ID' },
   { key: 'SyncToken', label: 'Sync Token' },
   { key: 'MetaData', label: 'Metadata', children: metadataFields },
-  { key: 'CurrencyRef', label: 'Currency', children: referenceFields },
-  { key: 'LinkedTxn', label: 'Linked Transactions' },
-  { key: 'Line', label: 'Line Items', listItems: billLineFields },
-  { key: 'RecurDataRef', label: 'Recur Data', children: referenceIdFields },
   {
     key: 'RecurringInfo',
     label: 'Recurring Info',
@@ -776,8 +768,6 @@ const recurringTransactionBillFields: OutputSchema['fields'] = [
       },
     ],
   },
-  { key: 'VendorRef', label: 'Vendor', children: referenceFields },
-  { key: 'APAccountRef', label: 'AP Account', children: referenceFields },
   { key: 'TotalAmt', label: 'Total Amount', format: 'currency' },
 ];
 
@@ -1035,7 +1025,7 @@ const rowsReportHeaderFields: OutputSchema['fields'] = [
 ];
 
 const rowsCellValueFields: OutputSchema['fields'] = [
-  { key: 'value', label: 'Value', format: 'date' },
+  { key: 'value', label: 'Value' },
   { key: 'id', label: 'ID' },
 ];
 
@@ -2243,30 +2233,18 @@ export const quickbooksSandboxCreatePurchaseOrderOutputSchema: OutputSchema = {
   ],
 };
 
-export const quickbooksSandboxCreateRecurringTransactionOutputSchema: OutputSchema =
-  {
-    fields: [
-      {
-        key: 'RecurringTransaction',
-        label: 'Recurring Transaction',
-        children: [
-          {
-            key: 'Bill',
-            label: 'Bill',
-            children: [
-              ...recurringTransactionBillFields,
-              {
-                key: 'VendorAddr',
-                label: 'Vendor Address',
-                children: resultAddressFields,
-              },
-            ],
-          },
-        ],
-      },
-      responseTimeField,
-    ],
-  };
+export const quickbooksSandboxCreateRecurringTransactionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'RecurringTransaction',
+      label: 'Recurring Transaction',
+      description: 'Keyed by the transaction type of the template, e.g. Bill or Invoice.',
+      dynamicKey: true,
+      children: recurringTemplateFields,
+    },
+    responseTimeField,
+  ],
+};
 
 export const quickbooksSandboxCreateRefundReceiptOutputSchema: OutputSchema = {
   fields: [
@@ -2490,21 +2468,20 @@ export const quickbooksSandboxDeletePurchaseOrderOutputSchema: OutputSchema = {
   ],
 };
 
-export const quickbooksSandboxDeleteRecurringTransactionOutputSchema: OutputSchema =
-  {
-    fields: [
-      {
-        key: 'RecurringTransaction',
-        label: 'Recurring Transaction',
-        children: [
-          { key: 'Bill', label: 'Bill', children: resultAddressFields },
-          { key: 'domain', label: 'Domain' },
-          { key: 'status', label: 'Status' },
-        ],
-      },
-      responseTimeField,
-    ],
-  };
+export const quickbooksSandboxDeleteRecurringTransactionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'RecurringTransaction',
+      label: 'Recurring Transaction',
+      description: 'The deleted template id sits under its transaction type, e.g. RecurringTransaction.Bill.Id.',
+      children: [
+        { key: 'status', label: 'Status' },
+        { key: 'domain', label: 'Domain' },
+      ],
+    },
+    responseTimeField,
+  ],
+};
 
 export const quickbooksSandboxDeleteRefundReceiptOutputSchema: OutputSchema = {
   fields: [
@@ -4307,35 +4284,25 @@ export const quickbooksSandboxListPurchasesOutputSchema: OutputSchema = {
   ],
 };
 
-export const quickbooksSandboxListRecurringTransactionsOutputSchema: OutputSchema =
-  {
-    fields: [
-      {
-        key: 'RecurringTransaction',
-        label: 'Recurring Transaction',
-        listItems: [
-          {
-            key: 'Bill',
-            label: 'Bill',
-            children: [
-              ...recurringTransactionBillFields,
-              {
-                key: 'VendorAddr',
-                label: 'Vendor Address',
-                children: addressFields,
-              },
-              {
-                key: 'SalesTermRef',
-                label: 'Sales Term',
-                children: referenceIdFields,
-              },
-            ],
-          },
-        ],
-      },
-      ...paginationFields,
-    ],
-  };
+export const quickbooksSandboxListRecurringTransactionsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'RecurringTransaction',
+      label: 'Recurring Transactions',
+      listItems: [
+        {
+          key: 'template',
+          value: '',
+          label: 'Template',
+          description: 'Keyed by the transaction type of the template, e.g. Bill or Invoice.',
+          dynamicKey: true,
+          children: recurringTemplateFields,
+        },
+      ],
+    },
+    ...paginationFields,
+  ],
+};
 
 export const quickbooksSandboxListRefundReceiptsOutputSchema: OutputSchema = {
   fields: [
@@ -4559,7 +4526,15 @@ export const quickbooksSandboxRunBatchOutputSchema: OutputSchema = {
 };
 
 export const quickbooksSandboxRunQueryOutputSchema: OutputSchema = {
-  fields: [{ key: 'totalCount', label: 'Total Count', format: 'number' }],
+  fields: [
+    {
+      key: 'QueryResponse',
+      label: 'Query Results',
+      description: 'One array named after the queried entity (e.g. Invoice), plus startPosition and maxResults; a COUNT(*) query returns totalCount instead.',
+      dynamicKey: true,
+    },
+    responseTimeField,
+  ],
 };
 
 export const quickbooksSandboxSendCreditMemoOutputSchema: OutputSchema = {
