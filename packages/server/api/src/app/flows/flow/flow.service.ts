@@ -917,11 +917,14 @@ async function replaceConnectionForDraftAndPublishedVersions({ id, projectId, pl
                         appliedOperations.push(await recordAppliedOperation({ id, projectId, operation: { type: FlowOperationType.LOCK_AND_PUBLISH, request: { status: flow.status } }, log }))
                     })
                     const hadUnpublishedChanges = latestVersion.id !== publishedVersionId
-                    if (hadUnpublishedChanges || !isNil(error)) {
+                    if (!hadUnpublishedChanges && isNil(error)) {
+                        return { appliedOperations, error }
+                    }
+                    const { error: restoreDraftError } = await tryCatch(async () => {
                         await writeDraft({ id, projectId, platformId, userId, operation: replaceInDraftOperation, log })
                         appliedOperations.push(await recordAppliedOperation({ id, projectId, operation: replaceInDraftOperation, log }))
-                    }
-                    return { appliedOperations, error }
+                    })
+                    return { appliedOperations, error: error ?? restoreDraftError }
                 },
             })
         },
