@@ -10,6 +10,7 @@ type EmbeddingState = {
   hideFolders: boolean;
   hideTables: boolean;
   hideFlowNameInBuilder: boolean;
+  hideConnectionsInBuilder: boolean;
   hideExportAndImportFlow: boolean;
   sdkVersion?: string;
   predefinedConnectionName?: string;
@@ -37,6 +38,7 @@ const defaultState: EmbeddingState = {
   hideFolders: false,
   hideTables: false,
   hideFlowNameInBuilder: false,
+  hideConnectionsInBuilder: false,
   hideExportAndImportFlow: false,
   useDarkBackground: window.opener !== null,
   hideHomeButtonInBuilder: false,

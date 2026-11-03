@@ -119,6 +119,7 @@ export interface ActivepiecesVendorInit {
   data: {
     hideSidebar: boolean;
     hideFlowNameInBuilder?: boolean;
+    hideConnectionsInBuilder?: boolean;
     disableNavigationInBuilder: boolean | 'keep_home_button_only';
     hideFolders?: boolean;
     hideTables?: boolean;
@@ -164,6 +165,7 @@ type EmbeddingParam = {
   builder?: {
     disableNavigation?: boolean;
     hideFlowName?: boolean;
+    hideConnections?: boolean;
     homeButtonIcon: 'back' | 'logo';
     homeButtonClickedHandler?: (data: {
       route: string;
@@ -342,6 +344,7 @@ class ActivepiecesEmbedded {
                 hideFolders: this._embeddingState?.hideFolders ?? false,
                 hideTables: this._embeddingState?.hideTables ?? false,
                 hideFlowNameInBuilder: this._embeddingState?.builder?.hideFlowName ?? false,
+                hideConnectionsInBuilder: this._embeddingState?.builder?.hideConnections ?? true,
                 jwtToken: this._jwtToken,
                 initialRoute,
                 fontUrl: this._embeddingState?.styling?.fontUrl,

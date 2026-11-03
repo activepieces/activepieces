@@ -134,6 +134,8 @@ const EmbedPage = React.memo(() => {
                   isEmbedded: true,
                   hideFlowNameInBuilder:
                     event.data.data.hideFlowNameInBuilder ?? false,
+                  hideConnectionsInBuilder:
+                    event.data.data.hideConnectionsInBuilder ?? true,
                   disableNavigationInBuilder:
                     event.data.data.disableNavigationInBuilder !== false,
                   hideFolders: event.data.data.hideFolders ?? false,
