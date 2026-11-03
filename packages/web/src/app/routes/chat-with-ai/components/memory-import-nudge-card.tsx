@@ -2,7 +2,7 @@ import { TelemetryEventName } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Brain } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ImportMemoryDialog } from '@/app/components/settings-hub/sections/memory/import-memory-dialog';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
@@ -28,26 +28,26 @@ export function MemoryImportNudgeCard({
     mutationFn: chatApi.markMemoryImportNudgeShown,
   });
   const eligible = data?.eligible === true;
-  const reportedShownRef = useRef(false);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!eligible || reportedShownRef.current) return;
-    reportedShownRef.current = true;
+    if (!eligible) return;
+    queryClient.setQueryData(MEMORY_IMPORT_NUDGE_QUERY_KEY, {
+      eligible: false,
+    });
+    setVisible(true);
     markShown();
     capture({
       name: TelemetryEventName.MEMORY_IMPORT_NUDGE_SHOWN,
       payload: { conversationId },
     });
-  }, [eligible, markShown, capture, conversationId]);
+  }, [eligible, queryClient, markShown, capture, conversationId]);
 
-  if (!eligible) {
+  if (!visible) {
     return null;
   }
 
-  const hide = () =>
-    queryClient.setQueryData(MEMORY_IMPORT_NUDGE_QUERY_KEY, {
-      eligible: false,
-    });
+  const hide = () => setVisible(false);
 
   const openImport = () => {
     capture({
