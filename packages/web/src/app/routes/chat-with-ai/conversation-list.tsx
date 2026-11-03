@@ -124,13 +124,16 @@ export function ConversationList({
     setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 5);
   }, []);
 
+  const skippedLoadMoreRef = useRef(false);
+
   const loadMoreIfNearEnd = useCallback(() => {
     const el = listRef.current;
     const nearListEnd =
       !!el &&
       el.scrollTop + el.clientHeight >= el.scrollHeight - LOAD_MORE_OFFSET_PX;
-    const shouldLoadMore = nearListEnd && hasNextPage && !isFetching;
-    if (shouldLoadMore) {
+    const wantsMore = nearListEnd && hasNextPage;
+    skippedLoadMoreRef.current = wantsMore && isFetching;
+    if (wantsMore && !isFetching) {
       fetchNextPage().catch(() => undefined);
     }
   }, [hasNextPage, isFetching, fetchNextPage]);
@@ -140,7 +143,9 @@ export function ConversationList({
 
   useEffect(() => {
     checkFades();
-    if (fillsShortSearchResults) {
+    const retriesSkippedScroll =
+      skippedLoadMoreRef.current && !isFetchNextPageError;
+    if (fillsShortSearchResults || retriesSkippedScroll) {
       loadMoreIfNearEnd();
     }
   }, [
@@ -149,6 +154,7 @@ export function ConversationList({
     checkFades,
     loadMoreIfNearEnd,
     fillsShortSearchResults,
+    isFetchNextPageError,
   ]);
 
   const handleListScroll = useCallback(() => {
