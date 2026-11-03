@@ -9,7 +9,7 @@ How an Engineering project gets a second engineer who approves the scope before 
 **Co-owned project** — a Linear project with the `co-owned` label whose description has the line `Co-Owner: <Name> (@github-login)`. The Co-Owner is also a project member, so the project shows in a "member = me" view. A project without the label keeps the old process.
 **PM** — the product person who brings the idea, agrees on the acceptance criteria, watches the demo and accepts the result. Decides product concerns. _Avoid_: "Product team"
 **Owner** — the engineer who scopes, writes the approach note and builds. The project Lead in Linear. Decides technical concerns.
-**Co-Owner** — the engineer named in the `Co-Owner:` line, from the code-owner team of the area the project changes most. Approves the scope and reviews every PR. Does not build and does not take over. _Avoid_: "second pair of eyes"
+**Co-Owner** — the engineer named in the `Co-Owner:` line, from the code-owner team of the area the project changes most, and never the project Lead. Approves the scope and reviews every PR. Does not build and does not take over. Can change during the project. _Avoid_: "second pair of eyes"
 **Area lead** — one per code-owner team (core, pieces, platform). Names Owners and Co-Owners, covers absences, and breaks an Owner–Co-Owner tie in 1 business day.
 **Product decider** — the PM, or the founder or Owner the approach note names when the project has no PM.
 **Approach note** — problem, acceptance criteria with IDs (AC-1, AC-2), approach, the rejected alternative, the five cost answers, the product decider and the Co-Owner. The Owner posts it with `/ask <ticket>` in the Discord #questions forum.
@@ -89,7 +89,7 @@ Two projects, ending 2026-12-04. For each concern, record where it first appears
 ## Edge cases
 
 - **Co-Owner silent on a PR for 2 business days** — the Owner pings once; on day 3, one code owner of the area reviews that PR only. The Co-Owner reads it after the merge.
-- **Co-Owner away more than a week** — the area lead names a temporary Co-Owner from the same team and updates the `Co-Owner:` line. The approach note is the handover.
+- **Co-Owner changes** — for an absence, a workload limit, or any other reason, the area lead or the Owner names a new Co-Owner from the same team. They update the `Co-Owner:` line and the project members, and write "Co-Owner changed from <A> to <B>" on the project. An earlier "Scope approved" stays valid, and the new Co-Owner reviews the next PRs. The approach note is the handover.
 - **Owner leaves** — the area lead names a new Owner; the Co-Owner briefs them.
 - **No free Co-Owner** — limit 2 active co-owned projects per engineer. Over it, the project waits or the area lead is the Co-Owner. Never a Co-Owner from another team: the ruleset needs a code owner.
 - **Owner is a contractor** — the Co-Owner is a team engineer with write access.
@@ -101,13 +101,13 @@ Two projects, ending 2026-12-04. For each concern, record where it first appears
 - **PM or founder concern after the window** — a follow-up ticket like any other. To change the scope now, they accept the cost on the ticket: the work to redo and the new date.
 - **Two areas changed** — the Co-Owner comes from the area with the most change. A PR in the other area also needs that area's code owner.
 - **Large PR (migration, generated code)** — allowed; the PR body says why and names the file to read first.
-- **Work fits in one PR, a single bug, or a hotfix** — not a project. Round-robin review, no Co-Owner.
+- **Work fits in one PR, a single bug, or a hotfix** — not a project. No Co-Owner and no gate: agents treat the ticket as approved in any status. Round-robin review.
 - **Rushed feature** — the gate stays but can be same-day on a short note; the window and the demo can be skipped when the PM or a founder asks and the Owner and Co-Owner agree. Decisions records each skip, and each skip gets a follow-up ticket.
 
 ## Gotchas
 
 - Linear has no custom fields on projects and no member roles, so the `co-owned` label and the `Co-Owner:` line are the signal. A member count is not: a PM or a third member would change it.
-- Any project member can type "Scope approved", and the Linear MCP writes as the engineer. Only a comment whose author is the named Co-Owner counts, and an agent never writes one.
+- Any project member can type "Scope approved", and the Linear MCP writes as the engineer. Only a comment whose author is the named Co-Owner, or a former Co-Owner named in a "Co-Owner changed" comment, counts. An agent never writes one.
 - The ruleset accepts any code-owner approval, so GitHub does not enforce the Co-Owner. The pilot counts merges without one.
 - GitHub round-robin adds a second reviewer even when the Co-Owner is already requested, unless the team's code review assignment has "Count existing requests" on.
 - A Co-Owner without write access is skipped as a code owner, so the PR cannot merge on that approval.
