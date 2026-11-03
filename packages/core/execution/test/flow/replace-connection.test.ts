@@ -67,7 +67,7 @@ describe('flowStructureUtil.replaceConnection', () => {
         expect(authOf(result, 'step_2')).toBe("{{connections['other']}}")
         expect(authOf(result, 'step_3')).toBe("{{connections['new']}}")
         expect(flowStructureUtil.getStepOrThrow('step_1', result.trigger).settings.input.channel).toBe('general')
-        expect(flowStructureUtil.extractConnectionIds(result)).toEqual(['new', 'other'])
+        expect(flowStructureUtil.extractFlowConnectionIds(result)).toEqual(['new', 'other'])
     })
 
     it('does not change a step whose auth points at a connection that only starts with the source name', () => {
@@ -98,7 +98,7 @@ describe('flowStructureUtil.replaceConnection', () => {
         }
         const flowVersion = flowWith(agentStep)
         expect(flowStructureUtil.extractAgentToolsConnectionIds(flowVersion)).toEqual(['old', 'other'])
-        expect(flowStructureUtil.extractConnectionIds(flowVersion)).toEqual(['old', 'other'])
+        expect(flowStructureUtil.extractFlowConnectionIds(flowVersion)).toEqual(['old', 'other'])
 
         const result = flowStructureUtil.replaceConnection({ flowVersion, sourceExternalId: 'old', targetExternalId: 'new' })
 

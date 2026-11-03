@@ -279,7 +279,7 @@ function isAgentPiece(action: Step) {
     )
 }
 
-function extractConnectionIds(flowVersion: FlowVersion): string[] {
+function extractFlowConnectionIds(flowVersion: FlowVersion): string[] {
     return unique(getAllSteps(flowVersion.trigger).flatMap(extractStepConnectionIds))
 }
 
@@ -385,7 +385,7 @@ export const flowStructureUtil = {
     hasContinueOnFailureBranches,
     getSkippedStepNames,
     isSkipped,
-    extractConnectionIds,
+    extractFlowConnectionIds,
     extractStepConnectionIds,
     isAgentPiece,
     isBranchedAction,
