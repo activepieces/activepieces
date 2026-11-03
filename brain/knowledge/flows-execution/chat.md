@@ -78,6 +78,8 @@ A turn is kept alive / reclaimed by three separate mechanisms in `execute-agent-
 
 - **The chat's internal MCP token lives as long as a turn can (2 hours), not 15 minutes.** It's issued once per turn by `issueChatTurnAccessToken` (called from `agentMcp.getCredentials`) and kept in worker memory. `issueInternalAccessToken`, which the `/mcp-server/token` route hands to callers, keeps 15 minutes. With the 15-minute outside-client lifetime, any turn that waited on a card long enough lost every `ap_*` tool with "authentication failed" and stopped half done. Outside MCP clients keep their 15-minute tokens.
 
+- **Chat won't overwrite a step you edited in the builder.** Each flow tool call from in-app chat goes through `chatFlowAwareness.wrap` (`ee/agent/chat-flow-awareness.ts`, hooked in `registerStaticTools`). It diffs the flow against the snapshot chat last saw (`agent_conversation.flowSnapshots`, keyed by flowId), puts your edits at the top of the next tool result, and refuses a write to a step you changed until chat re-reads it. External MCP clients (Claude, Cursor) carry no conversation id, so they skip it.
+
 ### Key files
 Entry point: `agentModule`, the Fastify plugin registered in `packages/server/api/src/app/app.ts`.
 

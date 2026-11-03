@@ -1,4 +1,4 @@
-import { Agent, AgentConversation, AgentConversationStatus, AgentRunSource, Platform, Project, User } from '@activepieces/shared'
+import { Agent, AgentConversation, AgentConversationStatus, AgentRunSource, FlowSnapshot, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
@@ -7,6 +7,7 @@ export type AgentConversationWithRelations = AgentConversation & {
     project: Project
     user: User
     agent: Agent
+    flowSnapshots: Record<string, FlowSnapshot> | null
 }
 
 export const AgentConversationEntity = new EntitySchema<AgentConversationWithRelations>({
@@ -32,6 +33,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
         waitpointId: {
             ...ApIdSchema,
             nullable: true,
+        },
+        flowSnapshots: {
+            type: 'jsonb',
+            nullable: true,
+            select: false,
         },
         aiCredits: {
             type: Number,
