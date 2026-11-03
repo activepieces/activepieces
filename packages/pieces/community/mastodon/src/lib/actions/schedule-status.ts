@@ -9,12 +9,14 @@ import {
 } from '../common/client';
 import { scheduledStatusOutputSchema } from '../output-schemas';
 
+const composeProps = mastodonProps.compose();
+
 export const scheduleStatus = createAction({
   auth: mastodonAuth,
   name: 'schedule_status',
   classification: 'WRITE',
   displayName: 'Schedule Status',
-  description: 'Schedule a status to be published automatically at a future time.',
+  description: 'Schedule a status to be published at a later time.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -22,19 +24,59 @@ export const scheduleStatus = createAction({
     idempotent: false,
   },
   outputSchema: scheduledStatusOutputSchema,
+  propertyGroups: [
+    {
+      key: 'when',
+      display: 'section',
+      label: 'When',
+      icon: 'calendar',
+      props: ['scheduled_at'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['status', 'spoiler_text', 'language'],
+    },
+    {
+      key: 'media',
+      display: 'section',
+      label: 'Media',
+      icon: 'paperclip',
+      props: ['media_ids', 'sensitive'],
+    },
+    {
+      key: 'poll',
+      display: 'section',
+      label: 'Poll',
+      icon: 'sliders',
+      props: ['poll_options', 'poll_expires_in', 'poll_multiple'],
+    },
+    {
+      key: 'delivery',
+      display: 'section',
+      label: 'Delivery',
+      icon: 'send',
+      props: ['visibility', 'in_reply_to_id'],
+    },
+  ],
   props: {
     scheduled_at: Property.DateTime({
       displayName: 'Scheduled At',
       description:
-        'When to publish, as a date-time such as 2026-10-01T09:30:00Z. Must be at least 6 minutes in the future (Mastodon requires 5, plus a minute for clock drift).',
+        'At least 6 minutes from now; Mastodon needs 5, plus a minute for clock drift.',
+      placeholder: '2026-10-01T09:30:00Z',
       required: true,
     }),
-    ...mastodonProps.compose(),
+    ...composeProps,
+    spoiler_text: halfWidth(composeProps.spoiler_text),
+    language: halfWidth(composeProps.language),
     idempotency_key: Property.ShortText({
-      displayName: 'Idempotency Key',
-      description:
-        'Optional unique string (for example a UUID). Mastodon keeps it for up to 1 hour and ignores a duplicate submission with the same key.',
+      displayName: 'Deduplication Key',
+      description: 'Reuse a key on retries within an hour so the status is scheduled once.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
@@ -66,3 +108,7 @@ export const scheduleStatus = createAction({
     });
   },
 });
+
+function halfWidth<T extends { width?: 'half' | 'full' }>(property: T): T {
+  return { ...property, width: 'half' };
+}

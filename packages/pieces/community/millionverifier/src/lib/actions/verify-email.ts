@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { millionVerifierAuth } from '../common/auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { verifyEmailActionOutputSchema } from '../output-schemas';
 export const verifyEmail = createAction({
   auth: millionVerifierAuth,
   name: 'verifyEmail',
@@ -8,6 +9,7 @@ export const verifyEmail = createAction({
   displayName: 'Verify Email',
   description: 'Verify email address using Million Verifier API',
   audience: 'both',
+  outputSchema: verifyEmailActionOutputSchema,
   aiMetadata: { description: 'Validates a single email address against the MillionVerifier real-time API, returning its deliverability status (e.g. deliverable, undeliverable, risky). Use to check whether an email is valid and safe to send to before adding it to a list or sending mail. Requires one email address; the call is read-only and idempotent.', idempotent: true },
   props: {
     email: Property.ShortText({
@@ -31,7 +33,7 @@ export const verifyEmail = createAction({
       email: email,
       timeout: timeout.toString(),
     });
-    const url = `https://millionverifier.com/api/v3/?${params.toString()}`;
+    const url = `https://api.millionverifier.com/api/v3/?${params.toString()}`;
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: url,

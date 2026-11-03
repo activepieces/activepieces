@@ -221,7 +221,7 @@ export const PieceSetProjectsDialog = ({
       <DialogTrigger asChild>
         <Button
           {...adminControl(AdminControl.PIECE_SETS_PROJECTS_OPEN)}
-          variant="outline"
+          variant="field"
           role="combobox"
           disabled={isLoading}
           className="font-normal"

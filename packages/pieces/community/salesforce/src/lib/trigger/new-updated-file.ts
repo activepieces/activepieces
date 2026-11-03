@@ -6,6 +6,8 @@ import {
 } from '@activepieces/pieces-common';
 import {
     AppConnectionValueForAuthProperty,
+    MarkdownVariant,
+    Property,
     TriggerStrategy,
     createTrigger,
 } from '@activepieces/pieces-framework';
@@ -20,12 +22,17 @@ export const newUpdatedFile = createTrigger({
     name: 'new_updated_file',
     classification: 'READ',
     displayName: 'New or Updated File',
-    description: 'Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.',
+    description: 'Fires when a file is added or changed. Classic attachments are not included.',
     aiMetadata: {
         description: 'Fires whenever a Salesforce Files ContentDocument is created or modified, detected by polling for records whose SystemModstamp is later than the last poll. Each event represents the current state of one file and includes its fields plus a Type of ContentDocument. Does not fire for classic Attachments or Notes.',
     },
     outputSchema: newUpdatedFileTriggerOutputSchema,
-    props: {},
+    props: {
+        scope_info: Property.MarkDown({
+            value: 'Watches Salesforce Files. Classic attachments and notes are not included.',
+            variant: MarkdownVariant.INFO,
+        }),
+    },
     sampleData: {
         "Id": "0697Q000002qB9iQAE",
         "Title": "My Document.pdf",
@@ -47,7 +54,7 @@ export const newUpdatedFile = createTrigger({
     },
 });
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>, Record<string, unknown>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
         const isoDate = dayjs(lastFetchEpochMS).toISOString();

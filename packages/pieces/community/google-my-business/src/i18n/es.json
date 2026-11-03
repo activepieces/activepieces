@@ -130,5 +130,12 @@
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
   "New Review": "Nueva reseña",
-  "Triggers when a customer posts a new review on the location.": "Se activa cuando un cliente publica una nueva reseña en la ubicación."
+  "Triggers when a customer posts a new review on the location.": "Se activa cuando un cliente publica una nueva reseña en la ubicación.",
+  "Post to Update": "Post a actualizar",
+  "Review": "Reseña",
+  "Reply": "Respuesta",
+  "Results": "Resultados",
+  "Business": "Empresa",
+  "Markdown": "Markdown",
+  "Fields left empty keep their current value.": "Los campos vacíos conservan su valor actual."
 }

@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { fileToUploadInput, sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { fileToUploadInput, regionOf, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
 
 export const pdfToJpgAction = createAction({
@@ -11,6 +12,7 @@ export const pdfToJpgAction = createAction({
   description:
     'Convert PDF pages to JPG images, or extract images embedded in the PDF.',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Turn a PDF into JPG images. Choose the "pages" mode to render each page as a full JPG, or the "extract" mode to pull out only the raster images already embedded inside the PDF. Each run produces a new converted output, so re-running creates a fresh result rather than reusing a prior one.',
@@ -40,10 +42,12 @@ export const pdfToJpgAction = createAction({
       context.propsValue;
 
     return await runAndStoreResult({
-      auth:context.auth.secret_text,
+      auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'pdfjpg',
-      uploads: [fileToUploadInput(file)],
+      uploads: [fileToUploadInput({ file: file })],
       options: {
         pdfjpg_mode: pdfjpg_mode ?? 'pages',
       },

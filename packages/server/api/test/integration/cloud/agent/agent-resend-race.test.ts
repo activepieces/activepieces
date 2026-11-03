@@ -48,6 +48,19 @@ describe('re-sending a message while the first run has not started yet', () => {
         expect(stored.activeRunId).toBe('run-1')
     })
 
+    it('drops a copy delivered after its run finished, so the agent and its tools do not run twice', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const created = await ctx.post('/v1/agents/conversations', { title: 'Late copy' })
+        const conversationId = created.json().id
+        await agentHelpers.claimConversationForRun({ conversationId, runId: 'run-1' })
+        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('acquired')
+        await db.update('agent_conversation', conversationId, { status: AgentConversationStatus.IDLE })
+
+        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('duplicate')
+        const stored = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: conversationId })
+        expect(stored.status).toBe(AgentConversationStatus.IDLE)
+    })
+
     it('still reports busy when a run without an id finds the conversation already streaming', async () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
         const created = await ctx.post('/v1/agents/conversations', { title: 'Busy' })

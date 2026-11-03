@@ -6,5 +6,12 @@
   "Booking Rescheduled": "Réservation reprogrammée",
   "Create a webhook to monitor when Booking Cancelled": "Créer un webhook à surveiller lors de l'annulation de la réservation",
   "Create a webhook to monitor when Booking Created": "Créer un webhook à surveiller lors de la création d'une réservation",
-  "Create a webhook to monitor when Booking Rescheduled": "Créer un webhook à surveiller lorsque la réservation est reprogrammée"
+  "Create a webhook to monitor when Booking Rescheduled": "Créer un webhook à surveiller lorsque la réservation est reprogrammée",
+  "To get your API key:\n1. Open [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) in Cal.com.\n2. Create a new key and choose when it expires.\n3. Copy the key (it starts with `cal_`) and paste it here.": "Pour obtenir votre clé API :\n1. Ouvrez [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) dans Cal.com.\n2. Créez une nouvelle clé et choisissez sa date d'expiration.\n3. Copiez la clé (elle commence par `cal_`) et collez-la ici.",
+  "Add cal-api-version (2026-05-01 for /bookings). Auth is added for you.": "Ajoutez cal-api-version (2026-05-01 pour /bookings). L'authentification est ajoutée pour vous.",
+  "New Booking": "Nouvelle réservation",
+  "Triggers when a Cal.com booking is cancelled.": "Se déclenche lorsqu'une réservation Cal.com est annulée.",
+  "Triggers when someone books a meeting with you on Cal.com.": "Se déclenche lorsqu'une personne réserve une réunion avec vous sur Cal.com.",
+  "Triggers when a Cal.com booking is moved to a new time.": "Se déclenche lorsqu'une réservation Cal.com est déplacée à un autre horaire.",
+  "This webhook is added to your Cal.com account when you publish the flow and removed when you turn it off. It fires for bookings on the account that owns the API key.": "Ce webhook est ajouté à votre compte Cal.com lorsque vous publiez le flux et supprimé lorsque vous le désactivez. Il se déclenche pour les réservations du compte propriétaire de la clé API."
 }

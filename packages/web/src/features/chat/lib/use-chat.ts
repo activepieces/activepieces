@@ -387,6 +387,7 @@ export function useAgentChat({
     { name: string; mimeType: AgentAllowedMimeType; data: string }[] | undefined
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
+  const lastSentRef = useRef<{ content: string; files?: File[] } | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const modelPickRef = useRef<ChatModelPick | null>(null);
   const savedPickRef = useRef<ChatModelPick | null>(null);
@@ -810,6 +811,7 @@ export function useAgentChat({
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
+      lastSentRef.current = { content, files };
 
       const optimisticUser: ChatUIMessage = {
         id: `optimistic-${Date.now()}`,
@@ -866,7 +868,10 @@ export function useAgentChat({
           setOptimisticUserMessage(null);
           updateSendStatus({
             type: 'error',
-            message: convError.message ?? 'Failed to start conversation',
+            message: api.extractServerErrorMessage(
+              convError,
+              'Failed to start conversation',
+            ),
           });
           return;
         }
@@ -928,7 +933,10 @@ export function useAgentChat({
         } else {
           updateSendStatus({
             type: 'error',
-            message: sendError.message ?? 'Failed to send message',
+            message: api.extractServerErrorMessage(
+              sendError,
+              'Failed to send message',
+            ),
           });
         }
       }
@@ -942,6 +950,16 @@ export function useAgentChat({
       commitInFlightTurn,
       store,
     ],
+  );
+
+  const retryLastMessage = useCallback(
+    (fallbackContent: string) => {
+      const lastSent = lastSentRef.current;
+      return isNil(lastSent)
+        ? sendMessage(fallbackContent)
+        : sendMessage(lastSent.content, lastSent.files);
+    },
+    [sendMessage],
   );
 
   const setConversationId = useCallback(
@@ -963,6 +981,7 @@ export function useAgentChat({
 
       pendingFilesRef.current = undefined;
       lastSentFileNamesRef.current = [];
+      lastSentRef.current = null;
       setOptimisticUserMessage(null);
 
       setIsLoadingHistory(true);
@@ -1130,6 +1149,7 @@ export function useAgentChat({
     isLoadingHistory,
     error,
     sendMessage,
+    retryLastMessage,
     cancelStream,
     setConversationId,
     setModelPick,

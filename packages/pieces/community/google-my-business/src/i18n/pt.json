@@ -130,5 +130,12 @@
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
   "New Review": "Nova Revisão",
-  "Triggers when a customer posts a new review on the location.": "Dispara quando um cliente publica uma nova avaliação no local."
+  "Triggers when a customer posts a new review on the location.": "Dispara quando um cliente publica uma nova avaliação no local.",
+  "Post to Update": "Publicação a atualizar",
+  "Review": "Avaliação",
+  "Reply": "Resposta",
+  "Results": "Resultados",
+  "Business": "Empresa",
+  "Markdown": "Markdown",
+  "Fields left empty keep their current value.": "Campos deixados vazios mantêm o valor atual."
 }

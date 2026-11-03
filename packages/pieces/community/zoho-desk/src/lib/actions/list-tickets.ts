@@ -1,19 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { zohoDeskAuth } from '../common/auth';
-import { zohoDeskApiCall } from '../common';
-import { organizationId } from '../common/props';
+import { zohoDeskAuth } from '../auth';
+import { zohoDeskApi } from '../common/api';
+import { zohoDeskProps } from '../common/props';
+import { listTicketsOutputSchema } from '../output-schemas';
 
 export const listTicketsAction = createAction({
 	auth: zohoDeskAuth,
 	name: 'list_tickets',
+	outputSchema: listTicketsOutputSchema,
 	classification: 'SEARCH',
 	description: 'List tickets',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Retrieves tickets from a Zoho Desk organization, optionally expanding related data (contacts, products, departments, team, isRead, assignee) via the include option. Use to browse or page through existing tickets when you do not have a specific ticket ID; requires the organization ID. Read-only and idempotent.', idempotent: true },
 	displayName: 'List tickets.',
 	props: {
-		orgId: organizationId({ displayName: 'Organization', required: true }),
+		orgId: zohoDeskProps.orgId({ required: true }),
 		include: Property.StaticMultiSelectDropdown({
 			displayName: 'include',
 			required: false,
@@ -32,18 +33,6 @@ export const listTicketsAction = createAction({
 		}),
 	},
 	async run({ propsValue, auth }) {
-		const queryParams: Record<string, string> = {};
-
-		if (propsValue.include) queryParams['include'] = propsValue.include.join(',');
-
-		const response = await zohoDeskApiCall({
-			auth,
-			method: HttpMethod.GET,
-			resourceUri: '/tickets',
-			orgId: propsValue.orgId,
-			query: queryParams,
-		});
-
-		return response;
+		return await zohoDeskApi.listTickets({ auth, orgId: propsValue.orgId, include: propsValue.include });
 	},
 });

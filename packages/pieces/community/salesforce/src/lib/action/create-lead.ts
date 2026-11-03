@@ -9,36 +9,51 @@ export const createLead = createAction({
     name: 'create_lead',
     classification: 'WRITE',
     displayName: 'Create Lead',
-    description: 'Creates a new lead.',
+    description: 'Creates a lead.',
     audience: 'human',
     aiMetadata: { description: 'Create a new Lead; Last Name and Company are required. Not idempotent — each call adds another Lead, so dedup beforehand if needed. Use Update Lead to modify an existing one.', idempotent: false },
     outputSchema: sobjectCreateResponseOutputSchema,
+    propertyGroups: [
+        { key: 'name', display: 'section', label: 'Name', icon: 'user', props: ['FirstName', 'LastName'] },
+        { key: 'company', display: 'section', label: 'Company', icon: 'users', props: ['Company', 'LeadSource'] },
+        { key: 'contact_details', display: 'section', label: 'Contact Details', icon: 'inbox', props: ['Email', 'Phone'] },
+    ],
     props: {
         LastName: Property.ShortText({
             displayName: 'Last Name',
             required: true,
+            placeholder: 'Doe',
+            width: 'half',
         }),
         Company: Property.ShortText({
             displayName: 'Company',
             required: true,
+            placeholder: 'Acme Inc.',
         }),
         FirstName: Property.ShortText({
             displayName: 'First Name',
             required: false,
+            placeholder: 'Jane',
+            width: 'half',
         }),
         Email: Property.ShortText({
             displayName: 'Email',
             required: false,
+            placeholder: 'jane@example.com',
+            width: 'half',
         }),
         Phone: Property.ShortText({
             displayName: 'Phone',
             required: false,
+            placeholder: '+1 415 555 0100',
+            width: 'half',
         }),
         LeadSource: salesforcesCommon.leadSource,
         other_fields: Property.Json({
             displayName: 'Other Fields',
-            description: 'Enter additional fields as a JSON object (e.g., {"Title": "Manager", "Website": "http://example.com"}).',
-            required: false
+            description: 'More fields as JSON, with Salesforce field API names as keys.',
+            required: false,
+            advanced: true,
         })
     },
     async run(context) {

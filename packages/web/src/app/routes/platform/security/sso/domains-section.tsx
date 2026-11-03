@@ -3,6 +3,7 @@ import {
   SsoDomainVerification,
   SsoDomainVerificationStatus,
 } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { FileText, MoreHorizontal, ShieldCheck, Trash } from 'lucide-react';
 import { useState } from 'react';
@@ -101,17 +102,14 @@ const DomainRow = ({
     useSignInMethods(platform).isOnlyWorkingMethod('saml');
   const [dnsRecordOpen, setDnsRecordOpen] = useState(false);
   const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
+  const day = Math.min(7, dayjs().diff(verification.createdAt, 'day') + 1);
 
   return (
     <SettingsRow
       media={<DomainStatusIcon status={verified ? 'verified' : 'pending'} />}
       title={domain}
       description={
-        verified
-          ? undefined
-          : t(
-              "Verification in progress. Add the TXT record within 3 hours or it's dropped.",
-            )
+        verified ? undefined : t('Waiting for DNS · day {day} of 7', { day })
       }
     >
       <StatusDot

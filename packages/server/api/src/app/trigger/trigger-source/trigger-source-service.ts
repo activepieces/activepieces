@@ -15,7 +15,7 @@ export const triggerSourceRepo = repoFactory(TriggerSourceEntity)
 export const triggerSourceService = (log: FastifyBaseLogger) => {
     return {
         async enable(params: EnableTriggerParams): Promise<TriggerSource> {
-            const { flowVersion, projectId, simulate, templateId, isRepublish } = params
+            const { flowVersion, projectId, simulate, templateId, isRepublish, isTriggerUnchanged } = params
             log.info({
                 flow: { id: flowVersion.flowId },
                 flowVersion: { id: flowVersion.id },
@@ -30,6 +30,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                     simulate,
                 },
                 withDeleted: true,
+                order: { created: 'DESC' },
             })
             if (!isNil(existingTriggerSource)) {
                 await jobQueue(log).removeRepeatingJob({ flowVersionId: existingTriggerSource.flowVersionId })
@@ -61,6 +62,8 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                     pieceTrigger,
                     simulate,
                     isRepublish,
+                    isTriggerUnchanged,
+                    previousSchedule: existingTriggerSource?.schedule ?? undefined,
                 })
                 return triggerSourceRepo().save({
                     ...triggerSource,
@@ -196,6 +199,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                     simulate,
                     ignoreError: params.ignoreError,
                     isRepublish: params.isRepublish,
+                    isTriggerUnchanged: params.isTriggerUnchanged,
                 })
                 log.info('[triggerSourceService#disable] Disabled flow trigger side effect')
             }
@@ -252,6 +256,7 @@ type DisableTriggerParams = {
     ignoreError: boolean
     templateId?: string
     isRepublish?: boolean
+    isTriggerUnchanged?: boolean
 }
 
 type EnableTriggerParams = {
@@ -260,4 +265,5 @@ type EnableTriggerParams = {
     simulate: boolean
     templateId?: string
     isRepublish?: boolean
+    isTriggerUnchanged?: boolean
 }

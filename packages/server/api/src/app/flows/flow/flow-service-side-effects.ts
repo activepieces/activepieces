@@ -12,6 +12,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         publishedFlowVersion,
         templateId,
         isRepublish,
+        isTriggerUnchanged,
     }: PreUpdateStatusParams): Promise<void> {
         switch (newStatus) {
             case FlowStatus.ENABLED: {
@@ -21,6 +22,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     simulate: false,
                     templateId,
                     isRepublish,
+                    isTriggerUnchanged,
                 })
                 break
             }
@@ -144,6 +146,7 @@ type PreUpdateStatusParams = {
     newStatus: FlowStatus
     templateId?: string
     isRepublish?: boolean
+    isTriggerUnchanged?: boolean
 }
 
 

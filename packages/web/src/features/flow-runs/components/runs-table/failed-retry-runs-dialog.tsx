@@ -66,15 +66,7 @@ export const FailedRetryRunsDialog = ({
                       </span>
                     </div>
                     <p className="text-xs text-gray-11">
-                      {run.error?.errorCode ===
-                      ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION
-                        ? t(
-                            'Retry is only available for {failedJobRetentionDays} after a run fails.',
-                            {
-                              failedJobRetentionDays: retentionDays,
-                            },
-                          )
-                        : run.error.errorMessage ?? t('Internal server error')}
+                      {retryErrorMessage({ run, retentionDays })}
                     </p>
                   </div>
                   <Button
@@ -100,4 +92,28 @@ export const FailedRetryRunsDialog = ({
       </DialogContent>
     </Dialog>
   );
+};
+
+function retryErrorMessage({
+  run,
+  retentionDays,
+}: RetryErrorMessageParams): string {
+  switch (run.error.errorCode) {
+    case ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION:
+      return t(
+        'Retry is only available for {failedJobRetentionDays} after a run fails.',
+        {
+          failedJobRetentionDays: retentionDays,
+        },
+      );
+    case ErrorCode.FLOW_RUN_NOT_RETRYABLE:
+      return t('Only failed runs can be retried from failed step');
+    default:
+      return run.error.errorMessage ?? t('Internal server error');
+  }
+}
+
+type RetryErrorMessageParams = {
+  run: Required<FlowRunWithRetryError>;
+  retentionDays: number | null | undefined;
 };

@@ -37,9 +37,15 @@ export const newWorksheetTrigger = createTrigger({
 				}
 			}
 		}
+		if (context.isRepublish && !isNil(await context.store.get('worksheets'))) {
+			return;
+		}
 		await context.store.put('worksheets', JSON.stringify(ids));
 	},
 	async onDisable(context) {
+		if (context.isRepublish) {
+			return;
+		}
 		await context.store.delete('worksheets');
 	},
 	async test(context) {

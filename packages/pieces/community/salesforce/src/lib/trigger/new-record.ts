@@ -11,6 +11,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { querySalesforceApi, salesforcesCommon } from '../common';
+import { salesforceUtils } from '../common/utils';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
@@ -21,7 +22,7 @@ export const newRecord = createTrigger({
   name: 'new_record',
   classification: 'READ',
   displayName: 'New Record',
-  description: 'Triggers when there is new record',
+  description: 'Fires when a record of the chosen object is created.',
   aiMetadata: {
     description: 'Fires once for each new record created for the selected Salesforce object, detected by polling for records whose CreatedDate is later than the last poll. Each event emits all fields of the created record. An optional SOQL where-clause condition can further filter which records trigger the event. Does not fire on updates to existing records.',
   },
@@ -29,42 +30,25 @@ export const newRecord = createTrigger({
   props: {
     object: salesforcesCommon.object,
     conditions: Property.LongText({
-      displayName: 'Conditions (Advanced)',
-      description: 'Enter a SOQL query where clause i. e. IsDeleted = TRUE',
+      displayName: 'Conditions',
+      description: 'SOQL conditions to filter by, without the WHERE keyword.',
+      placeholder: "Industry = 'Technology'",
       required: false,
     }),
   },
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async test(ctx) {
-    return await pollingHelper.test(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-      files: ctx.files,
-    });
+    return await pollingHelper.test(polling, ctx);
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onEnable(polling, ctx);
   },
   async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onDisable(polling, ctx);
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-      files: ctx.files,
-    });
+    return await pollingHelper.poll(polling, ctx);
   },
 });
 
@@ -98,28 +82,7 @@ const getRecords = async (
   }>(
     HttpMethod.GET,
     authentication,
-    constructQuery(object, 200, 0, startDate, conditions)
+    salesforceUtils.buildPollingQuery({ object, dateField: 'CreatedDate', startDate, conditions })
   );
   return response.body['records'];
 };
-
-function constructQuery(
-  object: string,
-  limit: number,
-  offset: number,
-  startDate: string,
-  conditions: string | undefined
-) {
-  return `
-    SELECT
-      FIELDS(ALL)
-    FROM
-      ${object}
-    WHERE CreatedDate > ${startDate} ${
-    conditions != undefined ? `AND ${conditions}` : ''
-  }
-    ORDER BY CreatedDate ASC
-    LIMIT ${limit}
-    OFFSET ${offset}
-  `;
-}

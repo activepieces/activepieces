@@ -85,5 +85,9 @@
   "PATCH": "PATCH",
   "PUT": "弹出",
   "DELETE": "删除",
-  "HEAD": "黑色"
+  "HEAD": "黑色",
+  "Simple": "简单",
+  "Advanced": "高级",
+  "Fill in Text, Image or PDF, or both.": "填写文本、图片或 PDF，或两者都填。",
+  "Add anthropic-version: 2023-06-01. Your API key is added for you.": "添加 anthropic-version: 2023-06-01。API 密钥会自动添加。"
 }

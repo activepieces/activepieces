@@ -85,5 +85,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "Simple": "シンプル",
+  "Advanced": "高度",
+  "Fill in Text, Image or PDF, or both.": "テキスト、画像または PDF のいずれか、または両方を入力してください。",
+  "Add anthropic-version: 2023-06-01. Your API key is added for you.": "anthropic-version: 2023-06-01 を追加してください。API キーは自動的に追加されます。"
 }

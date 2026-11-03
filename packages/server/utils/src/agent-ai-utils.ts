@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils';
+import { AIProviderName, isNil, spreadIfDefined, toError } from '@activepieces/core-utils';
 import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
 import { agentProviderOptions } from './agent-provider-options'
 import { ModelMessage, TelemetryOptions } from 'ai'
@@ -157,6 +157,7 @@ function toRecord(value: unknown): Record<string, unknown> {
 type ContentPartLike = {
     type: string
     invalid?: boolean
+    error?: unknown
     text?: string
     toolCallId?: string
     toolName?: string
@@ -221,6 +222,7 @@ function buildStepParts({ content }: {
                     break
                 }
                 const result = part.toolCallId ? resultMap.get(part.toolCallId) : undefined
+                const threw = result?.type === 'tool-error'
                 const rawOutput = result?.output ? agentPersistenceUtils.unwrapToolOutput(result.output) : undefined
                 const title = typeof input['title'] === 'string' ? input['title'] : undefined
                 const description = typeof input['description'] === 'string' ? input['description'] : undefined
@@ -232,7 +234,8 @@ function buildStepParts({ content }: {
                     ...spreadIfDefined('description', description),
                     input,
                     output: rawOutput,
-                    status: result && part.invalid !== true ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                    status: result && !threw && part.invalid !== true ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                    ...spreadIfDefined('errorText', threw && !isNil(result.error) ? toError(result.error).message : undefined),
                 })
                 if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
                     parts.push({

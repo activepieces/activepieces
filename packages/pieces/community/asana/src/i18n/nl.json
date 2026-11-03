@@ -10,7 +10,7 @@
   "Task Description": "Beschrijving taak",
   "Due Date": "Inleverdatum",
   "Tags": "Labels",
-  "Assignee": "Assignee",
+  "Assignee": "Toegewezen persoon",
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
@@ -849,5 +849,13 @@
   "Gid of the task, project or project brief to attach to. Obtain a task gid from List Project Tasks or Get Task, a project gid from List Projects.": "Gid of the task, project or project brief to attach to. Obtain a task gid from List Project Tasks or Get Task, a project gid from List Projects.",
   "The file to upload (up to 100 MB). Leave empty when attaching an External URL.": "The file to upload (up to 100 MB). Leave empty when attaching an External URL.",
   "An http(s) link to attach instead of a file. Requires Name. Leave empty when uploading a File.": "An http(s) link to attach instead of a file. Requires Name. Leave empty when uploading a File.",
-  "Display name of the attachment. Required with External URL; for a File it replaces the file name.": "Display name of the attachment. Required with External URL; for a File it replaces the file name."
+  "Display name of the attachment. Required with External URL; for a File it replaces the file name.": "Display name of the attachment. Required with External URL; for a File it replaces the file name.",
+  "Where": "Waar",
+  "Details": "Details",
+  "Workspace the task is created in.": "Werkruimte waarin de taak wordt aangemaakt.",
+  "Project the task is added to. Archived projects are not listed.": "Project waaraan de taak wordt toegevoegd. Gearchiveerde projecten worden niet weergegeven.",
+  "Plain text shown in the task's description.": "Platte tekst die in de beschrijving van de taak wordt getoond.",
+  "Day the task is due. For a due time too, use 2026-12-31T14:00:00Z.": "Dag waarop de taak af moet zijn. Gebruik voor een tijdstip 2026-12-31T14:00:00Z.",
+  "Pick tags, or type the names of existing tags.": "Kies labels of typ de namen van bestaande labels.",
+  "Leave empty to keep the task unassigned.": "Laat leeg om de taak aan niemand toe te wijzen."
 }

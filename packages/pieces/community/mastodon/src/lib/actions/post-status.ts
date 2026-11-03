@@ -34,59 +34,78 @@ export const postStatus = createAction({
   name: 'post_status',
   classification: 'WRITE',
   displayName: 'Post Status',
-  description:
-    'Post a status to Mastodon, optionally as a reply, with a content warning or with limited visibility.',
+  description: 'Post a status, optionally with media, a content warning or a reply.',
   audience: 'human',
   aiMetadata: { description: 'Publishes a new status (toot) to a Mastodon instance from the authenticated account, optionally attaching a media file uploaded alongside the post and media already uploaded with Upload Media, with optional visibility, content warning, reply target and sensitive flag. Use to broadcast a message or share content on Mastodon. Requires status text; not idempotent — each call creates a separate post.', idempotent: false },
   outputSchema: postStatusOutputSchema,
+  propertyGroups: [
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['status', 'spoiler_text'],
+    },
+    {
+      key: 'attachments',
+      display: 'section',
+      label: 'Attachments',
+      icon: 'paperclip',
+      props: ['media', 'media_ids', 'sensitive'],
+    },
+    {
+      key: 'delivery',
+      display: 'section',
+      label: 'Delivery',
+      icon: 'send',
+      props: ['visibility', 'in_reply_to_id'],
+    },
+  ],
   props: {
     status: Property.LongText({
-      displayName: 'Status',
-      description: 'The text of your status',
+      displayName: 'Status Text',
+      description: 'Mentions, hashtags and links work as they do in Mastodon.',
       required: true,
     }),
     media: Property.File({
-      displayName: 'Media URL or File',
-      description: 'The media attachment for your status',
+      displayName: 'Media',
+      description: 'An image, video or audio file, or its URL.',
       required: false,
     }),
     visibility: Property.StaticDropdown({
       displayName: 'Visibility',
-      description:
-        'Who can see the post. Leave empty to use the default posting privacy from your Mastodon preferences.',
+      description: 'Empty uses your account default. Unlisted stays off public timelines.',
       required: false,
       options: {
         disabled: false,
         options: [
           { label: 'Public', value: 'public' },
-          { label: 'Unlisted (public, hidden from public timelines)', value: 'unlisted' },
+          { label: 'Unlisted', value: 'unlisted' },
           { label: 'Followers only', value: 'private' },
-          { label: 'Direct (mentioned accounts only)', value: 'direct' },
+          { label: 'Mentioned people only', value: 'direct' },
         ],
       },
     }),
     spoiler_text: Property.ShortText({
       displayName: 'Content Warning',
-      description:
-        'Optional warning shown in place of the post text until the reader chooses to reveal it, for example "Spoilers for episode 3".',
+      description: 'Shown in place of the text until the reader opens the status.',
+      placeholder: 'Spoilers ahead',
       required: false,
     }),
     in_reply_to_id: Property.ShortText({
-      displayName: 'Reply To (Status ID)',
-      description:
-        'To post a reply, the ID of the status you are answering: map the Status ID from the New Mention trigger (Related Status > Status ID), from Get Status, or from a previous Post Status step (Status > Status ID). Leave empty for a new post.',
+      displayName: 'Reply To Status ID',
+      description: 'ID of the status to answer. Leave empty for a new status.',
+      placeholder: '109372843234737004',
       required: false,
     }),
     media_ids: Property.Array({
       displayName: 'Media IDs',
-      description:
-        'IDs of media you already uploaded with the Upload Media action, one per item. Most servers allow 4 attachments in total, including the file above. Leave empty if you have none.',
+      description: 'From Upload Media, one per item. Most servers allow 4 in total.',
       required: false,
     }),
     sensitive: mastodonProps.optionalBoolean({
       displayName: 'Mark Media as Sensitive',
-      description:
-        'Hide attached media behind a sensitive-content warning. Leave empty to use your account default.',
+      description: 'Hide the media behind a warning. Empty uses your account default.',
     }),
   },
   async run(context) {

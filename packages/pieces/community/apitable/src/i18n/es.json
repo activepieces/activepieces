@@ -85,5 +85,8 @@
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
   "New Record": "Nuevo registro",
-  "Triggers when a new record is added to a datasheet.": "Se activa cuando se añade un nuevo registro a una hoja de datos."
+  "Triggers when a new record is added to a datasheet.": "Se activa cuando se añade un nuevo registro a una hoja de datos.",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "Los campos en blanco quedan vacíos. Algunos tipos de columna, como los adjuntos y las fórmulas, no aparecen.",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "Los campos en blanco conservan su valor actual; las casillas sin marcar se borran. Algunos tipos de columna, como los adjuntos y las fórmulas, no aparecen."
 }
