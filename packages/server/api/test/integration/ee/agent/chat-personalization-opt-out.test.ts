@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { ChatPersonalizationStatus } from '@activepieces/shared'
+import { ChatPersonalizationScope, ChatPersonalizationStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { chatPersonalizationService } from '../../../../src/app/ee/agent/personalization/chat-personalization-service'
@@ -40,6 +40,30 @@ describe('clearing chat personalization', () => {
 
         expect(view.useCases).toEqual(USE_CASES)
     })
+
+    it('ignores a research run that finishes after the user cleared personalization', async () => {
+        const ctx = await createTestContext(app)
+        await saveResearchedCompany(ctx)
+        const researchToken = apId()
+        await db.save('chat_personalization', {
+            id: apId(),
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            domain: 'acme.com',
+            companyText: null,
+            role: null,
+            status: ChatPersonalizationStatus.RESEARCHING,
+            researchToken,
+            profile: null,
+            useCases: null,
+        })
+        await service().upsert({ platformId: ctx.platform.id, userId: ctx.user.id, personalize: false })
+
+        await service().saveResult({ platformId: ctx.platform.id, userId: ctx.user.id, scope: ChatPersonalizationScope.USER, researchToken, status: 'READY', profile: PROFILE, useCases: USE_CASES })
+
+        const userRow = await db.findOneByOrFail<{ status: string }>('chat_personalization', { platformId: ctx.platform.id, userId: ctx.user.id })
+        expect(userRow.status).toBe(ChatPersonalizationStatus.SKIPPED)
+    })
 })
 
 function service() {
@@ -56,9 +80,11 @@ async function saveResearchedCompany(ctx: TestContext): Promise<void> {
         role: null,
         status: ChatPersonalizationStatus.READY,
         researchToken: null,
-        profile: { companyName: 'Acme', displayName: 'Acme', website: 'acme.com', description: 'a logistics company', industry: 'Transport', userRole: null },
+        profile: PROFILE,
         useCases: USE_CASES,
     })
 }
+
+const PROFILE = { companyName: 'Acme', displayName: 'Acme', website: 'acme.com', description: 'a logistics company', industry: 'Transport', userRole: null }
 
 const USE_CASES = [{ title: 'Track shipments', description: 'Post late shipments to Slack' }]
