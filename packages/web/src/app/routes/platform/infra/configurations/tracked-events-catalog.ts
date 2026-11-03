@@ -158,6 +158,18 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'platformAdmin',
     label: t('Clicked a button on a platform administration page'),
   },
+  [TelemetryEventName.CONNECTION_SWITCH_DECIDED]: {
+    group: 'flows',
+    label: t("Chose an option when switching a step's connection"),
+  },
+  [TelemetryEventName.CONNECTION_REPLACE_OPENED]: {
+    group: 'flows',
+    label: t('Opened the replace connection dialog'),
+  },
+  [TelemetryEventName.CONNECTION_REPLACE_COMPLETED]: {
+    group: 'flows',
+    label: t('Replaced a connection'),
+  },
 });
 
 const buildGroups = (): TrackedEventGroup[] => {
