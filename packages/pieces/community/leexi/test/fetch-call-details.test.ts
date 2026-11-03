@@ -27,6 +27,23 @@ describe('fetchCallDetails', () => {
     await expect(fetchCallDetailsInternals.fetchCallDetails({ auth, callUuids: ['a'], include: [] })).rejects.toThrow(/401/);
   });
 
+  it('fails the batch on a 500 after an earlier call succeeded', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => {
+      if (req.url.endsWith('/broken')) {
+        throw new HttpError({}, { status: 500, responseBody: { message: 'boom' } });
+      }
+      return { status: 200, headers: {}, body: { data: { uuid: 'a', created_at: 'x' } } };
+    });
+    await expect(
+      fetchCallDetailsInternals.fetchCallDetails({ auth, callUuids: ['a', 'broken'], include: [] }),
+    ).rejects.toThrow(/500/);
+  });
+
+  it('fails the batch on a network error', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new Error('ECONNRESET'));
+    await expect(fetchCallDetailsInternals.fetchCallDetails({ auth, callUuids: ['a'], include: [] })).rejects.toThrow(/ECONNRESET/);
+  });
+
   it('enforces 20 UUIDs, and 5 with include', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest');
     const many = Array.from({ length: 21 }, (_, i) => `id-${i}`);

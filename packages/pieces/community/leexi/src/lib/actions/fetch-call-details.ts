@@ -9,7 +9,7 @@ import {
   MAX_FETCH_CALL_UUIDS_WITH_INCLUDE,
 } from '../common/constants';
 
-const BATCH_FATAL_STATUSES = [401, 403, 429];
+const PER_CALL_STATUSES = [400, 404, 422];
 
 function normalizeUuids(values: unknown[] | undefined): string[] {
   const seen = new Set<string>();
@@ -82,7 +82,7 @@ async function fetchCallDetails({
       });
       results.push({ uuid, found: true, call: shapeCall({ call: response.data, include }) });
     } catch (error) {
-      if (error instanceof LeexiApiError && !BATCH_FATAL_STATUSES.includes(error.status)) {
+      if (error instanceof LeexiApiError && PER_CALL_STATUSES.includes(error.status)) {
         results.push({ uuid, found: false, error: error.message });
         continue;
       }
@@ -105,7 +105,7 @@ export const fetchCallDetailsAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Fetches details for 1-20 Leexi calls by UUID (at most 5 when Include is set): title, performed_at, duration, direction, leexi_url, owner, participating users, customers, AI summary and follow-up tasks. Include can add AI notes (prompts), chapters and scorecards. Returns one entry per UUID with found=true and the call, or found=false with the error when that call cannot be fetched (e.g. not found or outside the API key scope); authentication, permission (403) and rate-limit (429) errors fail the whole step. Get call UUIDs from Query Calls. Read-only.',
+      'Fetches details for 1-20 Leexi calls by UUID (at most 5 when Include is set): title, performed_at, duration, direction, leexi_url, owner, participating users, customers, AI summary and follow-up tasks. Include can add AI notes (prompts), chapters and scorecards. Returns one entry per UUID with found=true and the call, or found=false with the error when that call does not exist, is outside the API key scope or has an invalid UUID (400/404/422). Any other failure (authentication, permission, rate limit, server error, network) fails the whole step so it can be retried. Get call UUIDs from Query Calls. Read-only.',
     idempotent: true,
   },
   outputSchema: {
