@@ -2,8 +2,9 @@ import { linearTicketCheck } from './linear-ticket-check'
 
 const CO_OWNER_GROUP = 'Co-Owner'
 const LOGIN_PATTERN = /\(@([\w-]+)\)\s*$/
+const PAGE_SIZE = 100
 const PROJECT_LABELS_QUERY = `query($team: String!, $number: Float!) {
-    issues(filter: { team: { key: { eq: $team } }, number: { eq: $number } }) {
+    issues(includeArchived: true, filter: { team: { key: { eq: $team } }, number: { eq: $number } }) {
         nodes { project { labels { nodes { name parent { name } } } } }
     }
 }`
@@ -47,6 +48,17 @@ async function github<T>({ path, token, method = 'GET', body }: { path: string, 
     return response.json()
 }
 
+async function fetchReviewers({ repository, prNumber, token }: { repository: string, prNumber: string, token: string }): Promise<string[]> {
+    const reviewers: string[] = []
+    for (let page = 1; ; page++) {
+        const reviews = await github<{ user: { login: string } | null }[]>({ path: `/repos/${repository}/pulls/${prNumber}/reviews?per_page=${PAGE_SIZE}&page=${page}`, token })
+        reviewers.push(...reviews.flatMap((review) => review.user ? [review.user.login] : []))
+        if (reviews.length < PAGE_SIZE) {
+            return reviewers
+        }
+    }
+}
+
 async function main(): Promise<void> {
     const apiKey = requireEnv({ name: 'LINEAR_API_KEY' })
     const token = requireEnv({ name: 'GITHUB_TOKEN' })
@@ -60,8 +72,7 @@ async function main(): Promise<void> {
         console.log('No ticket of this PR is in a co-owned project.')
         return
     }
-    const reviews = await github<{ user: { login: string } | null }[]>({ path: `/repos/${repository}/pulls/${prNumber}/reviews`, token })
-    const reviewers = reviews.flatMap((review) => review.user ? [review.user.login] : [])
+    const reviewers = await fetchReviewers({ repository, prNumber, token })
     const logins = loginsToRequest({ coOwners, author, reviewers })
     if (logins.length === 0) {
         console.log(`Co-Owner ${coOwners.join(', ')} is the author or has already reviewed.`)
