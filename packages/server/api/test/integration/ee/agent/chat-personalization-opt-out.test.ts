@@ -2,11 +2,22 @@ import { apId } from '@activepieces/core-utils'
 import { ChatPersonalizationScope, ChatPersonalizationStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { IsNull } from 'typeorm'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { chatPersonalizationService } from '../../../../src/app/ee/agent/personalization/chat-personalization-service'
 import { db } from '../../../helpers/db'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+const { mockEnqueueResearchJob } = vi.hoisted(() => ({ mockEnqueueResearchJob: vi.fn().mockResolvedValue(undefined) }))
+
+vi.mock('../../../../src/app/ee/agent/personalization/personalization-research', async (importOriginal) => {
+    const original = await importOriginal<typeof import('../../../../src/app/ee/agent/personalization/personalization-research')>()
+    return {
+        ...original,
+        guardsAllowResearch: vi.fn().mockResolvedValue(true),
+        enqueueResearchJob: mockEnqueueResearchJob,
+    }
+})
 
 let app: FastifyInstance
 
@@ -114,8 +125,8 @@ describe('changing the role on finished personalization', () => {
 
         const userRow = await db.findOneByOrFail<{ role: string, status: string, researchToken: string | null }>('chat_personalization', { platformId: ctx.platform.id, userId: ctx.user.id })
         expect(userRow.role).toBe('Engineer')
-        expect(userRow.status).not.toBe(ChatPersonalizationStatus.READY)
-        expect(userRow.researchToken).not.toBeNull()
+        expect(userRow.status).toBe(ChatPersonalizationStatus.PENDING)
+        expect(mockEnqueueResearchJob).toHaveBeenCalledWith(expect.objectContaining({ userId: ctx.user.id, role: 'Engineer', researchToken: userRow.researchToken }))
     })
 })
 
