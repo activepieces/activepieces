@@ -61,7 +61,7 @@ export function ConversationList({
     isLoading: isLoadingConversations,
     isSuccess: conversationsLoaded,
     hasNextPage,
-    isFetchingNextPage,
+    isFetching,
     fetchNextPage,
   } = useInfiniteQuery<
     SeekPage<AgentConversation>,
@@ -123,21 +123,26 @@ export function ConversationList({
     setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 5);
   }, []);
 
-  useEffect(() => {
-    checkFades();
-  }, [collapsed, conversations, checkFades]);
-
-  const handleListScroll = useCallback(() => {
-    checkFades();
+  const loadMoreIfNearEnd = useCallback(() => {
     const el = listRef.current;
     const nearListEnd =
       !!el &&
       el.scrollTop + el.clientHeight >= el.scrollHeight - LOAD_MORE_OFFSET_PX;
-    const shouldLoadMore = nearListEnd && hasNextPage && !isFetchingNextPage;
+    const shouldLoadMore = nearListEnd && hasNextPage && !isFetching;
     if (shouldLoadMore) {
       fetchNextPage().catch(() => undefined);
     }
-  }, [checkFades, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetching, fetchNextPage]);
+
+  useEffect(() => {
+    checkFades();
+    loadMoreIfNearEnd();
+  }, [collapsed, conversations, checkFades, loadMoreIfNearEnd]);
+
+  const handleListScroll = useCallback(() => {
+    checkFades();
+    loadMoreIfNearEnd();
+  }, [checkFades, loadMoreIfNearEnd]);
 
   const { today, yesterday, older } = useMemo(() => {
     const todayStr = new Date().toDateString();
