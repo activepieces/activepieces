@@ -1,18 +1,17 @@
 import {
   TriggerStrategy,
   createTrigger,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { quickbooksAuth } from '../lib/auth';
+import { quickbooksAuth } from '../auth';
 import dayjs from 'dayjs';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
-import { QuickbooksInvoice } from '../lib/types';
+import { quickbooksApi } from '../common/api';
+import type { QuickbooksEntityResponse, QuickbooksInvoice } from '../common/types';
 
 const polling: Polling<
  AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
@@ -20,9 +19,6 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
-    const { access_token } = auth;
-    const companyId = auth.props?.['companyId'] as string;
-
     const query =
       lastFetchEpochMS === 0
         ? `SELECT * FROM Transfer ORDERBY Metadata.CreateTime DESC MAXRESULTS 10`
@@ -30,12 +26,10 @@ const polling: Polling<
             lastFetchEpochMS
           ).toISOString()}' ORDERBY Metadata.CreateTime DESC`;
 
-    // https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/transfer#query-a-transfer
-    const response = await quickbooksQuery<
+    const response = await quickbooksApi.query<
       QuickbooksEntityResponse<QuickbooksInvoice>
     >({
-      accessToken: access_token,
-      companyId,
+      auth,
       query,
     });
 

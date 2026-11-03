@@ -1,8 +1,9 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../lib/auth';
-import { quickbooksApiCall, quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
-import { QuickbooksTerm, QuickbooksVendor } from '../lib/types';
+import { quickbooksAuth } from '../auth';
+import { quickbooksClient } from '../common/client';
+import { quickbooksProps } from '../common/props';
+import type { QuickbooksFault, QuickbooksVendor } from '../common/types';
 
 export const createVendorAction = createAction({
 	auth: quickbooksAuth,
@@ -65,43 +66,10 @@ export const createVendorAction = createAction({
 			description: 'Your own reference/account number for this vendor (external ID). Shown on checks.',
 			required: false,
 		}),
-		termRef: Property.Dropdown({
-			auth: quickbooksAuth,
-			displayName: 'Payment Term',
-			description: 'Optional. The default payment term for bills from this vendor.',
-			required: false,
-			refreshers: [],
-			options: async ({ auth }) => {
-				if (!auth) {
-					return { disabled: true, placeholder: 'Connect your account first', options: [] };
-				}
-				const { access_token, props } = auth as OAuth2PropertyValue;
-				const companyId = props?.['companyId'] as string;
-				const query = `SELECT Id, Name FROM Term MAXRESULTS 1000`;
-				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/term#query-a-term
-				const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksTerm>>({
-					accessToken: access_token,
-					companyId,
-					query,
-				});
-
-				if (response.Fault) {
-					return { disabled: true, placeholder: 'Unable to load payment terms', options: [] };
-				}
-
-				const terms = response.QueryResponse?.['Term'] ?? [];
-				return {
-					disabled: false,
-					options: terms.map((term) => ({ label: term.Name, value: term.Id })),
-				};
-			},
-		}),
+		termRef: quickbooksProps.termRef({ required: false }),
 	},
 	async run(context) {
-		const { access_token } = context.auth;
-		const companyId = context.auth.props?.['companyId'] as string;
-
-		if (!companyId) {
+		if (!context.auth.props?.['companyId']) {
 			throw new Error('Realm ID not found in authentication data. Please reconnect your account.');
 		}
 
@@ -129,16 +97,14 @@ export const createVendorAction = createAction({
 			...(props['termRef'] && { TermRef: { value: props['termRef'] } }),
 		};
 
-		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#create-a-vendor
-		const response = await quickbooksApiCall<{
+		const response = await quickbooksClient.request<{
 			Vendor: QuickbooksVendor;
 			time: string;
-			Fault?: { Error: { Message: string; Detail?: string; code: string }[]; type: string };
+			Fault?: QuickbooksFault;
 		}>({
-			accessToken: access_token,
-			companyId,
+			auth: context.auth,
 			method: HttpMethod.POST,
-			resourceUri: '/vendor',
+			path: '/vendor',
 			body: vendorPayload,
 		});
 

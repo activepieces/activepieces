@@ -1,12 +1,9 @@
-import {
-	createAction,
-	Property,
-	OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { quickbooksAuth } from '../lib/auth';
-import { QuickbooksEntityResponse, quickbooksApiCall, quickbooksQuery } from '../lib/common';
-import { QuickbooksCustomer, QuickbooksInvoice, QuickbooksRef } from '../lib/types';
+import { quickbooksAuth } from '../auth';
+import { quickbooksClient } from '../common/client';
+import { quickbooksProps } from '../common/props';
+import type { QuickbooksFault, QuickbooksInvoice } from '../common/types';
 
 export const createInvoiceAction = createAction({
 	auth: quickbooksAuth,
@@ -20,51 +17,7 @@ export const createInvoiceAction = createAction({
 		idempotent: false,
 	},
 	props: {
-		customerRef: Property.Dropdown({
-			auth: quickbooksAuth,
-
-			displayName: 'Customer',
-			required: true,
-			refreshers: [],
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						placeholder: 'Connect your account first',
-						options: [],
-					};
-				}
-				const { access_token, props } = auth as OAuth2PropertyValue;
-
-				const companyId = props?.['companyId'];
-
-				const query = `SELECT Id, DisplayName FROM Customer STARTPOSITION 1 MAXRESULTS 1000`;
-
-				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/customer#query-a-customer
-				const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksCustomer>>({
-					accessToken: access_token,
-					companyId,
-					query,
-				});
-
-				if (response.Fault) {
-					throw new Error(
-						`QuickBooks API Error: ${response.Fault.Error.map(
-							(e: { Message: string }) => e.Message,
-						).join(', ')}`,
-					);
-				}
-
-				const customers = response.QueryResponse?.['Customer'] ?? [];
-				return {
-					disabled: false,
-					options: customers.map((customer) => ({
-						label: customer.DisplayName,
-						value: customer.Id,
-					})),
-				};
-			},
-		}),
+		customerRef: quickbooksProps.customerRef({ required: true }),
 		lineItems: Property.Array({
 			displayName: 'Line Items',
 			description: 'Line items for the invoice',
@@ -154,16 +107,20 @@ export const createInvoiceAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { access_token } = context.auth;
-		const companyId = context.auth.props?.['companyId'] as string;
-
 		const props = context.propsValue;
 
 		if (props['emailStatus'] === 'NeedToSend' && !props['billEmail']) {
 			throw new Error('Billing Email Address is required when Email Status is "Needs To Be Sent".');
 		}
 
-		const lineItems = (props['lineItems'] as any[]).map((item: any) => {
+		const lineItems = (props['lineItems'] as {
+			description?: string;
+			amount: number;
+			detailType: string;
+			itemId?: string;
+			quantity?: number | null;
+			unitPrice?: number | null;
+		}[]).map((item) => {
 			if (item['detailType'] === 'SalesItemLineDetail') {
 				if (!item['itemId']) {
 					throw new Error('Item ID is required for Sales Item Line Detail.');
@@ -173,7 +130,7 @@ export const createInvoiceAction = createAction({
 					DetailType: item['detailType'],
 					Description: item['description'],
 					SalesItemLineDetail: {
-						ItemRef: { value: item['itemId'] } as QuickbooksRef,
+						ItemRef: { value: item['itemId'] },
 						...(item['quantity'] != null && { Qty: item['quantity'] }),
 						...(item['unitPrice'] != null && { UnitPrice: item['unitPrice'] }),
 					},
@@ -193,7 +150,7 @@ export const createInvoiceAction = createAction({
 
 		const invoicePayload = {
 			Line: lineItems,
-			CustomerRef: { value: props['customerRef'] } as QuickbooksRef,
+			CustomerRef: { value: props['customerRef'] },
 			...(props['emailStatus'] && { EmailStatus: props['emailStatus'] }),
 			...(props['billEmail'] && { BillEmail: { Address: props['billEmail'] } }),
 			...(props['dueDate'] && { DueDate: props['dueDate'].split('T')[0] }),
@@ -203,24 +160,22 @@ export const createInvoiceAction = createAction({
 			...(props['customerMemo'] && { CustomerMemo: { value: props['customerMemo'] } }),
 		};
 
-		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/invoice#create-an-invoice
-		const response = await quickbooksApiCall<{
+		const response = await quickbooksClient.request<{
 			Invoice: QuickbooksInvoice;
 			time: string;
-			Fault?: { Error: { Message: string; Detail?: string; code: string }[]; type: string };
+			Fault?: QuickbooksFault;
 		}>({
-			accessToken: access_token,
-			companyId,
+			auth: context.auth,
 			method: HttpMethod.POST,
-			resourceUri: '/invoice',
+			path: '/invoice',
 			body: invoicePayload,
 		});
 
 		if (response.Fault) {
 			throw new Error(
-				`QuickBooks API Error: ${response.Fault.Error.map((e: any) => e.Message).join(
+				`QuickBooks API Error: ${response.Fault.Error.map((e) => e.Message).join(
 					', ',
-				)} - ${response.Fault.Error.map((e: any) => e.Detail).join(', ')}`,
+				)} - ${response.Fault.Error.map((e) => e.Detail).join(', ')}`,
 			);
 		}
 
