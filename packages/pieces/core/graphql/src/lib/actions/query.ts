@@ -8,6 +8,7 @@ import {
 import {
   createAction,
   DynamicPropsValue,
+  MarkdownVariant,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
@@ -21,42 +22,72 @@ export const query = createAction({
   name: 'send_request',
   classification: 'WRITE',
   displayName: 'Send Request',
-  description: 'Makes a GraphQL request.',
+  description: 'Send a query or mutation to any GraphQL endpoint.',
   aiMetadata: {
     description: 'Sends an arbitrary GraphQL query or mutation to any GraphQL endpoint, optionally through an HTTP proxy, with a failsafe mode that returns the error message instead of throwing. Use it for GraphQL APIs that have no dedicated Activepieces piece, and prefer the HTTP piece for plain REST endpoints. The piece carries no auth, so any token must be passed manually in Headers; not idempotent, since the query field can carry a mutation.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'request',
+      display: 'section',
+      label: 'Request',
+      icon: 'send',
+      props: ['auth_info', 'method', 'url', 'headers', 'queryParams'],
+    },
+    {
+      key: 'payload',
+      display: 'section',
+      label: 'Data to send',
+      icon: 'code',
+      props: ['query', 'variables'],
+    },
+  ],
   props: {
+    auth_info: Property.MarkDown({
+      value:
+        'This piece has no connection. Add your API token as a header, such as Authorization.',
+      variant: MarkdownVariant.INFO,
+    }),
     method: httpMethodDropdown,
     url: Property.ShortText({
       displayName: 'URL',
+      description: 'Your GraphQL endpoint, including https://',
+      placeholder: 'https://api.example.com/graphql',
       required: true,
     }),
     queryParams: Property.Object({
       displayName: 'Query params',
-      required: true,
+      description: 'Appended to the URL as a query string.',
+      required: false,
     }),
     headers: Property.Object({
       displayName: 'Headers',
-      required: true,
+      description: 'Sent with the request as key-value pairs.',
+      required: false,
     }),
     query: Property.LongText({
       displayName: 'Query',
+      description: 'A query or mutation. Use $name for values from Variables.',
+      placeholder: 'query { viewer { login } }',
       required: true,
     }),
     variables: Property.Json({
       displayName: 'Variables',
+      description: 'A JSON object with a value for each $name in the query.',
       required: false,
     }),
     use_proxy: Property.Checkbox({
       displayName: 'Use Proxy',
       defaultValue: false,
-      description: 'Use a proxy for this request',
+      description: 'Route this request through an HTTP proxy.',
       required: false,
+      advanced: true,
     }),
     proxy_settings: Property.DynamicProperties({
       displayName: 'Proxy Settings',
       auth: PieceAuth.None(),
+      advanced: true,
       refreshers: ['use_proxy'],
       required: false,
       props: async ({ use_proxy }) => {
@@ -66,6 +97,7 @@ export const query = createAction({
 
         fields['proxy_host'] = Property.ShortText({
           displayName: 'Proxy Host',
+          placeholder: 'proxy.example.com',
           required: true,
         });
 
@@ -81,6 +113,7 @@ export const query = createAction({
 
         fields['proxy_password'] = Property.ShortText({
           displayName: 'Proxy Password',
+          description: 'Stored in the flow and visible in exports.',
           required: false,
         });
 
@@ -88,12 +121,18 @@ export const query = createAction({
       },
     }),
     timeout: Property.Number({
-      displayName: 'Timeout(in seconds)',
+      displayName: 'Timeout',
+      description:
+        'Seconds to wait for a response. Empty: up to the flow limit (10 min).',
       required: false,
+      advanced: true,
     }),
     failsafe: Property.Checkbox({
-      displayName: 'No Error on Failure',
+      displayName: 'Return Error as Output',
+      description:
+        'On a failed request, output the error instead of failing the step.',
       required: false,
+      advanced: true,
     }),
   },
   errorHandlingOptions: {
@@ -144,7 +183,14 @@ export const query = createAction({
           httpsAgent,
         });
 
-        const proxied_response = await axiosClient.request(request);
+        const proxied_response = await axiosClient.request({
+          method: request.method,
+          url: request.url,
+          params: request.queryParams,
+          headers: { 'Content-Type': 'application/json', ...request.headers },
+          data: request.body,
+          timeout: request.timeout,
+        });
         return proxied_response.data;
       }
       return await httpClient.sendRequest(request);
