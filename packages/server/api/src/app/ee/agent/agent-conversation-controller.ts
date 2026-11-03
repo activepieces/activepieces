@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, MemoryImportNudgeResponse, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -296,6 +296,22 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         })
     })
 
+    app.get('/memory/import-nudge', GetMemoryImportNudgeRoute, async (request): Promise<MemoryImportNudgeResponse> => {
+        const eligible = await agentHelpers.memoryImportNudgeEligible({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+        return { eligible }
+    })
+
+    app.post('/memory/import-nudge/shown', MarkMemoryImportNudgeShownRoute, async (request, reply) => {
+        await agentHelpers.markMemoryImportNudgeShown({
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
     app.post('/memory/import', ImportMemoryRoute, async (request) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
@@ -535,6 +551,29 @@ const UpdateMemoryRoute = {
         tags: ['agent'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: UpdateAgentMemoryRequest,
+    },
+}
+
+const GetMemoryImportNudgeRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['agent'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: MemoryImportNudgeResponse,
+        },
+    },
+}
+
+const MarkMemoryImportNudgeShownRoute = {
+    config: {
+        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
+    },
+    schema: {
+        tags: ['agent'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 
