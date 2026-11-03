@@ -12,6 +12,7 @@ import {
 } from '@activepieces/pieces-common';
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksEntityResponse, QuickbooksInvoice } from '../common/types';
+import { newTransferOutputSchema } from '../output-schemas';
 
 const polling: Polling<
  AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
@@ -46,6 +47,7 @@ export const newTransfer = createTrigger({
   auth: quickbooksAuth,
   name: 'new_transfer',
   classification: 'READ',
+  outputSchema: newTransferOutputSchema,
   displayName: 'New Transfer',
   description:
     'Triggers when a Transfer is created.',

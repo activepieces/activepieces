@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { quickbooksAuth } from '../auth';
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksEntityResponse, QuickbooksInvoice } from '../common/types';
+import { findInvoiceOutputSchema } from '../output-schemas';
 
 export const findInvoiceAction = createAction({
 	auth: quickbooksAuth,
 	name: 'find_invoice',
 	classification: 'READ',
+	outputSchema: findInvoiceOutputSchema,
 	displayName: 'Find Invoice',
 	description: 'Search for an invoice by its number in QuickBooks.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Look up a single QuickBooks invoice by its document number (DocNumber), returning the first match. Use to resolve an invoice reference to its full record before reading or acting on it; the document number is required. Read-only and idempotent.',
 		idempotent: true,

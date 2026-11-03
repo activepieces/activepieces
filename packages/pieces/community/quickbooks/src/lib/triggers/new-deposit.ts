@@ -8,6 +8,7 @@ import { DedupeStrategy, Polling, pollingHelper } from "@activepieces/pieces-com
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksEntityResponse, QuickbooksCustomer } from '../common/types';
 import dayjs from 'dayjs';
+import { newDepositOutputSchema } from '../output-schemas';
 
 const polling: Polling<
  AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
@@ -42,6 +43,7 @@ export const newDeposit = createTrigger({
     auth: quickbooksAuth,
     name: 'new_deposit',
     classification: 'READ',
+    outputSchema: newDepositOutputSchema,
     displayName: 'New Deposit',
     description: 'Triggers when a Deposit is created.',
     aiMetadata: {

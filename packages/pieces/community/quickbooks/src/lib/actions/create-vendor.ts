@@ -4,14 +4,16 @@ import { quickbooksAuth } from '../auth';
 import { quickbooksClient } from '../common/client';
 import { quickbooksProps } from '../common/props';
 import type { QuickbooksFault, QuickbooksVendor } from '../common/types';
+import { createVendorOutputSchema } from '../output-schemas';
 
 export const createVendorAction = createAction({
 	auth: quickbooksAuth,
 	name: 'create_vendor',
 	classification: 'WRITE',
+	outputSchema: createVendorOutputSchema,
 	displayName: 'Create Vendor',
 	description: 'Creates a vendor in QuickBooks.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Create a new QuickBooks vendor with a display name and optional company name, email, phone, billing address, 1099 tracking flag, tax identifier, account number, and payment term. Not idempotent: each call creates a new vendor, so guard against duplicates (e.g. with Find Vendor first).',
 		idempotent: false,

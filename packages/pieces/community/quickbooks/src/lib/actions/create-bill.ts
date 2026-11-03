@@ -4,14 +4,16 @@ import { quickbooksAuth } from '../auth';
 import { quickbooksClient } from '../common/client';
 import { quickbooksProps } from '../common/props';
 import type { QuickbooksAuthValue, QuickbooksBill, QuickbooksFault, QuickbooksPreferences } from '../common/types';
+import { createBillOutputSchema } from '../output-schemas';
 
 export const createBillAction = createAction({
 	auth: quickbooksAuth,
 	name: 'create_bill',
 	classification: 'WRITE',
+	outputSchema: createBillOutputSchema,
 	displayName: 'Create Bill',
 	description: 'Creates a bill (accounts payable) in QuickBooks.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Record a new bill owed to a vendor, with one or more account-based line items (each needs an amount and an expense account Id, and optionally a Class Id on QuickBooks Plus/Advanced). Optionally set the bill date, due date, bill number, and memo. Not idempotent: each call creates a new bill, so guard against duplicates.',
 		idempotent: false,

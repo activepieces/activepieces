@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { quickbooksAuth } from '../auth';
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksInvoice } from '../common/types';
+import { newOrUpdatedInvoiceOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof quickbooksAuth>, Record<string, unknown>> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -26,6 +27,7 @@ export const newOrUpdatedInvoice = createTrigger({
 	auth: quickbooksAuth,
 	name: 'new_or_updated_invoice',
 	classification: 'READ',
+	outputSchema: newOrUpdatedInvoiceOutputSchema,
 	displayName: 'New or Updated Invoice',
 	description: 'Triggers when an invoice is created or updated in QuickBooks.',
 	aiMetadata: {

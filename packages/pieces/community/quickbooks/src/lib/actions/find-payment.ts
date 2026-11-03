@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickbooksAuth } from '../auth';
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksEntityResponse, QuickbooksPayment } from '../common/types';
+import { findPaymentOutputSchema } from '../output-schemas';
 
 export const findPaymentAction = createAction({
 	auth: quickbooksAuth,
 	name: 'find_payment',
 	classification: 'SEARCH',
+	outputSchema: findPaymentOutputSchema,
 	displayName: 'Find Payment',
 	description: 'Finds an existing payment in QuickBooks.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'List all QuickBooks payments belonging to a given customer, identified by the customer Id (not name). Use to retrieve a customer\'s payment history or to check whether they have any payments on record. Read-only and idempotent.',
 		idempotent: true,

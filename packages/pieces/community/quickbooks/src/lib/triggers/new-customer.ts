@@ -12,6 +12,7 @@ import {
 import { quickbooksApi } from '../common/api';
 import dayjs from 'dayjs';
 import type { QuickbooksEntityResponse, QuickbooksCustomer } from '../common/types';
+import { newCustomerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
@@ -46,6 +47,7 @@ export const newCustomer = createTrigger({
   auth: quickbooksAuth,
   name: 'new_customer',
   classification: 'READ',
+  outputSchema: newCustomerOutputSchema,
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created.',
   aiMetadata: {

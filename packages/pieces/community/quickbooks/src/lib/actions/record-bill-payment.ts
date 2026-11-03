@@ -4,14 +4,16 @@ import { quickbooksAuth } from '../auth';
 import { quickbooksClient } from '../common/client';
 import { quickbooksProps } from '../common/props';
 import type { QuickbooksBillPayment, QuickbooksFault } from '../common/types';
+import { recordBillPaymentOutputSchema } from '../output-schemas';
 
 export const recordBillPaymentAction = createAction({
 	auth: quickbooksAuth,
 	name: 'record_bill_payment',
 	classification: 'WRITE',
+	outputSchema: recordBillPaymentOutputSchema,
 	displayName: 'Record Bill Payment (AP)',
 	description: 'Pays one or more vendor bills in QuickBooks, in full or in part, by check or credit card.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Record a payment made to a vendor to settle one or more outstanding bills, by check or credit card. Each bill line takes the amount applied so partial payments and paying several bills in a single payment are both supported. Not idempotent: each call creates a new bill payment, so guard against duplicates.',
 		idempotent: false,

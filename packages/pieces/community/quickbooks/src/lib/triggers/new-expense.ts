@@ -12,6 +12,7 @@ import {
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksEntityResponse, QuickbooksPurchase } from '../common/types';
 import dayjs from 'dayjs';
+import { newExpenseOutputSchema } from '../output-schemas';
 
 const polling: Polling<
  AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
@@ -46,6 +47,7 @@ export const newExpense = createTrigger({
   auth: quickbooksAuth,
   name: 'new_expense',
   classification: 'READ',
+  outputSchema: newExpenseOutputSchema,
   displayName: 'New Expense (Purchase)',
   description: 'Triggers when an Expense (Purchase) is created.',
   aiMetadata: {

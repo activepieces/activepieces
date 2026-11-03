@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { quickbooksAuth } from '../auth';
 import { quickbooksApi } from '../common/api';
 import type { QuickbooksAuthValue, QuickbooksEntityResponse, QuickbooksVendor } from '../common/types';
+import { findVendorOutputSchema } from '../output-schemas';
 
 export const findVendorAction = createAction({
 	auth: quickbooksAuth,
 	name: 'find_vendor',
 	classification: 'READ',
+	outputSchema: findVendorOutputSchema,
 	displayName: 'Find Vendor',
 	description: 'Search for a vendor in QuickBooks by display name, email address, or account number.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Look up a single QuickBooks vendor by exact display name, email address, or account number (external ID), returning the first match. Use to resolve a vendor to its full record (including its Id) before referencing it elsewhere; the match is exact, not fuzzy. Read-only and idempotent.',
 		idempotent: true,
