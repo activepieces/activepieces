@@ -14,7 +14,7 @@ export const contiguity = createPiece({
   displayName: 'Contiguity',
   description: 'Communications for what you\'re building',
   auth: contiguityAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/contiguity.png',
   authors: ["Owlcept","Ozak93","kishanprmr","MoShizzle","abuaboud","Contiguity"],
   categories: [PieceCategory.MARKETING],
@@ -27,6 +27,12 @@ export const contiguity = createPiece({
             authMapping: async (auth) => ({
                 authorization: `Bearer ${auth}`,
             }),
+            props: {
+                url: {
+                    description: 'Full URL, or a path relative to https://api.contiguity.com',
+                    placeholder: '/send/text',
+                },
+            },
     }),
   ],
   triggers: [],

@@ -4,6 +4,7 @@ import {
 } from '@activepieces/pieces-common';
 import { contiguityAuth } from '../../..';
 import {
+    MarkdownVariant,
     Property,
     createAction,
 } from '@activepieces/pieces-framework';
@@ -15,38 +16,63 @@ export const sendText = createAction({
     name: 'send_text',
     classification: 'WRITE',
     displayName: 'Send SMS/MMS',
-    description: 'Send a text message',
+    description: 'Send an SMS, or an MMS when you attach files.',
     audience: 'both',
     aiMetadata: { description: 'Sends an outbound SMS (or MMS when attachments are supplied) through Contiguity to a recipient phone number. Choose this to deliver a text notification or message; the recipient number must be in E.164 format, and the body can be empty only when attachments (up to 3 HTTPS file URLs) are provided. Not idempotent: each call dispatches a new message.', idempotent: false },
     props: {
+        numbers_note: Property.MarkDown({
+            value: 'Use international format: a + followed by the country code and number.',
+            variant: MarkdownVariant.INFO,
+        }),
         to: Property.ShortText({
             displayName: 'To',
-            description: 'Recipient phone number in E.164 format',
+            description: 'The mobile number that receives the message.',
+            placeholder: '+15555550123',
+            width: 'half',
             required: true,
         }),
         from: Property.ShortText({
             displayName: 'From',
-            description: 'Your leased phone number',
+            description: 'A number you lease from Contiguity.',
+            placeholder: '+15555550123',
+            width: 'half',
             required: false,
         }),
         message: Property.LongText({
             displayName: 'Message',
-            description: 'Text message content',
+            description: 'Plain text. Texts over 160 characters are split automatically.',
             required: true,
         }),
         attachments: Property.Array({
             displayName: 'Attachments',
-            description: 'File URLs (max 3, 5MB total, HTTPS required)',
+            description: 'Up to 3 HTTPS file links, 5 MB in total.',
             required: false,
             properties: {
                 url: Property.ShortText({
                     displayName: 'File URL',
-                    description: 'HTTPS URL with file extension',
+                    description: 'Must start with https:// and end in a file extension.',
+                    placeholder: 'https://example.com/photo.png',
                     required: true,
                 }),
             },
         }),
     },
+    propertyGroups: [
+        {
+            key: 'numbers',
+            display: 'section',
+            label: 'Phone Numbers',
+            icon: 'send',
+            props: ['numbers_note', 'to', 'from'],
+        },
+        {
+            key: 'content',
+            display: 'section',
+            label: 'Content',
+            icon: 'text',
+            props: ['message', 'attachments'],
+        },
+    ],
     async run(context) {
         await propsValidation.validateZod(context.propsValue, {
             to: z.string().check(z.regex(/^\+\d{1,4}\d+$/, 'Invalid E.164 format')),
