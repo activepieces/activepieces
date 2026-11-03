@@ -3,7 +3,6 @@ import {
   AuthenticationPage,
   AutomationsPage,
   BuilderPage,
-  TablesPage,
 } from '../pages';
 import { signUp, AuthenticationResponse } from './users';
 import { DEFAULT_EMAIL, DEFAULT_PASSWORD } from '../global-setup';
@@ -12,7 +11,6 @@ type CustomFixtures = {
   authenticationPage: AuthenticationPage;
   automationsPage: AutomationsPage;
   builderPage: BuilderPage;
-  tablesPage: TablesPage;
   authenticatedPage: AuthenticationPage;
   users: {
     apiSignUp: () => Promise<AuthenticationResponse>;
@@ -51,10 +49,6 @@ export const test = base.extend<CustomFixtures>({
 
   builderPage: async ({ page }, use) => {
     await use(new BuilderPage(page));
-  },
-
-  tablesPage: async ({ page }, use) => {
-    await use(new TablesPage(page));
   },
 
   authenticatedPage: async ({ page }, use) => {
