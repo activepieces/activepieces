@@ -280,15 +280,16 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
             const previous = compactionState
+            const compactionBilling: ActivepiecesAiBilling = {
+                source: ActivepiecesAiConsumerSource.CHAT,
+                platformId: conversation.platformId,
+                projectId: runProjectId,
+                conversationId: conversation.id,
+                context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: runProjectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId, userId: conversation.userId }),
+            }
             compactionState = await onFirstModelThatAnswers({
                 models: compactionModels,
-                billing: {
-                    source: ActivepiecesAiConsumerSource.CHAT,
-                    platformId: conversation.platformId,
-                    projectId: runProjectId,
-                    conversationId: conversation.id,
-                    context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: runProjectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId, userId: conversation.userId }),
-                },
+                billing: compactionBilling,
                 log,
                 run: (model) => agentCompaction.compactMessages({
                     messages: llmHistory,
@@ -298,6 +299,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                     reservedTokens: payloadReservedTokens,
                     model,
                     log,
+                    billing: compactionBilling,
                 }),
             })
             await agentHelpers.conversationRepo().update(conversationId, {
