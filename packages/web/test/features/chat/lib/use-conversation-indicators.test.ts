@@ -48,6 +48,18 @@ describe('unread dots across loads', () => {
     expect(result.current.getIndicator(arrived)).toBe('unread');
   });
 
+  it('treats chats from the first successful load as seen after a failed load', () => {
+    const { result, rerender } = renderIndicators({
+      conversations: [],
+      scope: 'chat',
+      loaded: false,
+    });
+    const existing = conversation({ id: 'a' });
+    rerender({ conversations: [existing], scope: 'chat', loaded: true });
+
+    expect(result.current.getIndicator(existing)).toBeNull();
+  });
+
   it('does not mark existing chats unread when switching to another agent', () => {
     const { result, rerender } = renderIndicators({
       conversations: [conversation({ id: 'a' })],
@@ -63,17 +75,18 @@ describe('unread dots across loads', () => {
 function renderIndicators(initialProps: {
   conversations: AgentConversation[];
   scope: string;
+  loaded?: boolean;
 }) {
   const queryClient = new QueryClient();
   const wrapper = ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   return renderHook(
-    ({ conversations, scope }) =>
+    ({ conversations, scope, loaded = true }) =>
       useConversationIndicators({
         conversations,
         activeId: null,
         scope,
-        loaded: true,
+        loaded,
       }),
     { initialProps, wrapper },
   );
