@@ -12,7 +12,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useEffect, useRef } from 'react';
-import { useLocation, usePrevious } from 'react-use';
+import { useLocation } from 'react-router-dom';
+import { usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
