@@ -19,9 +19,10 @@ import {
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { DeleteConnectionsDialog } from '@/app/connections/delete-connections-dialog';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
-import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
+import { ReplaceConnectionForProjectDialog } from '@/app/connections/replace-connection-for-project-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
@@ -33,9 +34,7 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { DeleteConnectionWarning } from '@/components/custom/global-connection-utils';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -354,23 +353,20 @@ function AppConnectionsPage() {
           return (
             <>
               {deletableRows.length > 0 && (
-                <ConfirmationDeleteDialog
+                <DeleteConnectionsDialog
+                  connections={deletableRows}
                   title={t('Delete Connections')}
                   message={t(
                     'The selected connections will be permanently deleted.',
                   )}
-                  warning={<DeleteConnectionWarning />}
                   mutationFn={async () => {
                     await deleteConnections(deletableRows.map((row) => row.id));
                     refetch();
                     resetSelection();
                     setSelectedRows([]);
                   }}
-                  entityName={t('connection')}
-                  buttonText={t('Delete')}
                   open={showDeleteDialog}
                   onOpenChange={setShowDeleteDialog}
-                  showToast
                 >
                   <Button
                     variant="ghost"
@@ -381,7 +377,7 @@ function AppConnectionsPage() {
                     <Trash2 className="h-4 w-4 mr-1" />
                     {t('Delete')} ({deletableRows.length})
                   </Button>
-                </ConfirmationDeleteDialog>
+                </DeleteConnectionsDialog>
               )}
             </>
           );
@@ -397,7 +393,7 @@ function AppConnectionsPage() {
         key="replace"
         hasPermission={userHasPermissionToWriteAppConnection}
       >
-        <ReplaceConnectionsDialog
+        <ReplaceConnectionForProjectDialog
           projectId={projectId}
           onConnectionMerged={() => {
             setRefresh(refresh + 1);
@@ -412,7 +408,7 @@ function AppConnectionsPage() {
           >
             {t('Replace')}
           </AnimatedIconButton>
-        </ReplaceConnectionsDialog>
+        </ReplaceConnectionForProjectDialog>
       </PermissionNeededTooltip>,
       <PermissionNeededTooltip
         key="new"
