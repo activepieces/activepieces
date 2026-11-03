@@ -3,6 +3,7 @@ import { ActivepiecesError, isObject, spreadIfNotUndefined, toError } from '@act
 const RPC_EVENT = 'rpc'
 const NOTIFY_EVENT = 'rpc-notify'
 const AP_ERROR_PROP = 'apError'
+const SOCKET_DISCONNECTED_MESSAGE = 'socket has been disconnected'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Contract = Record<string, (input: any) => any>
 
@@ -114,10 +115,12 @@ function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string, __rp
 export class RpcTimeoutError extends Error {
     readonly method: string
     readonly timeoutMs: number
+    readonly disconnected: boolean
     constructor({ method, timeoutMs, cause }: { method: string, timeoutMs: number, cause: unknown }) {
         super(`RPC [${method}] failed (timeout: ${timeoutMs}ms): ${toError(cause).message}`)
         this.method = method
         this.timeoutMs = timeoutMs
+        this.disconnected = toError(cause).message === SOCKET_DISCONNECTED_MESSAGE
     }
 }
 
