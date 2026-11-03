@@ -17,7 +17,6 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ReplaceConnectionForFlowDialog } from '@/app/builder/builder-header/replace-connection-for-flow-dialog';
-import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import { ConnectionSelect } from '@/app/connections/connection-select';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,7 +41,6 @@ export function ConnectionSelectWithSwitchConfirmation({
   disabled,
 }: ConnectionSelectWithSwitchConfirmationProps) {
   const form = useFormContext<PieceAction | PieceTrigger>();
-  const { flowConnections } = flowCanvasHooks.useFlowConnections();
   const projectId = authenticationSession.getProjectId()!;
   const { data: pieceConnections } = appConnectionsQueries.useAppConnections({
     request: { pieceName: piece.name, projectId, limit: 1000 },
@@ -104,13 +102,7 @@ export function ConnectionSelectWithSwitchConfirmation({
       />
       {pendingSwitch && (
         <SwitchConnectionConfirmationDialog
-          oldName={sourceConnection?.displayName ?? ''}
-          newName={targetConnection?.displayName ?? ''}
-          stepCount={
-            flowConnections.find(
-              ({ connection }) => connection.id === sourceConnection?.id,
-            )?.stepCount ?? 1
-          }
+          newConnectionDisplayName={targetConnection?.displayName ?? ''}
           clearedInputs={pendingSwitch.clearedInputs}
           onReplace={
             canReplace && sourceConnection
@@ -147,17 +139,15 @@ export function ConnectionSelectWithSwitchConfirmation({
 }
 
 function SwitchConnectionConfirmationDialog({
-  oldName,
-  newName,
-  stepCount,
+  newConnectionDisplayName,
   clearedInputs,
   onReplace,
   onCancel,
   onConfirm,
 }: SwitchConnectionConfirmationDialogProps) {
   const [beforeInputs, afterInputs] = t(
-    "Switching can clear {inputs} in this step's settings, if the new connection doesn't have access to them.",
-    { inputs: INPUTS_PLACEHOLDER },
+    "Switching can clear {inputs} in this step's settings, if the {newConnectionDisplayName} connection doesn't have access to them.",
+    { inputs: INPUTS_PLACEHOLDER, newConnectionDisplayName },
   ).split(INPUTS_PLACEHOLDER);
   return (
     <Dialog
@@ -170,21 +160,17 @@ function SwitchConnectionConfirmationDialog({
     >
       <DialogContent className="flex flex-col">
         <DialogHeader>
-          <DialogTitle>{t('Switch to {newName}?', { newName })}</DialogTitle>
+          <DialogTitle>
+            {t('Switch to {newConnectionDisplayName}?', {
+              newConnectionDisplayName,
+            })}
+          </DialogTitle>
         </DialogHeader>
         <DialogDescription className="text-gray-12">
           {beforeInputs}
           <InputNames names={clearedInputs.map((input) => input.displayName)} />
           {afterInputs}
         </DialogDescription>
-        {onReplace && (
-          <DialogDescription className="text-gray-12">
-            {t(
-              '{stepCount, plural, =1 {To keep your inputs, replace the connection in the step that uses {oldName} instead.} other {To keep your inputs, replace the connection in all # steps that use {oldName} instead.}}',
-              { stepCount, oldName },
-            )}
-          </DialogDescription>
-        )}
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={onCancel}>
             {t('Cancel')}
@@ -316,9 +302,7 @@ type ConnectionsToReplace = {
 };
 
 type SwitchConnectionConfirmationDialogProps = {
-  oldName: string;
-  newName: string;
-  stepCount: number;
+  newConnectionDisplayName: string;
   clearedInputs: ClearedInput[];
   onReplace: (() => void) | undefined;
   onCancel: () => void;
