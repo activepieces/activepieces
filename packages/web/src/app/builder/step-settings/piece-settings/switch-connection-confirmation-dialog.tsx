@@ -12,10 +12,13 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   AppConnectionWithoutSensitiveData,
+  ConnectionReplaceSource,
+  ConnectionSwitchChoice,
   PieceAction,
   PieceTrigger,
   PropertyExecutionType,
   PropertySettings,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import i18next, { t } from 'i18next';
 import { useState } from 'react';
@@ -23,6 +26,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { ReplaceConnectionForFlowDialog } from '@/app/builder/builder-header/replace-connection-for-flow-dialog';
 import { ConnectionSelect } from '@/app/connections/connection-select';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -46,6 +50,7 @@ export function ConnectionSelectWithSwitchConfirmation({
   disabled,
 }: ConnectionSelectWithSwitchConfirmationProps) {
   const form = useFormContext<PieceAction | PieceTrigger>();
+  const { capture } = useTelemetry();
   const projectId = authenticationSession.getProjectId()!;
   const { data: pieceConnections } = appConnectionsQueries.useAppConnections({
     request: { pieceName: piece.name, projectId, limit: 1000 },
@@ -97,6 +102,17 @@ export function ConnectionSelectWithSwitchConfirmation({
   const canReplace =
     showReplace && hasPermissionToReplace && !isNil(sourceConnection);
 
+  const captureSwitchDecision = (choice: ConnectionSwitchChoice) =>
+    capture({
+      name: TelemetryEventName.CONNECTION_SWITCH_DECIDED,
+      payload: {
+        choice,
+        pieceName: piece.name,
+        clearedInputCount: pendingSwitch?.clearedInputs.length ?? 0,
+        replaceAvailable: canReplace,
+      },
+    });
+
   return (
     <>
       <ConnectionSelect
@@ -112,6 +128,14 @@ export function ConnectionSelectWithSwitchConfirmation({
           onReplace={
             canReplace && sourceConnection
               ? () => {
+                  captureSwitchDecision(ConnectionSwitchChoice.REPLACE);
+                  capture({
+                    name: TelemetryEventName.CONNECTION_REPLACE_OPENED,
+                    payload: {
+                      source: ConnectionReplaceSource.SWITCH_DIALOG,
+                      pieceName: sourceConnection.pieceName,
+                    },
+                  });
                   setPendingSwitch(null);
                   setConnectionsToReplace({
                     source: sourceConnection,
@@ -120,8 +144,12 @@ export function ConnectionSelectWithSwitchConfirmation({
                 }
               : undefined
           }
-          onCancel={() => setPendingSwitch(null)}
+          onCancel={() => {
+            captureSwitchDecision(ConnectionSwitchChoice.CANCEL);
+            setPendingSwitch(null);
+          }}
           onConfirm={() => {
+            captureSwitchDecision(ConnectionSwitchChoice.SWITCH);
             setPendingSwitch(null);
             onChange(pendingSwitch.newValue);
           }}
@@ -131,6 +159,7 @@ export function ConnectionSelectWithSwitchConfirmation({
         <ReplaceConnectionForFlowDialog
           sourceConnection={connectionsToReplace.source}
           targetConnection={connectionsToReplace.target}
+          source={ConnectionReplaceSource.SWITCH_DIALOG}
           open
           onOpenChange={(open) => {
             if (!open) {

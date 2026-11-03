@@ -1,4 +1,8 @@
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+import {
+  AppConnectionWithoutSensitiveData,
+  ConnectionReplaceSource,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plug } from 'lucide-react';
 import { useState } from 'react';
@@ -7,6 +11,7 @@ import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -31,6 +36,7 @@ export const FlowConnectionsPopover = ({
     flowCanvasHooks.useFlowConnections();
   const { showReplace, hasPermissionToReplace } =
     appConnectionsHooks.useReplaceConnectionAccess();
+  const { capture } = useTelemetry();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [connectionToReplace, setConnectionToReplace] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
@@ -100,6 +106,14 @@ export const FlowConnectionsPopover = ({
                           onClick={() => {
                             setPopoverOpen(false);
                             setConnectionToReplace(connection);
+                            capture({
+                              name: TelemetryEventName.CONNECTION_REPLACE_OPENED,
+                              payload: {
+                                source:
+                                  ConnectionReplaceSource.BUILDER_CONNECTIONS_BUTTON,
+                                pieceName: connection.pieceName,
+                              },
+                            });
                           }}
                         >
                           {t('Replace')}
@@ -116,6 +130,7 @@ export const FlowConnectionsPopover = ({
       {connectionToReplace && (
         <ReplaceConnectionForFlowDialog
           sourceConnection={connectionToReplace}
+          source={ConnectionReplaceSource.BUILDER_CONNECTIONS_BUTTON}
           open
           onOpenChange={(open) => {
             if (!open) {

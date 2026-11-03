@@ -1,4 +1,8 @@
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+import {
+  AppConnectionWithoutSensitiveData,
+  ConnectionReplaceSource,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
@@ -12,6 +16,7 @@ import {
   ReplaceConnectionSourceKind,
   ReplaceConnectionTestFlowsAlert,
 } from '@/app/connections/replace-connection-selection-form';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -34,6 +39,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 const ReplaceConnectionForFlowDialog = ({
   sourceConnection,
   targetConnection,
+  source,
   open,
   onOpenChange,
 }: ReplaceConnectionForFlowDialogProps) => {
@@ -60,6 +66,7 @@ const ReplaceConnectionForFlowDialog = ({
           key={open ? 'open' : 'closed'}
           sourceConnection={sourceConnection}
           targetConnection={targetConnection}
+          source={source}
           setDialogOpen={onOpenChange}
         />
       </DialogContent>
@@ -70,12 +77,15 @@ const ReplaceConnectionForFlowDialog = ({
 function ReplaceConnectionForFlowForm({
   sourceConnection,
   targetConnection,
+  source,
   setDialogOpen,
 }: {
   sourceConnection: AppConnectionWithoutSensitiveData;
   targetConnection?: AppConnectionWithoutSensitiveData;
+  source: ConnectionReplaceSource;
   setDialogOpen: (open: boolean) => void;
 }) {
+  const { capture } = useTelemetry();
   const [flow, savePendingEdits, showsNewestVersion] = useBuilderStateContext(
     (state) => [state.flow, state.savePendingEdits, state.showsNewestVersion],
   );
@@ -92,6 +102,16 @@ function ReplaceConnectionForFlowForm({
     appConnectionsMutations.useReplaceConnections({
       setDialogOpen,
       connections: connections?.data ?? [],
+      onReplaced: (request) =>
+        capture({
+          name: TelemetryEventName.CONNECTION_REPLACE_COMPLETED,
+          payload: {
+            source,
+            pieceName: sourceConnection.pieceName,
+            flowCount: request.flowIds.length,
+            applyToPublishedVersions: request.applyToPublishedVersions ?? false,
+          },
+        }),
       refetch: () => {
         if (showsNewestVersion()) {
           refreshDraft().catch(() => internalErrorToast());
@@ -165,6 +185,7 @@ type FlowReplaceFormValues = ReplaceConnectionFlowVersionsSelection & {
 type ReplaceConnectionForFlowDialogProps = {
   sourceConnection: AppConnectionWithoutSensitiveData;
   targetConnection?: AppConnectionWithoutSensitiveData;
+  source: ConnectionReplaceSource;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
