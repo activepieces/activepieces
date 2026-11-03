@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksListContactCreditNoteRefundsOutputSchema } from '../../../output-schemas';
 
 export const listContactCreditNoteRefundsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_contact_credit_note_refunds',
+  outputSchema: zohoBooksListContactCreditNoteRefundsOutputSchema,
   displayName: 'List Contact Credit Note Refunds',
   description: 'Lists the credit note refunds issued to a Zoho Books contact.',
   audience: 'ai',

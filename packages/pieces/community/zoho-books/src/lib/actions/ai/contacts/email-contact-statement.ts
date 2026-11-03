@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const emailContactStatementAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_email_contact_statement',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Email Contact Statement',
   description: 'Emails a statement of transactions to a Zoho Books contact.',
   audience: 'ai',

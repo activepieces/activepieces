@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksListContactCommentsOutputSchema } from '../../../output-schemas';
 
 export const listContactCommentsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_contact_comments',
+  outputSchema: zohoBooksListContactCommentsOutputSchema,
   displayName: 'List Contact Comments',
   description: 'Lists the comments and recent activity of a Zoho Books contact.',
   audience: 'ai',

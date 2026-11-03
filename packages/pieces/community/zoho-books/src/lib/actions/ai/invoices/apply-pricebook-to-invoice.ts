@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const applyPricebookToInvoiceAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_apply_pricebook_to_invoice',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Apply Price Book To Invoice',
   description: 'Applies a price book to a Zoho Books invoice.',
   audience: 'ai',

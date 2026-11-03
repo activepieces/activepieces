@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksListInvoicePaymentsOutputSchema } from '../../../output-schemas';
 
 export const listInvoicePaymentsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_invoice_payments',
+  outputSchema: zohoBooksListInvoicePaymentsOutputSchema,
   displayName: 'List Invoice Payments',
   description: 'Lists the payments made for an invoice in Zoho Books.',
   audience: 'ai',

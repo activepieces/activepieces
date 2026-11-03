@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksCreateInvoicesFromEstimatesOutputSchema } from '../../../output-schemas';
 
 export const mergeContactsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_merge_contacts',
+  outputSchema: zohoBooksCreateInvoicesFromEstimatesOutputSchema,
   displayName: 'Merge Contacts',
   description: 'Merges duplicate Zoho Books contacts into one contact.',
   audience: 'ai',
@@ -48,8 +50,7 @@ export const mergeContactsAction = createAction({
       auth: context.auth,
       method: HttpMethod.POST,
       path: `/contacts/${encodeURIComponent(contactId)}/merge`,
-      query: { organization_id: organizationId },
-      body: { contact_ids: contactIdsToMergeList },
+      query: { organization_id: organizationId, contact_ids: contactIdsToMergeList.join(',') },
     });
   },
 });

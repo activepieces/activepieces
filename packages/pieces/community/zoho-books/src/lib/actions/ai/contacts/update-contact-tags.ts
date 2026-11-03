@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksUpdateContactTagsOutputSchema } from '../../../output-schemas';
 
 export const updateContactTagsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_update_contact_tags',
+  outputSchema: zohoBooksUpdateContactTagsOutputSchema,
   displayName: 'Update Contact Tags',
   description: 'Sets reporting tag options on a Zoho Books contact.',
   audience: 'ai',

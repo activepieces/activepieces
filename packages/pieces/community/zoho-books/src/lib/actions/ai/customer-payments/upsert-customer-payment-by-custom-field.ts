@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksCreateCustomerPaymentOutputSchema } from '../../../output-schemas';
 
 export const upsertCustomerPaymentByCustomFieldAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_upsert_customer_payment_by_custom_field',
+  outputSchema: zohoBooksCreateCustomerPaymentOutputSchema,
   displayName: 'Upsert Customer Payment by Custom Field',
   description:
     'Updates the customer payment matching a unique custom field value, or creates it when none matches.',

@@ -6,6 +6,7 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksListCustomerPaymentsOutputSchema } from '../../../output-schemas';
 
 const FILTER_BY = [
   'PaymentMode.All',
@@ -28,6 +29,7 @@ const FILTER_BY = [
 export const listCustomerPaymentsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_customer_payments',
+  outputSchema: zohoBooksListCustomerPaymentsOutputSchema,
   displayName: 'List Customer Payments',
   description: 'Lists payments received from customers in Zoho Books, with filters.',
   audience: 'ai',

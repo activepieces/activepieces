@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const deleteCustomerPaymentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_customer_payment',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Delete Customer Payment',
   description: 'Deletes a payment received from a customer in Zoho Books.',
   audience: 'ai',

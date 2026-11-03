@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksListAllContactPersonsOutputSchema } from '../../../output-schemas';
 
 export const listAllContactPersonsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_all_contact_persons',
+  outputSchema: zohoBooksListAllContactPersonsOutputSchema,
   displayName: 'List All Contact Persons',
   description: 'Lists contact persons across all contacts in a Zoho Books organization.',
   audience: 'ai',

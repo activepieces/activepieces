@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksListInvoiceCreditsAppliedOutputSchema } from '../../../output-schemas';
 
 export const listInvoiceCreditsAppliedAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_invoice_credits_applied',
+  outputSchema: zohoBooksListInvoiceCreditsAppliedOutputSchema,
   displayName: 'List Invoice Credits Applied',
   description: 'Lists the credits applied to an invoice in Zoho Books.',
   audience: 'ai',

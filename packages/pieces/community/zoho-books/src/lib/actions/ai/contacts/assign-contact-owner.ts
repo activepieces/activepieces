@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksAssignContactOwnerOutputSchema } from '../../../output-schemas';
 
 export const assignContactOwnerAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_assign_contact_owner',
+  outputSchema: zohoBooksAssignContactOwnerOutputSchema,
   displayName: 'Assign Contact Owner',
   description: 'Assigns a Zoho Books user as the owner of a contact.',
   audience: 'ai',

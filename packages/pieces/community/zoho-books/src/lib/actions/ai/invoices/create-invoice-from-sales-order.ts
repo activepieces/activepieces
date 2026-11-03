@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksCreateInvoiceFromSalesOrderOutputSchema } from '../../../output-schemas';
 
 export const createInvoiceFromSalesOrderAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_create_invoice_from_sales_order',
+  outputSchema: zohoBooksCreateInvoiceFromSalesOrderOutputSchema,
   displayName: 'Create Invoice from Sales Order',
   description: 'Creates an invoice from a confirmed sales order in Zoho Books.',
   audience: 'ai',

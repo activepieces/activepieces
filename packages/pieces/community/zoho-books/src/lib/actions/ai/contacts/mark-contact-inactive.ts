@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const markContactInactiveAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_mark_contact_inactive',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Mark Contact Inactive',
   description: 'Marks a Zoho Books contact as inactive.',
   audience: 'ai',

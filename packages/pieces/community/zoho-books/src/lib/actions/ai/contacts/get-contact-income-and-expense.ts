@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetContactIncomeAndExpenseOutputSchema } from '../../../output-schemas';
 
 export const getContactIncomeAndExpenseAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_contact_income_and_expense',
+  outputSchema: zohoBooksGetContactIncomeAndExpenseOutputSchema,
   displayName: 'Get Contact Income And Expense',
   description: 'Gets the income and expense summary of a Zoho Books contact.',
   audience: 'ai',

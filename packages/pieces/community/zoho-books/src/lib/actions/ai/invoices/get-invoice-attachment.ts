@@ -4,10 +4,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksExportInvoicesPdfOutputSchema } from '../../../output-schemas';
 
 export const getInvoiceAttachmentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_invoice_attachment',
+  outputSchema: zohoBooksExportInvoicesPdfOutputSchema,
   displayName: 'Get Invoice Attachment',
   description: 'Downloads the file attached to an invoice in Zoho Books.',
   audience: 'ai',

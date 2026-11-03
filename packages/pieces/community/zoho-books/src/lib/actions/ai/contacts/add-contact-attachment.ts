@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksAddContactAttachmentOutputSchema } from '../../../output-schemas';
 
 export const addContactAttachmentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_add_contact_attachment',
+  outputSchema: zohoBooksAddContactAttachmentOutputSchema,
   displayName: 'Add Contact Attachment',
   description: 'Attaches a file to a Zoho Books contact.',
   audience: 'ai',

@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const approveInvoicesAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_approve_invoices',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Approve Invoices',
   description: 'Approves several Zoho Books invoices that are pending approval.',
   audience: 'ai',

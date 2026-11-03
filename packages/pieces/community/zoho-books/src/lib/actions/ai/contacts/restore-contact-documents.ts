@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const restoreContactDocumentsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_restore_contact_documents',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Restore Contact Documents',
   description: 'Restores deleted documents of Zoho Books contacts.',
   audience: 'ai',

@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksAddInvoiceCommentOutputSchema } from '../../../output-schemas';
 
 export const addInvoiceCommentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_add_invoice_comment',
+  outputSchema: zohoBooksAddInvoiceCommentOutputSchema,
   displayName: 'Add Invoice Comment',
   description: 'Adds a comment to a Zoho Books invoice.',
   audience: 'ai',

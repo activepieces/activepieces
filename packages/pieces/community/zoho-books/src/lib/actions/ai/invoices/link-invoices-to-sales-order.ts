@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksLinkInvoicesToSalesOrderOutputSchema } from '../../../output-schemas';
 
 export const linkInvoicesToSalesOrderAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_link_invoices_to_sales_order',
+  outputSchema: zohoBooksLinkInvoicesToSalesOrderOutputSchema,
   displayName: 'Link Invoices to Sales Order',
   description: 'Associates existing invoices with their sales orders in Zoho Books.',
   audience: 'ai',

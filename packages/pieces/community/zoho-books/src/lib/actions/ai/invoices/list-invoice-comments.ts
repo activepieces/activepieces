@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksListInvoiceCommentsOutputSchema } from '../../../output-schemas';
 
 export const listInvoiceCommentsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_invoice_comments',
+  outputSchema: zohoBooksListInvoiceCommentsOutputSchema,
   displayName: 'List Invoice Comments',
   description: 'Lists the comments and history of a Zoho Books invoice.',
   audience: 'ai',

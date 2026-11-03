@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetContactStatementOutputSchema } from '../../../output-schemas';
 
 export const getContactStatementAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_contact_statement',
+  outputSchema: zohoBooksGetContactStatementOutputSchema,
   displayName: 'Get Contact Statement',
   description: 'Gets the statement of account of a Zoho Books contact.',
   audience: 'ai',

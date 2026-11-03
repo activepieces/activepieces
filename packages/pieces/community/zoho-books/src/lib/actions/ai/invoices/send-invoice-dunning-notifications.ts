@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const sendInvoiceDunningNotificationsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_send_invoice_dunning_notifications',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Send Invoice Dunning Notifications',
   description: 'Sends dunning notifications to the customer of an overdue Zoho Books invoice.',
   audience: 'ai',

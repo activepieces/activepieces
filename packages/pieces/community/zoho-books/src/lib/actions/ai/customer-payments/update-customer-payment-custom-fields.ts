@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const updateCustomerPaymentCustomFieldsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_update_customer_payment_custom_fields',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Update Customer Payment Custom Fields',
   description: 'Sets custom field values on an existing customer payment in Zoho Books.',
   audience: 'ai',
@@ -46,7 +48,7 @@ export const updateCustomerPaymentCustomFieldsAction = createAction({
       method: HttpMethod.PUT,
       path: `/customerpayment/${encodeURIComponent(customerPaymentId)}/customfields`,
       query: { organization_id: organizationId },
-      body: customFields,
+      body: { custom_fields: customFields },
     });
   },
 });

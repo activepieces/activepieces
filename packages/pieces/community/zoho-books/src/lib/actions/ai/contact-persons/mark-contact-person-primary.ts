@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const markContactPersonPrimaryAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_mark_contact_person_primary',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Mark Contact Person as Primary',
   description: 'Makes a contact person the primary contact person of its contact.',
   audience: 'ai',

@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetInvoiceDashboardOutputSchema } from '../../../output-schemas';
 
 export const getInvoiceDashboardAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_invoice_dashboard',
+  outputSchema: zohoBooksGetInvoiceDashboardOutputSchema,
   displayName: 'Get Invoice Dashboard',
   description: 'Gets the Zoho Books invoice dashboard with summary metrics.',
   audience: 'ai',

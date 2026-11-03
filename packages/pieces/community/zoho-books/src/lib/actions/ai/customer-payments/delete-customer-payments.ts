@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksDeleteCustomerPaymentsOutputSchema } from '../../../output-schemas';
 
 export const deleteCustomerPaymentsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_customer_payments',
+  outputSchema: zohoBooksDeleteCustomerPaymentsOutputSchema,
   displayName: 'Delete Customer Payments',
   description: 'Deletes several customer payments in Zoho Books at once.',
   audience: 'ai',
@@ -43,7 +45,7 @@ export const deleteCustomerPaymentsAction = createAction({
       path: '/customerpayments',
       query: {
         organization_id: organizationId,
-        payment_ids: paymentIdsList.join(','),
+        payment_id: paymentIdsList.join(','),
         bulk_delete: 'true',
       },
     });

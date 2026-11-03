@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksCreateCustomerPaymentRefundOutputSchema } from '../../../output-schemas';
 
 export const getCustomerPaymentRefundAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_customer_payment_refund',
+  outputSchema: zohoBooksCreateCustomerPaymentRefundOutputSchema,
   displayName: 'Get Customer Payment Refund',
   description: 'Gets a refund of a customer payment in Zoho Books.',
   audience: 'ai',

@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksCreateContactOutputSchema } from '../../../output-schemas';
 
 export const createContactAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_create_contact',
+  outputSchema: zohoBooksCreateContactOutputSchema,
   displayName: 'Create Contact',
   description: 'Creates a customer or vendor in Zoho Books.',
   audience: 'ai',

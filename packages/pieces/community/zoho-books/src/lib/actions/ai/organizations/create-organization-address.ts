@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksCreateOrganizationAddressOutputSchema } from '../../../output-schemas';
 
 export const createOrganizationAddressAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_create_organization_address',
+  outputSchema: zohoBooksCreateOrganizationAddressOutputSchema,
   displayName: 'Create Organization Address',
   description: 'Adds an address to a Zoho Books organization.',
   audience: 'ai',

@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksCreateInvoicesFromEstimatesOutputSchema } from '../../../output-schemas';
 
 export const markInvoiceSentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_mark_invoice_sent',
+  outputSchema: zohoBooksCreateInvoicesFromEstimatesOutputSchema,
   displayName: 'Mark Invoice Sent',
   description: 'Marks a draft invoice as sent in Zoho Books.',
   audience: 'ai',

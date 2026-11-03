@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const submitInvoiceAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_submit_invoice',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Submit Invoice',
   description: 'Submits an invoice for approval in Zoho Books.',
   audience: 'ai',

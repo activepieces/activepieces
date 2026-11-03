@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const updateInvoiceTemplateAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_update_invoice_template',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Update Invoice Template',
   description: 'Changes the PDF template of an invoice in Zoho Books.',
   audience: 'ai',

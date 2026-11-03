@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetCustomerPaymentOutputSchema } from '../../../output-schemas';
 
 export const updateCustomerPaymentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_update_customer_payment',
+  outputSchema: zohoBooksGetCustomerPaymentOutputSchema,
   displayName: 'Update Customer Payment',
   description: 'Updates a payment received from a customer in Zoho Books.',
   audience: 'ai',

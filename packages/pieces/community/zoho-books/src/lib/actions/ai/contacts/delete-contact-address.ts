@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const deleteContactAddressAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_contact_address',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Delete Contact Address',
   description: 'Deletes an additional address of a Zoho Books contact.',
   audience: 'ai',

@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const deleteInvoiceAppliedCreditAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_invoice_applied_credit',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Delete Invoice Applied Credit',
   description: 'Removes a credit applied to an invoice in Zoho Books.',
   audience: 'ai',

@@ -4,6 +4,7 @@ import { Property, createAction, spreadIfDefined } from '@activepieces/pieces-fr
 import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksUpdateOrganizationOutputSchema } from '../../../output-schemas';
 
 const FISCAL_MONTHS = [
   'january',
@@ -23,6 +24,7 @@ const FISCAL_MONTHS = [
 export const updateOrganizationAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_update_organization',
+  outputSchema: zohoBooksUpdateOrganizationOutputSchema,
   displayName: 'Update Organization',
   description: 'Updates the details of a Zoho Books organization.',
   audience: 'ai',

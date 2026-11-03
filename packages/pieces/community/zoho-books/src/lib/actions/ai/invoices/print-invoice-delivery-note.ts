@@ -4,10 +4,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksExportInvoicesPdfOutputSchema } from '../../../output-schemas';
 
 export const printInvoiceDeliveryNoteAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_print_invoice_delivery_note',
+  outputSchema: zohoBooksExportInvoicesPdfOutputSchema,
   displayName: 'Print Invoice Delivery Note',
   description: 'Exports the delivery note of a Zoho Books invoice as a PDF file.',
   audience: 'ai',

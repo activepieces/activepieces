@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const writeOffInvoicesAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_write_off_invoices',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Write Off Invoices',
   description: 'Writes off the balance of several Zoho Books invoices.',
   audience: 'ai',

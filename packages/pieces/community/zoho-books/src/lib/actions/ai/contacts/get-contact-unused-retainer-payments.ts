@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetContactUnusedCreditsOutputSchema } from '../../../output-schemas';
 
 export const getContactUnusedRetainerPaymentsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_contact_unused_retainer_payments',
+  outputSchema: zohoBooksGetContactUnusedCreditsOutputSchema,
   displayName: 'Get Contact Unused Retainer Payments',
   description: 'Gets the retainer payments of a Zoho Books contact not yet applied to invoices.',
   audience: 'ai',

@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksUpsertContactByCustomFieldOutputSchema } from '../../../output-schemas';
 
 export const upsertContactByCustomFieldAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_upsert_contact_by_custom_field',
+  outputSchema: zohoBooksUpsertContactByCustomFieldOutputSchema,
   displayName: 'Upsert Contact by Custom Field',
   description:
     'Updates the Zoho Books contact matching a unique custom field value, or creates it when none matches.',
@@ -45,7 +47,7 @@ export const upsertContactByCustomFieldAction = createAction({
     }),
     contactType: Property.StaticDropdown({
       displayName: 'Contact Type',
-      required: false,
+      required: true,
       options: {
         options: [
           { label: 'Customer', value: 'customer' },

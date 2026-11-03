@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const deleteOrganizationAddressAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_organization_address',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Delete Organization Address',
   description: 'Deletes an address of a Zoho Books organization.',
   audience: 'ai',

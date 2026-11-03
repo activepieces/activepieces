@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetInvoicePaymentReminderEmailContentOutputSchema } from '../../../output-schemas';
 
 export const getInvoicePaymentReminderEmailContentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_invoice_payment_reminder_email_content',
+  outputSchema: zohoBooksGetInvoicePaymentReminderEmailContentOutputSchema,
   displayName: 'Get Invoice Payment Reminder Email Content',
   description: 'Gets the payment reminder email content of an invoice in Zoho Books.',
   audience: 'ai',

@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksEmailInvoiceOutputSchema } from '../../../output-schemas';
 
 export const emailInvoiceAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_email_invoice',
+  outputSchema: zohoBooksEmailInvoiceOutputSchema,
   displayName: 'Email Invoice',
   description: 'Emails an invoice to the customer from Zoho Books.',
   audience: 'ai',

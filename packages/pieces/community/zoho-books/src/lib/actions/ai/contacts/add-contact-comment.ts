@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksAddContactCommentOutputSchema } from '../../../output-schemas';
 
 export const addContactCommentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_add_contact_comment',
+  outputSchema: zohoBooksAddContactCommentOutputSchema,
   displayName: 'Add Contact Comment',
   description: 'Adds a comment to a Zoho Books contact.',
   audience: 'ai',

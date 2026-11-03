@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksListContactPaymentRefundsOutputSchema } from '../../../output-schemas';
 
 export const listContactPaymentRefundsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_contact_payment_refunds',
+  outputSchema: zohoBooksListContactPaymentRefundsOutputSchema,
   displayName: 'List Contact Payment Refunds',
   description: 'Lists the customer payment refunds of a Zoho Books contact.',
   audience: 'ai',

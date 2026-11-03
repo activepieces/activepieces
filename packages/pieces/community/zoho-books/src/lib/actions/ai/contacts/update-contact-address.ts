@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksAddContactAddressOutputSchema } from '../../../output-schemas';
 
 export const updateContactAddressAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_update_contact_address',
+  outputSchema: zohoBooksAddContactAddressOutputSchema,
   displayName: 'Update Contact Address',
   description: 'Updates an additional address of a Zoho Books contact.',
   audience: 'ai',

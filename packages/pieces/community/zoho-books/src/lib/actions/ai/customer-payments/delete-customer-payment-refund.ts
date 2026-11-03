@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const deleteCustomerPaymentRefundAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_customer_payment_refund',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Delete Customer Payment Refund',
   description: 'Deletes a refund of a customer payment in Zoho Books.',
   audience: 'ai',

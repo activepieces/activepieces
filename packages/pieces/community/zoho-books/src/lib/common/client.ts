@@ -45,7 +45,7 @@ async function download({
   const response = await httpClient.sendRequest<ArrayBuffer>({
     method: HttpMethod.GET,
     url: `${baseUrl({ auth })}${path}`,
-    headers: authHeaders({ auth }),
+    headers: { ...authHeaders({ auth }), Accept: '*/*' },
     queryParams: toQueryParams({ query }),
     responseType: 'arraybuffer',
   });

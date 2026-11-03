@@ -4,10 +4,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksExportInvoicesPdfOutputSchema } from '../../../output-schemas';
 
 export const getInvoiceDocumentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_invoice_document',
+  outputSchema: zohoBooksExportInvoicesPdfOutputSchema,
   displayName: 'Get Invoice Document',
   description: 'Downloads a document attached to an invoice in Zoho Books.',
   audience: 'ai',
@@ -23,7 +25,7 @@ export const getInvoiceDocumentAction = createAction({
     documentId: Property.ShortText({
       displayName: 'Document ID',
       description:
-        'Document ID, from the documents of Get Invoice or from Upload Invoice Document.',
+        'Document ID, from the documents of Get Invoice or from Add Invoice Attachment.',
       required: true,
     }),
   },

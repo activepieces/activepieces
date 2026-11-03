@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const updateInvoiceAttachmentPreferenceAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_update_invoice_attachment_preference',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Update Invoice Attachment Preference',
   description: 'Sets whether the invoice attachment is sent with invoice emails in Zoho Books.',
   audience: 'ai',

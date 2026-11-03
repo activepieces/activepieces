@@ -3,11 +3,14 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 
 import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
+import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksListUserOrganizationsOutputSchema } from '../../../output-schemas';
 
 export const listUserOrganizationsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_user_organizations',
+  outputSchema: zohoBooksListUserOrganizationsOutputSchema,
   displayName: 'List User Organizations',
   description: 'Lists the organizations a user can access, with filters.',
   audience: 'ai',
@@ -18,6 +21,7 @@ export const listUserOrganizationsAction = createAction({
     idempotent: true,
   },
   props: {
+    organizationId: zohoBooksAiProps.organizationId(),
     email: Property.ShortText({
       displayName: 'Email',
       description:
@@ -43,11 +47,16 @@ export const listUserOrganizationsAction = createAction({
   async run(context) {
     const { email, showAdminOrgsOnly, showActiveOrgsOnly, showSameCurrencyOrgsOnly } =
       context.propsValue;
+    const organizationId = await zohoBooksApi.resolveOrganizationId({
+      auth: context.auth,
+      organizationId: context.propsValue.organizationId,
+    });
     return await zohoBooksClient.request({
       auth: context.auth,
       method: HttpMethod.GET,
       path: '/organizations/user',
       query: {
+        organization_id: organizationId,
         email,
         show_admin_orgs_only: showAdminOrgsOnly,
         show_active_orgs_only: showActiveOrgsOnly,

@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksCreateInvoicesFromEstimatesOutputSchema } from '../../../output-schemas';
 
 export const deleteInvoicesAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_invoices',
+  outputSchema: zohoBooksCreateInvoicesFromEstimatesOutputSchema,
   displayName: 'Delete Invoices',
   description: 'Deletes several invoices in Zoho Books.',
   audience: 'ai',

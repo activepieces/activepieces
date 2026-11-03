@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
+import { zohoBooksGetContactOutputSchema } from '../../../output-schemas';
 
 export const getContactAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_contact',
+  outputSchema: zohoBooksGetContactOutputSchema,
   displayName: 'Get Contact',
   description: 'Gets a Zoho Books contact (customer or vendor) by ID.',
   audience: 'ai',

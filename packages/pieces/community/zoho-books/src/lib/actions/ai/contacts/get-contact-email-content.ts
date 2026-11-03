@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetContactEmailContentOutputSchema } from '../../../output-schemas';
 
 export const getContactEmailContentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_contact_email_content',
+  outputSchema: zohoBooksGetContactEmailContentOutputSchema,
   displayName: 'Get Contact Email Content',
   description: 'Gets the default email content for emailing a Zoho Books contact.',
   audience: 'ai',

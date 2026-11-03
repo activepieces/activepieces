@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetContactVendorStatementEmailContentOutputSchema } from '../../../output-schemas';
 
 export const getContactVendorStatementEmailContentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_contact_vendor_statement_email_content',
+  outputSchema: zohoBooksGetContactVendorStatementEmailContentOutputSchema,
   displayName: 'Get Contact Vendor Statement Email Content',
   description: 'Gets the vendor statement email content for a Zoho Books vendor.',
   audience: 'ai',
@@ -28,13 +30,13 @@ export const getContactVendorStatementEmailContentAction = createAction({
     startDate: Property.ShortText({
       displayName: 'Start Date',
       description:
-        'Statement start date, yyyy-mm-dd. Leave Start Date and End Date empty for the current month.',
-      required: false,
+        'Statement start date, yyyy-mm-dd, e.g. "2026-10-01".',
+      required: true,
     }),
     endDate: Property.ShortText({
       displayName: 'End Date',
-      description: 'Statement end date, yyyy-mm-dd.',
-      required: false,
+      description: 'Statement end date, yyyy-mm-dd, e.g. "2026-10-31".',
+      required: true,
     }),
   },
   async run(context) {

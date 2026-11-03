@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const trackContacts1099Action = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_track_contacts_1099',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Track Contacts for 1099',
   description: 'Marks several Zoho Books contacts for 1099 tracking at once.',
   audience: 'ai',

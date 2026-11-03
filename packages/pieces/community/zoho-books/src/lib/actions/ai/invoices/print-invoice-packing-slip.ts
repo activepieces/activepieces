@@ -4,10 +4,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksExportInvoicesPdfOutputSchema } from '../../../output-schemas';
 
 export const printInvoicePackingSlipAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_print_invoice_packing_slip',
+  outputSchema: zohoBooksExportInvoicesPdfOutputSchema,
   displayName: 'Print Invoice Packing Slip',
   description: 'Exports the packing slip of a Zoho Books invoice as a PDF file.',
   audience: 'ai',

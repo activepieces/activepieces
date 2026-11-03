@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksCreateInvoicesFromEstimatesOutputSchema } from '../../../output-schemas';
 
 export const createInvoicesFromEstimatesAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_create_invoices_from_estimates',
+  outputSchema: zohoBooksCreateInvoicesFromEstimatesOutputSchema,
   displayName: 'Create Invoices From Estimates',
   description: 'Creates Zoho Books invoices from estimates.',
   audience: 'ai',

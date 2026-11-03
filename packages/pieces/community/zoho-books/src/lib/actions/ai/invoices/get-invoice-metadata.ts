@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetInvoiceMetadataOutputSchema } from '../../../output-schemas';
 
 export const getInvoiceMetadataAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_invoice_metadata',
+  outputSchema: zohoBooksGetInvoiceMetadataOutputSchema,
   displayName: 'Get Invoice Metadata',
   description: 'Gets a metadata value stored against a Zoho Books invoice.',
   audience: 'ai',

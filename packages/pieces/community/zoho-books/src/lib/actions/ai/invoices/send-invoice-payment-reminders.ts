@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksSendInvoicePaymentRemindersOutputSchema } from '../../../output-schemas';
 
 export const sendInvoicePaymentRemindersAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_send_invoice_payment_reminders',
+  outputSchema: zohoBooksSendInvoicePaymentRemindersOutputSchema,
   displayName: 'Send Invoice Payment Reminders',
   description: 'Emails payment reminders for several unpaid invoices in Zoho Books.',
   audience: 'ai',

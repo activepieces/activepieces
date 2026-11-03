@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetContactProfitAndLossOutputSchema } from '../../../output-schemas';
 
 export const getContactProfitAndLossAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_contact_profit_and_loss',
+  outputSchema: zohoBooksGetContactProfitAndLossOutputSchema,
   displayName: 'Get Contact Profit And Loss',
   description: 'Gets the profit and loss summary of a Zoho Books contact.',
   audience: 'ai',

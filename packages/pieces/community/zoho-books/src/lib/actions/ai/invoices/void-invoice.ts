@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const voidInvoiceAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_void_invoice',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Void Invoice',
   description: 'Voids an invoice in Zoho Books.',
   audience: 'ai',

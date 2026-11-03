@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const deleteContactDocumentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_contact_document',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Delete Contact Document',
   description: 'Deletes a document attached to a Zoho Books contact.',
   audience: 'ai',

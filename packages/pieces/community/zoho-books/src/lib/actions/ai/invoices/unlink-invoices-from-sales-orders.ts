@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksLinkInvoicesToSalesOrderOutputSchema } from '../../../output-schemas';
 
 export const unlinkInvoicesFromSalesOrdersAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_unlink_invoices_from_sales_orders',
+  outputSchema: zohoBooksLinkInvoicesToSalesOrderOutputSchema,
   displayName: 'Unlink Invoices From Sales Orders',
   description: 'Removes the link between Zoho Books invoices and their sales orders.',
   audience: 'ai',

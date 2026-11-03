@@ -6,6 +6,7 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksListContactsOutputSchema } from '../../../output-schemas';
 
 const FILTER_BY = [
   'Status.All',
@@ -33,6 +34,7 @@ const SORT_COLUMNS = [
 export const listContactsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_contacts',
+  outputSchema: zohoBooksListContactsOutputSchema,
   displayName: 'List Contacts',
   description: 'Lists Zoho Books contacts (customers and vendors), with filters.',
   audience: 'ai',

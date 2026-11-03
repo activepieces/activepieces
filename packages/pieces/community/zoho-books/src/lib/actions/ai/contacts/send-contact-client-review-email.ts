@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const sendContactClientReviewEmailAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_send_contact_client_review_email',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Send Contact Client Review Email',
   description: 'Sends the client review email to a Zoho Books contact.',
   audience: 'ai',
@@ -35,7 +37,7 @@ export const sendContactClientReviewEmailAction = createAction({
     subject: Property.ShortText({
       displayName: 'Subject',
       description: 'Up to 1000 characters.',
-      required: false,
+      required: true,
     }),
     body: Property.LongText({
       displayName: 'Body',

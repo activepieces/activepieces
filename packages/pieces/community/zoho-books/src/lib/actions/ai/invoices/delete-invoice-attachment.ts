@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const deleteInvoiceAttachmentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_invoice_attachment',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Delete Invoice Attachment',
   description: 'Deletes the file attached to an invoice in Zoho Books.',
   audience: 'ai',

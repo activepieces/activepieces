@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 
 import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksListOrganizationsOutputSchema } from '../../../output-schemas';
 
 export const listOrganizationsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_organizations',
+  outputSchema: zohoBooksListOrganizationsOutputSchema,
   displayName: 'List Organizations',
   description: 'Lists the Zoho Books organizations the connection can access.',
   audience: 'ai',

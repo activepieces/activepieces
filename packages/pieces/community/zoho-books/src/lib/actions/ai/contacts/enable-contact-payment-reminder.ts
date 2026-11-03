@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const enableContactPaymentReminderAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_enable_contact_payment_reminder',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Enable Contact Payment Reminder',
   description: 'Turns on automated payment reminders for a Zoho Books contact.',
   audience: 'ai',

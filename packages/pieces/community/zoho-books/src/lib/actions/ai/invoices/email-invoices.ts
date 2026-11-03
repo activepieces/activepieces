@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const emailInvoicesAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_email_invoices',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Email Invoices',
   description: 'Emails several invoices to their customers in Zoho Books.',
   audience: 'ai',
@@ -29,8 +31,8 @@ export const emailInvoicesAction = createAction({
     contacts: Property.Json({
       displayName: 'Contacts',
       description:
-        'Optional per-customer delivery choice, e.g. [{"contact_id": "460000000026049", "email": true, "snail_mail": false}]. contact_id comes from List Contacts.',
-      required: false,
+        'Delivery choice for each customer of the invoices, e.g. [{"contact_id": "460000000026049", "email": true, "snail_mail": false}]. contact_id is the customer_id of each invoice.',
+      required: true,
     }),
   },
   async run(context) {

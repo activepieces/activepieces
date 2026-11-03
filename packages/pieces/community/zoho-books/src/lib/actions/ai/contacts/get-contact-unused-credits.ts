@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetContactUnusedCreditsOutputSchema } from '../../../output-schemas';
 
 export const getContactUnusedCreditsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_contact_unused_credits',
+  outputSchema: zohoBooksGetContactUnusedCreditsOutputSchema,
   displayName: 'Get Contact Unused Credits',
   description: 'Gets the unused credits of a Zoho Books customer.',
   audience: 'ai',

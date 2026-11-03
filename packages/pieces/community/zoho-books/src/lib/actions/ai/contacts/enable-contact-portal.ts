@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const enableContactPortalAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_enable_contact_portal',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Enable Contact Portal',
   description: 'Gives contact persons of a Zoho Books contact access to the customer portal.',
   audience: 'ai',

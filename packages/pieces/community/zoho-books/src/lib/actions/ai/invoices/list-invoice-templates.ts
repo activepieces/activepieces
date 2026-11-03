@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksListInvoiceTemplatesOutputSchema } from '../../../output-schemas';
 
 export const listInvoiceTemplatesAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_invoice_templates',
+  outputSchema: zohoBooksListInvoiceTemplatesOutputSchema,
   displayName: 'List Invoice Templates',
   description: 'Lists the invoice PDF templates of Zoho Books.',
   audience: 'ai',

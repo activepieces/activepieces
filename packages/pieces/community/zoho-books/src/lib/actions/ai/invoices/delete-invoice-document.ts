@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const deleteInvoiceDocumentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_invoice_document',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Delete Invoice Document',
   description: 'Deletes a document attached to an invoice in Zoho Books.',
   audience: 'ai',
@@ -24,7 +26,7 @@ export const deleteInvoiceDocumentAction = createAction({
     documentId: Property.ShortText({
       displayName: 'Document ID',
       description:
-        'Document ID, from the documents of Get Invoice or from Upload Invoice Document.',
+        'Document ID, from the documents of Get Invoice or from Add Invoice Attachment.',
       required: true,
     }),
   },

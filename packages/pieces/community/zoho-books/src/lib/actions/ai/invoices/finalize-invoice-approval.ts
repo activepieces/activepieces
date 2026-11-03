@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const finalizeInvoiceApprovalAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_finalize_invoice_approval',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Finalize Invoice Approval',
   description: 'Gives the final approval for a Zoho Books invoice in a multi-level approval flow.',
   audience: 'ai',

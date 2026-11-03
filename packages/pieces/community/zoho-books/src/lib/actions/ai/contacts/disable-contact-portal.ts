@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const disableContactPortalAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_disable_contact_portal',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Disable Contact Portal',
   description: 'Turns off customer portal access for a Zoho Books contact.',
   audience: 'ai',

@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const disableInvoicePaymentReminderAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_disable_invoice_payment_reminder',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Disable Invoice Payment Reminder',
   description: 'Turns off automated payment reminders for an invoice in Zoho Books.',
   audience: 'ai',

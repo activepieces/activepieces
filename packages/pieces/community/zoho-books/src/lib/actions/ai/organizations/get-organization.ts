@@ -3,10 +3,12 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 
 import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetOrganizationOutputSchema } from '../../../output-schemas';
 
 export const getOrganizationAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_organization',
+  outputSchema: zohoBooksGetOrganizationOutputSchema,
   displayName: 'Get Organization',
   description: 'Gets the details of a Zoho Books organization.',
   audience: 'ai',

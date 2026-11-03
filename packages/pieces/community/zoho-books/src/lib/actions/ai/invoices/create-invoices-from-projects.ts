@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksCreateInvoicesFromProjectsOutputSchema } from '../../../output-schemas';
 
 export const createInvoicesFromProjectsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_create_invoices_from_projects',
+  outputSchema: zohoBooksCreateInvoicesFromProjectsOutputSchema,
   displayName: 'Create Invoices From Projects',
   description: 'Creates Zoho Books invoices from the unbilled time and expenses of projects.',
   audience: 'ai',

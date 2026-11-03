@@ -6,6 +6,7 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksListInvoicesOutputSchema } from '../../../output-schemas';
 
 const STATUSES = ['sent', 'draft', 'overdue', 'paid', 'void', 'unpaid', 'partially_paid', 'viewed'];
 
@@ -22,6 +23,7 @@ const SORT_COLUMNS = [
 export const listInvoicesAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_invoices',
+  outputSchema: zohoBooksListInvoicesOutputSchema,
   displayName: 'List Invoices',
   description: 'Lists Zoho Books invoices, with filters.',
   audience: 'ai',

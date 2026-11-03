@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksCreateInvoiceOutputSchema } from '../../../output-schemas';
 
 export const upsertInvoiceByCustomFieldAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_upsert_invoice_by_custom_field',
+  outputSchema: zohoBooksCreateInvoiceOutputSchema,
   displayName: 'Upsert Invoice by Custom Field',
   description:
     'Updates the invoice matching a unique custom field value in Zoho Books, or creates one.',

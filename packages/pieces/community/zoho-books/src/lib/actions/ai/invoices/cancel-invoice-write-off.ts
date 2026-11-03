@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const cancelInvoiceWriteOffAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_cancel_invoice_write_off',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Cancel Invoice Write Off',
   description: 'Cancels the write-off of an invoice in Zoho Books.',
   audience: 'ai',

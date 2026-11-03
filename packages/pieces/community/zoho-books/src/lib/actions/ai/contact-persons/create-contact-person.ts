@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksCreateContactPersonOutputSchema } from '../../../output-schemas';
 
 export const createContactPersonAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_create_contact_person',
+  outputSchema: zohoBooksCreateContactPersonOutputSchema,
   displayName: 'Create Contact Person',
   description: 'Adds a contact person to a Zoho Books customer or vendor.',
   audience: 'ai',

@@ -5,17 +5,19 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const verifyContactAddressAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_verify_contact_address',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Verify Contact Address',
   description: 'Verifies a saved address of a Zoho Books contact.',
   audience: 'ai',
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Verifies one saved address of a contact and marks it verified. Address IDs come from List Contact Addresses, List All Contact Addresses or Add Contact Address. To check address fields that are not saved yet, use Validate Address Fields.',
+      'Verifies one saved address of a contact and marks it verified. Address IDs come from List Contact Addresses, List All Contact Addresses or Add Contact Address.',
     idempotent: true,
   },
   props: {

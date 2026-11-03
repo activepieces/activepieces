@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const resendContactPersonPortalInviteAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_resend_contact_person_portal_invite',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Resend Contact Person Portal Invite',
   description: 'Resends the customer portal invitation to a Zoho Books contact person.',
   audience: 'ai',

@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksPreviewInvoiceCouponsOutputSchema } from '../../../output-schemas';
 
 export const previewInvoiceCouponsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_preview_invoice_coupons',
+  outputSchema: zohoBooksPreviewInvoiceCouponsOutputSchema,
   displayName: 'Preview Invoice Coupons',
   description: 'Previews the effect of coupons on a Zoho Books invoice before it is created.',
   audience: 'ai',

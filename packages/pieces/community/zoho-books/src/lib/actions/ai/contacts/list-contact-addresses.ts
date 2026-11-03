@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksListContactAddressesOutputSchema } from '../../../output-schemas';
 
 export const listContactAddressesAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_list_contact_addresses',
+  outputSchema: zohoBooksListContactAddressesOutputSchema,
   displayName: 'List Contact Addresses',
   description: 'Lists the billing, shipping and additional addresses of a Zoho Books contact.',
   audience: 'ai',

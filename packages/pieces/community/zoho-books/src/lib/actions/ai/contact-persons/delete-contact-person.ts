@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const deleteContactPersonAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_delete_contact_person',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Delete Contact Person',
   description: 'Deletes a contact person of a Zoho Books customer or vendor.',
   audience: 'ai',

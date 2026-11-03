@@ -5,10 +5,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksExportInvoicesPdfOutputSchema } from '../../../output-schemas';
 
 export const printInvoicesAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_print_invoices',
+  outputSchema: zohoBooksExportInvoicesPdfOutputSchema,
   displayName: 'Print Invoices',
   description: 'Gets a print-ready PDF of several invoices from Zoho Books.',
   audience: 'ai',

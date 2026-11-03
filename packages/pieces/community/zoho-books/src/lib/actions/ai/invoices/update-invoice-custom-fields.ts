@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const updateInvoiceCustomFieldsAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_update_invoice_custom_fields',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Update Invoice Custom Fields',
   description: 'Updates custom field values of an existing Zoho Books invoice.',
   audience: 'ai',
@@ -50,7 +52,7 @@ export const updateInvoiceCustomFieldsAction = createAction({
       method: HttpMethod.PUT,
       path: `/invoice/${encodeURIComponent(invoiceId)}/customfields`,
       query: { organization_id: organizationId },
-      body: customFields,
+      body: { custom_fields: customFields },
     });
   },
 });

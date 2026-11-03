@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksCreateInvoicePaymentLinkOutputSchema } from '../../../output-schemas';
 
 export const createInvoicePaymentLinkAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_create_invoice_payment_link',
+  outputSchema: zohoBooksCreateInvoicePaymentLinkOutputSchema,
   displayName: 'Create Invoice Payment Link',
   description: 'Generates a payment link for a Zoho Books invoice.',
   audience: 'ai',

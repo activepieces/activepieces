@@ -5,10 +5,12 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksGetContactClientReviewEmailContentOutputSchema } from '../../../output-schemas';
 
 export const getContactClientReviewEmailContentAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_get_contact_client_review_email_content',
+  outputSchema: zohoBooksGetContactClientReviewEmailContentOutputSchema,
   displayName: 'Get Contact Client Review Email Content',
   description: 'Gets the client review email content for a Zoho Books contact.',
   audience: 'ai',

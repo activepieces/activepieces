@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksSendInvoicePaymentReminderOutputSchema } from '../../../output-schemas';
 
 export const sendInvoicePaymentReminderAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_send_invoice_payment_reminder',
+  outputSchema: zohoBooksSendInvoicePaymentReminderOutputSchema,
   displayName: 'Send Invoice Payment Reminder',
   description: 'Emails a payment reminder for an unpaid invoice from Zoho Books.',
   audience: 'ai',
@@ -32,7 +34,7 @@ export const sendInvoicePaymentReminderAction = createAction({
       description: 'Email addresses to copy.',
       required: false,
     }),
-    subject: Property.ShortText({ displayName: 'Subject', required: false }),
+    subject: Property.ShortText({ displayName: 'Subject', required: true }),
     body: Property.LongText({
       displayName: 'Body',
       description: 'Email body; HTML is allowed.',

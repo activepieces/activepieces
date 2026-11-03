@@ -6,10 +6,12 @@ import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
 import { zohoBooksUtils } from '../../../common/utils';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const sendContactVendorStatementEmailAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_send_contact_vendor_statement_email',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Send Contact Vendor Statement Email',
   description: 'Emails a statement of account to a Zoho Books vendor.',
   audience: 'ai',
@@ -29,13 +31,13 @@ export const sendContactVendorStatementEmailAction = createAction({
     startDate: Property.ShortText({
       displayName: 'Start Date',
       description:
-        'Statement start date, yyyy-mm-dd. Leave Start Date and End Date empty for the current month.',
-      required: false,
+        'Statement start date, yyyy-mm-dd, e.g. "2026-10-01".',
+      required: true,
     }),
     endDate: Property.ShortText({
       displayName: 'End Date',
-      description: 'Statement end date, yyyy-mm-dd.',
-      required: false,
+      description: 'Statement end date, yyyy-mm-dd, e.g. "2026-10-31".',
+      required: true,
     }),
     toMailIds: Property.Array({
       displayName: 'To',
@@ -50,7 +52,7 @@ export const sendContactVendorStatementEmailAction = createAction({
     subject: Property.ShortText({
       displayName: 'Subject',
       description: 'Up to 1000 characters.',
-      required: false,
+      required: true,
     }),
     body: Property.LongText({
       displayName: 'Body',

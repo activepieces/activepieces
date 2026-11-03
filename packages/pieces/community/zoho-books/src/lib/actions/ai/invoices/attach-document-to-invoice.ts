@@ -5,17 +5,19 @@ import { zohoBooksAuth } from '../../../auth';
 import { zohoBooksAiProps } from '../../../common/ai-props';
 import { zohoBooksApi } from '../../../common/api';
 import { zohoBooksClient } from '../../../common/client';
+import { zohoBooksMessageOutputSchema } from '../../../output-schemas';
 
 export const attachDocumentToInvoiceAction = createAction({
   auth: zohoBooksAuth,
   name: 'zoho_books_attach_document_to_invoice',
+  outputSchema: zohoBooksMessageOutputSchema,
   displayName: 'Attach Document to Invoice',
   description: 'Attaches an existing document to an invoice in Zoho Books.',
   audience: 'ai',
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Attaches an existing Zoho Books document, by document_id, to an invoice. To upload a new file use Add Invoice Attachment or Upload Invoice Document.',
+      'Attaches an existing Zoho Books document, by document_id, to an invoice. To upload a new file use Add Invoice Attachment.',
     idempotent: false,
   },
   props: {
