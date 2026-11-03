@@ -325,7 +325,7 @@ type SendStatus =
   | { type: 'idle' }
   | { type: 'submitting' }
   | { type: 'cancelled' }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string | null };
 
 export function useAgentChat({
   agentId,
@@ -630,9 +630,7 @@ export function useAgentChat({
           );
         updateSendStatus({
           type: 'error',
-          message: failureIsInTranscript
-            ? t('The last reply did not finish. Please try again.')
-            : opts.errorMessage,
+          message: failureIsInTranscript ? null : opts.errorMessage,
         });
       } else if (!hasReply && !opts?.suppressNoReply) {
         updateSendStatus({
@@ -694,11 +692,8 @@ export function useAgentChat({
   ]);
 
   const error =
-    sendStatus.type === 'error'
-      ? sendStatus.message
-      : streamError
-      ? streamError
-      : null;
+    sendStatus.type === 'error' ? sendStatus.message : streamError ?? null;
+  const failed = sendStatus.type === 'error' || !isNil(streamError);
 
   const wasCancelled = sendStatus.type === 'cancelled';
 
@@ -1031,9 +1026,12 @@ export function useAgentChat({
       } else {
         setPersistedMessages(mapped);
         if (convResult.data.status === AgentConversationStatus.ERROR) {
+          const failureIsInTranscript = mapped.at(-1)?.role === 'assistant';
           updateSendStatus({
             type: 'error',
-            message: t('The last reply did not finish. Please try again.'),
+            message: failureIsInTranscript
+              ? null
+              : t('The last reply did not finish. Please try again.'),
           });
         }
       }
@@ -1078,6 +1076,7 @@ export function useAgentChat({
     wasCancelled,
     isLoadingHistory,
     error,
+    failed,
     sendMessage,
     retryLastMessage,
     cancelStream,
