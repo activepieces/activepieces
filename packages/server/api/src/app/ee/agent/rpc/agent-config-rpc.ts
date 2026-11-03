@@ -238,7 +238,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ? { ...agentPrompt.guides, ...promptOverride.guides }
             : agentPrompt.guides
 
-        const resumedHistory = lock === 'handed-off' ? await agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId }) : null
+        const resumedHistory = lock === 'handed-off' ? await agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId, platformId }) : null
         const history = resumedHistory ?? conversation
         const previousMessages = history.messages as ModelMessage[]
         const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
