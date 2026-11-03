@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/core-utils';
 import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -62,7 +61,6 @@ type FormData = {
 };
 
 type VersionScope = 'draft' | 'published';
-type OldConnectionAction = 'keep' | 'delete';
 
 enum STEP {
   SELECT = 'SELECT',
@@ -78,8 +76,6 @@ const ReplaceConnectionsDialog = ({
   const [step, setStep] = useState<STEP>(STEP.SELECT);
   const [affectedFlows, setAffectedFlows] = useState<Array<PopulatedFlow>>([]);
   const [versionScope, setVersionScope] = useState<VersionScope>('draft');
-  const [oldConnectionAction, setOldConnectionAction] =
-    useState<OldConnectionAction>('keep');
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
 
   const { data: connections, isLoading: connectionsLoading } =
@@ -185,10 +181,6 @@ const ReplaceConnectionsDialog = ({
     name: 'sourceConnections.id',
   });
 
-  const sourceIsGlobalConnection =
-    filteredConnections.find((conn) => conn.id === sourceConnectionId)
-      ?.scope === AppConnectionScope.PLATFORM;
-
   const replacedWithOptions = useMemo(() => {
     return filteredConnections
       .filter((conn) => conn.id !== sourceConnectionId)
@@ -198,22 +190,12 @@ const ReplaceConnectionsDialog = ({
       }));
   }, [filteredConnections, sourceConnectionId]);
 
-  const publishedAffectedCount = affectedFlows.filter(
-    (flow) => !isNil(flow.publishedVersionId),
-  ).length;
   const applyToPublishedVersions = versionScope === 'published';
-  const deleteBlockedByPublishedFlows =
-    !applyToPublishedVersions && publishedAffectedCount > 0;
-  const effectiveDeleteSourceConnection =
-    oldConnectionAction === 'delete' &&
-    !deleteBlockedByPublishedFlows &&
-    !sourceIsGlobalConnection;
 
   const handleBack = () => {
     setStep(STEP.SELECT);
     setAffectedFlows([]);
     setVersionScope('draft');
-    setOldConnectionAction('keep');
   };
 
   const handleConfirmedSubmit = async (values: FormData) => {
@@ -228,10 +210,10 @@ const ReplaceConnectionsDialog = ({
     }
 
     replaceConnections({
+      flowIds: affectedFlows.map((flow) => flow.id),
       sourceAppConnectionId: values.sourceConnections.id,
       targetAppConnectionId: values.replacedWithConnection.id,
       projectId: projectId,
-      deleteSourceConnection: effectiveDeleteSourceConnection,
       applyToPublishedVersions,
     });
   };
@@ -242,7 +224,6 @@ const ReplaceConnectionsDialog = ({
     setStep(STEP.SELECT);
     setAffectedFlows([]);
     setVersionScope('draft');
-    setOldConnectionAction('keep');
   };
   const navigate = useNavigate();
 
@@ -337,7 +318,6 @@ const ReplaceConnectionsDialog = ({
                               id: '',
                               externalId: '',
                             });
-                            setOldConnectionAction('keep');
                           }}
                           options={filteredConnections.map((conn) => ({
                             label: conn.displayName,
@@ -480,13 +460,9 @@ const ReplaceConnectionsDialog = ({
               />
               <Select
                 value={versionScope}
-                onValueChange={(value) => {
-                  const scope = value as VersionScope;
-                  setVersionScope(scope);
-                  if (scope === 'draft' && publishedAffectedCount > 0) {
-                    setOldConnectionAction('keep');
-                  }
-                }}
+                onValueChange={(value) =>
+                  setVersionScope(value as VersionScope)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -495,38 +471,6 @@ const ReplaceConnectionsDialog = ({
                   <SelectItem value="draft">{t('Draft only')}</SelectItem>
                   <SelectItem value="published">
                     {t('Draft and published')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <LabelWithTooltip
-                label={t('After replacing')}
-                tooltip={t(
-                  'Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. Global connections can only be deleted from the platform admin page.',
-                )}
-              />
-              <Select
-                value={oldConnectionAction}
-                onValueChange={(value) =>
-                  setOldConnectionAction(value as OldConnectionAction)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="keep">
-                    {t('Keep the old connection')}
-                  </SelectItem>
-                  <SelectItem
-                    value="delete"
-                    disabled={
-                      deleteBlockedByPublishedFlows || sourceIsGlobalConnection
-                    }
-                  >
-                    {t('Delete the old connection')}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -546,6 +490,7 @@ const ReplaceConnectionsDialog = ({
                 type="button"
                 onClick={() => handleConfirmedSubmit(form.getValues())}
                 loading={isReplacing}
+                disabled={affectedFlows.length === 0}
               >
                 {t('Replace')}
               </Button>
