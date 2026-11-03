@@ -34,6 +34,7 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 import { agentToolHooks } from '../agent-tool-hooks';
 
@@ -120,7 +121,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
     <div className="flex items-center gap-2 w-full">
       {renderToolIcon()}
       <span
-        className={`flex gap-1 items-center ${failed ? 'text-danger-11' : ''}`}
+        className={cn('flex gap-1 items-center', failed && 'text-danger-11')}
       >
         <span className="text-sm font-semibold">
           {isLoading ? 'Loading...' : metadata?.displayName ?? 'Unknown Tool'}
