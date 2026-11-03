@@ -47,7 +47,7 @@ import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 
 import { BuilderFlowStatusSection } from './flow-status';
 
-export const BuilderHeader = () => {
+export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -150,6 +150,7 @@ export const BuilderHeader = () => {
                     }}
                     insideBuilder={true}
                     savePendingEdits={savePendingEdits}
+                    isFlowLocked={isFlowLocked}
                     flow={flow}
                     flowVersion={flowVersion}
                     readonly={readonly}

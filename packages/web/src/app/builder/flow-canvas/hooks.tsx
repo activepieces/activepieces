@@ -321,6 +321,33 @@ function isActiveElementInsideListMapperModeInput(): boolean {
   );
 }
 
+const useDraftAndPublishedVersions = () => {
+  const [flowId, savePendingEdits] = useBuilderStateContext((state) => [
+    state.flow.id,
+    state.savePendingEdits,
+  ]);
+  return useQuery({
+    queryKey: ['draft-and-published-versions', flowId],
+    queryFn: async () => {
+      await savePendingEdits();
+      const draftFlow = await flowsApi.get(flowId);
+      const publishedVersionId = draftFlow.publishedVersionId;
+      if (
+        isNil(publishedVersionId) ||
+        publishedVersionId === draftFlow.version.id
+      ) {
+        return [draftFlow.version];
+      }
+      const publishedFlow = await flowsApi.get(flowId, {
+        versionId: publishedVersionId,
+      });
+      return [draftFlow.version, publishedFlow.version];
+    },
+    staleTime: 0,
+    gcTime: 0,
+  });
+};
+
 export const flowCanvasHooks = {
   useSetSocketListener,
   useShowBuilderIsSavingWarningBeforeLeaving,
@@ -333,4 +360,5 @@ export const flowCanvasHooks = {
   useResizeCanvas,
   useSwitchToDraft,
   useListenToExistingRun,
+  useDraftAndPublishedVersions,
 };
