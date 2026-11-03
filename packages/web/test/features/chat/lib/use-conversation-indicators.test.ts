@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 
-import { conversationIndicatorUtils } from './use-conversation-indicators';
+import { conversationIndicatorUtils } from '@/features/chat/lib/use-conversation-indicators';
 
 describe('seeding when each conversation was last seen', () => {
   it('treats conversations already there on the first load as seen', () => {
