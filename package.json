@@ -108,7 +108,7 @@
     "tsx": "4.21.0",
     "turbo": "2.9.14",
     "typescript": "5.5.4",
-    "vite": "6.4.3",
+    "vite": "6.4.4",
     "vite-plugin-checker": "0.7.2",
     "vite-plugin-html": "3.2.2",
     "vite-tsconfig-paths": "5.1.4",
@@ -142,6 +142,10 @@
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node",
     "axios": "1.20.0",
-    "nanoid": "3.3.18"
+    "nanoid": "3.3.18",
+    "prosemirror-model": "1.25.12",
+    "prosemirror-view": "1.41.9",
+    "@tiptap/extension-bubble-menu": "3.30.5",
+    "@tiptap/extension-floating-menu": "3.30.5"
   }
 }
