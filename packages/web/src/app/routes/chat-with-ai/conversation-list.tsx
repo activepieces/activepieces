@@ -62,6 +62,7 @@ export function ConversationList({
     isSuccess: conversationsLoaded,
     hasNextPage,
     isFetching,
+    isFetchNextPageError,
     fetchNextPage,
   } = useInfiniteQuery<
     SeekPage<AgentConversation>,
@@ -134,10 +135,21 @@ export function ConversationList({
     }
   }, [hasNextPage, isFetching, fetchNextPage]);
 
+  const fillsShortSearchResults =
+    searchQuery.trim().length > 0 && !isFetchNextPageError;
+
   useEffect(() => {
     checkFades();
-    loadMoreIfNearEnd();
-  }, [collapsed, conversations, checkFades, loadMoreIfNearEnd]);
+    if (fillsShortSearchResults) {
+      loadMoreIfNearEnd();
+    }
+  }, [
+    collapsed,
+    conversations,
+    checkFades,
+    loadMoreIfNearEnd,
+    fillsShortSearchResults,
+  ]);
 
   const handleListScroll = useCallback(() => {
     checkFades();
