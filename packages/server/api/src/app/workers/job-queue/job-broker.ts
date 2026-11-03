@@ -4,7 +4,7 @@ import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { getJobReclaimCountKey, JOB_RECLAIM_COUNT_TTL_SECONDS } from '../../database/redis/keys'
+import { getJobReclaimCountKey } from '../../database/redis/keys'
 import { redisConnections } from '../../database/redis-connections'
 import { engineResponseWatcher } from '../engine-response-watcher'
 import { QueueName } from '../job'
@@ -107,6 +107,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         }
         else {
             jobFailureLogger.logJobFailed({ queueName, jobId: job.id, jobType: job.name, error: deferredError, log })
+            await clearReclaimCount(job.id ?? job.name, log)
         }
         return tryDequeue(worker, queueName, log)
     }
@@ -136,6 +137,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         }
         else {
             jobFailureLogger.logJobFailed({ queueName, jobId, jobType: migratedData.jobType, error: schemaError, log })
+            await clearReclaimCount(jobId, log)
         }
         return tryDequeue(worker, queueName, log)
     }
@@ -143,6 +145,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     const interceptorResult = await runInterceptors({ jobId, jobData: migratedData, job, log })
     if (interceptorResult === 'DISCARD') {
         await job.moveToCompleted(null, token, false)
+        await clearReclaimCount(jobId, log)
         return tryDequeue(worker, queueName, log)
     }
     if (interceptorResult !== null) {
@@ -172,10 +175,17 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
 
 async function incrementReclaimCount(jobId: string): Promise<number> {
     const redis = await redisConnections.useExisting()
-    const key = getJobReclaimCountKey(jobId)
-    const count = await redis.incr(key)
-    await redis.expire(key, JOB_RECLAIM_COUNT_TTL_SECONDS)
-    return count
+    return redis.incr(getJobReclaimCountKey(jobId))
+}
+
+async function clearReclaimCount(jobId: string, log: FastifyBaseLogger): Promise<void> {
+    const { error } = await tryCatch(async () => {
+        const redis = await redisConnections.useExisting()
+        await redis.del(getJobReclaimCountKey(jobId))
+    })
+    if (error) {
+        log.error({ job: { id: jobId }, error: String(error) }, '[jobBroker] Failed to clear reclaim count')
+    }
 }
 
 async function returnJobToQueue(jobId: string, token: string, queueName: string, log: FastifyBaseLogger): Promise<void> {
@@ -223,8 +233,11 @@ async function failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueNam
     if (finalizeError) {
         log.error({ job: { id: jobId }, error: String(finalizeError) }, '[jobBroker#returnJobToQueue] Failed to finalize repeatedly-reclaimed job')
     }
-    else if (!waitingCaller) {
-        jobFailureLogger.logJobFailed({ queueName, jobId, jobType: jobData.jobType, error, log })
+    else {
+        if (!waitingCaller) {
+            jobFailureLogger.logJobFailed({ queueName, jobId, jobType: jobData.jobType, error, log })
+        }
+        await clearReclaimCount(jobId, log)
     }
 
     for (const interceptor of interceptors) {
@@ -323,6 +336,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                         logs: input.logs,
                     })
                     await job.moveToCompleted({ response: undefined }, input.token, false)
+                    await clearReclaimCount(input.jobId, log)
                     return
                 }
                 const engineErrorMessage = input.errorMessage ?? 'Internal error'
@@ -337,11 +351,13 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                         log,
                         signatureOverride: jobFailureLogger.signatureFromMessage(engineErrorMessage, 'EngineError'),
                     })
+                    await clearReclaimCount(input.jobId, log)
                 }
                 return
             }
 
             await job.moveToCompleted({ response: input.response ?? undefined }, input.token, false)
+            await clearReclaimCount(input.jobId, log)
             if (waitingCaller) {
                 await engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
                     status: input.status,

@@ -27,4 +27,3 @@ export const getJobReclaimCountKey = (jobId: ApId): string => `job_reclaim_count
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
 export const AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS = 60
-export const JOB_RECLAIM_COUNT_TTL_SECONDS = 24 * 60 * 60
