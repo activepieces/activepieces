@@ -9,7 +9,7 @@ export const getSentences = createAction({
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Get Transcript Sentences',
-  description: 'Retrieve the sentences of the transcript by its ID.',
+  description: 'Get a transcript split into sentences.',
   audience: 'both',
   aiMetadata: {
     description:

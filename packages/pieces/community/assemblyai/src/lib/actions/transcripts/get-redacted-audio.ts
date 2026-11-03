@@ -9,25 +9,35 @@ export const getRedactedAudio = createAction({
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Get Transcript Redacted Audio',
-  description: 'Get the result of the redacted audio model.',
+  description:
+    'Get the bleeped audio of a transcript with redacted audio on.',
   audience: 'both',
   aiMetadata: {
     description:
       'Retrieves the PII-redacted audio result for an existing transcript by its ID; if redaction is ready it returns the redacted audio URL and can optionally download the file into Activepieces storage. Use this only for transcripts created with PII audio redaction enabled. Requires a valid transcript ID; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'audio',
+      display: 'section',
+      label: 'Redacted Audio',
+      icon: 'file',
+      props: ['id', 'download_file', 'download_file_name'],
+    },
+  ],
   props: {
     id: transcriptIdProp,
     download_file: Property.Checkbox({
-      displayName: 'Download file?',
+      displayName: 'Save Audio File',
+      description: 'Save a copy of the bleeped audio to the flow.',
       required: true,
       defaultValue: false,
     }),
     download_file_name: Property.ShortText({
-      displayName: 'Download File Name',
-      description:
-        'The desired file name for storing in ActivePieces. Make sure the file extension is correct.',
-      required: true,
+      displayName: 'File Name',
+      description: 'Used when Save Audio File is on. Include the file extension.',
+      required: false,
       defaultValue: 'redacted-audio.mp3',
     }),
   },
@@ -44,7 +54,7 @@ export const getRedactedAudio = createAction({
         context.propsValue.id
       );
       const fileReference = await context.files.write({
-        fileName: context.propsValue.download_file_name,
+        fileName: context.propsValue.download_file_name || 'redacted-audio.mp3',
         data: Buffer.from(await file.arrayBuffer()),
       });
       return {

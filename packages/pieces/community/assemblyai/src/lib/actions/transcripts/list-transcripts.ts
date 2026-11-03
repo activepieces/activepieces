@@ -9,9 +9,8 @@ export const listTranscripts = createAction({
   classification: 'SEARCH',
   auth: assemblyaiAuth,
   requireAuth: true,
-  displayName: 'List transcripts',
-  description: `Retrieve a list of transcripts you created.
-Transcripts are sorted from newest to oldest. The previous URL always points to a page with older transcripts.`,
+  displayName: 'List Transcripts',
+  description: 'List your transcripts, newest first.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,6 +18,22 @@ Transcripts are sorted from newest to oldest. The previous URL always points to 
     idempotent: true,
   },
   props,
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['status', 'created_on', 'before_id', 'after_id', 'throttled_only'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit'],
+    },
+  ],
   async run(context) {
     const client = getAssemblyAIClient(context);
     const transcriptListResponse = await client.transcripts.list(

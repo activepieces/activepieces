@@ -8,8 +8,8 @@ export const getLemurResponse = createAction({
   classification: 'READ',
   auth: assemblyaiAuth,
   requireAuth: true,
-  displayName: 'Retrieve LeMUR response',
-  description: 'Retrieve a LeMUR response that was previously generated.',
+  displayName: 'Get LeMUR Response',
+  description: 'Get the answer to an earlier LeMUR request.',
   audience: 'both',
   aiMetadata: {
     description:

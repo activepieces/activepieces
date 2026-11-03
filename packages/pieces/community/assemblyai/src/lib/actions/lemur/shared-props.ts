@@ -1,8 +1,8 @@
 import { Property } from '@activepieces/pieces-framework';
 
 export const lemurRequestIdProp = Property.ShortText({
-  displayName: 'LeMUR request ID',
+  displayName: 'LeMUR Request ID',
   description:
-    'The ID of the LeMUR request whose data you want to delete. This would be found in the response of the original request.',
+    'Found in the response of Run a Task Using LeMUR.',
   required: true,
 });

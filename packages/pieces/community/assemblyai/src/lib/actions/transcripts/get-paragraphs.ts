@@ -9,7 +9,7 @@ export const getParagraphs = createAction({
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Get Transcript Paragraphs',
-  description: 'Retrieve the paragraphs of the transcript by its ID.',
+  description: 'Get a transcript split into paragraphs.',
   audience: 'both',
   aiMetadata: {
     description:
