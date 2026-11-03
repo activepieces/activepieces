@@ -1,8 +1,10 @@
 import path from 'path'
 import { tryCatchSync } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 
 const STACK_FRAME_RE = /at\s+(?:.+?\s+\()?([^\s()]+):(\d+):\d+\)?/
+const JsonErrorCode = z.object({ code: z.union([z.string().min(1), z.number()]) })
 
 export const jobFailureLogger = {
     signatureOf(error: unknown): string {
@@ -43,14 +45,8 @@ function readHead(line: string): string {
 function readJsonHead(line: string): string | null {
     if (!line.startsWith('{')) return null
     const { data } = tryCatchSync((): unknown => JSON.parse(line))
-    if (typeof data !== 'object' || data === null) return null
-    const code = 'code' in data ? data.code : undefined
-    if (typeof code === 'string' || typeof code === 'number') {
-        return String(code).slice(0, 80) || null
-    }
-    const message = 'message' in data ? data.message : undefined
-    if (typeof message !== 'string') return null
-    return readHead(message.split('\n', 1)[0].trim()) || null
+    const parsed = JsonErrorCode.safeParse(data)
+    return parsed.success ? String(parsed.data.code).slice(0, 80) : null
 }
 
 function readTopStackFrame(error: unknown): string | null {
