@@ -1,4 +1,5 @@
 import { HttpHeaders, HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
+import { tryCatch } from '@activepieces/pieces-framework';
 
 import type { ZohoBooksAuthValue, ZohoBooksDownload, ZohoBooksQuery } from './types';
 
@@ -51,15 +52,27 @@ async function download({
   });
   const contentType = response.headers?.['content-type'];
   const disposition = response.headers?.['content-disposition'];
-  const fileName =
-    typeof disposition === 'string'
-      ? /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1]
-      : undefined;
   return {
     data: Buffer.from(response.body),
     contentType: typeof contentType === 'string' ? contentType : undefined,
-    fileName: fileName ? decodeURIComponent(fileName) : undefined,
+    fileName:
+      typeof disposition === 'string'
+        ? await fileNameFromDisposition({ disposition })
+        : undefined,
   };
+}
+
+async function fileNameFromDisposition({
+  disposition,
+}: {
+  disposition: string;
+}): Promise<string | undefined> {
+  const encoded = /filename\*=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1];
+  if (encoded) {
+    const { data } = await tryCatch(async () => decodeURIComponent(encoded));
+    return data ?? encoded;
+  }
+  return /filename="?([^";]+)"?/i.exec(disposition)?.[1];
 }
 
 export const zohoBooksClient = { baseUrl, authHeaders, request, download };

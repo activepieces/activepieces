@@ -5414,9 +5414,6 @@ export const zohoBooksListInvoicesOutputSchema: OutputSchema = {
           ],
         },
         { key: 'custom_field_hash', label: 'Custom Fields', dynamicKey: true },
-        { key: 'cf_p3', label: 'Cf P3' },
-        { key: 'cf_p3_formatted', label: 'Cf P3 (Formatted)' },
-        { key: 'cf_p3_unformatted', label: 'Cf P3 Unformatted' },
         { key: 'tags', label: 'Tags' },
         { key: 'salesperson_name', label: 'Salesperson Name' },
         {
@@ -5865,9 +5862,6 @@ export const zohoBooksPreviewInvoiceCouponsOutputSchema: OutputSchema = {
           labelKey: 'label',
           listItems: customFieldFields,
         },
-        { key: 'cf_p3', label: 'Cf P3' },
-        { key: 'cf_p3_formatted', label: 'Cf P3 (Formatted)' },
-        { key: 'cf_p3_unformatted', label: 'Cf P3 Unformatted' },
         {
           key: 'customer_custom_field_hash',
           label: 'Customer Custom Fields',
