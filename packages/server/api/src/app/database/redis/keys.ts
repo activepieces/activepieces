@@ -22,7 +22,9 @@ export const getConcurrencyPoolSetKey = (poolId: string): string => `active_jobs
 export const getConcurrencyPoolParkedKey = (poolId: string): string => `parked_jobs_set:pool:${poolId}`
 export const getMcpOAuthRevokedGrantKey = (grantId: string): string => `mcp_oauth:revoked_grant:${grantId}`
 export const getPollingExclusivityKey = (flowVersionId: ApId): string => `polling_exclusivity:${flowVersionId}`
+export const getJobReclaimCountKey = (jobId: ApId): string => `job_reclaim_count:${jobId}`
 
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
 export const AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS = 60
+export const JOB_RECLAIM_COUNT_TTL_SECONDS = 24 * 60 * 60
