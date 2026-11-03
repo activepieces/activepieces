@@ -426,6 +426,9 @@
         "packages/pieces/community/deftform/src/index.ts"
       ],
       "@activepieces/piece-delay": ["packages/pieces/core/delay/src/index.ts"],
+      "@activepieces/piece-desearch": [
+        "packages/pieces/community/desearch/src/index.ts"
+      ],
       "@activepieces/piece-descript": [
         "packages/pieces/community/descript/src/index.ts"
       ],

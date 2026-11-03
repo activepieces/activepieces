@@ -2630,6 +2630,20 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/desearch": {
+      "name": "@activepieces/piece-desearch",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/descript": {
       "name": "@activepieces/piece-descript",
       "version": "0.1.2",
@@ -11841,6 +11855,8 @@
     "@activepieces/piece-delay": ["@activepieces/piece-delay@workspace:packages/pieces/core/delay"],
 
     "@activepieces/piece-denser-ai": ["@activepieces/piece-denser-ai@workspace:packages/pieces/community/denser-ai"],
+
+    "@activepieces/piece-desearch": ["@activepieces/piece-desearch@workspace:packages/pieces/community/desearch"],
 
     "@activepieces/piece-descript": ["@activepieces/piece-descript@workspace:packages/pieces/community/descript"],
 
