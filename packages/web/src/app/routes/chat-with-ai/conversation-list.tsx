@@ -50,15 +50,18 @@ export function ConversationList({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const { data: conversationsPage, isLoading: isLoadingConversations } =
-    useQuery({
-      queryKey: ['chat-conversations', agentId ?? 'chat'],
-      queryFn: () =>
-        chatApi.listConversations({
-          limit: 100,
-          ...(agentId === undefined ? {} : { agentId }),
-        }),
-    });
+  const {
+    data: conversationsPage,
+    isLoading: isLoadingConversations,
+    isSuccess: conversationsLoaded,
+  } = useQuery({
+    queryKey: ['chat-conversations', agentId ?? 'chat'],
+    queryFn: () =>
+      chatApi.listConversations({
+        limit: 100,
+        ...(agentId === undefined ? {} : { agentId }),
+      }),
+  });
 
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
@@ -80,6 +83,8 @@ export function ConversationList({
   const { getIndicator, markRead } = useConversationIndicators({
     conversations: allConversations,
     activeId: selectedId ?? null,
+    scope: agentId ?? 'chat',
+    loaded: conversationsLoaded,
   });
 
   const conversations = useMemo(() => {

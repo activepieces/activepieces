@@ -14,9 +14,13 @@ import { chatApi } from './chat-api';
 export function useConversationIndicators({
   conversations,
   activeId,
+  scope,
+  loaded,
 }: {
   conversations: AgentConversation[];
   activeId: string | null;
+  scope: string;
+  loaded: boolean;
 }) {
   const socket = useSocket();
   const queryClient = useQueryClient();
@@ -26,23 +30,19 @@ export function useConversationIndicators({
 
   const conversationsRef = useRef(conversations);
   conversationsRef.current = conversations;
+  const seededScopesRef = useRef(new Set<string>());
 
   useEffect(() => {
-    if (conversations.length === 0) return;
+    if (!loaded) return;
+    const initialLoad = !seededScopesRef.current.has(scope);
+    seededScopesRef.current.add(scope);
     setLastSeen((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      for (const conv of conversations) {
-        if (next[conv.id] === undefined) {
-          next[conv.id] = conv.updated;
-          changed = true;
-        }
-      }
-      if (!changed) return prev;
+      const next = seedLastSeen({ prev, conversations, initialLoad });
+      if (next === prev) return prev;
       writeLastSeen(next);
       return next;
     });
-  }, [conversations]);
+  }, [conversations, loaded, scope]);
 
   const markRead = useCallback((id: string) => {
     const conv = conversationsRef.current.find((c) => c.id === id);
@@ -151,6 +151,24 @@ export function useConversationIndicators({
   return { getIndicator, markRead };
 }
 
+function seedLastSeen({
+  prev,
+  conversations,
+  initialLoad,
+}: {
+  prev: Record<string, string>;
+  conversations: Pick<AgentConversation, 'id' | 'updated'>[];
+  initialLoad: boolean;
+}): Record<string, string> {
+  const unseen = conversations.filter((conv) => prev[conv.id] === undefined);
+  if (unseen.length === 0) return prev;
+  const seeded = unseen.map((conv) => [
+    conv.id,
+    initialLoad ? conv.updated : NEVER_SEEN,
+  ]);
+  return { ...prev, ...Object.fromEntries(seeded) };
+}
+
 function readLastSeen(): Record<string, string> {
   try {
     const raw = localStorage.getItem(LAST_SEEN_STORAGE_KEY);
@@ -176,6 +194,7 @@ function writeLastSeen(value: Record<string, string>): void {
 }
 
 const LAST_SEEN_STORAGE_KEY = 'chat-conversation-last-seen';
+const NEVER_SEEN = '';
 const GATE_REFETCH_INTERVAL_MS = 3000;
 
 type SocketEvent = {
@@ -186,3 +205,5 @@ type SocketEvent = {
 };
 
 export type ConversationIndicatorState = 'working' | 'waiting' | 'unread';
+
+export const conversationIndicatorUtils = { seedLastSeen };
