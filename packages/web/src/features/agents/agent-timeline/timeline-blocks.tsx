@@ -80,7 +80,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const output = normalizeToolOutputToExecuteResponse(block.output);
   const errorMessage = (output.errorMessage as string) ?? null;
   const isDone = block.status === ToolCallStatus.COMPLETED;
-  const isSuccess = output.status;
+  const failed = isDone && output.status !== ExecutionToolStatus.SUCCESS;
   const hasInstructions = !isNil(block.input?.instruction);
   const resolvedFields =
     (Object.keys(output.resolvedInput ?? {}).length > 0
@@ -94,7 +94,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
 
   const renderStatusIcon = () => {
     if (!isDone) return <Loader2 className="h-4 w-4 animate-spin shrink-0" />;
-    return isSuccess === ExecutionToolStatus.SUCCESS ? (
+    return !failed ? (
       <CheckCheck className="h-4 w-4 text-success-11 shrink-0" />
     ) : (
       <CircleX className="h-4 w-4 text-danger-11 shrink-0" />
@@ -120,13 +120,11 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
     <div className="flex items-center gap-2 w-full">
       {renderToolIcon()}
       <span
-        className={`flex gap-1 items-center ${
-          !isSuccess ? 'text-danger-11' : ''
-        }`}
+        className={`flex gap-1 items-center ${failed ? 'text-danger-11' : ''}`}
       >
         <span className="text-sm font-semibold">
           {isLoading ? 'Loading...' : metadata?.displayName ?? 'Unknown Tool'}
-          {!isSuccess && t(' (Failed)')}
+          {failed && t(' (Failed)')}
         </span>
       </span>
     </div>
