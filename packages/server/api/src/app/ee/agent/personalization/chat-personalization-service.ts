@@ -65,6 +65,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 companyText: null,
                 role: null,
                 status: ChatPersonalizationStatus.SKIPPED,
+                researchToken: null,
                 profile: null,
                 useCases: null,
             }
