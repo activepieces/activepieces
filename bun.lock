@@ -10927,7 +10927,7 @@
     },
     "packages/pieces/core/tags": {
       "name": "@activepieces/piece-tags",
-      "version": "0.0.23",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
