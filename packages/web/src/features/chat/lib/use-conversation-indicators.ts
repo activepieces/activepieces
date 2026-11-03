@@ -14,9 +14,13 @@ import { chatApi } from './chat-api';
 export function useConversationIndicators({
   conversations,
   activeId,
+  scope,
+  loaded,
 }: {
   conversations: AgentConversation[];
   activeId: string | null;
+  scope: string;
+  loaded: boolean;
 }) {
   const socket = useSocket();
   const queryClient = useQueryClient();
@@ -26,19 +30,19 @@ export function useConversationIndicators({
 
   const conversationsRef = useRef(conversations);
   conversationsRef.current = conversations;
-  const initialLoadSeededRef = useRef(false);
+  const seededScopesRef = useRef(new Set<string>());
 
   useEffect(() => {
-    if (conversations.length === 0) return;
-    const initialLoad = !initialLoadSeededRef.current;
-    initialLoadSeededRef.current = true;
+    if (!loaded) return;
+    const initialLoad = !seededScopesRef.current.has(scope);
+    seededScopesRef.current.add(scope);
     setLastSeen((prev) => {
       const next = seedLastSeen({ prev, conversations, initialLoad });
       if (next === prev) return prev;
       writeLastSeen(next);
       return next;
     });
-  }, [conversations]);
+  }, [conversations, loaded, scope]);
 
   const markRead = useCallback((id: string) => {
     const conv = conversationsRef.current.find((c) => c.id === id);

@@ -80,6 +80,8 @@ export function ConversationList({
   const { getIndicator, markRead } = useConversationIndicators({
     conversations: allConversations,
     activeId: selectedId ?? null,
+    scope: agentId ?? 'chat',
+    loaded: !isLoadingConversations,
   });
 
   const conversations = useMemo(() => {
