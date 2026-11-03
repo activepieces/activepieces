@@ -8,6 +8,23 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Knack 0.3.0: Create, Update and Find Record are no longer AI agent tools
+
+**Create Record**, **Update Record** and **Find Record** are now shown only in the flow builder. AI agents and MCP clients get **Create Record (Agent)**, **Update Record (Agent)**, **Search Records (Agent)** and **Get Record** instead, plus **List Objects** and **Get Object Fields** to discover an app's tables and field keys.
+
+After you upgrade:
+
+- **Delete Record** returns `{ deleted: true, id }` instead of Knack's raw response.
+- **Find Record** sends its filter in the documented `{ match, rules }` format.
+- Error messages now show Knack's own error text and the HTTP status.
+
+#### What you need to do
+
+- Agents that used Create, Update or Find Record as tools: switch to the (Agent) actions.
+- If a later step read Delete Record's old output, map `deleted` and `id` instead.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Webflow 0.4.0: moves to Webflow API v2, connections need reconnecting, and step outputs change
 
 Webflow switched off its v1 API, which every Webflow action and the New Submission trigger used. They now call v2, and the connection asks for the v2 permissions (CMS, sites, pages, forms, assets, custom code, comments, components and ecommerce).
