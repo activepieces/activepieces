@@ -127,6 +127,7 @@ export const usePieceToolsDialogStore = create<PiecesToolDialogsState>(
         selectedAction,
         selectedPiece,
         predefinedInputs,
+        editingPieceTool,
         isPieceAuthSet,
       } = get();
 
@@ -141,7 +142,11 @@ export const usePieceToolsDialogStore = create<PiecesToolDialogsState>(
           selectedAction.name,
         ),
         pieceMetadata: {
-          pieceVersion: selectedPiece.pieceVersion,
+          pieceVersion:
+            editingPieceTool?.pieceMetadata.pieceName ===
+            selectedPiece.pieceName
+              ? editingPieceTool.pieceMetadata.pieceVersion
+              : selectedPiece.pieceVersion,
           pieceName: selectedPiece.pieceName,
           actionName: selectedAction.name,
           predefinedInput: predefinedInputs || undefined,
