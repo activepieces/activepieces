@@ -1,8 +1,9 @@
-import { AIProviderName, isNil, isObject, spreadIfDefined, toError } from '@activepieces/core-utils'
-import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
+import { ActivepiecesAiBilling, AIProviderName, isNil, isObject, spreadIfDefined, toError } from '@activepieces/core-utils';
+import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
+import { agentProviderOptions } from './agent-provider-options'
+import { AI_TRACE_RUNTIME_CONTEXT, AiTraceContext, aiObservability } from './ai-observability'
 import { ModelMessage, TelemetryOptions } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
-import { agentProviderOptions } from './agent-provider-options'
 import { modelCatalog } from './model-catalog'
 import { wideEvent } from './wide-event'
 
@@ -140,12 +141,24 @@ function effectiveToolNamesByCallId(messages: ModelMessage[]): Map<string, strin
     }))
 }
 
-function buildTelemetry({ functionId }: { functionId: string }): TelemetryOptions | undefined {
+function buildTelemetry({ functionId, billing }: { functionId: string, billing?: ActivepiecesAiBilling }): AgentTelemetry {
     const logger = wideEvent.current()
-    if (isNil(logger)) {
-        return undefined
+    const posthog = aiObservability.integration()
+    if (isNil(logger) && isNil(posthog)) {
+        return {}
     }
-    return { functionId, integrations: [createEvlogIntegration(logger), ...(globalThis.AI_SDK_TELEMETRY_INTEGRATIONS ?? [])] }
+    const integrations = [
+        ...(isNil(logger) ? [] : [createEvlogIntegration(logger)]),
+        ...(isNil(posthog) ? [] : [posthog]),
+        ...(globalThis.AI_SDK_TELEMETRY_INTEGRATIONS ?? []),
+    ]
+    if (isNil(posthog)) {
+        return { telemetry: { functionId, integrations } }
+    }
+    return {
+        telemetry: { functionId, integrations, includeRuntimeContext: AI_TRACE_RUNTIME_CONTEXT },
+        runtimeContext: aiObservability.runtimeContextOf({ billing }),
+    }
 }
 
 function toRecord(value: unknown): Record<string, unknown> {
@@ -414,3 +427,8 @@ export const agentAiUtils = {
 }
 
 export type { ContentPartLike }
+
+export type AgentTelemetry = {
+    telemetry?: TelemetryOptions<AiTraceContext>
+    runtimeContext?: AiTraceContext
+}
