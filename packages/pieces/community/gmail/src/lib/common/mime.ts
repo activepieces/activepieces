@@ -1,6 +1,6 @@
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
-import Mail, { Attachment } from 'nodemailer/lib/mailer';
+import Mail from 'nodemailer/lib/mailer';
 import { ApFile } from '@activepieces/pieces-framework';
 
 export interface RawMimeAttachment {
@@ -42,7 +42,7 @@ async function buildRawMessage(props: BuildRawMessageProps): Promise<string> {
   };
 
   if (props.attachments && props.attachments.length > 0) {
-    const attachmentOption: Attachment[] = props.attachments.map(
+    const attachmentOption: Mail.Attachment[] = props.attachments.map(
       (attachment) => {
         if (isFileAttachment(attachment)) {
           const { file, name } = attachment;

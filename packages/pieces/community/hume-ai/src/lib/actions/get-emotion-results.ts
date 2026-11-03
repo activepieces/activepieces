@@ -4,6 +4,7 @@ import { humeAiAuth } from '../common/auth';
 
 export const getEmotionResults = createAction({
   name: 'get_emotion_results',
+  classification: 'READ',
   displayName: 'Get Emotion Results',
   description: 'Retrieve emotion analysis predictions from a completed batch job',
   audience: 'both',

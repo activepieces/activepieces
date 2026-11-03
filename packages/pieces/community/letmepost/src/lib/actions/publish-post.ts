@@ -6,6 +6,7 @@ import { letmepostApiCall, letmepostCommon } from '../common';
 export const publishPost = createAction({
   auth: letmepostAuth,
   name: 'publish_post',
+  classification: 'WRITE',
   displayName: 'Publish a Post',
   description: 'Publish or schedule a post to one or more connected accounts',
   audience: 'both',

@@ -5,6 +5,7 @@ import { WebhookInformation } from '../common/types';
 export const newSentMessage = createTrigger({
   auth: timelinesAiAuth,
   name: 'newSentMessage',
+  classification: 'READ',
   displayName: 'New Sent Message',
   description: 'Fires when a message is sent (outgoing).',
   aiMetadata: {

@@ -103,6 +103,18 @@ export function classifyProviderOutcome({ statusCode, body, message }: ProviderO
     return text.length === 0 ? 'no_change' : 'unreachable'
 }
 
+export function isFallbackWorthy({ statusCode, body, message, retryable }: ProviderOutcomeSignal): boolean {
+    const haystack = `${body ?? ''} ${message ?? ''}`
+    if (isProviderBillingError(haystack)) {
+        return true
+    }
+    if (!isNil(statusCode)) {
+        return FALLBACK_STATUS_CODES.has(statusCode) || statusCode >= 500
+    }
+    const text = message ?? ''
+    return retryable === true || isProviderCreditError(text) || isTransientProviderError(text)
+}
+
 function classifyByStatus({ statusCode, haystack }: { statusCode: number, haystack: string }): AiProviderKeyStatus | NoStatusChange {
     if (statusCode >= 200 && statusCode < 300) {
         return 'active'
@@ -146,6 +158,8 @@ const RATE_LIMIT_BODY_PATTERN = /per minute|per day|per_minute|per_day|requests?
 
 const MODEL_NOT_FOUND_PATTERN = /model|deployment|engine/i
 
+const FALLBACK_STATUS_CODES = new Set([401, 402, 403, 404, 408, 429])
+
 export const AiProviderKeyStatus = z.enum(['active', 'out_of_credits', 'rejected', 'unreachable'])
 export type AiProviderKeyStatus = z.infer<typeof AiProviderKeyStatus>
 
@@ -155,6 +169,8 @@ export type ProviderOutcomeSignal = {
     statusCode?: number
     body?: string
     message?: string
+    retryable?: boolean
+    fromProvider?: boolean
 }
 
 export type ProviderOutcomeReporter = (signal: ProviderOutcomeSignal) => void | Promise<void>

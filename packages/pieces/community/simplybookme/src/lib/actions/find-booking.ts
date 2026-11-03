@@ -4,6 +4,7 @@ import { simplybookAuth, makeJsonRpcCall, SimplybookAuth, clientDropdown, servic
 export const findBooking = createAction({
   auth: simplybookAuth,
   name: 'find_booking',
+  classification: 'SEARCH',
   displayName: 'Get Bookings',
   description: 'Returns list of bookings filtered by given parameters',
   audience: 'both',

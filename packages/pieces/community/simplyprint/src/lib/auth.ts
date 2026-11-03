@@ -37,6 +37,23 @@ export const simplyprintAuth = PieceAuth.OAuth2({
     'webhooks.read',
     'webhooks.write',
   ],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<{
+        user?: { name?: string; email?: string };
+        company?: { name?: string };
+      }>({
+        method: HttpMethod.GET,
+        url: `${BASE_URL.api}/0/account/GetUser`,
+        headers: { Authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      const { user, company } = response.body;
+      return user?.email || user?.name || company?.name || undefined;
+    } catch {
+      return undefined;
+    }
+  },
 });
 
 // Bounded LRU. Without the cap, every OAuth-token rotation leaves an orphan

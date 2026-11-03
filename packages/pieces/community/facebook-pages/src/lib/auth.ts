@@ -1,3 +1,4 @@
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
 
 const markdown = `
@@ -26,4 +27,18 @@ export const facebookPagesAuth = PieceAuth.OAuth2({
     'business_management',
     'pages_read_engagement',
   ],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<{ name?: string }>({
+        method: HttpMethod.GET,
+        url: 'https://graph.facebook.com/v23.0/me',
+        queryParams: { fields: 'name' },
+        headers: { Authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      return response.body.name || undefined;
+    } catch {
+      return undefined;
+    }
+  },
 });

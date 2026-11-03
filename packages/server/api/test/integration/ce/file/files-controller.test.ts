@@ -339,6 +339,49 @@ describe('Files Controller', () => {
         })
 
         it.each([
+            {
+                scenario: 'a current engine (ASCII fallback + encoded header)',
+                headers: { 'x-ap-file-name': 'Lettre _ Elodie.pdf', 'x-ap-file-name-encoded': encodeURIComponent('Lettre – Élodie.pdf') },
+                storedName: 'Lettre – Élodie.pdf',
+            },
+            {
+                scenario: 'an older engine (raw legacy header only)',
+                headers: { 'x-ap-file-name': 'invoice.pdf' },
+                storedName: 'invoice.pdf',
+            },
+            {
+                scenario: 'a malformed encoded header',
+                headers: { 'x-ap-file-name': 'report.pdf', 'x-ap-file-name-encoded': 'report%E0%A4%A.pdf' },
+                storedName: 'report.pdf',
+            },
+        ])('stores the upload name sent by $scenario', async ({ headers, storedName }) => {
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+            const engineToken = await generateMockToken({
+                type: PrincipalType.ENGINE,
+                id: apId(),
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+            const fileId = apId()
+
+            const putResponse = await app!.inject({
+                method: 'PUT',
+                url: `/api/v1/files/${fileId}`,
+                query: { token: engineToken },
+                headers: {
+                    'content-type': 'application/octet-stream',
+                    'x-ap-file-type': FileType.FLOW_STEP_FILE,
+                    ...headers,
+                },
+                payload: Buffer.from('%PDF-1.4', 'utf-8'),
+            })
+
+            expect(putResponse?.statusCode).toBe(StatusCodes.OK)
+            const file = await fileService(app!.log).getFileOrThrow({ fileId, projectId: mockProject.id })
+            expect(file.fileName).toBe(storedName)
+        })
+
+        it.each([
             { fileName: 'résumé.pdf', expected: 'attachment; filename="résumé.pdf"' },
             { fileName: '報告書.json', expected: 'attachment; filename="???.json"; filename*=UTF-8\'\'%E5%A0%B1%E5%91%8A%E6%9B%B8.json' },
             { fileName: 'evil\r\nX-Injected: 1.json', expected: 'attachment; filename="evil??X-Injected: 1.json"; filename*=UTF-8\'\'evil%0D%0AX-Injected%3A%201.json' },

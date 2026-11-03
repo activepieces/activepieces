@@ -7,6 +7,7 @@ import { leadDeleteDropdownProp } from '../common/props';
 export const deleteLeadAction = createAction({
     auth: hunterAuth,
     name: 'delete-lead',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Lead',
     description: 'Delete a specific lead record by ID.',
     audience: 'both',

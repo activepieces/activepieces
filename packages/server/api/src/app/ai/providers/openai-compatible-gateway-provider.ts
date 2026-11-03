@@ -1,9 +1,11 @@
-import { ActivepiecesError, AIProviderModel, ErrorCode, isNil, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, tryCatchSync } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderModel, aiProviderUtils, ErrorCode, isNil, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, tryCatchSync } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
+import { fetchOpenAiModelIds } from './openai-compatible-vendor'
 
 export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig> = {
     name: 'OpenAI Compatible',
+    validationSkipsModelEndpoint: true,
     async validateConnection(authConfig: OpenAICompatibleProviderAuthConfig, providerConfig: OpenAICompatibleProviderConfig, _log: FastifyBaseLogger): Promise<void> {
         assertUsableBaseUrl({ baseUrl: providerConfig.baseUrl })
         assertUsableHeader({ name: providerConfig.apiKeyHeader, value: authConfig.apiKey, field: 'The API key header' })
@@ -17,6 +19,13 @@ export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProvid
             name: m.modelName,
             type: m.modelType,
         }))
+    },
+    async suggestModels(authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<string[]> {
+        const modelIds = await fetchOpenAiModelIds({
+            url: `${config.baseUrl.replace(/\/$/, '')}/models`,
+            headers: { ...(config.defaultHeaders ?? {}), [config.apiKeyHeader]: authConfig.apiKey },
+        })
+        return modelIds.filter((modelId) => aiProviderUtils.isChatModelId({ modelId }))
     },
 }
 

@@ -27,24 +27,47 @@ export const updateDealAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Updates properties on an existing deal identified by its deal ID, such as name, pipeline, stage, or custom fields, then returns the refreshed deal. Use to modify a known deal; use Create Deal to make a new one. Idempotent: applying the same property values converges to the same deal state.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Deal to Update',
+			icon: 'tag',
+			props: ['dealId'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'text',
+			props: ['changesInfo', 'dealname', 'pipelineId', 'pipelineStageId', 'objectProperties'],
+		},
+	],
 	props: {
 		dealId: Property.ShortText({
 			displayName: 'Deal ID',
-			description: 'The ID of the deal to update.',
+			description: 'Map it from an earlier step like Find Deal.',
 			required: true,
+		}),
+		changesInfo: Property.MarkDown({
+			value: 'Fields left empty keep their current value.',
+			variant: MarkdownVariant.INFO,
 		}),
 		dealname: Property.ShortText({
 			displayName: 'Deal Name',
+			description: 'Leave empty to keep the current name.',
 			required: false,
 		}),
 		pipelineId: pipelineDropdown({
 			objectType: OBJECT_TYPE.DEAL,
 			displayName: 'Deal Pipeline',
+			description: 'Leave empty to keep the current pipeline.',
 			required: false,
 		}),
 		pipelineStageId: pipelineStageDropdown({
 			objectType: OBJECT_TYPE.DEAL,
 			displayName: 'Deal Stage',
+			description: 'Leave empty to keep the current stage.',
 			required: false,
 		}),
 		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.DEAL, [
@@ -54,16 +77,15 @@ export const updateDealAction = createAction({
 		]),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-												
-					  dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-														
-					  **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.DEAL,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

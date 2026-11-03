@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const getMinimalSessionDates = createAction({
   auth: wedofAuth,
   name: 'getMinimalSessionsDates',
+  classification: 'READ',
   displayName: 'Date minimale de début de session de formation',
   description:
     'Récupération des dates minimales de début de session de formation',

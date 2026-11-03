@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const lookupAdvertisement = createAction({
   auth: pubrioAuth,
   name: 'lookup_advertisement',
+  classification: 'READ',
   displayName: 'Lookup Advertisement',
   description:
     'Look up detailed advertisement information by advertisement search ID',

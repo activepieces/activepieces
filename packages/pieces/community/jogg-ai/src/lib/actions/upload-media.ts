@@ -9,6 +9,7 @@ import { joggAiAuth } from '../..';
 
 export const uploadMedia = createAction({
   name: 'uploadMedia',
+  classification: 'WRITE',
   displayName: 'Upload Media',
   description:
     'Generate a signed URL for file upload. Use the returned sign_url to upload your file with a PUT request.',

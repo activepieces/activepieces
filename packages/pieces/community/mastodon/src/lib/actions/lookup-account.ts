@@ -9,8 +9,8 @@ export const lookupAccount = createAction({
   name: 'lookup_account',
   classification: 'READ',
   displayName: 'Lookup Account',
-  description: 'Find an account by its handle (username or user@domain).',
-  audience: 'ai',
+  description: 'Find an account by its handle to get its Account ID.',
+  audience: 'both',
   aiMetadata: {
     description:
       'Resolves a handle such as Gargron or Gargron@mastodon.social to the account profile and local ID, without a fuzzy search. Only finds accounts already known to this server; for a remote user@domain that 404s, use Search with resolve=true (type accounts). Read-only and safe to retry.',
@@ -20,8 +20,8 @@ export const lookupAccount = createAction({
   props: {
     acct: Property.ShortText({
       displayName: 'Handle',
-      description:
-        'Username for a local account (for example Gargron) or user@domain for a remote one (for example Gargron@mastodon.social). A leading @ is removed automatically.',
+      description: 'A username on your server, or user@domain for another server.',
+      placeholder: 'Gargron@mastodon.social',
       required: true,
     }),
   },

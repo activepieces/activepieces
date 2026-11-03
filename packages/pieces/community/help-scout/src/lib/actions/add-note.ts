@@ -7,6 +7,7 @@ import { conversationIdDropdown, userIdDropdown } from '../common/props';
 export const addNote = createAction({
   auth: helpScoutAuth,
   name: 'add_note',
+  classification: 'WRITE',
   displayName: 'Add Note',
   description: 'Adds a note to a conversation.',
   audience: 'both',

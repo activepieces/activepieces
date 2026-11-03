@@ -7,6 +7,7 @@ import { microsoftPowerBiAuth } from '../auth';
 export const listReportsAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'list_reports',
+  classification: 'SEARCH',
   displayName: 'List Reports',
   description: 'Lists all reports in a Power BI workspace.',
   audience: 'both',

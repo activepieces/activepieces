@@ -49,10 +49,13 @@ export async function upsertFoundingUserRow({ platformId, userId, researchToken,
             "updated" = now()
         WHERE "chat_personalization"."researchToken" = $7
            OR ("chat_personalization"."status" <> ALL($8::varchar[])
-               AND "chat_personalization"."useCases" IS NULL)
+               AND "chat_personalization"."useCases" IS NULL
+               AND NOT ("chat_personalization"."status" = $9
+                   AND "chat_personalization"."domain" IS NULL
+                   AND "chat_personalization"."companyText" IS NULL))
         RETURNING "id"
         `,
-        [apId(), platformId, userId, ChatPersonalizationStatus.READY, profile, useCases, researchToken, IN_FLIGHT_STATUSES],
+        [apId(), platformId, userId, ChatPersonalizationStatus.READY, profile, useCases, researchToken, IN_FLIGHT_STATUSES, ChatPersonalizationStatus.SKIPPED],
     )
     if (seeded.length === 0) {
         log.info({ platform: { id: platformId }, user: { id: userId }, researchToken }, '[chatPersonalization] Founding-user seed skipped, the run was superseded or that row has its own research')
@@ -130,6 +133,10 @@ export async function writeUserRow({ platformId, userId, patch }: {
     await personalizationRepo().update({ platformId, userId }, patch)
 }
 
+
+export function hasOptedOut(row: ChatPersonalization): boolean {
+    return row.status === ChatPersonalizationStatus.SKIPPED && isNil(row.domain) && isNil(row.companyText)
+}
 
 export type UpsertParams = {
     platformId: string

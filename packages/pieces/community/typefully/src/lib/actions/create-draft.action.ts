@@ -11,6 +11,7 @@ type PlatformKey = (typeof PLATFORM_OPTIONS)[number];
 export const createDraftAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_create_draft',
+	classification: 'WRITE',
 	displayName: 'Create Draft Simple',
 	description:
 		'Create cross-platform, single-post drafts with text and optional media URLs. For threads (multiple posts) or advanced control, use "Create Draft Advanced" instead.',

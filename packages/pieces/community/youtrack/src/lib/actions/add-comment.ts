@@ -7,6 +7,7 @@ import { addCommentActionOutputSchema } from '../output-schemas';
 export const addCommentAction = createAction({
   auth: youtrackAuth,
   name: 'add_comment',
+  classification: 'WRITE',
   outputSchema: addCommentActionOutputSchema,
   displayName: 'Add Comment',
   description: 'Adds a comment to an issue. Supports Markdown formatting.',

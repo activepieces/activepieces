@@ -7,6 +7,7 @@ import { Project } from '@activepieces/pieces-framework';
 export const updateTask = createAction({
   auth: meistertaskAuth,
   name: 'update_task',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'Updates an existing task',
   audience: 'both',

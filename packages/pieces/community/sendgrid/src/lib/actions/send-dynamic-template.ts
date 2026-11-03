@@ -5,12 +5,13 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { getApiKey, getBaseUrl, sendgridAuth } from '../common';
-import { Attachment } from 'nodemailer/lib/mailer';
+import Mail from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
 
 export const sendDynamicTemplate = createAction({
   auth: sendgridAuth,
   name: 'send_dynamic_template',
+  classification: 'WRITE',
   displayName: 'Send Dynamic Template',
   description: 'Send an email using a dynamic template',
   audience: 'both',
@@ -67,7 +68,7 @@ export const sendDynamicTemplate = createAction({
     const { to, from, template_id, template_data, reply_to, from_name, attachments = [] } =
       context.propsValue;
 
-    const attachment_data: Attachment[] = (attachments as { file: ApFile; name?: string }[])
+    const attachment_data: Mail.Attachment[] = (attachments as { file: ApFile; name?: string }[])
       .map(({file, name}) => {
         const lookupResult = mime.lookup(
           file.extension ? file.extension : ''

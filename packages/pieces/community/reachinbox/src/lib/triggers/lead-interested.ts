@@ -25,6 +25,7 @@ const leadInterestedMessage = `
 
 export const leadInterested = createTrigger({
   name: 'leadInterested',
+  classification: 'READ',
   displayName: 'Lead Interested',
   description: 'Triggers when a lead is set to interested.',
   aiMetadata: {

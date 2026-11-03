@@ -1,40 +1,24 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { generateImage } from './lib/actions/generate-image.action';
-
-const markdownDescription = `
-Follow these instructions to get your API Key:
-1. Visit the following website: https://robolly.com/dashboard/account/
-2. Once on the website, locate and copy your API Key.
-Please, take into consideration: We don't test your API Key validity in order to save you some generations, so make sure this is the correct one.
-`;
-
-export const robollyAuth = PieceAuth.SecretText({
-  description: markdownDescription,
-  displayName: 'API Key',
-  required: true,
-  validate: async () => {
-    return {
-      valid: true,
-    };
-  },
-});
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { robollyAiActions } from './lib/actions/ai';
+import { generateImageAction } from './lib/actions/generate-image';
+import { robollyAuth } from './lib/auth';
+import { robollyClient } from './lib/common/client';
 
 export const robolly = createPiece({
   displayName: 'Robolly',
-  description:
-    'Robolly is the all‑in‑one service for personalized image, video & PDF generation with API',
+  description: 'Robolly is the all‑in‑one service for personalized image, video & PDF generation with API',
 
   auth: robollyAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/robolly.png',
   categories: [PieceCategory.MARKETING],
-  authors: ["pfernandez98","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['pfernandez98', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
-    generateImage,
+    generateImageAction,
+    ...robollyAiActions,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.robolly.com',
+      baseUrl: () => robollyClient.baseUrl(),
       auth: robollyAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,

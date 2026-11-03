@@ -9,7 +9,7 @@ export const githubCreateBranchAction = createAction({
   name: 'create_branch',
   classification: 'WRITE',
   displayName: 'Create Branch',
-  description: 'Creates a new branch on a repository.',
+  description: 'Creates a branch from an existing one.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -20,15 +20,31 @@ export const githubCreateBranchAction = createAction({
     repository: githubCommon.repositoryDropdown,
     source_branch: githubCommon.branchDropdown(
       'Source Branch',
-      'The source branch that will be used to create the new branch',
+      "The new branch starts from this branch's latest commit.",
       true
     ),
     new_branch_name: Property.ShortText({
       displayName: 'New Branch Name',
-      description: "The name for the new branch (e.g., 'feature/new-design').",
+      placeholder: 'feature/new-design',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Start from',
+      icon: 'code',
+      props: ['repository', 'source_branch'],
+    },
+    {
+      key: 'branch',
+      display: 'section',
+      label: 'New branch',
+      icon: 'tag',
+      props: ['new_branch_name'],
+    },
+  ],
   outputSchema: createBranchActionOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;

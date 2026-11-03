@@ -19,6 +19,7 @@ interface NewPaidTriggerPayload {
 
 export const newSuccessfulPartialPaymentViaRespaid = createTrigger({
     name: 'new_successful_partial_payment_via_respaid',
+    classification: 'READ',
     displayName: 'New Successful Partial Payment via Respaid',
     description: "Triggers when the debt is partially paid via Respaid's payment link.",
     aiMetadata: {

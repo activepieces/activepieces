@@ -7,6 +7,7 @@ import { emailProp } from '../common/props';
 export const verifyEmailAction = createAction({
     auth: hunterAuth,
     name: 'verify-email',
+    classification: 'READ',
     displayName: 'Verify Email',
     description: 'Check email deliverability and validation status.',
     audience: 'both',

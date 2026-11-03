@@ -227,7 +227,10 @@ async function resolveConversationProjectId({ conversationId, identity, log }: {
     return conversationProjectId
 }
 
+export const MCP_REQUEST_BODY_LIMIT_BYTES = 4 * 1024 * 1024
+
 const McpEndpointConfig = {
     config: { security: securityAccess.public() },
     schema: { hide: true },
+    bodyLimit: MCP_REQUEST_BODY_LIMIT_BYTES,
 }

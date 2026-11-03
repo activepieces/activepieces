@@ -7,6 +7,7 @@ import {
 import { drive as googleDrive } from '@googleapis/drive';
 import { docs as googleDocs } from '@googleapis/docs';
 import { folderIdProp } from '../common/props';
+import { driveQuery } from '../common/drive-query';
 import { findDocumentActionOutputSchema } from '../output-schemas';
 
 export const findDocumentAction = createAction({
@@ -21,6 +22,22 @@ export const findDocumentAction = createAction({
 			'Searches Google Drive for a Google Docs document whose name contains the given text, optionally scoped to a folder, and returns the first match. Use when an agent has a document name but not its ID and needs to resolve it. Idempotent only when used purely for lookup; enabling "Create a new document if not found" makes it create (and optionally move) a new document on each miss, which is a mutating side effect.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'search',
+			display: 'section',
+			label: 'Search',
+			icon: 'filter',
+			props: ['name', 'folderId'],
+		},
+		{
+			key: 'notFound',
+			display: 'section',
+			label: 'If Not Found',
+			icon: 'file',
+			props: ['createIfNotFound', 'newDocumentProps'],
+		},
+	],
 	props: {
 		name: Property.ShortText({
 			displayName: 'Document Name',
@@ -69,12 +86,12 @@ export const findDocumentAction = createAction({
 
 		// Search for the document in Google Drive
 		const query: string[] = [
-			`name contains '${documentName}'`,
+			`name contains '${driveQuery.escapeLiteral(documentName)}'`,
 			`mimeType='application/vnd.google-apps.document'`,
 			'trashed=false',
 		];
 
-		if (folderId) query.push(`'${folderId}' in parents`);
+		if (folderId) query.push(`'${driveQuery.escapeLiteral(folderId)}' in parents`);
 
 		const response = await drive.files.list({
 			q: query.join(' and '),

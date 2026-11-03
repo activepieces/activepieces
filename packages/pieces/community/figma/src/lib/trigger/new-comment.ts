@@ -18,6 +18,7 @@ const TRIGGER_DATA_STORE_KEY = 'figma_new_comment_trigger_data';
 export const newCommentTrigger = createTrigger({
   auth: figmaAuth,
   name: 'new_comment',
+  classification: 'READ',
   displayName: 'New Comment (Figma Professional plan only)',
   description: 'Triggers when a new comment is posted',
   aiMetadata: {

@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const getSubscriptionAction = createAction({
   name: 'get_subscription',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'Retrieve Subscription',
   description:

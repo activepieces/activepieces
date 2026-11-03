@@ -7,6 +7,7 @@ import type { CallDirectionType, CallStatusFilter } from '../common/types';
 export const listCalls = createAction({
   auth: famulorAuth,
   name: 'listCalls',
+  classification: 'SEARCH',
   displayName: 'List Calls',
   description: 'List calls with optional filters.',
   audience: 'both',

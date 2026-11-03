@@ -6,6 +6,7 @@ import { podioApiCall, getAccessToken, dynamicTaskProperty, hookProperty, silent
 export const updateTaskAction = createAction({
   auth: podioAuth,
   name: 'update_task',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'Modify an existing task\'s details or status. Only specified fields will be updated.',
   audience: 'both',

@@ -9,6 +9,7 @@ import { joggAiAuth } from '../..';
 
 export const createProductFromProductInfo = createAction({
   name: 'createProductFromProductInfo',
+  classification: 'WRITE',
   displayName: 'Create Product from Product Info',
   description: 'Creates a product from product information',
   audience: 'both',

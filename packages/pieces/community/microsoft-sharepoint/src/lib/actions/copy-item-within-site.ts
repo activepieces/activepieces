@@ -21,6 +21,7 @@ async function delay(ms: number) {
 export const copyItemWithinSiteAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_copy_item_within_site',
+  classification: 'WRITE',
   displayName: 'Copy File or Folder (Within Site)',
   description: 'Copy a file or folder to another folder within the same site.',
   audience: 'both',

@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getCadModelAction = createAction({
   name: 'get_cad_model',
+  classification: 'READ',
   displayName: 'Get CAD Model',
   description: 'Retrieve details of a specific 3D model',
   audience: 'both',

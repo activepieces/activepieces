@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-24.04
     environment:
       name: release
+    outputs:
+      release: ${{ steps.version.outputs.release }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -123,3 +125,77 @@ jobs:
           gh release edit "$VERSION" --notes "${BODY}${NOTE}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync-main:
+    needs: weekly-release
+    if: ${{ !cancelled() && needs.weekly-release.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          token: ${{ secrets.CROWDIN_PRS }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Roll unreleased breaking changes under the released version
+        env:
+          TAG: ${{ needs.weekly-release.outputs.release }}
+        run: |
+          git fetch --no-tags --depth=1 origin "refs/tags/$TAG:refs/tags/$TAG"
+          bun tools/scripts/breaking-changes-rollover.ts "$TAG"
+
+      - name: Push sync branch
+        id: push
+        env:
+          TAG: ${{ needs.weekly-release.outputs.release }}
+        run: |
+          git config --local user.email "abdulyki+automatedcommits@activepieces.com"
+          git config --local user.name "automated-commits-ap"
+          if git diff --quiet; then
+            echo "No breaking-change entry to roll over for $TAG."
+            exit 0
+          fi
+          BRANCH="automated/sync-main-$TAG"
+          git checkout -b "$BRANCH"
+          git add docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx
+          git commit -m "chore(release): sync main after $TAG"
+          git push -f origin "$BRANCH"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Open sync PR
+        if: steps.push.outputs.branch != ''
+        env:
+          GH_TOKEN: ${{ secrets.CROWDIN_PRS }}
+          TAG: ${{ needs.weekly-release.outputs.release }}
+          BRANCH: ${{ steps.push.outputs.branch }}
+        run: |
+          BODY="$(printf '%s\n' \
+            "The self-hosted release \`$TAG\` was published. This PR moves the breaking-change entries that \`$TAG\` contains from the hidden unreleased page under \`## $TAG\` on the Breaking Changes page. See SRE-232." \
+            "" \
+            "### Breaking change?" \
+            "" \
+            "- [x] no, reviewed, not breaking (entries are moved, none added)" \
+            "- [ ] yes, technical" \
+            "- [ ] yes, functional" \
+            "" \
+            "### Security impact?" \
+            "" \
+            "- [x] no, reviewed, no security impact" \
+            "- [ ] yes, security-sensitive")"
+          PR_NUMBER="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$PR_NUMBER" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" -X PATCH -f body="$BODY"
+          else
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore(release): sync main after $TAG" \
+              --body "$BODY" \
+              --label skip-changelog \
+              --label automated
+          fi

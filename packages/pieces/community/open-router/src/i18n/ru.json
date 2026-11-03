@@ -28,5 +28,6 @@
   "PATCH": "ПАТЧ",
   "PUT": "ПОКУПИТЬ",
   "DELETE": "УДАЛИТЬ",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Full URL, or a path relative to https://openrouter.ai/api/v1": "Полный URL или путь относительно https://openrouter.ai/api/v1"
 }

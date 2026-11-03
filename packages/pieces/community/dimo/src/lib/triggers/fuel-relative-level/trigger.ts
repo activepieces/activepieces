@@ -12,6 +12,7 @@ const TRIGGER_KEY = 'dimo-fuel-relative-level-trigger';
 export const fuelRelativeTrigger = createTrigger({
 	auth: dimoAuth,
 	name: 'fuel-relative-level-trigger',
+	classification: 'READ',
 	displayName: 'Fuel System Relative Level Trigger',
 	description: 'Triggers when vehicle fuel system relative level meets the specified condition.',
 	aiMetadata: {

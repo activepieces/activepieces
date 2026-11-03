@@ -1,24 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { smartleadRequest } from '../common/client';
 import { smartleadAuth } from '../auth';
+import { smartleadOperations } from '../common/operations';
+import { smartleadOutputSchemas } from '../common/output-schemas';
 
 export const createCampaignAction = createAction({
   auth: smartleadAuth,
   name: 'create_campaign',
+  classification: 'WRITE',
   displayName: 'Create Campaign',
   description: 'Create a new cold email campaign in SmartLead',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Creates a new, empty cold email campaign in SmartLead, identified by name; on agency/white-label accounts an optional client ID associates it with a specific client. Use this as the first step before adding leads or configuring sequences. Not idempotent: each call creates a separate campaign even with the same name.',
-    idempotent: false,
-  },
+  audience: 'human',
+  outputSchema: smartleadOutputSchemas.createCampaign,
   props: {
     name: Property.ShortText({
       displayName: 'Campaign Name',
-      description:
-        'Name of the campaign. Defaults to "Untitled Campaign" if not provided.',
+      description: 'Name of the new campaign.',
       required: true,
     }),
     client_id: Property.Number({
@@ -29,19 +25,10 @@ export const createCampaignAction = createAction({
     }),
   },
   async run(context) {
-    const { name, client_id } = context.propsValue;
-    const apiKey = context.auth.secret_text;
-
-    const body: Record<string, unknown> = { name };
-    if (client_id !== undefined && client_id !== null) {
-      body['client_id'] = client_id;
-    }
-
-    return await smartleadRequest({
-      endpoint: 'campaigns/create',
-      method: HttpMethod.POST,
-      apiKey,
-      body,
+    return smartleadOperations.createCampaign({
+      apiKey: context.auth.secret_text,
+      name: context.propsValue.name,
+      clientId: context.propsValue.client_id,
     });
   },
 });

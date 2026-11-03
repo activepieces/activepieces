@@ -39,6 +39,7 @@ describe('deriveActionRunOutcome', () => {
         it('error channel maps to INTERNAL_ERROR', () => {
             const outcome = deriveActionRunOutcome({ result: { data: null, error: new Error('boom') } })
             expect(outcome.status).toBe(FlowRunStatus.INTERNAL_ERROR)
+            expect(outcome.neverStarted).toBe(true)
         })
         it('watcher timeout maps to TIMEOUT, not INTERNAL_ERROR', () => {
             const error = new ActivepiecesError({

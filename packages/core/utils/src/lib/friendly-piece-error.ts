@@ -203,11 +203,12 @@ const extractResponseHttpDetails = (error: Record<string, unknown>): HttpDetails
 }
 
 const extractClientHttpDetails = (error: Record<string, unknown>): HttpDetails | null => {
-    const status = toHttpStatus(error['status'])
+    const thrownAsPlainValue = !(error instanceof Error)
+    const status = toHttpStatus(error['status']) ?? (thrownAsPlainValue ? toHttpStatus(error['statusCode']) : undefined)
     if (isNil(status)) {
         return null
     }
-    const responseBody = error['error'] ?? error['body']
+    const responseBody = error['error'] ?? error['body'] ?? (thrownAsPlainValue ? error['responseBody'] : undefined)
     const headersValue = error['headers']
     const headers = isObjectRecord(headersValue) ? headersValue : undefined
 
@@ -288,6 +289,10 @@ const readErrorMessage = (error: Record<string, unknown>): string => {
     const stringified = String(error)
     if (stringified.length > 0 && stringified !== '[object Object]') {
         return stringified
+    }
+    const nested = extractApiMessage(error['error'])
+    if (!isNil(nested)) {
+        return nested
     }
     return 'Unknown error'
 }

@@ -12,6 +12,7 @@ interface PauseCampaignResponse {
 export const pauseCampaign = createAction({
   auth: ReachinboxAuth,
   name: 'pauseCampaign',
+  classification: 'WRITE',
   displayName: 'Pause Campaign',
   description: 'Pause a selected campaign.',
   audience: 'both',

@@ -14,14 +14,23 @@ export const createContact = createAction({
   description: 'Add a contact to a Resend audience',
   audience: 'both',
   aiMetadata: { description: 'Adds a new contact (email plus optional name and subscription status) to a specific Resend audience. Use this to grow a mailing list; requires the target audience ID (use List Audiences to find it). Not idempotent — each call creates a new contact, so guard against re-adding the same email.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'contact',
+      display: 'section',
+      label: 'New Contact',
+      icon: 'user',
+      props: ['audience_id', 'email', 'first_name', 'last_name', 'unsubscribed'],
+    },
+  ],
   props: {
     audience_id: resendProps.audienceId,
-    email: Property.ShortText({ displayName: 'Email', required: true }),
-    first_name: Property.ShortText({ displayName: 'First Name', required: false }),
-    last_name: Property.ShortText({ displayName: 'Last Name', required: false }),
+    email: Property.ShortText({ displayName: 'Email', placeholder: 'jane@example.com', required: true }),
+    first_name: Property.ShortText({ displayName: 'First Name', placeholder: 'Jane', width: 'half', required: false }),
+    last_name: Property.ShortText({ displayName: 'Last Name', placeholder: 'Doe', width: 'half', required: false }),
     unsubscribed: Property.Checkbox({
       displayName: 'Unsubscribed',
-      description: 'If true, the contact will be unsubscribed from all broadcasts',
+      description: 'Turn on to add the contact as unsubscribed from broadcasts.',
       required: false,
       defaultValue: false,
     }),

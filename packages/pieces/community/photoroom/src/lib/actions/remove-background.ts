@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const removeBackground = createAction({
   name: 'removeBackground',
+  classification: 'READ',
   displayName: 'Remove background',
   description: 'Remove the background of the image given as input',
   audience: 'both',

@@ -5,6 +5,7 @@ import { getUserSpaces } from '../common';
 export const listSpaces = createAction({
   auth: medullarAuth,
   name: 'listSpaces',
+  classification: 'SEARCH',
   displayName: 'List Spaces',
   description: 'List all user Spaces',
   audience: 'both',

@@ -75,7 +75,7 @@
   "One entry per signer role defined in the template. Each signer must have an email and a role name (e.g. \"Signer 1\").": "テンプレート内で定義されているシグナーロールごとに1つのエントリ。各シグナーはメールアドレスと役割名（例：「シグナー1」）を持つ必要があります。",
   "Default email subject sent to all signers. Overridden by per-signer subject if set.": "すべての署名者に送信されたデフォルトのメール件名。設定されている場合は、署名者ごとの件名が上書きされます。",
   "Default email body sent to all signers. Overridden by per-signer message if set.": "すべての署名者に送信された既定のメール本文。設定されている場合は、署名者ごとのメッセージで上書きされます。",
-  "Number of days before the invite expires (3–180). Defaults to 30.": "招待の有効期限が切れるまでの日数。デフォルトは30です。",
+  "Number of days before the invite expires (1-180). Defaults to 30.": "Number of days before the invite expires (1-180). Defaults to 30.",
   "The unique ID of the document group template.": "ドキュメントグループテンプレートの一意のID。",
   "Name for the new document group.": "新しいドキュメント グループの名前。",
   "One entry per signer. Each signer needs an email, role name, and the document they are signing within the group. Signing order determines the step sequence.": "署名者ごとに 1 つのエントリ。各署名者は、メール、ロール名、およびグループ内で署名するドキュメントを必要とします。 署名順はステップシーケンスを決定します。",

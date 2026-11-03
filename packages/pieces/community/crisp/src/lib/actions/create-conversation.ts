@@ -8,6 +8,7 @@ import { crispApiCall } from '../common/client';
 export const createConversationAction = createAction({
 	auth: crispAuth,
 	name: 'create_conversation',
+	classification: 'WRITE',
 	displayName: 'Create Conversation',
 	description: 'Creates a new conversation.',
 	audience: 'both',

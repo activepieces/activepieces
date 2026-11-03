@@ -9,6 +9,7 @@ import { StreakBox } from '../common/types';
 export const getBoxAction = createAction({
   auth: streakAuth,
   name: 'get_box',
+  classification: 'READ',
   displayName: 'Get Box',
   description: 'Fetch a single box with its current stage, fields, and counts.',
   audience: 'both',

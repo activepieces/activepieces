@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const saveUserAccountPayment = createAction({
   auth: trueLayerCommon.auth,
   name: 'save-user-account-payment',
+  classification: 'WRITE',
   displayName: 'Save Payment Account',
   description: 'Save the account details associated with a payment for subsequent re-use. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
   audience: 'both',

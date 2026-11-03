@@ -6,6 +6,7 @@ import { memAuth } from '../auth';
 export const deleteNoteAction = createAction({
   auth: memAuth,
   name: 'delete_note',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Note',
   description: 'Delete a note in Mem by its ID.',
   audience: 'both',

@@ -29,6 +29,13 @@ export const aiProviderQueries = {
       queryKey: aiProviderKeys.configs,
       queryFn: () => aiProviderApi.listConfigs(),
     }),
+  useConfigModels: (configId: string | undefined) =>
+    useQuery({
+      queryKey: aiProviderKeys.configModels(configId),
+      queryFn: () =>
+        isNil(configId) ? [] : aiProviderApi.listModelsForConfig(configId),
+      enabled: !isNil(configId),
+    }),
   useProjectAiProviders: () => {
     const projectId = authenticationSession.getProjectId();
     return useQuery({
@@ -38,28 +45,37 @@ export const aiProviderQueries = {
       enabled: !isNil(projectId),
     });
   },
-  useChatProvider: () => {
-    const { data: providers, ...rest } =
-      aiProviderQueries.useProjectAiProviders();
-    return { ...rest, data: providers?.find((p) => p.enabledForChat) };
-  },
 };
 
 export const aiProviderMutations = {
   useRecheckAiProvider: ({
     onSuccess,
+    onError,
   }: {
     onSuccess: (result: { status: AiProviderKeyStatus }) => void;
+    onError: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => void;
   }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
       onSuccess,
+      onError,
     });
   },
-  useDeleteAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+  useDeleteAiProvider: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError?: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => void;
+  }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.delete(providerId),
       onSuccess,
+      onError,
     });
   },
   useUpdateAiProvider: ({
@@ -81,19 +97,6 @@ export const aiProviderMutations = {
       }) => aiProviderApi.update(providerId, request),
       onSuccess,
       onError,
-    });
-  },
-  useToggleChatProvider: ({ onSuccess }: { onSuccess: () => void }) => {
-    return useMutation({
-      mutationFn: ({
-        providerId,
-        displayName,
-      }: {
-        providerId: string;
-        displayName: string;
-      }) =>
-        aiProviderApi.update(providerId, { displayName, enabledForChat: true }),
-      onSuccess,
     });
   },
   useUpsertAiProvider: ({

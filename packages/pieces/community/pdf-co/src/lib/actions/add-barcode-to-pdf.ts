@@ -1,46 +1,10 @@
-import { Property, DropdownOption, createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, HttpError } from '@activepieces/pieces-common';
-import {
-	PdfCoSuccessResponse,
-	PdfCoErrorResponse,
-	PdfCoImageAnnotation,
-	PdfCoAddImagesRequestBody,
-} from '../common/types';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { pdfCoAuth } from '../auth';
-import { BASE_URL, commonProps } from '../common/props';
-
-// Interface for /barcode/generate request
-interface BarcodeGenerateRequestBody {
-	value: string;
-	type?: string;
-	async: boolean;
-	inline: boolean; // Must be false to get URL
-	name?: string;
-	decorationImage?: string;
-	profiles?: Record<string, unknown>;
-}
-
-// Interface for /barcode/generate success response (when inline=false)
-interface BarcodeGenerateSuccessResponse {
-	url: string; // URL to the generated barcode image
-	error: false;
-	status: number;
-	name: string;
-	duration: number;
-	remainingCredits: number;
-	credits: number;
-}
-
-// Supported Barcode Types
-const barcodeTypes: DropdownOption<string>[] = [
-	{ label: 'QR Code (Default)', value: 'QRCode' },
-	{ label: 'DataMatrix', value: 'DataMatrix' },
-	{ label: 'Code 128', value: 'Code128' },
-	{ label: 'Code 39', value: 'Code39' },
-	{ label: 'PDF417', value: 'PDF417' },
-	{ label: 'EAN-13', value: 'EAN13' },
-	{ label: 'UPC-A', value: 'UPCA' },
-];
+import { pdfCoClient } from '../common/client';
+import { pdfCoJobs } from '../common/jobs';
+import { BARCODE_TYPES, commonProps, PDF_CO_DEFAULTS, pdfCoProps } from '../common/props';
+import { pdfCoOutputSchemas } from '../output-schemas';
 
 export const addBarcodeToPdf = createAction({
 	name: 'add_barcode_to_pdf',
@@ -50,10 +14,11 @@ export const addBarcodeToPdf = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Generates a barcode (QR, DataMatrix, Code 128/39, PDF417, EAN-13, or UPC-A) and stamps it onto a source PDF (referenced by URL) at the given x/y coordinates. Use when an agent needs to embed a scannable code into an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+			'Generates a barcode (QR, DataMatrix, Code 128/39, PDF417, EAN-13, or UPC-A) and stamps it onto a source PDF (referenced by URL) at the given x/y coordinates (points from the top-left; page indexes start at 0). Use when an agent needs to embed a scannable code into an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
 		idempotent: false,
 	},
 	auth: pdfCoAuth,
+	outputSchema: pdfCoOutputSchemas.rawResult,
 	props: {
 		sourcePdfUrl: Property.ShortText({
 			displayName: 'Source PDF URL',
@@ -69,7 +34,7 @@ export const addBarcodeToPdf = createAction({
 			displayName: 'Barcode Type',
 			description: 'Select the type of barcode to generate.',
 			required: true,
-			options: { disabled: false, options: barcodeTypes, placeholder: 'Select Barcode Type' },
+			options: { disabled: false, options: BARCODE_TYPES, placeholder: 'Select Barcode Type' },
 		}),
 		x: Property.Number({
 			displayName: 'X Coordinate',
@@ -96,135 +61,59 @@ export const addBarcodeToPdf = createAction({
 		pages: Property.ShortText({
 			displayName: 'Pages',
 			description:
-				'Comma-separated page numbers or ranges to add the barcode (e.g., "0,2,5-10"). Leave empty for all pages.',
+				'Comma-separated page indexes or ranges to add the barcode (first page is 0), e.g. "0,2,5-10". Leave empty for all pages.',
 			required: false,
 		}),
 		...commonProps,
+		saveOutputFile: pdfCoProps.saveOutputFile({ defaultValue: PDF_CO_DEFAULTS.saveOutputFileOnExistingActions }),
 	},
-	async run(context) {
-		const { auth, propsValue } = context;
-		const {
-			sourcePdfUrl,
-			barcodeValue,
-			barcodeType,
-			x,
-			y,
-			width,
-			height,
-			pages,
-			fileName,
-			pdfPassword,
-			httpPassword,
-			httpUsername,
-			expiration,
-		} = propsValue;
-
-		let barcodeImageUrl = '';
-
-		// --- Step 1: Generate Barcode ---
-		const generateBarcodeBody: BarcodeGenerateRequestBody = {
-			value: barcodeValue,
-			type: barcodeType,
-			async: false,
-			inline: false, // Need the URL
-		};
-
-		try {
-			const generateResponse = await httpClient.sendRequest<
-				BarcodeGenerateSuccessResponse | PdfCoErrorResponse
-			>({
+	async run({ auth, propsValue, files }) {
+		const apiKey = pdfCoClient.apiKeyOf(auth);
+		const generated = pdfCoClient.readRecord(
+			await pdfCoClient.request<unknown>({
+				apiKey,
 				method: HttpMethod.POST,
-				url: `${BASE_URL}/barcode/generate`,
-				headers: {
-					'x-api-key': auth.secret_text,
-					'Content-Type': 'application/json',
-				},
-				body: generateBarcodeBody,
-			});
-
-			if (generateResponse.body.error) {
-				const errorBody = generateResponse.body as PdfCoErrorResponse;
-				throw new Error(
-					`PDF.co Barcode Generation Error: Status ${errorBody.status}. ${
-						errorBody.message || 'Unknown error.'
-					}`,
-				);
-			}
-
-			barcodeImageUrl = (generateResponse.body as BarcodeGenerateSuccessResponse).url;
-			if (!barcodeImageUrl) {
-				throw new Error('Failed to get barcode image URL from PDF.co response.');
-			}
-		} catch (error) {
-			if (error instanceof HttpError) {
-				const responseBody = error.response?.body as PdfCoErrorResponse | undefined;
-				throw new Error(
-					`HTTP Error generating barcode: ${error.message}. ${
-						responseBody?.message
-							? 'Server message: ' + responseBody.message
-							: 'Raw response: ' + JSON.stringify(responseBody)
-					}`,
-				);
-			}
-			throw error; // Re-throw other errors
+				path: '/v1/barcode/generate',
+				body: { value: propsValue.barcodeValue, type: propsValue.barcodeType, async: false, inline: false },
+			}),
+		);
+		const barcodeImageUrl = generated['url'];
+		if (typeof barcodeImageUrl !== 'string' || barcodeImageUrl === '') {
+			throw new Error('Failed to get barcode image URL from PDF.co response.');
 		}
-
-		// --- Step 2: Add Barcode Image to PDF ---
-		const imageAnnotation: PdfCoImageAnnotation = {
-			url: barcodeImageUrl,
-			x: x,
-			y: y,
-			width,
-			height,
-			pages,
-		};
-
-		const addImageBody: PdfCoAddImagesRequestBody = {
-			url: sourcePdfUrl,
-			images: [imageAnnotation],
-			async: false,
-			inline: false, // Get final PDF URL
-			name: fileName,
-			expiration,
-			httppassword: httpPassword,
-			httpusername: httpUsername,
-			password: pdfPassword,
-		};
-
-		try {
-			const addResponse = await httpClient.sendRequest<PdfCoSuccessResponse | PdfCoErrorResponse>({
+		const result = pdfCoClient.readRecord(
+			await pdfCoClient.request<unknown>({
+				apiKey,
 				method: HttpMethod.POST,
-				url: `${BASE_URL}/pdf/edit/add`,
-				headers: {
-					'x-api-key': auth.secret_text,
-					'Content-Type': 'application/json',
+				path: '/v1/pdf/edit/add',
+				body: {
+					url: propsValue.sourcePdfUrl,
+					images: [
+						{
+							url: barcodeImageUrl,
+							x: propsValue.x,
+							y: propsValue.y,
+							width: propsValue.width,
+							height: propsValue.height,
+							pages: propsValue.pages,
+						},
+					],
+					async: false,
+					inline: false,
+					name: propsValue.fileName,
+					expiration: propsValue.expiration,
+					httppassword: propsValue.httpPassword,
+					httpusername: propsValue.httpUsername,
+					password: propsValue.pdfPassword,
 				},
-				body: addImageBody,
-			});
-
-			if (addResponse.body.error) {
-				const errorBody = addResponse.body as PdfCoErrorResponse;
-				throw new Error(
-					`PDF.co Add Image Error: Status ${errorBody.status}. ${
-						errorBody.message || 'Unknown error.'
-					}`,
-				);
-			}
-
-			// Return the successful response containing the final PDF URL
-			return addResponse.body as PdfCoSuccessResponse;
-		} catch (error) {
-			if (error instanceof HttpError) {
-				const responseBody = error.response?.body as PdfCoErrorResponse | undefined;
-				throw new Error(
-					`HTTP Error adding barcode image to PDF: ${error.message}. ${
-						responseBody?.message
-							? 'Server message: ' + responseBody.message
-							: 'Raw response: ' + JSON.stringify(responseBody)
-					}`,
-				);
-			}
-			throw error; // Re-throw other errors
-		}
+			}),
+		);
+		const saved = await pdfCoJobs.optionalSave({
+			files,
+			url: result['url'],
+			enabled: propsValue.saveOutputFile,
+			fileName: propsValue.fileName,
+		});
+		return { ...result, ...saved };
 	},
 });

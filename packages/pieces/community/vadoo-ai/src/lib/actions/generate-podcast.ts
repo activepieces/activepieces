@@ -11,6 +11,7 @@ import { isEmpty } from '@activepieces/pieces-framework';
 export const generatePodcast = createAction({
   auth: vadooAiAuth,
   name: 'generate_podcast',
+  classification: 'WRITE',
   displayName: 'Generate Podcast',
   description: 'Generates a podcast-style video.',
   audience: 'both',

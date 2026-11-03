@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const sendInvoiceEmailAction = createAction({
   name: 'send_invoice_email',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Send Invoice Email',
   description:

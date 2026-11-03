@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, MarkdownVariant, Property } from "@activepieces/pieces-framework";
 import { supabaseAuth } from '../auth';
 import { createClient } from "@supabase/supabase-js";
 import { supabaseCommon } from "../common/props";
@@ -12,33 +12,32 @@ export const deleteRows = createAction({
     audience: 'both',
     aiMetadata: { description: 'Deletes rows from a Supabase table that match a single filter condition (equals, not-equals, in-list, range comparisons, null checks, or LIKE pattern on a chosen column). Use to remove records you can identify by one filter; a filter is required so it will not blindly clear a table. Idempotent: re-running deletes nothing further once the matching rows are gone.', idempotent: true },
     auth: supabaseAuth,
+    propertyGroups: [
+        {
+            key: 'target',
+            display: 'section',
+            label: 'Rows to Delete',
+            icon: 'trash',
+            props: ['table_name', 'delete_warning', 'filter_column', 'filter_type', 'filter_value', 'filter_values'],
+        },
+        {
+            key: 'output',
+            display: 'section',
+            label: 'Output',
+            icon: 'sliders',
+            props: ['count_deleted', 'return_deleted'],
+        },
+    ],
     props: {
         table_name: supabaseCommon.table_name,
-        filter_type: Property.StaticDropdown({
-            displayName: 'Filter Type',
-            description: 'How to filter rows for deletion',
-            required: true,
-            defaultValue: 'in',
-            options: {
-                options: [
-                    { label: 'Column equals value', value: 'eq' },
-                    { label: 'Column not equals value', value: 'neq' },
-                    { label: 'Column is in list', value: 'in' },
-                    { label: 'Column is greater than', value: 'gt' },
-                    { label: 'Column is greater than or equal', value: 'gte' },
-                    { label: 'Column is less than', value: 'lt' },
-                    { label: 'Column is less than or equal', value: 'lte' },
-                    { label: 'Column is null', value: 'is_null' },
-                    { label: 'Column is not null', value: 'is_not_null' },
-                    { label: 'Column matches pattern (LIKE)', value: 'like' },
-                    { label: 'Column matches pattern (case-insensitive)', value: 'ilike' }
-                ]
-            }
+        delete_warning: Property.MarkDown({
+            value: 'Every row that matches is deleted. This cannot be undone.',
+            variant: MarkdownVariant.WARNING,
         }),
         filter_column: Property.Dropdown({
             auth: supabaseAuth,
-            displayName: 'Filter Column',
-            description: 'Select the column to filter on',
+            displayName: 'Column',
+            description: 'Rows are matched on this column.',
             required: true,
             refreshers: ['table_name'],
             options: async ({ auth, table_name }) => {
@@ -116,25 +115,46 @@ export const deleteRows = createAction({
                 }
             }
         }),
+        filter_type: Property.StaticDropdown({
+            displayName: 'Condition',
+            description: 'How the column is compared with the value.',
+            required: true,
+            defaultValue: 'in',
+            options: {
+                options: [
+                    { label: 'Equals', value: 'eq' },
+                    { label: 'Does not equal', value: 'neq' },
+                    { label: 'Is one of', value: 'in' },
+                    { label: 'Greater than', value: 'gt' },
+                    { label: 'Greater than or equal to', value: 'gte' },
+                    { label: 'Less than', value: 'lt' },
+                    { label: 'Less than or equal to', value: 'lte' },
+                    { label: 'Is null', value: 'is_null' },
+                    { label: 'Is not null', value: 'is_not_null' },
+                    { label: 'Matches pattern', value: 'like' },
+                    { label: 'Matches pattern, any case', value: 'ilike' }
+                ]
+            }
+        }),
         filter_value: Property.ShortText({
-            displayName: 'Filter Value',
-            description: 'The value to match against (not used for null checks)',
+            displayName: 'Value',
+            description: 'Not used by Is one of, Is null or Is not null.',
             required: false,
         }),
         filter_values: Property.Array({
-            displayName: 'Filter Values',
-            description: 'List of values for "in" filter type',
+            displayName: 'Values',
+            description: 'Used only by Is one of.',
             required: false,
         }),
         count_deleted: Property.Checkbox({
             displayName: 'Count Deleted Rows',
-            description: 'Whether to count the number of deleted rows',
+            description: 'Adds the number of deleted rows to the output.',
             required: false,
             defaultValue: false,
         }),
         return_deleted: Property.Checkbox({
             displayName: 'Return Deleted Rows',
-            description: 'Whether to return the deleted rows data',
+            description: 'Adds the deleted rows to the output.',
             required: false,
             defaultValue: false,
         })
@@ -215,7 +235,7 @@ export const deleteRows = createAction({
             : await deleteQuery;
 
         if (error) {
-            throw error;
+            throw new Error(`Failed to delete rows: ${error.message}`);
         }
 
         const result: any = {

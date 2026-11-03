@@ -6,6 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { aiCallContext } from '../../ai/usage/ai-call-context'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { redisConnections } from '../../database/redis-connections'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -49,6 +50,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 modelName: request.body.modelName ?? null,
                 ...spreadIfDefined('provider', request.body.provider),
                 ...spreadIfDefined('providerConfigId', providerConfigId),
+                ...spreadIfDefined('modelTierId', request.body.modelTierId),
             }
             : agentHelpers.jobFieldsFromConfig({ config: linked.config })
         const { tools, structuredOutput, provider } = runFields
@@ -71,9 +73,10 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const flowTools = await agentHelpers.resolveFlowTools({ projectId, tools: tools ?? [], log: request.log })
-        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: runFields.providerConfigId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
+        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: runFields.providerConfigId, modelTierId: runFields.modelTierId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
+        const flowRun = await aiCallContext.runOf({ flowRunId, projectId })
 
         const conversationId = apId()
         const runId = apId()
@@ -95,6 +98,8 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 userMessage: instruction,
                 source: AgentRunSource.FLOW_STEP,
                 flowRunId,
+                ...spreadIfDefined('flowId', flowRun.flowId),
+                environment: flowRun.environment,
                 waitpointId,
                 flowTools,
                 ...spreadIfDefined('agentId', linked?.id),
@@ -184,6 +189,7 @@ const StartAgentRunRequest = z.object({
     modelName: z.string().optional(),
     provider: z.enum(AIProviderName).optional(),
     providerConfigId: z.string().optional(),
+    modelTierId: z.optional(ApId),
 })
 
 const StartAgentRunResponse = z.object({

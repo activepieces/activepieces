@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mastodonAuth } from '../..';
 import {
@@ -15,7 +15,7 @@ export const followAccount = createAction({
   classification: 'WRITE',
   displayName: 'Follow Account',
   description: 'Follow an account, or send a follow request to a locked account.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Follows an account as the connected account (for a locked account this sends a follow request); the target is notified. Calling it again on an account you already follow does not error and just updates the boost, notification and language options. Returns the relationship.',
@@ -25,25 +25,38 @@ export const followAccount = createAction({
   props: {
     account_id: Property.ShortText({
       displayName: 'Account ID',
-      description:
-        'Local ID of the account to follow. Obtain it from Lookup Account, Search Accounts or Search (use resolve for a remote user@domain).',
+      description: 'ID of the account, for example from Lookup Account or New Follower.',
+      placeholder: '109302436954721982',
       required: true,
+    }),
+    follow_info: Property.MarkDown({
+      value: 'Following an account you already follow only updates these options.',
+      variant: MarkdownVariant.INFO,
     }),
     reblogs: mastodonProps.optionalBoolean({
       displayName: 'Show Their Boosts',
-      description: 'Whether their boosts appear in your home timeline. Leave empty for the default (yes).',
+      description: 'Show their boosts in your home timeline. Empty means yes.',
     }),
     notify: mastodonProps.optionalBoolean({
       displayName: 'Notify When They Post',
-      description: 'Whether to get a notification for each of their posts. Leave empty for the default (no).',
+      description: 'Get a notification for each of their statuses. Empty means no.',
     }),
     languages: Property.Array({
       displayName: 'Languages',
-      description:
-        'Only show their posts in these ISO 639-1 languages, one code per item (for example en). Leave empty for all languages.',
+      description: 'Only show their statuses in these language codes. Empty shows all.',
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'target', display: 'section', label: 'Account to Follow', icon: 'user', props: ['account_id'] },
+    {
+      key: 'options',
+      display: 'section',
+      label: 'Options',
+      icon: 'sliders',
+      props: ['follow_info', 'reblogs', 'notify', 'languages'],
+    },
+  ],
   async run(context) {
     const { account_id, reblogs, notify, languages } = context.propsValue;
     const languageCodes = mastodonUtils.toStringArray(languages);

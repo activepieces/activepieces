@@ -7,6 +7,7 @@ import { applyCommandActionOutputSchema } from '../output-schemas';
 export const applyCommandAction = createAction({
   auth: youtrackAuth,
   name: 'apply_command',
+  classification: 'WRITE',
   outputSchema: applyCommandActionOutputSchema,
   displayName: 'Apply Command',
   description: 'Applies a YouTrack command to an issue (e.g. change state, assign, set sprint).',

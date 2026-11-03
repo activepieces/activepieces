@@ -15,6 +15,7 @@ const CreateRecordInputSchema = z.object({
 export const createRecordAction = createAction({
   auth: servicenowAuth,
   name: 'create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Create a new record in a specified table',
   audience: 'both',

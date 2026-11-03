@@ -1,6 +1,8 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
-import { makeClient } from '../common/client';
+import { linearWebhook } from '../common/webhook';
+import { commentWebhookOutputSchema } from '../output-schemas';
+import { linearWebhookSamples } from '../common/webhook-samples';
 import { props } from '../common/props';
 
 export const linearNewComment = createTrigger({
@@ -8,74 +10,36 @@ export const linearNewComment = createTrigger({
   name: 'new_comment',
   classification: 'READ',
   displayName: 'New Comment',
-  description: 'Triggers when a new comment is created on a Linear issue',
+  description: 'Triggers when someone comments on an issue in a public team.',
   aiMetadata: {
-    description: 'Fires when a new comment is posted on a Linear issue, optionally filtered to specific teams or comment authors. Represents the created comment and its parent issue.',
+    description: 'Fires when a new comment is posted on a Linear issue, optionally filtered to specific teams or comment authors. Represents the created comment and its parent issue. Only public teams are covered: events in private teams do not fire it.',
   },
   props: {
     team_ids: props.team_ids(false),
     author_ids: props.author_ids(false),
   },
-  sampleData: {
-    action: 'create',
-    data: {
-      id: 'c1a2b3c4-d5e6-7890-abcd-ef1234567890',
-      body: 'This is a test comment',
-      issueId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-      parentId: null,
-      userId: 'u1a2b3c4-d5e6-7890-abcd-ef1234567890',
-      reactionData: [],
-      createdAt: '2023-09-05T12:00:00.000Z',
-      updatedAt: '2023-09-05T12:00:00.000Z',
-      user: {
-        id: 'u1a2b3c4-d5e6-7890-abcd-ef1234567890',
-        name: 'Test user',
-      },
-      issue: {
-        id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-        title: 'Test issue',
-        identifier: 'TEST-1',
-        team: {
-          id: 't1a2b3c4-d5e6-7890-abcd-ef1234567890',
-          key: 'TEST',
-          name: 'Test team',
-        },
-      },
-    },
-    type: 'Comment',
-    actor: { id: 'u1a2b3c4-d5e6-7890-abcd-ef1234567890', name: 'Test user', type: 'user' },
-    createdAt: '2023-09-05T12:00:00.000Z',
-    url: 'https://linear.app/test-team/issue/TEST-1#comment-c1a2b3c4',
-    organizationId: 'org_1',
-    webhookTimestamp: 1693915200000,
-    webhookId: 'webhook_1',
-  },
+  sampleData: linearWebhookSamples.newCommentSample,
+  outputSchema: commentWebhookOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const client = makeClient(context.auth);
-
-    const webhook = await client.createWebhook({
-      label: 'ActivePieces New Comment',
-      url: context.webhookUrl,
-      resourceTypes: ['Comment'],
-      allPublicTeams: true,
+    await linearWebhook.register({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_new_comment_trigger',
+      input: {
+        label: 'ActivePieces New Comment',
+        url: context.webhookUrl,
+        resourceTypes: ['Comment'],
+        allPublicTeams: true,
+      },
     });
-
-    if (webhook.success && webhook.webhook) {
-      await context.store?.put<WebhookInformation>('_new_comment_trigger', {
-        webhookId: (await webhook.webhook).id,
-      });
-    } else {
-      console.error('Failed to create the webhook');
-    }
   },
   async onDisable(context) {
-    const client = makeClient(context.auth);
-    const response =
-      await context.store?.get<WebhookInformation>('_new_comment_trigger');
-    if (response && response.webhookId) {
-      await client.deleteWebhook(response.webhookId);
-    }
+    await linearWebhook.unregister({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_new_comment_trigger',
+    });
   },
   async run(context) {
     const body = context.payload.body as {
@@ -110,7 +74,3 @@ export const linearNewComment = createTrigger({
     return [body];
   },
 });
-
-interface WebhookInformation {
-  webhookId: string;
-}

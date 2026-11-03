@@ -6,6 +6,7 @@ import { oracleDbProps } from '../common/props';
 export const insertRowsAction = createAction({
   auth: oracleDbAuth,
   name: 'insert_rows',
+  classification: 'WRITE',
   displayName: 'Insert Rows',
   description: 'Insert multiple rows into an Oracle table',
   audience: 'both',

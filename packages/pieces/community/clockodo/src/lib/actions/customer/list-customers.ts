@@ -6,6 +6,7 @@ import { clockodoAuth } from '../../auth';
 export default createAction({
   auth: clockodoAuth,
   name: 'list_customers',
+  classification: 'SEARCH',
   displayName: 'Get Customers',
   description: 'Fetches customers from clockodo',
   audience: 'both',

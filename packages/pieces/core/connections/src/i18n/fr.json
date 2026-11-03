@@ -1,8 +1,9 @@
 {
-  "Read connections dynamically": "Lecture dynamique des connexions",
+  "Look up a connection's credentials while the flow runs": "Look up a connection's credentials while the flow runs",
   "Read Connection": "Lire la connexion",
-  "Fetch connection by name": "Récupérer la connexion par nom",
+  "Get a connection's credentials by its external ID": "Get a connection's credentials by its external ID",
   "Markdown": "Markdown",
   "Connection External ID": "ID externe de la connexion",
-  "\n**Advanced Piece**\n<br>\nUse this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.\n\n**Notes:**\n- You can retrieve the external ID from the connection settings page by hovering over the connection name.\n- Use this action to retrieve connection values by their external IDs from this project.\n- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.\n": "\n**Advanced Piece**\n<br>\nUse this piece if you are unsure which connection to use beforehand, such as when the connection external ID is sent through a webhook message.\n\n**Notes:**\n- You can retrieve the external ID from the connection settings page by hovering over the connection name.\n- Use this action to retrieve connection values by their external IDs from this project.\n- After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.\n"
+  "\nUse this step when the flow only learns which connection to use while it runs, for example from a webhook.\n\nIt returns that connection's credentials. To use them in a later step, turn on **Dynamic value** on that step's connection field and insert this step's output.\n": "\nUse this step when the flow only learns which connection to use while it runs, for example from a webhook.\n\nIt returns that connection's credentials. To use them in a later step, turn on **Dynamic value** on that step's connection field and insert this step's output.\n",
+  "Hover the app icon on the Connections page to copy it.": "Hover the app icon on the Connections page to copy it."
 }

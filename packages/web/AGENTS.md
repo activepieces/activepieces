@@ -32,8 +32,9 @@ You are working in the Activepieces web application (`packages/web`).
 ## Tailwind / Styling
 
 - **Always use `cn()` from `@/lib/utils` for className composition.** It uses `clsx` + `tailwind-merge` and handles conflicts and conditionals correctly. Never use template literals (`` `class-a ${someVar}` ``) or string concatenation for `className` props.
-- **Use the predefined type scale, never an arbitrary font size.** This is Tailwind v4 and the theme lives in the `@theme` block of `src/styles.css` — it is *not* stock Tailwind: it adds `--text-xss` (10.4px) and shrinks `--text-3xl` to 1.75rem and `--text-4xl` to 2rem. Pick the token, never `text-[13px]`: 10-11px → `text-xss` (eyebrows, dense badges), 11.5-12.5px → `text-xs` (metadata), 13-13.5px → `text-sm` (**body default**), 15-15.5px → `text-base`, then `text-lg` (card titles), `text-xl` (section titles), `text-2xl` (page titles), `text-3xl` / `text-4xl` (display). Drop the class entirely when the component already sets it (a `Badge` is `text-xs` on its own). Same for arbitrary `leading-[...]` / `tracking-[...]`: use `leading-*`, `tracking-tight` for headings, `tracking-wide` / `tracking-wider` for uppercase eyebrows. Fractional spacing is valid in v4, so `size-4.5` beats `size-[18px]`. The one exception is a layout constraint with no token equivalent (`max-w-[628px]` for a reading measure, `lg:w-[344px]` for a sidebar) — those stay arbitrary and are idiomatic. Neither eslint nor `tsc` catches any of this, so it only ever surfaces in review.
+- **Use the predefined type scale, never an arbitrary font size.** This is Tailwind v4 with the stock type and radius scales; `src/styles.css` overrides neither. Pick the token, never `text-[13px]`: 10-12.5px → `text-xs` (metadata, eyebrows, badges), 13-13.5px → `text-sm` (**body default**), 15-15.5px → `text-base`, then `text-lg` (card titles), `text-xl` (section titles), `text-2xl` (page titles), `text-3xl` / `text-4xl` (display). Drop the class entirely when the component already sets it (a `Badge` is `text-xs` on its own). Same for arbitrary `leading-[...]` / `tracking-[...]`: use `leading-*`, `tracking-tight` for headings, `tracking-wide` / `tracking-wider` for uppercase eyebrows. Fractional spacing is valid in v4, so `size-4.5` beats `size-[18px]`. The one exception is a layout constraint with no token equivalent (`max-w-[628px]` for a reading measure, `lg:w-[344px]` for a sidebar) — those stay arbitrary and are idiomatic. Neither eslint nor `tsc` catches any of this, so it only ever surfaces in review.
 - **Never use negative margins** (`-mt-`, `-mb-`, `-mx-`, `-my-`, `-ml-`, `-mr-`, etc.). They introduce subtle layout bugs and make spacing hard to reason about. Use `gap`, `padding`, or `space-*` utilities instead.
+- **Colour is numbered steps, not names.** Read `brain/knowledge/design-system/colour.md` before writing a colour class: it holds the job of each step, the six exceptions, and the rules (no `dark:` colour utilities, `[data-theme='dark']`, `<LogoPlate>` for third-party logos).
 
 ## Components
 
@@ -41,6 +42,11 @@ You are working in the Activepieces web application (`packages/web`).
 - **If an existing component isn't a perfect fit**, do not create a parallel one. Instead, propose extending the existing component (e.g. adding an optional prop) in a backwards-compatible way so existing usages are unaffected. Explain the trade-off to the user before making the change.
 - **Overflowing text must use `TextWithTooltip`** (from `@/components/custom/text-with-tooltip`). Wrap any text that may overflow its container (emails, IDs, long names) in `<TextWithTooltip tooltipMessage={text}><p className="...">{text}</p></TextWithTooltip>`. It auto-detects truncation and only shows the tooltip when the text actually overflows. Ensure parent flex containers have `min-w-0` so `truncate` works correctly.
 - **Copy-to-clipboard UI must use `CopyToClipboardInput`** (from `@/components/custom/clipboard/copy-to-clipboard`). Never hand-roll a readonly `<Input>` glued to a copy `<Button>` with `navigator.clipboard.writeText`. `CopyToClipboardInput` handles the copied-state toggle, tooltip, styling, and optional download button. Pass `useInput={true}` for single-line values (links, keys) or `useInput={false}` for multi-line content (textarea). Use `fileName` only when the value should also be downloadable.
+
+## Accessible markup
+
+- **Every interactive element has a role and an accessible name.** Use a real `<button>` / `<a>` (the Shadcn `Button`), never a clickable `div`. Link each `FormLabel` to its input through `FormControl`. Give an icon-only button an `aria-label` with a translation key.
+- **A `data-testid` does not replace either.** E2E specs select by test id first (see "Writing a spec" in `packages/tests-e2e/README.md`), but screen readers and `getByRole` still need the role and the name. When you add a test id to an element, check that it has both.
 
 ## React Hook Form
 
@@ -141,6 +147,23 @@ This project uses **ICU MessageFormat** via `i18next-icu` (configured in `src/i1
 - **Combining variables with plurals**: variables inside plural branches still use single braces.
   ```json
   "membersAddedCount": "{count, plural, =1 {1 member joined {projectName}} other {# members joined {projectName}}}"
+  ```
+- **Every translated string must appear in the code as `t('literal text')`.** The key extractor (`i18next-parser.config.js`, `keepRemoved: false`) only finds keys written as `t('...')` with a string literal, and deletes every other key from `translation.json`. A string kept in a constant or config array and rendered later as `t(item.label)` is invisible to it, so its key disappears on the next extraction.
+- **Static copy in arrays or config objects goes in a function that calls `t('...')`, called inside the component's render.** Never call `t()` at module scope: that runs at import time, before the language has loaded, so the text stays in English. Render the returned strings as they are, without a second `t()`.
+  ```tsx
+  // ✅ Correct — the extractor finds each key, and t() runs during render
+  function planCatalog() {
+    return [{ label: t('Unlimited flows'), tooltip: t('Build as many automations as you want.') }];
+  }
+  function PlanCard() {
+    return planCatalog().map((feature) => <span key={feature.label}>{feature.label}</span>);
+  }
+
+  // ❌ Wrong — the extractor never sees 'Unlimited flows', so the key is deleted
+  const PLAN_CATALOG = [{ label: 'Unlimited flows' }];
+  function PlanCard() {
+    return PLAN_CATALOG.map((feature) => <span key={feature.label}>{t(feature.label)}</span>);
+  }
   ```
 
 ## Guidelines

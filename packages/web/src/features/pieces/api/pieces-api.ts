@@ -1,3 +1,4 @@
+import { LocalesEnum } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -28,7 +29,7 @@ export const piecesApi = {
   ): Promise<PieceMetadataModel> {
     return api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
       version: request.version ?? undefined,
-      locale: request.locale ?? undefined,
+      locale: request.locale ?? LocalesEnum.ENGLISH,
       projectId: request.projectId ?? undefined,
       audience: request.audience ?? undefined,
     });
@@ -44,6 +45,15 @@ export const piecesApi = {
   ): Promise<ExecutePropsResult<T>> {
     return api
       .post<ExecutePropsResult<T>>(`/v1/pieces/options`, request)
+      .then((response) => {
+        if (
+          propertyType === PropertyType.DYNAMIC &&
+          !hasPropertyMapOptions(response)
+        ) {
+          throw new Error('Dynamic properties did not resolve to a schema');
+        }
+        return response;
+      })
       .catch((error) => {
         if (propertyType === PropertyType.DYNAMIC) {
           throw error;
@@ -97,3 +107,23 @@ export const piecesApi = {
     return api.delete(`/v1/pieces/${id}`);
   },
 };
+
+function hasPropertyMapOptions(response: unknown): boolean {
+  if (!isObject(response) || !('options' in response)) {
+    return false;
+  }
+  const { options } = response;
+  return (
+    isObject(options) &&
+    Object.values(options).every(
+      (property) =>
+        isObject(property) &&
+        'type' in property &&
+        typeof property.type === 'string',
+    )
+  );
+}
+
+function isObject(value: unknown): value is object {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}

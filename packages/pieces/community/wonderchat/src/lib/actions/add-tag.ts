@@ -4,6 +4,7 @@ import { wonderchatAuth } from '../..';
 
 export const addTag = createAction({
   name: 'addTag',
+  classification: 'WRITE',
   displayName: 'Add Tag',
   description: 'Add custom tags to a specific chatlog.',
   audience: 'both',

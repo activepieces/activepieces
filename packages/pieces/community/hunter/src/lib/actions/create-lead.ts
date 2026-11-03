@@ -26,6 +26,7 @@ import {
 export const createLeadAction = createAction({
     auth: hunterAuth,
     name: 'create-lead',
+    classification: 'WRITE',
     displayName: 'Create Lead',
     description: 'Create and store a lead record.',
     audience: 'both',

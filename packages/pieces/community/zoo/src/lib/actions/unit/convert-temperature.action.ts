@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertTemperatureAction = createAction({
   name: 'convert_temperature',
+  classification: 'READ',
   displayName: 'Convert Temperature',
   description: 'Convert temperature measurements between different units',
   audience: 'both',

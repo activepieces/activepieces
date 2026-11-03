@@ -47,7 +47,7 @@ function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranc
             withChildHeight = merged.height
         }
     }
-    else if (hasContinueOnFailureBranches(step)) {
+    else if (flowStructureUtil.hasContinueOnFailureBranches(step)) {
         const branches = getContinueOnFailureBranchPair(step)
         const childBoundingBoxes = branches.map(b => getFlowBoundingBox(b, true))
         const merged = mergeBranchedChildBoundingBoxes(childBoundingBoxes)
@@ -92,7 +92,7 @@ function buildPositions({ step, offsetX, offsetY, positions }: {
         const subgraphEndY = positionBranchedChildren({ children: step.children, offsetX, offsetY, positions })
         buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
-    else if (hasContinueOnFailureBranches(step)) {
+    else if (flowStructureUtil.hasContinueOnFailureBranches(step)) {
         const subgraphEndY = positionBranchedChildren({ children: getContinueOnFailureBranchPair(step), offsetX, offsetY, positions })
         buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
@@ -169,20 +169,13 @@ function positionBranchedChildren({ children, offsetX, offsetY, positions }: {
     return FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
 }
 
-function hasContinueOnFailureBranches(step: Step | FlowAction): step is CodeAction | PieceAction {
-    if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
-        return false
-    }
-    return step.settings.errorHandlingOptions?.continueOnFailure?.value ?? false
-}
-
 function getContinueOnFailureBranchPair(step: CodeAction | PieceAction): (FlowAction | undefined)[] {
     const branches = step.continueOnFailureBranches
     return [branches?.onSuccess, branches?.onFailure]
 }
 
 function getStepBranchRelativeTo(ancestor: Step | FlowAction, targetStepName: string): 'on-success' | 'on-failure' | null {
-    if (!hasContinueOnFailureBranches(ancestor)) {
+    if (!flowStructureUtil.hasContinueOnFailureBranches(ancestor)) {
         return null
     }
     const [onSuccess, onFailure] = getContinueOnFailureBranchPair(ancestor)
@@ -205,7 +198,6 @@ export const flowCanvasUtils = {
         buildPositions({ step: trigger, offsetX: 0, offsetY: 0, positions })
         return positions
     },
-    hasContinueOnFailureBranches,
     getContinueOnFailureBranchPair,
     getStepBranchRelativeTo,
     computeRouterChildOffsets,

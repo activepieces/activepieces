@@ -9,6 +9,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const ContentfulSearchRecordsAction = createAction({
   name: 'contentful_record_search',
+  classification: 'SEARCH',
   auth: ContentfulAuth,
   displayName: 'Search Records',
   description: 'Searches for records of a given Content Model',

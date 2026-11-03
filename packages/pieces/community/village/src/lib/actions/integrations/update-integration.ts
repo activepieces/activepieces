@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const updateIntegration = createAction({
   auth: villageAuth,
   name: 'update_integration',
+  classification: 'WRITE',
   displayName: 'Update Gmail Integration',
   description:
     'Update settings for a connected Gmail integration — adjust rate limits, timezone, status, or set as the default sending account. Provide only the fields you want to change.',

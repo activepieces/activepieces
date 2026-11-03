@@ -6,6 +6,7 @@ import { skyvernApiCall } from '../common/client';
 export const getRunAction = createAction({
 	auth: skyvernAuth,
 	name: 'get-run',
+	classification: 'READ',
 	displayName: 'Get Workflow/Task Run',
 	description: 'Retrieves a workflow or task run by ID.',
 	audience: 'both',

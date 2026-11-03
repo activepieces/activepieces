@@ -109,7 +109,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
               if (item.isCategory) {
                 return (
                   <div
-                    className={cn('p-2 pb-0 text-sm text-muted-foreground')}
+                    className={cn('p-2 pb-0 text-sm text-gray-11')}
                     id={item.displayName}
                   >
                     {item.displayName}

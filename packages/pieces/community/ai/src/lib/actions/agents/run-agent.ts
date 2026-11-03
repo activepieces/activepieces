@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AGENT_STEP_TEST_TIMEOUT_MS, AGENT_STEP_TIMEOUT_MS, AgentPieceProps, AgentProviderModel, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AGENT_STEP_TEST_TIMEOUT_MS, AGENT_STEP_TIMEOUT_MS, AgentPieceProps, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -62,7 +62,7 @@ export const runAgent = createAction({
   name: 'run_agent',
   classification: 'WRITE',
   displayName: 'Run Agent',
-  description: 'Handles complex, multi-step tasks by reasoning through problems, using tools accurately, and iterating until the job is done.',
+  description: 'Let an agent use tools and work step by step until the task is done.',
   aiMetadata: { description: 'Runs an agent that reasons over your prompt and calls the piece actions you attach to this step, iterating until the task is done. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Sub-flow, MCP and knowledge-base tools are not supported on this step. Requires a prompt and an AI Model; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
@@ -73,7 +73,7 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.PROMPT]: Property.LongText({
       displayName: 'Prompt',
-      description: 'Describe what you want the assistant to do.',
+      description: 'Describe what you want the agent to do.',
       required: true,
     }),
     [AgentPieceProps.AI_PROVIDER_MODEL]: Property.Object({
@@ -87,8 +87,8 @@ export const runAgent = createAction({
       properties: agentToolArrayItems,
     }),
     [AgentPieceProps.MAX_STEPS]: Property.Number({
-      displayName: 'Max steps',
-      description: 'The number of iterations the agent can do. Comes from the agent when the step runs a saved one.',
+      displayName: 'Max Steps',
+      description: 'Maximum number of steps before the agent stops.',
       required: false,
       defaultValue: 20,
     }),
@@ -141,9 +141,7 @@ export const runAgent = createAction({
         flowRunId: context.run.id,
         waitpointId: waitpoint.id,
         ...(agentId ? { agentId } : {
-          ...spreadIfDefined('modelName', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model),
-          ...spreadIfDefined('provider', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.provider),
-          ...spreadIfDefined('providerConfigId', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.configId),
+          ...modelFieldsOf(context.propsValue.aiProviderModel),
           tools: toolsWithoutResolvedAuth(context.propsValue.agentTools ?? []),
           structuredOutput: context.propsValue.structuredOutput ?? [],
           ...spreadIfDefined('maxSteps', context.propsValue.maxSteps),
@@ -155,6 +153,25 @@ export const runAgent = createAction({
     return {};
   },
 });
+
+function modelFieldsOf(pick: Record<string, unknown> | undefined): Record<string, string> {
+  if (isNil(pick)) {
+    return {};
+  }
+  const modelTierId = stringOf(pick['modelTierId']);
+  if (!isNil(modelTierId)) {
+    return { modelTierId };
+  }
+  return {
+    ...spreadIfDefined('modelName', stringOf(pick['model'])),
+    ...spreadIfDefined('provider', stringOf(pick['provider'])),
+    ...spreadIfDefined('providerConfigId', stringOf(pick['configId'])),
+  };
+}
+
+function stringOf(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
 
 // The engine resolves {{connections[...]}} in every step input, so a connection pinned on a tool
 // arrives here as the decrypted credential rather than its id. The server wants the id and rebuilds

@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const publishPageAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_publish_page',
+  classification: 'WRITE',
   displayName: 'Publish Page',
   description: 'Publishes a SharePoint page, making it available to all users. If the page is checked out, it will be automatically checked in. Note: Pages with active approval flows will not publish until approval is complete.',
   audience: 'both',

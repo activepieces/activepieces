@@ -8,6 +8,7 @@ import { uploadAttachmentActionOutputSchema } from '../output-schemas';
 export const uploadAttachmentAction = createAction({
   auth: youtrackAuth,
   name: 'upload_attachment',
+  classification: 'WRITE',
   outputSchema: uploadAttachmentActionOutputSchema,
   displayName: 'Upload Attachment',
   description: 'Uploads one or more files as attachments to an existing issue.',

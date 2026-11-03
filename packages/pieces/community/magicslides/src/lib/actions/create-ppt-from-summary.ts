@@ -7,6 +7,7 @@ import { MagicSlidesAuth } from '../common/auth';
 export const createPptFromSummary = createAction({
   auth: MagicSlidesAuth,
   name: 'createPptFromText',
+  classification: 'WRITE',
   displayName: 'Create PPT from Text/Summary',
   description: 'Generates a PPT presentation from provided text or summary.',
   audience: 'both',

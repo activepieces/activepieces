@@ -6,6 +6,7 @@ import { letmepostApiCall } from '../common';
 export const listAccounts = createAction({
   auth: letmepostAuth,
   name: 'list_accounts',
+  classification: 'SEARCH',
   displayName: 'List Accounts',
   description: 'List the social accounts connected to your organization',
   audience: 'both',

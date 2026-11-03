@@ -24,6 +24,7 @@ type StreakContact = {
 export const createContactAction = createAction({
   auth: streakAuth,
   name: 'create_contact',
+  classification: 'WRITE',
   displayName: 'Create or Find Contact',
   description:
     'Create a contact in a team. If a contact with the same email already exists, return that contact instead of creating a duplicate.',

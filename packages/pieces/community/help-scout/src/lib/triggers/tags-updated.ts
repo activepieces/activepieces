@@ -10,6 +10,7 @@ const WEBHOOK_KEY = 'helpscout_tags_updated';
 export const tagsUpdated = createTrigger({
   auth: helpScoutAuth,
   name: 'tags_updated',
+  classification: 'READ',
   displayName: 'Tags Updated',
   description: 'Triggers when tags on a conversation are modified.',
   aiMetadata: {

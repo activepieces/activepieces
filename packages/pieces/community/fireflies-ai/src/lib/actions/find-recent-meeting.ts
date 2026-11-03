@@ -8,6 +8,7 @@ import { BASE_URL } from '../common';
 export const findRecentMeetingAction = createAction({
 	auth: firefliesAiAuth,
 	name: 'find_recent_meeting',
+	classification: 'READ',
 	displayName: 'Find Recent Meeting',
 	description: 'Retrieves the latest meeting for a user.',
 	audience: 'both',

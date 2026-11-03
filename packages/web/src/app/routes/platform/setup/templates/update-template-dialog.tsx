@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { templateUtils } from '@/features/flows';
 import { templatesApi } from '@/features/templates';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 const UpdateFlowTemplateSchema = z.object({
@@ -114,7 +116,7 @@ export const UpdateTemplateDialog = ({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>{t('Update Template')}</DialogTitle>
         </DialogHeader>
@@ -132,7 +134,6 @@ export const UpdateTemplateDialog = ({
                     required
                     id="name"
                     placeholder={t('Template Name')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -147,7 +148,6 @@ export const UpdateTemplateDialog = ({
                     {...field}
                     id="summary"
                     placeholder={t('Template Summary')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -163,7 +163,6 @@ export const UpdateTemplateDialog = ({
                     {...field}
                     required
                     id="description"
-                    className="rounded-sm"
                     placeholder={t('Template Description')}
                   />
 
@@ -181,7 +180,6 @@ export const UpdateTemplateDialog = ({
                     required
                     id="blogUrl"
                     placeholder={t('Template Blog URL')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -210,7 +208,6 @@ export const UpdateTemplateDialog = ({
                     }}
                     id="template"
                     placeholder={t('Template')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -230,6 +227,7 @@ export const UpdateTemplateDialog = ({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl(AdminControl.TEMPLATES_EDIT_SUBMIT)}
             disabled={isPending}
             loading={isPending}
             onClick={(e) => {

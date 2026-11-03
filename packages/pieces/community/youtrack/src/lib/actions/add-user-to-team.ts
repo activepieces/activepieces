@@ -7,6 +7,7 @@ import { addUserToTeamActionOutputSchema } from '../output-schemas';
 export const addUserToTeamAction = createAction({
   auth: youtrackAuth,
   name: 'add_user_to_team',
+  classification: 'WRITE',
   outputSchema: addUserToTeamActionOutputSchema,
   displayName: 'Add User to Project Team',
   description: 'Adds a user as a direct member of a project team, giving them access to the project.',

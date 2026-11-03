@@ -7,6 +7,7 @@ import { accountIdDropdown } from '../common/account-dropdown';
 export const changeCredentialsInVault = createAction({
   auth: cyberarkAuth,
   name: 'change_credentials_in_vault',
+  classification: 'WRITE',
   displayName: 'Change Credentials in the Vault',
   description:
     'Sets account credentials and changes them in the Vault. This will not affect credentials on the target device.',

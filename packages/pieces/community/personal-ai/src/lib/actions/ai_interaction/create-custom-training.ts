@@ -6,6 +6,7 @@ import { BASE_URL } from '../../../index';
 export const createCustomTraining = createAction({
   auth:personalAiAuth,
   name: 'create_custom_training',
+  classification: 'WRITE',
   displayName: 'Send Custom Training',
   description: 'Send a custom training instruction to AI assistant.',
   audience: 'both',

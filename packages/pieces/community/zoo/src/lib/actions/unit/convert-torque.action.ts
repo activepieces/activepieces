@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertTorqueAction = createAction({
   name: 'convert_torque',
+  classification: 'READ',
   displayName: 'Convert Torque',
   description: 'Convert torque measurements between different units',
   audience: 'both',

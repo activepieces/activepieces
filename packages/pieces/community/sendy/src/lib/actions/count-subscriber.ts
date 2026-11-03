@@ -5,6 +5,7 @@ import { sendyAuth, SendyAuthType } from '../auth';
 
 export const countAction = createAction({
   name: 'count_subscribers',
+  classification: 'READ',
   auth: sendyAuth,
   displayName: 'Count Active Subscribers',
   description: 'Get the active subscriber count for a list',

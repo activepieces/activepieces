@@ -9,7 +9,7 @@ import { SelectUtilButton } from './select-util-button';
 
 export type SearchInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
-  'onChange'
+  'onChange' | 'size'
 > & {
   onChange: (value: string) => void;
 };
@@ -23,7 +23,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     return (
       <div
         className={cn(
-          'grow flex items-center gap-2 w-full bg-background px-3 box-border',
+          'grow flex items-center gap-2 w-full bg-gray-1 px-3 box-border',
           inputClass,
         )}
       >

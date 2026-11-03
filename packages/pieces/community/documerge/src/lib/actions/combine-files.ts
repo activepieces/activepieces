@@ -6,6 +6,7 @@ import { DocuMergeClient } from '../common/client';
 export const combineFiles = createAction({
   auth: documergeAuth,
   name: 'combine_files',
+  classification: 'READ',
   displayName: 'Combine Files',
   description: 'Combine multiple files into a single PDF or DOCX',
   audience: 'both',

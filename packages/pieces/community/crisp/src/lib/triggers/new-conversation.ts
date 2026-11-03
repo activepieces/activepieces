@@ -57,6 +57,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof crispAuth>, { we
 export const newConversationTrigger = createTrigger({
 	auth: crispAuth,
 	name: 'new_conversation',
+	classification: 'READ',
 	displayName: 'New Conversation Created',
 	description: 'Triggers when a new conversation is started.',
 	aiMetadata: {
@@ -68,18 +69,10 @@ export const newConversationTrigger = createTrigger({
 	type: TriggerStrategy.POLLING,
 	sampleData: {},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

@@ -7,6 +7,7 @@ import { crispApiCall } from '../common/client';
 export const findConversationAction = createAction({
 	auth: crispAuth,
 	name: 'find_conversation',
+	classification: 'SEARCH',
 	displayName: 'Find Conversation',
 	description: 'Searches for conversations matching the specified criteria.',
 	audience: 'both',

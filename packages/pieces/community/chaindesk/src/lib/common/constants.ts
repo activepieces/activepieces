@@ -1,1 +1,1 @@
-export const BASE_URL = 'https://app.chaindesk.ai/api'
+export const BASE_URL = 'https://app.askli.co/api'

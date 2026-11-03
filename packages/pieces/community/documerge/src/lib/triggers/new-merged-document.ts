@@ -8,6 +8,7 @@ import { documergeAuth } from '../common/auth';
 export const newMergedDocument = createTrigger({
   auth: documergeAuth,
   name: 'new_merged_document',
+  classification: 'READ',
   displayName: 'New Merged Document',
   description: 'Triggers when a merged/populated document is created',
   aiMetadata: {

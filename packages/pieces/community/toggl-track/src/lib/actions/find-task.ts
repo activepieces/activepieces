@@ -1,11 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  HttpMethod,
-  httpClient,
-  QueryParams,
-} from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+  createAction,
+  isNil,
+  Property,
+} from '@activepieces/pieces-framework';
+import { QueryParams } from '@activepieces/pieces-common';
+import { togglTrackAuth } from '../auth';
 import { togglCommon } from '../common';
+import { togglApi } from '../common/client';
+import { togglModels, TwoTask } from '../common/models';
+import { togglOutputSchemas } from '../output-schemas';
 
 export const findTask = createAction({
   auth: togglTrackAuth,
@@ -14,7 +17,11 @@ export const findTask = createAction({
   displayName: 'Find Task',
   description: 'Find a task by name and status.',
   audience: 'both',
-  aiMetadata: { description: 'Lists tasks in a Toggl Track workspace, optionally filtered by name, project ID, active/inactive/both status, and date range, with sorting and pagination; omitting filters returns all tasks. Use to resolve a task ID before logging time against it. Read-only and idempotent.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Lists tasks in a workspace, optionally filtered by name, project, status, and date range. Returns { total_count, page, per_page, data }. Read-only.',
+    idempotent: true,
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     search: Property.ShortText({
@@ -85,9 +92,9 @@ export const findTask = createAction({
       required: false,
     }),
   },
+  outputSchema: togglOutputSchemas.taskList,
   async run(context) {
     const {
-      workspace_id,
       search,
       project_id,
       active,
@@ -98,11 +105,47 @@ export const findTask = createAction({
       start_date,
       end_date,
     } = context.propsValue;
-    const apiToken = context.auth;
+    const auth = context.auth;
+    const workspaceId = togglApi.requireId({
+      value: context.propsValue.workspace_id,
+      label: 'Workspace',
+    });
+    const projectId = togglApi.optionalId({
+      value: project_id,
+      label: 'Project ID',
+    });
+
+    if (togglApi.isTwo(auth)) {
+      const queryParams: QueryParams = {};
+      if (search) queryParams['name'] = search;
+      if (!isNil(projectId)) queryParams['project_id'] = String(projectId);
+      if (active === 'true') queryParams['archived'] = 'false';
+      if (active === 'false') queryParams['archived'] = 'true';
+      if (sort_field) {
+        queryParams['order_by'] = `${sort_order === 'DESC' ? '-' : ''}${sort_field}`;
+      }
+      if (start_date) queryParams['start_date'] = start_date;
+      if (end_date) queryParams['end_date'] = end_date;
+      const tasks = await togglApi.listTwoPageOrAll<TwoTask>({
+        auth,
+        path: togglApi.twoWorkspacePath({ auth, workspaceId, path: '/tasks' }),
+        queryParams,
+        page: page ?? undefined,
+        perPage: per_page ?? undefined,
+      });
+      return {
+        total_count: tasks.length,
+        page: page ?? 1,
+        per_page: isNil(page) ? tasks.length : Math.min(per_page ?? 100, 100),
+        sort_field: sort_field ?? null,
+        sort_order: sort_order ?? null,
+        data: tasks.map(togglModels.task),
+      };
+    }
 
     const queryParams: QueryParams = {};
     if (search) queryParams['search'] = search;
-    if (project_id) queryParams['pid'] = project_id.toString();
+    if (!isNil(projectId)) queryParams['pid'] = String(projectId);
     if (active) queryParams['active'] = active;
     if (page) queryParams['page'] = page.toString();
     if (per_page) queryParams['per_page'] = per_page.toString();
@@ -111,18 +154,15 @@ export const findTask = createAction({
     if (start_date) queryParams['start_date'] = start_date;
     if (end_date) queryParams['end_date'] = end_date;
 
-    const response = await httpClient.sendRequest<{ data: unknown[] }>({
-      method: HttpMethod.GET,
-      url: `https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/tasks`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${apiToken}:api_token`).toString(
-          'base64'
-        )}`,
-      },
-      queryParams: queryParams,
+    const response = await togglApi.request<{
+      data: unknown[] | null;
+      [key: string]: unknown;
+    }>({
+      auth,
+      method: togglApi.HttpMethod.GET,
+      path: `/workspaces/${workspaceId}/tasks`,
+      queryParams,
     });
-
-    return response.body;
+    return { ...response, data: response?.data ?? [] };
   },
 });
