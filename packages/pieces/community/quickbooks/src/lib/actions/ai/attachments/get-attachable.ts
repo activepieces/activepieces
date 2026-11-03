@@ -2,12 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { quickbooksAuth } from '../../../auth';
 import { quickbooksAiProps } from '../../../common/ai-props';
 import { quickbooksApi } from '../../../common/api';
-import { quickbooksCreateAttachableNoteOutputSchema } from '../../../output-schemas';
+import { quickbooksGetAttachableOutputSchema } from '../../../output-schemas';
 
 export const getAttachableAction = createAction({
 	auth: quickbooksAuth,
 	name: 'quickbooks_get_attachable',
-	outputSchema: quickbooksCreateAttachableNoteOutputSchema,
+	outputSchema: quickbooksGetAttachableOutputSchema,
 	displayName: 'Get Attachable',
 	description: 'Gets one attachment or note by id.',
 	audience: 'ai',

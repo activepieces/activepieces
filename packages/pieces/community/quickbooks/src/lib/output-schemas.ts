@@ -1345,6 +1345,34 @@ const salesItemLineFields: OutputSchema['fields'] = [
   },
 ];
 
+const attachableRecordFields: OutputSchema['fields'] = [
+  { key: 'FileName', label: 'File Name' },
+  { key: 'FileAccessUri', label: 'File Access URI', format: 'url' },
+  {
+    key: 'TempDownloadUri',
+    label: 'Temp Download URI',
+    format: 'url',
+  },
+  { key: 'Size', label: 'Size', format: 'filesize' },
+  { key: 'ContentType', label: 'Content Type' },
+  { key: 'Note', label: 'Note' },
+  { key: 'documentId', label: 'Document ID' },
+  { key: 'domain', label: 'Domain' },
+  { key: 'sparse', label: 'Sparse Update', format: 'boolean' },
+  { key: 'Id', label: 'ID' },
+  { key: 'SyncToken', label: 'Sync Token' },
+  {
+    key: 'MetaData',
+    label: 'Metadata',
+    children: recordMetadataFields,
+  },
+  {
+    key: 'AttachableRef',
+    label: 'Attached To',
+    listItems: attachableLinkFields,
+  },
+];
+
 export const createBillOutputSchema: OutputSchema = {
   fields: [
     ...attachableFields,
@@ -4900,6 +4928,13 @@ export const quickbooksUpdateVendorCreditOutputSchema: OutputSchema = {
   ],
 };
 
+export const quickbooksGetAttachableOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'Attachable', label: 'Attachment', children: attachableRecordFields },
+    responseTimeField,
+  ],
+};
+
 export const quickbooksUploadAttachableOutputSchema: OutputSchema = {
   fields: [
     {
@@ -4910,31 +4945,7 @@ export const quickbooksUploadAttachableOutputSchema: OutputSchema = {
           key: 'Attachable',
           label: 'Attachment',
           children: [
-            { key: 'FileName', label: 'File Name' },
-            { key: 'FileAccessUri', label: 'File Access URI', format: 'url' },
-            {
-              key: 'TempDownloadUri',
-              label: 'Temp Download URI',
-              format: 'url',
-            },
-            { key: 'Size', label: 'Size', format: 'filesize' },
-            { key: 'ContentType', label: 'Content Type' },
-            { key: 'Note', label: 'Note' },
-            { key: 'documentId', label: 'Document ID' },
-            { key: 'domain', label: 'Domain' },
-            { key: 'sparse', label: 'Sparse Update', format: 'boolean' },
-            { key: 'Id', label: 'ID' },
-            { key: 'SyncToken', label: 'Sync Token' },
-            {
-              key: 'MetaData',
-              label: 'Metadata',
-              children: recordMetadataFields,
-            },
-            {
-              key: 'AttachableRef',
-              label: 'Attached To',
-              listItems: attachableLinkFields,
-            },
+            ...attachableRecordFields,
           ],
         },
       ],
