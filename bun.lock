@@ -7512,6 +7512,18 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/proweblook": {
+      "name": "@activepieces/piece-proweblook",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
     "packages/pieces/community/proxycurl": {
       "name": "@activepieces/piece-proxycurl",
       "version": "0.1.4",
@@ -12575,6 +12587,8 @@
     "@activepieces/piece-promptmate": ["@activepieces/piece-promptmate@workspace:packages/pieces/community/promptmate"],
 
     "@activepieces/piece-provenexpert": ["@activepieces/piece-provenexpert@workspace:packages/pieces/community/provenexpert"],
+
+    "@activepieces/piece-proweblook": ["@activepieces/piece-proweblook@workspace:packages/pieces/community/proweblook"],
 
     "@activepieces/piece-proxycurl": ["@activepieces/piece-proxycurl@workspace:packages/pieces/community/proxycurl"],
 

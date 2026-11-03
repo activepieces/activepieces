@@ -1094,6 +1094,9 @@
       "@activepieces/piece-provenexpert": [
         "packages/pieces/community/provenexpert/src/index.ts"
       ],
+      "@activepieces/piece-proweblook": [
+        "packages/pieces/community/proweblook/src/index.ts"
+      ],
       "@activepieces/piece-pubrio": [
         "packages/pieces/community/pubrio/src/index.ts"
       ],
