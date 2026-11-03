@@ -1,5 +1,11 @@
-import { AgentConversation } from '@activepieces/shared';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AgentConversation, SeekPage } from '@activepieces/shared';
+import {
+  InfiniteData,
+  QueryKey,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowUpRight,
@@ -51,14 +57,27 @@ export function ConversationList({
   const listRef = useRef<HTMLDivElement>(null);
 
   const {
-    data: conversationsPage,
+    data: conversationPages,
     isLoading: isLoadingConversations,
     isSuccess: conversationsLoaded,
-  } = useQuery({
+    hasNextPage,
+    isFetching,
+    isFetchNextPageError,
+    fetchNextPage,
+  } = useInfiniteQuery<
+    SeekPage<AgentConversation>,
+    Error,
+    InfiniteData<SeekPage<AgentConversation>>,
+    QueryKey,
+    string | undefined
+  >({
     queryKey: ['chat-conversations', agentId ?? 'chat'],
-    queryFn: () =>
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
+    queryFn: ({ pageParam }) =>
       chatApi.listConversations({
         limit: 100,
+        cursor: pageParam,
         ...(agentId === undefined ? {} : { agentId }),
       }),
   });
@@ -78,7 +97,10 @@ export function ConversationList({
     },
   });
 
-  const allConversations = conversationsPage?.data ?? [];
+  const allConversations = useMemo(
+    () => conversationPages?.pages.flatMap((page) => page.data) ?? [],
+    [conversationPages],
+  );
 
   const { getIndicator, markRead } = useConversationIndicators({
     conversations: allConversations,
@@ -102,9 +124,43 @@ export function ConversationList({
     setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 5);
   }, []);
 
+  const skippedLoadMoreRef = useRef(false);
+
+  const loadMoreIfNearEnd = useCallback(() => {
+    const el = listRef.current;
+    const nearListEnd =
+      !!el &&
+      el.scrollTop + el.clientHeight >= el.scrollHeight - LOAD_MORE_OFFSET_PX;
+    const wantsMore = nearListEnd && hasNextPage;
+    skippedLoadMoreRef.current = wantsMore && isFetching;
+    if (wantsMore && !isFetching) {
+      fetchNextPage().catch(() => undefined);
+    }
+  }, [hasNextPage, isFetching, fetchNextPage]);
+
+  const fillsShortSearchResults =
+    searchQuery.trim().length > 0 && !isFetchNextPageError;
+
   useEffect(() => {
     checkFades();
-  }, [collapsed, conversations, checkFades]);
+    const retriesSkippedScroll =
+      skippedLoadMoreRef.current && !isFetchNextPageError;
+    if (fillsShortSearchResults || retriesSkippedScroll) {
+      loadMoreIfNearEnd();
+    }
+  }, [
+    collapsed,
+    conversations,
+    checkFades,
+    loadMoreIfNearEnd,
+    fillsShortSearchResults,
+    isFetchNextPageError,
+  ]);
+
+  const handleListScroll = useCallback(() => {
+    checkFades();
+    loadMoreIfNearEnd();
+  }, [checkFades, loadMoreIfNearEnd]);
 
   const { today, yesterday, older } = useMemo(() => {
     const todayStr = new Date().toDateString();
@@ -265,7 +321,7 @@ export function ConversationList({
         )}
         <div
           ref={listRef}
-          onScroll={checkFades}
+          onScroll={handleListScroll}
           className="h-full overflow-y-auto px-2 pb-3"
         >
           {isLoadingConversations ? (
@@ -322,3 +378,5 @@ export function ConversationList({
     </div>
   );
 }
+
+const LOAD_MORE_OFFSET_PX = 200;

@@ -11,26 +11,38 @@ import {
 } from '@/features/chat/lib/use-conversation-indicators';
 
 describe('seeding when each conversation was last seen', () => {
-  it('treats conversations already there on the first load as seen', () => {
+  it('treats conversations up to the first load as seen', () => {
     const seeded = conversationIndicatorUtils.seedLastSeen({
       prev: {},
       conversations: [{ id: 'a', updated: T1 }],
-      initialLoad: true,
+      baseline: T1,
     });
     expect(T1 > seeded.a).toBe(false);
   });
 
-  it('shows a conversation that appears later, already finished, as unread', () => {
+  it('shows a conversation updated after the first load as unread', () => {
     const seeded = conversationIndicatorUtils.seedLastSeen({
       prev: { a: T1 },
       conversations: [
         { id: 'a', updated: T1 },
-        { id: 'b', updated: T1 },
+        { id: 'b', updated: T2 },
       ],
-      initialLoad: false,
+      baseline: T1,
     });
-    expect(T1 > seeded.b).toBe(true);
+    expect(T2 > seeded.b).toBe(true);
     expect(seeded.a).toBe(T1);
+  });
+
+  it('treats an older page loaded later as already seen', () => {
+    const seeded = conversationIndicatorUtils.seedLastSeen({
+      prev: { b: T2 },
+      conversations: [
+        { id: 'b', updated: T2 },
+        { id: 'a', updated: T1 },
+      ],
+      baseline: T2,
+    });
+    expect(T1 > seeded.a).toBe(false);
   });
 });
 
@@ -58,6 +70,20 @@ describe('unread dots across loads', () => {
     rerender({ conversations: [existing], scope: 'chat', loaded: true });
 
     expect(result.current.getIndicator(existing)).toBeNull();
+  });
+
+  it('keeps chats from an older page read when it is appended', () => {
+    const { result, rerender } = renderIndicators({
+      conversations: [conversation({ id: 'b', updated: T2 })],
+      scope: 'chat',
+    });
+    const olderChat = conversation({ id: 'a', updated: T1 });
+    rerender({
+      conversations: [conversation({ id: 'b', updated: T2 }), olderChat],
+      scope: 'chat',
+    });
+
+    expect(result.current.getIndicator(olderChat)).toBeNull();
   });
 
   it('does not mark existing chats unread when switching to another agent', () => {
@@ -92,11 +118,17 @@ function renderIndicators(initialProps: {
   );
 }
 
-function conversation({ id }: { id: string }): AgentConversation {
+function conversation({
+  id,
+  updated = T1,
+}: {
+  id: string;
+  updated?: string;
+}): AgentConversation {
   return AgentConversation.parse({
     id,
     created: T1,
-    updated: T1,
+    updated,
     platformId: 'platform-1',
     userId: 'user-1',
     source: AgentRunSource.CHAT,
@@ -104,3 +136,4 @@ function conversation({ id }: { id: string }): AgentConversation {
 }
 
 const T1 = '2026-11-03T10:00:00.000Z';
+const T2 = '2026-11-03T11:00:00.000Z';
