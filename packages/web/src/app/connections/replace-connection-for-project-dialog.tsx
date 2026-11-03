@@ -2,7 +2,6 @@ import { t } from 'i18next';
 import { ChevronDown, WorkflowIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,7 @@ import {
 } from '@/features/connections';
 import { flowHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
+import { useNewWindow } from '@/lib/navigation-utils';
 
 import {
   ReplaceConnectionSelection,
@@ -63,7 +63,7 @@ function ReplaceConnectionForProjectForm({
   onConnectionMerged,
   setDialogOpen,
 }: ReplaceConnectionForProjectFormProps) {
-  const navigate = useNavigate();
+  const openNewWindow = useNewWindow();
   const [step, setStep] = useState<ProjectReplaceStep>(
     ProjectReplaceStep.CHOOSE_CONNECTIONS,
   );
@@ -215,7 +215,7 @@ function ReplaceConnectionForProjectForm({
                             variant="secondary"
                             className="max-w-[280px] cursor-pointer hover:bg-gray-3/70"
                             onClick={() =>
-                              navigate(
+                              openNewWindow(
                                 `/projects/${flow.projectId}/flows/${flow.id}`,
                               )
                             }
