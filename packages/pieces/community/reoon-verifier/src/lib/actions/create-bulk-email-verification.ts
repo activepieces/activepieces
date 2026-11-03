@@ -1,6 +1,6 @@
 import { reoonEmailVerifyAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { verifyEmails } from '../common/send-util';
+import { splitEmails, verifyEmails } from '../common/send-util';
 import { createBulkEmailVerificationActionOutputSchema } from '../output-schemas';
 
 export const createBulkEmailVerification = createAction({
@@ -30,13 +30,7 @@ export const createBulkEmailVerification = createAction({
     }),
   },
   async run(context) {
-    const emails = context.propsValue.emails as string[];
-
-    // Each email field could be a comma separated list of emails so we need to split them
-    const emailsToVerify = emails.reduce(
-      (acc: string[], email: string) => [...acc, ...email.split(',')],
-      []
-    );
+    const emailsToVerify = splitEmails(context.propsValue.emails);
 
     const res = await verifyEmails(
       emailsToVerify,
