@@ -57,7 +57,7 @@ describe('re-sending a message while the first run has not started yet', () => {
 
         await agentHelpers.handLockToRedelivery({ conversationId, runId: 'run-1' })
 
-        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('acquired')
+        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('handed-off')
         expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('duplicate')
     })
 

@@ -238,10 +238,12 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ? { ...agentPrompt.guides, ...promptOverride.guides }
             : agentPrompt.guides
 
-        const previousMessages = conversation.messages as ModelMessage[]
+        const resumedHistory = lock === 'handed-off' ? await agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId }) : null
+        const history = resumedHistory ?? conversation
+        const previousMessages = history.messages as ModelMessage[]
         const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
         const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
-        const allMessages = [...previousMessages, newUserMessage]
+        const allMessages = isNil(resumedHistory) ? [...previousMessages, newUserMessage] : previousMessages
         const fastModelSeesMessages = conversation.source !== AgentRunSource.CHAT
         const modelsSeeingMessages = isNil(tierRun)
             ? [resolvedModelId, ...(fastModelSeesMessages ? [fastModelId] : [])].map((modelId) => ({ provider: providerConfig.provider, modelId }))
@@ -252,11 +254,10 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             models: modelsSeeingMessages.map((model) => catalog.lookup(model)),
         })
 
-        const previousUiMessages = (conversation.uiMessages ?? []) as PersistedAgentMessage[]
-        const uiMessagesWithUser: PersistedAgentMessage[] = [
-            ...previousUiMessages,
-            { role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: userMessage }] },
-        ]
+        const previousUiMessages = (history.uiMessages ?? []) as PersistedAgentMessage[]
+        const uiMessagesWithUser: PersistedAgentMessage[] = isNil(resumedHistory)
+            ? [...previousUiMessages, { role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: userMessage }] }]
+            : previousUiMessages
         await agentHelpers.conversationRepo().update(conversationId, {
             messages: allMessages,
             uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),

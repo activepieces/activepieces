@@ -435,7 +435,7 @@ async function acquireStreamingLock({ conversationId, runId }: { conversationId:
         const firstDelivery = await distributedStore.putIfAbsent(`agent-run-started:${conversationId}:${runId}`, true, STARTED_RUN_MARKER_TTL_SECONDS)
         if (!firstDelivery) {
             const handedToThisDelivery = await distributedStore.delete(handedOffRunKey({ conversationId, runId })) > 0
-            return handedToThisDelivery ? 'acquired' : 'duplicate'
+            return handedToThisDelivery ? 'handed-off' : 'duplicate'
         }
     }
     const builder = conversationRepo()
@@ -568,7 +568,7 @@ type SweptConversation = z.infer<typeof SweptConversation>
 
 type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'modelTierId' | 'promptOverride'>
 
-export type StreamingLockResult = 'acquired' | 'busy' | 'superseded' | 'duplicate'
+export type StreamingLockResult = 'acquired' | 'handed-off' | 'busy' | 'superseded' | 'duplicate'
 
 export type PlatformWorkModel = {
     config: GetProviderConfigResponse
