@@ -24,7 +24,7 @@ How an Engineering project gets a second engineer who approves the scope before 
 1. **Idea** — the PM brings a problem. An engineer-started project names a product decider in step 3.
 2. **Scope** — the Owner writes the acceptance criteria with IDs and agrees on them with the PM. The area lead names the Co-Owner. The Owner adds the `co-owned` label, the `Co-Owner:` line, and the Co-Owner as a project member. Tickets stay in Backlog.
 3. **Approach note** — the Owner runs `/ask <ticket>` and posts the note. Any engineer can comment there with the concern template. The Co-Owner must read it.
-4. **Scope approved** — the Co-Owner comments on the project, which can come before the window ends. If the Co-Owner does not answer in 1 business day after the window, the area lead writes "Scope approved". The Owner moves the tickets to Todo and the project to In Progress.
+4. **Scope approved** — the Co-Owner comments on the project, which can come before the window ends. If the Co-Owner does not answer in 1 business day after the window, the area lead takes over as Co-Owner (see *Co-Owner changes*) and then writes "Scope approved". The Owner moves the tickets to Todo and the project to In Progress.
 5. **Build and review** — small stacked PRs, each naming the AC IDs it covers. The Co-Owner reviews each PR in 2 business days. A review blocks a PR only for a mismatch with the approach note or for a blocking class; a new approach concern becomes a follow-up ticket. Risky changes go behind a feature flag.
 6. **Mid-build demo** — on staging, to the PM and the Co-Owner. Backend only: show the API call or the test run.
 7. **PM acceptance** — the PM checks each AC on staging. Each gap becomes a ticket. No second technical review.
