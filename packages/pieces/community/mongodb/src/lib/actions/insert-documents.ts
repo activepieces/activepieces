@@ -1,4 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
+import { BSON } from 'mongodb';
+import type { Document } from 'mongodb';
 import { mongodbAuth } from '../auth';
 import { insertDocumentsOutputSchema } from '../output-schemas';
 import { mongodbClient } from '../common/client';
@@ -13,12 +15,19 @@ export const insertDocumentsAction = createAction({
   audience: 'human',
   outputSchema: insertDocumentsOutputSchema,
   aiMetadata: { description: 'Inserts new documents into a MongoDB collection; accepts either a single document object or an array of documents. Use to add records. Not idempotent: each call creates new documents with fresh _id values, so repeating it appends duplicates.', idempotent: false },
+  propertyGroups: [
+    { key: 'where', display: 'section', label: 'Where', icon: 'location', props: ['database', 'collection'] },
+  ],
   props: {
     database: mongodbProps.database({ required: false }),
     collection: mongodbProps.collection({ required: true }),
+    documents_info: Property.MarkDown({
+      value: 'Write ObjectIds as `{"$oid": "…"}` and dates as `{"$date": "…"}`.',
+      variant: MarkdownVariant.INFO,
+    }),
     documents: Property.Json({
       displayName: 'Documents',
-      description: 'Document(s) to insert. Can be a single document object or an array of documents.',
+      description: 'One document, or an array of documents to insert in one go.',
       required: true,
     }),
   },
@@ -41,7 +50,7 @@ export const insertDocumentsAction = createAction({
       const db = client.db(databaseName);
       const collection = db.collection(context.propsValue.collection);
 
-      const documents = context.propsValue.documents;
+      const documents: Document | Document[] = BSON.EJSON.deserialize(context.propsValue.documents);
       let result;
 
       if (Array.isArray(documents)) {

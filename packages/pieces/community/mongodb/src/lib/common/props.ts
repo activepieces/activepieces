@@ -6,9 +6,15 @@ import { mongodbClient } from './client';
 function database<R extends boolean>({
   required,
   displayName = 'Database',
-  description = 'The MongoDB database to connect to (from your authentication)',
+  description = 'Leave empty to use the database from your connection.',
 }: PropParams<R>) {
-  return Property.ShortText({ displayName, description, required });
+  return Property.ShortText({
+    displayName,
+    description,
+    required,
+    placeholder: 'my_database',
+    width: 'half',
+  });
 }
 
 function collection<R extends boolean>({
@@ -21,10 +27,11 @@ function collection<R extends boolean>({
     displayName,
     description,
     required,
+    width: 'half',
     refreshers: ['database'],
     options: async ({ auth, database }) => {
       if (!auth) {
-        return disabledOptions({ placeholder: 'Connect to MongoDB first' });
+        return disabledOptions({ placeholder: 'Connect first' });
       }
 
       const databaseName =
@@ -32,7 +39,7 @@ function collection<R extends boolean>({
 
       if (!databaseName) {
         return disabledOptions({
-          placeholder: 'Database is required in authentication or action',
+          placeholder: 'Set a database',
         });
       }
 
@@ -47,6 +54,10 @@ function collection<R extends boolean>({
             value: collection,
           })),
         };
+      } catch {
+        return disabledOptions({
+          placeholder: 'Could not load',
+        });
       } finally {
         await client.close();
       }
@@ -61,13 +72,9 @@ async function listCollectionNames({
   client: MongoClient;
   databaseName: string;
 }): Promise<string[]> {
-  try {
-    const db = client.db(databaseName);
-    const collections = await db.listCollections().toArray();
-    return collections.map((collection) => collection.name);
-  } catch {
-    return [];
-  }
+  const db = client.db(databaseName);
+  const collections = await db.listCollections().toArray();
+  return collections.map((collection) => collection.name);
 }
 
 function disabledOptions({ placeholder }: { placeholder: string }): DropdownState<never> {

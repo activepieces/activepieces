@@ -45,6 +45,7 @@ export const findAndUpdateDocumentsAiAction = createAction({
     const client = await mongodbClient.create({ auth: context.auth });
     try {
       return await mongodbApi.findAndUpdateDocuments({
+        client,
         collection: client.db(databaseName).collection(context.propsValue.collection),
         filter,
         update,

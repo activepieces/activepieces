@@ -1,4 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
+import { BSON } from 'mongodb';
+import type { Document } from 'mongodb';
 import { mongodbAuth } from '../auth';
 import { updateDocumentsOutputSchema } from '../output-schemas';
 import { mongodbClient } from '../common/client';
@@ -9,26 +11,39 @@ export const updateDocumentsAction = createAction({
   name: 'update_documents',
   classification: 'WRITE',
   displayName: 'Update Documents',
-  description: 'Update multiple documents in a collection',
+  description: 'Update every document that matches a filter',
   audience: 'human',
   outputSchema: updateDocumentsOutputSchema,
   aiMetadata: { description: 'Applies MongoDB update operators (e.g. $set, $inc) to every document matching a filter via updateMany; optionally upserts a new document when nothing matches. Use to modify existing records in bulk. Both filter and update are required. Not idempotent in general: operators like $inc change state on each call and upsert can insert, though a pure $set repeated on the same matches yields the same end state.', idempotent: false },
+  propertyGroups: [
+    { key: 'where', display: 'section', label: 'Where', icon: 'location', props: ['database', 'collection'] },
+    { key: 'match', display: 'section', label: 'Which Documents', icon: 'filter', props: ['filter_warning', 'filter'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'code', props: ['update_info', 'update', 'upsert'] },
+  ],
   props: {
     database: mongodbProps.database({ required: false }),
     collection: mongodbProps.collection({ required: true }),
+    filter_warning: Property.MarkDown({
+      value: 'An empty filter `{}` updates every document in the collection.',
+      variant: MarkdownVariant.WARNING,
+    }),
     filter: Property.Json({
       displayName: 'Filter',
-      description: 'MongoDB query to select documents to update (e.g., {"status": "pending"})',
+      description: 'Fields to match, e.g. {"status": "pending"}.',
       required: true,
     }),
+    update_info: Property.MarkDown({
+      value: 'Write ObjectIds as `{"$oid": "…"}` and dates as `{"$date": "…"}`.',
+      variant: MarkdownVariant.INFO,
+    }),
     update: Property.Json({
-      displayName: 'Update',
-      description: 'MongoDB update operations (e.g., {"$set": {"status": "completed"}})',
+      displayName: 'Update Operators',
+      description: 'e.g. {"$set": {"status": "done"}}. Use $ operators only.',
       required: true,
     }),
     upsert: Property.Checkbox({
-      displayName: 'Upsert',
-      description: 'Insert a document if no documents match the filter',
+      displayName: 'Insert If Nothing Matches',
+      description: 'Upsert: create a new document when no document matches the filter.',
       required: false,
       defaultValue: false,
     }),
@@ -56,8 +71,8 @@ export const updateDocumentsAction = createAction({
       const db = client.db(databaseName);
       const collection = db.collection(context.propsValue.collection);
 
-      const filter = context.propsValue.filter;
-      const update = context.propsValue.update;
+      const filter: Document = BSON.EJSON.deserialize(context.propsValue.filter);
+      const update: Document = BSON.EJSON.deserialize(context.propsValue.update);
       const upsert = context.propsValue.upsert || false;
 
       const result = await collection.updateMany(filter, update, { upsert });

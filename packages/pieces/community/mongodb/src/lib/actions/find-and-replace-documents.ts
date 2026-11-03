@@ -1,4 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
+import { BSON } from 'mongodb';
+import type { Document } from 'mongodb';
 import { mongodbAuth } from '../auth';
 import { findAndReplaceDocumentsOutputSchema } from '../output-schemas';
 import { mongodbApi } from '../common/api';
@@ -9,39 +11,48 @@ export const findAndReplaceDocumentsAction = createAction({
   auth: mongodbAuth,
   name: 'find_and_replace_documents',
   classification: 'WRITE',
-  displayName: 'Find and Replace Documents',
-  description: 'Replace documents that match a filter with a new document',
+  displayName: 'Find and Replace Document',
+  description: 'Replace the first document that matches a filter',
   audience: 'human',
   outputSchema: findAndReplaceDocumentsOutputSchema,
   aiMetadata: { description: 'Replaces the first document matching a filter with an entirely new document via replaceOne (the whole document is overwritten, not patched), and can return either the before or after version. Choose this over Update Documents when swapping a full document rather than applying field-level operators. Filter and replacement are required; supports upsert. Mutating and not idempotent.', idempotent: false },
+  propertyGroups: [
+    { key: 'where', display: 'section', label: 'Where', icon: 'location', props: ['database', 'collection'] },
+    { key: 'match', display: 'section', label: 'Which Document', icon: 'filter', props: ['filter'] },
+    { key: 'replacement', display: 'section', label: 'Replacement', icon: 'file', props: ['replacement_info', 'replacement', 'upsert', 'returnDocument'] },
+  ],
   props: {
     database: mongodbProps.database({ required: false }),
     collection: mongodbProps.collection({ required: true }),
     filter: Property.Json({
       displayName: 'Filter',
-      description: 'MongoDB query to select documents to replace (e.g., {"_id": "123"})',
+      description: 'Fields to match, e.g. {"_id": {"$oid": "…"}}.',
       required: true,
+    }),
+    replacement_info: Property.MarkDown({
+      value: 'Replaces the first match with this whole document. ObjectIds: `{"$oid": "…"}`.',
+      variant: MarkdownVariant.INFO,
     }),
     replacement: Property.Json({
       displayName: 'Replacement Document',
-      description: 'New document that will replace the matched documents',
+      description: 'The new document, without $ operators, e.g. {"name": "Ada"}.',
       required: true,
     }),
     upsert: Property.Checkbox({
-      displayName: 'Upsert',
-      description: 'Insert the document if no documents match the filter',
+      displayName: 'Insert If Nothing Matches',
+      description: 'Upsert: create a new document when no document matches the filter.',
       required: false,
       defaultValue: false,
     }),
     returnDocument: Property.StaticDropdown({
       displayName: 'Return Document',
-      description: 'Which version of the document to return',
+      description: 'The document as it was before the replace, or as it is after.',
       required: false,
       defaultValue: 'after',
       options: {
         options: [
-          { label: 'Before Update', value: 'before' },
-          { label: 'After Update', value: 'after' },
+          { label: 'Before Replace', value: 'before' },
+          { label: 'After Replace', value: 'after' },
         ],
       },
     }),
@@ -69,8 +80,8 @@ export const findAndReplaceDocumentsAction = createAction({
       const db = client.db(databaseName);
       const collection = db.collection(context.propsValue.collection);
 
-      const filter = context.propsValue.filter;
-      const replacement = context.propsValue.replacement;
+      const filter: Document = BSON.EJSON.deserialize(context.propsValue.filter);
+      const replacement: Document = BSON.EJSON.deserialize(context.propsValue.replacement);
       const upsert = context.propsValue.upsert || false;
       const returnDocumentPreference = context.propsValue.returnDocument || 'after';
 

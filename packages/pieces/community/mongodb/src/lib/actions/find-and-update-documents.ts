@@ -1,4 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
+import { BSON } from 'mongodb';
+import type { Document } from 'mongodb';
 import { mongodbAuth } from '../auth';
 import { findAndUpdateDocumentsOutputSchema } from '../output-schemas';
 import { mongodbApi } from '../common/api';
@@ -10,32 +12,45 @@ export const findAndUpdateDocumentsAction = createAction({
   name: 'find_and_update_documents',
   classification: 'WRITE',
   displayName: 'Find and Update Documents',
-  description: 'Find documents and update them, returning the updated documents',
+  description: 'Update matching documents and return them',
   audience: 'human',
   outputSchema: findAndUpdateDocumentsOutputSchema,
   aiMetadata: { description: 'Applies MongoDB update operators to all documents matching a filter via updateMany, then optionally re-reads and returns the matched documents in their post-update state. Choose this over plain Update Documents when the agent needs to see the resulting documents, not just counts. Filter and update are required; supports upsert. Not idempotent: it mutates state and operators like $inc compound on each call.', idempotent: false },
+  propertyGroups: [
+    { key: 'where', display: 'section', label: 'Where', icon: 'location', props: ['database', 'collection'] },
+    { key: 'match', display: 'section', label: 'Which Documents', icon: 'filter', props: ['filter_warning', 'filter'] },
+    { key: 'changes', display: 'section', label: 'Changes', icon: 'code', props: ['update_info', 'update', 'upsert', 'returnUpdated'] },
+  ],
   props: {
     database: mongodbProps.database({ required: false }),
     collection: mongodbProps.collection({ required: true }),
+    filter_warning: Property.MarkDown({
+      value: 'An empty filter `{}` updates every document in the collection.',
+      variant: MarkdownVariant.WARNING,
+    }),
     filter: Property.Json({
       displayName: 'Filter',
-      description: 'MongoDB query to select documents to update (e.g., {"status": "pending"})',
+      description: 'Fields to match, e.g. {"status": "pending"}.',
       required: true,
     }),
+    update_info: Property.MarkDown({
+      value: 'Write ObjectIds as `{"$oid": "…"}` and dates as `{"$date": "…"}`.',
+      variant: MarkdownVariant.INFO,
+    }),
     update: Property.Json({
-      displayName: 'Update',
-      description: 'MongoDB update operations (e.g., {"$set": {"status": "completed"}})',
+      displayName: 'Update Operators',
+      description: 'e.g. {"$set": {"status": "done"}}. Use $ operators only.',
       required: true,
     }),
     upsert: Property.Checkbox({
-      displayName: 'Upsert',
-      description: 'Insert a document if no documents match the filter',
+      displayName: 'Insert If Nothing Matches',
+      description: 'Upsert: create a new document when no document matches the filter.',
       required: false,
       defaultValue: false,
     }),
     returnUpdated: Property.Checkbox({
       displayName: 'Return Updated Documents',
-      description: 'Return the documents after updates are applied',
+      description: 'Off: return only the counts.',
       required: false,
       defaultValue: true,
     }),
@@ -63,12 +78,13 @@ export const findAndUpdateDocumentsAction = createAction({
       const db = client.db(databaseName);
       const collection = db.collection(context.propsValue.collection);
 
-      const filter = context.propsValue.filter;
-      const update = context.propsValue.update;
+      const filter: Document = BSON.EJSON.deserialize(context.propsValue.filter);
+      const update: Document = BSON.EJSON.deserialize(context.propsValue.update);
       const upsert = context.propsValue.upsert || false;
       const returnUpdated = context.propsValue.returnUpdated !== false;
 
       return await mongodbApi.findAndUpdateDocuments({
+        client,
         collection,
         filter,
         update,
