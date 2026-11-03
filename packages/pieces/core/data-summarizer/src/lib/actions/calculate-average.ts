@@ -6,12 +6,13 @@ export const calculateAverage = createAction({
   name: 'calculateAverage',
   classification: 'READ',
   displayName: 'Calculate Average',
-  description: 'Calculates the average of a list of values.',
+  description: 'Calculates the average of a list of numbers.',
   aiMetadata: { description: 'Computes the arithmetic mean of an array of numeric values. Use when you need the average of a collected list; prefer Calculate Sum for a total, Find Min and Max for the extremes, or Count Uniques for distinct-value counts. Every element must be coercible to a number (numeric strings are accepted) or the action throws listing the offending values and their positions, and an empty list yields NaN; read-only and idempotent.', idempotent: true },
   props: {
     note: common.note,
     values: Property.Array({
       displayName: "Values",
+      description: 'The numbers to average. Text like "12.5" is read as a number.',
       required: true,
     })
   },
