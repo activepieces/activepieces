@@ -93,6 +93,32 @@ describe('clearing chat personalization', () => {
     })
 })
 
+describe('changing the role on finished personalization', () => {
+    it('starts new research for the new role instead of keeping the old cards', async () => {
+        const ctx = await createTestContext(app)
+        await saveResearchedCompany(ctx)
+        await db.save('chat_personalization', {
+            id: apId(),
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            domain: 'acme.com',
+            companyText: null,
+            role: 'Sales',
+            status: ChatPersonalizationStatus.READY,
+            researchToken: null,
+            profile: null,
+            useCases: USE_CASES,
+        })
+
+        await service().upsert({ platformId: ctx.platform.id, userId: ctx.user.id, role: 'Engineer', personalize: true })
+
+        const userRow = await db.findOneByOrFail<{ role: string, status: string, researchToken: string | null }>('chat_personalization', { platformId: ctx.platform.id, userId: ctx.user.id })
+        expect(userRow.role).toBe('Engineer')
+        expect(userRow.status).not.toBe(ChatPersonalizationStatus.READY)
+        expect(userRow.researchToken).not.toBeNull()
+    })
+})
+
 function service() {
     return chatPersonalizationService(app.log)
 }

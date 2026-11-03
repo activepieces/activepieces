@@ -160,11 +160,8 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
             const terminal = [ChatPersonalizationStatus.READY, ChatPersonalizationStatus.SKIPPED].includes(userRow.status)
             const roleChanged = !isNil(role) && role !== userRow.role
-            const keepCurrentRow = !hasOptedOut(userRow) && (terminal || (fresh && !roleChanged))
+            const keepCurrentRow = !hasOptedOut(userRow) && !roleChanged && (terminal || fresh)
             if (keepCurrentRow) {
-                if (roleChanged) {
-                    await personalizationRepo().update({ platformId, userId }, { role })
-                }
                 return this.getEffectiveView({ platformId, userId })
             }
             await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, domain: companyRow.domain, companyText: companyRow.companyText, ...spreadIfDefined('role', role) })
