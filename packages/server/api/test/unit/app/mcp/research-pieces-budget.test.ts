@@ -88,6 +88,19 @@ describe('what a pieceNames lookup is allowed to return', () => {
         expect(result.content[0].text).toContain('forIntent')
     })
 
+    it('keeps the actions matching forIntent when seven big apps do not fit', () => {
+        const found = Array.from({ length: 7 }, (_, index) => {
+            const { actions } = piece({ index, actionCount: 100, detailLength: 0, aiLength: 0 })
+            return { ...foundPiece(index), actions, triggers: actions, recommendedActions: [actions[0].name], recommendedTriggers: [actions[1].name] }
+        })
+
+        const text = fitBulkLookup({ found, missing: [], hints: [], forIntent: 'create a task' }).content[0].text
+
+        expect(text).toContain(found[6].actions[0].name)
+        expect(text).toContain(found[6].actions[1].name)
+        expect(text).not.toContain('one piece at a time')
+    })
+
     it('leaves a small lookup untouched with no trim hint', () => {
         const small = { ...foundPiece(1), actions: [], triggers: [] }
         const result = fitBulkLookup({ found: [small], missing: [], hints: [], forIntent: undefined })
