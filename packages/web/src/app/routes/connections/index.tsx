@@ -126,6 +126,9 @@ function AppConnectionsPage() {
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
+  const userHasPermissionToReplaceAppConnection = checkAccess(
+    Permission.REPLACE_APP_CONNECTION,
+  );
   const { data: owners } = appConnectionsQueries.useConnectionsOwners();
   const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] =
     ownerColumnHooks.useOwnerColumnFilter<AppConnectionWithoutSensitiveData>(
@@ -391,7 +394,7 @@ function AppConnectionsPage() {
     () => [
       <PermissionNeededTooltip
         key="replace"
-        hasPermission={userHasPermissionToWriteAppConnection}
+        hasPermission={userHasPermissionToReplaceAppConnection}
       >
         <ReplaceConnectionForProjectDialog
           projectId={projectId}
@@ -404,7 +407,7 @@ function AppConnectionsPage() {
             icon={ReplaceIcon}
             iconSize={16}
             variant="outline"
-            disabled={!userHasPermissionToWriteAppConnection}
+            disabled={!userHasPermissionToReplaceAppConnection}
           >
             {t('Replace')}
           </AnimatedIconButton>
@@ -432,7 +435,11 @@ function AppConnectionsPage() {
         </NewConnectionDialog>
       </PermissionNeededTooltip>,
     ],
-    [userHasPermissionToWriteAppConnection, refresh],
+    [
+      userHasPermissionToWriteAppConnection,
+      userHasPermissionToReplaceAppConnection,
+      refresh,
+    ],
   );
   return (
     <div className="flex-col w-full">
