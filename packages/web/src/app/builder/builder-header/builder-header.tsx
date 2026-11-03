@@ -2,7 +2,6 @@ import { Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   FlowOperationType,
-  FlowVersionState,
   supportUrl,
   UncategorizedFolderId,
 } from '@activepieces/shared';
@@ -67,6 +66,7 @@ export const BuilderHeader = () => {
     applyOperation,
     setRightSidebar,
     savePendingEdits,
+    readonly,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
@@ -74,6 +74,7 @@ export const BuilderHeader = () => {
     state.applyOperation,
     state.setRightSidebar,
     state.savePendingEdits,
+    state.readonly,
   ]);
 
   const { embedState } = useEmbedding();
@@ -83,9 +84,6 @@ export const BuilderHeader = () => {
     flow.folderId ?? UncategorizedFolderId,
   );
 
-  const isLatestVersion =
-    flowVersion.state === FlowVersionState.DRAFT ||
-    flowVersion.id === flow.publishedVersionId;
   const [isEditingFlowName, setIsEditingFlowName] = useState(false);
   useEffect(() => {
     setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
@@ -122,13 +120,13 @@ export const BuilderHeader = () => {
               <BreadcrumbPage>
                 <div
                   className={cn('flex items-center gap-1 text-sm', {
-                    'max-w-[500px]': !isEditingFlowName,
+                    'max-w-[500px]': !isEditingFlowName || readonly,
                   })}
                 >
                   <EditableText
                     className="hover:cursor-text"
                     value={flowVersion.displayName}
-                    readonly={!isLatestVersion}
+                    readonly={readonly}
                     onValueChange={(value) => {
                       applyOperation(
                         {
@@ -142,7 +140,7 @@ export const BuilderHeader = () => {
                         },
                       );
                     }}
-                    isEditing={isEditingFlowName}
+                    isEditing={isEditingFlowName && !readonly}
                     setIsEditing={setIsEditingFlowName}
                     tooltipContent=""
                   />
@@ -154,7 +152,7 @@ export const BuilderHeader = () => {
                     savePendingEdits={savePendingEdits}
                     flow={flow}
                     flowVersion={flowVersion}
-                    readonly={!isLatestVersion}
+                    readonly={readonly}
                     onDelete={goToFlowsPage}
                     onRename={() => {
                       setIsEditingFlowName(true);
