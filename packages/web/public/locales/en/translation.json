@@ -3724,5 +3724,9 @@
   "usedInStepsCount": "{count, plural, =1 {Used in 1 step} other {Used in # steps}}",
   "Replace {name}": "Replace {name}",
   "Every step in this flow that uses {name} will switch to the connection you pick below.": "Every step in this flow that uses {name} will switch to the connection you pick below.",
-  "Test the flow after the replace to make sure every step still works.": "Test the flow after the replace to make sure every step still works."
+  "Replace in all steps": "Replace in all steps",
+  "Switch": "Switch",
+  "{flowCount, plural, =1 {We recommend testing the flow after the replace. If {newName} can't access the same data as {oldName}, the flow could break.} other {We recommend testing these flows after the replace. If {newName} can't access the same data as {oldName}, they could break.}}": "{flowCount, plural, =1 {We recommend testing the flow after the replace. If {newName} can't access the same data as {oldName}, the flow could break.} other {We recommend testing these flows after the replace. If {newName} can't access the same data as {oldName}, they could break.}}",
+  "Switching can clear {inputs} in this step's settings, if the {newConnectionDisplayName} connection doesn't have access to them.": "Switching can clear {inputs} in this step's settings, if the {newConnectionDisplayName} connection doesn't have access to them.",
+  "Switch to {newConnectionDisplayName}?": "Switch to {newConnectionDisplayName}?"
 }

@@ -1,13 +1,12 @@
-import { Permission } from '@activepieces/core-utils';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plug } from 'lucide-react';
 import { useState } from 'react';
 
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -18,8 +17,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { appConnectionsHooks } from '@/features/connections';
 import { PieceIconWithPieceName } from '@/features/pieces';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { ReplaceConnectionForFlowDialog } from './replace-connection-for-flow-dialog';
 
@@ -28,16 +27,15 @@ export const FlowConnectionsPopover = ({
 }: {
   isFlowLocked: boolean;
 }) => {
-  const { flowConnections } = flowCanvasHooks.useFlowConnections();
-  const showReplace = !useEmbedding().embedState.hideReplaceConnection;
-  const hasPermissionToReplace = useAuthorization().checkAccess(
-    Permission.REPLACE_APP_CONNECTION,
-  );
+  const { flowConnections, isError, refetch } =
+    flowCanvasHooks.useFlowConnections();
+  const { showReplace, hasPermissionToReplace } =
+    appConnectionsHooks.useReplaceConnectionAccess();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [connectionToReplace, setConnectionToReplace] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
 
-  if (flowConnections.length === 0) {
+  if (flowConnections.length === 0 && !isError) {
     return null;
   }
 
@@ -48,7 +46,9 @@ export const FlowConnectionsPopover = ({
           <Button variant="ghost">
             <Plug className="w-4 h-4" />
             {t('Connections')}
-            <span className="text-gray-11">{flowConnections.length}</span>
+            {!isError && (
+              <span className="text-gray-11">{flowConnections.length}</span>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-[340px] p-0">
@@ -60,49 +60,57 @@ export const FlowConnectionsPopover = ({
               </PopoverDescription>
             )}
           </PopoverHeader>
-          <ScrollArea viewPortClassName="max-h-[320px]">
-            <div className="flex flex-col gap-1 p-2">
-              {flowConnections.map(({ connection, stepCount }) => (
-                <div
-                  key={connection.id}
-                  className="flex items-center gap-3 rounded-md px-2 py-2"
-                >
-                  <PieceIconWithPieceName
-                    pieceName={connection.pieceName}
-                    size="sm"
-                    border={false}
-                  />
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <TextWithTooltip tooltipMessage={connection.displayName}>
-                      <p className="truncate text-sm">
-                        {connection.displayName}
-                      </p>
-                    </TextWithTooltip>
-                    <span className="text-xs text-gray-11">
-                      {t('usedInStepsCount', { count: stepCount })}
-                    </span>
-                  </div>
-                  {showReplace && (
-                    <PermissionNeededTooltip
-                      hasPermission={hasPermissionToReplace}
-                    >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={!hasPermissionToReplace || isFlowLocked}
-                        onClick={() => {
-                          setPopoverOpen(false);
-                          setConnectionToReplace(connection);
-                        }}
+          {isError ? (
+            <DataFetchErrorState
+              entity={t('connections')}
+              onRetry={refetch}
+              className="py-6"
+            />
+          ) : (
+            <ScrollArea viewPortClassName="max-h-[320px]">
+              <div className="flex flex-col gap-1 p-2">
+                {flowConnections.map(({ connection, stepCount }) => (
+                  <div
+                    key={connection.id}
+                    className="flex items-center gap-3 rounded-md px-2 py-2"
+                  >
+                    <PieceIconWithPieceName
+                      pieceName={connection.pieceName}
+                      size="sm"
+                      border={false}
+                    />
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <TextWithTooltip tooltipMessage={connection.displayName}>
+                        <p className="truncate text-sm">
+                          {connection.displayName}
+                        </p>
+                      </TextWithTooltip>
+                      <span className="text-xs text-gray-11">
+                        {t('usedInStepsCount', { count: stepCount })}
+                      </span>
+                    </div>
+                    {showReplace && (
+                      <PermissionNeededTooltip
+                        hasPermission={hasPermissionToReplace}
                       >
-                        {t('Replace')}
-                      </Button>
-                    </PermissionNeededTooltip>
-                  )}
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!hasPermissionToReplace || isFlowLocked}
+                          onClick={() => {
+                            setPopoverOpen(false);
+                            setConnectionToReplace(connection);
+                          }}
+                        >
+                          {t('Replace')}
+                        </Button>
+                      </PermissionNeededTooltip>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
         </PopoverContent>
       </Popover>
       {connectionToReplace && (

@@ -1,18 +1,17 @@
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import {
-  ReplaceConnectionSelection,
+  ReplaceConnectionFlowVersionsField,
+  ReplaceConnectionFlowVersionsSelection,
   ReplaceConnectionSelectionFields,
-  replaceConnectionSelectionUtils,
-  ReplaceConnectionVersionsField,
+  ReplaceConnectionSourceKind,
+  ReplaceConnectionTestFlowsAlert,
 } from '@/app/connections/replace-connection-selection-form';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -34,6 +33,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 const ReplaceConnectionForFlowDialog = ({
   sourceConnection,
+  targetConnection,
   open,
   onOpenChange,
 }: ReplaceConnectionForFlowDialogProps) => {
@@ -59,6 +59,7 @@ const ReplaceConnectionForFlowDialog = ({
         <ReplaceConnectionForFlowForm
           key={open ? 'open' : 'closed'}
           sourceConnection={sourceConnection}
+          targetConnection={targetConnection}
           setDialogOpen={onOpenChange}
         />
       </DialogContent>
@@ -68,9 +69,11 @@ const ReplaceConnectionForFlowDialog = ({
 
 function ReplaceConnectionForFlowForm({
   sourceConnection,
+  targetConnection,
   setDialogOpen,
 }: {
   sourceConnection: AppConnectionWithoutSensitiveData;
+  targetConnection?: AppConnectionWithoutSensitiveData;
   setDialogOpen: (open: boolean) => void;
 }) {
   const [flow, savePendingEdits, showsNewestVersion] = useBuilderStateContext(
@@ -103,16 +106,14 @@ function ReplaceConnectionForFlowForm({
       replaceConnections({
         flowIds: [flow.id],
         projectId,
-        sourceAppConnectionId: values.sourceConnectionId,
+        sourceAppConnectionId: sourceConnection.id,
         targetAppConnectionId: values.targetConnectionId,
         applyToPublishedVersions: values.applyToPublishedVersions,
       }),
   });
   const form = useForm<FlowReplaceFormValues>({
     defaultValues: {
-      ...replaceConnectionSelectionUtils.emptySelection(),
-      pieceName: sourceConnection.pieceName,
-      sourceConnectionId: sourceConnection.id,
+      targetConnectionId: targetConnection?.id ?? '',
       applyToPublishedVersions: false,
     },
     mode: 'onSubmit',
@@ -125,21 +126,19 @@ function ReplaceConnectionForFlowForm({
         onSubmit={form.handleSubmit((values) => saveEditsThenReplace(values))}
         className="flex flex-col gap-4"
       >
-        <Alert>
-          <Info className="size-4" />
-          <AlertDescription>
-            {t(
-              'Test the flow after the replace to make sure every step still works.',
-            )}
-          </AlertDescription>
-        </Alert>
-        <ReplaceConnectionVersionsField />
+        <ReplaceConnectionFlowVersionsField />
         <ReplaceConnectionSelectionFields
-          pieces={[]}
-          sourceConnections={[sourceConnection]}
+          source={{
+            kind: ReplaceConnectionSourceKind.FIXED,
+            connection: sourceConnection,
+          }}
           targetConnections={projectConnections}
           loading={connectionsLoading}
-          hideSourceFields
+        />
+        <ReplaceConnectionTestFlowsAlert
+          sourceConnection={sourceConnection}
+          targetConnections={projectConnections}
+          flowCount={1}
         />
         <DialogFooter>
           <DialogClose asChild>
@@ -159,12 +158,13 @@ function ReplaceConnectionForFlowForm({
 ReplaceConnectionForFlowDialog.displayName = 'ReplaceConnectionForFlowDialog';
 export { ReplaceConnectionForFlowDialog };
 
-type FlowReplaceFormValues = ReplaceConnectionSelection & {
-  applyToPublishedVersions: boolean;
+type FlowReplaceFormValues = ReplaceConnectionFlowVersionsSelection & {
+  targetConnectionId: string;
 };
 
 type ReplaceConnectionForFlowDialogProps = {
   sourceConnection: AppConnectionWithoutSensitiveData;
+  targetConnection?: AppConnectionWithoutSensitiveData;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };

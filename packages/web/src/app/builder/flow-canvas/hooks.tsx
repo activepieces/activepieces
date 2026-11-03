@@ -327,16 +327,21 @@ function isActiveElementInsideListMapperModeInput(): boolean {
 const useFlowConnections = () => {
   const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
   const projectId = authenticationSession.getProjectId()!;
-  const { data: connections, isLoading } =
-    appConnectionsQueries.useAppConnections({
-      request: { projectId, limit: 1000 },
-      extraKeys: [projectId],
-      staleTime: 0,
-    });
+  const {
+    data: connections,
+    isLoading,
+    isError,
+    refetch,
+  } = appConnectionsQueries.useAppConnections({
+    request: { projectId, limit: 1000 },
+    extraKeys: [projectId],
+    staleTime: 0,
+  });
   const stepConnectionExternalIds = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .map((step) => flowStructureUtil.extractStepConnectionIds(step));
-  const flowConnections = (connections?.data ?? [])
+  const projectConnections = connections?.data ?? [];
+  const flowConnections = projectConnections
     .map((connection) => ({
       connection,
       stepCount: stepConnectionExternalIds.filter((connectionExternalIds) =>
@@ -344,7 +349,7 @@ const useFlowConnections = () => {
       ).length,
     }))
     .filter(({ stepCount }) => stepCount > 0);
-  return { flowConnections, isLoading };
+  return { flowConnections, projectConnections, isLoading, isError, refetch };
 };
 
 export const flowCanvasHooks = {
