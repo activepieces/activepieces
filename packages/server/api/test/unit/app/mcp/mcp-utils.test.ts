@@ -333,6 +333,40 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — keep what the cal
         expect(example.values).toContain('resolve with ap_resolve_property_options')
     })
 
+    it('treats an empty string or null as not given, but keeps false and 0', () => {
+        const props = [
+            { name: 'url', type: PropertyType.SHORT_TEXT, displayName: 'URL', required: true },
+            { name: 'body', type: PropertyType.SHORT_TEXT, displayName: 'Body', required: true },
+            { name: 'enabled', type: PropertyType.CHECKBOX, displayName: 'Enabled', required: true },
+            { name: 'limit', type: PropertyType.NUMBER, displayName: 'Limit', required: true },
+        ]
+        const providedInput = { url: '', body: null, enabled: false, limit: 0 }
+
+        expect(mcpUtils.buildRequiredInputs({ props, providedInput }).provideNow).toEqual(['url', 'body'])
+        expect(mcpUtils.buildExampleInput({ props, providedInput })).toMatchObject({ url: '<URL>', enabled: false, limit: 0 })
+    })
+
+    it('fills the missing required children of a dynamic object the caller passed', () => {
+        const props = [
+            { name: 'markdown', type: PropertyType.CHECKBOX, displayName: 'Markdown', required: false },
+            {
+                name: 'dynamic',
+                type: PropertyType.DYNAMIC,
+                displayName: 'Options',
+                required: true,
+                dynamicFields: [
+                    { name: 'depth', type: PropertyType.NUMBER, displayName: 'Depth', required: true, defaultValue: 1 },
+                    { name: 'filter', type: PropertyType.SHORT_TEXT, displayName: 'Filter', required: false },
+                ],
+            },
+        ]
+        const providedInput = { markdown: false, dynamic: { filter: 'todo' } }
+
+        expect(mcpUtils.buildExampleInput({ props, providedInput })).toEqual({ markdown: false, dynamic: { filter: 'todo', depth: 1 } })
+        expect(mcpUtils.buildRequiredInputs({ props, providedInput }).needsResolution).toEqual(['dynamic'])
+        expect(mcpUtils.buildRequiredInputs({ props, providedInput: { dynamic: { depth: 2 } } }).needsResolution).toEqual([])
+    })
+
     it('builds the same output as before when the caller passes nothing', () => {
         expect(mcpUtils.buildRequiredInputs({ props: sheetProps })).toEqual({ provideNow: [], needsResolution: ['spreadsheetId', 'sheetId', 'values'] })
         expect(Object.keys(mcpUtils.buildExampleInput({ props: sheetProps }))).toEqual(['spreadsheetId', 'sheetId', 'values'])

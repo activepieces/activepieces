@@ -121,7 +121,7 @@ function coerceEmptyContainerInputs({ props, input }: { props: PiecePropertyMap,
             continue
         }
         const value = coerced[propName]
-        const valueProvided = value !== undefined && value !== null && value !== ''
+        const valueProvided = isValueProvided(value)
         // An empty free-form bag means "none", so normalize a wrong-shape empty container
         // (`[]` for an OBJECT prop, `{}` for an ARRAY prop) to the prop's type rather than
         // letting validation bounce it.
@@ -155,7 +155,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
             : (prop.type === PropertyType.DYNAMIC ? ' — DYNAMIC: resolve sub-fields with ap_get_piece_props' : '')
         allProps.push(`${propName} (${prop.type}${prop.required ? ', required' : ''}${optionsHint})`)
         const value = input[propName]
-        const valueProvided = value !== undefined && value !== null && value !== ''
+        const valueProvided = isValueProvided(value)
         if (prop.required && !valueProvided) {
             const descriptionHint = prop.description ? ` — ${prop.description}` : ''
             if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
@@ -328,7 +328,11 @@ function buildExampleInput({ props, providedInput = {} }: { props: PropSummary[]
     const example: Record<string, unknown> = {}
     for (const prop of props) {
         const provided = providedInput[prop.name]
-        if (provided !== undefined) {
+        const childFields = childFieldsOf({ prop, provided })
+        if (!isNil(childFields) && isObject(provided)) {
+            example[prop.name] = { ...provided, ...buildExampleInput({ props: childFields, providedInput: provided }) }
+        }
+        else if (isValueProvided(provided)) {
             example[prop.name] = provided
         }
         else if (prop.required) {
@@ -341,7 +345,7 @@ function buildExampleInput({ props, providedInput = {} }: { props: PropSummary[]
 function buildRequiredInputs({ props, providedInput = {} }: { props: PropSummary[], providedInput?: Record<string, unknown> }): { provideNow: string[], needsResolution: string[] } {
     const provideNow: string[] = []
     const needsResolution: string[] = []
-    for (const prop of props.filter((p) => p.required && providedInput[p.name] === undefined)) {
+    for (const prop of props.filter((p) => p.required && !isPropGiven({ prop: p, providedInput }))) {
         if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
             needsResolution.push(prop.name)
         }
@@ -350,6 +354,28 @@ function buildRequiredInputs({ props, providedInput = {} }: { props: PropSummary
         }
     }
     return { provideNow, needsResolution }
+}
+
+function isValueProvided(value: unknown): boolean {
+    return value !== undefined && value !== null && value !== ''
+}
+
+function childFieldsOf({ prop, provided }: { prop: PropSummary, provided: unknown }): PropSummary[] | null {
+    const hasChildFields = prop.type === PropertyType.DYNAMIC && isObject(provided) && !isNil(prop.dynamicFields) && prop.dynamicFields.length > 0
+    return hasChildFields ? prop.dynamicFields ?? null : null
+}
+
+function isPropGiven({ prop, providedInput }: { prop: PropSummary, providedInput: Record<string, unknown> }): boolean {
+    const provided = providedInput[prop.name]
+    if (!isValueProvided(provided)) {
+        return false
+    }
+    const childFields = childFieldsOf({ prop, provided })
+    if (isNil(childFields) || !isObject(provided)) {
+        return true
+    }
+    const missingChildren = buildRequiredInputs({ props: childFields, providedInput: provided })
+    return missingChildren.provideNow.length === 0 && missingChildren.needsResolution.length === 0
 }
 
 function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): string[] {
