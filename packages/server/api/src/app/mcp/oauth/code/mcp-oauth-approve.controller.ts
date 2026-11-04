@@ -31,6 +31,9 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
         if (error) {
             return reply.status(400).send({ error: 'invalid_request', error_description: 'Invalid or expired authorization request' })
         }
+        if (isNil(projectId) !== isPlatformResource(authRequest.resource)) {
+            return reply.status(400).send({ error: 'invalid_request', error_description: 'Project access needs a projectId and platform access must not have one' })
+        }
 
         const code = await mcpOAuthCodeService.create({
             clientId: authRequest.clientId,
@@ -81,6 +84,10 @@ async function verifyAuthRequest(authRequestId: string): Promise<AuthRequestPayl
         throw new Error('Invalid authorization request type')
     }
     return authRequest
+}
+
+function isPlatformResource(resource: string | null): boolean {
+    return resource?.replace(/\/+$/, '').endsWith('/mcp/platform') ?? false
 }
 
 const ApproveRequest = {
