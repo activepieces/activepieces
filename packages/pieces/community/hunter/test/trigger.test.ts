@@ -18,7 +18,7 @@ describe('new lead trigger', () => {
     expect(output[0]).toMatchObject({ id: 851 });
     expect(output[149]).toMatchObject({ id: 1000 });
     expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(1000);
-    expect(seen.map((r) => r.query.get('offset'))).toEqual(['0', '100']);
+    expect(seen.map((r) => r.query.get('offset'))).toEqual(['0', '90']);
     const again = await newLeadTrigger.run(fakeContext({ store }));
     expect(again).toEqual([]);
   });
@@ -42,6 +42,64 @@ describe('new lead trigger', () => {
     expect(new Set(ids).size).toBe(100);
     expect(ids[0]).toBe(51);
     expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(150);
+  });
+
+  test('a lead deleted between page requests does not skip the lead that shifts across the page boundary', async () => {
+    let all = Array.from({ length: 200 }, (_, index) => ({ id: 250 - index }));
+    stubFetch((request: SeenRequest) => {
+      const offset = Number(request.query.get('offset'));
+      const limit = Number(request.query.get('limit'));
+      const leads = all.slice(offset, offset + limit);
+      if (offset === 0) {
+        all = all.filter((lead) => lead.id !== 250);
+      }
+      return { body: { data: { leads } } };
+    });
+    const store = memoryStore({ [LAST_LEAD_ID_KEY]: 50 });
+    const output = await newLeadTrigger.run(fakeContext({ store }));
+    const ids = output.map((lead) => lead['id']);
+    expect(ids).toHaveLength(200);
+    expect(new Set(ids).size).toBe(200);
+    expect(ids).toContain(150);
+    expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(250);
+  });
+
+  test('more deletions than the page overlap restart paging instead of skipping leads', async () => {
+    let all = Array.from({ length: 200 }, (_, index) => ({ id: 250 - index }));
+    const offsets: string[] = [];
+    stubFetch((request: SeenRequest) => {
+      const offset = Number(request.query.get('offset'));
+      const limit = Number(request.query.get('limit'));
+      offsets.push(String(offset));
+      const leads = all.slice(offset, offset + limit);
+      if (offsets.length === 1) {
+        all = all.filter((lead) => lead.id <= 230);
+      }
+      return { body: { data: { leads } } };
+    });
+    const store = memoryStore({ [LAST_LEAD_ID_KEY]: 50 });
+    const output = await newLeadTrigger.run(fakeContext({ store }));
+    const ids = output.map((lead) => lead['id']);
+    expect(offsets.slice(0, 3)).toEqual(['0', '90', '0']);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toEqual(expect.arrayContaining(Array.from({ length: 180 }, (_, index) => 51 + index)));
+    expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(250);
+  });
+
+  test('leads that keep shifting fail the poll without advancing the cursor', async () => {
+    let all = Array.from({ length: 2000 }, (_, index) => ({ id: 2050 - index }));
+    stubFetch((request: SeenRequest) => {
+      const offset = Number(request.query.get('offset'));
+      const limit = Number(request.query.get('limit'));
+      const leads = all.slice(offset, offset + limit);
+      if (offset === 0) {
+        all = all.slice(50);
+      }
+      return { body: { data: { leads } } };
+    });
+    const store = memoryStore({ [LAST_LEAD_ID_KEY]: 50 });
+    await expect(newLeadTrigger.run(fakeContext({ store }))).rejects.toThrow('kept shifting');
+    expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(50);
   });
 
   test('an empty account enabled at 0 emits every lead of a first bulk import', async () => {

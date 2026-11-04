@@ -72,6 +72,10 @@ const LEGACY_LAST_POLL_KEY = 'lastPoll';
 
 const PAGE_SIZE = 100;
 
+const PAGE_OVERLAP = 10;
+
+const MAX_PAGING_RESTARTS = 3;
+
 const MAX_LEADS_PER_POLL = 1000;
 
 const MAX_PAGED_LEADS = 20000;
@@ -95,8 +99,25 @@ async function pollNewLeads({ apiKey, store }: { apiKey: string; store: Store })
 
 async function collectNewer({ apiKey, lastSeen }: { apiKey: string; lastSeen: number }): Promise<HunterRecord[]> {
   const collected = new Map<number, HunterRecord>();
-  for (let offset = 0; offset < MAX_PAGED_LEADS; offset += PAGE_SIZE) {
+  for (let attempt = 0; attempt <= MAX_PAGING_RESTARTS; attempt++) {
+    const outcome = await pageNewer({ apiKey, lastSeen, collected });
+    if (outcome === 'done') {
+      return [...collected.values()];
+    }
+    if (outcome === 'cap') {
+      throw new Error(`More than ${MAX_PAGED_LEADS} new Hunter leads since the last check; the trigger stopped so none are skipped. Disable and re-enable it to start from the newest lead.`);
+    }
+  }
+  throw new Error('Hunter leads kept shifting while the trigger paged through them (many leads deleted during the check); the cursor was not advanced and the next poll will retry.');
+}
+
+async function pageNewer({ apiKey, lastSeen, collected }: { apiKey: string; lastSeen: number; collected: Map<number, HunterRecord> }): Promise<'done' | 'shifted' | 'cap'> {
+  for (let offset = 0; offset < MAX_PAGED_LEADS; offset += PAGE_SIZE - PAGE_OVERLAP) {
     const page = await hunterRequests.listLeadsPage({ apiKey, limit: PAGE_SIZE, offset });
+    const ids = page.map((lead) => leadIdOf(lead));
+    if (offset > 0 && !ids.some((id) => id !== undefined && collected.has(id))) {
+      return 'shifted';
+    }
     const newer = page.filter((lead) => (leadIdOf(lead) ?? 0) > lastSeen);
     for (const lead of newer) {
       const id = leadIdOf(lead);
@@ -105,10 +126,10 @@ async function collectNewer({ apiKey, lastSeen }: { apiKey: string; lastSeen: nu
       }
     }
     if (page.length < PAGE_SIZE || newer.length < page.length) {
-      return [...collected.values()];
+      return 'done';
     }
   }
-  throw new Error(`More than ${MAX_PAGED_LEADS} new Hunter leads since the last check; the trigger stopped so none are skipped. Disable and re-enable it to start from the newest lead.`);
+  return 'cap';
 }
 
 async function cursorFromLegacyCheckpoint({ apiKey, lastPollMs }: { apiKey: string; lastPollMs: number }): Promise<number> {
