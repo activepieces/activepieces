@@ -1,13 +1,13 @@
 {
-  "AnyHook GraphQL enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to GraphQL subscription events": "AnyHook GraphQL enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to GraphQL subscription events",
-  "AnyHook Server URL": "AnyHook Server URL",
-  "The URL of your AnyHook server": "The URL of your AnyHook server",
-  "New GraphQL Subscription Event": "New GraphQL Subscription Event",
-  "Triggers on a new GraphQL subscription event": "Triggers on a new GraphQL subscription event",
+  "AnyHook GraphQL enables real-time communication through AnyHook proxy server by allowing you to subscribe and listen to GraphQL subscription events": "AnyHok GraphQL允许您订阅并收听GraphQL订阅事件，从而启用通过 AnyHook 代理服务器的实时通信",
+  "AnyHook Server URL": "Anyhook 服务器 URL",
+  "The URL of your AnyHook server": "您的 AnyHook 服务器的 URL",
+  "New GraphQL Subscription Event": "新 GraphQL 订阅事件",
+  "Triggers on a new GraphQL subscription event": "触发一个新的 GraphQL 订阅活动",
   "Endpoint URL": "Endpoint URL",
   "Headers": "信头",
-  "GraphQL Query": "GraphQL Query",
-  "The GraphQL websocket to connect to.": "The GraphQL websocket to connect to.",
-  "Custom headers for the GraphQL connection, such as authentication tokens.": "Custom headers for the GraphQL connection, such as authentication tokens.",
-  "GraphQL subscription query to listen to events": "GraphQL subscription query to listen to events"
+  "GraphQL Query": "GraphQL 查询",
+  "The GraphQL websocket to connect to.": "要连接的 GraphQL Websocket。",
+  "Custom headers for the GraphQL connection, such as authentication tokens.": "GraphQL连接的自定义头像，例如身份验证令牌。",
+  "GraphQL subscription query to listen to events": "要监听事件的 GraphQL 订阅查询"
 }
