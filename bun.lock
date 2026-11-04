@@ -1941,7 +1941,7 @@
       "devDependencies": {
         "@types/mime-types": "2.1.1",
         "tslib": "2.6.2",
-        "vitest": "3.2.6",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/clay": {
