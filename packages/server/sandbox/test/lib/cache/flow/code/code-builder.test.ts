@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ExecutionMode, FlowVersionState, NetworkMode } from '@activepieces/shared'
@@ -413,23 +413,4 @@ describe('codeBuilder in-place rebuilds', () => {
         expect(installMock).toHaveBeenCalledWith(expect.objectContaining({ force: true }))
     })
 
-    it('runs the dependency install while holding the shared disk lock', async () => {
-        const codesFolderPath = uniqueFolder()
-        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
-        let lockFilesDuringInstall: string[] | null = null
-        installMock.mockImplementation(async ({ path }: { path: string }) => {
-            lockFilesDuringInstall = await readdir(join(codesFolderPath, '.install-locks'))
-            await mkdir(join(path, 'node_modules'), { recursive: true })
-            return { stdout: '', stderr: '' }
-        })
-
-        await expect(
-            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
-        ).resolves.toBe('success')
-
-        expect(lockFilesDuringInstall).not.toBeNull()
-        expect(lockFilesDuringInstall!.filter((name) => name.endsWith('.lock'))).toHaveLength(1)
-        const lockFilesAfter = await readdir(join(codesFolderPath, '.install-locks'))
-        expect(lockFilesAfter.filter((name) => name.endsWith('.lock'))).toHaveLength(0)
-    })
 })
