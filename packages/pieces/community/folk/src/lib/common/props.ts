@@ -1,46 +1,28 @@
 import { Property } from '@activepieces/pieces-framework';
 import { folkAuth } from './auth';
-import { folkClient } from './client';
+import { folkClient, FolkAuthValue } from './client';
 
 export const folkProps = {
-  group_id: (required = false, displayName = 'Group ID') =>
+  group_id: (required = false, displayName = 'Group') =>
     Property.Dropdown({
       auth: folkAuth,
       displayName,
-      description:
-        'Enter a Folk group ID (e.g., grp_abc123). Groups help you organize your contacts.',
+      description: 'Pick a Folk group. Groups organize your contacts.',
       required,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account to see groups.',
-            options: [],
-          };
+          return { disabled: true, placeholder: 'Connect your account to see groups.', options: [] };
         }
-
         try {
-          const response = await folkClient.getGroups({
-            apiKey: auth,
-          });
-          const groups = response.data?.items || [];
-
+          const { items, truncated } = await folkClient.listForDropdown<FolkGroup>({ auth, path: '/v1/groups' });
           return {
             disabled: false,
-            placeholder:
-              groups.length === 0 ? 'No groups found' : 'Select a group',
-            options: groups.map((group: any) => ({
-              label: group.name,
-              value: group.id,
-            })),
+            placeholder: placeholderFor({ count: items.length, truncated, noun: 'groups', verb: 'Select a group' }),
+            options: items.map((group) => ({ label: group.name, value: group.id })),
           };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Error loading groups. Check your API key.',
-            options: [],
-          };
+        } catch {
+          return { disabled: true, placeholder: 'Could not load groups. Check the API key in the connection.', options: [] };
         }
       },
     }),
@@ -49,96 +31,48 @@ export const folkProps = {
     Property.Dropdown({
       auth: folkAuth,
       displayName: 'Company',
-      description: 'Select a company from your Folk workspace.',
+      description: 'Pick a company from your Folk workspace. Type to search by name.',
       required,
       refreshers: [],
-      options: async ({ auth }) => {
+      refreshOnSearch: true,
+      options: async ({ auth }, { searchValue }) => {
         if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account to see companies.',
-            options: [],
-          };
+          return { disabled: true, placeholder: 'Connect your account to see companies.', options: [] };
         }
-
         try {
-          const limit = 100;
-          const response = await folkClient.getCompaniesWithFilters({
-            apiKey: auth,
-            limit,
-          });
-          const companies = response.data?.items || [];
-
+          const page = await searchCompanies({ auth, searchValue });
           return {
             disabled: false,
-            placeholder:
-              companies.length === 0
-                ? 'No companies found'
-                : 'Select a company',
-            options: companies.slice(0, 100).map((company: any) => {
-              const emails = company.emails
-                ?.map((e: any) => e.email)
-                .filter(Boolean)
-                .join(', ');
-              const label = emails
-                ? `${company.name} (${emails})`
-                : company.name || `Company ${company.id}`;
-              return {
-                label,
-                value: company.id,
-              };
-            }),
+            placeholder: page.items.length === 0 ? 'No companies found' : 'Select a company (type to search)',
+            options: page.items.map((company) => ({ label: companyLabel({ company }), value: company.id })),
           };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Error loading companies. Check your API key.',
-            options: [],
-          };
+        } catch {
+          return { disabled: true, placeholder: 'Could not load companies. Check the API key in the connection.', options: [] };
         }
       },
     }),
+
   companyIds: (required = false) =>
     Property.MultiSelectDropdown({
       auth: folkAuth,
       displayName: 'Companies',
-      description: 'Select companies to associate with the person.',
+      description: 'Pick companies to associate with the person. Type to search by name.',
       required,
       refreshers: [],
-      options: async ({ auth }) => {
+      refreshOnSearch: true,
+      options: async ({ auth }, { searchValue }) => {
         if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account to see companies.',
-            options: [],
-          };
+          return { disabled: true, placeholder: 'Connect your account to see companies.', options: [] };
         }
-
         try {
-          const limit = 100;
-          const response = await folkClient.getCompaniesWithFilters({
-            apiKey: auth,
-            limit,
-          });
-          const companies = response.data?.items || [];
-
+          const page = await searchCompanies({ auth, searchValue });
           return {
             disabled: false,
-            placeholder:
-              companies.length === 0
-                ? 'No companies found'
-                : 'Select companies',
-            options: companies.map((company: any) => ({
-              label: company.name,
-              value: company.id,
-            })),
+            placeholder: page.items.length === 0 ? 'No companies found' : 'Select companies (type to search)',
+            options: page.items.map((company) => ({ label: company.name || company.id, value: company.id })),
           };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Error loading companies. Check your API key.',
-            options: [],
-          };
+        } catch {
+          return { disabled: true, placeholder: 'Could not load companies. Check the API key in the connection.', options: [] };
         }
       },
     }),
@@ -147,55 +81,64 @@ export const folkProps = {
     Property.Dropdown({
       auth: folkAuth,
       displayName: 'Person',
-      description: 'Select a person from your Folk workspace.',
+      description: 'Pick a person from your Folk workspace. Type to search by name.',
       required,
       refreshers: [],
-      options: async ({ auth }) => {
+      refreshOnSearch: true,
+      options: async ({ auth }, { searchValue }) => {
         if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account to see people.',
-            options: [],
-          };
+          return { disabled: true, placeholder: 'Connect your account to see people.', options: [] };
         }
-
         try {
-          const limit = 100;
-          const response = await folkClient.getPeopleWithFilters({
-            apiKey: auth,
-            limit,
-          });
-          const people = response.data?.items || [];
-
+          const query: Record<string, string> = {};
+          const term = searchValue?.trim();
+          if (term) {
+            query['filter[fullName][like]'] = term;
+          }
+          const page = await folkClient.listPage<FolkPersonSummary>({ auth, path: '/v1/people', query, limit: 100 });
           return {
             disabled: false,
-            placeholder:
-              people.length === 0 ? 'No people found' : 'Select a person',
-            options: people.slice(0, 100).map((person: any) => {
-              const name =
-                person.fullName ||
-                person.name ||
-                `${person.firstName || ''} ${person.lastName || ''}`.trim();
-              const emails = person.emails
-                ?.map((e: any) => e.email)
-                .filter(Boolean)
-                .join(', ');
-              const label = emails
-                ? `${name} (${emails})`
-                : name || `Person ${person.id}`;
-              return {
-                label,
-                value: person.id,
-              };
-            }),
+            placeholder: page.items.length === 0 ? 'No people found' : 'Select a person (type to search)',
+            options: page.items.map((person) => ({ label: personLabel({ person }), value: person.id })),
           };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Error loading people. Check your API key.',
-            options: [],
-          };
+        } catch {
+          return { disabled: true, placeholder: 'Could not load people. Check the API key in the connection.', options: [] };
         }
       },
     }),
 };
+
+function searchCompanies({ auth, searchValue }: { auth: FolkAuthValue; searchValue?: string }) {
+  const query: Record<string, string> = {};
+  const term = searchValue?.trim();
+  if (term) {
+    query['filter[name][like]'] = term;
+  }
+  return folkClient.listPage<FolkCompanySummary>({ auth, path: '/v1/companies', query, limit: 100 });
+}
+
+function placeholderFor({ count, truncated, noun, verb }: { count: number; truncated: boolean; noun: string; verb: string }): string {
+  if (count === 0) {
+    return `No ${noun} found`;
+  }
+  return truncated ? `${verb} (showing the first ${count} ${noun})` : verb;
+}
+
+function companyLabel({ company }: { company: FolkCompanySummary }): string {
+  const emails = (company.emails ?? []).filter((email) => typeof email === 'string' && email.length > 0).join(', ');
+  const name = company.name || `Company ${company.id}`;
+  return emails ? `${name} (${emails})` : name;
+}
+
+function personLabel({ person }: { person: FolkPersonSummary }): string {
+  const name = person.fullName || `${person.firstName ?? ''} ${person.lastName ?? ''}`.trim();
+  const emails = (person.emails ?? []).filter((email) => typeof email === 'string' && email.length > 0).join(', ');
+  if (!name) {
+    return emails || `Person ${person.id}`;
+  }
+  return emails ? `${name} (${emails})` : name;
+}
+
+type FolkGroup = { id: string; name: string };
+type FolkCompanySummary = { id: string; name?: string; emails?: unknown[] };
+type FolkPersonSummary = { id: string; fullName?: string; firstName?: string; lastName?: string; emails?: unknown[] };
