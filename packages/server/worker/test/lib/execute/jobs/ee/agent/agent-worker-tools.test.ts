@@ -874,6 +874,16 @@ describe('buildPlanSync', () => {
         expect(next.steps.map((step) => step.id)).toEqual(['f1'])
     })
 
+    it('tells apart planned flows named in a non-Latin script', () => {
+        const plannedRows = [
+            { id: 'orders', label: '接收订单', status: 'pending' as const, flowName: '接收订单' },
+            { id: 'summary', label: '每日汇总', status: 'pending' as const, flowName: '每日汇总' },
+        ]
+        const flow = built(result({ flowId: 'f1', name: '接收订单', steps: [['every_day', 'ok']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows }))).toEqual(['接收订单=done', '每日汇总=pending'])
+    })
+
     it('keeps the real steps of a single flow when the rows only mention its name', () => {
         const plannedRows = [{ id: 'setup', label: 'Set up Email triage', status: 'pending' as const }]
         const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['gmail_new_email_received', 'ok'], ['Classify urgency', 'problem']] }))

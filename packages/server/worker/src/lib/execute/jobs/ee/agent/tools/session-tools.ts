@@ -297,7 +297,8 @@ function withBuiltRows({ plan, builtFlows, plannedRows = [] }: { plan: BuildPlan
 function plannedFlowRows({ plannedRows, builtFlows, flowRow, finished }: { plannedRows: PlannedRow[], builtFlows: BuiltFlow[], flowRow: (flow: BuiltFlow) => BuildPlanStep, finished: boolean }): BuildPlanStep[] {
     const shown = new Set<string>()
     const planned = plannedRows.flatMap(({ id, label, status, flowName }): BuildPlanStep[] => {
-        const flow = isNil(flowName) ? undefined : builtFlows.find((candidate) => comparableName(candidate.name) === comparableName(flowName))
+        const wanted = isNil(flowName) ? '' : comparableName(flowName)
+        const flow = wanted.length === 0 ? undefined : builtFlows.find((candidate) => comparableName(candidate.name) === wanted)
         if (isNil(flow)) {
             return [{ id, label, status: finished ? 'done' : status }]
         }
@@ -311,7 +312,7 @@ function plannedFlowRows({ plannedRows, builtFlows, flowRow, finished }: { plann
 }
 
 function comparableName(name: string): string {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+    return name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
 }
 
 function readableLabel(name: string): string {
