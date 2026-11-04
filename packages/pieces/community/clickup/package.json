@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-clickup",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -21,6 +21,6 @@
   "devDependencies": {
     "@types/qs": "6.14.0",
     "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

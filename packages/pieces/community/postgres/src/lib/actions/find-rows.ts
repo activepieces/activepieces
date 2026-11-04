@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { postgresAuth } from '../..';
+import { postgresAuth } from '../auth';
 import { pgClient, postgresCommon, postgresUtils, warningMarkdown } from '../common';
 import { findRowsOutputSchema } from '../output-schemas';
 
@@ -9,7 +9,7 @@ export const findRows = createAction({
   classification: 'SEARCH',
   displayName: 'Find Rows',
   description: 'Reads rows from a table',
-  audience: 'both',
+  audience: 'human',
   outputSchema: findRowsOutputSchema,
   aiMetadata: {
     description: 'Reads rows from a PostgreSQL table, optionally narrowed by a SQL WHERE condition and limited to specific columns. Use to look up or filter records by arbitrary criteria. Returns at most 100 rows unless limit is raised or cleared. The condition is interpolated raw into the query, so pass dynamic values through the args array and reference them as $1, $2 placeholders to avoid SQL injection. Read-only and idempotent.',

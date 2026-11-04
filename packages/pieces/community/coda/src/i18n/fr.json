@@ -232,6 +232,8 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer",
   "New Row Created": "Nouvelle ligne créée",
   "Triggers when a new row is added to the selected table.": "Déclenche quand une nouvelle ligne est ajoutée à la table sélectionnée."
 }
