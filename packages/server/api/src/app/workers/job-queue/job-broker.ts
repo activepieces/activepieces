@@ -4,7 +4,6 @@ import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { getJobReclaimCountKey } from '../../database/redis/keys'
 import { redisConnections } from '../../database/redis-connections'
 import { engineResponseWatcher } from '../engine-response-watcher'
 import { QueueName } from '../job'
@@ -16,6 +15,7 @@ import { jobAssignmentTracker } from './job-assignment-tracker'
 import { jobFailureLogger } from './job-failure-logger'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 import { callerWaitingForResponse } from './job-queue'
+import { jobReclaimCount } from './job-reclaim-count'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
@@ -78,7 +78,7 @@ function ensureDispatcher(queueName: string, worker: BullMQWorker, log: FastifyB
         queueName,
         worker,
         dequeue: tryDequeue,
-        onOrphanedJob: returnJobToQueue,
+        onOrphanedJob: requeueOrphanedJob,
         log,
     })
     dispatchers.set(queueName, dispatcher)
@@ -107,7 +107,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         }
         else {
             jobFailureLogger.logJobFailed({ queueName, jobId: job.id, jobType: job.name, error: deferredError, log })
-            await clearReclaimCount(job.id ?? job.name, log)
+            await jobReclaimCount.clear({ jobId: job.id ?? job.name, log })
         }
         return tryDequeue(worker, queueName, log)
     }
@@ -137,7 +137,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         }
         else {
             jobFailureLogger.logJobFailed({ queueName, jobId, jobType: migratedData.jobType, error: schemaError, log })
-            await clearReclaimCount(jobId, log)
+            await jobReclaimCount.clear({ jobId, log })
         }
         return tryDequeue(worker, queueName, log)
     }
@@ -145,7 +145,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     const interceptorResult = await runInterceptors({ jobId, jobData: migratedData, job, log })
     if (interceptorResult === 'DISCARD') {
         await job.moveToCompleted(null, token, false)
-        await clearReclaimCount(jobId, log)
+        await jobReclaimCount.clear({ jobId, log })
         return tryDequeue(worker, queueName, log)
     }
     if (interceptorResult !== null) {
@@ -173,32 +173,23 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     }
 }
 
-async function incrementReclaimCount(jobId: string): Promise<number> {
-    const redis = await redisConnections.useExisting()
-    return redis.incr(getJobReclaimCountKey(jobId))
+async function requeueOrphanedJob(jobId: string, token: string, queueName: string, log: FastifyBaseLogger): Promise<void> {
+    return returnJobToQueue({ jobId, token, queueName, log, isDisconnectReclaim: false })
 }
 
-async function clearReclaimCount(jobId: string, log: FastifyBaseLogger): Promise<void> {
-    const { error } = await tryCatch(async () => {
-        const redis = await redisConnections.useExisting()
-        await redis.del(getJobReclaimCountKey(jobId))
-    })
-    if (error) {
-        log.error({ job: { id: jobId }, error: String(error) }, '[jobBroker] Failed to clear reclaim count')
-    }
-}
-
-async function returnJobToQueue(jobId: string, token: string, queueName: string, log: FastifyBaseLogger): Promise<void> {
+async function returnJobToQueue({ jobId, token, queueName, log, isDisconnectReclaim }: { jobId: string, token: string, queueName: string, log: FastifyBaseLogger, isDisconnectReclaim: boolean }): Promise<void> {
     const job = await fetchJobFromRedis(queueName, jobId, log)
     if (isNil(job)) {
         return
     }
     const jobData = JobData.parse(job.data)
-    const reclaimCount = await incrementReclaimCount(jobId)
 
-    if (reclaimCount >= MAX_RECLAIM_ATTEMPTS) {
-        await failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueName, log, reclaimCount })
-        return
+    if (isDisconnectReclaim) {
+        const reclaimCount = await jobReclaimCount.increment(jobId)
+        if (reclaimCount >= MAX_RECLAIM_ATTEMPTS) {
+            await failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueName, log, reclaimCount })
+            return
+        }
     }
 
     await job.moveToDelayed(Date.now() + 100, token)
@@ -208,7 +199,7 @@ async function returnJobToQueue(jobId: string, token: string, queueName: string,
             log.error({ job: { id: jobId }, error: String(error) }, '[jobBroker#returnJobToQueue] interceptor cleanup failed')
         }
     }
-    log.info({ job: { id: jobId }, reclaimCount }, '[jobBroker#returnJobToQueue] orphaned job returned to queue')
+    log.info({ job: { id: jobId }, isDisconnectReclaim }, '[jobBroker#returnJobToQueue] job returned to queue')
 }
 
 async function failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueName, log, reclaimCount }: { job: Job, jobId: string, jobData: JobData, token: string, queueName: string, log: FastifyBaseLogger, reclaimCount: number }): Promise<void> {
@@ -237,7 +228,7 @@ async function failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueNam
         if (!waitingCaller) {
             jobFailureLogger.logJobFailed({ queueName, jobId, jobType: jobData.jobType, error, log })
         }
-        await clearReclaimCount(jobId, log)
+        await jobReclaimCount.clear({ jobId, log })
     }
 
     for (const interceptor of interceptors) {
@@ -305,7 +296,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         }
         log.info({ connection: { id: connectionId }, jobCount: jobs.length }, '[jobBroker] Worker connection closed with in-flight jobs — returning them to the queue')
         for (const { jobId, token, queueName } of jobs) {
-            const { error } = await tryCatch(() => returnJobToQueue(jobId, token, queueName, log))
+            const { error } = await tryCatch(() => returnJobToQueue({ jobId, token, queueName, log, isDisconnectReclaim: true }))
             if (error) {
                 log.error({ connection: { id: connectionId }, job: { id: jobId }, error: String(error) }, '[jobBroker] Failed to return in-flight job on disconnect — leaving for stalled-scan recovery')
             }
@@ -336,7 +327,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                         logs: input.logs,
                     })
                     await job.moveToCompleted({ response: undefined }, input.token, false)
-                    await clearReclaimCount(input.jobId, log)
+                    await jobReclaimCount.clear({ jobId: input.jobId, log })
                     return
                 }
                 const engineErrorMessage = input.errorMessage ?? 'Internal error'
@@ -351,13 +342,13 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                         log,
                         signatureOverride: jobFailureLogger.signatureFromMessage(engineErrorMessage, 'EngineError'),
                     })
-                    await clearReclaimCount(input.jobId, log)
+                    await jobReclaimCount.clear({ jobId: input.jobId, log })
                 }
                 return
             }
 
             await job.moveToCompleted({ response: input.response ?? undefined }, input.token, false)
-            await clearReclaimCount(input.jobId, log)
+            await jobReclaimCount.clear({ jobId: input.jobId, log })
             if (waitingCaller) {
                 await engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
                     status: input.status,

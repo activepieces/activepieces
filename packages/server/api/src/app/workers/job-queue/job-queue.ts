@@ -8,6 +8,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { QueueName } from '../job'
 import { workerGroupRouting } from '../worker-groups/worker-group-routing'
+import { jobReclaimCount } from './job-reclaim-count'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -83,6 +84,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         const job = await queue.getJob(jobId)
         if (!isNil(job)) {
             await job.remove()
+            await jobReclaimCount.clear({ jobId, log })
             log.info({
                 job: { id: jobId },
                 queueName,
@@ -109,6 +111,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
             log.info({ job: { id: jobId, everDequeued }, queueName, error: String(error) }, '[jobQueue#cancelAndReportNeverStarted] a worker holds the job')
             return false
         }
+        await jobReclaimCount.clear({ jobId, log })
         log.info({ job: { id: jobId, everDequeued }, queueName }, '[jobQueue#cancelAndReportNeverStarted] removed the abandoned job')
         return !everDequeued
     },
@@ -135,6 +138,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         const allJobs = await queue.getJobs(['waiting', 'delayed'])
         const matching = allJobs.filter((j) => j.id?.startsWith(flowRunId))
         await Promise.allSettled(matching.map((j) => j.remove()))
+        await Promise.allSettled(matching.map((j) => isNil(j.id) ? Promise.resolve() : jobReclaimCount.clear({ jobId: j.id, log })))
         log.info({ flowRun: { id: flowRunId }, queueName, removedIds: matching.map((j) => j.id) }, '[jobQueue#removeAllFlowRunJobs] done')
     },
 
