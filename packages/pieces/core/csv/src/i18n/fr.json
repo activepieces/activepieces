@@ -29,7 +29,7 @@
   "Delimiter Type": "Type de séparateur",
   "Markdown": "Markdown",
   "JSON Array": "Tableau JSON",
-  "Excel File": "Excel File",
+  "Excel File": "Fichier Excel",
   "Sheet Name": "Sheet Name",
   "Delimiter": "Délimiteur",
   "CSV File": "Fichier CSV",
@@ -117,5 +117,16 @@
   "First occurrence": "First occurrence",
   "Last occurrence": "Last occurrence",
   "Keep only these columns": "Keep only these columns",
-  "Remove these columns": "Remove these columns"
+  "Remove these columns": "Remove these columns",
+  "CSV Input": "Entrée CSV",
+  "JSON Output": "Sortie JSON",
+  "JSON Input": "Entrée JSON",
+  "CSV Output": "Sortie CSV",
+  "Reading Options": "Options de lecture",
+  "Spreadsheet Options": "Options du tableur",
+  "Keep Rows Where": "Conserver les lignes où",
+  "Sort": "Trier",
+  "Duplicates": "Doublons",
+  "CSVs to Merge": "CSV à fusionner",
+  "Chunks": "Segments"
 }

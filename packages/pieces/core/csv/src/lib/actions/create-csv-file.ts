@@ -15,6 +15,11 @@ export const createCsvFileAction = createAction({
       'Builds a .csv file from a JSON array of objects: every key seen in any row becomes a column (nested objects become dotted columns like address.city), booleans are written as true/false and missing values stay blank, with optional column order, delimiter, header row and an Excel-friendly UTF-8 byte-order mark. Text starting with = + - @ is prefixed with an apostrophe by default so spreadsheet apps do not run it as a formula (plain numbers like -5 are left alone). Pick this when the next step needs a file; use Convert JSON to CSV when you only need the CSV text. Up to 100,000 rows; nothing outside the run changes and the same input gives the same file content, so it is idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'Rows', icon: 'code', props: ['json_array'] },
+    { key: 'output', display: 'section', label: 'CSV File', icon: 'file', props: ['file_name', 'delimiter', 'include_header', 'columns'] },
+    { key: 'spreadsheet', display: 'section', label: 'Spreadsheet Options', icon: 'sliders', props: ['add_excel_bom', 'escape_formulas'] },
+  ],
   props: {
     json_array: Property.Json({
       displayName: 'Rows',

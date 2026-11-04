@@ -29,7 +29,7 @@
   "Delimiter Type": "区切り文字の種類",
   "Markdown": "Markdown",
   "JSON Array": "JSON配列",
-  "Excel File": "Excel File",
+  "Excel File": "Excel ファイル",
   "Sheet Name": "Sheet Name",
   "Delimiter": "区切り文字",
   "CSV File": "CSVファイル",
@@ -117,5 +117,16 @@
   "First occurrence": "First occurrence",
   "Last occurrence": "Last occurrence",
   "Keep only these columns": "Keep only these columns",
-  "Remove these columns": "Remove these columns"
+  "Remove these columns": "Remove these columns",
+  "CSV Input": "CSV 入力",
+  "JSON Output": "JSON 出力",
+  "JSON Input": "JSON 入力",
+  "CSV Output": "CSV 出力",
+  "Reading Options": "読み込みオプション",
+  "Spreadsheet Options": "スプレッドシートのオプション",
+  "Keep Rows Where": "行を残す条件",
+  "Sort": "並べ替え",
+  "Duplicates": "重複",
+  "CSVs to Merge": "結合する CSV",
+  "Chunks": "チャンク"
 }

@@ -12,6 +12,10 @@ export const jsonToCsvAction = createAction({
   displayName: 'Convert JSON to CSV',
   description: 'Turns a list of JSON objects into CSV text, one row per object.',
   aiMetadata: { description: 'Serializes a JSON array into delimited CSV text (comma or tab), flattening nested objects so dotted key paths become the column headers. Use this when preparing tabular data for a file, export, or attachment; use Convert CSV to JSON for the reverse direction. The input must be a JSON array of rows, not a single object, and the header row is always emitted; pure transformation, read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'JSON Input', icon: 'code', props: ['markdown', 'json_array'] },
+    { key: 'output', display: 'section', label: 'CSV Output', icon: 'text', props: ['delimiter_type'] },
+  ],
   props: {
     markdown: Property.MarkDown({
       value: markdown,
@@ -46,10 +50,11 @@ export const jsonToCsvAction = createAction({
       description: 'The character that separates columns in the CSV output.',
       defaultValue: ',',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Comma', value: ',' },
-          { label: 'Tab', value: '\t' },
+          { label: 'Comma', value: ',', icon: 'text', description: 'Most CSV files' },
+          { label: 'Tab', value: '\t', icon: 'blank', description: 'Tab-separated' },
         ],
       },
     }),

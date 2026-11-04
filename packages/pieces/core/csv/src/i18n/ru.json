@@ -15,5 +15,20 @@
   "Provide a JSON array to convert to CSV format.": "Преобразует массив JSON для преобразования в формат CSV.",
   "Select the delimiter type for the CSV file.": "Выберите тип разделителя для CSV-файла.",
   "Comma": "Запятая",
-  "Tab": "Tab"
+  "Tab": "Tab",
+  "Excel File": "Файл Excel",
+  "Rows": "Строки",
+  "CSV File": "Файл CSV",
+  "Columns": "Столбцы",
+  "CSV Input": "Входные данные CSV",
+  "JSON Output": "Выходные данные JSON",
+  "JSON Input": "Входные данные JSON",
+  "CSV Output": "Выходные данные CSV",
+  "Reading Options": "Параметры чтения",
+  "Spreadsheet Options": "Параметры таблицы",
+  "Keep Rows Where": "Оставить строки, где",
+  "Sort": "Сортировка",
+  "Duplicates": "Дубликаты",
+  "CSVs to Merge": "CSV для объединения",
+  "Chunks": "Части"
 }

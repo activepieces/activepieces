@@ -9,6 +9,10 @@ export const excelToCsvAction = createAction({
   displayName: 'Convert Excel to CSV',
   description: 'Turns one sheet of an Excel file (.xlsx or .xls) into CSV text.',
   aiMetadata: { description: 'Reads a binary Excel workbook (.xlsx or .xls) and converts a single sheet to delimited CSV text (comma, tab, or semicolon), selecting either a named sheet or the first sheet when no name is given. Pick this when the source is a spreadsheet file; use Convert CSV to JSON when you already have CSV text. Requires a real Excel file whose signature is validated, so HTML or PDF content is rejected, and any sheet name given must exist in the workbook; read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'Excel File', icon: 'paperclip', props: ['file', 'sheet_name'] },
+    { key: 'output', display: 'section', label: 'CSV Output', icon: 'text', props: ['delimiter_type'] },
+  ],
   props: {
     file: Property.File({
       displayName: 'Excel File',
@@ -26,11 +30,12 @@ export const excelToCsvAction = createAction({
       description: 'The character that separates columns in the CSV output.',
       defaultValue: ',',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Comma', value: ',' },
-          { label: 'Tab', value: '\t' },
-          { label: 'Semicolon', value: ';' },
+          { label: 'Comma', value: ',', icon: 'text', description: 'Most CSV files' },
+          { label: 'Tab', value: '\t', icon: 'blank', description: 'Tab-separated' },
+          { label: 'Semicolon', value: ';', icon: 'type', description: 'European Excel' },
         ],
       },
     }),

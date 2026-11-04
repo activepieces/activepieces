@@ -14,6 +14,10 @@ export const readCsvFileAction = createAction({
       'Parses an uploaded or mapped .csv file into rows keyed by column name, auto-detecting comma, semicolon, tab or pipe delimiters and handling byte-order marks, blank lines, uneven rows and duplicate column names. Pick this when the input is a file; use Convert CSV to JSON or the other CSV actions when you already have CSV text, and Convert Excel to CSV for .xlsx/.xls files. Files up to 20 MB and 100,000 rows; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'CSV File', icon: 'paperclip', props: ['file', 'delimiter'] },
+    { key: 'options', display: 'section', label: 'Reading Options', icon: 'sliders', props: ['has_header_row', 'trim_whitespace'] },
+  ],
   props: {
     file: Property.File({
       displayName: 'CSV File',

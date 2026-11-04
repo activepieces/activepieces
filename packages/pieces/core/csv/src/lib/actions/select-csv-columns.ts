@@ -14,6 +14,10 @@ export const selectCsvColumnsAction = createAction({
       'Returns CSV text with only the listed columns in the listed order, or with the listed columns removed when the mode is Remove. Pick this to trim or reorder columns before exporting or inserting rows elsewhere. The CSV must have a header row and every listed column must exist, otherwise it fails with the real column names; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'CSV Input', icon: 'text', props: ['csv_text', 'delimiter'] },
+    { key: 'columns', display: 'section', label: 'Columns', icon: 'tag', props: ['columns', 'mode'] },
+  ],
   props: {
     csv_text: csvProps.csvText(),
     delimiter: csvProps.inputDelimiter(),

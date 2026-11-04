@@ -14,6 +14,10 @@ export const sortCsvRowsAction = createAction({
       'Sorts the rows of CSV text by one named column, ascending or descending, comparing as text (natural order, so item2 comes before item10), numbers or dates; blank or unreadable values always go last and rows with equal values keep their order. Pick this before taking the top rows or writing an ordered report; for dates use ISO (2026-09-29) or another unambiguous format. The CSV must have a header row; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'CSV Input', icon: 'text', props: ['csv_text', 'delimiter'] },
+    { key: 'sort', display: 'section', label: 'Sort', icon: 'sliders', props: ['column', 'direction', 'compare_as'] },
+  ],
   props: {
     csv_text: csvProps.csvText(),
     delimiter: csvProps.inputDelimiter(),
