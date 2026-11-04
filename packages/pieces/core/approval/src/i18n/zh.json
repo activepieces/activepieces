@@ -1,7 +1,7 @@
 {
   "Pause a flow until someone approves or disapproves": "Pause a flow until someone approves or disapproves",
-  "Wait for Approval": "等待批准",
-  "Create Approval Links": "创建审批链接",
+  "Wait for Approval": "Wait for Approval",
+  "Create Approval Links": "Create Approval Links",
   "Pauses the flow until someone approves or disapproves": "Pauses the flow until someone approves or disapproves",
   "Creates an approval link without pausing the flow": "Creates an approval link without pausing the flow",
   "Markdown": "Markdown",
