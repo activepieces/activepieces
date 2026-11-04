@@ -587,6 +587,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Project Issue Event": "Novo Evento de Issue Projeto",
   "Triggers on project issue events (including confidential issues) when an issue is created or when an existing issue is updated, closed, or reopened.": "Triggers on project issue events (including confidential issues) when an issue is created or when an existing issue is updated, closed, or reopened.",
   "Issue Event": "Evento de issue",
