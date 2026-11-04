@@ -259,8 +259,7 @@ describe('contains filters', () => {
   it('offers only Yes, because Mem treats false as no filter', () => {
     for (const action of [listNotesAction, searchNotesAction]) {
       for (const key of containsKeys) {
-        const prop = action.props[key] as unknown as { options: { options: { value: string }[] } };
-        expect(prop.options.options.map((option) => option.value)).toEqual(['yes']);
+        expect(action.props[key].options.options.map((option) => option.value)).toEqual(['yes']);
       }
     }
   });
