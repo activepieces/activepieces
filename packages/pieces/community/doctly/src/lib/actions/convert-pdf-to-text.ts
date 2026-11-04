@@ -3,20 +3,18 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import FormData from 'form-data';
 import { doctlyAuth } from '../auth';
 import { doctlyClient } from '../common/client';
-import { DoctlyCreateDocumentResponse, DoctlyDocument } from '../common/types';
+import { doctlyApi } from '../common/api';
+import { DoctlyCreateDocumentResponse } from '../common/types';
+import { convertPdfToTextOutputSchema } from '../output-schemas';
 
 export const convertPdfToTextAction = createAction({
 	name: 'convert-pdf-to-text',
+	outputSchema: convertPdfToTextOutputSchema,
 	classification: 'READ',
 	auth: doctlyAuth,
 	displayName: 'Convert PDF to Text',
 	description: 'Converts PDF document to text file with markdown formatting.',
-	audience: 'both',
-	aiMetadata: {
-		description:
-			'Uploads a PDF file to Doctly AI and converts it to markdown-formatted text, returning the extracted text. The action submits the document, then blocks while polling Doctly until the conversion completes (up to a 5-minute timeout), so a single call can take a while. Requires a PDF file as input. Each call creates a new conversion job on Doctly, so it is not idempotent.',
-		idempotent: false,
-	},
+	audience: 'human',
 	props: {
 		file: Property.File({
 			displayName: 'Document File',
@@ -46,11 +44,7 @@ export const convertPdfToTextAction = createAction({
 		while (!['COMPLETED', 'FAILED'].includes(status) && Date.now() < timeoutAt) {
 			await new Promise((resolve) => setTimeout(resolve, 5000));
 
-			const document = await doctlyClient.request<DoctlyDocument>({
-				auth: context.auth,
-				method: HttpMethod.GET,
-				path: `/documents/${docId}`,
-			});
+			const document = await doctlyApi.getDocument({ auth: context.auth, documentId: docId });
 
 			status = document.status;
 

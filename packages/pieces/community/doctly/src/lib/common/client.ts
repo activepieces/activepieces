@@ -10,11 +10,15 @@ async function request<T>({ auth, method, path, query, headers, body }: RequestP
 		method,
 		url: `${baseUrl()}${path}`,
 		authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-		queryParams: query,
+		queryParams: query === undefined ? undefined : definedOnly({ query }),
 		headers,
 		body,
 	});
 	return response.body;
+}
+
+function definedOnly({ query }: { query: Record<string, string | undefined> }): QueryParams {
+	return Object.fromEntries(Object.entries(query).filter((entry): entry is [string, string] => entry[1] !== undefined));
 }
 
 async function download<T>({ url }: { url: string }): Promise<T> {
@@ -24,4 +28,4 @@ async function download<T>({ url }: { url: string }): Promise<T> {
 
 export const doctlyClient = { baseUrl, request, download };
 
-type RequestParams = { method: HttpMethod; path: string; query?: QueryParams; headers?: HttpHeaders; body?: unknown };
+type RequestParams = { method: HttpMethod; path: string; query?: Record<string, string | undefined>; headers?: HttpHeaders; body?: unknown };
