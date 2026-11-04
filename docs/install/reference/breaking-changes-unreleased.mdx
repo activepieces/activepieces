@@ -8,6 +8,10 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### GoodMem 0.1.0: three actions leave the agent tool list
+
+Create Space, Create Memory and Retrieve Memories are now human-only; agents use the new AI actions instead (Create Space, Store Memory, Retrieve Memories, List Memories, List Models), which cover the same operations with agent-sized inputs. Flows are unaffected; MCP servers and agents that exposed the old three tools should switch to the AI actions.
+
 #### Hunter 0.2.0: four lead and campaign actions leave the agent tool list, and Verify Email waits for a result
 
 From Hunter 0.2.0, these actions are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps, with the same inputs and outputs. Agents use the replacement instead:
