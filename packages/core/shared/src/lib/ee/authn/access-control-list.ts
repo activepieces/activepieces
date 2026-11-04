@@ -5,6 +5,7 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
     [DefaultProjectRole.ADMIN]: [
         Permission.READ_APP_CONNECTION,
         Permission.WRITE_APP_CONNECTION,
+        Permission.REPLACE_APP_CONNECTION,
         Permission.READ_FLOW,
         Permission.WRITE_FLOW,
         Permission.UPDATE_FLOW_STATUS,
@@ -37,6 +38,7 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
     [DefaultProjectRole.EDITOR]: [
         Permission.READ_APP_CONNECTION,
         Permission.WRITE_APP_CONNECTION,
+        Permission.REPLACE_APP_CONNECTION,
         Permission.READ_FLOW,
         Permission.WRITE_FLOW,
         Permission.UPDATE_FLOW_STATUS,
