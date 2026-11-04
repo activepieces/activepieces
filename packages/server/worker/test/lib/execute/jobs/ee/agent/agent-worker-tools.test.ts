@@ -806,3 +806,53 @@ describe('an agent does not offer to connect an account its author already chose
         expect(result?.success).toBe(false)
     })
 })
+
+describe('the connection card does the auth check itself', () => {
+    function pickerChecking({ needsNoConnection }: { needsNoConnection: boolean | Error }) {
+        const gatesOpened: string[] = []
+        const checkedPieces: string[] = []
+        const tools = agentWorkerTools.createDisplayTools({
+            waitForApproval: async () => ({ outcome: 'approved' as const, payload: { connectionExternalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' } }),
+            displayToolTimeoutMs: 1000,
+            onGateOpened: async ({ toolName }) => { gatesOpened.push(toolName) },
+            pieceNeedsNoConnection: async (pieceName) => {
+                checkedPieces.push(pieceName)
+                if (needsNoConnection instanceof Error) {
+                    throw needsNoConnection
+                }
+                return needsNoConnection
+            },
+        })
+        return { tools, gatesOpened, checkedPieces }
+    }
+
+    it('answers that a piece without auth needs no connection, without showing a card', async () => {
+        const { tools, gatesOpened, checkedPieces } = pickerChecking({ needsNoConnection: true })
+
+        const result = await tools['ap_show_connection_picker'].execute({ piece: 'webhook', displayName: 'Webhook' }, { toolCallId: 'call-1' })
+
+        expect(result).toMatchObject({ notShown: true })
+        expect(JSON.stringify(result)).toContain('needs no connection')
+        expect(gatesOpened).toEqual([])
+        expect(checkedPieces).toEqual(['@activepieces/piece-webhook'])
+    })
+
+    it('asks the agent to try again when the auth check fails, instead of waiting on a card', async () => {
+        const { tools, gatesOpened } = pickerChecking({ needsNoConnection: new Error('discovery timed out') })
+
+        const result = await tools['ap_show_connection_picker'].execute({ piece: 'webhook', displayName: 'Webhook' }, { toolCallId: 'call-1' })
+
+        expect(result).toMatchObject({ notShown: true })
+        expect(JSON.stringify(result)).toContain('Could not check whether Webhook needs a connection')
+        expect(gatesOpened).toEqual([])
+    })
+
+    it('shows the card for a piece that needs a connection', async () => {
+        const { tools, gatesOpened } = pickerChecking({ needsNoConnection: false })
+
+        const result = await tools['ap_show_connection_picker'].execute({ piece: 'gmail', displayName: 'Gmail' }, { toolCallId: 'call-1' })
+
+        expect(gatesOpened).toEqual(['ap_show_connection_picker'])
+        expect(result).toMatchObject({ selected: true, connectionExternalId: 'conn-1' })
+    })
+})
