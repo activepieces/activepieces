@@ -58,6 +58,16 @@ describe('toolResultView', () => {
         expect(text).toContain(`"offset":${shown}`)
     })
 
+    it('pages through text search matches instead of repeating the first ones', () => {
+        const text = Array.from({ length: 50 }, (_, index) => `row ${index} match`).join('\n')
+        const first = toolResultView.read({ stored: mcpEnvelope(text), fileId: 'f1', search: 'match', limit: 10 })
+        const second = toolResultView.read({ stored: mcpEnvelope(text), fileId: 'f1', search: 'match', offset: 10, limit: 10 })
+
+        expect(first).toContain('"search":"match","offset":10')
+        expect(second).toContain('11: row 10 match')
+        expect(second).not.toContain('1: row 0 match')
+    })
+
     it('keeps search and fields in the next-page call', () => {
         const text = toolResultView.read({ stored: { records }, fileId: 'f1', path: 'records', search: 'lead', fields: ['id'], limit: 2 })
 
