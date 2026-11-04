@@ -134,10 +134,12 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
     let evictedCount = 0
     let failedCount = 0
     let skippedCount = 0
-    for (const candidate of candidates) {
-        const usedPercent = await getUsedPercent()
-        if (usedPercent < maxUsedPercent) {
-            break
+    for (const [index, candidate] of candidates.entries()) {
+        if (index % USAGE_RECHECK_EVERY === 0) {
+            const usedPercent = index === 0 ? usedPercentBefore : await getUsedPercent()
+            if (usedPercent < maxUsedPercent) {
+                break
+            }
         }
         const outcome = await removeDir({ locks, dirPath: candidate.dirPath, expectedMtimeMs: candidate.mtimeMs })
         evictedCount += outcome === 'removed' ? 1 : 0
@@ -269,6 +271,7 @@ const CODE_CACHE_LOCKS_DIR = 'code-cache-locks'
 const PROVISION_LOCK_TIMEOUT_MS = 15 * 60 * 1000
 const EVICTION_TRY_LOCK_TIMEOUT_MS = 0
 const SCAN_BATCH_SIZE = 16
+const USAGE_RECHECK_EVERY = 10
 
 export const ACTION_RUN_CACHE_ACTIVE_WINDOW_MS = 15 * 60 * 1000
 export const ACTION_RUN_CACHE_MAX_DIRS = 200
