@@ -1,7 +1,7 @@
-import { utimes } from 'node:fs/promises'
+import { readdir, rm, stat, utimes } from 'node:fs/promises'
+import path from 'node:path'
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
-import { cacheEviction } from './cache-eviction'
 import { ACTION_RUN_CODE_DIR, cacheUtils } from './cache-paths'
 import { pendingCacheRemovals } from './pending-cache-removals'
 
@@ -32,10 +32,19 @@ export const actionRunCache = {
     async sweep({ basePath, log, activeWindowMs = ACTION_RUN_CACHE_ACTIVE_WINDOW_MS }: SweepParams): Promise<void> {
         const startedAt = Date.now()
         const actionRunsPath = cacheUtils(basePath).getActionRunCodeCachePath()
-        const managed = await cacheEviction.listManagedDirs({ parentPath: actionRunsPath, log, cacheLabel: 'Action-run code' })
-        if (managed === null) {
+        const { data: entries, error } = await tryCatch(() => readdir(actionRunsPath, { withFileTypes: true }))
+        if (error) {
+            if ('code' in error && error.code === 'ENOENT') {
+                log.debug({ cache: { path: actionRunsPath } }, 'Action-run code cache directory does not exist yet')
+                return
+            }
+            log.warn({ error, cache: { path: actionRunsPath } }, 'Failed to read the action-run code cache directory')
             return
         }
+
+        const managed = entries
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => path.join(actionRunsPath, entry.name))
 
         const expired = await removeExpired({ dirPaths: managed, expiredAt: Date.now() - ACTION_RUN_CACHE_TTL_MS })
 
@@ -75,7 +84,7 @@ async function removeExpired({ dirPaths, expiredAt }: RemoveExpiredParams): Prom
     let failedCount = 0
     let unreadableCount = 0
     for (const dirPath of dirPaths) {
-        const mtimeMs = await cacheEviction.readMtimeMs(dirPath)
+        const mtimeMs = await readMtimeMs(dirPath)
         if (isNil(mtimeMs)) {
             unreadableCount += 1
             continue
@@ -84,7 +93,7 @@ async function removeExpired({ dirPaths, expiredAt }: RemoveExpiredParams): Prom
             survivors.push({ dirPath, mtimeMs })
             continue
         }
-        const outcome = await cacheEviction.removeDir({ dirPath, expectedMtimeMs: mtimeMs })
+        const outcome = await removeDir({ dirPath, expectedMtimeMs: mtimeMs })
         expiredCount += outcome === 'removed' ? 1 : 0
         failedCount += outcome === 'failed' ? 1 : 0
     }
@@ -95,11 +104,34 @@ async function removeOldest(entries: DirEntry[]): Promise<EvictedResult> {
     let removedCount = 0
     let failedCount = 0
     for (const entry of entries) {
-        const outcome = await cacheEviction.removeDir({ dirPath: entry.dirPath, expectedMtimeMs: entry.mtimeMs })
+        const outcome = await removeDir({ dirPath: entry.dirPath, expectedMtimeMs: entry.mtimeMs })
         removedCount += outcome === 'removed' ? 1 : 0
         failedCount += outcome === 'failed' ? 1 : 0
     }
     return { removedCount, failedCount }
+}
+
+async function readMtimeMs(dirPath: string): Promise<number | null> {
+    const { data: stats, error } = await tryCatch(() => stat(dirPath))
+    if (error) {
+        return null
+    }
+    return stats.mtimeMs
+}
+
+async function removeDir({ dirPath, expectedMtimeMs }: RemoveDirParams): Promise<RemoveOutcome> {
+    const currentMtimeMs = await readMtimeMs(dirPath)
+    if (isNil(currentMtimeMs) || currentMtimeMs !== expectedMtimeMs) {
+        return 'skipped'
+    }
+    const removal = tryCatch(() => rm(dirPath, { recursive: true, force: true }))
+    pendingCacheRemovals.track(dirPath, removal)
+    const { error } = await removal
+    pendingCacheRemovals.untrack(dirPath)
+    if (isNil(error)) {
+        return 'removed'
+    }
+    return 'failed'
 }
 
 const ACTION_RUN_CACHE_TTL_MS = 2 * 60 * 60 * 1000
@@ -124,6 +156,13 @@ type DirEntry = {
     dirPath: string
     mtimeMs: number
 }
+
+type RemoveDirParams = {
+    dirPath: string
+    expectedMtimeMs: number
+}
+
+type RemoveOutcome = 'removed' | 'skipped' | 'failed'
 
 type RemoveExpiredParams = {
     dirPaths: string[]
