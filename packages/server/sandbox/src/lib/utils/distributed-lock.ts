@@ -15,8 +15,13 @@ export const diskLock = (locksPath: string) => ({
         const token = randomUUID()
         const deadline = isNil(timeoutMs) ? null : Date.now() + timeoutMs
         await mkdir(locksPath, { recursive: true })
+        let retriedAfterTakeover = false
         while (!await tryAcquireOnce({ lockPath, token })) {
-            await takeoverIfStale(lockPath)
+            const tookOver = await takeoverIfStale(lockPath)
+            if (tookOver && !retriedAfterTakeover && (isNil(deadline) || Date.now() < deadline)) {
+                retriedAfterTakeover = true
+                continue
+            }
             if (!isNil(deadline) && Date.now() >= deadline) {
                 throw new DiskLockTimeoutError(key)
             }
@@ -72,17 +77,18 @@ async function tryAcquireOnce({ lockPath, token }: LockParams): Promise<boolean>
     return true
 }
 
-async function takeoverIfStale(lockPath: string): Promise<void> {
+async function takeoverIfStale(lockPath: string): Promise<boolean> {
     const { data: lockStat, error } = await tryCatch(() => stat(lockPath))
     if (error || Date.now() - lockStat.mtimeMs < STALE_LOCK_MS) {
-        return
+        return false
     }
     const stalePath = `${lockPath}.stale-${randomUUID()}`
     const { error: renameError } = await tryCatch(() => rename(lockPath, stalePath))
     if (renameError) {
-        return
+        return false
     }
     await rm(stalePath, { force: true })
+    return true
 }
 
 async function releaseIfOwned({ lockPath, token }: LockParams): Promise<void> {
