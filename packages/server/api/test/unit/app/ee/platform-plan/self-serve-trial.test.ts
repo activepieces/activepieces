@@ -140,6 +140,10 @@ function endedTrialRow(dates: TrialDates): Record<string, unknown> {
     return { planId: PlanName.SELF_SERVE_TRIAL, status: ListSubscriptionsListStatus.Expired, startedAt: Date.parse(dates.startedAt), trialEndsAt: null, expiresAt: Date.parse(dates.endsAt) }
 }
 
+function ranOutTrialRow(dates: TrialDates): Record<string, unknown> {
+    return { planId: PlanName.SELF_SERVE_TRIAL, status: ListSubscriptionsListStatus.Expired, startedAt: Date.parse(dates.startedAt), trialEndsAt: Date.parse(dates.endsAt), expiresAt: null }
+}
+
 describe('self-serve trial', () => {
     beforeEach(() => {
         vi.useRealTimers()
@@ -355,8 +359,14 @@ describe('self-serve trial', () => {
             expect(store.get(TRIAL_KEY)).toEqual({ dates: STARTED })
         })
 
-        it('keeps an ended trial\'s dates from its expired subscription', async () => {
+        it('keeps the dates of a trial cancelled before its end', async () => {
             await refreshWith({ customer: customerWith({ trialUsed: true }), subscriptions: [endedTrialRow(PAST)] })
+
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: PAST })
+        })
+
+        it('keeps the dates of a trial that ran out on its own', async () => {
+            await refreshWith({ customer: customerWith({ trialUsed: true }), subscriptions: [ranOutTrialRow(PAST)] })
 
             expect(store.get(TRIAL_KEY)).toEqual({ dates: PAST })
         })
