@@ -56,7 +56,7 @@ function readBoolean({ value, label }: { value: unknown; label: string }): boole
   if (text === 'false' || text === 'no') {
     return false;
   }
-  throw new Error(`${label} must be yes or no, got "${String(value)}".`);
+  throw new Error(`${label} must be yes/no or true/false, got "${String(value)}".`);
 }
 
 function readText(value: unknown): string | undefined {

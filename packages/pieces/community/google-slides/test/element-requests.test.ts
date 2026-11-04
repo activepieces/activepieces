@@ -43,7 +43,7 @@ describe('units and colours', () => {
     expect(slidesElements.readBoolean({ value: 'true', label: 'Bold' })).toBe(true);
     expect(slidesElements.readBoolean({ value: 'yes', label: 'Bold' })).toBe(true);
     expect(slidesElements.readBoolean({ value: 'no', label: 'Bold' })).toBe(false);
-    expect(() => slidesElements.readBoolean({ value: 'maybe', label: 'Bold' })).toThrow(/yes or no/);
+    expect(() => slidesElements.readBoolean({ value: 'maybe', label: 'Bold' })).toThrow('Bold must be yes/no or true/false, got "maybe".');
   });
 });
 

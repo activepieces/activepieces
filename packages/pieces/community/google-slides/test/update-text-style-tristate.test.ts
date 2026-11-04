@@ -47,7 +47,7 @@ describe('update_text_style tri-state flags', () => {
   });
 
   it('rejects other values', () => {
-    expect(() => slidesElements.readBoolean({ value: 'maybe', label: 'Bold' })).toThrow(/yes or no/);
+    expect(() => slidesElements.readBoolean({ value: 'maybe', label: 'Bold' })).toThrow('Bold must be yes/no or true/false, got "maybe".');
   });
 });
 
