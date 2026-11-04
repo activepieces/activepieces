@@ -175,6 +175,7 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
 }): { tools: ToolSet, onFlowToolResult: (params: { toolName: string, result: unknown }) => string | undefined } {
     const buildId = apId()
     let currentPlan: BuildPlanEvent | null = null
+    let plannedRows: PlannedRow[] = []
     const builtFlows = new Map<string, BuiltFlow>()
     const emit = (event: BuildPlanEvent): void => {
         currentPlan = event
@@ -185,14 +186,14 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
         if (!isNil(built)) {
             builtFlows.set(built.flowId, built)
             if (!isNil(currentPlan)) {
-                emit(buildPlanSync.withBuiltRows({ plan: currentPlan, builtFlows: [...builtFlows.values()] }))
+                emit(buildPlanSync.withBuiltRows({ plan: currentPlan, builtFlows: [...builtFlows.values()], plannedRows }))
             }
         }
         return isNil(currentPlan) && toolName === 'ap_build_flow' ? MISSING_CARD_NOTE : undefined
     }
     const tools: ToolSet = {
         ap_set_build_plan: tool({
-            description: 'The live build card for a brand-new recurring automation (silent, internal — no thinking status). Use it only while following the build_flow guide; never for a one-time task, a lookup, an answer or a small edit to an existing automation. Call it once with phase "detecting" and every step "pending" before building, then update it as you work, reusing the same tagline, iconName and step ids so the card updates in place. Send each update alongside the next step\'s real tool calls instead of as a step on its own, but only with states you already know: mark a step done or failed, or set phase done or failed, only after the result that decides it has come back, never in the same step as the call that produces it.',
+            description: 'The live build card for a brand-new recurring automation (silent, internal — no thinking status). Use it only while following the build_flow guide; never for a one-time task, a lookup, an answer or a small edit to an existing automation. When the solution is several flows, give each flow one row and set its flowName. Call it once with phase "detecting" and every step "pending" before building, then update it as you work, reusing the same tagline, iconName and step ids so the card updates in place. Send each update alongside the next step\'s real tool calls instead of as a step on its own, but only with states you already know: mark a step done or failed, or set phase done or failed, only after the result that decides it has come back, never in the same step as the call that produces it.',
             inputSchema: z.object({
                 phase: z.enum(['detecting', 'building', 'testing', 'done', 'failed']).describe('"detecting" = just decided to build (celebrate); "building" = constructing steps; "testing" = running test cases; "done" = built & verified; "failed" = gave up'),
                 flowName: z.string().describe('Human-readable automation name shown on the card'),
@@ -203,6 +204,7 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
                     id: z.string().describe('Stable id you reuse across updates, e.g. "trigger", "classify", "route"'),
                     label: z.string().describe('Short human label for a planned step. Once flows are built, the card shows their real steps and their state by itself.'),
                     status: z.enum(['pending', 'in_progress', 'done', 'failed']),
+                    flowName: z.string().optional().describe('Only when the solution is several flows and this row stands for one whole flow: the exact name you build that flow with.'),
                 })).min(1),
             }),
             execute: async (input) => {
@@ -212,12 +214,13 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
                     flowName: input.flowName,
                     tagline: input.tagline,
                     iconName: input.iconName,
-                    steps: input.steps,
+                    steps: input.steps.map(({ id, label, status }) => ({ id, label, status })),
                     updatedAt: new Date().toISOString(),
                     ...spreadIfDefined('flowId', input.flowId),
                     ...spreadIfDefined('projectId', getProjectId() ?? undefined),
                 }
-                const plan = builtFlows.size === 0 ? event : buildPlanSync.withBuiltRows({ plan: event, builtFlows: [...builtFlows.values()] })
+                plannedRows = input.steps
+                const plan = builtFlows.size === 0 ? event : buildPlanSync.withBuiltRows({ plan: event, builtFlows: [...builtFlows.values()], plannedRows })
                 emit(plan)
                 return { ok: true, buildId, plan }
             },
@@ -273,14 +276,15 @@ function builtFlowOf({ result }: { result: unknown }): BuiltFlow | null {
     }
 }
 
-function withBuiltRows({ plan, builtFlows }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[] }): BuildPlanEvent {
+function withBuiltRows({ plan, builtFlows, plannedRows = [] }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[], plannedRows?: PlannedRow[] }): BuildPlanEvent {
     const finished = plan.phase === 'done'
     const status = (done: boolean): 'done' | 'in_progress' => done || finished ? 'done' : 'in_progress'
     const flowRow = (flow: BuiltFlow): BuildPlanStep => ({ id: flow.flowId, label: flow.name, status: status(flow.steps.every((step) => step.done)) })
-    const steps = plannedFlowRows({ plan, builtFlows, flowRow, finished })
-        ?? (builtFlows.length === 1
+    const steps = plannedRows.some((row) => !isNil(row.flowName))
+        ? plannedFlowRows({ plannedRows, builtFlows, flowRow, finished })
+        : builtFlows.length === 1
             ? builtFlows[0].steps.map((step, index) => ({ id: `${builtFlows[0].flowId}:${index}`, label: step.label, status: status(step.done) }))
-            : builtFlows.map(flowRow))
+            : builtFlows.map(flowRow)
     return {
         ...plan,
         steps,
@@ -290,17 +294,20 @@ function withBuiltRows({ plan, builtFlows }: { plan: BuildPlanEvent, builtFlows:
     }
 }
 
-function plannedFlowRows({ plan, builtFlows, flowRow, finished }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[], flowRow: (flow: BuiltFlow) => BuildPlanStep, finished: boolean }): BuildPlanStep[] | null {
-    const flowFor = (step: BuildPlanStep): BuiltFlow | undefined => builtFlows.find((flow) => ` ${comparableName(step.label)} `.includes(` ${comparableName(flow.name)} `))
-    const matched = new Set(plan.steps.map(flowFor).filter((flow): flow is BuiltFlow => !isNil(flow)))
-    if (matched.size === 0) {
-        return null
-    }
-    const planned = plan.steps.map((step): BuildPlanStep => {
-        const flow = flowFor(step)
-        return isNil(flow) ? { ...step, status: finished ? 'done' : step.status } : flowRow(flow)
+function plannedFlowRows({ plannedRows, builtFlows, flowRow, finished }: { plannedRows: PlannedRow[], builtFlows: BuiltFlow[], flowRow: (flow: BuiltFlow) => BuildPlanStep, finished: boolean }): BuildPlanStep[] {
+    const shown = new Set<string>()
+    const planned = plannedRows.flatMap(({ id, label, status, flowName }): BuildPlanStep[] => {
+        const flow = isNil(flowName) ? undefined : builtFlows.find((candidate) => comparableName(candidate.name) === comparableName(flowName))
+        if (isNil(flow)) {
+            return [{ id, label, status: finished ? 'done' : status }]
+        }
+        if (shown.has(flow.flowId)) {
+            return []
+        }
+        shown.add(flow.flowId)
+        return [flowRow(flow)]
     })
-    return [...planned, ...builtFlows.filter((flow) => !matched.has(flow)).map(flowRow)]
+    return [...planned, ...builtFlows.filter((flow) => !shown.has(flow.flowId)).map(flowRow)]
 }
 
 function comparableName(name: string): string {
@@ -330,6 +337,8 @@ export const buildPlanSync = {
 }
 
 type BuildPlanStep = BuildPlanEvent['steps'][number]
+
+type PlannedRow = BuildPlanStep & { flowName?: string }
 
 type BuiltFlow = {
     flowId: string

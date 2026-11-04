@@ -850,26 +850,35 @@ describe('buildPlanSync', () => {
     })
 
     it('keeps the flows not built yet when the card plans several flows', () => {
-        const plan: BuildPlanEvent = { ...PLAN, steps: [
-            { id: 'digest', label: 'Morning digest flow', status: 'pending' },
-            { id: 'checkin', label: 'Midday check-in flow', status: 'pending' },
-            { id: 'recap', label: 'Evening recap flow', status: 'pending' },
-        ] }
+        const plannedRows = [
+            { id: 'digest', label: 'Build Morning digest flow (8am)', status: 'pending' as const, flowName: 'Morning digest flow' },
+            { id: 'checkin', label: 'Midday check-in flow', status: 'pending' as const, flowName: 'Midday check-in flow' },
+            { id: 'recap', label: 'Evening recap flow', status: 'pending' as const, flowName: 'Evening recap flow' },
+        ]
         const flow = built(result({ flowId: 'f1', name: 'Morning digest flow', steps: [['catch_webhook', 'ok'], ['Send morning digest', 'ok']] }))
 
-        const next = buildPlanSync.withBuiltRows({ plan, builtFlows: [flow] })
+        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows })
 
-        expect(rows(next)).toEqual(expect.arrayContaining(['Midday check-in flow=pending', 'Evening recap flow=pending']))
+        expect(rows(next)).toEqual(['Morning digest flow=done', 'Midday check-in flow=pending', 'Evening recap flow=pending'])
     })
 
-    it('matches a built flow to the planned row that names it in more words', () => {
-        const plan: BuildPlanEvent = { ...PLAN, steps: [
-            { id: 'digest', label: 'Build Morning digest flow (8am + router)', status: 'in_progress' },
-            { id: 'recap', label: 'Build Evening recap flow (6pm)', status: 'pending' },
-        ] }
+    it('shows a planned flow once when two rows name it', () => {
+        const plannedRows = [
+            { id: 'build', label: 'Build the digest', status: 'pending' as const, flowName: 'Morning digest flow' },
+            { id: 'test', label: 'Test the digest', status: 'pending' as const, flowName: 'Morning digest flow' },
+        ]
         const flow = built(result({ flowId: 'f1', name: 'Morning digest flow', steps: [['every_day', 'ok']] }))
 
-        expect(rows(buildPlanSync.withBuiltRows({ plan, builtFlows: [flow] }))).toEqual(['Morning digest flow=done', 'Build Evening recap flow (6pm)=pending'])
+        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows })
+
+        expect(next.steps.map((step) => step.id)).toEqual(['f1'])
+    })
+
+    it('keeps the real steps of a single flow when the rows only mention its name', () => {
+        const plannedRows = [{ id: 'setup', label: 'Set up Email triage', status: 'pending' as const }]
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['gmail_new_email_received', 'ok'], ['Classify urgency', 'problem']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows }))).toEqual(['Gmail new email received=done', 'Classify urgency=in_progress'])
     })
 
     it('marks every row done once the model sets phase done', () => {

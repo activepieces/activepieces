@@ -251,15 +251,15 @@ function formatTurnDuration({
 
 function formatDuration(ms: number): string {
   const totalSeconds = ms / 1000;
-  if (totalSeconds < 60) {
+  const rounded = Math.round(totalSeconds);
+  if (rounded < 60) {
     return t('{seconds} sec', {
       seconds:
         totalSeconds < 10
           ? (Math.round(totalSeconds * 10) / 10).toString()
-          : Math.round(totalSeconds).toString(),
+          : rounded.toString(),
     });
   }
-  const rounded = Math.round(totalSeconds);
   return t('{minutes} min {seconds} sec', {
     minutes: Math.floor(rounded / 60),
     seconds: rounded % 60,
