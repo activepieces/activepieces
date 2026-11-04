@@ -92,6 +92,7 @@ function buildCreateRequest({
     case AIProviderName.MOONSHOT:
     case AIProviderName.META:
     case AIProviderName.NVIDIA:
+    case AIProviderName.COHERE:
       return {
         provider,
         displayName,

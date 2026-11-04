@@ -60,6 +60,19 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
 5. After you finish all the previous steps and filled the required inputs, add models but make sure you prefix the model id with the provider name i.e (openai/gpt-4o) or (anthropic/claude-3-5-sonnet), check https://developers.cloudflare.com/ai-gateway/usage/chat-completion/ for more information.`),
   },
   {
+    provider: AIProviderName.COHERE,
+    name: 'Cohere',
+    logoUrl: 'https://cdn.activepieces.com/pieces/cohere.png',
+    markdown: t(`Follow these instructions to get your Cohere API Key:
+
+1. Go to https://dashboard.cohere.com/api-keys and sign in.
+2. Copy a trial key or click **New Production Key**, then paste it below.
+
+Trial keys are free but rate-limited. Use a production key for live flows.
+`),
+    dashboardUrl: 'https://dashboard.cohere.com/billing',
+  },
+  {
     provider: AIProviderName.DEEPSEEK,
     name: 'DeepSeek',
     logoUrl: 'https://cdn.activepieces.com/pieces/deepseek.png',
