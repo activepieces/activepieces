@@ -57,7 +57,7 @@ export const listListItemsAction = createAction({
         ...(includeFields === false ? {} : { $expand: 'fields' }),
         ...(propsValue.filter ? { $filter: propsValue.filter } : {}),
       },
-      headers: propsValue.filter ? { Prefer: 'HonorNonIndexedQueriesWarningMayFailRandomly' } : {},
+      headers: propsValue.filter || propsValue.nextLink ? { Prefer: 'HonorNonIndexedQueriesWarningMayFailRandomly' } : {},
     });
   },
 });
