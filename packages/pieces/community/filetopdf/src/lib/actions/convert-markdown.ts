@@ -3,10 +3,12 @@ import { filetopdfAuth } from '../auth';
 import { filetopdfApi } from '../common/api';
 import { filetopdfProps } from '../common/props';
 import { filetopdfUtils } from '../common/utils';
+import { conversionOutputSchema } from '../output-schemas';
 
 export const convertMarkdownAction = createAction({
   auth: filetopdfAuth,
   name: 'convert_markdown',
+  outputSchema: conversionOutputSchema,
   classification: 'READ',
   displayName: 'Convert Markdown',
   description:

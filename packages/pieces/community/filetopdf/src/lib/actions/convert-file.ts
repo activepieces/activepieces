@@ -6,10 +6,12 @@ import { filetopdfClient } from '../common/client';
 import { filetopdfProps } from '../common/props';
 import { filetopdfUtils } from '../common/utils';
 import type { FiletopdfPdfEnvelope } from '../common/types';
+import { conversionOutputSchema } from '../output-schemas';
 
 export const convertFileAction = createAction({
   auth: filetopdfAuth,
   name: 'convert_file',
+  outputSchema: conversionOutputSchema,
   classification: 'READ',
   displayName: 'Convert a File',
   description:
