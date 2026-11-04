@@ -87,7 +87,7 @@ export const TestEventCard = ({
 
   return (
     <SettingsPanel title={t('Send test event')} description={description}>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Select
           value={activeEvent ?? ''}
           onValueChange={(value) =>
@@ -95,7 +95,7 @@ export const TestEventCard = ({
           }
           disabled={events.length === 0}
         >
-          <SelectTrigger className="flex-1">
+          <SelectTrigger className="flex-1 basis-40">
             <SelectValue placeholder={t('Choose an event')} />
           </SelectTrigger>
           <SelectContent>

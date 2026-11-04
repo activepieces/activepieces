@@ -9,6 +9,7 @@ export const runQueryAction = createAction({
   name: 'run_query',
   displayName: 'Run Query',
   description: 'Runs a T-SQL statement and returns the rows it produced',
+  classification: 'DESTRUCTIVE',
   audience: 'both',
   aiMetadata: {
     description:
