@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Bigin by Zoho CRM 0.2.0: the existing actions are no longer AI agent tools
+
+The 16 existing Bigin actions (Create and Update Company, Contact, Task, Event and Pipeline Record, Create Call, the four Search actions and Search User) are now shown only in the flow builder. AI agents and MCP clients get the new "(Agent)" actions instead: Search, Get and List Records, Create and Update Contact, Company, Deal, Task and Event, Log Call, List Users and List Pipelines, plus Add Note and Delete Record.
+
+#### What you need to do
+
+- Agents that used the old Bigin actions as tools: switch to the new "(Agent)" actions.
+- Flow steps keep working unchanged.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 
 When Activepieces connects to an MCP server, it no longer follows a redirect to a different host or port. That redirect now fails the connection, so headers such as API keys are never sent to a host you did not configure.
