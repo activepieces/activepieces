@@ -232,6 +232,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Row Created": "新しい行を作成しました",
   "Triggers when a new row is added to the selected table.": "選択したテーブルに新しい行が追加されたときにトリガーされます。"
 }

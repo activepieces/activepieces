@@ -28,6 +28,7 @@ import { UserMemoryEntity } from './user-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
 const STARTED_RUN_MARKER_TTL_SECONDS = 24 * 60 * 60
+const HANDED_OFF_RUN_TTL_SECONDS = 60
 
 // Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
 // eval endpoints and the regular chat path can tell them apart from real user conversations.
@@ -433,7 +434,8 @@ async function acquireStreamingLock({ conversationId, runId }: { conversationId:
     if (!isNil(runId)) {
         const firstDelivery = await distributedStore.putIfAbsent(`agent-run-started:${conversationId}:${runId}`, true, STARTED_RUN_MARKER_TTL_SECONDS)
         if (!firstDelivery) {
-            return 'duplicate'
+            const handedToThisDelivery = await distributedStore.delete(handedOffRunKey({ conversationId, runId })) > 0
+            return handedToThisDelivery ? 'handed-off' : 'duplicate'
         }
     }
     const builder = conversationRepo()
@@ -455,6 +457,14 @@ async function acquireStreamingLock({ conversationId, runId }: { conversationId:
         return 'busy'
     }
     return current.activeRunId === runId ? 'duplicate' : 'superseded'
+}
+
+async function handLockToRedelivery({ conversationId, runId }: { conversationId: string, runId: string }): Promise<void> {
+    await distributedStore.put(handedOffRunKey({ conversationId, runId }), true, HANDED_OFF_RUN_TTL_SECONDS)
+}
+
+function handedOffRunKey({ conversationId, runId }: { conversationId: string, runId: string }): string {
+    return `agent-run-handed-off:${conversationId}:${runId}`
 }
 
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
@@ -519,6 +529,7 @@ export const agentHelpers = {
     jobFieldsFromConfig,
     claimConversationForRun,
     acquireStreamingLock,
+    handLockToRedelivery,
     resolveFlowTools,
     agentsSurfaceAvailable,
     assertAgentsSurfaceAvailable,
@@ -557,7 +568,7 @@ type SweptConversation = z.infer<typeof SweptConversation>
 
 type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'modelTierId' | 'promptOverride'>
 
-export type StreamingLockResult = 'acquired' | 'busy' | 'superseded' | 'duplicate'
+export type StreamingLockResult = 'acquired' | 'handed-off' | 'busy' | 'superseded' | 'duplicate'
 
 export type PlatformWorkModel = {
     config: GetProviderConfigResponse
