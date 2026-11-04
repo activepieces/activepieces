@@ -70,7 +70,7 @@ export const newItemTrigger = createTrigger({
   async run(context) {
     const payload = context.payload.body;
 
-    if (await podioApi.validateHookIfVerification({ auth: context.auth, body: payload })) {
+    if (await podioApi.validateHookIfVerification({ auth: context.auth, body: payload, hookId: await context.store.get<number>('podio_new_item_hook_id') })) {
       return [];
     }
 

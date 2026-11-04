@@ -2248,6 +2248,14 @@ export const findItemOutputSchema: OutputSchema = {
       label: 'User Ratings',
       children: [{ key: 'like', label: 'Like' }],
     },
+    { key: 'filtered', label: 'Filtered', format: 'number' },
+    {
+      key: 'items',
+      label: 'Items',
+      labelKey: 'title',
+      listItems: itemListFields,
+    },
+    { key: 'total', label: 'Total', format: 'number' },
   ],
 };
 

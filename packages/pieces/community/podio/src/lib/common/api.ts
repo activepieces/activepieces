@@ -80,11 +80,14 @@ async function requestHookVerification({ auth, hookId }: { auth: PodioAuthValue;
   await podioClient.request<unknown>({ auth, method: HttpMethod.POST, path: `/hook/${hookId}/verify/request` });
 }
 
-async function validateHookIfVerification({ auth, body }: { auth: PodioAuthValue; body: unknown }): Promise<boolean> {
-  if (!body || typeof body !== 'object' || !('type' in body) || body.type !== 'hook.verify' || !('hook_id' in body) || !('code' in body)) {
+async function validateHookIfVerification({ auth, body, hookId }: { auth: PodioAuthValue; body: unknown; hookId: number | null }): Promise<boolean> {
+  if (!body || typeof body !== 'object' || !('type' in body) || body.type !== 'hook.verify') {
     return false;
   }
-  await podioClient.request<unknown>({ auth, method: HttpMethod.POST, path: `/hook/${String(body.hook_id)}/verify/validate`, body: { code: body.code } });
+  if (hookId === null || !('hook_id' in body) || String(body.hook_id) !== String(hookId) || !('code' in body)) {
+    return true;
+  }
+  await podioClient.request<unknown>({ auth, method: HttpMethod.POST, path: `/hook/${hookId}/verify/validate`, body: { code: body.code } });
   return true;
 }
 

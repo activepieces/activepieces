@@ -28,8 +28,8 @@ export const updateItemAction = createAction({
     }),
     revision: podioAiProps.number({ required: false, displayName: 'Revision', description: 'The current_revision.revision from Get Item; the update fails with a conflict if the item changed since.' }),
     externalId: podioAiProps.text({ required: false, displayName: 'External ID', description: 'A new external id for the item.' }),
-    fileIds: podioAiProps.idList({ required: false, displayName: 'File IDs', description: 'The full list of file ids attached to the item, from Upload File; replaces the current attachments.' }),
-    tags: podioAiProps.idList({ required: false, displayName: 'Tags', description: 'The full list of tag texts on the item; replaces the current tags.' }),
+    fileIds: podioAiProps.idList({ required: false, displayName: 'File IDs', description: 'The full list of file ids attached to the item, from Upload File; replaces the current attachments. An empty list leaves them unchanged.' }),
+    tags: podioAiProps.idList({ required: false, displayName: 'Tags', description: 'The full list of tag texts on the item; replaces the current tags. An empty list leaves them unchanged.' }),
     remindDelta: podioAiProps.number({ required: false, displayName: 'Reminder (Minutes Before)', description: 'For meeting items: minutes before the due date to send a reminder.' }),
     recurrence: podioAiProps.json({
       required: false,
