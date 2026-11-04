@@ -312,32 +312,31 @@ describe('new product upgrade', () => {
     return { auth: AUTH, propsValue: {}, store, isRepublish, setSchedule: () => undefined };
   }
 
-  function hook(name: 'onEnable' | 'run', context: ReturnType<typeof triggerContext>): Promise<unknown> {
+  function hook({ name, context }: { name: 'onEnable' | 'run'; context: ReturnType<typeof triggerContext> }): Promise<unknown> {
     return Promise.resolve(Reflect.apply(newProductTrigger[name], newProductTrigger, [context]));
   }
 
-  const products = (ids: number[]) => ids.map((id) => ({ id }));
+  const products = ({ ids }: { ids: number[] }) => ids.map((id) => ({ id }));
 
   it('re-baselines once on the upgrade instead of firing old products', async () => {
-    // 0.2.x stored the 500th oldest id; the account now has 800 products.
     const data = new Map<string, unknown>([['lastItem', 500]]);
-    const newest = products(Array.from({ length: 300 }, (_, index) => 800 - index));
+    const newest = products({ ids: Array.from({ length: 300 }, (_, index) => 800 - index) });
     mockBodies([newest, newest]);
 
-    await hook('onEnable', triggerContext({ data, isRepublish: true }));
+    await hook({ name: 'onEnable', context: triggerContext({ data, isRepublish: true }) });
     expect(data.get('lastItem')).toBe(800);
     expect(data.get('order_v2')).toBe(true);
-    await expect(hook('run', triggerContext({ data, isRepublish: false }))).resolves.toEqual([]);
+    await expect(hook({ name: 'run', context: triggerContext({ data, isRepublish: false }) })).resolves.toEqual([]);
   });
 
   it('keeps lastItem on later republishes', async () => {
     const data = new Map<string, unknown>([['lastItem', 800], ['order_v2', true]]);
-    const spy = mockBodies([products([802, 801, 800])]);
+    const spy = mockBodies([products({ ids: [802, 801, 800] })]);
 
-    await hook('onEnable', triggerContext({ data, isRepublish: true }));
+    await hook({ name: 'onEnable', context: triggerContext({ data, isRepublish: true }) });
     expect(spy).not.toHaveBeenCalled();
     expect(data.get('lastItem')).toBe(800);
-    const fired = await hook('run', triggerContext({ data, isRepublish: false }));
-    expect(fired).toEqual(products([802, 801]));
+    const fired = await hook({ name: 'run', context: triggerContext({ data, isRepublish: false }) });
+    expect(fired).toEqual(products({ ids: [802, 801] }));
   });
 });

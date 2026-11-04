@@ -124,14 +124,9 @@ export const newProductTrigger = createTrigger({
     expense_account_id: null,
   },
   onEnable: async (context) => {
-    // Up to 0.2.x the trigger read the 500 oldest products, so a stored lastItem
-    // can sit far below the newest id. Re-baseline once so the upgrade does not
-    // fire every product above it; later republishes keep lastItem as usual.
-    const isNewestFirstBaseline = await context.store.get<boolean>(NEWEST_FIRST_MARKER);
-    await pollingHelper.onEnable(polling, {
-      ...context,
-      isRepublish: isNewestFirstBaseline === true ? context.isRepublish : false,
-    });
+    const hasNewestFirstBaseline = (await context.store.get<boolean>(NEWEST_FIRST_MARKER)) === true;
+    const enableContext = hasNewestFirstBaseline ? context : { ...context, isRepublish: false };
+    await pollingHelper.onEnable(polling, enableContext);
     await context.store.put(NEWEST_FIRST_MARKER, true);
   },
   onDisable: async (context) => {
