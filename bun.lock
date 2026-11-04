@@ -7549,7 +7549,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
-        "vitest": "3.2.6",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/pushover": {
