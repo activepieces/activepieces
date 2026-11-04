@@ -54,8 +54,6 @@ export const updateConversationTags = createAction({
       await writeTags(replaced);
       return { conversationId: String(propsValue.conversationId), tags: replaced };
     }
-    // Help Scout's tags endpoint replaces the whole list and has no ETag/If-Match or per-tag add/remove,
-    // so read right before writing, then re-read once and re-apply our change on top of whatever is there now.
     const before = await readTags();
     await writeTags(helpScoutApi.mergeTags({ current: before, requested, mode }));
     const after = await readTags();

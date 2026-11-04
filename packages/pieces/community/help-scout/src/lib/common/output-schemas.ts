@@ -118,6 +118,12 @@ const mailboxFields: OutputSchemaField[] = [
   { key: 'updatedAt', label: 'Updated At', format: 'datetime' },
 ];
 
+const conversationLinksField: OutputSchemaField = {
+  key: '_links',
+  label: 'Links',
+  children: [{ key: 'web', label: 'Web', children: [{ key: 'href', label: 'Web URL', description: 'Opens the conversation in Help Scout.' }] }],
+};
+
 const idOnly: OutputSchema = {
   fields: [{ key: 'id', label: 'ID', description: 'From the Resource-ID response header.' }],
 };
@@ -139,7 +145,7 @@ export const helpScoutOutputSchemas: Record<string, OutputSchema> = {
   listUsers: { fields: [{ key: 'users', label: 'Users', labelKey: 'email', listItems: userFields }, { key: 'count', label: 'Count', format: 'number' }, { key: 'truncated', label: 'Truncated', format: 'boolean' }] },
   listTags: { fields: [{ key: 'tags', label: 'Tags', labelKey: 'name', listItems: [{ key: 'id', label: 'Tag ID', format: 'number' }, { key: 'name', label: 'Name' }, { key: 'slug', label: 'Slug' }, { key: 'color', label: 'Color' }, { key: 'ticketCount', label: 'Conversation Count', format: 'number' }, { key: 'createdAt', label: 'Created At', format: 'datetime' }] }, { key: 'count', label: 'Count', format: 'number' }, { key: 'truncated', label: 'Truncated', format: 'boolean' }] },
   listCustomerProperties: { fields: [{ key: 'properties', label: 'Properties', labelKey: 'name', listItems: [{ key: 'slug', label: 'Slug' }, { key: 'name', label: 'Name' }, { key: 'type', label: 'Type', description: 'text, number, url, date or dropdown.' }, { key: 'options', label: 'Options', labelKey: 'label', listItems: [{ key: 'id', label: 'ID' }, { key: 'label', label: 'Label' }] }] }, { key: 'count', label: 'Count', format: 'number' }] },
-  conversationWebhook: { fields: conversationFields },
+  conversationWebhook: { fields: [...conversationFields, conversationLinksField] },
   customerWebhook: { fields: customerFields },
 };
 
@@ -166,4 +172,5 @@ export const helpScoutSampleConversation = {
   bcc: [],
   primaryCustomer: { id: 333333, type: 'customer', first: 'Jane', last: 'Doe', email: 'jane@example.com' },
   customFields: [],
+  _links: { web: { href: 'https://secure.helpscout.net/conversation/1234567/345/' } },
 };

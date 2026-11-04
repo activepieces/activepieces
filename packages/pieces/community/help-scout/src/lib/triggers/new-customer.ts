@@ -60,7 +60,7 @@ export const newCustomer = createTrigger({
       rawBody: context.payload.rawBody,
       body: context.payload.body,
     });
-    return body ? [helpScoutApi.stripLinks(body)] : [];
+    return body ? [body] : [];
   },
   async test(context) {
     const response = await helpScoutApi.request({
@@ -71,8 +71,7 @@ export const newCustomer = createTrigger({
     });
     return helpScoutApi
       .getEmbeddedList({ body: response.body, key: 'customers' })
-      .slice(0, 5)
-      .map(helpScoutApi.stripLinks);
+      .slice(0, 5);
   },
 });
 

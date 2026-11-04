@@ -488,7 +488,6 @@ function readTagNames(conversation: unknown): string[] {
 
 function findFirst({ body, key }: { body: unknown; key: string }): { found: boolean; data: Record<string, unknown> } {
   const list = getEmbeddedList({ body, key });
-  // Keeps _links: the pre-0.3.0 find actions returned the raw item and saved flows may reference it.
   return list.length > 0 ? { found: true, data: list[0] } : { found: false, data: {} };
 }
 

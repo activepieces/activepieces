@@ -23,7 +23,7 @@ export const updateCustomerProperties = createAction({
       .filter(([, value]) => !isNil(value) && value !== '')
       .map(([slug, value]) => ({ op: 'replace', path: `/${slug}`, value }));
     if (updates.length === 0) {
-      throw new Error('Fill in at least one customer property to update.');
+      return { success: true, customerId: String(propsValue.customerId), updated: [] };
     }
     await helpScoutApi.request({
       method: HttpMethod.PATCH,

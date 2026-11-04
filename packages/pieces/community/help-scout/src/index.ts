@@ -36,7 +36,7 @@ export const helpScout = createPiece({
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/help-scout.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
-  authors: ['sparkybug'],
+  authors: ['sparkybug', 'OdaiAhmed99'],
   actions: [
     createConversation,
     sendReply,

@@ -52,7 +52,7 @@ export const conversationCreated = createTrigger({
     if (!helpScoutApi.matchesAssignee({ body, assignedTo: context.propsValue.assignedTo })) {
       return [];
     }
-    return [helpScoutApi.stripLinks(body)];
+    return [body];
   },
   async test(context) {
     const queryParams: Record<string, string> = { embed: 'threads', status: 'all', sortField: 'modifiedAt', sortOrder: 'desc' };
@@ -66,8 +66,7 @@ export const conversationCreated = createTrigger({
     });
     return helpScoutApi
       .getEmbeddedList({ body: response.body, key: 'conversations' })
-      .slice(0, 5)
-      .map(helpScoutApi.stripLinks);
+      .slice(0, 5);
   },
 });
 

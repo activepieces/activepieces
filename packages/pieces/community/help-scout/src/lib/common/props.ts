@@ -41,6 +41,7 @@ async function loadOptions({
   label,
   queryParams,
   searchValue,
+  limit = DROPDOWN_LIMIT,
 }: {
   auth: { access_token: string } | undefined;
   path: string;
@@ -48,6 +49,7 @@ async function loadOptions({
   label: (item: Record<string, unknown>) => string;
   queryParams?: Record<string, string>;
   searchValue?: unknown;
+  limit?: number;
 }) {
   if (!auth) {
     return { disabled: true, options: [], placeholder: 'Please connect your account first.' };
@@ -59,7 +61,7 @@ async function loadOptions({
       path,
       embedKey,
       queryParams: search ? { ...queryParams, query: search } : queryParams,
-      limit: DROPDOWN_LIMIT,
+      limit,
     });
     const options = items
       .filter((item) => stringOf(item['id']).length > 0)
@@ -69,7 +71,7 @@ async function loadOptions({
       options,
       placeholder:
         truncated && !search
-          ? `Showing the newest ${DROPDOWN_LIMIT} - type to search for older records.`
+          ? `Showing the newest ${limit} - type to search for older records.`
           : undefined,
     };
   } catch {
@@ -88,7 +90,14 @@ export const customerIdDropdown = Property.Dropdown({
   required: true,
   refreshOnSearch: true,
   options: async ({ auth }, { searchValue }) =>
-    loadOptions({ auth, path: '/customers', embedKey: 'customers', label: personLabel, searchValue }),
+    loadOptions({
+      auth,
+      path: '/customers',
+      embedKey: 'customers',
+      label: personLabel,
+      searchValue,
+      limit: SEARCHABLE_DROPDOWN_LIMIT,
+    }),
 });
 
 export const userIdDropdown = (displayName: string) =>
@@ -115,6 +124,7 @@ export const conversationIdDropdown = Property.Dropdown({
       embedKey: 'conversations',
       label: conversationLabel,
       queryParams: { status: 'all', sortField: 'modifiedAt', sortOrder: 'desc' },
+      limit: SEARCHABLE_DROPDOWN_LIMIT,
     }),
 });
 
@@ -193,3 +203,4 @@ export const customerProperties = Property.DynamicProperties({
 });
 
 const DROPDOWN_LIMIT = 500;
+const SEARCHABLE_DROPDOWN_LIMIT = 100;

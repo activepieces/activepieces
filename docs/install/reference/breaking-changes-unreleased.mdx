@@ -8,16 +8,19 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
-#### Help Scout 0.3.0: five actions are no longer AI agent tools, and Find Conversation searches every status
+#### Help Scout 0.3.0: five actions are no longer AI agent tools, and Find Conversation searches every status and applies Tags
 
 **Create Conversation**, **Send Reply**, **Add Note**, **Update Customer Properties** and **Find Conversation** are now shown only in the flow builder. AI agents and MCP clients get new ID-based actions instead, including Search Conversations, Get Conversation, Update Conversation and the list actions for mailboxes, users and tags.
 
 When Status is left empty, **Find Conversation** now searches every status. It used to fall back to Help Scout's default of active only, so closed and pending conversations were never found.
 
+**Find Conversation** now applies the Tags filter. It used to send the tags under a name Help Scout ignores, so the filter never applied. A step with Tags set now returns only conversations that carry those tags, so it can find a different conversation or none.
+
 #### What you need to do
 
 - Agents that used the old Help Scout actions as tools: switch to the new agent actions.
 - If a flow relied on Find Conversation returning only active conversations, set Status to Active.
+- If a Find Conversation step has Tags set, check that the tags match the conversations you expect, or clear Tags to keep the old results.
 
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 
