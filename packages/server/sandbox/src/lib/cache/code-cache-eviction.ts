@@ -74,7 +74,7 @@ async function sweepActionRuns({ basePath, log, activeWindowMs, locks }: ActionR
     const activeAt = Date.now() - activeWindowMs
     const evictable = expired.survivors.filter((entry) => entry.mtimeMs < activeAt)
     const overBy = expired.survivors.length - ACTION_RUN_CACHE_MAX_DIRS
-    const evicted = await removeOldest({
+    const evicted = await removeAll({
         entries: overBy > 0
             ? [...evictable].sort((a, b) => a.mtimeMs - b.mtimeMs).slice(0, overBy)
             : [],
@@ -235,9 +235,7 @@ async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandida
 
 async function removeExpired({ dirPaths, expiredAt, locks }: RemoveExpiredParams): Promise<ExpiredResult> {
     const survivors: DirEntry[] = []
-    let expiredCount = 0
-    let failedCount = 0
-    let skippedCount = 0
+    const expiredEntries: DirEntry[] = []
     let unreadableCount = 0
     for (const dirPath of dirPaths) {
         const mtimeMs = await readMtimeMs(dirPath)
@@ -249,15 +247,19 @@ async function removeExpired({ dirPaths, expiredAt, locks }: RemoveExpiredParams
             survivors.push({ dirPath, mtimeMs })
             continue
         }
-        const outcome = await removeDir({ locks, dirPath, expectedMtimeMs: mtimeMs })
-        expiredCount += outcome === 'removed' ? 1 : 0
-        failedCount += outcome === 'failed' ? 1 : 0
-        skippedCount += outcome === 'skipped' ? 1 : 0
+        expiredEntries.push({ dirPath, mtimeMs })
     }
-    return { survivors, expiredCount, failedCount, skippedCount, unreadableCount }
+    const removed = await removeAll({ entries: expiredEntries, locks })
+    return {
+        survivors,
+        expiredCount: removed.removedCount,
+        failedCount: removed.failedCount,
+        skippedCount: removed.skippedCount,
+        unreadableCount,
+    }
 }
 
-async function removeOldest({ entries, locks }: RemoveOldestParams): Promise<EvictedResult> {
+async function removeAll({ entries, locks }: RemoveAllParams): Promise<RemovalTally> {
     let removedCount = 0
     let failedCount = 0
     let skippedCount = 0
@@ -399,7 +401,7 @@ type RemoveExpiredParams = {
     locks: CacheLocks
 }
 
-type RemoveOldestParams = {
+type RemoveAllParams = {
     entries: DirEntry[]
     locks: CacheLocks
 }
@@ -412,7 +414,7 @@ type ExpiredResult = {
     unreadableCount: number
 }
 
-type EvictedResult = {
+type RemovalTally = {
     removedCount: number
     failedCount: number
     skippedCount: number
