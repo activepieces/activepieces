@@ -4,7 +4,7 @@
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 /* eslint-disable testing-library/no-container, testing-library/no-node-access -- <video> has no implicit ARIA role */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +19,8 @@ vi.mock('lucide-react', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   Gem: (props: Record<string, unknown>) =>
     React.createElement('span', { ...props, 'data-testid': 'gem' }),
+  Plus: (props: Record<string, unknown>) =>
+    React.createElement('span', { ...props, 'data-testid': 'plus' }),
 }));
 
 vi.mock('@/hooks/platform-hooks', () => ({
@@ -147,12 +149,16 @@ describe('create project gating', () => {
     expect(screen.getByTestId('gem')).toBeDefined();
   });
 
-  it('marks every variant with a gem, including the sidebar rail', () => {
-    teamProjectsLimit = 0;
+  it('keeps the plus on the sidebar rail and names the lock in its label', () => {
+    teamProjectsLimit = 3;
     renderWithQueryClient(
-      <CreateProjectButton variant="icon" projects={usedTeamProjects(0)} />,
+      <CreateProjectButton variant="icon" projects={usedTeamProjects(3)} />,
     );
-    expect(screen.getByTestId('gem')).toBeDefined();
+    const button = screen.getByRole('button', {
+      name: 'Create Project, Requires a plan upgrade',
+    });
+    expect(within(button).getByTestId('plus')).toBeDefined();
+    expect(screen.queryByTestId('gem')).toBeNull();
   });
 
   it('refuses on the click instead of after the form is filled in', () => {

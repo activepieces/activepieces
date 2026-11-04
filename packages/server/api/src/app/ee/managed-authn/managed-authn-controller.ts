@@ -1,11 +1,9 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { ApplicationEventName, AuthenticationResponse, ManagedAuthnRequestBody } from '@activepieces/shared'
+import { AuthenticationResponse, ManagedAuthnRequestBody, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { authenticationSideEffects } from '../../authentication/authentication-side-effects'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { applicationEvents } from '../../helper/application-events'
 import { networkUtils } from '../../helper/network-utils'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
 import { managedAuthnService } from './managed-authn-service'
 
 export const managedAuthnController: FastifyPluginAsyncZod = async (
@@ -17,21 +15,18 @@ export const managedAuthnController: FastifyPluginAsyncZod = async (
         async (req): Promise<AuthenticationResponse> => {
             const { externalAccessToken } = req.body
 
-            const response = await managedAuthnService(req.log).externalToken({
+            const { response, signedUp } = await managedAuthnService(req.log).externalToken({
                 externalAccessToken,
             })
             assertNotNullOrUndefined(response.platformId, 'Platform ID is required')
-            applicationEvents(req.log).sendUserEvent({
-                platformId: response.platformId,
-                userId: response.id,
-                projectId: response.projectId ?? undefined,
-                ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_UP,
-                data: {
-                    source: 'managed',
-                },
-            })
+            if (signedUp) {
+                authenticationSideEffects(req.log).onSignIn({
+                    response,
+                    signedUp,
+                    method: UserIdentityProvider.JWT,
+                    ip: networkUtils.clientIp(req),
+                })
+            }
             return response
         },
     )
