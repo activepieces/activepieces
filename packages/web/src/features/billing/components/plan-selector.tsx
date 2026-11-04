@@ -1,10 +1,12 @@
 import { isNil } from '@activepieces/core-utils';
-import { PurchasablePlan, TelemetryEventName } from '@activepieces/shared';
+import {
+  PurchasablePlan,
+  SalesLinkLocationInWebApp,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,6 +25,7 @@ import { useCancelSubscriptionGuard } from '../hooks/use-cancel-subscription-gua
 import { usePlanSeatFloorGuard } from '../hooks/use-plan-seat-floor-guard';
 
 import { CancelSubscriptionDialog } from './cancel-subscription-dialog';
+import { useSalesLink } from './current-subscription-card';
 import { KeepPlanDialog } from './keep-plan-dialog';
 import {
   planSelectorUtils,
@@ -341,7 +344,9 @@ function PlanCta({
   onKeepPlan,
   onDowngrade,
 }: PlanCtaProps) {
-  const { capture } = useTelemetry();
+  const salesLink = useSalesLink({
+    locationInWebApp: SalesLinkLocationInWebApp.PLAN_SELECTOR,
+  });
   if (isEnterprise) {
     return (
       <Button
@@ -350,16 +355,8 @@ function PlanCta({
         asChild
       >
         <a
+          {...salesLink}
           {...adminControl(AdminControl.BILLING_PLAN_SALES_LINK)}
-          href={planSelectorUtils.SALES_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() =>
-            capture({
-              name: TelemetryEventName.SALES_HANDOFF_CLICKED,
-              payload: { plan: 'enterprise', surface: 'plan_selector' },
-            })
-          }
         >
           {t('Talk to sales')}
         </a>
