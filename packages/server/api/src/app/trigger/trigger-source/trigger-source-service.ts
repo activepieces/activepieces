@@ -190,6 +190,11 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             const flowVersion = await flowVersionService(log).getOneOrThrow(triggerSource.flowVersionId)
             const pieceTrigger = await triggerUtils(log).getPieceTrigger({ flowVersion, projectId })
             if (!isNil(pieceTrigger)) {
+                const otherSourceExists = await triggerSourceRepo().existsBy({
+                    flowId,
+                    projectId,
+                    simulate: !simulate,
+                })
                 await flowTriggerSideEffect(log).disable({
                     flowId: triggerSource.flowId,
                     flowVersionId: triggerSource.flowVersionId,
@@ -200,6 +205,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                     ignoreError: params.ignoreError,
                     isRepublish: params.isRepublish,
                     isTriggerUnchanged: params.isTriggerUnchanged,
+                    keepAppEventListeners: otherSourceExists,
                 })
                 log.info('[triggerSourceService#disable] Disabled flow trigger side effect')
             }
