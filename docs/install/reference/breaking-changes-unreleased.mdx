@@ -22,6 +22,18 @@ Once a **Verify Email** step is upgraded to 0.2.0, it no longer returns right aw
 
 If a Run Agent step or MCP client uses Get Lead, Update Lead, Delete Lead or Add Recipients as a tool, switch it to the "by ID" action listed above. Flow steps that use them keep working. If a flow relied on Verify Email returning a pending result, expect the step to take up to 60 seconds, and handle a failed step for emails Hunter cannot finish checking in time.
 
+#### Figma 0.7.0: agents use Get File Outline instead of Get File, and the connection needs new scopes
+
+**Get File** is no longer offered as a tool to AI agents, because it returns the whole document tree, which can be many megabytes. Agents now get **Get File Outline (Agent)**, which returns the pages and top-level frames with a depth limit. Get File still works as a normal flow step.
+
+The Figma connection now asks for four new scopes: `current_user:read`, `file_versions:read`, `library_content:read` and `webhooks:write`. The trigger webhooks now check Figma's passcode.
+
+#### What you need to do
+
+If you self-host with your own Figma OAuth app, add `current_user:read`, `file_versions:read`, `library_content:read` and `webhooks:write` to that app's scopes in Figma before anyone reconnects. Figma rejects a consent request that asks for scopes the app does not declare.
+
+Reconnect existing Figma connections so they get the new scopes; a step that needs a missing scope stops with a message that says to reconnect. Re-enable flows that use a Figma trigger so their webhook gets a passcode. Agents that used Get File now get Get File Outline. Steps keep running on the version they were built with until you upgrade them.
+
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 
 When Activepieces connects to an MCP server, it no longer follows a redirect to a different host or port. That redirect now fails the connection, so headers such as API keys are never sent to a host you did not configure.
@@ -82,6 +94,16 @@ After you upgrade a Send Message step:
 - If your connection holds a hand-encoded password or virtual host (for example `%2F`), edit it to the plain value.
 
 Steps keep running on the version they were built with until you upgrade them.
+
+#### Actual Budget 0.2.0: four actions are no longer agent tools, and imports fail when nothing is imported
+
+From Actual Budget 0.2.0, **Get Accounts**, **Get Budget**, **Get Categories** and **Import Transaction** are shown only in the flow builder. AI agents and MCP clients no longer find them by name. They get **List Accounts**, **Get Budget Month**, **List Categories** and **Add Transaction** instead.
+
+Once a step is upgraded to Actual Budget 0.2.0, **Import Transaction** and **Import Transactions** fail the step when Actual imports nothing (they used to report success), and bulk import amounts must be integer cents, as a number or an integer string such as `"-1250"`.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used the four actions at their agent versions. Flow steps keep working. Steps keep running on the version they were built with until you upgrade them; when you upgrade, check that Import Transactions sends amounts in cents (for example `-1250` for -12.50), not decimals.
 
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
