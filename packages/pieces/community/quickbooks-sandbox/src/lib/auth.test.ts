@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { httpClient } from '@activepieces/pieces-common';
+import { AuthenticationType, httpClient } from '@activepieces/pieces-common';
 import { quickbooksAuth } from './auth';
 
 const server = { apiUrl: 'http://127.0.0.1:4200/api/', publicUrl: 'http://127.0.0.1:4200/api/' };
@@ -25,7 +25,9 @@ describe('quickbooksAuth.getConnectionIdentifier', () => {
       expect.objectContaining({
         url: 'https://sandbox-quickbooks.api.intuit.com/v3/company/123/companyinfo/123',
         queryParams: { minorversion: '75' },
-        headers: { Authorization: 'Bearer token', Accept: 'application/json' },
+        authentication: { type: AuthenticationType.BEARER_TOKEN, token: 'token' },
+        headers: { Accept: 'application/json' },
+        timeout: 5000,
       }),
     );
   });
