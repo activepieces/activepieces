@@ -56,6 +56,7 @@ export type RowDataWithActions<TData extends DataWithId> = TData & {
 
 export const CURSOR_QUERY_PARAM = 'cursor';
 export const LIMIT_QUERY_PARAM = 'limit';
+export const PAGE_SIZE_OPTIONS = [10, 30, 50];
 
 type DataTableAction<TData extends DataWithId> = (
   row: RowDataWithActions<TData>,
@@ -103,6 +104,8 @@ interface DataTableProps<
   bordered?: boolean;
   frameClassName?: string;
   toolbarClassName?: string;
+  syncPagingWithPage?: boolean;
+  firstPageCursor?: string;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -150,6 +153,8 @@ export function DataTable<
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
+  syncPagingWithPage = false,
+  firstPageCursor,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -217,8 +222,13 @@ export function DataTable<
   }, {} as Record<string, boolean>);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const startingCursor = searchParams.get('cursor') || undefined;
-  const startingLimit = searchParams.get('limit') || '10';
+  const urlCursor = searchParams.get('cursor') || undefined;
+  const startingCursor = urlCursor === firstPageCursor ? undefined : urlCursor;
+  const urlLimit = searchParams.get('limit') || '10';
+  const startingLimit =
+    syncPagingWithPage && !PAGE_SIZE_OPTIONS.includes(Number(urlLimit))
+      ? '10'
+      : urlLimit;
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
     startingCursor,
   );
@@ -227,12 +237,18 @@ export function DataTable<
     setLastUrlCursor(startingCursor);
     setCurrentCursor(startingCursor);
   }
-  const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
-    page?.next ?? undefined,
-  );
-  const [previousPageCursor, setPreviousPageCursor] = useState<
+  const [storedNextPageCursor, setNextPageCursor] = useState<
+    string | undefined
+  >(page?.next ?? undefined);
+  const [storedPreviousPageCursor, setPreviousPageCursor] = useState<
     string | undefined
   >(page?.previous ?? undefined);
+  const nextPageCursor = syncPagingWithPage
+    ? page?.next ?? undefined
+    : storedNextPageCursor;
+  const previousPageCursor = syncPagingWithPage
+    ? page?.previous ?? undefined
+    : storedPreviousPageCursor;
 
   const enrichPageData = (data: TData[]) => {
     return data.map((row, index) => ({
@@ -312,8 +328,13 @@ export function DataTable<
   const rowSelection = table.getState().rowSelection;
   const selectedRowOriginals = React.useMemo(
     () => table.getSelectedRowModel().rows.map((row) => row.original),
-    [rowSelection],
+    [rowSelection, syncPagingWithPage ? tableData : undefined],
   );
+  useEffect(() => {
+    if (syncPagingWithPage) {
+      table.resetRowSelection();
+    }
+  }, [startingCursor]);
   useEffect(() => {
     onSelectedRowsChange?.(selectedRowOriginals);
   }, [selectedRowOriginals]);
@@ -326,7 +347,11 @@ export function DataTable<
       (prev) => {
         const newParams = new URLSearchParams(prev);
 
-        if (!isNil(currentCursor) && currentCursor !== '') {
+        if (
+          !isNil(currentCursor) &&
+          currentCursor !== '' &&
+          currentCursor !== firstPageCursor
+        ) {
           newParams.set('cursor', currentCursor);
         } else {
           newParams.delete('cursor');
@@ -705,7 +730,7 @@ export function DataTable<
                 />
               </SelectTrigger>
               <SelectContent side="top">
-                {[10, 30, 50].map((pageSize) => (
+                {PAGE_SIZE_OPTIONS.map((pageSize) => (
                   <SelectItem key={pageSize} value={`${pageSize}`}>
                     {pageSize}
                   </SelectItem>

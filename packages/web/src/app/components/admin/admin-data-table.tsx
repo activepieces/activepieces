@@ -10,7 +10,6 @@ import {
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
 
-import { AdminPagedTable } from './admin-paged-table';
 import { adminPagination } from './admin-pagination';
 import { adminSurface } from './admin-surface';
 
@@ -83,26 +82,20 @@ export function AdminDataTable<
       data-slot="admin-data-table"
       className="flex max-h-full min-h-0 flex-initial flex-col"
     >
-      {followsEmptyPages ? (
-        <AdminPagedTable
-          {...props}
-          isLoading={props.isLoading || landedOnEmptyPage}
-          page={page}
-          hidePagination={hideFooter}
-          emptyStateIcon={emptyStateIcon}
-          bordered
-          frameClassName={adminSurface.listFrame}
-          toolbarClassName="px-0 pt-0 pb-4"
-        />
-      ) : (
-        <DataTable
-          {...props}
-          emptyStateIcon={emptyStateIcon}
-          bordered
-          frameClassName={adminSurface.listFrame}
-          toolbarClassName="px-0 pt-0 pb-4"
-        />
-      )}
+      <DataTable
+        {...props}
+        {...(followsEmptyPages && {
+          isLoading: props.isLoading || landedOnEmptyPage,
+          page,
+          hidePagination: hideFooter,
+          syncPagingWithPage: true,
+          firstPageCursor: adminPagination.FIRST_PAGE_CURSOR,
+        })}
+        emptyStateIcon={emptyStateIcon}
+        bordered
+        frameClassName={adminSurface.listFrame}
+        toolbarClassName="px-0 pt-0 pb-4"
+      />
     </div>
   );
 }

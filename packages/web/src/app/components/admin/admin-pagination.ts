@@ -1,5 +1,7 @@
 import { isNil, SeekPage } from '@activepieces/core-utils';
 
+import { PAGE_SIZE_OPTIONS } from '@/components/custom/data-table';
+
 function slicePage<TData>({
   page,
   cursor,
@@ -52,13 +54,11 @@ function toPositiveInt({
 }
 
 const SINGLE_PAGE_ROWS = 10;
-const PAGE_SIZE_OPTIONS = [10, 30, 50];
 const FIRST_PAGE_CURSOR = '0';
 
 export const adminPagination = {
   slicePage,
   fitsOnOnePage,
   parseLimit,
-  PAGE_SIZE_OPTIONS,
   FIRST_PAGE_CURSOR,
 };
