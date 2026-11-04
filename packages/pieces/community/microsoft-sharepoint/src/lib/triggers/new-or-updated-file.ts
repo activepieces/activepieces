@@ -12,6 +12,7 @@ import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
+import { newOrUpdatedFileOutputSchema } from '../output-schemas';
 
 type Props = {
 	siteId: string;
@@ -90,6 +91,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 export const newOrUpdatedFileTrigger = createTrigger({
 	auth: microsoftSharePointAuth,
 	name: 'new_or_updated_file',
+	outputSchema: newOrUpdatedFileOutputSchema,
 	classification: 'READ',
 	displayName: 'New or Updated File',
 	description: 'Triggers when a file is created or updated in a given folder.',

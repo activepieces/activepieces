@@ -232,6 +232,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Row Created": "Nueva fila creada",
   "Triggers when a new row is added to the selected table.": "Se activa cuando se añade una nueva fila a la tabla seleccionada."
 }
