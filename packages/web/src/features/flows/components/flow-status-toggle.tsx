@@ -1,12 +1,10 @@
 import { Permission, isNil } from '@activepieces/core-utils';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
-import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { cn } from '@/lib/utils';
 
 import { Switch } from '../../../components/ui/switch';
 import {
@@ -15,26 +13,22 @@ import {
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
 import { flowHooks } from '../hooks/flow-hooks';
-import { flowScheduleLabel } from '../utils/flow-schedule-label';
+import { flowScheduleLabelUtils } from '../utils/flow-schedule-label';
 
 type FlowStatusToggleProps = {
   flow: PopulatedFlow;
 };
 
 const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
-  const { i18n } = useTranslation();
-  const [isFlowPublished, setIsFlowPublished] = useState(
-    flow.status === FlowStatus.ENABLED,
-  );
-
-  // Turning a flow on creates its trigger source on the server, so the `flow` prop (fetched while it was off)
-  // has none. Keep the flow the toggle returned until the parent passes a newer one.
-  const [latestFlow, setLatestFlow] = useState(flow);
-
-  useEffect(() => {
-    setIsFlowPublished(flow.status === FlowStatus.ENABLED);
-    setLatestFlow(flow);
-  }, [flow]);
+  const { t, i18n } = useTranslation();
+  const [toggledFlow, setToggledFlow] = useState<PopulatedFlow | null>(null);
+  const currentFlow =
+    !isNil(toggledFlow) &&
+    toggledFlow.id === flow.id &&
+    new Date(toggledFlow.updated) >= new Date(flow.updated)
+      ? toggledFlow
+      : flow;
+  const isFlowOn = currentFlow.status === FlowStatus.ENABLED;
 
   const { checkAccess } = useAuthorization();
   const userHasPermissionToToggleFlowStatus = checkAccess(
@@ -44,17 +38,19 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
   const { mutate: changeStatus, isPending: isLoading } =
     flowHooks.useChangeFlowStatus({
       flowId: flow.id,
-      change: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
+      change: isFlowOn ? FlowStatus.DISABLED : FlowStatus.ENABLED,
       onSuccess: (updatedFlow: PopulatedFlow) => {
-        setIsFlowPublished(updatedFlow.status === FlowStatus.ENABLED);
-        setLatestFlow(updatedFlow);
+        setToggledFlow(updatedFlow);
       },
     });
 
-  const isNeverPublished = isNil(flow.publishedVersionId);
+  const isNeverPublished = isNil(currentFlow.publishedVersionId);
   const label =
-    isFlowPublished && !isLoading
-      ? flowScheduleLabel(latestFlow, { locale: i18n.language })
+    isFlowOn && !isLoading
+      ? flowScheduleLabelUtils.describe({
+          flow: currentFlow,
+          locale: i18n.language,
+        })
       : null;
 
   return (
@@ -63,7 +59,7 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
         <TooltipTrigger asChild>
           <div className="flex items-center justify-center">
             <Switch
-              checked={isFlowPublished}
+              checked={isFlowOn}
               onCheckedChange={() => changeStatus()}
               disabled={
                 isLoading ||
@@ -77,7 +73,7 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
           {userHasPermissionToToggleFlowStatus
             ? isNeverPublished
               ? t('Please publish flow first')
-              : isFlowPublished
+              : isFlowOn
               ? t('Flow is on')
               : t('Flow is off')
             : t('Permission Needed')}
@@ -86,7 +82,7 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
       {isLoading && (
         <div className="ml-2 flex items-center gap-1.5 text-xs text-gray-11">
           <LoadingSpinner className="size-3" />
-          {isFlowPublished ? t('Turning off…') : t('Turning on…')}
+          {isFlowOn ? t('Turning off…') : t('Turning on…')}
         </div>
       )}
       {!isLoading && isNeverPublished && (
@@ -96,17 +92,8 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
         <Tooltip>
           <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
             <div className="ml-2 flex min-w-0 max-w-[100px] flex-col text-xs leading-4">
-              <span
-                className={cn(
-                  'truncate',
-                  label.isError ? 'text-danger-11' : 'text-gray-12',
-                )}
-              >
-                {label.title}
-              </span>
-              {label.detail && (
-                <span className="truncate text-gray-11">{label.detail}</span>
-              )}
+              <span className="truncate text-gray-12">{label.title}</span>
+              <span className="truncate text-gray-11">{label.detail}</span>
               <span className="sr-only">{label.tooltip}</span>
             </div>
           </TooltipTrigger>
