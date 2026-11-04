@@ -49,6 +49,37 @@ Run these checks before anything else, silently when they pass. If one fails, sh
 
    `setup` reads the key hidden, checks it with Linear, and saves it to `env` in `~/.claude/settings.json`, which Claude Code loads on every OS. It also moves any old personal copy of this skill (in `~/.claude/skills/` or `~/.claude/commands/ai-task.md`) to `~/.claude/ai-task-old/`, since a personal copy loads instead of the repo's version. It needs a real terminal, so not through `!`. A key pasted into the chat is leaked: don't use it, tell them to revoke it and run `setup` with a new one.
 
+## Preview before every write
+
+Nothing changes in Linear, GitHub or git until the user has seen exactly what will change and said OK. This holds in every moment, with no exceptions.
+
+**What counts as a write:**
+- Linear: creating a ticket, editing its description or title, status, assignee, cycle, project, milestone, labels, priority, size, relations, comments, customer requests, and the queue order;
+- GitHub: opening, editing, readying or commenting on a PR, replying to or resolving review comments;
+- git: creating or switching a branch, a worktree, a commit or a push.
+
+**What the preview shows:**
+- **New ticket:** the full ticket as it will be filed (title, team, status, labels, priority, and every description section).
+- **Edited ticket:** each field that changes as `before → after`. For a description, show the new sections in full and say what stays below them.
+- **Comment or PR text:** the exact text that will be posted.
+- **Git:** the branch name, its base, and whether it's a new branch, a switch or a worktree.
+- **Proof of the result:** you produce it yourself, never ask the user for it.
+  - **Terminal or API:** run it and show an example of the real output, or a screenshot of the terminal.
+  - **Something in Chrome:** offer to demo it ("Want me to show it in Chrome?"). On a yes, walk through it with the claude-in-chrome tools and record a GIF.
+
+Group everything one step needs into one preview and one OK, so the user isn't asked five times. If the user changes anything, show the updated preview again before writing. After writing, say what was done in one line, with the link.
+
+> **Here's what I'll change on AI-123:**
+> - Status: Backlog → In Progress
+> - Assignee: none → you
+> - Cycle: none → Cycle 2
+> - Size: none → S
+> - Branch: `feature/ai-123` from `origin/main`
+>
+> **Go ahead?**
+
+Read-only work (reading tickets, code, logs, data, running lint or tests) needs no preview.
+
 ## Help (no arguments, "help", or "?")
 
 Run the requirement checks first, then show the card that fits. For a member, add one setup line under the card: `Setup: ✓ Linear MCP · ✓ API key · ✓ repo` (✗ on anything missing, with the card for it).
@@ -334,7 +365,7 @@ The cards below are examples of that voice, not forms to fill in word for word.
 
 ## Ship: before opening or updating a PR
 
-Run these checks and fix what you can, then show one short summary of what changed:
+Run these checks, show what you'd fix as one preview (see **Preview before every write**), then fix it after one OK:
 
 1. **Linked ticket.** The PR description starts with `Fixes AI-<n>` when merging finishes the ticket, or `Refs AI-<n>` when it doesn't. No ticket? Make one with Start first.
 2. **Title:** written for users, not engineers, because it feeds the changelog. Keep the repo's prefix style, e.g. `fix(chat): long chats no longer fail`.
@@ -434,6 +465,7 @@ Think the order is wrong? Say why in the ticket and re-run `/ai-task queue`, don
 
 ## Never
 
+- Create or change a ticket, comment, PR or branch without showing the preview first (see **Preview before every write**).
 - Move or close tickets the user didn't point at. Fix only what this task touches.
 - Post security details publicly.
 - Merge a PR that isn't on top of the queue, unless it's urgent.

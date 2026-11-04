@@ -32,6 +32,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
+import { workerGroupsLock } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -212,7 +213,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
             )}
           />
         )}
-        {!platform.plan.workerGroupsEnabled &&
+        {workerGroupsLock.reason({ edition, plan: platform.plan }) !== null &&
           platformRole === PlatformRole.ADMIN && (
             <FormField
               name="maxConcurrentJobs"

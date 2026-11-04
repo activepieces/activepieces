@@ -11,6 +11,7 @@ import {
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
+  FlowVersionState,
   FlowVersionTemplate,
   ListFlowsRequest,
   PopulatedFlow,
@@ -595,6 +596,43 @@ export const flowHooks = {
       onError,
     });
   },
+  useListFlowsUsingConnection: ({
+    projectId,
+    onSuccess,
+  }: {
+    projectId: string;
+    onSuccess: () => void;
+  }) => {
+    return useMutation({
+      mutationFn: async (externalId: string) => {
+        const request = {
+          projectId,
+          connectionExternalIds: [externalId],
+          cursor: undefined,
+          limit: FLOWS_PAGE_SIZE,
+        };
+        const [draftFlows, publishedFlows] = await Promise.all([
+          listAllFlows(request),
+          listAllFlows({ ...request, versionState: FlowVersionState.LOCKED }),
+        ]);
+        const draftFlowIds = new Set(draftFlows.map((flow) => flow.id));
+        return {
+          draftFlows,
+          publishedOnlyFlows: publishedFlows.filter(
+            (flow) => !draftFlowIds.has(flow.id),
+          ),
+          draftFlowIds,
+          publishedFlowIds: new Set(publishedFlows.map((flow) => flow.id)),
+        };
+      },
+      onSuccess,
+      onError: () => {
+        toast.error(t('Error'), {
+          description: t('Failed to get affected flows'),
+        });
+      },
+    });
+  },
   createFlowQueryKeys: ({
     flowId,
     versionId,
@@ -624,6 +662,22 @@ export const flowHooks = {
   },
 };
 
+async function listAllFlows(
+  request: ListFlowsRequest,
+): Promise<PopulatedFlow[]> {
+  const flows: PopulatedFlow[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const page: SeekPage<PopulatedFlow> = await flowsApi.list({
+      ...request,
+      cursor,
+    });
+    flows.push(...page.data);
+    cursor = page.next ?? undefined;
+  } while (cursor);
+  return flows;
+}
+
 type UseChangeFlowStatusParams = {
   flowId: string;
   change: 'publish' | FlowStatus;
@@ -633,3 +687,5 @@ type UseChangeFlowStatusParams = {
     params: RequiredActionsMissingErrorParams['params'],
   ) => void;
 };
+
+const FLOWS_PAGE_SIZE = 1000;
