@@ -101,7 +101,7 @@ async function fill({
     });
     const label =
       model?.label && model.label !== name
-        ? ` (${shortLabel(model.label)})`
+        ? ` (${shortLabel({ label: model.label, maxLength: model.maxLength })})`
         : '';
     return problem ? [`- "${name}"${label}: ${problem}`] : [];
   });
@@ -618,10 +618,39 @@ function readLabel(field: PDFField): string | null {
   return null;
 }
 
-function shortLabel(label: string): string {
-  return label.length <= MAX_LABEL_LENGTH
-    ? label
-    : `${label.slice(0, MAX_LABEL_LENGTH - 1).replace(/\s+\S*$/, '')}…`;
+function shortLabel({
+  label,
+  maxLength,
+}: {
+  label: string;
+  maxLength: number | null;
+}): string {
+  if (label.length <= MAX_LABEL_LENGTH) {
+    return label;
+  }
+  const ending = maxLength === null ? '' : closingSentences(label);
+  return ending === ''
+    ? `${cutAtWord({ text: label, length: MAX_LABEL_LENGTH - 1 })}…`
+    : `${cutAtWord({
+        text: label,
+        length: MAX_LABEL_LENGTH - ending.length - 2,
+      })}… ${ending}`;
+}
+
+function closingSentences(label: string): string {
+  const sentences = label.trim().split(SENTENCE_BREAK);
+  const endings = sentences
+    .slice(1)
+    .map((_sentence, index) => sentences.slice(index + 1).join(' '));
+  return (
+    endings.find(
+      (ending) => ending.length <= MAX_ENDING_LENGTH && ending.endsWith('.')
+    ) ?? ''
+  );
+}
+
+function cutAtWord({ text, length }: { text: string; length: number }): string {
+  return text.slice(0, length).replace(/\s+\S*$/, '');
 }
 
 function unfillableMessage(kind: Exclude<PdfFormKind, 'acroform'>): string {
@@ -685,6 +714,10 @@ const AUTO_FONT_SIZE = 0;
 const MIN_FONT_SIZE = 4;
 
 const MAX_LABEL_LENGTH = 80;
+
+const MAX_ENDING_LENGTH = 40;
+
+const SENTENCE_BREAK = /(?<=\.)\s+(?=[A-Z0-9(])/;
 
 const LATIN_ONLY = 'Only Latin characters are supported.';
 

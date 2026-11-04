@@ -20,21 +20,23 @@ export const fillPdfForm = createAction({
   description: 'Fill the fields of a fillable PDF form and get a new PDF.',
   aiMetadata: {
     description:
-      'Fills the fields of a fillable (AcroForm) PDF and returns a new PDF. Pass data as one JSON object keyed by the exact field names from Inspect PDF Form: text or numbers for text fields, true or false for checkboxes, one of the listed options for radio buttons and dropdowns, and a list of options for multi-select lists. Leave a field out, or set it to null, to keep it as it is. Every value is checked before anything is written: the call fails, naming each wrong field, for an unknown name, a value longer than the max length, a value that is not one of the options, a read-only field or a non-Latin character, and nothing is cut short. Flatten (on by default) locks the values into the page; keep it on before Merge PDFs. XFA, flat and encrypted PDFs are refused. The source file is not changed and the same inputs give the same document, so idempotent.',
+      'Fills the fields of a fillable (AcroForm) PDF and returns the URL of the new PDF. Pass data as one JSON object keyed by the exact field names from Inspect PDF Form: text or numbers for text fields, true or false for checkboxes, one of the listed options for radio buttons and dropdowns, and a list of options for multi-select lists. Leave a field out, or set it to null, to keep it as it is. Every value is checked before anything is written: the call fails, naming each wrong field, for an unknown name, a value longer than the max length, a value that is not one of the options, a read-only field or a non-Latin character, and nothing is cut short. Flatten (on by default) locks the values into the page; keep it on before Merge PDFs. XFA, flat and encrypted PDFs are refused. The source file is not changed and the same inputs give the same document, so idempotent.',
     idempotent: true,
   },
   outputSchema: fillPdfFormActionOutputSchema,
   props: {
     file: Property.File({
       displayName: 'PDF Form',
-      description: 'A fillable PDF form, from an earlier step or a URL.',
+      description:
+        'Its fields are found automatically. Use a fillable PDF from an earlier step or a URL.',
       placeholder: 'https://example.com/form.pdf',
       required: true,
     }),
     fields: Property.DynamicProperties({
       auth: PieceAuth.None(),
       displayName: 'Fields',
-      description: 'One input per form field, shown once the PDF Form is set.',
+      description:
+        'One input per field found in the PDF, shown once the PDF Form is set.',
       required: false,
       refreshers: ['file'],
       props: async ({ file }) => formFields(file),
@@ -42,7 +44,7 @@ export const fillPdfForm = createAction({
     data: Property.Json({
       displayName: 'Data (JSON)',
       description:
-        'Field names and values as one object. Wins over the inputs above.',
+        'All the values as one object, for example {"city": "Austin", "agree": true}. Map it from an earlier step, or let an AI agent fill it. Each input in Option 1 shows the name to use here. When a field is set in both, this value wins.',
       required: false,
     }),
     flatten: Property.Checkbox({
@@ -71,9 +73,16 @@ export const fillPdfForm = createAction({
     {
       key: 'values',
       display: 'section',
-      label: 'Values',
+      label: 'Option 1: Fill each field',
       icon: 'type',
-      props: ['fields', 'data'],
+      props: ['fields'],
+    },
+    {
+      key: 'data',
+      display: 'section',
+      label: 'Option 2: Fill from Data (JSON)',
+      icon: 'code',
+      props: ['data'],
     },
     {
       key: 'output',
@@ -102,11 +111,10 @@ export const fillPdfForm = createAction({
       },
       flatten: flatten !== false,
     });
-    const name = toFileName(fileName?.trim() || file.filename);
-    return {
-      file: await context.files.write({ fileName: name, data: filled }),
-      fileName: name,
-    };
+    return context.files.write({
+      fileName: toFileName(fileName?.trim() || file.filename),
+      data: filled,
+    });
   },
 });
 
@@ -119,54 +127,75 @@ async function formFields(file: unknown): Promise<DynamicPropsValue> {
     loadPdf(file)
   );
   if (loadError) {
-    return fieldsNotice(
-      loadError instanceof MissingFormError
-        ? 'Set the PDF Form above, or map it from a step you have tested, to see its fields here. You can also fill the form with Data (JSON).'
-        : `The PDF could not be downloaded (${describeDownloadError(
+    return loadError instanceof MissingFormError
+      ? fieldsNotice({
+          message:
+            'The fields are read from the PDF automatically. Set the PDF Form above, or map it from a step you have tested, and one input per field shows up here. You can also fill the form with Option 2 below.',
+          variant: MarkdownVariant.INFO,
+        })
+      : fieldsNotice({
+          message: `The PDF could not be downloaded (${describeDownloadError(
             loadError
-          )}). Check the URL, or map the file from a step you have tested.`
-    );
+          )}). Check the URL, or map the file from a step you have tested.`,
+        });
   }
   const { data: form, error: openError } = await tryCatch(async () =>
     pdfForm.open(pdf)
   );
   if (openError) {
-    return fieldsNotice(openError.message);
+    return fieldsNotice({ message: openError.message });
   }
   if (form.kind !== 'acroform') {
-    return fieldsNotice(pdfForm.unfillableMessage(form.kind));
+    return fieldsNotice({ message: pdfForm.unfillableMessage(form.kind) });
   }
   const fillable = form.fields.filter(pdfForm.isFillable);
   if (fillable.length === 0) {
-    return fieldsNotice(
-      'This PDF has form fields, but none of them can be filled (they are buttons, signatures or read-only).'
-    );
+    return fieldsNotice({
+      message:
+        'This PDF has form fields, but none of them can be filled (they are buttons, signatures or read-only).',
+    });
   }
   if (fillable.length > MAX_FIELDS) {
-    return fieldsNotice(
-      `This form has ${fillable.length} fields, too many to show here. Fill it with Data (JSON) instead; Inspect PDF Form lists the field names.`
-    );
+    return fieldsNotice({
+      message: `This form has ${fillable.length} fields, too many to show here. Fill it with Option 2 below instead; Inspect PDF Form lists the field names.`,
+    });
   }
-  return Object.fromEntries(
+  const inputs = Object.fromEntries(
     fillable.map((field) => [field.name, toFieldProperty(field)])
   );
+  if (FIELDS_FOUND_KEY in inputs) {
+    return inputs;
+  }
+  return {
+    [FIELDS_FOUND_KEY]: Property.MarkDown({
+      value: `**${fillable.length} ${
+        fillable.length === 1 ? 'field' : 'fields'
+      } found in this PDF.** Fill only the ones you need: an empty input keeps what the PDF already has. To send all the values as one object instead, use Option 2 below.`,
+      variant: MarkdownVariant.INFO,
+    }),
+    ...inputs,
+  };
 }
 
 function toFieldProperty(field: PdfFormField): DynamicPropsValue[string] {
   const name = field.label ?? field.name;
-  const shortName = pdfForm.shortLabel(name);
+  const shortName = pdfForm.shortLabel({
+    label: name,
+    maxLength: field.maxLength,
+  });
   const common = {
     displayName: shortName,
     description:
       shortName === name
         ? describeInput(field)
-        : `${name} ${describeInput(field)}`,
+        : `${describeInput(field)} Full label: ${name}`,
     required: false,
   };
   if (field.type === 'checkbox') {
     return Property.StaticDropdown({
       ...common,
       options: {
+        placeholder: KEEP_AS_IS,
         options: [
           { label: 'Checked', value: 'true' },
           { label: 'Unchecked', value: 'false' },
@@ -176,6 +205,7 @@ function toFieldProperty(field: PdfFormField): DynamicPropsValue[string] {
   }
   if (field.options !== null) {
     const options = {
+      placeholder: KEEP_AS_IS,
       options: field.options.map((option) => ({
         label: option,
         value: option,
@@ -191,16 +221,25 @@ function toFieldProperty(field: PdfFormField): DynamicPropsValue[string] {
 }
 
 function describeInput(field: PdfFormField): string {
-  const where =
-    field.page === null
-      ? `Field "${field.name}".`
-      : `Field "${field.name}" on page ${field.page}.`;
+  return [
+    field.page === null ? null : `Page ${field.page}.`,
+    field.maxLength === null ? null : `Up to ${field.maxLength} characters.`,
+    `Name in Data (JSON): "${field.name}"${describeJsonValue(field)}.`,
+  ]
+    .filter((part) => part !== null)
+    .join(' ');
+}
+
+function describeJsonValue(field: PdfFormField): string {
   if (field.type === 'checkbox') {
-    return `${where} Leave empty to keep the box as it is.`;
+    return ', as true or false';
   }
-  return field.maxLength === null
-    ? where
-    : `${where} Up to ${field.maxLength} characters.`;
+  if (field.options === null) {
+    return '';
+  }
+  return field.multiSelect
+    ? ', as a list of the options'
+    : ', as one of the options';
 }
 
 function withoutEmpty(
@@ -237,15 +276,20 @@ function describeDownloadError(error: Error): string {
   return error.message.slice(0, 200);
 }
 
-function fieldsNotice(message: string): DynamicPropsValue {
+function fieldsNotice({
+  message,
+  variant = MarkdownVariant.WARNING,
+}: {
+  message: string;
+  variant?: MarkdownVariant;
+}): DynamicPropsValue {
   return {
-    fieldsNotice: Property.MarkDown({
-      value: message,
-      variant: MarkdownVariant.WARNING,
-    }),
+    fieldsNotice: Property.MarkDown({ value: message, variant }),
   };
 }
 
 class MissingFormError extends Error {}
 
 const MAX_FIELDS = 200;
+const FIELDS_FOUND_KEY = 'fieldsFound';
+const KEEP_AS_IS = 'Leave as it is';

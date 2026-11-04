@@ -2,6 +2,7 @@ import {
   ApFile,
   AppConnectionType,
   createMockActionContext,
+  MarkdownVariant,
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
@@ -471,7 +472,7 @@ describe('fillPdfForm', () => {
       data: { 'entity.name': 'Acme Holdings LLC', city: 'Austin' },
     });
 
-    expect(result).toEqual({ file: 'file-url', fileName: 'form.pdf' });
+    expect(result).toBe('file-url');
     expect(written).toHaveLength(1);
     expect(await countFields(written[0].data)).toBe(0);
     const text = await readText(written[0].data);
@@ -897,6 +898,7 @@ describe('fillPdfForm fields', () => {
       ])
     ).toEqual([
       ['12', PropertyType.LONG_TEXT, '12'],
+      ['fieldsFound', PropertyType.MARKDOWN, 'Markdown'],
       ['entity.name', PropertyType.SHORT_TEXT, 'Legal name of the entity'],
       ['form1[0].state[0]', PropertyType.SHORT_TEXT, 'form1[0].state[0]'],
       ['agree', PropertyType.STATIC_DROPDOWN, 'agree'],
@@ -904,12 +906,12 @@ describe('fillPdfForm fields', () => {
       ['services', PropertyType.STATIC_MULTI_SELECT_DROPDOWN, 'services'],
     ]);
     expect(props['form1[0].state[0]'].description).toBe(
-      'Field "form1[0].state[0]" on page 1. Up to 2 characters.'
+      'Page 1. Up to 2 characters. Name in Data (JSON): "form1[0].state[0]".'
     );
     expect(props['agree']).toMatchObject({
-      description:
-        'Field "agree" on page 1. Leave empty to keep the box as it is.',
+      description: 'Page 1. Name in Data (JSON): "agree", as true or false.',
       options: {
+        placeholder: 'Leave as it is',
         options: [
           { label: 'Checked', value: 'true' },
           { label: 'Unchecked', value: 'false' },
@@ -917,13 +919,49 @@ describe('fillPdfForm fields', () => {
       },
     });
     expect(props['size']).toMatchObject({
+      description:
+        'Page 1. Name in Data (JSON): "size", as one of the options.',
       options: {
+        placeholder: 'Leave as it is',
         options: [
           { label: 'Small', value: 'Small' },
           { label: 'Large', value: 'Large' },
         ],
       },
     });
+    expect(props['services']).toMatchObject({
+      description:
+        'Page 1. Name in Data (JSON): "services", as a list of the options.',
+      options: { placeholder: 'Leave as it is' },
+    });
+  });
+
+  test('says how many fields it found in the PDF and points to the other way to fill', async () => {
+    const props = await listFields(
+      new ApFile('form.pdf', await buildFieldsForm(), 'pdf')
+    );
+
+    expect(props['fieldsFound']).toMatchObject({
+      type: PropertyType.MARKDOWN,
+      variant: MarkdownVariant.INFO,
+      description:
+        '**6 fields found in this PDF.** Fill only the ones you need: an empty input keeps what the PDF already has. To send all the values as one object instead, use Option 2 below.',
+    });
+  });
+
+  test('keeps a form field that has the same name as the note', async () => {
+    const pdf = await buildPdf({
+      build: ({ form, pages }) => {
+        form
+          .createTextField('fieldsFound')
+          .addToPage(pages[0], { x: 50, y: 700, width: 200, height: 20 });
+      },
+    });
+
+    const props = await listFields(new ApFile('form.pdf', pdf, 'pdf'));
+
+    expect(Object.keys(props)).toEqual(['fieldsFound']);
+    expect(props['fieldsFound'].type).toBe(PropertyType.SHORT_TEXT);
   });
 
   test('names an input after a long label cut at a word, and keeps the whole label in its description', async () => {
@@ -942,12 +980,38 @@ describe('fillPdfForm fields', () => {
     expect(props['form1[0].tin[0]']).toMatchObject({
       displayName:
         'Part I. Taxpayer Identification Number (T I N). Enter your T I N in the…',
-      description: `${label} Field "form1[0].tin[0]" on page 1.`,
+      description: `Page 1. Name in Data (JSON): "form1[0].tin[0]". Full label: ${label}`,
     });
     expect(props['form1[0].name[0]']).toMatchObject({
       displayName: 'Name',
-      description: 'Field "form1[0].name[0]" on page 1.',
+      description: 'Page 1. Name in Data (JSON): "form1[0].name[0]".',
     });
+  });
+
+  test('names a field with a character limit after the start and the short ending of its long label', async () => {
+    const label =
+      'Part I. Taxpayer Identification Number (T I N). Enter your T I N in the appropriate box. For other entities, it is your employer identification number (E I N). Social security number. First 3 digits.';
+    const pdf = await buildPdf({
+      build: ({ form, pages }) => {
+        const ssn = form.createTextField('f1_11');
+        ssn.acroField.dict.set(PDFName.of('TU'), PDFHexString.fromText(label));
+        ssn.setMaxLength(3);
+        ssn.addToPage(pages[0], { x: 50, y: 700, width: 60, height: 20 });
+      },
+    });
+
+    const props = await listFields(new ApFile('form.pdf', pdf, 'pdf'));
+
+    expect(props['f1_11']).toMatchObject({
+      displayName:
+        'Part I. Taxpayer Identification Number… Social security number. First 3 digits.',
+      description: `Page 1. Up to 3 characters. Name in Data (JSON): "f1_11". Full label: ${label}`,
+    });
+    await expect(
+      runFill({ pdf, data: { f1_11: '3423434' } })
+    ).rejects.toThrow(
+      '- "f1_11" (Part I. Taxpayer Identification Number… Social security number. First 3 digits.): the value has 7 characters, but this field takes at most 3.'
+    );
   });
 
   test('reads the form from a data URI', async () => {
@@ -964,16 +1028,18 @@ describe('fillPdfForm fields', () => {
     {
       title: 'no form is set',
       file: undefined,
+      variant: MarkdownVariant.INFO,
       notice:
-        'Set the PDF Form above, or map it from a step you have tested, to see its fields here. You can also fill the form with Data (JSON).',
+        'The fields are read from the PDF automatically. Set the PDF Form above, or map it from a step you have tested, and one input per field shows up here. You can also fill the form with Option 2 below.',
     },
     {
       title: 'the PDF has no fields',
       file: 'flat',
+      variant: MarkdownVariant.WARNING,
       notice:
         'This PDF has no form fields to fill. Use a fillable PDF form, or place text at fixed positions with Add Text to PDF.',
     },
-  ])('shows a notice when $title', async ({ file, notice }) => {
+  ])('shows a notice when $title', async ({ file, variant, notice }) => {
     const value =
       file === 'flat' ? new ApFile('flat.pdf', await buildPdf(), 'pdf') : file;
 
@@ -982,6 +1048,7 @@ describe('fillPdfForm fields', () => {
     expect(props).toEqual({
       fieldsNotice: expect.objectContaining({
         type: PropertyType.MARKDOWN,
+        variant,
         description: notice,
       }),
     });
@@ -1278,7 +1345,7 @@ describe('fillPdfForm file name', () => {
         data: { name: 'Acme' },
       });
 
-      expect(result).toEqual({ file: 'file-url', fileName: expected });
+      expect(result).toBe('file-url');
       expect(written[0].fileName).toBe(expected);
     }
   );

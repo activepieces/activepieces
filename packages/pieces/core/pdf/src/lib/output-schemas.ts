@@ -53,18 +53,9 @@ export const convertToImageActionOutputSchema: OutputSchema = {
   ],
 };
 
-export const fillPdfFormActionOutputSchema: OutputSchema = {
-  fields: [
-    {
-      key: 'file',
-      label: 'File',
-      format: 'url',
-      description:
-        'The filled PDF, ready to merge, attach to an email or upload.',
-    },
-    { key: 'fileName', label: 'File Name' },
-  ],
-};
+export const fillPdfFormActionOutputSchema = pdfUrlOutput(
+  'Link to the filled PDF, ready to merge, attach to an email or upload.',
+);
 
 export const inspectPdfFormActionOutputSchema: OutputSchema = {
   fields: [
