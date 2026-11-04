@@ -88,6 +88,21 @@ describe('agent crud', () => {
         }
     })
 
+    it('fills in the default tier on a fresh platform whose Activepieces credits row was never listed', async () => {
+        process.env.AP_OPENROUTER_PROVISION_KEY = 'test-provision-key'
+        try {
+            const ctx = await context()
+
+            const agent = await createAgent(ctx)
+
+            expect(agent.draft.modelName).toBe('smart')
+            expect(agent.draft.provider).toBe(AIProviderName.ACTIVEPIECES)
+        }
+        finally {
+            delete process.env.AP_OPENROUTER_PROVISION_KEY
+        }
+    })
+
     it('keeps a model the request did name, even where a default was available', async () => {
         const ctx = await context()
         await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
@@ -737,6 +752,27 @@ describe('agent list across projects', () => {
 
         const noMatch = (await ctx.get('/v1/agents', { search: 'nothing here' })).json().data
         expect(noMatch).toStrictEqual([])
+    })
+
+    it('lists the agents whose draft or published tools use one of the given connections', async () => {
+        const ctx = await context()
+        const pieceTool = (auth: string) => ({
+            type: 'PIECE',
+            toolName: 'create_issue',
+            pieceMetadata: {
+                pieceName: '@activepieces/piece-github',
+                pieceVersion: '0.1.0',
+                actionName: 'create_issue',
+                predefinedInput: { auth, fields: {} },
+            },
+        })
+        const usesInDraft = await createAgent(ctx, { displayName: 'Draft user', draft: { ...agentBody(ctx.project.id).draft, tools: [pieceTool('{{connections[\'conn-a\']}}')] } })
+        const usesInPublished = await createAgent(ctx, { displayName: 'Published user' })
+        await db.update('agent', usesInPublished.id, { published: { ...agentBody(ctx.project.id).draft, tools: [pieceTool('conn-b')] } })
+        await createAgent(ctx, { displayName: 'Other connection', draft: { ...agentBody(ctx.project.id).draft, tools: [pieceTool('conn-c')] } })
+
+        const listed = (await ctx.get('/v1/agents', { connectionExternalIds: ['conn-a', 'conn-b'] })).json().data
+        expect(listed.map((row: { id: string }) => row.id).sort()).toStrictEqual([usesInDraft.id, usesInPublished.id].sort())
     })
 
     it('sorts by name when asked, rather than by when it was touched', async () => {

@@ -242,9 +242,10 @@ describe('step time budget', () => {
     vi.useFakeTimers();
     try {
       mockHttp(defaultRoutes());
-      const mocked = httpClient.sendRequest;
+      const routed = vi.mocked(httpClient.sendRequest).getMockImplementation();
+      if (!routed) throw new Error('mockHttp did not install a mock');
       vi.spyOn(httpClient, 'sendRequest').mockImplementation((request, options) =>
-        request.url.endsWith('/v1/process') ? new Promise(() => undefined) : mocked(request, options)
+        request.url.endsWith('/v1/process') ? new Promise(() => undefined) : routed(request, options)
       );
       const pending = run(compressPdfAction)(fakeContext({ file: pdf }).context);
       const assertion = expect(pending).rejects.toThrow(/step time limit/);
