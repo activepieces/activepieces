@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, ApEdition, ApFlagId, CreateTemplateRequestBody, ListTemplatesRequestQuery, Principal, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -43,8 +43,12 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
-        const officialTemplates = await loadOfficialTemplatesOrReturnEmpty(app.log, request.query)
-        const customTemplates = await loadCustomTemplatesOrReturnEmpty(app.log, request.query, request.principal)
+        const { cursor, limit, ...query } = request.query
+        if (query.type === TemplateType.CUSTOM && !isNil(limit)) {
+            return loadCustomTemplatesPageOrReturnEmpty(app.log, { ...query, cursor, limit }, request.principal)
+        }
+        const officialTemplates = await loadOfficialTemplatesOrReturnEmpty(app.log, query)
+        const customTemplates = await loadCustomTemplatesOrReturnEmpty(app.log, query, request.principal)
 
         return {
             data: [...officialTemplates, ...customTemplates],
@@ -256,14 +260,23 @@ async function loadCustomTemplatesOrReturnEmpty(
     if ((!isNil(query.type) && query.type !== TemplateType.CUSTOM)) {
         return []
     }
+    const customTemplates = await loadCustomTemplatesPageOrReturnEmpty(log, query, principal)
+    return customTemplates.data
+}
+
+async function loadCustomTemplatesPageOrReturnEmpty(
+    log: FastifyBaseLogger,
+    query: ListTemplatesRequestQuery,
+    principal: Principal,
+): Promise<SeekPage<Template>> {
+    const emptyPage: SeekPage<Template> = { data: [], next: null, previous: null }
     const platformId = principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER || principal.type === PrincipalType.ONBOARDING ? null : principal.platform.id
     if (isNil(platformId)) {
-        return []
+        return emptyPage
     }
     const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
     if (!platform.plan.manageTemplatesEnabled) {
-        return []
+        return emptyPage
     }
-    const customTemplates = await templateService(log).list({ platformId, type: TemplateType.CUSTOM, ...query })
-    return customTemplates.data
+    return templateService(log).list({ platformId, type: TemplateType.CUSTOM, ...query })
 }

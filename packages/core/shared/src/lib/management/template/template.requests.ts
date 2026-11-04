@@ -38,6 +38,8 @@ export const ListFlowTemplatesRequestQuery = z.object({
     tags: OptionalArrayFromQuery(z.string()),
     search: z.string().optional(),
     category: z.string().optional(),
+    cursor: z.string().optional(),
+    limit: z.coerce.number().optional(),
 })
 export type ListFlowTemplatesRequestQuery = z.infer<typeof ListFlowTemplatesRequestQuery>
 

@@ -216,7 +216,8 @@ const SecretManagersPage = () => {
         isError={isSample ? false : isConnectionsError}
         errorStateEntity={t('secret managers')}
         onRetry={refetchConnections}
-        hidePagination={true}
+        pageInBrowser
+        hideFooterUntilNeeded
       />
     </AdminPage>
   );

@@ -160,6 +160,15 @@ way back was to stash the handful of intended edits, `git checkout` the package,
   surfaces that have no spacing of their own, a card grid or a form, and not on a table. Bit the Projects
   and Users pages during the admin alignment pass, where the table was inset while its own toolbar was not.
 
+- **An admin table whose list can grow without limit gets pagination, without changing the table.**
+  Use server cursor paging for big lists, or `pageInBrowser` on `AdminDataTable` for a list that is
+  already loaded in full (it keeps the page in the URL, so a live update or reload doesn't jump back to
+  page 1). Pass `hideFooterUntilNeeded` so the footer only shows once the list is longer than one page
+  of 10. A list that is fixed or capped (the piece catalog, a model pick-list, the health lists capped
+  at 50) stays unpaginated, and a list that already pages ("Load more", its own pager) is left as is.
+  The Users page pages pending invitations and users as one list from `GET /v1/users/with-invitations`,
+  invitations first, with the status filter applied on the server.
+
 - **Those two shells carry the page's layout, not just its header, so removing a header moves the content.**
   `CenteredPage` supplies `mx-auto` centring and a 40rem column; `DashboardPageHeader` supplies nothing, so
   its pages run flush to the container edge. Take the header away to hoist the title somewhere shared and

@@ -3,9 +3,10 @@ import {
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Gem, User } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -22,6 +23,7 @@ import { useSeatLimitGuard } from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
 import {
   platformUserHooks,
+  platformUserKeys,
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -29,7 +31,6 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { UserActions } from './actions/user-actions';
 import {
   createUsersTableColumns,
-  getUserRowStatus,
   INVITED_USER_STATUS,
   UserRowStatus,
 } from './columns';
@@ -51,60 +52,36 @@ export default function UsersPage() {
   const { isOutOfSeats, handleSeatLimitError, seatLimitDialog } =
     useSeatLimitGuard();
 
-  const {
-    data: usersData,
-    isLoading: usersLoading,
-    isError: usersError,
-    refetch: refetchUsers,
-  } = platformUserHooks.useUsers();
-
-  const {
-    data: invitationsData,
-    isLoading: invitationsLoading,
-    isError: invitationsError,
-    refetch: refetchInvitations,
-  } = platformUserHooks.usePlatformInvitations();
-
-  const refetch = () => {
-    refetchUsers();
-    refetchInvitations();
-  };
-
-  const combinedData: UserRowData[] = useMemo(() => {
-    const users: UserRowData[] =
-      usersData?.data?.map((user) => ({
-        id: user.id,
-        type: 'user' as const,
-        data: user,
-      })) ?? [];
-
-    const pendingInvitations: UserRowData[] =
-      invitationsData?.map((invitation) => ({
-        id: invitation.id,
-        type: 'invitation' as const,
-        data: invitation,
-      })) ?? [];
-
-    return [...users, ...pendingInvitations];
-  }, [usersData, invitationsData]);
-
   const [searchParams] = useSearchParams();
   const selectedStatuses = dataTableFilterUtils.getSelectedValues({
     searchParams,
     key: STATUS_FILTER_KEY,
     allowedValues: STATUS_FILTER_VALUES,
     defaultValues: DEFAULT_STATUS_FILTER,
-  });
-  const visibleRows =
-    selectedStatuses.length === 0
-      ? combinedData
-      : combinedData.filter((row) =>
-          selectedStatuses.includes(getUserRowStatus(row)),
-        );
-  const hiddenUsersCount = combinedData.length - visibleRows.length;
+  }) as UserRowStatus[];
+  const isFiltered =
+    selectedStatuses.length > 0 &&
+    selectedStatuses.length < STATUS_FILTER_VALUES.length;
 
-  const isLoading = usersLoading || invitationsLoading;
-  const isError = usersError || invitationsError;
+  // Pending invitations come first, then users, paged and filtered on the server as one list.
+  const {
+    data: usersPage,
+    isLoading,
+    isError,
+  } = platformUserHooks.useUsersWithInvitationsPage({
+    statuses: selectedStatuses,
+  });
+
+  const queryClient = useQueryClient();
+  const refetch = () => {
+    // Refresh every users and invitations query, so other screens stay current too.
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
+      queryClient.invalidateQueries({
+        queryKey: platformUserKeys.invitations,
+      }),
+    ]).catch(() => undefined);
+  };
 
   const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
     onSuccess: refetch,
@@ -166,13 +143,11 @@ export default function UsersPage() {
       </AdminPageHeader>
       <AdminDataTable
         emptyStateTextTitle={
-          hiddenUsersCount > 0
-            ? t('No users match this filter')
-            : t('No users found')
+          isFiltered ? t('No users match this filter') : t('No users found')
         }
         emptyStateTextDescription={
-          hiddenUsersCount > 0
-            ? t('usersHiddenByStatusFilter', { count: hiddenUsersCount })
+          isFiltered
+            ? t('Change the status filter to see more users')
             : t('Start inviting users to your project')
         }
         emptyStateIcon={<User />}
@@ -190,12 +165,8 @@ export default function UsersPage() {
             defaultValues: DEFAULT_STATUS_FILTER,
           },
         ]}
-        page={{
-          data: visibleRows,
-          next: usersData?.next || null,
-          previous: usersData?.previous || null,
-        }}
-        hidePagination={true}
+        page={usersPage}
+        hideFooterUntilNeeded
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('users')}

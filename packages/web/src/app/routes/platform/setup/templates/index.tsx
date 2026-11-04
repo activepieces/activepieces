@@ -14,7 +14,12 @@ import {
   adminPageResources,
 } from '@/app/components/admin';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
+import {
+  RowDataWithActions,
+  BulkAction,
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
@@ -44,8 +49,11 @@ const PlatformTemplatesPage = () => {
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
     queryFn: () => {
+      const limit = searchParams.get(LIMIT_QUERY_PARAM);
       return templatesApi.list({
         type: TemplateType.CUSTOM,
+        cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+        limit: limit ? parseInt(limit, 10) : 10,
       });
     },
   });
@@ -225,7 +233,7 @@ const PlatformTemplatesPage = () => {
         emptyStateIcon={<FileText />}
         columns={columnsWithCheckbox}
         page={isSample ? sampleData.templatesPage() : data}
-        hidePagination={true}
+        hideFooterUntilNeeded
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('templates')}

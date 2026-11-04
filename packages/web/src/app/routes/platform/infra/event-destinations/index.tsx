@@ -220,7 +220,8 @@ const EventDestinationsPage = () => {
         isError={isError}
         errorStateEntity={t('destinations')}
         onRetry={eventDestinationsCollectionUtils.refetch}
-        hidePagination={true}
+        pageInBrowser
+        hideFooterUntilNeeded
         onRowClick={(row, newWindow) =>
           newWindow
             ? openNewWindow(`${EVENT_STREAMING_PATH}/${row.id}`)

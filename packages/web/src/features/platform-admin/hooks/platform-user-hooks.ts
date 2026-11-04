@@ -1,6 +1,8 @@
 import { isNil, Permission, SeekPage } from '@activepieces/core-utils';
 import {
   InvitationType,
+  PlatformUserListItem,
+  PlatformUserListStatus,
   UpdateUserRequestBody,
   User,
   UserStatus,
@@ -8,9 +10,14 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { platformUserApi } from '@/api/platform-user-api';
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -35,6 +42,37 @@ export const platformUserHooks = {
         });
         return results;
       },
+      enabled: canListUsers,
+    });
+  },
+  useUsersWithInvitationsPage: ({
+    statuses,
+  }: {
+    statuses: PlatformUserListStatus[];
+  }) => {
+    const [searchParams] = useSearchParams();
+    const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
+    const limit = Number(searchParams.get(LIMIT_QUERY_PARAM)) || 10;
+    const { data: currentUser } = userHooks.useCurrentUser();
+    const { checkAccess, isFetchingProjectRole } = useAuthorization();
+    const canListUsers =
+      !isNil(currentUser) &&
+      checkAccess(Permission.WRITE_INVITATION) &&
+      !isFetchingProjectRole;
+    return useQuery<SeekPage<PlatformUserListItem>, Error>({
+      queryKey: [
+        ...platformUserKeys.users,
+        'with-invitations',
+        statuses,
+        cursor,
+        limit,
+      ],
+      queryFn: () =>
+        platformUserApi.listWithInvitations({
+          cursor,
+          limit,
+          status: statuses.length > 0 ? statuses : undefined,
+        }),
       enabled: canListUsers,
     });
   },

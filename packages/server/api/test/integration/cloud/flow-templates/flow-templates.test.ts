@@ -55,6 +55,50 @@ describe('Templates', () => {
             expect(responseBody.data[0].id).toBe(mockPlatformTemplate.id)
         })
 
+        it('should page custom templates when a limit is given', async () => {
+            const { mockPlatform, mockUser } =
+                await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
+            await db.save('template', [
+                createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM }),
+                createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM }),
+            ])
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const firstPage = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/templates',
+                headers: { authorization: `Bearer ${testToken}` },
+                query: { type: TemplateType.CUSTOM, limit: '2' },
+            })
+            const firstBody = firstPage?.json()
+            expect(firstPage?.statusCode).toBe(StatusCodes.OK)
+            expect(firstBody.data).toHaveLength(2)
+            expect(firstBody.next).not.toBeNull()
+
+            const secondPage = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/templates',
+                headers: { authorization: `Bearer ${testToken}` },
+                query: { type: TemplateType.CUSTOM, limit: '2', cursor: firstBody.next },
+            })
+            const secondBody = secondPage?.json()
+            expect(secondPage?.statusCode).toBe(StatusCodes.OK)
+            expect(secondBody.data).toHaveLength(1)
+            expect(secondBody.next).toBeNull()
+
+            const unpaged = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/templates',
+                headers: { authorization: `Bearer ${testToken}` },
+                query: { type: TemplateType.CUSTOM },
+            })
+            expect(unpaged?.json().data).toHaveLength(3)
+        })
+
         it('should list cloud platform template for anonymous users', async () => {
             const response = await app?.inject({
                 method: 'GET',
