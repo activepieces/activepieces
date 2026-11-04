@@ -128,6 +128,19 @@ describe('flowScheduleLabelUtils.describe', () => {
     expect(label?.tooltip).toBe('Runs Monday to Friday at 10 PM UTC.');
   });
 
+  it('names the schedule zone for hourly crons outside UTC', () => {
+    const label = flowScheduleLabelUtils.describe({
+      flow: flowWith({
+        schedule: cron('0 * * * *', 'Asia/Kolkata'),
+        pieceName: SCHEDULE,
+      }),
+      locale: 'en-US',
+      viewerTimeZone: 'UTC',
+      now: winter,
+    });
+    expect(label?.tooltip).toBe('Runs every hour on the hour (Kolkata time).');
+  });
+
   it('prints no English ordinal suffix in other languages', () => {
     const label = flowScheduleLabelUtils.describe({
       flow: flowWith({ schedule: cron('0 9 2 * *'), pieceName: SCHEDULE }),

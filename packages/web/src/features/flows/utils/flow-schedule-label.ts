@@ -7,10 +7,6 @@ import {
 import cronstrue from 'cronstrue/i18n';
 import { t } from 'i18next';
 
-export const flowScheduleLabelUtils = {
-  describe,
-};
-
 function describe({
   flow,
   locale,
@@ -146,12 +142,15 @@ function describeFixedTime({
         ? {
             detail: t('hourly, Mon–Fri'),
             scheduleTooltip: t(
-              'Runs every hour on the hour (UTC), Monday to Friday.',
+              'Runs every hour on the hour ({zone}), Monday to Friday.',
+              { zone: zoneName({ zone }) },
             ),
           }
         : {
             detail: t('hourly'),
-            scheduleTooltip: t('Runs every hour on the hour (UTC).'),
+            scheduleTooltip: t('Runs every hour on the hour ({zone}).', {
+              zone: zoneName({ zone }),
+            }),
           };
     case 'daily': {
       const nextRun = nextDailyRun({
@@ -509,6 +508,10 @@ function isKnownTimeZone({ timeZone }: { timeZone: string }): boolean {
   );
   return isNil(error);
 }
+
+export const flowScheduleLabelUtils = {
+  describe,
+};
 
 const SCHEDULE_PIECE_NAME = '@activepieces/piece-schedule';
 const MANUAL_TRIGGER_PIECE_NAME = '@activepieces/piece-manual-trigger';
