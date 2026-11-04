@@ -18,6 +18,16 @@ import { flowApprovalsApi } from '../api/flow-approvals-api';
 const PENDING_BADGE_PROBE_LIMIT = 11;
 
 export const flowApprovalsHooks = {
+  usePublishNeedsApproval: (): boolean => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    const { project } = projectCollectionUtils.useCurrentProject();
+    const { checkAccess } = useAuthorization();
+    return (
+      platform.plan.environmentsEnabled &&
+      !!project.sensitive &&
+      !checkAccess(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS)
+    );
+  },
   useListApprovals: ({
     cursor,
     limit,

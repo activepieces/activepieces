@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
+import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
 import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -111,4 +112,35 @@ describe('community edition: the worker picking up an agent step', () => {
             error: { code: ErrorCode.AGENT_RUN_SUPERSEDED },
         })
     })
+
+    it('gives the copy that takes over a lost config the instruction once, not twice', async () => {
+        const ctx = await createTestContext(app)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const conversationId = await startFlowStepRun(ctx, 'ce-handoff-resume')
+        const delivery = {
+            conversationId,
+            runId: apId(),
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            projectId: ctx.project.id,
+            userMessage: 'summarise the thread',
+            modelName: 'gpt-4o',
+            provider: AIProviderName.OPENAI,
+            source: AgentRunSource.FLOW_STEP,
+            waitpointId: apId(),
+        }
+        await agentRpcHandlers(app.log).getAgentConfig(delivery)
+        await agentHelpers.handLockToRedelivery({ conversationId, runId: delivery.runId })
+
+        const config = await agentRpcHandlers(app.log).getAgentConfig(delivery)
+
+        const stored = await db.findOneByOrFail<{ messages: { role: string }[], uiMessages: { role: string }[] }>('agent_conversation', { id: conversationId })
+        expect(userTurns({ messages: config.previousUiMessages })).toBe(1)
+        expect(userTurns({ messages: stored.messages })).toBe(1)
+        expect(userTurns({ messages: stored.uiMessages })).toBe(1)
+    })
 })
+
+function userTurns({ messages }: { messages: { role: string }[] }): number {
+    return messages.filter((message) => message.role === 'user').length
+}

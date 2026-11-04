@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
 
 vi.mock('@aws-sdk/client-sts', () => ({
-  STSClient: vi.fn(() => ({ send: sendMock })),
-  AssumeRoleWithWebIdentityCommand: vi.fn((input: unknown) => ({ input })),
+  STSClient: vi.fn(function () { return { send: sendMock } }),
+  AssumeRoleWithWebIdentityCommand: vi.fn(function (input: unknown) { return { input } }),
 }));
 
 import { PieceServerContextError } from '@activepieces/pieces-framework';

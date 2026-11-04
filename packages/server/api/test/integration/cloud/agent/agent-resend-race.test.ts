@@ -48,6 +48,34 @@ describe('re-sending a message while the first run has not started yet', () => {
         expect(stored.activeRunId).toBe('run-1')
     })
 
+    it('lets the redelivered copy take a lock handed to it once, when the first delivery never received its config', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const created = await ctx.post('/v1/agents/conversations', { title: 'Undelivered config' })
+        const conversationId = created.json().id
+        await agentHelpers.claimConversationForRun({ conversationId, runId: 'run-1' })
+        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('acquired')
+
+        await agentHelpers.handLockToRedelivery({ conversationId, runId: 'run-1' })
+
+        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('handed-off')
+        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('duplicate')
+    })
+
+    it('leaves the run streaming for the stale sweep when the copy is turned away before the hand-off', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const created = await ctx.post('/v1/agents/conversations', { title: 'Early copy' })
+        const conversationId = created.json().id
+        await agentHelpers.claimConversationForRun({ conversationId, runId: 'run-1' })
+        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('acquired')
+        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('duplicate')
+
+        await agentHelpers.handLockToRedelivery({ conversationId, runId: 'run-1' })
+
+        const stored = await db.findOneByOrFail<{ status: string, activeRunId: string }>('agent_conversation', { id: conversationId })
+        expect(stored.status).toBe(AgentConversationStatus.STREAMING)
+        expect(stored.activeRunId).toBe('run-1')
+    })
+
     it('drops a copy delivered after its run finished, so the agent and its tools do not run twice', async () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
         const created = await ctx.post('/v1/agents/conversations', { title: 'Late copy' })
