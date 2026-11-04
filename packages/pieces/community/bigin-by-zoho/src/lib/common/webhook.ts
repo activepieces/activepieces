@@ -30,14 +30,19 @@ async function fetchNotifiedRecords({
   auth: { access_token: string; data: Record<string, unknown> };
   module: string;
   ids: string[];
-}): Promise<BiginRecord[]> {
-  const connection = getBiginConnection(auth);
+}): Promise<NotifiedRecords> {
   const records: BiginRecord[] = [];
-  for (const id of ids.slice(0, MAX_FETCHED_RECORDS)) {
-    const record = await biginRecords.find({ connection, module, id });
-    if (record) records.push(record);
+  try {
+    const connection = getBiginConnection(auth);
+    for (const id of ids.slice(0, MAX_FETCHED_RECORDS)) {
+      const record = await biginRecords.find({ connection, module, id });
+      if (record) records.push(record);
+    }
+    return { records };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { records, records_error: message };
   }
-  return records;
 }
 
 function sampleData({ module, event }: { module: string; event: 'create' | 'edit' }) {
@@ -138,9 +143,9 @@ function hooks({
         throw new Error('Invalid webhook token');
       }
       const ids = Array.isArray(body['ids']) ? body['ids'].map((id) => String(id)) : [];
-      const records = await fetchNotifiedRecords({ auth: context.auth, module, ids });
+      const fetched = await fetchNotifiedRecords({ auth: context.auth, module, ids });
       const rest = Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'token'));
-      return [{ ...rest, records }];
+      return [{ ...rest, ...fetched }];
     },
   };
 }
@@ -156,6 +161,11 @@ type HookContext = {
 };
 
 type RunContext = HookContext & { payload: { body: unknown } };
+
+type NotifiedRecords = {
+  records: BiginRecord[];
+  records_error?: string;
+};
 
 type StoredChannel = {
   channel_id: string;

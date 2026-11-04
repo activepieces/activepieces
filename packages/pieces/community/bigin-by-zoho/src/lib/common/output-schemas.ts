@@ -201,6 +201,7 @@ const triggerPayload: OutputSchema = {
     { key: 'server_time', label: 'Server Time', format: 'number' },
     { key: 'affected_fields', label: 'Affected Fields' },
     { key: 'records', label: 'Records' },
+    { key: 'records_error', label: 'Records Fetch Error' },
   ],
 };
 

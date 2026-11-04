@@ -116,6 +116,20 @@ describe('webhook triggers', () => {
     expect(out).toEqual([{ ids: ['9'], module: 'Contacts', records: [{ id: '9', Last_Name: 'X' }] }]);
   });
 
+  it('still returns the notification when the record read fails', async () => {
+    const store = makeStore({ [key]: { channel_id: '1', token: 'secret' } });
+    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new Error('rate limited'));
+    const out = await newContactCreated.run({
+      auth,
+      store,
+      payload: { body: { token: 'secret', ids: ['9'], module: 'Contacts', operation: 'insert' } },
+    } as never);
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ ids: ['9'], module: 'Contacts', operation: 'insert', records: [] });
+    expect(out[0]).toHaveProperty('records_error');
+    expect(out[0]).not.toHaveProperty('token');
+  });
+
   it('onEnable sends channel_expiry and stores a random token', async () => {
     const store = makeStore();
     const spy = mockResponse({ status: 200, body: { watch: [] } });
