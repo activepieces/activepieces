@@ -8,6 +8,24 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Fireberry 0.2.0: record actions are no longer AI agent tools, and their output changes
+
+**Create Record**, **Update Record**, **Delete Records** and **Find Records** are now shown only in the flow builder. AI agents and MCP clients get a separate set of agent actions instead: List Object Types, List Object Fields, List Picklist Values, Search Records, Get Record, Create Record, Update Record and Delete Record.
+
+After you upgrade a step:
+
+- Create Record and Update Record return `{ id, objectSystemName, record }` instead of the raw batch response.
+- Delete Records returns `{ deletedIds, deletedCount }`.
+- The **Record Created or Updated** trigger ignores its lookback setting (it is kept only so saved flows still load). It now tracks Fireberry's own timestamps, so it no longer re-sends records changed earlier the same day. A flow that was already on starts tracking on its first poll after the upgrade and sends no events for that one poll.
+
+#### What you need to do
+
+- Agents that used the old Fireberry actions as tools: switch to the new agent actions.
+- If a later step read fields from the old Create or Update output, map `id` or `record` instead.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 
 When Activepieces connects to an MCP server, it no longer follows a redirect to a different host or port. That redirect now fails the connection, so headers such as API keys are never sent to a host you did not configure.
