@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { FlowRunStatus, FlowVersionState, PauseType, PrincipalType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { systemJobIds } from '../../../../../src/app/helper/system-jobs/common'
 import * as systemJobModule from '../../../../../src/app/helper/system-jobs/system-job'
@@ -7,6 +7,7 @@ import { barrierService } from '../../../../../src/app/waitpoints/barrier-servic
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
+import { generateMockToken } from '../../../../helpers/auth'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion, mockAndSaveBasicSetup } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
@@ -1062,6 +1063,29 @@ describe('Waitpoint service', () => {
 
             const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: ctx.project.id, version: 'V0' })
             expect(result).toBeNull()
+        })
+    })
+
+    describe('POST /v1/waitpoints', () => {
+        it('gives the instance url as the public resume url when the edition has no embed subdomain', async () => {
+            const { flowRun } = await createFlowRun()
+            const engineToken = await generateMockToken({
+                type: PrincipalType.ENGINE,
+                id: apId(),
+                projectId: ctx.project.id,
+                platform: { id: ctx.platform.id },
+            })
+
+            const response = await app.inject({
+                method: 'POST',
+                url: '/api/v1/waitpoints',
+                headers: { authorization: `Bearer ${engineToken}` },
+                body: { flowRunId: flowRun.id, projectId: ctx.project.id, stepName: 'approval', type: PauseType.WEBHOOK, version: 'V1' },
+            })
+
+            expect(response.statusCode).toBe(201)
+            const body = response.json()
+            expect(body.publicResumeUrl).toBe(body.resumeUrl)
         })
     })
 })
