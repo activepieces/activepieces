@@ -1,10 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { filetopdfAuth } from '../auth';
-import { filetopdfClient } from '../common/client';
+import { filetopdfApi } from '../common/api';
 import { filetopdfProps } from '../common/props';
 import { filetopdfUtils } from '../common/utils';
-import type { FiletopdfPdfEnvelope } from '../common/types';
 
 export const convertMarkdownAction = createAction({
   auth: filetopdfAuth,
@@ -13,7 +11,7 @@ export const convertMarkdownAction = createAction({
   displayName: 'Convert Markdown',
   description:
     'Render a raw Markdown string (with optional CSS) to PDF. A sensible default stylesheet is applied when no CSS is provided.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Renders a raw Markdown string to PDF, applying a default stylesheet when no CSS is supplied (custom CSS overrides it). Choose this when the agent holds Markdown text it generated or assembled in memory, rather than a file, URL, or HTML. Requires the Markdown content as input. Not idempotent: each call performs a fresh remote render on the FileToPDF service that produces a new file and consumes account credits.',
@@ -35,16 +33,7 @@ export const convertMarkdownAction = createAction({
   async run(context) {
     const { markdown, css, ...rawOptions } = context.propsValue;
     const options = filetopdfUtils.stringifyOptions(rawOptions);
-    const body: Record<string, unknown> = { markdown, ...options };
-    if (css) body['css'] = css;
-
-    const envelope = await filetopdfClient.request<FiletopdfPdfEnvelope>({
-      auth: context.auth,
-      method: HttpMethod.POST,
-      path: '/markdown',
-      body,
-    });
-
+    const envelope = await filetopdfApi.convertMarkdown({ auth: context.auth, markdown, css, options });
     return await filetopdfUtils.buildConversionOutput({ files: context.files, envelope });
   },
 });

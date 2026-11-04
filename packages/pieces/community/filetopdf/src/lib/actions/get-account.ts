@@ -1,10 +1,12 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { filetopdfAuth } from '../auth';
 import { filetopdfApi } from '../common/api';
+import { getAccountOutputSchema } from '../output-schemas';
 
 export const getAccountAction = createAction({
   auth: filetopdfAuth,
   name: 'get_account',
+  outputSchema: getAccountOutputSchema,
   classification: 'READ',
   displayName: 'Get Account Status',
   description:

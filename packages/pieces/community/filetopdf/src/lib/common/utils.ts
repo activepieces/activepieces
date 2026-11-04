@@ -10,6 +10,27 @@ function stringifyOptions(options: Record<string, unknown> | undefined): Record<
   return out;
 }
 
+function buildAiOptions({
+  additionalOptions,
+  options,
+}: {
+  additionalOptions: unknown;
+  options: Record<string, unknown>;
+}): Record<string, string> {
+  if (additionalOptions === undefined || additionalOptions === null) {
+    return stringifyOptions(options);
+  }
+  if (typeof additionalOptions !== 'object' || Array.isArray(additionalOptions)) {
+    throw new Error('additionalOptions must be a JSON object of option names to values.');
+  }
+  const additional = Object.fromEntries(
+    Object.entries(additionalOptions)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => [key, typeof value === 'string' ? value : JSON.stringify(value)])
+  );
+  return { ...additional, ...stringifyOptions(options) };
+}
+
 async function buildConversionOutput({
   files,
   envelope,
@@ -34,4 +55,4 @@ async function buildConversionOutput({
   };
 }
 
-export const filetopdfUtils = { stringifyOptions, buildConversionOutput };
+export const filetopdfUtils = { stringifyOptions, buildAiOptions, buildConversionOutput };

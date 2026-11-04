@@ -1,7 +1,7 @@
 import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import FormData from 'form-data';
 import { filetopdfAuth } from '../auth';
+import { filetopdfApi } from '../common/api';
 import { filetopdfClient } from '../common/client';
 import { filetopdfProps } from '../common/props';
 import { filetopdfUtils } from '../common/utils';
@@ -14,7 +14,7 @@ export const convertFileAction = createAction({
   displayName: 'Convert a File',
   description:
     'Convert an uploaded file or a public file URL to PDF. The engine is chosen automatically from the extension — Office (DOCX, XLSX, PPTX…), images, HTML, Markdown, or PDF passthrough.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Converts an existing document to PDF, choosing the rendering engine from the file extension (Office formats, images, HTML, Markdown, or PDF passthrough). Operates in one of two source modes: upload binary file data, or pass a public http(s) file URL the server downloads (private/internal addresses are rejected). Choose this when the agent already has a source file or its URL, rather than raw HTML/Markdown text. Not idempotent: each call performs a fresh conversion on the FileToPDF service that produces a new file and consumes account credits.',
@@ -83,18 +83,7 @@ export const convertFileAction = createAction({
       if (!file) {
         throw new Error('Upload a File to convert.');
       }
-      const form = new FormData();
-      form.append('files', Buffer.from(file.data), file.filename);
-      for (const [key, value] of Object.entries(options)) {
-        form.append(key, value);
-      }
-      envelope = await filetopdfClient.request<FiletopdfPdfEnvelope>({
-        auth: context.auth,
-        method: HttpMethod.POST,
-        path: '/file',
-        body: form,
-        headers: form.getHeaders(),
-      });
+      envelope = await filetopdfApi.convertUploadedFile({ auth: context.auth, file, options });
     }
 
     return await filetopdfUtils.buildConversionOutput({ files: context.files, envelope });
