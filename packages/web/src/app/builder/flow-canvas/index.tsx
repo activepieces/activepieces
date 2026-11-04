@@ -158,7 +158,7 @@ export const FlowCanvas = React.memo(
         .filter((step) => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
-          sharedFlowCanvasUtils.isContainerStep(step) ||
+          sharedFlowCanvasUtils.isLoopOrBatchStep(step) ||
           flowStructureUtil.isBranchedAction(step) ||
           flowStructureUtil.hasContinueOnFailureBranches(step)
         ) {
