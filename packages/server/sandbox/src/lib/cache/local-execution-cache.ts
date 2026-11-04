@@ -2,8 +2,8 @@ import { unique } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { PiecePackage } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../types'
-import { actionRunCache } from './action-run-cache'
 import { cacheUtils } from './cache-paths'
+import { actionRunCache } from './code-cache-eviction'
 import { engineInstaller } from './engine/engine-installer'
 import { codeBuilder } from './flow/code/code-builder'
 import { codeCache } from './flow/code/code-cache'
@@ -81,11 +81,11 @@ async function installCodeStep({ artifact, codeCachePath, log, getSettings }: In
             codesFolderPath: codeCachePath,
         })
     }
-    // Loops because a build can land on a directory an eviction sweep (action-run-cache.ts,
-    // code-cache-eviction.ts) is mid-removal of — waiting for that removal and rebuilding is the
-    // only way to avoid running against partially-deleted files. action-run-cache.ts evicts a whole
-    // namespace dir at once, but code-cache-eviction.ts now evicts per step dir (code-builder.ts
-    // touches that one on every use) — wait on whichever one actually gets deleted.
+    // Loops because a build can land on a directory an eviction sweep (code-cache-eviction.ts)
+    // is mid-removal of — waiting for that removal and rebuilding is the only way to avoid running
+    // against partially-deleted files. The action-run pass evicts a whole namespace dir at once,
+    // but the disk-pressure pass evicts per step dir (code-builder.ts touches that one on every
+    // use) — wait on whichever one actually gets deleted.
     const codes = codeCache(codeCachePath)
     const isActionRun = actionRunCache.isActionRunNamespace(artifact.flowVersionId)
     const dirPath = isActionRun
@@ -95,8 +95,8 @@ async function installCodeStep({ artifact, codeCachePath, log, getSettings }: In
         await build()
         if (isActionRun) {
             // code-builder.ts only touches the nested step dir it writes to, which never bumps a
-            // parent directory's own mtime — action-run-cache.ts's sweep needs the namespace dir
-            // itself touched on every use, not just its first build.
+            // parent directory's own mtime — the action-run sweep needs the namespace dir itself
+            // touched on every use, not just its first build.
             await actionRunCache.touch(dirPath)
         }
     } while (await sweptWhileProvisioning({ dirPath, log }))

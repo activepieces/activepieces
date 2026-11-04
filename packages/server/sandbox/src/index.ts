@@ -1,9 +1,8 @@
 export { createSandboxRuntime } from './lib/sandbox'
 export { markDevPiecesRebuilt } from './lib/sandbox-manager'
 export { createResolver } from './lib/resolver'
-export { actionRunCache, ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS } from './lib/cache/action-run-cache'
+export { actionRunCache, codeCacheEviction, ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, CODE_CACHE_FIRST_SWEEP_DELAY_MS, CODE_CACHE_SWEEP_INTERVAL_MS, DISK_EVICTION_THRESHOLD_PERCENT } from './lib/cache/code-cache-eviction'
 export { cacheUtils } from './lib/cache/cache-paths'
-export { codeCacheEviction, DISK_EVICTION_THRESHOLD_PERCENT } from './lib/cache/flow/code/code-cache-eviction'
 
 export type {
     Runtime,

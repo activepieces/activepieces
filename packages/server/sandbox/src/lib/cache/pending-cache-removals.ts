@@ -1,9 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
 
-// Shared across every cache eviction path (action-run-cache.ts, code-cache-eviction.ts) so that
-// provisioning (local-execution-cache.ts) can wait out ANY in-flight removal of a directory it is
-// about to use, regardless of which sweep started the removal, instead of racing a cache hit
-// against a recursive rm that is still deleting the files underneath it.
+// Shared across both eviction passes (code-cache-eviction.ts) so that provisioning
+// (local-execution-cache.ts) can wait out ANY in-flight removal of a directory it is about to use,
+// regardless of which pass started the removal, instead of racing a cache hit against a recursive
+// rm that is still deleting the files underneath it.
 export const pendingCacheRemovals = {
     track(dirPath: string, removal: Promise<unknown>): void {
         pendingRemovals.set(dirPath, removal)

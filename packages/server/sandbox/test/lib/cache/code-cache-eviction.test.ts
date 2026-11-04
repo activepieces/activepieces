@@ -2,16 +2,17 @@ import { randomUUID } from 'node:crypto'
 import { chmod, mkdir, rm, stat, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { ActivepiecesError, apId, ApId, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode } from '@activepieces/core-utils'
 import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, describe, expect, it } from 'vitest'
-import { actionRunCache, ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_MAX_DIRS } from '../../../src/lib/cache/action-run-cache'
 import { ACTION_RUN_CODE_DIR, cacheUtils } from '../../../src/lib/cache/cache-paths'
+import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_MAX_DIRS, actionRunCache, codeCacheEviction, DISK_EVICTION_THRESHOLD_PERCENT } from '../../../src/lib/cache/code-cache-eviction'
+import { pendingCacheRemovals } from '../../../src/lib/cache/pending-cache-removals'
 
 const basePaths: string[] = []
 
 function uniqueBasePath(): string {
-    const basePath = join(tmpdir(), `action-run-cache-test-${randomUUID()}`)
+    const basePath = join(tmpdir(), `code-cache-eviction-test-${randomUUID()}`)
     basePaths.push(basePath)
     return basePath
 }
@@ -58,7 +59,11 @@ function createRecordingLog(): RecordingLog {
 const SECOND_MS = 1000
 const HOUR_MS = 60 * 60 * 1000
 
-async function seedStepDir({ basePath, namespace, ageMs = 0, extraFiles = 0 }: SeedParams): Promise<string> {
+function flowVersionDir({ basePath, flowVersionId }: { basePath: string, flowVersionId: string }): string {
+    return join(cacheUtils(basePath).getGlobalCodeCachePath(), flowVersionId)
+}
+
+async function seedNamespaceDir({ basePath, namespace, ageMs = 0, extraFiles = 0 }: SeedNamespaceParams): Promise<string> {
     const dirPath = join(cacheUtils(basePath).getGlobalCodeCachePath(), namespace)
     const stepPath = join(dirPath, 'step_1')
     await mkdir(stepPath, { recursive: true })
@@ -71,14 +76,40 @@ async function seedStepDir({ basePath, namespace, ageMs = 0, extraFiles = 0 }: S
     return dirPath
 }
 
+async function seedStepDir({ basePath, flowVersionId, stepName = 'step_1', ageMs }: SeedStepParams): Promise<string> {
+    const stepPath = join(flowVersionDir({ basePath, flowVersionId }), stepName)
+    await mkdir(stepPath, { recursive: true })
+    await writeFile(join(stepPath, 'index.ts'), 'export const code = async () => 42', 'utf8')
+    const mtime = new Date(Date.now() - ageMs)
+    await utimes(stepPath, mtime, mtime)
+    return stepPath
+}
+
 async function seedOldestFirst({ basePath, total, ageOffsetMs = ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, label = '0' }: SeedOldestFirstParams): Promise<string[]> {
     return Promise.all(
-        Array.from({ length: total }, (_, index) => seedStepDir({
+        Array.from({ length: total }, (_, index) => seedNamespaceDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: `${label}${index.toString(16)}`.padStart(64, '0') }),
             ageMs: ageOffsetMs + (total - index) * SECOND_MS,
         })),
     )
+}
+
+function underThreshold(): Promise<number> {
+    return Promise.resolve(DISK_EVICTION_THRESHOLD_PERCENT - 1)
+}
+
+// The disk-pressure pass calls getUsedPercent() once before the loop (the initial gate check) plus
+// once per candidate considered, so driving N evictions needs N+1 "over threshold" answers.
+function overThresholdForEvictions(evictionsWanted: number): () => Promise<number> {
+    let overCallsLeft = evictionsWanted + 1
+    return async () => {
+        if (overCallsLeft <= 0) {
+            return DISK_EVICTION_THRESHOLD_PERCENT - 1
+        }
+        overCallsLeft -= 1
+        return DISK_EVICTION_THRESHOLD_PERCENT + 1
+    }
 }
 
 function runningAsRoot(): boolean {
@@ -156,24 +187,24 @@ describe('actionRunCache namespace classification', () => {
     })
 })
 
-describe('actionRunCache.sweep', () => {
+describe('codeCacheEviction.sweep action-run pass', () => {
     it('reclaims managed dirs past the TTL and leaves flow versions alone', async () => {
         const basePath = uniqueBasePath()
-        const flowVersionDir = await seedStepDir({ basePath, namespace: apId(), ageMs: 90 * 24 * HOUR_MS })
-        const freshDir = await seedStepDir({
+        const flowVersionCacheDir = await seedNamespaceDir({ basePath, namespace: apId(), ageMs: 90 * 24 * HOUR_MS })
+        const freshDir = await seedNamespaceDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '1'.repeat(64) }),
             ageMs: HOUR_MS,
         })
-        const expiredDir = await seedStepDir({
+        const expiredDir = await seedNamespaceDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '2'.repeat(64) }),
             ageMs: 3 * HOUR_MS,
         })
 
-        await actionRunCache.sweep({ basePath, log: noopLog })
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
 
-        await expect(exists(flowVersionDir)).resolves.toBe(true)
+        await expect(exists(flowVersionCacheDir)).resolves.toBe(true)
         await expect(exists(freshDir)).resolves.toBe(true)
         await expect(exists(expiredDir)).resolves.toBe(false)
     })
@@ -182,19 +213,19 @@ describe('actionRunCache.sweep', () => {
         const basePath = uniqueBasePath()
         const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
         const ancient = 90 * 24 * HOUR_MS
-        const flowVersionDir = await seedStepDir({ basePath, namespace: apId(), ageMs: ancient })
-        const legacyPrefixedDir = await seedStepDir({ basePath, namespace: `ar_${apId()}_${'d'.repeat(64)}`, ageMs: ancient })
+        const flowVersionCacheDir = await seedNamespaceDir({ basePath, namespace: apId(), ageMs: ancient })
+        const legacyPrefixedDir = await seedNamespaceDir({ basePath, namespace: `ar_${apId()}_${'d'.repeat(64)}`, ageMs: ancient })
         const strayFile = join(codesPath, 'stray.txt')
         await writeFile(strayFile, 'not a cache dir', 'utf8')
-        await seedStepDir({
+        await seedNamespaceDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: 'e'.repeat(64) }),
             ageMs: ancient,
         })
 
-        await actionRunCache.sweep({ basePath, log: noopLog })
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
 
-        await expect(exists(flowVersionDir)).resolves.toBe(true)
+        await expect(exists(flowVersionCacheDir)).resolves.toBe(true)
         await expect(exists(legacyPrefixedDir)).resolves.toBe(true)
         await expect(exists(strayFile)).resolves.toBe(true)
     })
@@ -204,7 +235,7 @@ describe('actionRunCache.sweep', () => {
         const overflow = 3
         const dirs = await seedOldestFirst({ basePath, total: ACTION_RUN_CACHE_MAX_DIRS + overflow })
 
-        await actionRunCache.sweep({ basePath, log: noopLog })
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
 
         for (const dirPath of dirs.slice(0, overflow)) {
             await expect(exists(dirPath)).resolves.toBe(false)
@@ -220,7 +251,7 @@ describe('actionRunCache.sweep', () => {
         const dirs = await seedOldestFirst({ basePath, total })
         const firstRetained = total - ACTION_RUN_CACHE_MAX_DIRS
 
-        await actionRunCache.sweep({ basePath, log: noopLog })
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
 
         await expect(exists(dirs[0])).resolves.toBe(false)
         await expect(exists(dirs[firstRetained - 1])).resolves.toBe(false)
@@ -233,7 +264,7 @@ describe('actionRunCache.sweep', () => {
         const staleDirs = await seedOldestFirst({ basePath, total: 3, label: 'a' })
         const activeDirs = await seedOldestFirst({ basePath, total: ACTION_RUN_CACHE_MAX_DIRS + 7, ageOffsetMs: 0, label: 'b' })
 
-        await actionRunCache.sweep({ basePath, log: noopLog })
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
 
         for (const dirPath of staleDirs) {
             await expect(exists(dirPath)).resolves.toBe(false)
@@ -252,7 +283,7 @@ describe('actionRunCache.sweep', () => {
             label: 'c',
         })
 
-        await actionRunCache.sweep({ basePath, log: noopLog, activeWindowMs: 60 * 60 * 1000 })
+        await codeCacheEviction.sweep({ basePath, log: noopLog, activeWindowMs: 60 * 60 * 1000, getUsedPercent: underThreshold })
 
         for (const dirPath of runningDirs) {
             await expect(exists(dirPath)).resolves.toBe(true)
@@ -262,26 +293,26 @@ describe('actionRunCache.sweep', () => {
     it('is a no-op on a cache that was never created, and is idempotent', async () => {
         const basePath = uniqueBasePath()
 
-        await expect(actionRunCache.sweep({ basePath, log: noopLog })).resolves.toBeUndefined()
+        await expect(codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })).resolves.toBeUndefined()
 
-        const freshDir = await seedStepDir({
+        const freshDir = await seedNamespaceDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '7'.repeat(64) }),
         })
 
-        await actionRunCache.sweep({ basePath, log: noopLog })
-        await actionRunCache.sweep({ basePath, log: noopLog })
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
 
         await expect(exists(freshDir)).resolves.toBe(true)
     })
 })
 
-describe('actionRunCache.sweep observability', () => {
+describe('codeCacheEviction.sweep action-run pass observability', () => {
     it('reports a missing cache directory at debug, because a worker that never ran code has nothing to sweep', async () => {
         const basePath = uniqueBasePath()
         const recording = createRecordingLog()
 
-        await actionRunCache.sweep({ basePath, log: recording.log })
+        await codeCacheEviction.sweep({ basePath, log: recording.log, getUsedPercent: underThreshold })
 
         expect(recording.payloadsAt('warn')).toHaveLength(0)
         expect(recording.payloadsAt('info')).toHaveLength(0)
@@ -295,7 +326,7 @@ describe('actionRunCache.sweep observability', () => {
         await writeFile(actionRunsPath, 'not a directory', 'utf8')
         const recording = createRecordingLog()
 
-        await actionRunCache.sweep({ basePath, log: recording.log })
+        await codeCacheEviction.sweep({ basePath, log: recording.log, getUsedPercent: underThreshold })
 
         const warnings = recording.payloadsAt('warn')
         expect(warnings).toHaveLength(1)
@@ -308,13 +339,13 @@ describe('actionRunCache.sweep observability', () => {
 
     it('stays at debug when a sweep under the cap had nothing to reclaim', async () => {
         const basePath = uniqueBasePath()
-        await seedStepDir({
+        await seedNamespaceDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '3'.repeat(64) }),
         })
         const recording = createRecordingLog()
 
-        await actionRunCache.sweep({ basePath, log: recording.log })
+        await codeCacheEviction.sweep({ basePath, log: recording.log, getUsedPercent: underThreshold })
 
         expect(recording.payloadsAt('warn')).toHaveLength(0)
         expect(recording.payloadsAt('info')).toHaveLength(0)
@@ -323,18 +354,18 @@ describe('actionRunCache.sweep observability', () => {
 
     it('reports what it reclaimed at info', async () => {
         const basePath = uniqueBasePath()
-        await seedStepDir({
+        await seedNamespaceDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '4'.repeat(64) }),
             ageMs: 3 * HOUR_MS,
         })
-        await seedStepDir({
+        await seedNamespaceDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '5'.repeat(64) }),
         })
         const recording = createRecordingLog()
 
-        await actionRunCache.sweep({ basePath, log: recording.log })
+        await codeCacheEviction.sweep({ basePath, log: recording.log, getUsedPercent: underThreshold })
 
         expect(recording.payloadsAt('warn')).toHaveLength(0)
         expect(recording.payloadsAt('info')).toMatchObject([{
@@ -349,7 +380,7 @@ describe('actionRunCache.sweep observability', () => {
     it.skipIf(runningAsRoot())('warns and counts the directory as retained when removal is denied', async () => {
         const basePath = uniqueBasePath()
         const actionRunsPath = cacheUtils(basePath).getActionRunCodeCachePath()
-        const expiredDir = await seedStepDir({
+        const expiredDir = await seedNamespaceDir({
             basePath,
             namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: '6'.repeat(64) }),
             ageMs: 3 * HOUR_MS,
@@ -357,7 +388,7 @@ describe('actionRunCache.sweep observability', () => {
         const recording = createRecordingLog()
 
         await chmod(actionRunsPath, 0o500)
-        await actionRunCache.sweep({ basePath, log: recording.log })
+        await codeCacheEviction.sweep({ basePath, log: recording.log, getUsedPercent: underThreshold })
         await chmod(actionRunsPath, 0o700)
 
         await expect(exists(expiredDir)).resolves.toBe(true)
@@ -370,14 +401,116 @@ describe('actionRunCache.sweep observability', () => {
     })
 })
 
+describe('codeCacheEviction.sweep disk-pressure pass', () => {
+    it('does nothing while disk usage is under the threshold', async () => {
+        const basePath = uniqueBasePath()
+        const oldStep = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 30 * 24 * HOUR_MS })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
+
+        await expect(exists(oldStep)).resolves.toBe(true)
+    })
+
+    it('evicts the oldest step caches first once disk usage is over the threshold', async () => {
+        const basePath = uniqueBasePath()
+        const oldest = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 3 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const middle = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const newest = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: ACTION_RUN_CACHE_ACTIVE_WINDOW_MS + 1000 })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
+
+        await expect(exists(oldest)).resolves.toBe(false)
+        await expect(exists(middle)).resolves.toBe(true)
+        await expect(exists(newest)).resolves.toBe(true)
+    })
+
+    it('stops evicting as soon as disk usage drops back under the threshold', async () => {
+        const basePath = uniqueBasePath()
+        const steps = await Promise.all(Array.from({ length: 5 }, (_, index) =>
+            seedStepDir({
+                basePath,
+                flowVersionId: apId(),
+                ageMs: ACTION_RUN_CACHE_ACTIVE_WINDOW_MS + (5 - index) * 1000,
+            }),
+        ))
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(2) })
+
+        await expect(exists(steps[0])).resolves.toBe(false)
+        await expect(exists(steps[1])).resolves.toBe(false)
+        for (const stepPath of steps.slice(2)) {
+            await expect(exists(stepPath)).resolves.toBe(true)
+        }
+    })
+
+    it('leaves a recently-used step cache alone even when disk usage is over the threshold', async () => {
+        const basePath = uniqueBasePath()
+        const activeStep = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 1000 })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(10) })
+
+        await expect(exists(activeStep)).resolves.toBe(true)
+    })
+
+    it('evicts only the least-active step in a flow version, leaving its active steps and the flow-version dir intact', async () => {
+        const basePath = uniqueBasePath()
+        const flowVersionId = apId()
+        const coldStep = await seedStepDir({ basePath, flowVersionId, stepName: 'cold_step', ageMs: 3 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const hotStep = await seedStepDir({ basePath, flowVersionId, stepName: 'hot_step', ageMs: 1000 })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
+
+        await expect(exists(coldStep)).resolves.toBe(false)
+        await expect(exists(hotStep)).resolves.toBe(true)
+        await expect(exists(flowVersionDir({ basePath, flowVersionId }))).resolves.toBe(true)
+    })
+
+    it('never touches the action-runs namespace, which the action-run pass already manages', async () => {
+        const basePath = uniqueBasePath()
+        const actionRunNamespace = actionRunCache.namespace({ platformId: apId(), sourceHash: 'f'.repeat(64) })
+        const actionRunDir = await seedNamespaceDir({
+            basePath,
+            namespace: actionRunNamespace,
+            ageMs: HOUR_MS,
+        })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(10) })
+
+        await expect(exists(actionRunDir)).resolves.toBe(true)
+    })
+
+    it('does nothing when the code cache directory does not exist yet', async () => {
+        const basePath = uniqueBasePath()
+
+        await expect(codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(10) }))
+            .resolves.toBeUndefined()
+    })
+
+    it('clears a removed directory from pendingCacheRemovals once eviction finishes, so provisioning is never left waiting forever', async () => {
+        const basePath = uniqueBasePath()
+        const stepPath = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
+
+        await expect(exists(stepPath)).resolves.toBe(false)
+        await expect(pendingCacheRemovals.settle(stepPath)).resolves.toBe(false)
+    })
+
+    it('by default reads disk usage from basePath itself (statfs), not a hardcoded path — a nonexistent basePath is treated as 0% used rather than falling back to "/"', async () => {
+        const basePath = join(tmpdir(), `code-cache-eviction-test-missing-${randomUUID()}`)
+
+        await expect(codeCacheEviction.sweep({ basePath, log: noopLog })).resolves.toBeUndefined()
+    })
+})
+
 describe('actionRunCache.touch', () => {
     it('advances the directory mtime so a reused build survives the next sweep', async () => {
         const basePath = uniqueBasePath()
         const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: '8'.repeat(64) })
-        const dirPath = await seedStepDir({ basePath, namespace, ageMs: 3 * HOUR_MS })
+        const dirPath = await seedNamespaceDir({ basePath, namespace, ageMs: 3 * HOUR_MS })
 
         await actionRunCache.touch(dirPath)
-        await actionRunCache.sweep({ basePath, log: noopLog })
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
 
         await expect(exists(dirPath)).resolves.toBe(true)
     })
@@ -393,7 +526,7 @@ describe('actionRunCache.settlePendingRemoval', () => {
     it('reports nothing pending for a directory no sweep is touching', async () => {
         const basePath = uniqueBasePath()
         const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: '9'.repeat(64) })
-        const dirPath = await seedStepDir({ basePath, namespace })
+        const dirPath = await seedNamespaceDir({ basePath, namespace })
 
         await expect(actionRunCache.settlePendingRemoval(dirPath)).resolves.toBe(false)
     })
@@ -401,9 +534,9 @@ describe('actionRunCache.settlePendingRemoval', () => {
     it('waits out a removal that is already past its mtime re-check, so a provision can rebuild instead of running deleted code', async () => {
         const basePath = uniqueBasePath()
         const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: 'b'.repeat(64) })
-        const dirPath = await seedStepDir({ basePath, namespace, ageMs: 3 * HOUR_MS, extraFiles: 1000 })
+        const dirPath = await seedNamespaceDir({ basePath, namespace, ageMs: 3 * HOUR_MS, extraFiles: 1000 })
 
-        const sweeping = actionRunCache.sweep({ basePath, log: noopLog })
+        const sweeping = codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
         const observed = await waitForPendingRemoval(dirPath)
         await sweeping
 
@@ -413,11 +546,18 @@ describe('actionRunCache.settlePendingRemoval', () => {
     })
 })
 
-type SeedParams = {
+type SeedNamespaceParams = {
     basePath: string
     namespace: string
     ageMs?: number
     extraFiles?: number
+}
+
+type SeedStepParams = {
+    basePath: string
+    flowVersionId: string
+    stepName?: string
+    ageMs: number
 }
 
 type SeedOldestFirstParams = {
