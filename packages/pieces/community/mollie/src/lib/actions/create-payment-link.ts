@@ -568,6 +568,7 @@ export const mollieCreatePaymentLink = createAction({
       HttpMethod.POST,
       '/payment-links',
       paymentLinkData
+      propsValue.testmode
     );
 
     return response;
