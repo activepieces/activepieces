@@ -18,7 +18,7 @@ export const diskLock = (locksPath: string) => ({
         while (!await tryAcquireOnce({ lockPath, token })) {
             await takeoverIfStale(lockPath)
             if (!isNil(deadline) && Date.now() >= deadline) {
-                throw new Error(`Timed out acquiring disk lock for key ${key}`)
+                throw new DiskLockTimeoutError(key)
             }
             await sleep(POLL_INTERVAL_MS)
         }
@@ -44,6 +44,12 @@ export const diskLock = (locksPath: string) => ({
         }
     },
 })
+
+export class DiskLockTimeoutError extends Error {
+    constructor(key: string) {
+        super(`Timed out acquiring disk lock for key ${key}`)
+    }
+}
 
 function sanitizeKey(key: string): string {
     return key.replace(/[^a-zA-Z0-9._-]/g, '-')

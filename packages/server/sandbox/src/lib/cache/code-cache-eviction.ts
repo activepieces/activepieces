@@ -2,7 +2,7 @@ import { readdir, rm, rmdir, stat, utimes } from 'node:fs/promises'
 import path from 'node:path'
 import { ActivepiecesError, chunk, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, systemUsage } from '@activepieces/server-utils'
-import { diskLock } from '../utils/distributed-lock'
+import { diskLock, DiskLockTimeoutError } from '../utils/distributed-lock'
 import { ACTION_RUN_CODE_DIR, cacheUtils } from './cache-paths'
 
 export const actionRunCache = {
@@ -257,7 +257,7 @@ async function removeDir({ locks, dirPath, expectedMtimeMs }: RemoveDirParams): 
         },
     }))
     if (error) {
-        return 'skipped'
+        return error instanceof DiskLockTimeoutError ? 'skipped' : 'failed'
     }
     return outcome
 }

@@ -483,6 +483,21 @@ describe('codeCacheEviction.sweep disk-pressure pass', () => {
         await expect(exists(flowVersionDir({ basePath, flowVersionId }))).resolves.toBe(false)
     })
 
+    it.skipIf(runningAsRoot())('reports a lock-infrastructure failure as failed, never as a candidate merely in use', async () => {
+        const basePath = uniqueBasePath()
+        const stepPath = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const locksPath = join(cacheUtils(basePath).getGlobalCachePathLatestVersion(), 'code-cache-locks')
+        await mkdir(locksPath, { recursive: true })
+        const recording = createRecordingLog()
+
+        await chmod(locksPath, 0o500)
+        await codeCacheEviction.sweep({ basePath, log: recording.log, getUsedPercent: overThresholdForEvictions(10) })
+        await chmod(locksPath, 0o700)
+
+        await expect(exists(stepPath)).resolves.toBe(true)
+        expect(recording.payloadsAt('warn')).toMatchObject([{ failedCount: 1, skippedCount: 0 }])
+    })
+
     it('skips a candidate whose directory lock is held by a concurrent provision, then evicts it once released', async () => {
         const basePath = uniqueBasePath()
         const stepPath = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
