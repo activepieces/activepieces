@@ -1,7 +1,8 @@
-import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, KnowledgeBaseSourceType, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, BuildPlanEvent, KnowledgeBaseSourceType, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
 import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { AgentEventEmitter, agentWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
+import { buildPlanSync } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/session-tools'
 
 function makeMockEventEmitter(): { eventEmitter: AgentEventEmitter, progressEvents: ToolProgressEvent[] } {
     const progressEvents: ToolProgressEvent[] = []
@@ -804,5 +805,105 @@ describe('an agent does not offer to connect an account its author already chose
         const result = await asSchema(tools[toolName].inputSchema).validate?.({ piece: '', displayName: 'Gmail' })
 
         expect(result?.success).toBe(false)
+    })
+})
+
+const PLAN: BuildPlanEvent = {
+    buildId: 'b1',
+    phase: 'detecting',
+    flowName: 'Email triage',
+    tagline: 'Never sort email again',
+    iconName: 'mail',
+    updatedAt: '2026-10-28T00:00:00.000Z',
+    steps: [
+        { id: 'classify', label: 'AI classifies urgency', status: 'pending' },
+        { id: 'slack', label: 'Slack ping for urgent mail', status: 'pending' },
+    ],
+}
+
+const result = ({ flowId, name, steps }: { flowId: string, name: string, steps: [string, 'ok' | 'problem'][] }) => ({
+    structuredContent: { flowId, displayName: name, flowSteps: steps.map(([displayName, state]) => ({ displayName, state })) },
+})
+const rows = (plan: BuildPlanEvent) => plan.steps.map((step) => `${step.label}=${step.status}`)
+const built = (value: unknown) => {
+    const flow = buildPlanSync.builtFlowOf({ result: value })
+    if (flow === null) throw new Error('no flow')
+    return flow
+}
+
+describe('buildPlanSync', () => {
+    it('shows the real steps of a single built flow, with the broken one still in progress, whatever the card labels were', () => {
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['gmail_new_email_received', 'ok'], ['Classify urgency', 'ok'], ['Ping me on Slack', 'problem']] }))
+        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow] })
+
+        expect(rows(next)).toEqual(['Gmail new email received=done', 'Classify urgency=done', 'Ping me on Slack=in_progress'])
+        expect(next).toMatchObject({ phase: 'building', flowId: 'f1' })
+    })
+
+    it('shows one row per flow for a solution of several flows', () => {
+        const flows = [
+            built(result({ flowId: 'f1', name: 'Morning task digest', steps: [['every_day', 'ok'], ['Send morning digest', 'ok']] })),
+            built(result({ flowId: 'f2', name: 'Midday task check-in', steps: [['cron_expression', 'problem'], ['Send check-in email', 'ok']] })),
+        ]
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: flows }))).toEqual(['Morning task digest=done', 'Midday task check-in=in_progress'])
+    })
+
+    it('keeps the flows not built yet when the card plans several flows', () => {
+        const plannedRows = [
+            { id: 'digest', label: 'Build Morning digest flow (8am)', status: 'pending' as const, flowName: 'Morning digest flow' },
+            { id: 'checkin', label: 'Midday check-in flow', status: 'pending' as const, flowName: 'Midday check-in flow' },
+            { id: 'recap', label: 'Evening recap flow', status: 'pending' as const, flowName: 'Evening recap flow' },
+        ]
+        const flow = built(result({ flowId: 'f1', name: 'Morning digest flow', steps: [['catch_webhook', 'ok'], ['Send morning digest', 'ok']] }))
+
+        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows })
+
+        expect(rows(next)).toEqual(['Morning digest flow=done', 'Midday check-in flow=pending', 'Evening recap flow=pending'])
+    })
+
+    it('shows a planned flow once when two rows name it', () => {
+        const plannedRows = [
+            { id: 'build', label: 'Build the digest', status: 'pending' as const, flowName: 'Morning digest flow' },
+            { id: 'test', label: 'Test the digest', status: 'pending' as const, flowName: 'Morning digest flow' },
+        ]
+        const flow = built(result({ flowId: 'f1', name: 'Morning digest flow', steps: [['every_day', 'ok']] }))
+
+        const next = buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows })
+
+        expect(next.steps.map((step) => step.id)).toEqual(['f1'])
+    })
+
+    it('tells apart planned flows named in a non-Latin script', () => {
+        const plannedRows = [
+            { id: 'orders', label: '接收订单', status: 'pending' as const, flowName: '接收订单' },
+            { id: 'summary', label: '每日汇总', status: 'pending' as const, flowName: '每日汇总' },
+        ]
+        const flow = built(result({ flowId: 'f1', name: '接收订单', steps: [['every_day', 'ok']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows }))).toEqual(['接收订单=done', '每日汇总=pending'])
+    })
+
+    it('keeps the real steps of a single flow when the rows only mention its name', () => {
+        const plannedRows = [{ id: 'setup', label: 'Set up Email triage', status: 'pending' as const }]
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['gmail_new_email_received', 'ok'], ['Classify urgency', 'problem']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows }))).toEqual(['Gmail new email received=done', 'Classify urgency=in_progress'])
+    })
+
+    it('marks the unfinished steps failed once the model sets phase failed', () => {
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Classify urgency', 'ok'], ['Ping me on Slack', 'problem']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: { ...PLAN, phase: 'failed' }, builtFlows: [flow] }))).toEqual(['Classify urgency=done', 'Ping me on Slack=failed'])
+    })
+
+    it('marks every row done once the model sets phase done', () => {
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Ping me on Slack', 'problem']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: { ...PLAN, phase: 'done' }, builtFlows: [flow] }))).toEqual(['Ping me on Slack=done'])
+    })
+
+    it('ignores results that are not a flow build or edit', () => {
+        expect(buildPlanSync.builtFlowOf({ result: { structuredContent: { rolledBack: true } } })).toBeNull()
     })
 })

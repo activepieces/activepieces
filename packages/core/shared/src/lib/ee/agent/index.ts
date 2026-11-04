@@ -172,6 +172,7 @@ export const PersistedAgentMessageSchema = z.object({
     role: z.enum([PersistedAgentRole.USER, PersistedAgentRole.ASSISTANT]),
     parts: z.array(PersistedAgentPartSchema),
     thinkingDurationMs: z.number().optional(),
+    toolDurationMs: z.number().optional(),
     feedback: AgentMessageFeedbackSchema.optional(),
     tainted: z.boolean().optional(),
 })

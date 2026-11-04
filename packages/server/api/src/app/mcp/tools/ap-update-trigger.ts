@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { buildFlowReview } from './build-flow-review'
 import { mcpUtils } from './mcp-utils'
 
 const updateTriggerInput = z.object({
@@ -121,10 +122,12 @@ export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: Fastif
                             type: 'text',
                             text: `⚠️ Trigger updated but still invalid. ${hint}${draftWarning}`,
                         }],
+                        structuredContent: buildFlowReview.flowState(updatedFlow),
                     }
                 }
                 return {
                     content: [{ type: 'text', text: `✅ Successfully updated trigger to "${resolvedPieceName}/${triggerName}".${draftWarning}` }],
+                    structuredContent: buildFlowReview.flowState(updatedFlow),
                 }
             }
             catch (err) {

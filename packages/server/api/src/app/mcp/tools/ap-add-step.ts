@@ -211,7 +211,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                 const hasConfig = input !== undefined || auth !== undefined || sourceCode !== undefined || loopItems !== undefined
                 const addedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
                 const stepValid = hasConfig && addedStep ? addedStep.valid : false
-                const structured = { stepName, displayName, valid: stepValid }
+                const structured = { ...buildFlowReview.flowState(updatedFlow), stepName, displayName, valid: stepValid }
                 if (hasConfig && addedStep && !addedStep.valid) {
                     return {
                         content: [{

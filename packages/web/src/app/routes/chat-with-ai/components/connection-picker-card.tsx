@@ -331,13 +331,23 @@ export function ConnectionPickerCard({
       <InteractiveCardShell
         onDismiss={() => onDismiss?.()}
         title={
-          reconnectOnly
-            ? t('Reconnect {name}', { name: filteredPicker.displayName })
-            : hasConnections
-            ? t('Which {name} account should I use?', {
-                name: filteredPicker.displayName,
-              })
-            : t('Connect {name}', { name: filteredPicker.displayName })
+          <span className="flex min-w-0 items-center gap-2">
+            <PieceIconWithPieceName
+              pieceName={pieceName}
+              size="sm"
+              border={false}
+              showTooltip={false}
+            />
+            <span className="truncate">
+              {reconnectOnly
+                ? t('Reconnect {name}', { name: filteredPicker.displayName })
+                : hasConnections
+                ? t('Which {name} account should I use?', {
+                    name: filteredPicker.displayName,
+                  })
+                : t('Connect {name}', { name: filteredPicker.displayName })}
+            </span>
+          </span>
         }
       >
         {!hasConnections && (

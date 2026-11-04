@@ -1,7 +1,7 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
 import { isNil, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, RouterActionSettingsWithValidation, Step } from '@activepieces/shared'
+import { FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, PopulatedFlow, RouterActionSettingsWithValidation, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { flowValidation } from './flow-validation'
@@ -75,6 +75,13 @@ function flowStepStates({ trigger, problemStepNames, skippedDisplayNames = [] }:
         ...flowStructureUtil.getAllSteps(trigger).map((step) => ({ displayName: step.displayName, state: problemStepNames.has(step.name) ? 'problem' as const : 'ok' as const })),
         ...skippedDisplayNames.map((displayName) => ({ displayName, state: 'skipped' as const })),
     ]
+}
+
+function flowState(flow: PopulatedFlow): { flowId: string, flowName: string, flowSteps: FlowStepState[] } {
+    const { trigger } = flow.version
+    const invalidStepNames = flowStructureUtil.getAllSteps(trigger).filter((step) => !step.valid).map((step) => step.name)
+    const flowIssueStepNames = flowValidation.validateFlow({ trigger }).issues.filter((issue) => issue.severity !== 'info').map((issue) => issue.stepName)
+    return { flowId: flow.id, flowName: flow.version.displayName, flowSteps: flowStepStates({ trigger, problemStepNames: new Set([...invalidStepNames, ...flowIssueStepNames]) }) }
 }
 
 function labelNote(resolution: LabelResolution): string {
@@ -268,6 +275,7 @@ function shortPieceName(pieceName: string): string {
 export const buildFlowReview = {
     resolveDropdownLabels,
     flowStepStates,
+    flowState,
     labelNote,
     findProblems,
     formatProblem,

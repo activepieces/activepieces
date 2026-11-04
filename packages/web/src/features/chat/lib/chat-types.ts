@@ -14,7 +14,11 @@ import {
   UIMessage,
 } from 'ai';
 
-export type ChatUIMessage = UIMessage & { feedback?: AgentMessageFeedback };
+export type ChatUIMessage = UIMessage & {
+  feedback?: AgentMessageFeedback;
+  thinkingDurationMs?: number;
+  toolDurationMs?: number;
+};
 
 export type AnyToolPart = ToolUIPart | DynamicToolUIPart;
 
