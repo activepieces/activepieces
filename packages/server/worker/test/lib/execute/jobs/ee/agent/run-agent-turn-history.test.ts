@@ -131,14 +131,14 @@ function updateThenConfirm(): MockLanguageModelV3 {
                     ? [
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'tool-call' as const, toolCallId: 'update-1', toolName: 'ap_update_agent', input: '{"instructions":"Reply in Arabic."}' },
-                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool-calls' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                     ]
                     : [
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'text-start' as const, id: 'done' },
                         { type: 'text-delta' as const, id: 'done', delta: 'Done, New agent now replies in Arabic.' },
                         { type: 'text-end' as const, id: 'done' },
-                        { type: 'finish' as const, finishReason: 'stop' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: { unified: 'stop' as const, raw: 'stop' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                     ]),
             }
         },
@@ -158,7 +158,7 @@ function keepsUpdating(): MockLanguageModelV3 {
                 stream: convertArrayToReadableStream([
                     { type: 'stream-start' as const, warnings: [] },
                     { type: 'tool-call' as const, toolCallId: `update-${calls}`, toolName: 'ap_update_agent', input: '{"instructions":"again"}' },
-                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool-calls' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                 ]),
             }
         },
@@ -175,7 +175,7 @@ function updateThenThinkThenConfirm(): MockLanguageModelV3 {
                 return { stream: convertArrayToReadableStream([
                     { type: 'stream-start' as const, warnings: [] },
                     { type: 'tool-call' as const, toolCallId: 'update-1', toolName: 'ap_update_agent', input: '{"instructions":"Reply in Arabic."}' },
-                    { ...finish, finishReason: 'tool-calls' as const },
+                    { ...finish, finishReason: { unified: 'tool-calls' as const, raw: 'tool-calls' } },
                 ]) }
             }
             if (calls === 2) {
@@ -184,7 +184,7 @@ function updateThenThinkThenConfirm(): MockLanguageModelV3 {
                     { type: 'reasoning-start' as const, id: 'think' },
                     { type: 'reasoning-delta' as const, id: 'think', delta: 'The update worked.' },
                     { type: 'reasoning-end' as const, id: 'think' },
-                    { ...finish, finishReason: 'stop' as const },
+                    { ...finish, finishReason: { unified: 'stop' as const, raw: 'stop' } },
                 ]) }
             }
             return { stream: convertArrayToReadableStream([
@@ -192,7 +192,7 @@ function updateThenThinkThenConfirm(): MockLanguageModelV3 {
                 { type: 'text-start' as const, id: 'done' },
                 { type: 'text-delta' as const, id: 'done', delta: 'Done, New agent now replies in Arabic.' },
                 { type: 'text-end' as const, id: 'done' },
-                { ...finish, finishReason: 'stop' as const },
+                { ...finish, finishReason: { unified: 'stop' as const, raw: 'stop' } },
             ]) }
         },
     })

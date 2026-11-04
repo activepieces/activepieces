@@ -144,7 +144,7 @@ function alwaysSearchingModel({ usage = USAGE }: { usage?: typeof USAGE } = {}):
                 stream: convertArrayToReadableStream([
                     { type: 'stream-start' as const, warnings: [] },
                     { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
-                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage },
+                    { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool-calls' }, usage },
                 ]),
             }
         },
@@ -162,7 +162,7 @@ function searchUntilToldToAnswer({ searches }: { searches: number }): MockLangua
                     stream: convertArrayToReadableStream([
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: toolChoice.toolName, input: '{"output":{"summary":"partial"}}' },
-                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
+                        { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool-calls' }, usage: USAGE },
                     ]),
                 }
             }
@@ -173,12 +173,12 @@ function searchUntilToldToAnswer({ searches }: { searches: number }): MockLangua
                         { type: 'text-start' as const, id: 'answer' },
                         { type: 'text-delta' as const, id: 'answer', delta: 'Here is what I found so far.' },
                         { type: 'text-end' as const, id: 'answer' },
-                        { type: 'finish' as const, finishReason: 'stop' as const, usage: USAGE },
+                        { type: 'finish' as const, finishReason: { unified: 'stop' as const, raw: 'stop' }, usage: USAGE },
                     ]
                     : [
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
-                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
+                        { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool-calls' }, usage: USAGE },
                     ]),
             }
         },

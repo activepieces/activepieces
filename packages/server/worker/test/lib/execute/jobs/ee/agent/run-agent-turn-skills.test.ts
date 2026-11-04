@@ -209,12 +209,12 @@ function scriptedModel({ toolCalls, repairText = '' }: { toolCalls: ScriptedTool
                         { type: 'text-start' as const, id: 'answer' },
                         { type: 'text-delta' as const, id: 'answer', delta: 'Done.' },
                         { type: 'text-end' as const, id: 'answer' },
-                        { type: 'finish' as const, finishReason: 'stop' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: { unified: 'stop' as const, raw: 'stop' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                     ]
                     : [
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'tool-call' as const, toolCallId: toolCall.id, toolName: toolCall.toolName, input: toolCall.input },
-                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool-calls' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                     ]),
             }
         },
@@ -241,14 +241,14 @@ function wrappedSearchThenAnswer(): MockLanguageModelV3 {
                     ? [
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'tool-call' as const, toolCallId: 'call-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":"more"}}' },
-                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool-calls' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                     ]
                     : [
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'text-start' as const, id: 'answer' },
                         { type: 'text-delta' as const, id: 'answer', delta: 'Done.' },
                         { type: 'text-end' as const, id: 'answer' },
-                        { type: 'finish' as const, finishReason: 'stop' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: { unified: 'stop' as const, raw: 'stop' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                     ]),
             }
         },
