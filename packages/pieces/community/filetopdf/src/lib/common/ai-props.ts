@@ -100,6 +100,12 @@ const chromiumOptions = {
 
 const fileOptions = {
   ...sharedOptions,
+  nativePageRanges: Property.ShortText({
+    displayName: 'Page Ranges',
+    description:
+      'Pages to keep, counted from 1, always written as ranges: "1-1" for page 1 alone, "1-3" for pages 1 to 3. A bare "1" is ignored and every page is kept. Omit for all pages.',
+    required: false,
+  }),
   password: Property.ShortText({
     displayName: 'Source Document Password',
     description: 'Password that opens a protected source document (Office files only).',

@@ -15,7 +15,7 @@ export const aiConvertFileAction = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Converts an existing file to a PDF file and returns it; the engine is picked from the file extension (Word, Excel, PowerPoint, images, HTML, Markdown, EPUB, Visio, iWork and more, up to 30 MB). Pick it when you have a file or a URL to one; use Convert HTML to PDF or Convert Markdown to PDF for text you hold. Every call spends one conversion credit (Get Account Status shows what is left), and any option needs the Pro or Scale plan or the free trial.',
+      'Converts an existing file to a PDF file and returns it; the engine is picked from the file extension (Word, Excel, PowerPoint, images, HTML, Markdown, EPUB, Visio, iWork and more, up to 30 MB). Pick it when you have a file or a URL to one; use Convert HTML to PDF or Convert Markdown to PDF for text you hold. Write page ranges as ranges ("1-1", not "1"); a bare page number is ignored. Every call spends one conversion credit (Get Account Status shows what is left), and any option needs the Pro or Scale plan or the free trial.',
     idempotent: false,
   },
   props: {
