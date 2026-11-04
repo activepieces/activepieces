@@ -87,9 +87,7 @@ async function installCodeStep({ artifact, codeCachePath, basePath, log, getSett
                 artifact,
                 codesFolderPath: codeCachePath,
             })
-            if (isActionRun) {
-                await codeCacheEviction.markUsed(dirPath)
-            }
+            await codeCacheEviction.markUsed(dirPath)
         },
     })
 }

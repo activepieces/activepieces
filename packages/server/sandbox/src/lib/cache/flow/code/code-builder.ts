@@ -8,7 +8,6 @@ import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
 import { diskLock } from '../../../utils/distributed-lock'
 import { cacheState } from '../../cache-state'
-import { codeCacheEviction } from '../../code-cache-eviction'
 import { codeCache } from './code-cache'
 import { denoStepTranspiler } from './deno-step-transpiler'
 import { packageDependencies } from './package-dependencies'
@@ -172,7 +171,6 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
             },
             skipSave: () => buildStatus !== 'success',
         })
-        await codeCacheEviction.markUsed(codePath)
         return cacheHit ? 'success' : buildStatus
     },
 })
