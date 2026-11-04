@@ -1,5 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
+import { parseurAiActions } from './lib/actions/ai';
 import { createDocumentAction } from './lib/actions/create-document';
 import { createDocumentFromFileAction } from './lib/actions/create-document-from-file';
 import { findDocumentAction } from './lib/actions/find-document';
@@ -18,7 +19,7 @@ export const parseur = createPiece({
   description:
     'Parseur is a document/email parsing tool that extracts structured data from emails, attachments, PDFs, invoices, forms, etc. It supports dynamic templates and table fields, and delivers parsed output to integrations (e.g. via webhook or API). This integration enables reactive workflows based on new processed documents, failed processing, mailbox changes, and more.',
   auth: parseurAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/parseur.png',
   authors: ['LuizDMM'],
   actions: [
@@ -27,6 +28,7 @@ export const parseur = createPiece({
     createDocumentFromFileAction,
     reprocessDocumentAction,
     findDocumentAction,
+    ...parseurAiActions,
     createCustomApiCallAction({
       auth: parseurAuth,
       baseUrl: () => parseurClient.baseUrl(),

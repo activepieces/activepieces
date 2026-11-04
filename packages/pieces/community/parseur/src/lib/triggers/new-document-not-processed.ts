@@ -2,7 +2,10 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { parseurAuth } from '../auth';
 import { parseurApi } from '../common/api';
 import { parseurProps } from '../common/props';
-import type { ParseurWebhookInformation } from '../common/types';
+import type {
+  ParseurAuthValue,
+  ParseurWebhookInformation,
+} from '../common/types';
 
 export const newDocumentNotProcessedTrigger = createTrigger({
   auth: parseurAuth,
@@ -26,11 +29,17 @@ export const newDocumentNotProcessedTrigger = createTrigger({
       event: 'document.template_needed',
       target: context.webhookUrl,
     });
-    await parseurApi.enableWebhook({
-      auth: context.auth,
-      webhookId: webhook.id,
-      mailboxId: context.propsValue.mailboxId,
-    });
+    const mailboxIds =
+      context.propsValue.mailboxId === undefined
+        ? await listAllMailboxIds({ auth: context.auth })
+        : [context.propsValue.mailboxId];
+    for (const mailboxId of mailboxIds) {
+      await parseurApi.enableWebhook({
+        auth: context.auth,
+        webhookId: webhook.id,
+        mailboxId,
+      });
+    }
     await context.store.put<ParseurWebhookInformation>('_newDocumentNotProcessed', {
       webhookId: webhook.id,
     });
@@ -52,3 +61,25 @@ export const newDocumentNotProcessedTrigger = createTrigger({
     return [context.payload.body];
   },
 });
+
+async function listAllMailboxIds({
+  auth,
+}: {
+  auth: ParseurAuthValue;
+}): Promise<number[]> {
+  const ids: number[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const response = await parseurApi.listMailboxes({
+      auth,
+      query: { page: String(page), page_size: String(PAGE_SIZE) },
+    });
+    ids.push(...response.results.map((mailbox) => mailbox.id));
+    if (response.current >= response.total) {
+      break;
+    }
+  }
+  return ids;
+}
+
+const PAGE_SIZE = 100;
+const MAX_PAGES = 50;

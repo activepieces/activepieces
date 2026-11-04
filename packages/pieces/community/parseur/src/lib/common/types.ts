@@ -265,8 +265,31 @@ export type ParseurCreateDocumentFromFileResponse = {
   attachments: { name: string; DocumentID: string }[];
 };
 
-export type ParseurReprocessDocumentResponse = {
+export type ParseurNotificationResponse = {
   notification_set: {
     info: string[];
   };
+};
+
+export type ParseurListQuery = Record<string, string | undefined>;
+
+export type ParseurRecord = Record<string, unknown>;
+
+export type ParseurPage<T> = {
+  count: number;
+  current: number;
+  total: number;
+  results: T[];
+};
+
+export type ParseurEmailDocument = {
+  subject: string;
+  from: string;
+  recipient: string;
+  to?: string;
+  cc?: string;
+  bcc?: string;
+  body_html?: string;
+  body_plain?: string;
+  message_headers?: unknown;
 };

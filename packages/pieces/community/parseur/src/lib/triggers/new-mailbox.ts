@@ -7,11 +7,12 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { parseurAuth } from '../auth';
 import { parseurApi } from '../common/api';
 import type { ParseurAuthValue } from '../common/types';
+import { newMailboxOutputSchema } from '../output-schemas';
 
 const polling: Polling<ParseurAuthValue, Record<string, never>> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth }) => {
-    const response = await parseurApi.listMailboxes({ auth });
+    const response = await parseurApi.listMailboxes({ auth, query: {} });
     const items = response.results;
     return items.map((item) => ({
       id: item.id,
@@ -23,6 +24,7 @@ const polling: Polling<ParseurAuthValue, Record<string, never>> = {
 export const newMailboxTrigger = createTrigger({
   auth: parseurAuth,
   name: 'newMailbox',
+  outputSchema: newMailboxOutputSchema,
   classification: 'READ',
   displayName: 'New Mailbox',
   description: 'Fires when a new mailbox is created in the Parseur account.',

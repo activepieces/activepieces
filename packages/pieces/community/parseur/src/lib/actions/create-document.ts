@@ -1,16 +1,16 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { parseurAuth } from '../auth';
-import { parseurClient } from '../common/client';
-import type { ParseurCreateDocumentResponse } from '../common/types';
+import { parseurApi } from '../common/api';
+import { emailDocumentUploadOutputSchema } from '../output-schemas';
 
 export const createDocumentAction = createAction({
   auth: parseurAuth,
   name: 'createDocument',
+  outputSchema: emailDocumentUploadOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Document',
   description: 'Creates a new document.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Submits a new email-style document to Parseur for parsing by sending its subject, sender/recipient addresses, and HTML or plain-text body. Use to push raw email content into a Parseur mailbox so it can be parsed against templates. Each call creates a separate document, so it is not idempotent.',
@@ -66,11 +66,9 @@ export const createDocumentAction = createAction({
   },
   async run({ auth, propsValue }) {
     const { message_headers, ...rest } = propsValue;
-    return await parseurClient.request<ParseurCreateDocumentResponse>({
+    return await parseurApi.createEmailDocument({
       auth,
-      method: HttpMethod.POST,
-      path: '/email',
-      body: {
+      document: {
         ...rest,
         message_headers: message_headers
           ? Object.fromEntries(

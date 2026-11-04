@@ -22,7 +22,7 @@ function parserId<R extends boolean>({
       }
       const response = await parseurApi.listMailboxes({
         auth,
-        ...(search != undefined ? { search } : {}),
+        query: { search },
       });
       return {
         disabled: false,
@@ -59,7 +59,7 @@ function documentId<R extends boolean>({
       const response = await parseurApi.listDocuments({
         auth,
         parserId: String(parserId),
-        ...(search != undefined ? { search } : {}),
+        query: { search },
       });
       return {
         disabled: false,
