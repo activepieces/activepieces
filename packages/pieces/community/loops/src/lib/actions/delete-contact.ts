@@ -37,7 +37,7 @@ export const deleteContact = createAction({
     }
     return loopsClient.request<Record<string, unknown>>({
       apiKey: context.auth.secret_text,
-      method: HttpMethod.DELETE,
+      method: HttpMethod.POST,
       path: '/contacts/delete',
       body: email ? { email } : { userId },
     });

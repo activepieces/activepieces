@@ -14,7 +14,7 @@ export const updateContact = createAction({
   outputSchema: loopsSchemas.successWithId,
   aiMetadata: {
     description:
-      'Upserts a Loops contact matched by email or internal user ID (at least one required; if both are given, the email of the contact found by user ID is changed). Only the fields you send are changed; omitted fields keep their current values. Use to change subscription status, names, mailing lists or custom properties. Idempotent: repeating the same update converges on the same contact state.',
+      'Upserts a Loops contact matched by email or internal user ID (at least one required). If both are given, Loops matches on either one and overwrites the other on the matched contact. Send only one unless you mean to change the other.. Only the fields you send are changed; omitted fields keep their current values. Use to change subscription status, names, mailing lists or custom properties. Idempotent: repeating the same update converges on the same contact state.',
     idempotent: true,
   },
   auth: loopsAuth,

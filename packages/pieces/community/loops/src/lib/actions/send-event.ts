@@ -14,7 +14,7 @@ export const sendEvent = createAction({
   outputSchema: loopsSchemas.success,
   aiMetadata: {
     description:
-      'Sends a named event for a contact to Loops, which can trigger email automations configured in the dashboard. The contact is identified by email or internal user ID (at least one required) and is created if missing. Can attach event properties, update mailing-list memberships and set contact properties. Not idempotent: each call records a new event, unless the same idempotencyKey is reused within 24 hours (Loops then rejects it with 409).',
+      'Sends a named event for a contact to Loops, which can trigger email automations configured in the dashboard. The contact is identified by email or internal user ID (at least one required) and is created if missing. If both are given, Loops matches on either one and overwrites the other on the matched contact. Send only one unless you mean to change the other. Can attach event properties, update mailing-list memberships and set contact properties. Not idempotent: each call records a new event, unless the same idempotencyKey is reused within 24 hours (Loops then rejects it with 409).',
     idempotent: false,
   },
   auth: loopsAuth,

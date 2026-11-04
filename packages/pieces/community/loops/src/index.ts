@@ -22,7 +22,7 @@ export const loops = createPiece({
     'Loops is an email platform for sending beautiful transactional and marketing emails. Manage contacts, trigger automations with events, and send transactional emails from your workflows.',
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/loops.png',
-  authors: ['Harmatta'],
+  authors: ['Harmatta', 'OdaiAhmed99'],
   categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING],
   auth: loopsAuth,
   actions: [

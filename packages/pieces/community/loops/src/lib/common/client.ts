@@ -1,8 +1,8 @@
 import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 
-const BASE_URL = 'https://app.loops.so/api/v1';
+export const LOOPS_BASE_URL = 'https://app.loops.so/api/v1';
 
-const RESERVED_CONTACT_FIELDS = new Set([
+export const RESERVED_CONTACT_FIELDS = new Set([
   'email',
   'firstName',
   'lastName',
@@ -12,6 +12,19 @@ const RESERVED_CONTACT_FIELDS = new Set([
   'source',
   'mailingLists',
 ]);
+
+export const loopsClient = {
+  request,
+  findContacts,
+  sliceArray,
+  buildContactBody,
+  requireOneIdentifier,
+  isRecord,
+  describeStatus,
+  RESERVED_CONTACT_FIELDS,
+};
+
+export { LoopsApiError };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -82,7 +95,7 @@ async function request<T>({
   try {
     const response = await httpClient.sendRequest<T>({
       method,
-      url: `${BASE_URL}${path}`,
+      url: `${LOOPS_BASE_URL}${path}`,
       headers,
       queryParams,
       body,
@@ -215,18 +228,3 @@ type ContactBodyProps = {
   mailingLists?: unknown;
   customProperties?: unknown;
 };
-
-export const LOOPS_BASE_URL = BASE_URL;
-
-export const loopsClient = {
-  request,
-  findContacts,
-  sliceArray,
-  buildContactBody,
-  requireOneIdentifier,
-  isRecord,
-  describeStatus,
-  RESERVED_CONTACT_FIELDS,
-};
-
-export { LoopsApiError };

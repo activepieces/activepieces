@@ -89,7 +89,7 @@ describe('delete_contact', () => {
     respond({ body: { success: true, message: 'Contact deleted.' } });
     await runAction({ action: deleteContact, propsValue: { email: ' a@b.co ', userId: '' } });
     const request = sent({ index: 0 });
-    expect(request.method).toBe('DELETE');
+    expect(request.method).toBe('POST');
     expect(request.url).toBe('https://app.loops.so/api/v1/contacts/delete');
     expect(request.body).toEqual({ email: 'a@b.co' });
     expect(request.headers['Authorization']).toBe('Bearer key_123');
@@ -352,3 +352,13 @@ type RunActionParams = {
   action: TestAction;
   propsValue: StaticPropsValue<InputPropertyMap>;
 };
+
+describe('identifier warning for agents', () => {
+  it('tells agents that sending both IDs overwrites one of them', () => {
+    for (const action of [updateContact, sendEvent]) {
+      expect(action.aiMetadata?.description).toContain(
+        'If both are given, Loops matches on either one and overwrites the other on the matched contact.'
+      );
+    }
+  });
+});

@@ -39,4 +39,3 @@ export const findContact = createAction({
     return { contacts, count: contacts.length };
   },
 });
-
