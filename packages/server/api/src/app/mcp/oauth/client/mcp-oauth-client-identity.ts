@@ -3,9 +3,13 @@ import { McpOAuthClientKey } from '@activepieces/shared'
 const LOOPBACK_HOSTS = ['localhost', '127.0.0.1', '::1', '[::1]']
 const CURSOR_LOOPBACK_PORT = '8787'
 const VSCODE_LOOPBACK_PORT = '33418'
+const CLINE_LOOPBACK_PORTS = ['1456', '1457', '1458', '1459', '1460', '1461']
+const DEVIN_CLI_LOOPBACK_PORT = '8765'
 const CODEX_CALLBACK_PATH = /^\/callback\/[^/]+$/
 const GEMINI_CLI_CALLBACK_PATH = '/oauth/callback'
-const OPENCODE_CALLBACK_PATH = '/mcp/oauth/callback'
+const MCP_OAUTH_CALLBACK_PATH = '/mcp/oauth/callback'
+const GOOSE_CALLBACK_PATH = '/oauth_callback'
+const GITHUB_APP_SCHEME = 'github-app:'
 
 function parseRedirectUri(redirectUri: string): URL | null {
     try {
@@ -37,17 +41,32 @@ function clientKeyFromUrl(url: URL): McpOAuthClientKey | null {
     if (host === 'vscode.dev' || scheme === 'vscode:' || scheme === 'vscode-insiders:' || (loopback && url.port === VSCODE_LOOPBACK_PORT)) {
         return 'vscode'
     }
+    if (host === 'antigravity.google') {
+        return 'antigravity'
+    }
+    if (loopback && url.pathname === MCP_OAUTH_CALLBACK_PATH && CLINE_LOOPBACK_PORTS.includes(url.port)) {
+        return 'cline'
+    }
     if (loopback && CODEX_CALLBACK_PATH.test(url.pathname)) {
         return 'codex'
     }
-    if (loopback && url.pathname === OPENCODE_CALLBACK_PATH) {
+    if (loopback && url.pathname === MCP_OAUTH_CALLBACK_PATH) {
         return 'opencode'
     }
     if (loopback && url.pathname === GEMINI_CLI_CALLBACK_PATH) {
         return 'gemini-cli'
     }
-    if (loopback && url.pathname === '/callback') {
+    if (loopback && url.pathname === GOOSE_CALLBACK_PATH) {
+        return 'goose'
+    }
+    if (loopback && url.pathname === '/callback' && url.port === DEVIN_CLI_LOOPBACK_PORT) {
+        return 'windsurf'
+    }
+    if (host === 'localhost' && url.pathname === '/callback') {
         return 'claude-code'
+    }
+    if (host === '127.0.0.1' && url.pathname === '/') {
+        return 'copilot-cli'
     }
     if (scheme === 'windsurf:') {
         return 'windsurf'
@@ -57,9 +76,13 @@ function clientKeyFromUrl(url: URL): McpOAuthClientKey | null {
 
 export const mcpOAuthClientIdentity = {
     detectClientKey({ redirectUris }: DetectClientKeyParams): McpOAuthClientKey {
-        return redirectUris
+        const urls = redirectUris
             .map(parseRedirectUri)
             .filter((url): url is URL => url !== null)
+        if (urls.some((url) => url.protocol.toLowerCase() === GITHUB_APP_SCHEME)) {
+            return 'unknown'
+        }
+        return urls
             .map(clientKeyFromUrl)
             .find((candidate) => candidate !== null) ?? 'unknown'
     },
