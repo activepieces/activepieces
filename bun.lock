@@ -259,17 +259,18 @@
     },
     "packages/pieces/community/actualbudget": {
       "name": "@activepieces/piece-actualbudget",
-      "version": "0.1.9",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "@actual-app/api": "26.5.2",
+        "@actual-app/api": "26.10.0",
       },
       "devDependencies": {
         "@types/node": "^24",
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/acuity-scheduling": {
