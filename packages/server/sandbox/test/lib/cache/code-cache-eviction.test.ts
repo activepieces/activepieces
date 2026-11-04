@@ -7,7 +7,6 @@ import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ACTION_RUN_CODE_DIR, cacheUtils } from '../../../src/lib/cache/cache-paths'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_MAX_DIRS, actionRunCache, codeCacheEviction, DISK_EVICTION_THRESHOLD_PERCENT } from '../../../src/lib/cache/code-cache-eviction'
-import { pendingCacheRemovals } from '../../../src/lib/cache/pending-cache-removals'
 
 const basePaths: string[] = []
 
@@ -99,8 +98,6 @@ function underThreshold(): Promise<number> {
     return Promise.resolve(DISK_EVICTION_THRESHOLD_PERCENT - 1)
 }
 
-// The disk-pressure pass calls getUsedPercent() once before the loop (the initial gate check) plus
-// once per candidate considered, so driving N evictions needs N+1 "over threshold" answers.
 function overThresholdForEvictions(evictionsWanted: number): () => Promise<number> {
     let overCallsLeft = evictionsWanted + 1
     return async () => {
@@ -114,17 +111,6 @@ function overThresholdForEvictions(evictionsWanted: number): () => Promise<numbe
 
 function runningAsRoot(): boolean {
     return process.getuid?.() === 0
-}
-
-async function waitForPendingRemoval(dirPath: string): Promise<boolean> {
-    const deadline = Date.now() + 10 * SECOND_MS
-    while (Date.now() < deadline) {
-        if (await actionRunCache.settlePendingRemoval(dirPath)) {
-            return true
-        }
-        await new Promise((resolve) => setTimeout(resolve, 0))
-    }
-    return false
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -486,30 +472,63 @@ describe('codeCacheEviction.sweep disk-pressure pass', () => {
             .resolves.toBeUndefined()
     })
 
-    it('clears a removed directory from pendingCacheRemovals once eviction finishes, so provisioning is never left waiting forever', async () => {
+    it('removes the emptied flow-version dir once its last step is evicted', async () => {
         const basePath = uniqueBasePath()
-        const stepPath = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const flowVersionId = apId()
+        const stepPath = await seedStepDir({ basePath, flowVersionId, ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
 
         await expect(exists(stepPath)).resolves.toBe(false)
-        await expect(pendingCacheRemovals.settle(stepPath)).resolves.toBe(false)
+        await expect(exists(flowVersionDir({ basePath, flowVersionId }))).resolves.toBe(false)
     })
 
-    it('by default reads disk usage from basePath itself (statfs), not a hardcoded path — a nonexistent basePath is treated as 0% used rather than falling back to "/"', async () => {
+    it('skips a candidate whose directory lock is held by a concurrent provision, then evicts it once released', async () => {
+        const basePath = uniqueBasePath()
+        const stepPath = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+
+        let releaseLock!: () => void
+        const lockHeld = new Promise<void>((resolve) => {
+            releaseLock = resolve
+        })
+        let signalAcquired!: () => void
+        const lockAcquired = new Promise<void>((resolve) => {
+            signalAcquired = resolve
+        })
+        const provisioning = codeCacheEviction.withDirLock({
+            basePath,
+            dirPath: stepPath,
+            fn: async () => {
+                signalAcquired()
+                await lockHeld
+            },
+        })
+        await lockAcquired
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(10) })
+        await expect(exists(stepPath)).resolves.toBe(true)
+
+        releaseLock()
+        await provisioning
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(10) })
+        await expect(exists(stepPath)).resolves.toBe(false)
+    })
+
+    it('by default reads disk usage from basePath itself, not a hardcoded path — a nonexistent basePath is treated as 0% used rather than falling back to "/"', async () => {
         const basePath = join(tmpdir(), `code-cache-eviction-test-missing-${randomUUID()}`)
 
         await expect(codeCacheEviction.sweep({ basePath, log: noopLog })).resolves.toBeUndefined()
     })
 })
 
-describe('actionRunCache.touch', () => {
+describe('codeCacheEviction.markUsed', () => {
     it('advances the directory mtime so a reused build survives the next sweep', async () => {
         const basePath = uniqueBasePath()
         const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: '8'.repeat(64) })
         const dirPath = await seedNamespaceDir({ basePath, namespace, ageMs: 3 * HOUR_MS })
 
-        await actionRunCache.touch(dirPath)
+        await codeCacheEviction.markUsed(dirPath)
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
 
         await expect(exists(dirPath)).resolves.toBe(true)
@@ -518,31 +537,47 @@ describe('actionRunCache.touch', () => {
     it('does not throw when the directory is already gone', async () => {
         const basePath = uniqueBasePath()
 
-        await expect(actionRunCache.touch(join(basePath, 'missing'))).resolves.toBeUndefined()
+        await expect(codeCacheEviction.markUsed(join(basePath, 'missing'))).resolves.toBeUndefined()
     })
 })
 
-describe('actionRunCache.settlePendingRemoval', () => {
-    it('reports nothing pending for a directory no sweep is touching', async () => {
+describe('codeCacheEviction.withDirLock', () => {
+    it('blocks a provision on the same directory until the first holder finishes, and runs callers in acquisition order', async () => {
         const basePath = uniqueBasePath()
         const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: '9'.repeat(64) })
         const dirPath = await seedNamespaceDir({ basePath, namespace })
 
-        await expect(actionRunCache.settlePendingRemoval(dirPath)).resolves.toBe(false)
-    })
+        const order: string[] = []
+        let releaseFirst!: () => void
+        const firstHeld = new Promise<void>((resolve) => {
+            releaseFirst = resolve
+        })
+        let signalAcquired!: () => void
+        const firstAcquired = new Promise<void>((resolve) => {
+            signalAcquired = resolve
+        })
+        const first = codeCacheEviction.withDirLock({
+            basePath,
+            dirPath,
+            fn: async () => {
+                signalAcquired()
+                await firstHeld
+                order.push('first')
+            },
+        })
+        await firstAcquired
+        const second = codeCacheEviction.withDirLock({
+            basePath,
+            dirPath,
+            fn: async () => {
+                order.push('second')
+            },
+        })
 
-    it('waits out a removal that is already past its mtime re-check, so a provision can rebuild instead of running deleted code', async () => {
-        const basePath = uniqueBasePath()
-        const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: 'b'.repeat(64) })
-        const dirPath = await seedNamespaceDir({ basePath, namespace, ageMs: 3 * HOUR_MS, extraFiles: 1000 })
+        releaseFirst()
+        await Promise.all([first, second])
 
-        const sweeping = codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
-        const observed = await waitForPendingRemoval(dirPath)
-        await sweeping
-
-        expect(observed).toBe(true)
-        await expect(exists(dirPath)).resolves.toBe(false)
-        await expect(actionRunCache.settlePendingRemoval(dirPath)).resolves.toBe(false)
+        expect(order).toEqual(['first', 'second'])
     })
 })
 

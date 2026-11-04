@@ -1,9 +1,9 @@
-import { readdir, rm, stat, statfs, utimes } from 'node:fs/promises'
+import { readdir, rm, rmdir, stat, utimes } from 'node:fs/promises'
 import path from 'node:path'
-import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { type ApLogger } from '@activepieces/server-utils'
+import { ActivepiecesError, chunk, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { type ApLogger, systemUsage } from '@activepieces/server-utils'
+import { diskLock } from '../utils/distributed-lock'
 import { ACTION_RUN_CODE_DIR, cacheUtils } from './cache-paths'
-import { pendingCacheRemovals } from './pending-cache-removals'
 
 export const actionRunCache = {
     namespace({ platformId, sourceHash }: NamespaceParams): string {
@@ -19,39 +19,40 @@ export const actionRunCache = {
     isActionRunNamespace(namespace: string): boolean {
         return namespace.startsWith(`${ACTION_RUN_CODE_DIR}/`)
     },
-
-    async touch(dirPath: string): Promise<void> {
-        const now = new Date()
-        await tryCatch(() => utimes(dirPath, now, now))
-    },
-
-    async settlePendingRemoval(dirPath: string): Promise<boolean> {
-        return pendingCacheRemovals.settle(dirPath)
-    },
 }
 
 export const codeCacheEviction = {
-    // The code cache holds two kinds of entries with different lifecycles, swept in two passes
-    // sharing the same mechanics (mtime-ordered candidates, re-stat before a tracked removal):
-    // - action-runs/: per-source build dirs with no natural end of life, so they always get a
-    //   TTL + count-cap sweep.
-    // - every other dir is a published flow version's code cache, kept forever by the normal
-    //   provisioning path, so it is only evicted under disk pressure. Candidates are individual
-    //   step dirs (code-builder.ts touches one on every use, hit or miss), not whole flow
-    //   versions, so a flow with one hot step and nine cold ones only loses the nine.
     async sweep({
         basePath,
         log,
         activeWindowMs = ACTION_RUN_CACHE_ACTIVE_WINDOW_MS,
         maxUsedPercent = DISK_EVICTION_THRESHOLD_PERCENT,
-        getUsedPercent = () => defaultGetUsedPercent(basePath),
+        getUsedPercent = () => defaultGetUsedPercent({ basePath, log }),
     }: SweepParams): Promise<void> {
-        await sweepActionRuns({ basePath, log, activeWindowMs })
-        await sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPercent, getUsedPercent })
+        const locks = evictionLocks(basePath)
+        await sweepActionRuns({ basePath, log, activeWindowMs, locks })
+        await sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPercent, getUsedPercent, locks })
+    },
+
+    async markUsed(dirPath: string): Promise<void> {
+        const now = new Date()
+        await tryCatch(() => utimes(dirPath, now, now))
+    },
+
+    async withDirLock<T>({ basePath, dirPath, fn }: WithDirLockParams<T>): Promise<T> {
+        return evictionLocks(basePath).runExclusive({
+            key: dirPath,
+            timeoutMs: PROVISION_LOCK_TIMEOUT_MS,
+            fn,
+        })
     },
 }
 
-async function sweepActionRuns({ basePath, log, activeWindowMs }: ActionRunSweepParams): Promise<void> {
+function evictionLocks(basePath: string): CacheLocks {
+    return diskLock(path.join(cacheUtils(basePath).getGlobalCachePathLatestVersion(), CODE_CACHE_LOCKS_DIR))
+}
+
+async function sweepActionRuns({ basePath, log, activeWindowMs, locks }: ActionRunSweepParams): Promise<void> {
     const startedAt = Date.now()
     const actionRunsPath = cacheUtils(basePath).getActionRunCodeCachePath()
     const { data: entries, error } = await tryCatch(() => readdir(actionRunsPath, { withFileTypes: true }))
@@ -68,14 +69,17 @@ async function sweepActionRuns({ basePath, log, activeWindowMs }: ActionRunSweep
         .filter((entry) => entry.isDirectory())
         .map((entry) => path.join(actionRunsPath, entry.name))
 
-    const expired = await removeExpired({ dirPaths: managed, expiredAt: Date.now() - ACTION_RUN_CACHE_TTL_MS })
+    const expired = await removeExpired({ dirPaths: managed, expiredAt: Date.now() - ACTION_RUN_CACHE_TTL_MS, locks })
 
     const activeAt = Date.now() - activeWindowMs
     const evictable = expired.survivors.filter((entry) => entry.mtimeMs < activeAt)
     const overBy = expired.survivors.length - ACTION_RUN_CACHE_MAX_DIRS
-    const evicted = await removeOldest(overBy > 0
-        ? [...evictable].sort((a, b) => a.mtimeMs - b.mtimeMs).slice(0, overBy)
-        : [])
+    const evicted = await removeOldest({
+        entries: overBy > 0
+            ? [...evictable].sort((a, b) => a.mtimeMs - b.mtimeMs).slice(0, overBy)
+            : [],
+        locks,
+    })
 
     const failedCount = expired.failedCount + evicted.failedCount
     const retainedCount = managed.length - expired.expiredCount - evicted.removedCount - expired.unreadableCount
@@ -99,7 +103,7 @@ async function sweepActionRuns({ basePath, log, activeWindowMs }: ActionRunSweep
     log.info(summary, 'Swept action-run code cache')
 }
 
-async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPercent, getUsedPercent }: DiskPressureSweepParams): Promise<void> {
+async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPercent, getUsedPercent, locks }: DiskPressureSweepParams): Promise<void> {
     const usedPercentBefore = await getUsedPercent()
     if (usedPercentBefore < maxUsedPercent) {
         return
@@ -117,29 +121,38 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
 
     const activeAt = Date.now() - activeWindowMs
     const flowVersionDirs = entries.filter((entry) => entry.isDirectory() && entry.name !== ACTION_RUN_CODE_DIR)
-    const nested = await Promise.all(flowVersionDirs.map((entry) => readStepCandidates({
-        flowVersionPath: path.join(codesPath, entry.name),
-        activeAt,
-    })))
-    const candidates = nested.flat()
+    const candidates: DirEntry[] = []
+    for (const batch of chunk(flowVersionDirs, SCAN_BATCH_SIZE)) {
+        const nested = await Promise.all(batch.map((entry) => readStepCandidates({
+            flowVersionPath: path.join(codesPath, entry.name),
+            activeAt,
+        })))
+        candidates.push(...nested.flat())
+    }
     candidates.sort((a, b) => a.mtimeMs - b.mtimeMs)
 
     let evictedCount = 0
     let failedCount = 0
+    let skippedCount = 0
     for (const candidate of candidates) {
         const usedPercent = await getUsedPercent()
         if (usedPercent < maxUsedPercent) {
             break
         }
-        const outcome = await removeDir({ dirPath: candidate.dirPath, expectedMtimeMs: candidate.mtimeMs })
+        const outcome = await removeDir({ locks, dirPath: candidate.dirPath, expectedMtimeMs: candidate.mtimeMs })
         evictedCount += outcome === 'removed' ? 1 : 0
         failedCount += outcome === 'failed' ? 1 : 0
+        skippedCount += outcome === 'skipped' ? 1 : 0
+        if (outcome === 'removed') {
+            await tryCatch(() => rmdir(path.dirname(candidate.dirPath)))
+        }
     }
 
     const usedPercentAfter = await getUsedPercent()
     const summary = {
         evictedCount,
         failedCount,
+        skippedCount,
         candidateCount: candidates.length,
         usedPercentBefore,
         usedPercentAfter,
@@ -154,16 +167,21 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
         return
     }
     if (usedPercentAfter >= maxUsedPercent) {
+        if (skippedCount > 0) {
+            log.info(summary, 'Every code cache eviction candidate was in use during the sweep, retrying next cycle')
+            return
+        }
         log.warn(summary, 'Disk usage is above threshold but no evictable code cache directories were found')
     }
 }
 
-async function defaultGetUsedPercent(basePath: string): Promise<number> {
-    const { data: stats, error } = await tryCatch(() => statfs(basePath))
-    if (error || stats.blocks === 0) {
+async function defaultGetUsedPercent({ basePath, log }: DefaultGetUsedPercentParams): Promise<number> {
+    const diskInfo = await systemUsage.getDiskInfo(basePath)
+    if (diskInfo.total === 0) {
+        log.warn({ cache: { path: basePath } }, 'Disk usage read failed, disk-pressure code cache eviction is inactive')
         return 0
     }
-    return ((stats.blocks - stats.bavail) / stats.blocks) * 100
+    return diskInfo.percentage
 }
 
 async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandidatesParams): Promise<DirEntry[]> {
@@ -171,15 +189,20 @@ async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandida
     if (error) {
         return []
     }
-    const stats = await Promise.all(stepEntries.filter((entry) => entry.isDirectory()).map(async (entry): Promise<DirEntry | null> => {
-        const dirPath = path.join(flowVersionPath, entry.name)
-        const mtimeMs = await readMtimeMs(dirPath)
-        return isNil(mtimeMs) ? null : { dirPath, mtimeMs }
-    }))
-    return stats.filter((entry): entry is DirEntry => entry !== null && entry.mtimeMs < activeAt)
+    const stepDirs = stepEntries.filter((entry) => entry.isDirectory())
+    const candidates: DirEntry[] = []
+    for (const batch of chunk(stepDirs, SCAN_BATCH_SIZE)) {
+        const stats = await Promise.all(batch.map(async (entry): Promise<DirEntry | null> => {
+            const dirPath = path.join(flowVersionPath, entry.name)
+            const mtimeMs = await readMtimeMs(dirPath)
+            return isNil(mtimeMs) ? null : { dirPath, mtimeMs }
+        }))
+        candidates.push(...stats.filter((entry): entry is DirEntry => entry !== null && entry.mtimeMs < activeAt))
+    }
+    return candidates
 }
 
-async function removeExpired({ dirPaths, expiredAt }: RemoveExpiredParams): Promise<ExpiredResult> {
+async function removeExpired({ dirPaths, expiredAt, locks }: RemoveExpiredParams): Promise<ExpiredResult> {
     const survivors: DirEntry[] = []
     let expiredCount = 0
     let failedCount = 0
@@ -194,18 +217,18 @@ async function removeExpired({ dirPaths, expiredAt }: RemoveExpiredParams): Prom
             survivors.push({ dirPath, mtimeMs })
             continue
         }
-        const outcome = await removeDir({ dirPath, expectedMtimeMs: mtimeMs })
+        const outcome = await removeDir({ locks, dirPath, expectedMtimeMs: mtimeMs })
         expiredCount += outcome === 'removed' ? 1 : 0
         failedCount += outcome === 'failed' ? 1 : 0
     }
     return { survivors, expiredCount, failedCount, unreadableCount }
 }
 
-async function removeOldest(entries: DirEntry[]): Promise<EvictedResult> {
+async function removeOldest({ entries, locks }: RemoveOldestParams): Promise<EvictedResult> {
     let removedCount = 0
     let failedCount = 0
     for (const entry of entries) {
-        const outcome = await removeDir({ dirPath: entry.dirPath, expectedMtimeMs: entry.mtimeMs })
+        const outcome = await removeDir({ locks, dirPath: entry.dirPath, expectedMtimeMs: entry.mtimeMs })
         removedCount += outcome === 'removed' ? 1 : 0
         failedCount += outcome === 'failed' ? 1 : 0
     }
@@ -220,32 +243,38 @@ async function readMtimeMs(dirPath: string): Promise<number | null> {
     return stats.mtimeMs
 }
 
-// Re-stats immediately before removing so a directory touched after being listed (a build that
-// just reused it) is skipped instead of deleted out from under it. Tracks the removal in
-// pendingCacheRemovals so provisioning can wait it out and rebuild instead of racing a cache hit
-// against files still being unlinked.
-async function removeDir({ dirPath, expectedMtimeMs }: RemoveDirParams): Promise<RemoveOutcome> {
-    const currentMtimeMs = await readMtimeMs(dirPath)
-    if (isNil(currentMtimeMs) || currentMtimeMs !== expectedMtimeMs) {
+async function removeDir({ locks, dirPath, expectedMtimeMs }: RemoveDirParams): Promise<RemoveOutcome> {
+    const { data: outcome, error } = await tryCatch(() => locks.runExclusive({
+        key: dirPath,
+        timeoutMs: EVICTION_TRY_LOCK_TIMEOUT_MS,
+        fn: async (): Promise<RemoveOutcome> => {
+            const currentMtimeMs = await readMtimeMs(dirPath)
+            if (isNil(currentMtimeMs) || currentMtimeMs !== expectedMtimeMs) {
+                return 'skipped'
+            }
+            const { error: removeError } = await tryCatch(() => rm(dirPath, { recursive: true, force: true }))
+            return isNil(removeError) ? 'removed' : 'failed'
+        },
+    }))
+    if (error) {
         return 'skipped'
     }
-    const removal = tryCatch(() => rm(dirPath, { recursive: true, force: true }))
-    pendingCacheRemovals.track(dirPath, removal)
-    const { error } = await removal
-    pendingCacheRemovals.untrack(dirPath)
-    if (isNil(error)) {
-        return 'removed'
-    }
-    return 'failed'
+    return outcome
 }
 
 const ACTION_RUN_CACHE_TTL_MS = 2 * 60 * 60 * 1000
+const CODE_CACHE_LOCKS_DIR = 'code-cache-locks'
+const PROVISION_LOCK_TIMEOUT_MS = 15 * 60 * 1000
+const EVICTION_TRY_LOCK_TIMEOUT_MS = 0
+const SCAN_BATCH_SIZE = 16
 
 export const ACTION_RUN_CACHE_ACTIVE_WINDOW_MS = 15 * 60 * 1000
 export const ACTION_RUN_CACHE_MAX_DIRS = 200
 export const CODE_CACHE_SWEEP_INTERVAL_MS = 30 * 60 * 1000
 export const CODE_CACHE_FIRST_SWEEP_DELAY_MS = 60 * 1000
 export const DISK_EVICTION_THRESHOLD_PERCENT = 80
+
+type CacheLocks = ReturnType<typeof diskLock>
 
 type NamespaceParams = {
     platformId: string
@@ -260,10 +289,17 @@ type SweepParams = {
     getUsedPercent?: () => Promise<number>
 }
 
+type WithDirLockParams<T> = {
+    basePath: string
+    dirPath: string
+    fn: () => Promise<T>
+}
+
 type ActionRunSweepParams = {
     basePath: string
     log: ApLogger
     activeWindowMs: number
+    locks: CacheLocks
 }
 
 type DiskPressureSweepParams = {
@@ -272,6 +308,12 @@ type DiskPressureSweepParams = {
     activeWindowMs: number
     maxUsedPercent: number
     getUsedPercent: () => Promise<number>
+    locks: CacheLocks
+}
+
+type DefaultGetUsedPercentParams = {
+    basePath: string
+    log: ApLogger
 }
 
 type DirEntry = {
@@ -280,6 +322,7 @@ type DirEntry = {
 }
 
 type RemoveDirParams = {
+    locks: CacheLocks
     dirPath: string
     expectedMtimeMs: number
 }
@@ -294,6 +337,12 @@ type ReadStepCandidatesParams = {
 type RemoveExpiredParams = {
     dirPaths: string[]
     expiredAt: number
+    locks: CacheLocks
+}
+
+type RemoveOldestParams = {
+    entries: DirEntry[]
+    locks: CacheLocks
 }
 
 type ExpiredResult = {

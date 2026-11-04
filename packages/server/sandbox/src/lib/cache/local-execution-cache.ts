@@ -3,11 +3,10 @@ import { type ApLogger, fileSystemUtils, wideEvent } from '@activepieces/server-
 import { PiecePackage } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../types'
 import { cacheUtils } from './cache-paths'
-import { actionRunCache } from './code-cache-eviction'
+import { actionRunCache, codeCacheEviction } from './code-cache-eviction'
 import { engineInstaller } from './engine/engine-installer'
 import { codeBuilder } from './flow/code/code-builder'
 import { codeCache } from './flow/code/code-cache'
-import { pendingCacheRemovals } from './pending-cache-removals'
 import { pieceInstaller } from './pieces/piece-installer'
 
 export const localExecutionCache = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
@@ -33,7 +32,7 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
                     fn: async () => {
                         await fileSystemUtils.threadSafeMkdir(codeCachePath)
                         for (const artifact of codeSteps) {
-                            await installCodeStep({ artifact, codeCachePath, log, getSettings })
+                            await installCodeStep({ artifact, codeCachePath, basePath, log, getSettings })
                         }
                         log.info({ path: codeCachePath }, 'Installed code in sandbox')
                     },
@@ -74,50 +73,31 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
     },
 })
 
-async function installCodeStep({ artifact, codeCachePath, log, getSettings }: InstallCodeStepParams): Promise<void> {
-    const build = async (): Promise<void> => {
-        await codeBuilder(log, getSettings).processCodeStep({
-            artifact,
-            codesFolderPath: codeCachePath,
-        })
-    }
-    // Loops because a build can land on a directory an eviction sweep (code-cache-eviction.ts)
-    // is mid-removal of — waiting for that removal and rebuilding is the only way to avoid running
-    // against partially-deleted files. The action-run pass evicts a whole namespace dir at once,
-    // but the disk-pressure pass evicts per step dir (code-builder.ts touches that one on every
-    // use) — wait on whichever one actually gets deleted.
+async function installCodeStep({ artifact, codeCachePath, basePath, log, getSettings }: InstallCodeStepParams): Promise<void> {
     const codes = codeCache(codeCachePath)
     const isActionRun = actionRunCache.isActionRunNamespace(artifact.flowVersionId)
     const dirPath = isActionRun
         ? codes.flowVersionDir(artifact.flowVersionId)
         : codes.stepDir({ flowVersionId: artifact.flowVersionId, stepName: artifact.name })
-    do {
-        await build()
-        if (isActionRun) {
-            // code-builder.ts only touches the nested step dir it writes to, which never bumps a
-            // parent directory's own mtime — the action-run sweep needs the namespace dir itself
-            // touched on every use, not just its first build.
-            await actionRunCache.touch(dirPath)
-        }
-    } while (await sweptWhileProvisioning({ dirPath, log }))
-}
-
-async function sweptWhileProvisioning({ dirPath, log }: SweptWhileProvisioningParams): Promise<boolean> {
-    const swept = await pendingCacheRemovals.settle(dirPath)
-    if (swept) {
-        log.warn({ cache: { path: dirPath } }, 'Code cache was swept while provisioning, rebuilding')
-    }
-    return swept
-}
-
-type SweptWhileProvisioningParams = {
-    dirPath: string
-    log: ApLogger
+    await codeCacheEviction.withDirLock({
+        basePath,
+        dirPath,
+        fn: async () => {
+            await codeBuilder(log, getSettings).processCodeStep({
+                artifact,
+                codesFolderPath: codeCachePath,
+            })
+            if (isActionRun) {
+                await codeCacheEviction.markUsed(dirPath)
+            }
+        },
+    })
 }
 
 type InstallCodeStepParams = {
     artifact: CodeArtifact
     codeCachePath: string
+    basePath: string
     log: ApLogger
     getSettings: () => SandboxSettings
 }
