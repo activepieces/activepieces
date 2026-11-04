@@ -3,7 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const update = vi.fn();
 
 vi.mock('@notionhq/client', () => ({
-  Client: vi.fn().mockImplementation(() => ({ blocks: { update } })),
+  Client: vi.fn().mockImplementation(function () {
+    return { blocks: { update } };
+  }),
 }));
 
 import { notionUpdateBlock } from '../src/lib/actions/notion-update-block';

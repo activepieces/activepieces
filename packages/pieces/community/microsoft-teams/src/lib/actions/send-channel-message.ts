@@ -1,24 +1,25 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
-import { ConversationMember } from '@microsoft/microsoft-graph-types';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, withGraphRetry } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
+import type { MicrosoftTeamsMember, MicrosoftTeamsPage } from '../common/types';
+import { microsoftTeamsGetChannelMessageOutputSchema } from '../output-schemas';
 
 export const sendChannelMessageAction = createAction({
   auth: microsoftTeamsAuth,
   name: 'microsoft_teams_send_channel_message',
+  outputSchema: microsoftTeamsGetChannelMessageOutputSchema,
   classification: 'WRITE',
   displayName: 'Send Channel Message',
   description: "Sends a message to a teams's channel.",
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Posts a new top-level message to a Microsoft Teams channel, identified by team ID and channel ID. Use to broadcast to a channel rather than a private chat; to answer an existing thread use Reply to Channel Message instead. Supports @username mentions, which are resolved to team members before posting. Not idempotent — each call posts another message.',
     idempotent: false,
   },
   props: {
-    teamId: microsoftTeamsCommon.teamId,
-    channelId: microsoftTeamsCommon.channelId,
+    teamId: microsoftTeamsProps.teamId({ required: true }),
+    channelId: microsoftTeamsProps.channelId({ required: true }),
     contentType: Property.StaticDropdown({
       displayName: 'Content Type',
       required: true,
@@ -46,8 +47,7 @@ export const sendChannelMessageAction = createAction({
   async run(context) {
     const { teamId, channelId, contentType, content } = context.propsValue;
 
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
-    const client = createGraphClient(context.auth.access_token, cloud);
+    const client = microsoftTeamsClient.create({ auth: context.auth });
 
     let messageContent = content;
     const messageMentions: Array<{
@@ -71,15 +71,13 @@ export const sendChannelMessageAction = createAction({
     if (mentionHandles.length > 0) {
       const uniqueHandles = [...new Set(mentionHandles.map(normalize))];
 
-      // Build OData $filter to only fetch members matching any mentioned handle.
-      // Use startswith for email so "@username" matches "username@test.com".
       const filterClauses = uniqueHandles.flatMap((handle) => [
         `microsoft.graph.aadUserConversationMember/displayName eq '${handle}'`,
         `startswith(microsoft.graph.aadUserConversationMember/email, '${handle}@')`,
       ]);
 
-      const members: ConversationMember[] = [];
-      let response: PageCollection = await withGraphRetry(() =>
+      const members: MicrosoftTeamsMember[] = [];
+      let response: MicrosoftTeamsPage<MicrosoftTeamsMember> = await microsoftTeamsClient.withRetry(() =>
         client
           .api(`/teams/${teamId}/members`)
           .filter(filterClauses.join(' or '))
@@ -87,27 +85,22 @@ export const sendChannelMessageAction = createAction({
       );
 
       while (response.value && response.value.length > 0) {
-        members.push(...(response.value as ConversationMember[]));
+        members.push(...response.value);
         const nextLink = response['@odata.nextLink'];
         if (nextLink) {
-          response = await withGraphRetry(() => client.api(nextLink).get());
+          response = await microsoftTeamsClient.withRetry(() => client.api(nextLink).get());
         } else {
           break;
         }
       }
 
-      const byHandle = new Map<string, ConversationMember>();
+      const byHandle = new Map<string, MicrosoftTeamsMember>();
 
       for (const member of members) {
-        const typedMember = member as ConversationMember & {
-          userPrincipalName?: string;
-          userId?: string;
-          email?: string;
-        };
         const keys = [
-          typedMember.displayName,
-          typedMember.userPrincipalName,
-          typedMember.email,
+          member.displayName,
+          member.userPrincipalName,
+          member.email,
         ].filter((value): value is string => Boolean(value));
 
         for (const key of keys) {
@@ -128,15 +121,11 @@ export const sendChannelMessageAction = createAction({
           if (!member) {
             return match;
           }
-          const typedMember = member as ConversationMember & {
-            userPrincipalName?: string;
-            userId?: string;
-          };
           const displayName =
-            typedMember.displayName ||
-            typedMember.userPrincipalName ||
-            typedMember.userId;
-          if (!displayName || !typedMember.userId) {
+            member.displayName ||
+            member.userPrincipalName ||
+            member.userId;
+          if (!displayName || !member.userId) {
             return match;
           }
 
@@ -146,9 +135,9 @@ export const sendChannelMessageAction = createAction({
             mentionText: displayName,
             mentioned: {
               user: {
-                id: typedMember.userId,
+                id: member.userId,
                 displayName: displayName,
-                userPrincipalName: typedMember.userPrincipalName,
+                userPrincipalName: member.userPrincipalName,
               },
             },
           });
@@ -162,7 +151,6 @@ export const sendChannelMessageAction = createAction({
       }
     }
 
-    //https://learn.microsoft.com/en-us/graph/api/channel-post-messages?view=graph-rest-1.0&tabs=http
     const chatMessage: {
       body: {
         content: string;

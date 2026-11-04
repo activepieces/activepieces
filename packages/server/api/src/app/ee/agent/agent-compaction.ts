@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesError, AIProviderName, ErrorCode, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
@@ -69,7 +69,7 @@ function snapToSafeMessageBoundary({ messages, rawCutoff }: {
     return idx
 }
 
-async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, log }: {
+async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, log, billing }: {
     messages: ModelMessage[]
     existingSummary: string | null
     summarizedUpToIndex: number | null
@@ -77,6 +77,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     reservedTokens: number
     model: LanguageModel
     log: FastifyBaseLogger
+    billing?: ActivepiecesAiBilling
 }): Promise<{ summary: string, summarizedUpToIndex: number }> {
     const recentWindowSize = recentWindowSizeFor({
         messages,
@@ -119,7 +120,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     const { data, error } = await tryCatch(() => generateText({
         model,
         instructions: COMPACTION_SYSTEM_PROMPT,
-        telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-compaction' }),
+        ...agentAiUtils.buildTelemetry({ functionId: 'agent-compaction', billing }),
         prompt: contentToSummarize,
         maxOutputTokens: SUMMARY_OUTPUT_RESERVE_TOKENS,
         abortSignal: AbortSignal.timeout(COMPACTION_TIMEOUT_MS),
