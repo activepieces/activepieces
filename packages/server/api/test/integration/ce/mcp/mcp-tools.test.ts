@@ -202,7 +202,8 @@ function text(result: { content: Array<{ type: 'text', text: string }> }): strin
 
 const ResearchedPieces = z.object({
     pieces: z.array(z.object({
-        actions: z.array(z.object({ name: z.string(), audience: z.string().optional() })),
+        actions: z.array(z.object({ name: z.string(), audience: z.string().optional() }).passthrough()),
+        recommendedActions: z.array(z.string()).optional(),
     })),
 })
 
@@ -2715,7 +2716,7 @@ describe('MCP Tools integration', () => {
             platformId: ctx.platform.id,
             actions: {
                 search_folder: action({ name: 'search_folder', displayName: 'Search Folder', description: 'Search files by name prefix in a folder', audience: 'human' }),
-                drive_list_files: action({ name: 'drive_list_files', displayName: 'List Files', description: 'List every file', audience: 'ai' }),
+                drive_browse_entries: action({ name: 'drive_browse_entries', displayName: 'Browse Entries', description: 'Walk through every entry the drive holds', audience: 'ai' }),
             },
             triggers: {},
         }))
@@ -2723,7 +2724,8 @@ describe('MCP Tools integration', () => {
         const result = await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-audience-drive'], forIntent: 'search files by name prefix' })
         const [found] = structured({ result, schema: ResearchedPieces }).pieces
 
-        expect(found.actions.find((entry) => entry.name === 'drive_list_files')).toMatchObject({ audience: 'ai' })
+        expect(found.recommendedActions).not.toContain('drive_browse_entries')
+        expect(found.actions.find((entry) => entry.name === 'drive_browse_entries')).toEqual({ name: 'drive_browse_entries', displayName: 'Browse Entries', audience: 'ai' })
         expect(found.actions.find((entry) => entry.name === 'search_folder')).not.toHaveProperty('audience')
     })
 
