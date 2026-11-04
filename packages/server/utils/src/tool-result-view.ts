@@ -54,8 +54,9 @@ function readText({ text, fileId, path, offset, limit, search, budget }: { text:
         if (matches.length === 0) {
             return `No line contains "${search}" (${lines.length} lines). Try a shorter search or read by offset.`
         }
-        const kept = linesWithinBudget({ lines: matches, start: 0, maxLines: limit, budget })
-        return `${matches.length} line(s) contain "${search}"${kept.length < matches.length ? `, first ${kept.length} shown` : ''}. Read around one with offset: <line - 1>.\n${kept.join('\n')}`
+        const kept = linesWithinBudget({ lines: matches, start: offset, maxLines: limit, budget })
+        const end = offset + kept.length
+        return `${matches.length} line(s) contain "${search}", matches ${offset + 1}–${end} shown. Read around one without search, with offset: <line - 1>.\n${kept.join('\n')}${more({ fileId, path, search, offset: end, total: matches.length, limit })}`
     }
     const kept = linesWithinBudget({ lines, start: offset, maxLines: limit, budget })
     const end = offset + kept.length
