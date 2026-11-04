@@ -16,5 +16,7 @@
   "\nIf **Wait for Response** is enabled, use **Respond on UI** in your flow to provide a response back to the form.\n": "\nWenn **Warten auf Antwort** aktiviert ist, verwenden Sie **Antwort auf UI** in Ihrem Fluss, um eine Antwort auf das Formular zu geben.\n",
   "\n**Published Chat URL:**\n```text\n{{chatUrl}}\n```\nUse this for production, views the published version of the chat flow.\n<br>\n<br>\n": "\n**veröffentlichte Chat-URL:**\n```text\n{{chatUrl}}\n```\nVerwenden Sie dies für die Produktion zeigt die veröffentlichte Version des Chatflusses an.\n<br>\n<br>\n",
   "\nThis trigger sets up a chat interface. Ensure that **Respond on UI** is used in your flow": "\nDieser Trigger konfiguriert ein Chat-Interface. Stelle sicher, dass **Reagieren auf UI** in deinem Fluss verwendet wird",
-  "The name of the chatbot": "Der Name des Chatbots"
+  "The name of the chatbot": "Der Name des Chatbots",
+  "Form": "Formular",
+  "Response": "Antwort"
 }

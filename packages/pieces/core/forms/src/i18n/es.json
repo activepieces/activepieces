@@ -16,5 +16,7 @@
   "\nIf **Wait for Response** is enabled, use **Respond on UI** in your flow to provide a response back to the form.\n": "\nIf **Wait for Response** is enabled, use **Respond on UI** in your flow to provide a response back to the form.\n",
   "\n**Published Chat URL:**\n```text\n{{chatUrl}}\n```\nUse this for production, views the published version of the chat flow.\n<br>\n<br>\n": "\n**Published Chat URL:**\n```text\n{{chatUrl}}\n```\nUse this for production, views the published version of the chat flow.\n<br>\n<br>\n",
   "\nThis trigger sets up a chat interface. Ensure that **Respond on UI** is used in your flow": "\nThis trigger sets up a chat interface. Ensure that **Respond on UI** is used in your flow",
-  "The name of the chatbot": "El nombre del chatbot"
+  "The name of the chatbot": "El nombre del chatbot",
+  "Form": "Formulario",
+  "Response": "Respuesta"
 }

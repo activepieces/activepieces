@@ -17,5 +17,7 @@
   "\nIf **Wait for Response** is enabled, use **Respond on UI** in your flow to provide a response back to the form.\n": "\nЕсли **Дождите** включен, используйте **Ответь** на пользовательском интерфейсе, чтобы дать ответ на форму.\n",
   "\n**Published Chat URL:**\n```text\n{{chatUrl}}\n```\nUse this for production, views the published version of the chat flow.\n<br>\n<br>\n": "\n**Опубликованный URL чата:**\n```text\n{{chatUrl}}\n```\nИспользуйте это для производства, просматривает опубликованную версию чата.\n<br>\n<br>\n",
   "\nThis trigger sets up a chat interface. Ensure that **Respond on UI** is used in your flow": "\nЭтот триггер создает чат интерфейс. Убедитесь, что **Ответь** используется в вашем потоке",
-  "The name of the chatbot": "Название робота чата"
+  "The name of the chatbot": "Название робота чата",
+  "Form": "Форма",
+  "Response": "Ответ"
 }
