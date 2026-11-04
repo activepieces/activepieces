@@ -9,8 +9,6 @@ import {
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { knackAuth } from './auth';
 
-const KNACK_BASE_URL = 'https://api.knack.com/v1';
-
 export async function knackApiCall<T extends HttpMessageBody>({
   method,
   resourceUri,
@@ -96,6 +94,24 @@ export function assertKnackRecordFound({
   }
 }
 
+export function assertKnackDeleteConfirmed({
+  response,
+  recordId,
+  objectKey,
+}: {
+  response: Record<string, unknown> | null | undefined;
+  recordId: string;
+  objectKey: string;
+}): void {
+  if (response?.['delete'] !== true) {
+    throw new KnackApiError({
+      message: `Knack API error (HTTP 404): Record ${recordId} not found in ${objectKey}, nothing was deleted. Check the object key and record ID.`,
+      status: 404,
+      responseBody: response,
+    });
+  }
+}
+
 export function extractKnackMessage(body: unknown): string | undefined {
   if (body === null || body === undefined) {
     return undefined;
@@ -151,6 +167,8 @@ class KnackApiError extends Error {
     this.responseBody = responseBody;
   }
 }
+
+const KNACK_BASE_URL = 'https://api.knack.com/v1';
 
 const STATUS_HINTS: Record<number, string> = {
   401: 'Check the API Key and Application ID in the connection.',

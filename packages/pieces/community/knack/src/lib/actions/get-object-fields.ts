@@ -18,7 +18,7 @@ export const getObjectFieldsAction = createAction({
   props: {
     object_key: Property.ShortText({
       displayName: 'Object Key',
-      description: 'The Knack object key, e.g. "object_1". Get it from List Objects (Agent).',
+      description: 'Knack object key such as object_1, from List Objects (Agent).',
       required: true,
     }),
   },

@@ -5,6 +5,7 @@ import { recordFields } from '../src/lib/common/props';
 import { findRecordAction } from '../src/lib/actions/find-record';
 import { searchRecordsAction } from '../src/lib/actions/search-records';
 import { getRecordAction } from '../src/lib/actions/get-record';
+import { deleteRecordAction } from '../src/lib/actions/delete-record';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -74,6 +75,24 @@ describe('assertKnackRecordFound', () => {
     await expect(
       callRun({ fn: getRecordAction.run, propsValue: { object_key: 'object_3', record_id: 'missing' } })
     ).rejects.toThrow(/not found in object_3/);
+  });
+});
+
+describe('deleteRecordAction', () => {
+  it('sends DELETE and returns Knack delete flag with deleted and id', async () => {
+    const send = mockSend(() => ({ delete: true }));
+    const out = await callRun({ fn: deleteRecordAction.run, propsValue: { object: 'object_3', recordId: ' r1 ' } });
+    const req = firstRequest(send);
+    expect(req.method).toBe(HttpMethod.DELETE);
+    expect(req.url).toBe('https://api.knack.com/v1/objects/object_3/records/r1');
+    expect(out).toEqual({ delete: true, deleted: true, id: 'r1' });
+  });
+
+  it('throws not found when Knack replies 200 without delete: true', async () => {
+    mockSend(() => ({ records: [] }));
+    await expect(
+      callRun({ fn: deleteRecordAction.run, propsValue: { object: 'object_3', recordId: 'missing' } })
+    ).rejects.toThrow(/missing not found in object_3, nothing was deleted/);
   });
 });
 

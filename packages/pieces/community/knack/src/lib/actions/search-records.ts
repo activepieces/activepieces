@@ -20,7 +20,7 @@ export const searchRecordsAction = createAction({
   props: {
     object_key: Property.ShortText({
       displayName: 'Object Key',
-      description: 'The Knack object key, e.g. "object_1". Get it from List Objects (Agent).',
+      description: 'Knack object key such as object_1, from List Objects (Agent).',
       required: true,
     }),
     match: Property.StaticDropdown<string>({
@@ -36,7 +36,7 @@ export const searchRecordsAction = createAction({
     }),
     rules: Property.Json({
       displayName: 'Filter Rules',
-      description: 'JSON array of rules, e.g. [{"field":"field_1","operator":"contains","value":"Jane"}].',
+      description: 'JSON array of {"field", "operator", "value"} rule objects.',
       required: false,
     }),
     sort_field: Property.ShortText({

@@ -18,7 +18,7 @@ export const knack = createPiece({
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/knack.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ['aryel780'],
+  authors: ['aryel780', 'OdaiAhmed99'],
   actions: [
     createRecordAction,
     deleteRecordAction,

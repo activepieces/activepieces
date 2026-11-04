@@ -1,15 +1,5 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
-const splitRecordFields: OutputSchema['fields'] = [
-  { key: 'id', label: 'Record ID' },
-  {
-    key: 'fields',
-    label: 'Fields',
-    dynamicKey: true,
-    description: 'Values keyed by Knack field key (field_N formatted, field_N_raw structured).',
-  },
-];
-
 export const humanRecordOutputSchema: OutputSchema = {
   fields: [
     { key: 'id', label: 'Record ID' },
@@ -26,6 +16,7 @@ export const findRecordOutputSchema: OutputSchema = {
 
 export const deleteRecordOutputSchema: OutputSchema = {
   fields: [
+    { key: 'delete', label: 'Delete', format: 'boolean' },
     { key: 'deleted', label: 'Deleted', format: 'boolean' },
     { key: 'id', label: 'Record ID' },
   ],
@@ -67,7 +58,7 @@ export const getObjectFieldsOutputSchema: OutputSchema = {
 
 export const searchRecordsOutputSchema: OutputSchema = {
   fields: [
-    { key: 'records', label: 'Records', listItems: splitRecordFields },
+    { key: 'records', label: 'Records', listItems: splitRecordFields() },
     { key: 'total_records', label: 'Total Records', format: 'number' },
     { key: 'total_pages', label: 'Total Pages', format: 'number' },
     { key: 'current_page', label: 'Current Page', format: 'number' },
@@ -75,5 +66,17 @@ export const searchRecordsOutputSchema: OutputSchema = {
 };
 
 export const splitRecordOutputSchema: OutputSchema = {
-  fields: splitRecordFields,
+  fields: splitRecordFields(),
 };
+
+function splitRecordFields(): OutputSchema['fields'] {
+  return [
+    { key: 'id', label: 'Record ID' },
+    {
+      key: 'fields',
+      label: 'Fields',
+      dynamicKey: true,
+      description: 'Values keyed by Knack field key (field_N formatted, field_N_raw structured).',
+    },
+  ];
+}
