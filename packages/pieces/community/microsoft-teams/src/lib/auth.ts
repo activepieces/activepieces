@@ -1,10 +1,19 @@
-import {
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import { microsoftCloudProperty } from './common/microsoft-cloud';
-import { createGraphClient, withGraphRetry } from './common/graph';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { microsoftTeamsClient } from './common/client';
+
+const cloudProperty = Property.StaticDropdown({
+  displayName: 'Cloud Environment',
+  description: 'Select your Microsoft cloud environment.',
+  required: true,
+  defaultValue: 'login.microsoftonline.com',
+  options: {
+    disabled: false,
+    options: [
+      { label: 'Commercial (Global)', value: 'login.microsoftonline.com' },
+      { label: 'US Government (GCC High)', value: 'login.microsoftonline.us' },
+    ],
+  },
+});
 
 const authDesc = `
 When you connect, Activepieces shows a **permissions** selector. Tick only the
@@ -26,7 +35,7 @@ Leave **Tenant ID** as \`common\` for the default multi-tenant flow, or set it t
 export const microsoftTeamsAuth = PieceAuth.OAuth2({
   description: authDesc,
   props: {
-    cloud: microsoftCloudProperty,
+    cloud: cloudProperty,
     tenantId: Property.ShortText({
       displayName: 'Tenant ID',
       description:
@@ -53,7 +62,6 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
     'TeamMember.Read.All',
     'User.ReadBasic.All',
     'Presence.Read.All',
-    // 'OnlineMeetings.Read',
     'OnlineMeetingTranscript.Read.All',
     'OnlineMeetingRecording.Read.All',
   ],
@@ -62,10 +70,10 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://{cloud}/{tenantId}/oauth2/v2.0/token',
   validate: async ({ auth }) => {
     try {
-      const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-      const cloud = authValue.props?.['cloud'] as string | undefined;
-      const client = createGraphClient(authValue.access_token, cloud);
-      await withGraphRetry(() => client.api('/me').get());
+      const client = microsoftTeamsClient.create({
+        auth: { access_token: auth.access_token, props: auth.props },
+      });
+      await microsoftTeamsClient.withRetry(() => client.api('/me').get());
       return { valid: true };
     } catch (error) {
       return { valid: false, error: 'Invalid Credentials.' };

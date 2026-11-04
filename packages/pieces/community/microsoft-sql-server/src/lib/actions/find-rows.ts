@@ -10,7 +10,7 @@ export const findRowsAction = createAction({
   name: 'find_rows',
   displayName: 'Find Rows',
   description: 'Reads rows from a table',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Reads rows from one SQL Server table, optionally filtered by a WHERE condition, restricted to chosen columns, sorted, and capped to a maximum number of rows. Use to look up or list records without writing a full query. The condition is inserted into the statement as written, so pass dynamic values through the Parameters map as named @placeholders instead of embedding them. Not idempotent in general: the condition is raw T-SQL, so a statement that writes can be smuggled through it and repeating the call would repeat the write.',

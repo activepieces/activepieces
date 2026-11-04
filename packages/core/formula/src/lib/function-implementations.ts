@@ -4,6 +4,7 @@ import timezoneDayjs from 'dayjs/plugin/timezone'
 import utcDayjs from 'dayjs/plugin/utc'
 import { Parser } from 'expr-eval'
 import { AP_FUNCTIONS } from './function-registry'
+import { ownValue } from './own-value'
 
 dayjs.extend(relativeTimeDayjs)
 dayjs.extend(timezoneDayjs)
@@ -19,15 +20,33 @@ declare module 'expr-eval' {
     interface Parser {
         evaluate(expression: string, values: Record<string, unknown>): unknown
     }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+    interface Expression {
+        evaluate(values: Record<string, unknown>): unknown
+    }
 }
 
 // Parser is a module-private singleton — exposing it would let any consumer
 // of @activepieces/shared mutate `parser.functions.X` and break formula
 // evaluation process-wide. Use `evaluateRaw` instead.
-const parser = new Parser()
+const parser = new Parser({
+    allowMemberAccess: false,
+    operators: withoutPrototype({
+        fndef: false,
+    }),
+})
+for (const table of [parser.functions, parser.consts, parser.unaryOps, Reflect.get(parser, 'binaryOps'), Reflect.get(parser, 'ternaryOps')]) {
+    Object.setPrototypeOf(table, null)
+}
 
 export function evaluateRaw(expression: string, vars: Record<string, unknown>): unknown {
-    return parser.evaluate(expression, vars)
+    const scope = withoutPrototype(vars)
+    const parsed = parser.parse(expression)
+    const inheritedName = parsed.symbols().find((symbol) => isInheritedName({ symbol, scope }))
+    if (inheritedName !== undefined) {
+        throw new Error(`${inheritedName} is not defined`)
+    }
+    return parsed.evaluate(scope)
 }
 
 parser.functions.combine = (a: unknown, b: unknown, sep: unknown = '') =>
@@ -296,7 +315,7 @@ parser.functions.filter_list = (list: unknown, field: unknown, value: unknown) =
             // input, while item fields are typed (`{age: 25}`). `===` would silently
             // return zero matches when filtering numeric fields with string args.
             // Same rationale applies to is_equal, switch, if_null below.
-            (item as Record<string, unknown>)[String(field)] == value,
+            readField(item, String(field)) == value,
     )
 parser.functions.sort_list = (list: unknown, field: unknown, order: unknown = 'asc') => {
     const arr = [...toArray(list)]
@@ -313,11 +332,7 @@ parser.functions.sort_list = (list: unknown, field: unknown, order: unknown = 'a
     })
 }
 parser.functions.pluck = (list: unknown, field: unknown) =>
-    toArray(list).map((item) =>
-        typeof item === 'object' && item !== null
-            ? (item as Record<string, unknown>)[String(field)]
-            : undefined,
-    )
+    toArray(list).map((item) => readField(item, String(field)))
 parser.functions.join_list = (list: unknown, sep: unknown = ',') =>
     toArray(list).join(String(sep))
 parser.functions.first_item = (list: unknown) => toArray(list)[0]
@@ -332,7 +347,7 @@ parser.functions.sum = (list: unknown, field: unknown) => {
     return toArray(list).reduce<number>((acc, item) => {
         const v =
             typeof item === 'object' && item !== null
-                ? Number((item as Record<string, unknown>)[String(field)])
+                ? Number(readField(item, String(field)))
                 : 0
         return acc + (isNaN(v) ? 0 : v)
     }, 0)
@@ -343,7 +358,7 @@ parser.functions.average = (list: unknown, field: unknown) => {
     const total = arr.reduce<number>((acc, item) => {
         const v =
             typeof item === 'object' && item !== null
-                ? Number((item as Record<string, unknown>)[String(field)])
+                ? Number(readField(item, String(field)))
                 : 0
         return acc + (isNaN(v) ? 0 : v)
     }, 0)
@@ -362,7 +377,7 @@ parser.functions.deduplicate = (list: unknown, field: unknown) => {
     return toArray(list).filter((item) => {
         const key =
             typeof item === 'object' && item !== null
-                ? (item as Record<string, unknown>)[String(field)]
+                ? readField(item, String(field))
                 : item
         if (seen.has(key)) return false
         seen.add(key)
@@ -431,10 +446,15 @@ function toArray(value: unknown): unknown[] {
 }
 
 function readField(item: unknown, field: string): unknown {
-    if (item !== null && typeof item === 'object') {
-        return (item as Record<string, unknown>)[field]
-    }
-    return undefined
+    return ownValue.read({ source: item, key: field })
+}
+
+function withoutPrototype<T extends object>(source: T): T {
+    return Object.assign(Object.create(null), source)
+}
+
+function isInheritedName({ symbol, scope }: { symbol: string, scope: Record<string, unknown> }): boolean {
+    return symbol in Object.prototype && !Object.hasOwn(scope, symbol) && !Object.hasOwn(parser.functions, symbol)
 }
 
 function toNumericFieldValues(list: unknown, field: unknown): number[] {
