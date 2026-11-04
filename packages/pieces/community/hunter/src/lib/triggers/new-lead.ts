@@ -56,7 +56,7 @@ export const newLeadTrigger = createTrigger({
     await context.store.put(LAST_LEAD_ID_KEY, leadIdOf(newest[0]) ?? 0);
   },
   async onDisable() {
-    // Keep the cursor: a republish runs onDisable then onEnable, and leads created since the last poll must still fire.
+    return;
   },
   async test(context) {
     return hunterRequests.listLeadsPage({ apiKey: apiKeyOf(context.auth), limit: 5, offset: 0 });
