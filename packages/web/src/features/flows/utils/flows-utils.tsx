@@ -1,12 +1,5 @@
-import {
-  PopulatedFlow,
-  FlowTriggerType,
-  TriggerSourceScheduleType,
-} from '@activepieces/shared';
-import cronstrue from 'cronstrue/i18n';
-import { t } from 'i18next';
+import { PopulatedFlow } from '@activepieces/shared';
 import JSZip from 'jszip';
-import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
 import { downloadFile } from '@/lib/dom-utils';
 
@@ -36,67 +29,4 @@ const zipFlows = async (flows: PopulatedFlow[]) => {
 export const flowsUtils = {
   downloadFlow,
   zipFlows,
-  flowStatusToolTipRenderer: (flow: PopulatedFlow) => {
-    const trigger = flow.version.trigger;
-    switch (trigger?.type) {
-      case FlowTriggerType.PIECE: {
-        const schedule = flow.triggerSource?.schedule;
-        switch (schedule?.type) {
-          case TriggerSourceScheduleType.INTERVAL: {
-            const minutes = Math.round(schedule.intervalMs / 60_000);
-            return flow.triggerSource?.pieceName ===
-              '@activepieces/piece-schedule' ? (
-              t('Runs every {minutes, plural, =1 {minute} other {# minutes}}', {
-                minutes,
-              })
-            ) : (
-              <>
-                {t(
-                  'Checks for new data every {minutes, plural, =1 {minute} other {# minutes}}.',
-                  { minutes },
-                )}
-                <br />
-                {t('The flow runs only when there is new data.')}
-              </>
-            );
-          }
-          case TriggerSourceScheduleType.CRON_EXPRESSION:
-            return t('Runs {schedule}', {
-              schedule: cronstrue
-                .toString(schedule.cronExpression, { locale: 'en' })
-                .toLocaleLowerCase(),
-            });
-          default:
-            return t('Runs as soon as new data arrives');
-        }
-      }
-      case FlowTriggerType.EMPTY:
-        console.error(
-          t("Flow can't be published with empty trigger {name}", {
-            name: flow.version.displayName,
-          }),
-        );
-        return t('Please contact support as your published flow has a problem');
-    }
-  },
-  flowStatusIconRenderer: (flow: PopulatedFlow) => {
-    const trigger = flow.version.trigger;
-    switch (trigger?.type) {
-      case FlowTriggerType.PIECE: {
-        if (flow.triggerSource?.schedule) {
-          return <TimerReset className="h-4 w-4 text-gray-12" />;
-        } else {
-          return <Zap className="h-4 w-4 text-gray-12 fill-gray-12" />;
-        }
-      }
-      case FlowTriggerType.EMPTY: {
-        console.error(
-          t("Flow can't be published with empty trigger {name}", {
-            name: flow.version.displayName,
-          }),
-        );
-        return <TriangleAlert className="h-4 w-4 text-danger-11" />;
-      }
-    }
-  },
 };

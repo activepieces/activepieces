@@ -2,9 +2,11 @@ import { Permission, isNil } from '@activepieces/core-utils';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { cn } from '@/lib/utils';
 
 import { Switch } from '../../../components/ui/switch';
 import {
@@ -13,19 +15,25 @@ import {
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
 import { flowHooks } from '../hooks/flow-hooks';
-import { flowsUtils } from '../utils/flows-utils';
+import { flowScheduleLabel } from '../utils/flow-schedule-label';
 
 type FlowStatusToggleProps = {
   flow: PopulatedFlow;
 };
 
 const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
+  const { i18n } = useTranslation();
   const [isFlowPublished, setIsFlowPublished] = useState(
     flow.status === FlowStatus.ENABLED,
   );
 
+  // Turning a flow on creates its trigger source on the server, so the `flow` prop (fetched while it was off)
+  // has none. Keep the flow the toggle returned until the parent passes a newer one.
+  const [latestFlow, setLatestFlow] = useState(flow);
+
   useEffect(() => {
     setIsFlowPublished(flow.status === FlowStatus.ENABLED);
+    setLatestFlow(flow);
   }, [flow]);
 
   const { checkAccess } = useAuthorization();
@@ -39,8 +47,15 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
       change: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
       onSuccess: (updatedFlow: PopulatedFlow) => {
         setIsFlowPublished(updatedFlow.status === FlowStatus.ENABLED);
+        setLatestFlow(updatedFlow);
       },
     });
+
+  const isNeverPublished = isNil(flow.publishedVersionId);
+  const label =
+    isFlowPublished && !isLoading
+      ? flowScheduleLabel(latestFlow, { locale: i18n.language })
+      : null;
 
   return (
     <div className="flex items-center justify-start">
@@ -53,14 +68,14 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
               disabled={
                 isLoading ||
                 !userHasPermissionToToggleFlowStatus ||
-                isNil(flow.publishedVersionId)
+                isNeverPublished
               }
             />
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom">
           {userHasPermissionToToggleFlowStatus
-            ? isNil(flow.publishedVersionId)
+            ? isNeverPublished
               ? t('Please publish flow first')
               : isFlowPublished
               ? t('Flow is on')
@@ -68,21 +83,37 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
             : t('Permission Needed')}
         </TooltipContent>
       </Tooltip>
-      {isLoading ? (
-        <LoadingSpinner />
-      ) : (
-        isFlowPublished && (
-          <Tooltip>
-            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <div className="p-2 rounded-full ">
-                {flowsUtils.flowStatusIconRenderer(flow)}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {flowsUtils.flowStatusToolTipRenderer(flow)}
-            </TooltipContent>
-          </Tooltip>
-        )
+      {isLoading && (
+        <div className="ml-2 flex items-center gap-1.5 text-xs text-gray-11">
+          <LoadingSpinner className="size-3" />
+          {isFlowPublished ? t('Turning off…') : t('Turning on…')}
+        </div>
+      )}
+      {!isLoading && isNeverPublished && (
+        <span className="ml-2 text-xs text-gray-11">{t('Not published')}</span>
+      )}
+      {label && (
+        <Tooltip>
+          <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <div className="ml-2 flex min-w-0 max-w-[100px] flex-col text-xs leading-4">
+              <span
+                className={cn(
+                  'truncate',
+                  label.isError ? 'text-danger-11' : 'text-gray-12',
+                )}
+              >
+                {label.title}
+              </span>
+              {label.detail && (
+                <span className="truncate text-gray-11">{label.detail}</span>
+              )}
+              <span className="sr-only">{label.tooltip}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[280px]">
+            {label.tooltip}
+          </TooltipContent>
+        </Tooltip>
       )}
     </div>
   );
