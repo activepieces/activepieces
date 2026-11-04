@@ -891,6 +891,12 @@ describe('buildPlanSync', () => {
         expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: [flow], plannedRows }))).toEqual(['Gmail new email received=done', 'Classify urgency=in_progress'])
     })
 
+    it('marks the unfinished steps failed once the model sets phase failed', () => {
+        const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Classify urgency', 'ok'], ['Ping me on Slack', 'problem']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan: { ...PLAN, phase: 'failed' }, builtFlows: [flow] }))).toEqual(['Classify urgency=done', 'Ping me on Slack=failed'])
+    })
+
     it('marks every row done once the model sets phase done', () => {
         const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Ping me on Slack', 'problem']] }))
 

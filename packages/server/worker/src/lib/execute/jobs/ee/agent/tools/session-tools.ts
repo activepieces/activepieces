@@ -278,7 +278,12 @@ function builtFlowOf({ result }: { result: unknown }): BuiltFlow | null {
 
 function withBuiltRows({ plan, builtFlows, plannedRows = [] }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[], plannedRows?: PlannedRow[] }): BuildPlanEvent {
     const finished = plan.phase === 'done'
-    const status = (done: boolean): 'done' | 'in_progress' => done || finished ? 'done' : 'in_progress'
+    const status = (done: boolean): BuildPlanStep['status'] => {
+        if (done || finished) {
+            return 'done'
+        }
+        return plan.phase === 'failed' ? 'failed' : 'in_progress'
+    }
     const flowRow = (flow: BuiltFlow): BuildPlanStep => ({ id: flow.flowId, label: flow.name, status: status(flow.steps.every((step) => step.done)) })
     const steps = plannedRows.some((row) => !isNil(row.flowName))
         ? plannedFlowRows({ plannedRows, builtFlows, flowRow, finished })
