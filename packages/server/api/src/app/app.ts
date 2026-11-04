@@ -1,6 +1,6 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { aiCostReporter, apDayjs, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { aiCostReporter, aiObservability, apDayjs, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuditLogRetentionUpdatedEvent, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
@@ -51,6 +51,7 @@ import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { authnSsoSamlService } from './ee/authentication/saml-authn/authn-sso-saml-service'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
+import { embedSubdomainService } from './ee/embed-subdomain/embed-subdomain.service'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { flowApprovalModule } from './ee/flows/flow-approval/flow-approval.module'
 import { eeFlowPublishHook } from './ee/flows/flow-approval/flow-publish-hook'
@@ -401,7 +402,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             billingProvider.set(autumnBillingProvider)
             await aiUsageJobs.register(app.log)
             await app.register(aiUsageModule)
-            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            resumePageHooks.set((log) => ({
+                getTheme: (params) => appearanceHelper.getTheme({ ...params, log }),
+                getPublicApiBaseUrl: (params) => embedSubdomainService(log).getPublicApiBaseUrl(params),
+            }))
             verifiedDomainHooks.set(authnSsoSamlService)
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
@@ -448,7 +452,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             billingProvider.set(autumnBillingProvider)
             await aiUsageJobs.register(app.log)
             await app.register(aiUsageModule)
-            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            resumePageHooks.set((log) => ({
+                getTheme: (params) => appearanceHelper.getTheme({ ...params, log }),
+                getPublicApiBaseUrl: (params) => embedSubdomainService(log).getPublicApiBaseUrl(params),
+            }))
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
@@ -509,6 +516,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const pieces = process.env.AP_DEV_PIECES
 
     assertReleaseReadable(app.log)
+    aiObservability.init({ enabled: system.getEdition() === ApEdition.CLOUD })
     aiCostReporter.install({
         log: app.log,
         report: (request) => aiUsageService(app.log).report(request),

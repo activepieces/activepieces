@@ -1,4 +1,4 @@
-import { AiProviderCredentials, AIProviderName, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
+import { AiProviderCredentials, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
 import { OPENAI_COMPATIBLE_VENDOR_BASE_URLS } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createVertex } from '@ai-sdk/google-vertex'
@@ -10,7 +10,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { defaultSettingsMiddleware, ImageModel, LanguageModel, wrapLanguageModel } from 'ai'
+import { defaultSettingsMiddleware, ImageModel, LanguageModel, LanguageModelMiddleware, simulateStreamingMiddleware, wrapLanguageModel } from 'ai'
 
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
@@ -83,7 +83,8 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
         case AIProviderName.ZAI:
         case AIProviderName.QWEN:
         case AIProviderName.MINIMAX:
-        case AIProviderName.MOONSHOT: {
+        case AIProviderName.MOONSHOT:
+        case AIProviderName.NVIDIA: {
             const { apiKey } = credentials.auth
             return createOpenAICompatible({
                 name: credentials.provider,
@@ -91,6 +92,14 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
                 apiKey: apiKey ?? '',
                 ...observed,
             }).chatModel(modelId)
+        }
+        case AIProviderName.META: {
+            const { apiKey } = credentials.auth
+            const responses = createOpenAI({ baseURL: OPENAI_COMPATIBLE_VENDOR_BASE_URLS[AIProviderName.META], apiKey, ...observed }).responses(modelId)
+            return withoutServerStorage({
+                model: wrapLanguageModel({ model: responses, middleware: autoToolChoiceOnly }),
+                providerOptionsName: 'openai',
+            })
         }
         case AIProviderName.OPENROUTER:
         case AIProviderName.ACTIVEPIECES: {
@@ -189,6 +198,93 @@ export function withoutServerStorage({ model, providerOptionsName }: {
     })
 }
 
+const autoToolChoiceOnly: LanguageModelMiddleware = {
+    wrapGenerate: async ({ params, model }) => generateWithAutoToolChoice({ params, model }),
+    wrapStream: async ({ params, model, doStream }) => {
+        const { toolChoice } = params
+        if (isNil(toolChoice) || toolChoice.type === 'auto') {
+            return doStream()
+        }
+        if (toolChoice.type === 'none') {
+            return model.doStream(withoutTools({ params }))
+        }
+        return simulatedStreaming.wrapStream!({
+            params,
+            model,
+            doStream,
+            doGenerate: () => generateWithAutoToolChoice({ params, model }),
+        })
+    },
+}
+
+async function generateWithAutoToolChoice({ params, model }: MiddlewareCall): Promise<GenerateResult> {
+    const { toolChoice, tools } = params
+    if (isNil(toolChoice) || toolChoice.type === 'auto') {
+        return model.doGenerate(params)
+    }
+    if (toolChoice.type === 'none') {
+        return model.doGenerate(withoutTools({ params }))
+    }
+    const toolName = toolChoice.type === 'tool' ? toolChoice.toolName : undefined
+    const relaxed: MiddlewareCall['params'] = {
+        ...params,
+        tools: isNil(toolName) ? tools : tools?.filter((tool) => tool.name === toolName),
+        toolChoice: { type: 'auto' },
+    }
+    const first = await model.doGenerate(withToolInstruction({ params: relaxed, toolName, retry: false }))
+    if (callsATool({ result: first })) {
+        return first
+    }
+    const retried = await model.doGenerate(withToolInstruction({ params: relaxed, toolName, retry: true }))
+    const usage = addUsage({ a: first.usage, b: retried.usage })
+    if (!callsATool({ result: retried })) {
+        throw new ForcedToolNotCalledError({ toolName, usage })
+    }
+    return { ...retried, usage }
+}
+
+function addUsage({ a, b }: { a: GenerateResult['usage'], b: GenerateResult['usage'] }): GenerateResult['usage'] {
+    return {
+        inputTokens: {
+            total: addCounts({ a: a.inputTokens.total, b: b.inputTokens.total }),
+            noCache: addCounts({ a: a.inputTokens.noCache, b: b.inputTokens.noCache }),
+            cacheRead: addCounts({ a: a.inputTokens.cacheRead, b: b.inputTokens.cacheRead }),
+            cacheWrite: addCounts({ a: a.inputTokens.cacheWrite, b: b.inputTokens.cacheWrite }),
+        },
+        outputTokens: {
+            total: addCounts({ a: a.outputTokens.total, b: b.outputTokens.total }),
+            text: addCounts({ a: a.outputTokens.text, b: b.outputTokens.text }),
+            reasoning: addCounts({ a: a.outputTokens.reasoning, b: b.outputTokens.reasoning }),
+        },
+        ...spreadIfDefined('raw', b.raw),
+    }
+}
+
+function addCounts({ a, b }: { a: number | undefined, b: number | undefined }): number | undefined {
+    return isNil(a) && isNil(b) ? undefined : (a ?? 0) + (b ?? 0)
+}
+
+function callsATool({ result }: { result: GenerateResult }): boolean {
+    return result.content.some((part) => part.type === 'tool-call')
+}
+
+function withoutTools({ params }: { params: MiddlewareCall['params'] }): MiddlewareCall['params'] {
+    return { ...params, tools: undefined, toolChoice: undefined }
+}
+
+function withToolInstruction({ params, toolName, retry }: {
+    params: MiddlewareCall['params']
+    toolName: string | undefined
+    retry: boolean
+}): MiddlewareCall['params'] {
+    const target = isNil(toolName) ? 'one of the available tools' : `the ${toolName} tool`
+    const reminder = retry ? 'Your previous reply did not call a tool. ' : ''
+    return {
+        ...params,
+        prompt: [...params.prompt, { role: 'system', content: `${reminder}Reply only by calling ${target}. Do not reply with text.` }],
+    }
+}
+
 function createOpenRouterChatModel({ apiKey, modelId, options }: {
     apiKey: string | undefined
     modelId: string
@@ -213,6 +309,24 @@ export function buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHead
         [apiKeyHeader]: apiKey,
     }
 }
+
+const simulatedStreaming = simulateStreamingMiddleware()
+
+class ForcedToolNotCalledError extends Error {
+    readonly usage: GenerateResult['usage']
+
+    constructor({ toolName, usage }: { toolName: string | undefined, usage: GenerateResult['usage'] }) {
+        super(isNil(toolName)
+            ? 'The model answered in text twice instead of calling a tool'
+            : `The model answered in text twice instead of calling the ${toolName} tool`)
+        this.name = 'ForcedToolNotCalledError'
+        this.usage = usage
+    }
+}
+
+type MiddlewareCall = Pick<Parameters<NonNullable<LanguageModelMiddleware['wrapGenerate']>>[0], 'params' | 'model'>
+
+type GenerateResult = Awaited<ReturnType<MiddlewareCall['model']['doGenerate']>>
 
 export type LanguageModelOptions = {
     onOutcome?: ProviderOutcomeReporter

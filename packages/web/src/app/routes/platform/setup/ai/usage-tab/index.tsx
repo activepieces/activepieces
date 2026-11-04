@@ -9,7 +9,12 @@ import {
 import { t } from 'i18next';
 import { CalendarRange, Gauge, Hash, TrendingUp, Type } from 'lucide-react';
 
-import { AdminPageHeader, StatCard, StatGrid } from '@/app/components/admin';
+import {
+  AdminPageHeader,
+  StatCard,
+  StatGrid,
+  adminPageResources,
+} from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { aiUsageHooks } from '@/features/ai-usage';
 
@@ -39,6 +44,7 @@ export function UsageTab() {
         description={t(
           'Where your AI spend goes across flows, agents and chat.',
         )}
+        resources={adminPageResources.aiUsage}
       >
         <UsageHeaderControls view={view} />
       </AdminPageHeader>

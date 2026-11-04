@@ -2,7 +2,7 @@ import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, markDevPiecesRebuilt, Runtime } from '@activepieces/sandbox'
-import { aiCostReporter, createLogger, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
+import { aiCostReporter, aiObservability, createLogger, modelCatalog, modelTierCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
 import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketClientEvent, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -451,6 +451,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 }
             }
             workerSettings.set(response)
+            aiObservability.init({ enabled: response.EDITION === ApEdition.CLOUD })
             logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE, sandboxMemoryLimitKb: response.SANDBOX_MEMORY_LIMIT }, 'Worker settings loaded')
             resolve()
         })

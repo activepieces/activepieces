@@ -1,4 +1,4 @@
-import { AiUsageDetail, AiUsageDetailParams, AiUsageItemList, AiUsageItemsQuery, AiUsageOverview, AiUsageQuery, PrincipalType } from '@activepieces/shared'
+import { AiUsageDetail, AiUsageDetailParams, AiUsageItemList, AiUsageItemsQuery, AiUsageOverview, AiUsageQuery, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -31,7 +31,7 @@ const RATE_LIMIT: RateLimitOptions = {
 }
 
 const READ_CONFIG = {
-    security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     rateLimit: RATE_LIMIT,
 }
 
@@ -39,6 +39,9 @@ const GetOverview = {
     config: READ_CONFIG,
     preHandler: assertPlan,
     schema: {
+        tags: ['ai-usage'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'AI spend and calls for a period, with totals, trend and top items.',
         querystring: AiUsageQuery,
         response: { [StatusCodes.OK]: AiUsageOverview },
     },
@@ -48,6 +51,9 @@ const ListItems = {
     config: READ_CONFIG,
     preHandler: assertPlan,
     schema: {
+        tags: ['ai-usage'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'AI spend broken down by project, flow, agent, user, key or model.',
         querystring: AiUsageItemsQuery,
         response: { [StatusCodes.OK]: AiUsageItemList },
     },
@@ -57,6 +63,9 @@ const GetDetail = {
     config: READ_CONFIG,
     preHandler: assertPlan,
     schema: {
+        tags: ['ai-usage'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'AI spend for one project, flow, agent, user, key or model.',
         params: AiUsageDetailParams,
         querystring: AiUsageQuery,
         response: { [StatusCodes.OK]: AiUsageDetail },
