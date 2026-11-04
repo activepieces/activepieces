@@ -14,6 +14,7 @@ import { bexioUnarchiveProject } from '../src/lib/actions/ai/projects';
 import { updatePersonAction } from '../src/lib/actions/update-person';
 import { updateProductAction } from '../src/lib/actions/update-product';
 import { bexio } from '../src';
+import { newProductTrigger } from '../src/lib/triggers/new-product';
 import { bexioAi } from '../src/lib/common/ai-helpers';
 
 const AUTH = { access_token: 'token-1' };
@@ -293,5 +294,50 @@ describe('review fixes', () => {
     const spy = mockBodies([]);
     await expect(run({ action: bexioSearchContacts, propsValue: { field: 'id', criteria: 'in', value: ' , ,' } })).rejects.toThrow('Value is required');
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('new product upgrade', () => {
+  function triggerContext({ data, isRepublish }: { data: Map<string, unknown>; isRepublish: boolean }) {
+    const store = {
+      get: async (key: string) => (data.has(key) ? data.get(key) : null),
+      put: async (key: string, value: unknown) => {
+        data.set(key, value);
+        return value;
+      },
+      delete: async (key: string) => {
+        data.delete(key);
+      },
+    };
+    return { auth: AUTH, propsValue: {}, store, isRepublish, setSchedule: () => undefined };
+  }
+
+  function hook(name: 'onEnable' | 'run', context: ReturnType<typeof triggerContext>): Promise<unknown> {
+    return Promise.resolve(Reflect.apply(newProductTrigger[name], newProductTrigger, [context]));
+  }
+
+  const products = (ids: number[]) => ids.map((id) => ({ id }));
+
+  it('re-baselines once on the upgrade instead of firing old products', async () => {
+    // 0.2.x stored the 500th oldest id; the account now has 800 products.
+    const data = new Map<string, unknown>([['lastItem', 500]]);
+    const newest = products(Array.from({ length: 300 }, (_, index) => 800 - index));
+    mockBodies([newest, newest]);
+
+    await hook('onEnable', triggerContext({ data, isRepublish: true }));
+    expect(data.get('lastItem')).toBe(800);
+    expect(data.get('order_v2')).toBe(true);
+    await expect(hook('run', triggerContext({ data, isRepublish: false }))).resolves.toEqual([]);
+  });
+
+  it('keeps lastItem on later republishes', async () => {
+    const data = new Map<string, unknown>([['lastItem', 800], ['order_v2', true]]);
+    const spy = mockBodies([products([802, 801, 800])]);
+
+    await hook('onEnable', triggerContext({ data, isRepublish: true }));
+    expect(spy).not.toHaveBeenCalled();
+    expect(data.get('lastItem')).toBe(800);
+    const fired = await hook('run', triggerContext({ data, isRepublish: false }));
+    expect(fired).toEqual(products([802, 801]));
   });
 });

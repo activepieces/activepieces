@@ -468,9 +468,7 @@ const contactListOutputSchema: OutputSchema = {
   ],
 };
 const contactArrayOutputSchema: OutputSchema = { itemLabel: '{name_1}', fields: [{ key: 'results', label: 'Results', value: '', listItems: contactSummaryFields }] };
-const contactAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name_1', listItems: contactSummaryFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const contactSummaryOutputSchema: OutputSchema = { fields: contactSummaryFields };
-const contactGroupOutputSchema: OutputSchema = { fields: contactGroupFields };
 const contactGroupListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'name', listItems: contactGroupFields },
@@ -480,8 +478,6 @@ const contactGroupListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const contactGroupArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: contactGroupFields }] };
-const contactGroupAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: contactGroupFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const contactRelationOutputSchema: OutputSchema = { fields: contactRelationFields };
 const contactRelationListOutputSchema: OutputSchema = {
   fields: [
@@ -492,8 +488,6 @@ const contactRelationListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const contactRelationArrayOutputSchema: OutputSchema = { itemLabel: '{description}', fields: [{ key: 'results', label: 'Results', value: '', listItems: contactRelationFields }] };
-const contactRelationAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'description', listItems: contactRelationFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const itemOutputSchema: OutputSchema = { fields: itemFields };
 const itemListOutputSchema: OutputSchema = {
   fields: [
@@ -505,7 +499,6 @@ const itemListOutputSchema: OutputSchema = {
   ],
 };
 const itemArrayOutputSchema: OutputSchema = { itemLabel: '{intern_name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: itemFields }] };
-const itemAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'intern_name', listItems: itemFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const invoiceOutputSchema: OutputSchema = { fields: invoiceFields };
 const invoiceListOutputSchema: OutputSchema = {
   fields: [
@@ -517,7 +510,6 @@ const invoiceListOutputSchema: OutputSchema = {
   ],
 };
 const invoiceArrayOutputSchema: OutputSchema = { itemLabel: '{document_nr}', fields: [{ key: 'results', label: 'Results', value: '', listItems: invoiceSummaryFields }] };
-const invoiceAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'document_nr', listItems: invoiceSummaryFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const invoiceSummaryOutputSchema: OutputSchema = { fields: invoiceSummaryFields };
 const paymentOutputSchema: OutputSchema = { fields: paymentFields };
 const paymentListOutputSchema: OutputSchema = {
@@ -529,19 +521,7 @@ const paymentListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const paymentArrayOutputSchema: OutputSchema = { itemLabel: '{date}', fields: [{ key: 'results', label: 'Results', value: '', listItems: paymentFields }] };
-const paymentAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'date', listItems: paymentFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const reminderOutputSchema: OutputSchema = { fields: reminderFields };
-const reminderListOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'items', label: 'Items', labelKey: 'title', listItems: reminderFields },
-    { key: 'count', label: 'Count', format: 'number' },
-    { key: 'offset', label: 'Offset', format: 'number' },
-    { key: 'has_more', label: 'Has More', format: 'boolean' },
-    { key: 'next_offset', label: 'Next Offset', format: 'number' },
-  ],
-};
-const reminderArrayOutputSchema: OutputSchema = { itemLabel: '{title}', fields: [{ key: 'results', label: 'Results', value: '', listItems: reminderFields }] };
 const reminderAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'title', listItems: reminderFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const quoteOutputSchema: OutputSchema = { fields: quoteFields };
 const quoteListOutputSchema: OutputSchema = {
@@ -554,7 +534,6 @@ const quoteListOutputSchema: OutputSchema = {
   ],
 };
 const quoteArrayOutputSchema: OutputSchema = { itemLabel: '{document_nr}', fields: [{ key: 'results', label: 'Results', value: '', listItems: quoteSummaryFields }] };
-const quoteAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'document_nr', listItems: quoteSummaryFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const quoteSummaryOutputSchema: OutputSchema = { fields: quoteSummaryFields };
 const orderOutputSchema: OutputSchema = { fields: orderFields };
 const orderListOutputSchema: OutputSchema = {
@@ -567,7 +546,6 @@ const orderListOutputSchema: OutputSchema = {
   ],
 };
 const orderArrayOutputSchema: OutputSchema = { itemLabel: '{document_nr}', fields: [{ key: 'results', label: 'Results', value: '', listItems: orderSummaryFields }] };
-const orderAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'document_nr', listItems: orderSummaryFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const orderSummaryOutputSchema: OutputSchema = { fields: orderSummaryFields };
 const projectOutputSchema: OutputSchema = { fields: projectFields };
 const projectListOutputSchema: OutputSchema = {
@@ -579,8 +557,6 @@ const projectListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const projectArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: projectFields }] };
-const projectAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: projectFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const milestoneOutputSchema: OutputSchema = { fields: milestoneFields };
 const milestoneListOutputSchema: OutputSchema = {
   fields: [
@@ -591,8 +567,6 @@ const milestoneListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const milestoneArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: milestoneFields }] };
-const milestoneAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: milestoneFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const workPackageOutputSchema: OutputSchema = { fields: workPackageFields };
 const workPackageListOutputSchema: OutputSchema = {
   fields: [
@@ -603,21 +577,7 @@ const workPackageListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const workPackageArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: workPackageFields }] };
-const workPackageAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: workPackageFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const timesheetOutputSchema: OutputSchema = { fields: timesheetFields };
-const timesheetListOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'items', label: 'Items', labelKey: 'text', listItems: timesheetFields },
-    { key: 'count', label: 'Count', format: 'number' },
-    { key: 'offset', label: 'Offset', format: 'number' },
-    { key: 'has_more', label: 'Has More', format: 'boolean' },
-    { key: 'next_offset', label: 'Next Offset', format: 'number' },
-  ],
-};
-const timesheetArrayOutputSchema: OutputSchema = { itemLabel: '{text}', fields: [{ key: 'results', label: 'Results', value: '', listItems: timesheetFields }] };
-const timesheetAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'text', listItems: timesheetFields }, { key: 'count', label: 'Count', format: 'number' }] };
-const businessActivityOutputSchema: OutputSchema = { fields: businessActivityFields };
 const businessActivityListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'name', listItems: businessActivityFields },
@@ -627,8 +587,6 @@ const businessActivityListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const businessActivityArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: businessActivityFields }] };
-const businessActivityAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: businessActivityFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const taskOutputSchema: OutputSchema = { fields: taskFields };
 const taskListOutputSchema: OutputSchema = {
   fields: [
@@ -639,9 +597,6 @@ const taskListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const taskArrayOutputSchema: OutputSchema = { itemLabel: '{subject}', fields: [{ key: 'results', label: 'Results', value: '', listItems: taskFields }] };
-const taskAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'subject', listItems: taskFields }, { key: 'count', label: 'Count', format: 'number' }] };
-const accountOutputSchema: OutputSchema = { fields: accountFields };
 const accountListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'name', listItems: accountFields },
@@ -652,8 +607,6 @@ const accountListOutputSchema: OutputSchema = {
   ],
 };
 const accountArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: accountFields }] };
-const accountAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: accountFields }, { key: 'count', label: 'Count', format: 'number' }] };
-const taxOutputSchema: OutputSchema = { fields: taxFields };
 const taxListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'name', listItems: taxFields },
@@ -663,9 +616,6 @@ const taxListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const taxArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: taxFields }] };
-const taxAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: taxFields }, { key: 'count', label: 'Count', format: 'number' }] };
-const currencyOutputSchema: OutputSchema = { fields: currencyFields };
 const currencyListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'name', listItems: currencyFields },
@@ -675,8 +625,6 @@ const currencyListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const currencyArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: currencyFields }] };
-const currencyAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: currencyFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const manualEntryOutputSchema: OutputSchema = { fields: manualEntryFields };
 const manualEntryListOutputSchema: OutputSchema = {
   fields: [
@@ -687,9 +635,6 @@ const manualEntryListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const manualEntryArrayOutputSchema: OutputSchema = { itemLabel: '{reference_nr}', fields: [{ key: 'results', label: 'Results', value: '', listItems: manualEntryFields }] };
-const manualEntryAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'reference_nr', listItems: manualEntryFields }, { key: 'count', label: 'Count', format: 'number' }] };
-const businessYearOutputSchema: OutputSchema = { fields: businessYearFields };
 const businessYearListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'start', listItems: businessYearFields },
@@ -699,9 +644,6 @@ const businessYearListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const businessYearArrayOutputSchema: OutputSchema = { itemLabel: '{start}', fields: [{ key: 'results', label: 'Results', value: '', listItems: businessYearFields }] };
-const businessYearAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'start', listItems: businessYearFields }, { key: 'count', label: 'Count', format: 'number' }] };
-const vatPeriodOutputSchema: OutputSchema = { fields: vatPeriodFields };
 const vatPeriodListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'start', listItems: vatPeriodFields },
@@ -711,8 +653,6 @@ const vatPeriodListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const vatPeriodArrayOutputSchema: OutputSchema = { itemLabel: '{start}', fields: [{ key: 'results', label: 'Results', value: '', listItems: vatPeriodFields }] };
-const vatPeriodAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'start', listItems: vatPeriodFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const fileOutputSchema: OutputSchema = { fields: fileFields };
 const fileListOutputSchema: OutputSchema = {
   fields: [
@@ -724,7 +664,6 @@ const fileListOutputSchema: OutputSchema = {
   ],
 };
 const fileArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: fileFields }] };
-const fileAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: fileFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const userOutputSchema: OutputSchema = { fields: userFields };
 const userListOutputSchema: OutputSchema = {
   fields: [
@@ -735,9 +674,6 @@ const userListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const userArrayOutputSchema: OutputSchema = { itemLabel: '{email}', fields: [{ key: 'results', label: 'Results', value: '', listItems: userFields }] };
-const userAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'email', listItems: userFields }, { key: 'count', label: 'Count', format: 'number' }] };
-const countryOutputSchema: OutputSchema = { fields: countryFields };
 const countryListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'name', listItems: countryFields },
@@ -748,8 +684,6 @@ const countryListOutputSchema: OutputSchema = {
   ],
 };
 const countryArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: countryFields }] };
-const countryAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: countryFields }, { key: 'count', label: 'Count', format: 'number' }] };
-const languageOutputSchema: OutputSchema = { fields: languageFields };
 const languageListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'name', listItems: languageFields },
@@ -759,9 +693,6 @@ const languageListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const languageArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: languageFields }] };
-const languageAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: languageFields }, { key: 'count', label: 'Count', format: 'number' }] };
-const namedOutputSchema: OutputSchema = { fields: namedFields };
 const namedListOutputSchema: OutputSchema = {
   fields: [
     { key: 'items', label: 'Items', labelKey: 'name', listItems: namedFields },
@@ -771,7 +702,6 @@ const namedListOutputSchema: OutputSchema = {
     { key: 'next_offset', label: 'Next Offset', format: 'number' },
   ],
 };
-const namedArrayOutputSchema: OutputSchema = { itemLabel: '{name}', fields: [{ key: 'results', label: 'Results', value: '', listItems: namedFields }] };
 const namedAllOutputSchema: OutputSchema = { fields: [{ key: 'items', label: 'Items', labelKey: 'name', listItems: namedFields }, { key: 'count', label: 'Count', format: 'number' }] };
 const successOutputSchema: OutputSchema = { fields: [{ key: 'success', label: 'Success', format: 'boolean' }] };
 const pdfOutputSchema: OutputSchema = { fields: [
@@ -800,110 +730,56 @@ export const bexioOutputSchemas = {
   contactOutputSchema,
   contactListOutputSchema,
   contactArrayOutputSchema,
-  contactAllOutputSchema,
   contactSummaryOutputSchema,
-  contactGroupOutputSchema,
   contactGroupListOutputSchema,
-  contactGroupArrayOutputSchema,
-  contactGroupAllOutputSchema,
   contactRelationOutputSchema,
   contactRelationListOutputSchema,
-  contactRelationArrayOutputSchema,
-  contactRelationAllOutputSchema,
   itemOutputSchema,
   itemListOutputSchema,
   itemArrayOutputSchema,
-  itemAllOutputSchema,
   invoiceOutputSchema,
   invoiceListOutputSchema,
   invoiceArrayOutputSchema,
-  invoiceAllOutputSchema,
   invoiceSummaryOutputSchema,
   paymentOutputSchema,
   paymentListOutputSchema,
-  paymentArrayOutputSchema,
-  paymentAllOutputSchema,
   reminderOutputSchema,
-  reminderListOutputSchema,
-  reminderArrayOutputSchema,
   reminderAllOutputSchema,
   quoteOutputSchema,
   quoteListOutputSchema,
   quoteArrayOutputSchema,
-  quoteAllOutputSchema,
   quoteSummaryOutputSchema,
   orderOutputSchema,
   orderListOutputSchema,
   orderArrayOutputSchema,
-  orderAllOutputSchema,
   orderSummaryOutputSchema,
   projectOutputSchema,
   projectListOutputSchema,
-  projectArrayOutputSchema,
-  projectAllOutputSchema,
   milestoneOutputSchema,
   milestoneListOutputSchema,
-  milestoneArrayOutputSchema,
-  milestoneAllOutputSchema,
   workPackageOutputSchema,
   workPackageListOutputSchema,
-  workPackageArrayOutputSchema,
-  workPackageAllOutputSchema,
   timesheetOutputSchema,
-  timesheetListOutputSchema,
-  timesheetArrayOutputSchema,
-  timesheetAllOutputSchema,
-  businessActivityOutputSchema,
   businessActivityListOutputSchema,
-  businessActivityArrayOutputSchema,
-  businessActivityAllOutputSchema,
   taskOutputSchema,
   taskListOutputSchema,
-  taskArrayOutputSchema,
-  taskAllOutputSchema,
-  accountOutputSchema,
   accountListOutputSchema,
   accountArrayOutputSchema,
-  accountAllOutputSchema,
-  taxOutputSchema,
   taxListOutputSchema,
-  taxArrayOutputSchema,
-  taxAllOutputSchema,
-  currencyOutputSchema,
   currencyListOutputSchema,
-  currencyArrayOutputSchema,
-  currencyAllOutputSchema,
   manualEntryOutputSchema,
   manualEntryListOutputSchema,
-  manualEntryArrayOutputSchema,
-  manualEntryAllOutputSchema,
-  businessYearOutputSchema,
   businessYearListOutputSchema,
-  businessYearArrayOutputSchema,
-  businessYearAllOutputSchema,
-  vatPeriodOutputSchema,
   vatPeriodListOutputSchema,
-  vatPeriodArrayOutputSchema,
-  vatPeriodAllOutputSchema,
   fileOutputSchema,
   fileListOutputSchema,
   fileArrayOutputSchema,
-  fileAllOutputSchema,
   userOutputSchema,
   userListOutputSchema,
-  userArrayOutputSchema,
-  userAllOutputSchema,
-  countryOutputSchema,
   countryListOutputSchema,
   countryArrayOutputSchema,
-  countryAllOutputSchema,
-  languageOutputSchema,
   languageListOutputSchema,
-  languageArrayOutputSchema,
-  languageAllOutputSchema,
-  namedOutputSchema,
   namedListOutputSchema,
-  namedArrayOutputSchema,
   namedAllOutputSchema,
   successOutputSchema,
   pdfOutputSchema,

@@ -15,7 +15,7 @@ export const bexioListContacts = createAction({
   outputSchema: bexioOutputSchemas.contactListOutputSchema,
   props: {
     ...bexioAi.listProps({ orderByHint: 'Sort field with optional _asc/_desc suffix, e.g. id_desc or updated_at_desc.' }),
-    show_archived: bexioAi.flagProp({ displayName: 'Show Archived', description: 'Set to yes to return ONLY archived contacts instead of active ones. Leave empty for active contacts.' }),
+    show_archived: bexioAi.flagProp({ displayName: 'Show Archived', description: 'Set to yes to return ONLY archived contacts instead of active ones.', whenEmpty: 'active contacts' }),
   },
   async run({ auth, propsValue }) {
     return bexioAi.list({ auth, path: `/2.0/contact`, limit: propsValue.limit, offset: propsValue.offset, orderBy: propsValue.order_by, extra: { show_archived: propsValue.show_archived === 'yes' ? 'true' : undefined } });

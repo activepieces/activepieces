@@ -10,12 +10,13 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 #### Bexio 0.3.0: the existing actions are no longer agent tools
 
-All 23 existing Bexio actions (contacts, products, sales quotes, orders and invoices) are now shown only in the flow builder. AI agents and MCP clients get new `bexio_` tools instead, which take IDs as text and cover the same jobs and more.
+All 23 existing Bexio actions are now shown only in the flow builder. AI agents and MCP clients get new `bexio_` tools instead, which take IDs as text and cover the same jobs and more.
 
 Once a step is upgraded to Bexio 0.3.0:
 
 - **Update Product** ignores the **In Stock** field. Bexio only accepts it when a product is created and rejects it on edit, so the action no longer sends it. Set stock management in **Create Product** instead.
 - **Update Person** edits the contact with POST instead of PATCH, which Bexio treats as a restore.
+- **New Product** now reads the newest products first. The first time the flow is enabled or republished on 0.3.0, the trigger starts again from the current newest product, so it does not fire for products created before the upgrade. Without this, accounts with more than 500 products would get one run for every old product above the stored position. A product created between the last check on the old version and the upgrade does not fire.
 
 #### What you need to do
 

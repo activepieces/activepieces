@@ -83,7 +83,7 @@ export const bexioCreateItem = createAction({
     tax_income_id: Property.ShortText({ displayName: 'Tax Income ID', description: 'Sales tax ID from bexio_list_taxes.', required: false }),
     tax_expense_id: Property.ShortText({ displayName: 'Tax Expense ID', description: 'Purchase tax ID from bexio_list_taxes.', required: false }),
     unit_id: Property.ShortText({ displayName: 'Unit ID', description: 'Unit ID from bexio_list_units.', required: false }),
-    is_stock: bexioAi.flagProp({ displayName: 'Is Stock', description: 'Whether the item is stock-managed.' }),
+    is_stock: bexioAi.flagProp({ displayName: 'Is Stock', description: 'Whether the item is stock-managed.', whenEmpty: "Bexio's default" }),
     stock_id: Property.ShortText({ displayName: 'Stock ID', description: 'References a stock location object', required: false }),
     stock_place_id: Property.ShortText({ displayName: 'Stock Place ID', description: 'References a stock area object', required: false }),
     stock_nr: Property.Number({ displayName: 'Stock Number', description: 'Please note that the stock number can only be set if no bookings for this product have been made.', required: false }),

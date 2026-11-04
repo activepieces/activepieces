@@ -4,6 +4,8 @@ import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
 import { bexioOutputSchemas } from '../common/output-schemas';
 
+const NEWEST_FIRST_MARKER = 'order_v2';
+
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof bexioAuth>,
   Record<string, never>
@@ -122,7 +124,15 @@ export const newProductTrigger = createTrigger({
     expense_account_id: null,
   },
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, context);
+    // Up to 0.2.x the trigger read the 500 oldest products, so a stored lastItem
+    // can sit far below the newest id. Re-baseline once so the upgrade does not
+    // fire every product above it; later republishes keep lastItem as usual.
+    const isNewestFirstBaseline = await context.store.get<boolean>(NEWEST_FIRST_MARKER);
+    await pollingHelper.onEnable(polling, {
+      ...context,
+      isRepublish: isNewestFirstBaseline === true ? context.isRepublish : false,
+    });
+    await context.store.put(NEWEST_FIRST_MARKER, true);
   },
   onDisable: async (context) => {
     await pollingHelper.onDisable(polling, context);

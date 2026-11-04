@@ -42,7 +42,7 @@ export const bexio = createPiece({
   auth: bexioAuth,
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/bexio.png',
-  authors: ["onyedikachi-david"],
+  authors: ["onyedikachi-david", "OdaiAhmed99"],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   actions: [
     createManualEntryAction,

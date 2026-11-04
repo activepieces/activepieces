@@ -79,9 +79,9 @@ export const bexioCreateInvoice = createAction({
     payment_type_id: Property.ShortText({ displayName: 'Payment Type ID', description: 'Payment type ID from bexio_list_payment_types.', required: false }),
     header: Property.LongText({ displayName: 'Header', description: 'Text printed above the positions.', required: false }),
     footer: Property.LongText({ displayName: 'Footer', description: 'Text printed below the positions.', required: false }),
-    mwst_is_net: bexioAi.flagProp({ displayName: 'Mwst Is Net', description: 'This value affects the total if the field mwst_type has been set to 0.<br> false = Taxes are included in the total<br> true = Taxes will be added to the total' }),
-    show_position_taxes: bexioAi.flagProp({ displayName: 'Show Position Taxes', description: 'Show Position Taxes.' }),
-    is_valid_from: Property.ShortText({ displayName: 'Is Valid From', description: 'Document date. Format YYYY-MM-DD. Format YYYY-MM-DD.', required: false }),
+    mwst_is_net: bexioAi.flagProp({ displayName: 'Mwst Is Net', description: 'Only applies when mwst_type is 0. No: taxes are included in the total. Yes: taxes are added to the total.', whenEmpty: "Bexio's default" }),
+    show_position_taxes: bexioAi.flagProp({ displayName: 'Show Position Taxes', description: 'Show Position Taxes.', whenEmpty: "Bexio's default" }),
+    is_valid_from: Property.ShortText({ displayName: 'Is Valid From', description: 'Document date. Format YYYY-MM-DD.', required: false }),
     is_valid_to: Property.ShortText({ displayName: 'Is Valid To', description: 'Format YYYY-MM-DD.', required: false }),
     contact_address_manual: Property.LongText({ displayName: 'Contact Address Manual', description: 'This field can be used to set a contact address manually. If not in use or null the invoice address of the contact will be taken.', required: false }),
     reference: Property.ShortText({ displayName: 'Reference', description: 'Customer reference shown on the document.', required: false }),
@@ -162,8 +162,8 @@ export const bexioSendInvoice = createAction({
     recipient_email: Property.ShortText({ displayName: 'Recipient Email', description: 'Recipient email address.', required: true }),
     subject: Property.ShortText({ displayName: 'Subject', description: 'Email subject line.', required: true }),
     message: Property.LongText({ displayName: 'Message', description: 'Email body. Must contain the placeholder [Network Link].', required: true }),
-    mark_as_open: bexioAi.flagProp({ displayName: 'Mark As Open', description: 'Set to yes to mark the document as open (issued) when sending.' }),
-    attach_pdf: bexioAi.flagProp({ displayName: 'Attach PDF', description: 'Set to yes to attach the PDF.' }),
+    mark_as_open: bexioAi.flagProp({ displayName: 'Mark As Open', description: 'Set to yes to mark the document as open (issued) when sending.', whenEmpty: "Bexio's default" }),
+    attach_pdf: bexioAi.flagProp({ displayName: 'Attach PDF', description: 'Set to yes to attach the PDF.', whenEmpty: "Bexio's default" }),
   },
   async run({ auth, propsValue }) {
     bexioAi.requireNetworkLink({ message: propsValue.message });
@@ -218,7 +218,7 @@ export const bexioCopyInvoice = createAction({
     invoice_id: bexioAi.idProp({ displayName: 'Invoice ID', description: 'Numeric invoice ID. Find it with bexio_search_invoices or bexio_list_invoices.', required: true }),
     contact_id: Property.ShortText({ displayName: 'Contact ID', description: 'Customer contact ID from bexio_search_contacts.', required: true }),
     contact_sub_id: Property.ShortText({ displayName: 'Contact Sub ID', description: 'Optional contact person ID at the customer.', required: false }),
-    is_valid_from: Property.ShortText({ displayName: 'Is Valid From', description: 'Document date. Format YYYY-MM-DD. Format YYYY-MM-DD.', required: false }),
+    is_valid_from: Property.ShortText({ displayName: 'Is Valid From', description: 'Document date. Format YYYY-MM-DD.', required: false }),
     title: Property.ShortText({ displayName: 'Title', description: 'Document title shown on the PDF.', required: false }),
   },
   async run({ auth, propsValue }) {
@@ -273,7 +273,7 @@ export const bexioCreateInvoicePayment = createAction({
   outputSchema: bexioOutputSchemas.paymentOutputSchema,
   props: {
     invoice_id: bexioAi.idProp({ displayName: 'Invoice ID', description: 'Numeric invoice ID. Find it with bexio_search_invoices or bexio_list_invoices.', required: true }),
-    date: Property.ShortText({ displayName: 'Date', description: 'Payment date. Format YYYY-MM-DD. Format YYYY-MM-DD.', required: true }),
+    date: Property.ShortText({ displayName: 'Date', description: 'Payment date. Format YYYY-MM-DD.', required: true }),
     value: Property.ShortText({ displayName: 'Value', description: 'Amount received as a decimal string, e.g. 100.00.', required: true }),
     bank_account_id: Property.ShortText({ displayName: 'Bank Account ID', description: 'Bank account ID the payment was received on. Leave empty to use the default.', required: false }),
   },

@@ -534,10 +534,10 @@ function clearProp({ allowed }: { allowed: string[] }) {
   });
 }
 
-function flagProp({ displayName, description }: { displayName: string; description: string }) {
+function flagProp({ displayName, description, whenEmpty }: { displayName: string; description: string; whenEmpty: string }) {
   return Property.StaticDropdown<string>({
     displayName,
-    description: `${description} Leave empty to keep the current value.`,
+    description: `${description} Leave empty for ${whenEmpty}.`,
     required: false,
     options: { disabled: false, options: FLAG_OPTIONS },
   });
