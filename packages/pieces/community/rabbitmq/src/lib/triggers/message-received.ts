@@ -1,51 +1,43 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  PiecePropValueSchema,
-  Property,
-  AppConnectionValueForAuthProperty,
-} from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { rabbitmqAuth } from '../auth';
-import { rabbitmqConnect } from '../common';
-import dayjs from 'dayjs';
+import { RabbitmqAuthProps, rabbitmqCommon } from '../common';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof rabbitmqAuth>, {
-  queue: string,
-  maxMessagesPerPoll: number,
-}> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue }) => {
-    const connection = await rabbitmqConnect(auth.props);
-    const channel = await connection.createChannel();
-    const messages = [];
-
-    try {
-      const queueInfo = await channel.checkQueue(propsValue.queue);
-
-      if (queueInfo.messageCount === 0) {
-        return [];
-      }
-
-      for (let i = 0; i < propsValue.maxMessagesPerPoll; i++) {
-        const message = await channel.get(propsValue.queue);
+async function readMessages({
+  auth,
+  queue,
+  max,
+  consume,
+}: {
+  auth: RabbitmqAuthProps;
+  queue: string;
+  max: number;
+  consume: boolean;
+}): Promise<unknown[]> {
+  return rabbitmqCommon.withChannel({
+    auth,
+    fn: async (channel) => {
+      const messages: unknown[] = [];
+      let last: Awaited<ReturnType<typeof channel.get>> = false;
+      const limit = Math.max(1, Math.floor(max));
+      for (let i = 0; i < limit; i++) {
+        const message = await channel.get(queue, { noAck: false });
         if (!message) {
           break;
         }
-        messages.push({
-          id: dayjs().toISOString(),
-          data: JSON.parse(message.content.toString()),
-        });
-        channel.ack(message);
+        messages.push(rabbitmqCommon.parseContent(message).content);
+        last = message;
       }
-    } finally {
-      await channel.close();
-      await connection.close();
-    }
-
-    return messages;
-  },
-};
+      // Ack once after the loop so a dropped connection redelivers the batch instead of losing it.
+      if (consume && last) {
+        channel.ack(last, true);
+      }
+      if (!consume) {
+        channel.nackAll(true);
+      }
+      return messages;
+    },
+  });
+}
 
 export const messageReceived = createTrigger({
   auth: rabbitmqAuth,
@@ -54,7 +46,8 @@ export const messageReceived = createTrigger({
   displayName: 'Message Received',
   description: 'Triggers when a message is received on a RabbitMQ queue',
   aiMetadata: {
-    description: 'Fires when one or more messages are available on a configured RabbitMQ queue, emitting each consumed message. Polls the queue on a schedule, pulling up to a configurable maximum number of messages per poll and acknowledging (removing) them from the queue as it reads.',
+    description:
+      'Fires for each message on a configured RabbitMQ queue. Each poll pulls up to the configured maximum and acknowledges (removes) the messages it emits. Each output is the message body itself: JSON bodies are emitted as the parsed object, other bodies as a text string. Testing the trigger only peeks: messages are put back on the queue.',
   },
   props: {
     queue: Property.ShortText({
@@ -69,20 +62,28 @@ export const messageReceived = createTrigger({
       defaultValue: 50,
     }),
   },
-  sampleData: {},
+  sampleData: { orderId: 'A-1001', status: 'created' },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    return readMessages({
+      auth: context.auth.props,
+      queue: context.propsValue.queue,
+      max: Math.min(context.propsValue.maxMessagesPerPoll ?? 5, 5),
+      consume: false,
+    });
   },
-  async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+  async onEnable() {
+    return;
   },
-
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
-
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return readMessages({
+      auth: context.auth.props,
+      queue: context.propsValue.queue,
+      max: context.propsValue.maxMessagesPerPoll ?? 50,
+      consume: true,
+    });
   },
 });

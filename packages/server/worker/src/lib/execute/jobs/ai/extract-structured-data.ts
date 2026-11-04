@@ -18,6 +18,7 @@ export async function extractStructuredData({ data, resolved, modelId, flowStep,
         modelId,
         flowStep,
         billing,
+        providerConfigId: resolved.providerConfigId,
     })
     const { schemaDefinition, sanitizedNameMap } = buildSchema(data)
     const extractionTool = tool({

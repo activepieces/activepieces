@@ -167,6 +167,61 @@ describe('ap_execute_action batch approval', () => {
     })
 })
 
+describe('ap_execute_action with a declared classification', () => {
+    const declaredTools = ({ declaredReadOnly }: { declaredReadOnly: boolean | null }) => {
+        let asked = false
+        const tools = agentWorkerTools.createCrossProjectTools({
+            executeTool: async () => ({ success: true, content: [{ type: 'text', text: 'done' }] }),
+            isDeclaredReadOnly: async () => declaredReadOnly ?? undefined,
+            eventEmitter: agentWorkerTools.createEventEmitter({ sendEvent: async () => undefined, userId: 'user-1', conversationId: 'conv-1' }),
+            waitForApproval: async () => {
+                asked = true
+                return { outcome: 'approved' as const }
+            },
+            guides: {},
+            taintState: { tainted: false },
+        })
+        return { tools, wasAsked: () => asked }
+    }
+    const markAsRead = { pieceName: '@activepieces/piece-gmail', actionName: 'mark_as_read', input: {}, needsConfirmation: false }
+
+    it('asks before an action the piece declares as a write, even when its name reads like a read', async () => {
+        const { tools, wasAsked } = declaredTools({ declaredReadOnly: false })
+
+        await tools.ap_execute_action.execute?.(markAsRead, options)
+
+        expect(wasAsked()).toBe(true)
+    })
+
+    it('falls back to the action name when the piece declares nothing', async () => {
+        const { tools, wasAsked } = declaredTools({ declaredReadOnly: null })
+
+        await tools.ap_execute_action.execute?.(markAsRead, options)
+
+        expect(wasAsked()).toBe(false)
+    })
+})
+
+describe('ap_explore_data leaves the read-or-write call to the API', () => {
+    it('sends an action whose name proves nothing to the API, which knows what the piece declares', async () => {
+        const sent: string[] = []
+        const tools = agentWorkerTools.createCrossProjectTools({
+            executeTool: async (toolName) => {
+                sent.push(toolName)
+                return { success: true, content: [{ type: 'text', text: 'rows' }] }
+            },
+            eventEmitter: agentWorkerTools.createEventEmitter({ sendEvent: async () => undefined, userId: 'user-1', conversationId: 'conv-1' }),
+            waitForApproval: async () => ({ outcome: 'approved' as const }),
+            guides: {},
+            taintState: { tainted: false },
+        })
+
+        await tools.ap_explore_data.execute?.({ pieceName: '@activepieces/piece-text-helper', actionName: 'split', input: {} }, options)
+
+        expect(sent).toEqual(['ap_explore_data'])
+    })
+})
+
 describe('previousReplyReadData', () => {
     const reply = (tainted?: boolean) => ({ role: 'assistant', parts: [], ...(tainted === undefined ? {} : { tainted }) })
     const user = { role: 'user', parts: [] }

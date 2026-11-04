@@ -73,7 +73,7 @@
   "JSON array, one object per layer, each with \"name\".": "JSON array, one object per layer, each with \"name\".",
   "The image UID returned by Create Image.": "The image UID returned by Create Image.",
   "Page number, starting at 1.": "Page number, starting at 1.",
-  "Images per page, 1 to 100. V5 keys always get 25.": "Images per page, 1 to 100. V5 keys always get 25.",
+  "Images per page, 1 to 100.": "Images per page, 1 to 100.",
   "Only templates whose name contains this text.": "Only templates whose name contains this text.",
   "Only templates with this tag.": "Only templates with this tag.",
   "New template name.": "New template name.",

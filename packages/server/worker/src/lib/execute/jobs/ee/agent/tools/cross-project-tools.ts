@@ -43,11 +43,12 @@ function createProgressGuard() {
     }
 }
 
-export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, taintState }: {
+export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, isDeclaredReadOnly, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    isDeclaredReadOnly?: (params: { pieceName: string, actionName: string }) => Promise<boolean | undefined>
     taintState: TaintState
 }): ToolSet {
     const progressGuard = createProgressGuard()
@@ -103,12 +104,14 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         return guardResult
                     }
                 }
+                const { data: declaredReadOnly } = await tryCatch(async () => isDeclaredReadOnly?.({ pieceName: toolInput.pieceName, actionName: toolInput.actionName }))
                 const executedInputs = isBatch ? toolInput.items! : [toolInput.input ?? {}]
                 const gatedInputs = executedInputs.filter((input) => agentToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
                     input,
                     needsConfirmation: toolInput.needsConfirmation,
                     tainted: taintState.tainted,
+                    declaredReadOnly: declaredReadOnly ?? undefined,
                 }))
                 const needsPreview = gatedInputs.length > 0
                 taintState.tainted = true
@@ -175,6 +178,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 const isReadOnly = agentToolClassification.isReadOnlyActionCall({
                     actionName: toolInput.actionName,
                     input: toolInput.input,
+                    declaredReadOnly: declaredReadOnly ?? undefined,
                 })
                 if (!isReadOnly) {
                     eventEmitter.emitActionReceipt({
@@ -214,9 +218,6 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
-                if (!agentToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
-                    return agentToolClassification.readOnlyRejection(toolInput.actionName)
-                }
                 taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)
