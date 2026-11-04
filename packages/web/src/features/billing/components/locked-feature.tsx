@@ -45,7 +45,7 @@ export function SelfServeTrialLockedActions({
   const small = size === LockedActionsSize.SMALL;
   const buttonSize = small ? 'sm' : 'default';
   const secondary = small ? 'link' : 'outline';
-  const actionWhenLocked = useActionWhenLocked();
+  const actionWhenLocked = useActionWhenLocked({ featureKey });
   const plan = usePlanThatHasFeature(featureKey);
   const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
   const upgradeClick = useUpgradeClick();

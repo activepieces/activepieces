@@ -6,7 +6,6 @@ import {
   Globe,
   KeyRound,
   LucideIcon,
-  Server,
   Sparkles,
   UserCog,
   Users,
@@ -68,16 +67,11 @@ function list(): SelfServeTrialFeature[] {
       featureKeys: ['GLOBAL_CONNECTIONS'],
       isOnPlan: (plan) => plan.globalConnectionsEnabled,
     },
-    {
-      icon: Server,
-      title: names.DEDICATED_WORKERS,
-      benefit: t(
-        'Give critical projects workers of their own, so they never wait.',
-      ),
-      featureKeys: ['DEDICATED_WORKERS'],
-      isOnPlan: (plan) => plan.workerGroupsEnabled,
-    },
   ];
+}
+
+function isIncludedInTrial(featureKey: FeatureKey | undefined): boolean {
+  return isNil(featureKey) || !FEATURES_NOT_IN_TRIAL.includes(featureKey);
 }
 
 function lockedAfterTrial(plan: PlatformPlanLimits): SelfServeTrialFeature[] {
@@ -324,11 +318,14 @@ function lockedCopyByFeature(): Partial<Record<FeatureKey, LockedFeatureCopy>> {
 
 export const selfServeTrialFeatures = {
   list,
+  isIncludedInTrial,
   lockedAfterTrial,
   name,
   nameInSentence,
   lockedCopy,
 };
+
+const FEATURES_NOT_IN_TRIAL: FeatureKey[] = ['DEDICATED_WORKERS'];
 
 type SelfServeTrialFeature = {
   icon: LucideIcon;
