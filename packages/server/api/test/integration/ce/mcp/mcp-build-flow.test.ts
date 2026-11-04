@@ -279,6 +279,18 @@ describe('ap_apply_flow_operations', () => {
         expect(flowStructureUtil.getAllSteps(trigger).map(s => s.name)).toEqual(['trigger', 'step_1', 'step_2', 'step_3'])
     })
 
+    it('reports a trigger set to a name its piece does not have', async () => {
+        const { mcp, flowId } = await setupFlowWithCodeStep()
+
+        const result = await apApplyFlowOperationsTool({ mcp }, mockLog).execute({
+            flowId,
+            operations: [{ type: 'update_trigger', pieceName: MAIL, triggerName: 'no_such_trigger' }],
+        })
+
+        expect(text(result)).not.toContain('No remaining problems')
+        expect(appliedSchema.parse(result.structuredContent).problems.trigger?.[0]).toContain('trigger is invalid')
+    })
+
     it('rolls the draft back and names the failing operation when the second one fails', async () => {
         const { mcp, projectId, flowId } = await setupFlowWithCodeStep()
         const before = await draftTrigger({ flowId, projectId })
