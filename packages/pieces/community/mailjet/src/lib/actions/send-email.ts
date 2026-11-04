@@ -58,6 +58,7 @@ export const sendEmailAction = createAction({
       fromEmail: propsValue.fromEmail,
       fromName: propsValue.fromName,
       toEmails: propsValue.toEmails,
+      htmlPart: propsValue.htmlPart,
       subject: propsValue.subject,
       textPart: propsValue.textPart,
       templateId: propsValue.templateId,
