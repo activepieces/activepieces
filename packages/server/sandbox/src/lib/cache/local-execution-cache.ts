@@ -80,11 +80,14 @@ async function installCodeStep({ artifact, codeCachePath, log, getSettings }: In
             codesFolderPath: codeCachePath,
         })
     }
+    const dirPath = codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId)
     if (!actionRunCache.isActionRunNamespace(artifact.flowVersionId)) {
         await build()
+        // Bumps mtime on every use, not just rebuilds, so disk-usage eviction (code-cache-eviction.ts)
+        // can tell "still in use" from "stale" instead of evicting a frequently-run, rarely-changed flow.
+        await actionRunCache.touch(dirPath)
         return
     }
-    const dirPath = codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId)
     do {
         await build()
         await actionRunCache.touch(dirPath)
