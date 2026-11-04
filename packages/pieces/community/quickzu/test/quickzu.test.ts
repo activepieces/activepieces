@@ -5,7 +5,8 @@ import { aiCreatePromoCodeAction } from '../src/lib/actions/discounts/ai-create-
 import { orderCreatedTrigger } from '../src/lib/triggers/order-created';
 import { quickzuAuth } from '../src/lib/auth';
 import { toQuickzuDate } from '../src/lib/common';
-import { QuickzuAPIClient } from '../src/lib/common/client';
+import { QuickzuAPIClient, toQuickzuError } from '../src/lib/common/client';
+import { formatPieceError } from '@activepieces/core-utils';
 import { quickzu } from '../src';
 import { updateProductAction } from '../src/lib/actions/products/update-product';
 
@@ -329,5 +330,18 @@ describe('delete of a missing item', () => {
     const actions = quickzu.actions();
     expect(actions['quickzu_delete_product'].aiMetadata?.idempotent).toBe(false);
     expect(actions['quickzu_delete_category'].aiMetadata?.idempotent).toBe(false);
+  });
+});
+
+describe('QuickzuApiError structured details', () => {
+  it('keeps the piece message and reports the HTTP status to formatPieceError', () => {
+    const error = toQuickzuError({
+      error: new HttpError({ product_id: 'x' }, { status: 404, responseBody: { message: 'Not found' } }),
+    });
+    const formatted = formatPieceError(error);
+    expect(formatted.message).toBe(error.message);
+    expect(formatted.message).toContain('Quickzu says: Not found');
+    expect(formatted.status).toBe(404);
+    expect(formatted.requestBody).toBeUndefined();
   });
 });

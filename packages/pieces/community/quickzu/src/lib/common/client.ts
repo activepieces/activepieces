@@ -117,6 +117,10 @@ export class QuickzuApiError extends Error {
     this.statusCode = statusCode;
     this.responseBody = responseBody;
   }
+
+  get response(): { status: number } {
+    return { status: this.statusCode };
+  }
 }
 
 export class QuickzuAPIClient {
