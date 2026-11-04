@@ -15,6 +15,7 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 #### What you need to do
 
 - Agents that used Get Call as a tool: switch to Fetch Call Details.
+- Flows using the **New Call Created** trigger: after you upgrade the step and publish, the next polls emit every call created since the flow was first turned on (up to 2,000 per poll) until they catch up, because the old trigger never moved its checkpoint forward. Expect a burst of runs after the upgrade, or turn the flow off and on again to start from now.
 
 Steps keep running on the version they were built with until you upgrade them.
 

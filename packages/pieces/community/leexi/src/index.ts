@@ -19,7 +19,7 @@ export const leexi = createPiece({
   auth: leexiAuth,
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/leexi.png',
-  authors: ['kishanprmr'],
+  authors: ['kishanprmr', 'OdaiAhmed99'],
   actions: [
     getCallAction,
     queryCallsAction,

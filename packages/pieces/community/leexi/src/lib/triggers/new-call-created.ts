@@ -62,7 +62,7 @@ export const newCallCreatedTrigger = createTrigger({
   type: TriggerStrategy.POLLING,
   props: {},
   outputSchema: {
-    fields: leexiOutputFields.callDetail.filter((f) => !['simple_transcript', 'speakers'].includes(f.key)),
+    fields: leexiOutputFields.callDetail.filter((f) => f.key !== 'simple_transcript'),
   },
   async onEnable(context) {
     await pollingHelper.onEnable(polling, context);

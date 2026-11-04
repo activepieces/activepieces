@@ -5,27 +5,12 @@ import { leexiApi } from '../common/client';
 import { LeexiMeetingEvent } from '../common/types';
 import { leexiOutputFields } from '../common/constants';
 
-function toIso({ value, label }: { value: string; label: string }): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    throw new Error(`Invalid ${label} "${value}". Use an ISO 8601 date such as 2026-01-31T10:00:00.000Z.`);
-  }
-  return date.toISOString();
-}
-
-const yesNoOptions = {
-  options: [
-    { label: 'Yes', value: 'yes' },
-    { label: 'No', value: 'no' },
-  ],
-};
-
 export const createMeetingEventAction = createAction({
   name: 'create_meeting_event',
   classification: 'WRITE',
   auth: leexiAuth,
   displayName: 'Create Meeting Event',
-  description: 'Schedule a Zoom, Teams or Google Meet meeting in Leexi so the assistant can record it.',
+  description: 'Schedule a Zoom, Teams or Meet meeting for Leexi to record.',
   audience: 'ai',
   aiMetadata: {
     description:
@@ -70,21 +55,21 @@ export const createMeetingEventAction = createAction({
       description: 'Whether the Leexi assistant should record this meeting.',
       required: true,
       defaultValue: 'yes',
-      options: yesNoOptions,
+      options: yesNoOptions(),
     }),
     internal: Property.StaticDropdown({
       displayName: 'Internal Meeting',
       description: 'Whether the meeting is internal (no external customers).',
       required: true,
       defaultValue: 'no',
-      options: yesNoOptions,
+      options: yesNoOptions(),
     }),
     owned: Property.StaticDropdown({
       displayName: 'Owned by User',
       description: 'Whether the user is the owner of the meeting.',
       required: true,
       defaultValue: 'yes',
-      options: yesNoOptions,
+      options: yesNoOptions(),
     }),
     attendees: Property.Array({
       displayName: 'Attendee Emails',
@@ -151,3 +136,20 @@ export const createMeetingEventAction = createAction({
     });
   },
 });
+
+function toIso({ value, label }: { value: string; label: string }): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Invalid ${label} "${value}". Use an ISO 8601 date such as 2026-01-31T10:00:00.000Z.`);
+  }
+  return date.toISOString();
+}
+
+function yesNoOptions() {
+  return {
+    options: [
+      { label: 'Yes', value: 'yes' },
+      { label: 'No', value: 'no' },
+    ],
+  };
+}

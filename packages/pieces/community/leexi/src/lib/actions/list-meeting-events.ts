@@ -5,17 +5,6 @@ import { leexiApi } from '../common/client';
 import { LeexiListResponse, LeexiMeetingEvent } from '../common/types';
 import { leexiOutputFields } from '../common/constants';
 
-function toIso(value: string | undefined): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    throw new Error(`Invalid date "${value}". Use an ISO 8601 date such as 2026-01-31T00:00:00.000Z.`);
-  }
-  return date.toISOString();
-}
-
 export const listMeetingEventsAction = createAction({
   name: 'list_meeting_events',
   classification: 'SEARCH',
@@ -37,12 +26,12 @@ export const listMeetingEventsAction = createAction({
   props: {
     from: Property.DateTime({
       displayName: 'From',
-      description: 'Only return events whose date (see Date Filter) is on or after this time.',
+      description: 'Only events on or after this time (see Date Filter).',
       required: false,
     }),
     to: Property.DateTime({
       displayName: 'To',
-      description: 'Only return events whose date (see Date Filter) is on or before this time.',
+      description: 'Only events on or before this time (see Date Filter).',
       required: false,
     }),
     date_filter: Property.StaticDropdown({
@@ -114,3 +103,14 @@ export const listMeetingEventsAction = createAction({
     });
   },
 });
+
+function toIso(value: string | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Invalid date "${value}". Use an ISO 8601 date such as 2026-01-31T00:00:00.000Z.`);
+  }
+  return date.toISOString();
+}

@@ -14,7 +14,7 @@ export const listCallNotesAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists the AI-generated notes of one Leexi call (summary and text prompts such as CRM notes), flattened to uuid, prompt title, prompt category, text and locale. Returns one page with pagination; pass page (and items, 1-100) to read further pages. Optionally restrict to one prompt UUID; prompts whose category is not summary or text are rejected by Leexi (422). Get the call UUID from Query Calls. Read-only.',
+      'Lists the AI-generated notes of one Leexi call (summary and text prompts such as CRM notes), flattened to uuid, prompt title, prompt category, text and locale. Text, original text and locale come from the first locale of each note only; other translations are not returned. Returns one page with pagination; pass page (and items, 1-100) to read further pages. Optionally restrict to one prompt UUID; prompts whose category is not summary or text are rejected by Leexi (422). Get the call UUID from Query Calls. Read-only.',
     idempotent: true,
   },
   outputSchema: {
@@ -54,7 +54,7 @@ export const listCallNotesAction = createAction({
     }),
     page: Property.Number({
       displayName: 'Page',
-      description: 'Page number, starting at 1. Use pagination.pages from a previous result to know when to stop.',
+      description: 'Page number, from 1. Stop at pagination.pages.',
       required: false,
       defaultValue: 1,
     }),

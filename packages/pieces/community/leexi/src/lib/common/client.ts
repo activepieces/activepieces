@@ -1,6 +1,23 @@
 import { httpClient, HttpError, HttpMessageBody, HttpMethod } from '@activepieces/pieces-common';
 import { BASE_URL } from './constants';
 
+export class LeexiApiError extends Error {
+  readonly status: number;
+  readonly responseBody: unknown;
+  constructor({ message, status, responseBody }: { message: string; status: number; responseBody: unknown }) {
+    super(message);
+    this.name = 'LeexiApiError';
+    this.status = status;
+    this.responseBody = responseBody;
+  }
+}
+
+export const leexiApi = {
+  request,
+  describeError,
+  buildQueryString,
+};
+
 function buildQueryString(query: LeexiQuery | undefined): string {
   if (!query) {
     return '';
@@ -91,23 +108,6 @@ async function request<T>({ auth, method, path, query, body }: LeexiRequestParam
     throw error;
   }
 }
-
-export class LeexiApiError extends Error {
-  readonly status: number;
-  readonly responseBody: unknown;
-  constructor({ message, status, responseBody }: { message: string; status: number; responseBody: unknown }) {
-    super(message);
-    this.name = 'LeexiApiError';
-    this.status = status;
-    this.responseBody = responseBody;
-  }
-}
-
-export const leexiApi = {
-  request,
-  describeError,
-  buildQueryString,
-};
 
 export type LeexiQuery = Record<string, string | number | boolean | string[] | undefined | null>;
 
