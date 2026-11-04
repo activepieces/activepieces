@@ -1,9 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { doctlyAuth } from '../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { BASE_URL } from '../common/constants';
-import { CreateDocumentResponse, GetDocumentResponse } from '../common/types';
+import { doctlyAuth } from '../auth';
+import { doctlyClient } from '../common/client';
+import { DoctlyCreateDocumentResponse, DoctlyDocument } from '../common/types';
 
 export const convertPdfToTextAction = createAction({
 	name: 'convert-pdf-to-text',
@@ -29,46 +29,35 @@ export const convertPdfToTextAction = createAction({
 		const formData = new FormData();
 		formData.append('file', file.data, { filename: file.filename });
 
-		const response = await httpClient.sendRequest<CreateDocumentResponse>({
+		const created = await doctlyClient.request<DoctlyCreateDocumentResponse>({
+			auth: context.auth,
 			method: HttpMethod.POST,
-			url: BASE_URL + '/documents/',
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.secret_text,
-			},
+			path: '/documents/',
 			headers: {
 				...formData.getHeaders(),
 			},
 			body: formData,
 		});
 
-		const docId = response.body.id;
-		let status = response.body.status;
+		const docId = created.id;
+		let status = created.status;
 		const timeoutAt = Date.now() + 5 * 60 * 1000;
 
 		while (!['COMPLETED', 'FAILED'].includes(status) && Date.now() < timeoutAt) {
 			await new Promise((resolve) => setTimeout(resolve, 5000));
 
-			const pollResponse = await httpClient.sendRequest<GetDocumentResponse>({
+			const document = await doctlyClient.request<DoctlyDocument>({
+				auth: context.auth,
 				method: HttpMethod.GET,
-				url: BASE_URL + `/documents/${docId}`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth.secret_text,
-				},
+				path: `/documents/${docId}`,
 			});
 
-			status = pollResponse.body.status;
+			status = document.status;
 
 			if (status === 'COMPLETED') {
-				const mdResponse = await httpClient.sendRequest({
-					method: HttpMethod.GET,
-					url: pollResponse.body.output_file_url,
-				});
+				const markdownText = await doctlyClient.download<string>({ url: document.output_file_url });
 
-				const markdownText = mdResponse.body as unknown as string;
-
-				return { markdownText, ...pollResponse.body };
+				return { markdownText, ...document };
 			}
 			if (status === 'FAILED') throw new Error('Document processing failed.');
 		}

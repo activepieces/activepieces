@@ -1,9 +1,8 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { doctlyAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { convertPdfToTextAction } from './lib/actions/convert-pdf-to-text';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { BASE_URL } from './lib/common/constants';
+import { doctlyAuth } from './lib/auth';
+import { doctlyClient } from './lib/common/client';
+import { convertPdfToTextAction } from './lib/actions/convert-pdf-to-text';
 
 export const doctly = createPiece({
 	displayName: 'Doctly AI',
@@ -16,7 +15,7 @@ export const doctly = createPiece({
 		convertPdfToTextAction,
 		createCustomApiCallAction({
 			auth: doctlyAuth,
-			baseUrl: () => BASE_URL,
+			baseUrl: () => doctlyClient.baseUrl(),
 			authMapping: async (auth) => {
 				return {
 					Authorization: `Bearer ${auth.secret_text}`,
