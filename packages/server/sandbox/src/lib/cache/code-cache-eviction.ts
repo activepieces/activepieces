@@ -137,10 +137,13 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
     let evictedCount = 0
     let failedCount = 0
     let skippedCount = 0
+    let lastUsedPercent = usedPercentBefore
     for (const [index, candidate] of candidates.entries()) {
         if (index % USAGE_RECHECK_EVERY === 0) {
-            const usedPercent = index === 0 ? usedPercentBefore : await getUsedPercent()
-            if (usedPercent < maxUsedPercent) {
+            if (index > 0) {
+                lastUsedPercent = await getUsedPercent()
+            }
+            if (lastUsedPercent < maxUsedPercent) {
                 break
             }
         }
@@ -150,7 +153,7 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
         skippedCount += outcome === 'skipped' ? 1 : 0
     }
 
-    const usedPercentAfter = await getUsedPercent()
+    const usedPercentAfter = lastUsedPercent >= maxUsedPercent ? await getUsedPercent() : lastUsedPercent
     const summary = {
         evictedCount,
         failedCount,
