@@ -12,6 +12,10 @@ function linesOf(value: unknown): InvoiceLine[] {
   });
 }
 
+function isYes(value: unknown): boolean {
+  return value === 'yes' || value === true;
+}
+
 export const createInvoiceAi = createAction({
   auth: chargekeepAuth,
   name: 'create_invoice',
@@ -75,7 +79,3 @@ export const createInvoiceAi = createAction({
     return mapped();
   },
 });
-
-function isYes(value: unknown): boolean {
-  return value === 'yes' || value === true;
-}

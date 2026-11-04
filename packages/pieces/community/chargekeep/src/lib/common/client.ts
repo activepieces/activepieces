@@ -1,7 +1,5 @@
 import { httpClient, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 
-export const CHARGEKEEP_BASE_URLS = ['https://crm.chargekeep.com', 'https://beta.chargekeep.com'];
-
 const REQUEST_TIMEOUT_MS = 60_000;
 
 export class ChargekeepApiError extends Error {
@@ -167,6 +165,8 @@ function compact(value: Record<string, unknown>): Record<string, unknown> {
   }
   return out;
 }
+
+export const CHARGEKEEP_BASE_URLS = ['https://crm.chargekeep.com', 'https://beta.chargekeep.com'];
 
 export const chargekeepClient = { send, request, baseUrlOf, keyOf, headersOf, isRecord, positiveId, text, compact, normalizePath };
 
