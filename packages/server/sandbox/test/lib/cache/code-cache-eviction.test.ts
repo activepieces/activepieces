@@ -492,13 +492,25 @@ describe('codeCacheEviction.sweep disk-pressure pass', () => {
         await expect(exists(flowVersionDir({ basePath, flowVersionId }))).resolves.toBe(true)
     })
 
-    it('never touches the action-runs namespace, which the action-run pass already manages', async () => {
+    it('evicts an action-run namespace idle past the pressure floor even before its TTL expires', async () => {
         const basePath = uniqueBasePath()
-        const actionRunNamespace = actionRunCache.namespace({ platformId: apId(), sourceHash: 'f'.repeat(64) })
         const actionRunDir = await seedNamespaceDir({
             basePath,
-            namespace: actionRunNamespace,
-            ageMs: HOUR_MS,
+            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: 'f'.repeat(64) }),
+            ageMs: 90 * 60 * 1000,
+        })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForChecks(99) })
+
+        await expect(exists(actionRunDir)).resolves.toBe(false)
+    })
+
+    it('leaves an action-run namespace idle for less than the pressure floor alone, even under pressure', async () => {
+        const basePath = uniqueBasePath()
+        const actionRunDir = await seedNamespaceDir({
+            basePath,
+            namespace: actionRunCache.namespace({ platformId: apId(), sourceHash: 'f'.repeat(64) }),
+            ageMs: 30 * 60 * 1000,
         })
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForChecks(99) })

@@ -130,6 +130,8 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
         })))
         candidates.push(...nested.flat())
     }
+    const actionRunActiveAt = Date.now() - Math.max(ACTION_RUN_PRESSURE_FLOOR_MS, activeWindowMs + PROVISION_LOCK_TIMEOUT_MS)
+    candidates.push(...await readActionRunCandidates({ basePath, activeAt: actionRunActiveAt }))
     candidates.sort((a, b) => a.mtimeMs - b.mtimeMs)
 
     let evictedCount = 0
@@ -182,6 +184,25 @@ async function defaultGetUsedPercent({ basePath, log }: DefaultGetUsedPercentPar
         return 0
     }
     return diskInfo.percentage
+}
+
+async function readActionRunCandidates({ basePath, activeAt }: ReadActionRunCandidatesParams): Promise<PressureCandidate[]> {
+    const actionRunsPath = cacheUtils(basePath).getActionRunCodeCachePath()
+    const { data: entries, error } = await tryCatch(() => readdir(actionRunsPath, { withFileTypes: true }))
+    if (error) {
+        return []
+    }
+    const namespaceDirs = entries.filter((entry) => entry.isDirectory())
+    const candidates: PressureCandidate[] = []
+    for (const batch of chunk(namespaceDirs, SCAN_BATCH_SIZE)) {
+        const stats = await Promise.all(batch.map(async (entry): Promise<PressureCandidate | null> => {
+            const dirPath = path.join(actionRunsPath, entry.name)
+            const mtimeMs = await readMtimeMs(dirPath)
+            return isNil(mtimeMs) ? null : { dirPath, mtimeMs, emptyShell: false }
+        }))
+        candidates.push(...stats.filter((entry): entry is PressureCandidate => entry !== null && entry.mtimeMs < activeAt))
+    }
+    return candidates
 }
 
 async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandidatesParams): Promise<PressureCandidate[]> {
@@ -286,6 +307,7 @@ async function removeEmptyDir(dirPath: string): Promise<RemoveOutcome> {
 }
 
 const ACTION_RUN_CACHE_TTL_MS = 2 * 60 * 60 * 1000
+const ACTION_RUN_PRESSURE_FLOOR_MS = 60 * 60 * 1000
 const CODE_CACHE_LOCKS_DIR = 'code-cache-locks'
 const PROVISION_LOCK_TIMEOUT_MS = 15 * 60 * 1000
 const EVICTION_TRY_LOCK_TIMEOUT_MS = 0
@@ -357,6 +379,11 @@ type RemoveDirParams = {
 }
 
 type RemoveOutcome = 'removed' | 'skipped' | 'failed'
+
+type ReadActionRunCandidatesParams = {
+    basePath: string
+    activeAt: number
+}
 
 type ReadStepCandidatesParams = {
     flowVersionPath: string
