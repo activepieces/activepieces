@@ -20,8 +20,8 @@ function makeStore() {
   };
 }
 
-function ctx({ store, propsValue = {} }: { store: ReturnType<typeof makeStore>; propsValue?: Record<string, unknown> }) {
-  return { auth: AUTH, propsValue, store, files: {}, server: {}, setSchedule: () => undefined };
+function ctx({ store, isRepublish }: { store: ReturnType<typeof makeStore>; isRepublish?: boolean }) {
+  return { auth: AUTH, propsValue: {}, store, files: {}, server: {}, setSchedule: () => undefined, isRepublish };
 }
 
 function push({ iden, createdSec, extra = {} }: { iden: string; createdSec: number; extra?: Record<string, unknown> }) {
@@ -55,7 +55,7 @@ describe('new_push trigger', () => {
     }
   });
 
-  it('poll filters dismissed/inactive/old pushes, sends modified_after, and dedupes on created', async () => {
+  it('poll keeps dismissed pushes, skips deleted/old ones, sends modified_after, and dedupes on created', async () => {
     const store = makeStore();
     const lastPoll = 1_700_000_000_000;
     store.data.set('lastPoll', lastPoll);
@@ -72,7 +72,7 @@ describe('new_push trigger', () => {
       },
     });
     const out = await call({ fn: newPushTrigger.run, c: ctx({ store }) });
-    expect(idens(out)).toEqual(['new']);
+    expect(idens(out)).toEqual(['new', 'dismissed']);
     expect(spy.mock.calls[0][0].queryParams).toEqual({ active: 'true', limit: '100', modified_after: '1700000000' });
     expect(store.data.get('lastPoll')).toBe(1_700_000_100_000);
 
@@ -81,15 +81,14 @@ describe('new_push trigger', () => {
     expect(again).toEqual([]);
   });
 
-  it('includeDismissed keeps dismissed pushes', async () => {
+  it('test step shows dismissed pushes as samples', async () => {
     const store = makeStore();
-    store.data.set('lastPoll', 1_000);
     vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce({
       status: 200,
       headers: {},
       body: { pushes: [push({ iden: 'd', createdSec: 5, extra: { dismissed: true } })] },
     });
-    const out = await call({ fn: newPushTrigger.run, c: ctx({ store, propsValue: { includeDismissed: true } }) });
+    const out = await call({ fn: newPushTrigger.test, c: ctx({ store }) });
     expect(idens(out)).toEqual(['d']);
   });
 
@@ -112,7 +111,7 @@ describe('new_push trigger', () => {
     const spy = vi
       .spyOn(httpClient, 'sendRequest')
       .mockResolvedValue({ status: 200, headers: {}, body: { pushes: [push({ iden: 'n', createdSec: 9_999 })], cursor: 'again' } });
-    await expect(call({ fn: newPushTrigger.run, c: ctx({ store }) })).rejects.toThrow('since the last check');
+    await expect(call({ fn: newPushTrigger.run, c: ctx({ store }) })).rejects.toThrow('turn the flow off and on again');
     expect(spy).toHaveBeenCalledTimes(50);
     expect(store.data.get('lastPoll')).toBe(1_000);
   });
@@ -136,5 +135,26 @@ describe('new_push trigger', () => {
     await call({ fn: newPushTrigger.onEnable, c: ctx({ store }) });
     expect(typeof store.data.get('lastPoll')).toBe('number');
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('onEnable on a republish keeps the existing lastPoll', async () => {
+    const store = makeStore();
+    store.data.set('lastPoll', 1_000);
+    await call({ fn: newPushTrigger.onEnable, c: ctx({ store, isRepublish: true }) });
+    expect(store.data.get('lastPoll')).toBe(1_000);
+  });
+
+  it('onEnable without a republish resets lastPoll to now', async () => {
+    const store = makeStore();
+    store.data.set('lastPoll', 1_000);
+    await call({ fn: newPushTrigger.onEnable, c: ctx({ store }) });
+    expect(store.data.get('lastPoll')).toBeGreaterThan(1_000);
+  });
+
+  it('onDisable keeps lastPoll so a republish resumes from it', async () => {
+    const store = makeStore();
+    store.data.set('lastPoll', 1_000);
+    await call({ fn: newPushTrigger.onDisable, c: ctx({ store }) });
+    expect(store.data.get('lastPoll')).toBe(1_000);
   });
 });

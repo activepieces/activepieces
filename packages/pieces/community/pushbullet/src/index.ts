@@ -19,9 +19,9 @@ export const pushbullet = createPiece({
   description: 'Cross-device notification service',
   categories: [PieceCategory.COMMUNICATION],
   auth: bushbulletAuth,
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/pushbullet.png',
-  authors: ['sanket-a11y'],
+  authors: ['sanket-a11y', 'OdaiAhmed99'],
   actions: [
     sendALink,
     sendANote,

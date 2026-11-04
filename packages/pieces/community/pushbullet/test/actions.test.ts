@@ -66,7 +66,7 @@ describe('piece metadata', () => {
     expect(pushbullet.actions()['ai_delete_push'].aiMetadata?.idempotent).toBe(false);
     expect(pushbullet.actions()['ai_dismiss_push'].aiMetadata?.idempotent).toBe(true);
     expect(pushbullet.actions()['ai_send_note'].aiMetadata?.idempotent).toBe(false);
-    expect(pushbullet.minimumSupportedRelease).toBe('0.86.4');
+    expect(pushbullet.minimumSupportedRelease).toBe('0.88.2');
   });
 });
 

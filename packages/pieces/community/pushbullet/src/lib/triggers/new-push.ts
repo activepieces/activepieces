@@ -1,6 +1,5 @@
 import {
   AppConnectionValueForAuthProperty,
-  Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -13,9 +12,9 @@ const PAGE_SIZE = 100;
 const MAX_PAGES = 50;
 const TEST_SAMPLE_SIZE = 5;
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof bushbulletAuth>, { includeDismissed?: boolean }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof bushbulletAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+  items: async ({ auth, lastFetchEpochMS }) => {
     const isTest = lastFetchEpochMS === 0;
     const pushes: PushbulletPush[] = [];
     let cursor: string | undefined = undefined;
@@ -43,12 +42,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof bushbulletAuth>,
     } while (cursor && page < MAX_PAGES);
     if (cursor) {
       throw new Error(
-        `More than ${MAX_PAGES * PAGE_SIZE} pushes arrived since the last check. The trigger stopped without saving progress so none are skipped; it will retry from the same point.`,
+        `More than ${MAX_PAGES * PAGE_SIZE} pushes changed since the last check, so the trigger stopped without saving progress and will keep failing. To recover, turn the flow off and on again: it then starts from now, and pushes from before that will not trigger it.`,
       );
     }
 
     return pushes
-      .filter((push) => push.active && (propsValue.includeDismissed === true || !push.dismissed))
+      .filter((push) => push.active)
       .filter((push) => isTest || push.created * 1000 > lastFetchEpochMS)
       .map((push) => ({
         epochMilliSeconds: Math.floor(push.created * 1000),
@@ -65,16 +64,9 @@ export const newPushTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires when a new push is created on the Pushbullet account, sent or received, emitting the push object (iden, type, title, body, url, sender). Polls by creation time, so pushes created since the last check are captured once each.',
+      'Fires when a new push is created on the Pushbullet account, sent or received, emitting the push object (iden, type, title, body, url, sender). Polls by creation time, so pushes created since the last check are captured once each, including pushes already dismissed on a device; deleted pushes are skipped.',
   },
-  props: {
-    includeDismissed: Property.Checkbox({
-      displayName: 'Include Dismissed Pushes',
-      description: 'Also trigger for pushes that were already dismissed when the check ran.',
-      required: false,
-      defaultValue: false,
-    }),
-  },
+  props: {},
   outputSchema: pushbulletOutputSchemas.push,
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
