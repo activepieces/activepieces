@@ -1,11 +1,13 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
 import { makeClient } from '../../common';
 import { BusinessTimingInput } from '../../common/types';
 
 export const updateBusinessTimeAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_update_business_time',
+  outputSchema: quickzuOutputSchemas.statusMessage,
   classification: 'WRITE',
   displayName: 'Update Business Time',
   description: 'Updates business hours.',
@@ -42,7 +44,7 @@ export const updateBusinessTimeAction = createAction({
           required: true,
         }),
         end: Property.ShortText({
-          displayName: 'Start Time',
+          displayName: 'End Time',
           description: 'Please use 24:00 hour format',
           required: true,
         }),
@@ -55,22 +57,33 @@ export const updateBusinessTimeAction = createAction({
     }),
   },
   async run(context) {
-    const items = context.propsValue.items as BusinessDayHour[];
     const input: BusinessTimingInput = {
-      timing: {},
+      timing: Object.fromEntries(
+        context.propsValue.items.map((item) => {
+          const day = toBusinessDayHour(item);
+          return [day.weekday, { start: day.start, end: day.end, status: day.status }];
+        })
+      ),
     };
-    for (const day of items) {
-      input.timing[day.weekday] = {
-        start: day.start,
-        end: day.end,
-        status: day.status,
-      };
-    }
 
     const client = makeClient(context.auth);
     return await client.updateBusinessTime(input);
   },
 });
+
+function toBusinessDayHour(item: unknown): BusinessDayHour {
+  if (typeof item !== 'object' || item === null) {
+    throw new Error('Each business hours entry must have a day, start time and end time.');
+  }
+  const weekday: unknown = Reflect.get(item, 'weekday');
+  const start: unknown = Reflect.get(item, 'start');
+  const end: unknown = Reflect.get(item, 'end');
+  const status: unknown = Reflect.get(item, 'status');
+  if (typeof weekday !== 'string' || typeof start !== 'string' || typeof end !== 'string') {
+    throw new Error('Each business hours entry must have a day, start time and end time.');
+  }
+  return { weekday, start: start.trim(), end: end.trim(), status: status !== false };
+}
 
 type BusinessDayHour = {
   weekday: string;
