@@ -1,5 +1,5 @@
 import { isNil, LocalesEnum } from '@activepieces/core-utils'
-import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
+import { MODEL_RESULT_OFFLOAD_BYTES, toolResultView } from '@activepieces/server-utils'
 import { McpToolDefinition, PieceAudienceFilter, PieceCategory, ProjectScopedMcpServer, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -133,9 +133,11 @@ export function fitBulkLookup({ found, missing, hints, forIntent }: { found: Fou
         }
     }
     return bulkResult({
-        pieces: found.map(({ name, displayName, actions, triggers }) => ({ name, displayName, actionCount: actions.length, triggerCount: triggers.length })),
+        pieces: found.map(({ name, displayName, actions, triggers, recommendedActions, recommendedTriggers }) => ({ name, displayName, actionCount: actions.length, triggerCount: triggers.length, recommendedActions, recommendedTriggers })),
         missing,
-        hints: [...hints, '⚠️ Too many actions to list for these pieces together: look up one piece at a time, with forIntent.'],
+        hints: [...hints, isNil(forIntent)
+            ? '⚠️ Too many actions to list for these pieces together: call again with the same pieceNames and forIntent to get the actions that match it.'
+            : '⚠️ Too many actions to list for these pieces together: recommendedActions and recommendedTriggers are the ones matching your intent.'],
     })
 }
 
@@ -278,7 +280,7 @@ function pieceSearchResult({ pieces, overflowHint, totalCount, trimmed }: {
 }
 
 function fitsBudget(result: PieceSearchResult): boolean {
-    return (largeResultUtils.byteSizeOf(result) ?? 0) <= MAX_TOOL_RESULT_BYTES
+    return (toolResultView.modelVisibleBytes(result) ?? 0) <= MODEL_RESULT_OFFLOAD_BYTES
 }
 
 function emptySearchResult(searchQuery: string | undefined): { content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> } {

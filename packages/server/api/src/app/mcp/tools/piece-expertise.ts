@@ -43,6 +43,11 @@ const EXPERTISE: Record<string, PieceExpertise> = {
     trello: {
         general: 'board → list are dependent dynamic dropdowns (resolve board first). Labels are board-specific dynamic options; cards take the resolved list ID.',
     },
+    tables: {
+        actions: {
+            'tables-create-records': 'Input shape: { table_id, values: { values: [ { "<fieldExternalId>": value } ] } } — one object per record, numbers as numbers. "records" (JSON) does not replace values; values is still required.',
+        },
+    },
     http: {
         general: 'For send_request: headers/queryParams/authType are REQUIRED ({} / "NONE" when empty). body shape depends on body_type — json nests under a "data" key. Load the http_fallback guide for the full contract.',
     },
