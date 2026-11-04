@@ -40,7 +40,7 @@ export const streak = createPiece({
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/streak.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['sanket-a11y'],
+  authors: ['sanket-a11y', 'OdaiAhmed99'],
   actions: [
     createBoxAction,
     updateBoxAction,
