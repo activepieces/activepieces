@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from '../common/client';
 import { freshserviceCommon } from '../common/props';
+import { freshserviceSchemas } from '../common/schemas';
 
 export const createRequester = createAction({
   auth: freshserviceAuth,
@@ -10,7 +11,8 @@ export const createRequester = createAction({
   classification: 'WRITE',
   displayName: 'Create Requester',
   description: 'Creates a new requester (end user) in Freshservice.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: freshserviceSchemas.requester,
   aiMetadata: {
     description: 'Creates a new requester (end-user) record in Freshservice. Use to onboard a person who will submit tickets; requires a first name and primary email. Not idempotent — each call creates a new requester and will fail if the email already belongs to an existing requester.',
     idempotent: false,
@@ -63,7 +65,7 @@ export const createRequester = createAction({
 
     if (props.last_name) requesterBody['last_name'] = props.last_name;
     if (props.job_title) requesterBody['job_title'] = props.job_title;
-    if (props.phone) requesterBody['phone'] = props.phone;
+    if (props.phone) requesterBody['work_phone_number'] = props.phone;
     if (props.mobile_phone_number)
       requesterBody['mobile_phone_number'] = props.mobile_phone_number;
     if (props.department_id)

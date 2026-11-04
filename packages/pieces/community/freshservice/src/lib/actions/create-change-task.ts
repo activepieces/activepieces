@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from '../common/client';
 import { freshserviceCommon } from '../common/props';
+import { freshserviceSchemas } from '../common/schemas';
 
 export const createChangeTask = createAction({
   auth: freshserviceAuth,
@@ -10,9 +11,10 @@ export const createChangeTask = createAction({
   classification: 'WRITE',
   displayName: 'Create Change Task',
   description: 'Creates a new task on a change request in Freshservice.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: freshserviceSchemas.task,
   aiMetadata: {
-    description: 'Adds a task (sub-item of work) to an existing Freshservice change request identified by change id. Use to break a change into actionable steps; requires a title, with optional assignee, group, status, and due date. Not idempotent — each call creates a separate task.',
+    description: 'Adds a task (sub-item of work) to an existing Freshservice change request identified by numeric change id (from List Changes). Use to break a change into actionable steps; requires a title, with optional assignee agent id and group id (from List Agents and List Groups), status, and due date. Not idempotent — each call creates a separate task.',
     idempotent: false,
   },
   props: {

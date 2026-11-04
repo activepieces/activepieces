@@ -4,13 +4,13 @@ import {
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  HttpMethod,
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
-import { freshserviceApiCall } from '../common/client';
+import { freshserviceListPages } from '../common/client';
+import { freshserviceSchemas } from '../common/schemas';
 
 interface FreshserviceRequester {
   id: number;
@@ -24,28 +24,36 @@ interface FreshserviceRequester {
   updated_at: string;
 }
 
+function dayBefore(epochMs: number): string {
+  return new Date(epochMs - 86400000).toISOString().slice(0, 10);
+}
+
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof freshserviceAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
-    const response = await freshserviceApiCall<{
-      requesters: FreshserviceRequester[];
-    }>({
-      method: HttpMethod.GET,
-      endpoint: 'requesters',
-      auth,
-      queryParams: {
-        order_by: 'created_at',
-        order_type: 'desc',
-        per_page: lastFetchEpochMS === 0 ? '10' : '100',
-      },
-    });
-
-    return response.body.requesters.map((requester) => ({
-      epochMilliSeconds: new Date(requester.created_at).getTime(),
-      data: requester,
+    const records =
+      lastFetchEpochMS === 0
+        ? await freshserviceListPages<FreshserviceRequester>({
+            auth,
+            endpoint: 'requesters',
+            key: 'requesters',
+            perPage: 10,
+            maxPages: 1,
+            allowTruncation: true,
+            queryParams: {},
+          })
+        : await freshserviceListPages<FreshserviceRequester>({
+            auth,
+            endpoint: 'requesters',
+            key: 'requesters',
+            queryParams: { query: `"created_at:>'${dayBefore(lastFetchEpochMS)}'"` },
+          });
+    return records.map((record) => ({
+      epochMilliSeconds: new Date(record.created_at).getTime(),
+      data: record,
     }));
   },
 };
@@ -54,10 +62,11 @@ export const newRequester = createTrigger({
   auth: freshserviceAuth,
   name: 'new_requester',
   classification: 'READ',
+  outputSchema: freshserviceSchemas.requester,
   displayName: 'New Requester',
   description: 'Triggers when a new requester (user) is created in Freshservice.',
   aiMetadata: {
-    description: 'Fires when a new requester (end-user) record is created in Freshservice, representing a person newly onboarded into the help desk. Polls newest-first by creation time across all requesters in the account.',
+    description: 'Fires when a new requester (end-user) record is created in Freshservice, representing a person newly onboarded into the help desk. Polls every page of records since the last check, by creation time across all requesters in the account.',
   },
   props: {},
   sampleData: {

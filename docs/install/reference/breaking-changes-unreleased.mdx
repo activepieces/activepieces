@@ -8,6 +8,15 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Freshservice 0.3.0: the existing actions are no longer AI agent tools
+
+**Create Ticket**, **Add Note to Ticket**, **Create Requester**, **Request Ticket Approval**, **Create Change**, **Update Change**, **Delete Change**, **Add Note to Change**, **Create Change Task**, **Update Change Task** and **Delete Change Task** are now shown only in the flow builder, with their dropdowns unchanged. AI agents and MCP clients get new ID-based actions instead: Create, Update, Get and Search Tickets, Add Ticket Note, Reply to Ticket, Request Ticket Approval, Create and Find Requester, List Agents, Groups and Departments, Get, List, Create, Update and Delete Change, Add Change Note, and Create, Update and Delete Change Task.
+
+#### What you need to do
+
+- Agents that used the old Freshservice actions as tools: switch to the new agent actions.
+- Flow steps keep working unchanged.
+
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 
 When Activepieces connects to an MCP server, it no longer follows a redirect to a different host or port. That redirect now fails the connection, so headers such as API keys are never sent to a host you did not configure.

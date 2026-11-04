@@ -4,13 +4,13 @@ import {
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  HttpMethod,
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
-import { freshserviceApiCall } from '../common/client';
+import { freshserviceListPages } from '../common/client';
+import { freshserviceSchemas } from '../common/schemas';
 
 interface FreshserviceTicket {
   id: number;
@@ -34,22 +34,26 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
-    const response = await freshserviceApiCall<{
-      tickets: FreshserviceTicket[];
-    }>({
-      method: HttpMethod.GET,
-      endpoint: 'tickets',
-      auth,
-      queryParams: {
-        order_by: 'created_at',
-        order_type: 'desc',
-        per_page: lastFetchEpochMS === 0 ? '10' : '100',
-      },
-    });
-
-    return response.body.tickets.map((ticket) => ({
-      epochMilliSeconds: new Date(ticket.created_at).getTime(),
-      data: ticket,
+    const records =
+      lastFetchEpochMS === 0
+        ? await freshserviceListPages<FreshserviceTicket>({
+            auth,
+            endpoint: 'tickets',
+            key: 'tickets',
+            perPage: 10,
+            maxPages: 1,
+            allowTruncation: true,
+            queryParams: { order_type: 'desc' },
+          })
+        : await freshserviceListPages<FreshserviceTicket>({
+            auth,
+            endpoint: 'tickets',
+            key: 'tickets',
+            queryParams: { updated_since: new Date(lastFetchEpochMS).toISOString(), order_type: 'asc' },
+          });
+    return records.map((record) => ({
+      epochMilliSeconds: new Date(record.created_at).getTime(),
+      data: record,
     }));
   },
 };
@@ -58,10 +62,11 @@ export const newTicket = createTrigger({
   auth: freshserviceAuth,
   name: 'new_ticket',
   classification: 'READ',
+  outputSchema: freshserviceSchemas.ticket,
   displayName: 'New Ticket',
   description: 'Triggers when a new ticket is created in Freshservice.',
   aiMetadata: {
-    description: 'Fires when a new ticket is created in Freshservice, representing a freshly logged incident or service request. Polls newest-first by creation time across all tickets in the account.',
+    description: 'Fires when a new ticket is created in Freshservice, representing a freshly logged incident or service request. Polls every page of records since the last check, by creation time across all tickets in the account.',
   },
   props: {},
   sampleData: {

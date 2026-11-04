@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from '../common/client';
 import { freshserviceCommon } from '../common/props';
+import { freshserviceSchemas } from '../common/schemas';
 
 export const addNoteToTicket = createAction({
   auth: freshserviceAuth,
@@ -10,7 +11,8 @@ export const addNoteToTicket = createAction({
   classification: 'WRITE',
   displayName: 'Add Note to Ticket',
   description: 'Adds a private or public note to an existing ticket.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: freshserviceSchemas.note,
   aiMetadata: {
     description: 'Appends a note (conversation entry) to an existing Freshservice ticket identified by ticket id. The note can be private (agent-only, the default) or public (visible to the requester). Use to record an update or comment on a ticket. Not idempotent — each call appends another note.',
     idempotent: false,

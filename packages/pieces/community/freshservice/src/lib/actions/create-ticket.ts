@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from '../common/client';
 import { freshserviceCommon } from '../common/props';
+import { freshserviceSchemas } from '../common/schemas';
 
 export const createTicket = createAction({
   auth: freshserviceAuth,
@@ -10,7 +11,8 @@ export const createTicket = createAction({
   classification: 'WRITE',
   displayName: 'Create Ticket',
   description: 'Creates a new ticket in Freshservice.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: freshserviceSchemas.ticket,
   aiMetadata: {
     description: 'Opens a new IT service ticket in Freshservice on behalf of a requester. Use to log an incident or service request from an end user; requires a subject, an HTML description, and the requester (identified by id). Not idempotent — each call creates a separate ticket.',
     idempotent: false,

@@ -4,13 +4,13 @@ import {
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  HttpMethod,
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
-import { freshserviceApiCall } from '../common/client';
+import { freshserviceListPages } from '../common/client';
+import { freshserviceSchemas } from '../common/schemas';
 import { FreshserviceChange } from '../common/props';
 
 const polling: Polling<
@@ -19,22 +19,26 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
-    const response = await freshserviceApiCall<{
-      changes: FreshserviceChange[];
-    }>({
-      method: HttpMethod.GET,
-      endpoint: 'changes',
-      auth,
-      queryParams: {
-        order_by: 'updated_at',
-        order_type: 'desc',
-        per_page: lastFetchEpochMS === 0 ? '10' : '100',
-      },
-    });
-
-    return response.body.changes.map((change) => ({
-      epochMilliSeconds: new Date(change.updated_at).getTime(),
-      data: change,
+    const records =
+      lastFetchEpochMS === 0
+        ? await freshserviceListPages<FreshserviceChange>({
+            auth,
+            endpoint: 'changes',
+            key: 'changes',
+            perPage: 10,
+            maxPages: 1,
+            allowTruncation: true,
+            queryParams: {},
+          })
+        : await freshserviceListPages<FreshserviceChange>({
+            auth,
+            endpoint: 'changes',
+            key: 'changes',
+            queryParams: { updated_since: new Date(lastFetchEpochMS).toISOString() },
+          });
+    return records.map((record) => ({
+      epochMilliSeconds: new Date(record.updated_at).getTime(),
+      data: record,
     }));
   },
 };
@@ -43,10 +47,11 @@ export const updatedChange = createTrigger({
   auth: freshserviceAuth,
   name: 'updated_change',
   classification: 'READ',
+  outputSchema: freshserviceSchemas.change,
   displayName: 'Updated Change',
   description: 'Triggers when an existing change request is updated in Freshservice. Note: newly created changes may also fire this trigger because their updated_at matches created_at.',
   aiMetadata: {
-    description: 'Fires when an existing change request is modified in Freshservice (e.g. status, risk, or schedule change), representing the latest state of that change. Polls newest-first by last-updated time across all changes; note that newly created changes can also fire this because their updated time initially equals their creation time.',
+    description: 'Fires when an existing change request is modified in Freshservice (e.g. status, risk, or schedule change), representing the latest state of that change. Polls every page of records since the last check, by last-updated time across all changes; note that newly created changes can also fire this because their updated time initially equals their creation time.',
   },
   props: {},
   sampleData: {
