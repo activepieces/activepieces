@@ -37,14 +37,20 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         return { content: [{ type: 'text', text: `The user already picked the ${displayName} account "${chosenEarlier.label}" earlier in this conversation, so the card was not shown again. Use connectionExternalId "${chosenEarlier.externalId}" and carry on without asking. If they ask to use a different account, call this again with switchAccount true.` }] }
     }
 
-    async function refuseIfNoConnectionNeeded(input: Record<string, unknown>): Promise<{ content: { type: string, text: string }[] } | undefined> {
+    async function refuseIfNoConnectionNeeded(input: Record<string, unknown>): Promise<CardRefusal | undefined> {
+        if (isNil(pieceNeedsNoConnection)) {
+            return undefined
+        }
         const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
-        const needsNoConnection = isNil(pieceNeedsNoConnection) ? false : await pieceNeedsNoConnection(normalizePieceName(piece))
+        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
+        const { data: needsNoConnection, error } = await tryCatch(() => pieceNeedsNoConnection(normalizePieceName(piece)))
+        if (!isNil(error)) {
+            return { notShown: true, content: [{ type: 'text', text: `Could not check whether ${displayName} needs a connection, so the card was not shown. Call this again.` }] }
+        }
         if (!needsNoConnection) {
             return undefined
         }
-        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
-        return { content: [{ type: 'text', text: `${displayName} needs no connection, so the card was not shown. Call its actions without auth.` }] }
+        return { notShown: true, content: [{ type: 'text', text: `${displayName} needs no connection, so the card was not shown. Call its actions without auth.` }] }
     }
 
     function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved, refuseWhen }: {
@@ -53,7 +59,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         toolName: string
         getDisplayName?: (input: Record<string, unknown>) => string
         onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
-        refuseWhen?: (input: Record<string, unknown>) => { content: { type: string, text: string }[] } | undefined | Promise<{ content: { type: string, text: string }[] } | undefined>
+        refuseWhen?: (input: Record<string, unknown>) => CardRefusal | undefined | Promise<CardRefusal | undefined>
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions<undefined>) => {
             const refusal = await refuseWhen?.(input)
@@ -277,3 +283,5 @@ function cardIdentity({ toolName, input }: { toolName: string, input: Record<str
 function cardStillUnansweredMessage(displayName: string): string {
     return `The ${displayName} card was already shown in this turn and the user has not answered it, so it was not shown again. Do not ask for it again now. End your reply with one short line saying what you need from them, and continue when they answer.`
 }
+
+type CardRefusal = { content: { type: string, text: string }[], notShown?: true }

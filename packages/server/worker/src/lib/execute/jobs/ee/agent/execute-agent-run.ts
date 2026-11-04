@@ -794,7 +794,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             return { externalId, label: typeof label === 'string' ? label : externalId }
         },
         pieceNeedsNoConnection: async (pieceName) => {
-            const { data: discovered } = await tryCatch(() => executeCrossProjectTool('ap_discover_action_auth', { pieceName }))
+            const discovered = await executeCrossProjectTool('ap_discover_action_auth', { pieceName })
             return isObject(discovered) && discovered['noAuthRequired'] === true
         },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
