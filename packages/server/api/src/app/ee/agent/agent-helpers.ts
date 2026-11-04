@@ -6,7 +6,7 @@ import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/serve
 import { AGENT_RUN_USAGE_ORIGIN, AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { Repository } from 'typeorm'
+import { IsNull, Repository } from 'typeorm'
 import { z } from 'zod'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { platformModelTierService, TierForRun } from '../../ai/platform-model-tier-service'
@@ -367,10 +367,20 @@ async function memoryImportNudgeEligible({ platformId, userId }: { platformId: s
     return memoryIsEmpty && neverShown && onFirstChat
 }
 
-async function markMemoryImportNudgeShown({ platformId, userId }: { platformId: string, userId: string }): Promise<void> {
-    await withLockedMemoryRow({ platformId, userId }, async ({ repo }) => {
-        await repo.update({ platformId, userId }, { importNudgeShownAt: new Date().toISOString() })
-    })
+async function claimMemoryImportNudge({ platformId, userId }: { platformId: string, userId: string }): Promise<boolean> {
+    const repo = userMemoryRepo()
+    await repo.createQueryBuilder()
+        .insert()
+        .values({ id: apId(), platformId, userId, memories: [] })
+        .orIgnore()
+        .execute()
+    const claimed = await repo.createQueryBuilder()
+        .update()
+        .set({ importNudgeShownAt: new Date().toISOString() })
+        .where({ platformId, userId, importNudgeShownAt: IsNull() })
+        .returning(['id'])
+        .execute()
+    return claimed.raw.length === 1
 }
 
 function capMemories({ instructions, memories }: { instructions: string | null, memories: string[] }): GetAgentMemoryResponse {
@@ -574,7 +584,7 @@ export const agentHelpers = {
     conversationRepo,
     getUserMemory,
     memoryImportNudgeEligible,
-    markMemoryImportNudgeShown,
+    claimMemoryImportNudge,
     capMemories,
     mergeMemories,
     saveUserMemory,

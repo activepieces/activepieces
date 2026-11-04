@@ -20,8 +20,17 @@ describe('memory import nudge', () => {
         await startChat(ctx)
 
         expect(await nudgeEligible(ctx)).toBe(true)
-        expect((await ctx.post(`${NUDGE_URL}/shown`)).statusCode).toBe(StatusCodes.NO_CONTENT)
+        expect(await claimNudge(ctx)).toBe(true)
         expect(await nudgeEligible(ctx)).toBe(false)
+    })
+
+    it('lets only one page claim it when two pages saw it as eligible', async () => {
+        const ctx = await chatContext()
+        await startChat(ctx)
+
+        const claims = await Promise.all([claimNudge(ctx), claimNudge(ctx)])
+
+        expect(claims.filter(Boolean)).toHaveLength(1)
     })
 
     it('is not offered before the first chat or once there is a second one', async () => {
@@ -55,6 +64,12 @@ async function nudgeEligible(ctx: TestContext): Promise<boolean> {
     const response = await ctx.get(NUDGE_URL)
     expect(response.statusCode).toBe(StatusCodes.OK)
     return response.json().eligible
+}
+
+async function claimNudge(ctx: TestContext): Promise<boolean> {
+    const response = await ctx.post(`${NUDGE_URL}/claim`)
+    expect(response.statusCode).toBe(StatusCodes.OK)
+    return response.json().claimed
 }
 
 const NUDGE_URL = '/v1/agents/memory/import-nudge'

@@ -290,6 +290,11 @@ export const MemoryImportNudgeResponse = z.object({
 })
 export type MemoryImportNudgeResponse = z.infer<typeof MemoryImportNudgeResponse>
 
+export const MemoryImportNudgeClaimResponse = z.object({
+    claimed: z.boolean(),
+})
+export type MemoryImportNudgeClaimResponse = z.infer<typeof MemoryImportNudgeClaimResponse>
+
 export const UpdateAgentMemoryRequest = z.object({
     instructions: Nullable(z.string()),
     memories: z.optional(z.object({

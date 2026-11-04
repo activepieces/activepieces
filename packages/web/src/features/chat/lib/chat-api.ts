@@ -10,6 +10,7 @@ import {
   GetAgentMemoryResponse,
   ImportAgentMemoryRequest,
   InstructAgentMemoryRequest,
+  MemoryImportNudgeClaimResponse,
   MemoryImportNudgeResponse,
   UpdateAgentConversationRequest,
   UpdateAgentMemoryRequest,
@@ -145,8 +146,10 @@ async function getMemoryImportNudge(): Promise<MemoryImportNudgeResponse> {
   return api.get<MemoryImportNudgeResponse>('/v1/agents/memory/import-nudge');
 }
 
-async function markMemoryImportNudgeShown(): Promise<void> {
-  return api.post<void>('/v1/agents/memory/import-nudge/shown');
+async function claimMemoryImportNudge(): Promise<MemoryImportNudgeClaimResponse> {
+  return api.post<MemoryImportNudgeClaimResponse>(
+    '/v1/agents/memory/import-nudge/claim',
+  );
 }
 
 async function saveMemory(
@@ -185,7 +188,7 @@ export const chatApi = {
   getPendingGate,
   getMemory,
   getMemoryImportNudge,
-  markMemoryImportNudgeShown,
+  claimMemoryImportNudge,
   saveMemory,
   importMemory,
   instructMemory,
