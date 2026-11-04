@@ -43,7 +43,8 @@ function lazyCall(input: unknown): (Record<string, unknown> & { tool: string }) 
     if (typeof input['tool'] === 'string') {
         return { ...input, tool: input['tool'] }
     }
-    return isRecord(input['input']) && typeof input['input']['tool'] === 'string' ? lazyCall(input['input']) : undefined
+    const { input: wrapped, ...outer } = input
+    return isRecord(wrapped) && typeof wrapped['tool'] === 'string' ? { ...outer, ...wrapped, tool: wrapped['tool'] } : undefined
 }
 
 function uncataloguedToolNames({ surface, allToolNames }: { surface: SkillSurface, allToolNames: string[] }): string[] {

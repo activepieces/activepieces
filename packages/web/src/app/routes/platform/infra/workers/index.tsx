@@ -28,7 +28,6 @@ import {
   adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -37,7 +36,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { RequestTrial } from '@/features/billing';
-import { workersQueries } from '@/features/platform-admin';
+import { workerGroupsLock, workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
@@ -45,6 +44,7 @@ import { cn } from '@/lib/utils';
 
 import { SandboxesPopover } from './sandboxes-popover';
 import { WorkerConfigsPopover } from './worker-configs-popover';
+import { LockedWorkerGroups } from './worker-groups/locked-worker-groups';
 import { WorkerGroupsPage } from './worker-groups/worker-groups-page';
 
 export default function WorkersPage({ section }: WorkersPageProps) {
@@ -56,18 +56,14 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const fleetType = workersData?.[0]?.type;
 
   if (section === 'worker-groups') {
-    return (
-      <LockedFeatureGuard
-        featureKey="DEDICATED_WORKERS"
-        locked={!platform.plan.workerGroupsEnabled}
-        lockTitle={t('Unlock worker groups')}
-        lockDescription={t(
-          'Set aside servers for specific projects or flows, so a busy project never slows down the rest.',
-        )}
-        lockDocumentationUrl="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
-      >
-        <WorkerGroupsPage />
-      </LockedFeatureGuard>
+    const lockReason = workerGroupsLock.reason({
+      edition,
+      plan: platform.plan,
+    });
+    return lockReason === null ? (
+      <WorkerGroupsPage />
+    ) : (
+      <LockedWorkerGroups reason={lockReason} />
     );
   }
 

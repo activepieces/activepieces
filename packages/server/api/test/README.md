@@ -46,4 +46,4 @@ This list is a backlog, not a to-do for this README. Items should be tackled opp
 ## Related documentation
 
 - Canonical taxonomy: `../../../../docs/handbook/engineering/playbooks/testing-strategy.mdx` (repo-relative path — works from GitHub UI before the handbook PR is deployed).
-- Full-stack browser E2E (not covered here): `../../../../docs/handbook/engineering/playbooks/e2e-tests.mdx`
+- Full-stack browser E2E (not covered here): `../../../tests-e2e/README.md`
