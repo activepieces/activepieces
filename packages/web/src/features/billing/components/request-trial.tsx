@@ -1,16 +1,9 @@
-import { isNil } from '@activepieces/core-utils';
-import {
-  PlatformAdminSurface,
-  TelemetryEventName,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { SendIcon } from '@/components/icons/send';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
-import { userHooks } from '@/hooks/user-hooks';
-import { telemetryUtils } from '@/lib/telemetry-utils';
+
+import { OpenSalesParams, useOpenSales } from '../hooks/use-open-sales';
 
 export const RequestTrial = ({
   featureKey,
@@ -18,32 +11,13 @@ export const RequestTrial = ({
   buttonVariant = 'default',
   buttonSize = 'default',
 }: RequestTrialProps) => {
-  const { data: currentUser } = userHooks.useCurrentUser();
-  const { capture } = useTelemetry();
-
-  const handleClick = () => {
-    if (surface !== undefined) {
-      capture({
-        name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
-        payload: { feature: featureKey, surface },
-      });
-    }
-    capture({
-      name: TelemetryEventName.SALES_HANDOFF_CLICKED,
-      payload: { featureKey, surface: 'locked_feature' },
-    });
-    window.open(
-      buildSalesUrl({ currentUser, featureKey }),
-      '_blank',
-      'noopener noreferrer',
-    );
-  };
+  const openSales = useOpenSales({ featureKey, surface });
 
   return (
     <AnimatedIconButton
       variant={buttonVariant}
       size={buttonSize}
-      onClick={handleClick}
+      onClick={openSales}
       icon={SendIcon}
       iconSize={14}
     >
@@ -51,28 +25,6 @@ export const RequestTrial = ({
     </AnimatedIconButton>
   );
 };
-
-function buildSalesUrl({
-  currentUser,
-  featureKey,
-}: {
-  currentUser: UserWithMetaInformation | null | undefined;
-  featureKey: FeatureKey;
-}): string {
-  const url = new URL(SALES_URL);
-  url.searchParams.set('email', currentUser?.email ?? '');
-  url.searchParams.set('firstName', currentUser?.firstName ?? '');
-  url.searchParams.set('lastName', currentUser?.lastName ?? '');
-  url.searchParams.set('featureKey', featureKey);
-  url.searchParams.set('ap_cta', `app_${featureKey.toLowerCase()}`);
-  const sessionId = telemetryUtils.getSessionId();
-  if (!isNil(sessionId)) {
-    url.searchParams.set('ap_sid', sessionId);
-  }
-  return url.toString();
-}
-
-const SALES_URL = 'https://www.activepieces.com/sales';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -102,9 +54,7 @@ export type FeatureKey =
   | 'SECRET_MANAGERS'
   | 'DEDICATED_WORKERS';
 
-type RequestTrialProps = {
-  featureKey: FeatureKey;
-  surface?: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>;
+type RequestTrialProps = OpenSalesParams & {
   customButton?: React.ReactNode;
   buttonVariant?: 'default' | 'basic';
   buttonSize?: 'default' | 'sm' | 'xs';

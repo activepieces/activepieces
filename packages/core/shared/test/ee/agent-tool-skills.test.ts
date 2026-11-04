@@ -31,6 +31,11 @@ describe('agentToolSkills', () => {
             .toEqual({ toolName: 'ap_validate_flow', input: { flowId: 'x' } })
     })
 
+    it('keeps the labels set next to the extra input wrapper', () => {
+        expect(agentToolSkills.effectiveToolCall({ toolName: LAZY_TOOL_NAME, input: { title: 'Your flow', input: { tool: 'ap_validate_flow', input: { flowId: 'x' } } } }))
+            .toEqual({ toolName: 'ap_validate_flow', input: { flowId: 'x', title: 'Your flow' } })
+    })
+
     it('carries pill labels from the outer call into the inner input without overriding inner ones', () => {
         const effective = agentToolSkills.effectiveToolCall({
             toolName: LAZY_TOOL_NAME,

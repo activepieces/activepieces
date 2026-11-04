@@ -13,6 +13,7 @@ import { projectMemberRepo } from '../ee/projects/project-role/project-role.serv
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
+import { mcpGrantRevocation } from '../mcp/oauth/token/mcp-grant-revocation'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
@@ -123,6 +124,9 @@ export const userService = (log: FastifyBaseLogger) => ({
         else {
             await applyUpdate()
         }
+        if (status === UserStatus.INACTIVE) {
+            await mcpGrantRevocation.revokeActiveGrants({ scope: { userId: id, platformId }, log })
+        }
 
         return this.getMetaInformation({ id })
     },
@@ -208,6 +212,7 @@ export const userService = (log: FastifyBaseLogger) => ({
             })
             await deleteIdentityIfOrphaned({ identityId: user.identityId, entityManager })
         })
+        await mcpGrantRevocation.revokeActiveGrants({ scope: { userId: id, platformId }, log })
     },
     async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
@@ -231,6 +236,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         }, {
             lastLoggedInPlatformId: null,
         })
+        await mcpGrantRevocation.revokeActiveGrants({ scope: { userId: id, platformId }, log })
     },
 
     async getByPlatformRole(id: PlatformId, role: PlatformRole): Promise<UserSchema[]> {
@@ -280,6 +286,20 @@ export const userService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    isActive({ user, identity }: IsActiveParams): boolean {
+        return user.status === UserStatus.ACTIVE && identity.verified
+    },
+    async isActiveOnPlatform({ id, platformId }: GetOneByIdAndPlatformIdParams): Promise<boolean> {
+        const user = await userRepo().findOne({
+            where: { id, platformId },
+            relations: { identity: true },
+            select: { id: true, status: true, identity: { id: true, verified: true } },
+        })
+        if (isNil(user)) {
+            return false
+        }
+        return this.isActive({ user, identity: user.identity })
+    },
     isUserPrivileged(user: User): boolean {
         return user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     },
@@ -419,6 +439,11 @@ type GetOrCreateWithProjectParams = {
     identity: UserIdentity
     platformId: string
     platformRole?: PlatformRole
+}
+
+type IsActiveParams = {
+    user: Pick<User, 'status'>
+    identity: Pick<UserIdentity, 'verified'>
 }
 
 type GetOrCreateWithProjectResult = {

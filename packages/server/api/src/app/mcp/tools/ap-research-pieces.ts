@@ -133,9 +133,11 @@ export function fitBulkLookup({ found, missing, hints, forIntent }: { found: Fou
         }
     }
     return bulkResult({
-        pieces: found.map(({ name, displayName, actions, triggers }) => ({ name, displayName, actionCount: actions.length, triggerCount: triggers.length })),
+        pieces: found.map(({ name, displayName, actions, triggers, recommendedActions, recommendedTriggers }) => ({ name, displayName, actionCount: actions.length, triggerCount: triggers.length, recommendedActions, recommendedTriggers })),
         missing,
-        hints: [...hints, '⚠️ Too many actions to list for these pieces together: look up one piece at a time, with forIntent.'],
+        hints: [...hints, isNil(forIntent)
+            ? '⚠️ Too many actions to list for these pieces together: call again with the same pieceNames and forIntent to get the actions that match it.'
+            : '⚠️ Too many actions to list for these pieces together: recommendedActions and recommendedTriggers are the ones matching your intent.'],
     })
 }
 
