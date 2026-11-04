@@ -25,9 +25,10 @@ export const createEntity = createAction({
   },
   async run({ auth, propsValue }) {
     const { entityType, entityData } = propsValue;
+    const data = base44Common.requireJsonObject({ value: entityData, label: 'Entity Data' });
     const handler = await base44Common.getEntityHandler({ auth: auth.props, entityType });
     try {
-      const result = await handler.create(base44Common.toRecord(entityData));
+      const result = await handler.create(data);
       return base44Common.toRecord(result);
     } catch (error: unknown) {
       throw base44Common.toBase44Error({ error, entityType, operation: 'create the record' });

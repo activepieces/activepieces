@@ -89,6 +89,42 @@ describe('base44 actions', () => {
     expect(result).toEqual({ found: false, created: true, entity: { id: 'new' } });
   });
 
+  it('find or create rejects an array query before calling the API', async () => {
+    await expect(
+      run({ action: findOrCreateEntity, propsValue: { entityType: 'Product', searchQuery: [{ name: 'A' }], createData: { name: 'A' } } }),
+    ).rejects.toThrow('Search Query must be a JSON object');
+    expect(createClient).not.toHaveBeenCalled();
+    expect(handler.filter).not.toHaveBeenCalled();
+    expect(handler.create).not.toHaveBeenCalled();
+  });
+
+  it('create rejects a non-object entity data before calling the API', async () => {
+    await expect(run({ action: createEntity, propsValue: { entityType: 'Product', entityData: 42 } })).rejects.toThrow(
+      'Entity Data must be a JSON object',
+    );
+    expect(handler.create).not.toHaveBeenCalled();
+  });
+
+  it('find rejects invalid JSON text', async () => {
+    await expect(run({ action: findEntity, propsValue: { entityType: 'Product', searchQuery: '{name' } })).rejects.toThrow(
+      'Search Query is not valid JSON',
+    );
+    expect(handler.filter).not.toHaveBeenCalled();
+  });
+
+  it('find accepts a query passed as JSON text', async () => {
+    handler.filter.mockResolvedValue([]);
+    await run({ action: findEntity, propsValue: { entityType: 'Product', searchQuery: '{"name":"A"}' } });
+    expect(handler.filter).toHaveBeenCalledWith({ name: 'A' }, undefined, 50);
+  });
+
+  it('update rejects an array before calling the API', async () => {
+    await expect(
+      run({ action: updateEntityRecord, propsValue: { entityType: 'Product', recordId: 'r1', updateData: ['x'] } }),
+    ).rejects.toThrow('Update Data must be a JSON object');
+    expect(handler.update).not.toHaveBeenCalled();
+  });
+
   it('find or create is human only', () => {
     expect(findOrCreateEntity.audience).toBe('human');
   });

@@ -19,8 +19,6 @@ function toEpoch(value: unknown): number {
   return new Date(normalized).getTime();
 }
 
-// Full-precision instant in microseconds since epoch. Date only keeps milliseconds,
-// so the fractional seconds are read separately (padded/truncated to 6 digits).
 function toEpochMicros(value: unknown): number {
   const epochMs = toEpoch(value);
   if (Number.isNaN(epochMs) || typeof value !== 'string') {

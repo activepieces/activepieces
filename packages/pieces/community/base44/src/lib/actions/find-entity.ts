@@ -42,11 +42,12 @@ export const findEntity = createAction({
   },
   async run({ auth, propsValue }) {
     const { entityType, searchQuery, sort, limit } = propsValue;
+    const query = base44Common.requireJsonObject({ value: searchQuery, label: 'Search Query' });
     const handler = await base44Common.getEntityHandler({ auth: auth.props, entityType });
     try {
       const results = base44Common.toRecordList(
         await handler.filter(
-          base44Common.toRecord(searchQuery),
+          query,
           base44Common.toSortField(sort),
           base44Common.clampLimit({ limit, fallback: base44Common.DEFAULT_LIMIT }),
         ),

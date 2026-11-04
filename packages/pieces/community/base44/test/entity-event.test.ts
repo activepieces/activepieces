@@ -108,13 +108,18 @@ describe('entity event scheduled poll (run)', () => {
     };
     return { store, data };
   }
-  function ctx(store: unknown, eventType: string) {
-    return {
+  async function poll({ store, eventType }: { store: unknown; eventType: string }): Promise<Record<string, unknown>[]> {
+    const context = {
       store,
       auth: { props: { appId: 'app', token: 'tok' } },
       propsValue: { entityType: 'Product', eventType },
       files: {},
-    } as unknown as Parameters<typeof entityEvent.run>[0];
+    };
+    const result: unknown = await Reflect.apply(entityEvent.run, entityEvent, [context]);
+    if (!Array.isArray(result)) {
+      throw new Error('expected an array of items');
+    }
+    return result.filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null);
   }
 
   it('created mode lists by -created_date with limit 500 and emits new records', async () => {
@@ -123,7 +128,7 @@ describe('entity event scheduled poll (run)', () => {
       { id: 'old', created_date: '2026-11-01T11:00:00.000000', updated_date: '2026-11-01T11:00:00.000000' },
     ]);
     const { store, data } = setup(list);
-    const items = (await entityEvent.run(ctx(store, 'created'))) as Record<string, unknown>[];
+    const items = await poll({ store, eventType: 'created' });
     expect(list).toHaveBeenCalledWith('-created_date', 500);
     expect(items.map((i) => i['id'])).toEqual(['new']);
     expect(items[0]).toMatchObject({ name: 'Widget', _eventType: 'created', _entityType: 'Product' });
@@ -136,7 +141,7 @@ describe('entity event scheduled poll (run)', () => {
       { id: 'fresh', created_date: '2026-11-01T12:30:00.000000', updated_date: '2026-11-01T12:30:00.000000' },
     ]);
     const { store } = setup(list);
-    const items = (await entityEvent.run(ctx(store, 'updated'))) as Record<string, unknown>[];
+    const items = await poll({ store, eventType: 'updated' });
     expect(list).toHaveBeenCalledWith('-updated_date', 500);
     expect(items.map((i) => i['id'])).toEqual(['edited']);
     expect(items[0]['_eventType']).toBe('updated');
@@ -145,7 +150,7 @@ describe('entity event scheduled poll (run)', () => {
   it('propagates a rejected SDK request', async () => {
     const list = vi.fn().mockRejectedValue(Object.assign(new Error('Request failed'), { status: 500 }));
     const { store, data } = setup(list);
-    await expect(entityEvent.run(ctx(store, 'created'))).rejects.toThrow();
+    await expect(poll({ store, eventType: 'created' })).rejects.toThrow();
     expect(list).toHaveBeenCalledWith('-created_date', 500);
     expect(data['lastPoll']).toBe(lastPoll);
   });

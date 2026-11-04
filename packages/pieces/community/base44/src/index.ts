@@ -17,7 +17,7 @@ export const base44 = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/base44.png",
   categories: [PieceCategory.DEVELOPER_TOOLS, PieceCategory.PRODUCTIVITY],
-  authors: ["onyedikachi-david"],
+  authors: ["onyedikachi-david", "OdaiAhmed99"],
   actions: [
     createEntity,
     findEntity,

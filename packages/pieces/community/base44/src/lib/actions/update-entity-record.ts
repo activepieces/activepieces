@@ -30,7 +30,7 @@ export const updateEntityRecord = createAction({
   },
   async run({ auth, propsValue }) {
     const { entityType, recordId, updateData } = propsValue;
-    const data = base44Common.toRecord(updateData);
+    const data = base44Common.requireJsonObject({ value: updateData, label: 'Update Data' });
     if (Object.keys(data).length === 0) {
       throw new Error('Update Data must contain at least one field.');
     }

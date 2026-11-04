@@ -36,15 +36,17 @@ export const findOrCreateEntity = createAction({
   },
   async run({ auth, propsValue }) {
     const { entityType, searchQuery, createData } = propsValue;
+    const query = base44Common.requireJsonObject({ value: searchQuery, label: 'Search Query' });
+    const data = base44Common.requireJsonObject({ value: createData, label: 'Create Data' });
     const handler = await base44Common.getEntityHandler({ auth: auth.props, entityType });
     try {
       const results = base44Common.toRecordList(
-        await handler.filter(base44Common.toRecord(searchQuery), undefined, 1),
+        await handler.filter(query, undefined, 1),
       );
       if (results.length > 0) {
         return { found: true, created: false, entity: results[0] };
       }
-      const newEntity = await handler.create(base44Common.toRecord(createData));
+      const newEntity = await handler.create(data);
       return { found: false, created: true, entity: base44Common.toRecord(newEntity) };
     } catch (error: unknown) {
       throw base44Common.toBase44Error({ error, entityType, operation: 'find or create the record' });

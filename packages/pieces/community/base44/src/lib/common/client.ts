@@ -89,6 +89,28 @@ function toRecord(value: unknown): EntityRecordData {
   );
 }
 
+function requireJsonObject({ value, label }: { value: unknown; label: string }): EntityRecordData {
+  if (value === undefined || value === null) {
+    return {};
+  }
+  const parsed = typeof value === 'string' ? parseJson({ text: value, label }) : value;
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error(`${label} must be a JSON object, for example {"name": "Widget"}.`);
+  }
+  return { ...parsed };
+}
+
+function parseJson({ text, label }: { text: string; label: string }): unknown {
+  if (!text.trim()) {
+    return {};
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`${label} is not valid JSON. Use a JSON object, for example {"name": "Widget"}.`);
+  }
+}
+
 function normalizeTimestamp(value: unknown): unknown {
   if (typeof value !== 'string' || !NAIVE_ISO_PATTERN.test(value)) {
     return value;
@@ -128,8 +150,6 @@ class Base44ActionError extends Error {
   }
 }
 
-// Built-in Base44 fields only. Records also carry every app-defined field of the
-// entity (e.g. name, status) as top-level keys; those vary per app and are not fixed here.
 const recordFields: OutputSchema['fields'] = [
   { key: 'id', label: 'Record ID', description: 'Built-in record ID. Records also include every app-defined field of the entity (e.g. name, status) as top-level keys, referenced by their field name.' },
   { key: 'created_date', label: 'Created Date', format: 'datetime' },
@@ -193,6 +213,7 @@ export const base44Common = {
   requireText,
   toBase44Error,
   toRecord,
+  requireJsonObject,
   normalizeTimestamp,
   toRecordList,
   toSortField,
