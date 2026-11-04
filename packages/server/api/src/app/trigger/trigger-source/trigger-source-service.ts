@@ -1,4 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, FlowId, isNil, tryCatch } from '@activepieces/core-utils'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
 import { FlowVersion, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
@@ -6,6 +7,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { templateTelemetryService } from '../../template/template-telemetry/template-telemetry.service'
 import { jobQueue } from '../../workers/job-queue/job-queue'
+import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { flowTriggerSideEffect } from './flow-trigger-side-effect'
 import { TriggerSourceEntity } from './trigger-source-entity'
 import { triggerUtils } from './trigger-utils'
@@ -190,11 +192,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             const flowVersion = await flowVersionService(log).getOneOrThrow(triggerSource.flowVersionId)
             const pieceTrigger = await triggerUtils(log).getPieceTrigger({ flowVersion, projectId })
             if (!isNil(pieceTrigger)) {
-                const otherSourceExists = await triggerSourceRepo().existsBy({
-                    flowId,
-                    projectId,
-                    simulate: !simulate,
-                })
                 await flowTriggerSideEffect(log).disable({
                     flowId: triggerSource.flowId,
                     flowVersionId: triggerSource.flowVersionId,
@@ -205,7 +202,6 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                     ignoreError: params.ignoreError,
                     isRepublish: params.isRepublish,
                     isTriggerUnchanged: params.isTriggerUnchanged,
-                    keepAppEventListeners: otherSourceExists,
                 })
                 log.info('[triggerSourceService#disable] Disabled flow trigger side effect')
             }
@@ -214,6 +210,9 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 projectId,
             })
             log.info('[triggerSourceService#disable] Soft deleted trigger source')
+            if (pieceTrigger?.type === TriggerStrategy.APP_WEBHOOK) {
+                await deleteAppEventListenersIfUnused({ flowId, projectId, otherSourceSimulate: !simulate })
+            }
             if (templateId) {
                 templateTelemetryService(log).sendEvent({
                     event: {
@@ -226,6 +225,24 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             }
         },
     }
+}
+
+async function deleteAppEventListenersIfUnused({ flowId, projectId, otherSourceSimulate }: DeleteAppEventListenersIfUnusedParams): Promise<void> {
+    const otherSourceExists = await triggerSourceRepo().existsBy({
+        flowId,
+        projectId,
+        simulate: otherSourceSimulate,
+    })
+    if (otherSourceExists) {
+        return
+    }
+    await appEventRoutingService.deleteListeners({ projectId, flowId })
+}
+
+type DeleteAppEventListenersIfUnusedParams = {
+    flowId: FlowId
+    projectId: string
+    otherSourceSimulate: boolean
 }
 
 type ExistsByFlowIdParams = {

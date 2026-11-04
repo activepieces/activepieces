@@ -80,18 +80,12 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             if (environment === ApEnvironment.TESTING) {
                 return
             }
-            const { flowId, flowVersionId, projectId, pieceTrigger, isRepublish, keepAppEventListeners } = params
+            const { flowVersionId, pieceTrigger, isRepublish } = params
             if (pieceTrigger.type !== TriggerStrategy.POLLING || isRepublish !== true) {
                 await runDisableHook({ params, log })
             }
             switch (pieceTrigger.type) {
                 case TriggerStrategy.APP_WEBHOOK:
-                    if (!keepAppEventListeners) {
-                        await appEventRoutingService.deleteListeners({
-                            projectId,
-                            flowId,
-                        })
-                    }
                     break
                 case TriggerStrategy.WEBHOOK: {
                     const renewConfiguration = pieceTrigger.renewConfiguration
@@ -263,7 +257,6 @@ type EnableFlowTriggerParams = {
 
 type DisableFlowTriggerParams = Omit<EnableFlowTriggerParams, 'previousSchedule'> & {
     ignoreError: boolean
-    keepAppEventListeners: boolean
 }
 
 type RunDisableHookParams = {

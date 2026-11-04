@@ -360,24 +360,6 @@ describe('flowTriggerSideEffect', () => {
                 flowVersionId: 'fv-1',
             })
         })
-
-        it('should still delete app event listeners when engine call fails and ignoreError is true', async () => {
-            mockSubmitAndWaitForResponse.mockRejectedValue(new Error('timeout'))
-
-            await flowTriggerSideEffect(mockLog).disable({
-                ...BASE_PARAMS,
-                pieceTrigger: {
-                    ...makePollingTrigger(),
-                    type: TriggerStrategy.APP_WEBHOOK,
-                },
-                ignoreError: true,
-            })
-
-            expect(mockDeleteListeners).toHaveBeenCalledWith({
-                projectId: 'proj-1',
-                flowId: 'flow-1',
-            })
-        })
     })
 
     describe('republish with an unchanged trigger', () => {
