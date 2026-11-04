@@ -11,12 +11,11 @@ export const getChatters = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'List users connected to a Twitch channel\'s chat (default: the connected account\'s channel). Requires moderator:read:chatters; the connected account (or moderator_id) must be the broadcaster or a moderator. The list can lag a few minutes. Returns chatters[] (user_id, user_login, user_name), total, count and next_cursor.',
+      'List users connected to a Twitch channel\'s chat (default: the connected account\'s channel). Requires moderator:read:chatters; the connected account acts as the moderator and must be the broadcaster or a moderator. The list can lag a few minutes. Returns chatters[] (user_id, user_login, user_name), total, count and next_cursor.',
     idempotent: true,
   },
   props: {
     broadcaster_id: twitchCommon.props.broadcasterId(),
-    moderator_id: twitchCommon.props.moderatorId(),
     limit: twitchCommon.props.limit({ max: 5000 }),
   },
   outputSchema: {
@@ -33,7 +32,7 @@ export const getChatters = createAction({
   async run({ auth, propsValue }) {
     const limit = twitchCommon.validateLimitMax({ limit: propsValue.limit, max: 5000 });
     const broadcasterId = await twitchCommon.resolveUserId({ auth, value: propsValue.broadcaster_id });
-    const moderatorId = await twitchCommon.resolveUserId({ auth, value: propsValue.moderator_id });
+    const { id: moderatorId } = await twitchCommon.getTokenUser({ auth });
     const { items, nextCursor, total } = await twitchCommon.paginate<Record<string, unknown>>({
       auth,
       path: '/chat/chatters',

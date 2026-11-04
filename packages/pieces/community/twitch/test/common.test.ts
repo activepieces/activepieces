@@ -9,6 +9,7 @@ import { getPolls } from '../src/lib/actions/get-polls';
 import { sendShoutout } from '../src/lib/actions/send-shoutout';
 import { getStreamMarkers } from '../src/lib/actions/get-stream-markers';
 import { streamStarted } from '../src/lib/triggers/stream-started';
+import { createMockPollingTriggerContext } from '@activepieces/pieces-framework';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { twitchCommon } from '../src/lib/common';
 describe('twitchCommon.normalizeLogin', () => {
@@ -135,6 +136,19 @@ describe('moderation: ban_user', () => {
   });
 });
 
+describe('moderation: moderator is always the token user', () => {
+  it('no action exposes a Moderator ID input', async () => {
+    const { twitch } = await import('../src');
+    const withModeratorProp = Object.values(twitch.actions()).filter((action) => 'moderator_id' in action.props);
+    expect(withModeratorProp.map((action) => action.name)).toEqual([]);
+  });
+  it('ignores a stray moderator_id and sends the token user', async () => {
+    const calls = mockTwitch(() => ({ status: 200, body: { data: [] } }));
+    await getChatters.run(ctx({ broadcaster_id: '999', moderator_id: '555' }));
+    expect(calls.find((c) => c.url.includes('/chat/chatters'))?.url).toContain('broadcaster_id=999&moderator_id=111');
+  });
+});
+
 describe('moderation: update_chat_settings', () => {
   it('sends only changed modes, and a duration turns its mode on', async () => {
     const calls = mockTwitch(() => ({ status: 200, body: { data: [{ slow_mode: true }] } }));
@@ -211,30 +225,70 @@ describe('twitchCommon.unixToIso', () => {
 });
 
 describe('markers: get_stream_markers', () => {
-  it('maps the uppercase URL field to url', async () => {
-    mockTwitch(() => ({
-      status: 200,
-      body: {
-        data: [
-          {
-            user_id: '111',
-            videos: [{ video_id: 'v1', markers: [{ id: 'm1', position_seconds: 10, URL: 'https://twitch.tv/videos/v1?t=0h0m10s' }] }],
-          },
-        ],
-        pagination: {},
-      },
-    }));
+  function markerPage({ ids, cursor }: { ids: string[]; cursor?: string }) {
+    return {
+      data: [
+        {
+          user_id: '111',
+          user_login: 'me',
+          user_name: 'Me',
+          videos: [
+            {
+              video_id: 'v1',
+              markers: ids.map((id, i) => ({ id, position_seconds: i, URL: `https://twitch.tv/videos/v1?t=${i}s` })),
+            },
+          ],
+        },
+      ],
+      pagination: cursor ? { cursor } : {},
+    };
+  }
+
+  it('returns one flat item per marker and maps URL to url', async () => {
+    mockTwitch(() => ({ status: 200, body: markerPage({ ids: ['m1', 'm2'] }) }));
     const result = await getStreamMarkers.run(ctx({ user_id: '111' }));
     expect(result).toEqual({
       markers: [
-        {
-          user_id: '111',
-          videos: [{ video_id: 'v1', markers: [{ id: 'm1', position_seconds: 10, url: 'https://twitch.tv/videos/v1?t=0h0m10s' }] }],
-        },
+        { id: 'm1', position_seconds: 0, url: 'https://twitch.tv/videos/v1?t=0s', video_id: 'v1', user_id: '111', user_login: 'me', user_name: 'Me' },
+        { id: 'm2', position_seconds: 1, url: 'https://twitch.tv/videos/v1?t=1s', video_id: 'v1', user_id: '111', user_login: 'me', user_name: 'Me' },
       ],
-      count: 1,
+      count: 2,
       next_cursor: null,
     });
+  });
+
+  it('counts markers, not pages, and sizes first from the markers still needed', async () => {
+    const ids = ({ from, count }: { from: number; count: number }) => Array.from({ length: count }, (_, i) => `m${from + i}`);
+    const calls = mockTwitch((req) => {
+      const q = new URL(req.url).searchParams;
+      const first = Number(q.get('first'));
+      return q.get('after') === 'c1'
+        ? { status: 200, body: markerPage({ ids: ids({ from: 100, count: first }), cursor: 'c2' }) }
+        : { status: 200, body: markerPage({ ids: ids({ from: 0, count: first }), cursor: 'c1' }) };
+    });
+    const result = await getStreamMarkers.run(ctx({ video_id: 'v1', limit: 150 }));
+    const firsts = calls.map((c) => new URL(c.url).searchParams.get('first'));
+    expect(firsts).toEqual(['100', '50']);
+    expect(result).toMatchObject({ count: 150, next_cursor: 'c2' });
+    expect(result).toHaveProperty('markers.length', 150);
+  });
+
+  it('stops at the default limit of 20 in one request', async () => {
+    const calls = mockTwitch((req) => {
+      const first = Number(new URL(req.url).searchParams.get('first'));
+      return { status: 200, body: markerPage({ ids: Array.from({ length: first }, (_, i) => `m${i}`), cursor: 'c1' }) };
+    });
+    const result = await getStreamMarkers.run(ctx({ user_id: '111' }));
+    expect(calls).toHaveLength(1);
+    expect(new URL(calls[0].url).searchParams.get('first')).toBe('20');
+    expect(result).toMatchObject({ count: 20 });
+  });
+
+  it('refuses both or neither of user_id and video_id', async () => {
+    const calls = mockTwitch(() => ({ status: 200, body: markerPage({ ids: [] }) }));
+    await expect(getStreamMarkers.run(ctx({}))).rejects.toThrow('exactly one');
+    await expect(getStreamMarkers.run(ctx({ user_id: '1', video_id: 'v' }))).rejects.toThrow('exactly one');
+    expect(calls).toHaveLength(0);
   });
 });
 
@@ -260,39 +314,69 @@ describe('social: send_shoutout', () => {
 });
 
 function memoryStore() {
-  const data: Record<string, unknown> = {};
+  const data = new Map<string, unknown>();
   return {
     data,
-    get: async <T>(key: string) => (key in data ? (data[key] as T) : null),
+    get: async <T>(key: string): Promise<T | null> => {
+      const value: unknown = data.get(key);
+      return isPresent<T>(value) ? value : null;
+    },
     put: async <T>(key: string, value: T) => {
-      data[key] = value;
+      data.set(key, value);
       return value;
     },
     delete: async (key: string) => {
-      delete data[key];
+      data.delete(key);
     },
   };
 }
 
-function liveStream(i: number, startedAt: string) {
+function isPresent<T>(value: unknown): value is T {
+  return value !== undefined;
+}
+
+function seenIds({ store }: { store: ReturnType<typeof memoryStore> }): string[] {
+  const seen = store.data.get('seenStreams');
+  return seen !== null && typeof seen === 'object' ? Object.keys(seen) : [];
+}
+
+function idsOf(result: unknown[]): unknown[] {
+  return result.map((item) => (item !== null && typeof item === 'object' && 'id' in item ? item.id : undefined));
+}
+
+function liveStream({ i, startedAt }: { i: number; startedAt: string }) {
   return { id: `s${i}`, user_login: `user${i}`, started_at: startedAt, tag_ids: [], tags: ['English'] };
 }
 
-function triggerCtx(streamers: unknown[], store = memoryStore()) {
-  return { auth: { access_token: 'tok', client_id: 'cid' }, propsValue: { streamers }, store, files: {} } as never;
+function triggerCtx({
+  streamers,
+  store = memoryStore(),
+  isRepublish,
+}: {
+  streamers: unknown[];
+  store?: ReturnType<typeof memoryStore>;
+  isRepublish?: boolean;
+}) {
+  return {
+    ...createMockPollingTriggerContext({ propsValue: { streamers } }),
+    auth: { access_token: 'tok', client_id: 'cid', data: {} },
+    store,
+    isRepublish,
+    files: { write: async () => 'file-url' },
+  };
 }
 
 describe('trigger: stream_started', () => {
   it('makes no request and throws when every entry is blank or invalid', async () => {
     const calls = mockTwitch(() => ({ status: 200, body: { data: [] } }));
-    await expect(streamStarted.test(triggerCtx(['', '  ', 'https://twitch.tv/']))).rejects.toThrow('at least one valid Twitch username');
+    await expect(streamStarted.test(triggerCtx({ streamers: ['', '  ', 'https://twitch.tv/'] }))).rejects.toThrow('at least one valid Twitch username');
     expect(calls).toHaveLength(0);
   });
 
   it('splits more than 100 logins into requests of at most 100 with first=100', async () => {
     const calls = mockTwitch(() => ({ status: 200, body: { data: [] } }));
     const logins = Array.from({ length: 250 }, (_, i) => `user${i}`);
-    await streamStarted.test(triggerCtx(logins));
+    await streamStarted.test(triggerCtx({ streamers: logins }));
     const streams = calls.filter((c) => c.url.startsWith('https://api.twitch.tv/helix/streams'));
     expect(streams).toHaveLength(3);
     const perRequest = streams.map((c) => new URL(c.url).searchParams);
@@ -301,29 +385,69 @@ describe('trigger: stream_started', () => {
     expect(perRequest.flatMap((q) => q.getAll('user_login'))).toEqual(logins);
   });
 
-  it('returns every live stream when more than 20 are live', async () => {
-    const live = Array.from({ length: 30 }, (_, i) => liveStream(i, new Date(Date.UTC(2030, 0, 1, 0, i)).toISOString()));
+  it('returns every new live stream when more than 20 are live', async () => {
+    const live = Array.from({ length: 30 }, (_, i) => liveStream({ i, startedAt: new Date(Date.UTC(2030, 0, 1, 0, i)).toISOString() }));
     mockTwitch(() => ({ status: 200, body: { data: live } }));
     const store = memoryStore();
-    const logins = live.map((s) => s.user_login);
-    await store.put('lastPoll', Date.UTC(2029, 0, 1));
-    const result = (await streamStarted.run(triggerCtx(logins, store))) as Array<Record<string, unknown>>;
+    await store.put('seenStreams', {});
+    const result = await streamStarted.run(triggerCtx({ streamers: live.map((s) => s.user_login), store }));
     expect(result).toHaveLength(30);
     expect(result[0]).not.toHaveProperty('tag_ids');
   });
 
-  it('does not fire the same streams again on the next poll', async () => {
-    const now = Date.now();
-    const live = [liveStream(1, new Date(now + 60_000).toISOString()), liveStream(2, new Date(now + 120_000).toISOString())];
+  it('does not fire for streams already live when enabled, then fires each new stream once', async () => {
+    let live = [liveStream({ i: 1, startedAt: '2030-01-01T00:00:00Z' })];
     mockTwitch(() => ({ status: 200, body: { data: live } }));
     const store = memoryStore();
-    const context = triggerCtx(['user1', 'user2'], store);
+    const context = triggerCtx({ streamers: ['user1', 'user2'], store });
     await streamStarted.onEnable(context);
-    expect(typeof store.data['lastPoll']).toBe('number');
-    const first = (await streamStarted.run(context)) as Array<{ id: string }>;
-    expect(first.map((s) => s.id)).toEqual(['s1', 's2']);
-    expect(store.data['lastPoll']).toBe(now + 120_000);
-    const second = await streamStarted.run(context);
-    expect(second).toEqual([]);
+    expect(seenIds({ store })).toEqual(['s1']);
+    expect(await streamStarted.run(context)).toEqual([]);
+    live = [liveStream({ i: 1, startedAt: '2030-01-01T00:00:00Z' }), liveStream({ i: 2, startedAt: '2030-01-01T01:00:00Z' })];
+    expect(idsOf(await streamStarted.run(context))).toEqual(['s2']);
+    expect(await streamStarted.run(context)).toEqual([]);
+  });
+
+  it('fires a stream that Helix lists late even if it started before one already seen', async () => {
+    let live = [liveStream({ i: 2, startedAt: '2030-01-01T00:05:00Z' })];
+    mockTwitch(() => ({ status: 200, body: { data: live } }));
+    const store = memoryStore();
+    await store.put('seenStreams', {});
+    const context = triggerCtx({ streamers: ['user1', 'user2'], store });
+    expect(idsOf(await streamStarted.run(context))).toEqual(['s2']);
+    live = [liveStream({ i: 1, startedAt: '2030-01-01T00:04:00Z' }), liveStream({ i: 2, startedAt: '2030-01-01T00:05:00Z' })];
+    expect(idsOf(await streamStarted.run(context))).toEqual(['s1']);
+  });
+
+  it('keeps its state on republish and clears it on a real disable', async () => {
+    mockTwitch(() => ({ status: 200, body: { data: [liveStream({ i: 1, startedAt: '2030-01-01T00:00:00Z' })] } }));
+    const store = memoryStore();
+    await store.put('seenStreams', { s9: Date.now() });
+    const republish = triggerCtx({ streamers: ['user1'], store, isRepublish: true });
+    await streamStarted.onDisable(republish);
+    await streamStarted.onEnable(republish);
+    expect(seenIds({ store })).toEqual(['s9']);
+    await streamStarted.onDisable(triggerCtx({ streamers: ['user1'], store }));
+    expect(store.data.has('seenStreams')).toBe(false);
+  });
+
+  it('after an upgrade from lastPoll, still fires streams that started after the last check', async () => {
+    mockTwitch(() => ({
+      status: 200,
+      body: { data: [liveStream({ i: 1, startedAt: '2030-01-01T00:00:00Z' }), liveStream({ i: 2, startedAt: '2030-01-01T02:00:00Z' })] },
+    }));
+    const store = memoryStore();
+    await store.put('lastPoll', Date.parse('2030-01-01T01:00:00Z'));
+    await streamStarted.onEnable(triggerCtx({ streamers: ['user1', 'user2'], store, isRepublish: true }));
+    expect(store.data.has('lastPoll')).toBe(false);
+    expect(idsOf(await streamStarted.run(triggerCtx({ streamers: ['user1', 'user2'], store })))).toEqual(['s2']);
+  });
+
+  it('forgets stream IDs not seen for a day', async () => {
+    mockTwitch(() => ({ status: 200, body: { data: [] } }));
+    const store = memoryStore();
+    await store.put('seenStreams', { old: Date.now() - 25 * 60 * 60 * 1000, recent: Date.now() });
+    await streamStarted.run(triggerCtx({ streamers: ['user1'], store }));
+    expect(seenIds({ store })).toEqual(['recent']);
   });
 });

@@ -12,12 +12,11 @@ export const updateChatSettings = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Change chat settings of a Twitch channel (default: the connected account). Requires moderator:manage:chat_settings and moderator rights. Each mode is "yes" (on), "no" (off) or left empty (unchanged): emote_mode, follower_mode (+ follower_mode_duration 0-129600 minutes), slow_mode (+ slow_mode_wait_time 3-120 seconds), subscriber_mode, unique_chat_mode, non_moderator_chat_delay (+ duration 2, 4 or 6 seconds). Setting a duration also turns its mode on. Returns the full updated settings. Repeating the same call leaves chat unchanged.',
+      'Change chat settings of a Twitch channel (default: the connected account). Requires moderator:manage:chat_settings; the connected account acts as the moderator and must have moderator rights. Each mode is "yes" (on), "no" (off) or left empty (unchanged): emote_mode, follower_mode (+ follower_mode_duration 0-129600 minutes), slow_mode (+ slow_mode_wait_time 3-120 seconds), subscriber_mode, unique_chat_mode, non_moderator_chat_delay (+ duration 2, 4 or 6 seconds). Setting a duration also turns its mode on. Returns the full updated settings. Repeating the same call leaves chat unchanged.',
     idempotent: true,
   },
   props: {
     broadcaster_id: twitchCommon.props.broadcasterId(),
-    moderator_id: twitchCommon.props.moderatorId(),
     emote_mode: twitchCommon.props.yesNo({ displayName: 'Emote-Only Mode', description: 'Leave empty to keep the current value.' }),
     follower_mode: twitchCommon.props.yesNo({ displayName: 'Follower-Only Mode', description: 'Leave empty to keep the current value.' }),
     follower_mode_duration: Property.Number({
@@ -87,7 +86,7 @@ export const updateChatSettings = createAction({
       throw new Error('Provide at least one chat setting to change.');
     }
     const broadcasterId = await twitchCommon.resolveUserId({ auth, value: propsValue.broadcaster_id });
-    const moderatorId = await twitchCommon.resolveUserId({ auth, value: propsValue.moderator_id });
+    const { id: moderatorId } = await twitchCommon.getTokenUser({ auth });
     const response = await twitchCommon.request<HelixPage<Record<string, unknown>>>({
       auth,
       method: HttpMethod.PATCH,

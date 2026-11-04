@@ -8,7 +8,7 @@ export const getClips = createAction({
   name: 'get_clips',
   displayName: 'Get Clips',
   description: 'List clips of a broadcaster or category, or get clips by ID.',
-  classification: 'READ',
+  classification: 'SEARCH',
   audience: 'both',
   aiMetadata: {
     description:

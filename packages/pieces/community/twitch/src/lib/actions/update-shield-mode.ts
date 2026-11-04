@@ -12,12 +12,11 @@ export const updateShieldMode = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Turn Shield Mode (Twitch\'s anti-harassment lockdown) on or off in a channel (default: the connected account). Requires moderator:manage:shield_mode and moderator rights. active is "yes" (on) or "no" (off). Returns is_active, moderator_id, moderator_login, moderator_name and last_activated_at. Repeating with the same value changes nothing.',
+      'Turn Shield Mode (Twitch\'s anti-harassment lockdown) on or off in a channel (default: the connected account). Requires moderator:manage:shield_mode; the connected account acts as the moderator and must have moderator rights. active is "yes" (on) or "no" (off). Returns is_active, moderator_id, moderator_login, moderator_name and last_activated_at. Repeating with the same value changes nothing.',
     idempotent: true,
   },
   props: {
     broadcaster_id: twitchCommon.props.broadcasterId(),
-    moderator_id: twitchCommon.props.moderatorId(),
     active: Property.StaticDropdown({
       displayName: 'Shield Mode',
       required: true,
@@ -44,7 +43,7 @@ export const updateShieldMode = createAction({
       throw new Error('Choose whether Shield Mode should be on or off.');
     }
     const broadcasterId = await twitchCommon.resolveUserId({ auth, value: propsValue.broadcaster_id });
-    const moderatorId = await twitchCommon.resolveUserId({ auth, value: propsValue.moderator_id });
+    const { id: moderatorId } = await twitchCommon.getTokenUser({ auth });
     const response = await twitchCommon.request<HelixPage<Record<string, unknown>>>({
       auth,
       method: HttpMethod.PUT,

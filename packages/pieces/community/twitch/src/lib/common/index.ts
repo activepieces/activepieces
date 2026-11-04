@@ -320,14 +320,6 @@ function broadcasterIdProp() {
   });
 }
 
-function moderatorIdProp() {
-  return Property.ShortText({
-    displayName: 'Moderator ID',
-    description: 'Numeric Twitch user ID acting as moderator. Leave empty to use your own account.',
-    required: false,
-  });
-}
-
 function userIdProp({ displayName, description }: { displayName: string; description: string }) {
   return Property.ShortText({ displayName, description, required: true });
 }
@@ -420,7 +412,6 @@ export const twitchCommon = {
   validateLimitMax,
   props: {
     broadcasterId: broadcasterIdProp,
-    moderatorId: moderatorIdProp,
     userId: userIdProp,
     limit: limitProp,
     yesNo: yesNoProp,

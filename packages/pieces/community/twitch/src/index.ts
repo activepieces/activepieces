@@ -59,7 +59,7 @@ export const twitch = createPiece({
   auth: twitchAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/twitch.png',
-  authors: ['arinmakk', 'sanket-a11y'],
+  authors: ['arinmakk', 'sanket-a11y', 'OdaiAhmed99'],
   description:
     "Twitch is the world's leading live streaming platform for gamers and the things we love!",
   actions: [

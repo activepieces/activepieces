@@ -12,12 +12,11 @@ export const unbanUser = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Remove a ban or an active timeout from a user in a Twitch channel\'s chat (default channel: the connected account). Requires moderator:manage:banned_users and moderator rights. Twitch answers 400 if the user is not banned, so a repeat call fails. Returns success, broadcaster_id, moderator_id and user_id.',
+      'Remove a ban or an active timeout from a user in a Twitch channel\'s chat (default channel: the connected account). Requires moderator:manage:banned_users; the connected account acts as the moderator and must have moderator rights. Twitch answers 400 if the user is not banned, so a repeat call fails. Returns success, broadcaster_id, moderator_id and user_id.',
     idempotent: false,
   },
   props: {
     broadcaster_id: twitchCommon.props.broadcasterId(),
-    moderator_id: twitchCommon.props.moderatorId(),
     user_id: twitchCommon.props.userId({ displayName: 'User ID', description: 'Numeric Twitch ID of the banned user.' }),
   },
   outputSchema: {
@@ -31,7 +30,7 @@ export const unbanUser = createAction({
   async run({ auth, propsValue }) {
     const userId = twitchCommon.requiredText({ value: propsValue.user_id, label: 'User ID' });
     const broadcasterId = await twitchCommon.resolveUserId({ auth, value: propsValue.broadcaster_id });
-    const moderatorId = await twitchCommon.resolveUserId({ auth, value: propsValue.moderator_id });
+    const { id: moderatorId } = await twitchCommon.getTokenUser({ auth });
     await twitchCommon.request<unknown>({
       auth,
       method: HttpMethod.DELETE,

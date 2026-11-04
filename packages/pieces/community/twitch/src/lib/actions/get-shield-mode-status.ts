@@ -12,12 +12,11 @@ export const getShieldModeStatus = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Get the Shield Mode status of a Twitch channel (default: the connected account). Requires moderator:manage:shield_mode and moderator rights. Returns is_active, the moderator who last changed it (moderator_id, moderator_login, moderator_name) and last_activated_at (an empty string if Shield Mode was never activated; moderator fields are also empty then).',
+      'Get the Shield Mode status of a Twitch channel (default: the connected account). Requires moderator:manage:shield_mode; the connected account acts as the moderator and must have moderator rights. Returns is_active, the moderator who last changed it (moderator_id, moderator_login, moderator_name) and last_activated_at (an empty string if Shield Mode was never activated; moderator fields are also empty then).',
     idempotent: true,
   },
   props: {
     broadcaster_id: twitchCommon.props.broadcasterId(),
-    moderator_id: twitchCommon.props.moderatorId(),
   },
   outputSchema: {
     fields: [
@@ -30,7 +29,7 @@ export const getShieldModeStatus = createAction({
   },
   async run({ auth, propsValue }) {
     const broadcasterId = await twitchCommon.resolveUserId({ auth, value: propsValue.broadcaster_id });
-    const moderatorId = await twitchCommon.resolveUserId({ auth, value: propsValue.moderator_id });
+    const { id: moderatorId } = await twitchCommon.getTokenUser({ auth });
     const response = await twitchCommon.request<HelixPage<Record<string, unknown>>>({
       auth,
       method: HttpMethod.GET,

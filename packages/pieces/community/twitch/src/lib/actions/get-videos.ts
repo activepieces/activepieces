@@ -8,7 +8,7 @@ export const getVideos = createAction({
   name: 'get_videos',
   displayName: 'Get Videos',
   description: 'List videos (past broadcasts, highlights, uploads) of a user, or get videos by ID.',
-  classification: 'READ',
+  classification: 'SEARCH',
   audience: 'both',
   aiMetadata: {
     description:

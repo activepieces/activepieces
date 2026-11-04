@@ -12,12 +12,11 @@ export const warnUser = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Warn a user in a Twitch channel\'s chat (default channel: the connected account); they must acknowledge it before they can chat again. Requires moderator:manage:warnings and moderator rights. reason is required, max 500 characters. Returns broadcaster_id, user_id, moderator_id and reason. Not idempotent: each call issues a new warning.',
+      'Warn a user in a Twitch channel\'s chat (default channel: the connected account); they must acknowledge it before they can chat again. Requires moderator:manage:warnings; the connected account acts as the moderator and must have moderator rights. reason is required, max 500 characters. Returns broadcaster_id, user_id, moderator_id and reason. Not idempotent: each call issues a new warning.',
     idempotent: false,
   },
   props: {
     broadcaster_id: twitchCommon.props.broadcasterId(),
-    moderator_id: twitchCommon.props.moderatorId(),
     user_id: twitchCommon.props.userId({ displayName: 'User ID', description: 'Numeric Twitch ID of the user to warn.' }),
     reason: Property.LongText({
       displayName: 'Reason',
@@ -37,7 +36,7 @@ export const warnUser = createAction({
     const userId = twitchCommon.requiredText({ value: propsValue.user_id, label: 'User ID' });
     const reason = twitchCommon.assertTextLength({ value: propsValue.reason, max: 500, label: 'Reason' });
     const broadcasterId = await twitchCommon.resolveUserId({ auth, value: propsValue.broadcaster_id });
-    const moderatorId = await twitchCommon.resolveUserId({ auth, value: propsValue.moderator_id });
+    const { id: moderatorId } = await twitchCommon.getTokenUser({ auth });
     const response = await twitchCommon.request<HelixPage<Record<string, unknown>>>({
       auth,
       method: HttpMethod.POST,
