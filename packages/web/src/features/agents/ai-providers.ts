@@ -80,6 +80,19 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
     dashboardUrl: 'https://aistudio.google.com/usage',
   },
   {
+    provider: AIProviderName.META,
+    name: 'Meta',
+    logoUrl: 'https://cdn.activepieces.com/pieces/meta.png',
+    markdown: t(`Follow these instructions to get your Meta Model API Key:
+
+1. Go to https://dev.meta.ai and sign in.
+2. Open **API keys** in the dashboard, click **Create API key**, copy the key, and paste it below.
+
+The Meta Model API serves Meta's Muse models and opened to developers in the US first.
+`),
+    dashboardUrl: 'https://dev.meta.ai',
+  },
+  {
     provider: AIProviderName.MINIMAX,
     name: 'MiniMax',
     logoUrl: 'https://cdn.activepieces.com/pieces/minimax.png',
@@ -114,6 +127,18 @@ This connects to MiniMax's international endpoint. A key from the China platform
 2. Click **Create API key**, copy the key, and paste it below.
 
 This connects to Moonshot's international endpoint. A key from the China platform will not authenticate here — add that account through **Other (OpenAI Compatible)** with your China base URL instead.
+`),
+  },
+  {
+    provider: AIProviderName.NVIDIA,
+    name: 'NVIDIA',
+    logoUrl: 'https://cdn.activepieces.com/pieces/nvidia.png',
+    markdown: t(`Follow these instructions to get your NVIDIA API Key:
+
+1. Go to https://build.nvidia.com and open any model.
+2. Click **Get API Key**, sign in with your NVIDIA account, copy the key (it starts with nvapi-), and paste it below.
+
+NVIDIA offers these hosted keys for trial and development use. For production, run NVIDIA NIM yourself and add it through **Other (OpenAI Compatible)** with your NIM base URL.
 `),
   },
   {

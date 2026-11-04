@@ -465,9 +465,11 @@ import { AddDefaultChatModelToPlatformConfiguration1875000000000 } from './migra
 import { AddAgentConversationWaitpointId1876000000000 } from './migration/postgres/1876000000000-AddAgentConversationWaitpointId'
 import { AddIsDefaultToProject1877000000000 } from './migration/postgres/1877000000000-AddIsDefaultToProject'
 import { AddAiUsageTables1878000000000 } from './migration/postgres/1878000000000-AddAiUsageTables'
+import { AddReplaceAppConnectionPermission1879000000000 } from './migration/postgres/1879000000000-AddReplaceAppConnectionPermission'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
+import { RefetchMissingPieceTranslations1879000000000 } from './migration/postgres/background/1879000000000-RefetchMissingPieceTranslations'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -482,8 +484,9 @@ const getSslConfig = (): boolean | TlsOptions => {
 export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
     return [
         AddAgentConversationProviderConfigIdIndex1869000000000,
-        ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
         BackfillPieceTranslation1874000000000,
+        RefetchMissingPieceTranslations1879000000000,
+        ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
     ]
 }
 
@@ -955,6 +958,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentConversationWaitpointId1876000000000,
         AddIsDefaultToProject1877000000000,
         AddAiUsageTables1878000000000,
+        AddReplaceAppConnectionPermission1879000000000,
     ]
     return migrations
 }

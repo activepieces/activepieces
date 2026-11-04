@@ -227,6 +227,7 @@ describe('Required actions', () => {
                 targetAppConnectionId: target.id,
                 projectId: ctx.project.id,
                 applyToPublishedVersions: true,
+                flowIds: [flow.id],
             })
 
             expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)

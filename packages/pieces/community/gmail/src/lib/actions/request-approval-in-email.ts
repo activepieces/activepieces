@@ -146,7 +146,9 @@ export const requestApprovalInEmail = createAction({
           type: 'WEBHOOK',
         });
 
-        const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
+        const confirmationLink = `${
+          waitpoint.publicResumeUrl ?? waitpoint.resumeUrl
+        }/confirm`;
 
         const bodyHtml =
           context.propsValue.body_type === 'plain_text'
