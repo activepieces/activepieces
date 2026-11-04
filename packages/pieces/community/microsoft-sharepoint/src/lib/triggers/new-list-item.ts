@@ -55,7 +55,10 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 				}
 
 				if (response['@odata.nextLink']) {
-					response = await client.api(response['@odata.nextLink']).get();
+					response = await client
+						.api(response['@odata.nextLink'])
+						.header('Prefer', 'HonorNonIndexedQueriesWarningMayFailRandomly')
+						.get();
 				} else {
 					break;
 				}
