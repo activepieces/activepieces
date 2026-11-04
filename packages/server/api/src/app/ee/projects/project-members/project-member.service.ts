@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, chunk, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, ProjectRole, SeekPage, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, chunk, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, ProjectRole, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { ApEdition, DefaultProjectRole, PlatformRole, ProjectMember, ProjectMemberId, ProjectMemberWithUser, ProjectType, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,6 +8,7 @@ import { distributedLock } from '../../../database/redis-connections'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { system } from '../../../helper/system/system'
+import { mcpGrantRevocation } from '../../../mcp/oauth/token/mcp-grant-revocation'
 import { projectRepo } from '../../../project/project-repo'
 import { projectService } from '../../../project/project-service'
 import { UserSchema } from '../../../user/user-entity'
@@ -244,7 +245,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
                 if (enforceLastProjectGuard) {
                     await assertMemberKeepsAProject({ member: currentMember, log })
                 }
-                await repo().delete({ projectId, id: memberId })
+                await this.delete(projectId, memberId)
             },
         })
     },
@@ -252,7 +253,15 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         projectId: ProjectId,
         invitationId: ProjectMemberId,
     ): Promise<void> {
+        const member = await repo().findOneBy({ projectId, id: invitationId })
         await repo().delete({ projectId, id: invitationId })
+        if (isNil(member)) {
+            return
+        }
+        const { data: role } = await tryCatch(() => this.getRole({ userId: member.userId, projectId }))
+        if (isNil(role)) {
+            await mcpGrantRevocation.revokeActiveGrants({ scope: { userId: member.userId, projectId, platformId: member.platformId }, log })
+        }
     },
     async countTotalUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
         if (projectIds.length === 0) return new Map()
