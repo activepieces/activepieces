@@ -105,6 +105,16 @@ describe('update_person_ai three-state', () => {
     expect(call(1).body).toEqual({ groups: [{ id: 'grp_other' }, { id: GRP }], customFieldValues: { [GRP]: { Status: 'Won' } } });
   });
 
+  it('refuses clearing groups while custom field values would add groups back', async () => {
+    for (const action of [updatePersonAi, updateCompanyAi]) {
+      const idProp = action === updatePersonAi ? { personId: PER } : { companyId: 'com_1' };
+      await expect(
+        runAction({ action, propsValue: { ...idProp, clearFields: ['groups'], customFieldValues: { [GRP]: { Status: 'Won' } } } })
+      ).rejects.toThrow(/Clear Fields removes every group/);
+    }
+    expect(sendRequest).not.toHaveBeenCalled();
+  });
+
   it('refuses an empty update and a bad ID', async () => {
     await expect(runAction({ action: updatePersonAi, propsValue: { personId: PER } })).rejects.toThrow(/Nothing to update/);
     await expect(runAction({ action: updatePersonAi, propsValue: { personId: '../webhooks', jobTitle: 'x' } })).rejects.toThrow(/not a valid Folk ID/);
@@ -152,6 +162,20 @@ describe('search and pagination', () => {
       limit: '1',
     });
     expect(result).toEqual({ items: [{ id: PER }], count: 1, hasMore: true, nextCursor: 'abc=' });
+  });
+
+  it('refuses two filters on the same field and operator instead of dropping one', async () => {
+    await expect(
+      runAction({
+        action: searchPeople,
+        propsValue: {
+          email: 'a@acme.com',
+          extraFilters: [{ field: 'emails', operator: 'like', value: 'b@acme.com' }],
+          combinator: 'or',
+        },
+      })
+    ).rejects.toThrow(/same field and operator/);
+    expect(sendRequest).not.toHaveBeenCalled();
   });
 
   it('validates limit and bad filter operators', async () => {

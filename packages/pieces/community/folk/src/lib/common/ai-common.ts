@@ -67,6 +67,9 @@ async function groupsForUpdate({
   clearGroups: boolean;
   customFieldValues: Record<string, unknown> | undefined;
 }): Promise<string[] | undefined> {
+  if (clearGroups && customFieldValues !== undefined && Object.keys(customFieldValues).length > 0) {
+    throw new Error('Clear Fields removes every group, but Custom Field Values would add groups back. Clear the groups in one step and set the custom fields in another.');
+  }
   const given = clearGroups ? [] : groupIds !== undefined && groupIds.length > 0 ? groupIds : undefined;
   const currentGroupIds =
     given === undefined && customFieldValues !== undefined ? await currentGroupIdsOf({ auth, path }) : undefined;
@@ -79,15 +82,18 @@ async function currentGroupIdsOf({ auth, path }: { auth: FolkAuthValue; path: st
 }
 
 function filterQuery({ filters, combinator }: { filters: FilterEntry[]; combinator: unknown }): Record<string, string> {
-  const query = Object.fromEntries(
-    filters.flatMap((filter) => {
-      if (filter.value === undefined && filter.operator !== 'empty' && filter.operator !== 'not_empty') {
-        return [];
-      }
-      const suffix = filter.subKey ? `[${filter.subKey}]` : '';
-      return [[`filter[${filter.field}][${filter.operator}]${suffix}`, filter.value ?? '']];
-    })
-  );
+  const entries = filters.flatMap((filter): [string, string][] => {
+    if (filter.value === undefined && filter.operator !== 'empty' && filter.operator !== 'not_empty') {
+      return [];
+    }
+    const suffix = filter.subKey ? `[${filter.subKey}]` : '';
+    return [[`filter[${filter.field}][${filter.operator}]${suffix}`, filter.value ?? '']];
+  });
+  const duplicate = entries.map(([key]) => key).find((key, index, keys) => keys.indexOf(key) !== index);
+  if (duplicate !== undefined) {
+    throw new Error(`Two filters use the same field and operator (${duplicate}). folk accepts one value per field and operator, so one condition would be dropped. Remove the duplicate, or run one search per value.`);
+  }
+  const query = Object.fromEntries(entries);
   if (Object.keys(query).length > 1) {
     query['combinator'] = combinator === 'or' ? 'or' : 'and';
   }
