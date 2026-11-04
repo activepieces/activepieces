@@ -8,3 +8,5 @@ export type PocketbaseAuthValue = {
 export type PocketbaseAuthResponse = { token?: string };
 
 export type PocketbaseRecordPage<T> = { items?: T[]; totalItems: number };
+
+export type PocketbaseCollection = { id: string; name: string; type: string; fields: unknown[] };

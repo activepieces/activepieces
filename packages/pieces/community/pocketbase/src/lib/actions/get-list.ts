@@ -3,9 +3,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { pocketbaseAuth } from '../auth';
 import { pocketbaseClient } from '../common/client';
 import { pocketbaseProps } from '../common/props';
+import { pocketbaseGetListOutputSchema } from '../output-schemas';
 
 export const getListAction = createAction({
   name: 'getList',
+  outputSchema: pocketbaseGetListOutputSchema,
   classification: 'SEARCH',
   displayName: 'Get List',
   description: 'Gets a paginated list of records from a collection',

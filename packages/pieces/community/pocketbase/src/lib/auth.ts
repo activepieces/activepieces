@@ -3,11 +3,7 @@ import { AppConnectionType, PieceAuth, Property, tryCatch } from '@activepieces/
 import { pocketbaseClient } from './common/client';
 import type { PocketbaseAuthValue } from './common/types';
 
-const markdown = `
-Provide your PocketBase **host URL** and **superuser credentials**.
-
-Find your admin panel at \`https://your-host/_/\`.
-`;
+const markdown = '\nProvide your PocketBase **host URL** and **superuser credentials**.\n\nFind your admin panel at `https://your-host/_/`.\n';
 
 export const pocketbaseAuth = PieceAuth.CustomAuth({
   required: true,

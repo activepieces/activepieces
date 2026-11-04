@@ -3,9 +3,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { pocketbaseAuth } from '../auth';
 import { pocketbaseClient } from '../common/client';
 import { pocketbaseProps } from '../common/props';
+import { pocketbaseSuccessOutputSchema } from '../output-schemas';
 
 export const deleteRecordAction = createAction({
   name: 'deleteRecord',
+  outputSchema: pocketbaseSuccessOutputSchema,
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
   description: 'Deletes a single record from a collection',

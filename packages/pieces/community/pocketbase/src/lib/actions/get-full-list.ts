@@ -2,9 +2,11 @@ import { createAction } from '@activepieces/pieces-framework';
 import { pocketbaseAuth } from '../auth';
 import { pocketbaseClient } from '../common/client';
 import { pocketbaseProps } from '../common/props';
+import { pocketbaseGetFullListOutputSchema } from '../output-schemas';
 
 export const getFullListAction = createAction({
   name: 'getFullList',
+  outputSchema: pocketbaseGetFullListOutputSchema,
   classification: 'SEARCH',
   displayName: 'Get Full List',
   description: 'Gets all the data for a given collection',

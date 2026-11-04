@@ -58,7 +58,7 @@ async function getToken({ auth }: { auth: PocketbaseAuthValue }): Promise<string
   return token;
 }
 
-async function send<T>({ auth, token, method, path, query, body }: RequestParams & { auth: PocketbaseAuthValue; token: string }): Promise<T> {
+async function send<T>({ auth, token, method, path, query, body, responseType }: RequestParams & { auth: PocketbaseAuthValue; token: string }): Promise<T> {
   const response = await httpClient.sendRequest<T>({
     method,
     url: `${baseUrl({ auth })}${path}`,
@@ -67,13 +67,14 @@ async function send<T>({ auth, token, method, path, query, body }: RequestParams
     },
     queryParams: query,
     body,
+    responseType,
   });
   return response.body;
 }
 
-export const pocketbaseClient = { baseUrl, authenticate, request, paginate };
+export const pocketbaseClient = { baseUrl, authenticate, getToken, request, paginate };
 
 const PAGE_SIZE = 200;
 
-type RequestParams = { method: HttpMethod; path: string; query?: QueryParams; body?: unknown };
+type RequestParams = { method: HttpMethod; path: string; query?: QueryParams; body?: unknown; responseType?: 'arraybuffer' };
 type PaginateParams = { path: string; query?: QueryParams };
