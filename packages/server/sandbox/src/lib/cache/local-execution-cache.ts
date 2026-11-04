@@ -7,6 +7,7 @@ import { cacheUtils } from './cache-paths'
 import { engineInstaller } from './engine/engine-installer'
 import { codeBuilder } from './flow/code/code-builder'
 import { codeCache } from './flow/code/code-cache'
+import { pendingCacheRemovals } from './pending-cache-removals'
 import { pieceInstaller } from './pieces/piece-installer'
 
 export const localExecutionCache = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
@@ -80,24 +81,22 @@ async function installCodeStep({ artifact, codeCachePath, log, getSettings }: In
             codesFolderPath: codeCachePath,
         })
     }
+    // Loops because a build can land on a directory an eviction sweep (action-run-cache.ts,
+    // code-cache-eviction.ts) is mid-removal of — waiting for that removal and rebuilding is the
+    // only way to avoid running against partially-deleted files.
     const dirPath = codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId)
-    if (!actionRunCache.isActionRunNamespace(artifact.flowVersionId)) {
+    do {
         await build()
         // Bumps mtime on every use, not just rebuilds, so disk-usage eviction (code-cache-eviction.ts)
         // can tell "still in use" from "stale" instead of evicting a frequently-run, rarely-changed flow.
-        await actionRunCache.touch(dirPath)
-        return
-    }
-    do {
-        await build()
         await actionRunCache.touch(dirPath)
     } while (await sweptWhileProvisioning({ dirPath, log }))
 }
 
 async function sweptWhileProvisioning({ dirPath, log }: SweptWhileProvisioningParams): Promise<boolean> {
-    const swept = await actionRunCache.settlePendingRemoval(dirPath)
+    const swept = await pendingCacheRemovals.settle(dirPath)
     if (swept) {
-        log.warn({ cache: { path: dirPath } }, 'Action-run code cache was swept while provisioning, rebuilding')
+        log.warn({ cache: { path: dirPath } }, 'Code cache was swept while provisioning, rebuilding')
     }
     return swept
 }

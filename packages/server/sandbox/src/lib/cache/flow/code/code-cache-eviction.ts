@@ -1,10 +1,11 @@
 import { Dirent } from 'node:fs'
-import { readdir, rm, stat } from 'node:fs/promises'
+import { readdir, rm, stat, statfs } from 'node:fs/promises'
 import path from 'node:path'
 import { tryCatch } from '@activepieces/core-utils'
-import { type ApLogger, systemUsage } from '@activepieces/server-utils'
+import { type ApLogger } from '@activepieces/server-utils'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS } from '../../action-run-cache'
 import { ACTION_RUN_CODE_DIR, cacheUtils } from '../../cache-paths'
+import { pendingCacheRemovals } from '../../pending-cache-removals'
 
 export const codeCacheEviction = {
     // Only the action-runs namespace gets a dedicated TTL/count sweep (action-run-cache.ts).
@@ -15,7 +16,7 @@ export const codeCacheEviction = {
         log,
         maxUsedPercent = DISK_EVICTION_THRESHOLD_PERCENT,
         activeWindowMs = ACTION_RUN_CACHE_ACTIVE_WINDOW_MS,
-        getUsedPercent = defaultGetUsedPercent,
+        getUsedPercent = () => defaultGetUsedPercent(basePath),
     }: SweepParams): Promise<void> {
         const usedPercentBefore = await getUsedPercent()
         if (usedPercentBefore < maxUsedPercent) {
@@ -71,9 +72,12 @@ export const codeCacheEviction = {
     },
 }
 
-async function defaultGetUsedPercent(): Promise<number> {
-    const diskInfo = await systemUsage.getDiskInfo()
-    return diskInfo.percentage
+async function defaultGetUsedPercent(basePath: string): Promise<number> {
+    const { data: stats, error } = await tryCatch(() => statfs(basePath))
+    if (error || stats.blocks === 0) {
+        return 0
+    }
+    return ((stats.blocks - stats.bavail) / stats.blocks) * 100
 }
 
 async function readEvictionCandidates({ codesPath, entries, activeAt }: ReadCandidatesParams): Promise<DirEntry[]> {
@@ -94,7 +98,10 @@ async function removeDir({ dirPath, mtimeMs }: DirEntry): Promise<'removed' | 's
     if (statError || currentStat.mtimeMs !== mtimeMs) {
         return 'skipped'
     }
-    const { error } = await tryCatch(() => rm(dirPath, { recursive: true, force: true }))
+    const removal = tryCatch(() => rm(dirPath, { recursive: true, force: true }))
+    pendingCacheRemovals.track(dirPath, removal)
+    const { error } = await removal
+    pendingCacheRemovals.untrack(dirPath)
     return error ? 'failed' : 'removed'
 }
 

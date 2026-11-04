@@ -3,6 +3,7 @@ import path from 'node:path'
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ACTION_RUN_CODE_DIR, cacheUtils } from './cache-paths'
+import { pendingCacheRemovals } from './pending-cache-removals'
 
 export const actionRunCache = {
     namespace({ platformId, sourceHash }: NamespaceParams): string {
@@ -25,12 +26,7 @@ export const actionRunCache = {
     },
 
     async settlePendingRemoval(dirPath: string): Promise<boolean> {
-        const pending = pendingRemovals.get(dirPath)
-        if (isNil(pending)) {
-            return false
-        }
-        await pending
-        return true
+        return pendingCacheRemovals.settle(dirPath)
     },
 
     async sweep({ basePath, log, activeWindowMs = ACTION_RUN_CACHE_ACTIVE_WINDOW_MS }: SweepParams): Promise<void> {
@@ -129,16 +125,14 @@ async function removeDir({ dirPath, expectedMtimeMs }: RemoveDirParams): Promise
         return 'skipped'
     }
     const removal = tryCatch(() => rm(dirPath, { recursive: true, force: true }))
-    pendingRemovals.set(dirPath, removal)
+    pendingCacheRemovals.track(dirPath, removal)
     const { error } = await removal
-    pendingRemovals.delete(dirPath)
+    pendingCacheRemovals.untrack(dirPath)
     if (isNil(error)) {
         return 'removed'
     }
     return 'failed'
 }
-
-const pendingRemovals = new Map<string, Promise<unknown>>()
 
 const ACTION_RUN_CACHE_TTL_MS = 2 * 60 * 60 * 1000
 

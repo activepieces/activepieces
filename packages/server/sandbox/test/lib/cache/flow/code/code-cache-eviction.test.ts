@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, actionRunCache } from '../../../../../src/lib/cache/action-run-cache'
 import { cacheUtils } from '../../../../../src/lib/cache/cache-paths'
 import { codeCacheEviction, DISK_EVICTION_THRESHOLD_PERCENT } from '../../../../../src/lib/cache/flow/code/code-cache-eviction'
+import { pendingCacheRemovals } from '../../../../../src/lib/cache/pending-cache-removals'
 
 const basePaths: string[] = []
 
@@ -148,6 +149,22 @@ describe('codeCacheEviction.sweep', () => {
 
         await expect(codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(10) }))
             .resolves.toBeUndefined()
+    })
+
+    it('clears a removed directory from pendingCacheRemovals once eviction finishes, so provisioning is never left waiting forever', async () => {
+        const basePath = uniqueBasePath()
+        const dirPath = await seedFlowVersionDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
+
+        await expect(exists(dirPath)).resolves.toBe(false)
+        await expect(pendingCacheRemovals.settle(dirPath)).resolves.toBe(false)
+    })
+
+    it('by default reads disk usage from basePath itself (statfs), not a hardcoded path — a nonexistent basePath is treated as 0% used rather than falling back to "/"', async () => {
+        const basePath = join(tmpdir(), `code-cache-eviction-test-missing-${randomUUID()}`)
+
+        await expect(codeCacheEviction.sweep({ basePath, log: noopLog })).resolves.toBeUndefined()
     })
 })
 
