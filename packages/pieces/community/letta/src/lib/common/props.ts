@@ -64,10 +64,11 @@ function aiAfter() {
   });
 }
 
-function aiOrder() {
+function aiOrder({ defaultOrder = 'desc' }: { defaultOrder?: 'asc' | 'desc' } = {}) {
   return Property.StaticDropdown<string, false>({
     displayName: 'Order',
-    description: 'Sort order by creation time. Defaults to newest first (desc).',
+    description: defaultOrder === 'asc' ? 'Sort order by creation time. Defaults to oldest first (asc).' : 'Sort order by creation time. Defaults to newest first (desc).',
+    defaultValue: defaultOrder,
     required: false,
     options: {
       disabled: false,

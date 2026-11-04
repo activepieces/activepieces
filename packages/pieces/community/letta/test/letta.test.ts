@@ -15,6 +15,7 @@ const calls = vi.hoisted(() => ({
   rawGet: vi.fn(),
   rawPost: vi.fn(),
   identitiesCreate: vi.fn(),
+  runMessagesList: vi.fn(),
 }));
 
 vi.mock('@letta-ai/letta-client', () => {
@@ -34,6 +35,7 @@ vi.mock('@letta-ai/letta-client', () => {
         reset: calls.messagesReset,
       },
     };
+    runs = { messages: { list: async (runId: string, query: unknown) => page(await calls.runMessagesList(runId, query)) } };
     identities = { create: calls.identitiesCreate };
     get = calls.rawGet;
     post = calls.rawPost;
@@ -365,5 +367,17 @@ describe('live-test fixes', () => {
       ['agent_type', 'created_at', 'description', 'embedding', 'id', 'last_run_completion', 'last_stop_reason', 'model', 'name', 'system', 'tags', 'updated_at'].sort()
     );
     expect(result[0]).toMatchObject({ tags: ['vip'], system: 'sys' });
+  });
+});
+
+describe('list run messages', () => {
+  it('defaults to oldest first and says so in the prop and action descriptions', async () => {
+    calls.runMessagesList.mockResolvedValue([]);
+    await runAction({ name: 'letta_list_run_messages', propsValue: { run_id: 'run-1' } });
+    expect(calls.runMessagesList).toHaveBeenCalledWith('run-1', expect.objectContaining({ order: 'asc' }));
+    const action = findAction('letta_list_run_messages');
+    expect(action.props['order']).toMatchObject({ defaultValue: 'asc' });
+    expect(action.props['order'].description).toContain('oldest first');
+    expect(action.aiMetadata?.description).toContain('oldest first');
   });
 });

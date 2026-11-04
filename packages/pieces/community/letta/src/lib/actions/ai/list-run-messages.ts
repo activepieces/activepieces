@@ -21,7 +21,7 @@ export const lettaListRunMessages = createAction({
     run_id: lettaProps.aiId({ displayName: 'Run ID', description: 'The run ID (run-...) taken from the run_id of a message (Send Message or List Agent Messages).' }),
     limit: lettaProps.aiLimit({ max: 100 }),
     after: lettaProps.aiAfter(),
-    order: lettaProps.aiOrder(),
+    order: lettaProps.aiOrder({ defaultOrder: 'asc' }),
   },
   async run({ auth, propsValue }) {
     const client = await lettaApi.getLettaClient({ auth: auth.props });
