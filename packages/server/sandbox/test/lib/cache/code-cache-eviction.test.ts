@@ -3,8 +3,8 @@ import { chmod, mkdir, rm, stat, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { ActivepiecesError, apId, ErrorCode } from '@activepieces/core-utils'
-import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, describe, expect, it } from 'vitest'
+import { testLogger } from '../../helpers/logger'
 import { ACTION_RUN_CODE_DIR, cacheUtils } from '../../../src/lib/cache/cache-paths'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_MAX_DIRS, actionRunCache, codeCacheEviction, DISK_EVICTION_THRESHOLD_PERCENT } from '../../../src/lib/cache/code-cache-eviction'
 
@@ -16,44 +16,8 @@ function uniqueBasePath(): string {
     return basePath
 }
 
-function createNoopLog(): ApLogger {
-    const log: ApLogger = {
-        level: 'silent',
-        silent: () => undefined,
-        info: () => undefined,
-        warn: () => undefined,
-        error: () => undefined,
-        fatal: () => undefined,
-        debug: () => undefined,
-        trace: () => undefined,
-        child: () => log,
-    }
-    return log
-}
-
-const noopLog = createNoopLog()
-
-function createRecordingLog(): RecordingLog {
-    const calls: LogCall[] = []
-    const record = (level: LogLevel) => (...args: unknown[]) => {
-        calls.push({ level, payload: args[0] })
-    }
-    const log: ApLogger = {
-        level: 'debug',
-        silent: () => undefined,
-        info: record('info'),
-        warn: record('warn'),
-        error: record('error'),
-        fatal: record('fatal'),
-        debug: record('debug'),
-        trace: record('trace'),
-        child: () => log,
-    }
-    return {
-        log,
-        payloadsAt: (level: LogLevel) => calls.filter((call) => call.level === level).map((call) => call.payload),
-    }
-}
+const noopLog = testLogger.noop
+const createRecordingLog = testLogger.createRecording
 
 const SECOND_MS = 1000
 const HOUR_MS = 60 * 60 * 1000
@@ -733,16 +697,4 @@ type SeedOldestFirstParams = {
     total: number
     ageOffsetMs?: number
     label?: string
-}
-
-type LogLevel = 'info' | 'warn' | 'error' | 'fatal' | 'debug' | 'trace'
-
-type LogCall = {
-    level: LogLevel
-    payload: unknown
-}
-
-type RecordingLog = {
-    log: ApLogger
-    payloadsAt: (level: LogLevel) => unknown[]
 }

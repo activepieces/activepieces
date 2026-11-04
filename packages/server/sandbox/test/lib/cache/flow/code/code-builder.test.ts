@@ -4,7 +4,6 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ExecutionMode, FlowVersionState, NetworkMode } from '@activepieces/shared'
-import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { installMock, buildMock, transpileMock } = vi.hoisted(() => ({
@@ -27,6 +26,8 @@ import { codeBuilder } from '../../../../../src/lib/cache/flow/code/code-builder
 import { codeCache } from '../../../../../src/lib/cache/flow/code/code-cache'
 // eslint-disable-next-line import/first
 import { SandboxSettings } from '../../../../../src/lib/types'
+// eslint-disable-next-line import/first
+import { testLogger } from '../../../../helpers/logger'
 
 const folders: string[] = []
 
@@ -36,22 +37,7 @@ function uniqueFolder(): string {
     return folder
 }
 
-function createNoopLog(): ApLogger {
-    const log: ApLogger = {
-        level: 'silent',
-        silent: () => undefined,
-        info: () => undefined,
-        warn: () => undefined,
-        error: () => undefined,
-        fatal: () => undefined,
-        debug: () => undefined,
-        trace: () => undefined,
-        child: () => log,
-    }
-    return log
-}
-
-const noopLog = createNoopLog()
+const noopLog = testLogger.noop
 
 const getSettings = (): SandboxSettings => ({
     EXECUTION_MODE: ExecutionMode.SANDBOX_CODE_AND_PROCESS,
