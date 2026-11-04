@@ -1,16 +1,19 @@
 import { McpServerType } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { mcpClientCatalog } from '@/app/routes/mcp-server/mcp-client-catalog';
 import { useMcpServerUrl } from '@/app/routes/mcp-server/mcp-server-url';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 export function McpCredentials() {
   const { serverUrl } = useMcpServerUrl({ serverType: McpServerType.PROJECT });
+  const { websiteName } = flagsHooks.useWebsiteBranding();
 
   const jsonConfiguration = {
     mcpServers: {
-      activepieces: {
+      [mcpClientCatalog.serverSlug(websiteName)]: {
         url: serverUrl,
       },
     },
@@ -22,7 +25,7 @@ export function McpCredentials() {
         <label className="text-sm font-medium">{t('Server URL')}</label>
         <p className="text-xs text-gray-11">
           {t(
-            'Use this URL to connect from Cursor, Windsurf, Claude Desktop, or any MCP-compatible client. Authentication is handled via OAuth.',
+            'Use this URL to connect any MCP client, like Claude, Cursor or VS Code.',
           )}
         </p>
         <div className="flex items-center gap-2">
@@ -36,9 +39,7 @@ export function McpCredentials() {
       <CollapsibleJson
         json={jsonConfiguration}
         label={t('JSON Configuration')}
-        description={t(
-          'Copy this into your MCP client config (Cursor, Windsurf, Claude Desktop, etc.).',
-        )}
+        description={t("Copy this into your MCP client's config.")}
         defaultOpen={false}
       />
     </div>

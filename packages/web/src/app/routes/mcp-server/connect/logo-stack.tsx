@@ -33,9 +33,10 @@ export function LogoStack({
       ? [
           <span
             key="more"
+            data-theme="light"
             className={cn(
               tileVariants({ size }),
-              'flex items-center justify-center border bg-panel text-gray-11',
+              'flex items-center justify-center border bg-gray-1 text-gray-11',
             )}
           >
             <Plus className="size-4" strokeWidth={1.6} />
