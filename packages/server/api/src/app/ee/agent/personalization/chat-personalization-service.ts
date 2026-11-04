@@ -65,6 +65,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 companyText: null,
                 role: null,
                 status: ChatPersonalizationStatus.SKIPPED,
+                researchToken: null,
                 profile: null,
                 useCases: null,
             }
@@ -155,17 +156,15 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
     async upsertUserScope({ platformId, userId, companyRow, role }: { platformId: string, userId: string, companyRow: ChatPersonalization, role: string | null }): Promise<ChatPersonalizationView> {
         const researchToken = apId()
         const userRow = await findRow({ platformId, userId })
+        if (!isNil(userRow) && keepsCurrentRow({ userRow, role })) {
+            return this.getEffectiveView({ platformId, userId })
+        }
+        const refreshesReadyCards = userRow?.status === ChatPersonalizationStatus.READY
+        const researchBlockedForReadyCards = refreshesReadyCards && !await guardsAllowResearch({ platformId, log })
+        if (researchBlockedForReadyCards) {
+            return this.getEffectiveView({ platformId, userId })
+        }
         if (!isNil(userRow)) {
-            const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
-            const terminal = [ChatPersonalizationStatus.READY, ChatPersonalizationStatus.SKIPPED].includes(userRow.status)
-            const roleChanged = !isNil(role) && role !== userRow.role
-            const keepCurrentRow = !hasOptedOut(userRow) && (terminal || (fresh && !roleChanged))
-            if (keepCurrentRow) {
-                if (roleChanged) {
-                    await personalizationRepo().update({ platformId, userId }, { role })
-                }
-                return this.getEffectiveView({ platformId, userId })
-            }
             await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, domain: companyRow.domain, companyText: companyRow.companyText, ...spreadIfDefined('role', role) })
         }
         else {
@@ -185,7 +184,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 return this.getEffectiveView({ platformId, userId })
             }
         }
-        const allowed = await guardsAllowResearch({ platformId, log })
+        const allowed = refreshesReadyCards || await guardsAllowResearch({ platformId, log })
         if (!allowed) {
             await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.SKIPPED })
             return this.getEffectiveView({ platformId, userId })
@@ -384,3 +383,10 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function keepsCurrentRow({ userRow, role }: { userRow: ChatPersonalization, role: string | null }): boolean {
+    const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
+    const terminal = [ChatPersonalizationStatus.READY, ChatPersonalizationStatus.SKIPPED].includes(userRow.status)
+    const roleChanged = !isNil(role) && role !== userRow.role
+    return !hasOptedOut(userRow) && !roleChanged && (terminal || fresh)
+}

@@ -3,6 +3,7 @@ import {
   FlowDraftUpdatedEvent,
   FlowRunStatus,
   FlowVersionState,
+  flowStructureUtil,
   WebsocketClientEvent,
   RunEnvironment,
   isFlowRunStateTerminal,
@@ -11,15 +12,18 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useEffect, useRef } from 'react';
-import { useLocation, usePrevious } from 'react-use';
+import { useLocation } from 'react-router-dom';
+import { usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { editorSession } from '@/lib/editor-session';
 
 import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
@@ -56,6 +60,7 @@ const useListenToExistingRun = () => {
       }
       const flowRun = await flowRunsApi.getPopulated(run.id);
       setRun(flowRun, flowVersion);
+      return flowRun;
     },
     enabled:
       !isNil(run) &&
@@ -321,6 +326,34 @@ function isActiveElementInsideListMapperModeInput(): boolean {
   );
 }
 
+const useFlowConnections = () => {
+  const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
+  const projectId = authenticationSession.getProjectId()!;
+  const {
+    data: connections,
+    isLoading,
+    isError,
+    refetch,
+  } = appConnectionsQueries.useAppConnections({
+    request: { projectId, limit: 1000 },
+    extraKeys: [projectId],
+    staleTime: 0,
+  });
+  const stepConnectionExternalIds = flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .map((step) => flowStructureUtil.extractStepConnectionIds(step));
+  const projectConnections = connections?.data ?? [];
+  const flowConnections = projectConnections
+    .map((connection) => ({
+      connection,
+      stepCount: stepConnectionExternalIds.filter((connectionExternalIds) =>
+        connectionExternalIds.includes(connection.externalId),
+      ).length,
+    }))
+    .filter(({ stepCount }) => stepCount > 0);
+  return { flowConnections, projectConnections, isLoading, isError, refetch };
+};
+
 export const flowCanvasHooks = {
   useSetSocketListener,
   useShowBuilderIsSavingWarningBeforeLeaving,
@@ -333,4 +366,5 @@ export const flowCanvasHooks = {
   useResizeCanvas,
   useSwitchToDraft,
   useListenToExistingRun,
+  useFlowConnections,
 };
