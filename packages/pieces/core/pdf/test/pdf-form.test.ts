@@ -14,6 +14,7 @@ import {
   PDFPage,
   PDFRef,
   PDFString,
+  StandardFonts,
 } from 'pdf-lib';
 import { extractText, getDocumentProxy } from 'unpdf';
 import { fillPdfForm } from '../src/lib/actions/fill-pdf-form';
@@ -1286,6 +1287,141 @@ describe('fillPdfForm text size', () => {
     );
     expect(write).not.toHaveBeenCalled();
   });
+
+  test('shrinks the font of a single-line field when the text would be taller than its box', async () => {
+    const pdf = await buildPdf({
+      build: ({ form, pages }) => {
+        const code = form.createTextField('code');
+        code.addToPage(pages[0], {
+          x: 50,
+          y: 700,
+          width: 300,
+          height: 10,
+          borderWidth: 0,
+        });
+        code.setFontSize(12);
+      },
+    });
+
+    const { written } = await runFill({
+      pdf,
+      flatten: false,
+      data: { code: 'TX' },
+    });
+
+    const [fontSize] = await widgetFontSizes({
+      pdf: written[0].data,
+      name: 'code',
+    });
+    const helvetica = await embedHelvetica();
+    expect(fontSize).toBeGreaterThanOrEqual(4);
+    expect(helvetica.heightAtSize(fontSize)).toBeLessThanOrEqual(10 - 2);
+  });
+
+  test('reads a box stored top to bottom at its real height', async () => {
+    const pdf = await buildPdf({
+      build: ({ doc, form, pages }) => {
+        const code = form.createTextField('code');
+        code.addToPage(pages[0], {
+          x: 50,
+          y: 700,
+          width: 300,
+          height: 20,
+          borderWidth: 0,
+        });
+        code.setFontSize(12);
+        code.acroField
+          .getWidgets()[0]
+          .dict.set(PDFName.of('Rect'), doc.context.obj([50, 720, 350, 700]));
+      },
+    });
+
+    const { written } = await runFill({
+      pdf,
+      flatten: false,
+      data: { code: 'TX' },
+    });
+
+    expect(await widgetFontSizes({ pdf: written[0].data, name: 'code' })).toEqual(
+      [12]
+    );
+  });
+
+  test('fits every copy of a field shown in more than one place', async () => {
+    const value = 'Acme Holdings International';
+    const helvetica = await embedHelvetica();
+    const widthAtOnePoint = helvetica.widthOfTextAtSize(value, 1);
+    const wideBox = widthAtOnePoint * 8.5 + 2;
+    const narrowBox = widthAtOnePoint * 6 + 2;
+    const pdf = await buildPdf({
+      build: ({ form, pages }) => {
+        const name = form.createTextField('name');
+        name.addToPage(pages[0], {
+          x: 50,
+          y: 700,
+          width: wideBox,
+          height: 30,
+          borderWidth: 0,
+        });
+        name.addToPage(pages[0], {
+          x: 50,
+          y: 600,
+          width: narrowBox,
+          height: 30,
+          borderWidth: 0,
+        });
+        name.setFontSize(12);
+        name.acroField.getWidgets()[1].setDefaultAppearance('/Helv 4 Tf 0 g');
+      },
+    });
+
+    const { written } = await runFill({
+      pdf,
+      flatten: false,
+      data: { name: value },
+    });
+
+    const [wide, narrow] = await widgetFontSizes({
+      pdf: written[0].data,
+      name: 'name',
+    });
+    expect(widthAtOnePoint * wide).toBeLessThanOrEqual(wideBox - 2);
+    expect(widthAtOnePoint * narrow).toBeLessThanOrEqual(narrowBox - 2);
+  });
+
+  test('fills a field whose PDF asks for an absurd font size, at a size that fits its box', async () => {
+    const pdf = await buildPdf({
+      drawFields: false,
+      build: ({ form, pages }) => {
+        const code = form.createTextField('code');
+        code.addToPage(pages[0], {
+          x: 50,
+          y: 700,
+          width: 200,
+          height: 20,
+          borderWidth: 0,
+        });
+        code.acroField.setDefaultAppearance('/Helv 10000000000 Tf 0 g');
+        code.acroField
+          .getWidgets()[0]
+          .setDefaultAppearance('/Helv 10000000000 Tf 0 g');
+      },
+    });
+
+    const { written } = await runFill({
+      pdf,
+      flatten: false,
+      data: { code: 'TX' },
+    });
+
+    const [fontSize] = await widgetFontSizes({
+      pdf: written[0].data,
+      name: 'code',
+    });
+    const helvetica = await embedHelvetica();
+    expect(fontSize).toBeGreaterThanOrEqual(4);
+    expect(helvetica.heightAtSize(fontSize)).toBeLessThanOrEqual(20 - 2);
+  });
 });
 
 describe('filled forms in a packet', () => {
@@ -1362,6 +1498,32 @@ async function buildPdf({
   );
   build({ doc, form: doc.getForm(), pages });
   return Buffer.from(await doc.save({ updateFieldAppearances: drawFields }));
+}
+
+async function widgetFontSizes({
+  pdf,
+  name,
+}: {
+  pdf: ArrayBuffer | Buffer;
+  name: string;
+}): Promise<number[]> {
+  const field = (await PDFDocument.load(new Uint8Array(pdf)))
+    .getForm()
+    .getTextField(name);
+  const fieldAppearance = field.acroField.getDefaultAppearance() ?? '';
+  return field.acroField
+    .getWidgets()
+    .map((widget) =>
+      Number(
+        /(\d*\.?\d+)\s+Tf/.exec(
+          widget.getDefaultAppearance() ?? fieldAppearance
+        )?.[1]
+      )
+    );
+}
+
+async function embedHelvetica() {
+  return (await PDFDocument.create()).embedFont(StandardFonts.Helvetica);
 }
 
 async function runInspect(pdf: Buffer) {

@@ -334,15 +334,18 @@ function fitText({
     });
     return { fontSize, fitting };
   });
-  if (widgets.some(({ fitting }) => fitting === undefined)) {
+  const fittingSizes = widgets.flatMap(({ fitting }) =>
+    fitting === undefined ? [] : [fitting]
+  );
+  if (fittingSizes.length < widgets.length) {
     return { kind: 'too-long' };
   }
-  const shrunk = widgets.flatMap(({ fontSize, fitting }) =>
-    fitting !== undefined && fitting < fontSize ? [fitting] : []
+  const mustShrink = widgets.some(
+    ({ fontSize, fitting }) => fitting !== undefined && fitting < fontSize
   );
-  return shrunk.length === 0
-    ? { kind: 'fits' }
-    : { kind: 'shrink', fontSize: Math.min(...shrunk) };
+  return mustShrink
+    ? { kind: 'shrink', fontSize: Math.min(...fittingSizes) }
+    : { kind: 'fits' };
 }
 
 function largestFittingSize({
@@ -363,11 +366,16 @@ function largestFittingSize({
   if (fontSize === AUTO_FONT_SIZE) {
     return fits(MIN_FONT_SIZE) ? AUTO_FONT_SIZE : undefined;
   }
-  const smaller = Array.from(
-    { length: Math.max(Math.ceil(fontSize) - MIN_FONT_SIZE, 0) },
-    (_, index) => Math.ceil(fontSize) - 1 - index
-  );
-  return [fontSize, ...smaller].find(fits);
+  if (fontSize <= MAX_FONT_SIZE && fits(fontSize)) {
+    return fontSize;
+  }
+  const largestCandidate = Math.min(Math.ceil(fontSize) - 1, MAX_FONT_SIZE);
+  for (let size = largestCandidate; size >= MIN_FONT_SIZE; size--) {
+    if (fits(size)) {
+      return size;
+    }
+  }
+  return undefined;
 }
 
 function isInside({
@@ -384,7 +392,10 @@ function isInside({
   fontSize: number;
 }): boolean {
   if (!multiline) {
-    return font.widthOfTextAtSize(text, fontSize) <= box.width;
+    return (
+      font.widthOfTextAtSize(text, fontSize) <= box.width &&
+      font.heightAtSize(fontSize) <= box.height
+    );
   }
   const layout = layoutMultilineText(text, {
     alignment: TextAlignment.Left,
@@ -400,7 +411,9 @@ function isInside({
 
 function textBox(widget: PDFWidgetAnnotation): TextBox {
   const inset = (widget.getBorderStyle()?.getWidth() ?? 0) + 1;
-  const { width, height } = widget.getRectangle();
+  const rectangle = widget.getRectangle();
+  const width = Math.abs(rectangle.width);
+  const height = Math.abs(rectangle.height);
   const rotation = widget.getAppearanceCharacteristics()?.getRotation() ?? 0;
   const turned = Math.abs(rotation) % 180 === 90;
   return {
@@ -712,6 +725,8 @@ const FONT_SIZE_PATTERN = /(\d*\.?\d+)(\s+Tf)/;
 const AUTO_FONT_SIZE = 0;
 
 const MIN_FONT_SIZE = 4;
+
+const MAX_FONT_SIZE = 500;
 
 const MAX_LABEL_LENGTH = 80;
 
