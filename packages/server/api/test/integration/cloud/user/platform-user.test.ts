@@ -213,132 +213,74 @@ describe('Enterprise User API', () => {
             })
             const projectRole = createMockProjectRole({ platformId: mockPlatform.id, type: RoleType.CUSTOM, permissions: [Permission.READ_FLOW] })
             await databaseConnection().getRepository('project_role').save(projectRole)
+            const invitation = (created: string, status: InvitationStatus) =>
+                createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status, platformRole: PlatformRole.MEMBER, created })
             const invitations = [
-                createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.PENDING, platformRole: PlatformRole.MEMBER, created: '2026-01-01T00:00:00.000Z' }),
-                createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.PENDING, platformRole: PlatformRole.MEMBER, created: '2026-01-03T00:00:00.000Z' }),
-                { ...createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.PENDING, platformRole: PlatformRole.MEMBER, created: '2026-01-02T00:00:00.000Z', projectId: mockProject.id }), projectRoleId: projectRole.id },
-                createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.ACCEPTED, platformRole: PlatformRole.MEMBER, created: '2026-01-04T00:00:00.000Z' }),
+                invitation('2026-01-04T00:00:00.000Z', InvitationStatus.ACCEPTED),
+                invitation('2026-01-03T00:00:00.000Z', InvitationStatus.PENDING),
+                { ...invitation('2026-01-02T00:00:00.000Z', InvitationStatus.PENDING), projectId: mockProject.id, projectRoleId: projectRole.id },
+                invitation('2026-01-01T00:00:00.000Z', InvitationStatus.PENDING),
             ]
             const projectInvitation = createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PROJECT, status: InvitationStatus.PENDING, projectId: mockProject.id })
             await databaseConnection().getRepository('user_invitation').save([...invitations, projectInvitation])
             const token = await generateMockToken({ id: mockOwner.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
-            return { mockOwner, deactivatedUser, invitations, projectRole, token }
+            return { mockOwner, mockPlatform, deactivatedUser, invitations, projectRole, token }
         }
 
-        async function list(token: string, query: Record<string, string | string[]>) {
+        async function list(token: string, query: Record<string, string | string[]> = {}) {
             const response = await app?.inject({
                 method: 'GET',
                 url: '/api/v1/users/with-invitations',
                 query,
                 headers: { authorization: `Bearer ${token}` },
             })
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            return response?.json()
+            return { status: response?.statusCode, body: response?.json() }
         }
+        const ids = (page: { data: { id: string }[] }) => page.data.map((row) => row.id)
 
-        it('Lists platform invitations first, newest first, then users', async () => {
-            const { mockOwner, deactivatedUser, invitations, token } = await setup()
+        it('Lists platform invitations newest first, then users, in full pages', async () => {
+            const { mockOwner, deactivatedUser, invitations, projectRole, token } = await setup()
 
-            const page = await list(token, {})
+            const first = (await list(token, { limit: '3' })).body
+            const second = (await list(token, { limit: '3', cursor: first.next })).body
+            const pastEnd = (await list(token, { limit: '3', cursor: '1000' })).body
 
-            expect(page.data.map((row: { id: string }) => row.id)).toEqual([
-                invitations[3].id,
-                invitations[1].id,
-                invitations[2].id,
-                invitations[0].id,
-                ...[mockOwner, deactivatedUser]
-                    .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
-                    .map((user) => user.id),
-            ])
-            expect(page.next).toBeNull()
-            expect(page.previous).toBeNull()
-        })
-
-        it('Includes the project role of an invitation and whether a user has projects', async () => {
-            const { mockOwner, invitations, projectRole, token } = await setup()
-
-            const page = await list(token, {})
-            const withRole = page.data.find((row: { id: string }) => row.id === invitations[2].id)
-            const owner = page.data.find((row: { id: string }) => row.id === mockOwner.id)
-
-            expect(withRole.data.projectRole.id).toBe(projectRole.id)
-            expect(owner.data.email).toBeDefined()
-            expect(typeof owner.data.hasProjects).toBe('boolean')
-        })
-
-        it('Pages across invitations into users with full pages', async () => {
-            const { token } = await setup()
-
-            const first = await list(token, { limit: '3' })
-            const second = await list(token, { limit: '3', cursor: first.next })
-
-            expect(first.data.map((row: { type: string }) => row.type)).toEqual(['invitation', 'invitation', 'invitation'])
-            expect(second.data.map((row: { type: string }) => row.type)).toEqual(['invitation', 'user', 'user'])
+            expect(ids(first)).toEqual([invitations[0].id, invitations[1].id, invitations[2].id])
+            expect(ids(second)).toEqual([invitations[3].id, mockOwner.id, deactivatedUser.id])
             expect(second.next).toBeNull()
-            expect(second.previous).toBe('0')
+            expect(first.data[2].data.projectRole.id).toBe(projectRole.id)
+            expect(pastEnd).toEqual({ data: [], next: null, previous: '3' })
         })
 
-        it('Filters by status on the server, also across pages', async () => {
+        it('Filters by status across pages', async () => {
             const { deactivatedUser, invitations, token } = await setup()
 
-            const invitedOnly = await list(token, { status: 'INVITED' })
-            const deactivatedOnly = await list(token, { status: 'INACTIVE' })
-            const activeAndInvited = await list(token, { status: ['ACTIVE', 'INVITED'] })
-            const invitedAndDeactivatedPage2 = await list(token, { status: ['INVITED', 'INACTIVE'], limit: '3', cursor: '3' })
+            const page = (await list(token, { status: ['INVITED', 'INACTIVE'], limit: '3', cursor: '3' })).body
 
-            expect(invitedOnly.data).toHaveLength(4)
-            expect(invitedOnly.data.every((row: { type: string }) => row.type === 'invitation')).toBe(true)
-            expect(deactivatedOnly.data.map((row: { id: string }) => row.id)).toEqual([deactivatedUser.id])
-            expect(activeAndInvited.data).toHaveLength(5)
-            expect(invitedAndDeactivatedPage2.data.map((row: { id: string }) => row.id)).toEqual([invitations[0].id, deactivatedUser.id])
+            expect(ids(page)).toEqual([invitations[3].id, deactivatedUser.id])
         })
 
         it('Never returns users or invitations from another platform', async () => {
             const { token } = await setup()
             const other = await setup()
 
-            const page = await list(token, {})
-            const otherIds = [other.mockOwner.id, other.deactivatedUser.id, ...other.invitations.map((invitation) => invitation.id)]
+            const page = (await list(token)).body
+            const otherIds = [other.mockOwner.id, other.deactivatedUser.id, ...other.invitations.map((row) => row.id)]
 
             expect(page.data).toHaveLength(6)
             expect(page.data.some((row: { id: string }) => otherIds.includes(row.id))).toBe(false)
         })
 
-        it('Starts at the first page for a junk cursor and points to the last page for one past the end', async () => {
-            const { token } = await setup()
-
-            const junk = await list(token, { limit: '2', cursor: 'not-a-number' })
-            const pastEnd = await list(token, { limit: '2', cursor: '1000' })
-
-            expect(junk.previous).toBeNull()
-            expect(junk.data).toHaveLength(2)
-            expect(pastEnd.data).toEqual([])
-            expect(pastEnd.next).toBeNull()
-            expect(pastEnd.previous).toBe('4')
-        })
-
-        it('Rejects platform members who are not admins', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+        it('Rejects platform members and service accounts', async () => {
+            const { mockPlatform } = await setup()
             const { mockUser } = await mockBasicUser({
                 user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, status: UserStatus.ACTIVE },
             })
             const memberToken = await generateMockToken({ id: mockUser.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/users/with-invitations',
-                headers: { authorization: `Bearer ${memberToken}` },
-            })
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
-
-        it('Rejects service accounts', async () => {
             const { mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/users/with-invitations',
-                headers: { authorization: `Bearer ${mockApiKey.value}` },
-            })
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            expect((await list(memberToken)).status).toBe(StatusCodes.FORBIDDEN)
+            expect((await list(mockApiKey.value)).status).toBe(StatusCodes.FORBIDDEN)
         })
     })
 

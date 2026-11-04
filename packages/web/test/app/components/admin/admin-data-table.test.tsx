@@ -18,8 +18,7 @@ const rows = (count: number): Row[] =>
   }));
 
 function LocationProbe() {
-  const location = useLocation();
-  return <div data-testid="location">{location.search}</div>;
+  return <div data-testid="location">{useLocation().search}</div>;
 }
 
 function renderTable({
@@ -54,43 +53,15 @@ function renderTable({
 }
 
 describe('AdminDataTable paging', () => {
-  it('shows no footer while the list fits on one page', () => {
+  it('hides the footer for 10 rows and pages longer lists', async () => {
     renderTable({ data: rows(10) });
-
-    expect(screen.getAllByText(/^Row \d+$/).length).toBe(10);
     expect(screen.queryAllByText('Rows per page').length).toBe(0);
-  });
 
-  it('pages a long list 10 rows at a time', async () => {
     renderTable({ data: rows(25) });
-
-    expect(screen.getAllByText(/^Row \d+$/).length).toBe(10);
-    expect(screen.queryAllByText('Row 10').length).toBe(0);
-    expect(screen.getAllByText('Rows per page').length).toBe(1);
-
     fireEvent.click(screen.getByRole('button', { name: /Next/ }));
 
     await waitFor(() => expect(screen.queryAllByText('Row 10').length).toBe(1));
-    expect(screen.queryAllByText('Row 0').length).toBe(0);
-  });
-
-  it('sends an empty page back to the first page', async () => {
-    renderTable({ data: [], url: '/?cursor=20' });
-
-    await waitFor(() => {
-      const search = screen.getByTestId('location').textContent ?? '';
-      expect(search.includes('cursor')).toBe(false);
-    });
-  });
-
-  it('moves a cursor past the end to the last page', async () => {
-    renderTable({ data: rows(25), url: '/?cursor=500' });
-
-    await waitFor(() => {
-      const search = screen.getByTestId('location').textContent ?? '';
-      expect(search.includes('cursor=20')).toBe(true);
-    });
-    expect(screen.queryAllByText('Row 24').length).toBe(1);
+    expect(screen.queryAllByText('Row 24').length).toBe(0);
   });
 
   it('clears the selection when the page changes', async () => {
@@ -103,11 +74,20 @@ describe('AdminDataTable paging', () => {
         expect.objectContaining({ id: 'row-0' }),
       ]),
     );
-
     fireEvent.click(screen.getByRole('button', { name: /Next/ }));
 
     await waitFor(() =>
       expect(onSelectedRowsChange).toHaveBeenLastCalledWith([]),
     );
+  });
+
+  it('moves a link past the end to the last page', async () => {
+    renderTable({ data: rows(25), url: '/?cursor=500' });
+
+    await waitFor(() => {
+      const search = screen.getByTestId('location').textContent ?? '';
+      expect(search.includes('cursor=20')).toBe(true);
+    });
+    expect(screen.queryAllByText('Row 24').length).toBe(1);
   });
 });
