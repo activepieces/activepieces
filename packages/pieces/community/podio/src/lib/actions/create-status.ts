@@ -3,14 +3,16 @@ import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { podioClient } from '../common/client';
 import { podioProps } from '../common/props';
 import { podioAuth } from '../auth';
+import { createStatusOutputSchema } from '../output-schemas';
 
 export const createStatusAction = createAction({
   auth: podioAuth,
   name: 'create_status',
+  outputSchema: createStatusOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Status Update',
   description: 'Add a status to an item or workspace stream.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Posts a status update to a Podio workspace (space) stream, optionally with file/embed attachments or an attached poll. Use to share an announcement or post to a space feed; requires the space id and a status message. Not idempotent — each call posts a new status update.', idempotent: false },
   props: {
     orgId: podioProps.orgId({ required: true }),
@@ -78,7 +80,7 @@ export const createStatusAction = createAction({
       throw new Error('Embed ID must be a number.');
     }
 
-    if (question && typeof question === 'object') {
+    if (question && typeof question === 'object' && Object.keys(question).length > 0) {
       if (!question['text'] || typeof question['text'] !== 'string') {
         throw new Error('Poll question must have a "text" property with the question text.');
       }

@@ -5,14 +5,16 @@ import { podioClient } from '../common/client';
 import { podioProps } from '../common/props';
 import { podioAuth } from '../auth';
 import type { PodioItemFilter } from '../common/types';
+import { findItemOutputSchema } from '../output-schemas';
 
 export const findItemAction = createAction({
   auth: podioAuth,
   name: 'find_item',
+  outputSchema: findItemOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find Item',
   description: 'Retrieve a single item by ID or field value.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Looks up Podio items in one of two modes: fetch a single item directly by its item id, or filter items within an app by field criteria (with limit, offset, and sorting). Use to read a known record or search an app for matching records; the filter mode requires an app id. Idempotent — a read that does not modify data.', idempotent: true },
   props: {
     searchType: Property.Dropdown({

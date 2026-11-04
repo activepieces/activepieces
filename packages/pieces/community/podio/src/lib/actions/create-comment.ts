@@ -3,14 +3,16 @@ import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { podioClient } from '../common/client';
 import { podioProps } from '../common/props';
 import { podioAuth } from '../auth';
+import { createCommentOutputSchema } from '../output-schemas';
 
 export const createCommentAction = createAction({
   auth: podioAuth,
   name: 'create_comment',
+  outputSchema: createCommentOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Post a comment on an item or task.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Posts a text comment on a Podio item or task, chosen via the comment-on type and object id, with optional file or embed attachments. Use to add a note or reply to a record; requires the target type/id and comment text. Not idempotent — each call posts a separate comment.', idempotent: false },
   props: {
     orgId: podioProps.orgId({ required: true }),

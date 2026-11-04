@@ -5,14 +5,16 @@ import { podioClient } from '../common/client';
 import { podioProps } from '../common/props';
 import { podioUtils } from '../common/utils';
 import { podioAuth } from '../auth';
+import { podioUpdateItemOutputSchema } from '../output-schemas';
 
 export const updateItemAction = createAction({
   auth: podioAuth,
   name: 'update_item',
+  outputSchema: podioUpdateItemOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Item',
   description: 'Update an existing record in a Podio app with specified field values. Only provided fields will be updated.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Updates fields on an existing Podio item identified by item id; only the fields you supply are changed (via structured app-field inputs or a raw legacy-fields JSON map). Use when modifying an existing record rather than creating one; requires the app id and item id. Idempotent — repeating with the same values leaves the item in the same state.', idempotent: true },
   props: {
     appId: podioProps.appId({ required: true }),
@@ -127,7 +129,7 @@ export const updateItemAction = createAction({
       throw new Error('Linked Account ID must be a number.');
     }
 
-    if (ref && (!ref['type'] || !ref['id'])) {
+    if (ref && Object.keys(ref).length > 0 && (!ref['type'] || !ref['id'])) {
       throw new Error('Reference must include both "type" and "id" properties.');
     }
 

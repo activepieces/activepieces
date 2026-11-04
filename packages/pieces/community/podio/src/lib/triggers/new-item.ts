@@ -2,10 +2,12 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { podioAuth } from '../auth';
 import { podioApi } from '../common/api';
 import { podioProps } from '../common/props';
+import { newItemOutputSchema } from '../output-schemas';
 
 export const newItemTrigger = createTrigger({
   auth: podioAuth,
   name: 'new_item',
+  outputSchema: newItemOutputSchema,
   classification: 'READ',
   displayName: 'New Item',
   description: 'Fires when a new item (record/entry) is created in an app',
@@ -43,6 +45,7 @@ export const newItemTrigger = createTrigger({
       }
 
       await context.store.put('podio_new_item_hook_id', response.hook_id);
+      await podioApi.requestHookVerification({ auth: context.auth, hookId: response.hook_id });
       await context.store.put('podio_new_item_app_id', appId);
     } catch (error) {
       throw new Error(`Failed to enable New Item trigger: ${(error instanceof Error && error.message) || 'Unknown error occurred'}`);
@@ -66,6 +69,10 @@ export const newItemTrigger = createTrigger({
   },
   async run(context) {
     const payload = context.payload.body;
+
+    if (await podioApi.validateHookIfVerification({ auth: context.auth, body: payload })) {
+      return [];
+    }
 
     if (!payload || typeof payload !== 'object') {
       return [];

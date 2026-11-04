@@ -42,6 +42,7 @@ export const newOrganizationTrigger = createTrigger({
       }
 
       await context.store.put('podio_new_app_hook_id', response.hook_id);
+      await podioApi.requestHookVerification({ auth: context.auth, hookId: response.hook_id });
       await context.store.put('podio_new_app_space_id', spaceId);
     } catch (error) {
       throw new Error(`Failed to enable New App trigger: ${(error instanceof Error && error.message) || 'Unknown error occurred'}`);
@@ -65,6 +66,10 @@ export const newOrganizationTrigger = createTrigger({
   },
   async run(context) {
     const payload = context.payload.body;
+
+    if (await podioApi.validateHookIfVerification({ auth: context.auth, body: payload })) {
+      return [];
+    }
 
     if (!payload || typeof payload !== 'object') {
       return [];

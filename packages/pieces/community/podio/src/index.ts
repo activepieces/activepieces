@@ -11,6 +11,7 @@ import { createCommentAction } from './lib/actions/create-comment';
 import { createStatusAction } from './lib/actions/create-status';
 import { findItemAction } from './lib/actions/find-item';
 import { findTaskAction } from './lib/actions/find-task';
+import { podioAiActions } from './lib/actions/ai';
 import { newItemTrigger } from './lib/triggers/new-item';
 import { newTaskTrigger } from './lib/triggers/new-task';
 import { newActivityTrigger } from './lib/triggers/new-activity';
@@ -21,7 +22,7 @@ import { newWorkspaceTrigger } from './lib/triggers/new-workspace';
 export const podio = createPiece({
   displayName: "Podio",
   auth: podioAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: "https://cdn.activepieces.com/pieces/podio.png",
   authors: ["sparkybug", "onyedikachi-david"],
   actions: [
@@ -34,6 +35,7 @@ export const podio = createPiece({
     createStatusAction,
     findItemAction,
     findTaskAction,
+    ...podioAiActions,
     createCustomApiCallAction({
       baseUrl: () => podioClient.baseUrl(),
       auth: podioAuth,

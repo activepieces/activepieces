@@ -38,6 +38,7 @@ export type PodioItemFilter = {
   offset?: number;
   sort_by?: string;
   sort_desc?: boolean;
+  remember?: boolean;
 };
 
 export type PodioItemFilterResponse = { items?: PodioItem[]; filtered?: number; total?: number };
@@ -72,3 +73,34 @@ export type PodioErrorBody = {
   message?: string;
   errors?: unknown;
 };
+
+export type PodioComment = {
+  value: string;
+  external_id?: string | null;
+  files?: { file_id: number }[];
+  embed?: { embed_id: number } | null;
+};
+
+export type PodioStatus = {
+  value: string;
+  files?: { file_id: number }[];
+  embed?: { embed_id: number } | null;
+};
+
+export type PodioFormField = { field_id: number; settings?: unknown };
+
+export type PodioForm = {
+  settings?: Record<string, unknown> & { text?: Record<string, unknown> };
+  domains?: unknown[];
+  fields?: PodioFormField[];
+  attachments?: boolean;
+};
+
+export type PodioShare = {
+  abstract?: string | null;
+  description?: string | null;
+  language?: string | null;
+  categories?: Record<string, { category_id: number }[]>;
+};
+
+export type PodioAppEmailConfiguration = { attachments: boolean; mappings: Record<string, string> };

@@ -43,6 +43,7 @@ export const newWorkspaceTrigger = createTrigger({
       }
 
       await context.store.put('podio_member_added_hook_id', response.hook_id);
+      await podioApi.requestHookVerification({ auth: context.auth, hookId: response.hook_id });
       await context.store.put('podio_member_added_space_id', spaceId);
     } catch (error) {
       throw new Error(`Failed to enable Member Added trigger: ${(error instanceof Error && error.message) || 'Unknown error occurred'}`);
@@ -66,6 +67,10 @@ export const newWorkspaceTrigger = createTrigger({
   },
   async run(context) {
     const payload = context.payload.body;
+
+    if (await podioApi.validateHookIfVerification({ auth: context.auth, body: payload })) {
+      return [];
+    }
 
     if (!payload || typeof payload !== 'object') {
       return [];

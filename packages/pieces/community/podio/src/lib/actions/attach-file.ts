@@ -10,7 +10,7 @@ export const attachFileAction = createAction({
   classification: 'WRITE',
   displayName: 'Attach File',
   description: 'Upload and attach a file to an item/task/comment.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Attaches an already-uploaded Podio file to a target object — an item, task, status update, comment, or space — selected via the reference type and id. Use when linking an existing file to a Podio object; requires the file id, a space, and the target type/id. Not idempotent — each call adds another attachment.', idempotent: false },
   props: {
     orgId: podioProps.orgId({ required: true }),

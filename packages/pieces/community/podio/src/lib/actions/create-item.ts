@@ -5,14 +5,16 @@ import { podioClient } from '../common/client';
 import { podioProps } from '../common/props';
 import { podioUtils } from '../common/utils';
 import { podioAuth } from '../auth';
+import { createItemOutputSchema } from '../output-schemas';
 
 export const createItemAction = createAction({
   auth: podioAuth,
   name: 'create_item',
+  outputSchema: createItemOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Item',
   description: 'Create a new record in a Podio app with specified field values.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new item (record) in a specified Podio app, populating its fields. Field values can be supplied via the structured app-field inputs or, for complex cases, a raw legacy-fields JSON map keyed by field id. Use when adding a record to a Podio app; requires an app id and at least one field value. Not idempotent — each call creates a separate item.', idempotent: false },
   props: {
     orgId: podioProps.orgId({

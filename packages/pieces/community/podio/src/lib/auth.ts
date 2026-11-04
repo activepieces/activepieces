@@ -6,7 +6,7 @@ export const podioAuth = PieceAuth.OAuth2({
       authUrl: 'https://podio.com/oauth/authorize',
       tokenUrl: 'https://podio.com/oauth/token',
       required: true,
-      scope: ['global:read', 'global:write'],
+      scope: ['global:read', 'global:write', 'global:delete'],
       getConnectionIdentifier: async ({ auth }) => {
         try {
           const status = await podioApi.getUserStatus({ auth, timeout: 5000 });

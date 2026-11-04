@@ -3,14 +3,16 @@ import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { podioClient } from '../common/client';
 import { podioProps } from '../common/props';
 import { podioAuth } from '../auth';
+import { createTaskOutputSchema } from '../output-schemas';
 
 export const updateTaskAction = createAction({
   auth: podioAuth,
   name: 'update_task',
+  outputSchema: createTaskOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Task',
   description: 'Modify an existing task\'s details or status. Only specified fields will be updated.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Updates an existing Podio task identified by task id; only the fields you supply change, and this includes toggling its completed flag, reassigning it, or editing text, due date, labels, and reminders. Use to edit or complete a known task; requires the task id and at least one field to change. Idempotent — repeating with the same values yields the same task state.', idempotent: true },
   props: {
     taskId: podioProps.taskId({ required: true }),
@@ -160,13 +162,13 @@ export const updateTaskAction = createAction({
       updateCount++;
     }
 
-    if (typeof isPrivate === 'boolean') {
-      body.private = isPrivate;
+    if (isPrivate === true) {
+      body.private = true;
       updateCount++;
     }
 
-    if (typeof completed === 'boolean') {
-      body.completed = completed;
+    if (completed === true) {
+      body.completed = true;
       updateCount++;
     }
 

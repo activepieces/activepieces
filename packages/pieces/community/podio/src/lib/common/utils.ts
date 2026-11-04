@@ -1,3 +1,4 @@
+import type { QueryParams } from '@activepieces/pieces-common';
 import type { DynamicPropsValue } from '@activepieces/pieces-framework';
 import type { PodioAppField } from './types';
 
@@ -108,4 +109,22 @@ function formatFieldValues({ appFields, formData }: { appFields: PodioAppField[]
   return fields;
 }
 
-export const podioUtils = { formatFieldValues };
+function query({ values }: { values: Record<string, string | number | boolean | undefined | null> }): QueryParams {
+  return Object.fromEntries(
+    Object.entries(values)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => [key, String(value)]),
+  );
+}
+
+function body({ values }: { values: Record<string, unknown> }): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined));
+}
+
+function toBool({ value }: { value: string | undefined | null }): boolean | undefined {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+}
+
+export const podioUtils = { formatFieldValues, query, body, toBool };
