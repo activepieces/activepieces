@@ -106,9 +106,36 @@ async function listWorkspaceSampleResponses({
     surveyIds: scopedSurveyIds.slice(0, MAX_TEST_SURVEYS),
     finishedOnly,
     sampleSize,
-    fetchSurveyResponses: async (surveyId) =>
-      (await listResponses({ auth, surveyId, limit: TEST_RESPONSES_PER_SURVEY, skip: 0 })).responses,
+    fetchSurveyResponses: (surveyId) =>
+      collectSurveySampleResponses({
+        finishedOnly,
+        sampleSize,
+        fetchPage: (skip) => listResponses({ auth, surveyId, limit: TEST_RESPONSES_PER_SURVEY, skip }),
+      }),
   });
+}
+
+export async function collectSurveySampleResponses({
+  finishedOnly,
+  sampleSize,
+  fetchPage,
+}: {
+  finishedOnly: boolean;
+  sampleSize: number;
+  fetchPage: (skip: number) => Promise<{ responses: FormbricksResponse[]; has_more: boolean }>;
+}): Promise<FormbricksResponse[]> {
+  const collected: FormbricksResponse[] = [];
+  let finishedCount = 0;
+  for (let pageIndex = 0; pageIndex < TEST_MAX_PAGES_PER_SURVEY; pageIndex++) {
+    const page = await fetchPage(pageIndex * TEST_RESPONSES_PER_SURVEY);
+    collected.push(...page.responses);
+    finishedCount += page.responses.filter((response) => response.finished).length;
+    const enough = finishedOnly ? finishedCount >= sampleSize : collected.length > 0;
+    if (enough || !page.has_more || page.responses.length === 0) {
+      break;
+    }
+  }
+  return collected;
 }
 
 export async function collectSampleResponses({
@@ -654,6 +681,7 @@ const MAX_TEST_SURVEYS = 25;
 const TEST_RESPONSES_PER_SURVEY = 10;
 
 const TEST_FETCH_CONCURRENCY = 5;
+const TEST_MAX_PAGES_PER_SURVEY = 5;
 const MAX_SCANNED_SURVEYS = 1000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEFAULT_ATTRIBUTE_NAMES: Record<string, string> = {

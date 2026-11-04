@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildFormbricksError, buildFormbricksUrl, normalizeAppUrl, toFormbricksError } from '../src/lib/common/client';
 import { handleFormbricksWebhook, readStoredWebhook, verifyStandardWebhook } from '../src/lib/common/webhook';
 import { formbricksInputs } from '../src/lib/common/inputs';
-import { collectPages, collectSampleResponses, FormbricksResponse } from '../src/lib/common/api';
+import { collectPages, collectSampleResponses, collectSurveySampleResponses, FormbricksResponse } from '../src/lib/common/api';
 
 const SECRET_BYTES = randomBytes(32);
 const SECRET = `whsec_${SECRET_BYTES.toString('base64')}`;
@@ -220,6 +220,24 @@ describe('collectSampleResponses', () => {
     singleUseId: null,
     createdAt,
     updatedAt: createdAt,
+  });
+
+  it('pages past unfinished responses to find completed ones', async () => {
+    const pages: FormbricksResponse[][] = [
+      Array.from({ length: 10 }, (_, i) => response({ id: `u${i}`, surveyId: 's1', createdAt: '2026-10-05T00:00:00Z', finished: false })),
+      [response({ id: 'done', surveyId: 's1', createdAt: '2026-10-01T00:00:00Z' })],
+    ];
+    const fetchPage = vi.fn(async (skip: number) => ({ responses: pages[skip / 10] ?? [], has_more: skip === 0 }));
+    const result = await collectSurveySampleResponses({ finishedOnly: true, sampleSize: 1, fetchPage });
+    expect(fetchPage).toHaveBeenCalledTimes(2);
+    expect(fetchPage).toHaveBeenLastCalledWith(10);
+    expect(result.filter((r) => r.finished).map((r) => r.id)).toEqual(['done']);
+  });
+
+  it('reads one page when finished responses are not required', async () => {
+    const fetchPage = vi.fn(async () => ({ responses: [response({ id: 'u', surveyId: 's1', createdAt: '2026-10-05T00:00:00Z', finished: false })], has_more: true }));
+    await collectSurveySampleResponses({ finishedOnly: false, sampleSize: 5, fetchPage });
+    expect(fetchPage).toHaveBeenCalledTimes(1);
   });
 
   it('queries every selected survey and merges newest first', async () => {

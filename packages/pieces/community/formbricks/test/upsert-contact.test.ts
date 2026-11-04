@@ -10,7 +10,7 @@ vi.mock('../src/lib/common/client', async (importOriginal) => {
 import { formbricksApi } from '../src/lib/common/api';
 import { FormbricksAuthValue } from '../src/lib/common/client';
 
-const auth: FormbricksAuthValue = { apiKey: 'k', appUrl: 'https://app.formbricks.com' };
+const auth: FormbricksAuthValue = { props: { apiKey: 'k', appUrl: 'https://app.formbricks.com' } };
 
 describe('upsertContact', () => {
   it('keeps the stored display name of an existing attribute key', async () => {
