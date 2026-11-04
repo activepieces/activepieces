@@ -1,4 +1,8 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  TriggerStrategy,
+  tryCatch,
+} from '@activepieces/pieces-framework';
 import { parseurAuth } from '../auth';
 import { parseurApi } from '../common/api';
 import { parseurProps } from '../common/props';
@@ -29,16 +33,19 @@ export const newDocumentNotProcessedTrigger = createTrigger({
       event: 'document.template_needed',
       target: context.webhookUrl,
     });
-    const mailboxIds =
-      context.propsValue.mailboxId === undefined
-        ? await listAllMailboxIds({ auth: context.auth })
-        : [context.propsValue.mailboxId];
-    for (const mailboxId of mailboxIds) {
-      await parseurApi.enableWebhook({
+    const { error } = await tryCatch(() =>
+      enableOnMailboxes({
         auth: context.auth,
         webhookId: webhook.id,
-        mailboxId,
+        mailboxId: context.propsValue.mailboxId,
+      })
+    );
+    if (error) {
+      await parseurApi.deleteWebhook({
+        auth: context.auth,
+        webhookId: webhook.id,
       });
+      throw error;
     }
     await context.store.put<ParseurWebhookInformation>('_newDocumentNotProcessed', {
       webhookId: webhook.id,
@@ -61,6 +68,22 @@ export const newDocumentNotProcessedTrigger = createTrigger({
     return [context.payload.body];
   },
 });
+
+async function enableOnMailboxes({
+  auth,
+  webhookId,
+  mailboxId,
+}: {
+  auth: ParseurAuthValue;
+  webhookId: number;
+  mailboxId: number | undefined;
+}): Promise<void> {
+  const mailboxIds =
+    mailboxId === undefined ? await listAllMailboxIds({ auth }) : [mailboxId];
+  for (const id of mailboxIds) {
+    await parseurApi.enableWebhook({ auth, webhookId, mailboxId: id });
+  }
+}
 
 async function listAllMailboxIds({
   auth,

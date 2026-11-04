@@ -43,13 +43,9 @@ function mailboxBody({
   }
   const extra = additionalFields ?? {};
   const set = Object.entries(settings).filter(
-    ([, value]) => value !== undefined && !isEmptyArray({ value })
+    ([, value]) => value !== undefined
   );
   return { ...extra, ...Object.fromEntries(set) };
-}
-
-function isEmptyArray({ value }: { value: unknown }): boolean {
-  return Array.isArray(value) && value.length === 0;
 }
 
 export const parseurUtils = { definedQuery, pageQuery, mailboxBody };
