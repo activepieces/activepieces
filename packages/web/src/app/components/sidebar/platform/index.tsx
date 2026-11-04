@@ -26,6 +26,7 @@ import {
   SidebarMenu,
 } from '@/components/ui/sidebar-shadcn';
 import { PLATFORM_FEATURES } from '@/features/billing';
+import { workerGroupsLock } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -203,7 +204,9 @@ export function PlatformNav() {
             {
               to: '/platform/workers/groups',
               label: t('Worker groups'),
-              locked: !platform.plan.workerGroupsEnabled,
+              locked:
+                workerGroupsLock.reason({ edition, plan: platform.plan }) !==
+                null,
             },
           ],
         },

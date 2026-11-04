@@ -1,8 +1,9 @@
 import { resolveTxt } from 'dns/promises'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, AuthenticationResponse, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { AuthenticationResult } from '../../../authentication/authentication-utils'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
@@ -42,11 +43,11 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 redirectUrl,
             }
         },
-        async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResponse> {
+        async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResult> {
             const acsUrl = await this.getAcsUrl(platformId)
             const client = await createSamlClient({ platformId, samlProvider, acsUrl })
             const attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)
-            const { response } = await authenticationService(log).federatedAuthn({
+            return authenticationService(log).federatedAuthn({
                 email: attributes.email,
                 firstName: attributes.firstName,
                 lastName: attributes.lastName,
@@ -55,7 +56,6 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 provider: UserIdentityProvider.SAML,
                 predefinedPlatformId: platformId,
             })
-            return response
         },
         async discoverByDomain(domain: string): Promise<DiscoverResult> {
             const platformId = await this.findPlatformIdByDomain({ domain })
