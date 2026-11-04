@@ -5504,7 +5504,7 @@
         "@activepieces/pieces-framework": "workspace:*",
       },
       "devDependencies": {
-        "vitest": "3.2.6",
+        "vitest": "5.0.5",
         "tslib": "2.6.2",
       },
     },
