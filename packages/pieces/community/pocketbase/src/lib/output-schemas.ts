@@ -1,29 +1,28 @@
 import { OutputSchema, OutputSchemaField } from '@activepieces/pieces-framework';
 
-const fieldDefinitionFields: OutputSchemaField[] = [
-  { key: 'id', label: 'Field ID' },
-  { key: 'name', label: 'Name' },
-  { key: 'type', label: 'Type' },
-  { key: 'required', label: 'Required', format: 'boolean' },
-  { key: 'hidden', label: 'Hidden', format: 'boolean' },
-  { key: 'presentable', label: 'Presentable', format: 'boolean' },
-  { key: 'system', label: 'System', format: 'boolean' },
-  { key: 'primaryKey', label: 'Primary Key', format: 'boolean' },
-  { key: 'help', label: 'Help Text' },
-];
-
 const collectionFields: OutputSchemaField[] = [
   { key: 'id', label: 'Collection ID' },
   { key: 'name', label: 'Name' },
   { key: 'type', label: 'Type' },
   { key: 'system', label: 'System', format: 'boolean' },
-  { key: 'fields', label: 'Fields', labelKey: 'name', listItems: fieldDefinitionFields },
+  { key: 'fields', label: 'Fields' },
   { key: 'indexes', label: 'Indexes' },
   { key: 'listRule', label: 'List Rule' },
   { key: 'viewRule', label: 'View Rule' },
   { key: 'createRule', label: 'Create Rule' },
   { key: 'updateRule', label: 'Update Rule' },
   { key: 'deleteRule', label: 'Delete Rule' },
+  { key: 'viewQuery', label: 'View Query' },
+  { key: 'authRule', label: 'Auth Rule' },
+  { key: 'manageRule', label: 'Manage Rule' },
+  { key: 'passwordAuth', label: 'Password Auth' },
+  { key: 'oauth2', label: 'OAuth2' },
+  { key: 'otp', label: 'OTP' },
+  { key: 'mfa', label: 'MFA' },
+  { key: 'authAlert', label: 'Auth Alert' },
+  { key: 'verificationTemplate', label: 'Verification Email Template' },
+  { key: 'resetPasswordTemplate', label: 'Reset Password Email Template' },
+  { key: 'confirmEmailChangeTemplate', label: 'Confirm Email Change Template' },
   { key: 'created', label: 'Created', format: 'datetime' },
   { key: 'updated', label: 'Updated', format: 'datetime' },
 ];
@@ -134,7 +133,7 @@ export const pocketbaseCollectionResultOutputSchema: OutputSchema = {
 
 export const pocketbasePreviewViewQueryOutputSchema: OutputSchema = {
   fields: [
-    { key: 'fields', label: 'Fields', labelKey: 'name', listItems: fieldDefinitionFields },
+    { key: 'fields', label: 'Fields' },
     { key: 'sample', label: 'Sample Row' },
   ],
 };
