@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Gender API 0.2.0: the Country Code input is now applied
+
+Before 0.2.0, **Get Gender by First Name** and **Get Gender by Full Name** sent the Country Code under a key Gender API ignores, so it had no effect. From 0.2.0 it is sent as `country` and applied, on those two actions and on the new **Get Gender by Email**. After you upgrade one of these steps, a country code can change the result (for example Andrea with IT now returns male), and a value that is not a two-letter ISO code, such as `USA` or `Germany`, now fails the step with Gender API's `invalid-country-code` error.
+
+#### What you need to do
+
+Use two-letter country codes such as `US` or `DE` in the Country Code input, or leave it empty. Steps keep running on the version they were built with until you upgrade them.
+
 #### Folk 0.2.0: eight Folk actions are no longer agent tools, and Update Person/Company behave differently
 
 From Folk 0.2.0, **Create Person**, **Create Company**, **Get Person**, **Get Company**, **List People**, **Find Company**, **Update Person** and **Update Company** (the existing flow-builder actions) are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents get new tools instead: **Create Person**, **Create Company**, **Get Person**, **Get Company**, **Search People** (replaces List People), **Search Companies** (replaces Find Company), **Update Person** and **Update Company** (the `*_ai` actions, which take IDs and plain lists).

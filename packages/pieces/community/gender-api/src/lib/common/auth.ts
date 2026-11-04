@@ -1,18 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { genderApiClient } from './client';
-
-function readMessage(error: unknown): string {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    typeof error.message === 'string'
-  ) {
-    return error.message;
-  }
-  return 'Invalid API key.';
-}
+import { genderApiCommon } from './client';
 
 export const genderApiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -21,7 +9,7 @@ export const genderApiAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      await genderApiClient.request({
+      await genderApiCommon.request({
         apiKey: auth,
         method: HttpMethod.GET,
         path: '/statistic',
@@ -35,3 +23,15 @@ export const genderApiAuth = PieceAuth.SecretText({
     }
   },
 });
+
+function readMessage(error: unknown): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return error.message;
+  }
+  return 'Invalid API key.';
+}

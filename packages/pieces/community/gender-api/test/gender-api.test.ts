@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { httpClient, HttpError } from '@activepieces/pieces-common';
+import { createMockActionContext } from '@activepieces/pieces-framework';
 import { getGenderByFirstName } from '../src/lib/actions/get-gender-by-first-name';
 import { getGenderByFullName } from '../src/lib/actions/get-gender-by-full-name';
 import { getGenderByEmail } from '../src/lib/actions/get-gender-by-email';
@@ -8,9 +9,10 @@ import { getStatistics } from '../src/lib/actions/get-statistics';
 import { genderApiAuth } from '../src/lib/common/auth';
 
 const auth = { type: 'SECRET_TEXT', secret_text: 'key-123' };
+const validationServer = { apiUrl: '', publicUrl: '', mintOidcToken: async () => '' };
 
 function ctx(propsValue: Record<string, unknown>) {
-  return { auth, propsValue } as never;
+  return { ...createMockActionContext({ propsValue }), auth };
 }
 
 function ok(body: unknown) {
@@ -62,6 +64,28 @@ describe('gender-api', () => {
     expect(first).toMatchObject({ gender: null, result_found: false });
     const email = await getGenderByEmail.run(ctx({ email: 'xqzv@example.com' }));
     expect(email).toMatchObject({ gender: 'unknown', result_found: false });
+  });
+
+  it('drops a country code or locale that is only spaces on every gender lookup', async () => {
+    send.mockResolvedValue(ok(genderBody));
+    await getGenderByFirstName.run(ctx({ first_name: 'Andrea', country_code: '   ', locale: ' ' }));
+    await getGenderByFullName.run(ctx({ full_name: 'Andrea Rossi', country_code: '  ', locale: '  ' }));
+    await getGenderByEmail.run(ctx({ email: 'andrea@example.com', country_code: ' ', locale: '   ' }));
+    expect(send.mock.calls.map((call) => call[0].body)).toEqual([
+      { first_name: 'Andrea' },
+      { full_name: 'Andrea Rossi' },
+      { email: 'andrea@example.com' },
+    ]);
+  });
+
+  it('trims and upper-cases the country code and trims the locale on full name and email lookups', async () => {
+    send.mockResolvedValue(ok(genderBody));
+    await getGenderByFullName.run(ctx({ full_name: 'Andrea Rossi', country_code: ' de ', locale: ' de-DE ' }));
+    await getGenderByEmail.run(ctx({ email: 'andrea@example.com', country_code: 'us ', locale: 'en-US' }));
+    expect(send.mock.calls.map((call) => call[0].body)).toEqual([
+      { full_name: 'Andrea Rossi', country: 'DE', locale: 'de-DE' },
+      { email: 'andrea@example.com', country: 'US', locale: 'en-US' },
+    ]);
   });
 
   it('omits optional fields when empty', async () => {
@@ -118,10 +142,10 @@ describe('gender-api', () => {
 
   it('validate accepts good key and rejects bad key with vendor message', async () => {
     send.mockResolvedValueOnce(ok({ remaining_credits: 10 }));
-    await expect(genderApiAuth.validate?.({ auth: 'good', server: { apiUrl: '', publicUrl: '' } } as never)).resolves.toEqual({ valid: true });
+    await expect(genderApiAuth.validate?.({ auth: 'good', server: validationServer })).resolves.toEqual({ valid: true });
     expect(send.mock.calls[0][0].method).toBe('GET');
     send.mockRejectedValueOnce(new HttpError({}, { status: 400, responseBody: { error: 'invalid-auth-token', detail: 'Invalid token' } }));
-    const bad = await genderApiAuth.validate?.({ auth: 'bad', server: { apiUrl: '', publicUrl: '' } } as never);
+    const bad = await genderApiAuth.validate?.({ auth: 'bad', server: validationServer });
     expect(bad).toMatchObject({ valid: false });
     expect(JSON.stringify(bad)).toContain('Gender API request failed (400): Invalid token. Check that the API key');
   });

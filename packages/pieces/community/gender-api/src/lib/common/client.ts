@@ -143,13 +143,37 @@ function normalizeGenderResult(body: unknown): GenderResult {
   };
 }
 
+function optionalText(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function buildLookupBody({
+  key,
+  value,
+  countryCode,
+  locale,
+}: {
+  key: string;
+  value: string;
+  countryCode: string | null | undefined;
+  locale: string | null | undefined;
+}): Record<string, unknown> {
+  const body: Record<string, unknown> = { [key]: value };
+  const country = optionalText(countryCode);
+  if (country) {
+    body['country'] = country.toUpperCase();
+  }
+  const trimmedLocale = optionalText(locale);
+  if (trimmedLocale) {
+    body['locale'] = trimmedLocale;
+  }
+  return body;
+}
+
 function normalizeGenderResultKeepingRaw(body: unknown): Record<string, unknown> {
   return { ...normalizeGenderResult(body), ...toRecord(body) };
 }
-
-const GENDER_API_BASE_URL = 'https://gender-api.com/v2';
-
-const genderApiClient = { request };
 
 const genderResultFields: OutputSchemaField[] = [
   { key: 'gender', label: 'Gender', description: 'Predicted gender: male, female or unknown (unknown when the name is not found)' },
@@ -202,6 +226,21 @@ const genderResultWithRawOutputSchema: OutputSchema = {
   ],
 };
 
+const GENDER_API_BASE_URL = 'https://gender-api.com/v2';
+
+export const genderApiCommon = {
+  baseUrl: GENDER_API_BASE_URL,
+  request,
+  buildLookupBody,
+  normalizeGenderResult,
+  normalizeGenderResultKeepingRaw,
+  toNumber,
+  toRecord,
+  toText,
+  genderResultOutputSchema,
+  genderResultWithRawOutputSchema,
+};
+
 type GenderResult = {
   gender: string;
   probability: number | null;
@@ -211,18 +250,4 @@ type GenderResult = {
   samples: number | null;
   country: string | null;
   credits_used: number | null;
-};
-
-export {
-  GENDER_API_BASE_URL,
-  GenderApiError,
-  genderApiClient,
-  genderResultOutputSchema,
-  genderResultWithRawOutputSchema,
-  normalizeGenderResult,
-  normalizeGenderResultKeepingRaw,
-  toNumber,
-  toRecord,
-  toText,
-  GenderResult,
 };

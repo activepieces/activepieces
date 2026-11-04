@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, OutputSchema } from '@activepieces/pieces-framework';
 import { genderApiAuth } from '../common/auth';
-import { genderApiClient, toNumber, toRecord, toText } from '../common/client';
+import { genderApiCommon } from '../common/client';
 
 export const getStatistics = createAction({
   auth: genderApiAuth,
@@ -19,19 +19,19 @@ export const getStatistics = createAction({
   props: {},
   outputSchema: statisticsOutputSchema(),
   async run({ auth }) {
-    const response = await genderApiClient.request<unknown>({
+    const response = await genderApiCommon.request<unknown>({
       apiKey: auth.secret_text,
       method: HttpMethod.GET,
       path: '/statistic',
     });
-    const data = toRecord(response);
-    const usage = toRecord(data['usage_last_month']);
+    const data = genderApiCommon.toRecord(response);
+    const usage = genderApiCommon.toRecord(data['usage_last_month']);
     return {
-      remaining_credits: toNumber(data['remaining_credits']),
+      remaining_credits: genderApiCommon.toNumber(data['remaining_credits']),
       is_limit_reached: data['is_limit_reached'] === true,
       usage_last_month: {
-        date: toText(usage['date']),
-        credits_used: toNumber(usage['credits_used']),
+        date: genderApiCommon.toText(usage['date']),
+        credits_used: genderApiCommon.toNumber(usage['credits_used']),
       },
       ...data,
     };

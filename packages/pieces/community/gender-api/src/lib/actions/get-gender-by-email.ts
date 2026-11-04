@@ -1,11 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { genderApiAuth } from '../common/auth';
-import {
-  genderApiClient,
-  genderResultOutputSchema,
-  normalizeGenderResult,
-} from '../common/client';
+import { genderApiCommon } from '../common/client';
 
 export const getGenderByEmail = createAction({
   auth: genderApiAuth,
@@ -36,21 +32,20 @@ export const getGenderByEmail = createAction({
       required: false,
     }),
   },
-  outputSchema: genderResultOutputSchema,
+  outputSchema: genderApiCommon.genderResultOutputSchema,
   async run({ auth, propsValue }) {
-    const body: Record<string, unknown> = { email: propsValue.email };
-    if (propsValue.country_code) {
-      body['country'] = propsValue.country_code.trim().toUpperCase();
-    }
-    if (propsValue.locale) {
-      body['locale'] = propsValue.locale.trim();
-    }
-    const response = await genderApiClient.request<unknown>({
+    const body = genderApiCommon.buildLookupBody({
+      key: 'email',
+      value: propsValue.email,
+      countryCode: propsValue.country_code,
+      locale: propsValue.locale,
+    });
+    const response = await genderApiCommon.request<unknown>({
       apiKey: auth.secret_text,
       method: HttpMethod.POST,
       path: '/gender',
       body,
     });
-    return normalizeGenderResult(response);
+    return genderApiCommon.normalizeGenderResult(response);
   },
 });

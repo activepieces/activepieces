@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, OutputSchema, Property } from '@activepieces/pieces-framework';
 import { genderApiAuth } from '../common/auth';
-import { genderApiClient, toNumber, toRecord, toText } from '../common/client';
+import { genderApiCommon } from '../common/client';
 
 export const getCountryOfOrigin = createAction({
   auth: genderApiAuth,
@@ -45,36 +45,36 @@ export const getCountryOfOrigin = createAction({
         `Unsupported input type "${propsValue.input_type}". Use first_name, full_name or email.`
       );
     }
-    const response = await genderApiClient.request<unknown>({
+    const response = await genderApiCommon.request<unknown>({
       apiKey: auth.secret_text,
       method: HttpMethod.POST,
       path: '/country-of-origin',
       body: { [inputType]: propsValue.value },
     });
-    const data = toRecord(response);
-    const details = toRecord(data['details']);
+    const data = genderApiCommon.toRecord(response);
+    const details = genderApiCommon.toRecord(data['details']);
     const origins = Array.isArray(data['country_of_origin'])
       ? data['country_of_origin']
       : [];
     return {
-      first_name: toText(data['first_name']),
-      gender: toText(data['gender']),
-      probability: toNumber(data['probability']),
+      first_name: genderApiCommon.toText(data['first_name']),
+      gender: genderApiCommon.toText(data['gender']),
+      probability: genderApiCommon.toNumber(data['probability']),
       result_found: data['result_found'] === true,
       country_of_origin: origins.map((item) => {
-        const origin = toRecord(item);
+        const origin = genderApiCommon.toRecord(item);
         return {
-          country: toText(origin['country']),
-          country_name: toText(origin['country_name']),
-          probability: toNumber(origin['probability']),
-          continental_region: toText(origin['continental_region']),
-          statistical_region: toText(origin['statistical_region']),
+          country: genderApiCommon.toText(origin['country']),
+          country_name: genderApiCommon.toText(origin['country_name']),
+          probability: genderApiCommon.toNumber(origin['probability']),
+          continental_region: genderApiCommon.toText(origin['continental_region']),
+          statistical_region: genderApiCommon.toText(origin['statistical_region']),
         };
       }),
-      language_of_origin: toText(data['language_of_origin']),
-      meaning: toText(data['meaning']),
-      country_of_origin_map_url: toText(data['country_of_origin_map_url']),
-      credits_used: toNumber(details['credits_used']),
+      language_of_origin: genderApiCommon.toText(data['language_of_origin']),
+      meaning: genderApiCommon.toText(data['meaning']),
+      country_of_origin_map_url: genderApiCommon.toText(data['country_of_origin_map_url']),
+      credits_used: genderApiCommon.toNumber(details['credits_used']),
     };
   },
 });
