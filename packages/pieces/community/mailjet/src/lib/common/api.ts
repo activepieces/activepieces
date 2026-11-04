@@ -21,6 +21,7 @@ async function sendEmail({
 	fromName,
 	toEmails,
 	subject,
+    htmlPart,
 	textPart,
 	templateId,
 	templateVariables,
@@ -36,6 +37,7 @@ async function sendEmail({
 		})),
 		Subject: subject,
 		TextPart: textPart,
+        HTMLPart: htmlPart,
 		TemplateID: templateId,
 		TemplateLanguage: !!templateId,
 		Variables: templateVariables,
@@ -197,6 +199,7 @@ type SendEmailParams = {
 	fromEmail: string;
 	fromName?: string;
 	toEmails: unknown[];
+    htmlPart?: string;
 	subject: string;
 	textPart?: string;
 	templateId?: number;
