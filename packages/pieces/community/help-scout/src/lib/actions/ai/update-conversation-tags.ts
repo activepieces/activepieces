@@ -58,14 +58,17 @@ export const updateConversationTags = createAction({
     await writeTags(helpScoutApi.mergeTags({ current: before, requested, mode }));
     const after = await readTags();
     const reconciled = helpScoutApi.mergeTags({ current: after, requested, mode });
-    if (!sameTags(reconciled, after)) {
+    if (!sameTags({ left: reconciled, right: after })) {
       await writeTags(reconciled);
     }
     return { conversationId: String(propsValue.conversationId), tags: reconciled };
   },
 });
 
-function sameTags(a: string[], b: string[]): boolean {
-  const key = (tags: string[]) => tags.map((tag) => tag.trim().toLowerCase()).sort().join('\n');
-  return key(a) === key(b);
+function sameTags({ left, right }: { left: string[]; right: string[] }): boolean {
+  return tagKey(left) === tagKey(right);
+}
+
+function tagKey(tags: string[]): string {
+  return tags.map((tag) => tag.trim().toLowerCase()).sort().join('\n');
 }

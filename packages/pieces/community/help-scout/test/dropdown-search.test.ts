@@ -4,7 +4,7 @@ import { conversationIdDropdown, customerIdDropdown } from '../src/lib/common/pr
 import { aiUpdateCustomerProperties } from '../src/lib/actions/ai/update-customer-properties';
 
 const auth = { access_token: 'token' };
-async function call(dropdown: { options: unknown }, searchValue?: string): Promise<{ options?: unknown; placeholder?: unknown }> {
+async function call({ dropdown, searchValue }: { dropdown: { options: unknown }; searchValue?: string }): Promise<{ options?: unknown; placeholder?: unknown }> {
   if (typeof dropdown.options !== 'function') {
     throw new Error('dropdown has no options loader');
   }
@@ -26,7 +26,7 @@ describe('searchable dropdowns', () => {
       headers: {},
       body: { _embedded: { conversations: [{ id: 9, subject: 'Old' }] }, page: { totalPages: 1 } },
     });
-    const result = await call(conversationIdDropdown, 'refund "late"');
+    const result = await call({ dropdown: conversationIdDropdown, searchValue: 'refund "late"' });
     const request = spy.mock.calls[0][0];
     expect(request.queryParams?.['query']).toBe('refund late');
     expect(request.queryParams?.['status']).toBe('all');
@@ -39,7 +39,7 @@ describe('searchable dropdowns', () => {
       headers: {},
       body: { _embedded: { customers: [] }, page: { totalPages: 1 } },
     });
-    await call(customerIdDropdown, 'a@b.co');
+    await call({ dropdown: customerIdDropdown, searchValue: 'a@b.co' });
     expect(spy.mock.calls[0][0].queryParams?.['query']).toBe('a@b.co');
   });
   it('omits query when not searching', async () => {
@@ -48,7 +48,7 @@ describe('searchable dropdowns', () => {
       headers: {},
       body: { _embedded: { customers: [] }, page: { totalPages: 1 } },
     });
-    await call(customerIdDropdown);
+    await call({ dropdown: customerIdDropdown });
     expect(spy.mock.calls[0][0].queryParams?.['query']).toBeUndefined();
   });
   it('stops the unsearched conversation list after two pages', async () => {
@@ -57,7 +57,7 @@ describe('searchable dropdowns', () => {
       headers: {},
       body: { _embedded: { conversations: Array.from({ length: 50 }, (_, i) => ({ id: i + 1, subject: 'S' })) }, page: { totalPages: 10 } },
     }));
-    const result = await call(conversationIdDropdown);
+    const result = await call({ dropdown: conversationIdDropdown });
     expect(spy).toHaveBeenCalledTimes(2);
     expect(result.placeholder).toBe('Showing the newest 100 - type to search for older records.');
   });
