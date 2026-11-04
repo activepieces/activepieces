@@ -140,6 +140,16 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         const writeNames = async (): Promise<void> => {
             await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
         }
+        if (await userInvitationsService(log).hasAnyAcceptedInvitationsForEmail({ email: identity.email })) {
+            await writeNames()
+            await userInvitationsService(log).provisionUserInvitation({ email: identity.email })
+            const invitedPlatformId = await authenticationService(log).selectCloudSignInPlatformId({ identityId })
+            if (!isNil(invitedPlatformId)) {
+                const { user } = await userService(log).getOrCreateWithProject({ identity, platformId: invitedPlatformId })
+                const response = await authenticationUtils(log).getProjectAndToken({ userId: user.id, platformId: invitedPlatformId, projectId: null })
+                return { response, signedUp: true, provider: identity.provider }
+            }
+        }
         const { response, provisioned } = await platformService(log).createPlatformWithProject({
             identityId,
             name: signupNames.platformNameFromSignup({ firstName, email: identity.email }),
