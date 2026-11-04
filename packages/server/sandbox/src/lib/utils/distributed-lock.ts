@@ -5,7 +5,8 @@ import { join } from 'path'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { ApLock } from '@activepieces/server-utils'
 
-const POLL_INTERVAL_MS = 500
+const INITIAL_POLL_INTERVAL_MS = 25
+const MAX_POLL_INTERVAL_MS = 500
 const STALE_LOCK_MS = 5 * 60 * 1000
 const HEARTBEAT_INTERVAL_MS = 60 * 1000
 
@@ -16,6 +17,7 @@ export const diskLock = (locksPath: string) => ({
         const deadline = isNil(timeoutMs) ? null : Date.now() + timeoutMs
         await mkdir(locksPath, { recursive: true })
         let retriedAfterTakeover = false
+        let pollIntervalMs = INITIAL_POLL_INTERVAL_MS
         while (!await tryAcquireOnce({ lockPath, token })) {
             const tookOver = await takeoverIfStale(lockPath)
             if (tookOver && !retriedAfterTakeover && (isNil(deadline) || Date.now() < deadline)) {
@@ -25,7 +27,8 @@ export const diskLock = (locksPath: string) => ({
             if (!isNil(deadline) && Date.now() >= deadline) {
                 throw new DiskLockTimeoutError(key)
             }
-            await sleep(POLL_INTERVAL_MS)
+            await sleep(pollIntervalMs)
+            pollIntervalMs = Math.min(pollIntervalMs * 2, MAX_POLL_INTERVAL_MS)
         }
         const heartbeat = setInterval(() => {
             const now = new Date()
