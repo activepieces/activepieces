@@ -291,17 +291,16 @@ function withBuiltRows({ plan, builtFlows }: { plan: BuildPlanEvent, builtFlows:
 }
 
 function plannedFlowRows({ plan, builtFlows, flowRow, finished }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[], flowRow: (flow: BuiltFlow) => BuildPlanStep, finished: boolean }): BuildPlanStep[] | null {
-    const flowsByName = new Map(builtFlows.map((flow) => [comparableName(flow.name), flow]))
-    const plannedNames = new Set(plan.steps.map((step) => comparableName(step.label)))
-    if (!builtFlows.some((flow) => plannedNames.has(comparableName(flow.name)))) {
+    const flowFor = (step: BuildPlanStep): BuiltFlow | undefined => builtFlows.find((flow) => ` ${comparableName(step.label)} `.includes(` ${comparableName(flow.name)} `))
+    const matched = new Set(plan.steps.map(flowFor).filter((flow): flow is BuiltFlow => !isNil(flow)))
+    if (matched.size === 0) {
         return null
     }
     const planned = plan.steps.map((step): BuildPlanStep => {
-        const flow = flowsByName.get(comparableName(step.label))
+        const flow = flowFor(step)
         return isNil(flow) ? { ...step, status: finished ? 'done' : step.status } : flowRow(flow)
     })
-    const unplanned = builtFlows.filter((flow) => !plannedNames.has(comparableName(flow.name))).map(flowRow)
-    return [...planned, ...unplanned]
+    return [...planned, ...builtFlows.filter((flow) => !matched.has(flow)).map(flowRow)]
 }
 
 function comparableName(name: string): string {

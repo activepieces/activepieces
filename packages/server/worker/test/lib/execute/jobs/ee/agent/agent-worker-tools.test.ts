@@ -862,6 +862,16 @@ describe('buildPlanSync', () => {
         expect(rows(next)).toEqual(expect.arrayContaining(['Midday check-in flow=pending', 'Evening recap flow=pending']))
     })
 
+    it('matches a built flow to the planned row that names it in more words', () => {
+        const plan: BuildPlanEvent = { ...PLAN, steps: [
+            { id: 'digest', label: 'Build Morning digest flow (8am + router)', status: 'in_progress' },
+            { id: 'recap', label: 'Build Evening recap flow (6pm)', status: 'pending' },
+        ] }
+        const flow = built(result({ flowId: 'f1', name: 'Morning digest flow', steps: [['every_day', 'ok']] }))
+
+        expect(rows(buildPlanSync.withBuiltRows({ plan, builtFlows: [flow] }))).toEqual(['Morning digest flow=done', 'Build Evening recap flow (6pm)=pending'])
+    })
+
     it('marks every row done once the model sets phase done', () => {
         const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Ping me on Slack', 'problem']] }))
 
