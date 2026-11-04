@@ -1,7 +1,7 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { millionVerifierAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { millionVerifierAuth } from './lib/auth';
+import { millionVerifierClient } from './lib/common/client';
 import { verifyEmail } from './lib/actions/verify-email';
 
 export const millionverifier = createPiece({
@@ -16,7 +16,7 @@ export const millionverifier = createPiece({
     verifyEmail,
     createCustomApiCallAction({
       auth: millionVerifierAuth,
-      baseUrl: () => 'https://api.millionverifier.com/api/v3',
+      baseUrl: () => millionVerifierClient.baseUrl(),
       authLocation: 'queryParams',
       authMapping: async (auth) => ({
         api: auth.secret_text,

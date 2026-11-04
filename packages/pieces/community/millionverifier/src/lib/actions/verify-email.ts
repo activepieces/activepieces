@@ -1,7 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { millionVerifierAuth } from '../common/auth';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { millionVerifierAuth } from '../auth';
+import { millionVerifierClient } from '../common/client';
+import type { MillionVerifierVerifyResult } from '../common/types';
 import { verifyEmailActionOutputSchema } from '../output-schemas';
+
 export const verifyEmail = createAction({
   auth: millionVerifierAuth,
   name: 'verifyEmail',
@@ -26,19 +29,11 @@ export const verifyEmail = createAction({
   },
   async run(context) {
     const { email, timeout = 10 } = context.propsValue;
-    const apiKey = context.auth.secret_text;
-
-    const params = new URLSearchParams({
-      api: apiKey,
-      email: email,
-      timeout: timeout.toString(),
-    });
-    const url = `https://api.millionverifier.com/api/v3/?${params.toString()}`;
-    const response = await httpClient.sendRequest({
+    return await millionVerifierClient.request<MillionVerifierVerifyResult>({
+      auth: context.auth,
       method: HttpMethod.GET,
-      url: url,
+      path: '/',
+      query: { email, timeout: timeout.toString() },
     });
-
-    return response.body;
   },
 });
