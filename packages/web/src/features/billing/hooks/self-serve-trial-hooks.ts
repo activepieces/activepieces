@@ -17,6 +17,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { platformBillingApi } from '../api/billing-plans-api';
 import { enterpriseDocs } from '../utils/billing-utils';
 import { FeatureKey, platformFeatures } from '../utils/platform-features';
+import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
 import {
   selfServeTrialTime,
   TRIAL_DAYS,
@@ -29,7 +30,11 @@ import {
 import { billingKeys, refreshBillingCaches } from './billing-hooks';
 import { useUpgradeClick } from './use-upgrade-click';
 
-export function useActionWhenLocked(): ActionWhenLocked {
+export function useActionWhenLocked({
+  featureKey,
+}: {
+  featureKey: FeatureKey | undefined;
+}): ActionWhenLocked {
   const { platform } = platformHooks.useCurrentPlatform();
   const isPlatformAdmin = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
@@ -41,7 +46,10 @@ export function useActionWhenLocked(): ActionWhenLocked {
   if (!isPlatformAdmin || embedState.isEmbedded) {
     return ActionWhenLocked.ASK_ADMIN;
   }
-  if (shouldOfferTrial) {
+  if (
+    shouldOfferTrial &&
+    selfServeTrialFeatures.isIncludedInTrial(featureKey)
+  ) {
     return ActionWhenLocked.START_TRIAL;
   }
   if (selfServeTrialTime.hasEnded(platform.selfServeTrial)) {
@@ -57,8 +65,8 @@ export function useLockedFeature({
   unlocked: boolean;
   featureKey: FeatureKey;
 }): LockedFeature {
-  const actionWhenLocked = useActionWhenLocked();
-  const openDialog = useOpenLockedFeature();
+  const actionWhenLocked = useActionWhenLocked({ featureKey });
+  const openDialog = useOpenLockedFeature({ featureKey });
   const locked = !unlocked;
 
   const runOrShowLockedDialog: LockedFeature['runOrShowLockedDialog'] = (
@@ -92,8 +100,8 @@ function useCanManageSelfServeTrial(): boolean {
   );
 }
 
-function useOpenLockedFeature() {
-  const actionWhenLocked = useActionWhenLocked();
+function useOpenLockedFeature({ featureKey }: { featureKey: FeatureKey }) {
+  const actionWhenLocked = useActionWhenLocked({ featureKey });
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
   const upgradeClick = useUpgradeClick();

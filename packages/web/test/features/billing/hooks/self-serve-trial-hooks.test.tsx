@@ -154,8 +154,16 @@ describe('enterprise lockedFeature', () => {
       isPlatformAdmin = !member;
       isEmbedded = embedded;
       planTrialEndsAt = state.trialEnded ? dayjs().subtract(1, 'day').toISOString() : null;
-      const { result } = renderHook(() => useActionWhenLocked());
+      const { result } = renderHook(() => useActionWhenLocked({ featureKey: undefined }));
       expect(result.current).toBe(actionWhenLocked);
+    });
+
+    it('never offers the trial for dedicated workers', () => {
+      state.offer = true;
+      const { result } = renderHook(() =>
+        useActionWhenLocked({ featureKey: 'DEDICATED_WORKERS' }),
+      );
+      expect(result.current).toBe(ActionWhenLocked.UPGRADE);
     });
   });
 

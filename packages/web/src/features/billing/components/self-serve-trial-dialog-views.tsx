@@ -69,7 +69,7 @@ export function LockedFeature({
   featureKey: FeatureKey | undefined;
   onAction: () => void;
 }) {
-  const actionWhenLocked = useActionWhenLocked();
+  const actionWhenLocked = useActionWhenLocked({ featureKey });
   const plan = usePlanThatHasFeature(featureKey);
   const copy = selfServeTrialFeatures.lockedCopy(featureKey);
   const headline =
