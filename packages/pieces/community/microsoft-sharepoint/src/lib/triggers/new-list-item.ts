@@ -33,10 +33,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 
 		const items = [];
 
-		const filter = '$top=10';
+		const filter =
+			lastFetchEpochMS === 0
+				? '$top=10'
+				: `$filter=fields/Created gt '${dayjs(lastFetchEpochMS).toISOString()}'`;
 
 		let response: PageCollection = await client
 			.api(`/sites/${siteId}/lists/${listId}/items?${filter}`)
+			.header('Prefer', 'HonorNonIndexedQueriesWarningMayFailRandomly')
 			.expand('fields')
 			.get();
 
