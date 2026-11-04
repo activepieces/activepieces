@@ -690,6 +690,9 @@ function hasManagedKey(auth: AIProviderAuthConfig | null): auth is AIProviderAut
 }
 
 async function findAvailableChatProviderRow({ platformId, scope, log }: { platformId: PlatformId, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
+    if (flagService(log).aiCreditsEnabled()) {
+        await ensureManagedProviderRow({ platformId })
+    }
     const candidates = await aiProviderRepo().findBy([
         { platformId, enabledForChat: true },
         { platformId, provider: AIProviderName.ACTIVEPIECES },

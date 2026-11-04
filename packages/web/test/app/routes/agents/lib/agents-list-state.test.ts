@@ -35,15 +35,20 @@ describe('showsFirstRun', () => {
 });
 
 describe('showsAgentList', () => {
-  const settled = { listLoading: false, hasList: true, firstRun: false };
+  const settled = {
+    listLoading: false,
+    listFailed: false,
+    hasList: true,
+    firstRun: false,
+  };
 
   it('keeps the list on screen when a refetch fails over agents already loaded', () => {
-    expect(showsAgentList(settled)).toBe(true);
+    expect(showsAgentList({ ...settled, listFailed: true })).toBe(true);
   });
 
   it('shows the section while the very first load is still running', () => {
     expect(
-      showsAgentList({ listLoading: true, hasList: false, firstRun: false }),
+      showsAgentList({ ...settled, listLoading: true, hasList: false }),
     ).toBe(true);
   });
 
@@ -52,9 +57,13 @@ describe('showsAgentList', () => {
   });
 
   it('renders nothing before any list has arrived', () => {
+    expect(showsAgentList({ ...settled, hasList: false })).toBe(false);
+  });
+
+  it('shows the section, and with it the retry, when the first load failed', () => {
     expect(
-      showsAgentList({ listLoading: false, hasList: false, firstRun: false }),
-    ).toBe(false);
+      showsAgentList({ ...settled, listFailed: true, hasList: false }),
+    ).toBe(true);
   });
 });
 

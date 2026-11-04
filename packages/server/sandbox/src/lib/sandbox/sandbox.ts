@@ -10,6 +10,13 @@ import { cacheUtils } from '../cache/cache-paths'
 import { assertSafeCodeNamespace, assertSafePathSegment } from '../utils/path-safety'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
+const PING_INTERVAL_MS = 25_000
+const MAX_NODE_TIMER_MS = 2 ** 31 - 1
+
+function heartbeatTimeoutMs(timeLimitSeconds: number): number {
+    return Math.min(timeLimitSeconds * 1000, MAX_NODE_TIMER_MS - PING_INTERVAL_MS)
+}
+
 function assertSandboxPathUnderRoot(mount: SandboxMount): void {
     const normalized = path.posix.normalize(mount.sandboxPath)
     if (!normalized.startsWith('/root/') && normalized !== '/root') {
@@ -86,6 +93,8 @@ export function createSandbox(
         const ioServer = new SocketIOServer(server, {
             path: '/worker/ws',
             maxHttpBufferSize: options.maxHttpBufferSizeBytes,
+            pingInterval: PING_INTERVAL_MS,
+            pingTimeout: heartbeatTimeoutMs(options.timeLimitSeconds),
             cors: { origin: '*' },
         })
         wireConnectionHandler(ioServer)
