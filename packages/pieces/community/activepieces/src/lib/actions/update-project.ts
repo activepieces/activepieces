@@ -15,7 +15,7 @@ export const updateProject = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Update an existing project on an Activepieces platform, identified by its project id, setting its display name, notification status, and team-member limit. Use when reconfiguring a known project rather than creating one. Requires the target project id; idempotent — repeating with the same values leaves the project in the same state.',
+      'Update an existing project on an Activepieces platform, identified by its project id, and setting its display name. Use when reconfiguring a known project rather than creating one. Requires the target project id; idempotent — repeating with the same values leaves the project in the same state.',
     idempotent: true,
   },
   props: {
@@ -29,28 +29,28 @@ export const updateProject = createAction({
       description: undefined,
       required: true,
     }),
-    notify_status: Property.StaticDropdown({
-      displayName: 'Notify Status',
-      description: undefined,
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'Always notify',
-            value: 'ALWAYS',
-          },
-          {
-            label: 'Never notify',
-            value: 'NEVER',
-          },
-        ],
-      },
-    }),
-    team_members: Property.Number({
-      displayName: 'Team Members',
-      description: undefined,
-      required: true,
-    }),
+    // notify_status: Property.StaticDropdown({
+    //   displayName: 'Notify Status',
+    //   description: undefined,
+    //   required: true,
+    //   options: {
+    //     options: [
+    //       {
+    //         label: 'Always notify',
+    //         value: 'ALWAYS',
+    //       },
+    //       {
+    //         label: 'Never notify',
+    //         value: 'NEVER',
+    //       },
+    //     ],
+    //   },
+    // }),
+    // team_members: Property.Number({
+    //   displayName: 'Team Members',
+    //   description: undefined,
+    //   required: true,
+    // }),
   },
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
