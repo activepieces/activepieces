@@ -475,12 +475,26 @@ describe('codeCacheEviction.sweep disk-pressure pass', () => {
     it('removes the emptied flow-version dir once its last step is evicted', async () => {
         const basePath = uniqueBasePath()
         const flowVersionId = apId()
-        const stepPath = await seedStepDir({ basePath, flowVersionId, ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const ageMs = 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS
+        const stepPath = await seedStepDir({ basePath, flowVersionId, ageMs })
+        const parentMtime = new Date(Date.now() - ageMs)
+        await utimes(flowVersionDir({ basePath, flowVersionId }), parentMtime, parentMtime)
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
 
         await expect(exists(stepPath)).resolves.toBe(false)
         await expect(exists(flowVersionDir({ basePath, flowVersionId }))).resolves.toBe(false)
+    })
+
+    it('leaves a freshly touched flow-version dir in place even when its only step is evicted, so a concurrent provision cannot lose its parent', async () => {
+        const basePath = uniqueBasePath()
+        const flowVersionId = apId()
+        const stepPath = await seedStepDir({ basePath, flowVersionId, ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
+
+        await expect(exists(stepPath)).resolves.toBe(false)
+        await expect(exists(flowVersionDir({ basePath, flowVersionId }))).resolves.toBe(true)
     })
 
     it.skipIf(runningAsRoot())('reports a lock-infrastructure failure as failed, never as a candidate merely in use', async () => {

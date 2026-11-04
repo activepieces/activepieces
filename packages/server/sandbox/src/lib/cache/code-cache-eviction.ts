@@ -121,7 +121,7 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
 
     const activeAt = Date.now() - activeWindowMs
     const flowVersionDirs = entries.filter((entry) => entry.isDirectory() && entry.name !== ACTION_RUN_CODE_DIR)
-    const candidates: DirEntry[] = []
+    const candidates: StepCandidate[] = []
     for (const batch of chunk(flowVersionDirs, SCAN_BATCH_SIZE)) {
         const nested = await Promise.all(batch.map((entry) => readStepCandidates({
             flowVersionPath: path.join(codesPath, entry.name),
@@ -143,7 +143,8 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
         evictedCount += outcome === 'removed' ? 1 : 0
         failedCount += outcome === 'failed' ? 1 : 0
         skippedCount += outcome === 'skipped' ? 1 : 0
-        if (outcome === 'removed') {
+        const parentIdleAtScan = !isNil(candidate.parentMtimeMs) && candidate.parentMtimeMs < activeAt
+        if (outcome === 'removed' && parentIdleAtScan) {
             await tryCatch(() => rmdir(path.dirname(candidate.dirPath)))
         }
     }
@@ -184,20 +185,21 @@ async function defaultGetUsedPercent({ basePath, log }: DefaultGetUsedPercentPar
     return diskInfo.percentage
 }
 
-async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandidatesParams): Promise<DirEntry[]> {
+async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandidatesParams): Promise<StepCandidate[]> {
     const { data: stepEntries, error } = await tryCatch(() => readdir(flowVersionPath, { withFileTypes: true }))
     if (error) {
         return []
     }
+    const parentMtimeMs = await readMtimeMs(flowVersionPath)
     const stepDirs = stepEntries.filter((entry) => entry.isDirectory())
-    const candidates: DirEntry[] = []
+    const candidates: StepCandidate[] = []
     for (const batch of chunk(stepDirs, SCAN_BATCH_SIZE)) {
-        const stats = await Promise.all(batch.map(async (entry): Promise<DirEntry | null> => {
+        const stats = await Promise.all(batch.map(async (entry): Promise<StepCandidate | null> => {
             const dirPath = path.join(flowVersionPath, entry.name)
             const mtimeMs = await readMtimeMs(dirPath)
-            return isNil(mtimeMs) ? null : { dirPath, mtimeMs }
+            return isNil(mtimeMs) ? null : { dirPath, mtimeMs, parentMtimeMs }
         }))
-        candidates.push(...stats.filter((entry): entry is DirEntry => entry !== null && entry.mtimeMs < activeAt))
+        candidates.push(...stats.filter((entry): entry is StepCandidate => entry !== null && entry.mtimeMs < activeAt))
     }
     return candidates
 }
@@ -319,6 +321,10 @@ type DefaultGetUsedPercentParams = {
 type DirEntry = {
     dirPath: string
     mtimeMs: number
+}
+
+type StepCandidate = DirEntry & {
+    parentMtimeMs: number | null
 }
 
 type RemoveDirParams = {
