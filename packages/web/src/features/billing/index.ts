@@ -32,6 +32,7 @@ export { billingDialogHooks } from './hooks/billing-dialog-hooks';
 export { AutomaticTrialActivation } from './components/automatic-trial-activation';
 export { useFeatureGate, UpgradeFeatureDialog } from './hooks/use-feature-gate';
 export { useUpgradeClick } from './hooks/use-upgrade-click';
+export { useOpenSales } from './hooks/use-open-sales';
 export type { PlatformFeature } from './hooks/use-feature-gate';
 export { RequestTrial } from './components/request-trial';
 export type { FeatureKey } from './components/request-trial';

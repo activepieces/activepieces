@@ -187,70 +187,72 @@ function CapabilityCard({
         >
           <look.icon className="size-4" />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="truncate text-sm font-semibold text-gray-12">
-            {capabilityInfo.name}
-          </p>
-          <p className="text-sm text-gray-11">{capabilityInfo.description}</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {config && (
-            <ConfirmationDeleteDialog
-              title={t('Reset {name}', { name: capabilityInfo.name })}
-              message={
-                chatProviderFallback
-                  ? isEmbeddings
-                    ? t('Knowledge bases go back to using {provider}.', {
-                        provider: chatProviderFallback.name,
-                      })
-                    : t('Chat goes back to using {provider}.', {
-                        provider: chatProviderFallback.name,
-                      })
-                  : t(
-                      'This removes the saved API key and disables this capability.',
-                    )
-              }
-              entityName={capabilityInfo.name}
-              showToast
-              onError={() => undefined}
-              controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
-              mutationFn={async () => {
-                await onDelete(config.id);
-              }}
-            >
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 group-focus-within:opacity-100 group-hover:opacity-100"
-                {...adminControl(AdminControl.AI_CAPABILITY_RESET_OPEN)}
+        <div className="flex min-w-0 flex-1 flex-wrap items-start gap-3">
+          <div className="flex min-w-0 flex-1 basis-40 flex-col gap-1">
+            <p className="truncate text-sm font-semibold text-gray-12">
+              {capabilityInfo.name}
+            </p>
+            <p className="text-sm text-gray-11">{capabilityInfo.description}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            {config && (
+              <ConfirmationDeleteDialog
+                title={t('Reset {name}', { name: capabilityInfo.name })}
+                message={
+                  chatProviderFallback
+                    ? isEmbeddings
+                      ? t('Knowledge bases go back to using {provider}.', {
+                          provider: chatProviderFallback.name,
+                        })
+                      : t('Chat goes back to using {provider}.', {
+                          provider: chatProviderFallback.name,
+                        })
+                    : t(
+                        'This removes the saved API key and disables this capability.',
+                      )
+                }
+                entityName={capabilityInfo.name}
+                showToast
+                onError={() => undefined}
+                controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
+                mutationFn={async () => {
+                  await onDelete(config.id);
+                }}
               >
-                <Trash2 className="size-4" />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 group-focus-within:opacity-100 group-hover:opacity-100"
+                  {...adminControl(AdminControl.AI_CAPABILITY_RESET_OPEN)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </ConfirmationDeleteDialog>
+            )}
+            {needsProviderKey ? (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/platform/ai">
+                  {t('Connect a provider')}
+                  <ArrowRight className="size-4" />
+                </Link>
               </Button>
-            </ConfirmationDeleteDialog>
-          )}
-          {needsProviderKey ? (
-            <Button asChild variant="outline" size="sm">
-              <Link to="/platform/ai">
-                {t('Connect a provider')}
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-          ) : (
-            <AiCapabilityDialog
-              capabilityInfo={capabilityInfo}
-              existingConfig={config}
-              defaultProviderId={chatProviderFallback?.id}
-              onSaved={onSaved}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
+            ) : (
+              <AiCapabilityDialog
+                capabilityInfo={capabilityInfo}
+                existingConfig={config}
+                defaultProviderId={chatProviderFallback?.id}
+                onSaved={onSaved}
               >
-                {inUse ? t('Change') : t('Set up')}
-              </Button>
-            </AiCapabilityDialog>
-          )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
+                >
+                  {inUse ? t('Change') : t('Set up')}
+                </Button>
+              </AiCapabilityDialog>
+            )}
+          </div>
         </div>
       </div>
       <div className="mt-auto flex min-h-11 min-w-0 items-center gap-2 border-t px-5 py-2.5 text-xs text-gray-11">

@@ -1,6 +1,6 @@
 import { ProjectWithLimits, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Gem, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import React from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
@@ -111,7 +111,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           className={cn('hover:bg-gray-4', className)}
           {...control}
         >
-          {locked ? <Gem className="text-accent-11" /> : <Plus />}
+          <Plus />
         </Button>
       );
     case 'full':
@@ -141,11 +141,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           className={cn('text-gray-11 gap-2', className)}
           {...control}
         >
-          {locked ? (
-            <Gem className="size-4 text-accent-11" />
-          ) : (
-            <Plus className="size-4" />
-          )}
+          <Plus className="size-4" />
           <span>{t('Add team project')}</span>
         </SidebarMenuButton>
       );
