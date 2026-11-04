@@ -1,4 +1,4 @@
-import { isNil, SeekPage } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isNil, SeekPage } from '@activepieces/core-utils'
 import { InvitationType, INVITED_USER_STATUS, PlatformUserListItem, PlatformUserListStatus, UserInvitation, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
@@ -72,16 +72,14 @@ async function toUserRows({ log, platformId, users }: ToUserRowsParams): Promise
         return []
     }
     const userIdsWithProjects = await projectService(log).listUserIdsWithProjects({ platformId, userIds: users.map((user) => user.id) })
-    return users.flatMap((user): PlatformUserListItem[] => {
+    return users.map((user): PlatformUserListItem => {
         const metaInformation = mapToUserWithMetaInformation(user)
-        if (isNil(metaInformation)) {
-            return []
-        }
-        return [{
+        assertNotNullOrUndefined(metaInformation, 'metaInformation')
+        return {
             id: user.id,
             type: 'user',
             data: { ...metaInformation, hasProjects: userIdsWithProjects.includes(user.id) },
-        }]
+        }
     })
 }
 

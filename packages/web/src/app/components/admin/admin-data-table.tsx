@@ -10,6 +10,7 @@ import {
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
 
+import { AdminPagedTable } from './admin-paged-table';
 import { adminPagination } from './admin-pagination';
 import { adminSurface } from './admin-surface';
 
@@ -43,6 +44,7 @@ export function AdminDataTable<
   const landedOnEmptyPage =
     followsEmptyPages &&
     !props.isLoading &&
+    !props.isError &&
     !isNil(page) &&
     page.data.length === 0 &&
     !isNil(cursor);
@@ -70,27 +72,36 @@ export function AdminDataTable<
     (hideFooterUntilNeeded &&
       (isNil(page) || adminPagination.fitsOnOnePage(page)));
 
+  const emptyStateIcon = props.emptyStateIcon && (
+    <span className="flex size-10 items-center justify-center rounded-lg bg-gray-3 text-gray-11 [&_svg]:size-5">
+      {props.emptyStateIcon}
+    </span>
+  );
+
   return (
     <div
       data-slot="admin-data-table"
       className="flex max-h-full min-h-0 flex-initial flex-col"
     >
-      <DataTable
-        key={followsEmptyPages ? `${page?.next}|${page?.previous}` : undefined}
-        {...props}
-        page={page}
-        hidePagination={hideFooter}
-        emptyStateIcon={
-          props.emptyStateIcon && (
-            <span className="flex size-10 items-center justify-center rounded-lg bg-gray-3 text-gray-11 [&_svg]:size-5">
-              {props.emptyStateIcon}
-            </span>
-          )
-        }
-        bordered
-        frameClassName={adminSurface.listFrame}
-        toolbarClassName="px-0 pt-0 pb-4"
-      />
+      {followsEmptyPages ? (
+        <AdminPagedTable
+          {...props}
+          page={page}
+          hidePagination={hideFooter}
+          emptyStateIcon={emptyStateIcon}
+          bordered
+          frameClassName={adminSurface.listFrame}
+          toolbarClassName="px-0 pt-0 pb-4"
+        />
+      ) : (
+        <DataTable
+          {...props}
+          emptyStateIcon={emptyStateIcon}
+          bordered
+          frameClassName={adminSurface.listFrame}
+          toolbarClassName="px-0 pt-0 pb-4"
+        />
+      )}
     </div>
   );
 }

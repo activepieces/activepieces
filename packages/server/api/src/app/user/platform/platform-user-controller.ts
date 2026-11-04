@@ -93,12 +93,10 @@ const ListUsersWithInvitationsRequest = {
         response: {
             [StatusCodes.OK]: SeekPage(PlatformUserListItem),
         },
-        tags: ['users'],
-        description: 'List pending platform invitations, then users, as one page-able list',
         hide: true,
     },
     config: {
-        security: securityAccess.nonEmbedUsersOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 

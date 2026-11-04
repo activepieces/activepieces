@@ -92,13 +92,14 @@ describe('adminPagination.fitsOnOnePage', () => {
 });
 
 describe('adminPagination.parseLimit', () => {
-  it('accepts 1 to 100', () => {
+  it('accepts the page sizes the table offers', () => {
+    expect(adminPagination.parseLimit('10')).toBe(10);
     expect(adminPagination.parseLimit('30')).toBe(30);
-    expect(adminPagination.parseLimit('100')).toBe(100);
+    expect(adminPagination.parseLimit('50')).toBe(50);
   });
 
   it('falls back to 10 for anything else', () => {
-    for (const value of [null, '', '0', '-5', '2.5', '500', 'abc']) {
+    for (const value of [null, '', '0', '-5', '2.5', '7', '100', '500', 'abc']) {
       expect(adminPagination.parseLimit(value)).toBe(10);
     }
   });

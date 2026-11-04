@@ -45,14 +45,16 @@ export default function UsersPage() {
     useSeatLimitGuard();
 
   const [searchParams] = useSearchParams();
-  const selectedStatuses = dataTableFilterUtils
-    .getSelectedValues({
-      searchParams,
-      key: STATUS_FILTER_KEY,
-      allowedValues: STATUS_FILTER_VALUES,
-      defaultValues: DEFAULT_STATUS_FILTER,
-    })
-    .filter(isPlatformUserListStatus);
+  const selectedStatuses = STATUS_FILTER_VALUES.filter((status) =>
+    dataTableFilterUtils
+      .getSelectedValues({
+        searchParams,
+        key: STATUS_FILTER_KEY,
+        allowedValues: STATUS_FILTER_VALUES,
+        defaultValues: DEFAULT_STATUS_FILTER,
+      })
+      .includes(status),
+  );
   const isFiltered =
     selectedStatuses.length > 0 &&
     selectedStatuses.length < STATUS_FILTER_VALUES.length;
@@ -199,9 +201,3 @@ const DEFAULT_STATUS_FILTER: PlatformUserListStatus[] = [
   UserStatus.ACTIVE,
   INVITED_USER_STATUS,
 ];
-
-function isPlatformUserListStatus(
-  value: string,
-): value is PlatformUserListStatus {
-  return PlatformUserListStatus.safeParse(value).success;
-}

@@ -36,8 +36,8 @@ function fitsOnOnePage<TData>(page: SeekPage<TData>): boolean {
 }
 
 function parseLimit(value: string | null): number {
-  const limit = toPositiveInt({ value, fallback: SINGLE_PAGE_ROWS });
-  return limit <= MAX_PAGE_SIZE ? limit : SINGLE_PAGE_ROWS;
+  const limit = Number(value);
+  return PAGE_SIZE_OPTIONS.includes(limit) ? limit : SINGLE_PAGE_ROWS;
 }
 
 function toPositiveInt({
@@ -54,4 +54,4 @@ function toPositiveInt({
 export const adminPagination = { slicePage, fitsOnOnePage, parseLimit };
 
 const SINGLE_PAGE_ROWS = 10;
-const MAX_PAGE_SIZE = 100;
+const PAGE_SIZE_OPTIONS = [10, 30, 50];

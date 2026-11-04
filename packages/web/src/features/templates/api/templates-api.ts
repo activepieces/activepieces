@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
   CreateTemplateRequestBody,
+  ListCustomTemplatesPageRequestQuery,
   ListTemplatesRequestQuery,
   Template,
   UpdateTemplateRequestBody,
@@ -18,6 +19,9 @@ export const templatesApi = {
   },
   update(templateId: string, request: UpdateTemplateRequestBody) {
     return api.post<Template>(`/v1/templates/${templateId}`, request);
+  },
+  listCustomPage(request: ListCustomTemplatesPageRequestQuery) {
+    return api.get<SeekPage<Template>>(`/v1/templates/custom`, request);
   },
   list(request: ListTemplatesRequestQuery) {
     return api.get<SeekPage<Template>>(`/v1/templates`, request);

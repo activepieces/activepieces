@@ -199,6 +199,8 @@ type NewTemplate = Omit<Template, 'created' | 'updated'>
 type ListParams = Omit<ListTemplatesRequestQuery, 'type'> & {
     platformId: string | null
     type: TemplateType
+    cursor?: string
+    limit?: number
 }
 
 type DeleteParams = {

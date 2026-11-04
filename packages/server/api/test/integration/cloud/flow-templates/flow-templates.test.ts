@@ -55,78 +55,101 @@ describe('Templates', () => {
             expect(responseBody.data[0].id).toBe(mockPlatformTemplate.id)
         })
 
-        it('should page custom templates when a limit is given', async () => {
-            const { mockPlatform, mockUser } =
+        it('should page custom templates for platform admins on the admin endpoint', async () => {
+            const { mockPlatform, mockOwner } =
                 await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
             const older = createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM, created: '2020-01-01T00:00:00.000Z' })
             const newest = createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM, created: '2030-01-01T00:00:00.000Z' })
             await db.save('template', [older, newest])
-            const testToken = await generateMockToken({
+            const adminToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUser.id,
+                id: mockOwner.id,
                 platform: { id: mockPlatform.id },
             })
-
-            const firstPage = await app?.inject({
+            const listPage = (query: Record<string, string>) => app?.inject({
                 method: 'GET',
-                url: '/api/v1/templates',
-                headers: { authorization: `Bearer ${testToken}` },
-                query: { type: TemplateType.CUSTOM, limit: '2' },
+                url: '/api/v1/templates/custom',
+                headers: { authorization: `Bearer ${adminToken}` },
+                query,
             })
+
+            const firstPage = await listPage({ limit: '2' })
             const firstBody = firstPage?.json()
             expect(firstPage?.statusCode).toBe(StatusCodes.OK)
             expect(firstBody.data).toHaveLength(2)
             expect(firstBody.data[0].id).toBe(newest.id)
             expect(firstBody.next).not.toBeNull()
 
-            const secondPage = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/templates',
-                headers: { authorization: `Bearer ${testToken}` },
-                query: { type: TemplateType.CUSTOM, limit: '2', cursor: firstBody.next },
-            })
-            const secondBody = secondPage?.json()
-            expect(secondPage?.statusCode).toBe(StatusCodes.OK)
-            expect(secondBody.data).toHaveLength(1)
-            expect(secondBody.data[0].id).toBe(older.id)
+            const secondBody = (await listPage({ limit: '2', cursor: firstBody.next }))?.json()
+            expect(secondBody.data.map((row: { id: string }) => row.id)).toEqual([older.id])
             expect(secondBody.next).toBeNull()
-            const firstIds = firstBody.data.map((row: { id: string }) => row.id)
-            expect(firstIds).not.toContain(secondBody.data[0].id)
 
-            const backToFirst = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/templates',
-                headers: { authorization: `Bearer ${testToken}` },
-                query: { type: TemplateType.CUSTOM, limit: '2', cursor: secondBody.previous },
-            })
-            expect(backToFirst?.json().data.map((row: { id: string }) => row.id)).toEqual(firstIds)
-
-            const unpaged = await app?.inject({
-                method: 'GET',
-                url: '/api/v1/templates',
-                headers: { authorization: `Bearer ${testToken}` },
-                query: { type: TemplateType.CUSTOM },
-            })
-            expect(unpaged?.json().data).toHaveLength(3)
+            const backToFirst = (await listPage({ limit: '2', cursor: secondBody.previous }))?.json()
+            expect(backToFirst.data.map((row: { id: string }) => row.id)).toEqual(firstBody.data.map((row: { id: string }) => row.id))
         })
 
-        it('should reject a page size outside 1 to 100', async () => {
+        it('should keep the public list endpoint unpaged even when a limit is sent', async () => {
             const { mockPlatform, mockUser } =
                 await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
+            await db.save('template', [
+                createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM }),
+                createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM }),
+            ])
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
                 platform: { id: mockPlatform.id },
             })
-            for (const limit of ['0', '-1', '101']) {
+
+            for (const limit of ['1', '500']) {
                 const response = await app?.inject({
                     method: 'GET',
                     url: '/api/v1/templates',
                     headers: { authorization: `Bearer ${testToken}` },
                     query: { type: TemplateType.CUSTOM, limit },
                 })
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+                expect(response?.json().data).toHaveLength(3)
+                expect(response?.json().next).toBeNull()
+            }
+        })
+
+        it('should limit the admin endpoint to platform admins and page sizes of 1 to 100', async () => {
+            const { mockPlatform, mockOwner, mockUser } =
+                await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
+            const memberToken = await generateMockToken({ type: PrincipalType.USER, id: mockUser.id, platform: { id: mockPlatform.id } })
+            const adminToken = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
+
+            const asMember = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/templates/custom',
+                headers: { authorization: `Bearer ${memberToken}` },
+            })
+            expect(asMember?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            for (const limit of ['0', '-1', '101']) {
+                const response = await app?.inject({
+                    method: 'GET',
+                    url: '/api/v1/templates/custom',
+                    headers: { authorization: `Bearer ${adminToken}` },
+                    query: { limit },
+                })
                 expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
             }
+        })
+
+        it('should return an empty page on the admin endpoint when the plan has no templates', async () => {
+            const { mockPlatform, mockOwner } =
+                await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: false } })
+            const adminToken = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/templates/custom',
+                headers: { authorization: `Bearer ${adminToken}` },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json()).toEqual({ data: [], next: null, previous: null })
         })
 
         it('should list cloud platform template for anonymous users', async () => {

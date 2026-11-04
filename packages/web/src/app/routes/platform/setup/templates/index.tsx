@@ -1,4 +1,4 @@
-import { Template, TemplateType } from '@activepieces/shared';
+import { Template } from '@activepieces/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -57,7 +57,7 @@ const PlatformTemplatesPage = () => {
     staleTime: 0,
     placeholderData: keepPreviousData,
     queryFn: () =>
-      templatesApi.list({ type: TemplateType.CUSTOM, cursor, limit }),
+      templatesApi.listCustomPage({ cursor, limit }),
   });
 
   const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates({

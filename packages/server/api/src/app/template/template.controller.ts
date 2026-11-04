@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
-import { ALL_PRINCIPAL_TYPES, ApEdition, ApFlagId, CreateTemplateRequestBody, ListTemplatesRequestQuery, Principal, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApEdition, ApFlagId, CreateTemplateRequestBody, ListCustomTemplatesPageRequestQuery, ListTemplatesRequestQuery, Principal, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -35,6 +35,19 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
+    app.get('/custom', ListCustomTemplatesPageParams, async (request) => {
+        const platform = await platformService(app.log).getOneWithPlanOrThrow(request.principal.platform.id)
+        if (!platform.plan.manageTemplatesEnabled) {
+            return { data: [], next: null, previous: null }
+        }
+        return templateService(app.log).list({
+            platformId: platform.id,
+            type: TemplateType.CUSTOM,
+            cursor: request.query.cursor,
+            limit: request.query.limit ?? 10,
+        })
+    })
+
     app.get('/categories', GetCategoriesParams, async (request) => {
         if (edition === ApEdition.CLOUD) {
             return flagService(request.log).getOne(ApFlagId.TEMPLATES_CATEGORIES)
@@ -43,12 +56,8 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
-        const { cursor, limit, ...query } = request.query
-        if (query.type === TemplateType.CUSTOM && !isNil(limit)) {
-            return loadCustomTemplatesPageOrReturnEmpty(app.log, { ...query, cursor, limit }, request.principal)
-        }
-        const officialTemplates = await loadOfficialTemplatesOrReturnEmpty(app.log, query)
-        const customTemplates = await loadCustomTemplatesOrReturnEmpty(app.log, query, request.principal)
+        const officialTemplates = await loadOfficialTemplatesOrReturnEmpty(app.log, request.query)
+        const customTemplates = await loadCustomTemplatesOrReturnEmpty(app.log, request.query, request.principal)
 
         return {
             data: [...officialTemplates, ...customTemplates],
@@ -173,6 +182,19 @@ const GetParams = {
     },
 }
 
+const ListCustomTemplatesPageParams = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        hide: true,
+        querystring: ListCustomTemplatesPageRequestQuery,
+        response: {
+            [StatusCodes.OK]: SeekPage(Template),
+        },
+    },
+}
+
 const ListTemplatesParams = {
     config: {
         security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
@@ -260,23 +282,14 @@ async function loadCustomTemplatesOrReturnEmpty(
     if ((!isNil(query.type) && query.type !== TemplateType.CUSTOM)) {
         return []
     }
-    const customTemplates = await loadCustomTemplatesPageOrReturnEmpty(log, query, principal)
-    return customTemplates.data
-}
-
-async function loadCustomTemplatesPageOrReturnEmpty(
-    log: FastifyBaseLogger,
-    query: ListTemplatesRequestQuery,
-    principal: Principal,
-): Promise<SeekPage<Template>> {
-    const emptyPage: SeekPage<Template> = { data: [], next: null, previous: null }
     const platformId = principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER || principal.type === PrincipalType.ONBOARDING ? null : principal.platform.id
     if (isNil(platformId)) {
-        return emptyPage
+        return []
     }
     const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
     if (!platform.plan.manageTemplatesEnabled) {
-        return emptyPage
+        return []
     }
-    return templateService(log).list({ platformId, type: TemplateType.CUSTOM, ...query })
+    const customTemplates = await templateService(log).list({ platformId, type: TemplateType.CUSTOM, ...query })
+    return customTemplates.data
 }

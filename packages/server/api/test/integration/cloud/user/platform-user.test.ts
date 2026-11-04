@@ -330,6 +330,20 @@ describe('Enterprise User API', () => {
             }
         })
 
+        it('Rejects platform members who are not admins', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, status: UserStatus.ACTIVE },
+            })
+            const memberToken = await generateMockToken({ id: mockUser.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/users/with-invitations',
+                headers: { authorization: `Bearer ${memberToken}` },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
         it('Rejects service accounts', async () => {
             const { mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
             const response = await app?.inject({

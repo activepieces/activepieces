@@ -215,7 +215,14 @@ const EventDestinationsPage = () => {
       </AdminPageHeader>
       <AdminDataTable
         columns={columns}
-        page={{ data: destinations, next: null, previous: null }}
+        page={{
+          data: [...destinations].sort(
+            (a, b) =>
+              a.created.localeCompare(b.created) || a.id.localeCompare(b.id),
+          ),
+          next: null,
+          previous: null,
+        }}
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('destinations')}
