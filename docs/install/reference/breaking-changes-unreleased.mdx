@@ -22,6 +22,49 @@ Once a **Verify Email** step is upgraded to 0.2.0, it no longer returns right aw
 
 If a Run Agent step or MCP client uses Get Lead, Update Lead, Delete Lead or Add Recipients as a tool, switch it to the "by ID" action listed above. Flow steps that use them keep working. If a flow relied on Verify Email returning a pending result, expect the step to take up to 60 seconds, and handle a failed step for emails Hunter cannot finish checking in time.
 
+#### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
+
+When Activepieces connects to an MCP server, it no longer follows a redirect to a different host or port. That redirect now fails the connection, so headers such as API keys are never sent to a host you did not configure.
+
+This applies to MCP servers added as tools to an AI agent as soon as you upgrade. For the **MCP Client** piece it applies from version 0.0.8; steps keep running on the version they were built with until you upgrade them.
+
+The built-in MCP server (`/mcp` and `/mcp/platform`) now rejects a request body larger than 4 MiB with `413 Payload Too Large`. It also rejects a tool call whose arguments hold more than 50,000 values (array items and object keys combined) and returns a tool error instead of running the tool.
+
+#### What you need to do
+
+- Configure each MCP server with its final URL, including `https`, so that reaching it needs no redirect.
+- If an MCP client sends very large tool calls to Activepieces, split them into smaller calls.
+
+#### Webflow 0.4.0: moves to Webflow API v2, connections need reconnecting, and step outputs change
+
+Webflow switched off its v1 API, which every Webflow action and the New Submission trigger used. They now call v2, and the connection asks for the v2 permissions (CMS, sites, pages, forms, assets, custom code, comments, components and ecommerce).
+
+After you upgrade a Webflow step:
+
+- Collection item steps return `id`, `isDraft`, `isArchived` and the field values under `fieldData` (before: `_id`, `_draft`, `_archived` and the fields at the top level). Find Collection Item returns items in the same shape.
+- List Sites and List Collections return `id` and `displayName` instead of `_id` and `name`.
+- Delete Collection Item returns `success` and `collectionItemId`.
+- Update Collection Item changes only the fields you fill in, instead of replacing the whole item.
+- New Submission delivers `siteId`, `submittedAt`, `id` and `formId` (before: `site`, `d` and `_id`). The submitted values stay under `data`.
+- List Sites, List Collections and the collection item actions are now shown only in the flow builder; AI agents and MCP clients get the new Webflow AI actions instead.
+
+#### What you need to do
+
+- Reconnect each Webflow connection once, and pick the sites it may reach on the Webflow consent screen.
+- Remap later steps that read `_id`, `name`, `_draft`, `_archived`, `site`, `d` or item fields at the top level.
+- Turn flows that use New Submission off and on again so the webhook is registered through v2.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Audit logs: SAML and embedded sign-ins no longer send `user.signed.up` on every sign-in
+
+`user.signed.up` used to fire on every SAML and embedded (JWT) sign-in, even for existing members. It now fires once, when the member is created. Later SAML sign-ins, and sign-ins with email or Google, send the new `user.signed.in` event, which carries the sign-in method. Later embedded sign-ins send no event.
+
+#### What you need to do
+
+- If an Event Streaming destination used `user.signed.up` to track SAML logins, subscribe it to `user.signed.in` as well.
+- Embedded logins of existing members are no longer streamed. Track them in your own app, which issues the JWT.
+
 #### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
 
 **Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.

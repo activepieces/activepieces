@@ -43,6 +43,11 @@ You are working in the Activepieces web application (`packages/web`).
 - **Overflowing text must use `TextWithTooltip`** (from `@/components/custom/text-with-tooltip`). Wrap any text that may overflow its container (emails, IDs, long names) in `<TextWithTooltip tooltipMessage={text}><p className="...">{text}</p></TextWithTooltip>`. It auto-detects truncation and only shows the tooltip when the text actually overflows. Ensure parent flex containers have `min-w-0` so `truncate` works correctly.
 - **Copy-to-clipboard UI must use `CopyToClipboardInput`** (from `@/components/custom/clipboard/copy-to-clipboard`). Never hand-roll a readonly `<Input>` glued to a copy `<Button>` with `navigator.clipboard.writeText`. `CopyToClipboardInput` handles the copied-state toggle, tooltip, styling, and optional download button. Pass `useInput={true}` for single-line values (links, keys) or `useInput={false}` for multi-line content (textarea). Use `fileName` only when the value should also be downloadable.
 
+## Accessible markup
+
+- **Every interactive element has a role and an accessible name.** Use a real `<button>` / `<a>` (the Shadcn `Button`), never a clickable `div`. Link each `FormLabel` to its input through `FormControl`. Give an icon-only button an `aria-label` with a translation key.
+- **A `data-testid` does not replace either.** E2E specs select by test id first (see "Writing a spec" in `packages/tests-e2e/README.md`), but screen readers and `getByRole` still need the role and the name. When you add a test id to an element, check that it has both.
+
 ## React Hook Form
 
 - **Zod error messages must use `formErrors`** — For standard validation messages (e.g. required fields) use the `formErrors` constant from `@activepieces/shared`. For custom messages, add the key to `packages/web/public/locales/en/translation.json` first, then use the key string. `FormMessage` automatically calls `t()` on every error message, so the string must be a valid translation key.

@@ -30,6 +30,7 @@ import {
 import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { validationUtils } from '@/lib/validation-utils';
 
@@ -393,7 +394,9 @@ export default function ProjectsPage() {
         emptyStateIcon={<Package />}
         onRowClick={async (project) => {
           await projectCollectionUtils.setCurrentProject(project.id);
-          navigate('/');
+          navigate(
+            authenticationSession.appendProjectRoutePrefix('/automations'),
+          );
         }}
         filters={[
           {

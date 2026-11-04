@@ -1,6 +1,6 @@
 import path from 'path'
 import { apId, spreadIfDefined } from '@activepieces/core-utils'
-import { apLogger, evlogFastify, useWideEventLogger, wideEvent } from '@activepieces/server-utils'
+import { apLogger, evlogFastify, POSTHOG_HOST, useWideEventLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, maxSocketHttpBufferSizeBytes } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
@@ -67,7 +67,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     }
 
     if (system.isApp()) {
-        const posthogIngestionHost = 'https://us.i.posthog.com'
+        const posthogIngestionHost = POSTHOG_HOST
         const posthogAssetsHost = 'https://us-assets.i.posthog.com'
         await app.register(async (ingestScope) => {
             ingestScope.removeAllContentTypeParsers()
