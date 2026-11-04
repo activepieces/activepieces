@@ -1,5 +1,6 @@
 import { readdir, rm, rmdir, stat, utimes } from 'node:fs/promises'
 import path from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { ActivepiecesError, chunk, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, systemUsage } from '@activepieces/server-utils'
 import { diskLock, DiskLockTimeoutError } from '../utils/distributed-lock'
@@ -27,10 +28,11 @@ export const codeCacheEviction = {
         log,
         activeWindowMs = ACTION_RUN_CACHE_ACTIVE_WINDOW_MS,
         getUsedPercent = () => defaultGetUsedPercent({ basePath, log }),
+        pauseMs = EVICTION_PAUSE_MS,
     }: SweepParams): Promise<void> {
         const locks = evictionLocks(basePath)
         await sweepActionRuns({ basePath, log, activeWindowMs, locks })
-        await sweepOnDiskPressure({ basePath, log, activeWindowMs, getUsedPercent, locks })
+        await sweepOnDiskPressure({ basePath, log, activeWindowMs, getUsedPercent, locks, pauseMs })
     },
 
     async markUsed(dirPath: string): Promise<void> {
@@ -103,12 +105,28 @@ async function sweepActionRuns({ basePath, log, activeWindowMs, locks }: ActionR
     log.info(summary, 'Swept action-run code cache')
 }
 
-async function sweepOnDiskPressure({ basePath, log, activeWindowMs, getUsedPercent, locks }: DiskPressureSweepParams): Promise<void> {
+async function sweepOnDiskPressure({ basePath, log, activeWindowMs, getUsedPercent, locks, pauseMs }: DiskPressureSweepParams): Promise<void> {
     const usedPercentBefore = await getUsedPercent()
     if (usedPercentBefore < DISK_EVICTION_THRESHOLD_PERCENT) {
         return
     }
 
+    const { error: lockError } = await tryCatch(() => locks.runExclusive({
+        key: DISK_PRESSURE_SWEEP_LOCK_KEY,
+        timeoutMs: EVICTION_TRY_LOCK_TIMEOUT_MS,
+        fn: () => runDiskPressureEviction({ basePath, log, activeWindowMs, getUsedPercent, locks, pauseMs, usedPercentBefore }),
+    }))
+    if (isNil(lockError)) {
+        return
+    }
+    if (lockError instanceof DiskLockTimeoutError) {
+        log.debug({ cache: { path: basePath } }, 'Another process is already sweeping the code cache under disk pressure, skipping this cycle')
+        return
+    }
+    log.warn({ error: lockError }, 'Failed to acquire the disk-pressure sweep lock')
+}
+
+async function runDiskPressureEviction({ basePath, log, activeWindowMs, getUsedPercent, locks, pauseMs, usedPercentBefore }: RunDiskPressureEvictionParams): Promise<void> {
     const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
     const { data: entries, error } = await tryCatch(() => readdir(codesPath, { withFileTypes: true }))
     if (error) {
@@ -140,6 +158,7 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, getUsedPerce
     for (const [index, candidate] of candidates.entries()) {
         if (index % USAGE_RECHECK_EVERY === 0) {
             if (index > 0) {
+                await sleep(pauseMs)
                 lastUsedPercent = await getUsedPercent()
             }
             if (lastUsedPercent < DISK_EVICTION_THRESHOLD_PERCENT) {
@@ -317,6 +336,8 @@ const PROVISION_LOCK_TIMEOUT_MS = 15 * 60 * 1000
 const EVICTION_TRY_LOCK_TIMEOUT_MS = 0
 const SCAN_BATCH_SIZE = 16
 const USAGE_RECHECK_EVERY = 10
+const DISK_PRESSURE_SWEEP_LOCK_KEY = 'disk-pressure-sweep'
+const EVICTION_PAUSE_MS = 1000
 
 export const ACTION_RUN_CACHE_ACTIVE_WINDOW_MS = 15 * 60 * 1000
 export const ACTION_RUN_CACHE_MAX_DIRS = 200
@@ -336,6 +357,7 @@ type SweepParams = {
     log: ApLogger
     activeWindowMs?: number
     getUsedPercent?: () => Promise<number>
+    pauseMs?: number
 }
 
 type WithDirLockParams<T> = {
@@ -357,6 +379,11 @@ type DiskPressureSweepParams = {
     activeWindowMs: number
     getUsedPercent: () => Promise<number>
     locks: CacheLocks
+    pauseMs: number
+}
+
+type RunDiskPressureEvictionParams = DiskPressureSweepParams & {
+    usedPercentBefore: number
 }
 
 type DefaultGetUsedPercentParams = {
