@@ -1,8 +1,10 @@
 import { microsoftTeamsAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { ResponseType } from '@microsoft/microsoft-graph-client';
-import { microsoftTeamsCommon } from '../common';
-import { createGraphClient, resolveMeetingId, withGraphRetry } from '../common/graph';
+import { microsoftTeamsProps } from '../common/props';
+import { microsoftTeamsClient } from '../common/client';
+import { microsoftTeamsApi } from '../common/api';
+import { microsoftTeamsGetMeetingTranscriptOutputSchema } from '../output-schemas';
 
 export const getMeetingTranscriptAction = createAction({
 	auth: microsoftTeamsAuth,
@@ -11,28 +13,27 @@ export const getMeetingTranscriptAction = createAction({
 	displayName: 'Get Meeting Transcript',
 	description:
 		'Retrieves transcripts for a Teams meeting. Provide a Transcript to fetch its text content; omit it to list all available transcripts.',
-	audience: 'both',
+	audience: 'human',
+	outputSchema: microsoftTeamsGetMeetingTranscriptOutputSchema,
 	aiMetadata: {
 		description: 'Retrieves transcripts for a Microsoft Teams online meeting belonging to the authenticated user, resolved from a meeting identifier (join URL or ID). Operates in two modes: with a transcript ID it fetches that transcript\'s text content (VTT); without one it lists all available transcripts for the meeting. Idempotent read-only operation.',
 		idempotent: true,
 	},
 	props: {
-		meetingIdentifierType: microsoftTeamsCommon.meetingIdentifierType,
-		meetingIdentifierValue: microsoftTeamsCommon.meetingIdentifierValue,
-		transcriptId: microsoftTeamsCommon.transcriptId,
+		meetingIdentifierType: microsoftTeamsProps.meetingIdentifierType({ required: true }),
+		meetingIdentifierValue: microsoftTeamsProps.meetingIdentifierValue({ required: true }),
+		transcriptId: microsoftTeamsProps.transcriptId({ required: false }),
 	},
 	async run(context) {
 		const { meetingIdentifierType, meetingIdentifierValue, transcriptId } = context.propsValue;
-		const cloud = context.auth.props?.['cloud'] as string | undefined;
-		const client = createGraphClient(context.auth.access_token, cloud);
+		const client = microsoftTeamsClient.create({ auth: context.auth });
 
-		const meetingId = await withGraphRetry(() =>
-			resolveMeetingId({ client, identifierType: meetingIdentifierType, identifierValue: meetingIdentifierValue }),
+		const meetingId = await microsoftTeamsClient.withRetry(() =>
+			microsoftTeamsApi.resolveMeetingId({ client, identifierType: meetingIdentifierType, identifierValue: meetingIdentifierValue }),
 		);
 
 		if (transcriptId) {
-			// https://learn.microsoft.com/graph/api/calltranscript-get?view=graph-rest-1.0
-			const content = await withGraphRetry(() =>
+			const content = await microsoftTeamsClient.withRetry(() =>
 				client
 					.api(`/me/onlineMeetings/${meetingId}/transcripts/${transcriptId}/content`)
 					.header('Accept', 'text/vtt')
@@ -42,8 +43,7 @@ export const getMeetingTranscriptAction = createAction({
 			return { content };
 		}
 
-		// https://learn.microsoft.com/graph/api/onlinemeeting-list-transcripts?view=graph-rest-1.0
-		return await withGraphRetry(() =>
+		return await microsoftTeamsClient.withRetry(() =>
 			client.api(`/me/onlineMeetings/${meetingId}/transcripts`).get(),
 		);
 	},

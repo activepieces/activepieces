@@ -90,11 +90,10 @@ COPY . .
 # Build frontend, engine, server API, and worker
 RUN NODE_OPTIONS=--max-old-space-size=4096 npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
-# Source maps are off unless AP_BUILD_SOURCEMAP=true: generating them costs ~1GB of
-# peak heap in the web build (3.5GB vs 2.5GB measured) for ~21MB of output that this
-# layer then deletes, which is what OOM-killed the image build. A build that opts in
-# must upload them BEFORE this line; the delete stays so source is never served from
-# the shipped image.
+# Source maps are off unless AP_BUILD_SOURCEMAP=true: there is no upload step yet, so
+# they'd be ~21MB of output that this layer deletes anyway. Turning them on adds about
+# 0.6GB of peak memory and a second or two. A build that opts in must upload them BEFORE
+# this line; the delete stays so source is never served from the shipped image.
 # TODO(cloud-ci): set AP_BUILD_SOURCEMAP=true and upload with sentry-cli when SENTRY_AUTH_TOKEN is set.
 RUN find dist/packages/web -name '*.map' -delete
 

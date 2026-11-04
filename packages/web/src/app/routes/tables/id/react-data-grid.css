@@ -40,7 +40,7 @@
     }
 }
 
-div[role="gridcell"]:focus-within {
+div[role="gridcell"]:has([data-editing="true"]) {
     overflow: visible !important;
 }
 

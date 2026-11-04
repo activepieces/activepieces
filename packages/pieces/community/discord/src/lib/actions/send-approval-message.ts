@@ -49,7 +49,7 @@ export const discordSendApprovalMessage = createAction({
         type: 'WEBHOOK',
       });
 
-      const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
+      const confirmationLink = `${waitpoint.publicResumeUrl ?? waitpoint.resumeUrl}/confirm`;
 
       const request: HttpRequest = {
         method: HttpMethod.POST,
