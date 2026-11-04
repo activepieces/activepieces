@@ -89,6 +89,7 @@ async function sweepActionRuns({ basePath, log, activeWindowMs, locks }: ActionR
         retainedCount,
         activeCount: expired.survivors.length - evictable.length,
         failedCount,
+        skippedCount: expired.skippedCount + evicted.skippedCount,
         unreadableCount: expired.unreadableCount,
         durationMs: Date.now() - startedAt,
     }
@@ -210,6 +211,7 @@ async function removeExpired({ dirPaths, expiredAt, locks }: RemoveExpiredParams
     const survivors: DirEntry[] = []
     let expiredCount = 0
     let failedCount = 0
+    let skippedCount = 0
     let unreadableCount = 0
     for (const dirPath of dirPaths) {
         const mtimeMs = await readMtimeMs(dirPath)
@@ -224,19 +226,22 @@ async function removeExpired({ dirPaths, expiredAt, locks }: RemoveExpiredParams
         const outcome = await removeDir({ locks, dirPath, expectedMtimeMs: mtimeMs })
         expiredCount += outcome === 'removed' ? 1 : 0
         failedCount += outcome === 'failed' ? 1 : 0
+        skippedCount += outcome === 'skipped' ? 1 : 0
     }
-    return { survivors, expiredCount, failedCount, unreadableCount }
+    return { survivors, expiredCount, failedCount, skippedCount, unreadableCount }
 }
 
 async function removeOldest({ entries, locks }: RemoveOldestParams): Promise<EvictedResult> {
     let removedCount = 0
     let failedCount = 0
+    let skippedCount = 0
     for (const entry of entries) {
         const outcome = await removeDir({ locks, dirPath: entry.dirPath, expectedMtimeMs: entry.mtimeMs })
         removedCount += outcome === 'removed' ? 1 : 0
         failedCount += outcome === 'failed' ? 1 : 0
+        skippedCount += outcome === 'skipped' ? 1 : 0
     }
-    return { removedCount, failedCount }
+    return { removedCount, failedCount, skippedCount }
 }
 
 async function readMtimeMs(dirPath: string): Promise<number | null> {
@@ -358,10 +363,12 @@ type ExpiredResult = {
     survivors: DirEntry[]
     expiredCount: number
     failedCount: number
+    skippedCount: number
     unreadableCount: number
 }
 
 type EvictedResult = {
     removedCount: number
     failedCount: number
+    skippedCount: number
 }

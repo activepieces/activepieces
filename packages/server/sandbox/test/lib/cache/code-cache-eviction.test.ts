@@ -363,6 +363,39 @@ describe('codeCacheEviction.sweep action-run pass observability', () => {
         }])
     })
 
+    it('counts an expired directory whose lock another sweeper holds as skipped, not silently as retained', async () => {
+        const basePath = uniqueBasePath()
+        const namespace = actionRunCache.namespace({ platformId: apId(), sourceHash: 'c'.repeat(64) })
+        const dirPath = await seedNamespaceDir({ basePath, namespace, ageMs: 3 * HOUR_MS })
+        const recording = createRecordingLog()
+
+        let releaseLock!: () => void
+        const lockHeld = new Promise<void>((resolve) => {
+            releaseLock = resolve
+        })
+        let signalAcquired!: () => void
+        const lockAcquired = new Promise<void>((resolve) => {
+            signalAcquired = resolve
+        })
+        const concurrentSweeper = codeCacheEviction.withDirLock({
+            basePath,
+            dirPath,
+            fn: async () => {
+                signalAcquired()
+                await lockHeld
+            },
+        })
+        await lockAcquired
+
+        await codeCacheEviction.sweep({ basePath, log: recording.log, getUsedPercent: underThreshold })
+
+        releaseLock()
+        await concurrentSweeper
+
+        await expect(exists(dirPath)).resolves.toBe(true)
+        expect(recording.payloadsAt('debug')).toMatchObject([{ expiredCount: 0, failedCount: 0, skippedCount: 1 }])
+    })
+
     it.skipIf(runningAsRoot())('warns and counts the directory as retained when removal is denied', async () => {
         const basePath = uniqueBasePath()
         const actionRunsPath = cacheUtils(basePath).getActionRunCodeCachePath()
