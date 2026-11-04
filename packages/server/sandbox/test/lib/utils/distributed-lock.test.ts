@@ -119,6 +119,40 @@ describe('diskLock', () => {
         expect(await readdir(locksPath)).toEqual([])
     })
 
+    it('retries immediately after taking over a stale lock when the deadline allows waiting, without a poll sleep', async () => {
+        const locksPath = uniqueLocksPath()
+        await mkdir(locksPath, { recursive: true })
+        const staleLockPath = join(locksPath, 'dead-key.lock')
+        await writeFile(staleLockPath, 'dead-holder-token', 'utf8')
+        const sixMinutesAgo = (Date.now() - 6 * 60 * 1000) / 1000
+        await utimes(staleLockPath, sixMinutesAgo, sixMinutesAgo)
+
+        const startedAt = Date.now()
+        const result = await diskLock(locksPath).runExclusive({
+            key: 'dead-key',
+            timeoutMs: 2000,
+            fn: async () => 'took over',
+        })
+
+        expect(result).toBe('took over')
+        expect(Date.now() - startedAt).toBeLessThan(400)
+    })
+
+    it('a try-lock still throws after cleaning a stale lock, deferring the reclaim to the next attempt', async () => {
+        const locksPath = uniqueLocksPath()
+        await mkdir(locksPath, { recursive: true })
+        const staleLockPath = join(locksPath, 'frozen-key.lock')
+        await writeFile(staleLockPath, 'frozen-holder-token', 'utf8')
+        const sixMinutesAgo = (Date.now() - 6 * 60 * 1000) / 1000
+        await utimes(staleLockPath, sixMinutesAgo, sixMinutesAgo)
+
+        await expect(diskLock(locksPath).acquire('frozen-key', 0)).rejects.toThrow('Timed out acquiring disk lock')
+        expect(await readdir(locksPath)).toEqual([])
+
+        const lock = await diskLock(locksPath).acquire('frozen-key', 0)
+        await lock.release()
+    })
+
     it('does not delete a lock it no longer owns on release', async () => {
         const locksPath = uniqueLocksPath()
         const lock = await diskLock(locksPath).acquire('contested-key')
