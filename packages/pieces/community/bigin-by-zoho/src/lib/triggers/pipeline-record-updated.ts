@@ -7,10 +7,10 @@ export const pipelineRecordUpdated = createTrigger({
   auth: biginAuth,
   name: 'pipelineRecordUpdated',
   displayName: 'Pipeline Record Updated',
-  description: 'Triggers when a pipeline record is updated',
+  description: 'Triggers when a pipeline record is updated. Full records are fetched for the first 10 IDs.',
   aiMetadata: {
     description:
-      'Fires when an existing pipeline record (deal) is edited in Bigin CRM, via a Pipelines.edit webhook. Represents a change to a deal already in the CRM, such as a stage or amount update. The output includes the notified record ids and the fetched records.',
+      'Fires when an existing pipeline record (deal) is edited in Bigin CRM, via a Pipelines.edit webhook. Represents a change to a deal already in the CRM, such as a stage or amount update. The output includes every notified record id (ids) and the full records of the first 10 ids only (records); a bulk change can notify more ids than that, so use ids for the complete list. If a record read fails, records holds the ones fetched so far and records_error says why.',
   },
   classification: 'READ',
   props: {},

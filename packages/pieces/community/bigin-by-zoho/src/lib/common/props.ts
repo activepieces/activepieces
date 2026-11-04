@@ -315,7 +315,7 @@ export const biginAiProps = {
   tags: () =>
     Property.Array({
       displayName: 'Tags',
-      description: 'Tag names to add to the record.',
+      description: 'Tag names to add. On update, existing tags are kept.',
       required: false,
     }),
   relatedModule: () =>

@@ -200,7 +200,7 @@ const triggerPayload: OutputSchema = {
     { key: 'channel_id', label: 'Channel ID' },
     { key: 'server_time', label: 'Server Time', format: 'number' },
     { key: 'affected_fields', label: 'Affected Fields' },
-    { key: 'records', label: 'Records' },
+    { key: 'records', label: 'Records (first 10)', description: 'Full records for the first 10 record IDs only. Record IDs lists every ID.' },
     { key: 'records_error', label: 'Records Fetch Error' },
   ],
 };

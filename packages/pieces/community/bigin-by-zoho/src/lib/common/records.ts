@@ -167,8 +167,6 @@ function readWriteItem(body: Record<string, unknown>): Record<string, unknown> {
   return item['details'];
 }
 
-// Bigin already saved the write; the re-read only enriches the result. If it fails
-// (timeout, rate limit), return the confirmed write details so a retry does not duplicate.
 async function readBackOrDetails({
   connection,
   module,
@@ -187,7 +185,6 @@ async function readBackOrDetails({
   }
 }
 
-// The dropdown exposes deals as 'Pipelines'; Bigin's $related_module expects 'Deals'.
 function relatedModuleForApi(module: string | null | undefined): string | undefined {
   if (!module) return undefined;
   return module === 'Pipelines' ? 'Deals' : module;
@@ -324,6 +321,33 @@ function lookup(id: string | undefined): { id: string } | undefined {
   return id && id.trim() !== '' ? { id: id.trim() } : undefined;
 }
 
+async function mergeTagsWithExisting({
+  connection,
+  module,
+  id,
+  tags,
+}: {
+  connection: BiginConnection;
+  module: string;
+  id: string;
+  tags: unknown;
+}): Promise<{ name: string }[] | undefined> {
+  const added = toTagList(tags);
+  if (!added) return undefined;
+  const current = await getRecord({ connection, module, id });
+  const byKey = new Map<string, string>();
+  for (const name of [...existingTagNames(current['Tag']), ...added.map((tag) => tag.name)]) {
+    const key = name.toLowerCase();
+    if (!byKey.has(key)) byKey.set(key, name);
+  }
+  return [...byKey.values()].map((name) => ({ name }));
+}
+
+function existingTagNames(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((tag) => (isObject(tag) && typeof tag['name'] === 'string' && tag['name'].trim() !== '' ? [tag['name'].trim()] : []));
+}
+
 function toTagList(tags: unknown): { name: string }[] | undefined {
   if (!Array.isArray(tags)) return undefined;
   const names = tags.map((t) => String(t).trim()).filter((t) => t !== '');
@@ -375,6 +399,7 @@ export const biginRecords = {
   compactRecord,
   lookup,
   toTagList,
+  mergeTagsWithExisting,
 };
 
 export type { BiginRecord, BiginRecordPage, BiginSearchPage, BiginWriteResult, BiginUpdateResult };

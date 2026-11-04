@@ -55,7 +55,7 @@ export const biginByZoho = createPiece({
   minimumSupportedRelease: '0.86.4',
   categories: [PieceCategory.SALES_AND_CRM],
   logoUrl: 'https://cdn.activepieces.com/pieces/bigin-by-zoho.png',
-  authors: ['gs03dev'],
+  authors: ['gs03dev', 'OdaiAhmed99'],
   actions: [
     createCompany,
     updateCompany,

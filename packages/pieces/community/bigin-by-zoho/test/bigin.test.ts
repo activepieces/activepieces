@@ -345,3 +345,68 @@ describe('pipeline secondary contacts', () => {
     ).rejects.toThrow();
   });
 });
+
+describe('review follow-ups', () => {
+  it('Update Contact (Agent) merges new tags with the existing ones', async () => {
+    const { biginUpdateContactAi } = await import('../src/lib/actions/ai/update-contact');
+    const spy = vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: [{ id: '8', Tag: [{ name: 'Lead', id: 't1' }, { name: 'vip', id: 't2' }] }] } })
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: [{ status: 'success', details: { id: '8', Modified_Time: 'm' } }] } })
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: [{ id: '8' }] } });
+    await runWith({ fn: biginUpdateContactAi.run, context: { auth, propsValue: { recordId: ' 8 ', tags: ['VIP', 'Partner'] } } });
+    expect(spy.mock.calls[0][0].method).toBe('GET');
+    expect(spy.mock.calls[0][0].url).toContain('/Contacts/8');
+    const put = spy.mock.calls[1][0];
+    expect(put.method).toBe('PUT');
+    expect(put.body.data[0].Tag).toEqual([{ name: 'Lead' }, { name: 'vip' }, { name: 'Partner' }]);
+  });
+
+  it('Update Company (Agent) skips the tag read when no tags are passed', async () => {
+    const { biginUpdateCompanyAi } = await import('../src/lib/actions/ai/update-company');
+    const spy = vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: [{ status: 'success', details: { id: '5', Modified_Time: 'm' } }] } })
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { data: [{ id: '5' }] } });
+    await runWith({ fn: biginUpdateCompanyAi.run, context: { auth, propsValue: { recordId: '5', phone: '123' } } });
+    expect(spy.mock.calls[0][0].method).toBe('PUT');
+    expect(spy.mock.calls[0][0].body.data[0]).not.toHaveProperty('Tag');
+  });
+
+  it('legacy createCall sends no related record when Related To is empty', async () => {
+    const { createCall } = await import('../src/lib/actions/create-call');
+    const spy = mockResponse({ status: 201, body: { data: [{ status: 'success', details: { id: '7' } }] } });
+    await runWith({
+      fn: createCall.run,
+      context: {
+        auth,
+        propsValue: { callStartTime: '2026-10-01T09:00:00+03:00', callDuration: 5, callType: 'Inbound', relatedModule: 'Pipelines', relatedTo: {} },
+      },
+    });
+    const payload = spy.mock.calls[0][0].body.data[0];
+    expect(payload).not.toHaveProperty('What_Id');
+    expect(payload).not.toHaveProperty('$se_module');
+  });
+
+  it('renews the 23h channel every 6 hours', () => {
+    expect(newContactCreated.renewConfiguration).toEqual({ strategy: 'CRON', cronExpression: '0 */6 * * *' });
+  });
+
+  it('keeps every notified id but fetches records for the first 10 only', async () => {
+    const store = makeStore({ bigin_created_contact_trigger: { channel_id: '1', token: 'secret' } });
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => ({
+      status: 200,
+      headers: {},
+      body: { data: [{ id: String(req.url).split('/').pop() }] },
+    }));
+    const ids = Array.from({ length: 12 }, (_, i) => String(i + 1));
+    const out = await runWith({ fn: newContactCreated.run, context: { auth, store, payload: { body: { token: 'secret', ids, module: 'Contacts' } } } });
+    expect(spy).toHaveBeenCalledTimes(10);
+    expect(out).toEqual([expect.objectContaining({ ids, records: ids.slice(0, 10).map((id) => ({ id })) })]);
+  });
+});
+
+function runWith({ fn, context }: { fn: unknown; context: Record<string, unknown> }): Promise<unknown> {
+  if (typeof fn !== 'function') {
+    throw new Error('not callable');
+  }
+  return Promise.resolve(Reflect.apply(fn, undefined, [context]));
+}

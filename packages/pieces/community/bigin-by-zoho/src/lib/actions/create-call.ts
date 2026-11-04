@@ -84,7 +84,6 @@ export const createCall = createAction({
       description: 'Select the specific record the call is related to.',
       required: false,
       refreshers: ['auth', 'relatedModule'],
-      defaultValue: {},
       options: async ({ auth, relatedModule }): Promise<any> => {
         if (!auth) return handleDropdownError('Please connect first');
         if (!relatedModule) return { options: [] };
@@ -138,7 +137,8 @@ export const createCall = createAction({
       if (propsValue.contactName)
         payload.Who_Id = { id: propsValue.contactName };
 
-      if (propsValue.relatedTo && propsValue.relatedModule) {
+      const relatedTo = typeof propsValue.relatedTo === 'string' ? propsValue.relatedTo.trim() : '';
+      if (relatedTo !== '' && propsValue.relatedModule) {
         const relatedModuleMap = {
           Pipelines: 'Deals',
           Companies: 'Accounts',
@@ -148,7 +148,7 @@ export const createCall = createAction({
           relatedModuleMap[
             propsValue.relatedModule as keyof typeof relatedModuleMap
           ] || 'Deals';
-        payload.What_Id = { id: propsValue.relatedTo };
+        payload.What_Id = { id: relatedTo };
       }
   
       if (propsValue.tag) payload.Tag = propsValue.tag.map((t: any) => ({ name: t }));

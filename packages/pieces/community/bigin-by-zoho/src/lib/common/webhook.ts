@@ -79,7 +79,7 @@ function hooks({
   return {
     renewConfiguration: {
       strategy: WebhookRenewStrategy.CRON as const,
-      cronExpression: '0 */12 * * *',
+      cronExpression: '0 */6 * * *',
     },
     async onEnable(context: HookContext) {
       const channel_id = Date.now().toString();

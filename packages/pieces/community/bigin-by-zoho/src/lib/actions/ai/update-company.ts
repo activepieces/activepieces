@@ -15,7 +15,7 @@ export const biginUpdateCompanyAi = createAction({
   outputSchema: biginOutputSchemas.aiUpdateResult,
   aiMetadata: {
     description:
-      'Updates an existing Bigin company by id. Only the fields you provide are changed. Idempotent: repeating the same update leaves the company in the same state. Returns the saved record.',
+      'Updates an existing Bigin company by id. Only the fields you provide are changed. Tags are added to the existing tags of the record (it reads the record first), never replacing them. Idempotent: repeating the same update leaves the company in the same state. Returns the saved record.',
     idempotent: true,
   },
   props: {
@@ -35,6 +35,9 @@ export const biginUpdateCompanyAi = createAction({
   },
   async run(context) {
     const { propsValue } = context;
+    const connection = getBiginConnection(context.auth);
+    const id = propsValue.recordId.trim();
+    const tags = await biginRecords.mergeTagsWithExisting({ connection, module: 'Accounts', id, tags: propsValue.tags });
 
     const record = biginRecords.mergeAdditionalFields({
       record: {
@@ -47,7 +50,7 @@ export const biginUpdateCompanyAi = createAction({
       Billing_Country: propsValue.billingCountry ?? undefined,
       Billing_Code: propsValue.billingCode ?? undefined,
       Owner: biginRecords.lookup(propsValue.ownerId ?? undefined),
-      Tag: biginRecords.toTagList(propsValue.tags),
+      Tag: tags,
       Description: propsValue.description ?? undefined,
       },
       additionalFields: propsValue.additionalFields,
@@ -55,6 +58,6 @@ export const biginUpdateCompanyAi = createAction({
     if (Object.keys(record).length === 0) {
       throw new Error('Provide at least one field to update.');
     }
-    return biginRecords.update({ connection: getBiginConnection(context.auth), module: 'Accounts', id: propsValue.recordId.trim(), record });
+    return biginRecords.update({ connection, module: 'Accounts', id, record });
   },
 });

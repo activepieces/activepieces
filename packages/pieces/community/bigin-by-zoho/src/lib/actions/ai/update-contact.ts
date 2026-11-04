@@ -15,7 +15,7 @@ export const biginUpdateContactAi = createAction({
   outputSchema: biginOutputSchemas.aiUpdateResult,
   aiMetadata: {
     description:
-      'Updates an existing Bigin contact by id. Only the fields you provide are changed; omitted fields keep their values. Idempotent: repeating the same update leaves the contact in the same state. Returns the saved record.',
+      'Updates an existing Bigin contact by id. Only the fields you provide are changed; omitted fields keep their values. Tags are added to the existing tags of the record (it reads the record first), never replacing them. Idempotent: repeating the same update leaves the contact in the same state. Returns the saved record.',
     idempotent: true,
   },
   props: {
@@ -33,6 +33,9 @@ export const biginUpdateContactAi = createAction({
   },
   async run(context) {
     const { propsValue } = context;
+    const connection = getBiginConnection(context.auth);
+    const id = propsValue.recordId.trim();
+    const tags = await biginRecords.mergeTagsWithExisting({ connection, module: 'Contacts', id, tags: propsValue.tags });
 
     const record = biginRecords.mergeAdditionalFields({
       record: {
@@ -43,7 +46,7 @@ export const biginUpdateContactAi = createAction({
       Title: propsValue.title ?? undefined,
       Account_Name: biginRecords.lookup(propsValue.companyId ?? undefined),
       Owner: biginRecords.lookup(propsValue.ownerId ?? undefined),
-      Tag: biginRecords.toTagList(propsValue.tags),
+      Tag: tags,
       Description: propsValue.description ?? undefined,
       },
       additionalFields: propsValue.additionalFields,
@@ -51,6 +54,6 @@ export const biginUpdateContactAi = createAction({
     if (Object.keys(record).length === 0) {
       throw new Error('Provide at least one field to update.');
     }
-    return biginRecords.update({ connection: getBiginConnection(context.auth), module: 'Contacts', id: propsValue.recordId.trim(), record });
+    return biginRecords.update({ connection, module: 'Contacts', id, record });
   },
 });
