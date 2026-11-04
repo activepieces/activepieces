@@ -78,6 +78,8 @@ A turn is kept alive / reclaimed by three separate mechanisms in `execute-agent-
 
 - **The chat's internal MCP token lives as long as a turn can (2 hours), not 15 minutes.** It's issued once per turn by `issueChatTurnAccessToken` (called from `agentMcp.getCredentials`) and kept in worker memory. `issueInternalAccessToken`, which the `/mcp-server/token` route hands to callers, keeps 15 minutes. With the 15-minute outside-client lifetime, any turn that waited on a card long enough lost every `ap_*` tool with "authentication failed" and stopped half done. Outside MCP clients keep their 15-minute tokens.
 
+- **A missing step label is filled by the web, not the worker.** The schema the model sees marks `title`, `activeTitle` and `doneTitle` on `ap_lazy_tool` as required, but validation does not reject a call without them, and the worker stores no fallback. The web picks the label from `TOOL_LABELS` by the inner tool name (e.g. "Validating automation"), so a server-side fallback would override it and get saved into history.
+
 ### Key files
 Entry point: `agentModule`, the Fastify plugin registered in `packages/server/api/src/app/app.ts`.
 
