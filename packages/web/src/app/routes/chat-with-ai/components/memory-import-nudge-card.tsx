@@ -27,14 +27,6 @@ export function MemoryImportNudgeCard({
   const [visible, setVisible] = useState(false);
   const { mutate: claim } = useMutation({
     mutationFn: chatApi.claimMemoryImportNudge,
-    onSuccess: ({ claimed }) => {
-      if (!claimed) return;
-      setVisible(true);
-      capture({
-        name: TelemetryEventName.MEMORY_IMPORT_NUDGE_SHOWN,
-        payload: { conversationId },
-      });
-    },
   });
   const eligible = data?.eligible === true;
 
@@ -43,8 +35,17 @@ export function MemoryImportNudgeCard({
     queryClient.setQueryData(MEMORY_IMPORT_NUDGE_QUERY_KEY, {
       eligible: false,
     });
-    claim();
-  }, [eligible, queryClient, claim]);
+    claim(undefined, {
+      onSuccess: ({ claimed }) => {
+        if (!claimed) return;
+        setVisible(true);
+        capture({
+          name: TelemetryEventName.MEMORY_IMPORT_NUDGE_SHOWN,
+          payload: { conversationId },
+        });
+      },
+    });
+  }, [eligible, queryClient, claim, capture, conversationId]);
 
   if (!visible) {
     return null;
