@@ -14,14 +14,14 @@ export const amazonBedrockConverse = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Calls the Amazon Bedrock Converse API with a model, inference profile, prompt router or managed prompt and returns the model\'s reply message, stop reason and token usage. Supports prior messages, a system prompt, tool definitions, a guardrail and prompt variables; pick it over Ask Bedrock when you need tools, multi-turn history or a managed prompt from List Prompts (pass its ARN as the model id and fill promptVariables). Get model ids from List Foundation Models or List Inference Profiles. Not idempotent: each call bills a new, non-deterministic completion.',
+      'Calls the Amazon Bedrock Converse API with a model, inference profile, prompt router or managed prompt and returns the model\'s reply message, stop reason and token usage. Supports prior messages, a system prompt, tool definitions, a guardrail and prompt variables; pick it over Ask Bedrock when you need tools, multi-turn history or a managed prompt from List Prompts (pass its version ARN from Create Prompt Version as the model id, fill promptVariables, and leave the system prompt, inference settings and tools empty: the prompt supplies them). Get model ids from List Foundation Models or List Inference Profiles. Not idempotent: each call bills a new, non-deterministic completion.',
     idempotent: false,
   },
   props: {
     modelId: Property.ShortText({
       displayName: 'Model ID',
       description:
-        'A modelId from List Foundation Models, an inferenceProfileId from List Inference Profiles, a promptRouterArn, or a prompt ARN from List Prompts.',
+        'A modelId from List Foundation Models, an inferenceProfileId from List Inference Profiles, a promptRouterArn, or a prompt version ARN from Create Prompt Version.',
       required: true,
     }),
     prompt: Property.LongText({
@@ -92,6 +92,21 @@ export const amazonBedrockConverse = createAction({
     if (Boolean(guardrailId) !== Boolean(guardrailVersion)) {
       throw new Error('Guardrail ID and Guardrail Version must be set together.');
     }
+    const inferenceConfig = {
+      maxTokens: propsValue.maxTokens ?? undefined,
+      temperature: propsValue.temperature ?? undefined,
+      topP: propsValue.topP ?? undefined,
+      stopSequences: stopSequences && stopSequences.length > 0 ? stopSequences.map(String) : undefined,
+    };
+    const hasInferenceConfig = Object.values(inferenceConfig).some((value) => value !== undefined);
+    const system = bedrockAi.systemBlocks(propsValue.system);
+    const toolConfig = bedrockAi.toolConfig(propsValue.toolConfig);
+    const additionalModelRequestFields = bedrockAi.document(propsValue.additionalModelRequestFields);
+    if (MANAGED_PROMPT_ARN.test(propsValue.modelId) && (hasInferenceConfig || system || toolConfig || additionalModelRequestFields)) {
+      throw new Error(
+        'A managed prompt sets its own system prompt, inference settings and tools: leave System Prompt, Max Tokens, Temperature, Top P, Stop Sequences, Tool Configuration and Additional Model Request Fields empty.',
+      );
+    }
     const messages = bedrockAi.conversation({ prompt: propsValue.prompt, messages: propsValue.messages });
     const variables = Object.entries(promptVariables ?? {});
     const client = await bedrockAi.runtime({ auth: auth.props, server });
@@ -99,20 +114,17 @@ export const amazonBedrockConverse = createAction({
       new ConverseCommand({
         modelId: propsValue.modelId,
         messages: messages.length > 0 ? messages : undefined,
-        system: bedrockAi.systemBlocks(propsValue.system),
-        inferenceConfig: {
-          maxTokens: propsValue.maxTokens ?? undefined,
-          temperature: propsValue.temperature ?? undefined,
-          topP: propsValue.topP ?? undefined,
-          stopSequences: stopSequences && stopSequences.length > 0 ? stopSequences.map(String) : undefined,
-        },
-        toolConfig: bedrockAi.toolConfig(propsValue.toolConfig),
+        system,
+        inferenceConfig: hasInferenceConfig ? inferenceConfig : undefined,
+        toolConfig,
         guardrailConfig: guardrailId && guardrailVersion ? { guardrailIdentifier: guardrailId, guardrailVersion } : undefined,
         promptVariables:
           variables.length > 0 ? Object.fromEntries(variables.map(([name, value]) => [name, { text: String(value) }])) : undefined,
-        additionalModelRequestFields: bedrockAi.document(propsValue.additionalModelRequestFields),
+        additionalModelRequestFields,
       }),
     );
     return bedrockAi.body(response);
   },
 });
+
+const MANAGED_PROMPT_ARN = /^arn:aws[\w-]*:bedrock:[^:]*:\d*:prompt\//;

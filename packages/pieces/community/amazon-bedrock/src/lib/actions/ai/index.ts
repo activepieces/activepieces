@@ -1,6 +1,4 @@
-import { amazonBedrockGetAccountDataRetention } from './account/get-account-data-retention';
 import { amazonBedrockGetModelInvocationLoggingConfiguration } from './account/get-model-invocation-logging-configuration';
-import { amazonBedrockInvokeGuardrailChecks } from './guardrails/invoke-guardrail-checks';
 import { amazonBedrockListEnforcedGuardrailConfigurations } from './guardrails/list-enforced-guardrail-configurations';
 import { amazonBedrockConverse } from './models/converse';
 import { amazonBedrockCountTokens } from './models/count-tokens';
@@ -42,7 +40,6 @@ export const amazonBedrockAiActions = [
   amazonBedrockListFoundationModels,
   amazonBedrockListInferenceProfiles,
   amazonBedrockListPromptRouters,
-  amazonBedrockInvokeGuardrailChecks,
   amazonBedrockListEnforcedGuardrailConfigurations,
   amazonBedrockCreatePromptVersion,
   amazonBedrockCreatePrompt,
@@ -62,6 +59,5 @@ export const amazonBedrockAiActions = [
   amazonBedrockListSessions,
   amazonBedrockPutSessionInvocationStep,
   amazonBedrockUpdateSession,
-  amazonBedrockGetAccountDataRetention,
   amazonBedrockGetModelInvocationLoggingConfiguration,
 ];

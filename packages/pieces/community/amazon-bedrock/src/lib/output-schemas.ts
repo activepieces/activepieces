@@ -11,7 +11,22 @@ export const amazonBedrockConverseOutputSchema: OutputSchema = {
           label: 'Message',
           children: [
             { key: 'role', label: 'Role' },
-            { key: 'content', label: 'Content', listItems: [{ key: 'text', label: 'Text' }] },
+            {
+              key: 'content',
+              label: 'Content',
+              listItems: [
+                { key: 'text', label: 'Text' },
+                {
+                  key: 'toolUse',
+                  label: 'Tool Use',
+                  children: [
+                    { key: 'toolUseId', label: 'Tool Use ID' },
+                    { key: 'name', label: 'Name' },
+                    { key: 'input', label: 'Input' },
+                  ],
+                },
+              ],
+            },
           ],
         },
       ],
@@ -172,10 +187,6 @@ export const amazonBedrockEndSessionOutputSchema: OutputSchema = {
   ],
 };
 
-export const amazonBedrockGetAccountDataRetentionOutputSchema: OutputSchema = {
-  fields: [{ key: 'mode', label: 'Mode' }],
-};
-
 export const amazonBedrockGetFoundationModelOutputSchema: OutputSchema = {
   fields: [
     {
@@ -276,11 +287,7 @@ export const amazonBedrockGetSessionOutputSchema: OutputSchema = {
     { key: 'sessionStatus', label: 'Session Status' },
     { key: 'createdAt', label: 'Created At', format: 'datetime' },
     { key: 'lastUpdatedAt', label: 'Last Updated At', format: 'datetime' },
-    {
-      key: 'sessionMetadata',
-      label: 'Session Metadata',
-      children: [{ key: 'stage', label: 'Stage' }, { key: 'source', label: 'Source' }],
-    },
+    { key: 'sessionMetadata', label: 'Session Metadata' },
   ],
 };
 
@@ -310,100 +317,9 @@ export const amazonBedrockGetSessionInvocationStepOutputSchema: OutputSchema = {
   ],
 };
 
-export const amazonBedrockInvokeGuardrailChecksOutputSchema: OutputSchema = {
-  fields: [
-    {
-      key: 'results',
-      label: 'Results',
-      children: [
-        {
-          key: 'contentFilter',
-          label: 'Content Filter',
-          children: [
-            {
-              key: 'results',
-              label: 'Results',
-              listItems: [
-                { key: 'category', label: 'Category' },
-                { key: 'severityScore', label: 'Severity Score', format: 'number' },
-              ],
-            },
-          ],
-        },
-        {
-          key: 'promptAttack',
-          label: 'Prompt Attack',
-          children: [
-            {
-              key: 'results',
-              label: 'Results',
-              listItems: [
-                { key: 'category', label: 'Category' },
-                { key: 'severityScore', label: 'Severity Score', format: 'number' },
-              ],
-            },
-          ],
-        },
-        {
-          key: 'sensitiveInformation',
-          label: 'Sensitive Information',
-          children: [
-            {
-              key: 'results',
-              label: 'Results',
-              listItems: [
-                { key: 'type', label: 'Type' },
-                { key: 'confidenceScore', label: 'Confidence Score', format: 'number' },
-                { key: 'beginOffset', label: 'Begin Offset', format: 'number' },
-                { key: 'endOffset', label: 'End Offset', format: 'number' },
-                { key: 'messageIndex', label: 'Message Index', format: 'number' },
-                { key: 'contentIndex', label: 'Content Index', format: 'number' },
-              ],
-            },
-            { key: 'truncated', label: 'Truncated', format: 'boolean' },
-          ],
-        },
-      ],
-    },
-    {
-      key: 'usage',
-      label: 'Usage',
-      children: [
-        {
-          key: 'contentFilter',
-          label: 'Content Filter',
-          children: [{ key: 'textUnits', label: 'Text Units', format: 'number' }],
-        },
-        {
-          key: 'promptAttack',
-          label: 'Prompt Attack',
-          children: [{ key: 'textUnits', label: 'Text Units', format: 'number' }],
-        },
-        {
-          key: 'sensitiveInformation',
-          label: 'Sensitive Information',
-          children: [{ key: 'textUnits', label: 'Text Units', format: 'number' }],
-        },
-      ],
-    },
-  ],
-};
-
 export const amazonBedrockInvokeModelOutputSchema: OutputSchema = {
   fields: [
-    {
-      key: 'body',
-      label: 'Body',
-      children: [
-        { key: 'embedding', label: 'Embedding' },
-        {
-          key: 'embeddingsByType',
-          label: 'Embeddings By Type',
-          children: [{ key: 'float', label: 'Float' }],
-        },
-        { key: 'inputTextTokenCount', label: 'Input Text Token Count', format: 'number' },
-      ],
-    },
+    { key: 'body', label: 'Body' },
     { key: 'contentType', label: 'Content Type' },
   ],
 };
