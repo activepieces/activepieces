@@ -12,6 +12,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { appEventRoutingService } from '../../../../src/app/trigger/app-event-routing/app-event-routing.service'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -66,6 +67,24 @@ describe('POST /v1/test-trigger with the simulation strategy', () => {
         expect(response?.statusCode).toBe(StatusCodes.OK)
 
         expect(await db.findBy('app_event_routing', { flowId })).toHaveLength(0)
+    })
+
+    it('keeps the test source when its app event listeners cannot be deleted, so a retry can finish the cleanup', async () => {
+        const { ctx, flowId, flowVersionId } = await createDraftFlowWithTrigger({ triggerType: TriggerStrategy.APP_WEBHOOK })
+        await saveTriggerSource({ projectId: ctx.project.id, flowId, flowVersionId, simulate: true })
+        await saveAppEventListener({ projectId: ctx.project.id, flowId })
+        const deleteListeners = vi.spyOn(appEventRoutingService, 'deleteListeners').mockRejectedValue(new Error('database unavailable'))
+
+        try {
+            const response = await ctx.post('/v1/test-trigger', { projectId: ctx.project.id, flowId, flowVersionId, testStrategy: TriggerTestStrategy.SIMULATION })
+            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+        }
+        finally {
+            deleteListeners.mockRestore()
+        }
+
+        expect(await listSimulationSources(flowId)).toHaveLength(1)
+        expect(await db.findBy('app_event_routing', { flowId })).toHaveLength(1)
     })
 })
 

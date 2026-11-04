@@ -2,8 +2,9 @@ import { ActivepiecesError, apId, ErrorCode, FlowId, isNil, tryCatch } from '@ac
 import { TriggerStrategy } from '@activepieces/pieces-framework'
 import { FlowVersion, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { templateTelemetryService } from '../../template/template-telemetry/template-telemetry.service'
 import { jobQueue } from '../../workers/job-queue/job-queue'
@@ -205,14 +206,17 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 })
                 log.info('[triggerSourceService#disable] Disabled flow trigger side effect')
             }
-            await triggerSourceRepo().softDelete({
-                id: triggerSource.id,
-                projectId,
+            await transaction(async (entityManager) => {
+                await lockLiveSourcesOfFlow({ flowId, projectId, entityManager })
+                await triggerSourceRepo(entityManager).softDelete({
+                    id: triggerSource.id,
+                    projectId,
+                })
+                if (pieceTrigger?.type === TriggerStrategy.APP_WEBHOOK) {
+                    await deleteAppEventListenersIfUnused({ flowId, projectId, otherSourceSimulate: !simulate, entityManager })
+                }
             })
             log.info('[triggerSourceService#disable] Soft deleted trigger source')
-            if (pieceTrigger?.type === TriggerStrategy.APP_WEBHOOK) {
-                await deleteAppEventListenersIfUnused({ flowId, projectId, otherSourceSimulate: !simulate })
-            }
             if (templateId) {
                 templateTelemetryService(log).sendEvent({
                     event: {
@@ -227,8 +231,16 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
     }
 }
 
-async function deleteAppEventListenersIfUnused({ flowId, projectId, otherSourceSimulate }: DeleteAppEventListenersIfUnusedParams): Promise<void> {
-    const otherSourceExists = await triggerSourceRepo().existsBy({
+async function lockLiveSourcesOfFlow({ flowId, projectId, entityManager }: LockLiveSourcesOfFlowParams): Promise<void> {
+    await triggerSourceRepo(entityManager).find({
+        where: { flowId, projectId },
+        order: { id: 'ASC' },
+        lock: { mode: 'pessimistic_write' },
+    })
+}
+
+async function deleteAppEventListenersIfUnused({ flowId, projectId, otherSourceSimulate, entityManager }: DeleteAppEventListenersIfUnusedParams): Promise<void> {
+    const otherSourceExists = await triggerSourceRepo(entityManager).existsBy({
         flowId,
         projectId,
         simulate: otherSourceSimulate,
@@ -236,13 +248,20 @@ async function deleteAppEventListenersIfUnused({ flowId, projectId, otherSourceS
     if (otherSourceExists) {
         return
     }
-    await appEventRoutingService.deleteListeners({ projectId, flowId })
+    await appEventRoutingService.deleteListeners({ projectId, flowId, entityManager })
+}
+
+type LockLiveSourcesOfFlowParams = {
+    flowId: FlowId
+    projectId: string
+    entityManager: EntityManager
 }
 
 type DeleteAppEventListenersIfUnusedParams = {
     flowId: FlowId
     projectId: string
     otherSourceSimulate: boolean
+    entityManager: EntityManager
 }
 
 type ExistsByFlowIdParams = {
