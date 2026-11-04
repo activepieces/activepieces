@@ -1,15 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { filetopdfAuth } from '../common/auth';
-import { filetopdfApiCall } from '../common/client';
-import { CHROMIUM_OPTION_PROPS } from '../common/props';
-import {
-  stringifyOptions,
-  buildConversionOutput,
-  PdfJsonEnvelope,
-} from '../common/conversion';
+import { filetopdfAuth } from '../auth';
+import { filetopdfClient } from '../common/client';
+import { filetopdfProps } from '../common/props';
+import { filetopdfUtils } from '../common/utils';
+import type { FiletopdfPdfEnvelope } from '../common/types';
 
-export const convertMarkdown = createAction({
+export const convertMarkdownAction = createAction({
   auth: filetopdfAuth,
   name: 'convert_markdown',
   classification: 'READ',
@@ -33,21 +30,21 @@ export const convertMarkdown = createAction({
       description: 'Optional CSS to style the rendered Markdown. Overrides the default stylesheet.',
       required: false,
     }),
-    ...CHROMIUM_OPTION_PROPS,
+    ...filetopdfProps.chromiumOptions,
   },
   async run(context) {
     const { markdown, css, ...rawOptions } = context.propsValue;
-    const options = stringifyOptions(rawOptions);
+    const options = filetopdfUtils.stringifyOptions(rawOptions);
     const body: Record<string, unknown> = { markdown, ...options };
     if (css) body['css'] = css;
 
-    const envelope = await filetopdfApiCall<PdfJsonEnvelope>({
-      apiKey: context.auth.secret_text,
+    const envelope = await filetopdfClient.request<FiletopdfPdfEnvelope>({
+      auth: context.auth,
       method: HttpMethod.POST,
-      resourceUri: '/markdown',
+      path: '/markdown',
       body,
     });
 
-    return buildConversionOutput(context.files, envelope);
+    return await filetopdfUtils.buildConversionOutput({ files: context.files, envelope });
   },
 });

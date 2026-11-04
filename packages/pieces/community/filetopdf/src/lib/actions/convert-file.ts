@@ -1,20 +1,13 @@
-import {
-  createAction,
-  Property,
-  DynamicPropsValue,
-} from '@activepieces/pieces-framework';
+import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { filetopdfAuth } from '../common/auth';
-import { filetopdfApiCall } from '../common/client';
-import { FILE_OPTION_PROPS } from '../common/props';
-import {
-  stringifyOptions,
-  buildConversionOutput,
-  PdfJsonEnvelope,
-} from '../common/conversion';
+import { filetopdfAuth } from '../auth';
+import { filetopdfClient } from '../common/client';
+import { filetopdfProps } from '../common/props';
+import { filetopdfUtils } from '../common/utils';
+import type { FiletopdfPdfEnvelope } from '../common/types';
 
-export const convertFile = createAction({
+export const convertFileAction = createAction({
   auth: filetopdfAuth,
   name: 'convert_file',
   classification: 'READ',
@@ -66,24 +59,23 @@ export const convertFile = createAction({
         };
       },
     }),
-    ...FILE_OPTION_PROPS,
+    ...filetopdfProps.fileOptions,
   },
   async run(context) {
     const { source, input, ...rawOptions } = context.propsValue;
-    const options = stringifyOptions(rawOptions);
+    const options = filetopdfUtils.stringifyOptions(rawOptions);
 
-    let envelope: PdfJsonEnvelope;
+    let envelope: FiletopdfPdfEnvelope;
 
     if (source === 'url') {
       const url = input['url'];
       if (!url) {
         throw new Error('Provide a File URL to convert.');
       }
-      // Remote URL → JSON body; the server downloads it (SSRF-protected).
-      envelope = await filetopdfApiCall<PdfJsonEnvelope>({
-        apiKey: context.auth.secret_text,
+      envelope = await filetopdfClient.request<FiletopdfPdfEnvelope>({
+        auth: context.auth,
         method: HttpMethod.POST,
-        resourceUri: '/file',
+        path: '/file',
         body: { url, ...options },
       });
     } else {
@@ -91,21 +83,20 @@ export const convertFile = createAction({
       if (!file) {
         throw new Error('Upload a File to convert.');
       }
-      // Uploaded binary → multipart/form-data under the `files` field.
       const form = new FormData();
       form.append('files', Buffer.from(file.data), file.filename);
       for (const [key, value] of Object.entries(options)) {
         form.append(key, value);
       }
-      envelope = await filetopdfApiCall<PdfJsonEnvelope>({
-        apiKey: context.auth.secret_text,
+      envelope = await filetopdfClient.request<FiletopdfPdfEnvelope>({
+        auth: context.auth,
         method: HttpMethod.POST,
-        resourceUri: '/file',
+        path: '/file',
         body: form,
         headers: form.getHeaders(),
       });
     }
 
-    return buildConversionOutput(context.files, envelope);
+    return await filetopdfUtils.buildConversionOutput({ files: context.files, envelope });
   },
 });

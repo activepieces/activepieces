@@ -1,10 +1,9 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { filetopdfAuth } from './lib/common/auth';
-import { getAccount } from './lib/actions/get-account';
-import { convertFile } from './lib/actions/convert-file';
-import { convertHtml } from './lib/actions/convert-html';
-import { convertMarkdown } from './lib/actions/convert-markdown';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { filetopdfAuth } from './lib/auth';
+import { convertFileAction } from './lib/actions/convert-file';
+import { convertHtmlAction } from './lib/actions/convert-html';
+import { convertMarkdownAction } from './lib/actions/convert-markdown';
+import { getAccountAction } from './lib/actions/get-account';
 
 export const filetopdf = createPiece({
   displayName: 'FileToPDF',
@@ -15,6 +14,6 @@ export const filetopdf = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/filetopdf.png',
   categories: [PieceCategory.CONTENT_AND_FILES, PieceCategory.PRODUCTIVITY],
   authors: ['FileToPDF'],
-  actions: [convertFile, convertHtml, convertMarkdown, getAccount],
+  actions: [convertFileAction, convertHtmlAction, convertMarkdownAction, getAccountAction],
   triggers: [],
 });
