@@ -1,11 +1,10 @@
-import { Dirent } from 'node:fs'
-import { readdir, rm, stat, statfs } from 'node:fs/promises'
+import { readdir, statfs } from 'node:fs/promises'
 import path from 'node:path'
 import { tryCatch } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS } from '../../action-run-cache'
+import { cacheEviction } from '../../cache-eviction'
 import { ACTION_RUN_CODE_DIR, cacheUtils } from '../../cache-paths'
-import { pendingCacheRemovals } from '../../pending-cache-removals'
 
 export const codeCacheEviction = {
     // Only the action-runs namespace gets a dedicated TTL/count sweep (action-run-cache.ts).
@@ -26,17 +25,19 @@ export const codeCacheEviction = {
         }
 
         const codesPath = cacheUtils(basePath).getGlobalCodeCachePath()
-        const { data: entries, error } = await tryCatch(() => readdir(codesPath, { withFileTypes: true }))
-        if (error) {
-            if ('code' in error && error.code === 'ENOENT') {
-                return
-            }
-            log.warn({ error, cache: { path: codesPath } }, 'Failed to read code cache directory for disk-usage eviction')
+        const flowVersionPaths = await cacheEviction.listManagedDirs({
+            parentPath: codesPath,
+            log,
+            cacheLabel: 'code',
+            filterName: (name) => name !== ACTION_RUN_CODE_DIR,
+        })
+        if (flowVersionPaths === null) {
             return
         }
 
         const activeAt = Date.now() - activeWindowMs
-        const candidates = await readEvictionCandidates({ codesPath, entries, activeAt })
+        const nested = await Promise.all(flowVersionPaths.map((flowVersionPath) => readStepCandidates({ flowVersionPath, activeAt })))
+        const candidates = nested.flat()
         candidates.sort((a, b) => a.mtimeMs - b.mtimeMs)
 
         let evictedCount = 0
@@ -46,7 +47,7 @@ export const codeCacheEviction = {
             if (usedPercent < maxUsedPercent) {
                 break
             }
-            const outcome = await removeDir(candidate)
+            const outcome = await cacheEviction.removeDir({ dirPath: candidate.dirPath, expectedMtimeMs: candidate.mtimeMs })
             evictedCount += outcome === 'removed' ? 1 : 0
             failedCount += outcome === 'failed' ? 1 : 0
         }
@@ -82,15 +83,6 @@ async function defaultGetUsedPercent(basePath: string): Promise<number> {
     return ((stats.blocks - stats.bavail) / stats.blocks) * 100
 }
 
-async function readEvictionCandidates({ codesPath, entries, activeAt }: ReadCandidatesParams): Promise<DirEntry[]> {
-    const flowVersionDirs = entries.filter((entry) => entry.isDirectory() && entry.name !== ACTION_RUN_CODE_DIR)
-    const nested = await Promise.all(flowVersionDirs.map((entry) => readStepCandidates({
-        flowVersionPath: path.join(codesPath, entry.name),
-        activeAt,
-    })))
-    return nested.flat()
-}
-
 async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandidatesParams): Promise<DirEntry[]> {
     const { data: stepEntries, error } = await tryCatch(() => readdir(flowVersionPath, { withFileTypes: true }))
     if (error) {
@@ -98,25 +90,10 @@ async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandida
     }
     const stats = await Promise.all(stepEntries.filter((entry) => entry.isDirectory()).map(async (entry): Promise<DirEntry | null> => {
         const dirPath = path.join(flowVersionPath, entry.name)
-        const { data: dirStat, error: statError } = await tryCatch(() => stat(dirPath))
-        if (statError) {
-            return null
-        }
-        return { dirPath, mtimeMs: dirStat.mtimeMs }
+        const mtimeMs = await cacheEviction.readMtimeMs(dirPath)
+        return mtimeMs === null ? null : { dirPath, mtimeMs }
     }))
     return stats.filter((entry): entry is DirEntry => entry !== null && entry.mtimeMs < activeAt)
-}
-
-async function removeDir({ dirPath, mtimeMs }: DirEntry): Promise<'removed' | 'skipped' | 'failed'> {
-    const { data: currentStat, error: statError } = await tryCatch(() => stat(dirPath))
-    if (statError || currentStat.mtimeMs !== mtimeMs) {
-        return 'skipped'
-    }
-    const removal = tryCatch(() => rm(dirPath, { recursive: true, force: true }))
-    pendingCacheRemovals.track(dirPath, removal)
-    const { error } = await removal
-    pendingCacheRemovals.untrack(dirPath)
-    return error ? 'failed' : 'removed'
 }
 
 export const DISK_EVICTION_THRESHOLD_PERCENT = 80
@@ -132,12 +109,6 @@ type SweepParams = {
 type DirEntry = {
     dirPath: string
     mtimeMs: number
-}
-
-type ReadCandidatesParams = {
-    codesPath: string
-    entries: Dirent[]
-    activeAt: number
 }
 
 type ReadStepCandidatesParams = {
