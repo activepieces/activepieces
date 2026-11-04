@@ -56,8 +56,8 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer",
   "New Form Response": "Nouveau formulaire de réponse",
   "Triggers when a new submission is received for a selected Fillout form.": "Déclenche quand une nouvelle soumission est reçue pour un formulaire de remplissage sélectionné."
 }

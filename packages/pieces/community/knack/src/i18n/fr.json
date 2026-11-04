@@ -43,6 +43,6 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Requête",
+  "Data to send": "Données à envoyer"
 }
