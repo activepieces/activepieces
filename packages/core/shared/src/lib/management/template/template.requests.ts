@@ -43,9 +43,3 @@ export type ListFlowTemplatesRequestQuery = z.infer<typeof ListFlowTemplatesRequ
 
 export const ListTemplatesRequestQuery = ListFlowTemplatesRequestQuery
 export type ListTemplatesRequestQuery = z.infer<typeof ListTemplatesRequestQuery>
-
-export const ListCustomTemplatesPageRequestQuery = z.object({
-    cursor: z.string().optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional(),
-})
-export type ListCustomTemplatesPageRequestQuery = z.infer<typeof ListCustomTemplatesPageRequestQuery>

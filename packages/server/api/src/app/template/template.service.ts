@@ -4,12 +4,11 @@ import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ArrayOverlap, Equal, IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformTemplateService } from '../ee/template/platform-template.service'
-import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { templateValidator } from './template-validator'
 import { TemplateEntity } from './template.entity'
 
-const templateRepo = repoFactory(TemplateEntity)
+const templateRepo = repoFactory<Template>(TemplateEntity)
 
 export const templateService = (log: FastifyBaseLogger) => ({
     async getOne({ id }: GetParams): Promise<Template | null> {
@@ -110,7 +109,7 @@ export const templateService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async list({ platformId, pieces, tags, search, type, category, cursor, limit }: ListParams): Promise<SeekPage<Template>> {
+    async list({ platformId, pieces, tags, search, type, category }: ListParams): Promise<SeekPage<Template>> {
         const commonFilters: Record<string, unknown> = {}
 
         if (pieces) {
@@ -162,22 +161,8 @@ export const templateService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        if (isNil(limit)) {
-            const templates = await queryBuilder.getMany()
-            return paginationHelper.createPage(templates, null)
-        }
-        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
-        const paginator = buildPaginator({
-            entity: TemplateEntity,
-            query: {
-                limit,
-                order: 'DESC',
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
-            },
-        })
-        const { data, cursor: newCursor } = await paginator.paginate(queryBuilder)
-        return paginationHelper.createPage<Template>(data, newCursor)
+        const templates = await queryBuilder.getMany()
+        return paginationHelper.createPage(templates, null)
     },
 
     async delete({ id }: DeleteParams): Promise<void> {
@@ -199,8 +184,6 @@ type NewTemplate = Omit<Template, 'created' | 'updated'>
 type ListParams = Omit<ListTemplatesRequestQuery, 'type'> & {
     platformId: string | null
     type: TemplateType
-    cursor?: string
-    limit?: number
 }
 
 type DeleteParams = {

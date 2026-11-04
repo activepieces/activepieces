@@ -1,5 +1,5 @@
-import { ActivepiecesError, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
-import { ALL_PRINCIPAL_TYPES, ApEdition, ApFlagId, CreateTemplateRequestBody, ListCustomTemplatesPageRequestQuery, ListTemplatesRequestQuery, Principal, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ALL_PRINCIPAL_TYPES, ApEdition, ApFlagId, CreateTemplateRequestBody, ListTemplatesRequestQuery, Principal, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -32,19 +32,6 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
                 entityId: request.params.id,
                 message: `Template ${request.params.id} not found`,
             },
-        })
-    })
-
-    app.get('/custom', ListCustomTemplatesPageParams, async (request) => {
-        const platform = await platformService(app.log).getOneWithPlanOrThrow(request.principal.platform.id)
-        if (!platform.plan.manageTemplatesEnabled) {
-            return { data: [], next: null, previous: null }
-        }
-        return templateService(app.log).list({
-            platformId: platform.id,
-            type: TemplateType.CUSTOM,
-            cursor: request.query.cursor,
-            limit: request.query.limit ?? 10,
         })
     })
 
@@ -179,19 +166,6 @@ const GetParams = {
         description: 'Get a template.',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
-    },
-}
-
-const ListCustomTemplatesPageParams = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        hide: true,
-        querystring: ListCustomTemplatesPageRequestQuery,
-        response: {
-            [StatusCodes.OK]: SeekPage(Template),
-        },
     },
 }
 

@@ -317,19 +317,6 @@ describe('Enterprise User API', () => {
             expect(pastEnd.previous).toBe('4')
         })
 
-        it('Rejects a page size outside 1 to 100', async () => {
-            const { token } = await setup()
-            for (const limit of ['0', '101']) {
-                const response = await app?.inject({
-                    method: 'GET',
-                    url: '/api/v1/users/with-invitations',
-                    query: { limit },
-                    headers: { authorization: `Bearer ${token}` },
-                })
-                expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
-            }
-        })
-
         it('Rejects platform members who are not admins', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({

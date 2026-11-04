@@ -1,10 +1,9 @@
-import { Template } from '@activepieces/shared';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { Template, TemplateType } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { FileText, Pencil, Trash, Tag, Clock, Puzzle } from 'lucide-react';
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import {
@@ -12,15 +11,9 @@ import {
   AdminPage,
   AdminPageHeader,
   adminPageResources,
-  adminPagination,
 } from '@/app/components/admin';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import {
-  RowDataWithActions,
-  BulkAction,
-  CURSOR_QUERY_PARAM,
-  LIMIT_QUERY_PARAM,
-} from '@/components/custom/data-table';
+import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
@@ -47,18 +40,20 @@ import { CreateTemplateDialog } from './create-template-dialog';
 import { UpdateTemplateDialog } from './update-template-dialog';
 
 const PlatformTemplatesPage = () => {
-  const [searchParams] = useSearchParams();
   const { platform } = platformHooks.useCurrentPlatform();
   const isSample = !platform.plan.manageTemplatesEnabled;
-  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
-  const limit = adminPagination.parseLimit(searchParams.get(LIMIT_QUERY_PARAM));
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: [...templateKeys.all, 'platform', cursor, limit],
+    queryKey: [...templateKeys.all, 'platform'],
     staleTime: 0,
-    placeholderData: keepPreviousData,
-    queryFn: () =>
-      templatesApi.listCustomPage({ cursor, limit }),
+    queryFn: () => templatesApi.list({ type: TemplateType.CUSTOM }),
   });
+  const templatesPage = isSample ? sampleData.templatesPage() : data;
+  const newestFirst = templatesPage && {
+    ...templatesPage,
+    data: [...templatesPage.data].sort(
+      (a, b) => b.created.localeCompare(a.created) || b.id.localeCompare(a.id),
+    ),
+  };
 
   const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates({
     onSuccess: () => {
@@ -206,7 +201,8 @@ const PlatformTemplatesPage = () => {
         emptyStateIcon={<FileText />}
         columns={columnsWithCheckbox}
         getRowId={(template) => template.id}
-        page={isSample ? sampleData.templatesPage() : data}
+        page={newestFirst}
+        pageInBrowser
         hideFooterUntilNeeded
         isLoading={isLoading}
         isError={isError}
