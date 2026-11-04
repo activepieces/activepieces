@@ -6,6 +6,8 @@ import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import Ajv from 'ajv';
 import mime from 'mime-types';
 import {
+  ClaudeMessageParams,
+  lowEffortConfig,
   modelDropdown,
   resolveModelId,
   supportsForcedToolChoice,
@@ -19,7 +21,7 @@ export const extractStructuredDataAction = createAction({
   classification: 'READ',
   displayName: 'Extract Structured Data',
   description: 'Pull the fields you define out of text, an image or a PDF.',
-  aiMetadata: { description: 'Runs a Claude model over supplied text, an image, or a PDF and returns only the fields you defined by having the model call an extraction tool whose input is your schema. Older models are forced to call the tool; newer 5.5-family models are instructed to call it, and if the model replies with text only the step fails with a clear error that includes the reply text. The Field Definition prop switches between Simple mode (a list of named fields with types and required flags) and Advanced mode (a raw JSON Schema object); prefer the sibling Ask Claude action when you want free-form prose instead of typed fields. Requires a model, the field definitions, and at least one of Text, or an Image or PDF; not idempotent, since each call re-runs the model and extraction can vary.', idempotent: false },
+  aiMetadata: { description: 'Runs a Claude model over supplied text, an image, or a PDF and returns only the fields you defined by having the model call an extraction tool whose input is your schema. Most models are forced to call the tool; Claude Sonnet 5.5, Opus 5.5, Fable 5.1 and Mythos 5.1 do not accept a forced tool call, so they are instructed to call it and asked once more if they reply with text only; if they still do not call it, the step fails with a clear error that includes the reply text. The Field Definition prop switches between Simple mode (a list of named fields with types and required flags) and Advanced mode (a raw JSON Schema object); prefer the sibling Ask Claude action when you want free-form prose instead of typed fields. Requires a model, the field definitions, and at least one of Text, or an Image or PDF; not idempotent, since each call re-runs the model and extraction can vary.', idempotent: false },
   propertyGroups: [
     { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'maxTokens'] },
     { key: 'source', display: 'section', label: 'Extract from', icon: 'file', props: ['sourceInfo', 'text', 'image'] },
@@ -258,33 +260,49 @@ export const extractStructuredDataAction = createAction({
     }
     const resolvedModel = resolveModelId(model);
     const forceTool = supportsForcedToolChoice(resolvedModel);
-    const response = await anthropic.messages.create({
-      model: resolvedModel,
-      ...(forceTool
-        ? {}
-        : {
-            system:
-              'Always answer by calling the extract_structured_data tool exactly once.',
-          }),
-      messages,
-      tools: [
-        {
-          name: 'extract_structured_data',
-          description: 'Extract the following data from the provided data.',
-          input_schema: params,
-        },
-      ],
-      tool_choice: forceTool
-        ? { type: 'tool', name: 'extract_structured_data' }
-        : { type: 'auto' },
-      max_tokens: maxTokens ?? 2000,
-    });
+    const createExtraction = (
+      conversation: Anthropic.Messages.MessageParam[]
+    ): Promise<Anthropic.Messages.Message> => {
+      const request: ClaudeMessageParams = {
+        model: resolvedModel,
+        ...(forceTool ? {} : { system: AUTO_TOOL_SYSTEM_PROMPT }),
+        messages: conversation,
+        tools: [
+          {
+            name: EXTRACTION_TOOL_NAME,
+            description: 'Extract the following data from the provided data.',
+            input_schema: params,
+          },
+        ],
+        tool_choice: forceTool
+          ? { type: 'tool', name: EXTRACTION_TOOL_NAME }
+          : { type: 'auto' },
+        max_tokens: maxTokens ?? 2000,
+        ...lowEffortConfig(resolvedModel),
+      };
+      return anthropic.messages.create(request);
+    };
 
-    const toolCallsResponse = response.content.filter(
+    let response = await createExtraction(messages);
+    if (
+      !forceTool &&
+      !hasToolCall(response) &&
+      response.content.length > 0 &&
+      response.stop_reason !== 'max_tokens'
+    ) {
+      response = await createExtraction([
+        ...messages,
+        { role: 'assistant', content: response.content },
+        {
+          role: 'user',
+          content: `Answer by calling the ${EXTRACTION_TOOL_NAME} tool now, with no other text.`,
+        },
+      ]);
+    }
+
+    const toolCall = response.content.find(
       (choice): choice is ToolUseBlock => choice.type === 'tool_use'
     );
-
-    const toolCall = toolCallsResponse[0];
 
     const choices = response.content
       .filter((choice): choice is TextBlock => choice.type === 'text')
@@ -294,6 +312,14 @@ export const extractStructuredDataAction = createAction({
       }));
 
     const args = toolCall?.input;
+    if (isNil(args) && response.stop_reason === 'max_tokens') {
+      throw new Error(
+        JSON.stringify({
+          message:
+            'Claude ran out of tokens before returning structured data. Raise Maximum Tokens and try again.',
+        })
+      );
+    }
     if (isNil(args)) {
       throw new Error(
         JSON.stringify({
@@ -306,6 +332,13 @@ export const extractStructuredDataAction = createAction({
     return args;
   },
 });
+
+function hasToolCall(message: Anthropic.Messages.Message): boolean {
+  return message.content.some((block) => block.type === 'tool_use');
+}
+
+const EXTRACTION_TOOL_NAME = 'extract_structured_data';
+const AUTO_TOOL_SYSTEM_PROMPT = `Always answer by calling the ${EXTRACTION_TOOL_NAME} tool exactly once.`;
 
 type AIFunctionArgumentDefinition = {
   type: 'object';

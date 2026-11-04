@@ -38,25 +38,64 @@ export function isRetiredModel(model: string): boolean {
   return model in RETIRED_MODEL_REPLACEMENTS;
 }
 
-const STRICT_MODEL_PREFIXES = [
+const NO_FORCED_TOOL_CHOICE_PREFIXES = [
   'claude-fable-5-1',
   'claude-mythos-5-1',
+  'claude-opus-5-5',
+  'claude-sonnet-5-5',
+];
+
+const TEMPERATURE_MODEL_PREFIXES = [
+  'claude-sonnet-4-6',
+  'claude-opus-4-6',
+  'claude-opus-4-5',
+  'claude-haiku-4-5',
+  'claude-sonnet-4-5',
+  'claude-sonnet-4-0',
+  'claude-sonnet-4-2025',
+  'claude-opus-4-1',
+  'claude-opus-4-0',
+  'claude-opus-4-2025',
+  'claude-3-',
+  'claude-2',
+  'claude-instant',
+];
+
+const DEFAULT_THINKING_MODEL_PREFIXES = [
   'claude-opus-5-5',
   'claude-sonnet-5-5',
   'claude-haiku-5-5',
 ];
 
-function isStrictModel(model: string): boolean {
-  const id = model.toLowerCase().replace(/\./g, '-');
-  return STRICT_MODEL_PREFIXES.some((prefix) => id.startsWith(prefix));
+function normalizeModelId(model: string): string {
+  return model.toLowerCase().replace(/\./g, '-');
+}
+
+function matchesAnyPrefix({
+  model,
+  prefixes,
+}: {
+  model: string;
+  prefixes: string[];
+}): boolean {
+  const id = normalizeModelId(model);
+  return prefixes.some((prefix) => id.startsWith(prefix));
 }
 
 export function supportsForcedToolChoice(model: string): boolean {
-  return !isStrictModel(model);
+  return !matchesAnyPrefix({ model, prefixes: NO_FORCED_TOOL_CHOICE_PREFIXES });
 }
 
 export function supportsTemperature(model: string): boolean {
-  return !isStrictModel(model);
+  return matchesAnyPrefix({ model, prefixes: TEMPERATURE_MODEL_PREFIXES });
+}
+
+export function thinksByDefault(model: string): boolean {
+  return matchesAnyPrefix({ model, prefixes: DEFAULT_THINKING_MODEL_PREFIXES });
+}
+
+export function lowEffortConfig(model: string): LowEffortConfig {
+  return thinksByDefault(model) ? { output_config: { effort: 'low' } } : {};
 }
 
 export const baseUrl = 'https://api.anthropic.com/v1';
@@ -120,3 +159,7 @@ export const modelDropdown = Property.Dropdown({
 
 export const DEFAULT_MODEL = 'claude-sonnet-5-5';
 export const THINKING_MODEL = 'claude-sonnet-5-5';
+
+export type LowEffortConfig = { output_config?: { effort: 'low' } };
+export type ClaudeMessageParams =
+  Anthropic.Messages.MessageCreateParamsNonStreaming & LowEffortConfig;

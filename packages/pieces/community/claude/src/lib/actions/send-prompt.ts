@@ -1,8 +1,4 @@
-import {
-  createAction,
-  DynamicPropsValue,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import Anthropic from '@anthropic-ai/sdk';
 import mime from 'mime-types';
 import { claudeAuth } from '../auth';
@@ -12,6 +8,8 @@ import { isNil } from '@activepieces/pieces-framework';
 import { spreadIfDefined } from '@activepieces/pieces-framework';
 import {
   billingIssueMessage,
+  ClaudeMessageParams,
+  lowEffortConfig,
   modelDropdown,
   resolveModelId,
   supportsTemperature,
@@ -19,7 +17,6 @@ import {
   unauthorizedMessage,
 } from '../common/common';
 import { askClaudeActionOutputSchema } from '../output-schemas';
-const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({
   audience: 'both',
   auth: claudeAuth,
@@ -61,7 +58,7 @@ export const askClaude = createAction({
       displayName: 'Temperature',
       required: false,
       advanced: true,
-      description: 'From 0 to 1. Lower is more focused, higher is more varied.',
+      description: 'From 0 to 1, lower is more focused. Newer models ignore it.',
     }),
     roles: Property.Json({
       displayName: 'Roles',
@@ -85,21 +82,7 @@ export const askClaude = createAction({
       refreshers: ['thinkingMode'],
       required: false,
       advanced: true,
-      props: async ({ auth, thinkingMode }) => {
-        if (!auth || !thinkingMode) return {};
-
-        const props: DynamicPropsValue = {};
-
-        props['budgetTokens'] = Property.Number({
-          displayName: 'Budget Tokens',
-          required: true,
-          defaultValue: DEFAULT_TOKENS_FOR_THINKING_MODE,
-          description:
-            'No longer used: Claude Sonnet 5.5 sets its own reasoning budget (adaptive thinking).',
-        });
-
-        return props;
-      },
+      props: async () => ({}),
     }),
   },
   outputSchema: askClaudeActionOutputSchema,
@@ -185,12 +168,13 @@ export const askClaude = createAction({
 
           response = extractReplyText(req);
         } else {
-          const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
+          const params: ClaudeMessageParams = {
             model: model,
             max_tokens: maxTokens,
             system: systemPrompt,
             messages: roles,
             ...spreadIfDefined('temperature', temperature),
+            ...lowEffortConfig(model),
           };
           const req = await anthropic.messages.create(params);
 
