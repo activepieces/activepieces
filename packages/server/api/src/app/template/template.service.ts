@@ -9,7 +9,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { templateValidator } from './template-validator'
 import { TemplateEntity } from './template.entity'
 
-const templateRepo = repoFactory<Template>(TemplateEntity)
+const templateRepo = repoFactory(TemplateEntity)
 
 export const templateService = (log: FastifyBaseLogger) => ({
     async getOne({ id }: GetParams): Promise<Template | null> {

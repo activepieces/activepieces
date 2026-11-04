@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -25,9 +25,7 @@ export function AdminDataTable<
   DataTableProps<TData, TValue, Keys>,
   'bordered' | 'frameClassName' | 'toolbarClassName'
 > & {
-  /** Keep the pagination footer hidden while the list has 10 rows or fewer. */
   hideFooterUntilNeeded?: boolean;
-  /** Page a list that is already fully loaded, keeping the page in the URL so reloads don't reset it. */
   pageInBrowser?: boolean;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -41,8 +39,9 @@ export function AdminDataTable<
         })
       : props.page;
 
-  // A page can come back empty, e.g. after deleting its last rows: go back a page, or to the first one.
+  const followsEmptyPages = hideFooterUntilNeeded || pageInBrowser;
   const landedOnEmptyPage =
+    followsEmptyPages &&
     !props.isLoading &&
     !isNil(page) &&
     page.data.length === 0 &&
@@ -66,11 +65,10 @@ export function AdminDataTable<
     );
   }, [landedOnEmptyPage, previous, setSearchParams]);
 
-  // Keep the footer's last state while a page loads, so it doesn't blink.
-  const lastFitsOnOnePage = useRef(true);
-  if (!isNil(page)) {
-    lastFitsOnOnePage.current = adminPagination.fitsOnOnePage(page);
-  }
+  const hideFooter =
+    props.hidePagination ||
+    (hideFooterUntilNeeded &&
+      (isNil(page) || adminPagination.fitsOnOnePage(page)));
 
   return (
     <div
@@ -78,12 +76,10 @@ export function AdminDataTable<
       className="flex max-h-full min-h-0 flex-initial flex-col"
     >
       <DataTable
+        key={followsEmptyPages ? `${page?.next}|${page?.previous}` : undefined}
         {...props}
         page={page}
-        hidePagination={
-          props.hidePagination ||
-          (hideFooterUntilNeeded && lastFitsOnOnePage.current)
-        }
+        hidePagination={hideFooter}
         emptyStateIcon={
           props.emptyStateIcon && (
             <span className="flex size-10 items-center justify-center rounded-lg bg-gray-3 text-gray-11 [&_svg]:size-5">

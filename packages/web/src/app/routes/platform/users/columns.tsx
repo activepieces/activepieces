@@ -198,6 +198,6 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
   },
 ];
 
-export function getUserRowStatus(row: UserRowData): PlatformUserListStatus {
+function getUserRowStatus(row: UserRowData): PlatformUserListStatus {
   return row.type === 'invitation' ? INVITED_USER_STATUS : row.data.status;
 }

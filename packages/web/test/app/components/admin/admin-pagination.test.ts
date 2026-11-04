@@ -35,21 +35,13 @@ describe('adminPagination.slicePage', () => {
     expect(page.previous).toBe('0');
   });
 
-  it('lands on the last page when the cursor is past the end', () => {
+  it('points back to the last page when the cursor is past the end', () => {
     const page = adminPagination.slicePage({
       page: all(25),
       cursor: '500',
       limit: '10',
     });
-    expect(page.data.map((row) => row.id)).toEqual([
-      'row-20',
-      'row-21',
-      'row-22',
-      'row-23',
-      'row-24',
-    ]);
-    expect(page.next).toBeNull();
-    expect(page.previous).toBe('10');
+    expect(page).toEqual({ data: [], next: null, previous: '20' });
   });
 
   it('falls back to the first page and the default size for junk params', () => {
@@ -96,5 +88,18 @@ describe('adminPagination.fitsOnOnePage', () => {
         previous: '0',
       }),
     ).toBe(false);
+  });
+});
+
+describe('adminPagination.parseLimit', () => {
+  it('accepts 1 to 100', () => {
+    expect(adminPagination.parseLimit('30')).toBe(30);
+    expect(adminPagination.parseLimit('100')).toBe(100);
+  });
+
+  it('falls back to 10 for anything else', () => {
+    for (const value of [null, '', '0', '-5', '2.5', '500', 'abc']) {
+      expect(adminPagination.parseLimit(value)).toBe(10);
+    }
   });
 });

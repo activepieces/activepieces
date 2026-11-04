@@ -207,22 +207,22 @@ describe('Enterprise User API', () => {
 
     describe('List users with invitations endpoint', () => {
         async function setup() {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockUser: deactivatedUser } = await mockBasicUser({
                 user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER, status: UserStatus.INACTIVE, created: '2026-01-02T00:00:00.000Z' },
             })
+            const projectRole = createMockProjectRole({ platformId: mockPlatform.id, type: RoleType.CUSTOM, permissions: [Permission.READ_FLOW] })
+            await databaseConnection().getRepository('project_role').save(projectRole)
             const invitations = [
                 createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.PENDING, platformRole: PlatformRole.MEMBER, created: '2026-01-01T00:00:00.000Z' }),
                 createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.PENDING, platformRole: PlatformRole.MEMBER, created: '2026-01-03T00:00:00.000Z' }),
-                createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.PENDING, platformRole: PlatformRole.MEMBER, created: '2026-01-02T00:00:00.000Z' }),
+                { ...createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.PENDING, platformRole: PlatformRole.MEMBER, created: '2026-01-02T00:00:00.000Z', projectId: mockProject.id }), projectRoleId: projectRole.id },
+                createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.ACCEPTED, platformRole: PlatformRole.MEMBER, created: '2026-01-04T00:00:00.000Z' }),
             ]
-            const hidden = [
-                createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PLATFORM, status: InvitationStatus.ACCEPTED, platformRole: PlatformRole.MEMBER }),
-                createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PROJECT, status: InvitationStatus.PENDING, projectId: null }),
-            ]
-            await databaseConnection().getRepository('user_invitation').save([...invitations, ...hidden])
+            const projectInvitation = createMockUserInvitation({ platformId: mockPlatform.id, type: InvitationType.PROJECT, status: InvitationStatus.PENDING, projectId: mockProject.id })
+            await databaseConnection().getRepository('user_invitation').save([...invitations, projectInvitation])
             const token = await generateMockToken({ id: mockOwner.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
-            return { mockOwner, deactivatedUser, invitations, token }
+            return { mockOwner, deactivatedUser, invitations, projectRole, token }
         }
 
         async function list(token: string, query: Record<string, string | string[]>) {
@@ -236,12 +236,13 @@ describe('Enterprise User API', () => {
             return response?.json()
         }
 
-        it('Lists pending platform invitations first, newest first, then users', async () => {
+        it('Lists platform invitations first, newest first, then users', async () => {
             const { mockOwner, deactivatedUser, invitations, token } = await setup()
 
             const page = await list(token, {})
 
             expect(page.data.map((row: { id: string }) => row.id)).toEqual([
+                invitations[3].id,
                 invitations[1].id,
                 invitations[2].id,
                 invitations[0].id,
@@ -249,36 +250,47 @@ describe('Enterprise User API', () => {
                     .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
                     .map((user) => user.id),
             ])
-            expect(page.data.slice(0, 3).every((row: { type: string }) => row.type === 'invitation')).toBe(true)
             expect(page.next).toBeNull()
             expect(page.previous).toBeNull()
+        })
+
+        it('Includes the project role of an invitation and whether a user has projects', async () => {
+            const { mockOwner, invitations, projectRole, token } = await setup()
+
+            const page = await list(token, {})
+            const withRole = page.data.find((row: { id: string }) => row.id === invitations[2].id)
+            const owner = page.data.find((row: { id: string }) => row.id === mockOwner.id)
+
+            expect(withRole.data.projectRole.id).toBe(projectRole.id)
+            expect(owner.data.email).toBeDefined()
+            expect(typeof owner.data.hasProjects).toBe('boolean')
         })
 
         it('Pages across invitations into users with full pages', async () => {
             const { token } = await setup()
 
-            const first = await list(token, { limit: '2' })
-            const second = await list(token, { limit: '2', cursor: first.next })
-            const third = await list(token, { limit: '2', cursor: second.next })
+            const first = await list(token, { limit: '3' })
+            const second = await list(token, { limit: '3', cursor: first.next })
 
-            expect(first.data.map((row: { type: string }) => row.type)).toEqual(['invitation', 'invitation'])
-            expect(second.data.map((row: { type: string }) => row.type)).toEqual(['invitation', 'user'])
-            expect(third.data.map((row: { type: string }) => row.type)).toEqual(['user'])
-            expect(third.next).toBeNull()
+            expect(first.data.map((row: { type: string }) => row.type)).toEqual(['invitation', 'invitation', 'invitation'])
+            expect(second.data.map((row: { type: string }) => row.type)).toEqual(['invitation', 'user', 'user'])
+            expect(second.next).toBeNull()
             expect(second.previous).toBe('0')
         })
 
-        it('Filters by status on the server', async () => {
-            const { deactivatedUser, token } = await setup()
+        it('Filters by status on the server, also across pages', async () => {
+            const { deactivatedUser, invitations, token } = await setup()
 
             const invitedOnly = await list(token, { status: 'INVITED' })
             const deactivatedOnly = await list(token, { status: 'INACTIVE' })
             const activeAndInvited = await list(token, { status: ['ACTIVE', 'INVITED'] })
+            const invitedAndDeactivatedPage2 = await list(token, { status: ['INVITED', 'INACTIVE'], limit: '3', cursor: '3' })
 
-            expect(invitedOnly.data).toHaveLength(3)
+            expect(invitedOnly.data).toHaveLength(4)
             expect(invitedOnly.data.every((row: { type: string }) => row.type === 'invitation')).toBe(true)
             expect(deactivatedOnly.data.map((row: { id: string }) => row.id)).toEqual([deactivatedUser.id])
-            expect(activeAndInvited.data).toHaveLength(4)
+            expect(activeAndInvited.data).toHaveLength(5)
+            expect(invitedAndDeactivatedPage2.data.map((row: { id: string }) => row.id)).toEqual([invitations[0].id, deactivatedUser.id])
         })
 
         it('Never returns users or invitations from another platform', async () => {
@@ -288,11 +300,11 @@ describe('Enterprise User API', () => {
             const page = await list(token, {})
             const otherIds = [other.mockOwner.id, other.deactivatedUser.id, ...other.invitations.map((invitation) => invitation.id)]
 
-            expect(page.data).toHaveLength(5)
+            expect(page.data).toHaveLength(6)
             expect(page.data.some((row: { id: string }) => otherIds.includes(row.id))).toBe(false)
         })
 
-        it('Lands on the first page for a junk cursor and on the last page for one past the end', async () => {
+        it('Starts at the first page for a junk cursor and points to the last page for one past the end', async () => {
             const { token } = await setup()
 
             const junk = await list(token, { limit: '2', cursor: 'not-a-number' })
@@ -300,9 +312,9 @@ describe('Enterprise User API', () => {
 
             expect(junk.previous).toBeNull()
             expect(junk.data).toHaveLength(2)
-            expect(pastEnd.data).toHaveLength(1)
+            expect(pastEnd.data).toEqual([])
             expect(pastEnd.next).toBeNull()
-            expect(pastEnd.previous).toBe('2')
+            expect(pastEnd.previous).toBe('4')
         })
 
         it('Rejects a page size outside 1 to 100', async () => {

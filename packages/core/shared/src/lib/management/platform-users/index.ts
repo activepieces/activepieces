@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { UserStatus, UserWithMetaInformation } from '../../core/user'
 import { UserInvitation } from '../invitations'
 
-// The platform admin Users page lists pending invitations and users as one list.
 export const INVITED_USER_STATUS = 'INVITED'
 
 export const PlatformUserListStatus = z.union([z.enum(UserStatus), z.literal(INVITED_USER_STATUS)])

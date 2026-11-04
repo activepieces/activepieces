@@ -30,6 +30,7 @@ import { triggerRunHooks } from '@/features/flows';
 import { PieceDisplayName, PieceIconWithPieceName } from '@/features/pieces';
 
 import { StatusProgressBar, type DayStatus } from './status-progress-bar';
+import { triggerHealthUtils } from './trigger-health-utils';
 
 type TriggerHealthRow = {
   id: string;
@@ -69,10 +70,7 @@ const percentageForLastXDays = (
     (acc, day) => acc + (pieceData.dailyStats[day]?.failure ?? 0),
     0,
   );
-  const totalRuns = successRuns + failureRuns;
-  // No runs counts as healthy; runs that all failed count as 0%.
-  const percentage = totalRuns > 0 ? (successRuns / totalRuns) * 100 : 100;
-  return Number(percentage.toFixed(1));
+  return triggerHealthUtils.successRate({ successRuns, failureRuns });
 };
 
 const generateLastXDays = (days: number): string[] => {
@@ -125,13 +123,11 @@ export default function TriggerHealthPage() {
             runs: pieceData.totalRuns,
           };
         })
-        // Worst first, so problems land on the first page.
-        .sort(
-          (a, b) =>
-            a.last24Hours - b.last24Hours ||
-            a.last7Days - b.last7Days ||
-            a.last14Days - b.last14Days ||
-            a.id.localeCompare(b.id),
+        .sort((a, b) =>
+          triggerHealthUtils.compareWorstFirst(
+            { ...a, status: a.status.type },
+            { ...b, status: b.status.type },
+          ),
         );
 
   const getStatusIcon = (statusType: string) => {

@@ -15,7 +15,12 @@ import {
   AdminPage,
   AdminPageHeader,
   adminPageResources,
+  adminPagination,
 } from '@/app/components/admin';
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { dataTableFilterUtils } from '@/components/custom/data-table/data-table-filter-utils';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
@@ -52,18 +57,18 @@ export default function UsersPage() {
     selectedStatuses.length > 0 &&
     selectedStatuses.length < STATUS_FILTER_VALUES.length;
 
-  // Pending invitations come first, then users, paged and filtered on the server as one list.
   const {
     data: usersPage,
     isLoading,
     isError,
   } = platformUserHooks.useUsersWithInvitationsPage({
     statuses: selectedStatuses,
+    cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+    limit: adminPagination.parseLimit(searchParams.get(LIMIT_QUERY_PARAM)),
   });
 
   const queryClient = useQueryClient();
   const refetch = () => {
-    // Refresh every users and invitations query, so other screens stay current too.
     Promise.all([
       queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
       queryClient.invalidateQueries({
@@ -136,7 +141,7 @@ export default function UsersPage() {
         }
         emptyStateTextDescription={
           isFiltered
-            ? t('Change the status filter to see more users')
+            ? t('Try changing the status filter')
             : t('Start inviting users to your project')
         }
         emptyStateIcon={<User />}

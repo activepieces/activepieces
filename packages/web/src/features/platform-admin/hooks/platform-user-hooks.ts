@@ -10,27 +10,12 @@ import {
 } from '@activepieces/shared';
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { platformUserApi } from '@/api/platform-user-api';
-import {
-  CURSOR_QUERY_PARAM,
-  LIMIT_QUERY_PARAM,
-} from '@/components/custom/data-table';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-
-function useCanListPlatformUsers(): boolean {
-  const { data: currentUser } = userHooks.useCurrentUser();
-  const { checkAccess, isFetchingProjectRole } = useAuthorization();
-  return (
-    !isNil(currentUser) &&
-    checkAccess(Permission.WRITE_INVITATION) &&
-    !isFetchingProjectRole
-  );
-}
 
 export const platformUserKeys = {
   users: ['users'] as const,
@@ -53,12 +38,13 @@ export const platformUserHooks = {
   },
   useUsersWithInvitationsPage: ({
     statuses,
+    cursor,
+    limit,
   }: {
     statuses: PlatformUserListStatus[];
+    cursor: string | undefined;
+    limit: number;
   }) => {
-    const [searchParams] = useSearchParams();
-    const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
-    const limit = Number(searchParams.get(LIMIT_QUERY_PARAM)) || 10;
     const canListUsers = useCanListPlatformUsers();
     return useQuery<SeekPage<PlatformUserListItem>, Error>({
       queryKey: [
@@ -74,7 +60,6 @@ export const platformUserHooks = {
           limit,
           status: statuses.length > 0 ? statuses : undefined,
         }),
-      // Keep the current page on screen while the next one loads.
       placeholderData: keepPreviousData,
       enabled: canListUsers,
     });
@@ -158,3 +143,13 @@ export const platformUserMutations = {
     });
   },
 };
+
+function useCanListPlatformUsers(): boolean {
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const { checkAccess, isFetchingProjectRole } = useAuthorization();
+  return (
+    !isNil(currentUser) &&
+    checkAccess(Permission.WRITE_INVITATION) &&
+    !isFetchingProjectRole
+  );
+}

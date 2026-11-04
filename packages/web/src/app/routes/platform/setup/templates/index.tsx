@@ -12,6 +12,7 @@ import {
   AdminPage,
   AdminPageHeader,
   adminPageResources,
+  adminPagination,
 } from '@/app/components/admin';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
@@ -32,7 +33,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces';
-import { templatesApi, templatesMutations } from '@/features/templates';
+import {
+  templateKeys,
+  templatesApi,
+  templatesMutations,
+} from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -46,11 +51,10 @@ const PlatformTemplatesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isSample = !platform.plan.manageTemplatesEnabled;
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
-  const limit = Number(searchParams.get(LIMIT_QUERY_PARAM)) || 10;
+  const limit = adminPagination.parseLimit(searchParams.get(LIMIT_QUERY_PARAM));
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['templates', cursor, limit],
+    queryKey: [...templateKeys.all, 'platform', cursor, limit],
     staleTime: 0,
-    // Keep the current page on screen while the next one loads.
     placeholderData: keepPreviousData,
     queryFn: () =>
       templatesApi.list({ type: TemplateType.CUSTOM, cursor, limit }),
@@ -201,6 +205,7 @@ const PlatformTemplatesPage = () => {
         )}
         emptyStateIcon={<FileText />}
         columns={columnsWithCheckbox}
+        getRowId={(template) => template.id}
         page={isSample ? sampleData.templatesPage() : data}
         hideFooterUntilNeeded
         isLoading={isLoading}

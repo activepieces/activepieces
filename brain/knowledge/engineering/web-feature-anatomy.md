@@ -166,7 +166,7 @@ way back was to stash the handful of intended edits, `git checkout` the package,
   page 1). Pass `hideFooterUntilNeeded` so the footer only shows once the list is longer than one page
   of 10. A list that is fixed or capped (the piece catalog, a model pick-list, the health lists capped
   at 50) stays unpaginated, and a list that already pages ("Load more", its own pager) is left as is.
-  The Users page pages pending invitations and users as one list from `GET /v1/users/with-invitations`,
+  The Users page pages invitations and users as one list from `GET /v1/users/with-invitations`,
   invitations first, with the status filter applied on the server.
 
 - **Those two shells carry the page's layout, not just its header, so removing a header moves the content.**

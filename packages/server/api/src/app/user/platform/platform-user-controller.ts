@@ -22,8 +22,6 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    // The admin Users page shows invitations and users as one list. Users and invitations live in two
-    // tables with separate cursors, so this endpoint merges them and pages by offset.
     app.get('/with-invitations', ListUsersWithInvitationsRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
