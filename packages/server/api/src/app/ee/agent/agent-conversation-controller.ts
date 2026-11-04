@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, MemoryImportNudgeResponse, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, MemoryImportNudgeClaimResponse, MemoryImportNudgeResponse, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -304,12 +304,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         return { eligible }
     })
 
-    app.post('/memory/import-nudge/shown', MarkMemoryImportNudgeShownRoute, async (request, reply) => {
-        await agentHelpers.markMemoryImportNudgeShown({
+    app.post('/memory/import-nudge/claim', ClaimMemoryImportNudgeRoute, async (request): Promise<MemoryImportNudgeClaimResponse> => {
+        const claimed = await agentHelpers.claimMemoryImportNudge({
             platformId: request.principal.platform.id,
             userId: request.principal.id,
         })
-        return reply.status(StatusCodes.NO_CONTENT).send()
+        return { claimed }
     })
 
     app.post('/memory/import', ImportMemoryRoute, async (request) => {
@@ -567,13 +567,16 @@ const GetMemoryImportNudgeRoute = {
     },
 }
 
-const MarkMemoryImportNudgeShownRoute = {
+const ClaimMemoryImportNudgeRoute = {
     config: {
         security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
     },
     schema: {
         tags: ['agent'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: MemoryImportNudgeClaimResponse,
+        },
     },
 }
 
