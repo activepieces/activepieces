@@ -317,27 +317,31 @@ function exampleValueForProp(prop: PropSummary): unknown {
             return RESOLUTION_SENTINEL
         case PropertyType.DYNAMIC:
             return prop.dynamicFields && prop.dynamicFields.length > 0
-                ? buildExampleInput(prop.dynamicFields)
+                ? buildExampleInput({ props: prop.dynamicFields })
                 : RESOLUTION_SENTINEL
         default:
             return prop.defaultValue ?? `<${prop.displayName}>`
     }
 }
 
-function buildExampleInput(props: PropSummary[]): Record<string, unknown> {
+function buildExampleInput({ props, providedInput = {} }: { props: PropSummary[], providedInput?: Record<string, unknown> }): Record<string, unknown> {
     const example: Record<string, unknown> = {}
     for (const prop of props) {
-        if (prop.required) {
+        const provided = providedInput[prop.name]
+        if (provided !== undefined) {
+            example[prop.name] = provided
+        }
+        else if (prop.required) {
             example[prop.name] = exampleValueForProp(prop)
         }
     }
     return example
 }
 
-function buildRequiredInputs(props: PropSummary[]): { provideNow: string[], needsResolution: string[] } {
+function buildRequiredInputs({ props, providedInput = {} }: { props: PropSummary[], providedInput?: Record<string, unknown> }): { provideNow: string[], needsResolution: string[] } {
     const provideNow: string[] = []
     const needsResolution: string[] = []
-    for (const prop of props.filter((p) => p.required)) {
+    for (const prop of props.filter((p) => p.required && providedInput[p.name] === undefined)) {
         if (RESOLVABLE_PROP_TYPES.has(prop.type)) {
             needsResolution.push(prop.name)
         }

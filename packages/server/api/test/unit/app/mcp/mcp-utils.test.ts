@@ -288,7 +288,7 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
     ]
 
     it('splits required inputs into provideNow vs needsResolution (dropdowns/dynamic)', () => {
-        const { provideNow, needsResolution } = mcpUtils.buildRequiredInputs(props)
+        const { provideNow, needsResolution } = mcpUtils.buildRequiredInputs({ props })
         expect(provideNow).toContain('url')
         expect(provideNow).toContain('headers')
         expect(provideNow).toContain('method')
@@ -296,7 +296,7 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
     })
 
     it('builds an example with empty containers, a first dropdown option, and a resolution sentinel for unresolved dropdowns', () => {
-        const example = mcpUtils.buildExampleInput(props)
+        const example = mcpUtils.buildExampleInput({ props })
         expect(example.headers).toEqual({})
         expect(example.queryParams).toEqual({})
         expect(example.method).toBe('GET')
@@ -305,10 +305,37 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
     })
 
     it('uses a resolved dropdown option value when options are present', () => {
-        const example = mcpUtils.buildExampleInput([
+        const example = mcpUtils.buildExampleInput({ props: [
             { name: 'objectTypeId', type: PropertyType.DROPDOWN, displayName: 'Object Type', required: true, options: [{ label: 'Deals', value: 'deal-uuid' }] },
-        ])
+        ] })
         expect(example.objectTypeId).toBe('deal-uuid')
+    })
+})
+
+describe('mcpUtils.buildRequiredInputs / buildExampleInput — keep what the caller already passed', () => {
+    const sheetProps = [
+        { name: 'spreadsheetId', type: PropertyType.DROPDOWN, displayName: 'Spreadsheet', required: true },
+        { name: 'sheetId', type: PropertyType.DROPDOWN, displayName: 'Sheet', required: true },
+        { name: 'first_row_headers', type: PropertyType.CHECKBOX, displayName: 'First row headers', required: false },
+        { name: 'values', type: PropertyType.DYNAMIC, displayName: 'Values', required: true },
+    ]
+    const providedInput = { spreadsheetId: 'sheet-123', sheetId: 7, first_row_headers: true }
+
+    it('lists only the required keys the caller has not given under Resolve first', () => {
+        const { provideNow, needsResolution } = mcpUtils.buildRequiredInputs({ props: sheetProps, providedInput })
+        expect(needsResolution).toEqual(['values'])
+        expect(provideNow).toEqual([])
+    })
+
+    it('keeps the caller\'s values, including optional ones, in the example', () => {
+        const example = mcpUtils.buildExampleInput({ props: sheetProps, providedInput })
+        expect(example).toMatchObject({ spreadsheetId: 'sheet-123', sheetId: 7, first_row_headers: true })
+        expect(example.values).toContain('resolve with ap_resolve_property_options')
+    })
+
+    it('builds the same output as before when the caller passes nothing', () => {
+        expect(mcpUtils.buildRequiredInputs({ props: sheetProps })).toEqual({ provideNow: [], needsResolution: ['spreadsheetId', 'sheetId', 'values'] })
+        expect(Object.keys(mcpUtils.buildExampleInput({ props: sheetProps }))).toEqual(['spreadsheetId', 'sheetId', 'values'])
     })
 })
 
@@ -460,7 +487,7 @@ describe('mcpUtils.buildExampleInput — runnable, sentinel-free once resolved',
                 { name: 'name', type: PropertyType.SHORT_TEXT, displayName: 'Name', required: true },
             ] },
         ]
-        const example = mcpUtils.buildExampleInput(props)
+        const example = mcpUtils.buildExampleInput({ props })
         const serialized = JSON.stringify(example)
         expect(serialized).not.toContain('resolve with')
         expect(example.channel).toBe('C123')
