@@ -44,8 +44,8 @@
   "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "請求",
+  "Data to send": "要傳送的資料",
   "New Campaign": "New Campaign",
   "Trigger when a new campaign is created": "Trigger when a new campaign is created"
 }
