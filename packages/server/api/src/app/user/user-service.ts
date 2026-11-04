@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
-import { ApEdition, PlatformRole, ProjectType, User, UserIdentity, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, newMemberSettingsUtils, PlatformRole, ProjectType, User, UserIdentity, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -13,9 +13,11 @@ import { projectMemberRepo } from '../ee/projects/project-role/project-role.serv
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
+import { mcpGrantRevocation } from '../mcp/oauth/token/mcp-grant-revocation'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
+import { userHooks } from './user-hooks'
 
 
 export const userRepo = repoFactory(UserEntity)
@@ -31,28 +33,45 @@ export const userService = (log: FastifyBaseLogger) => ({
             externalId: params.externalId,
             platformId: params.platformId,
         }
-        return userRepo().save(user)
+        return userRepo(params.entityManager).save(user)
     },
-    async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<GetOrCreateWithProjectResult> {
+    async getOrCreateWithProject({ identity, platformId, platformRole }: GetOrCreateWithProjectParams): Promise<GetOrCreateWithProjectResult> {
         const user = await this.getOneByIdentityAndPlatform({
             identityId: identity.id,
             platformId,
         })
         if (isNil(user)) {
-            const newUser = await this.create({
-                identityId: identity.id,
-                platformId,
-                platformRole: PlatformRole.MEMBER,
+            const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+            const defaultProjectIds = newMemberSettingsUtils.activeDefaultProjectIds({
+                defaultProjectIds: await platformService(log).listDefaultProjectIds({ platformId }),
+                projectRolesEnabled: platform.plan.projectRolesEnabled,
             })
-
-            const platform = await platformService(log).getOneOrThrow(platformId)
-            if (platform.autoCreatePersonalProjects) {
-                await projectService(log).create({
-                    displayName: identity.firstName + '\'s Project',
-                    ownerId: newUser.id,
+            const createsPersonalProject = newMemberSettingsUtils.personalProjectsActive({
+                autoCreatePersonalProjects: platform.autoCreatePersonalProjects,
+                projectRolesEnabled: platform.plan.projectRolesEnabled,
+            })
+            const { newUser, personalProject } = await transaction(async (entityManager) => {
+                const createdUser = await this.create({
+                    identityId: identity.id,
                     platformId,
-                    type: ProjectType.PERSONAL,
+                    platformRole: platformRole ?? PlatformRole.MEMBER,
+                    entityManager,
                 })
+                const createdPersonalProject = createsPersonalProject
+                    ? await projectService(log).create({
+                        displayName: identity.firstName + '\'s Project',
+                        ownerId: createdUser.id,
+                        platformId,
+                        type: ProjectType.PERSONAL,
+                        entityManager,
+                        callPostCreateHooks: false,
+                    })
+                    : null
+                await userHooks.get(log).postCreate({ user: createdUser, email: identity.email, platformId, defaultProjectIds, platformRoleAssigned: !isNil(platformRole), entityManager })
+                return { newUser: createdUser, personalProject: createdPersonalProject }
+            })
+            if (!isNil(personalProject)) {
+                await projectService(log).callProjectPostCreateHooks(personalProject)
             }
             return { user: newUser, created: true }
         }
@@ -105,6 +124,9 @@ export const userService = (log: FastifyBaseLogger) => ({
         else {
             await applyUpdate()
         }
+        if (status === UserStatus.INACTIVE) {
+            await mcpGrantRevocation.revokeActiveGrants({ scope: { userId: id, platformId }, log })
+        }
 
         return this.getMetaInformation({ id })
     },
@@ -132,8 +154,14 @@ export const userService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('externalId', externalId),
         }))
 
-        const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
-        return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
+        const [usersWithMetaInformation, userIdsWithProjects] = await Promise.all([
+            Promise.all(data.map(this.getMetaInformation)),
+            projectService(log).listUserIdsWithProjects({ platformId, userIds: data.map((user) => user.id) }),
+        ])
+        return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation.map((user) => ({
+            ...user,
+            hasProjects: userIdsWithProjects.includes(user.id),
+        })), cursor)
     },
     async getByIdentityId({ identityId }: GetByIdentityId): Promise<UserSchema[]> {
         return userRepo().find({ where: { identityId } })
@@ -184,6 +212,7 @@ export const userService = (log: FastifyBaseLogger) => ({
             })
             await deleteIdentityIfOrphaned({ identityId: user.identityId, entityManager })
         })
+        await mcpGrantRevocation.revokeActiveGrants({ scope: { userId: id, platformId }, log })
     },
     async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
@@ -207,6 +236,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         }, {
             lastLoggedInPlatformId: null,
         })
+        await mcpGrantRevocation.revokeActiveGrants({ scope: { userId: id, platformId }, log })
     },
 
     async getByPlatformRole(id: PlatformId, role: PlatformRole): Promise<UserSchema[]> {
@@ -256,6 +286,20 @@ export const userService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    isActive({ user, identity }: IsActiveParams): boolean {
+        return user.status === UserStatus.ACTIVE && identity.verified
+    },
+    async isActiveOnPlatform({ id, platformId }: GetOneByIdAndPlatformIdParams): Promise<boolean> {
+        const user = await userRepo().findOne({
+            where: { id, platformId },
+            relations: { identity: true },
+            select: { id: true, status: true, identity: { id: true, verified: true } },
+        })
+        if (isNil(user)) {
+            return false
+        }
+        return this.isActive({ user, identity: user.identity })
+    },
     isUserPrivileged(user: User): boolean {
         return user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     },
@@ -364,6 +408,7 @@ type CreateParams = {
     externalId?: string
     platformRole: PlatformRole
     isActive?: boolean
+    entityManager?: EntityManager
 }
 type GetUsersByIdentityIdParams = {
     identityId: string
@@ -393,6 +438,12 @@ type UpdatePlatformIdParams = {
 type GetOrCreateWithProjectParams = {
     identity: UserIdentity
     platformId: string
+    platformRole?: PlatformRole
+}
+
+type IsActiveParams = {
+    user: Pick<User, 'status'>
+    identity: Pick<UserIdentity, 'verified'>
 }
 
 type GetOrCreateWithProjectResult = {

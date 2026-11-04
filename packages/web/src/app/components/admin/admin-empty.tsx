@@ -14,6 +14,7 @@ import { adminSurface } from './admin-surface';
 
 export function AdminEmpty({
   icon,
+  media,
   title,
   description,
   action,
@@ -29,6 +30,7 @@ export function AdminEmpty({
       )}
     >
       <EmptyHeader>
+        {media && <EmptyMedia>{media}</EmptyMedia>}
         {icon && <EmptyMedia variant="icon">{icon}</EmptyMedia>}
         <EmptyTitle>{title}</EmptyTitle>
         {description && <EmptyDescription>{description}</EmptyDescription>}
@@ -40,6 +42,7 @@ export function AdminEmpty({
 
 type AdminEmptyProps = {
   icon?: ReactNode;
+  media?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
   action?: ReactNode;

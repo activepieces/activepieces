@@ -1,19 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { rabbitmqAuth } from '../auth';
-import { rabbitmqConnect } from '../common';
+import { publishOutputSchema, rabbitmqCommon } from '../common';
 
 export const sendMessageToQueue = createAction({
   auth: rabbitmqAuth,
   name: 'sendMessageToQueue',
   classification: 'WRITE',
-  displayName: 'sendMessageToQueue',
+  displayName: 'Send Message to Queue',
   description: 'Send a message on a RabbitMQ queue',
-  audience: 'both',
-  aiMetadata: { description: 'Publishes a JSON message directly to a named RabbitMQ queue (default exchange), bypassing exchange-based routing. Choose this to enqueue work onto one specific queue for its consumers; use the send-to-exchange action when you need routing-key-based fan-out across multiple queues. The target queue must already exist (the call verifies it first). Not idempotent: each call enqueues a new message.', idempotent: false },
+  audience: 'human',
+  outputSchema: publishOutputSchema,
   props: {
     queue: Property.ShortText({
       displayName: 'Queue',
-      description: 'The name of the exchange to send the message to',
+      description: 'The name of the queue to send the message to. It must already exist.',
       required: true,
     }),
     data: Property.Json({
@@ -21,38 +21,20 @@ export const sendMessageToQueue = createAction({
       description: 'The data to send',
       required: true,
       defaultValue: {
-        "key": "value",
-        "nested": { "key": "value" },
-        "array": ["value1", "value2"]
+        key: 'value',
+        nested: { key: 'value' },
+        array: ['value1', 'value2'],
       },
     }),
+    ...rabbitmqCommon.publishOptionProps,
   },
   async run(context) {
-    const queue = context.propsValue.queue;
-    let connection;
-    let channel;
-    try {
-      connection = await rabbitmqConnect(context.auth.props);
-      channel = await connection.createChannel();
-
-      await channel.checkQueue(queue);
-
-      const result = channel.sendToQueue(
-        queue,
-        Buffer.from(JSON.stringify(context.propsValue.data))
-      );
-
-      if (!result) {
-        throw new Error('Failed to send message to exchange');
-      }
-      return result;
-    } finally {
-      if (channel) {
-        await channel.close();
-      }
-      if (connection) {
-        await connection.close();
-      }
-    }
-  }
+    const { queue, data, persistent, contentType, headers } = context.propsValue;
+    return rabbitmqCommon.publish({
+      auth: context.auth.props,
+      target: { type: 'queue', queue },
+      data,
+      options: { persistent, contentType, headers },
+    });
+  },
 });

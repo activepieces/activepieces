@@ -32,7 +32,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
     if (!allProjects) return [];
     return allProjects.map((platform) => ({
       name: platform.platformName,
-      id: platform.projects[0]?.platformId,
+      id: platform.platformId,
     }));
   }, [allProjects]);
 

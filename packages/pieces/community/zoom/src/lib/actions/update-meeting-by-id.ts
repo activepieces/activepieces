@@ -65,11 +65,11 @@ export const zoomUpdateMeetingById = createAction({
         ],
       },
     }),
-    host_video: Property.Checkbox({ displayName: 'Host Video', description: 'Start video when the host joins.', required: false }),
-    participant_video: Property.Checkbox({ displayName: 'Participant Video', description: 'Start video when participants join.', required: false }),
-    join_before_host: Property.Checkbox({ displayName: 'Join Before Host', description: 'Let participants join before the host.', required: false }),
-    mute_upon_entry: Property.Checkbox({ displayName: 'Mute Upon Entry', description: 'Mute participants when they join.', required: false }),
-    waiting_room: Property.Checkbox({ displayName: 'Waiting Room', description: 'Turn the waiting room on or off.', required: false }),
+    host_video: triStateSetting({ displayName: 'Host Video', description: 'Start video when the host joins.' }),
+    participant_video: triStateSetting({ displayName: 'Participant Video', description: 'Start video when participants join.' }),
+    join_before_host: triStateSetting({ displayName: 'Join Before Host', description: 'Let participants join before the host.' }),
+    mute_upon_entry: triStateSetting({ displayName: 'Mute Upon Entry', description: 'Mute participants when they join.' }),
+    waiting_room: triStateSetting({ displayName: 'Waiting Room', description: 'Turn the waiting room on or off.' }),
   },
   async run(context) {
     const meetingId = zoomClient.normalizeMeetingId(context.propsValue.meeting_id);
@@ -111,11 +111,11 @@ function buildUpdateBody({ propsValue }: { propsValue: UpdateProps }): Record<st
   const settingEntries = Object.entries({
     auto_recording: propsValue.auto_recording,
     audio: propsValue.audio,
-    host_video: propsValue.host_video,
-    participant_video: propsValue.participant_video,
-    join_before_host: propsValue.join_before_host,
-    mute_upon_entry: propsValue.mute_upon_entry,
-    waiting_room: propsValue.waiting_room,
+    host_video: toSettingValue(propsValue.host_video),
+    participant_video: toSettingValue(propsValue.participant_video),
+    join_before_host: toSettingValue(propsValue.join_before_host),
+    mute_upon_entry: toSettingValue(propsValue.mute_upon_entry),
+    waiting_room: toSettingValue(propsValue.waiting_room),
   }).filter(([, value]) => value !== undefined && value !== null && value !== '');
   return {
     ...(topic !== undefined ? { topic } : {}),
@@ -128,6 +128,33 @@ function buildUpdateBody({ propsValue }: { propsValue: UpdateProps }): Record<st
   };
 }
 
+function triStateSetting({ displayName, description }: { displayName: string; description: string }) {
+  return Property.StaticDropdown({
+    displayName,
+    description: `${description} Leave unchanged to keep the meeting's current setting.`,
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
+        { label: 'Leave unchanged', value: 'unchanged' },
+      ],
+    },
+  });
+}
+
+function toSettingValue(value: TriStateValue): boolean | undefined {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'yes' || normalized === 'true') return true;
+  if (normalized === 'no' || normalized === 'false') return false;
+  return undefined;
+}
+
+type TriStateValue = string | boolean | null | undefined;
+
 type UpdateProps = {
   topic?: string;
   start_time?: string;
@@ -138,9 +165,9 @@ type UpdateProps = {
   password?: string;
   auto_recording?: string;
   audio?: string;
-  host_video?: boolean;
-  participant_video?: boolean;
-  join_before_host?: boolean;
-  mute_upon_entry?: boolean;
-  waiting_room?: boolean;
+  host_video?: TriStateValue;
+  participant_video?: TriStateValue;
+  join_before_host?: TriStateValue;
+  mute_upon_entry?: TriStateValue;
+  waiting_room?: TriStateValue;
 };

@@ -41,6 +41,7 @@ const EXPECTED_MAPPING: [string, Permission | undefined, Permission | undefined]
       Permission.READ_APP_CONNECTION,
       Permission.WRITE_APP_CONNECTION,
     ],
+    ['replace-app-connections', undefined, Permission.REPLACE_APP_CONNECTION],
     [
       'project-releases',
       Permission.READ_PROJECT_RELEASE,
@@ -82,8 +83,8 @@ describe('the permission grid mapping', () => {
     expect(missing).toEqual([Permission.PUBLISH_SENSITIVE_FLOW_ACCESS]);
   });
 
-  it('has 29 boxes, which is what the counter promises', () => {
-    expect(rolePermissionModel.totalBoxes()).toBe(29);
+  it('has 30 boxes, which is what the counter promises', () => {
+    expect(rolePermissionModel.totalBoxes()).toBe(30);
   });
 
   it('keeps view permanently on only where a role cannot function without it', () => {
@@ -99,7 +100,7 @@ describe('the built-in bases', () => {
   it.each([
     ['Nothing' as const, [Permission.READ_FLOW, Permission.READ_PROJECT], 2],
     ['Viewer' as const, rolePermissions[DefaultProjectRole.VIEWER], 12],
-    ['Editor' as const, rolePermissions[DefaultProjectRole.EDITOR], 24],
+    ['Editor' as const, rolePermissions[DefaultProjectRole.EDITOR], 25],
   ])('%s seeds the stored set and counts %i', (base, expected, count) => {
     const permissions = rolePermissionModel.basePermissions({ base });
     expect(new Set(permissions)).toEqual(new Set(expected));
@@ -166,6 +167,35 @@ describe('toggling a box', () => {
       row: row('flow-status'),
       column: 'view',
       checked: true,
+    });
+    expect(permissions).toEqual([]);
+  });
+
+  it('turns on connection read access when replace goes on', () => {
+    const permissions = rolePermissionModel.toggleBox({
+      permissions: [],
+      row: row('replace-app-connections'),
+      column: 'edit',
+      checked: true,
+    });
+    expect(new Set(permissions)).toEqual(
+      new Set([
+        Permission.REPLACE_APP_CONNECTION,
+        Permission.READ_APP_CONNECTION,
+      ]),
+    );
+  });
+
+  it('clears replace when connection read access goes off', () => {
+    const permissions = rolePermissionModel.toggleBox({
+      permissions: [
+        Permission.READ_APP_CONNECTION,
+        Permission.WRITE_APP_CONNECTION,
+        Permission.REPLACE_APP_CONNECTION,
+      ],
+      row: row('app-connections'),
+      column: 'view',
+      checked: false,
     });
     expect(permissions).toEqual([]);
   });
