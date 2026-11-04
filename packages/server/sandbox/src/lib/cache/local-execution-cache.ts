@@ -83,13 +83,22 @@ async function installCodeStep({ artifact, codeCachePath, log, getSettings }: In
     }
     // Loops because a build can land on a directory an eviction sweep (action-run-cache.ts,
     // code-cache-eviction.ts) is mid-removal of — waiting for that removal and rebuilding is the
-    // only way to avoid running against partially-deleted files.
-    const dirPath = codeCache(codeCachePath).flowVersionDir(artifact.flowVersionId)
+    // only way to avoid running against partially-deleted files. action-run-cache.ts evicts a whole
+    // namespace dir at once, but code-cache-eviction.ts now evicts per step dir (code-builder.ts
+    // touches that one on every use) — wait on whichever one actually gets deleted.
+    const codes = codeCache(codeCachePath)
+    const isActionRun = actionRunCache.isActionRunNamespace(artifact.flowVersionId)
+    const dirPath = isActionRun
+        ? codes.flowVersionDir(artifact.flowVersionId)
+        : codes.stepDir({ flowVersionId: artifact.flowVersionId, stepName: artifact.name })
     do {
         await build()
-        // Bumps mtime on every use, not just rebuilds, so disk-usage eviction (code-cache-eviction.ts)
-        // can tell "still in use" from "stale" instead of evicting a frequently-run, rarely-changed flow.
-        await actionRunCache.touch(dirPath)
+        if (isActionRun) {
+            // code-builder.ts only touches the nested step dir it writes to, which never bumps a
+            // parent directory's own mtime — action-run-cache.ts's sweep needs the namespace dir
+            // itself touched on every use, not just its first build.
+            await actionRunCache.touch(dirPath)
+        }
     } while (await sweptWhileProvisioning({ dirPath, log }))
 }
 

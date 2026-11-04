@@ -9,8 +9,10 @@ import { pendingCacheRemovals } from '../../pending-cache-removals'
 
 export const codeCacheEviction = {
     // Only the action-runs namespace gets a dedicated TTL/count sweep (action-run-cache.ts).
-    // Every other entry here is a published flow version's code cache, kept forever by the
-    // normal provisioning path, so it needs its own eviction once disk pressure shows up.
+    // Every other entry here is a published flow version's code cache, kept forever by the normal
+    // provisioning path, so it needs its own eviction once disk pressure shows up. Candidates are
+    // individual step dirs (code-builder.ts touches one on every use, hit or miss), not whole flow
+    // versions, so a flow with one hot step and nine cold ones only loses the nine.
     async sweep({
         basePath,
         log,
@@ -81,11 +83,23 @@ async function defaultGetUsedPercent(basePath: string): Promise<number> {
 }
 
 async function readEvictionCandidates({ codesPath, entries, activeAt }: ReadCandidatesParams): Promise<DirEntry[]> {
-    const dirs = entries.filter((entry) => entry.isDirectory() && entry.name !== ACTION_RUN_CODE_DIR)
-    const stats = await Promise.all(dirs.map(async (entry): Promise<DirEntry | null> => {
-        const dirPath = path.join(codesPath, entry.name)
-        const { data: dirStat, error } = await tryCatch(() => stat(dirPath))
-        if (error) {
+    const flowVersionDirs = entries.filter((entry) => entry.isDirectory() && entry.name !== ACTION_RUN_CODE_DIR)
+    const nested = await Promise.all(flowVersionDirs.map((entry) => readStepCandidates({
+        flowVersionPath: path.join(codesPath, entry.name),
+        activeAt,
+    })))
+    return nested.flat()
+}
+
+async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandidatesParams): Promise<DirEntry[]> {
+    const { data: stepEntries, error } = await tryCatch(() => readdir(flowVersionPath, { withFileTypes: true }))
+    if (error) {
+        return []
+    }
+    const stats = await Promise.all(stepEntries.filter((entry) => entry.isDirectory()).map(async (entry): Promise<DirEntry | null> => {
+        const dirPath = path.join(flowVersionPath, entry.name)
+        const { data: dirStat, error: statError } = await tryCatch(() => stat(dirPath))
+        if (statError) {
             return null
         }
         return { dirPath, mtimeMs: dirStat.mtimeMs }
@@ -123,5 +137,10 @@ type DirEntry = {
 type ReadCandidatesParams = {
     codesPath: string
     entries: Dirent[]
+    activeAt: number
+}
+
+type ReadStepCandidatesParams = {
+    flowVersionPath: string
     activeAt: number
 }

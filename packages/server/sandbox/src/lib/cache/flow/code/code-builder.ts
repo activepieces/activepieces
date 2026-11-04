@@ -7,6 +7,7 @@ import { ExecutionMode } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
 import { diskLock } from '../../../utils/distributed-lock'
+import { actionRunCache } from '../../action-run-cache'
 import { cacheState } from '../../cache-state'
 import { codeCache } from './code-cache'
 import { denoStepTranspiler } from './deno-step-transpiler'
@@ -171,6 +172,10 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
             },
             skipSave: () => buildStatus !== 'success',
         })
+        // Bumps the step dir's mtime on every use, hit or miss, so disk-usage eviction
+        // (code-cache-eviction.ts) can evict by actual activity instead of by whichever step
+        // happened to rebuild most recently.
+        await actionRunCache.touch(codePath)
         return cacheHit ? 'success' : buildStatus
     },
 })

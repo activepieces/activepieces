@@ -35,14 +35,17 @@ function createNoopLog(): ApLogger {
 
 const noopLog = createNoopLog()
 
-async function seedFlowVersionDir({ basePath, flowVersionId, ageMs }: SeedParams): Promise<string> {
-    const dirPath = join(cacheUtils(basePath).getGlobalCodeCachePath(), flowVersionId)
-    const stepPath = join(dirPath, 'step_1')
+function flowVersionDir({ basePath, flowVersionId }: { basePath: string, flowVersionId: string }): string {
+    return join(cacheUtils(basePath).getGlobalCodeCachePath(), flowVersionId)
+}
+
+async function seedStepDir({ basePath, flowVersionId, stepName = 'step_1', ageMs }: SeedParams): Promise<string> {
+    const stepPath = join(flowVersionDir({ basePath, flowVersionId }), stepName)
     await mkdir(stepPath, { recursive: true })
     await writeFile(join(stepPath, 'index.ts'), 'export const code = async () => 42', 'utf8')
     const mtime = new Date(Date.now() - ageMs)
-    await utimes(dirPath, mtime, mtime)
-    return dirPath
+    await utimes(stepPath, mtime, mtime)
+    return stepPath
 }
 
 function underThreshold(): Promise<number> {
@@ -82,18 +85,18 @@ afterEach(async () => {
 describe('codeCacheEviction.sweep', () => {
     it('does nothing while disk usage is under the threshold', async () => {
         const basePath = uniqueBasePath()
-        const oldDir = await seedFlowVersionDir({ basePath, flowVersionId: apId(), ageMs: 30 * 24 * 60 * 60 * 1000 })
+        const oldStep = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 30 * 24 * 60 * 60 * 1000 })
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: underThreshold })
 
-        await expect(exists(oldDir)).resolves.toBe(true)
+        await expect(exists(oldStep)).resolves.toBe(true)
     })
 
-    it('evicts the oldest flow-version caches first once disk usage is over the threshold', async () => {
+    it('evicts the oldest step caches first once disk usage is over the threshold', async () => {
         const basePath = uniqueBasePath()
-        const oldest = await seedFlowVersionDir({ basePath, flowVersionId: apId(), ageMs: 3 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
-        const middle = await seedFlowVersionDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
-        const newest = await seedFlowVersionDir({ basePath, flowVersionId: apId(), ageMs: ACTION_RUN_CACHE_ACTIVE_WINDOW_MS + 1000 })
+        const oldest = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 3 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const middle = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const newest = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: ACTION_RUN_CACHE_ACTIVE_WINDOW_MS + 1000 })
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
 
@@ -104,8 +107,8 @@ describe('codeCacheEviction.sweep', () => {
 
     it('stops evicting as soon as disk usage drops back under the threshold', async () => {
         const basePath = uniqueBasePath()
-        const dirs = await Promise.all(Array.from({ length: 5 }, (_, index) =>
-            seedFlowVersionDir({
+        const steps = await Promise.all(Array.from({ length: 5 }, (_, index) =>
+            seedStepDir({
                 basePath,
                 flowVersionId: apId(),
                 ageMs: ACTION_RUN_CACHE_ACTIVE_WINDOW_MS + (5 - index) * 1000,
@@ -114,26 +117,39 @@ describe('codeCacheEviction.sweep', () => {
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(2) })
 
-        await expect(exists(dirs[0])).resolves.toBe(false)
-        await expect(exists(dirs[1])).resolves.toBe(false)
-        for (const dirPath of dirs.slice(2)) {
-            await expect(exists(dirPath)).resolves.toBe(true)
+        await expect(exists(steps[0])).resolves.toBe(false)
+        await expect(exists(steps[1])).resolves.toBe(false)
+        for (const stepPath of steps.slice(2)) {
+            await expect(exists(stepPath)).resolves.toBe(true)
         }
     })
 
-    it('leaves a recently-used flow-version cache alone even when disk usage is over the threshold', async () => {
+    it('leaves a recently-used step cache alone even when disk usage is over the threshold', async () => {
         const basePath = uniqueBasePath()
-        const activeDir = await seedFlowVersionDir({ basePath, flowVersionId: apId(), ageMs: 1000 })
+        const activeStep = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 1000 })
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(10) })
 
-        await expect(exists(activeDir)).resolves.toBe(true)
+        await expect(exists(activeStep)).resolves.toBe(true)
+    })
+
+    it('evicts only the least-active step in a flow version, leaving its active steps and the flow-version dir intact', async () => {
+        const basePath = uniqueBasePath()
+        const flowVersionId = apId()
+        const coldStep = await seedStepDir({ basePath, flowVersionId, stepName: 'cold_step', ageMs: 3 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const hotStep = await seedStepDir({ basePath, flowVersionId, stepName: 'hot_step', ageMs: 1000 })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
+
+        await expect(exists(coldStep)).resolves.toBe(false)
+        await expect(exists(hotStep)).resolves.toBe(true)
+        await expect(exists(flowVersionDir({ basePath, flowVersionId }))).resolves.toBe(true)
     })
 
     it('never touches the action-runs namespace, which already manages its own eviction', async () => {
         const basePath = uniqueBasePath()
         const actionRunNamespace = actionRunCache.namespace({ platformId: apId(), sourceHash: 'f'.repeat(64) })
-        const actionRunDir = await seedFlowVersionDir({
+        const actionRunStep = await seedStepDir({
             basePath,
             flowVersionId: actionRunNamespace,
             ageMs: 90 * 24 * 60 * 60 * 1000,
@@ -141,7 +157,7 @@ describe('codeCacheEviction.sweep', () => {
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(10) })
 
-        await expect(exists(actionRunDir)).resolves.toBe(true)
+        await expect(exists(actionRunStep)).resolves.toBe(true)
     })
 
     it('does nothing when the code cache directory does not exist yet', async () => {
@@ -153,12 +169,12 @@ describe('codeCacheEviction.sweep', () => {
 
     it('clears a removed directory from pendingCacheRemovals once eviction finishes, so provisioning is never left waiting forever', async () => {
         const basePath = uniqueBasePath()
-        const dirPath = await seedFlowVersionDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
+        const stepPath = await seedStepDir({ basePath, flowVersionId: apId(), ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForEvictions(1) })
 
-        await expect(exists(dirPath)).resolves.toBe(false)
-        await expect(pendingCacheRemovals.settle(dirPath)).resolves.toBe(false)
+        await expect(exists(stepPath)).resolves.toBe(false)
+        await expect(pendingCacheRemovals.settle(stepPath)).resolves.toBe(false)
     })
 
     it('by default reads disk usage from basePath itself (statfs), not a hardcoded path — a nonexistent basePath is treated as 0% used rather than falling back to "/"', async () => {
@@ -171,5 +187,6 @@ describe('codeCacheEviction.sweep', () => {
 type SeedParams = {
     basePath: string
     flowVersionId: string
+    stepName?: string
     ageMs: number
 }
