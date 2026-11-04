@@ -1,0 +1,565 @@
+{
+	"server": "https://mcp.10ml.com",
+	"version": "2.5.5",
+	"routes": {
+		"GET /api/v1/perfumes": {
+			"operationId": "searchPerfumes",
+			"params": {
+				"q": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"house": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"notes_include": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"notes_exclude": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"accords": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"family": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"gender": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"men",
+						"women",
+						"unisex"
+					]
+				},
+				"season": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"spring",
+						"summer",
+						"autumn",
+						"winter"
+					]
+				},
+				"occasion": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"daytime",
+						"office",
+						"casual",
+						"evening",
+						"date night",
+						"special occasion"
+					]
+				},
+				"style": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"aquatic",
+						"boozy",
+						"clean",
+						"creamy",
+						"dark",
+						"floral",
+						"fresh",
+						"citrusy",
+						"fruity",
+						"gourmand",
+						"green",
+						"leathery",
+						"musky",
+						"powdery",
+						"sensual",
+						"smoky",
+						"spicy",
+						"sweet",
+						"woody"
+					]
+				},
+				"iconic": {
+					"in": "query",
+					"required": false,
+					"type": "boolean"
+				},
+				"limit": {
+					"in": "query",
+					"required": false,
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 20
+				},
+				"cursor": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"format": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"concise",
+						"detailed"
+					]
+				},
+				"locale": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"en",
+						"de",
+						"fr",
+						"es",
+						"it",
+						"ro",
+						"el",
+						"hu",
+						"cs",
+						"pl",
+						"nl",
+						"pt",
+						"sv",
+						"da",
+						"fi",
+						"bg",
+						"hr"
+					]
+				}
+			}
+		},
+		"GET /api/v1/perfumes/{id}": {
+			"operationId": "getPerfume",
+			"params": {
+				"id": {
+					"in": "path",
+					"required": true,
+					"type": "string"
+				},
+				"house": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"format": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"concise",
+						"detailed"
+					]
+				},
+				"locale": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"en",
+						"de",
+						"fr",
+						"es",
+						"it",
+						"ro",
+						"el",
+						"hu",
+						"cs",
+						"pl",
+						"nl",
+						"pt",
+						"sv",
+						"da",
+						"fi",
+						"bg",
+						"hr"
+					]
+				}
+			}
+		},
+		"GET /api/v1/similar": {
+			"operationId": "findSimilarPerfumes",
+			"params": {
+				"perfume": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"house": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"notes": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"accords": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"steer": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"fresher",
+						"sweeter",
+						"darker",
+						"lighter",
+						"longer_lasting",
+						"more_projection"
+					]
+				},
+				"gender": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"men",
+						"women",
+						"unisex"
+					]
+				},
+				"other_houses_only": {
+					"in": "query",
+					"required": false,
+					"type": "boolean"
+				},
+				"limit": {
+					"in": "query",
+					"required": false,
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 15
+				},
+				"cursor": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"format": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"concise",
+						"detailed"
+					]
+				},
+				"locale": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"en",
+						"de",
+						"fr",
+						"es",
+						"it",
+						"ro",
+						"el",
+						"hu",
+						"cs",
+						"pl",
+						"nl",
+						"pt",
+						"sv",
+						"da",
+						"fi",
+						"bg",
+						"hr"
+					]
+				}
+			}
+		},
+		"GET /api/v1/alternatives": {
+			"operationId": "findPerfumeAlternatives",
+			"params": {
+				"perfume": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"house": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"closeness": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"very close",
+						"similar vibe",
+						"same spirit"
+					]
+				},
+				"limit": {
+					"in": "query",
+					"required": false,
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 10
+				},
+				"cursor": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"locale": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"en",
+						"de",
+						"fr",
+						"es",
+						"it",
+						"ro",
+						"el",
+						"hu",
+						"cs",
+						"pl",
+						"nl",
+						"pt",
+						"sv",
+						"da",
+						"fi",
+						"bg",
+						"hr"
+					]
+				}
+			}
+		},
+		"GET /api/v1/notes/{id}": {
+			"operationId": "explainNote",
+			"params": {
+				"id": {
+					"in": "path",
+					"required": true,
+					"type": "string"
+				},
+				"format": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"concise",
+						"detailed"
+					]
+				},
+				"locale": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"en",
+						"de",
+						"fr",
+						"es",
+						"it",
+						"ro",
+						"el",
+						"hu",
+						"cs",
+						"pl",
+						"nl",
+						"pt",
+						"sv",
+						"da",
+						"fi",
+						"bg",
+						"hr"
+					]
+				}
+			}
+		},
+		"GET /api/v1/houses": {
+			"operationId": "listHouses",
+			"params": {
+				"type": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"designer",
+						"niche",
+						"middle-eastern",
+						"indie",
+						"celebrity"
+					]
+				},
+				"country": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"query": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"limit": {
+					"in": "query",
+					"required": false,
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 50
+				},
+				"cursor": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"locale": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"en",
+						"de",
+						"fr",
+						"es",
+						"it",
+						"ro",
+						"el",
+						"hu",
+						"cs",
+						"pl",
+						"nl",
+						"pt",
+						"sv",
+						"da",
+						"fi",
+						"bg",
+						"hr"
+					]
+				}
+			}
+		},
+		"GET /api/v1/houses/{id}": {
+			"operationId": "getHouse",
+			"params": {
+				"id": {
+					"in": "path",
+					"required": true,
+					"type": "string"
+				},
+				"format": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"concise",
+						"detailed"
+					]
+				},
+				"locale": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"en",
+						"de",
+						"fr",
+						"es",
+						"it",
+						"ro",
+						"el",
+						"hu",
+						"cs",
+						"pl",
+						"nl",
+						"pt",
+						"sv",
+						"da",
+						"fi",
+						"bg",
+						"hr"
+					]
+				}
+			}
+		},
+		"GET /api/v1/guides": {
+			"operationId": "searchGuides",
+			"params": {
+				"q": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"type": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"how-to",
+						"list",
+						"alternatives",
+						"note",
+						"house"
+					]
+				},
+				"limit": {
+					"in": "query",
+					"required": false,
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 20
+				},
+				"cursor": {
+					"in": "query",
+					"required": false,
+					"type": "string"
+				},
+				"locale": {
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"enum": [
+						"en",
+						"de",
+						"fr",
+						"es",
+						"it",
+						"ro",
+						"el",
+						"hu",
+						"cs",
+						"pl",
+						"nl",
+						"pt",
+						"sv",
+						"da",
+						"fi",
+						"bg",
+						"hr"
+					]
+				}
+			}
+		}
+	}
+}

@@ -27,6 +27,9 @@
       "@activepieces/piece-0codekit": [
         "packages/pieces/community/0codekit/src/index.ts"
       ],
+      "@activepieces/piece-10ml-perfume": [
+        "packages/pieces/community/10ml-perfume/src/index.ts"
+      ],
       "@activepieces/piece-activecampaign": [
         "packages/pieces/community/activecampaign/src/index.ts"
       ],

@@ -1,0 +1,784 @@
+{
+	"search_detailed": {
+		"total": 879,
+		"results": [
+			{
+				"id": "tom-ford-private-blend-oud-wood-edp",
+				"name": "Oud Wood",
+				"house": "Tom Ford",
+				"year": 2007,
+				"gender": "unisex",
+				"family": "Oud woody",
+				"accords": [
+					"oud",
+					"woody",
+					"spicy",
+					"amber",
+					"vanilla"
+				],
+				"key_notes": [
+					"oud",
+					"sandalwood",
+					"tonka bean",
+					"amber",
+					"rosewood"
+				],
+				"character": "A tame, elegant oud with cardamom spice and smooth sandalwood, luxurious yet wearable.",
+				"links": [
+					{
+						"type": "try",
+						"title": "Try it at 10ML",
+						"url": "https://10ml.com/search?q=Tom%20Ford%20Oud%20Wood&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=search_perfumes"
+					},
+					{
+						"type": "guide",
+						"title": "Tom Ford Oud Wood Dupes 2026: 6 Clones vs the Original",
+						"url": "https://10ml.com/guides/oud-wood-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=search_perfumes"
+					},
+					{
+						"type": "note",
+						"title": "Oud on 10ML",
+						"url": "https://10ml.com/notes/agarwood-oud?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=search_perfumes"
+					}
+				],
+				"profile": "full",
+				"concentration": "EDP",
+				"pyramid": {
+					"top": [
+						"rosewood",
+						"cardamom",
+						"sichuan pepper"
+					],
+					"heart": [
+						"oud",
+						"sandalwood",
+						"vetiver"
+					],
+					"base": [
+						"tonka bean",
+						"amber",
+						"vanilla"
+					]
+				},
+				"seasons": [
+					"autumn",
+					"winter"
+				],
+				"occasions": [
+					"daytime",
+					"evening",
+					"special occasion"
+				],
+				"styles": [
+					"woody",
+					"spicy",
+					"smoky"
+				],
+				"longevity": 4,
+				"projection": 3,
+				"perfumers": [
+					"Richard Herpin"
+				]
+			},
+			{
+				"id": "initio-oud-for-greatness-edp",
+				"name": "Oud for Greatness",
+				"house": "Initio Parfums Privés",
+				"year": 2018,
+				"gender": "unisex",
+				"family": "Oud woody",
+				"accords": [
+					"oud",
+					"woody",
+					"spicy",
+					"musky",
+					"smoky"
+				],
+				"key_notes": [
+					"oud",
+					"patchouli",
+					"musk",
+					"saffron"
+				],
+				"character": "A bold, smoky oud with saffron and lavender sparkle, powerful and imposing with a velvety musky back.",
+				"links": [
+					{
+						"type": "try",
+						"title": "Try it at 10ML",
+						"url": "https://10ml.com/search?q=Initio%20Parfums%20Priv%C3%A9s%20Oud%20for%20Greatness&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=search_perfumes"
+					},
+					{
+						"type": "note",
+						"title": "Saffron on 10ML",
+						"url": "https://10ml.com/notes/saffron?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=search_perfumes"
+					}
+				],
+				"profile": "full",
+				"concentration": "EDP",
+				"pyramid": {
+					"top": [
+						"saffron",
+						"nutmeg",
+						"lavender"
+					],
+					"heart": [
+						"oud",
+						"patchouli"
+					],
+					"base": [
+						"musk"
+					]
+				},
+				"seasons": [
+					"autumn",
+					"winter"
+				],
+				"occasions": [
+					"evening",
+					"special occasion"
+				],
+				"styles": [
+					"dark",
+					"woody",
+					"smoky"
+				],
+				"longevity": 5,
+				"projection": 5
+			}
+		],
+		"filters": {},
+		"relaxed": false,
+		"source": "10ML Fragrance Index",
+		"next_cursor": "bzI"
+	},
+	"get_perfume": {
+		"found": true,
+		"exact": true,
+		"perfume": {
+			"id": "maison-francis-kurkdjian-baccarat-rouge-540-edp",
+			"name": "Baccarat Rouge 540",
+			"house": "Maison Francis Kurkdjian",
+			"year": 2015,
+			"gender": "unisex",
+			"family": "Amber floral",
+			"accords": [
+				"amber",
+				"woody",
+				"sweet"
+			],
+			"key_notes": [
+				"amberwood",
+				"ambergris",
+				"fir resin",
+				"cedar",
+				"saffron"
+			],
+			"character": "A glowing, airy amber with a sugared, almost cotton-candy sweetness over mineral woods. Instantly recognisable and famously long-lasting.",
+			"links": [
+				{
+					"type": "try",
+					"title": "Try it at 10ML",
+					"url": "https://10ml.com/search?q=Maison%20Francis%20Kurkdjian%20Baccarat%20Rouge%20540&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_perfume"
+				},
+				{
+					"type": "guide",
+					"title": "Baccarat Rouge 540 Dupes 2026: 6 Clones vs the Original",
+					"url": "https://10ml.com/guides/baccarat-rouge-540-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_perfume"
+				},
+				{
+					"type": "note",
+					"title": "Saffron on 10ML",
+					"url": "https://10ml.com/notes/saffron?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_perfume"
+				}
+			],
+			"profile": "full"
+		},
+		"house_info": {
+			"name": "Maison Francis Kurkdjian",
+			"country": "France",
+			"type": "niche",
+			"style": "Elegant Parisian house by perfumer Francis Kurkdjian with luminous, airy and refined creations."
+		},
+		"similar": [
+			{
+				"id": "armaf-club-de-nuit-untold",
+				"name": "Club de Nuit Untold",
+				"house": "Armaf",
+				"closeness": "very close",
+				"shared_notes": [
+					"saffron",
+					"jasmine",
+					"amberwood",
+					"ambergris"
+				],
+				"url": "https://10ml.com/search?q=Armaf%20Club%20de%20Nuit%20Untold&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_perfume"
+			},
+			{
+				"id": "afnan-adwaa-al-sharq",
+				"name": "Adwaa Al Sharq",
+				"house": "Afnan",
+				"closeness": "very close",
+				"shared_notes": [
+					"saffron",
+					"jasmine",
+					"amberwood",
+					"ambergris"
+				],
+				"url": "https://10ml.com/search?q=Afnan%20Adwaa%20Al%20Sharq&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_perfume"
+			}
+		],
+		"alternatives": [
+			{
+				"name": "Maison Alhambra Baroque Rouge Extrait",
+				"closeness": "very close",
+				"why": "Sugared amber, saffron and airy woods aim at the same luminous effect.",
+				"id": "maison-alhambra-baroque-rouge-extrait"
+			},
+			{
+				"name": "Dossier Ambery Saffron",
+				"closeness": "similar vibe",
+				"why": "Saffron and amber with sweet woods share the glowing amber idea.",
+				"id": "dossier-ambery-saffron"
+			}
+		],
+		"guides": [
+			{
+				"type": "guide",
+				"title": "Baccarat Rouge 540 Dupes 2026: 6 Clones vs the Original",
+				"url": "https://10ml.com/guides/baccarat-rouge-540-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_perfume"
+			}
+		],
+		"source": "10ML Fragrance Index"
+	},
+	"get_perfume_missing": {
+		"found": false,
+		"exact": false,
+		"suggestions": [
+			{
+				"id": "maison-francis-kurkdjian-baccarat-rouge-540-edp",
+				"name": "Baccarat Rouge 540",
+				"house": "Maison Francis Kurkdjian",
+				"year": 2015,
+				"gender": "unisex",
+				"family": "Amber floral",
+				"accords": [
+					"amber",
+					"woody",
+					"sweet"
+				],
+				"key_notes": [
+					"amberwood",
+					"ambergris",
+					"fir resin",
+					"cedar",
+					"saffron"
+				],
+				"character": "A glowing, airy amber with a sugared, almost cotton-candy sweetness over mineral woods. Instantly recognisable and famously long-lasting.",
+				"links": [
+					{
+						"type": "try",
+						"title": "Try it at 10ML",
+						"url": "https://10ml.com/search?q=Maison%20Francis%20Kurkdjian%20Baccarat%20Rouge%20540&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_perfume"
+					},
+					{
+						"type": "guide",
+						"title": "Baccarat Rouge 540 Dupes 2026: 6 Clones vs the Original",
+						"url": "https://10ml.com/guides/baccarat-rouge-540-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_perfume"
+					},
+					{
+						"type": "note",
+						"title": "Saffron on 10ML",
+						"url": "https://10ml.com/notes/saffron?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_perfume"
+					}
+				],
+				"profile": "full"
+			}
+		],
+		"message": "\"Baccarat Rouge 54\" is not in the 10ML Fragrance Index. Closest matches below. Use search_perfumes to browse, or find_similar_perfumes with notes to work from any other perfume.",
+		"source": "10ML Fragrance Index"
+	},
+	"similar": {
+		"target": {
+			"name": "Baccarat Rouge 540",
+			"house": "Maison Francis Kurkdjian",
+			"in_index": true,
+			"id": "maison-francis-kurkdjian-baccarat-rouge-540-edp",
+			"notes": [
+				"saffron",
+				"jasmine",
+				"amberwood",
+				"ambergris",
+				"fir resin",
+				"cedar"
+			],
+			"accords": [
+				"amber",
+				"woody",
+				"sweet",
+				"floral",
+				"musky"
+			]
+		},
+		"results": [
+			{
+				"perfume": {
+					"id": "armaf-club-de-nuit-untold",
+					"name": "Club de Nuit Untold",
+					"house": "Armaf",
+					"gender": "unisex",
+					"family": "Amber woody",
+					"accords": [
+						"amber",
+						"warm spicy",
+						"sweet"
+					],
+					"key_notes": [
+						"amberwood",
+						"ambergris",
+						"fir resin",
+						"cedar",
+						"saffron"
+					],
+					"character": "A warm, spiced amber with sweet woods, deeper and more evening-oriented than other Club de Nuit options.",
+					"links": [
+						{
+							"type": "try",
+							"title": "Try it at 10ML",
+							"url": "https://10ml.com/search?q=Armaf%20Club%20de%20Nuit%20Untold&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=find_similar_perfumes"
+						},
+						{
+							"type": "note",
+							"title": "Saffron on 10ML",
+							"url": "https://10ml.com/notes/saffron?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=find_similar_perfumes"
+						}
+					],
+					"profile": "full"
+				},
+				"closeness": "very close",
+				"shared_notes": [
+					"saffron",
+					"jasmine",
+					"amberwood",
+					"ambergris",
+					"fir resin",
+					"cedar"
+				],
+				"shared_accords": [
+					"amber",
+					"woody",
+					"sweet"
+				],
+				"why": "shares saffron, jasmine, amberwood, ambergris"
+			},
+			{
+				"perfume": {
+					"id": "afnan-adwaa-al-sharq",
+					"name": "Adwaa Al Sharq",
+					"house": "Afnan",
+					"gender": "unisex",
+					"family": "Oriental woody",
+					"accords": [
+						"saffron",
+						"amber",
+						"woody"
+					],
+					"key_notes": [
+						"amberwood",
+						"ambergris",
+						"fir resin",
+						"cedar",
+						"saffron"
+					],
+					"character": "Saffron, jasmine and caramel lead into amberwood and ambergris, closing on fir resin and cedar.",
+					"links": [
+						{
+							"type": "try",
+							"title": "Try it at 10ML",
+							"url": "https://10ml.com/search?q=Afnan%20Adwaa%20Al%20Sharq&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=find_similar_perfumes"
+						},
+						{
+							"type": "note",
+							"title": "Saffron on 10ML",
+							"url": "https://10ml.com/notes/saffron?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=find_similar_perfumes"
+						}
+					],
+					"profile": "core"
+				},
+				"closeness": "very close",
+				"shared_notes": [
+					"saffron",
+					"jasmine",
+					"amberwood",
+					"ambergris",
+					"fir resin",
+					"cedar"
+				],
+				"shared_accords": [
+					"amber",
+					"woody",
+					"sweet",
+					"musky"
+				],
+				"why": "shares saffron, jasmine, amberwood, ambergris"
+			}
+		],
+		"total": 14,
+		"source": "10ML Fragrance Index",
+		"next_cursor": "bzI"
+	},
+	"alternatives": {
+		"total": 6,
+		"original": {
+			"name": "Maison Francis Kurkdjian Baccarat Rouge 540",
+			"id": "maison-francis-kurkdjian-baccarat-rouge-540-edp"
+		},
+		"alternatives": [
+			{
+				"name": "Maison Alhambra Baroque Rouge Extrait",
+				"closeness": "very close",
+				"why": "Sugared amber, saffron and airy woods aim at the same luminous effect.",
+				"id": "maison-alhambra-baroque-rouge-extrait",
+				"house": "Maison Alhambra",
+				"source": "editors"
+			},
+			{
+				"name": "Dossier Ambery Saffron",
+				"closeness": "similar vibe",
+				"why": "Saffron and amber with sweet woods share the glowing amber idea.",
+				"id": "dossier-ambery-saffron",
+				"house": "Dossier",
+				"source": "editors"
+			}
+		],
+		"guide": {
+			"type": "guide",
+			"title": "Baccarat Rouge 540 Dupes 2026: 6 Clones vs the Original",
+			"url": "https://10ml.com/guides/baccarat-rouge-540-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=find_perfume_alternatives"
+		},
+		"links": [
+			{
+				"type": "guide",
+				"title": "Baccarat Rouge 540 Dupes 2026: 6 Clones vs the Original",
+				"url": "https://10ml.com/guides/baccarat-rouge-540-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=find_perfume_alternatives"
+			},
+			{
+				"type": "try",
+				"title": "Try it at 10ML",
+				"url": "https://10ml.com/search?q=Maison%20Francis%20Kurkdjian%20Baccarat%20Rouge%20540&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=find_perfume_alternatives"
+			}
+		],
+		"next_cursor": "bzI",
+		"source": "10ML Fragrance Index"
+	},
+	"note": {
+		"found": true,
+		"note": {
+			"id": "oud",
+			"name": "oud",
+			"family": "woody",
+			"origin": "both",
+			"smells_like": "Dark, smoky, medicinal, leathery wood, sometimes animalic.",
+			"mood": "dark, opulent, mysterious",
+			"also_called": [
+				"agarwood",
+				"aloeswood",
+				"oudh",
+				"aoud",
+				"agar",
+				"agarwood-oud"
+			],
+			"pairs_with": [
+				"rose",
+				"saffron",
+				"amber",
+				"sandalwood",
+				"leather",
+				"incense"
+			],
+			"similar_notes": [
+				"cedarwood",
+				"cedar",
+				"sandalwood",
+				"vetiver",
+				"patchouli"
+			]
+		},
+		"famous_perfumes": [
+			{
+				"id": "xerjoff-alexandria-ii-edp",
+				"name": "Alexandria II",
+				"house": "Xerjoff",
+				"year": 2012,
+				"gender": "unisex",
+				"family": "Oud rose",
+				"accords": [
+					"woody",
+					"spicy",
+					"oud"
+				],
+				"key_notes": [
+					"rose",
+					"lily of the valley",
+					"oud",
+					"sandalwood",
+					"rosewood"
+				],
+				"character": "An opulent, regal woody oriental with a rich, resinous presence.",
+				"links": [
+					{
+						"type": "try",
+						"title": "Try it at 10ML",
+						"url": "https://10ml.com/search?q=Xerjoff%20Alexandria%20II&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=explain_note"
+					},
+					{
+						"type": "guide",
+						"title": "Xerjoff Alexandria II Dupes 2026: 6 Clones vs Original",
+						"url": "https://10ml.com/guides/alexandria-ii-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=explain_note"
+					},
+					{
+						"type": "note",
+						"title": "Lily of the valley on 10ML",
+						"url": "https://10ml.com/notes/lily-of-the-valley?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=explain_note"
+					}
+				],
+				"profile": "full"
+			},
+			{
+				"id": "amouage-interlude-man-edp",
+				"name": "Interlude Man",
+				"house": "Amouage",
+				"year": 2012,
+				"gender": "men",
+				"family": "Smoky amber",
+				"accords": [
+					"smoky",
+					"spicy",
+					"amber"
+				],
+				"key_notes": [
+					"opoponax",
+					"amber",
+					"leather",
+					"patchouli",
+					"bergamot"
+				],
+				"character": "A turbulent, smoky incense and spice with a dense resinous core, dramatic and unmistakable.",
+				"links": [
+					{
+						"type": "try",
+						"title": "Try it at 10ML",
+						"url": "https://10ml.com/search?q=Amouage%20Interlude%20Man&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=explain_note"
+					},
+					{
+						"type": "guide",
+						"title": "Amouage Dupes 2026: 7 Clones vs the Original",
+						"url": "https://10ml.com/guides/amouage-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=explain_note"
+					},
+					{
+						"type": "note",
+						"title": "Bergamot on 10ML",
+						"url": "https://10ml.com/notes/bergamot?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=explain_note"
+					}
+				],
+				"profile": "full"
+			}
+		],
+		"links": [
+			{
+				"type": "note",
+				"title": "Oud on 10ML",
+				"url": "https://10ml.com/notes/agarwood-oud?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=explain_note"
+			},
+			{
+				"type": "guide",
+				"title": "Best oud perfume: rose, sweet, light and smoky",
+				"url": "https://10ml.com/guides/best-oud-perfumes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=explain_note"
+			},
+			{
+				"type": "try",
+				"title": "Try it at 10ML",
+				"url": "https://10ml.com/search?q=oud%20perfume&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=explain_note"
+			}
+		],
+		"source": "10ML Fragrance Index"
+	},
+	"note_missing": {
+		"found": false,
+		"suggestions": [],
+		"message": "\"zzzqq\" is not a note in the 10ML Fragrance Index. For terms like EDP, sillage or accord use explain_perfume_term; to find perfumes by a note use perfumes_by_note.",
+		"source": "10ML Fragrance Index"
+	},
+	"house": {
+		"found": true,
+		"house": {
+			"id": "tom-ford",
+			"name": "Tom Ford",
+			"country": "United States",
+			"type": "designer",
+			"founded": 2006,
+			"perfumes_in_index": 49,
+			"known_for": [
+				"Oud Wood",
+				"Tobacco Vanille",
+				"Lost Cherry",
+				"Black Orchid"
+			],
+			"style": "Luxury American house with glamorous, provocative perfumes, plus the famed Private Blend range.",
+			"aliases": []
+		},
+		"signature_perfumes": [
+			{
+				"id": "tom-ford-private-blend-bitter-peach-edp",
+				"name": "Bitter Peach",
+				"house": "Tom Ford",
+				"year": 2020,
+				"gender": "unisex",
+				"family": "Fruity boozy",
+				"accords": [
+					"fruity",
+					"boozy",
+					"sweet"
+				],
+				"key_notes": [
+					"rum",
+					"cognac",
+					"vanilla",
+					"tonka bean",
+					"peach"
+				],
+				"character": "A luscious bruised peach spiked with rum and spice, juicy, sweet and slightly decadent.",
+				"links": [
+					{
+						"type": "try",
+						"title": "Try it at 10ML",
+						"url": "https://10ml.com/search?q=Tom%20Ford%20Bitter%20Peach&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_house"
+					},
+					{
+						"type": "guide",
+						"title": "Tom Ford Bitter Peach Dupes 2026: 6 Clones Compared",
+						"url": "https://10ml.com/guides/bitter-peach-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_house"
+					},
+					{
+						"type": "note",
+						"title": "Peach on 10ML",
+						"url": "https://10ml.com/notes/peach?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_house"
+					}
+				],
+				"profile": "full"
+			},
+			{
+				"id": "tom-ford-black-orchid",
+				"name": "Black Orchid",
+				"house": "Tom Ford",
+				"year": 2006,
+				"gender": "unisex",
+				"family": "Oriental floral",
+				"accords": [
+					"dark",
+					"floral",
+					"earthy"
+				],
+				"key_notes": [
+					"orchid",
+					"lotus",
+					"patchouli",
+					"sandalwood",
+					"truffle"
+				],
+				"character": "A dark, truffled orchid wrapped in patchouli and chocolate, decadent and moody.",
+				"links": [
+					{
+						"type": "try",
+						"title": "Try it at 10ML",
+						"url": "https://10ml.com/search?q=Tom%20Ford%20Black%20Orchid&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_house"
+					},
+					{
+						"type": "guide",
+						"title": "Tom Ford Black Orchid Dupes 2026: 6 Clones vs the Original",
+						"url": "https://10ml.com/guides/black-orchid-dupes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_house"
+					},
+					{
+						"type": "note",
+						"title": "Patchouli on 10ML",
+						"url": "https://10ml.com/notes/patchouli?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_house"
+					}
+				],
+				"profile": "full"
+			}
+		],
+		"links": [
+			{
+				"type": "try",
+				"title": "Explore Tom Ford at 10ML",
+				"url": "https://10ml.com/search?q=Tom%20Ford&utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_house"
+			},
+			{
+				"type": "guide",
+				"title": "Best Tom Ford perfume for men and women: 12 compared",
+				"url": "https://10ml.com/guides/best-tom-ford-perfumes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=get_house"
+			}
+		],
+		"source": "10ML Fragrance Index"
+	},
+	"houses": {
+		"total": 109,
+		"houses": [
+			{
+				"id": "xerjoff",
+				"name": "Xerjoff",
+				"country": "Italy",
+				"type": "niche",
+				"founded": 2003,
+				"perfumes_in_index": 114,
+				"known_for": [
+					"Naxos",
+					"Alexandria II",
+					"Erba Pura",
+					"Torino 21"
+				]
+			},
+			{
+				"id": "montale",
+				"name": "Montale",
+				"country": "France",
+				"type": "niche",
+				"founded": 2003,
+				"perfumes_in_index": 102,
+				"known_for": [
+					"Arabians Tonka",
+					"Intense Café",
+					"Black Aoud",
+					"Roses Musk"
+				]
+			}
+		],
+		"next_cursor": "bzI",
+		"source": "10ML Fragrance Index"
+	},
+	"guides": {
+		"total": 6,
+		"guides": [
+			{
+				"title": "Best oud perfume: rose, sweet, light and smoky",
+				"type": "note",
+				"topics": [
+					"oud"
+				],
+				"url": "https://10ml.com/guides/best-oud-perfumes?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=search_guides",
+				"translated": true
+			},
+			{
+				"title": "Oud perfume for men: 12 to try, soft wood to dark leather",
+				"type": "note",
+				"topics": [
+					"oud",
+					"men"
+				],
+				"url": "https://10ml.com/guides/oud-perfumes-for-men?utm_source=mcp&utm_medium=ai-assistant&utm_campaign=search_guides",
+				"translated": true
+			}
+		],
+		"next_cursor": "bzI",
+		"source": "10ML Fragrance Index"
+	}
+}
