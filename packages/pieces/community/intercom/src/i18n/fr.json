@@ -356,6 +356,8 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer",
   "Contact Replied": "Contact Répondu",
   "Lead Added Email": "Courriel ajouté au prospect",
   "Lead Converted To User": "Prospect converti en utilisateur",
