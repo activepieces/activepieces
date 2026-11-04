@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 import { isRecord } from './client';
 
@@ -64,16 +64,17 @@ export async function handleFormbricksWebhook({
   if (deliveryId === undefined) {
     return [body];
   }
-  const timestamp = headerValue({ headers: payload.headers, name: 'webhook-timestamp' });
-  const signedAtSec = timestamp !== undefined && /^\d+$/.test(timestamp) ? Number(timestamp) : Math.floor(nowMs / 1000);
-  const slotKey = `${storeKey}_deliveries_${signedAtSec % DELIVERY_SLOTS}`;
-  const slot = await store.get<{ second: number; ids: string[] }>(slotKey);
-  const seen = slot !== null && slot.second === signedAtSec && Array.isArray(slot.ids) ? slot.ids : [];
-  if (seen.includes(deliveryId)) {
+  const slotKey = deliverySlotKey({ storeKey, deliveryId });
+  const seen = freshDeliveries({ value: await store.get<unknown>(slotKey), nowMs });
+  if (seen[deliveryId] !== undefined) {
     return [];
   }
-  await store.put(slotKey, { second: signedAtSec, ids: [...seen, deliveryId] });
+  await store.put(slotKey, { ...seen, [deliveryId]: nowMs });
   return [{ ...body, [DEDUPE_KEY_PROPERTY]: deliveryId }];
+}
+
+export function deliverySlotKeys(storeKey: string): string[] {
+  return Array.from({ length: DELIVERY_SLOTS }, (_, slot) => `${storeKey}_seen_${slot}`);
 }
 
 export function readStoredWebhook(value: unknown): { webhookId: string | null; secret: string | null } {
@@ -88,6 +89,20 @@ export function readStoredWebhook(value: unknown): { webhookId: string | null; s
     return { webhookId: legacy['id'], secret: null };
   }
   return { webhookId: null, secret: null };
+}
+
+function deliverySlotKey({ storeKey, deliveryId }: { storeKey: string; deliveryId: string }): string {
+  const slot = createHash('sha256').update(deliveryId).digest().readUInt32BE(0) % DELIVERY_SLOTS;
+  return `${storeKey}_seen_${slot}`;
+}
+
+function freshDeliveries({ value, nowMs }: { value: unknown; nowMs: number }): Record<string, number> {
+  if (!isRecord(value)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, number] => typeof entry[1] === 'number' && nowMs - entry[1] < DELIVERY_TTL_MS),
+  );
 }
 
 function headerValue({ headers, name }: { headers: Record<string, string | undefined> | undefined; name: string }): string | undefined {
@@ -117,4 +132,5 @@ function parseBody(body: unknown): Record<string, unknown> | undefined {
 const SECRET_PREFIX = 'whsec_';
 const REPLAY_WINDOW_MS = 15 * 60 * 1000;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
-const DELIVERY_SLOTS = Math.ceil((REPLAY_WINDOW_MS + CLOCK_SKEW_MS) / 1000) + 60;
+const DELIVERY_SLOTS = 32;
+const DELIVERY_TTL_MS = 60 * 60 * 1000;

@@ -5,7 +5,7 @@ import { encodeId, formbricksData, formbricksRequest, isFormbricksStatus, isReco
 import { formbricksApi } from '../common/api';
 import { formbricksProps } from '../common/props';
 import { formbricksSchemas } from '../common/schemas';
-import { handleFormbricksWebhook, readStoredWebhook } from '../common/webhook';
+import { deliverySlotKeys, handleFormbricksWebhook, readStoredWebhook } from '../common/webhook';
 
 export const formBricksRegisterTrigger = ({
   name,
@@ -67,6 +67,7 @@ export const formBricksRegisterTrigger = ({
       });
     },
     async onDisable(context) {
+      await Promise.all(deliverySlotKeys(storeKey(name)).map((key) => context.store.delete(key)));
       const stored = readStoredWebhook(await context.store.get<unknown>(storeKey(name)));
       if (stored.webhookId === null) {
         return;

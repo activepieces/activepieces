@@ -1,7 +1,7 @@
 import { createHmac, randomBytes } from 'crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { buildFormbricksError, buildFormbricksUrl, normalizeAppUrl, toFormbricksError } from '../src/lib/common/client';
-import { handleFormbricksWebhook, readStoredWebhook, verifyStandardWebhook } from '../src/lib/common/webhook';
+import { deliverySlotKeys, handleFormbricksWebhook, readStoredWebhook, verifyStandardWebhook } from '../src/lib/common/webhook';
 import { formbricksInputs } from '../src/lib/common/inputs';
 import { collectPages, collectSampleResponses, collectSurveySampleResponses, FormbricksResponse } from '../src/lib/common/api';
 
@@ -138,17 +138,42 @@ describe('handleFormbricksWebhook', () => {
     expect(await handleFormbricksWebhook({ payload: first, store, storeKey: 'key', eventType: 'responseFinished', nowMs: replayAt })).toEqual([]);
   });
 
-  it('reuses a fixed set of slots, so old delivery IDs are overwritten instead of piling up', async () => {
+  it('runs once when Formbricks retries the same delivery with a fresh signed timestamp', async () => {
+    const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET } });
+    const runs = [];
+    for (const offsetSec of [0, 35, 100, 225]) {
+      const retry = delivery({ event: 'responseFinished', id: 'msg_retry', timestamp: timestamp + offsetSec });
+      runs.push(...(await handleFormbricksWebhook({ payload: retry, store, storeKey: 'key', eventType: 'responseFinished', nowMs: NOW_MS + offsetSec * 1000 })));
+    }
+    expect(runs).toHaveLength(1);
+  });
+
+  it('keeps the stored rows to a fixed set of slots', async () => {
     const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET } });
     for (let i = 0; i < 3000; i++) {
-      const next = delivery({ event: 'responseFinished', id: `msg_${i}`, timestamp: timestamp - (i % 900) });
+      const next = delivery({ event: 'responseFinished', id: `msg_${i}`, timestamp });
       await handleFormbricksWebhook({ payload: next, store, storeKey: 'key', eventType: 'responseFinished', nowMs: NOW_MS });
     }
-    expect(store.keys().length).toBeLessThanOrEqual(1 + 1260);
-    const later = NOW_MS + 1260 * 1000;
-    const reused = delivery({ event: 'responseFinished', id: 'msg_reused', timestamp: timestamp + 1260 });
-    expect(await handleFormbricksWebhook({ payload: reused, store, storeKey: 'key', eventType: 'responseFinished', nowMs: later })).toHaveLength(1);
-    expect(store.keys().length).toBeLessThanOrEqual(1 + 1260);
+    expect(store.keys().length).toBeLessThanOrEqual(1 + deliverySlotKeys('key').length);
+  });
+
+  it('forgets a delivery ID after an hour and drops the old entry from its slot', async () => {
+    const store = memoryStore({ key: { webhookId: 'wh1', secret: SECRET } });
+    const handle = (nowMs: number) =>
+      handleFormbricksWebhook({ payload: delivery({ event: 'responseFinished', id: 'msg_1', timestamp: Math.floor(nowMs / 1000) }), store, storeKey: 'key', eventType: 'responseFinished', nowMs });
+    expect(await handle(NOW_MS)).toHaveLength(1);
+    expect(await handle(NOW_MS + 59 * 60 * 1000)).toHaveLength(0);
+    const later = NOW_MS + 61 * 60 * 1000;
+    expect(await handle(later)).toHaveLength(1);
+    const slots = await Promise.all(deliverySlotKeys('key').map((key) => store.get(key)));
+    const entries = slots.flatMap((slot) => (slot === null ? [] : Object.values(slot)));
+    expect(entries).toEqual([later]);
+  });
+
+  it('lists every slot key so onDisable can delete them', () => {
+    const keys = deliverySlotKeys('formbricks_x_trigger');
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(keys.every((key) => key.startsWith('formbricks_x_trigger_seen_'))).toBe(true);
   });
 
   it('drops a forged delivery when a secret is stored', async () => {

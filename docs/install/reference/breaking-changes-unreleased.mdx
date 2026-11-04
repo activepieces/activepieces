@@ -14,7 +14,7 @@ From Formbricks 0.4.0, the piece checks the certificate of your Formbricks serve
 
 #### What you need to do
 
-If you self-host Formbricks on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to the Activepieces container with `NODE_EXTRA_CA_CERTS`, before upgrading Formbricks steps or connections to 0.4.0.
+If you self-host Formbricks on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to Activepieces before upgrading Formbricks steps or connections to 0.4.0. To add the CA, set both `NODE_EXTRA_CA_CERTS=/path/to/ca.pem` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container. The engine that runs pieces only receives variables listed in `AP_SANDBOX_PROPAGATED_ENV_VARS`, so `NODE_EXTRA_CA_CERTS` alone has no effect.
 
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 
