@@ -169,7 +169,10 @@ async function remainingProblems({ trigger, platformId, log }: {
         .filter(issue => issue.severity !== 'info')
         .filter(issue => !(issue.category === 'step_validity' && stepsWithFieldProblems.has(issue.stepName)))
         .map(issue => ({ stepName: issue.stepName, reasons: [issue.message] }))
-    return [...fieldProblems, ...issueProblems]
+    const triggerProblems = !trigger.valid && !fieldProblems.some(p => p.stepName === trigger.name && p.reasons.length > 0) && !issueProblems.some(p => p.stepName === trigger.name)
+        ? [{ stepName: trigger.name, reasons: [INVALID_TRIGGER_PROBLEM] }]
+        : []
+    return [...fieldProblems, ...issueProblems, ...triggerProblems]
         .filter(p => p.reasons.length > 0)
         .reduce<Record<string, string[]>>((acc, p) => ({ ...acc, [p.stepName]: [...(acc[p.stepName] ?? []), ...p.reasons] }), {})
 }
@@ -197,6 +200,7 @@ async function withBranchTarget({ type, fields, loadTrigger }: {
     return { ...fields, routerStepName: router.name, ...(branchIndex === -1 ? {} : { branchIndex }) }
 }
 
+const INVALID_TRIGGER_PROBLEM = 'The trigger is invalid: check pieceName and triggerName with ap_update_trigger.'
 const OPERATION_TYPES = ['add_step', 'update_step', 'delete_step', 'update_trigger', 'add_branch', 'update_branch', 'delete_branch'] as const
 
 const applyFlowOperationsInput = z.object({
