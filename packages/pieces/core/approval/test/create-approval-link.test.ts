@@ -5,6 +5,8 @@ import { createApprovalLink } from '../src/lib/actions/create-approval-link';
 
 const RESUME_URL =
   'https://cloud.activepieces.com/api/v1/flow-runs/run-id/waitpoints/wp-id';
+const PUBLIC_RESUME_URL =
+  'https://embed.example.com/api/v1/flow-runs/run-id/waitpoints/wp-id';
 
 function mockContext() {
   const ctx = createMockActionContext({ propsValue: {} });
@@ -28,5 +30,18 @@ describe('createApprovalLink', () => {
     const result = await createApprovalLink.run(mockContext());
     expect(result.approvalLink).not.toContain('?action=');
     expect(result.disapprovalLink).not.toContain('?action=');
+  });
+
+  test('links to the public resume url when the server sends one', async () => {
+    const ctx = mockContext();
+    ctx.run.createWaitpoint = async () => ({
+      id: 'wp-id',
+      resumeUrl: RESUME_URL,
+      publicResumeUrl: PUBLIC_RESUME_URL,
+      buildResumeUrl: () => RESUME_URL,
+    });
+    const result = await createApprovalLink.run(ctx);
+    expect(result.approvalLink).toBe(`${PUBLIC_RESUME_URL}/confirm`);
+    expect(result.disapprovalLink).toBe(`${PUBLIC_RESUME_URL}/confirm`);
   });
 });
