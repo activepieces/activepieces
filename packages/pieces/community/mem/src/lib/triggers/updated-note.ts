@@ -8,20 +8,6 @@ import { memAuth } from '../auth';
 import { memClient, memSchemas } from '../common';
 import { memProps } from '../common/props';
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof memAuth>,
-  { collection_id?: string }
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) =>
-    memClient.pollNotes({
-      apiKey: auth.secret_text,
-      timestampField: 'updated_at',
-      lastFetchEpochMS,
-      collectionId: propsValue.collection_id ?? undefined,
-    }),
-};
-
 export const updatedNoteTrigger = createTrigger({
   auth: memAuth,
   name: 'updated_note',
@@ -62,3 +48,17 @@ export const updatedNoteTrigger = createTrigger({
     return pollingHelper.poll(polling, context);
   },
 });
+
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof memAuth>,
+  { collection_id?: string }
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue, lastFetchEpochMS }) =>
+    memClient.pollNotes({
+      apiKey: auth.secret_text,
+      timestampField: 'updated_at',
+      lastFetchEpochMS,
+      collectionId: propsValue.collection_id ?? undefined,
+    }),
+};

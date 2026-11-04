@@ -6,6 +6,11 @@ import { deleteNoteAction } from '../src/lib/actions/delete-note';
 import { updateNoteAction } from '../src/lib/actions/update-note';
 import { restoreNoteAction } from '../src/lib/actions/restore-note';
 import { addNoteToCollectionAction } from '../src/lib/actions/add-note-to-collection';
+import { listNotesAction } from '../src/lib/actions/list-notes';
+import { searchNotesAction } from '../src/lib/actions/search-notes';
+import { updateCollectionAction } from '../src/lib/actions/update-collection';
+import { newNoteTrigger } from '../src/lib/triggers/new-note';
+import { updatedNoteTrigger } from '../src/lib/triggers/updated-note';
 import { memAuth } from '../src/lib/auth';
 import { MemApiError, memClient } from '../src/lib/common';
 
@@ -225,5 +230,59 @@ describe('pollNotes', () => {
     await expect(
       memClient.pollNotes({ apiKey: 'k', timestampField: 'updated_at', lastFetchEpochMS: 1, collectionId: undefined })
     ).rejects.toBeInstanceOf(MemApiError);
+  });
+});
+
+describe('output schemas', () => {
+  it('update_collection does not promise note_count, which PATCH never returns', () => {
+    const keys = (updateCollectionAction.outputSchema?.fields ?? []).map((field) => field.key);
+    expect(keys).toEqual(['id', 'title', 'description', 'created_at', 'updated_at']);
+  });
+
+  it('note triggers do not promise content, which the poll never requests', () => {
+    for (const trigger of [newNoteTrigger, updatedNoteTrigger]) {
+      const keys = (trigger.outputSchema?.fields ?? []).map((field) => field.key);
+      expect(keys).not.toContain('content');
+      expect(keys).toContain('snippet');
+    }
+  });
+
+  it('list and search still offer content when Include Note Content is set', () => {
+    const listItems = listNotesAction.outputSchema?.fields.find((field) => field.key === 'results')?.listItems ?? [];
+    expect(listItems.map((field) => field.key)).toContain('content');
+  });
+});
+
+describe('contains filters', () => {
+  const containsKeys = ['contains_open_tasks', 'contains_tasks', 'contains_images', 'contains_files'] as const;
+
+  it('offers only Yes, because Mem treats false as no filter', () => {
+    for (const action of [listNotesAction, searchNotesAction]) {
+      for (const key of containsKeys) {
+        const prop = action.props[key] as unknown as { options: { options: { value: string }[] } };
+        expect(prop.options.options.map((option) => option.value)).toEqual(['yes']);
+      }
+    }
+  });
+
+  it('sends the flag only when Yes is picked', async () => {
+    const calls = mockResponses([{ results: [], total: 0 }]);
+    const propsValue = {
+      collection_id: undefined,
+      order_by: undefined,
+      created_after: undefined,
+      created_before: undefined,
+      updated_after: undefined,
+      updated_before: undefined,
+      contains_open_tasks: undefined,
+      contains_tasks: 'yes',
+      contains_images: undefined,
+      contains_files: undefined,
+      include_note_content: undefined,
+      limit: undefined,
+      page: undefined,
+    };
+    await listNotesAction.run({ ...createMockActionContext({ propsValue }), auth, propsValue });
+    expect(calls[0].queryParams).toEqual({ contains_tasks: 'true' });
   });
 });

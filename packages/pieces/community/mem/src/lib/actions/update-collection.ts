@@ -20,7 +20,7 @@ export const updateCollectionAction = createAction({
     title: Property.ShortText({ displayName: 'Title', description: 'New title. Leave empty to keep the current one.', required: false }),
     description: Property.LongText({ displayName: 'Description', description: 'New description. Leave empty to keep the current one.', required: false }),
   },
-  outputSchema: memSchemas.collection,
+  outputSchema: memSchemas.createdCollection,
   async run(context) {
     const { collection_id, title, description } = context.propsValue;
     if (!title && !description) {

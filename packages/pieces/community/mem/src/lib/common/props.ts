@@ -3,6 +3,15 @@ import { Property } from '@activepieces/pieces-framework';
 import { memAuth } from '../auth';
 import { CollectionListResponse, memClient } from '.';
 
+export const memProps = {
+  collectionDropdown,
+  yesNoFilter,
+  containsFilter,
+  dateFilters,
+  orderBy,
+  noteId,
+};
+
 function collectionDropdown<R extends boolean>({
   displayName,
   description,
@@ -68,6 +77,18 @@ function yesNoFilter({ displayName, description }: { displayName: string; descri
   });
 }
 
+function containsFilter({ displayName, description }: { displayName: string; description: string }) {
+  return Property.StaticDropdown<string>({
+    displayName,
+    description: `${description} Leave empty to include all notes.`,
+    required: false,
+    options: {
+      disabled: false,
+      options: [{ label: 'Yes', value: 'yes' }],
+    },
+  });
+}
+
 function dateFilter({ displayName, description }: { displayName: string; description: string }) {
   return Property.DateTime({ displayName, description, required: false });
 }
@@ -103,11 +124,3 @@ function noteId({ description }: { description: string }) {
     required: true,
   });
 }
-
-export const memProps = {
-  collectionDropdown,
-  yesNoFilter,
-  dateFilters,
-  orderBy,
-  noteId,
-};

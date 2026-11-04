@@ -6,6 +6,110 @@ import {
 } from '@activepieces/pieces-common';
 import { OutputSchema, OutputSchemaField } from '@activepieces/pieces-framework';
 
+export const memClient = {
+  request,
+  encodePath,
+  toQuery,
+  yesNoToBoolean,
+  splitCollections,
+  describeFailure,
+  pollNotes,
+};
+
+export const memSchemas = {
+  requestId: {
+    fields: [{ key: 'request_id', label: 'Request ID' }],
+  },
+  note: { fields: noteFields() },
+  readNote: {
+    fields: [
+      ...noteFields(),
+      {
+        key: 'attachment_metadata',
+        label: 'Attachments',
+        labelKey: 'attachment_id',
+        listItems: [
+          { key: 'attachment_id', label: 'Attachment ID' },
+          { key: 'attachment_kind', label: 'Kind' },
+          { key: 'summary', label: 'Summary' },
+          { key: 'ocr_text', label: 'OCR Text' },
+        ],
+      },
+    ],
+  },
+  noteList: {
+    fields: [
+      { key: 'results', label: 'Notes', labelKey: 'title', listItems: noteListItemFields() },
+      { key: 'total', label: 'Total', format: 'number' },
+      { key: 'next_page', label: 'Next Page Cursor' },
+    ],
+  },
+  noteSearch: {
+    fields: [
+      { key: 'results', label: 'Notes', labelKey: 'title', listItems: noteListItemFields() },
+      { key: 'total', label: 'Total', format: 'number' },
+      { key: 'offset', label: 'Offset', format: 'number' },
+      { key: 'limit', label: 'Limit', format: 'number' },
+      { key: 'has_next_page', label: 'Has Next Page', format: 'boolean' },
+      { key: 'snapshot_id', label: 'Snapshot ID' },
+    ],
+  },
+  relatedNotes: {
+    fields: [
+      {
+        key: 'results',
+        label: 'Related Notes',
+        labelKey: 'title',
+        listItems: [
+          { key: 'id', label: 'Note ID' },
+          { key: 'title', label: 'Title' },
+          { key: 'snippet', label: 'Snippet' },
+          { key: 'preview', label: 'Preview' },
+          { key: 'score', label: 'Score', format: 'number' },
+          { key: 'collection_ids', label: 'Collection IDs' },
+          {
+            key: 'collections',
+            label: 'Collections',
+            labelKey: 'title',
+            listItems: [
+              { key: 'id', label: 'Collection ID' },
+              { key: 'title', label: 'Title' },
+            ],
+          },
+          { key: 'created_at', label: 'Created At', format: 'datetime' },
+          { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+        ],
+      },
+      { key: 'total', label: 'Total', format: 'number' },
+    ],
+  },
+  collection: { fields: collectionFields() },
+  createdCollection: {
+    fields: collectionFields().filter((field) => field.key !== 'note_count'),
+  },
+  memIt: {
+    fields: [{ key: 'request_id', label: 'Request ID (the note appears in Mem a few seconds later)' }],
+  },
+  collectionList: {
+    fields: [
+      { key: 'results', label: 'Collections', labelKey: 'title', listItems: collectionFields() },
+      { key: 'total', label: 'Total', format: 'number' },
+      { key: 'next_page', label: 'Next Page Cursor' },
+    ],
+  },
+  collectionSearch: {
+    fields: [
+      { key: 'results', label: 'Collections', labelKey: 'title', listItems: collectionFields() },
+      { key: 'total', label: 'Total', format: 'number' },
+    ],
+  },
+  noteTrigger: {
+    fields: noteListItemFields().filter((field) => field.key !== 'content'),
+  },
+} satisfies Record<string, OutputSchema>;
+
+export { MemApiError };
+
 const BASE_URL = 'https://api.mem.ai/v2';
 
 const MAX_POLL_PAGES = 200;
@@ -221,162 +325,42 @@ class MemApiError extends Error {
   }
 }
 
-const collectionFields: OutputSchemaField[] = [
-  { key: 'id', label: 'Collection ID' },
-  { key: 'title', label: 'Title' },
-  { key: 'description', label: 'Description' },
-  { key: 'note_count', label: 'Note Count', format: 'number' },
-  { key: 'created_at', label: 'Created At', format: 'datetime' },
-  { key: 'updated_at', label: 'Updated At', format: 'datetime' },
-];
+function collectionFields(): OutputSchemaField[] {
+  return [
+    { key: 'id', label: 'Collection ID' },
+    { key: 'title', label: 'Title' },
+    { key: 'description', label: 'Description' },
+    { key: 'note_count', label: 'Note Count', format: 'number' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+  ];
+}
 
-const noteListItemFields: OutputSchemaField[] = [
-  { key: 'id', label: 'Note ID' },
-  { key: 'title', label: 'Title' },
-  { key: 'snippet', label: 'Snippet' },
-  { key: 'content', label: 'Content' },
-  { key: 'collection_ids', label: 'Collection IDs' },
-  { key: 'audio_recording_ids', label: 'Audio Recording IDs' },
-  { key: 'created_at', label: 'Created At', format: 'datetime' },
-  { key: 'updated_at', label: 'Updated At', format: 'datetime' },
-];
+function noteListItemFields(): OutputSchemaField[] {
+  return [
+    { key: 'id', label: 'Note ID' },
+    { key: 'title', label: 'Title' },
+    { key: 'snippet', label: 'Snippet' },
+    { key: 'content', label: 'Content' },
+    { key: 'collection_ids', label: 'Collection IDs' },
+    { key: 'audio_recording_ids', label: 'Audio Recording IDs' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+  ];
+}
 
-const noteFields: OutputSchemaField[] = [
-  { key: 'id', label: 'Note ID' },
-  { key: 'title', label: 'Title' },
-  { key: 'content', label: 'Content' },
-  { key: 'version', label: 'Version', format: 'number' },
-  { key: 'collection_ids', label: 'Collection IDs' },
-  { key: 'created_at', label: 'Created At', format: 'datetime' },
-  { key: 'updated_at', label: 'Updated At', format: 'datetime' },
-  { key: 'trashed_at', label: 'Trashed At', format: 'datetime' },
-];
-
-const requestIdSchema: OutputSchema = {
-  fields: [{ key: 'request_id', label: 'Request ID' }],
-};
-
-const noteSchema: OutputSchema = { fields: noteFields };
-
-const readNoteSchema: OutputSchema = {
-  fields: [
-    ...noteFields,
-    {
-      key: 'attachment_metadata',
-      label: 'Attachments',
-      labelKey: 'attachment_id',
-      listItems: [
-        { key: 'attachment_id', label: 'Attachment ID' },
-        { key: 'attachment_kind', label: 'Kind' },
-        { key: 'summary', label: 'Summary' },
-        { key: 'ocr_text', label: 'OCR Text' },
-      ],
-    },
-  ],
-};
-
-const noteListSchema: OutputSchema = {
-  fields: [
-    { key: 'results', label: 'Notes', labelKey: 'title', listItems: noteListItemFields },
-    { key: 'total', label: 'Total', format: 'number' },
-    { key: 'next_page', label: 'Next Page Cursor' },
-  ],
-};
-
-const noteSearchSchema: OutputSchema = {
-  fields: [
-    { key: 'results', label: 'Notes', labelKey: 'title', listItems: noteListItemFields },
-    { key: 'total', label: 'Total', format: 'number' },
-    { key: 'offset', label: 'Offset', format: 'number' },
-    { key: 'limit', label: 'Limit', format: 'number' },
-    { key: 'has_next_page', label: 'Has Next Page', format: 'boolean' },
-    { key: 'snapshot_id', label: 'Snapshot ID' },
-  ],
-};
-
-const relatedNotesSchema: OutputSchema = {
-  fields: [
-    {
-      key: 'results',
-      label: 'Related Notes',
-      labelKey: 'title',
-      listItems: [
-        { key: 'id', label: 'Note ID' },
-        { key: 'title', label: 'Title' },
-        { key: 'snippet', label: 'Snippet' },
-        { key: 'preview', label: 'Preview' },
-        { key: 'score', label: 'Score', format: 'number' },
-        { key: 'collection_ids', label: 'Collection IDs' },
-        {
-          key: 'collections',
-          label: 'Collections',
-          labelKey: 'title',
-          listItems: [
-            { key: 'id', label: 'Collection ID' },
-            { key: 'title', label: 'Title' },
-          ],
-        },
-        { key: 'created_at', label: 'Created At', format: 'datetime' },
-        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
-      ],
-    },
-    { key: 'total', label: 'Total', format: 'number' },
-  ],
-};
-
-const collectionSchema: OutputSchema = { fields: collectionFields };
-
-const createdCollectionSchema: OutputSchema = {
-  fields: collectionFields.filter((field) => field.key !== 'note_count'),
-};
-
-const memItSchema: OutputSchema = {
-  fields: [{ key: 'request_id', label: 'Request ID (the note appears in Mem a few seconds later)' }],
-};
-
-const collectionListSchema: OutputSchema = {
-  fields: [
-    { key: 'results', label: 'Collections', labelKey: 'title', listItems: collectionFields },
-    { key: 'total', label: 'Total', format: 'number' },
-    { key: 'next_page', label: 'Next Page Cursor' },
-  ],
-};
-
-const collectionSearchSchema: OutputSchema = {
-  fields: [
-    { key: 'results', label: 'Collections', labelKey: 'title', listItems: collectionFields },
-    { key: 'total', label: 'Total', format: 'number' },
-  ],
-};
-
-const noteTriggerSchema: OutputSchema = { fields: noteListItemFields };
-
-export const memClient = {
-  request,
-  encodePath,
-  toQuery,
-  yesNoToBoolean,
-  splitCollections,
-  describeFailure,
-  pollNotes,
-};
-
-export const memSchemas = {
-  requestId: requestIdSchema,
-  note: noteSchema,
-  readNote: readNoteSchema,
-  noteList: noteListSchema,
-  noteSearch: noteSearchSchema,
-  relatedNotes: relatedNotesSchema,
-  collection: collectionSchema,
-  createdCollection: createdCollectionSchema,
-  memIt: memItSchema,
-  collectionList: collectionListSchema,
-  collectionSearch: collectionSearchSchema,
-  noteTrigger: noteTriggerSchema,
-};
-
-export { MemApiError };
+function noteFields(): OutputSchemaField[] {
+  return [
+    { key: 'id', label: 'Note ID' },
+    { key: 'title', label: 'Title' },
+    { key: 'content', label: 'Content' },
+    { key: 'version', label: 'Version', format: 'number' },
+    { key: 'collection_ids', label: 'Collection IDs' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+    { key: 'trashed_at', label: 'Trashed At', format: 'datetime' },
+  ];
+}
 
 export type NoteListItem = {
   id: string;

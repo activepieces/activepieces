@@ -8,28 +8,14 @@ import { memAuth } from '../auth';
 import { memClient, memSchemas } from '../common';
 import { memProps } from '../common/props';
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof memAuth>,
-  { collection_id?: string }
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) =>
-    memClient.pollNotes({
-      apiKey: auth.secret_text,
-      timestampField: 'created_at',
-      lastFetchEpochMS,
-      collectionId: propsValue.collection_id ?? undefined,
-    }),
-};
-
 export const newNoteTrigger = createTrigger({
   auth: memAuth,
   name: 'new_note',
   displayName: 'New Note',
-  description: 'Triggers when a new note is created in Mem. Each poll reads every page of changes since the last poll.',
+  description: 'Triggers when a new note is created in Mem. Each poll reads every page of changes since the last poll. A note created with a past Created At (for example by Create Note) does not fire this trigger; use Updated Note to catch it.',
   classification: 'READ',
   aiMetadata: {
-    description: 'Fires once for each Mem note created after the trigger was enabled, optionally only notes in one collection. Polls the note list by created_at and emits the note list item (id, title, snippet, collection IDs, timestamps); use Get Note for the full content. Each poll follows every page of changes since the last poll, so no note is skipped.',
+    description: 'Fires once for each Mem note created after the trigger was enabled, optionally only notes in one collection. Polls the note list by created_at and emits the note list item (id, title, snippet, collection IDs, timestamps); use Get Note for the full content. Each poll follows every page of changes since the last poll, so no note is skipped. A note created with a Created At earlier than the last poll (for example through Create Note or Set Note Created At) is not emitted; Updated Note catches it.',
   },
   props: {
     collection_id: memProps.collectionDropdown({
@@ -62,3 +48,17 @@ export const newNoteTrigger = createTrigger({
     return pollingHelper.poll(polling, context);
   },
 });
+
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof memAuth>,
+  { collection_id?: string }
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue, lastFetchEpochMS }) =>
+    memClient.pollNotes({
+      apiKey: auth.secret_text,
+      timestampField: 'created_at',
+      lastFetchEpochMS,
+      collectionId: propsValue.collection_id ?? undefined,
+    }),
+};
