@@ -8,6 +8,20 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Hunter 0.2.0: four lead and campaign actions leave the agent tool list, and Verify Email waits for a result
+
+From Hunter 0.2.0, these actions are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps, with the same inputs and outputs. Agents use the replacement instead:
+- **Get Lead** → **Get Lead by ID**
+- **Update Lead** → **Update Lead by ID**
+- **Delete Lead** → **Delete Lead by ID**
+- **Add Recipients** → **Add Campaign Recipients by ID**
+
+Once a **Verify Email** step is upgraded to 0.2.0, it no longer returns right away when Hunter answers that the check is still running (HTTP 202). It waits up to 60 seconds for the result, and then fails asking you to run it again.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Get Lead, Update Lead, Delete Lead or Add Recipients as a tool, switch it to the "by ID" action listed above. Flow steps that use them keep working. If a flow relied on Verify Email returning a pending result, expect the step to take up to 60 seconds, and handle a failed step for emails Hunter cannot finish checking in time.
+
 #### ChargeKeep 0.4.0: actions return mapped records, triggers start one run per event, and some inputs changed
 
 Add or Update Contact, Add or Update Contact (Extended), Add or Update Subscription, Create Invoice, Create Product and Get Contact Details used to return the raw response as `{ status, body }`. From ChargeKeep 0.4.0 they return the record itself: `contactId` and `leadId` for contact imports, the saved invoice (`invoiceId`, `number`, `lines`, ...), the saved product (`productId`, `priceOptions`, ...), the contact for Get Contact Details, and `{ contactId, subscription }` for subscriptions. Steps also fail when ChargeKeep reports an error in a 200 response.
