@@ -849,6 +849,19 @@ describe('buildPlanSync', () => {
         expect(rows(buildPlanSync.withBuiltRows({ plan: PLAN, builtFlows: flows }))).toEqual(['Morning task digest=done', 'Midday task check-in=in_progress'])
     })
 
+    it('keeps the flows not built yet when the card plans several flows', () => {
+        const plan: BuildPlanEvent = { ...PLAN, steps: [
+            { id: 'digest', label: 'Morning digest flow', status: 'pending' },
+            { id: 'checkin', label: 'Midday check-in flow', status: 'pending' },
+            { id: 'recap', label: 'Evening recap flow', status: 'pending' },
+        ] }
+        const flow = built(result({ flowId: 'f1', name: 'Morning digest flow', steps: [['catch_webhook', 'ok'], ['Send morning digest', 'ok']] }))
+
+        const next = buildPlanSync.withBuiltRows({ plan, builtFlows: [flow] })
+
+        expect(rows(next)).toEqual(expect.arrayContaining(['Midday check-in flow=pending', 'Evening recap flow=pending']))
+    })
+
     it('marks every row done once the model sets phase done', () => {
         const flow = built(result({ flowId: 'f1', name: 'Email triage', steps: [['Ping me on Slack', 'problem']] }))
 

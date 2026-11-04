@@ -276,9 +276,11 @@ function builtFlowOf({ result }: { result: unknown }): BuiltFlow | null {
 function withBuiltRows({ plan, builtFlows }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[] }): BuildPlanEvent {
     const finished = plan.phase === 'done'
     const status = (done: boolean): 'done' | 'in_progress' => done || finished ? 'done' : 'in_progress'
-    const steps = builtFlows.length === 1
-        ? builtFlows[0].steps.map((step, index) => ({ id: `${builtFlows[0].flowId}:${index}`, label: step.label, status: status(step.done) }))
-        : builtFlows.map((flow) => ({ id: flow.flowId, label: flow.name, status: status(flow.steps.every((step) => step.done)) }))
+    const flowRow = (flow: BuiltFlow): BuildPlanStep => ({ id: flow.flowId, label: flow.name, status: status(flow.steps.every((step) => step.done)) })
+    const steps = plannedFlowRows({ plan, builtFlows, flowRow, finished })
+        ?? (builtFlows.length === 1
+            ? builtFlows[0].steps.map((step, index) => ({ id: `${builtFlows[0].flowId}:${index}`, label: step.label, status: status(step.done) }))
+            : builtFlows.map(flowRow))
     return {
         ...plan,
         steps,
@@ -286,6 +288,24 @@ function withBuiltRows({ plan, builtFlows }: { plan: BuildPlanEvent, builtFlows:
         updatedAt: new Date().toISOString(),
         flowId: plan.flowId ?? builtFlows[0].flowId,
     }
+}
+
+function plannedFlowRows({ plan, builtFlows, flowRow, finished }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[], flowRow: (flow: BuiltFlow) => BuildPlanStep, finished: boolean }): BuildPlanStep[] | null {
+    const flowsByName = new Map(builtFlows.map((flow) => [comparableName(flow.name), flow]))
+    const plannedNames = new Set(plan.steps.map((step) => comparableName(step.label)))
+    if (!builtFlows.some((flow) => plannedNames.has(comparableName(flow.name)))) {
+        return null
+    }
+    const planned = plan.steps.map((step): BuildPlanStep => {
+        const flow = flowsByName.get(comparableName(step.label))
+        return isNil(flow) ? { ...step, status: finished ? 'done' : step.status } : flowRow(flow)
+    })
+    const unplanned = builtFlows.filter((flow) => !plannedNames.has(comparableName(flow.name))).map(flowRow)
+    return [...planned, ...unplanned]
+}
+
+function comparableName(name: string): string {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 }
 
 function readableLabel(name: string): string {
@@ -309,6 +329,8 @@ export const buildPlanSync = {
     builtFlowOf,
     withBuiltRows,
 }
+
+type BuildPlanStep = BuildPlanEvent['steps'][number]
 
 type BuiltFlow = {
     flowId: string
