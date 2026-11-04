@@ -98,7 +98,7 @@ describe('lookups', () => {
     ).rejects.toThrow('still verifying');
   });
 
-  test('verify caps each request timeout to the time left and drops a late result', async () => {
+  test('verify keeps a valid result that arrives after the deadline', async () => {
     let clock = 0;
     stubFetch((_request, index) => {
       clock += index === 0 ? 50_000 : 9_000;
@@ -106,8 +106,30 @@ describe('lookups', () => {
     });
     await expect(
       hunterRequests.verifyEmail({ apiKey: API_KEY, email: 'a@example.com', wait: async (ms) => { clock += ms; }, now: () => clock }),
-    ).rejects.toThrow('still verifying');
+    ).resolves.toEqual({ status: 'valid' });
     expect(clock).toBe(64_000);
+  });
+
+  test('verify reports still verifying when the last request times out at the deadline', async () => {
+    let clock = 0;
+    const spy = vi.spyOn(hunterApi, 'request')
+      .mockResolvedValueOnce({ status: 202, body: {} })
+      .mockImplementationOnce(async () => {
+        clock = 60_000;
+        throw new Error('This operation was aborted');
+      });
+    await expect(
+      hunterRequests.verifyEmail({ apiKey: API_KEY, email: 'a@example.com', wait: async (ms) => { clock += ms; }, now: () => clock }),
+    ).rejects.toThrow('still verifying');
+    spy.mockRestore();
+  });
+
+  test('verify rethrows a network error before the deadline', async () => {
+    const spy = vi.spyOn(hunterApi, 'request').mockRejectedValueOnce(new Error('socket hang up'));
+    await expect(
+      hunterRequests.verifyEmail({ apiKey: API_KEY, email: 'a@example.com', wait: async () => undefined, now: () => 0 }),
+    ).rejects.toThrow('socket hang up');
+    spy.mockRestore();
   });
 
   test('verify passes the remaining time as the request timeout', async () => {

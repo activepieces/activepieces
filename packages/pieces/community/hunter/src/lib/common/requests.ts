@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import {
   HunterApiError,
   HunterRecord,
+  HunterResponse,
   QueryValue,
   hunterApi,
   isNotFound,
@@ -322,12 +323,12 @@ async function verifyEmail({ apiKey, email, wait = hunterApi.sleep, now = Date.n
     if (remainingMs <= 0) {
       throw stillVerifying();
     }
-    const response = await hunterApi.request({ apiKey, method: HttpMethod.GET, path: '/email-verifier', operation: 'verify email', query: { email }, timeoutMs: remainingMs });
+    const response = await verifierRequest({ apiKey, email, timeoutMs: remainingMs, deadline, now });
+    if (response === 'timed_out') {
+      throw stillVerifying();
+    }
     if (response.status === 222) {
       throw new HunterApiError({ operation: 'verify email', status: 222, responseBody: response.body });
-    }
-    if (now() > deadline) {
-      throw stillVerifying();
     }
     if (response.status !== 202) {
       return dataOf(response.body);
@@ -336,6 +337,17 @@ async function verifyEmail({ apiKey, email, wait = hunterApi.sleep, now = Date.n
       throw stillVerifying();
     }
     await wait(VERIFY_POLL_MS);
+  }
+}
+
+async function verifierRequest({ apiKey, email, timeoutMs, deadline, now }: { apiKey: string; email: string; timeoutMs: number; deadline: number; now: () => number }): Promise<HunterResponse<HunterRecord> | 'timed_out'> {
+  try {
+    return await hunterApi.request({ apiKey, method: HttpMethod.GET, path: '/email-verifier', operation: 'verify email', query: { email }, timeoutMs });
+  } catch (error) {
+    if (!(error instanceof HunterApiError) && now() >= deadline) {
+      return 'timed_out';
+    }
+    throw error;
   }
 }
 
