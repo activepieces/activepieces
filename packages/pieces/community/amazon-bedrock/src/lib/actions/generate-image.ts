@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { ModelModality } from '@aws-sdk/client-bedrock';
 import { awsBedrockCombinedAuth } from '../auth';
+import { generateImageOutputSchema } from '../output-schemas';
 import {
   createBedrockRuntimeClient,
   getBedrockModelOptions,
@@ -12,6 +13,7 @@ export const generateImage = createAction({
   audience: 'both',
   auth: awsBedrockCombinedAuth,
   name: 'generate_image',
+  outputSchema: generateImageOutputSchema,
   classification: 'READ',
   displayName: 'Generate Image',
   description:

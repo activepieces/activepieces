@@ -13,5 +13,7 @@
   "Seconds": "秒",
   "Minutes": "分",
   "Hours": "時間",
-  "Days": "日数"
+  "Days": "日数",
+  "Wait time": "Wait time",
+  "Delay": "待機"
 }
