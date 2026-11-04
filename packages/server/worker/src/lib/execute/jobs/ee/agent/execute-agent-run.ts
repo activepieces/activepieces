@@ -799,6 +799,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             return isObject(discovered) && discovered['noAuthRequired'] === true
         },
         autoPickedConnectionFor: !discoveryOnly ? undefined : async (pieceName) => {
+            await tryCatch(() => executeCrossProjectTool('ap_discover_action_auth', { pieceName }))
             const { data: available } = await tryCatch(() => ctx.apiClient.executeAgentTool({
                 toolName: '__get_available_connections',
                 toolInput: { pieceName },
