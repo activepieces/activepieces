@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { podioClient } from '../common/client';
+import { podioProps } from '../common/props';
 import { podioAuth } from '../auth';
-import { podioApiCall, getAccessToken, dynamicTaskProperty, hookProperty, silentProperty, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty } from '../common';
 
 export const updateTaskAction = createAction({
   auth: podioAuth,
@@ -12,7 +13,7 @@ export const updateTaskAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Updates an existing Podio task identified by task id; only the fields you supply change, and this includes toggling its completed flag, reassigning it, or editing text, due date, labels, and reminders. Use to edit or complete a known task; requires the task id and at least one field to change. Idempotent — repeating with the same values yields the same task state.', idempotent: true },
   props: {
-    taskId: dynamicTaskProperty,
+    taskId: podioProps.taskId({ required: true }),
     text: Property.LongText({
       displayName: 'Text',
       description: 'The updated text (title) for the task',
@@ -44,12 +45,12 @@ export const updateTaskAction = createAction({
       required: false,
     }),
 
-    orgId: dynamicOrgProperty,
-    spaceId: dynamicSpaceProperty,
-    appId: dynamicAppProperty,
+    orgId: podioProps.orgId({ required: true }),
+    spaceId: podioProps.spaceId({ required: true }),
+    appId: podioProps.appId({ required: true }),
     
-    refType: dynamicRefTypeProperty,
-    refId: dynamicRefIdProperty,
+    refType: podioProps.refType({ required: false }),
+    refId: podioProps.refId({ required: false }),
 
     responsible: Property.Number({
       displayName: 'Responsible User ID',
@@ -71,11 +72,10 @@ export const updateTaskAction = createAction({
       description: 'Optional reminder on this task. Format: {"remind_delta": minutes_before_due_date}. If empty, existing reminder is deleted.',
       required: false,
     }),
-    hook: hookProperty,
-    silent: silentProperty,
+    hook: podioProps.hook({ required: false }),
+    silent: podioProps.silent({ required: false }),
   },
   async run(context) {
-    const accessToken = getAccessToken(context.auth);
     const { 
       taskId,
       text, 
@@ -131,7 +131,7 @@ export const updateTaskAction = createAction({
       }
     }
 
-    const body: any = {};
+    const body: UpdateTaskBody = {};
     let updateCount = 0;
 
     if (text !== undefined) {
@@ -217,25 +217,37 @@ export const updateTaskAction = createAction({
       throw new Error('At least one field must be provided to update the task. Please specify which fields you want to modify.');
     }
 
-    const queryParams: any = {};
+    const queryParams: QueryParams = {};
     if (typeof hook === 'boolean') {
-      queryParams.hook = hook.toString();
+      queryParams['hook'] = hook.toString();
     }
     if (typeof silent === 'boolean') {
-      queryParams.silent = silent.toString();
+      queryParams['silent'] = silent.toString();
     }
 
-    const response = await podioApiCall<{
+    return await podioClient.request<{
       task_id: number;
-      [key: string]: any;
-    }>({
+      }>({
       method: HttpMethod.PUT,
-      accessToken,
-      resourceUri: `/task/${taskId}`,
+      auth: context.auth,
+      path: `/task/${taskId}`,
       body,
-      queryParams,
+      query: queryParams,
     });
-
-    return response;
   },
-}); 
+});
+
+type UpdateTaskBody = {
+  text?: string;
+  description?: string;
+  due_date?: string;
+  due_time?: string;
+  private?: boolean;
+  completed?: boolean;
+  ref_type?: string;
+  ref_id?: unknown;
+  responsible?: number;
+  labels?: unknown[];
+  file_ids?: unknown[];
+  reminder?: Record<string, unknown>;
+};

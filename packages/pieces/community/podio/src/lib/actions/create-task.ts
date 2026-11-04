@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { podioClient } from '../common/client';
+import { podioProps } from '../common/props';
 import { podioAuth } from '../auth';
-import { podioApiCall, getAccessToken, dynamicRefTypeProperty, dynamicRefIdProperty, dynamicAppProperty, dynamicSpaceProperty, dynamicOrgProperty, hookProperty, silentProperty } from '../common';
 
 export const createTaskAction = createAction({
   auth: podioAuth,
@@ -45,12 +46,12 @@ export const createTaskAction = createAction({
       required: false,
     }),
 
-    orgId: dynamicOrgProperty,
-    spaceId: dynamicSpaceProperty,
-    appId: dynamicAppProperty,
+    orgId: podioProps.orgId({ required: true }),
+    spaceId: podioProps.spaceId({ required: true }),
+    appId: podioProps.appId({ required: true }),
     
-    refType: dynamicRefTypeProperty,
-    refId: dynamicRefIdProperty,
+    refType: podioProps.refType({ required: false }),
+    refId: podioProps.refId({ required: false }),
 
     responsible: Property.Object({
       displayName: 'Responsible Person',
@@ -91,13 +92,10 @@ export const createTaskAction = createAction({
       required: false,
     }),
 
-    hook: hookProperty,
-    silent: silentProperty,
+    hook: podioProps.hook({ required: false }),
+    silent: podioProps.silent({ required: false }),
   },
   async run(context) {
-    console.log('🔍 [Podio Task] Action run started with propsValue:', JSON.stringify(context.propsValue, null, 2));
-    
-    const accessToken = getAccessToken(context.auth);
     const { 
       text, 
       description,
@@ -161,7 +159,7 @@ export const createTaskAction = createAction({
       throw new Error('Recurrence must be an object with name and config properties.');
     }
 
-    const body: any = {
+    const body: CreateTaskBody = {
       text: text.trim(),
     };
 
@@ -221,38 +219,50 @@ export const createTaskAction = createAction({
       body.external_id = externalId.trim();
     }
 
-    const queryParams: any = {};
+    const queryParams: QueryParams = {};
     if (typeof hook === 'boolean') {
-      queryParams.hook = hook.toString();
+      queryParams['hook'] = hook.toString();
     }
     if (typeof silent === 'boolean') {
-      queryParams.silent = silent.toString();
+      queryParams['silent'] = silent.toString();
     }
 
-    let resourceUri = '/task/';
+    let path = '/task/';
     
     if (refType && refId) {
-      resourceUri = `/task/${refType}/${refId}/`;
+      path = `/task/${refType}/${refId}/`;
       
       delete body.ref_type;
       delete body.ref_id;
-    } else {
-      console.log('🔍 [Podio Task] Using general task endpoint:', resourceUri);
     }
 
-    const response = await podioApiCall<{
+    return await podioClient.request<{
       task_id: number;
       text: string;
-      [key: string]: any;
-    }>({
+      }>({
       method: HttpMethod.POST,
-      accessToken,
-      resourceUri,
+      auth: context.auth,
+      path,
       body,
-      queryParams,
+      query: queryParams,
     });
-
-
-    return response;
   },
-}); 
+});
+
+type CreateTaskBody = {
+  text: string;
+  description?: string;
+  private?: boolean;
+  due_on?: string;
+  due_date?: string;
+  due_time?: string;
+  ref_type?: string;
+  ref_id?: unknown;
+  responsible?: Record<string, unknown>;
+  file_ids?: unknown[];
+  labels?: string[];
+  label_ids?: unknown[];
+  reminder?: Record<string, unknown>;
+  recurrence?: Record<string, unknown>;
+  external_id?: string;
+};

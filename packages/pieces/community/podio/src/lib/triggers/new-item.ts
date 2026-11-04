@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { podioAuth } from '../auth';
-import { podioApiCall, getAccessToken, dynamicAppProperty } from '../common';
+import { podioApi } from '../common/api';
+import { podioProps } from '../common/props';
 
 export const newItemTrigger = createTrigger({
   auth: podioAuth,
@@ -13,7 +13,7 @@ export const newItemTrigger = createTrigger({
     description: 'Fires when a new item (record/entry) is created in the selected Podio app, via an item.create webhook on that app. Represents a newly added record.',
   },
   props: {
-    appId: dynamicAppProperty,
+    appId: podioProps.appId({ required: true }),
   },
   sampleData: {
     type: "item.create",
@@ -23,7 +23,6 @@ export const newItemTrigger = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const accessToken = getAccessToken(context.auth);
     const { appId } = context.propsValue;
 
     if (!appId) {
@@ -31,14 +30,12 @@ export const newItemTrigger = createTrigger({
     }
 
     try {
-      const response = await podioApiCall<{ hook_id: number }>({
-        method: HttpMethod.POST,
-        accessToken,
-        resourceUri: `/hook/app/${appId}/`,
-        body: {
-          url: context.webhookUrl,
-          type: 'item.create',
-        },
+      const response = await podioApi.createHook({
+        auth: context.auth,
+        refType: 'app',
+        refId: appId,
+        url: context.webhookUrl,
+        type: 'item.create',
       });
 
       if (!response.hook_id) {
@@ -47,12 +44,11 @@ export const newItemTrigger = createTrigger({
 
       await context.store.put('podio_new_item_hook_id', response.hook_id);
       await context.store.put('podio_new_item_app_id', appId);
-    } catch (error: any) {
-      throw new Error(`Failed to enable New Item trigger: ${error.message || 'Unknown error occurred'}`);
+    } catch (error) {
+      throw new Error(`Failed to enable New Item trigger: ${(error instanceof Error && error.message) || 'Unknown error occurred'}`);
     }
   },
   async onDisable(context) {
-    const accessToken = getAccessToken(context.auth);
     const hookId = await context.store.get<number>('podio_new_item_hook_id');
 
     if (!hookId) {
@@ -60,16 +56,9 @@ export const newItemTrigger = createTrigger({
     }
 
     try {
-      await podioApiCall({
-        method: HttpMethod.DELETE,
-        accessToken,
-        resourceUri: `/hook/${hookId}`,
-      });
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        return;
-      }
-      throw new Error(`Failed to disable New Item trigger: ${error.message || 'Unknown error occurred'}`);
+      await podioApi.deleteHook({ auth: context.auth, hookId });
+    } catch (error) {
+      throw new Error(`Failed to disable New Item trigger: ${(error instanceof Error && error.message) || 'Unknown error occurred'}`);
     } finally {
       await context.store.delete('podio_new_item_hook_id');
       await context.store.delete('podio_new_item_app_id');
@@ -82,14 +71,14 @@ export const newItemTrigger = createTrigger({
       return [];
     }
 
-    if (!(payload as any).type || (payload as any).type !== 'item.create') {
+    if (!('type' in payload) || payload.type !== 'item.create') {
       return [];
     }
 
-    if (!(payload as any).item_id) {
+    if (!('item_id' in payload && payload.item_id)) {
       return [];
     }
 
     return [payload];
   },
-}); 
+});
