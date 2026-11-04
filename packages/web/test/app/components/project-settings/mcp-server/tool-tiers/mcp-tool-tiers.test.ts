@@ -45,6 +45,7 @@ describe('mcpToolTiers.groupByTier', () => {
         'ap_update_trigger',
         'ap_add_step',
         'ap_update_step',
+        'ap_apply_flow_operations',
         'ap_delete_step',
         'ap_add_branch',
         'ap_update_branch',

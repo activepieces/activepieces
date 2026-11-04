@@ -203,7 +203,7 @@ function diagnosePieceProps({ props, input, pieceAuth, requireAuth, componentTyp
         parts.push(`Missing required inputs: ${missing.join(', ')}.`)
     }
     if (uiRequired.length > 0) {
-        parts.push(`These inputs are dropdown/dynamic fields — resolve their values with ap_resolve_property_options (or ap_get_piece_props with auth) and pass the returned value (ID), then retry: ${uiRequired.join(', ')}.`)
+        parts.push(`These inputs are dropdown/dynamic fields — resolve their values with ap_resolve_property_chain (or ap_get_piece_props with auth) and pass the returned value (ID), then retry: ${uiRequired.join(', ')}.`)
     }
     if (allProps.length > 0 && unknownKeys.length === 0) {
         parts.push(`Expected inputs: ${allProps.join(', ')}.`)
@@ -283,7 +283,7 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
                 summary.options = prop.options.options.map((o: { label: string, value: unknown }) => ({ label: o.label, value: o.value }))
             }
             if (prop.type === PropertyType.DROPDOWN || prop.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                summary.note = 'Resolve with ap_resolve_property_options. Use the returned value (ID), not label.'
+                summary.note = 'Resolve with ap_resolve_property_chain. Use the returned value (ID), not label.'
             }
             if (prop.type === PropertyType.DYNAMIC) {
                 summary.note = 'DYNAMIC — call ap_get_piece_props with auth+input to resolve sub-fields.'
@@ -296,7 +296,7 @@ function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
         })
 }
 
-const RESOLUTION_SENTINEL = '<resolve with ap_resolve_property_options>'
+const RESOLUTION_SENTINEL = '<resolve with ap_resolve_property_chain>'
 
 function exampleValueForProp(prop: PropSummary): unknown {
     if (prop.options && prop.options.length > 0) {
@@ -363,7 +363,8 @@ function flattenOutputSchemaFields(fields: OutputSchemaField[], prefix = ''): st
         }
         const typeHint = field.format ? ` (${field.format})` : ''
         const dynamicNote = field.dynamicKey ? ' (dynamic key)' : ''
-        return [`${path}${typeHint}${dynamicNote}`]
+        const description = field.description ? ` — ${field.description}` : ''
+        return [`${path}${typeHint}${dynamicNote}${description}`]
     })
 }
 

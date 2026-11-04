@@ -709,7 +709,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('✅')
         expect(text(result)).toContain('folder')
         expect(text(result)).toContain('DROPDOWN')
-        expect(text(result)).toContain('ap_resolve_property_options')
+        expect(text(result)).toContain('ap_resolve_property_chain')
     })
 
     it('23. ap_get_piece_props — schema includes all fields regardless of auth', async () => {
@@ -742,7 +742,7 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('✅')
         expect(text(result)).not.toContain('DROPDOWN')
-        expect(text(result)).not.toContain('ap_resolve_property_options')
+        expect(text(result)).not.toContain('ap_resolve_property_chain')
     })
 
     it('25. ap_get_piece_props — with auth and invalid piece returns error before resolution', async () => {
@@ -1335,6 +1335,101 @@ describe('MCP Tools integration', () => {
         expect(output).toContain('step_1')
         expect(output).toContain('step_2')
         expect(output).toContain('step_3')
+    })
+
+    it('46b. ap_build_flow — builds a router with its branches and the steps inside them in one call', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Router',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [
+                { type: FlowActionType.CODE, displayName: 'Classify', sourceCode: 'export const code = async () => ({ urgent: true });', input: {} },
+                {
+                    type: FlowActionType.ROUTER,
+                    displayName: 'Route by urgency',
+                    branches: [{ branchName: 'Urgent', conditions: [[{ firstValue: '{{step_1.urgent}}', operator: 'BOOLEAN_IS_TRUE' }]] }],
+                },
+                { type: FlowActionType.CODE, displayName: 'Alert', sourceCode: 'export const code = async () => ({});', input: {}, parentStepName: 'Route by urgency', stepLocationRelativeToParent: 'INSIDE_BRANCH', branchIndex: 0 },
+                { type: FlowActionType.CODE, displayName: 'Log alert', sourceCode: 'export const code = async () => ({});', input: {}, parentStepName: 'Alert' },
+                { type: FlowActionType.CODE, displayName: 'Archive', sourceCode: 'export const code = async () => ({});', input: {}, parentStepName: 'Route by urgency', stepLocationRelativeToParent: 'INSIDE_BRANCH', branchIndex: 1 },
+                { type: FlowActionType.CODE, displayName: 'Done', sourceCode: 'export const code = async () => ({});', input: {} },
+            ],
+        })
+
+        expect(text(result)).not.toContain('Skipped')
+        const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId!, projectId: ctx.project.id })
+        const router = flowStructureUtil.getAllSteps(flow.version.trigger).find((step) => step.displayName === 'Route by urgency')
+        expect(router?.type).toBe(FlowActionType.ROUTER)
+        if (router?.type !== FlowActionType.ROUTER) return
+        expect(router.settings.branches.map((branch) => branch.branchName)).toEqual(['Urgent', 'Otherwise'])
+        expect(router.children[0]?.displayName).toBe('Alert')
+        expect(router.children[0]?.nextAction?.displayName).toBe('Log alert')
+        expect(router.children[1]?.displayName).toBe('Archive')
+        expect(router.nextAction?.displayName).toBe('Done')
+    })
+
+    it('46b2. ap_build_flow — builds branch steps the model listed before their router', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Router Children First',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [
+                { type: FlowActionType.CODE, displayName: 'Save high value', sourceCode: 'export const code = async () => ({});', input: {}, parentStepName: 'Route by amount', stepLocationRelativeToParent: 'INSIDE_BRANCH', branchIndex: 0 },
+                { type: FlowActionType.CODE, displayName: 'Save regular', sourceCode: 'export const code = async () => ({});', input: {}, parentStepName: 'Route by amount', stepLocationRelativeToParent: 'INSIDE_BRANCH', branchIndex: 1 },
+                { type: FlowActionType.ROUTER, displayName: 'Route by amount', branches: [{ branchName: 'High value', conditions: [[{ firstValue: '{{trigger.amount}}', operator: 'NUMBER_IS_GREATER_THAN', secondValue: '1000' }]] }] },
+            ],
+        })
+
+        expect(text(result)).not.toContain('Skipped')
+        const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId!, projectId: ctx.project.id })
+        const router = flowStructureUtil.getAllSteps(flow.version.trigger).find((step) => step.displayName === 'Route by amount')
+        if (router?.type !== FlowActionType.ROUTER) throw new Error('router was not built')
+        expect(router.children[0]?.displayName).toBe('Save high value')
+        expect(router.children[1]?.displayName).toBe('Save regular')
+    })
+
+    it('46b3. ap_build_flow — finds the app for a step sent without pieceName when one app owns the action, and says why when none does', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Without Piece Name',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [
+                { type: FlowActionType.PIECE, displayName: 'Uses array', actionName: 'action_with_array', input: {} },
+                { type: FlowActionType.PIECE, displayName: 'Made up', actionName: 'no_such_action_anywhere', input: {} },
+            ],
+        })
+
+        expect(text(result)).toContain('Skipped: Made up (pieceName is missing and no single app has the action "no_such_action_anywhere")')
+        const flowId = text(result).match(/\(id: (\S+?)\)/)?.[1]
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId!, projectId: ctx.project.id })
+        const built = flowStructureUtil.getAllSteps(flow.version.trigger).find((step) => step.displayName === 'Uses array')
+        expect(built?.type).toBe(FlowActionType.PIECE)
+        if (built?.type !== FlowActionType.PIECE) return
+        expect(built.settings.pieceName).toBe('@activepieces/piece-test-array')
+    })
+
+    it('46c. ap_build_flow — skips a branch step whose branch does not exist and says why', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Router Bad Branch',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [
+                { type: FlowActionType.ROUTER, displayName: 'Router', branches: [{ branchName: 'Only' }] },
+                { type: FlowActionType.CODE, displayName: 'Lost', sourceCode: 'export const code = async () => ({});', input: {}, parentStepName: 'Router', stepLocationRelativeToParent: 'INSIDE_BRANCH', branchIndex: 5 },
+            ],
+        })
+
+        expect(text(result)).toContain('Skipped: Lost (INSIDE_BRANCH needs a branchIndex from 0 to 1)')
     })
 
     it('47. ap_build_flow — partial success: invalid steps reported', async () => {

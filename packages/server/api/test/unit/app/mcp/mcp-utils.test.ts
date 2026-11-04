@@ -77,6 +77,13 @@ describe('mcpUtils.flattenOutputSchemaFields — declared output schema → refe
         expect(mcpUtils.flattenOutputSchemaFields([])).toEqual([])
     })
 
+    it('carries a field description, so the model knows how a dynamic map is keyed', () => {
+        const paths = mcpUtils.flattenOutputSchemaFields([
+            { key: 'values', dynamicKey: true, description: 'Keyed by column letter (A, B, C, …)' },
+        ])
+        expect(paths).toEqual(['values (dynamic key) — Keyed by column letter (A, B, C, …)'])
+    })
+
     it('flattens arbitrarily deep schemas without dropping fields', () => {
         const paths = mcpUtils.flattenOutputSchemaFields([
             { key: 'l1', children: [{ key: 'l2', children: [{ key: 'l3', children: [{ key: 'l4', children: [{ key: 'l5', children: [{ key: 'l6', format: 'number' }] }] }] }] }] },
@@ -272,7 +279,7 @@ describe('mcpUtils.diagnosePieceProps — container coercion + hybrid teaching',
             componentType: 'action',
         })
         const text = diagnosis.parts.join('\n')
-        expect(text).toContain('ap_resolve_property_options')
+        expect(text).toContain('ap_resolve_property_chain')
         expect(text).not.toContain('Activepieces UI')
     })
 })
@@ -300,7 +307,7 @@ describe('mcpUtils.buildRequiredInputs / buildExampleInput — prepare-to-execut
         expect(example.headers).toEqual({})
         expect(example.queryParams).toEqual({})
         expect(example.method).toBe('GET')
-        expect(example.objectTypeId).toContain('resolve with ap_resolve_property_options')
+        expect(example.objectTypeId).toContain('resolve with ap_resolve_property_chain')
         expect(example).not.toHaveProperty('body')
     })
 

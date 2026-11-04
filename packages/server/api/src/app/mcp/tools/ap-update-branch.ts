@@ -18,7 +18,7 @@ export const apUpdateBranchTool = ({ mcp, userId }: McpToolContext, log: Fastify
     return {
         title: 'ap_update_branch',
         permission: Permission.WRITE_FLOW,
-        description: 'Update the conditions and/or name of an existing router branch. Does not affect the steps inside the branch.',
+        description: 'Update the conditions and/or name of a branch on an existing flow\'s router. Does not affect the steps inside the branch. A new flow defines its routers and branches inside ap_build_flow instead.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             routerStepName: z.string().describe('The name of the ROUTER step. Use ap_flow_structure to get valid values.'),

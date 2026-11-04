@@ -170,6 +170,10 @@ const TOOL_CATEGORIES: ToolCategory[] = [
         description: "Update an existing step's settings",
       },
       {
+        name: 'ap_apply_flow_operations',
+        description: 'Apply several step and branch edits to a flow at once',
+      },
+      {
         name: 'ap_delete_step',
         description: 'Delete a step from a flow',
       },

@@ -3,6 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { isToolSearchEnabled } from '../../tool-search/tool-search-flag'
 import { apAddBranchTool } from './ap-add-branch'
 import { apAddStepTool } from './ap-add-step'
+import { apApplyFlowOperationsTool } from './ap-apply-flow-operations'
 import { apBuildFlowTool } from './ap-build-flow'
 import { apChangeFlowStatusTool } from './ap-change-flow-status'
 import { apCreateFlowTool } from './ap-create-flow'
@@ -96,6 +97,7 @@ export const ALL_CONTROLLABLE_TOOL_NAMES = [
     'ap_update_trigger',
     'ap_add_step',
     'ap_update_step',
+    'ap_apply_flow_operations',
     'ap_delete_step',
     'ap_add_branch',
     'ap_update_branch',
@@ -144,6 +146,7 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apAddBranchTool({ mcp, userId }, log),
     apUpdateBranchTool({ mcp, userId }, log),
     apDeleteBranchTool({ mcp, userId }, log),
+    apApplyFlowOperationsTool({ mcp, userId }, log),
     apLockAndPublishTool({ mcp, userId }, log),
     apChangeFlowStatusTool({ mcp, userId }, log),
     apDeleteFlowTool({ mcp, userId }, log),
