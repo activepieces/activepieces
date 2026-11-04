@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { parseurAuth, parseurCommon } from '../common';
-import { parserDropdown } from '../common/properties';
+import { parseurAuth } from '../auth';
+import { parseurApi } from '../common/api';
+import { parseurProps } from '../common/props';
 
-export const findDocument = createAction({
+export const findDocumentAction = createAction({
   auth: parseurAuth,
   name: 'findDocument',
   classification: 'SEARCH',
@@ -15,7 +16,7 @@ export const findDocument = createAction({
     idempotent: true,
   },
   props: {
-    parserId: parserDropdown({ required: true }),
+    parserId: parseurProps.parserId({ required: true }),
     search: Property.ShortText({
       displayName: 'Search',
       description:
@@ -23,13 +24,13 @@ export const findDocument = createAction({
       required: false,
     }),
   },
-  async run({ auth: apiKey, propsValue: { parserId, search } }) {
+  async run({ auth, propsValue: { parserId, search } }) {
     if (!parserId) {
       throw new Error('Parser ID is required');
     }
-    return await parseurCommon.listDocuments({
-      apiKey:apiKey.secret_text,
-      parserId,
+    return await parseurApi.listDocuments({
+      auth,
+      parserId: String(parserId),
       search,
     });
   },

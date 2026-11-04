@@ -1,16 +1,17 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { createDocument } from './lib/actions/create-document';
-import { createDocumentFromFile } from './lib/actions/create-document-from-file';
-import { findDocument } from './lib/actions/find-document';
-import { getParsedDocumentById } from './lib/actions/get-parsed-document-by-id';
-import { reprocessDocument } from './lib/actions/reprocess-document';
-import { parseurAuth, parseurCommon } from './lib/common';
-import { newDocumentExportFailed } from './lib/triggers/new-document-export-failed';
-import { newDocumentNotProcessed } from './lib/triggers/new-document-not-processed';
-import { newDocumentProcessed } from './lib/triggers/new-document-processed';
-import { newMailbox } from './lib/triggers/new-mailbox';
-import { newTableFieldProcessed } from './lib/triggers/new-table-field-processed';
+import { createDocumentAction } from './lib/actions/create-document';
+import { createDocumentFromFileAction } from './lib/actions/create-document-from-file';
+import { findDocumentAction } from './lib/actions/find-document';
+import { getParsedDocumentByIdAction } from './lib/actions/get-parsed-document-by-id';
+import { reprocessDocumentAction } from './lib/actions/reprocess-document';
+import { parseurAuth } from './lib/auth';
+import { parseurClient } from './lib/common/client';
+import { newDocumentExportFailedTrigger } from './lib/triggers/new-document-export-failed';
+import { newDocumentNotProcessedTrigger } from './lib/triggers/new-document-not-processed';
+import { newDocumentProcessedTrigger } from './lib/triggers/new-document-processed';
+import { newMailboxTrigger } from './lib/triggers/new-mailbox';
+import { newTableFieldProcessedTrigger } from './lib/triggers/new-table-field-processed';
 
 export const parseur = createPiece({
   displayName: 'Parseur',
@@ -21,14 +22,14 @@ export const parseur = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/parseur.png',
   authors: ['LuizDMM'],
   actions: [
-    getParsedDocumentById,
-    createDocument,
-    createDocumentFromFile,
-    reprocessDocument,
-    findDocument,
+    getParsedDocumentByIdAction,
+    createDocumentAction,
+    createDocumentFromFileAction,
+    reprocessDocumentAction,
+    findDocumentAction,
     createCustomApiCallAction({
       auth: parseurAuth,
-      baseUrl: () => parseurCommon.baseUrl,
+      baseUrl: () => parseurClient.baseUrl(),
       authMapping: async (auth) => {
         return {
           Authorization: auth.secret_text,
@@ -37,10 +38,10 @@ export const parseur = createPiece({
     }),
   ],
   triggers: [
-    newDocumentProcessed,
-    newTableFieldProcessed,
-    newDocumentNotProcessed,
-    newDocumentExportFailed,
-    newMailbox,
+    newDocumentProcessedTrigger,
+    newTableFieldProcessedTrigger,
+    newDocumentNotProcessedTrigger,
+    newDocumentExportFailedTrigger,
+    newMailboxTrigger,
   ],
 });

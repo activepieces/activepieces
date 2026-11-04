@@ -1,7 +1,10 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { parseurAuth, parseurCommon } from '../common';
+import { parseurAuth } from '../auth';
+import { parseurClient } from '../common/client';
+import type { ParseurCreateDocumentResponse } from '../common/types';
 
-export const createDocument = createAction({
+export const createDocumentAction = createAction({
   auth: parseurAuth,
   name: 'createDocument',
   classification: 'WRITE',
@@ -61,16 +64,20 @@ export const createDocument = createAction({
       required: false,
     }),
   },
-  async run({ auth: apiKey, propsValue }) {
+  async run({ auth, propsValue }) {
     const { message_headers, ...rest } = propsValue;
-    return await parseurCommon.createDocument({
-      apiKey:apiKey.secret_text,
-      ...rest,
-      message_headers: message_headers
-        ? Object.fromEntries(
-            Object.entries(message_headers).map(([k, v]) => [k, String(v)])
-          )
-        : undefined,
+    return await parseurClient.request<ParseurCreateDocumentResponse>({
+      auth,
+      method: HttpMethod.POST,
+      path: '/email',
+      body: {
+        ...rest,
+        message_headers: message_headers
+          ? Object.fromEntries(
+              Object.entries(message_headers).map(([k, v]) => [k, String(v)])
+            )
+          : undefined,
+      },
     });
   },
 });

@@ -1,25 +1,17 @@
 import {
-    DedupeStrategy,
-    Polling,
-    pollingHelper,
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
 } from '@activepieces/pieces-common';
-import {
-  AppConnectionValueForAuthProperty,
-    createTrigger,
-    PiecePropValueSchema,
-    TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { parseurAuth, parseurCommon } from '../common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { parseurAuth } from '../auth';
+import { parseurApi } from '../common/api';
+import type { ParseurAuthValue } from '../common/types';
 
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof parseurAuth>,
-  Record<string, never>
-> = {
+const polling: Polling<ParseurAuthValue, Record<string, never>> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth: apiKey }) => {
-    const response = await parseurCommon.listMailboxes({
-      apiKey: apiKey.secret_text,
-    });
+  items: async ({ auth }) => {
+    const response = await parseurApi.listMailboxes({ auth });
     const items = response.results;
     return items.map((item) => ({
       id: item.id,
@@ -28,7 +20,7 @@ const polling: Polling<
   },
 };
 
-export const newMailbox = createTrigger({
+export const newMailboxTrigger = createTrigger({
   auth: parseurAuth,
   name: 'newMailbox',
   classification: 'READ',

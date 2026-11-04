@@ -1,8 +1,11 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { parseurAuth, parseurCommon } from '../common';
-import { parserDropdown } from '../common/properties';
+import { parseurAuth } from '../auth';
+import { parseurClient } from '../common/client';
+import { parseurProps } from '../common/props';
+import type { ParseurCreateDocumentFromFileResponse } from '../common/types';
 
-export const createDocumentFromFile = createAction({
+export const createDocumentFromFileAction = createAction({
   auth: parseurAuth,
   name: 'createDocumentFromFile',
   classification: 'WRITE',
@@ -15,21 +18,27 @@ export const createDocumentFromFile = createAction({
     idempotent: false,
   },
   props: {
-    parserId: parserDropdown({ required: true }),
+    parserId: parseurProps.parserId({ required: true }),
     file: Property.File({
       displayName: 'File',
       description: 'Select the file to upload',
       required: true,
     }),
   },
-  async run({ auth: apiKey, propsValue: { parserId, file } }) {
+  async run({ auth, propsValue: { parserId, file } }) {
     if (!parserId) {
       throw new Error('Parser is required');
     }
-    return await parseurCommon.createDocumentFromFile({
-      apiKey: apiKey.secret_text,
-      parserId,
-      file,
+    const data = new FormData();
+    const uint8 = new Uint8Array(file.data);
+    data.append('file', new Blob([uint8]), file.filename);
+    data.append('parserId', String(parserId));
+    return await parseurClient.request<ParseurCreateDocumentFromFileResponse>({
+      auth,
+      method: HttpMethod.POST,
+      path: `/parser/${parserId}/upload`,
+      headers: { 'Content-Type': 'multipart/form-data' },
+      body: data,
     });
   },
 });
