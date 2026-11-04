@@ -21,14 +21,21 @@ import {
 import { ReactNode } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 
-import { AdminPageHeader, StatCard, StatGrid } from '@/app/components/admin';
+import {
+  AdminPageHeader,
+  StatCard,
+  StatGrid,
+  adminPageResources,
+} from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import { aiUsageHooks } from '@/features/ai-usage';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
+import { AiCenterTrail } from '../components/ai-center-trail';
+
 import { usageAdapters } from './usage-adapters';
-import { relatedSpan, UsageTrail } from './usage-bits';
+import { relatedSpan } from './usage-bits';
 import { UsageEmpty } from './usage-empty';
 import { usageFormat } from './usage-format';
 import {
@@ -60,7 +67,7 @@ export function UsageDetailPage() {
     <>
       <AdminPageHeader
         title={
-          <UsageTrail
+          <AiCenterTrail
             crumbs={[
               { label: t('AI usage'), to: overviewLink },
               {
@@ -78,6 +85,7 @@ export function UsageDetailPage() {
         description={
           data ? usageAdapters.itemSubtitle({ item: data.item }) : undefined
         }
+        resources={adminPageResources.aiUsage}
       >
         <UsageHeaderControls view={view} />
       </AdminPageHeader>

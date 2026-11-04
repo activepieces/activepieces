@@ -10,7 +10,7 @@ export const updateRowsAction = createAction({
   name: 'update_rows',
   displayName: 'Update Rows',
   description: 'Updates every row whose search column matches a value',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates every row in a SQL Server table whose search column equals a given value, setting the supplied column-to-value pairs, and returns the updated rows. Use to modify existing records matched on a single column; for anything more complex use Run Query. Idempotent: re-running with the same input writes the same values and changes nothing further.',
