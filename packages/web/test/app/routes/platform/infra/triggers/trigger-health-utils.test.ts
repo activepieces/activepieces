@@ -18,17 +18,17 @@ describe('triggerHealthUtils.successRate', () => {
 
 describe('triggerHealthUtils.compareWorstFirst', () => {
   it('puts failing triggers before warnings and healthy ones', () => {
-    const row = (id: string, status: string, rate: number) => ({
+    const row = (id: string, type: string, rate: number) => ({
       id,
-      status,
+      status: { type },
       last24Hours: rate,
       last7Days: rate,
       last14Days: rate,
     });
     const rows = [
       row('healthy', 'success', 100),
-      row('warning', 'warning', 40),
-      row('failing', 'fault', 90),
+      row('warning', 'warning', 60),
+      row('failing', 'fault', 0),
     ];
     expect(
       [...rows].sort(triggerHealthUtils.compareWorstFirst).map((r) => r.id),

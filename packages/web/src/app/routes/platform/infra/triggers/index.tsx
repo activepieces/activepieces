@@ -123,12 +123,7 @@ export default function TriggerHealthPage() {
             runs: pieceData.totalRuns,
           };
         })
-        .sort((a, b) =>
-          triggerHealthUtils.compareWorstFirst(
-            { ...a, status: a.status.type },
-            { ...b, status: b.status.type },
-          ),
-        );
+        .sort(triggerHealthUtils.compareWorstFirst);
 
   const getStatusIcon = (statusType: string) => {
     switch (statusType) {

@@ -218,7 +218,7 @@ const EventDestinationsPage = () => {
         page={{
           data: [...destinations].sort(
             (a, b) =>
-              a.created.localeCompare(b.created) || a.id.localeCompare(b.id),
+              b.created.localeCompare(a.created) || b.id.localeCompare(a.id),
           ),
           next: null,
           previous: null,

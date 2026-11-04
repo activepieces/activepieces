@@ -63,6 +63,7 @@ export default function UsersPage() {
     data: usersPage,
     isLoading,
     isError,
+    isPlaceholderData,
   } = platformUserHooks.useUsersWithInvitationsPage({
     statuses: selectedStatuses,
     cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
@@ -163,7 +164,10 @@ export default function UsersPage() {
         ]}
         page={usersPage}
         hideFooterUntilNeeded
-        isLoading={isLoading}
+        isLoading={
+          isLoading ||
+          (isPlaceholderData && (usersPage?.data.length ?? 0) === 0)
+        }
         isError={isError}
         errorStateEntity={t('users')}
         onRetry={refetch}

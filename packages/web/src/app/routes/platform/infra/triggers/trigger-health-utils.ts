@@ -12,7 +12,7 @@ function successRate({
 
 function compareWorstFirst(a: HealthRow, b: HealthRow): number {
   return (
-    STATUS_RANK[a.status] - STATUS_RANK[b.status] ||
+    STATUS_RANK[a.status.type] - STATUS_RANK[b.status.type] ||
     a.last24Hours - b.last24Hours ||
     a.last7Days - b.last7Days ||
     a.last14Days - b.last14Days ||
@@ -24,7 +24,7 @@ export const triggerHealthUtils = { successRate, compareWorstFirst };
 
 type HealthRow = {
   id: string;
-  status: string;
+  status: { type: string };
   last24Hours: number;
   last7Days: number;
   last14Days: number;

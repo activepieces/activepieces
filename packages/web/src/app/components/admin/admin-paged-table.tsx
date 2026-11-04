@@ -48,6 +48,8 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
+import { adminPagination } from './admin-pagination';
+
 type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
   notClickable?: boolean;
 };
@@ -713,5 +715,4 @@ export function AdminPagedTable<
 const STICKY_HEADER_CLASS_NAME =
   'sticky top-0 z-10 border-t-0 bg-[color-mix(in_srgb,var(--gray-3)_70%,var(--gray-1))] shadow-[inset_0_1px_0_var(--gray-6),inset_0_-1px_0_var(--gray-6)] [&>tr]:border-b-0';
 
-const PAGE_SIZE_OPTIONS = [10, 30, 50];
-const FIRST_PAGE_CURSOR = '0';
+const { PAGE_SIZE_OPTIONS, FIRST_PAGE_CURSOR } = adminPagination;

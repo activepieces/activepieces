@@ -22,7 +22,15 @@ function LocationProbe() {
   return <div data-testid="location">{location.search}</div>;
 }
 
-function renderTable({ data, url = '/' }: { data: Row[]; url?: string }) {
+function renderTable({
+  data,
+  url = '/',
+  onSelectedRowsChange,
+}: {
+  data: Row[];
+  url?: string;
+  onSelectedRowsChange?: (rows: Row[]) => void;
+}) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AdminDataTable<Row, unknown, string>
@@ -36,6 +44,9 @@ function renderTable({ data, url = '/' }: { data: Row[]; url?: string }) {
         emptyStateIcon={null}
         pageInBrowser
         hideFooterUntilNeeded
+        selectColumn={!!onSelectedRowsChange}
+        onSelectedRowsChange={onSelectedRowsChange}
+        getRowId={(row) => row.id}
       />
       <LocationProbe />
     </MemoryRouter>,
@@ -70,5 +81,33 @@ describe('AdminDataTable paging', () => {
       const search = screen.getByTestId('location').textContent ?? '';
       expect(search.includes('cursor')).toBe(false);
     });
+  });
+
+  it('moves a cursor past the end to the last page', async () => {
+    renderTable({ data: rows(25), url: '/?cursor=500' });
+
+    await waitFor(() => {
+      const search = screen.getByTestId('location').textContent ?? '';
+      expect(search.includes('cursor=20')).toBe(true);
+    });
+    expect(screen.queryAllByText('Row 24').length).toBe(1);
+  });
+
+  it('clears the selection when the page changes', async () => {
+    const onSelectedRowsChange = vi.fn();
+    renderTable({ data: rows(25), onSelectedRowsChange });
+
+    fireEvent.click(screen.getAllByRole('checkbox')[1]);
+    await waitFor(() =>
+      expect(onSelectedRowsChange).toHaveBeenLastCalledWith([
+        expect.objectContaining({ id: 'row-0' }),
+      ]),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/ }));
+
+    await waitFor(() =>
+      expect(onSelectedRowsChange).toHaveBeenLastCalledWith([]),
+    );
   });
 });

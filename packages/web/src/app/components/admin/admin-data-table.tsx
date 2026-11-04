@@ -56,7 +56,7 @@ export function AdminDataTable<
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (isNil(previous)) {
+        if (isNil(previous) || previous === adminPagination.FIRST_PAGE_CURSOR) {
           next.delete(CURSOR_QUERY_PARAM);
         } else {
           next.set(CURSOR_QUERY_PARAM, previous);
@@ -86,6 +86,7 @@ export function AdminDataTable<
       {followsEmptyPages ? (
         <AdminPagedTable
           {...props}
+          isLoading={props.isLoading || landedOnEmptyPage}
           page={page}
           hidePagination={hideFooter}
           emptyStateIcon={emptyStateIcon}

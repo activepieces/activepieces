@@ -51,7 +51,14 @@ function toPositiveInt({
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-export const adminPagination = { slicePage, fitsOnOnePage, parseLimit };
-
 const SINGLE_PAGE_ROWS = 10;
 const PAGE_SIZE_OPTIONS = [10, 30, 50];
+const FIRST_PAGE_CURSOR = '0';
+
+export const adminPagination = {
+  slicePage,
+  fitsOnOnePage,
+  parseLimit,
+  PAGE_SIZE_OPTIONS,
+  FIRST_PAGE_CURSOR,
+};
