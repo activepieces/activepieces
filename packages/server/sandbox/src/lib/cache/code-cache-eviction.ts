@@ -122,7 +122,7 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
 
     const activeAt = Date.now() - activeWindowMs
     const flowVersionDirs = entries.filter((entry) => entry.isDirectory() && entry.name !== ACTION_RUN_CODE_DIR)
-    const candidates: StepCandidate[] = []
+    const candidates: PressureCandidate[] = []
     for (const batch of chunk(flowVersionDirs, SCAN_BATCH_SIZE)) {
         const nested = await Promise.all(batch.map((entry) => readStepCandidates({
             flowVersionPath: path.join(codesPath, entry.name),
@@ -142,14 +142,10 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
                 break
             }
         }
-        const outcome = await removeDir({ locks, dirPath: candidate.dirPath, expectedMtimeMs: candidate.mtimeMs })
+        const outcome = await removeDir({ locks, dirPath: candidate.dirPath, expectedMtimeMs: candidate.mtimeMs, emptyOnly: candidate.emptyShell })
         evictedCount += outcome === 'removed' ? 1 : 0
         failedCount += outcome === 'failed' ? 1 : 0
         skippedCount += outcome === 'skipped' ? 1 : 0
-        const parentIdleAtScan = !isNil(candidate.parentMtimeMs) && candidate.parentMtimeMs < activeAt
-        if (outcome === 'removed' && parentIdleAtScan) {
-            await tryCatch(() => rmdir(path.dirname(candidate.dirPath)))
-        }
     }
 
     const usedPercentAfter = await getUsedPercent()
@@ -188,21 +184,27 @@ async function defaultGetUsedPercent({ basePath, log }: DefaultGetUsedPercentPar
     return diskInfo.percentage
 }
 
-async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandidatesParams): Promise<StepCandidate[]> {
+async function readStepCandidates({ flowVersionPath, activeAt }: ReadStepCandidatesParams): Promise<PressureCandidate[]> {
     const { data: stepEntries, error } = await tryCatch(() => readdir(flowVersionPath, { withFileTypes: true }))
     if (error) {
         return []
     }
-    const parentMtimeMs = await readMtimeMs(flowVersionPath)
+    if (stepEntries.length === 0) {
+        const mtimeMs = await readMtimeMs(flowVersionPath)
+        if (isNil(mtimeMs) || mtimeMs >= activeAt) {
+            return []
+        }
+        return [{ dirPath: flowVersionPath, mtimeMs, emptyShell: true }]
+    }
     const stepDirs = stepEntries.filter((entry) => entry.isDirectory())
-    const candidates: StepCandidate[] = []
+    const candidates: PressureCandidate[] = []
     for (const batch of chunk(stepDirs, SCAN_BATCH_SIZE)) {
-        const stats = await Promise.all(batch.map(async (entry): Promise<StepCandidate | null> => {
+        const stats = await Promise.all(batch.map(async (entry): Promise<PressureCandidate | null> => {
             const dirPath = path.join(flowVersionPath, entry.name)
             const mtimeMs = await readMtimeMs(dirPath)
-            return isNil(mtimeMs) ? null : { dirPath, mtimeMs, parentMtimeMs }
+            return isNil(mtimeMs) ? null : { dirPath, mtimeMs, emptyShell: false }
         }))
-        candidates.push(...stats.filter((entry): entry is StepCandidate => entry !== null && entry.mtimeMs < activeAt))
+        candidates.push(...stats.filter((entry): entry is PressureCandidate => entry !== null && entry.mtimeMs < activeAt))
     }
     return candidates
 }
@@ -252,7 +254,7 @@ async function readMtimeMs(dirPath: string): Promise<number | null> {
     return stats.mtimeMs
 }
 
-async function removeDir({ locks, dirPath, expectedMtimeMs }: RemoveDirParams): Promise<RemoveOutcome> {
+async function removeDir({ locks, dirPath, expectedMtimeMs, emptyOnly = false }: RemoveDirParams): Promise<RemoveOutcome> {
     const { data: outcome, error } = await tryCatch(() => locks.runExclusive({
         key: dirPath,
         timeoutMs: EVICTION_TRY_LOCK_TIMEOUT_MS,
@@ -260,6 +262,9 @@ async function removeDir({ locks, dirPath, expectedMtimeMs }: RemoveDirParams): 
             const currentMtimeMs = await readMtimeMs(dirPath)
             if (isNil(currentMtimeMs) || currentMtimeMs !== expectedMtimeMs) {
                 return 'skipped'
+            }
+            if (emptyOnly) {
+                return removeEmptyDir(dirPath)
             }
             const { error: removeError } = await tryCatch(() => rm(dirPath, { recursive: true, force: true }))
             return isNil(removeError) ? 'removed' : 'failed'
@@ -269,6 +274,15 @@ async function removeDir({ locks, dirPath, expectedMtimeMs }: RemoveDirParams): 
         return error instanceof DiskLockTimeoutError ? 'skipped' : 'failed'
     }
     return outcome
+}
+
+async function removeEmptyDir(dirPath: string): Promise<RemoveOutcome> {
+    const { error } = await tryCatch(() => rmdir(dirPath))
+    if (isNil(error)) {
+        return 'removed'
+    }
+    const gainedContentWhileRemoving = 'code' in error && (error.code === 'ENOTEMPTY' || error.code === 'EEXIST')
+    return gainedContentWhileRemoving ? 'skipped' : 'failed'
 }
 
 const ACTION_RUN_CACHE_TTL_MS = 2 * 60 * 60 * 1000
@@ -331,14 +345,15 @@ type DirEntry = {
     mtimeMs: number
 }
 
-type StepCandidate = DirEntry & {
-    parentMtimeMs: number | null
+type PressureCandidate = DirEntry & {
+    emptyShell: boolean
 }
 
 type RemoveDirParams = {
     locks: CacheLocks
     dirPath: string
     expectedMtimeMs: number
+    emptyOnly?: boolean
 }
 
 type RemoveOutcome = 'removed' | 'skipped' | 'failed'

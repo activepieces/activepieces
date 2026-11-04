@@ -513,29 +513,80 @@ describe('codeCacheEviction.sweep disk-pressure pass', () => {
             .resolves.toBeUndefined()
     })
 
-    it('removes the emptied flow-version dir once its last step is evicted', async () => {
+    it('reclaims an emptied flow-version dir on the next pressure sweep once it has gone idle', async () => {
         const basePath = uniqueBasePath()
         const flowVersionId = apId()
-        const ageMs = 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS
-        const stepPath = await seedStepDir({ basePath, flowVersionId, ageMs })
-        const parentMtime = new Date(Date.now() - ageMs)
-        await utimes(flowVersionDir({ basePath, flowVersionId }), parentMtime, parentMtime)
-
-        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForChecks(1) })
-
-        await expect(exists(stepPath)).resolves.toBe(false)
-        await expect(exists(flowVersionDir({ basePath, flowVersionId }))).resolves.toBe(false)
-    })
-
-    it('leaves a freshly touched flow-version dir in place even when its only step is evicted, so a concurrent provision cannot lose its parent', async () => {
-        const basePath = uniqueBasePath()
-        const flowVersionId = apId()
+        const parentPath = flowVersionDir({ basePath, flowVersionId })
         const stepPath = await seedStepDir({ basePath, flowVersionId, ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS })
 
         await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForChecks(1) })
-
         await expect(exists(stepPath)).resolves.toBe(false)
-        await expect(exists(flowVersionDir({ basePath, flowVersionId }))).resolves.toBe(true)
+        await expect(exists(parentPath)).resolves.toBe(true)
+
+        const idle = new Date(Date.now() - 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS)
+        await utimes(parentPath, idle, idle)
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForChecks(1) })
+
+        await expect(exists(parentPath)).resolves.toBe(false)
+    })
+
+    it('leaves a freshly created empty flow-version dir alone under pressure, so a provision that just made it cannot lose it', async () => {
+        const basePath = uniqueBasePath()
+        const parentPath = flowVersionDir({ basePath, flowVersionId: apId() })
+        await mkdir(parentPath, { recursive: true })
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent: overThresholdForChecks(99) })
+
+        await expect(exists(parentPath)).resolves.toBe(true)
+    })
+
+    it('never treats a dir holding only stray files as evictable, and still raises the no-evictable warn', async () => {
+        const basePath = uniqueBasePath()
+        const parentPath = flowVersionDir({ basePath, flowVersionId: apId() })
+        await mkdir(parentPath, { recursive: true })
+        const strayFile = join(parentPath, 'stray.txt')
+        await writeFile(strayFile, 'not a step dir', 'utf8')
+        const idle = new Date(Date.now() - 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS)
+        await utimes(parentPath, idle, idle)
+        const recording = createRecordingLog()
+
+        await codeCacheEviction.sweep({ basePath, log: recording.log, getUsedPercent: overThresholdForChecks(99) })
+
+        await expect(exists(strayFile)).resolves.toBe(true)
+        expect(recording.payloadsAt('warn')).toMatchObject([{ candidateCount: 0, skippedCount: 0 }])
+    })
+
+    it('skips an empty shell that gains a step between the scan and its removal, keeping the new step intact', async () => {
+        const basePath = uniqueBasePath()
+        const steps = await Promise.all(Array.from({ length: 10 }, (_, index) =>
+            seedStepDir({
+                basePath,
+                flowVersionId: apId(),
+                ageMs: 2 * ACTION_RUN_CACHE_ACTIVE_WINDOW_MS + (10 - index) * 1000,
+            }),
+        ))
+        const shellPath = flowVersionDir({ basePath, flowVersionId: apId() })
+        await mkdir(shellPath, { recursive: true })
+        const shellIdle = new Date(Date.now() - ACTION_RUN_CACHE_ACTIVE_WINDOW_MS - 1000)
+        await utimes(shellPath, shellIdle, shellIdle)
+        const lateStepPath = join(shellPath, 'late_step')
+
+        let usageCalls = 0
+        const getUsedPercent = async (): Promise<number> => {
+            usageCalls += 1
+            if (usageCalls === 2) {
+                await mkdir(lateStepPath, { recursive: true })
+            }
+            return DISK_EVICTION_THRESHOLD_PERCENT + 1
+        }
+
+        await codeCacheEviction.sweep({ basePath, log: noopLog, getUsedPercent })
+
+        for (const stepPath of steps) {
+            await expect(exists(stepPath)).resolves.toBe(false)
+        }
+        await expect(exists(shellPath)).resolves.toBe(true)
+        await expect(exists(lateStepPath)).resolves.toBe(true)
     })
 
     it.skipIf(runningAsRoot())('reports a lock-infrastructure failure as failed, never as a candidate merely in use', async () => {
