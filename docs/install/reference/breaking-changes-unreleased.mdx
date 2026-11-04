@@ -8,6 +8,67 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Folk 0.2.0: eight Folk actions are no longer agent tools, and Update Person/Company behave differently
+
+From Folk 0.2.0, **Create Person**, **Create Company**, **Get Person**, **Get Company**, **List People**, **Find Company**, **Update Person** and **Update Company** (the existing flow-builder actions) are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents get new tools instead: **Create Person**, **Create Company**, **Get Person**, **Get Company**, **Search People** (replaces List People), **Search Companies** (replaces Find Company), **Update Person** and **Update Company** (the `*_ai` actions, which take IDs and plain lists).
+
+Once a step is upgraded to Folk 0.2.0:
+
+- **Update Company** no longer clears Emails, Phones, URLs or Addresses when the list is left empty; an empty list now keeps the current values.
+- **Update Person** and **Update Company** fail with "Nothing to update" when no field is filled in, instead of sending an empty update.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used these eight actions at the new agent tools listed above. Flow steps keep running on the version they were built with until you upgrade them; when you upgrade, make sure Update Person and Update Company steps always fill in at least one field, and use the Folk app (or Custom API Call) if a flow relied on an empty list to clear a Company field.
+
+#### Formbricks 0.4.0: calls to Formbricks now verify the TLS certificate
+
+From Formbricks 0.4.0, the piece checks the certificate of your Formbricks server on the connection check, triggers, dropdowns and every dedicated action. Before, certificate checks were skipped, so a self-hosted Formbricks behind a self-signed or private-CA certificate worked. With 0.4.0 these calls fail with a certificate error for such servers. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. Formbricks Cloud and servers with a publicly trusted certificate are not affected.
+
+#### What you need to do
+
+If you self-host Formbricks on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to Activepieces before upgrading Formbricks steps or connections to 0.4.0. To add the CA, set both `NODE_EXTRA_CA_CERTS=/path/to/ca.pem` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container. The engine that runs pieces only receives variables listed in `AP_SANDBOX_PROPAGATED_ENV_VARS`, so `NODE_EXTRA_CA_CERTS` alone has no effect.
+
+#### Hunter 0.2.0: four lead and campaign actions leave the agent tool list, and Verify Email waits for a result
+
+From Hunter 0.2.0, these actions are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps, with the same inputs and outputs. Agents use the replacement instead:
+- **Get Lead** → **Get Lead by ID**
+- **Update Lead** → **Update Lead by ID**
+- **Delete Lead** → **Delete Lead by ID**
+- **Add Recipients** → **Add Campaign Recipients by ID**
+
+Once a **Verify Email** step is upgraded to 0.2.0, it no longer returns right away when Hunter answers that the check is still running (HTTP 202). It waits up to 60 seconds for the result, and then fails asking you to run it again.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Get Lead, Update Lead, Delete Lead or Add Recipients as a tool, switch it to the "by ID" action listed above. Flow steps that use them keep working. If a flow relied on Verify Email returning a pending result, expect the step to take up to 60 seconds, and handle a failed step for emails Hunter cannot finish checking in time.
+
+#### ChargeKeep 0.4.0: actions return mapped records, triggers start one run per event, and some inputs changed
+
+Add or Update Contact, Add or Update Contact (Extended), Add or Update Subscription, Create Invoice, Create Product and Get Contact Details used to return the raw response as `{ status, body }`. From ChargeKeep 0.4.0 they return the record itself: `contactId` and `leadId` for contact imports, the saved invoice (`invoiceId`, `number`, `lines`, ...), the saved product (`productId`, `priceOptions`, ...), the contact for Get Contact Details, and `{ contactId, subscription }` for subscriptions. Steps also fail when ChargeKeep reports an error in a 200 response.
+
+New Lead, New Payment and New Subscription used to start one run per delivery with the whole delivery (an array of events) as the trigger output. They now start one run per event, with the event object as the output, and skip events they have already processed. Replacing a subscription sends two events, so New Subscription starts two runs.
+
+Create Invoice's **Invoice No.** is now text instead of a number, and Get Contact Details' **User Email** is now a single-line text input. Add or Update Contact (Extended) now defaults **Create User** and **Send Welcome Email** to No.
+
+**Add or Update Contact**, **Add or Update Contact (Extended)** and **Create Invoice** are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps. Agents get **Create or Update Contact** and **Create or Update Invoice** instead.
+
+#### What you need to do
+
+Update later steps that read `{{step.body.result...}}` or `{{step.status}}` to the new fields, for example `{{step.contactId}}` instead of `{{step.body.result.contactId}}`. Update steps after a ChargeKeep trigger that read `{{trigger[0]...}}` to read the event fields directly, for example `{{trigger.id}}`. Re-enter a numeric Invoice No. if the step shows it as empty, and turn Create User and Send Welcome Email on in new Extended contact steps if you want portal users and welcome emails. Create Invoice steps built before 0.4.0 saved **Quantity** as 0 and a fixed **Date** and **Transaction Date** (the old default was taken when the step was created): set a real quantity, and clear or map the dates if each run should use the current date. Remove Add or Update Contact, Add or Update Contact (Extended) and Create Invoice from any agent's tool list and give it Create or Update Contact and Create or Update Invoice. Steps keep running on the version they were built with until you upgrade them.
+
+#### Figma 0.7.0: agents use Get File Outline instead of Get File, and the connection needs new scopes
+
+**Get File** is no longer offered as a tool to AI agents, because it returns the whole document tree, which can be many megabytes. Agents now get **Get File Outline (Agent)**, which returns the pages and top-level frames with a depth limit. Get File still works as a normal flow step.
+
+The Figma connection now asks for four new scopes: `current_user:read`, `file_versions:read`, `library_content:read` and `webhooks:write`. The trigger webhooks now check Figma's passcode.
+
+#### What you need to do
+
+If you self-host with your own Figma OAuth app, add `current_user:read`, `file_versions:read`, `library_content:read` and `webhooks:write` to that app's scopes in Figma before anyone reconnects. Figma rejects a consent request that asks for scopes the app does not declare.
+
+Reconnect existing Figma connections so they get the new scopes; a step that needs a missing scope stops with a message that says to reconnect. Re-enable flows that use a Figma trigger so their webhook gets a passcode. Agents that used Get File now get Get File Outline. Steps keep running on the version they were built with until you upgrade them.
+
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 
 When Activepieces connects to an MCP server, it no longer follows a redirect to a different host or port. That redirect now fails the connection, so headers such as API keys are never sent to a host you did not configure.
@@ -68,6 +129,16 @@ After you upgrade a Send Message step:
 - If your connection holds a hand-encoded password or virtual host (for example `%2F`), edit it to the plain value.
 
 Steps keep running on the version they were built with until you upgrade them.
+
+#### Actual Budget 0.2.0: four actions are no longer agent tools, and imports fail when nothing is imported
+
+From Actual Budget 0.2.0, **Get Accounts**, **Get Budget**, **Get Categories** and **Import Transaction** are shown only in the flow builder. AI agents and MCP clients no longer find them by name. They get **List Accounts**, **Get Budget Month**, **List Categories** and **Add Transaction** instead.
+
+Once a step is upgraded to Actual Budget 0.2.0, **Import Transaction** and **Import Transactions** fail the step when Actual imports nothing (they used to report success), and bulk import amounts must be integer cents, as a number or an integer string such as `"-1250"`.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used the four actions at their agent versions. Flow steps keep working. Steps keep running on the version they were built with until you upgrade them; when you upgrade, check that Import Transactions sends amounts in cents (for example `-1250` for -12.50), not decimals.
 
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 

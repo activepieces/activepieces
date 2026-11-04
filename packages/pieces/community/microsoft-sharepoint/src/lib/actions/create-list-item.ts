@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { microsoftSharepointCreateListItemOutputSchema } from '../output-schemas';
 
 export const createListItemAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_create_list_item',
+  outputSchema: microsoftSharepointCreateListItemOutputSchema,
   classification: 'WRITE',
   displayName: 'Create List Item',
   description: 'Creates a new item in a list.',
