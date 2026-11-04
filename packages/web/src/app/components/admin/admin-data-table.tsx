@@ -1,5 +1,5 @@
-import { isNil, SeekPage } from '@activepieces/core-utils';
-import { useEffect } from 'react';
+import { isNil } from '@activepieces/core-utils';
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -10,9 +10,8 @@ import {
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
 
+import { adminPagination } from './admin-pagination';
 import { adminSurface } from './admin-surface';
-
-const DEFAULT_PAGE_SIZE = 10;
 
 export function AdminDataTable<
   TData extends DataWithId,
@@ -26,39 +25,52 @@ export function AdminDataTable<
   DataTableProps<TData, TValue, Keys>,
   'bordered' | 'frameClassName' | 'toolbarClassName'
 > & {
-  /** Keep the pagination footer hidden while the whole list fits on one page. */
+  /** Keep the pagination footer hidden while the list has 10 rows or fewer. */
   hideFooterUntilNeeded?: boolean;
   /** Page a list that is already fully loaded, keeping the page in the URL so reloads don't reset it. */
   pageInBrowser?: boolean;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const page = pageInBrowser ? slicePage(props.page, searchParams) : props.page;
+  const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+  const page =
+    pageInBrowser && !isNil(props.page)
+      ? adminPagination.slicePage({
+          page: props.page,
+          cursor,
+          limit: searchParams.get(LIMIT_QUERY_PARAM),
+        })
+      : props.page;
 
-  const emptyPageWithPrevious =
+  // A page can come back empty, e.g. after deleting its last rows: go back a page, or to the first one.
+  const landedOnEmptyPage =
     !props.isLoading &&
     !isNil(page) &&
     page.data.length === 0 &&
-    !isNil(page.previous);
+    !isNil(cursor);
+  const previous = page?.previous ?? null;
   useEffect(() => {
-    if (!emptyPageWithPrevious || isNil(page?.previous)) {
+    if (!landedOnEmptyPage) {
       return;
     }
-    const previous = page.previous;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        next.set(CURSOR_QUERY_PARAM, previous);
+        if (isNil(previous)) {
+          next.delete(CURSOR_QUERY_PARAM);
+        } else {
+          next.set(CURSOR_QUERY_PARAM, previous);
+        }
         return next;
       },
       { replace: true },
     );
-  }, [emptyPageWithPrevious, page?.previous, setSearchParams]);
+  }, [landedOnEmptyPage, previous, setSearchParams]);
 
-  const fitsOnOnePage =
-    isNil(props.page) ||
-    (props.page.data.length <= DEFAULT_PAGE_SIZE &&
-      isNil(page?.next) &&
-      isNil(page?.previous));
+  // Keep the footer's last state while a page loads, so it doesn't blink.
+  const lastFitsOnOnePage = useRef(true);
+  if (!isNil(page)) {
+    lastFitsOnOnePage.current = adminPagination.fitsOnOnePage(page);
+  }
 
   return (
     <div
@@ -69,7 +81,8 @@ export function AdminDataTable<
         {...props}
         page={page}
         hidePagination={
-          props.hidePagination || (hideFooterUntilNeeded && fitsOnOnePage)
+          props.hidePagination ||
+          (hideFooterUntilNeeded && lastFitsOnOnePage.current)
         }
         emptyStateIcon={
           props.emptyStateIcon && (
@@ -84,33 +97,4 @@ export function AdminDataTable<
       />
     </div>
   );
-}
-
-function slicePage<TData>(
-  page: SeekPage<TData> | undefined,
-  searchParams: URLSearchParams,
-): SeekPage<TData> | undefined {
-  if (isNil(page)) {
-    return page;
-  }
-  const limit = toPositiveInt(
-    searchParams.get(LIMIT_QUERY_PARAM),
-    DEFAULT_PAGE_SIZE,
-  );
-  const requested = toPositiveInt(searchParams.get(CURSOR_QUERY_PARAM), 0);
-  const lastPageStart = Math.max(
-    0,
-    Math.floor((page.data.length - 1) / limit) * limit,
-  );
-  const offset = Math.min(requested, lastPageStart);
-  return {
-    data: page.data.slice(offset, offset + limit),
-    next: offset + limit < page.data.length ? `${offset + limit}` : null,
-    previous: offset > 0 ? `${Math.max(0, offset - limit)}` : null,
-  };
-}
-
-function toPositiveInt(value: string | null, fallback: number): number {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }

@@ -1,5 +1,5 @@
 import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/core-utils'
-import { ApEdition, INVITED_USER_STATUS, ListPlatformUsersWithInvitationsRequest, ListUsersRequestBody, PlatformUserListItem, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateUserRequestBody, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ListPlatformUsersWithInvitationsRequest, ListUsersRequestBody, PLATFORM_USER_LIST_STATUSES, PlatformUserListItem, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateUserRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -22,13 +22,15 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
+    // The admin Users page shows invitations and users as one list. Users and invitations live in two
+    // tables with separate cursors, so this endpoint merges them and pages by offset.
     app.get('/with-invitations', ListUsersWithInvitationsRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
         return platformUserListService(req.log).list({
             platformId,
-            statuses: req.query.status ?? ALL_STATUSES,
+            statuses: req.query.status ?? PLATFORM_USER_LIST_STATUSES,
             cursor: req.query.cursor,
             limit: req.query.limit ?? 10,
         })
@@ -86,8 +88,6 @@ const ListUsersRequest = {
         security: securityAccess.nonEmbedUsersOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
-
-const ALL_STATUSES = [INVITED_USER_STATUS, UserStatus.ACTIVE, UserStatus.INACTIVE]
 
 const ListUsersWithInvitationsRequest = {
     schema: {

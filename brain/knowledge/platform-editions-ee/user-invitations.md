@@ -16,6 +16,7 @@ Lets platform owners (and project members with `WRITE_INVITATION`) invite users 
 - Invitation link: JWT-signed URL (7-day default) to `<platform-domain>/invitation?token=...&email=...`.
 
 ### Gotchas
+- **The admin Users page lists only `PENDING` platform invitations.** Accepted ones stay in the table as `ACCEPTED` (they are the record that the person joined) but no longer show as pending. The page reads them through `GET /v1/users/with-invitations` (see `users.md`), which pages invitations and users as one list.
 - **Auto-accept**: SERVICE-key callers always auto-accept; project invites for already-registered users also auto-accept (added immediately, no click).
 - Project invitations require `projectMustBeTeamType` + `WRITE_INVITATION` + `projectRolesEnabled` plan flag; platform invitations require platform ownership.
 - If SMTP unconfigured, the `link` field is included in the response for the caller to surface manually; if configured, `link` is omitted and email is sent. Auto-accept + SMTP sends a "project member added" notification instead.

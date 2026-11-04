@@ -1,11 +1,13 @@
-import { isNil, SeekPage } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isNil, SeekPage } from '@activepieces/core-utils'
 import { InvitationStatus, InvitationType, INVITED_USER_STATUS, PlatformUserListItem, PlatformUserListStatus, UserInvitation, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { projectRoleService } from '../../ee/projects/project-role/project-role.service'
+import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
+import { projectRoleRepo } from '../../ee/projects/project-role/project-role.service'
 import { projectService } from '../../project/project-service'
 import { userInvitationRepo } from '../../user-invitations/user-invitation.service'
-import { userRepo, userService } from '../user-service'
+import { UserSchema } from '../user-entity'
+import { userRepo } from '../user-service'
 
 /**
  * The admin Users page shows pending invitations and users as one list:
@@ -14,7 +16,6 @@ import { userRepo, userService } from '../user-service'
  */
 export const platformUserListService = (log: FastifyBaseLogger) => ({
     async list({ platformId, statuses, cursor, limit }: ListParams): Promise<SeekPage<PlatformUserListItem>> {
-        const offset = decodeOffset(cursor)
         const userStatuses = statuses.filter((status): status is UserStatus => status !== INVITED_USER_STATUS)
         const includeInvitations = statuses.includes(INVITED_USER_STATUS)
 
@@ -32,15 +33,17 @@ export const platformUserListService = (log: FastifyBaseLogger) => ({
             includeInvitations ? invitationsQuery.getCount() : 0,
             userStatuses.length > 0 ? usersQuery.getCount() : 0,
         ])
+        const total = invitationCount + userCount
+        // A cursor past the end (e.g. a stale link) lands on the last page.
+        const offset = Math.min(decodeOffset(cursor), lastPageOffset({ total, limit }))
 
-        const invitationSkip = Math.min(offset, invitationCount)
         const invitationTake = Math.max(0, Math.min(limit, invitationCount - offset))
         const userSkip = Math.max(0, offset - invitationCount)
         const userTake = limit - invitationTake
 
         const [invitations, users] = await Promise.all([
             invitationTake > 0
-                ? invitationsQuery.orderBy('user_invitation.created', 'DESC').addOrderBy('user_invitation.id', 'DESC').skip(invitationSkip).take(invitationTake).getMany()
+                ? invitationsQuery.orderBy('user_invitation.created', 'DESC').addOrderBy('user_invitation.id', 'DESC').skip(offset).take(invitationTake).getMany()
                 : [],
             userTake > 0 && userCount > userSkip
                 ? usersQuery.orderBy('user.created', 'DESC').addOrderBy('user.id', 'DESC').skip(userSkip).take(userTake).getMany()
@@ -48,11 +51,10 @@ export const platformUserListService = (log: FastifyBaseLogger) => ({
         ])
 
         const [invitationRows, userRows] = await Promise.all([
-            withProjectRoles(invitations),
-            withMetaInformation({ log, platformId, users }),
+            toInvitationRows(invitations),
+            toUserRows({ log, platformId, users }),
         ])
 
-        const total = invitationCount + userCount
         return {
             data: [...invitationRows, ...userRows],
             next: offset + limit < total ? encodeOffset(offset + limit) : null,
@@ -61,27 +63,54 @@ export const platformUserListService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function withProjectRoles(invitations: UserInvitation[]): Promise<PlatformUserListItem[]> {
-    return Promise.all(invitations.map(async (invitation) => ({
+async function toInvitationRows(invitations: UserInvitation[]): Promise<PlatformUserListItem[]> {
+    const roleIds = invitations.map((invitation) => invitation.projectRoleId).filter((id): id is string => !isNil(id))
+    const roles = roleIds.length > 0 ? await projectRoleRepo().findBy({ id: In(roleIds) }) : []
+    return invitations.map((invitation) => ({
         id: invitation.id,
         type: 'invitation' as const,
         data: {
             ...invitation,
-            projectRole: isNil(invitation.projectRoleId) ? null : await projectRoleService.getOneOrThrowById({ id: invitation.projectRoleId }),
+            projectRole: roles.find((role) => role.id === invitation.projectRoleId) ?? null,
         },
-    })))
+    }))
 }
 
-async function withMetaInformation({ log, platformId, users }: WithMetaInformationParams): Promise<PlatformUserListItem[]> {
-    const [usersWithMeta, userIdsWithProjects] = await Promise.all([
-        Promise.all(users.map((user) => userService(log).getMetaInformation({ id: user.id }))),
+async function toUserRows({ log, platformId, users }: ToUserRowsParams): Promise<PlatformUserListItem[]> {
+    if (users.length === 0) {
+        return []
+    }
+    const [identities, userIdsWithProjects] = await Promise.all([
+        userIdentityRepository().findBy({ id: In(users.map((user) => user.identityId)) }),
         projectService(log).listUserIdsWithProjects({ platformId, userIds: users.map((user) => user.id) }),
     ])
-    return usersWithMeta.map((user) => ({
-        id: user.id,
-        type: 'user' as const,
-        data: { ...user, hasProjects: userIdsWithProjects.includes(user.id) },
-    }))
+    return users.map((user) => {
+        const identity = identities.find((candidate) => candidate.id === user.identityId)
+        assertNotNullOrUndefined(identity, 'identity')
+        return {
+            id: user.id,
+            type: 'user' as const,
+            data: {
+                id: user.id,
+                email: identity.email,
+                firstName: identity.firstName,
+                lastName: identity.lastName,
+                platformId: user.platformId,
+                platformRole: user.platformRole,
+                status: user.status,
+                externalId: user.externalId,
+                created: user.created,
+                updated: user.updated,
+                lastActiveDate: user.lastActiveDate,
+                imageUrl: identity.imageUrl,
+                hasProjects: userIdsWithProjects.includes(user.id),
+            },
+        }
+    })
+}
+
+function lastPageOffset({ total, limit }: { total: number, limit: number }): number {
+    return total === 0 ? 0 : Math.floor((total - 1) / limit) * limit
 }
 
 function decodeOffset(cursor: string | undefined): number {
@@ -100,8 +129,8 @@ type ListParams = {
     limit: number
 }
 
-type WithMetaInformationParams = {
+type ToUserRowsParams = {
     log: FastifyBaseLogger
     platformId: string
-    users: { id: string }[]
+    users: UserSchema[]
 }

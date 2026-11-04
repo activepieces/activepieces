@@ -8,7 +8,7 @@ import {
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -22,6 +22,16 @@ import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
+function useCanListPlatformUsers(): boolean {
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const { checkAccess, isFetchingProjectRole } = useAuthorization();
+  return (
+    !isNil(currentUser) &&
+    checkAccess(Permission.WRITE_INVITATION) &&
+    !isFetchingProjectRole
+  );
+}
+
 export const platformUserKeys = {
   users: ['users'] as const,
   invitations: ['platform-invitations'] as const,
@@ -29,11 +39,7 @@ export const platformUserKeys = {
 
 export const platformUserHooks = {
   useUsers: () => {
-    const { data: currentUser } = userHooks.useCurrentUser();
-    const { checkAccess, isFetchingProjectRole } = useAuthorization();
-    const hasInvitePermission = checkAccess(Permission.WRITE_INVITATION);
-    const canListUsers =
-      !isNil(currentUser) && hasInvitePermission && !isFetchingProjectRole;
+    const canListUsers = useCanListPlatformUsers();
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
       queryFn: async () => {
@@ -53,12 +59,7 @@ export const platformUserHooks = {
     const [searchParams] = useSearchParams();
     const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
     const limit = Number(searchParams.get(LIMIT_QUERY_PARAM)) || 10;
-    const { data: currentUser } = userHooks.useCurrentUser();
-    const { checkAccess, isFetchingProjectRole } = useAuthorization();
-    const canListUsers =
-      !isNil(currentUser) &&
-      checkAccess(Permission.WRITE_INVITATION) &&
-      !isFetchingProjectRole;
+    const canListUsers = useCanListPlatformUsers();
     return useQuery<SeekPage<PlatformUserListItem>, Error>({
       queryKey: [
         ...platformUserKeys.users,
@@ -73,6 +74,8 @@ export const platformUserHooks = {
           limit,
           status: statuses.length > 0 ? statuses : undefined,
         }),
+      // Keep the current page on screen while the next one loads.
+      placeholderData: keepPreviousData,
       enabled: canListUsers,
     });
   },

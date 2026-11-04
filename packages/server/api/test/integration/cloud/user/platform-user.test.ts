@@ -280,6 +280,53 @@ describe('Enterprise User API', () => {
             expect(deactivatedOnly.data.map((row: { id: string }) => row.id)).toEqual([deactivatedUser.id])
             expect(activeAndInvited.data).toHaveLength(4)
         })
+
+        it('Never returns users or invitations from another platform', async () => {
+            const { token } = await setup()
+            const other = await setup()
+
+            const page = await list(token, {})
+            const otherIds = [other.mockOwner.id, other.deactivatedUser.id, ...other.invitations.map((invitation) => invitation.id)]
+
+            expect(page.data).toHaveLength(5)
+            expect(page.data.some((row: { id: string }) => otherIds.includes(row.id))).toBe(false)
+        })
+
+        it('Lands on the first page for a junk cursor and on the last page for one past the end', async () => {
+            const { token } = await setup()
+
+            const junk = await list(token, { limit: '2', cursor: 'not-a-number' })
+            const pastEnd = await list(token, { limit: '2', cursor: '1000' })
+
+            expect(junk.previous).toBeNull()
+            expect(junk.data).toHaveLength(2)
+            expect(pastEnd.data).toHaveLength(1)
+            expect(pastEnd.next).toBeNull()
+            expect(pastEnd.previous).toBe('2')
+        })
+
+        it('Rejects a page size outside 1 to 100', async () => {
+            const { token } = await setup()
+            for (const limit of ['0', '101']) {
+                const response = await app?.inject({
+                    method: 'GET',
+                    url: '/api/v1/users/with-invitations',
+                    query: { limit },
+                    headers: { authorization: `Bearer ${token}` },
+                })
+                expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            }
+        })
+
+        it('Rejects service accounts', async () => {
+            const { mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/users/with-invitations',
+                headers: { authorization: `Bearer ${mockApiKey.value}` },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
     })
 
     describe('Update user endpoint', () => {

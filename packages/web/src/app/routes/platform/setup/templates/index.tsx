@@ -1,9 +1,9 @@
 import { Template, TemplateType } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { FileText, Pencil, Trash, Tag, Clock, Puzzle } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -45,20 +45,16 @@ const PlatformTemplatesPage = () => {
   const [searchParams] = useSearchParams();
   const { platform } = platformHooks.useCurrentPlatform();
   const isSample = !platform.plan.manageTemplatesEnabled;
+  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
+  const limit = Number(searchParams.get(LIMIT_QUERY_PARAM)) || 10;
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['templates', searchParams.toString()],
+    queryKey: ['templates', cursor, limit],
     staleTime: 0,
-    queryFn: () => {
-      const limit = searchParams.get(LIMIT_QUERY_PARAM);
-      return templatesApi.list({
-        type: TemplateType.CUSTOM,
-        cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
-        limit: limit ? parseInt(limit, 10) : 10,
-      });
-    },
+    // Keep the current page on screen while the next one loads.
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      templatesApi.list({ type: TemplateType.CUSTOM, cursor, limit }),
   });
-
-  const [selectedRows, setSelectedRows] = useState<Template[]>([]);
 
   const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates({
     onSuccess: () => {
@@ -82,41 +78,15 @@ const PlatformTemplatesPage = () => {
             table.getRowModel().rows.length > 0 &&
             table.getRowModel().rows.every((row) => row.getIsSelected())
           }
-          onCheckedChange={(value) => {
-            table.toggleAllRowsSelected(!!value);
-            const allRows = table.getRowModel().rows.map((row) => row.original);
-            setSelectedRows(value ? allRows : []);
-          }}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
         />
       ),
-      cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-
-        return (
-          <Checkbox
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              let newSelectedRows = [...selectedRows];
-              if (value) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
-        );
-      },
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+        />
+      ),
     },
     {
       accessorKey: 'name',
@@ -168,7 +138,7 @@ const PlatformTemplatesPage = () => {
     () => [
       {
         render: (
-          _selectedRows: RowDataWithActions<Template>[],
+          selectedRows: RowDataWithActions<Template>[],
           resetSelection: () => void,
         ) => (
           <div onClick={(e) => e.stopPropagation()}>
@@ -184,7 +154,6 @@ const PlatformTemplatesPage = () => {
                   selectedRows.map((row) => row.id),
                 );
                 resetSelection();
-                setSelectedRows([]);
               }}
             >
               {selectedRows.length > 0 && (
@@ -203,7 +172,7 @@ const PlatformTemplatesPage = () => {
         ),
       },
     ],
-    [selectedRows, bulkDeleteMutation],
+    [bulkDeleteMutation],
   );
 
   return (

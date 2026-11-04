@@ -6,8 +6,10 @@ import { UserInvitation } from '../invitations'
 // The platform admin Users page lists pending invitations and users as one list.
 export const INVITED_USER_STATUS = 'INVITED'
 
-export const PlatformUserListStatus = z.union([z.nativeEnum(UserStatus), z.literal(INVITED_USER_STATUS)])
+export const PlatformUserListStatus = z.union([z.enum(UserStatus), z.literal(INVITED_USER_STATUS)])
 export type PlatformUserListStatus = z.infer<typeof PlatformUserListStatus>
+
+export const PLATFORM_USER_LIST_STATUSES: PlatformUserListStatus[] = [INVITED_USER_STATUS, UserStatus.ACTIVE, UserStatus.INACTIVE]
 
 export const ListPlatformUsersWithInvitationsRequest = z.object({
     cursor: z.string().optional(),

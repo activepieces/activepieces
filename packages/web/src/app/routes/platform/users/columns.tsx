@@ -1,4 +1,9 @@
-import { PlatformRole, UserStatus } from '@activepieces/shared';
+import {
+  INVITED_USER_STATUS,
+  PlatformRole,
+  PlatformUserListStatus,
+  UserStatus,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -193,10 +198,6 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
   },
 ];
 
-export function getUserRowStatus(row: UserRowData): UserRowStatus {
+export function getUserRowStatus(row: UserRowData): PlatformUserListStatus {
   return row.type === 'invitation' ? INVITED_USER_STATUS : row.data.status;
 }
-
-export const INVITED_USER_STATUS = 'INVITED';
-
-export type UserRowStatus = UserStatus | typeof INVITED_USER_STATUS;

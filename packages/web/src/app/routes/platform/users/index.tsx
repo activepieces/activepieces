@@ -1,7 +1,8 @@
 import {
-  UserInvitation,
+  INVITED_USER_STATUS,
+  PlatformUserListItem,
+  PlatformUserListStatus,
   UserStatus,
-  UserWithMetaInformation,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -29,23 +30,9 @@ import {
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserActions } from './actions/user-actions';
-import {
-  createUsersTableColumns,
-  INVITED_USER_STATUS,
-  UserRowStatus,
-} from './columns';
+import { createUsersTableColumns } from './columns';
 
-export type UserRowData =
-  | {
-      id: string;
-      type: 'user';
-      data: UserWithMetaInformation;
-    }
-  | {
-      id: string;
-      type: 'invitation';
-      data: UserInvitation;
-    };
+export type UserRowData = PlatformUserListItem;
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -53,12 +40,14 @@ export default function UsersPage() {
     useSeatLimitGuard();
 
   const [searchParams] = useSearchParams();
-  const selectedStatuses = dataTableFilterUtils.getSelectedValues({
-    searchParams,
-    key: STATUS_FILTER_KEY,
-    allowedValues: STATUS_FILTER_VALUES,
-    defaultValues: DEFAULT_STATUS_FILTER,
-  }) as UserRowStatus[];
+  const selectedStatuses = dataTableFilterUtils
+    .getSelectedValues({
+      searchParams,
+      key: STATUS_FILTER_KEY,
+      allowedValues: STATUS_FILTER_VALUES,
+      defaultValues: DEFAULT_STATUS_FILTER,
+    })
+    .filter(isPlatformUserListStatus);
   const isFiltered =
     selectedStatuses.length > 0 &&
     selectedStatuses.length < STATUS_FILTER_VALUES.length;
@@ -195,13 +184,19 @@ export default function UsersPage() {
 
 const STATUS_FILTER_KEY = 'status';
 
-const STATUS_FILTER_VALUES: UserRowStatus[] = [
+const STATUS_FILTER_VALUES: PlatformUserListStatus[] = [
   UserStatus.ACTIVE,
   UserStatus.INACTIVE,
   INVITED_USER_STATUS,
 ];
 
-const DEFAULT_STATUS_FILTER: UserRowStatus[] = [
+const DEFAULT_STATUS_FILTER: PlatformUserListStatus[] = [
   UserStatus.ACTIVE,
   INVITED_USER_STATUS,
 ];
+
+function isPlatformUserListStatus(
+  value: string,
+): value is PlatformUserListStatus {
+  return PlatformUserListStatus.safeParse(value).success;
+}

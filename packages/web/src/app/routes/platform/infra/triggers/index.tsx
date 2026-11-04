@@ -69,8 +69,9 @@ const percentageForLastXDays = (
     (acc, day) => acc + (pieceData.dailyStats[day]?.failure ?? 0),
     0,
   );
-  const percentage =
-    successRuns > 0 ? (successRuns / (successRuns + failureRuns)) * 100 : 100;
+  const totalRuns = successRuns + failureRuns;
+  // No runs counts as healthy; runs that all failed count as 0%.
+  const percentage = totalRuns > 0 ? (successRuns / totalRuns) * 100 : 100;
   return Number(percentage.toFixed(1));
 };
 

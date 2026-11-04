@@ -38,8 +38,8 @@ export const ListFlowTemplatesRequestQuery = z.object({
     tags: OptionalArrayFromQuery(z.string()),
     search: z.string().optional(),
     category: z.string().optional(),
-    cursor: z.string().optional(),
-    limit: z.coerce.number().optional(),
+    cursor: z.string().optional().describe('Paging cursor. Only used when type is CUSTOM.'),
+    limit: z.coerce.number().int().min(1).max(100).optional().describe('Page size, 1 to 100. Only used when type is CUSTOM.'),
 })
 export type ListFlowTemplatesRequestQuery = z.infer<typeof ListFlowTemplatesRequestQuery>
 

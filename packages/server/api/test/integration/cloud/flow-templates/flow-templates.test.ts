@@ -58,10 +58,9 @@ describe('Templates', () => {
         it('should page custom templates when a limit is given', async () => {
             const { mockPlatform, mockUser } =
                 await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
-            await db.save('template', [
-                createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM }),
-                createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM }),
-            ])
+            const older = createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM, created: '2020-01-01T00:00:00.000Z' })
+            const newest = createMockTemplate({ platformId: mockPlatform.id, type: TemplateType.CUSTOM, created: '2030-01-01T00:00:00.000Z' })
+            await db.save('template', [older, newest])
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
@@ -77,6 +76,7 @@ describe('Templates', () => {
             const firstBody = firstPage?.json()
             expect(firstPage?.statusCode).toBe(StatusCodes.OK)
             expect(firstBody.data).toHaveLength(2)
+            expect(firstBody.data[0].id).toBe(newest.id)
             expect(firstBody.next).not.toBeNull()
 
             const secondPage = await app?.inject({
@@ -88,7 +88,18 @@ describe('Templates', () => {
             const secondBody = secondPage?.json()
             expect(secondPage?.statusCode).toBe(StatusCodes.OK)
             expect(secondBody.data).toHaveLength(1)
+            expect(secondBody.data[0].id).toBe(older.id)
             expect(secondBody.next).toBeNull()
+            const firstIds = firstBody.data.map((row: { id: string }) => row.id)
+            expect(firstIds).not.toContain(secondBody.data[0].id)
+
+            const backToFirst = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/templates',
+                headers: { authorization: `Bearer ${testToken}` },
+                query: { type: TemplateType.CUSTOM, limit: '2', cursor: secondBody.previous },
+            })
+            expect(backToFirst?.json().data.map((row: { id: string }) => row.id)).toEqual(firstIds)
 
             const unpaged = await app?.inject({
                 method: 'GET',
@@ -97,6 +108,25 @@ describe('Templates', () => {
                 query: { type: TemplateType.CUSTOM },
             })
             expect(unpaged?.json().data).toHaveLength(3)
+        })
+
+        it('should reject a page size outside 1 to 100', async () => {
+            const { mockPlatform, mockUser } =
+                await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
+            })
+            for (const limit of ['0', '-1', '101']) {
+                const response = await app?.inject({
+                    method: 'GET',
+                    url: '/api/v1/templates',
+                    headers: { authorization: `Bearer ${testToken}` },
+                    query: { type: TemplateType.CUSTOM, limit },
+                })
+                expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            }
         })
 
         it('should list cloud platform template for anonymous users', async () => {
