@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { mkdir, open, readFile, rename, rm, stat } from 'node:fs/promises'
+import { mkdir, open, readFile, rename, rm, stat, utimes } from 'node:fs/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { join } from 'path'
 import { isNil, tryCatch } from '@activepieces/core-utils'
@@ -7,6 +7,7 @@ import { ApLock } from '@activepieces/server-utils'
 
 const POLL_INTERVAL_MS = 500
 const STALE_LOCK_MS = 5 * 60 * 1000
+const HEARTBEAT_INTERVAL_MS = 60 * 1000
 
 export const diskLock = (locksPath: string) => ({
     acquire: async (key: string, timeoutMs?: number): Promise<ApLock> => {
@@ -21,8 +22,16 @@ export const diskLock = (locksPath: string) => ({
             }
             await sleep(POLL_INTERVAL_MS)
         }
+        const heartbeat = setInterval(() => {
+            const now = new Date()
+            utimes(lockPath, now, now).catch(() => undefined)
+        }, HEARTBEAT_INTERVAL_MS)
+        heartbeat.unref()
         return {
-            release: async () => releaseIfOwned({ lockPath, token }),
+            release: async () => {
+                clearInterval(heartbeat)
+                await releaseIfOwned({ lockPath, token })
+            },
         }
     },
     runExclusive: async <T>({ key, fn, timeoutMs }: RunExclusiveParams<T>): Promise<T> => {
