@@ -26,12 +26,11 @@ export const codeCacheEviction = {
         basePath,
         log,
         activeWindowMs = ACTION_RUN_CACHE_ACTIVE_WINDOW_MS,
-        maxUsedPercent = DISK_EVICTION_THRESHOLD_PERCENT,
         getUsedPercent = () => defaultGetUsedPercent({ basePath, log }),
     }: SweepParams): Promise<void> {
         const locks = evictionLocks(basePath)
         await sweepActionRuns({ basePath, log, activeWindowMs, locks })
-        await sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPercent, getUsedPercent, locks })
+        await sweepOnDiskPressure({ basePath, log, activeWindowMs, getUsedPercent, locks })
     },
 
     async markUsed(dirPath: string): Promise<void> {
@@ -104,9 +103,9 @@ async function sweepActionRuns({ basePath, log, activeWindowMs, locks }: ActionR
     log.info(summary, 'Swept action-run code cache')
 }
 
-async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPercent, getUsedPercent, locks }: DiskPressureSweepParams): Promise<void> {
+async function sweepOnDiskPressure({ basePath, log, activeWindowMs, getUsedPercent, locks }: DiskPressureSweepParams): Promise<void> {
     const usedPercentBefore = await getUsedPercent()
-    if (usedPercentBefore < maxUsedPercent) {
+    if (usedPercentBefore < DISK_EVICTION_THRESHOLD_PERCENT) {
         return
     }
 
@@ -143,7 +142,7 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
             if (index > 0) {
                 lastUsedPercent = await getUsedPercent()
             }
-            if (lastUsedPercent < maxUsedPercent) {
+            if (lastUsedPercent < DISK_EVICTION_THRESHOLD_PERCENT) {
                 break
             }
         }
@@ -153,7 +152,7 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
         skippedCount += outcome === 'skipped' ? 1 : 0
     }
 
-    const usedPercentAfter = lastUsedPercent >= maxUsedPercent ? await getUsedPercent() : lastUsedPercent
+    const usedPercentAfter = lastUsedPercent >= DISK_EVICTION_THRESHOLD_PERCENT ? await getUsedPercent() : lastUsedPercent
     const summary = {
         evictedCount,
         failedCount,
@@ -161,7 +160,7 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
         candidateCount: candidates.length,
         usedPercentBefore,
         usedPercentAfter,
-        maxUsedPercent,
+        maxUsedPercent: DISK_EVICTION_THRESHOLD_PERCENT,
     }
     if (failedCount > 0) {
         log.warn(summary, 'Code cache disk-usage eviction could not remove every candidate')
@@ -171,7 +170,7 @@ async function sweepOnDiskPressure({ basePath, log, activeWindowMs, maxUsedPerce
         log.info(summary, 'Evicted code cache directories to relieve disk pressure')
         return
     }
-    if (usedPercentAfter >= maxUsedPercent) {
+    if (usedPercentAfter >= DISK_EVICTION_THRESHOLD_PERCENT) {
         if (skippedCount > 0) {
             log.info(summary, 'Every code cache eviction candidate was in use during the sweep, retrying next cycle')
             return
@@ -336,7 +335,6 @@ type SweepParams = {
     basePath: string
     log: ApLogger
     activeWindowMs?: number
-    maxUsedPercent?: number
     getUsedPercent?: () => Promise<number>
 }
 
@@ -357,7 +355,6 @@ type DiskPressureSweepParams = {
     basePath: string
     log: ApLogger
     activeWindowMs: number
-    maxUsedPercent: number
     getUsedPercent: () => Promise<number>
     locks: CacheLocks
 }
