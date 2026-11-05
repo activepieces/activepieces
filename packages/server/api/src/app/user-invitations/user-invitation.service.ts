@@ -1,7 +1,8 @@
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { ApEdition, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ApEdition, DEFAULT_BRAND_LOGOS, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationPreview, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { JsonWebTokenError } from 'jsonwebtoken'
 import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -19,6 +20,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { ProjectEntity } from '../project/project-entity'
 import { userService } from '../user/user-service'
+import { resumePageHooks } from '../waitpoints/resume-page-hooks'
 import { UserInvitationEntity } from './user-invitation.entity'
 
 export const userInvitationRepo = repoFactory(UserInvitationEntity)
@@ -45,6 +47,30 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             })
         }
         return invitation
+    },
+    async getPreviewByInvitationToken(invitationToken: string): Promise<UserInvitationPreview> {
+        const { data: invitation, error } = await tryCatch(() => this.getOneByInvitationTokenOrThrow(invitationToken))
+        if (error instanceof JsonWebTokenError) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'UserInvitation',
+                },
+            })
+        }
+        if (isNil(invitation)) {
+            throw error
+        }
+        const platform = await platformService(log).getOneOrThrow(invitation.platformId)
+        const theme = await resumePageHooks.get(log).getTheme({ platformId: invitation.platformId })
+        const memberCount = await userService(log).countActiveByPlatformId({ platformId: invitation.platformId })
+        return {
+            email: invitation.email,
+            platformName: platform.name,
+            platformLogoUrl: theme.logos.logoIconUrl === DEFAULT_BRAND_LOGOS.logoIconUrl ? null : theme.logos.logoIconUrl,
+            memberCount,
+            status: invitation.status,
+        }
     },
     async provisionUserInvitation({ email }: ProvisionUserInvitationParams): Promise<void> {
         const invitations = await repo().createQueryBuilder('user_invitation')

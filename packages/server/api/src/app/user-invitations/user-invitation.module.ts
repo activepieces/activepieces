@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, RoleType, SeekPage } from '@activepieces/core-utils'
-import { ApplicationEventName, InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationEvent, UserInvitationWithLink } from '@activepieces/shared'
+import { ApplicationEventName, InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationEvent, UserInvitationPreview, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -114,6 +114,11 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             limit: request.query.limit ?? 10,
         })
         await reply.status(StatusCodes.OK).send(invitations)
+    })
+
+    app.get('/preview', PreviewUserInvitationRequestParams, async (request, reply) => {
+        const preview = await userInvitationsService(request.log).getPreviewByInvitationToken(request.query.token)
+        await reply.status(StatusCodes.OK).send(preview)
     })
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
@@ -340,6 +345,20 @@ const ListUserInvitationsRequestParams = {
         querystring: ListUserInvitationsRequest,
         response: {
             [StatusCodes.OK]: SeekPage(UserInvitation),
+        },
+    },
+}
+
+const PreviewUserInvitationRequestParams = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        querystring: z.object({
+            token: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: UserInvitationPreview,
         },
     },
 }
