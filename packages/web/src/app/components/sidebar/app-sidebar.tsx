@@ -1,7 +1,7 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronsUpDown, PanelLeftClose, Search } from 'lucide-react';
-import React, { ComponentType, useRef } from 'react';
+import React, { ComponentType, memo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -72,7 +72,7 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
       <TooltipProvider delayDuration={300}>
         <MobileSidebarBar />
         <Sidebar collapsible="icon" className="border-r-0">
-          {mode === 'app' ? <AppHeader /> : <PlatformHeader />}
+          {mode === 'app' ? <MemoAppHeader /> : <MemoPlatformHeader />}
           <SidebarContent
             className={cn(
               sidebarStyles.scrollArea,
@@ -80,15 +80,15 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
               isPlatform && sidebarStyles.fadeBottom,
             )}
           >
-            {mode === 'app' ? <AppNav /> : <PlatformNav />}
+            {mode === 'app' ? <MemoAppNav /> : <MemoPlatformNav />}
           </SidebarContent>
           <SidebarFooter className="gap-1 overflow-hidden">
             {mode === 'app' ? (
-              <AppFooterExtras />
+              <MemoAppFooterExtras />
             ) : (
               <SidebarSeparator className="mx-2 my-1" />
             )}
-            <SidebarUser />
+            <MemoSidebarUser />
           </SidebarFooter>
         </Sidebar>
       </TooltipProvider>
@@ -338,6 +338,16 @@ function HeaderIconButton({
     </Tooltip>
   );
 }
+
+// The sidebar re-renders whenever the rail opens or closes. These sections
+// take no props, so memo keeps that render to the frame itself; the parts that
+// read the rail state update on their own, after the move has started.
+const MemoAppHeader = memo(AppHeader);
+const MemoPlatformHeader = memo(PlatformHeader);
+const MemoAppNav = memo(AppNav);
+const MemoPlatformNav = memo(PlatformNav);
+const MemoAppFooterExtras = memo(AppFooterExtras);
+const MemoSidebarUser = memo(SidebarUser);
 
 const BRAND_BUTTON =
   'px-1.5 pr-18 font-medium group-data-[collapsible=icon]:pr-1.5';

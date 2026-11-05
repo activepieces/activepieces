@@ -26,7 +26,8 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 export function ChatNotch({ className }: { className?: string }) {
   const hidden = useChatPanelHidden();
-  const { open, setOpen } = useChatPanel();
+  const open = useChatPanel((s) => s.open);
+  const setOpen = useChatPanel((s) => s.setOpen);
   const isHidden = hidden || open;
   const progress = useMotionValue(isHidden ? 0 : 1);
 
