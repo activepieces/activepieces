@@ -86,7 +86,7 @@ export const delayForAction = createAction({
       const futureTime = new Date(currentTime.getTime() + delayInMs);
       const waitpoint = await ctx.run.createWaitpoint({
         type: 'DELAY',
-        resumeDateTime: futureTime.toUTCString(),
+        resumeDateTime: futureTime.toISOString(),
       });
       ctx.run.waitForWaitpoint(waitpoint.id);
       return {};
