@@ -10,10 +10,12 @@ import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection, GraphError } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
+import { microsoftSharepointFindFileOutputSchema } from '../output-schemas';
 
 export const findFileAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_find_file',
+  outputSchema: microsoftSharepointFindFileOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find File',
   description: 'Look up a file by its name or path.',

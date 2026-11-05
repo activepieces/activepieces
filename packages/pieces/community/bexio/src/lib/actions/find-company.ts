@@ -1,6 +1,7 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const findCompanyAction = createAction({
   auth: bexioAuth,
@@ -8,7 +9,8 @@ export const findCompanyAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find Company',
   description: 'Search for company contacts using various criteria',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.contactArrayOutputSchema,
   aiMetadata: { description: 'Searches Bexio contacts for companies, matching one or more field criteria (name, number, email, city, country, etc.) with operators such as contains, equals, or comparison; results are automatically filtered to company-type contacts. Use to locate a company before referencing or updating it; pick Find Country/Find Product/Find Account for those object types. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({

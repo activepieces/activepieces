@@ -131,17 +131,21 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
         }
 
-        const storedMetadata = isNil(request.metadata)
-            ? undefined
-            : (await appConnectionsRepo().findOneByOrFail(filter)).metadata
-        const storedAccountIdentifier = storedMetadata?.['accountIdentifier']
+        const existingConnection = await appConnectionsRepo().findOneBy(filter)
+        if (isNil(existingConnection)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'AppConnection', entityId: id },
+            })
+        }
+        const storedAccountIdentifier = existingConnection.metadata?.['accountIdentifier']
 
         await appConnectionsRepo().update(filter, {
             displayName: request.displayName,
             ...spreadIfDefined('projectIds', request.projectIds),
             ...(isNil(request.metadata) ? {} : spreadIfDefined('metadata', mergeConnectionMetadata({
                 requestMetadata: request.metadata,
-                existingMetadata: storedMetadata,
+                existingMetadata: existingConnection.metadata,
                 accountIdentifier: typeof storedAccountIdentifier === 'string' ? storedAccountIdentifier : undefined,
             }))),
             ...spreadIfDefined('preSelectForNewProjects', request.preSelectForNewProjects),
