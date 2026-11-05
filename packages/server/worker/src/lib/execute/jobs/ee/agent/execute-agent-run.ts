@@ -793,6 +793,10 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             selectedConnectionByPiece.set(pieceName, externalId)
             return { externalId, label: typeof label === 'string' ? label : externalId }
         },
+        pieceNeedsNoConnection: async (pieceName) => {
+            const discovered = await executeCrossProjectTool('ap_discover_action_auth', { pieceName })
+            return isObject(discovered) && discovered['noAuthRequired'] === true
+        },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)
             await tryCatch(() => ctx.apiClient.executeAgentTool({

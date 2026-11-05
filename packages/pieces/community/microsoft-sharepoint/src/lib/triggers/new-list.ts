@@ -11,6 +11,7 @@ import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { List } from '@microsoft/microsoft-graph-types';
+import { newListOutputSchema } from '../output-schemas';
 type Props = {
 	siteId: string;
 };
@@ -67,6 +68,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 export const newListTrigger = createTrigger({
 	auth: microsoftSharePointAuth,
 	name: 'new_list',
+	outputSchema: newListOutputSchema,
 	classification: 'READ',
 	displayName: 'New List',
 	description: 'Triggers when a new list is created in a site.',

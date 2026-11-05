@@ -260,6 +260,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Verzoek",
+  "Data to send": "Gegevens om te verzenden",
   "New Post": "Nieuw bericht",
   "New Member": "Nieuw lid",
   "New Reply": "New Reply",

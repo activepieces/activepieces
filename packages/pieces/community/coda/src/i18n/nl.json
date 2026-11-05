@@ -232,6 +232,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Row Created": "Nieuwe rij gemaakt",
   "Triggers when a new row is added to the selected table.": "Triggert wanneer een nieuwe rij wordt toegevoegd aan de geselecteerde tabel."
 }

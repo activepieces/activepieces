@@ -1,66 +1,47 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { chargekeepCommon } from '../common/common';
 import { chargekeepAuth } from '../auth';
+import { chargekeepOutputSchemas } from '../common/output-schemas';
+import { createChargekeepWebhookHooks, deliveryKeys } from './helpers';
+
+const hooks = createChargekeepWebhookHooks({ eventName: 'Subscription.CreatedOrUpdated', storeKey: '_new_subscription_trigger', deliveryKey: deliveryKeys.bySubscriptionChange });
 
 export const newSubscription = createTrigger({
   auth: chargekeepAuth,
   name: 'new_subscription',
   classification: 'READ',
   displayName: 'New Subscription',
-  description: 'Triggers when a new subscription is created',
+  description: 'Triggers when a subscription is created or updated',
   aiMetadata: {
-    description: 'Fires when a subscription is created or updated in the ChargeKeep/Sperse CRM, emitting the subscription details (plan name, dates, amount, frequency, and status) for the associated contact.',
+    description: 'Fires when a subscription is created or updated in the ChargeKeep/Sperse CRM, emitting one item per changed subscription (subscription id, product name, dates, amount, frequency, statusId, contact id/name/email). Replacing a subscription emits two items: the old one with statusId U and the new one with statusId A.',
   },
   props: {},
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: chargekeepOutputSchemas.subscriptionTrigger,
   sampleData: {
     eventType: 'Subscription.CreatedOrUpdated',
     contactId: 3994,
-    fullname: 'Frank Micheal',
-    email: 'tray@sperse.com',
-    id: '536778',
+    contactFullName: 'Frank Micheal',
+    contactEmail: 'frank@example.com',
+    contactXrefs: [],
+    id: 536778,
     name: 'Subscription_Name',
     startDate: '2024-06-30T09:29:43.6271352Z',
     endDate: '2025-06-30T09:29:43.6271352Z',
     amount: 100,
     frequency: 'Annual',
-    trialDayCount: '4',
-    gracePeriodCount: '10',
+    trialDayCount: null,
+    gracePeriodDayCount: null,
     statusId: 'A',
-    cancelationReason: '',
+    cancelationReason: null,
     eventTime: '2024-09-06T00:29:07',
   },
   async onEnable(context) {
-    const webhookId = await chargekeepCommon.subscribeWebhook(
-      'Subscription.CreatedOrUpdated',
-      context.auth.props.base_url,
-      context.auth.props.api_key,
-      context.webhookUrl
-    );
-
-    await context.store?.put<WebhookInformation>('_new_subscription_trigger', {
-      webhookId: webhookId,
-    });
+    await hooks.onEnable({ auth: context.auth, webhookUrl: context.webhookUrl, store: context.store });
   },
-
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_new_subscription_trigger'
-    );
-
-    if (response !== null && response !== undefined) {
-      await chargekeepCommon.unsubscribeWebhook(
-        context.auth.props.base_url,
-        context.auth.props.api_key,
-        response.webhookId
-      );
-    }
+    await hooks.onDisable({ auth: context.auth, store: context.store });
   },
   async run(context) {
-    return [context.payload.body];
+    return hooks.run(context);
   },
 });
-
-interface WebhookInformation {
-  webhookId: number;
-}
