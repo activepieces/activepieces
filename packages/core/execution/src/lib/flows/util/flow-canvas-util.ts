@@ -25,7 +25,7 @@ function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranc
     let withChildMaxX = FLOW_CANVAS_STEP_WIDTH
     let withChildHeight = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE
 
-    if (isContainerStep(step)) {
+    if (isLoopOrBatchStep(step)) {
         const childBoundingBox = getFlowBoundingBox(step.firstLoopAction, true)
         const childWidth = childBoundingBox.maxX - childBoundingBox.minX
         const childLeft = -childBoundingBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
@@ -74,7 +74,7 @@ function buildPositions({ step, offsetX, offsetY, positions }: {
 
     positions.set(step.name, { x: offsetX + FLOW_CANVAS_STEP_WIDTH / 2, y: offsetY })
 
-    if (isContainerStep(step)) {
+    if (isLoopOrBatchStep(step)) {
         const childBoundingBox = getFlowBoundingBox(step.firstLoopAction, true)
         const childLeft = -childBoundingBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
         const childRight = childBoundingBox.maxX - FLOW_CANVAS_STEP_WIDTH / 2
@@ -169,7 +169,7 @@ function positionBranchedChildren({ children, offsetX, offsetY, positions }: {
     return FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
 }
 
-function isContainerStep(step: Step | FlowAction): step is LoopOnItemsAction | ProcessInBatchesAction {
+function isLoopOrBatchStep(step: Step | FlowAction): step is LoopOnItemsAction | ProcessInBatchesAction {
     return step.type === FlowActionType.LOOP_ON_ITEMS || step.type === FlowActionType.PROCESS_IN_BATCHES
 }
 
@@ -202,7 +202,7 @@ export const flowCanvasUtils = {
         buildPositions({ step: trigger, offsetX: 0, offsetY: 0, positions })
         return positions
     },
-    isContainerStep,
+    isLoopOrBatchStep,
     getContinueOnFailureBranchPair,
     getStepBranchRelativeTo,
     computeRouterChildOffsets,

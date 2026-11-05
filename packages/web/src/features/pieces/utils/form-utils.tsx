@@ -24,6 +24,7 @@ import {
   formErrors,
   LoopOnItemsActionSchema,
   ProcessInBatchesActionSchema,
+  ProcessInBatchesActionSettings,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
@@ -600,9 +601,11 @@ export const formUtils = {
             settings: z.object({
               items: z.string().min(1, formErrors.required),
               batchSize: z
-                .number({ message: 'batchSizeMustBeAWholeNumber' })
-                .int({ message: 'batchSizeMustBeAWholeNumber' })
-                .min(1, { message: 'batchSizeMustBeAtLeastOne' }),
+                .number({ error: formErrors.batchSizeMustBeAWholeNumber })
+                .int(formErrors.batchSizeMustBeAWholeNumber)
+                .min(1, formErrors.batchSizeMustBeAtLeastOne),
+              timeoutSeconds:
+                ProcessInBatchesActionSettings.shape.timeoutSeconds,
             }),
           }).shape,
         );
