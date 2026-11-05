@@ -202,7 +202,16 @@ export function DialogFrame({
   );
 }
 
-export function TrialStarted({ onClose }: { onClose: () => void }) {
+export function TrialStarted({
+  endsAt,
+  onClose,
+}: {
+  endsAt: string | null | undefined;
+  onClose: () => void;
+}) {
+  const endDate = isNil(endsAt)
+    ? dayjs().add(SELF_SERVE_TRIAL_DAYS, 'day')
+    : dayjs(endsAt);
   const shortcuts = [
     { label: t('Set up single sign-on'), to: '/platform/sso' },
     { label: t('Review audit logs'), to: '/platform/audit-log' },
@@ -214,13 +223,11 @@ export function TrialStarted({ onClose }: { onClose: () => void }) {
       description={t(
         'Every Enterprise plan feature is unlocked until {date}.',
         {
-          date: selfServeTrialTime.formatDate(
-            dayjs().add(SELF_SERVE_TRIAL_DAYS, 'day'),
-          ),
+          date: selfServeTrialTime.formatDate(endDate),
         },
       )}
       mainTitle={t('Your trial')}
-      main={<TrialTimeline started={true} />}
+      main={<TrialTimeline started={true} endsAt={endsAt} />}
       asideTitle={t('Good first steps')}
       aside={
         <div className="flex flex-col divide-y border-y">
