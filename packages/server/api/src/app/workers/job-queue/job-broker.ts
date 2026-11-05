@@ -233,7 +233,7 @@ async function failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueNam
         const { error: publishError } = await tryCatch(() => engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
             status: EngineResponseStatus.INTERNAL_ERROR,
             response: undefined,
-            error: reason,
+            error: 'Internal error',
         }))
         if (publishError) {
             log.error({ job: { id: jobId }, error: String(publishError) }, '[jobBroker#failRepeatedlyReclaimedJob] Failed to notify waiting caller of repeatedly-reclaimed job')
@@ -275,7 +275,7 @@ function buildFailedReason(errorMessage: string, logs?: string): string {
     return `${errorMessage}\n${logs}`
 }
 
-export { tryDequeue }
+export { tryDequeue, MAX_RECLAIM_ATTEMPTS }
 
 export const jobBroker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
