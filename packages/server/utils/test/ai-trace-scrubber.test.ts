@@ -12,7 +12,7 @@ describe('aiTraceScrubber', () => {
             credentials: { user: 'hidden-5' },
             rows: [{ email: 'ops@acme.test', apiKey: 'hidden-6' }],
         }
-        const toolResult = { content: [{ type: 'text', text: JSON.stringify(pieceOutput) }], structuredContent: pieceOutput, usage: { inputTokens: 120 } }
+        const toolResult = { content: [{ type: 'text', text: JSON.stringify(pieceOutput) }], structuredContent: pieceOutput, usage: { inputTokens: 120, inputTokenDetails: { cacheReadTokens: 3 } } }
 
         const span = exportOneSpan((tracer) => {
             const s = tracer.startSpan('execute_tool ap_run_action')
@@ -24,6 +24,7 @@ describe('aiTraceScrubber', () => {
         expect(result).not.toMatch(/hidden-/)
         const parsed = JSON.parse(result)
         expect(parsed.usage.inputTokens).toBe(120)
+        expect(parsed.usage.inputTokenDetails).toBe('[REDACTED]')
         expect(parsed.structuredContent.profile.name).toBe('Acme')
         expect(parsed.structuredContent.rows[0].email).toBe('ops@acme.test')
         expect(JSON.parse(parsed.content[0].text).token).toBe('[REDACTED]')

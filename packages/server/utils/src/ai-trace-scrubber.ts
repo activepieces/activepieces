@@ -11,10 +11,11 @@ function wrapExporter({ exporter }: { exporter: SpanExporter }): SpanExporter {
 }
 
 function scrubSpan({ span }: { span: ReadableSpan }): ReadableSpan {
+    const context = span.spanContext()
     return {
         name: span.name,
         kind: span.kind,
-        spanContext: () => span.spanContext(),
+        spanContext: () => context,
         parentSpanContext: span.parentSpanContext,
         startTime: span.startTime,
         endTime: span.endTime,
@@ -53,7 +54,7 @@ function scrubAttributes({ attributes }: { attributes: Attributes }): Attributes
 }
 
 function scrubAttribute({ key, value }: { key: string, value: AttributeValue | undefined }): AttributeValue | undefined {
-    if (isSensitiveKey(key) && (typeof value === 'string' || Array.isArray(value))) {
+    if (holdsSecret({ key, value })) {
         return REDACTED
     }
     if (typeof value === 'string') {
@@ -87,7 +88,7 @@ function scrubJson({ value }: { value: unknown }): unknown {
 }
 
 function holdsSecret({ key, value }: { key: string, value: unknown }): boolean {
-    return isSensitiveKey(key) && (typeof value === 'string' || isObject(value) || Array.isArray(value))
+    return isSensitiveKey(key) && value !== null && (typeof value === 'string' || typeof value === 'object')
 }
 
 function isSensitiveKey(key: string): boolean {
