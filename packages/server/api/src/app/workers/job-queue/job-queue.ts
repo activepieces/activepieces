@@ -82,19 +82,27 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         const queueName = await workerGroupRouting.resolveQueueForJob({ platformId, projectId, flowId, jobType, log })
         const queue = await ensureQueueExists({ log, queueName })
         const job = await queue.getJob(jobId)
-        if (!isNil(job)) {
-            await job.remove()
-            await jobReclaimCount.clear({ jobId, log })
+        if (isNil(job)) {
             log.info({
                 job: { id: jobId },
                 queueName,
-            }, '[jobQueue#removeOneTimeJob] removed job from queue')
+            }, '[jobQueue#removeOneTimeJob] job not found in queue')
             return
         }
+        const { error } = await tryCatch(() => job.remove())
+        if (error) {
+            log.info({
+                job: { id: jobId },
+                queueName,
+                error: String(error),
+            }, '[jobQueue#removeOneTimeJob] a worker holds the job')
+            return
+        }
+        await jobReclaimCount.clear({ jobId, log })
         log.info({
             job: { id: jobId },
             queueName,
-        }, '[jobQueue#removeOneTimeJob] job not found in queue')
+        }, '[jobQueue#removeOneTimeJob] removed job from queue')
     },
 
     async cancelAndReportNeverStarted({ jobId, platformId, projectId, jobType }: RemoveOneTimeJobParams): Promise<boolean> {

@@ -264,10 +264,6 @@ function buildFailedReason(errorMessage: string, logs?: string): string {
     return `${errorMessage}\n${logs}`
 }
 
-export { tryDequeue }
-
-export const MAX_RECLAIM_ATTEMPTS = 5
-
 export const jobBroker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         await ensureBullMQWorker(QueueName.WORKER_JOBS, log)
@@ -394,3 +390,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         workerPromises.clear()
     },
 })
+
+export { tryDequeue }
+
+export const MAX_RECLAIM_ATTEMPTS = 5
