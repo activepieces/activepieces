@@ -88,8 +88,8 @@ export function ProjectSelectionPanel({
   ];
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
-      <div className="flex flex-wrap items-center gap-2 p-3">
+    <div className="flex flex-col">
+      <div className="flex flex-wrap items-center gap-2 p-4">
         <InputWithIcon
           icon={<Search className="size-4 shrink-0 text-gray-11" />}
           value={search}
@@ -108,7 +108,7 @@ export function ProjectSelectionPanel({
           }}
         />
       </div>
-      <div className="border-t border-gray-6/60 [&_tbody_tr:last-child]:border-b-0 [&_thead]:border-t-0">
+      <div className="border-t border-gray-6 [&_tbody_tr:last-child]:border-b-0 [&_thead]:border-t-0">
         <DataTable
           columns={columns}
           page={{ data: rows, next: null, previous: null }}
@@ -131,7 +131,7 @@ export function ProjectSelectionPanel({
         pageSize={PAGE_SIZE}
         total={filtered.length}
         onPageChange={setPage}
-        className="border-t border-gray-6/60 p-3"
+        className="border-t border-gray-6 p-4"
       />
     </div>
   );

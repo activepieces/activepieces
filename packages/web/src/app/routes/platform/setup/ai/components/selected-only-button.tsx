@@ -1,7 +1,7 @@
 import { t } from 'i18next';
+import { ListChecks } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Toggle } from '@/components/ui/toggle';
 
 export function SelectedOnlyButton({
   pressed,
@@ -11,14 +11,14 @@ export function SelectedOnlyButton({
   onToggle: () => void;
 }) {
   return (
-    <Button
-      type="button"
+    <Toggle
       variant="outline"
-      onClick={onToggle}
-      className="gap-2"
+      pressed={pressed}
+      onPressedChange={onToggle}
+      className="px-3 text-gray-12 data-[state=on]:border-gray-8"
     >
-      <Checkbox checked={pressed} className="pointer-events-none" />
+      <ListChecks className="text-gray-11" />
       {t('Selected only')}
-    </Button>
+    </Toggle>
   );
 }
