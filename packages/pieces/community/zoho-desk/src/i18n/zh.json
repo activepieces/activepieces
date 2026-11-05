@@ -609,7 +609,7 @@
   "From Address": "发件地址",
   "To": "收件人",
   "CC": "CC",
-  "BCC": "密送抄送",
+  "BCC": "BCC",
   "Content Type": "内容类型",
   "In Reply To Thread ID": "回复线程 ID",
   "Ticket Status After Reply": "回复后工单状态",

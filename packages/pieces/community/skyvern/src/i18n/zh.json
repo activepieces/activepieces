@@ -13,7 +13,7 @@
   "Finds workflow based on title.": "基于标题查找工作流。",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Prompt": "Prompt",
-  "URL": "网址",
+  "URL": "URL",
   "Engine": "引擎",
   "Webhook Callback URL": "Webhook Callback URL",
   "Proxy Location": "代理位置",

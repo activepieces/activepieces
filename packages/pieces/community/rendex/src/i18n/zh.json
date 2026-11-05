@@ -28,7 +28,7 @@
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "等待响应的秒数。留空：最多到流程限制（10 分钟）。",
   "Follow 3xx redirects instead of returning them as the response.": "跟随 3xx 重定向，而不是将其作为响应返回。",
   "HTML": "HTML",
-  "URL": "网址",
+  "URL": "URL",
   "Markdown": "Markdown",
   "PNG": "PNG",
   "JPEG": "JPEG",

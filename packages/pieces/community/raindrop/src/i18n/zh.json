@@ -110,7 +110,7 @@
   "Gets the public profile of a Raindrop.io user by username.": "通过用户名获取 Raindrop.io 用户的公开资料。",
   "Updates the connected account's name, email, settings or collection groups.": "更新已连接账户的名称、电子邮件、设置或收藏分组。",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
-  "URL": "网址",
+  "URL": "URL",
   "Title": "标题",
   "Excerpt": "摘要",
   "Note": "说明",

@@ -20,7 +20,7 @@
   "Recipient": "收款人",
   "To": "收件人",
   "CC": "CC",
-  "BCC": "密送抄送",
+  "BCC": "BCC",
   "Body HTML": "正文HTML",
   "Body Plain": "正文模式",
   "Message Headers": "消息标题",

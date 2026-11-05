@@ -149,7 +149,7 @@
   "Standard Deviation": "标准偏差",
   "Gradient": "渐变",
   "Similarity": "相似度",
-  "MMR": "天梯分数",
+  "MMR": "MMR",
   "Similarity Score Threshold": "相似度阈值",
   "Active": "已启用",
   "Inactive": "未激活",

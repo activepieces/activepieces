@@ -304,7 +304,7 @@
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Seconden wachten op een antwoord. Leeg: tot de flowlimiet (10 min).",
   "Follow 3xx redirects instead of returning them as the response.": "3xx-omleidingen volgen in plaats van ze als antwoord terug te geven.",
   "HTML": "HTML",
-  "CSV": "csv",
+  "CSV": "CSV",
   "Yes": "Yes",
   "No": "No",
   "ZIP": "ZIP",

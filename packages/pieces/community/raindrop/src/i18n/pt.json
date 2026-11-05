@@ -304,7 +304,7 @@
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Segundos de espera pela resposta. Vazio: até o limite do fluxo (10 min).",
   "Follow 3xx redirects instead of returning them as the response.": "Seguir redirecionamentos 3xx em vez de retorná-los como resposta.",
   "HTML": "HTML",
-  "CSV": "Csv",
+  "CSV": "CSV",
   "Yes": "Yes",
   "No": "No",
   "ZIP": "ZIP",

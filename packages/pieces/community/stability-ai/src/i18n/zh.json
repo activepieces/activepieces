@@ -13,7 +13,7 @@
   "samples": "采样",
   "steps": "步骤",
   "weight": "权重",
-  "clip_guidance_preset": "clip_guide_preset",
+  "clip_guidance_preset": "clip_guidance_preset",
   "style_preset": "style_preset",
   "Engine ID": "引擎 ID",
   "Method": "方法",
