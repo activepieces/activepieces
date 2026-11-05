@@ -1194,7 +1194,7 @@
     },
     "packages/pieces/community/bexio": {
       "name": "@activepieces/piece-bexio",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1205,6 +1205,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/bigcommerce": {
@@ -2723,7 +2724,7 @@
     },
     "packages/pieces/community/discord": {
       "name": "@activepieces/piece-discord",
-      "version": "0.8.4",
+      "version": "0.8.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8967,7 +8968,7 @@
     },
     "packages/pieces/community/streak": {
       "name": "@activepieces/piece-streak",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8976,6 +8977,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/stripe": {
@@ -9414,7 +9416,7 @@
     },
     "packages/pieces/community/todoist": {
       "name": "@activepieces/piece-todoist",
-      "version": "0.6.2",
+      "version": "0.6.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
