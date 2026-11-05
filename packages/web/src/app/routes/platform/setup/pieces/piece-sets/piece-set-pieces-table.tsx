@@ -102,6 +102,13 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
         {
           accessorKey: 'displayName',
           size: 300,
+          filterFn: (row, _columnId, filterValue: string) => {
+            const query = filterValue.toLowerCase();
+            return (
+              row.original.displayName.toLowerCase().includes(query) ||
+              row.original.name.toLowerCase().includes(query)
+            );
+          },
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
