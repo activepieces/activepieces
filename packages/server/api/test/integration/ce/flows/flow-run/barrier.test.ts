@@ -1765,6 +1765,32 @@ describe('fan-out dispatch', () => {
         })
     })
 
+    it('keeps the first source when a retried fan-out create resolves different items, so each batch keeps its slice', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 2 })
+
+            const retried = await createFanOutBarrier({ flowRunId: flowRun.id, items: [9, 8, 7, 6], batchSize: 2 })
+
+            expect(retried.barrier.id).toBe(barrier.id)
+            const source = await distributedStore.get<{ batches: unknown[][] }>(barrierSourceKey(barrier.id))
+            expect(source?.batches).toEqual([[1, 2], [3, 4]])
+        })
+    })
+
+    it('refuses a retried fan-out create whose items split into a different number of batches', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3], batchSize: 1 })
+            await distributedStore.delete(barrierSourceKey(barrier.id))
+
+            await expect(createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1 })).rejects.toMatchObject({ error: { code: ErrorCode.VALIDATION } })
+
+            expect(await distributedStore.exists(barrierSourceKey(barrier.id))).toBe(false)
+            expect(await listSignals(barrier.id)).toHaveLength(3)
+        })
+    })
+
     it('replaces a consumed barrier when its step creates one again', async () => {
         const { flowRun } = await createParentRun()
         const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })

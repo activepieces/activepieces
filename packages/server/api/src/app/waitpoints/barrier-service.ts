@@ -72,6 +72,9 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         })
 
         if (!isNil(params.fanOut) && creation.barrier.status === WaitpointStatus.PENDING) {
+            if (!creation.inserted) {
+                assertSameBatchCount({ existingSignalCount: creation.signals.length, requestedSignalCount: signalCount })
+            }
             await startFanOut({
                 barrierId: creation.barrier.id,
                 projectId: params.projectId,
@@ -271,7 +274,7 @@ async function lockOpenBarrier({ barrierId, projectId, entityManager }: LockForD
 }
 
 async function startFanOut({ barrierId, projectId, source, log }: StartFanOutParams): Promise<void> {
-    await distributedStore.put(barrierSourceKey(barrierId), source, SOURCE_TTL_SECONDS)
+    await distributedStore.putIfAbsent(barrierSourceKey(barrierId), source, SOURCE_TTL_SECONDS)
     await barrierQueue(log).addFanOutDispatch({ barrierId, projectId })
 }
 
@@ -371,6 +374,15 @@ function assertSignalCountWithinLimit({ signalCount, maxSignals }: AssertSignalC
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: `This step waits on ${signalCount} things, which exceeds the maximum of ${maxSignals}. Wait on fewer things.` },
+        })
+    }
+}
+
+function assertSameBatchCount({ existingSignalCount, requestedSignalCount }: AssertSameBatchCountParams): void {
+    if (existingSignalCount !== requestedSignalCount) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `This step already started ${existingSignalCount} batches, but its items now split into ${requestedSignalCount}. The items changed between attempts, so the batches cannot continue safely.` },
         })
     }
 }
@@ -559,6 +571,11 @@ type ClampBatchSizeParams = {
 type AssertSignalCountWithinLimitParams = {
     signalCount: number
     maxSignals: number
+}
+
+type AssertSameBatchCountParams = {
+    existingSignalCount: number
+    requestedSignalCount: number
 }
 
 type ResolveDeadlineParams = {
