@@ -8,7 +8,6 @@ import {
   Brain,
   Eye,
   ImageIcon,
-  ListChecks,
   LucideIcon,
   Search,
   Wrench,
@@ -16,6 +15,7 @@ import {
 import { useId, useState } from 'react';
 
 import { adminSurface } from '@/app/components/admin';
+import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -30,10 +30,11 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { Toggle } from '@/components/ui/toggle';
 import { ModelCapabilityIcons } from '@/features/agents/ai-model/model-capability-icons';
 import { modelMeta } from '@/features/agents/ai-model/model-meta';
 import { cn } from '@/lib/utils';
+
+import { SelectedOnlyButton } from '../components/selected-only-button';
 
 import {
   keyModelFilters,
@@ -76,10 +77,13 @@ export function KeyModelList({
   });
   const page = filtered.slice(0, shown);
   const filteredIds = filtered.map((model) => model.id);
-  const filtering =
-    search.trim() !== '' ||
-    capabilities.length > 0 ||
-    (selectedOnly && !allModels);
+  const shownOnCount = filteredIds.filter(isOn).length;
+  const headerState =
+    filteredIds.length > 0 && shownOnCount === filteredIds.length
+      ? true
+      : shownOnCount > 0
+      ? 'indeterminate'
+      : false;
   const onCount = listedIds.filter(isOn).length;
   const providerName = modelMeta.providerInfoOf({
     provider: config.provider,
@@ -91,144 +95,102 @@ export function KeyModelList({
     onChange(keyModelSelection.select({ selection, ids, lockedIds }));
   const clearIds = (ids: string[]) =>
     onChange(keyModelSelection.clear({ selection, ids, listedIds, lockedIds }));
-  const toggleCapability = (capability: ModelCapabilityFilter) => {
-    setCapabilities(
-      capabilities.includes(capability)
-        ? capabilities.filter((current) => current !== capability)
-        : [...capabilities, capability],
-    );
-    resetPaging();
-  };
 
   return (
     <div className={cn(adminSurface.card, 'flex flex-col overflow-hidden')}>
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-gray-6 p-4">
-        <div className="flex min-w-0 items-start gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-gray-6 p-4">
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-sm font-semibold text-gray-12">
+            {t('Allowed models')}
+          </h3>
+          <span className="text-sm tabular-nums text-gray-11">
+            {isLoading
+              ? t('Loading models…')
+              : t('{count} of {total}', {
+                  count: onCount,
+                  total: models.length,
+                })}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor={switchId}
+            className="cursor-pointer text-sm text-gray-12"
+          >
+            {t('Add new {provider} models automatically', {
+              provider: providerName,
+            })}
+          </label>
           <Switch
             id={switchId}
             checked={allModels}
             disabled={isLoading}
-            aria-describedby={`${switchId}-note`}
             onCheckedChange={(on) =>
               onChange(
                 keyModelSelection.setAutoAdd({ on, listedIds, lockedIds }),
               )
             }
-            className="mt-0.5"
           />
-          <div className="flex min-w-0 flex-col gap-1">
-            <label
-              htmlFor={switchId}
-              className="cursor-pointer text-sm font-semibold text-gray-12"
-            >
-              {t('Add new {provider} models automatically', {
-                provider: providerName,
-              })}
-            </label>
-            <p id={`${switchId}-note`} className="text-sm text-gray-11">
-              {allModels
-                ? t(
-                    'Every model is allowed. Untick one to pick models yourself.',
-                  )
-                : leftAutoAdd
-                ? t(
-                    'New models won’t be added automatically. Turn this on to allow all models again.',
-                  )
-                : t('Only the ticked models are allowed.')}
-            </p>
-          </div>
         </div>
-        <span className="text-sm tabular-nums text-gray-11">
-          {isLoading
-            ? t('Loading models…')
-            : t('modelsAllowedCount', {
-                count: onCount,
-                total: models.length,
-              })}
-        </span>
+        {leftAutoAdd && (
+          <p className="basis-full text-sm text-gray-11">
+            {t(
+              'New models won’t be added automatically. Turn this on to allow all models again.',
+            )}
+          </p>
+        )}
       </div>
 
-      <div className="flex flex-col gap-3 p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <InputWithIcon
-            icon={<Search className="size-4 shrink-0 text-gray-11" />}
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
+      <div className="flex flex-wrap items-center gap-2 p-4">
+        <InputWithIcon
+          icon={<Search className="size-4 shrink-0 text-gray-11" />}
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            resetPaging();
+          }}
+          placeholder={t('Search models')}
+          className="max-w-xs grow-0"
+        />
+        <DataTableSelectPopover
+          title={t('Capabilities')}
+          selectedValues={new Set(capabilities)}
+          options={capabilityOptions()}
+          handleFilterChange={(values) => {
+            setCapabilities(CAPABILITIES.filter((c) => values.includes(c)));
+            resetPaging();
+          }}
+        />
+        {!allModels && (
+          <SelectedOnlyButton
+            pressed={selectedOnly}
+            onToggle={() => {
+              setSelectedOnly(!selectedOnly);
               resetPaging();
             }}
-            placeholder={t('Search models')}
-            className="max-w-xs grow-0"
           />
-          <Select
-            value={sort}
-            onValueChange={(value) => {
-              setSort(sortOf(value));
-              resetPaging();
-            }}
+        )}
+        <Select
+          value={sort}
+          onValueChange={(value) => {
+            setSort(sortOf(value));
+            resetPaging();
+          }}
+        >
+          <SelectTrigger
+            className="ml-auto w-36 shrink-0"
+            aria-label={t('Sort')}
           >
-            <SelectTrigger className="w-40 shrink-0" aria-label={t('Sort')}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORTS.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {sortLabel(option)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {!isLoading && (
-            <div className="ml-auto flex flex-wrap items-center gap-1">
-              {filtering && (
-                <>
-                  <BulkButton
-                    label={t('Select shown')}
-                    disabled={!canSelect(filteredIds)}
-                    onClick={() => selectIds(filteredIds)}
-                  />
-                  <BulkButton
-                    label={t('Clear shown')}
-                    disabled={!canClear(filteredIds)}
-                    onClick={() => clearIds(filteredIds)}
-                  />
-                </>
-              )}
-              <BulkButton
-                label={t('Select all')}
-                disabled={!canSelect(listedIds)}
-                onClick={() => selectIds(listedIds)}
-              />
-              <BulkButton
-                label={t('Clear')}
-                disabled={!canClear(listedIds)}
-                onClick={() => clearIds(listedIds)}
-              />
-            </div>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {CAPABILITY_CHIPS.map(({ capability, icon }) => (
-            <FilterToggle
-              key={capability}
-              icon={icon}
-              label={capabilityLabel(capability)}
-              pressed={capabilities.includes(capability)}
-              onPressedChange={() => toggleCapability(capability)}
-            />
-          ))}
-          {!allModels && (
-            <FilterToggle
-              icon={ListChecks}
-              label={t('Selected only')}
-              pressed={selectedOnly}
-              onPressedChange={(pressed) => {
-                setSelectedOnly(pressed);
-                resetPaging();
-              }}
-            />
-          )}
-        </div>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SORTS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {sortLabel(option)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div
@@ -237,7 +199,18 @@ export function KeyModelList({
           'border-y border-gray-6 bg-gray-2 py-2 text-xs font-medium text-gray-11',
         )}
       >
-        <span />
+        <Checkbox
+          checked={headerState}
+          disabled={
+            isLoading || (!canSelect(filteredIds) && !canClear(filteredIds))
+          }
+          onCheckedChange={() =>
+            headerState === true
+              ? clearIds(filteredIds)
+              : selectIds(filteredIds)
+          }
+          aria-label={t('Select all')}
+        />
         <span>{t('Model')}</span>
         <span className="hidden text-right md:block">{t('Context')}</span>
         <span className="hidden text-right md:block">{t('Price per 1M')}</span>
@@ -341,53 +314,6 @@ export function KeyModelList({
   );
 }
 
-function BulkButton({
-  label,
-  disabled,
-  onClick,
-}: {
-  label: string;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="basic"
-      size="xs"
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {label}
-    </Button>
-  );
-}
-
-function FilterToggle({
-  icon: Icon,
-  label,
-  pressed,
-  onPressedChange,
-}: {
-  icon: LucideIcon;
-  label: string;
-  pressed: boolean;
-  onPressedChange: (pressed: boolean) => void;
-}) {
-  return (
-    <Toggle
-      variant="outline"
-      size="sm"
-      pressed={pressed}
-      onPressedChange={onPressedChange}
-      className="px-2.5 text-xs text-gray-12 data-[state=on]:border-gray-8"
-    >
-      <Icon className="size-3.5 text-gray-11" />
-      {label}
-    </Toggle>
-  );
-}
-
 function ModelBadges({
   model,
   stale,
@@ -456,6 +382,18 @@ function sortLabel(sort: ModelSort): string {
   }
 }
 
+function capabilityOptions(): {
+  label: string;
+  value: ModelCapabilityFilter;
+  icon: LucideIcon;
+}[] {
+  return CAPABILITIES.map((capability) => ({
+    label: capabilityLabel(capability),
+    value: capability,
+    icon: CAPABILITY_ICONS[capability],
+  }));
+}
+
 function capabilityLabel(capability: ModelCapabilityFilter): string {
   switch (capability) {
     case 'toolCalling':
@@ -469,6 +407,13 @@ function capabilityLabel(capability: ModelCapabilityFilter): string {
   }
 }
 
+const CAPABILITY_ICONS: Record<ModelCapabilityFilter, LucideIcon> = {
+  toolCalling: Wrench,
+  reasoning: Brain,
+  vision: Eye,
+  image: ImageIcon,
+};
+
 const PAGE_SIZE = 20;
 
 const EMPTY = '—';
@@ -478,14 +423,11 @@ const ROW_GRID =
 
 const SORTS: ModelSort[] = ['newest', 'cheapest', 'context', 'name'];
 
-const CAPABILITY_CHIPS: {
-  capability: ModelCapabilityFilter;
-  icon: LucideIcon;
-}[] = [
-  { capability: 'toolCalling', icon: Wrench },
-  { capability: 'reasoning', icon: Brain },
-  { capability: 'vision', icon: Eye },
-  { capability: 'image', icon: ImageIcon },
+const CAPABILITIES: ModelCapabilityFilter[] = [
+  'toolCalling',
+  'reasoning',
+  'vision',
+  'image',
 ];
 
 type KeyModelListProps = {

@@ -138,7 +138,7 @@ describe('KeyModelList', () => {
 
   it('turns auto-add back on only through the switch', () => {
     const { onChange } = renderList();
-    fireEvent.click(screen.getByRole('button', { name: 'Select all' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
     expect(onChange).toHaveBeenLastCalledWith({
       modelScope: 'selected',
       modelIds: ['gpt-main', 'gpt-other', 'gpt-third'],
@@ -156,14 +156,27 @@ describe('KeyModelList', () => {
 
   it('acts on the shown rows only while a search narrows the list', () => {
     const { onChange } = renderList();
-    expect(screen.queryByRole('button', { name: 'Select shown' })).toBeNull();
     fireEvent.change(screen.getByPlaceholderText('Search models'), {
       target: { value: 'third' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Select shown' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
     expect(onChange).toHaveBeenCalledWith({
       modelScope: 'selected',
       modelIds: ['gpt-main', 'gpt-third'],
+    });
+  });
+
+  it('clears every free model from the header box under auto-add', () => {
+    const { onChange } = renderList({
+      config: { ...CONFIG, modelScope: 'all', modelIds: [] },
+      selection: { modelScope: 'all', modelIds: [] },
+    });
+    const header = screen.getByRole('checkbox', { name: 'Select all' });
+    expect(header.getAttribute('data-state')).toBe('checked');
+    fireEvent.click(header);
+    expect(onChange).toHaveBeenCalledWith({
+      modelScope: 'selected',
+      modelIds: ['gpt-main'],
     });
   });
 });
