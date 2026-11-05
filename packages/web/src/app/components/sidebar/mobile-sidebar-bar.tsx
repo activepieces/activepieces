@@ -1,13 +1,18 @@
 import { t } from 'i18next';
-import { Menu } from 'lucide-react';
+import { Menu, MessageSquare } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { flagsHooks } from '@/hooks/flags-hooks';
+
+import { useChatPanelHidden } from '../chat-panel/chat-window';
 
 export function MobileSidebarBar() {
   const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const branding = flagsHooks.useWebsiteBranding();
+  const chatHidden = useChatPanelHidden();
+  const openChat = useChatPanel((s) => s.setOpen);
 
   if (!isMobile) {
     return null;
@@ -34,6 +39,18 @@ export function MobileSidebarBar() {
       <span className="truncate text-sm font-medium text-gray-12">
         {branding.websiteName}
       </span>
+      {/* The notch has no room on a phone, so the chat opens from here. */}
+      {!chatHidden && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="ml-auto size-8 rounded-md"
+          aria-label={t('Chat')}
+          onClick={() => openChat(true)}
+        >
+          <MessageSquare className="size-4" />
+        </Button>
+      )}
     </div>
   );
 }

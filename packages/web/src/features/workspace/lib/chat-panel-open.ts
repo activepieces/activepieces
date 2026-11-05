@@ -52,7 +52,7 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
   };
   return {
     ...readSaved(),
-    dragging: false,
+    gesture: 'idle',
     chatMounted: false,
     mountChat: () => set({ chatMounted: true }),
     setOpen: (open) => update({ open }),
@@ -63,11 +63,11 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
     resizeFloat: (floatSize) => update({ floatSize }),
     setDockWidth: (dockWidth) => update({ dockWidth }),
     setConversationId: (conversationId) => update({ conversationId }),
-    setDragging: (dragging) => set({ dragging }),
+    setGesture: (gesture) => set({ gesture }),
   };
 });
 
-// A docked panel takes room from the page, so the sidebar folds to make it.
+// A docked panel takes room from the page, so the sidebar may fold for it.
 export function chatPanelIsDocked(state: ChatPanelState): boolean {
   return state.open && state.mode !== 'float';
 }
@@ -76,6 +76,9 @@ export type ChatPanelSide = 'left' | 'right';
 export type ChatPanelMode = ChatPanelSide | 'float';
 export type FloatPosition = { x: number; y: number };
 export type FloatSize = { width: number; height: number };
+// `dragging` follows the pointer; `settling` is the card easing to rest after
+// a drop, a cancel or a layout change, before a dock takes the chat over.
+export type ChatGesture = 'idle' | 'dragging' | 'settling';
 
 type SavedChatPanel = {
   open: boolean;
@@ -87,7 +90,7 @@ type SavedChatPanel = {
 };
 
 type ChatPanelState = SavedChatPanel & {
-  dragging: boolean;
+  gesture: ChatGesture;
   chatMounted: boolean;
   mountChat: () => void;
   setOpen: (open: boolean) => void;
@@ -97,5 +100,5 @@ type ChatPanelState = SavedChatPanel & {
   resizeFloat: (size: FloatSize) => void;
   setDockWidth: (width: number) => void;
   setConversationId: (conversationId: string | null) => void;
-  setDragging: (dragging: boolean) => void;
+  setGesture: (gesture: ChatGesture) => void;
 };

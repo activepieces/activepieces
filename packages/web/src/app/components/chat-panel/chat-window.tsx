@@ -1,4 +1,5 @@
-import { AnimatePresence, motion, useMotionValue } from 'motion/react';
+import { t } from 'i18next';
+import { AnimatePresence, animate, motion, motionValue } from 'motion/react';
 import {
   useCallback,
   useEffect,
@@ -10,51 +11,83 @@ import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 
 import {
+  ChatLayout,
+  DOCK_BREAKPOINT,
+  DOCK_MAX_WIDTH,
+  DOCK_MIN_WIDTH,
+  PAGE_COMFORT_WIDTH,
+  cardInnerWidth,
+  chatLayoutFor,
+  clamp,
+  dockWidthFor,
+  sidebarWidth,
+} from '@/features/workspace/lib/chat-layout';
+import {
   ChatPanelSide,
   FloatPosition,
   FloatSize,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import {
+  railOpenAfterDock,
+  railOpenNow,
+  useRailOpen,
+} from '@/features/workspace/lib/rail-collapsed';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import { ChatChrome } from './chat-chrome';
 
-// A docked panel's width limits. It also never takes more than half the card.
-const DOCK_MIN_WIDTH = 320;
-const DOCK_MAX_WIDTH = 640;
 // The floating card's size until the user resizes it, and how small it may get.
 export const FLOAT_DEFAULT: FloatSize = { width: 400, height: 640 };
 const FLOAT_MIN: FloatSize = { width: 320, height: 400 };
+const DOCK_DEFAULT_WIDTH = 372;
 // A floating panel always keeps this much room from the window's edges.
 const EDGE = 16;
-// Snapping is a deliberate push: the pointer has to reach the window's own
-// left or right edge. Short of that the card just floats, so it can also sit
-// flush in a corner.
-const SNAP_EDGE = 96;
+// Snapping is a deliberate push toward the window's own edge. Leaving takes a
+// little more travel than entering, so the preview never flickers on the line.
+const SNAP_ENTER = 72;
+const SNAP_EXIT = 120;
 // Pointer travel before a press on the header counts as a drag.
 const DRAG_THRESHOLD = 4;
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
+// Anything that follows the pointer or comes to rest after a drop.
+const SETTLE = { type: 'spring', bounce: 0, visualDuration: 0.25 } as const;
 const CARD_ID = 'dashboard-content-container';
+// The layout's right gutter, outside the card.
+const GUTTER_RIGHT = 8;
 
 // The full chat page has its own chat, so the panel steps aside there.
 export function useChatPanelHidden(): boolean {
   return useLocation().pathname.includes(CHAT_ROUTE);
 }
 
+export function useChatLayout(): ChatLayout {
+  const mode = useChatPanel((s) => s.mode);
+  return chatLayoutFor(mode, useViewport().width);
+}
+
 export function ChatDock({ side }: { side: ChatPanelSide }) {
   const hidden = useChatPanelHidden();
-  const active =
-    useChatPanel((s) => s.open && s.mode === side && !s.dragging) && !hidden;
+  const layout = useChatLayout();
+  const viewport = useViewport();
+  const railOpen = useRailOpen();
+  const open = useChatPanel((s) => s.open);
+  const gesture = useChatPanel((s) => s.gesture);
   const savedWidth = useChatPanel((s) => s.dockWidth);
   const setDockWidth = useChatPanel((s) => s.setDockWidth);
   const [resizing, setResizing] = useState(false);
   const slot = useRef<HTMLDivElement>(null);
-  const host = useChatHost(active);
-  const width = clampDockWidth(savedWidth);
+  // The slot opens as soon as the panel is headed here; it takes the chat over
+  // once the card has settled into it.
+  const slotOpen = open && !hidden && layout === side && gesture !== 'dragging';
+  const hostsChat = slotOpen && gesture === 'idle';
+  const host = useChatHost(hostsChat);
+  const cardWidth = cardInnerWidth(viewport.width, railOpen);
+  const width = dockWidthFor(savedWidth, cardWidth);
 
   // Dragging the inner edge sets the width straight on the DOM, with the width
-  // transition off, so it tracks the pointer. It's saved on release.
+  // transition off, so it tracks the pointer 1:1. It's saved on release.
   const startResize = (event: React.PointerEvent<HTMLDivElement>) => {
     const slotEl = slot.current;
     const hostEl = host.current;
@@ -63,14 +96,15 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
     }
     event.preventDefault();
     const startX = event.clientX;
+    const max = Math.min(DOCK_MAX_WIDTH, cardWidth - PAGE_COMFORT_WIDTH);
     let next = width;
     setResizing(true);
-    document.body.style.cursor = 'col-resize';
+    const unlock = lockPointer('col-resize');
 
     const onMove = (move: PointerEvent) => {
       const delta =
         side === 'left' ? move.clientX - startX : startX - move.clientX;
-      next = clampDockWidth(width + delta);
+      next = clamp(width + delta, DOCK_MIN_WIDTH, max);
       slotEl.style.width = `${next}px`;
       hostEl.style.width = `${next}px`;
     };
@@ -78,7 +112,7 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
-      document.body.style.cursor = '';
+      unlock();
       setResizing(false);
       setDockWidth(next);
     };
@@ -90,29 +124,28 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
   return (
     <div
       ref={slot}
-      inert={!active}
+      inert={!hostsChat}
       className={cn(
         'relative shrink-0 overflow-hidden max-md:hidden',
+        // Same duration and curve as the sidebar, so they move as one.
         !resizing &&
-          'transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+          'transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
       )}
-      style={{ width: active ? width : 0 }}
+      style={{ width: slotOpen ? width : 0 }}
     >
       <div
         ref={host}
         className={cn(
-          'absolute inset-y-0 transition-[opacity,translate] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+          'absolute inset-y-0',
           side === 'left' ? 'left-0 border-r' : 'right-0 border-l',
-          active && 'translate-x-0 opacity-100 delay-50',
-          !active && 'opacity-0',
-          !active && (side === 'left' ? '-translate-x-2' : 'translate-x-2'),
         )}
         style={{ width }}
       />
-      {active && (
+      {hostsChat && (
         <div
           aria-hidden
           onPointerDown={startResize}
+          onDoubleClick={() => setDockWidth(DOCK_DEFAULT_WIDTH)}
           className={cn(
             'group/edge absolute inset-y-0 z-10 w-2 cursor-col-resize touch-none',
             side === 'left' ? 'right-0' : 'left-0',
@@ -149,33 +182,24 @@ const dragStartHandler: {
   current: ((event: React.PointerEvent<HTMLElement>) => void) | null;
 } = { current: null };
 
-// Owns everything that isn't a docked slot: the chat itself, the floating card,
-// the drag, the snap preview and the shortcuts. Mounted once in the layout.
+// Owns everything that isn't a docked slot: the floating card, the mobile
+// sheet, the drag, the snap preview, focus and the shortcuts. Mounted once in
+// the layout.
 export function ChatWindow() {
   const hidden = useChatPanelHidden();
-  const {
-    open,
-    mode,
-    float,
-    dragging,
-    toggle,
-    setOpen,
-    dock,
-    floatAt,
-    floatSize,
-    resizeFloat,
-    setDragging,
-    mountChat,
-  } = useChatPanel();
-  const [zone, setZone] = useState<ChatPanelSide | null>(null);
+  const layout = useChatLayout();
   const viewport = useViewport();
-  const size = fitToWindow(floatSize ?? FLOAT_DEFAULT);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const width = useMotionValue(size.width);
-  const height = useMotionValue(size.height);
-  const floating = open && !hidden && (mode === 'float' || dragging);
+  const { open, float, floatSize, gesture, toggle, setOpen, mountChat } =
+    useChatPanel();
+  const [zone, setZone] = useState<ChatPanelSide | null>(null);
+  const [gripActive, setGripActive] = useState(false);
+  const [card] = useState(() => createCardMotion(FLOAT_DEFAULT));
+  const sheet = layout === 'sheet';
+  const floating =
+    open && !hidden && !sheet && (layout === 'float' || gesture !== 'idle');
+  const sheetOpen = open && !hidden && sheet;
   const floatHost = useChatHost(floating);
+  const sheetHost = useChatHost(sheetOpen);
 
   // Build the chat once the page is idle, not when the panel opens: mounting
   // it mid-animation makes the open stutter.
@@ -188,17 +212,56 @@ export function ChatWindow() {
     return () => clearTimeout(prewarm);
   }, [open, mountChat]);
 
+  // At rest the card sits where the user left it, refitted to the window.
   useLayoutEffect(() => {
-    if (dragging) {
+    if (gesture !== 'idle') {
       return;
     }
-    const fitted = fitToWindow(floatSize ?? FLOAT_DEFAULT);
-    const position = clampToWindow(float ?? defaultFloat(fitted), fitted);
-    width.set(fitted.width);
-    height.set(fitted.height);
-    x.set(position.x);
-    y.set(position.y);
-  }, [float, floatSize, dragging, viewport, x, y, width, height]);
+    const size = fitToWindow(floatSize ?? FLOAT_DEFAULT);
+    card.place({
+      ...clampToWindow(float ?? defaultFloat(size), size),
+      ...size,
+    });
+  }, [float, floatSize, gesture, viewport, card]);
+
+  useFocusHandoff(open && !hidden);
+
+  // Layout changes made from the menu move the card the same way a drag does:
+  // a dock lifts into the card, a card settles into the dock.
+  useEffect(() => {
+    return useChatPanel.subscribe((state, prev) => {
+      if (
+        !state.open ||
+        !prev.open ||
+        state.gesture !== 'idle' ||
+        state.mode === prev.mode ||
+        window.location.pathname.includes(CHAT_ROUTE)
+      ) {
+        return;
+      }
+      const viewportWidth = window.innerWidth;
+      const from = chatLayoutFor(prev.mode, viewportWidth);
+      const to = chatLayoutFor(state.mode, viewportWidth);
+      if (from === 'float' && (to === 'left' || to === 'right')) {
+        const target = dockRect(to, railOpenNow());
+        if (target) {
+          state.setGesture('settling');
+          card.settle(target, () => state.setGesture('idle'));
+        }
+      } else if ((from === 'left' || from === 'right') && to === 'float') {
+        const size = fitToWindow(state.floatSize ?? FLOAT_DEFAULT);
+        card.place(rectOf(getChatNode()));
+        state.setGesture('settling');
+        card.settle(
+          {
+            ...clampToWindow(state.float ?? defaultFloat(size), size),
+            ...size,
+          },
+          () => state.setGesture('idle'),
+        );
+      }
+    });
+  }, [card]);
 
   useEffect(() => {
     if (hidden) {
@@ -216,10 +279,12 @@ export function ChatWindow() {
         toggle();
         return;
       }
+      // Esc closes the panel only from inside it; elsewhere it's the page's.
       if (
         event.key === 'Escape' &&
         !event.defaultPrevented &&
         useChatPanel.getState().open &&
+        getChatNode().contains(document.activeElement) &&
         !document.querySelector('[role="dialog"], [role="menu"]')
       ) {
         setOpen(false);
@@ -232,66 +297,154 @@ export function ChatWindow() {
   const startDrag = useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
       const target = event.target as HTMLElement;
-      if (event.button !== 0 || target.closest('button')) {
+      const state = useChatPanel.getState();
+      const layoutNow = chatLayoutFor(state.mode, window.innerWidth);
+      if (
+        event.button !== 0 ||
+        layoutNow === 'sheet' ||
+        target.closest('button, a, input, textarea, [role="menuitem"]')
+      ) {
         return;
       }
       event.preventDefault();
-      const rect = getChatNode().getBoundingClientRect();
+      // A press mid-settle catches the card where it is.
+      const fromDock = layoutNow !== 'float' && state.gesture === 'idle';
+      const from = fromDock ? rectOf(getChatNode()) : card.rect();
+      const origin = state.mode;
       const start = { x: event.clientX, y: event.clientY };
-      // Keep the grab point under the pointer as the panel lifts into a card.
+      // Keep the grab point under the pointer while the card changes size.
       const grab = {
-        x: Math.min(Math.max(start.x - rect.left, 24), width.get() - 24),
-        y: start.y - rect.top,
+        ratioX: (start.x - from.x) / from.width,
+        y: start.y - from.y,
       };
+      const floatTarget = fitToWindow(state.floatSize ?? FLOAT_DEFAULT);
+      const unlock = lockPointer('grabbing');
+      let pointer = start;
       let moved = false;
-      let dropSide: ChatPanelSide | null = null;
+      let side: ChatPanelSide | null = null;
+      let stopFollow: (() => void) | null = null;
+
+      const follow = () => {
+        const size = { width: card.width.get(), height: card.height.get() };
+        const position = clampToWindow(
+          {
+            x: pointer.x - grab.ratioX * size.width,
+            y: pointer.y - grab.y,
+          },
+          size,
+        );
+        card.x.set(position.x);
+        card.y.set(position.y);
+      };
+
+      // The card takes over the dock's exact rect on the same frame the slot
+      // starts closing, then eases to its floating size under the pointer.
+      const lift = () => {
+        moved = true;
+        card.place(from);
+        card.resize(floatTarget);
+        stopFollow = card.width.on('change', follow);
+        useChatPanel.getState().setGesture('dragging');
+      };
+
+      const finish = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onCancel);
+        window.removeEventListener('keydown', onKey, true);
+        stopFollow?.();
+        unlock();
+        setZone(null);
+      };
+
+      const settleIntoDock = (dockSide: ChatPanelSide) => {
+        const panel = useChatPanel.getState();
+        // Docking may fold the rail, so read where the dock lands afterwards.
+        panel.dock(dockSide);
+        const rect = dockRect(dockSide, railOpenNow());
+        panel.setGesture('settling');
+        if (!rect) {
+          panel.setGesture('idle');
+          return;
+        }
+        card.settle(rect, () => useChatPanel.getState().setGesture('idle'));
+      };
+
+      const settleFloating = (rect: Rect) => {
+        const panel = useChatPanel.getState();
+        panel.floatAt({ x: rect.x, y: rect.y });
+        panel.setGesture('settling');
+        card.settle(rect, () => useChatPanel.getState().setGesture('idle'));
+      };
 
       const onMove = (move: PointerEvent) => {
+        pointer = { x: move.clientX, y: move.clientY };
         if (!moved) {
-          const travel = Math.hypot(
-            move.clientX - start.x,
-            move.clientY - start.y,
-          );
-          if (travel < DRAG_THRESHOLD) {
+          if (
+            Math.hypot(pointer.x - start.x, pointer.y - start.y) <
+            DRAG_THRESHOLD
+          ) {
             return;
           }
-          moved = true;
-          document.body.style.cursor = 'grabbing';
-          setDragging(true);
+          lift();
         }
-        const position = clampToWindow(
-          { x: move.clientX - grab.x, y: move.clientY - grab.y },
-          { width: width.get(), height: height.get() },
-        );
-        x.set(position.x);
-        y.set(position.y);
-        const next = snapZone(move.clientX);
-        if (next !== dropSide) {
-          dropSide = next;
+        follow();
+        const next = snapZone(pointer.x, side);
+        if (next !== side) {
+          side = next;
           setZone(next);
         }
       };
+
       const onUp = () => {
-        window.removeEventListener('pointermove', onMove);
-        window.removeEventListener('pointerup', onUp);
-        window.removeEventListener('pointercancel', onUp);
+        finish();
         if (!moved) {
           return;
         }
-        document.body.style.cursor = '';
-        setZone(null);
-        if (dropSide) {
-          dock(dropSide);
-        } else {
-          floatAt({ x: x.get(), y: y.get() });
+        if (side) {
+          settleIntoDock(side);
+          return;
         }
-        setDragging(false);
+        const size = floatTarget;
+        settleFloating({
+          ...clampToWindow(
+            { x: pointer.x - grab.ratioX * size.width, y: pointer.y - grab.y },
+            size,
+          ),
+          ...size,
+        });
       };
+
+      // Esc or a lost pointer puts the panel back where the drag started.
+      const onCancel = () => {
+        finish();
+        if (!moved) {
+          return;
+        }
+        if (
+          origin !== 'float' &&
+          chatLayoutFor(origin, window.innerWidth) === origin
+        ) {
+          settleIntoDock(origin);
+        } else {
+          settleFloating(from);
+        }
+      };
+      const onKey = (key: KeyboardEvent) => {
+        if (key.key !== 'Escape' || !moved) {
+          return;
+        }
+        key.preventDefault();
+        key.stopPropagation();
+        onCancel();
+      };
+
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
-      window.addEventListener('pointercancel', onUp);
+      window.addEventListener('pointercancel', onCancel);
+      window.addEventListener('keydown', onKey, true);
     },
-    [dock, floatAt, setDragging, x, y, width, height],
+    [card],
   );
 
   useEffect(() => {
@@ -307,22 +460,23 @@ export function ChatWindow() {
       event.preventDefault();
       event.stopPropagation();
       const start = { x: event.clientX, y: event.clientY };
-      const from = { width: width.get(), height: height.get() };
-      document.body.style.cursor = 'nwse-resize';
+      const from = card.rect();
+      const unlock = lockPointer('nwse-resize');
+      setGripActive(true);
 
       const onMove = (move: PointerEvent) => {
-        width.set(
+        card.width.set(
           clamp(
             from.width + move.clientX - start.x,
             FLOAT_MIN.width,
-            window.innerWidth - x.get() - EDGE,
+            window.innerWidth - from.x - EDGE,
           ),
         );
-        height.set(
+        card.height.set(
           clamp(
             from.height + move.clientY - start.y,
             FLOAT_MIN.height,
-            window.innerHeight - y.get() - EDGE,
+            window.innerHeight - from.y - EDGE,
           ),
         );
       };
@@ -330,71 +484,120 @@ export function ChatWindow() {
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
         window.removeEventListener('pointercancel', onUp);
-        document.body.style.cursor = '';
-        resizeFloat({ width: width.get(), height: height.get() });
+        unlock();
+        setGripActive(false);
+        useChatPanel
+          .getState()
+          .resizeFloat({ width: card.width.get(), height: card.height.get() });
       };
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
       window.addEventListener('pointercancel', onUp);
     },
-    [resizeFloat, x, y, width, height],
+    [card],
   );
 
-  return (
+  return createPortal(
     <>
-      {createPortal(
-        <>
-          <AnimatePresence>
-            {zone && <SnapPreview key={zone} side={zone} />}
-          </AnimatePresence>
-          <AnimatePresence custom={open}>
-            {floating && (
-              <motion.div
-                key="chat-float"
-                ref={floatHost}
-                custom={open}
-                variants={floatCard}
-                initial="hidden"
-                animate="shown"
-                exit="hidden"
-                className={cn(
-                  'group/float fixed top-0 left-0 z-40 overflow-hidden rounded-xl border bg-gray-1 transition-shadow duration-150',
-                  dragging ? 'shadow-over' : 'shadow-lift',
-                )}
-                style={{ x, y, width, height }}
-              >
-                <ResizeGrip onPointerDown={startResize} />
-              </motion.div>
+      <AnimatePresence>
+        {zone && <SnapPreview key={zone} side={zone} />}
+      </AnimatePresence>
+      <AnimatePresence custom={open}>
+        {floating && (
+          <motion.div
+            key="chat-float"
+            ref={floatHost}
+            custom={open}
+            variants={floatCard}
+            // A card lifted out of the dock is already there: no fade.
+            initial={gesture === 'idle' ? 'hidden' : false}
+            animate="shown"
+            exit="hidden"
+            className={cn(
+              'group/float fixed top-0 left-0 z-40 overflow-hidden rounded-xl border bg-gray-1 transition-shadow duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
+              gesture === 'dragging'
+                ? 'shadow-over'
+                : (gesture === 'idle' || layout === 'float') && 'shadow-lift',
             )}
-          </AnimatePresence>
-        </>,
-        document.body,
-      )}
-    </>
+            style={{
+              x: card.x,
+              y: card.y,
+              width: card.width,
+              height: card.height,
+            }}
+          >
+            <ResizeGrip active={gripActive} onPointerDown={startResize} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {sheetOpen && (
+          <motion.div
+            key="chat-sheet-scrim"
+            aria-hidden
+            className="fixed inset-0 z-40 bg-black/30"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { duration: 0.2 } }}
+            exit={{ opacity: 0, transition: { duration: 0.15 } }}
+            onClick={() => setOpen(false)}
+          />
+        )}
+        {sheetOpen && (
+          <motion.section
+            key="chat-sheet"
+            ref={sheetHost}
+            aria-label={t('Chat')}
+            variants={sheetVariants}
+            initial="hidden"
+            animate="shown"
+            exit="hidden"
+            className="fixed inset-x-0 top-2 bottom-0 z-40 flex flex-col overflow-hidden rounded-t-xl border bg-gray-1 shadow-over"
+          />
+        )}
+      </AnimatePresence>
+    </>,
+    document.body,
   );
 }
 
-// Closing fades the card out. Docking it hands the chat to the slot at once,
-// so the empty card just goes.
 const floatCard = {
   hidden: (stillOpen: boolean) =>
+    // Handing the chat to a dock: the card is already where the dock is.
     stillOpen
       ? { opacity: 0, transition: { duration: 0 } }
+      : prefersReducedMotion()
+      ? { opacity: 0, transition: { duration: 0.1 } }
       : {
           opacity: 0,
           scale: 0.98,
-          transition: { duration: 0.15, ease: EASE_OUT },
+          transition: { duration: 0.12, ease: EASE_OUT },
         },
-  shown: {
+  shown: () => ({
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.15, ease: EASE_OUT },
-  },
+    transition: {
+      duration: prefersReducedMotion() ? 0.1 : 0.18,
+      ease: EASE_OUT,
+    },
+  }),
+};
+
+const sheetVariants = {
+  hidden: () =>
+    prefersReducedMotion()
+      ? { opacity: 0, transition: { duration: 0.1 } }
+      : { y: '100%', transition: { duration: 0.2, ease: EASE_OUT } },
+  shown: () =>
+    prefersReducedMotion()
+      ? { opacity: 1, transition: { duration: 0.1 } }
+      : { y: 0, opacity: 1, transition: { duration: 0.28, ease: EASE_OUT } },
 };
 
 function ResizeGrip({
+  active,
   onPointerDown,
 }: {
+  active: boolean;
   onPointerDown: (event: React.PointerEvent<HTMLElement>) => void;
 }) {
   return (
@@ -409,7 +612,10 @@ function ResizeGrip({
         stroke="currentColor"
         strokeWidth={1.25}
         strokeLinecap="round"
-        className="absolute right-1 bottom-1 size-2.5 text-gray-8 opacity-0 transition-[opacity,color] duration-150 group-hover/float:opacity-100 group-hover/grip:text-gray-11"
+        className={cn(
+          'absolute right-1 bottom-1 size-2.5 transition-[opacity,color] duration-150 group-hover/float:opacity-100 group-hover/grip:text-gray-11',
+          active ? 'text-gray-11 opacity-100' : 'text-gray-8 opacity-0',
+        )}
       >
         <path d="M9 3L3 9M9 6.5L6.5 9" />
       </svg>
@@ -419,33 +625,159 @@ function ResizeGrip({
 
 // Where the docked panel will land, shown while a drag is over a snap zone.
 function SnapPreview({ side }: { side: ChatPanelSide }) {
-  const card = cardRect();
-  const width = clampDockWidth(useChatPanel.getState().dockWidth);
-  if (!card) {
+  const rect = dockRect(side, railOpenAfterDock());
+  if (!rect) {
     return null;
   }
-  // Docking on the left folds the sidebar, which moves the card's left edge.
-  const left =
-    side === 'left' ? card.left - sidebarFoldShift() : card.right - width;
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: 0.15, ease: EASE_OUT }}
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1, transition: { duration: 0.15 } }}
+      exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.12 } }}
+      transition={{ ease: EASE_OUT }}
       className="pointer-events-none fixed z-30 rounded-lg bg-gray-12/6 ring-1 ring-gray-12/15 ring-inset"
       style={{
-        left: left + 6,
-        top: card.top + 6,
-        width: width - 12,
-        height: card.height - 12,
+        left: rect.x + 6,
+        top: rect.y + 6,
+        width: rect.width - 12,
+        height: rect.height - 12,
       }}
     />
   );
 }
 
-// The chat lives in one DOM node that moves between the docked slot and the
-// floating card, so moving the panel never remounts the chat.
+// Opening hands focus to the chat input; closing gives it back to wherever it
+// was, if the panel had it.
+function useFocusHandoff(open: boolean) {
+  const wasOpen = useRef(open);
+  const returnTo = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (open === wasOpen.current) {
+      return;
+    }
+    wasOpen.current = open;
+    if (open) {
+      const active = document.activeElement;
+      returnTo.current =
+        active instanceof HTMLElement && active !== document.body
+          ? active
+          : null;
+      // The chat may still be mounting, so wait for its input to appear.
+      let frame = 0;
+      let tries = 0;
+      const focusInput = () => {
+        const input = getChatNode().querySelector<HTMLElement>('textarea');
+        if (input && getChatNode().isConnected) {
+          input.focus({ preventScroll: true });
+          return;
+        }
+        if (++tries < 60) {
+          frame = requestAnimationFrame(focusInput);
+        }
+      };
+      frame = requestAnimationFrame(focusInput);
+      return () => cancelAnimationFrame(frame);
+    }
+    const active = document.activeElement;
+    const focusLeftWithPanel =
+      !active || active === document.body || getChatNode().contains(active);
+    if (focusLeftWithPanel && returnTo.current?.isConnected) {
+      returnTo.current.focus({ preventScroll: true });
+    }
+    returnTo.current = null;
+  }, [open]);
+}
+
+// The card's position and size as motion values, so following the pointer
+// never re-renders React. Every animation retargets from the current value.
+function createCardMotion(size: FloatSize) {
+  const x = motionValue(0);
+  const y = motionValue(0);
+  const width = motionValue(size.width);
+  const height = motionValue(size.height);
+  let running: ReturnType<typeof animate>[] = [];
+  let unwatch: (() => void) | null = null;
+  let run = 0;
+
+  const stop = () => {
+    running.forEach((controls) => controls.stop());
+    running = [];
+    unwatch?.();
+    unwatch = null;
+    run++;
+  };
+  const motionFor = () => (prefersReducedMotion() ? { duration: 0 } : SETTLE);
+
+  return {
+    x,
+    y,
+    width,
+    height,
+    stop,
+    rect: (): Rect => ({
+      x: x.get(),
+      y: y.get(),
+      width: width.get(),
+      height: height.get(),
+    }),
+    place: (rect: Rect) => {
+      stop();
+      x.set(rect.x);
+      y.set(rect.y);
+      width.set(rect.width);
+      height.set(rect.height);
+    },
+    resize: (to: FloatSize) => {
+      running.push(
+        animate(width, to.width, motionFor()),
+        animate(height, to.height, motionFor()),
+      );
+    },
+    // A spring's tail runs well past the point where it looks done, so the
+    // card is done as soon as it's within half a pixel of the target.
+    settle: (to: Rect, done: () => void) => {
+      stop();
+      const id = run;
+      const finish = () => {
+        if (run !== id) {
+          return;
+        }
+        unwatch?.();
+        unwatch = null;
+        done();
+      };
+      const arrived = () =>
+        Math.abs(x.get() - to.x) < 0.5 &&
+        Math.abs(y.get() - to.y) < 0.5 &&
+        Math.abs(width.get() - to.width) < 0.5 &&
+        Math.abs(height.get() - to.height) < 0.5;
+      const check = () => {
+        if (arrived()) {
+          finish();
+        }
+      };
+      const offs = [x, y, width, height].map((value) =>
+        value.on('change', check),
+      );
+      unwatch = () => offs.forEach((off) => off());
+      running = [
+        animate(x, to.x, motionFor()),
+        animate(y, to.y, motionFor()),
+        animate(width, to.width, motionFor()),
+        animate(height, to.height, motionFor()),
+      ];
+      void Promise.all(
+        running.map(
+          (controls) => new Promise<void>((resolve) => controls.then(resolve)),
+        ),
+      ).then(finish);
+    },
+  };
+}
+
+// The chat lives in one DOM node that moves between the docked slot, the
+// floating card and the sheet, so moving the panel never remounts the chat.
 let chatNode: HTMLDivElement | null = null;
 function getChatNode(): HTMLDivElement {
   if (!chatNode) {
@@ -465,15 +797,36 @@ function useChatHost(active: boolean) {
   return ref;
 }
 
-// Re-renders on window resize, so the floating card refits the window.
-function useViewport(): number {
-  const [version, setVersion] = useState(0);
+function useViewport(): { width: number; height: number } {
+  const [viewport, setViewport] = useState(readViewport);
   useEffect(() => {
-    const onResize = () => setVersion((v) => v + 1);
+    const onResize = () => setViewport(readViewport());
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-  return version;
+  return viewport;
+}
+
+function readViewport() {
+  return { width: window.innerWidth, height: window.innerHeight };
+}
+
+// While a gesture runs, a shield above everything keeps one cursor and stops
+// text selection and hover effects underneath.
+function lockPointer(cursor: string): () => void {
+  const shield = document.createElement('div');
+  shield.style.cssText = `position:fixed;inset:0;z-index:2147483647;cursor:${cursor}`;
+  document.body.appendChild(shield);
+  const userSelect = document.body.style.userSelect;
+  document.body.style.userSelect = 'none';
+  return () => {
+    shield.remove();
+    document.body.style.userSelect = userSelect;
+  };
+}
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 export function fitToWindow(size: FloatSize): FloatSize {
@@ -501,17 +854,42 @@ export function defaultFloat(size: FloatSize): FloatPosition {
   };
 }
 
-export function clampDockWidth(width: number): number {
+// Where a dock on this side sits once the rail has settled, inside the card's
+// border. Computed, not measured, since the rail may still be moving.
+function dockRect(side: ChatPanelSide, railOpen: boolean): Rect | null {
   const card = cardRect();
-  const max = Math.min(DOCK_MAX_WIDTH, card ? card.width / 2 : DOCK_MAX_WIDTH);
-  return clamp(width, DOCK_MIN_WIDTH, max);
+  if (!card) {
+    return null;
+  }
+  const viewportWidth = window.innerWidth;
+  const width = dockWidthFor(
+    useChatPanel.getState().dockWidth,
+    cardInnerWidth(viewportWidth, railOpen),
+  );
+  return {
+    x:
+      side === 'left'
+        ? sidebarWidth(railOpen) + 1
+        : viewportWidth - GUTTER_RIGHT - 1 - width,
+    y: card.top + 1,
+    width,
+    height: card.height - 2,
+  };
 }
 
-function snapZone(pointerX: number): ChatPanelSide | null {
-  if (pointerX <= SNAP_EDGE) {
+function snapZone(
+  pointerX: number,
+  current: ChatPanelSide | null,
+): ChatPanelSide | null {
+  if (window.innerWidth < DOCK_BREAKPOINT) {
+    return null;
+  }
+  const reach = (side: ChatPanelSide) =>
+    side === current ? SNAP_EXIT : SNAP_ENTER;
+  if (pointerX <= reach('left')) {
     return 'left';
   }
-  if (pointerX >= window.innerWidth - SNAP_EDGE) {
+  if (pointerX >= window.innerWidth - reach('right')) {
     return 'right';
   }
   return null;
@@ -521,25 +899,9 @@ function cardRect(): DOMRect | null {
   return document.getElementById(CARD_ID)?.getBoundingClientRect() ?? null;
 }
 
-// How far the card's left edge moves when the sidebar folds to its rail.
-function sidebarFoldShift(): number {
-  const gap = document.querySelector<HTMLElement>('[data-slot=sidebar-gap]');
-  if (!gap) {
-    return 0;
-  }
-  const icon = cssLengthToPx(
-    getComputedStyle(gap).getPropertyValue('--sidebar-width-icon'),
-  );
-  return Math.max(0, gap.getBoundingClientRect().width - icon);
+function rectOf(element: HTMLElement): Rect {
+  const rect = element.getBoundingClientRect();
+  return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
 }
 
-export function cssLengthToPx(value: string): number {
-  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-  return value.trim().endsWith('rem')
-    ? parseFloat(value) * rem
-    : parseFloat(value);
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), Math.max(min, max));
-}
+type Rect = FloatPosition & FloatSize;

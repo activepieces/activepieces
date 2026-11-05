@@ -2,7 +2,14 @@ import { t } from 'i18next';
 import { animate, motion, useMotionValue, useTransform } from 'motion/react';
 import { useEffect } from 'react';
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
+import { isMac } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 import { useChatPanelHidden } from './chat-window';
@@ -55,35 +62,48 @@ export function ChatNotch({ className }: { className?: string }) {
         <motion.path d={fillD} className="fill-gray-2" />
         <motion.path d={edgeD} className="fill-none stroke-gray-6" />
       </motion.svg>
-      <motion.button
-        type="button"
-        aria-label={t('Chat')}
-        onClick={() => setOpen(true)}
-        initial={false}
-        whileHover="hover"
-        animate={
-          isHidden
-            ? { opacity: 0, scale: 0.6, y: 6 }
-            : { opacity: 1, scale: 1, y: 0 }
-        }
-        transition={{
-          duration: isHidden ? 0.12 : 0.2,
-          ease: EASE_OUT,
-          delay: isHidden ? 0 : 0.08,
-        }}
-        className={cn(
-          'group absolute bottom-0 left-0 flex items-start justify-start rounded-md text-gray-11 outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-8',
-          isHidden ? 'pointer-events-none' : 'pointer-events-auto',
-        )}
-        style={{
-          width: NOTCH,
-          height: NOTCH,
-          paddingLeft: INSET_X,
-          paddingTop: INSET_TOP,
-        }}
-      >
-        <ChatSparkIcon className="size-6 transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:text-gray-12" />
-      </motion.button>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip open={isHidden ? false : undefined}>
+          <TooltipTrigger asChild>
+            <motion.button
+              type="button"
+              aria-label={t('Chat')}
+              aria-keyshortcuts="Meta+J Control+J"
+              onClick={() => setOpen(true)}
+              initial={false}
+              whileHover="hover"
+              animate={
+                isHidden
+                  ? { opacity: 0, scale: 0.6, y: 6 }
+                  : { opacity: 1, scale: 1, y: 0 }
+              }
+              transition={{
+                duration: isHidden ? 0.12 : 0.2,
+                ease: EASE_OUT,
+                delay: isHidden ? 0 : 0.08,
+              }}
+              className={cn(
+                'group absolute bottom-0 left-0 flex items-start justify-start rounded-md text-gray-11 outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-8',
+                isHidden ? 'pointer-events-none' : 'pointer-events-auto',
+              )}
+              style={{
+                width: NOTCH,
+                height: NOTCH,
+                paddingLeft: INSET_X,
+                paddingTop: INSET_TOP,
+              }}
+            >
+              <ChatSparkIcon className="size-6 transition-colors duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:text-gray-12" />
+            </motion.button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="flex items-center gap-2">
+            {t('Chat')}
+            <kbd className="font-sans text-xs opacity-60">
+              {isMac() ? '⌘J' : 'Ctrl+J'}
+            </kbd>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }
