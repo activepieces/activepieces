@@ -74,7 +74,7 @@ describe('Sign-in method enforcement for governed people', () => {
         expect(response?.json()?.code).toBe('INVALID_CREDENTIALS')
     })
 
-    it('refuses an accepted invitee\'s password sign-up before any account is created', async () => {
+    it('refuses an accepted invitee\'s password sign-up before any account is created, without naming the platform or its methods', async () => {
         const { mockPlatform, domain } = await saveGoverningPlatform({ emailAuthEnabled: false, googleAuthEnabled: true })
         const email = `priya@${domain}`
         await saveAcceptedInvitation({ email, platformId: mockPlatform.id })
@@ -87,6 +87,7 @@ describe('Sign-in method enforcement for governed people', () => {
 
         expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         expect(response?.json()?.code).toBe('SIGN_IN_METHOD_NOT_ALLOWED')
+        expect(response?.json()?.params).toEqual({})
         expect(await storedIdentity(email)).toBeNull()
     })
 

@@ -167,7 +167,7 @@ export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DIS
 export type SignInMethodNotAllowedParams = BaseErrorParams<ErrorCode.SIGN_IN_METHOD_NOT_ALLOWED, {
     platformName: string
     allowedMethods: SignInMethod[]
-}>
+} | Record<string, never>>
 
 export type SignInMethod = 'EMAIL' | 'GOOGLE' | 'SAML'
 
