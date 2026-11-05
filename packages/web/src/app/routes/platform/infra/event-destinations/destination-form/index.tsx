@@ -201,7 +201,7 @@ const DestinationForm = ({
               'flex w-full flex-wrap items-center justify-end gap-2 px-4 py-3 md:px-6',
             )}
           >
-            <span className="min-w-0 flex-1 text-sm text-gray-11">
+            <span className="min-w-0 flex-1 text-sm text-gray-11 max-sm:basis-full">
               {footerStatus}
             </span>
             <Button
