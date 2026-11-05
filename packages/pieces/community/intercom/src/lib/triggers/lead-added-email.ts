@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
+import { contactTriggerOutputSchema } from '../output-schemas';
 
 export const leadAddedEmailTrigger = createTrigger({
 	auth: intercomAuth,
@@ -12,9 +13,10 @@ export const leadAddedEmailTrigger = createTrigger({
 		description: 'Fires when a lead provides an email address in Intercom for the first time, capturing the moment an anonymous or partially identified lead becomes contactable by email. Outputs the lead contact object including the newly added email.',
 	},
 	props: {},
+	outputSchema: contactTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -26,11 +28,11 @@ export const leadAddedEmailTrigger = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.contacts.search({
 			query: {

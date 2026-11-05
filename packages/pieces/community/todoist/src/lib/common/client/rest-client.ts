@@ -363,7 +363,7 @@ const dueDateParams = (dueDate?: string) => {
     const parsedDate = Date.parse(dueDate);
     if (isNaN(parsedDate)) {
       return { due_string: dueDate };
-    } else if (/\d{4}-\d{2}-\d{2}/.test(dueDate)) {
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
       return { due_date: dueDate };
     } else {
       return { due_datetime: new Date(parsedDate).toISOString() };

@@ -73,6 +73,12 @@ function publishedTierModelId({ tierId, surface, log }: { tierId: string, surfac
 
 function resolveNamedModelId({ provider, modelName, surface, modelScope, modelIds, log }: { provider: AIProviderName, modelName: string, surface: ModelTierSurface, modelScope?: AiProviderModelScope, modelIds?: string[], log: FastifyBaseLogger }): string {
     if (provider !== AIProviderName.ACTIVEPIECES) {
+        if (modelScope === 'selected' && !isNil(modelIds) && !modelIds.includes(modelName)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+            }, `the model "${modelName}" is not allowed for this AI provider key anymore`)
+        }
         return modelName
     }
     const requested = isTierId({ modelName }) ? publishedTierModelId({ tierId: modelName, surface, log }) : modelName
@@ -85,6 +91,25 @@ function resolveNamedModelId({ provider, modelName, surface, modelScope, modelId
         }, message)
     }
     return requested
+}
+
+function resolvePinnedModelId({ provider, modelName, config, modelScope, modelIds, log }: { provider: AIProviderName, modelName: string, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[], log: FastifyBaseLogger }): string | null {
+    const managed = provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER
+    if (managed && isTierId({ modelName })) {
+        const modelId = findTier({ tierId: modelName, surface: 'chat' })?.modelId
+        const excluded = modelScope === 'selected' && !isNil(modelIds) && !isNil(modelId) && !modelIds.includes(modelId)
+        return isNil(modelId) || excluded ? null : modelId
+    }
+    if (!managed && !isNil(findTier({ tierId: modelName, surface: 'chat' }))) {
+        const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: modelName, surface: 'chat', config, modelScope, modelIds }))
+        return data ?? null
+    }
+    const catalog = manualTextModelCatalog({ config })
+    if (!isNil(catalog) && !catalog.includes(modelName)) {
+        return null
+    }
+    const { data } = tryCatchSync(() => resolveNamedModelId({ provider, modelName, surface: 'chat', modelScope, modelIds, log }))
+    return data ?? null
 }
 
 function resolveModelIdForProvider({ provider, selectedModel, surface, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, surface: ModelTierSurface, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
@@ -101,22 +126,27 @@ function resolveModelIdForProvider({ provider, selectedModel, surface, config, m
     return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
 }
 
-function defaultModelIdForProvider({ provider, surface }: { provider: AIProviderName, surface: ModelTierSurface }): string | null {
-    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: modelTierCatalog.current(surface).defaultTierId, surface }))
+function defaultModelIdForProvider({ provider, surface, config, modelScope, modelIds }: { provider: AIProviderName, surface: ModelTierSurface, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string | null {
+    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: modelTierCatalog.current(surface).defaultTierId, surface, config, modelScope, modelIds }))
     return data
 }
 
-// Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
-// chat provider no longer resolves, so fall back to the stored selection — but only when it is one
-// of our own ids, never echoing an arbitrary stored string out to the analytics sink.
-function resolveModelIdForAnalytics({ provider, selectedModel, surface }: { provider: AIProviderName | null, selectedModel: string | null, surface: ModelTierSurface }): string | null {
+// Analytics and billing report the model a turn ran on. A pinned chat stored a model id that was
+// checked when it was picked, so it is reported as is. Otherwise the provider is unknown when a
+// platform's chat provider no longer resolves, so fall back to the stored selection, but only when it
+// is one of our own ids, never echoing an arbitrary stored string out to the analytics sink.
+function resolveModelIdForAnalytics({ provider, selectedModel, surface, pinned }: { provider: AIProviderName | null, selectedModel: string | null, surface: ModelTierSurface, pinned: boolean }): string | null {
     if (isNil(selectedModel)) {
         return null
     }
-    if (!isNil(provider)) {
-        return resolveModelIdForProvider({ provider, selectedModel, surface })
-    }
     const tier = findTier({ tierId: selectedModel, surface })
+    if (pinned && isNil(tier)) {
+        return selectedModel
+    }
+    if (!isNil(provider)) {
+        const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel, surface }))
+        return data ?? null
+    }
     if (!isNil(tier)) {
         return tier.modelId
     }
@@ -130,6 +160,8 @@ export const agentModelResolution = {
     resolveRunTier,
     nativeModelIdFor,
     resolveNamedModelId,
+    resolvePinnedModelId,
+    isTierId,
     resolveModelIdForProvider,
     defaultModelIdForProvider,
     resolveModelIdForAnalytics,

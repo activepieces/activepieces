@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  AI_PROVIDER_CAPABILITIES,
   AIProviderModelType,
   AiProviderToolConfig,
   AIProviderWithoutSensitiveData,
@@ -14,8 +15,11 @@ import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -46,6 +50,7 @@ import {
   aiProviderQueries,
   aiToolConfigMutations,
 } from '@/features/platform-admin';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { aiCapabilitySources, AiToolCapabilityInfo } from './catalog';
 
@@ -73,16 +78,15 @@ export function AiCapabilityDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      {open && (
         <CapabilityForm
-          key={open ? 'open' : 'closed'}
           capabilityInfo={capabilityInfo}
           existingConfig={existingConfig}
           defaultProviderId={defaultProviderId}
           onClose={() => setOpen(false)}
           onSaved={onSaved}
         />
-      </DialogContent>
+      )}
     </Dialog>
   );
 }
@@ -106,8 +110,27 @@ function CapabilityForm({
     providers,
   });
   const existingChoice = AiProviderToolConfig.safeParse(existingConfig?.config);
+  const isEmbeddings =
+    capabilityInfo.capability === AiToolCapability.EMBEDDINGS;
   const needsModel =
+    isEmbeddings ||
     capabilityInfo.capability === AiToolCapability.IMAGE_GENERATION;
+  const defaultSource = pickDefaultSource({
+    preferred: existingChoice.success
+      ? existingChoice.data.aiProviderId
+      : existingConfig?.provider ?? defaultProviderId,
+    sourceIds: [
+      ...aiProviders.map((p) => p.id),
+      ...capabilityInfo.providers.map((p) => p.id),
+    ],
+    fallback: capabilityInfo.providers[0]?.id ?? aiProviders[0]?.id ?? '',
+  });
+  const firstEmbeddingModel = (sourceId: string): string => {
+    const provider = aiProviders.find((p) => p.id === sourceId);
+    return isEmbeddings && !isNil(provider)
+      ? AI_PROVIDER_CAPABILITIES[provider.provider].embeddingModels[0] ?? ''
+      : '';
+  };
   const savedKeyProvider = existingConfig?.hasApiKey
     ? existingConfig.provider
     : undefined;
@@ -134,40 +157,38 @@ function CapabilityForm({
     ),
     mode: 'onChange',
     defaultValues: {
-      source: pickDefaultSource({
-        preferred: existingChoice.success
-          ? existingChoice.data.aiProviderId
-          : existingConfig?.provider ?? defaultProviderId,
-        sourceIds: [
-          ...aiProviders.map((p) => p.id),
-          ...capabilityInfo.providers.map((p) => p.id),
-        ],
-        fallback: capabilityInfo.providers[0].id,
-      }),
+      source: defaultSource,
       apiKey: '',
-      modelId: existingChoice.success ? existingChoice.data.modelId ?? '' : '',
+      modelId:
+        (existingChoice.success ? existingChoice.data.modelId : undefined) ??
+        firstEmbeddingModel(defaultSource),
     },
   });
   const source = form.watch('source');
   const selectedAiProvider = aiProviders.find((p) => p.id === source);
   const { data: models = [] } = aiProviderQueries.useConfigModels(
-    needsModel ? selectedAiProvider?.id : undefined,
+    needsModel && !isEmbeddings ? selectedAiProvider?.id : undefined,
   );
-  const imageModels = isNil(selectedAiProvider)
+  const modelOptions = isNil(selectedAiProvider)
     ? []
+    : isEmbeddings
+    ? AI_PROVIDER_CAPABILITIES[selectedAiProvider.provider].embeddingModels.map(
+        (id) => ({ id, name: id }),
+      )
     : models.filter(
         (model) =>
           model.type === AIProviderModelType.IMAGE &&
           modelAllowed({ model, provider: selectedAiProvider }),
       );
 
-  const selectedModel = imageModels.find(
+  const selectedModel = modelOptions.find(
     (model) => model.id === form.watch('modelId'),
   );
 
   const saveCallbacks: SaveCallbacks = {
     onSuccess: () => {
       onSaved();
+      toast.success(t('Saved'));
       onClose();
     },
     onError: (error) => {
@@ -184,6 +205,12 @@ function CapabilityForm({
     aiToolConfigMutations.useUpsertAiToolConfig(saveCallbacks);
   const { mutate: reenable, isPending: isReenabling } =
     aiToolConfigMutations.useUpdateAiToolConfig(saveCallbacks);
+  const saving = isPending || isReenabling;
+  const keepOpen = (event: Event) => {
+    if (saving) {
+      event.preventDefault();
+    }
+  };
 
   const handleSubmit = (values: FormValues) => {
     form.clearErrors('root.serverError');
@@ -220,148 +247,194 @@ function CapabilityForm({
   const sourceCount = aiProviders.length + capabilityInfo.providers.length;
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <DialogHeader>
-          <DialogTitle>{capabilityInfo.name}</DialogTitle>
-          <DialogDescription>{capabilityInfo.description}</DialogDescription>
-        </DialogHeader>
+    <DialogContent
+      className={adminLayout.dialog.md}
+      showCloseButton={!saving}
+      onEscapeKeyDown={keepOpen}
+      onPointerDownOutside={keepOpen}
+      onInteractOutside={keepOpen}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <DialogHeader>
+            <DialogTitle>{capabilityInfo.name}</DialogTitle>
+            <DialogDescription>{capabilityInfo.description}</DialogDescription>
+          </DialogHeader>
 
-        {sourceCount > 1 && (
-          <FormField
-            control={form.control}
-            name="source"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('Source')}</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    form.setValue('modelId', '');
-                  }}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {aiProviders.map((provider) => (
-                      <SelectItem key={provider.id} value={provider.id}>
-                        {provider.name}
-                      </SelectItem>
-                    ))}
-                    {capabilityInfo.providers.map((provider) => (
-                      <SelectItem key={provider.id} value={provider.id}>
-                        {provider.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        {selectedAiProvider && needsModel && (
-          <FormField
-            control={form.control}
-            name="modelId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('Image model')}</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('Choose a model')}>
-                        {selectedModel && (
-                          <span className="flex min-w-0 items-baseline gap-2">
-                            <span className="truncate">
-                              {selectedModel.name}
-                            </span>
-                            <span className="truncate text-xs text-muted-foreground">
-                              {selectedModel.id}
-                            </span>
-                          </span>
-                        )}
-                      </SelectValue>
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {imageModels.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        <span className="flex flex-col">
-                          <span>{model.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {model.id}
-                          </span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        {!selectedAiProvider && (
-          <FormField
-            control={form.control}
-            name="apiKey"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('API Key')}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="password"
-                    autoComplete="off"
-                    placeholder={
-                      source === savedKeyProvider
-                        ? t('Enter a new key to replace the saved one')
-                        : t('Paste your API key')
-                    }
-                  />
-                </FormControl>
-                {selectedProvider && (
-                  <a
-                    href={selectedProvider.signupUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
+          {sourceCount > 1 && (
+            <FormField
+              control={form.control}
+              name="source"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Source')}</FormLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      form.setValue('modelId', firstEmbeddingModel(value));
+                    }}
                   >
-                    {t('Get a {provider} API key', {
-                      provider: selectedProvider.name,
-                    })}
-                    <ExternalLink className="size-3" />
-                  </a>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {aiProviders.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          {provider.name}
+                        </SelectItem>
+                      ))}
+                      {capabilityInfo.providers.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          {provider.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          {selectedAiProvider && needsModel && (
+            <FormField
+              control={form.control}
+              name="modelId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {isEmbeddings ? t('Embedding model') : t('Image model')}
+                  </FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('Choose a model')}>
+                          {selectedModel && (
+                            <span className="flex min-w-0 items-baseline gap-2">
+                              <span className="truncate">
+                                {selectedModel.name}
+                              </span>
+                              {selectedModel.name !== selectedModel.id && (
+                                <span className="truncate text-xs text-gray-11">
+                                  {selectedModel.id}
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {modelOptions.map((model) => (
+                        <SelectItem key={model.id} value={model.id}>
+                          <span className="flex flex-col">
+                            <span>{model.name}</span>
+                            {model.name !== model.id && (
+                              <span className="text-xs text-gray-11">
+                                {model.id}
+                              </span>
+                            )}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          {isEmbeddings && sourceCount > 0 && (
+            <p className="text-xs text-gray-11">
+              {t(
+                'Files already in knowledge bases keep their old vectors. Re-upload them to search with the new key or model.',
+              )}
+            </p>
+          )}
+
+          {sourceCount === 0 && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-sm text-gray-11">
+                {t(
+                  'Add a key that serves all projects and supports embeddings, such as OpenAI, Google, Azure or OpenRouter.',
                 )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+              </p>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/platform/ai">{t('Add a provider key')}</Link>
+              </Button>
+            </div>
+          )}
 
-        {form.formState.errors.root?.serverError && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.root.serverError.message}
-          </p>
-        )}
+          {!selectedAiProvider && sourceCount > 0 && (
+            <FormField
+              control={form.control}
+              name="apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('API Key')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="password"
+                      autoComplete="off"
+                      placeholder={
+                        source === savedKeyProvider
+                          ? t('Enter a new key to replace the saved one')
+                          : t('Paste your API key')
+                      }
+                    />
+                  </FormControl>
+                  {selectedProvider && (
+                    <a
+                      href={selectedProvider.signupUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-gray-11 hover:underline"
+                      {...adminControl(AdminControl.AI_API_KEY_LINK)}
+                    >
+                      {t('Get a {provider} API key', {
+                        provider: selectedProvider.name,
+                      })}
+                      <ExternalLink className="size-3" />
+                    </a>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t('Cancel')}
-          </Button>
-          <Button type="submit" loading={isPending || isReenabling}>
-            {t('Save')}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Form>
+          {form.formState.errors.root?.serverError && (
+            <p className="text-sm text-danger-11">
+              {form.formState.errors.root.serverError.message}
+            </p>
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={saving}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button
+              type="submit"
+              disabled={sourceCount === 0}
+              loading={saving}
+              {...adminControl(AdminControl.AI_CAPABILITY_SUBMIT)}
+            >
+              {t('Save')}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </DialogContent>
   );
 }
 

@@ -1,45 +1,41 @@
 import { propsValidation } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
-import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import * as z from 'zod/mini';
+import { zohoCampaignsAuth } from '../auth';
+import { zohoCampaignsApi } from '../common/api';
+import { zohoCampaignsProps } from '../common/props';
+import { zohoCampaignsStatusOutputSchema } from '../output-schemas';
 
-export const addTagToContact = createAction({
+export const addTagToContactAction = createAction({
   auth: zohoCampaignsAuth,
   name: 'addTagToContact',
+  outputSchema: zohoCampaignsStatusOutputSchema,
   classification: 'WRITE',
   displayName: 'Add Tag to Contact',
   description:
     "Apply a tag to a contact by email. Creates the tag if it doesn't exist.",
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Applies a tag to a contact identified by email address, first creating the tag in the account if it does not already exist. Use to label or segment a subscriber. Idempotent: re-applying the same tag to the same contact leaves the contact in the same tagged state.',
     idempotent: true,
   },
-  props: zohoCampaignsCommon.addTagToContactProperties,
+  props: {
+    tagName: zohoCampaignsProps.tagName({ required: true }),
+    lead_email: Property.ShortText({
+      displayName: 'Contact Email',
+      description: 'Email address of the contact to tag',
+      required: true,
+    }),
+  },
   async run({ auth, propsValue }) {
-    const location = auth.props?.['location'] as string || 'zoho.com';
-    const accessToken = auth.access_token;
-    await propsValidation.validateZod(
-      propsValue,
-      zohoCampaignsCommon.addTagToContactSchema
-    );
-    const tags = await zohoCampaignsCommon.listTags({ accessToken, location });
-    const tagExists =
-      tags !== undefined &&
-      tags.some((tagMap) =>
-        Object.values(tagMap).some((t) => t.tag_name === propsValue.tagName)
-      );
-    if (!tagExists) {
-      await zohoCampaignsCommon.createTag({
-        accessToken,
-        location,
-        tagName: propsValue.tagName,
-      });
-    }
-    return await zohoCampaignsCommon.addTagToContact({
-      accessToken,
-      location,
-      ...propsValue,
-    });
+    await propsValidation.validateZod(propsValue, schema);
+    await zohoCampaignsApi.ensureTag({ auth, tagName: propsValue.tagName });
+    return await zohoCampaignsApi.addTagToContact({ auth, ...propsValue });
   },
 });
+
+const schema = {
+  tagName: z.string(),
+  lead_email: z.string().check(z.email()),
+};

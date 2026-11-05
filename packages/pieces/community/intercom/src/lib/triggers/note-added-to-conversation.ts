@@ -2,27 +2,30 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 import { stripHtml } from 'string-strip-html';
 import { intercomAuth } from '../auth';
 import { intercomClient } from '../common';
+import { conversationEnvelopeTriggerOutputSchema } from '../output-schemas';
+import { conversationEnvelopeSample, recentConversationEnvelopes } from '../common/webhook-samples';
 
 export const noteAddedToConversation = createTrigger({
-	// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
 	name: 'noteAddedToConversation',
 	classification: 'READ',
 	displayName: 'Note added to conversation',
 	description: 'Triggers when a note is added to a conversation',
 	aiMetadata: {
-		description: 'Fires when an internal note is added to a conversation in Intercom. Notes are private remarks visible only to admins and teammates, not to the contact. An optional keyword input filters to notes containing that text. Outputs the conversation object reflecting the added note.',
+		description: 'Fires when an internal note is added to a conversation in Intercom. Notes are private remarks visible only to admins and teammates, not to the contact. An optional keyword keeps only notes that contain that exact word (whole word, case-sensitive). Outputs the whole webhook notification (id, topic, created_at); the conversation, with the new parts, is under data.item.',
 	},
 	props: {
 		keyword: Property.ShortText({
 			displayName: 'Keyword (optional)',
+			description: 'Only notes containing this exact word fire the flow. Matching is whole-word and case-sensitive.',
 			required: false,
 		}),
 	},
-	sampleData: undefined,
+	sampleData: conversationEnvelopeSample('conversation.admin.noted'),
 	auth: intercomAuth,
+	outputSchema: conversationEnvelopeTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.admins.identify();
 
@@ -35,8 +38,11 @@ export const noteAddedToConversation = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
+	},
+	async test(context) {
+		return recentConversationEnvelopes({ auth: context.auth, topic: 'conversation.admin.noted' });
 	},
 	async run(context) {
 		const keyword = context.propsValue.keyword;

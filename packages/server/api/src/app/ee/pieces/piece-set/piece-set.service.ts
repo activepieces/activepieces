@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
+import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, pieceSetConfigUtil, requiredActionsUtil, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -8,7 +8,7 @@ import { isUniqueViolation } from '../../../core/db/unique-violation'
 import { distributedLock } from '../../../database/redis-connections'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
-import { pieceSetConfig } from './piece-set-config'
+import { projectRepo } from '../../../project/project-repo'
 import { PieceSetEntity } from './piece-set.entity'
 
 export const pieceSetRepo = repoFactory(PieceSetEntity)
@@ -19,6 +19,7 @@ type ListParams = {
     platformId: string
     cursor?: string
     limit?: number
+    name?: string
 }
 
 type GetOneParams = {
@@ -42,6 +43,11 @@ type UpdateParams = {
 
 type DeleteParams = {
     id: string
+    platformId: string
+}
+
+type GetForProjectParams = {
+    projectId: string
     platformId: string
 }
 
@@ -70,13 +76,20 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
                 const existing = await pieceSetRepo().findOneBy({ platformId, isDefault: true })
                 if (!isNil(existing)) return existing
 
-                await pieceSetRepo().save(pieceSetConfig.buildDefaultSet(platformId))
+                await pieceSetRepo().save(pieceSetConfigUtil.buildDefaultSet(platformId))
                 return pieceSetRepo().findOneByOrFail({ platformId, isDefault: true })
             },
         })
     },
 
-    async list({ platformId, cursor, limit = 10 }: ListParams): Promise<SeekPage<PieceSet>> {
+    async getForProject({ projectId, platformId }: GetForProjectParams): Promise<PieceSet> {
+        const project = await projectRepo().findOneBy({ id: projectId, platformId })
+        const pieceSetId = project?.pieceSetId ?? null
+        const assigned = isNil(pieceSetId) ? null : await pieceSetRepo().findOneBy({ id: pieceSetId, platformId })
+        return isNil(assigned) ? this.getOrCreateDefaultPieceSet(platformId) : assigned
+    },
+
+    async list({ platformId, cursor, limit = 10, name }: ListParams): Promise<SeekPage<PieceSet>> {
         const boundedLimit = Math.min(limit, MAX_PIECE_SET_PAGE_SIZE)
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
@@ -88,9 +101,11 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor: newCursor } = await paginator.paginate(
-            pieceSetRepo().createQueryBuilder('piece_set').where({ platformId }),
-        )
+        const queryBuilder = pieceSetRepo().createQueryBuilder('piece_set').where({ platformId })
+        if (name) {
+            queryBuilder.andWhere('piece_set.name ILIKE :name', { name: `%${escapeLikeBackslashes(name)}%` })
+        }
+        const { data, cursor: newCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<PieceSet>(data, newCursor)
     },
 
@@ -114,7 +129,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
             key: resolveKey({ key, name }),
             isDefault,
             generatedForProjectId,
-            config: config ?? pieceSetConfig.emptyConfig(),
+            config: config ?? pieceSetConfigUtil.emptyConfig(),
         }))
         if (error) {
             rethrowKeyConflict(error)
@@ -125,7 +140,14 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
     async update({ id, platformId, request }: UpdateParams): Promise<PieceSet> {
         const existing = await this.getOne({ id, platformId })
 
-        const updatedConfig = pieceSetConfig.applyUpdate({ current: existing.config, request })
+        const updatedConfig = pieceSetConfigUtil.applyUpdate({ current: existing.config, request })
+        const excludedRequired = requiredActionsUtil.findExcludedRequiredActions({ config: updatedConfig, requiredActions: request.requiredActions?.actions ?? {} })
+        if (Object.keys(excludedRequired).length > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: requiredActionsUtil.buildExcludedRequiredActionsErrorMessage(excludedRequired) },
+            })
+        }
 
         const { error } = await tryCatch(() => pieceSetRepo().update({ id, platformId }, {
             ...spreadIfDefined('name', request.name),
@@ -218,6 +240,10 @@ function resolveKey({ key, name }: { key?: string | null, name: string }): strin
         return key
     }
     return `${kebabCase(name)}-${apId().slice(0, 8)}`
+}
+
+function escapeLikeBackslashes(value: string): string {
+    return value.replace(/\\/g, '\\\\')
 }
 
 function rethrowKeyConflict(error: unknown): never {

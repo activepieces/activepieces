@@ -9,15 +9,11 @@ export const AfterImportFlowRedirect = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   useEffect(() => {
-    if (flowId) {
-      queryClient.removeQueries({
-        queryKey: flowHooks.createFlowQueryKeys({
-          flowId,
-          versionId: undefined,
-        }),
-      });
+    if (!flowId) {
+      return;
     }
+    flowHooks.removeFlowFromCache({ flowId, queryClient });
     navigate(`/flows/${flowId}`, { replace: true });
   }, []);
-  return <></>;
+  return null;
 };

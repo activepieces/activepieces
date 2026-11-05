@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { microsoftSharepointUpdateListItemOutputSchema } from '../output-schemas';
 
 export const updateListItemAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_update_list_item',
+  outputSchema: microsoftSharepointUpdateListItemOutputSchema,
   classification: 'WRITE',
   displayName: 'Update List Item',
   description: 'Updates an existing item in a list.',

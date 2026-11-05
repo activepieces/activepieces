@@ -3,14 +3,16 @@ import { createAction } from '@activepieces/pieces-framework';
 import { ticktickAuth } from '../auth';
 import { tickTickApiCall } from '../common/client';
 import { projectId, taskId } from '../common/props';
+import { createTaskOutputSchema } from '../output-schemas';
 
 export const getTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'get_task',
+	outputSchema: createTaskOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Task',
 	description: 'Retrieves the details of a specific task.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Fetches the full details of a single TickTick task by its list (project) ID and task ID. Use when you already know both IDs and need the task data; to discover a task ID by title, use Find Task first. Read-only and idempotent.',

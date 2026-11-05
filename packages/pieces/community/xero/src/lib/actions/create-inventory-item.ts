@@ -1,12 +1,9 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { XERO_URLS, xeroApi, xeroValue } from '../common/client';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroCreateInventoryItem = createAction({
   auth: xeroAuth,
@@ -17,9 +14,10 @@ export const xeroCreateInventoryItem = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Create a new Xero item (product/service) keyed by a unique item code, optionally tracked as inventory via sales, purchase, COGS, and inventory-asset accounts. Pick this to register a catalog item that line items can later reference by ItemCode. Not idempotent: each call creates an item, and Xero rejects a duplicate code; look the code up first if it may already exist.',
-    idempotent: false,
+      'Creates a Xero item (product or service) keyed by its item code, optionally tracked as inventory via sales, purchase, COGS and inventory-asset accounts picked by account. Pick this to register a catalog item that line items can later reference by ItemCode; use Create or Update Item to work with account codes directly. Idempotent on the code: if an item with this code already exists, Xero updates it instead of creating a duplicate.',
+    idempotent: true,
   },
+  outputSchema: xeroOutputSchemas.itemEnvelope,
   props: {
     tenant_id: props.tenant_id,
     code: Property.ShortText({
@@ -83,8 +81,16 @@ export const xeroCreateInventoryItem = createAction({
       cogs_account_id,
       inventory_asset_account_id,
     } = context.propsValue;
-
-    const url = 'https://api.xero.com/api.xro/2.0/Items';
+    const accessToken = context.auth.access_token;
+    const selected = [sales_account_id, purchase_account_id, cogs_account_id, inventory_asset_account_id].filter(
+      (value): value is string => typeof value === 'string' && value.trim().length > 0,
+    );
+    const codes = selected.length > 0 ? await accountCodes({ accessToken, tenantId: tenant_id }) : new Map<string, string>();
+    const codeOf = (value: unknown) => resolveAccountCode({ value, codes });
+    const salesAccountCode = codeOf(sales_account_id);
+    const purchaseAccountCode = codeOf(purchase_account_id);
+    const cogsAccountCode = codeOf(cogs_account_id);
+    const inventoryAccountCode = codeOf(inventory_asset_account_id);
 
     const item: Record<string, unknown> = {
       Code: code,
@@ -93,44 +99,54 @@ export const xeroCreateInventoryItem = createAction({
       ...(typeof is_purchased === 'boolean' ? { IsPurchased: is_purchased } : {}),
       ...(description ? { Description: description } : {}),
       ...(purchase_description ? { PurchaseDescription: purchase_description } : {}),
-      ...(sales_details || sales_account_id
-        ? { SalesDetails: { ...(sales_details ?? {}), ...(sales_account_id ? { AccountID: sales_account_id } : {}) } }
+      ...(sales_details || salesAccountCode
+        ? { SalesDetails: { ...(sales_details ?? {}), ...(salesAccountCode ? { AccountCode: salesAccountCode } : {}) } }
         : {}),
-      ...(purchase_details || purchase_account_id || cogs_account_id
+      ...(purchase_details || purchaseAccountCode || cogsAccountCode
         ? {
             PurchaseDetails: {
               ...(purchase_details ?? {}),
-              ...(purchase_account_id ? { AccountID: purchase_account_id } : {}),
-              ...(cogs_account_id ? { COGSAccountID: cogs_account_id } : {}),
+              ...(purchaseAccountCode ? { AccountCode: purchaseAccountCode } : {}),
+              ...(cogsAccountCode ? { COGSAccountCode: cogsAccountCode } : {}),
             },
           }
         : {}),
-      ...(inventory_asset_account_id
-        ? { InventoryAssetAccountCode: undefined, InventoryAssetAccountID: inventory_asset_account_id }
-        : {}),
+      ...(inventoryAccountCode ? { InventoryAssetAccountCode: inventoryAccountCode, IsTrackedAsInventory: true } : {}),
     };
 
-    const payload = item;
-
-    const request: HttpRequest = {
+    return xeroApi.request<unknown>({
+      accessToken,
+      tenantId: tenant_id,
       method: HttpMethod.POST,
-      url,
-      body: payload,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: (context.auth as any).access_token,
-      },
-      headers: {
-        'Xero-Tenant-Id': tenant_id,
-      },
-    };
-
-    const result = await httpClient.sendRequest(request);
-    if (result.status === 200) {
-      return result.body;
-    }
-    return result;
+      url: `${XERO_URLS.api}/Items`,
+      body: item,
+      operation: 'create inventory item',
+    });
   },
 });
 
+async function accountCodes({ accessToken, tenantId }: { accessToken: string; tenantId: string }): Promise<Map<string, string>> {
+  const body = await xeroApi.request<unknown>({
+    accessToken,
+    tenantId,
+    method: HttpMethod.GET,
+    url: `${XERO_URLS.api}/Accounts`,
+    operation: 'list accounts for item account codes',
+  });
+  return new Map(
+    xeroApi.recordsOf({ body, key: 'Accounts' }).flatMap((account): [string, string][] => {
+      const id = xeroValue.readString(account['AccountID']);
+      const accountCode = xeroValue.readString(account['Code']);
+      return id && accountCode ? [[id, accountCode]] : [];
+    }),
+  );
+}
 
+function resolveAccountCode({ value, codes }: { value: unknown; codes: Map<string, string> }): string | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) return undefined;
+  const key = value.trim();
+  const fromId = codes.get(key);
+  if (fromId) return fromId;
+  if ([...codes.values()].includes(key)) return key;
+  throw new Error(`Xero account ${key} was not found or has no account code; items can only use accounts that have a code.`);
+}

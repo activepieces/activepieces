@@ -13,30 +13,37 @@ export const getClickupChannels = createAction({
   auth: clickupAuth,
   name: 'get_channels',
   classification: 'SEARCH',
-  description: 'Gets all channels in a ClickUp workspace',
+  description: 'List the chat channels in a workspace.',
   audience: 'both',
   aiMetadata: { description: 'Read-only: list the Chat channels in a ClickUp workspace, optionally including hidden ones and capping the count (1-100). Use to discover channel IDs before reading or posting messages. Safe to call repeatedly.', idempotent: true },
   displayName: 'Get Channels',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     include_hidden: Property.Checkbox({
-      description: 'Include hidden channels',
-      displayName: 'Include Hidden',
+      description: 'Also list channels you have hidden.',
+      displayName: 'Include Hidden Channels',
       required: false,
       defaultValue: false,
     }),
     limit: Property.Number({
-      description: 'Limit the number of channels returned',
-      displayName: 'Limit',
+      description: 'How many channels to return, up to 100.',
+      displayName: 'Max Results',
       required: false,
       defaultValue: 50,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
     }),
   },
 
   outputSchema: getChannelsOutputSchema,
   async run(configValue) {
     await propsValidation.validateZod(configValue.propsValue, {
-      limit: z.number().check(z.minimum(0), z.maximum(100, 'You can fetch between 1 and 100 messages')),
+      limit: z.number().check(
+        z.minimum(1, 'You can fetch between 1 and 100 channels'),
+        z.maximum(100, 'You can fetch between 1 and 100 channels')
+      ),
     });
 
     const { workspace_id, include_hidden, limit } = configValue.propsValue;

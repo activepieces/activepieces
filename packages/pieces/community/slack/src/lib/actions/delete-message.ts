@@ -17,6 +17,22 @@ export const deleteMessageAction = createAction({
     idempotent: false,
   },
   auth: slackAuth,
+  propertyGroups: [
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channel'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['ts'],
+    },
+  ],
   props: {
     info: singleSelectChannelInfo,
     onlyBotChannels,

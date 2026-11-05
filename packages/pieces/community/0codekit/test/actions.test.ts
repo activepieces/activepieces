@@ -63,8 +63,8 @@ beforeEach(() => {
 describe('piece metadata', () => {
     const actions = Object.values(zeroCodeKit.actions()).filter((action) => action.name !== 'custom_api_call');
 
-    it('registers all 33 actions plus Custom API Call', () => {
-        expect(Object.keys(zeroCodeKit.actions())).toHaveLength(34);
+    it('registers all 74 actions plus Custom API Call', () => {
+        expect(Object.keys(zeroCodeKit.actions())).toHaveLength(75);
     });
 
     it.each(actions.map((action) => [action.name, action]))('%s carries audience, aiMetadata and classification', (_, action) => {

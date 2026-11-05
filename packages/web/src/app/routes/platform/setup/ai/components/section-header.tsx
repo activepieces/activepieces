@@ -1,42 +1,21 @@
-import { cn } from '@/lib/utils';
-
 export function SectionHeader({
   title,
   count,
   description,
-  isPageTitle = false,
 }: {
   title: string;
   count?: number;
   description: string;
-  isPageTitle?: boolean;
 }) {
-  const Heading = isPageTitle ? 'h1' : 'h2';
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline gap-2">
-        <Heading
-          className={cn('font-semibold tracking-tight', {
-            'text-lg': isPageTitle,
-            'text-base': !isPageTitle,
-          })}
-        >
-          {title}
-        </Heading>
+        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
         {count !== undefined && (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {count}
-          </span>
+          <span className="text-sm text-gray-11 tabular-nums">{count}</span>
         )}
       </div>
-      <p
-        className={cn('text-muted-foreground', {
-          'text-xs': isPageTitle,
-          'text-sm': !isPageTitle,
-        })}
-      >
-        {description}
-      </p>
+      <p className="text-sm text-gray-11">{description}</p>
     </div>
   );
 }

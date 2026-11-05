@@ -3,14 +3,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { ticktickAuth } from '../auth';
 import { tickTickApiCall } from '../common/client';
 import { projectId } from '../common/props';
+import { findTaskOutputSchema } from '../output-schemas';
 
 export const findTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'find_task',
+	outputSchema: findTaskOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Task',
 	description: 'Finds tasks in a specific project by their title.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			"Searches the tasks in a TickTick list (project) for ones whose title matches a given string, with a match-type option for case-insensitive 'contains' (substring) or 'exact' matching. Use to resolve a task by name into its ID before getting, updating, completing, or deleting it. Requires the list ID and a title. Read-only and idempotent.",
@@ -43,7 +45,7 @@ export const findTaskAction = createAction({
 		const { projectId, title, matchType } = context.propsValue;
 
 		if (!projectId || !title) {
-			return [];
+			return { found: false, result: [] };
 		}
 
 		const response = await tickTickApiCall<{

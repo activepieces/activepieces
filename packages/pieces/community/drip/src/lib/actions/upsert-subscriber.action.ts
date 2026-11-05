@@ -1,18 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { dripCommon } from '../common';
+import { dripApi } from '../common/client';
 import { dripAuth } from '../auth';
+import { dripOutputSchemas } from '../output-schemas';
 
 export const dripUpsertSubscriberAction = createAction({
   auth: dripAuth,
   name: 'upsert_subscriber',
   classification: 'WRITE',
   description: 'Create or Update Subscriber',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a subscriber in a Drip account, or updates the existing one matched by email address, setting tags, custom fields, and contact details (name, address, phone, location). Use to add a new contact or keep an existing contact in sync. Idempotent: matched on the stable email, so repeating with the same input converges to the same record.', idempotent: true },
   displayName: 'Create or Update Subscriber',
   props: {
@@ -55,14 +53,17 @@ export const dripUpsertSubscriberAction = createAction({
     }),
     address: Property.ShortText({
       displayName: 'Address',
-      description: "The subscriber's mailing address",
+      description: "Address line 1 of the subscriber's mailing address",
       required: false,
     }),
   },
+  outputSchema: dripOutputSchemas.legacySubscribersResponse,
   async run({ auth, propsValue }) {
-    const request: HttpRequest = {
+    return await dripApi.send<Record<string, unknown>>({
+      token: auth.secret_text,
       method: HttpMethod.POST,
-      url: `${dripCommon.baseUrl(propsValue.account_id)}/subscribers`,
+      path: `${dripApi.accountPath(propsValue.account_id)}/subscribers`,
+      operation: 'create or update subscriber',
       body: {
         subscribers: [
           {
@@ -80,11 +81,6 @@ export const dripUpsertSubscriberAction = createAction({
           },
         ],
       },
-      headers: {
-        Authorization: dripCommon.authorizationHeader(auth),
-      },
-      queryParams: {},
-    };
-    return await httpClient.sendRequest<Record<string, never>>(request);
+    });
   },
 });

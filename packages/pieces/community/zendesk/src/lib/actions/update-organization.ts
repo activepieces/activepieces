@@ -9,14 +9,16 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { organizationIdDropdown, groupIdDropdown } from '../common/props';
+import { createOrganizationOutputSchema } from '../output-schemas';
 
 export const updateOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'update-organization',
+  outputSchema: createOrganizationOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Organization',
   description: 'Update existing organization fields.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Updates an existing organization identified by organization ID, changing fields such as name, details, notes, domain names, tags, group, visibility settings, or custom fields. Use to edit an account record already in Zendesk. Note that the domain names and tags arrays REPLACE all existing values rather than appending. At least one field must be provided. Idempotent: re-applying the same field values leaves the organization in the same state.', idempotent: true },
   props: {
     organization_id: organizationIdDropdown,

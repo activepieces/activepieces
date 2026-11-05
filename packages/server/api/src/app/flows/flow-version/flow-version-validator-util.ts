@@ -1,10 +1,10 @@
-import { ActivepiecesError, ErrorCode, isNil, PlatformId, STEP_NAME_REGEX, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, PlatformId, STEP_NAME_REGEX, unique, UserId } from '@activepieces/core-utils'
 import {
     PieceAuthProperty,
     piecePropertiesUtils,
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
-import { AiRouterActionSettingsWithValidation, CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode } from '@activepieces/shared'
+import { AiRouterActionSettingsWithValidation, CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -24,6 +24,7 @@ const codeSettingsValidator = CodeActionSettings.and(z.object({
 type ValidationResult = {
     valid: boolean
     cleanInput?: Record<string, unknown>
+    invalidInputs?: string[]
 }
 
 export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
@@ -135,6 +136,15 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
         }
         return clonedRequest
     },
+    async invalidPieceInputs({ platformId, step }: { platformId: PlatformId, step: Step }): Promise<string[]> {
+        if (step.type === FlowActionType.PIECE) {
+            return (await validateAction({ settings: step.settings, platformId, log })).invalidInputs ?? []
+        }
+        if (step.type === FlowTriggerType.PIECE) {
+            return (await validateTrigger({ settings: step.settings, platformId, log })).invalidInputs ?? []
+        }
+        return []
+    },
 })
 
 function assertImportedStepNamesAreSafe(trigger: FlowTrigger): void {
@@ -216,10 +226,22 @@ function validateProps(
     const cleanInput = !isNil(input) ? Object.fromEntries(
         schemaKeys.map(key => [key, input?.[key]]),
     ) : undefined
+    const parsed = propsSchema.safeParse(cleanInput)
     return {
-        valid: propsSchema.safeParse(cleanInput).success,
+        valid: parsed.success,
         cleanInput,
+        invalidInputs: parsed.success ? [] : describeInvalidInputs({ issues: parsed.error.issues, input: cleanInput }),
     }
+}
+
+function describeInvalidInputs({ issues, input }: { issues: z.ZodError['issues'], input: Record<string, unknown> | undefined }): string[] {
+    const keys = unique(issues.flatMap((issue) => typeof issue.path[0] === 'string' ? [issue.path[0]] : []))
+    return keys.map((key) => {
+        const label = key === 'auth' ? 'connection' : key
+        const value = input?.[key]
+        const missing = isNil(value) || value === ''
+        return missing ? `${label} is missing` : `${label} has an invalid value`
+    })
 }
 
 

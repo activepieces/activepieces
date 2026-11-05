@@ -64,7 +64,7 @@ const ChangePasswordForm = () => {
   };
 
   return (
-    <Card className="w-md rounded-sm drop-shadow-xl">
+    <Card className="w-md rounded-md drop-shadow-xl">
       <CardHeader>
         <CardTitle className="text-2xl">{t('Reset Password')}</CardTitle>
         <CardDescription>{t('Enter your new password')}</CardDescription>
@@ -94,13 +94,12 @@ const ChangePasswordForm = () => {
                         id="newPassword"
                         type="password"
                         placeholder={'********'}
-                        className="rounded-sm"
                         ref={inputRef}
                         onBlur={() => setPasswordFocused(false)}
                         onChange={(e) => field.onChange(e)}
                       />
                     </PopoverTrigger>
-                    <PopoverContent className="absolute border-2 bg-background p-2 rounded-md right-60 -bottom-16 flex flex-col">
+                    <PopoverContent className="absolute border-2 bg-gray-1 p-2 rounded-md right-60 -bottom-16 flex flex-col">
                       <PasswordRequirementsList
                         password={form.getValues().newPassword}
                         isSubmitted={form.formState.submitCount > 0}

@@ -47,7 +47,7 @@ describe('MCP publish delivers flow.published to event destinations', () => {
     })
 
     it('queues an EVENT_DESTINATION job when publishing through ap_lock_and_publish', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, { plan: { eventStreamingEnabled: true } })
         await db.save('event_destination', createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.FLOW_PUBLISHED],
@@ -67,7 +67,7 @@ describe('MCP publish delivers flow.published to event destinations', () => {
     })
 
     it('queues no job when the destination does not subscribe to flow.published', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, { plan: { eventStreamingEnabled: true } })
         await db.save('event_destination', createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.FLOW_RUN_FINISHED],

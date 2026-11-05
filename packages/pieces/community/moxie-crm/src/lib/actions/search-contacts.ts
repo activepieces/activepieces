@@ -1,18 +1,19 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient } from '../common';
+import { moxieInput } from '../common/props';
 import { moxieCRMAuth } from '../auth';
 import { searchContactsActionOutputSchema } from '../output-schemas';
 
 export const moxieSearchContactsAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_search_contacts',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'Search Contacts',
-  description: 'Find contacts by first name, last name or email.',
+  description: 'Find contacts by first name, last name or email, or look one up by id.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Searches Moxie contacts by first name, last name or email and returns the matching contact records, including the client each belongs to. Leave the query empty to list every contact. Read-only and idempotent.',
+      'Searches Moxie contacts whose first name, last name or email contains the query, or returns the one contact with an exact Contact ID; leave both empty to list every active contact. Each contact carries its clientId (resolve the client with Search Clients by id). Read-only and idempotent.',
     idempotent: true,
   },
   outputSchema: searchContactsActionOutputSchema,
@@ -23,9 +24,17 @@ export const moxieSearchContactsAction = createAction({
         'Matches a contact first name, last name or email. Leave empty to return every contact.',
       required: false,
     }),
+    id: Property.ShortText({
+      displayName: 'Contact ID',
+      description: 'Exact contact id. When set, the query is ignored.',
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const client = await makeClient(auth);
-    return await client.searchContacts(propsValue.query);
+    return await client.searchContacts({
+      query: moxieInput.text({ value: propsValue.query }),
+      id: moxieInput.optionalId({ value: propsValue.id, field: 'Contact ID' }),
+    });
   },
 });

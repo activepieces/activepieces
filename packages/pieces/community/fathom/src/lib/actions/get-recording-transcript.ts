@@ -1,78 +1,58 @@
-import { fathomAuth, getFathomClient } from '../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { GetRecordingTranscriptRequest } from 'fathom-typescript/dist/esm/sdk/models/operations';
+import { fathomAuth } from '../common/auth';
+import { fathomClient } from '../common/client';
+import { fathomProps } from '../common/props';
+import { fathomSdk } from '../common/sdk';
+import { fathomOutputSchemas } from '../output-schemas';
 
 export const getRecordingTranscript = createAction({
   name: 'getRecordingTranscript',
   classification: 'READ',
   displayName: 'Get Recording Transcript',
-  description: 'Get the AI-generated transcript of a meeting recording. Note: This action requires API Key authentication and is not available when using OAuth2.',
-  audience: 'both',
-  aiMetadata: { description: 'Retrieve the full transcript of a single Fathom meeting recording, identified by its recording ID. Use when you need the verbatim spoken content rather than the summary. Read-only and repeatable; optionally supply a destination URL to have Fathom POST the transcript there instead of returning it inline. Requires API Key auth (not available under OAuth2).', idempotent: true },
+  description: 'Get the transcript of a meeting recording. Works with both OAuth and API key connections.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Retrieves the speaker-attributed transcript of one Fathom recording picked from a list of recent meetings, or asks Fathom to POST it to a destination URL instead. Agents should use Get Recording Transcript (AI), which takes a recording ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: fathomAuth,
   props: {
-    recording_id: Property.Dropdown({
-      auth: fathomAuth,
-      displayName: 'Meeting Recording',
-      description: 'Select the meeting recording to get the transcript for',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please authenticate first'
-          };
-        }
-
-        try {
-          const fathom = getFathomClient(auth);
-
-          const meetingsIterator = await fathom.listMeetings();
-
-          const options: { label: string; value: number }[] = [];
-          for await (const response of meetingsIterator) {
-            if (response && response.result && response.result.items) {
-              response.result.items.forEach((meeting) => {
-                const label = meeting.title || `Meeting on ${meeting.scheduledStartTime.toLocaleDateString()}`;
-                options.push({
-                  label: label,
-                  value: meeting.recordingId
-                });
-              });
-            }
-          }
-
-          return {
-            disabled: false,
-            options: options
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Failed to load meetings. Please check your connection.'
-          };
-        }
-      }
-    }),
+    recording_id: fathomProps.recordingDropdown({ description: 'Select the meeting recording to get the transcript for' }),
     destination_url: Property.ShortText({
       displayName: 'Destination URL',
       description: 'Optional: URL where Fathom will POST the transcript. Leave empty to get data directly in response.',
       required: false,
     }),
   },
+  outputSchema: fathomOutputSchemas.legacyTranscript,
   async run({ auth, propsValue }) {
-    const fathom = getFathomClient(auth);
-
-    const request = {
-      recordingId: propsValue.recording_id,
-      ...(propsValue.destination_url && { destinationUrl: propsValue.destination_url })
-    } as GetRecordingTranscriptRequest;
-
-    const response = await fathom.getRecordingTranscript(request);
-
-    return response;
+    const { sdk, requireResult } = fathomSdk.create({ auth });
+    const destinationUrl = propsValue.destination_url?.trim();
+    if (destinationUrl) {
+      const response = await sdk.getRecordingTranscript({ recordingId: propsValue.recording_id, destinationUrl });
+      return requireResult({ value: response, operation: 'Get Recording Transcript' });
+    }
+    const body = await fathomClient.requestObject({
+      auth,
+      method: HttpMethod.GET,
+      path: `recordings/${propsValue.recording_id}/transcript`,
+    });
+    const lines = Array.isArray(body['transcript']) ? body['transcript'].filter(fathomClient.isRecord) : [];
+    return { transcript: lines.map(toCamelLine) };
   },
 });
+
+function toCamelLine(line: Record<string, unknown>) {
+  const speaker = fathomClient.isRecord(line['speaker']) ? line['speaker'] : {};
+  const email = speaker['matched_calendar_invitee_email'];
+  return {
+    speaker: {
+      displayName: speaker['display_name'],
+      ...(email === undefined ? {} : { matchedCalendarInviteeEmail: email }),
+    },
+    text: line['text'],
+    timestamp: line['timestamp'],
+  };
+}

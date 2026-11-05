@@ -8,7 +8,7 @@ import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const renderDiffInfo = (flowName: string, icon: React.ReactNode) => (
-  <div className="flex items-center justify-between text-sm hover:bg-accent/20 rounded-md py-1">
+  <div className="flex items-center justify-between text-sm hover:bg-gray-4 rounded-md py-1">
     <div className="flex items-center gap-2">
       {icon}
       {flowName}
@@ -27,7 +27,7 @@ export const OperationChange = React.memo(
     return (
       <>
         {change.type === FlowProjectOperationType.CREATE_FLOW && (
-          <div className="flex gap-2 text-success items-center">
+          <div className="flex gap-2 text-success-11 items-center">
             <Checkbox checked={selected} onCheckedChange={onSelect} />
             {renderDiffInfo(
               change.flow.displayName,
@@ -45,7 +45,7 @@ export const OperationChange = React.memo(
           </div>
         )}
         {change.type === FlowProjectOperationType.DELETE_FLOW && (
-          <div className="flex gap-2 text-destructive items-center">
+          <div className="flex gap-2 text-danger-11 items-center">
             <Checkbox checked={selected} onCheckedChange={onSelect} />
             {renderDiffInfo(
               change.flow.displayName,

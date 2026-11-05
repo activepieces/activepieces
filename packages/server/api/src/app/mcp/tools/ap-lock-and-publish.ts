@@ -31,7 +31,8 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
             }
 
             const allSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
-            const invalidSteps = allSteps.filter(s => !s.valid && !(s as { skip?: boolean }).skip)
+            const skippedStepNames = flowStructureUtil.getSkippedStepNames({ trigger: flow.version.trigger })
+            const invalidSteps = allSteps.filter(s => !s.valid && !skippedStepNames.has(s.name))
             if (invalidSteps.length > 0) {
                 const stepList = invalidSteps.map(s => `"${s.name}" (${s.displayName})`).join(', ')
                 return {

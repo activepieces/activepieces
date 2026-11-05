@@ -64,10 +64,8 @@ export class SerpApiValidator {
     if (language !== undefined) {
       if (typeof language !== 'string') {
         errors.push('Language code must be a string');
-      } else if (language.length !== 2) {
-        errors.push('Language code must be exactly 2 characters (ISO 639-1 format)');
-      } else if (!/^[a-z]{2}$/.test(language)) {
-        errors.push('Language code must contain only lowercase letters');
+      } else if (!/^[a-z]{2,3}(-[a-z0-9]{2,3})?$/.test(language)) {
+        errors.push('Language code must be a code like en, pt-br or es-419');
       }
     }
 

@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { fileSystemUtils } from '@activepieces/server-utils'
 import { ApEnvironment, ConfigureRepoRequest, GitRepo } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -74,7 +74,7 @@ async function createGitRepoAndReturnPaths(
 
 async function createOrGetSshKeyPath({ keyPath, sshPrivateKey }: { keyPath: string, sshPrivateKey: string }): Promise<void> {
     await fs.mkdir(path.dirname(keyPath), { recursive: true })
-    await fs.writeFile(keyPath, sshPrivateKey)
+    await fs.writeFile(keyPath, `${sshPrivateKey.replace(/\r\n/g, '\n').trim()}\n`)
     await fs.chmod(keyPath, 0o600)
 }
 
@@ -92,18 +92,22 @@ async function initGitRepo(
             allowUnsafeSshCommand: true,
             allowUnsafeProtocolOverride: true,
         },
-    }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no`)
+    }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10 -o LogLevel=ERROR`)
     await git.init()
     await git.addConfig('core.symlinks', 'false')
     await git.addConfig('protocol.file.allow', 'never')
     await git.addRemote('origin', remoteUrl)
     await git.branch(['-M', branch])
-    await git.pull('origin', branch)
+    const { error } = await tryCatch(() => git.raw(['pull', 'origin', branch]))
+    if (!isNil(error)) {
+        throw new Error(error.message.replaceAll(keyPath, '<ssh-key>').slice(-MAX_GIT_ERROR_MESSAGE_LENGTH))
+    }
     return git
 }
 
 const SAFE_SLUG_PATTERN = /^[A-Za-z0-9._-]{1,128}$/
 const SAFE_KEY_PATH_PATTERN = /^[A-Za-z0-9._/-]+$/
+const MAX_GIT_ERROR_MESSAGE_LENGTH = 2000
 
 function assertSafeSlug(slug: string): void {
     if (!SAFE_SLUG_PATTERN.test(slug) || slug === '.' || slug === '..') {
@@ -127,7 +131,7 @@ function assertSafeKeyPath(keyPath: string): void {
     }
 }
 
-async function validateConnection(request: ConfigureRepoRequest): Promise<void> {
+async function validateConnection({ request, log }: { request: ConfigureRepoRequest, log: FastifyBaseLogger }): Promise<void> {
     const environment = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return
@@ -146,12 +150,18 @@ async function validateConnection(request: ConfigureRepoRequest): Promise<void> 
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_GIT_CREDENTIALS,
             params: {
-                message: (error as Error).message,
+                message: error instanceof Error ? error.message.replaceAll(keyPath, '<ssh-key>') : String(error),
             },
         })
     }
     finally {
-        await fs.rmdir(tmpFolder, { recursive: true })
-        await fs.unlink(keyPath)
+        const { error: keyRemovalError } = await tryCatch(() => fs.rm(keyPath, { force: true }))
+        if (!isNil(keyRemovalError)) {
+            log.error({ error: keyRemovalError }, '[gitHelper#validateConnection] Failed to delete the temporary SSH key')
+        }
+        const { error: folderRemovalError } = await tryCatch(() => fs.rm(tmpFolder, { recursive: true, force: true }))
+        if (!isNil(folderRemovalError)) {
+            log.warn({ error: folderRemovalError }, '[gitHelper#validateConnection] Failed to delete the temporary repository folder')
+        }
     }
 }

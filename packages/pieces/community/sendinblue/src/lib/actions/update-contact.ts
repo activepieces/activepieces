@@ -50,15 +50,13 @@ export const updateContact = createAction({
 			description: 'Sets a new external id for the contact.',
 			required: false,
 		}),
-		email_blacklisted: Property.Checkbox({
+		email_blacklisted: brevoProps.optionalBoolean({
 			displayName: 'Email Blacklisted?',
-			description: `Set this field to blacklist the contact for emails (emailBlacklisted = true). Leave untouched to keep the contact's current setting.`,
-			required: false,
+			description: `Whether the contact is blacklisted for emails. Leave empty or pick Leave unchanged to keep the contact's current setting.`,
 		}),
-		sms_blacklisted: Property.Checkbox({
+		sms_blacklisted: brevoProps.optionalBoolean({
 			displayName: 'SMS Blacklisted?',
-			description: `Set this field to blacklist the contact for SMS (smsBlacklisted = true). Leave untouched to keep the contact's current setting.`,
-			required: false,
+			description: `Whether the contact is blacklisted for SMS. Leave empty or pick Leave unchanged to keep the contact's current setting.`,
 		}),
 		list_ids: brevoProps.listIds({
 			displayName: 'Add to Lists',
@@ -102,8 +100,8 @@ export const updateContact = createAction({
 		const body = {
 			ext_id,
 			attributes: brevoCommon.isEmptyObject(attributes) ? undefined : attributes,
-			emailBlacklisted: email_blacklisted,
-			smsBlacklisted: sms_blacklisted,
+			emailBlacklisted: brevoCommon.optionalBooleanValue(email_blacklisted),
+			smsBlacklisted: brevoCommon.optionalBooleanValue(sms_blacklisted),
 			listIds: listIds.length > 0 ? listIds : undefined,
 			unlinkListIds: unlinkListIds.length > 0 ? unlinkListIds : undefined,
 			smtpBlacklistSender: blockedSenders.length > 0 ? blockedSenders : undefined,

@@ -1,13 +1,13 @@
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { dripCommon } from '../common';
+import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { dripAuth } from '../auth';
+import { dripCommon } from '../common';
+import { dripSamples } from '../common/samples';
+import { dripWebhook } from '../common/webhook';
+import { dripOutputSchemas } from '../output-schemas';
 
-const triggerNameInStore = 'drip_tag_applied_to_subscriber_trigger';
+const STORE_KEY = 'drip_tag_applied_to_subscriber_trigger';
+const EVENT = 'subscriber.applied_tag';
+
 export const dripTagAppliedEvent = createTrigger({
   auth: dripAuth,
   name: 'tag_applied_to_subscribers',
@@ -15,68 +15,36 @@ export const dripTagAppliedEvent = createTrigger({
   displayName: 'Tag Applied',
   description: 'Triggers when a tag is applied.',
   aiMetadata: {
-    description: 'Fires when a tag is applied to a subscriber in the selected Drip account, emitting the subscriber.applied_tag event. Represents a contact being labeled or segmented; the payload includes the applied tag.',
+    description: 'Fires when a tag is applied to a subscriber in the selected Drip account (Drip event subscriber.applied_tag), optionally only for one tag; the payload has the subscriber and the tag in data.properties.tag.',
   },
   props: {
     account_id: dripCommon.account_id,
+    tag: Property.ShortText({ displayName: 'Tag', description: 'Only trigger for this tag (not case-sensitive). Leave empty for every tag.', required: false }),
   },
-  sampleData: {
-    event: 'subscriber.applied_tag',
-    data: {
-      account_id: '9999999',
-      subscriber: {},
-      properties: {
-        tag: 'Customer',
-      },
-    },
-    occurred_at: '2013-06-21T10:31:58Z',
-  },
+  sampleData: dripSamples.event({ name: EVENT, properties: { tag: 'Customer' } }),
+  outputSchema: dripOutputSchemas.tagEvent,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${dripCommon.baseUrl(context.propsValue.account_id)}/webhooks`,
-      body: {
-        webhooks: [
-          { post_url: context.webhookUrl, events: ['subscriber.applied_tag'] },
-        ],
-      },
-      headers: {
-        Authorization: dripCommon.authorizationHeader(context.auth),
-      },
-      queryParams: {},
-    };
-    const { body } = await httpClient.sendRequest<{
-      webhooks: { id: string }[];
-    }>(request);
-    await context.store?.put<DripWebhookInformation>(triggerNameInStore, {
-      webhookId: body.webhooks[0].id,
-      userId: context.propsValue['account_id']!,
+    await dripWebhook.enable({
+      token: context.auth.secret_text,
+      accountId: context.propsValue.account_id,
+      webhookUrl: context.webhookUrl,
+      store: context.store,
+      storeKey: STORE_KEY,
+      event: EVENT,
     });
   },
   async onDisable(context) {
-    const response = await context.store?.get<DripWebhookInformation>(
-      triggerNameInStore
-    );
-    if (response !== null && response !== undefined) {
-      const request: HttpRequest<never> = {
-        method: HttpMethod.DELETE,
-        url: `${dripCommon.baseUrl(response.userId)}/webhooks/${
-          response.webhookId
-        }`,
-        headers: {
-          Authorization: dripCommon.authorizationHeader(context.auth),
-        },
-      };
-      await httpClient.sendRequest(request);
-    }
+    await dripWebhook.disable({ token: context.auth.secret_text, store: context.store, storeKey: STORE_KEY });
   },
   async run(context) {
-    return [context.payload.body];
+    return dripWebhook.handle({
+      token: context.auth.secret_text,
+      store: context.store,
+      storeKey: STORE_KEY,
+      event: EVENT,
+      payload: context.payload,
+      matches: (body) => dripWebhook.textMatches({ expected: context.propsValue.tag, actual: dripWebhook.propertiesOf(body)['tag'] }),
+    });
   },
 });
-
-interface DripWebhookInformation {
-  webhookId: string;
-  userId: string;
-}

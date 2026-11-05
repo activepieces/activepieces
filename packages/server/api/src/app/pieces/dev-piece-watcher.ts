@@ -44,10 +44,7 @@ async function buildPieces(app: FastifyInstance, piecesInfo: PieceInfo[]): Promi
         await Promise.all(piecesInfo.map(async (piece) => {
             await copyPackageJsonToDist(piece.pieceDirectory)
             await copyI18nToDist(piece.pieceDirectory)
-            const distPath = await utils.findDistPiecePathByPackageName(piece.packageName)
-            if (distPath) {
-                utils.clearPieceModuleCache(distPath)
-            }
+            utils.clearPieceModuleCache(join(piece.pieceDirectory, 'dist'))
         }))
 
         invalidateDevPieceCache()
@@ -91,18 +88,23 @@ export async function startDevPieceWatcher(app: FastifyInstance): Promise<void> 
         join(p.pieceDirectory, 'package.json'),
     ])
 
-    const triggerBuild = async (pieceInfo: PieceInfo) => {
-        rebuilding.add(pieceInfo.pieceName)
+    const triggerBuild = async (piecesToBuild: PieceInfo[]): Promise<void> => {
+        piecesToBuild.forEach(p => rebuilding.add(p.pieceName))
         try {
-            await buildPieces(app, [pieceInfo])
+            await buildPieces(app, piecesToBuild)
         }
         finally {
-            rebuilding.delete(pieceInfo.pieceName)
+            piecesToBuild.forEach(p => rebuilding.delete(p.pieceName))
         }
-        if (pendingRebuild.has(pieceInfo.pieceName)) {
-            pendingRebuild.delete(pieceInfo.pieceName)
-            void triggerBuild(pieceInfo)
+        const pending = piecesToBuild.filter(p => pendingRebuild.has(p.pieceName))
+        pending.forEach(p => pendingRebuild.delete(p.pieceName))
+        if (pending.length > 0) {
+            startBuild(pending)
         }
+    }
+
+    const startBuild = (piecesToBuild: PieceInfo[]): void => {
+        triggerBuild(piecesToBuild).catch((error) => app.log.error({ error }, 'Failed to build dev pieces'))
     }
 
     const watcher = chokidar.watch(watchPaths, { ignoreInitial: true })
@@ -118,7 +120,7 @@ export async function startDevPieceWatcher(app: FastifyInstance): Promise<void> 
                 pendingRebuild.add(pieceInfo.pieceName)
                 return
             }
-            void triggerBuild(pieceInfo)
+            startBuild([pieceInfo])
         }, 300))
     })
 

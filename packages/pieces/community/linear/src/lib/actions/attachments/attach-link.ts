@@ -11,8 +11,8 @@ export const linearAttachLink = createAction({
   name: 'linear_attach_link',
   classification: 'WRITE',
   displayName: 'Attach Link to Issue',
-  description: 'Link a URL (ticket, pull request, document) to an issue. Attaching the same URL again updates the existing link.',
-  audience: 'both',
+  description: 'Link a URL to an issue. Attaching it again updates that link.',
+  audience: 'human',
   aiMetadata: {
     description:
       'Attaches an external link (support ticket, pull request, document, dashboard) to a Linear issue, shown in the issue sidebar with a title and optional subtitle. Use to connect records in other tools to an issue; use Create Comment to post text instead. Idempotent: Linear updates the existing attachment when the same URL is attached to the same issue again.',
@@ -22,18 +22,22 @@ export const linearAttachLink = createAction({
     issue_id: props.issue_reference(),
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'The full link, for example https://github.com/acme/app/pull/42.',
+      description: 'Must start with http:// or https://.',
+      placeholder: 'https://github.com/acme/app/pull/42',
       required: true,
     }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'Text shown for the link, for example "PR #42: Fix login timeout".',
+      description: "Shown as the link's name on the issue.",
+      placeholder: 'PR #42: Fix login timeout',
       required: true,
     }),
     subtitle: Property.ShortText({
       displayName: 'Subtitle',
-      description: 'Optional second line, for example "Open · 2 approvals".',
+      description: 'A second line under the title.',
+      placeholder: 'Open · 2 approvals',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: attachmentOutputSchema,

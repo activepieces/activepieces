@@ -2,6 +2,7 @@ import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
 import dayjs from 'dayjs';
+import { contactOutputSchema } from '../output-schemas';
 
 export const createOrUpdateLeadAction = createAction({
 	auth: intercomAuth,
@@ -10,7 +11,7 @@ export const createOrUpdateLeadAction = createAction({
 	displayName: 'Create or Update Lead',
 	description: 'Create or update an Intercom lead.If an ID is provided, the lead will be updated.',
 	audience: 'both',
-	aiMetadata: { description: 'Upsert a lead (prospect contact): if a Lead ID is supplied the matching lead is updated (erroring if none is found), otherwise a new lead is created. Providing an ID makes it effectively idempotent; without an ID each call creates a new lead. For signed-up users use Create/Update User instead.', idempotent: true },
+	aiMetadata: { description: 'Update a lead (prospect contact) when a Lead ID is given (errors if none is found), otherwise create a new lead. With a Lead ID a retry writes the same values; without one each call creates another lead, so it is not marked idempotent. For signed-up users use Create/Update User instead.', idempotent: false },
 	props: {
 		leadId: Property.ShortText({
 			displayName: 'Lead ID',
@@ -41,10 +42,11 @@ export const createOrUpdateLeadAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: contactOutputSchema,
 	async run(context) {
 		const { leadId, name, email, phone, unsubscribe, createdAt, customAttributes } =
 			context.propsValue;
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		if (leadId) {
 			const lead = await client.contacts.search({

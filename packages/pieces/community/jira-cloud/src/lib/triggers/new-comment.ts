@@ -1,4 +1,5 @@
 import {
+	MarkdownVariant,
 	Property,
 	TriggerStrategy,
 	createTrigger,
@@ -52,8 +53,7 @@ export const newComment = createTrigger({
 	name: 'new_comment',
 	classification: 'READ',
 	displayName: 'New Comment',
-	description:
-		'Fires whenever someone adds a new comment to a Jira issue. Great for getting notified in Slack or Teams, syncing customer replies, or reacting to feedback automatically.',
+	description: 'Triggers when a comment is added to an issue.',
 	aiMetadata: {
 		description:
 			'Fires when a new comment is posted on a Jira issue, optionally limited to issues matching a JQL filter. Each event represents one comment and includes the comment body, author, timestamps, and the parent issue. Polling-based; events arrive on the next poll, not instantly.',
@@ -62,30 +62,91 @@ export const newComment = createTrigger({
 	type: TriggerStrategy.POLLING,
 	outputSchema: newCommentTriggerOutputSchema,
 	props: {
+		filterHelp: Property.MarkDown({
+			value: 'Build a filter in Jira under Filters → Advanced search, then copy its JQL here.',
+			variant: MarkdownVariant.INFO,
+		}),
 		jql: Property.LongText({
-			displayName: 'Only watch these issues (optional)',
-			description: `Leave empty to watch comments on **every** issue in your Jira.
-
-To narrow it down, paste a Jira filter here. A few ready-to-use examples:
-
-- \`project = "SUPPORT"\` — only issues in the Support project
-- \`assignee = currentUser()\` — only issues assigned to you
-- \`status != Done\` — skip closed issues
-- \`labels = "vip"\` — only issues tagged \`vip\`
-- \`project = "SUPPORT" AND priority = High\` — combine conditions with \`AND\`
-
-Not sure what to write? Open Jira → Filters → Advanced search, build the filter visually, then copy the query here.`,
+			displayName: 'Issue Filter',
+			description: 'JQL query. Empty: every issue is watched.',
+			placeholder: 'project = SUPPORT AND status != Done',
 			required: false,
 		}),
 		sanitizeJql: Property.Checkbox({
-			displayName: 'Auto-fix the filter',
-			description:
-				'Keep this on. If your filter references something you can\'t access (a private project, a deleted field), Jira will automatically clean it up instead of erroring.',
+			displayName: 'Sanitize JQL',
+			description: "Jira swaps names you can't view for IDs before the search runs.",
 			required: false,
 			defaultValue: true,
 		}),
 	},
-	sampleData: {},
+	propertyGroups: [
+		{
+			key: 'filter',
+			display: 'section',
+			label: 'Filter',
+			icon: 'filter',
+			props: ['filterHelp', 'jql', 'sanitizeJql'],
+		},
+	],
+	sampleData: {
+		issue: {
+			id: '10042',
+			key: 'EXAMPLE-42',
+			summary: 'Checkout page shows an error on submit',
+		},
+		comment: {
+			self: 'https://example.atlassian.net/rest/api/3/issue/10042/comment/10100',
+			id: '10100',
+			author: {
+				self: 'https://example.atlassian.net/rest/api/3/user?accountId=111111%3A11111111-1111-1111-1111-111111111111',
+				accountId: '111111:11111111-1111-1111-1111-111111111111',
+				emailAddress: 'alice@example.com',
+				avatarUrls: {
+					'48x48': 'https://example.com/avatar/alice.png',
+					'24x24': 'https://example.com/avatar/alice.png',
+					'16x16': 'https://example.com/avatar/alice.png',
+					'32x32': 'https://example.com/avatar/alice.png',
+				},
+				displayName: 'Alice Example',
+				active: true,
+				timeZone: 'UTC',
+				accountType: 'atlassian',
+			},
+			body: {
+				type: 'doc',
+				version: 1,
+				content: [
+					{
+						type: 'paragraph',
+						content: [
+							{
+								type: 'text',
+								text: 'I can reproduce this on the staging site too.',
+							},
+						],
+					},
+				],
+			},
+			updateAuthor: {
+				self: 'https://example.atlassian.net/rest/api/3/user?accountId=111111%3A11111111-1111-1111-1111-111111111111',
+				accountId: '111111:11111111-1111-1111-1111-111111111111',
+				emailAddress: 'alice@example.com',
+				avatarUrls: {
+					'48x48': 'https://example.com/avatar/alice.png',
+					'24x24': 'https://example.com/avatar/alice.png',
+					'16x16': 'https://example.com/avatar/alice.png',
+					'32x32': 'https://example.com/avatar/alice.png',
+				},
+				displayName: 'Alice Example',
+				active: true,
+				timeZone: 'UTC',
+				accountType: 'atlassian',
+			},
+			created: '2024-01-15T10:30:00.000+0000',
+			updated: '2024-01-15T10:30:00.000+0000',
+			jsdPublic: true,
+		},
+	},
 	async onEnable(context) {
 		await polling.onEnable({ context });
 	},

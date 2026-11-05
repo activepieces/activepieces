@@ -21,8 +21,9 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
         if (!isNil(template)) {
             return template
         }
-        if (edition !== ApEdition.CLOUD) {
-            return communityTemplates.getOrThrow(request.params.id)
+        const communityTemplate = edition === ApEdition.CLOUD ? null : await communityTemplates(request.log).getOne(request.params.id)
+        if (!isNil(communityTemplate)) {
+            return communityTemplate
         }
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -38,7 +39,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
         if (edition === ApEdition.CLOUD) {
             return flagService(request.log).getOne(ApFlagId.TEMPLATES_CATEGORIES)
         }
-        return communityTemplates.getCategories()
+        return communityTemplates(request.log).getCategories()
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
@@ -244,8 +245,7 @@ async function loadOfficialTemplatesOrReturnEmpty(
         })
         return officialTemplatesFromCloud.data
     }
-    const loadTemplatesFromCloud = await communityTemplates.list({ ...query, type: TemplateType.OFFICIAL })
-    return loadTemplatesFromCloud.data
+    return communityTemplates(log).list({ ...query, type: TemplateType.OFFICIAL })
 }
 
 async function loadCustomTemplatesOrReturnEmpty(

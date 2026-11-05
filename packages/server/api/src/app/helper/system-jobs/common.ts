@@ -10,12 +10,17 @@ export enum SystemJobName {
     RUN_TELEMETRY = 'run-telemetry',
     DELETE_FLOW = 'delete-flow',
     HARD_DELETE_PROJECT = 'hard-delete-project',
+    CREATE_MISSING_PERSONAL_PROJECTS = 'create-missing-personal-projects',
     HARD_DELETE_PLATFORM = 'hard-delete-platform',
     BILLING_USAGE_REPORT = 'billing-usage-report',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
     TOOL_SEARCH_REINDEX = 'tool-search-reindex',
     CHAT_STALE_SWEEP = 'chat-stale-sweep',
+    AI_USAGE_COPY = 'ai-usage-copy',
+    AI_USAGE_RETENTION = 'ai-usage-retention',
     WAITPOINT_DEADLINE_SWEEP = 'waitpoint-deadline-sweep',
+    RUN_BACKGROUND_MIGRATIONS = 'run-background-migrations',
+    AUDIT_LOG_RETENTION = 'audit-log-retention',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -27,6 +32,14 @@ type HardDeleteProjectSystemJobData = {
     projectId: ProjectId
     platformId: PlatformId
     preDeletedFlowIds: FlowId[]
+}
+
+type CreateMissingPersonalProjectsSystemJobData = {
+    platformId: PlatformId
+    runId: string
+    afterUserId?: string
+    onlyUserIds?: string[]
+    failedUserIds?: string[]
 }
 
 type HardDeletePlatformSystemJobData = {
@@ -52,12 +65,17 @@ type SystemJobDataMap = {
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
+    [SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS]: CreateMissingPersonalProjectsSystemJobData
     [SystemJobName.HARD_DELETE_PLATFORM]: HardDeletePlatformSystemJobData
     [SystemJobName.BILLING_USAGE_REPORT]: Record<string, never>
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
     [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
     [SystemJobName.CHAT_STALE_SWEEP]: Record<string, never>
+    [SystemJobName.AI_USAGE_COPY]: Record<string, never>
+    [SystemJobName.AI_USAGE_RETENTION]: Record<string, never>
     [SystemJobName.WAITPOINT_DEADLINE_SWEEP]: Record<string, never>
+    [SystemJobName.RUN_BACKGROUND_MIGRATIONS]: Record<string, never>
+    [SystemJobName.AUDIT_LOG_RETENTION]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

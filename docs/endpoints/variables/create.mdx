@@ -1,0 +1,11 @@
+---
+title: 'Create Variable'
+openapi: POST /v1/variables
+---
+
+Creating a variable whose name already exists in the project returns `409 Conflict`. To set a value whether or not the variable exists yet:
+
+1. Call [List Variables](/endpoints/variables/list) with `name` set to the variable name. The filter matches partial names, so look for a result whose `name` is an exact match. If none matches and `next` is not null, pass `next` as `cursor` with the same `projectId` and `name`, and repeat until you find the exact match or there are no more pages.
+2. If you find an exact match, [update](/endpoints/variables/update) it by `id`. Otherwise, create it.
+
+When you embed Activepieces, each of your tenants maps to a project. Find the tenant's `projectId` with `GET /v1/projects?externalId=<your tenant id>`.

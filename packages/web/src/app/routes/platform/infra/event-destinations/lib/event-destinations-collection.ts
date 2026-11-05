@@ -1,4 +1,4 @@
-import { SeekPage } from '@activepieces/core-utils';
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   ApplicationEvent,
   ApplicationEventName,
@@ -6,58 +6,49 @@ import {
   CreatePlatformEventDestinationRequestBody,
   EventDestination,
   FlowOperationType,
+  ListPlatformEventDestinationsRequestBody,
   PopulatedFlow,
   ProjectType,
   SampleDataFileType,
   Template,
   TestPlatformEventDestinationRequestBody,
+  TestPlatformEventDestinationResponse,
   UpdatePlatformEventDestinationRequestBody,
 } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { createCollection, useLiveQuery } from '@tanstack/react-db';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { QueryClient, QueryState, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { flowHooks, flowsApi, triggerEventsApi } from '@/features/flows';
 import { projectCollectionUtils } from '@/features/projects';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 
-const collectionQueryClient = new QueryClient();
+const collectionQueryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
+
+const DESTINATIONS_PAGE_SIZE = 100;
+
+const DESTINATIONS_QUERY_KEY = ['event-destinations'];
 
 export const eventDestinationsCollection = createCollection<
   EventDestination,
   string
 >(
   queryCollectionOptions({
-    queryKey: ['event-destinations'],
+    queryKey: DESTINATIONS_QUERY_KEY,
     queryClient: collectionQueryClient,
-    queryFn: async () => {
-      const response = await api.get<SeekPage<EventDestination>>(
-        '/v1/event-destinations',
-      );
-      return response.data;
-    },
+    queryFn: () => fetchAllDestinations(),
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
-      for (const { original, modified } of transaction.mutations) {
-        const request: UpdatePlatformEventDestinationRequestBody = {
-          url: modified.url,
-          events: modified.events,
-        };
-        await api.patch<EventDestination>(
+      for (const { original, changes } of transaction.mutations) {
+        await api.post<EventDestination>(
           `/v1/event-destinations/${original.id}`,
-          request,
+          toUpdateRequestBody(changes),
         );
-      }
-    },
-    onInsert: async ({ transaction }) => {
-      for (const { modified } of transaction.mutations) {
-        const request: CreatePlatformEventDestinationRequestBody = {
-          url: modified.url,
-          events: modified.events,
-        };
-        await api.post<EventDestination>('/v1/event-destinations', request);
       }
     },
     onDelete: async ({ transaction }) => {
@@ -69,71 +60,88 @@ export const eventDestinationsCollection = createCollection<
 );
 
 export const eventDestinationsCollectionUtils = {
-  useAll: (enabled: boolean) => {
-    const queryResult = useLiveQuery(
-      (q) =>
-        q
-          .from({ destination: eventDestinationsCollection })
-          .select(({ destination }) => ({ ...destination })),
-      [],
+  useAll: (enabled: boolean): LiveDestinations => useLiveDestinations(enabled),
+
+  useFreshDestination: (destinationId: string): FreshDestination => {
+    const { data: destinations } = useLiveDestinations(true);
+    const queryState = useSyncExternalStore(
+      subscribeToDestinationsQuery,
+      readDestinationsQueryState,
     );
-    if (!enabled) {
-      return {
-        data: [],
-        isLoading: false,
-        isError: false,
-        isSuccess: true,
-      };
+    const [countsAtOpen] = useState(() => ({
+      data: queryState?.dataUpdateCount ?? 0,
+      error: queryState?.errorUpdateCount ?? 0,
+    }));
+    useEffect(() => {
+      eventDestinationsCollection.utils.refetch().catch(() => undefined);
+    }, []);
+    const dataUpdateCount = queryState?.dataUpdateCount ?? 0;
+    if (dataUpdateCount <= countsAtOpen.data) {
+      const hasFreshError =
+        queryState?.status === 'error' &&
+        queryState.errorUpdateCount > countsAtOpen.error;
+      return { status: hasFreshError ? 'error' : 'loading' };
     }
-    return queryResult;
+    const destination = destinations.find(
+      (candidate) => candidate.id === destinationId,
+    );
+    return isNil(destination)
+      ? { status: 'missing' }
+      : { status: 'ready', destination };
   },
 
-  useCreateEventDestination: (
-    onSuccess: (destination: EventDestination) => void,
-    onError: (error: Error) => void,
-  ) => {
+  refetch: () => eventDestinationsCollection.utils.refetch(),
+
+  useSaveEventDestination: ({
+    onSuccess,
+    onError,
+  }: MutationCallbacks<EventDestination>) => {
     return useMutation({
-      mutationFn: (request: CreatePlatformEventDestinationRequestBody) =>
-        api.post<EventDestination>('/v1/event-destinations', request),
-      onSuccess: (data) => {
-        eventDestinationsCollection.utils.writeInsert(data);
+      mutationFn: ({ destinationId, request }: SaveEventDestinationParams) =>
+        api.post<EventDestination>(
+          isNil(destinationId)
+            ? '/v1/event-destinations'
+            : `/v1/event-destinations/${destinationId}`,
+          request,
+        ),
+      onSuccess: async (data) => {
+        await applySavedDestination(data).catch(() => undefined);
         onSuccess(data);
       },
-      onError: (error) => {
-        onError(error);
-      },
+      onError,
     });
   },
 
-  update: (
-    destinationId: string,
-    request: UpdatePlatformEventDestinationRequestBody,
-  ) => {
-    return eventDestinationsCollection.update(destinationId, (draft) => {
+  update: ({ destinationId, request }: UpdateEventDestinationParams) =>
+    eventDestinationsCollection.update(destinationId, (draft) => {
       Object.assign(
         draft,
         Object.fromEntries(
           Object.entries(request).filter(([_, value]) => value !== undefined),
         ),
       );
-    });
-  },
+    }),
 
-  delete: (destinationIds: string[]) => {
-    return eventDestinationsCollection.delete(destinationIds);
+  delete: async (destinationIds: string[]) => {
+    const transaction = eventDestinationsCollection.delete(destinationIds);
+    await transaction.isPersisted.promise;
   },
 
   useTestEventDestination: () => {
     return useMutation({
       mutationFn: (request: TestPlatformEventDestinationRequestBody) =>
-        api.post<void>(`/v1/event-destinations/test`, request),
+        api.post<TestPlatformEventDestinationResponse>(
+          `/v1/event-destinations/test`,
+          request,
+        ),
+      onError: () => undefined,
     });
   },
 
-  useImportHandlerFlow: (
-    onSuccess: (flow: PopulatedFlow) => void,
-    onError: (error: Error) => void,
-  ) => {
+  useImportHandlerFlow: ({
+    onSuccess,
+    onError,
+  }: MutationCallbacks<PopulatedFlow>) => {
     const { data: currentUser } = userHooks.useCurrentUser();
     const { data: allProjects } = projectCollectionUtils.useAll();
 
@@ -195,6 +203,92 @@ export const eventDestinationsCollectionUtils = {
   },
 };
 
+async function applySavedDestination(
+  destination: EventDestination,
+): Promise<void> {
+  await eventDestinationsCollection.preload();
+  if (readHasLoadFailed()) {
+    await eventDestinationsCollection.utils.refetch();
+    return;
+  }
+  eventDestinationsCollection.utils.writeUpsert(destination);
+}
+
+function useLiveDestinations(enabled: boolean): LiveDestinations {
+  const { data, isLoading } = useLiveQuery(
+    (q) =>
+      enabled
+        ? q
+            .from({ destination: eventDestinationsCollection })
+            .select(({ destination }) => ({ ...destination }))
+        : undefined,
+    [enabled],
+  );
+  const hasLoadFailed = useSyncExternalStore(
+    subscribeToDestinationsQuery,
+    readHasLoadFailed,
+  );
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+    collectionQueryClient.mount();
+    return () => collectionQueryClient.unmount();
+  }, [enabled]);
+  if (!enabled) {
+    return { data: [], isLoading: false, isError: false };
+  }
+  return { data: data ?? [], isLoading, isError: hasLoadFailed };
+}
+
+function subscribeToDestinationsQuery(onChange: () => void): () => void {
+  return collectionQueryClient.getQueryCache().subscribe(onChange);
+}
+
+function readDestinationsQueryState():
+  | QueryState<EventDestination[]>
+  | undefined {
+  return collectionQueryClient.getQueryState<EventDestination[]>(
+    DESTINATIONS_QUERY_KEY,
+  );
+}
+
+function readHasLoadFailed(): boolean {
+  return (
+    collectionQueryClient.getQueryState(DESTINATIONS_QUERY_KEY)?.status ===
+    'error'
+  );
+}
+
+async function fetchAllDestinations(): Promise<EventDestination[]> {
+  const destinations: EventDestination[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const request: ListPlatformEventDestinationsRequestBody = {
+      cursor,
+      limit: DESTINATIONS_PAGE_SIZE,
+    };
+    const page: SeekPage<EventDestination> = await api.get<
+      SeekPage<EventDestination>
+    >('/v1/event-destinations', request);
+    destinations.push(...page.data);
+    cursor = page.next ?? undefined;
+  } while (!isNil(cursor));
+  return destinations;
+}
+
+function toUpdateRequestBody(
+  changes: Partial<EventDestination>,
+): UpdatePlatformEventDestinationRequestBody {
+  return {
+    url: changes.url,
+    events: changes.events,
+    enabled: changes.enabled,
+    headers: changes.headers,
+    format: changes.format,
+  };
+}
+
 function buildWebhookTriggerPayload(
   event: ApplicationEvent,
 ): WebhookTriggerPayload {
@@ -214,4 +308,31 @@ type WebhookTriggerPayload = {
   body: ApplicationEvent;
   headers: Record<string, string>;
   queryParams: Record<string, string>;
+};
+
+export type LiveDestinations = {
+  data: EventDestination[];
+  isLoading: boolean;
+  isError: boolean;
+};
+
+export type FreshDestination =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'missing' }
+  | { status: 'ready'; destination: EventDestination };
+
+export type MutationCallbacks<T> = {
+  onSuccess: (result: T) => void;
+  onError: (error: Error) => void;
+};
+
+export type SaveEventDestinationParams = {
+  destinationId: string | null;
+  request: CreatePlatformEventDestinationRequestBody;
+};
+
+export type UpdateEventDestinationParams = {
+  destinationId: string;
+  request: UpdatePlatformEventDestinationRequestBody;
 };

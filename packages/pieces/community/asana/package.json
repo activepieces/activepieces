@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-asana",
-  "version": "0.6.1",
+  "version": "0.8.1",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -13,11 +13,12 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "dayjs": "1.11.9",
+    "form-data": "4.0.6",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
     "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

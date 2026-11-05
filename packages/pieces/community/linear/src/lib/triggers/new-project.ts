@@ -9,7 +9,7 @@ export const linearNewProject = createTrigger({
   name: 'new_project',
   classification: 'READ',
   displayName: 'New Project',
-  description: 'Triggers when a new project is created in Linear. Only projects in public teams are covered.',
+  description: 'Triggers when a project is created in a public team.',
   aiMetadata: {
     description: 'Fires when a new project is created anywhere in the Linear workspace. Represents the newly created project with its details such as name, state, dates, and teams. Only public teams are covered: events in private teams do not fire it.',
   },

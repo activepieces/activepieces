@@ -96,6 +96,35 @@ describe('QueueDispatcher', () => {
         expect(result2).toEqual(job2)
     })
 
+    it('skips a waiter whose worker disconnected and hands the job to a live one', async () => {
+        const deadSocket = { connected: true }
+        const deadPoll = dispatcher.poll(deadSocket)
+        const livePoll = dispatcher.poll({ connected: true })
+        await vi.advanceTimersByTimeAsync(0)
+
+        deadSocket.connected = false
+        const job = createFakeJob('requeued')
+        pendingDequeues[0].resolve(job)
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(await deadPoll).toBeNull()
+        expect(await livePoll).toEqual(job)
+        expect(onOrphanedJobMock).not.toHaveBeenCalled()
+    })
+
+    it('returns the job to the queue when every waiter has disconnected', async () => {
+        const deadSocket = { connected: true }
+        const deadPoll = dispatcher.poll(deadSocket)
+        await vi.advanceTimersByTimeAsync(0)
+
+        deadSocket.connected = false
+        pendingDequeues[0].resolve(createFakeJob('requeued'))
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(await deadPoll).toBeNull()
+        expect(onOrphanedJobMock).toHaveBeenCalledWith('requeued', 'job-token', 'test-queue', mockLog)
+    })
+
     it('should only have one active getNextJob call at a time', async () => {
         dispatcher.poll()
         dispatcher.poll()

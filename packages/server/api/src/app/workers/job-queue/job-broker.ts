@@ -2,11 +2,13 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, JobData } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { redisConnections } from '../../database/redis-connections'
 import { engineResponseWatcher } from '../engine-response-watcher'
 import { QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
+import { pollingExclusivityInterceptor } from './interceptors/polling-exclusivity-interceptor'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { zombiePollingInterceptor } from './interceptors/zombie-polling-interceptor'
 import { jobAssignmentTracker } from './job-assignment-tracker'
@@ -18,7 +20,7 @@ import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 const DRAIN_DELAY_SECONDS = 15
 const LOCK_DURATION_MS = 120_000
 
-const interceptors: JobInterceptor[] = [rateLimiterInterceptor, zombiePollingInterceptor]
+const interceptors: JobInterceptor[] = [rateLimiterInterceptor, zombiePollingInterceptor, pollingExclusivityInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
 const dispatchers = new Map<string, QueueDispatcher>()
 
@@ -107,7 +109,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         return tryDequeue(worker, queueName, log)
     }
 
-    log.info({ queueName, job: { id: job.id }, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
+    log.info({ queueName, job: { id: job.id, pickupWaitMs: (job.processedOn ?? Date.now()) - job.timestamp - (job.opts.delay ?? 0) }, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
 
     const originalSchemaVersion = (job.data as Record<string, unknown>).schemaVersion
     const migratedData = await jobMigrations(log).apply(job.data)
@@ -222,12 +224,12 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         log.info('[jobBroker] Job broker initialized')
     },
 
-    async poll(queueName: string = QueueName.WORKER_JOBS, connectionId?: string): Promise<ConsumeJobRequest | null> {
+    async poll(queueName: string = QueueName.WORKER_JOBS, socket?: Pick<Socket, 'id' | 'connected'>): Promise<ConsumeJobRequest | null> {
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
-        const job = await dispatcher.poll()
-        if (!isNil(job) && !isNil(connectionId)) {
-            jobAssignmentTracker.record({ connectionId, jobId: job.jobId, token: job.token, queueName: job.queueName })
+        const job = await dispatcher.poll(socket)
+        if (!isNil(job) && !isNil(socket)) {
+            jobAssignmentTracker.record({ connectionId: socket.id, jobId: job.jobId, token: job.token, queueName: job.queueName })
         }
         return job
     },

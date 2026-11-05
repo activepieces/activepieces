@@ -101,9 +101,10 @@ export const ProjectDashboardPageHeader = ({
   };
 
   const titleContent = (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 min-w-0">
       <ApProjectDisplay
         title={getProjectName(project)}
+        containerClassName="min-w-0"
         maxLengthToNotShowTooltip={30}
         titleClassName="text-sm font-medium"
         projectType={project.type}
@@ -112,7 +113,7 @@ export const ProjectDashboardPageHeader = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Lock className="w-4 h-4" />
+              <Lock className="w-4 h-4 shrink-0" />
             </TooltipTrigger>
             <TooltipContent>
               <p>
@@ -128,7 +129,7 @@ export const ProjectDashboardPageHeader = ({
   );
 
   const rightContent = isProjectPage ? (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 shrink-0">
       {showProjectMembersIcons && (
         <Button
           variant="ghost"
@@ -154,8 +155,11 @@ export const ProjectDashboardPageHeader = ({
           variant="ghost"
           size="sm"
           onClick={() => setInviteOpen(true)}
+          aria-label={t('Add Members')}
         >
-          <span className="text-sm font-medium">{t('Add Members')}</span>
+          <span className="hidden sm:inline text-sm font-medium">
+            {t('Add Members')}
+          </span>
         </AnimatedIconButton>
       )}
       <AnimatedIconButton
@@ -187,9 +191,6 @@ export const ProjectDashboardPageHeader = ({
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         initialTab={settingsInitialTab}
-        initialValues={{
-          projectName: project?.displayName,
-        }}
       />
     </>
   );

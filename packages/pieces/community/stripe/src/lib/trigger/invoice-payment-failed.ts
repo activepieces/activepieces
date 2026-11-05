@@ -23,7 +23,7 @@ export const stripeInvoicePaymentFailed = createTrigger({
   name: 'invoice_payment_failed',
   classification: 'READ',
   displayName: 'Invoice Payment Failed',
-  description: 'Fires when a payment against an invoice fails.',
+  description: 'Fires when paying an invoice fails, e.g. a renewal.',
   aiMetadata: {
     description:
       'Fires when a payment against an invoice fails in Stripe (the invoice.payment_failed event), emitting the affected invoice including the finalization error. An optional customer ID filter narrows firing to one customer. Use to react to failed invoice payments, such as starting a dunning or retry flow.',
@@ -31,8 +31,8 @@ export const stripeInvoicePaymentFailed = createTrigger({
   props: {
     customer: Property.ShortText({
       displayName: 'Customer ID',
-      description:
-        'Only trigger for invoices belonging to this customer ID (e.g., `cus_...`).',
+      description: 'Only invoices for this customer. Empty: all.',
+      placeholder: 'cus_...',
       required: false,
     }),
   },
