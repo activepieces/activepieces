@@ -83,10 +83,19 @@ import {
 } from './chat-window';
 
 // `?chatDemo=<scenarioId>` (demo builds only) opens the panel docked so the
-// chat mounts, then plays that scenario once.
+// chat mounts, then plays that scenario once. `&chatDock=left|float` picks
+// where it opens (right by default).
 let autoplayed = false;
 if (chatDemo.autoplayScenarioId) {
-  setTimeout(() => useChatPanel.getState().dock('right'), 0);
+  const where = new URLSearchParams(window.location.search).get('chatDock');
+  setTimeout(() => {
+    const panel = useChatPanel.getState();
+    if (where === 'float') {
+      panel.floatAt(panel.float ?? { x: window.innerWidth - 440, y: 96 });
+    } else {
+      panel.dock(where === 'left' ? 'left' : 'right');
+    }
+  }, 0);
 }
 
 // The panel's header and the chat itself. Rendered once, above the routes, by

@@ -140,6 +140,12 @@ function startRun({
   touch(entry, { status: AgentConversationStatus.STREAMING });
 
   const convId = entry.conv.id;
+  // Scenarios that edit real resources keep real time even at "instant"
+  // speed, so the page can be watched changing.
+  const speed = () =>
+    scenario.realtime
+      ? Math.max(1, chatDemo.speedFactor())
+      : chatDemo.speedFactor();
   const emit = (type: AgentEventType, data: unknown) => {
     if (run.stopped) throw new DemoStop();
     chatDemo.publish({ conversationId: convId, runId, type, data });
@@ -155,7 +161,7 @@ function startRun({
         reject(new DemoStop());
         return;
       }
-      const scaled = Math.round(ms * chatDemo.speedFactor());
+      const scaled = Math.round(ms * speed());
       const timer = setTimeout(() => {
         run.timers.delete(timer);
         if (run.stopped) reject(new DemoStop());
@@ -165,7 +171,15 @@ function startRun({
       run.cancelWait = () => reject(new DemoStop());
     });
 
-  const ctx = createContext({ run, chunk, emit, wait, attempt, userText });
+  const ctx = createContext({
+    run,
+    chunk,
+    emit,
+    wait,
+    speed,
+    attempt,
+    userText,
+  });
   ctx.fileNames = fileNames;
   const titleOnStart =
     entry.turns === 1 && scenario.title ? scenario.title : null;
@@ -240,6 +254,7 @@ function createContext({
   chunk,
   emit,
   wait,
+  speed,
   attempt,
   userText,
 }: {
@@ -247,6 +262,7 @@ function createContext({
   chunk: (...chunks: UIMessageChunk[]) => void;
   emit: (type: AgentEventType, data: unknown) => void;
   wait: (ms: number) => Promise<void>;
+  speed: () => number;
   attempt: number;
   userText: string;
 }): DemoContext {
@@ -260,7 +276,7 @@ function createContext({
     run.textCounter += 1;
     const id = `${kind}-${run.textCounter}`;
     chunk({ type: `${kind}-start`, id });
-    if (chatDemo.speedFactor() === 0) {
+    if (speed() === 0) {
       chunk({ type: `${kind}-delta`, id, delta: text });
     } else {
       const tokens = text.split(/(\s+)/);

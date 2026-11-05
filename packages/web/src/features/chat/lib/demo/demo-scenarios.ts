@@ -13,6 +13,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 import { chatDemo } from './chat-demo';
 import type { DemoContext } from './demo-backend';
+import { demoLiveScenarios } from './demo-live-scenarios';
 
 // Scripted replies, one per chat UI state. Each script drives the same events
 // the server streams; the real components render them. Prompts are what the
@@ -1180,6 +1181,8 @@ const SCENARIOS: DemoScenario[] = [
   },
 ];
 
+SCENARIOS.push(...demoLiveScenarios);
+
 const FALLBACK: DemoScenario = {
   id: 'fallback',
   group: 'Replies',
@@ -1240,5 +1243,7 @@ export type DemoScenario = {
   // A seeded scenario opens an existing chat that already has this history.
   seed?: () => PersistedAgentMessage[];
   rejectSendOnFirstTry?: boolean;
+  // Plays in real time even at instant speed (it edits real resources).
+  realtime?: boolean;
   play: (ctx: DemoContext) => Promise<void>;
 };
