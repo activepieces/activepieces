@@ -48,7 +48,7 @@ export const getUsers = createAction({
     ],
   },
   async run({ auth, propsValue }) {
-    const logins = twitchCommon.normalizeLogins(propsValue.logins ?? []);
+    const logins = twitchCommon.requireValidLogins({ inputs: propsValue.logins ?? [], label: 'Usernames or Channel URLs' });
     const ids = twitchCommon.toStringList(propsValue.ids);
     if (logins.length + ids.length > 100) {
       throw new Error('Twitch accepts at most 100 usernames and user IDs combined.');

@@ -45,7 +45,7 @@ export const getLiveStreams = createAction({
   },
   async run({ auth, propsValue }) {
     const limit = twitchCommon.validateLimit(propsValue.limit);
-    const logins = twitchCommon.normalizeLogins(propsValue.user_logins ?? []);
+    const logins = twitchCommon.requireValidLogins({ inputs: propsValue.user_logins ?? [], label: 'Streamer Usernames or URLs' });
     if (logins.length > 100) {
       throw new Error('Twitch accepts at most 100 streamer usernames.');
     }

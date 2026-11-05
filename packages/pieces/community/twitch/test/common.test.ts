@@ -38,6 +38,23 @@ describe('twitchCommon.normalizeLogins', () => {
   });
 });
 
+describe('twitchCommon.requireValidLogins', () => {
+  it('returns no logins for a genuinely empty input', () => {
+    expect(twitchCommon.requireValidLogins({ inputs: [], label: 'Usernames' })).toEqual([]);
+    expect(twitchCommon.requireValidLogins({ inputs: ['', '  '], label: 'Usernames' })).toEqual([]);
+  });
+
+  it('keeps the valid logins when at least one survives', () => {
+    expect(twitchCommon.requireValidLogins({ inputs: ['https://twitch.tv/', 'Faker'], label: 'Usernames' })).toEqual(['faker']);
+  });
+
+  it('rejects a supplied list when no entry is a valid login', () => {
+    expect(() => twitchCommon.requireValidLogins({ inputs: ['https://twitch.tv/', 'not a name!'], label: 'Usernames' })).toThrow(
+      'None of the Usernames is a valid Twitch username',
+    );
+  });
+});
+
 describe('twitchCommon.chunk', () => {
   it('splits 250 logins into 100/100/50', () => {
     const items = Array.from({ length: 250 }, (_, i) => `user${i}`);

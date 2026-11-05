@@ -119,6 +119,17 @@ function normalizeLogins(inputs: unknown[]): string[] {
   return Array.from(new Set(logins));
 }
 
+function requireValidLogins({ inputs, label }: { inputs: unknown[]; label: string }): string[] {
+  const logins = normalizeLogins(inputs);
+  const supplied = inputs.some((value) => typeof value === 'string' && value.trim().length > 0);
+  if (supplied && logins.length === 0) {
+    throw new Error(
+      `None of the ${label} is a valid Twitch username. Use the channel name (up to 25 letters, digits or underscores) or a twitch.tv/<name> link.`,
+    );
+  }
+  return logins;
+}
+
 function omitKeys<T extends Record<string, unknown>>({
   item,
   keys,
@@ -390,6 +401,7 @@ export const twitchCommon = {
   paginate,
   normalizeLogin,
   normalizeLogins,
+  requireValidLogins,
   chunk,
   omitKeys,
   toStringList,
