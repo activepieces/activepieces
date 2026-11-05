@@ -21,6 +21,7 @@ const createRecordingLog = testLogger.createRecording
 
 const SECOND_MS = 1000
 const HOUR_MS = 60 * 60 * 1000
+const CAP_EVICTION_WINDOW_MS = 15 * 60 * 1000
 
 function flowVersionDir({ basePath, flowVersionId }: { basePath: string, flowVersionId: string }): string {
     return join(cacheUtils(basePath).getGlobalCodeCachePath(), flowVersionId)
@@ -183,9 +184,9 @@ describe('codeCacheEviction.sweep action-run pass', () => {
     it('evicts only the oldest overflow once the managed dir count exceeds the cap', async () => {
         const basePath = uniqueBasePath()
         const overflow = 3
-        const dirs = await seedOldestFirst({ basePath, total: ACTION_RUN_CACHE_MAX_DIRS + overflow })
+        const dirs = await seedOldestFirst({ basePath, total: ACTION_RUN_CACHE_MAX_DIRS + overflow, ageOffsetMs: CAP_EVICTION_WINDOW_MS })
 
-        await codeCacheEviction.sweep({ basePath, pauseMs: 0, log: noopLog, getUsedPercent: underThreshold })
+        await codeCacheEviction.sweep({ basePath, pauseMs: 0, log: noopLog, activeWindowMs: CAP_EVICTION_WINDOW_MS, getUsedPercent: underThreshold })
 
         for (const dirPath of dirs.slice(0, overflow)) {
             await expect(exists(dirPath)).resolves.toBe(false)
@@ -198,10 +199,10 @@ describe('codeCacheEviction.sweep action-run pass', () => {
     it('retains exactly the newest ACTION_RUN_CACHE_MAX_DIRS however far over the cap the tree runs', async () => {
         const basePath = uniqueBasePath()
         const total = ACTION_RUN_CACHE_MAX_DIRS * 3
-        const dirs = await seedOldestFirst({ basePath, total })
+        const dirs = await seedOldestFirst({ basePath, total, ageOffsetMs: CAP_EVICTION_WINDOW_MS })
         const firstRetained = total - ACTION_RUN_CACHE_MAX_DIRS
 
-        await codeCacheEviction.sweep({ basePath, pauseMs: 0, log: noopLog, getUsedPercent: underThreshold })
+        await codeCacheEviction.sweep({ basePath, pauseMs: 0, log: noopLog, activeWindowMs: CAP_EVICTION_WINDOW_MS, getUsedPercent: underThreshold })
 
         await expect(exists(dirs[0])).resolves.toBe(false)
         await expect(exists(dirs[firstRetained - 1])).resolves.toBe(false)
@@ -224,12 +225,12 @@ describe('codeCacheEviction.sweep action-run pass', () => {
         }
     })
 
-    it('widens the window to cover a run budget longer than 15 minutes, so a long code action is not evicted while it executes', async () => {
+    it('widens the window via an explicit override, so a long code action is not evicted while it executes', async () => {
         const basePath = uniqueBasePath()
         const runningDirs = await seedOldestFirst({
             basePath,
             total: ACTION_RUN_CACHE_MAX_DIRS + 7,
-            ageOffsetMs: ACTION_RUN_CACHE_ACTIVE_WINDOW_MS + 60_000,
+            ageOffsetMs: CAP_EVICTION_WINDOW_MS + 5 * 60 * 1000,
             label: 'c',
         })
 
@@ -464,7 +465,7 @@ describe('codeCacheEviction.sweep disk-pressure pass', () => {
             ageMs: 90 * 60 * 1000,
         })
 
-        await codeCacheEviction.sweep({ basePath, pauseMs: 0, log: noopLog, getUsedPercent: overThresholdForChecks(99) })
+        await codeCacheEviction.sweep({ basePath, pauseMs: 0, log: noopLog, activeWindowMs: CAP_EVICTION_WINDOW_MS, getUsedPercent: overThresholdForChecks(99) })
 
         await expect(exists(actionRunDir)).resolves.toBe(false)
     })
@@ -477,7 +478,7 @@ describe('codeCacheEviction.sweep disk-pressure pass', () => {
             ageMs: 30 * 60 * 1000,
         })
 
-        await codeCacheEviction.sweep({ basePath, pauseMs: 0, log: noopLog, getUsedPercent: overThresholdForChecks(99) })
+        await codeCacheEviction.sweep({ basePath, pauseMs: 0, log: noopLog, activeWindowMs: CAP_EVICTION_WINDOW_MS, getUsedPercent: overThresholdForChecks(99) })
 
         await expect(exists(actionRunDir)).resolves.toBe(true)
     })
