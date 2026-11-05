@@ -1,5 +1,11 @@
 import { t } from 'i18next';
 
+import {
+  chatDemo,
+  useChatDemoSettings,
+} from '@/features/chat/lib/demo/chat-demo';
+import { demoScenarios } from '@/features/chat/lib/demo/demo-scenarios';
+import { playDemoScenario } from '@/features/chat/lib/demo/play-scenario';
 import { userHooks } from '@/hooks/user-hooks';
 
 // The full chat page opens on a big hero. The panel is a side tool, so it opens
@@ -36,6 +42,31 @@ export function ChatPanelEmptyState({
             className="max-w-full truncate rounded-full border px-3 py-1.5 text-left text-sm text-gray-11 transition-colors duration-150 outline-none hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8 active:bg-gray-4"
           >
             {t(suggestion)}
+          </button>
+        ))}
+      </div>
+      {chatDemo.available && <DemoScenarioPills />}
+    </div>
+  );
+}
+
+// Dev builds, in demo mode: every scenario as a small pill.
+function DemoScenarioPills() {
+  const { active } = useChatDemoSettings();
+  if (!active) return null;
+  return (
+    <div className="flex flex-col gap-1.5 border-t pt-3">
+      <p className="text-xs text-gray-10">{t('Demo scenarios')}</p>
+      <div className="flex flex-wrap gap-1">
+        {demoScenarios.all.map((scenario) => (
+          <button
+            key={scenario.id}
+            type="button"
+            title={scenario.prompt}
+            onClick={() => playDemoScenario(scenario.id)}
+            className="max-w-full truncate rounded-full border border-dashed px-2 py-0.5 text-xs text-gray-11 transition-colors duration-150 outline-none hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8 active:bg-gray-4"
+          >
+            {scenario.label}
           </button>
         ))}
       </div>

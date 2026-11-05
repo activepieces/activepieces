@@ -16,6 +16,9 @@ import {
 
 import { api } from '@/lib/api';
 
+import { chatDemo } from './demo/chat-demo';
+import { demoBackend } from './demo/demo-backend';
+
 async function createConversation(
   request: CreateAgentConversationRequest,
 ): Promise<AgentConversation> {
@@ -161,7 +164,7 @@ async function instructMemory(
   );
 }
 
-export const chatApi = {
+const serverChatApi = {
   createConversation,
   listConversations,
   getConversation,
@@ -179,6 +182,15 @@ export const chatApi = {
   importMemory,
   instructMemory,
 };
+
+// Dev builds (or ?chatDemo in any build) route demo conversations to an in-memory backend (see
+// ./demo/chat-demo.ts); every other call, and every call when demo is off, goes
+// to the server unchanged.
+export const chatApi: ChatApi = chatDemo.available
+  ? demoBackend.wrap(serverChatApi)
+  : serverChatApi;
+
+export type ChatApi = typeof serverChatApi;
 
 export type PendingGate = {
   gateId: string;

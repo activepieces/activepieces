@@ -17,6 +17,7 @@ import { chatDebug } from '@/lib/chat-debug-logger';
 
 import { ChatUIMessage } from './chat-types';
 import { chunkReducer, StreamingState } from './chunk-reducer';
+import { chatDemo } from './demo/chat-demo';
 
 const THROTTLE_MS = 100;
 const STALE_CHECK_INTERVAL_MS = 15_000;
@@ -304,6 +305,8 @@ export function useStreamingReducer({
       };
 
       socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+      // Dev only: scripted demo replies arrive here instead of the socket.
+      const offDemo = chatDemo.onEvent(handler);
 
       const reconnectHandler = () => {
         socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
@@ -327,6 +330,7 @@ export function useStreamingReducer({
       cleanupRef.current = () => {
         socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
         socket.off('connect', reconnectHandler);
+        offDemo();
       };
     },
     [socket, teardown, flush, scheduleFlush, updatePhase],

@@ -1,12 +1,14 @@
 import { t } from 'i18next';
 import {
   ArrowLeft,
+  FlaskConical,
   History,
   Maximize2,
   PanelLeft,
   PanelRight,
   PictureInPicture2,
   Plus,
+  RotateCcw,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -14,7 +16,14 @@ import {
   Popover as PopoverPrimitive,
   Tooltip as TooltipPrimitive,
 } from 'radix-ui';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Fragment,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ToastT } from 'sonner';
 
@@ -22,12 +31,16 @@ import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -35,6 +48,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  chatDemo,
+  DemoSpeed,
+  useChatDemoSettings,
+} from '@/features/chat/lib/demo/chat-demo';
+import { demoScenarios } from '@/features/chat/lib/demo/demo-scenarios';
+import { playDemoScenario } from '@/features/chat/lib/demo/play-scenario';
 import {
   ChatLayout,
   DOCK_BREAKPOINT,
@@ -61,6 +81,13 @@ import {
   useChatLayout,
   useWindowAtLeast,
 } from './chat-window';
+
+// `?chatDemo=<scenarioId>` (demo builds only) opens the panel docked so the
+// chat mounts, then plays that scenario once.
+let autoplayed = false;
+if (chatDemo.autoplayScenarioId) {
+  setTimeout(() => useChatPanel.getState().dock('right'), 0);
+}
 
 // The panel's header and the chat itself. Rendered once, above the routes, by
 // ChatChromeHost, so it survives page changes.
@@ -144,6 +171,27 @@ export function ChatChrome({
     },
     [backToChat],
   );
+
+  // Dev only: a demo scenario opens here, in a fresh chat or a seeded one.
+  const { invalidate } = useChatHistoryActions();
+  useEffect(
+    () =>
+      chatDemo.onPlay((target) => {
+        invalidate();
+        if (target.kind === 'conversation') {
+          openConversation(target.conversationId);
+        } else {
+          startFresh(target.prompt);
+        }
+      }),
+    [invalidate, openConversation, startFresh],
+  );
+  useEffect(() => {
+    const scenarioId = chatDemo.autoplayScenarioId;
+    if (!scenarioId || autoplayed) return;
+    autoplayed = true;
+    playDemoScenario(scenarioId);
+  }, []);
 
   // Esc steps back from the history view before it may close the panel. It
   // listens on the document, after a drag's own Esc on the window, and leaves
@@ -487,8 +535,108 @@ function LayoutMenu({
           <Maximize2 className="size-4" />
           {t('Open full page')}
         </DropdownMenuItem>
+        {chatDemo.available && <DemoScenariosMenu />}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+const DEMO_SPEED_LABELS: Record<DemoSpeed, string> = {
+  slow: 'Slow',
+  normal: 'Normal',
+  instant: 'Instant',
+};
+
+// Dev builds only: scripted chats that show every chat state without an AI.
+function DemoScenariosMenu() {
+  const settings = useChatDemoSettings();
+  const { invalidate } = useChatHistoryActions();
+  const keepOpen = (event: Event) => event.preventDefault();
+
+  return (
+    <>
+      <DropdownMenuSeparator />
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger className="gap-2">
+          <FlaskConical className="size-4" />
+          {t('Demo scenarios')}
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent className="max-h-[min(75vh,640px)] w-64 overflow-y-auto">
+          {demoScenarios.groups.map((group, index) => (
+            <Fragment key={group}>
+              {index > 0 && <DropdownMenuSeparator />}
+              <DropdownMenuLabel className="text-xs font-normal text-gray-10">
+                {group}
+              </DropdownMenuLabel>
+              {demoScenarios.all
+                .filter((scenario) => scenario.group === group)
+                .map((scenario) => (
+                  <DropdownMenuItem
+                    key={scenario.id}
+                    onSelect={() => playDemoScenario(scenario.id)}
+                  >
+                    {scenario.label}
+                  </DropdownMenuItem>
+                ))}
+            </Fragment>
+          ))}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            disabled={!settings.lastScenarioId}
+            onSelect={() =>
+              settings.lastScenarioId &&
+              playDemoScenario(settings.lastScenarioId)
+            }
+          >
+            <RotateCcw className="size-4" />
+            {t('Replay last')}
+          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              {t('Speed: {speed}', {
+                speed: t(DEMO_SPEED_LABELS[settings.speed]),
+              })}
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuRadioGroup
+                value={settings.speed}
+                onValueChange={(value) => {
+                  const speed = chatDemo.SPEEDS.find((s) => s === value);
+                  if (speed) chatDemo.setSpeed(speed);
+                }}
+              >
+                {chatDemo.SPEEDS.map((speed) => (
+                  <DropdownMenuRadioItem
+                    key={speed}
+                    value={speed}
+                    onSelect={keepOpen}
+                  >
+                    {t(DEMO_SPEED_LABELS[speed])}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          <DropdownMenuCheckboxItem
+            checked={settings.fakeHistory}
+            onSelect={keepOpen}
+            onCheckedChange={(checked) => {
+              chatDemo.setFakeHistory(checked);
+              invalidate();
+            }}
+          >
+            {t('Fake chat history')}
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={settings.active}
+            onSelect={keepOpen}
+            onCheckedChange={(checked) => chatDemo.setActive(checked)}
+          >
+            {t('Demo mode for new chats')}
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
+    </>
   );
 }
 
