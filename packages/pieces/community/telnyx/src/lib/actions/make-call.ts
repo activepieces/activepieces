@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { telnyxAuth } from '../auth';
-import { telnyxRequest } from '../common/client';
+import { telnyxApi } from '../common/api';
 
 export const makeCallAction = createAction({
   auth: telnyxAuth,
@@ -9,7 +8,7 @@ export const makeCallAction = createAction({
   classification: 'WRITE',
   displayName: 'Make Call',
   description: 'Initiate an outbound call using the Telnyx Call Control API.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Places an outbound voice call via the Telnyx Call Control API from a caller ID (E.164) to a destination number or SIP URI, using a required Call Control Application (connection) ID; can optionally play an audio file (WAV/MP3) on answer and override the webhook destination and ring timeout. Use to dial a recipient programmatically. Not idempotent: each call initiates a new call.',
@@ -55,18 +54,14 @@ export const makeCallAction = createAction({
     const { connection_id, from, to, audio_url, webhook_url, timeout_secs } =
       context.propsValue;
 
-    return await telnyxRequest({
-      apiKey: context.auth.secret_text,
-      method: HttpMethod.POST,
-      path: '/calls',
-      body: {
-        connection_id,
-        from,
-        to,
-        ...(audio_url ? { audio_url } : {}),
-        ...(webhook_url ? { webhook_url } : {}),
-        ...(timeout_secs ? { timeout_secs } : {}),
-      },
+    return await telnyxApi.dialCall({
+      auth: context.auth,
+      connectionId: connection_id,
+      from,
+      to,
+      audioUrl: audio_url,
+      webhookUrl: webhook_url,
+      timeoutSecs: timeout_secs,
     });
   },
 });

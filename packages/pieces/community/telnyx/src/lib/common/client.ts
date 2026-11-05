@@ -1,30 +1,41 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  QueryParams,
+} from '@activepieces/pieces-common';
+import type { TelnyxAuthValue } from './types';
 
-const TELNYX_API_BASE_URL = 'https://api.telnyx.com/v2';
+function baseUrl(): string {
+  return 'https://api.telnyx.com/v2';
+}
 
-type TelnyxRequestParams = {
-  apiKey: string;
-  method: HttpMethod;
-  path: string;
-  body?: Record<string, unknown>;
-};
-
-export async function telnyxRequest<TResponse>({
-  apiKey,
+async function request<T>({
+  auth,
   method,
   path,
+  query,
   body,
-}: TelnyxRequestParams): Promise<TResponse> {
-  const response = await httpClient.sendRequest<TResponse>({
+}: RequestParams & { auth: TelnyxAuthValue }): Promise<T> {
+  const response = await httpClient.sendRequest<T>({
     method,
-    url: `${TELNYX_API_BASE_URL}${path}`,
+    url: `${baseUrl()}${path}`,
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${auth.secret_text}`,
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
+    queryParams: query,
     body,
   });
 
   return response.body;
 }
+
+export const telnyxClient = { baseUrl, request };
+
+type RequestParams = {
+  method: HttpMethod;
+  path: string;
+  query?: QueryParams;
+  body?: Record<string, unknown>;
+};

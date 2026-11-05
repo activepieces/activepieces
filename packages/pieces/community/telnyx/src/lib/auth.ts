@@ -1,6 +1,5 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { telnyxRequest } from './common/client';
+import { AppConnectionType, PieceAuth } from '@activepieces/pieces-framework';
+import { telnyxApi } from './common/api';
 
 export const telnyxAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -8,10 +7,8 @@ export const telnyxAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      await telnyxRequest({
-        apiKey: auth,
-        method: HttpMethod.GET,
-        path: '/messaging_profiles',
+      await telnyxApi.listMessagingProfiles({
+        auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
       });
       return { valid: true };
     } catch {
