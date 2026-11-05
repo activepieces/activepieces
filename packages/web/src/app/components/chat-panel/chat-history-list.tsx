@@ -94,14 +94,14 @@ export function ChatHistoryList({
       );
       setHighlight(start);
       // Wait for the dropdown to be placed and capped before scrolling it.
-      const frame = requestAnimationFrame(() =>
+      // Not cancelled on cleanup: setting the highlight re-runs this effect.
+      requestAnimationFrame(() =>
         requestAnimationFrame(() =>
           listRef.current
             ?.querySelector(`[data-index="${start}"]`)
             ?.scrollIntoView({ block: 'center' }),
         ),
       );
-      return () => cancelAnimationFrame(frame);
     }
   }, [flat, currentId, highlight]);
 
