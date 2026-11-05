@@ -1,6 +1,7 @@
 import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
 import { AgentPhase, agentToolSkills, PersistedAgentPartType } from '@activepieces/shared'
-import { aiUtils } from '@activepieces/server-utils'
+import { activepiecesAiCost, aiUtils } from '@activepieces/server-utils'
+import { LanguageModelV4StreamPart, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { hasToolCall, isLoopFinished, isStepCount, LanguageModel, StopCondition, ToolSet, wrapLanguageModel } from 'ai'
 import { AgentTurnResult, runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 import { EvalCase, RecordedToolCall } from './eval-case'
@@ -12,8 +13,9 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
     const caseReplay = replay.create({ recordedToolCalls: evalCase.recordedToolCalls })
     const tools = evalToolSet.build({ mcpToolSet, replay: caseReplay, auth, recordMode })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
-    const model = pinned({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
+    const { model, costUsd } = pinned({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
     const warnings: string[] = []
+    let steps = 0
     const abortSignal = AbortSignal.timeout(TURN_TIMEOUT_MS)
 
     const { data: result, error } = await tryCatch(() => runAgentTurn({
@@ -26,6 +28,9 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
         phaseState,
         skills: { surface: 'CHAT', guides: evalPrompts.loadGuides(), preloaded: evalCase.preloadedSkills },
         abortSignal,
+        onStepModel: () => {
+            steps += 1
+        },
         log: {
             debug: () => {},
             info: () => {},
@@ -54,6 +59,8 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
         stops: caseReplay.stops(),
         newFixtures: caseReplay.newFixtures(),
         reachedTarget: reachedTarget({ evalCase, result, rejected: [...warnings, ...rejectedToolParts(result)] }),
+        costUsd: costUsd(),
+        steps,
     }
 }
 
@@ -77,13 +84,21 @@ function gradedWindow({ evalCase }: { evalCase: EvalCase }): StopCondition<ToolS
     return [reachedTarget, isStepCount(MAX_STEPS_TO_TARGET)]
 }
 
-function pinned({ model }: { model: LanguageModel }): LanguageModel {
+function pinned({ model }: { model: LanguageModel }): { model: LanguageModel, costUsd: () => number | null } {
     if (typeof model === 'string') {
         throw new Error(`Expected a model instance for ${model}`)
     }
     const provider = process.env[PROVIDER_ENV] ?? DEFAULT_PROVIDER
     const productionSampling = process.env[PRODUCTION_SAMPLING_ENV] === 'true'
-    return wrapLanguageModel({
+    const ledger = { calls: 0, reported: 0, totalUsd: 0 }
+    const record = (providerMetadata: SharedV4ProviderMetadata | undefined): void => {
+        const cost = activepiecesAiCost.openRouterCostOf(providerMetadata)
+        if (cost !== undefined) {
+            ledger.reported += 1
+            ledger.totalUsd += cost
+        }
+    }
+    const wrapped = wrapLanguageModel({
         model,
         middleware: {
             transformParams: async ({ params }) => ({
@@ -91,11 +106,33 @@ function pinned({ model }: { model: LanguageModel }): LanguageModel {
                 ...(productionSampling ? {} : { temperature: 0, seed: SEED }),
                 providerOptions: {
                     ...params.providerOptions,
-                    openrouter: { ...params.providerOptions?.['openrouter'], provider: { order: [provider], allow_fallbacks: false } },
+                    openrouter: { ...params.providerOptions?.['openrouter'], provider: { order: [provider], allow_fallbacks: false }, usage: { include: true } },
                 },
             }),
+            wrapGenerate: async ({ doGenerate }) => {
+                const result = await doGenerate()
+                ledger.calls += 1
+                record(result.providerMetadata)
+                return result
+            },
+            wrapStream: async ({ doStream }) => {
+                const { stream, ...rest } = await doStream()
+                ledger.calls += 1
+                return {
+                    ...rest,
+                    stream: stream.pipeThrough(new TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart>({
+                        transform: (chunk, controller) => {
+                            if (chunk.type === 'finish') {
+                                record(chunk.providerMetadata)
+                            }
+                            controller.enqueue(chunk)
+                        },
+                    })),
+                }
+            },
         },
     })
+    return { model: wrapped, costUsd: () => ledger.reported === ledger.calls ? ledger.totalUsd : null }
 }
 
 function rejectedToolParts(result: AgentTurnResult): string[] {
@@ -189,4 +226,6 @@ export type TurnOutcome = {
     stops: ReplayStop[]
     newFixtures: RecordedToolCall[]
     reachedTarget: boolean
+    costUsd: number | null
+    steps: number
 }

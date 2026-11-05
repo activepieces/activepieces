@@ -5,7 +5,7 @@ import { parseArgs } from 'node:util'
 import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
 import { ToolSet } from 'ai'
 import { evalAgentTurn } from './agent-turn'
-import { CheckResult, evalChecks, Verdict } from './checks'
+import { evalChecks, RunScores, Verdict } from './checks'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 import { posthogExperiments, VerdictCounts } from './posthog-experiments'
@@ -82,7 +82,7 @@ async function runDataset({ dataset, repeats, recordMode, upload, verbose, model
     const results = await runInBatches({ runs, verbose, run: ({ candidate, trial }) => evaluate({ candidate, trial, mcpToolSet, modelId, auth, recordMode }) })
     const summaries = cases.map((candidate) => summarize({ candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
     console.log(`\n${name} summary (a case fails when at least half of its runs fail):`)
-    summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail`))
+    summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · overall ${isNil(summary.overall) ? '-' : summary.overall.toFixed(1)}/10 · ${isNil(summary.costUsd) ? 'cost unknown' : `$${summary.costUsd.toFixed(4)}/run`}`))
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
     console.log(`\n${summaries.length - failing} pass · ${failing} fail · ${summaries.length} cases`)
     if (recordMode) {
@@ -113,20 +113,30 @@ async function runInBatches({ runs, verbose, run }: { runs: PlannedRun[], verbos
 async function evaluate({ candidate, trial, mcpToolSet, modelId, auth, recordMode }: { candidate: EvalCase, trial: number, mcpToolSet: ToolSet, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<CaseResult> {
     const { data, error } = await tryCatch(async () => {
         const outcome = await evalAgentTurn.run({ evalCase: candidate, mcpToolSet, modelId, auth, recordMode })
-        const checks = await evalChecks.grade({ evalCase: candidate, outcome, auth })
-        return { checks, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures }
+        const scores = await evalChecks.grade({ evalCase: candidate, outcome, auth })
+        return { scores, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures }
     })
     if (error) {
-        return { candidate, trial, verdict: 'fail', checks: [{ name: 'run completed', verdict: 'fail', reason: error.message }], stops: [], transcript: '', newFixtures: [] }
+        return { candidate, trial, verdict: 'fail', scores: crashedScores({ reason: error.message }), stops: [], transcript: '', newFixtures: [] }
     }
-    return { candidate, trial, verdict: evalChecks.caseVerdict({ checks: data.checks }), ...data }
+    return { candidate, trial, verdict: evalChecks.verdictOf({ scores: data.scores }), ...data }
+}
+
+function crashedScores({ reason }: { reason: string }): RunScores {
+    const message = `The run crashed: ${reason}`
+    return { expected: 'fail', honest: 'fail', validToolCalls: 'fail', rejectedToolCalls: 0, overall: null, costUsd: null, stepsToDecision: 0, problemTypes: [], reasons: { expected: message, honest: message, overall: message, toolCalls: message } }
 }
 
 function summarize({ candidate, results }: { candidate: EvalCase, results: CaseResult[] }): CaseSummary {
     const pass = results.filter((result) => result.verdict === 'pass').length
     const fail = results.filter((result) => result.verdict === 'fail').length
     const verdict: Verdict = fail * 2 >= pass + fail ? 'fail' : 'pass'
-    return { caseNumber: candidate.caseNumber, pass, fail, verdict }
+    return { caseNumber: candidate.caseNumber, pass, fail, verdict, overall: average(results.map((result) => result.scores.overall)), costUsd: average(results.map((result) => result.scores.costUsd)) }
+}
+
+function average(values: (number | null)[]): number | null {
+    const known = values.flatMap((value) => isNil(value) ? [] : [value])
+    return known.length === 0 ? null : known.reduce((total, value) => total + value, 0) / known.length
 }
 
 async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<number> {
@@ -230,12 +240,14 @@ function print({ result, verbose }: { result: CaseResult, verbose: boolean }): v
         console.log(`    USER: ${result.candidate.userMessage}`)
         console.log(result.transcript.split('\n').map((line) => `    ${line}`).join('\n'))
     }
-    result.checks.forEach((check) => {
-        console.log(`    ${VERDICT_LABEL[check.verdict]}  ${check.name}`)
-        if (check.verdict !== 'pass') {
-            console.log(`          ${check.reason}`)
-        }
-    })
+    const { scores } = result
+    const line = (label: string, verdict: Verdict, reason: string): void => {
+        console.log(`    ${VERDICT_LABEL[verdict]}  ${label}${verdict === 'fail' ? `: ${reason}` : ''}`)
+    }
+    line('did the expected thing', scores.expected, scores.reasons.expected)
+    line('honest about results', scores.honest, scores.reasons.honest)
+    line(`valid tool calls (${scores.rejectedToolCalls} rejected)`, scores.validToolCalls, scores.reasons.toolCalls)
+    console.log(`    overall ${scores.overall ?? '-'}/10 · ${scores.stepsToDecision} step(s) · ${isNil(scores.costUsd) ? 'cost unknown' : `$${scores.costUsd.toFixed(4)}`}${scores.problemTypes.length > 0 ? ` · problems: ${scores.problemTypes.join(', ')}` : ''}`)
     result.stops.forEach((reason) => console.log(`    replay stopped: ${reason}`))
 }
 
@@ -263,6 +275,8 @@ type CaseSummary = {
     pass: number
     fail: number
     verdict: Verdict
+    overall: number | null
+    costUsd: number | null
 }
 
 type DatasetOutcome = {
@@ -279,7 +293,7 @@ type CaseResult = {
     candidate: EvalCase
     trial: number
     verdict: Verdict
-    checks: CheckResult[]
+    scores: RunScores
     stops: string[]
     transcript: string
     newFixtures: RecordedToolCall[]

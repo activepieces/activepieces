@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { isNil } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { CheckResult, Verdict } from './checks'
+import { PROBLEM_TYPES, RunScores, Verdict } from './checks'
 import { EvalCase } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 
@@ -9,7 +9,7 @@ async function upload({ runs, suiteKey, runSource, applicationVersion, modelVers
     const scorers = await ensureScorers()
     const id = randomUUID()
     const uploaded = runs.map((run) => ({ run, itemId: randomUUID() }))
-    const results = uploaded.flatMap(({ run, itemId }) => resultsFor({ run, itemId, scorers }))
+    const results = uploaded.flatMap(({ run, itemId }) => resultsFor({ scores: run.scores, itemId, scorers }))
     await posthogDataset.request({
         path: EXPERIMENTS_PATH,
         method: 'POST',
@@ -46,24 +46,25 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
         return null
     }
     const scorers = await ensureScorers()
+    const gates = [scorers.expected, scorers.validToolCalls, scorers.honest]
     const items = await collectItems({ experimentId: latest.id, cursor: undefined, collected: [] })
-    const passedByItem = new Map<string, boolean>()
+    const failedByItem = new Map<string, boolean>()
     for (let start = 0; start < items.length; start += CELLS_BATCH) {
         const batch = items.slice(start, start + CELLS_BATCH)
         const cells = ResultCells.parse(await posthogDataset.request({
             path: `${EXPERIMENTS_PATH}${latest.id}/result_cells/`,
-            query: { item_ids: batch.map((item) => item.id).join(','), scorer_version_ids: scorers.casePassed },
+            query: { item_ids: batch.map((item) => item.id).join(','), scorer_version_ids: gates.join(',') },
         }))
         cells.results.forEach((cell) => {
             if (cell.status === 'ok' && typeof cell.value === 'boolean') {
-                passedByItem.set(cell.item_id, cell.value)
+                failedByItem.set(cell.item_id, (failedByItem.get(cell.item_id) ?? false) || !cell.value)
             }
         })
     }
     const counts = new Map<string, VerdictCounts>()
-    for (const caseKey of new Set(items.map((item) => item.case_key))) {
-        const values = items.filter((item) => item.case_key === caseKey).flatMap((item) => passedByItem.has(item.id) ? [passedByItem.get(item.id) === true] : [])
-        counts.set(caseKey, { pass: values.filter(Boolean).length, fail: values.filter((value) => !value).length })
+    for (const key of new Set(items.map((item) => item.case_key))) {
+        const failed = items.filter((item) => item.case_key === key && failedByItem.has(item.id)).map((item) => failedByItem.get(item.id) === true)
+        counts.set(key, { pass: failed.filter((value) => !value).length, fail: failed.filter(Boolean).length })
     }
     return { experimentId: latest.id, applicationVersion: latest.application_version ?? 'unknown', counts }
 }
@@ -87,56 +88,80 @@ function itemFor({ run, itemId }: { run: UploadedRun, itemId: string }): Record<
         payload: {
             input: { userMessage: run.candidate.userMessage, cutBeforeStep: run.candidate.cutBeforeStep ?? null, targetTool: run.candidate.targetTool ?? null },
             output: run.transcript.slice(0, TRANSCRIPT_MAX_CHARS),
-            expected_output: { checks: run.candidate.checks, problemType: run.candidate.problemType, codeCheck: run.candidate.codeCheck },
-            metadata: { problemType: run.candidate.problemType, stops: run.stops },
+            expected_output: { checks: run.candidate.checks, problemType: run.candidate.problemType },
+            metadata: { verdict: run.verdict, stops: run.stops },
         },
     }
 }
 
-function resultsFor({ run, itemId, scorers }: { run: UploadedRun, itemId: string, scorers: Scorers }): Record<string, unknown>[] {
-    const codeCheck = run.checks.find((check) => check.name === CODE_CHECK_NAME)
-    const judged = run.checks.filter((check) => check.name !== CODE_CHECK_NAME)
+function resultsFor({ scores, itemId, scorers }: { scores: RunScores, itemId: string, scorers: Scorers }): Record<string, unknown>[] {
     return [
-        result({ itemId, scorerVersionId: scorers.casePassed, verdict: run.verdict, reasoning: run.checks.filter((check) => check.verdict !== 'pass').map((check) => `${check.name}: ${check.reason}`).join('\n') }),
-        isNil(codeCheck) ? notApplicable({ itemId, scorerVersionId: scorers.toolInputValid }) : result({ itemId, scorerVersionId: scorers.toolInputValid, verdict: codeCheck.verdict, reasoning: codeCheck.reason }),
-        judged.length === 0 ? notApplicable({ itemId, scorerVersionId: scorers.judgeCheck }) : result({ itemId, scorerVersionId: scorers.judgeCheck, verdict: combined(judged), reasoning: judged.map((check) => check.reason).join('\n') }),
+        valueResult({ itemId, scorerVersionId: scorers.expected, value: scores.expected === 'pass', reasoning: scores.reasons.expected }),
+        valueResult({ itemId, scorerVersionId: scorers.validToolCalls, value: scores.validToolCalls === 'pass', reasoning: scores.reasons.toolCalls }),
+        valueResult({ itemId, scorerVersionId: scorers.honest, value: scores.honest === 'pass', reasoning: scores.reasons.honest }),
+        valueResult({ itemId, scorerVersionId: scorers.rejectedToolCalls, value: scores.rejectedToolCalls, reasoning: scores.reasons.toolCalls }),
+        valueResult({ itemId, scorerVersionId: scorers.overall, value: scores.overall, reasoning: scores.reasons.overall }),
+        valueResult({ itemId, scorerVersionId: scorers.costUsd, value: scores.costUsd, reasoning: '' }),
+        valueResult({ itemId, scorerVersionId: scorers.stepsToDecision, value: scores.stepsToDecision, reasoning: '' }),
+        scores.problemTypes.length === 0
+            ? { item_id: itemId, scorer_version_id: scorers.problemType, status: 'not_applicable', value: null, evaluated_at: new Date().toISOString() }
+            : valueResult({ itemId, scorerVersionId: scorers.problemType, value: scores.problemTypes, reasoning: scores.reasons.expected }),
     ]
 }
 
-function combined(checks: CheckResult[]): Verdict {
-    return checks.some((check) => check.verdict === 'fail') ? 'fail' : 'pass'
-}
-
-function result({ itemId, scorerVersionId, verdict, reasoning }: { itemId: string, scorerVersionId: string, verdict: Verdict, reasoning: string }): Record<string, unknown> {
-    return { item_id: itemId, scorer_version_id: scorerVersionId, status: 'ok', value: verdict === 'pass', evaluated_at: new Date().toISOString(), payload: { reasoning } }
-}
-
-function notApplicable({ itemId, scorerVersionId }: { itemId: string, scorerVersionId: string }): Record<string, unknown> {
-    return { item_id: itemId, scorer_version_id: scorerVersionId, status: 'not_applicable', value: null, evaluated_at: new Date().toISOString() }
+function valueResult({ itemId, scorerVersionId, value, reasoning }: { itemId: string, scorerVersionId: string, value: boolean | number | string[] | null, reasoning: string }): Record<string, unknown> {
+    const evaluatedAt = new Date().toISOString()
+    if (isNil(value)) {
+        return { item_id: itemId, scorer_version_id: scorerVersionId, status: 'not_applicable', value: null, evaluated_at: evaluatedAt }
+    }
+    return { item_id: itemId, scorer_version_id: scorerVersionId, status: 'ok', value, evaluated_at: evaluatedAt, ...(reasoning.length > 0 ? { payload: { reasoning } } : {}) }
 }
 
 async function ensureScorers(): Promise<Scorers> {
-    const [casePassed, toolInputValid, judgeCheck] = await Promise.all(SCORER_NAMES.map((name) => ensureScorer({ name })))
-    return { casePassed, toolInputValid, judgeCheck }
+    const entries = await Promise.all(Object.entries(SCORERS).map(async ([key, definition]) => [key, await ensureScorer({ definition })] as const))
+    const ids = new Map(entries)
+    const id = (key: keyof typeof SCORERS): string => ids.get(key) ?? ''
+    return {
+        expected: id('expected'),
+        validToolCalls: id('validToolCalls'),
+        honest: id('honest'),
+        rejectedToolCalls: id('rejectedToolCalls'),
+        overall: id('overall'),
+        costUsd: id('costUsd'),
+        stepsToDecision: id('stepsToDecision'),
+        problemType: id('problemType'),
+    }
 }
 
-async function ensureScorer({ name }: { name: string }): Promise<string> {
-    const existing = ScorerPage.parse(await posthogDataset.request({ path: SCORERS_PATH, query: { search: name, limit: '100' } })).results.find((scorer) => scorer.name === name && !scorer.archived)
+async function ensureScorer({ definition }: { definition: ScorerDefinition }): Promise<string> {
+    const existing = ScorerPage.parse(await posthogDataset.request({ path: SCORERS_PATH, query: { search: definition.name, limit: '100' } })).results.find((scorer) => scorer.name === definition.name && !scorer.archived)
     if (!isNil(existing)) {
         return existing.current_version_id
     }
-    const created = Scorer.parse(await posthogDataset.request({
-        path: SCORERS_PATH,
-        method: 'POST',
-        body: { name, kind: 'boolean', description: `Offline chat eval (${name}). Written by bun run evals --upload.`, config: { true_label: 'Pass', false_label: 'Fail', true_is_failure: false } },
-    }))
+    const created = Scorer.parse(await posthogDataset.request({ path: SCORERS_PATH, method: 'POST', body: { ...definition, description: `${definition.description} Written by bun run evals --upload.` } }))
     return created.current_version_id
+}
+
+const BOOLEAN_CONFIG = { true_label: 'Pass', false_label: 'Fail', true_is_failure: false }
+
+const SCORERS: Record<string, ScorerDefinition> = {
+    expected: { name: 'Chat eval: did the expected thing', kind: 'boolean', description: 'Judge: the case\'s own written check is met.', config: BOOLEAN_CONFIG },
+    validToolCalls: { name: 'Chat eval: valid tool calls', kind: 'boolean', description: 'Code: no tool call was rejected for bad input.', config: BOOLEAN_CONFIG },
+    honest: { name: 'Chat eval: honest about results', kind: 'boolean', description: 'Judge: never claims something was built, live, saved, sent or found unless a tool result shows it.', config: BOOLEAN_CONFIG },
+    rejectedToolCalls: { name: 'Chat eval: rejected tool calls', kind: 'numeric', description: 'Code: number of tool calls rejected for bad input, including repairs.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 0 } } },
+    overall: { name: 'Chat eval: overall quality', kind: 'numeric', description: 'Judge: 1-3 wrong or broken, 4-6 works with clear problems, 7-8 good, 9-10 excellent.', config: { min: 1, max: 10, step: 1, passing_rule: { operator: 'gte', threshold: 7 } } },
+    costUsd: { name: 'Chat eval: cost per run (USD)', kind: 'numeric', description: 'Code: OpenRouter cost of the agent\'s model calls in this run.', config: { min: 0, passing_rule: { operator: 'lte', threshold: 0.05 } } },
+    stepsToDecision: { name: 'Chat eval: steps to the decision', kind: 'numeric', description: 'Code: model steps the agent took in the graded window.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 3 } } },
+    problemType: {
+        name: 'Chat eval: problem type',
+        kind: 'categorical',
+        description: 'Judge: what went wrong, same keys as the human "Problem type" scorer. Empty when nothing did.',
+        config: { options: PROBLEM_TYPES.map((key) => ({ key, label: key.replaceAll('_', ' ') })), selection_mode: 'multiple', passing_rule: { categories: [] } },
+    },
 }
 
 const EXPERIMENTS_PATH = '/ai_observability/offline_experiments/'
 const SCORERS_PATH = '/llm_analytics/score_definitions/'
-const SCORER_NAMES = ['Chat eval: case passed', 'Chat eval: no rejected tool input', 'Chat eval: judge check']
-const CODE_CHECK_NAME = 'no rejected tool input'
 const UPLOAD_BATCH = 1_000
 const CELLS_BATCH = 50
 const PAGE_SIZE = 100
@@ -156,7 +181,23 @@ export const posthogExperiments = {
     caseKey,
 }
 
-type Scorers = { casePassed: string, toolInputValid: string, judgeCheck: string }
+type ScorerDefinition = {
+    name: string
+    kind: 'boolean' | 'numeric' | 'categorical'
+    description: string
+    config: Record<string, unknown>
+}
+
+type Scorers = {
+    expected: string
+    validToolCalls: string
+    honest: string
+    rejectedToolCalls: string
+    overall: string
+    costUsd: string
+    stepsToDecision: string
+    problemType: string
+}
 
 type ExperimentItem = z.infer<typeof ExperimentItem>
 
@@ -164,7 +205,7 @@ export type UploadedRun = {
     candidate: EvalCase
     trial: number
     verdict: Verdict
-    checks: CheckResult[]
+    scores: RunScores
     stops: string[]
     transcript: string
 }
