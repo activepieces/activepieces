@@ -81,6 +81,18 @@ describe('new_push trigger', () => {
     expect(again).toEqual([]);
   });
 
+  it('fires a push created within the same millisecond as lastPoll', async () => {
+    const store = makeStore();
+    store.data.set('lastPoll', 1_700_000_000_000);
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce({
+      status: 200,
+      headers: {},
+      body: { pushes: [push({ iden: 'same-ms', createdSec: 1_700_000_000.0005 })] },
+    });
+    const out = await call({ fn: newPushTrigger.run, c: ctx({ store }) });
+    expect(idens(out)).toEqual(['same-ms']);
+  });
+
   it('test step shows dismissed pushes as samples', async () => {
     const store = makeStore();
     vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce({

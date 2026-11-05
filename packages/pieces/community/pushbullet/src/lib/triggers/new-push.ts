@@ -50,7 +50,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof bushbulletAuth>,
       .filter((push) => push.active)
       .filter((push) => isTest || push.created * 1000 > lastFetchEpochMS)
       .map((push) => ({
-        epochMilliSeconds: Math.floor(push.created * 1000),
+        epochMilliSeconds: push.created * 1000,
         data: push,
       }));
   },
