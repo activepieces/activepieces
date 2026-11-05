@@ -119,7 +119,7 @@ describe('KeyModelList', () => {
     });
   });
 
-  it('says new models stop being added once a saved auto-add key leaves it', () => {
+  it('turns the switch off once a saved auto-add key leaves it', () => {
     renderList({
       config: { ...CONFIG, modelScope: 'all', modelIds: [] },
       selection: { modelScope: 'selected', modelIds: ['gpt-main'] },
@@ -129,11 +129,6 @@ describe('KeyModelList', () => {
         .getByRole('switch', { name: 'Add new OpenAI models automatically' })
         .getAttribute('data-state'),
     ).toBe('unchecked');
-    expect(
-      screen.getByText(
-        'New models won’t be added automatically. Turn this on to allow all models again.',
-      ),
-    ).toBeTruthy();
   });
 
   it('turns auto-add back on only through the switch', () => {

@@ -88,7 +88,6 @@ export function KeyModelList({
   const providerName = modelMeta.providerInfoOf({
     provider: config.provider,
   }).name;
-  const leftAutoAdd = config.modelScope === 'all' && !allModels;
 
   const resetPaging = () => setShown(PAGE_SIZE);
   const selectIds = (ids: string[]) =>
@@ -132,13 +131,6 @@ export function KeyModelList({
             }
           />
         </div>
-        {leftAutoAdd && (
-          <p className="basis-full text-sm text-gray-11">
-            {t(
-              'New models won’t be added automatically. Turn this on to allow all models again.',
-            )}
-          </p>
-        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-2 p-4">
