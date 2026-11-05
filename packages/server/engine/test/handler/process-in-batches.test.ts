@@ -321,6 +321,45 @@ describe('process in batches executor', () => {
         expect(mockCreateWaitpoint.mock.calls[0][0].barrier.fanOut.seedSteps.loop.output).toEqual({ item: 1, index: 1 })
     })
 
+    it('seeds a finished loop above the batch with its last item only, not its past iterations', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: { value: '{{ done_loop.item }}' } }),
+        })
+        const executionState = await FlowExecutorContext.empty().upsertStep('done_loop', LoopStepOutput.init({ input: {} })
+            .setItemAndIndex({ item: 'last', index: 3 })
+            .addIteration()
+            .addIteration()
+            .addIteration())
+
+        await flowExecutor.execute({
+            action,
+            executionState,
+            constants: generateMockEngineConstants({ stepNames: ['done_loop'] }),
+        })
+
+        expect(mockCreateWaitpoint.mock.calls[0][0].barrier.fanOut.seedSteps.done_loop.output).toEqual({ item: 'last', index: 3 })
+    })
+
+    it('does not mistake a property named like a loop-scoped step for a reference to that step', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: { value: '{{ trigger.body.id }}' } }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: await insideLoopIteration({ stepName: 'body' }),
+            constants: generateMockEngineConstants({ stepNames: ['body'] }),
+        })
+
+        expect(result.verdict).toEqual({ status: FlowRunStatus.PAUSED })
+    })
+
     it('refuses a loop-scoped reference when testing the step too', async () => {
         const action = buildProcessInBatchesAction({
             name: 'batches',
