@@ -42,7 +42,7 @@ async function collectItems({ datasetId, offset, collected }: { datasetId: strin
     return isNil(page.next) ? items : collectItems({ datasetId, offset: offset + PAGE_SIZE, collected: items })
 }
 
-async function request({ path, query = {}, method = 'GET', body }: { path: string, query?: Record<string, string>, method?: 'GET' | 'PATCH', body?: unknown }): Promise<unknown> {
+async function request({ path, query = {}, method = 'GET', body }: { path: string, query?: Record<string, string>, method?: 'GET' | 'POST' | 'PATCH', body?: unknown }): Promise<unknown> {
     const apiKey = process.env[API_KEY_ENV]
     if (isNil(apiKey) || apiKey.length === 0) {
         throw new Error(`${API_KEY_ENV} is not set. Add a PostHog personal API key to .env.dev.`)
@@ -84,4 +84,5 @@ export const posthogDataset = {
     loadItems,
     addFixtures,
     setMetadataField,
+    request,
 }

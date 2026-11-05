@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
@@ -6,6 +8,8 @@ import { evalAgentTurn } from './agent-turn'
 import { CheckResult, evalChecks, Verdict } from './checks'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
+import { posthogExperiments } from './posthog-experiments'
+import { evalPrompts } from './prompts'
 import { evalToolSet } from './tool-set'
 
 async function main(): Promise<void> {
@@ -23,6 +27,7 @@ async function main(): Promise<void> {
             'steps': { type: 'boolean', default: false },
             'set-cut': { type: 'string', multiple: true },
             'set-target': { type: 'string', multiple: true },
+            'upload': { type: 'boolean', default: false },
         },
     })
     const repeats = Math.max(1, Number(values.repeats) || 1)
@@ -42,12 +47,15 @@ async function main(): Promise<void> {
         cases.forEach(printSteps)
         return
     }
-    console.log(`${cases.length} case(s) × ${repeats} run(s) from "${values.dataset}" · model ${values.model} · judge ${evalChecks.judgeModelId()} · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${recordMode ? '' : ' · nothing is uploaded'}`)
+    if (values.upload && (recordMode || onlyCases.size > 0)) {
+        throw new Error('--upload is for the full release run only: drop --case and --record')
+    }
+    console.log(`${cases.length} case(s) × ${repeats} run(s) from "${values.dataset}" · model ${values.model} · judge ${evalChecks.judgeModelId()} · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${values.upload ? ' · UPLOADS a release baseline to PostHog' : ' · nothing is uploaded'}`)
 
     const auth = await evalAgentTurn.resolveAuth()
     const mcp = await evalToolSet.connectMcp({ conversationId: EVAL_CONVERSATION_ID })
-    const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, () => candidate))
-    const results = await runInBatches({ runs, verbose: values.verbose, run: (candidate) => evaluate({ candidate, mcpToolSet: mcp.toolSet, modelId: values.model, auth, recordMode }) })
+    const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
+    const results = await runInBatches({ runs, verbose: values.verbose, run: ({ candidate, trial }) => evaluate({ candidate, trial, mcpToolSet: mcp.toolSet, modelId: values.model, auth, recordMode }) })
         .finally(async () => {
             await mcp.close().catch(() => undefined)
             await evalAgentTurn.cleanupAuth()
@@ -61,10 +69,17 @@ async function main(): Promise<void> {
     if (recordMode) {
         await saveFixtures({ cases, results })
     }
+    if (values.upload) {
+        const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: values.dataset, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: values.model, promptVersion: promptVersion() })
+        console.log(`\nUploaded release baseline: experiment ${experimentId}`)
+    }
+    else if (!recordMode) {
+        await printDiff({ suiteKey: values.dataset, modelVersion: values.model, cases, summaries })
+    }
     process.exit(count('fail') === 0 ? 0 : 1)
 }
 
-async function runInBatches({ runs, verbose, run }: { runs: EvalCase[], verbose: boolean, run: (candidate: EvalCase) => Promise<CaseResult> }): Promise<CaseResult[]> {
+async function runInBatches({ runs, verbose, run }: { runs: PlannedRun[], verbose: boolean, run: (planned: PlannedRun) => Promise<CaseResult> }): Promise<CaseResult[]> {
     const results: CaseResult[] = []
     for (const batch of chunk(runs, CONCURRENCY)) {
         const done = await Promise.all(batch.map(run))
@@ -74,16 +89,16 @@ async function runInBatches({ runs, verbose, run }: { runs: EvalCase[], verbose:
     return results
 }
 
-async function evaluate({ candidate, mcpToolSet, modelId, auth, recordMode }: { candidate: EvalCase, mcpToolSet: ToolSet, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<CaseResult> {
+async function evaluate({ candidate, trial, mcpToolSet, modelId, auth, recordMode }: { candidate: EvalCase, trial: number, mcpToolSet: ToolSet, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<CaseResult> {
     const { data, error } = await tryCatch(async () => {
         const outcome = await evalAgentTurn.run({ evalCase: candidate, mcpToolSet, modelId, auth, recordMode })
         const checks = await evalChecks.grade({ evalCase: candidate, outcome, auth })
         return { checks, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures }
     })
     if (error) {
-        return { candidate, verdict: 'fail', checks: [{ name: 'run completed', verdict: 'fail', reason: error.message }], stops: [], transcript: '', newFixtures: [] }
+        return { candidate, trial, verdict: 'fail', checks: [{ name: 'run completed', verdict: 'fail', reason: error.message }], stops: [], transcript: '', newFixtures: [] }
     }
-    return { candidate, verdict: evalChecks.caseVerdict({ checks: data.checks }), ...data }
+    return { candidate, trial, verdict: evalChecks.caseVerdict({ checks: data.checks }), ...data }
 }
 
 function summarize({ candidate, results }: { candidate: EvalCase, results: CaseResult[] }): CaseSummary {
@@ -92,6 +107,44 @@ function summarize({ candidate, results }: { candidate: EvalCase, results: CaseR
     const noVerdict = results.length - pass - fail
     const verdict: Verdict = pass + fail === 0 ? 'no_verdict' : (fail * 2 >= pass + fail ? 'fail' : 'pass')
     return { caseNumber: candidate.caseNumber, pass, fail, noVerdict, verdict }
+}
+
+async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<void> {
+    const { data: found, error } = await tryCatch(() => posthogExperiments.baseline({ suiteKey, modelVersion }))
+    if (error) {
+        console.log(`\nCould not read the release baseline from PostHog: ${error.message}`)
+        return
+    }
+    if (isNil(found)) {
+        console.log(`\nNo release baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to diff against.`)
+        return
+    }
+    console.log(`\nDiff against the release baseline (commit ${found.applicationVersion.slice(0, SHORT_SHA)}, same model):`)
+    cases.forEach((candidate) => {
+        const before = found.verdicts.get(posthogExperiments.caseKey(candidate)) ?? 'no_verdict'
+        const now = summaries.find((summary) => summary.caseNumber === candidate.caseNumber)?.verdict ?? 'no_verdict'
+        console.log(`  case ${candidate.caseNumber}: ${VERDICT_LABEL[before]} → ${VERDICT_LABEL[now]}${diffLabel({ before, now })}`)
+    })
+}
+
+function diffLabel({ before, now }: { before: Verdict, now: Verdict }): string {
+    if (before === 'pass' && now === 'fail') {
+        return '  REGRESSED'
+    }
+    if (before === 'fail' && now === 'pass') {
+        return '  FIXED'
+    }
+    return ''
+}
+
+function gitSha(): string {
+    return process.env['GITHUB_SHA'] ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf-8' }).trim()
+}
+
+function promptVersion(): string {
+    const guides = evalPrompts.loadGuides()
+    const text = [evalPrompts.loadSystemPrompt(), ...Object.keys(guides).sort().map((topic) => guides[topic])].join('\n')
+    return createHash('sha256').update(text).digest('hex').slice(0, PROMPT_HASH_CHARS)
 }
 
 async function saveFixtures({ cases, results }: { cases: EvalCase[], results: CaseResult[] }): Promise<void> {
@@ -153,6 +206,8 @@ const DEFAULT_MODEL = 'z-ai/glm-5.3'
 const DEFAULT_DATASET = 'chat-regressions'
 const EVAL_CONVERSATION_ID = 'eval-conversation'
 const CONCURRENCY = 4
+const SHORT_SHA = 8
+const PROMPT_HASH_CHARS = 12
 const VERDICT_MARK: Record<Verdict, string> = { pass: '✓', fail: '✗', no_verdict: '?' }
 const VERDICT_LABEL: Record<Verdict, string> = { pass: 'pass', fail: 'FAIL', no_verdict: 'no verdict' }
 
@@ -169,8 +224,14 @@ type CaseSummary = {
     verdict: Verdict
 }
 
+type PlannedRun = {
+    candidate: EvalCase
+    trial: number
+}
+
 type CaseResult = {
     candidate: EvalCase
+    trial: number
     verdict: Verdict
     checks: CheckResult[]
     stops: string[]
