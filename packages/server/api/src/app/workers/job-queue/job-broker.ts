@@ -208,7 +208,7 @@ async function notifyInterceptorsJobFinished({ jobId, jobData, failed, log }: { 
 
 async function failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueName, log, reclaimCount }: { job: Job, jobId: string, jobData: JobData, token: string, queueName: string, log: FastifyBaseLogger, reclaimCount: number }): Promise<void> {
     const reason = `Job disconnected its worker ${reclaimCount} times without completing — marking as failed to stop endless redelivery`
-    log.error({ queueName, job: { id: jobId }, reclaimCount }, '[jobBroker#returnJobToQueue] Failing job after repeated worker disconnects')
+    log.error({ queueName, job: { id: jobId }, reclaimCount }, '[jobBroker#failRepeatedlyReclaimedJob] Failing job after repeated worker disconnects')
     const error = new UnrecoverableError(reason)
     const waitingCaller = callerWaitingForResponse(jobData)
 
@@ -221,22 +221,22 @@ async function failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueNam
     })
 
     if (finalizeError) {
-        log.error({ job: { id: jobId }, error: String(finalizeError) }, '[jobBroker#returnJobToQueue] Failed to finalize repeatedly-reclaimed job')
+        log.error({ job: { id: jobId }, error: String(finalizeError) }, '[jobBroker#failRepeatedlyReclaimedJob] Failed to finalize repeatedly-reclaimed job — leaving for stalled-scan recovery')
+        return
     }
-    else {
-        if (!waitingCaller) {
-            jobFailureLogger.logJobFailed({ queueName, jobId, jobType: jobData.jobType, error, log })
-        }
-        await jobReclaimCount.clear({ jobId, log })
-        if (waitingCaller) {
-            const { error: publishError } = await tryCatch(() => engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
-                status: EngineResponseStatus.INTERNAL_ERROR,
-                response: undefined,
-                error: reason,
-            }))
-            if (publishError) {
-                log.error({ job: { id: jobId }, error: String(publishError) }, '[jobBroker#returnJobToQueue] Failed to notify waiting caller of repeatedly-reclaimed job')
-            }
+
+    if (!waitingCaller) {
+        jobFailureLogger.logJobFailed({ queueName, jobId, jobType: jobData.jobType, error, log })
+    }
+    await jobReclaimCount.clear({ jobId, log })
+    if (waitingCaller) {
+        const { error: publishError } = await tryCatch(() => engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
+            status: EngineResponseStatus.INTERNAL_ERROR,
+            response: undefined,
+            error: reason,
+        }))
+        if (publishError) {
+            log.error({ job: { id: jobId }, error: String(publishError) }, '[jobBroker#failRepeatedlyReclaimedJob] Failed to notify waiting caller of repeatedly-reclaimed job')
         }
     }
 
