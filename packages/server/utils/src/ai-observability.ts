@@ -4,6 +4,7 @@ import { Attributes } from '@opentelemetry/api'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BasicTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { Telemetry } from 'ai'
+import { aiTraceScrubber } from './ai-trace-scrubber'
 import { wideEvent } from './wide-event'
 
 let tracing: { processor: BatchSpanProcessor, integration: Telemetry } | undefined
@@ -12,9 +13,11 @@ function init({ enabled }: { enabled: boolean }): void {
     if (!enabled || !isNil(tracing)) {
         return
     }
-    const exporter = new OTLPTraceExporter({
-        url: `${POSTHOG_HOST}/i/v0/ai/otel`,
-        headers: { Authorization: `Bearer ${POSTHOG_PROJECT_TOKEN}` },
+    const exporter = aiTraceScrubber.wrapExporter({
+        exporter: new OTLPTraceExporter({
+            url: `${POSTHOG_HOST}/i/v0/ai/otel`,
+            headers: { Authorization: `Bearer ${POSTHOG_PROJECT_TOKEN}` },
+        }),
     })
     const processor = new BatchSpanProcessor(exporter, { maxExportBatchSize: 8, maxQueueSize: 128 })
     const tracer = new BasicTracerProvider({ spanProcessors: [processor], spanLimits: { attributeValueLengthLimit: 100_000 } }).getTracer('activepieces-ai')

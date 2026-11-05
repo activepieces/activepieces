@@ -50,5 +50,11 @@
   "Base64": "Base64",
   "SHA384": "SHA384",
   "Alphanumeric": "Alphanumeric",
-  "With Symbols": "With Symbols"
+  "With Symbols": "With Symbols",
+  "Hash": "Hash",
+  "Signing key": "Signing key",
+  "Signature": "Signature",
+  "Password": "Password",
+  "Encrypt for recipient": "Encrypt for recipient",
+  "Crypto": "Crypto"
 }

@@ -287,6 +287,12 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Caption": "Caption",
+  "Output": "Output",
+  "Search for": "Search for",
+  "Results": "Results",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Video In Channel": "Nieuwe Video In Kanaal",
   "Runs when a new video is added to a YouTube channel.": "Voert uit wanneer een nieuwe video wordt toegevoegd aan een YouTube kanaal.",
   "Paste the channel's URL, its @handle, or its ID.": "Paste the channel's URL, its @handle, or its ID."
