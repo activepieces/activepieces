@@ -15,9 +15,10 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-describe('Sign-in discovery', () => {
-    it('returns domainOwned: false on self-hosted even for a verified domain', async () => {
-        await mockAndSaveBasicSetup({
+describe('Governing platform', () => {
+    it('is nothing on self-hosted, even for a member on a verified domain', async () => {
+        const { mockUserIdentity } = await mockAndSaveBasicSetup({
+            userIdentity: { email: 'owner@self-hosted.example.com' },
             platform: {
                 ssoDomain: 'self-hosted.example.com',
                 ssoDomainVerification: {
@@ -28,6 +29,6 @@ describe('Sign-in discovery', () => {
             },
             plan: { ssoEnabled: true },
         })
-        await expect(authenticationService(mockLog).discoverSignInMethods({ domain: 'self-hosted.example.com' })).resolves.toEqual({ domainOwned: false })
+        await expect(authenticationService(mockLog).findGoverningPlatform({ email: mockUserIdentity.email })).resolves.toBeNull()
     })
 })
