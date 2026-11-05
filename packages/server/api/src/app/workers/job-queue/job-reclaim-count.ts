@@ -22,4 +22,14 @@ async function clear({ jobId, log }: { jobId: string, log: FastifyBaseLogger }):
     }
 }
 
-export const jobReclaimCount = { increment, clear }
+async function clearMany({ jobIds, log }: { jobIds: string[], log: FastifyBaseLogger }): Promise<void> {
+    if (jobIds.length === 0) {
+        return
+    }
+    const { error } = await tryCatch(() => distributedStore.delete(jobIds.map(getJobReclaimCountKey)))
+    if (error) {
+        log.error({ jobIds, error: String(error) }, '[jobReclaimCount] Failed to clear reclaim counts')
+    }
+}
+
+export const jobReclaimCount = { increment, clear, clearMany }

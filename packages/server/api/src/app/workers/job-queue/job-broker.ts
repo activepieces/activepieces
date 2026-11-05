@@ -376,12 +376,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         jobAssignmentTracker.clear({ jobId: input.jobId, queueName: input.queueName })
 
         const failed = input.status === EngineResponseStatus.INTERNAL_ERROR || !isNil(error)
-        for (const interceptor of interceptors) {
-            const { error: interceptorError } = await tryCatch(() => interceptor.onJobFinished({ jobId: input.jobId, jobData, failed, log }))
-            if (interceptorError) {
-                log.error({ job: { id: input.jobId }, error: String(interceptorError) }, '[jobBroker] Interceptor onJobFinished failed')
-            }
-        }
+        await notifyInterceptorsJobFinished({ jobId: input.jobId, jobData, failed, log })
     },
 
     async extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void> {
