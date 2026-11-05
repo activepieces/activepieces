@@ -11,8 +11,7 @@ export const removeFromGlobalSuppression = createAction({
   name: 'remove_from_global_suppression',
   classification: 'WRITE',
   displayName: 'Remove from Global Unsubscribe List',
-  description:
-    'Remove an email address from the global suppression list, allowing it to receive emails again',
+  description: 'Let an address receive your emails again',
   audience: 'both',
   aiMetadata: {
     description:
@@ -22,7 +21,8 @@ export const removeFromGlobalSuppression = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Email address to remove from the global suppression list',
+      description: 'This address can get email from your account again.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },

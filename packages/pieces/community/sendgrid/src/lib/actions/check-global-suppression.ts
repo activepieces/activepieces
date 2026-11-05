@@ -11,8 +11,7 @@ export const checkGlobalSuppression = createAction({
   name: 'check_global_suppression',
   classification: 'READ',
   displayName: 'Check Global Unsubscribe Status',
-  description:
-    'Check whether an email address is on the global suppression list',
+  description: 'Check if an address is on the global unsubscribe list',
   audience: 'both',
   aiMetadata: {
     description:
@@ -22,7 +21,7 @@ export const checkGlobalSuppression = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Email address to check',
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },

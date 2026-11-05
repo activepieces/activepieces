@@ -8,7 +8,13 @@ import { findListByName } from './lib/actions/find-list-by-name';
 import { removeFromGlobalSuppression } from './lib/actions/remove-from-global-suppression';
 import { sendDynamicTemplate } from './lib/actions/send-dynamic-template';
 import { sendEmail } from './lib/actions/send-email';
-import { getApiKey, getBaseUrl, sendgridAuth, SendgridAuthValue } from './lib/common';
+import {
+  getApiKey,
+  getBaseUrl,
+  sendgridAuth,
+  SendgridAuthValue,
+  sendgridCommon,
+} from './lib/common';
 
 export { sendgridAuth, SendgridAuthValue } from './lib/common';
 
@@ -17,7 +23,7 @@ export const sendgrid = createPiece({
   description:
     'Email delivery service for sending transactional and marketing emails',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendgrid.png',
   authors: ['ashrafsamhouri', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'Thijs-Attenza', 'sanket-a11y'],
   categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING],
@@ -36,6 +42,12 @@ export const sendgrid = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${getApiKey(auth as SendgridAuthValue)}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${sendgridCommon.baseUrl('US')} (EU connections: ${sendgridCommon.baseUrl('EU')}).`,
+          placeholder: '/marketing/contacts',
+        },
+      },
     }),
   ],
   triggers: [],

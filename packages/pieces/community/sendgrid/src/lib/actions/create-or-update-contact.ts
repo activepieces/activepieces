@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   AuthenticationType,
@@ -18,23 +22,49 @@ export const createOrUpdateContact = createAction({
       'Upserts a marketing contact in SendGrid by email, optionally adding them to one or more lists. Existing reserved and custom fields are merged, not replaced. SendGrid processes this asynchronously and returns a job_id. Idempotent — repeating the same input converges to the same contact.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'contact',
+      display: 'section',
+      label: 'Contact',
+      icon: 'user',
+      props: ['upsert_note', 'email', 'first_name', 'last_name'],
+    },
+    {
+      key: 'lists',
+      display: 'section',
+      label: 'Lists and fields',
+      icon: 'tag',
+      props: ['list_ids', 'custom_fields'],
+    },
+  ],
   props: {
+    upsert_note: Property.MarkDown({
+      value:
+        'If a contact with this email exists, it is updated. An empty First Name or Last Name keeps its current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Email address of the contact (used to match existing contacts)',
+      description: 'Used to find an existing contact.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     first_name: Property.ShortText({
       displayName: 'First Name',
+      placeholder: 'Jane',
+      width: 'half',
       required: false,
     }),
     last_name: Property.ShortText({
       displayName: 'Last Name',
+      placeholder: 'Doe',
+      width: 'half',
       required: false,
     }),
     list_ids: Property.MultiSelectDropdown<string, false, typeof sendgridAuth>({
       displayName: 'Lists',
-      description: 'Lists to add the contact to',
+      description: 'Lists to add the contact to. Current lists are kept.',
       required: false,
       auth: sendgridAuth,
       refreshers: [],
@@ -56,7 +86,7 @@ export const createOrUpdateContact = createAction({
     custom_fields: Property.Object({
       displayName: 'Additional Fields',
       description:
-        'Extra reserved (e.g. city, country) or custom fields as key/value pairs',
+        'Reserved fields such as city or country, as key/value pairs.',
       required: false,
     }),
   },
