@@ -104,7 +104,7 @@ type UsePiecesSearchProps = {
   enabled?: boolean;
   type: 'action' | 'trigger';
   shouldCaptureEvent: boolean;
-  excludeProcessInBatches?: boolean;
+  hiddenStepTypes?: FlowActionType[];
 };
 
 export const pieceQueryKey = ({
@@ -290,8 +290,9 @@ export const piecesHooks = {
     const piecesMetadataWithoutEmptySuggestions =
       filterOutPiecesWithNoSuggestions(metadata).filter(
         (stepMetadata) =>
-          !props.excludeProcessInBatches ||
-          stepMetadata.type !== FlowActionType.PROCESS_IN_BATCHES,
+          !(props.hiddenStepTypes ?? []).some(
+            (hiddenType) => hiddenType === stepMetadata.type,
+          ),
       );
 
     const pinnedPieces = getPinnedPieces(

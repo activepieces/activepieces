@@ -63,6 +63,10 @@ and it retries like any barrier job.
   `NOT_DISPATCHED`; children already claimed keep running.
 - **Each child carries its own copy of `seedSteps`**, inline below `WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` and as a
   file above it.
+- **The seed reads only whole step names inside `{{ }}`** of the body's non-skipped steps, never plain text, keys
+  or `sampleData`. A substring scan made `step_10` refuse a batch over a loop-scoped `step_1`. A referenced step
+  from any enclosing loop iteration, nested ones included, is refused; the enclosing loop itself travels as
+  `{ item, index }` only, without its past iterations.
 - **The parent's run timeline no longer measures dispatch cost.** Its first leg is one HTTP call. Measure the span
   of the children's `created` timestamps instead.
 - **`barrier-queue-factory.ts` is the module graph's acyclic leaf.** `barrierSourceKey` and the job types live

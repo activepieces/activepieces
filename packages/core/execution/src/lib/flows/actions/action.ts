@@ -120,8 +120,8 @@ export const MIN_BATCH_TIMEOUT_SECONDS = 3600
 export const ProcessInBatchesActionSettings = z.object({
     ...commonActionSettings,
     items: z.string(),
-    batchSize: z.number().int({ message: 'batchSizeMustBeAWholeNumber' }).min(1, { message: 'batchSizeMustBeAtLeastOne' }).default(DEFAULT_BATCH_SIZE),
-    timeoutSeconds: z.number().int({ message: 'batchTimeoutMustBeAWholeNumber' }).min(MIN_BATCH_TIMEOUT_SECONDS, { message: 'batchTimeoutMustBeAtLeastOneHour' }).optional(),
+    batchSize: z.number().int(formErrors.batchSizeMustBeAWholeNumber).min(1, formErrors.batchSizeMustBeAtLeastOne).default(DEFAULT_BATCH_SIZE),
+    timeoutSeconds: z.number().int(formErrors.batchTimeoutMustBeAWholeNumber).min(MIN_BATCH_TIMEOUT_SECONDS, formErrors.batchTimeoutMustBeAtLeastOneHour).optional(),
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 export type ProcessInBatchesActionSettings = z.infer<
