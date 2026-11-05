@@ -162,6 +162,37 @@ describe('Invitation audit events', () => {
         expect(row?.data).toMatchObject({ invitation: { id: sent.id, email: sent.email } })
     })
 
+    it('does not credit the project owner for a project invitation sent with an API key', async () => {
+        const { mockPlatform, mockProject } = await createEnvironment({ auditLogEnabled: true })
+        const serviceToken = await generateMockToken({ id: apId(), type: PrincipalType.SERVICE, platform: { id: mockPlatform.id } })
+        const response = await app.inject({
+            method: 'POST',
+            url: '/api/v1/user-invitations',
+            headers: { authorization: `Bearer ${serviceToken}` },
+            body: { email: faker.internet.email(), type: InvitationType.PROJECT, projectId: mockProject.id, projectRole: DefaultProjectRole.EDITOR },
+        })
+        expect(response.statusCode).toBe(StatusCodes.CREATED)
+        const [row] = await savedInvitationRows({ platformId: mockPlatform.id, action: ApplicationEventName.USER_INVITATION_SENT })
+        expect(row).toMatchObject({ projectId: mockProject.id })
+        expect(row?.userId ?? null).toBeNull()
+        expect(row?.userEmail ?? null).toBeNull()
+    })
+
+    it('files an accepted invitation under its project without crediting the project owner', async () => {
+        const { mockPlatform, mockProject } = await createEnvironment({ auditLogEnabled: true })
+        const invitation = await saveInvitation({ platformId: mockPlatform.id, email: faker.internet.email(), status: InvitationStatus.PENDING, projectId: mockProject.id })
+        const accepted = await app.inject({
+            method: 'POST',
+            url: '/api/v1/user-invitations/accept',
+            body: { invitationToken: await signInvitationToken(invitation.id) },
+        })
+        expect(accepted.statusCode).toBe(StatusCodes.OK)
+        const [row] = await savedInvitationRows({ platformId: mockPlatform.id, action: ApplicationEventName.USER_INVITATION_ACCEPTED })
+        expect(row).toMatchObject({ projectId: mockProject.id, projectDisplayName: mockProject.displayName })
+        expect(row?.userId ?? null).toBeNull()
+        expect(row?.userEmail ?? null).toBeNull()
+    })
+
     it('saves the project of a project invitation on the audit row', async () => {
         const { mockPlatform, mockProject, mockOwnerToken } = await createEnvironment({ auditLogEnabled: true })
         const response = await app.inject({

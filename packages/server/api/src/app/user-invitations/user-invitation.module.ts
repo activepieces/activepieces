@@ -77,7 +77,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             invitationExpirySeconds: INVITATION_EXPIRY_SECONDS,
             resent: status === InvitationStatus.PENDING && userInvitationRecord.status === InvitationStatus.ACCEPTED,
         })
-        applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation }), {
+        applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation, userId: actingUserId(request) }), {
             action: ApplicationEventName.USER_INVITATION_SENT,
             data: await auditedInvitationData(invitation),
         })
@@ -123,7 +123,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             platformId: invitation.platformId,
         })
         if (firstAcceptance) {
-            applicationEvents(request.log).sendUserEvent({ platformId: invitation.platformId, ip: networkUtils.clientIp(request) }, {
+            applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation, userId: null }), {
                 action: ApplicationEventName.USER_INVITATION_ACCEPTED,
                 data: await auditedInvitationData(invitation),
             })
@@ -144,7 +144,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.body.projectId,
         })
         if (result.revoked) {
-            applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation }), {
+            applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation, userId: actingUserId(request) }), {
                 action: ApplicationEventName.USER_INVITATION_DELETED,
                 data: await auditedInvitationData(invitation),
             })
@@ -171,7 +171,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             id: request.params.id,
             platformId: request.principal.platform.id,
         })
-        applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation }), {
+        applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation, userId: actingUserId(request) }), {
             action: ApplicationEventName.USER_INVITATION_DELETED,
             data: await auditedInvitationData(invitation),
         })
@@ -313,13 +313,18 @@ async function auditedInvitationData(invitation: UserInvitation): Promise<UserIn
     }
 }
 
-function invitationEventSource({ request, invitation }: InvitationEventSourceParams): MetaInformation {
+function invitationEventSource({ request, invitation, userId }: InvitationEventSourceParams): MetaInformation {
     return {
         platformId: invitation.platformId,
         projectId: invitation.projectId ?? undefined,
-        userId: request.principal.type === PrincipalType.USER ? request.principal.id : undefined,
+        userId,
         ip: networkUtils.clientIp(request),
+        fallBackToProjectOwner: false,
     }
+}
+
+function actingUserId(request: FastifyRequest): string | null {
+    return request.principal.type === PrincipalType.USER ? request.principal.id : null
 }
 
 const ListUserInvitationsRequestParams = {
@@ -427,4 +432,5 @@ type TrackInviteSentParams = {
 type InvitationEventSourceParams = {
     request: FastifyRequest
     invitation: UserInvitation
+    userId: string | null
 }
