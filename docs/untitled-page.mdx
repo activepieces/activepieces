@@ -18,13 +18,13 @@ Memory is only used while the flow is running and is cleared when it finishes. I
 
 ## **How Do You Know You've Hit the Limit?**
 
-The run shows as **failed** in your run history, with this message:
+The run shows as failed in your run history, with this message:
 
 **Run failed due to exceeding the memory limit of 1024 MB**
 
 (1024 MB is the same as 1 GB, the amount of memory your flow had.)
 
-There are three other messages that look similar but mean something different:
+Here’s how this message compares with two others that look similar but mean something different:
 
 | **Message** | **What it means** | **Usual cause** |
 | :-- | :-- | :-- |
@@ -32,7 +32,7 @@ There are three other messages that look similar but mean something different:
 | _…exceeding the log size limit…_ | The flow produced too much information to save in its run history | Many steps or loop rounds each returning a lot of data |
 | _Run exceeded … seconds…_ | The flow took too long to finish | Slow apps, very long loops |
 
-Later in this guide, we will explore how to handle them.
+See **What to Do About the Other Two Messages** for how to fix them.
 
 ## **Memory on Activepieces Cloud**
 
@@ -40,17 +40,17 @@ If you use Activepieces at [cloud.activepieces.com](http://cloud.activepieces.co
 
 | **Limit** | **Amount** | **What this means** |
 | :-- | :-- | :-- |
-| **Memory per flow run** | 1 GB | The total working space each flow gets every time it runs. |
-| **Usable memory after overhead** | About 700 MB | Activepieces needs about 300 MB of that space just to run your flow, so about 700 MB is left for your data and files. |
-| **Maximum file size per step** | 10 MB | The biggest single file one step can handle, roughly a 100-page PDF or a large spreadsheet. |
-| **Maximum run history size** | 25 MB | The most information that can be saved about a single run, across all its steps, so you can review it later. |
-| **Maximum run time** | 10 minutes | How long a flow can run before it's stopped. Time spent waiting, for example for an approval or a delay, doesn't count. |
-| **Maximum webhook size** | 5 MB | The maximum data another app can send to start your flow through a webhook link. |
-| **Maximum Store value** | 512 KB | The maximum size of things you can save in one entry with the Store piece, which is meant for small things like a date or an ID. |
+| Memory per flow run | 1 GB | The total working space each flow gets every time it runs. |
+| Usable memory after overhead | About 700 MB | Activepieces needs about 300 MB of that space just to run your flow, so about 700 MB is left for your data and files. |
+| Maximum file size per step | 10 MB | The biggest single file one step can handle, roughly a 100-page PDF or a large spreadsheet. |
+| Maximum run history size | 25 MB | The most information that can be saved about a single run, across all its steps, so you can review it later. |
+| Maximum run time | 10 minutes | How long a flow can run before it's stopped. Time spent waiting, for example for an approval or a delay, doesn't count. |
+| Maximum webhook size | 5 MB | The maximum data another app can send to start your flow through a webhook link. |
+| Maximum Store value | 512 KB | The maximum size of things you can save in one entry with the Store piece, which is meant for small things like a date or an ID. |
 
 **Good to know:** Every flow run gets its own memory. If one flow runs out, it doesn't affect your other flows.
 
-If your flow needs more memory, you can fix it **u**sing the tips in[ <u>How to Build Flows That Use Less Memory</u>](https://chatgpt.com/g/g-p-6a732087df4c81918dd795b225827ff7-technical-meeting/c/6aecc3d7-84f8-83ea-a448-9b4738e4e86c#how-to-build-flows-that-use-less-memory). 
+If your flow needs more memory, you can fix it using the tips in **How to Build Flows That Use Less Memory**.
 
 ## **Memory on Self-Hosted Enterprise**
 
@@ -60,7 +60,7 @@ To understand how, it's important to know what a worker is.
 
 ### **What Is a Worker?**
 
-A worker is the part of Activepieces that actually runs your flows.
+A **worker** is the part of Activepieces that actually runs your flows.
 
 When Activepieces runs on your company's own servers, it has two main parts:
 
@@ -69,18 +69,16 @@ When Activepieces runs on your company's own servers, it has two main parts:
 | **The app** | The Activepieces software your company runs on its own servers. It's what you open in your browser (at your own web address) to build flows, see runs and manage settings. Behind the scenes, it also receives every request to run a flow, for example when a trigger fires, even when nobody has the page open. | The front desk of a restaurant, which takes the orders |
 | **Workers** | Separate machines, also on your company's servers, that do the work of running each flow, step by step | The cooks in the kitchen, who prepare the orders |
 
-When a flow is triggered, the app puts it in a waiting line (a list of flows waiting to run).
+When a flow is triggered, the app puts it in a waiting line (a list of flows waiting to run). The next free worker picks it up, runs it from start to finish, sends the result back to the app, and picks up the next one.
 
-The next free worker picks it up, runs it from start to finish, sends the result back to the app, and picks up the next one.
-
-#### **What a Worker Is Made Of**
+### **What a Worker Is Made Of**
 
 - **Processing power (CPU):** How fast it can work through the steps of a flow.
 - **Memory (RAM):** The working space it uses to hold a flow's data and files while running it.
 - **The Activepieces worker program:** The software that knows how to run flows and connect to your apps.
 - **A protected space for each flow (sandbox):** Each flow runs in its own sealed-off area inside the worker, so it can't see or interfere with other flows. Think of it as a separate cutting board for each order.
 
-#### **Important Things to Know About Workers**
+### **Important Things to Know About Workers**
 
 - **They don't keep your data:** A worker only holds a flow's data while running it, then clears it. Your flows, runs and files are saved by the app, not the worker.
 - **You can have many of them:** Need to run more flows at the same time? Add more workers.
@@ -92,31 +90,31 @@ Your memory limit depends on how your IT team has set up the workers, so it migh
 
 If your flow needs more memory, you can use either of these two ways:
 
-1. **Change the flow** using the tips in[ <u>How to Build Flows That Use Less Memory</u>](https://chatgpt.com/g/g-p-6a732087df4c81918dd795b225827ff7-technical-meeting/c/6aecc3d7-84f8-83ea-a448-9b4738e4e86c#how-to-build-flows-that-use-less-memory). This is usually the quickest fix.
+1. **Change the flow** using the tips in **How to Build Flows That Use Less Memory**. This is usually the quickest fix.
 2. **Ask your IT team** to give the workers more memory.
 
 ### **For Your IT Team: Recommended Setup**
 
 | **Setting** | **Recommended** | **What this means** |
 | :-- | :-- | :-- |
-| **Worker size** | 0.5 vCPU / 1 GB memory | How much processing power and memory each worker gets. 0.5 vCPU is half of one processor, and 1 GB of memory is the working space for the flow it runs. |
-| **AP_WORKER_CONCURRENCY** | 1 | How many flows one worker runs at the same time. With 1, the worker handles one flow at a time and that flow gets all of its memory, like a cook preparing one order at a time with the whole counter to themselves. |
-| **AP_SANDBOX_MEMORY_LIMIT** | 1048576 (1 GB) | The most memory one flow is allowed to use inside the worker. This is the number users see in the error message. It's written in kilobytes, and 1,048,576 KB = 1 GB. It should never be bigger than the worker's own memory. |
-| **AP_FILE_STORAGE_LOCATION** | S3 | Where Activepieces keeps files. S3 is cloud file storage, like Amazon S3. It lets workers pass big files along in small chunks instead of loading the whole file into memory. |
-| **AP_MAX_FILE_SIZE_MB** | 25 (default) | The biggest single file one step can handle, in MB. |
-| **AP_MAX_FLOW_RUN_LOG_SIZE_MB** | 50 (default) | The most information that can be saved about one run, in MB. |
-| **AP_FLOW_TIMEOUT_SECONDS** | 600 (default) | How long a flow can run before it's stopped, in seconds. 600 seconds = 10 minutes. |
+| Worker size | 0.5 vCPU / 1 GB memory | How much processing power and memory each worker gets. 0.5 vCPU is half of one processor, and 1 GB of memory is the working space for the flow it runs. |
+| AP_WORKER_CONCURRENCY | 1 | How many flows one worker runs at the same time. With 1, the worker handles one flow at a time and that flow gets all of its memory, like a cook preparing one order at a time with the whole counter to themselves. |
+| AP_SANDBOX_MEMORY_LIMIT | 1048576 (1 GB) | The most memory one flow is allowed to use inside the worker. This is the number users see in the error message. It's written in kilobytes, and 1,048,576 KB = 1 GB. It should never be bigger than the worker's own memory. |
+| AP_FILE_STORAGE_LOCATION | S3 | Where Activepieces keeps files. S3 is cloud file storage, like Amazon S3. It lets workers pass big files along in small chunks instead of loading the whole file into memory. |
+| AP_MAX_FILE_SIZE_MB | 25 (default) | The biggest single file one step can handle, in MB. |
+| AP_MAX_FLOW_RUN_LOG_SIZE_MB | 50 (default) | The most information that can be saved about one run, in MB. |
+| AP_FLOW_TIMEOUT_SECONDS | 600 (default) | How long a flow can run before it's stopped, in seconds. 600 seconds = 10 minutes. |
 
-#### **Why We Recommend One Flow at a Time per Worker**
+### **Why We Recommend One Flow at a Time per Worker**
 
 Picture a cook with one counter:
 
-- **One order at a time** (AP_WORKER_CONCURRENCY=1): The cook has the whole counter for that order. If one order is huge and overflows the counter, only that order may face issues.
-- **Five orders at a time** (AP_WORKER_CONCURRENCY=5): Five orders share one counter. If one order takes up too much space, everything falls off and all five orders develop issues.
+- **One order at a time (AP_WORKER_CONCURRENCY=1):** The cook has the whole counter for that order. If one order is huge and overflows the counter, only that order may face issues.
+- **Five orders at a time (AP_WORKER_CONCURRENCY=5):** Five orders share one counter. If one order takes up too much space, everything falls off and all five orders develop issues.
 
 The same applies to flows. With one flow per worker, each flow gets its own guaranteed memory, and a heavy flow only affects itself. With five per worker, one heavy flow can make all five fail at once.
 
-#### **How to Give Flows More Memory**
+### **How to Give Flows More Memory**
 
 1. Give each worker more memory (a bigger counter), for example from 1 GB to 2 GB.
 2. Raise AP_SANDBOX_MEMORY_LIMIT (the per-flow memory limit) to match, keeping it no bigger than the worker's memory.
@@ -124,27 +122,25 @@ The same applies to flows. With one flow per worker, each flow gets its own guar
 
 If you keep running five flows per worker, make each worker about five times bigger (around 5 GB), so each flow still gets its share.
 
-#### **How Many Workers Do You Need?**
+### **How Many Workers Do You Need?**
 
-One worker for each flow you expect to run at the same time during your busiest period.
-
-For example, if 50 flows usually run at once, you need 50 workers.
+One worker for each flow you expect to run at the same time during your busiest period. For example, if 50 flows usually run at once, you need 50 workers.
 
 If more flows arrive than there are free workers, the extra ones wait in line and start as soon as a worker is free. They aren't lost, just delayed.
 
-#### **How to Check Memory Usage**
+### **How to Check Memory Usage**
 
-Go to **Platform Admin → Infrastructure → Workers** to see each worker's status and how much processing power, memory and disk space it is using.
+Go to **Platform Admin → Operations → Workers** to see each worker's status and how much processing power, memory and disk space it is using.
 
 ## **Memory When Activepieces Is Embedded in Another Product**
 
 Some companies build Activepieces directly into their own product, so their customers can create flows without leaving it. This is called **embedding**.
 
-Embedding changes where people see the flow builder, not **how flows run**. Flows built inside an embedded product use memory in exactly the same way as any other Activepieces flow.
+Embedding changes where people see the flow builder, not how flows run. Flows built inside an embedded product use memory in exactly the same way as any other Activepieces flow.
 
 ### **For Companies That Embed Activepieces in Their Product**
 
-You're responsible for the memory your user’s flows have.They can't change any limits, so it's up to you to set things up well and help them when a flow runs out of memory.
+You're responsible for the memory your users' flows have. They can't change any limits, so it's up to you to set things up well and help them when a flow runs out of memory.
 
 #### **Your Limits Depend on How You Run Activepieces**
 
@@ -155,14 +151,14 @@ You're responsible for the memory your user’s flows have.They can't change any
 
 **If you host Activepieces on your own servers:**
 
-- Your IT team sets the limits, as described in the[ <u>self-hosted section</u>](https://chatgpt.com/g/g-p-6a732087df4c81918dd795b225827ff7-technical-meeting/c/6aecc3d7-84f8-83ea-a448-9b4738e4e86c#memory-on-self-hosted-enterprise).
+- Your IT team sets the limits, as described in the self-hosted section.
 - **Run one flow at a time per worker** (AP_WORKER_CONCURRENCY=1). With many customers sharing your setup, this matters more than usual: it stops one customer's heavy flow from making other customers' flows fail.
 - **Size your workers for your heaviest customers, not your average one.** If some customers process large files or long lists, their flows need more memory.
 - **Give your biggest or most important customers their own dedicated workers** (worker groups). Their flows then never compete with everyone else's for space.
 
 #### **Help Your Customers Help Themselves**
 
-- **Show them their run history**: So they can see when a flow fails and read the error message.
+- **Show them their run history:** So they can see when a flow fails and read the error message.
 - **Share the tips in this guide:** (Or your own version written in your product's name), so they know what "memory limit exceeded" means and how to fix it.
 - **Tell them who to contact:** Your customers can't reach Activepieces support directly, so make sure they know to come to you.
 
@@ -172,8 +168,9 @@ If you build flows inside another company's product, this part is for you.
 
 #### **Your Memory Limit**
 
-- The company that provides your product decides how much memory your flows get. You can't change it yourself.
-- If one of your flows runs out of memory, it stops and shows this message in your run history:
+The company that provides your product decides how much memory your flows get. You can't change it yourself.
+
+If one of your flows runs out of memory, it stops and shows this message in your run history:
 
 **Run failed due to exceeding the memory limit of … MB**
 
@@ -183,7 +180,7 @@ The number is the amount of memory your flow had.
 
 You can do either of these:
 
-1. **Change the flow** using the tips in[ <u>How to Build Flows That Use Less Memory</u>](https://chatgpt.com/g/g-p-6a732087df4c81918dd795b225827ff7-technical-meeting/c/6aecc3d7-84f8-83ea-a448-9b4738e4e86c#how-to-build-flows-that-use-less-memory). This is usually the quickest fix.
+1. **Change the flow** using the tips in **How to Build Flows That Use Less Memory**. This is usually the quickest fix.
 2. **Contact your product's support team** if the flow still needs more memory. Contact them rather than Activepieces, because they manage the setup.
 
 ## **How to Build Flows That Use Less Memory**
@@ -194,33 +191,34 @@ These tips work on both Cloud and self-hosted. Most memory problems can be fixed
 
 Most memory problems start with a step that pulls in much more data than the flow actually uses.
 
-- Use **filters** in the step (for example, "only today's orders" or "only unread emails").
-- Set a **limit** on how many records a step returns, if the step has that option.
-- Pick only the **fields** you need (for example, just name and email instead of the full customer record).
+- Use filters in the step (for example, "only today's orders" or "only unread emails").
+- Set a limit on how many records a step returns, if the step has that option.
+- Pick only the fields you need (for example, just name and email instead of the full customer record).
 
 ### **2. Work in Smaller Groups**
 
 Instead of handling 50,000 rows in one go:
 
-- Use the step's **page** or **limit** options (these let you fetch records a few hundred at a time).
-- Run the flow on a **schedule** (for example, every 15 minutes) and handle one group each time.
+- Use the step's page or limit options (these let you fetch records a few hundred at a time).
+- Run the flow on a schedule (for example, every 15 minutes) and handle one group each time.
 
 ### **3. Move Heavy Loop Work Into a Separate Flow**
 
-A **loop** (a step that repeats the same actions for every item in a list) keeps the results of every round in memory until the flow finishes. Looping through thousands of items adds up quickly.
+A loop (a step that repeats the same actions for every item in a list) keeps the results of every round in memory until the flow finishes. Looping through thousands of items adds up quickly.
 
 A better way:
 
-1. Create a second flow that handles **just one item**. Start it with the **Callable Flow** trigger (a trigger that lets another flow start this one).
-2. In your main flow, use the **Call Flow** action inside the loop to send each item to that second flow.
+1. Create a second flow that handles just one item. Start it with the **Callable Flow** trigger (a trigger that lets another flow start this one). Publish the flow and make sure it's turned on, or it won't appear in the list in step 2.
+2. In your main flow, use the **Call Flow** action from the **Sub Flows** piece inside the loop to send each item to that second flow.
+3. Each item is handled in its own run with its own memory, so your main flow stays light.
 
-Each item is handled in its own run with **its own memory**, so your main flow stays light.
+If your main flow needs a result back from the second flow, tick **Wait for Response** in the **Call Flow** action, and end the second flow with the **Return Response** action from the same piece. The main flow pauses while it waits.
 
 The second flow is often called a **subflow**: a flow that's started by another flow.
 
 ### **4. Big CSV Files: Use "Stream CSV to Subflows"**
 
-For large CSV files (spreadsheet files with thousands or millions of rows), use **Stream CSV to Subflows** from the Subflows piece.
+For large CSV files (spreadsheet files with thousands or millions of rows), use **Stream CSV to Subflows** from the **Sub Flows** piece.
 
 It:
 
@@ -230,9 +228,7 @@ It:
 
 ### **5. Big Files: Use Actions That Pass Files Along in Chunks**
 
-Some actions can move large files **without loading the whole file into memory**.
-
-They pass the file along a few megabytes at a time, a bit like water flowing through a pipe instead of filling a bucket.
+Some actions can move large files without loading the whole file into memory. They pass the file along a few megabytes at a time, a bit like water flowing through a pipe instead of filling a bucket.
 
 This happens automatically when you use one of these actions:
 
@@ -252,9 +248,7 @@ This happens automatically when you use one of these actions:
 
 ### **6. Pass the File, Not What's Inside It**
 
-When a step gives you a file, pass the **file itself** to the next step.
-
-Don't convert it into text first, because that can use several times more memory than the file itself.
+When a step gives you a file, pass the file itself to the next step. Don't convert it into text first, because that can use several times more memory than the file itself.
 
 ### **7. Save Big Data in Tables, Not Store**
 
@@ -269,66 +263,91 @@ To keep it light:
 
 - Only send on the data the next steps actually need, not everything the code received.
 - Avoid loading whole files or very long lists inside the code.
-- Code steps may have a smaller memory limit of their own (about 128 MB), so they can run out sooner than the rest of the flow.
+
+Code steps may have a smaller memory limit of their own (about 128 MB), so they can run out sooner than the rest of the flow.
 
 ### **9. Split Big Jobs Into Several Flows**
 
-If one flow does several heavy jobs in a row (for example: export data, then clean it, then upload it, then send a report), split it into separate flows that hand off to each other.
-
-Each new flow starts with fresh memory.
+If one flow does several heavy jobs in a row (for example: export data, then clean it, then upload it, then send a report), split it into separate flows that hand off to each other. Each new flow starts with fresh memory.
 
 ## **What to Do When You See "Memory Limit Exceeded"**
 
 1. **Open the failed run** and find the step where it stopped.
 2. **Look at what that step and the steps before it produced.** Look for very long lists, big files or large blocks of text.
 3. **Pick the fix that matches:**
-   - A step brings in too much data → **filter or limit it** (tip 1).
-   - A loop with many rounds → **move the loop's work into a separate flow** (tip 3).
-   - A big CSV file → **use Stream CSV to Subflows** (tip 4).
-   - A big file → **use an action from tip 5** and **pass the file, not its contents** (tip 6).
-   - A Code step → **make it return and load less** (tip 8).
+   - A step brings in too much data → filter or limit it (tip 1).
+   - A loop with many rounds → move the loop's work into a separate flow (tip 3).
+   - A big CSV file → use Stream CSV to Subflows (tip 4).
+   - A big file → use an action from tip 5 and pass the file, not its contents (tip 6).
+   - A Code step → make it return and load less (tip 8).
 4. **Test the flow again.**
-5. **Still failing?**
-   - **Cloud:** Split the work into smaller flows. The limit can't be raised.
-   - **Self-hosted:** Send the failed run to your IT team. They can check whether the workers need more memory.
+
+**Still failing?**
+
+- **Cloud:** Split the work into smaller flows. The limit can't be raised.
+- **Self-hosted:** Send the failed run to your IT team. They can check whether the workers need more memory.
+
+## **What to Do About the Other Two Messages**
+
+### **"Run Failed Due to Output of Steps Exceeding the Log Size Limit…"**
+
+**What it means:** Your flow ran, but it produced too much information to save in its run history (the record of what each step received and produced, which you open to review a run).
+
+**The limit:**
+
+- **Cloud:** 25 MB per run. This can't be changed.
+- **Self-hosted:** 50 MB per run by default. Your IT team can change it with AP_MAX_FLOW_RUN_LOG_SIZE_MB (the most information that can be saved about one run, in MB).
+
+**How to fix it:** The causes are almost the same as for memory, so most of the same tips work:
+
+- **Bring in less data** (tip 1). Filter, set limits, and pick only the fields you need.
+- **Move heavy loop work into a separate flow** (tip 3). Every round of a loop is saved in the run history. With a separate flow, each item gets its own run history instead of one huge one.
+- **Pass the file, not what's inside it** (tip 6). The contents of a converted file take up a lot of space in the run history.
+- **Keep Code steps small** (tip 8). Only return what the next steps need.
+- **Split big jobs into several flows** (tip 9).
+
+### **"Run Exceeded … Seconds, Try to Optimize Your Steps."**
+
+**What it means:** The flow took too long and was stopped before it finished.
+
+**The limit:**
+
+- **Cloud:** 10 minutes per run. This can't be changed.
+- **Self-hosted:** 10 minutes by default. Your IT team can change it with AP_FLOW_TIMEOUT_SECONDS (how long a flow can run before it's stopped, in seconds).
+- Only time the flow is actually working counts. Time spent waiting, for example in a Delay step or for an approval, doesn't count.
+
+**How to fix it:**
+
+- **Handle fewer items per run.** Fetch records in pages and run the flow on a schedule, handling one group each time (tip 2).
+- **Move loop work into a separate flow** (tip 3). Each item then runs in its own flow with its own 10 minutes. If you tick **Wait for Response** in the **Call Flow** action, the main flow pauses while it waits, and that waiting doesn't count toward its time limit.
+- **Split big jobs into several flows** (tip 9). Each flow gets its own 10 minutes.
+- **Look for slow steps.** Open the run and check how long each step took. The time is shown on each step. A slow step is often an app that responds slowly, or a step that fetches far more data than it needs.
 
 ## **Common Questions**
 
 ### **Is Memory the Same as Storage?**
 
-No. Storage is what's saved in your account, like tables, files and run history.
-
-Memory is the temporary working space a flow uses while it runs, and it's cleared when the run ends.
+No. Storage is what's saved in your account, like tables, files and run history. Memory is the temporary working space a flow uses while it runs, and it's cleared when the run ends.
 
 ### **If One Flow Runs Out of Memory, Will My Other Flows Break?**
 
-On Cloud, no. Each run has its own memory.
-
-On self-hosted, the same is true when your IT team uses the recommended setup of one flow at a time per worker.
+On Cloud, no. Each run has its own memory. On self-hosted, the same is true when your IT team uses the recommended setup of one flow at a time per worker.
 
 ### **Will the Flow Try Again on Its Own?**
 
-The run is marked as failed. Fix the flow first, then retry it.
-
-Retrying without changes usually fails the same way.
+The run is marked as failed. Fix the flow first, then retry it. Retrying without changes usually fails the same way.
 
 ### **It Worked When I Tested It. Why Did It Fail Later?**
 
-Tests usually use a small sample.
-
-Real data, like a full month of orders or a large email attachment, can be much bigger.
+Tests usually use a small sample. Real data, like a full month of orders or a large email attachment, can be much bigger.
 
 ### **My File Is Smaller Than 1 GB. Why Did It Still Fail?**
 
-Activepieces itself uses part of the memory (about 300 MB).
-
-Files can also take more space once they're opened or converted, for example a 100 MB spreadsheet turned into a list of rows.
+Activepieces itself uses part of the memory (about 300 MB). Files can also take more space once they're opened or converted, for example a 100 MB spreadsheet turned into a list of rows.
 
 ### **What Happens If All the Workers Are Busy?**
 
-New flows wait in line and start as soon as a worker is free. They aren't lost, just delayed.
-
-If this happens often, your IT team can add more workers.
+New flows wait in line and start as soon as a worker is free. They aren't lost, just delayed. If this happens often, your IT team can add more workers.
 
 ### **Can I See How Much Memory My Flow Used?**
 
@@ -340,9 +359,11 @@ Not yet. On self-hosted installs, your IT team can see how much memory each work
 | :-- | :-- |
 | Understand why my flow failed | Open the run and read the error message |
 | Handle a long list | Filter it, fetch it in pages, or move the loop's work into a separate flow |
-| Process a big CSV file | Use **Stream CSV to Subflows** |
+| Process a big CSV file | Use Stream CSV to Subflows |
 | Move a big file between apps | Use an action that passes files along in chunks (tip 5) |
-| Save data between runs | Small values: **Store**. Lists and records: **Tables** |
+| Save data between runs | Small values: Store. Lists and records: Tables |
+| Fix "log size limit" | Bring in less data, move loop work into a separate flow, return less from Code steps |
+| Fix "run exceeded … seconds" | Handle fewer items per run, move loop work into a separate flow, split big jobs |
 | Get more memory (Cloud) | Not possible. Change the flow instead |
 | Get more memory (self-hosted) | Ask your IT team to give the workers more memory |
 
