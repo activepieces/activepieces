@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects';
@@ -190,7 +190,11 @@ export function ProjectSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-full max-h-[95vh] flex flex-col p-0">
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-w-5xl w-full max-h-[95vh] flex flex-col p-0"
+      >
+        <DialogTitle className="sr-only">{t('Project settings')}</DialogTitle>
         <div className="flex h-[700px]">
           <div className="w-[238px]">
             <nav className="space-y-1 bg-gray-3 rounded-md rounded-r-none h-full flex flex-col rounded-l-md">
