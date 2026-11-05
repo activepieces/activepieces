@@ -34,7 +34,7 @@ const ExploreTabContent = ({
         operation.type === FlowOperationType.UPDATE_TRIGGER
           ? 'trigger'
           : 'action',
-      excludeProcessInBatches: pieceSelectorUtils.isInsideBatch({
+      hiddenStepTypes: pieceSelectorUtils.getHiddenStepTypes({
         operation,
         flowVersion,
       }),

@@ -51,7 +51,7 @@ const BatchFailureModeField = React.memo(
                     'The step succeeds anyway and reports which batches failed in its output.',
                   )
                 : t(
-                    'The step fails as soon as one batch fails, like any other step.',
+                    'If any batch fails, the step fails once every batch has finished or the wait times out.',
                   )}
             </FormDescription>
           </FormItem>
