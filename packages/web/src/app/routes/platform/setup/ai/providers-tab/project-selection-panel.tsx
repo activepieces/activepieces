@@ -10,7 +10,10 @@ import { useState } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 import { SelectedOnlyButton } from '../components/selected-only-button';
 import { pageSlice, TablePagination } from '../components/table-pagination';
@@ -68,19 +71,21 @@ export function ProjectSelectionPanel({
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-3">
           <Checkbox
             checked={selectedIds.includes(row.original.id)}
             className="pointer-events-none"
           />
-          <ProjectSwatch project={row.original} />
-          <span className="text-sm font-medium">
-            {row.original.displayName}
-          </span>
-          {row.original.type === ProjectType.PERSONAL && (
-            <span className="rounded-full bg-gray-3 px-1.5 py-px text-xs text-gray-11">
-              {t('Personal')}
+          <ProjectSwatch project={row.original} className="size-7" />
+          <TextWithTooltip tooltipMessage={row.original.displayName}>
+            <span className="truncate text-sm font-medium text-gray-12">
+              {row.original.displayName}
             </span>
+          </TextWithTooltip>
+          {row.original.type === ProjectType.PERSONAL && (
+            <Badge variant="secondary" className="shrink-0">
+              {t('Personal')}
+            </Badge>
           )}
         </div>
       ),
@@ -116,6 +121,7 @@ export function ProjectSelectionPanel({
           isError={false}
           errorStateEntity={t('projects')}
           hidePagination={true}
+          getRowClassName={() => 'h-14'}
           onRowClick={(row) => toggleProject(row.id)}
           emptyStateTextTitle={t('No projects found')}
           emptyStateTextDescription={
@@ -137,13 +143,22 @@ export function ProjectSelectionPanel({
   );
 }
 
-export function ProjectSwatch({ project }: { project: Project }) {
+export function ProjectSwatch({
+  project,
+  className,
+}: {
+  project: Project;
+  className?: string;
+}) {
   const palette = project.icon?.color
     ? PROJECT_COLOR_PALETTE[project.icon.color]
     : undefined;
   return (
     <span
-      className="flex size-5 shrink-0 items-center justify-center rounded-md bg-gray-3 text-xs font-medium"
+      className={cn(
+        'flex size-5 shrink-0 items-center justify-center rounded-md bg-gray-3 text-xs font-medium',
+        className,
+      )}
       style={
         palette
           ? { backgroundColor: palette.color, color: palette.textColor }
