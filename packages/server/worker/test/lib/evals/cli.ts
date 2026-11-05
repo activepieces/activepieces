@@ -62,10 +62,10 @@ async function main(): Promise<void> {
         })
 
     const summaries = cases.map((candidate) => summarize({ candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
-    console.log(`\nSummary (a case fails when at least half of its judged runs fail):`)
-    summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · ${summary.noVerdict} no verdict`))
+    console.log(`\nSummary (a case fails when at least half of its runs fail):`)
+    summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail`))
     const count = (verdict: Verdict): number => summaries.filter((summary) => summary.verdict === verdict).length
-    console.log(`\n${count('pass')} pass · ${count('fail')} fail · ${count('no_verdict')} no verdict · ${summaries.length} cases`)
+    console.log(`\n${count('pass')} pass · ${count('fail')} fail · ${summaries.length} cases`)
     if (recordMode) {
         await saveFixtures({ cases, results })
     }
@@ -104,9 +104,8 @@ async function evaluate({ candidate, trial, mcpToolSet, modelId, auth, recordMod
 function summarize({ candidate, results }: { candidate: EvalCase, results: CaseResult[] }): CaseSummary {
     const pass = results.filter((result) => result.verdict === 'pass').length
     const fail = results.filter((result) => result.verdict === 'fail').length
-    const noVerdict = results.length - pass - fail
-    const verdict: Verdict = pass + fail === 0 ? 'no_verdict' : (fail * 2 >= pass + fail ? 'fail' : 'pass')
-    return { caseNumber: candidate.caseNumber, pass, fail, noVerdict, verdict }
+    const verdict: Verdict = fail * 2 >= pass + fail ? 'fail' : 'pass'
+    return { caseNumber: candidate.caseNumber, pass, fail, verdict }
 }
 
 async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<void> {
@@ -119,7 +118,7 @@ async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKe
         console.log(`\nNo release baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to diff against.`)
         return
     }
-    console.log(`\nDiff against the release baseline (commit ${found.applicationVersion.slice(0, SHORT_SHA)}, same model). A change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} judged runs agree on both sides:`)
+    console.log(`\nDiff against the release baseline (commit ${found.applicationVersion.slice(0, SHORT_SHA)}, same model). A change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides:`)
     cases.forEach((candidate) => {
         const before = found.counts.get(posthogExperiments.caseKey(candidate)) ?? { pass: 0, fail: 0 }
         const now = summaries.find((summary) => summary.caseNumber === candidate.caseNumber) ?? { pass: 0, fail: 0 }
@@ -226,8 +225,8 @@ const DEFAULT_REPEATS = 5
 const MIN_JUDGED_RUNS = 3
 const CLEAR_SHARE = 0.8
 const PROMPT_HASH_CHARS = 12
-const VERDICT_MARK: Record<Verdict, string> = { pass: '✓', fail: '✗', no_verdict: '?' }
-const VERDICT_LABEL: Record<Verdict, string> = { pass: 'pass', fail: 'FAIL', no_verdict: 'no verdict' }
+const VERDICT_MARK: Record<Verdict, string> = { pass: '✓', fail: '✗' }
+const VERDICT_LABEL: Record<Verdict, string> = { pass: 'pass', fail: 'FAIL' }
 
 main().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error))
@@ -238,7 +237,6 @@ type CaseSummary = {
     caseNumber: number
     pass: number
     fail: number
-    noVerdict: number
     verdict: Verdict
 }
 

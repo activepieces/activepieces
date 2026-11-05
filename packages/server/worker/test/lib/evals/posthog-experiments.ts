@@ -103,16 +103,10 @@ function resultsFor({ run, itemId, scorers }: { run: UploadedRun, itemId: string
 }
 
 function combined(checks: CheckResult[]): Verdict {
-    if (checks.some((check) => check.verdict === 'fail')) {
-        return 'fail'
-    }
-    return checks.every((check) => check.verdict === 'pass') ? 'pass' : 'no_verdict'
+    return checks.some((check) => check.verdict === 'fail') ? 'fail' : 'pass'
 }
 
 function result({ itemId, scorerVersionId, verdict, reasoning }: { itemId: string, scorerVersionId: string, verdict: Verdict, reasoning: string }): Record<string, unknown> {
-    if (verdict === 'no_verdict') {
-        return { ...notApplicable({ itemId, scorerVersionId }), payload: { reasoning } }
-    }
     return { item_id: itemId, scorer_version_id: scorerVersionId, status: 'ok', value: verdict === 'pass', evaluated_at: new Date().toISOString(), payload: { reasoning } }
 }
 

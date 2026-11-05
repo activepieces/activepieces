@@ -53,7 +53,16 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
         rejectedToolInputs: [...warnings, ...rejectedToolParts(result)],
         stops: caseReplay.stops(),
         newFixtures: caseReplay.newFixtures(),
+        reachedTarget: reachedTarget({ evalCase, result, rejected: [...warnings, ...rejectedToolParts(result)] }),
     }
+}
+
+function reachedTarget({ evalCase, result, rejected }: { evalCase: EvalCase, result: AgentTurnResult, rejected: string[] }): boolean {
+    const targetTool = evalCase.targetTool
+    if (isNil(targetTool)) {
+        return false
+    }
+    return result.toolCalls.some((call) => call.toolName === targetTool) || rejected.some((entry) => entry.includes(targetTool))
 }
 
 function gradedWindow({ evalCase }: { evalCase: EvalCase }): StopCondition<ToolSet>[] {
@@ -178,4 +187,5 @@ export type TurnOutcome = {
     rejectedToolInputs: string[]
     stops: ReplayStop[]
     newFixtures: RecordedToolCall[]
+    reachedTarget: boolean
 }
