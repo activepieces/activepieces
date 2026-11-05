@@ -12,15 +12,18 @@ export const extractAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Fetch and return the cleaned, parsed content of one or more specific web pages by passing their URLs, optionally including images found on those pages. Use when you already have exact URLs (e.g. from a prior search) and need their full text rather than performing a new query. Read-only and idempotent: repeating the call with the same URLs has no side effects.', idempotent: true },
   auth: tavilyAuth,
+  propertyGroups: [
+    { key: 'pages', display: 'section', label: 'Pages', icon: 'file', props: ['urls', 'include_images'] },
+  ],
   props: {
     urls: Property.Array({
       displayName: 'URLs',
-      description: 'The URLs you want to extract with Tavily.',
+      description: 'Pages to read, up to 20 URLs.',
       required: true,
     }),
     include_images: Property.Checkbox({
       displayName: 'Include Images',
-      description: 'Include a list of images extracted from the URLs in the response.',
+      description: 'Add the images found on each page.',
       required: false,
       defaultValue: false,
     }),
