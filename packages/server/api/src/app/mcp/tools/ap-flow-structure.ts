@@ -151,7 +151,7 @@ function buildFlowStructure(trigger: FlowTrigger): { structure: StepInfo[], step
                 relationship = 'next'
                 break
             }
-            if (flowCanvasUtils.isContainerStep(parent) && parent.firstLoopAction?.name === step.name) {
+            if (flowCanvasUtils.isLoopOrBatchStep(parent) && parent.firstLoopAction?.name === step.name) {
                 parentName = parent.name
                 relationship = parent.type === FlowActionType.PROCESS_IN_BATCHES ? 'inside_batch' : 'first_loop_action'
                 break
