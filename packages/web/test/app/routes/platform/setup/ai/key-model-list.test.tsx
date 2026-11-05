@@ -179,4 +179,19 @@ describe('KeyModelList', () => {
       modelIds: ['gpt-main'],
     });
   });
+
+  it('keeps the selected only filter in place whatever the scope', () => {
+    renderList({
+      config: { ...CONFIG, modelScope: 'all', modelIds: [] },
+      selection: { modelScope: 'all', modelIds: [] },
+    });
+    expect(screen.getByRole('checkbox', { name: 'Selected only' })).toBeTruthy();
+  });
+
+  it('shows only the ticked models under selected only', () => {
+    renderList();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Selected only' }));
+    expect(screen.getByRole('checkbox', { name: 'GPT Main' })).toBeTruthy();
+    expect(screen.queryByRole('checkbox', { name: 'GPT Other' })).toBeNull();
+  });
 });

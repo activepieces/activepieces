@@ -72,8 +72,8 @@ export function KeyModelList({
     search,
     capabilities,
     sort,
-    selectedOnly: selectedOnly && !allModels,
-    selectedIds: selection.modelIds,
+    selectedOnly,
+    selectedIds: listedIds.filter(isOn),
   });
   const page = filtered.slice(0, shown);
   const filteredIds = filtered.map((model) => model.id);
@@ -162,15 +162,13 @@ export function KeyModelList({
             resetPaging();
           }}
         />
-        {!allModels && (
-          <SelectedOnlyButton
-            pressed={selectedOnly}
-            onToggle={() => {
-              setSelectedOnly(!selectedOnly);
-              resetPaging();
-            }}
-          />
-        )}
+        <SelectedOnlyButton
+          pressed={selectedOnly}
+          onToggle={() => {
+            setSelectedOnly(!selectedOnly);
+            resetPaging();
+          }}
+        />
         <Select
           value={sort}
           onValueChange={(value) => {
@@ -236,7 +234,7 @@ export function KeyModelList({
           <p className="px-4 py-6 text-center text-sm text-gray-11">
             {models.length === 0
               ? t('No models found')
-              : selectedOnly && !allModels
+              : selectedOnly
               ? t('No model is selected yet.')
               : t('No model matches your search.')}
           </p>
