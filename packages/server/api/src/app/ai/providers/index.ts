@@ -5,6 +5,7 @@ import { anthropicProvider } from './anthropic-provider'
 import { azureProvider } from './azure-provider'
 import { bedrockProvider } from './bedrock-provider'
 import { cloudflareGatewayProvider } from './cloudflare-gateway-provider'
+import { cohereProvider } from './cohere-provider'
 import { googleProvider } from './google-provider'
 import { mistralProvider } from './mistral-provider'
 import { openAICompatibleProvider } from './openai-compatible-gateway-provider'
@@ -32,6 +33,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     [AIProviderName.MOONSHOT]: openAiCompatibleVendor({ name: 'Moonshot AI', provider: AIProviderName.MOONSHOT }),
     [AIProviderName.META]: openAiCompatibleVendor({ name: 'Meta', provider: AIProviderName.META }),
     [AIProviderName.NVIDIA]: openAiCompatibleVendor({ name: 'NVIDIA', provider: AIProviderName.NVIDIA }),
+    [AIProviderName.COHERE]: cohereProvider,
     [AIProviderName.ACTIVEPIECES]: {
         ...openRouterProvider,
         name: 'Activepieces',
