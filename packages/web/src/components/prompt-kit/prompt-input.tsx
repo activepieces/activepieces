@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useLayoutEffect,
   useRef,
@@ -117,22 +118,30 @@ function PromptInputTextarea({
   const { value, setValue, maxHeight, onSubmit, disabled, textareaRef } =
     usePromptInput();
 
-  const adjustHeight = (el: HTMLTextAreaElement | null) => {
-    if (!el || disableAutosize) return;
+  const adjustHeight = useCallback(
+    (el: HTMLTextAreaElement | null) => {
+      if (!el || disableAutosize) return;
 
-    el.style.height = 'auto';
+      el.style.height = 'auto';
 
-    if (typeof maxHeight === 'number') {
-      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
-    } else {
-      el.style.height = `min(${el.scrollHeight}px, ${maxHeight})`;
-    }
-  };
+      if (typeof maxHeight === 'number') {
+        el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+      } else {
+        el.style.height = `min(${el.scrollHeight}px, ${maxHeight})`;
+      }
+    },
+    [disableAutosize, maxHeight],
+  );
 
-  const handleRef = (el: HTMLTextAreaElement | null) => {
-    textareaRef.current = el;
-    adjustHeight(el);
-  };
+  // Stable, so React doesn't detach and re-attach it on every render: each
+  // attach measures the textarea, which forces a layout of the whole page.
+  const handleRef = useCallback(
+    (el: HTMLTextAreaElement | null) => {
+      textareaRef.current = el;
+      adjustHeight(el);
+    },
+    [textareaRef, adjustHeight],
+  );
 
   useLayoutEffect(() => {
     if (!textareaRef.current || disableAutosize) return;
