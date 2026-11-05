@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Pushbullet 0.3.0: Send a Note and Send a Link are no longer agent tools
+
+**Send a Note** and **Send a Link** are now shown only in the flow builder. AI agents and MCP clients get **Send Note** and **Send Link** instead, plus new tools to list pushes, devices and chats, dismiss or delete a push, and read the current user. Both builder actions also gain an optional target (a device or an email).
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Send a Note or Send a Link as a tool, switch it to Send Note or Send Link. Flow steps keep working and stay on the version they were built with until you upgrade them.
+
 #### Streak 0.2.0: Update Box is no longer an agent tool and now saves custom fields, and triggers output an object
 
 **Update Box** is now shown only in the flow builder. AI agents and MCP clients get a separate agent version of **Update Box**, which takes the box key and a list of `{field_key, value}` updates as plain text. Update Box also now saves custom field values through Streak's field endpoint (before, they were sent in the box update and silently ignored), returns the box as it is after the update, and has a new Clear Notes option.
