@@ -3,6 +3,7 @@ import {
   AuthenticationPage,
   AutomationsPage,
   BuilderPage,
+  PlatformSwitcherPage,
   RunsPage,
 } from '../pages';
 import { e2eApi, E2eSession } from './api';
@@ -22,6 +23,10 @@ export const test = base.extend<CustomFixtures>({
 
   runsPage: async ({ page }, use) => {
     await use(new RunsPage(page));
+  },
+
+  platformSwitcherPage: async ({ page }, use) => {
+    await use(new PlatformSwitcherPage(page));
   },
 
   session: async ({}, use) => {
@@ -52,6 +57,7 @@ type CustomFixtures = {
   automationsPage: AutomationsPage;
   builderPage: BuilderPage;
   runsPage: RunsPage;
+  platformSwitcherPage: PlatformSwitcherPage;
   session: E2eSession;
   flowCleanup: { track: (flowId: string) => void };
   connectionCleanup: { track: (connectionId: string) => void };
