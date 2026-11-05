@@ -515,11 +515,20 @@ describe('flow operation invariants', () => {
             await flowOperation.execute(makeBeginOperation({
                 flowVersion: makeFlowVersionWithBatchBody(),
                 entryStepName: 'step_2',
+                triggerPayload: {
+                    type: 'inline',
+                    value: {
+                        step_1: { type: FlowActionType.PROCESS_IN_BATCHES, status: StepOutputStatus.SUCCEEDED, input: {}, output: { items: [1, 2] } },
+                    },
+                },
             }))
 
             const started = mockSendUpdate.mock.calls.filter((call) => !isNil(call[0].startTime))
             expect(started).toHaveLength(1)
             expect(dayjs(started[0][0].startTime).isValid()).toBe(true)
+            const finalCtx = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0].flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.SUCCEEDED)
+            expect(finalCtx.steps.step_2.output.iterations).toHaveLength(2)
         })
 
         it('fails a run entered at a step with malformed seeded steps instead of throwing for a retry', async () => {

@@ -88,6 +88,7 @@ export const FlowCanvas = React.memo(
     const graphKey = `${createGraphKey(
       flowVersion,
       notes,
+      selectedStep ?? '',
     )}-${canvasOrientation}`;
     const graph = useMemo(() => {
       return flowCanvasUtils.createFlowGraph({
@@ -158,7 +159,7 @@ export const FlowCanvas = React.memo(
         .filter((step) => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
-          sharedFlowCanvasUtils.isContainerStep(step) ||
+          sharedFlowCanvasUtils.isLoopOrBatchStep(step) ||
           flowStructureUtil.isBranchedAction(step) ||
           flowStructureUtil.hasContinueOnFailureBranches(step)
         ) {
@@ -292,7 +293,11 @@ const getChildrenKey = (step: Step) => {
     }
   }
 };
-const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
+const createGraphKey = (
+  flowVersion: FlowVersion,
+  notes: Note[],
+  selectedStep: string,
+) => {
   const flowGraphKey = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
@@ -312,5 +317,5 @@ const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
   const notesGraphKey = notes
     .map((note) => `${note.id}-${note.position.x}-${note.position.y}`)
     .join('-');
-  return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}`;
+  return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}-${selectedStep}`;
 };
