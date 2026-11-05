@@ -24,12 +24,6 @@ const jobKey = (jobId: string): string => `bull:${QueueName.WORKER_JOBS}:${jobId
 const failedKey = (): string => `bull:${QueueName.WORKER_JOBS}:failed`
 const reclaimCountKey = (jobId: string): string => `job_reclaim_count:${jobId}`
 
-const RECLAIM_DELAY_MS = 100
-
-function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
 describe('jobBroker — repeated worker-disconnect reclaim limit', () => {
     it('permanently fails a job after MAX_RECLAIM_ATTEMPTS disconnect-reclaims instead of redelivering forever', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
@@ -62,11 +56,6 @@ describe('jobBroker — repeated worker-disconnect reclaim limit', () => {
             expect(polled?.jobId).toBe(jobId)
 
             await jobBroker(app.log).releaseConnectionJobs(connectionId)
-
-            const isLastCycle = cycle === MAX_RECLAIM_ATTEMPTS - 1
-            if (!isLastCycle) {
-                await sleep(RECLAIM_DELAY_MS * 2)
-            }
         }
 
         const redis = await redisConnections.useExisting()

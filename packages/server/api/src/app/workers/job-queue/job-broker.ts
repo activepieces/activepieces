@@ -300,6 +300,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             return
         }
 
+        jobAssignmentTracker.clear({ jobId: input.jobId, queueName: input.queueName })
+
         const jobData = JobData.parse(job.data)
         const waitingCaller = callerWaitingForResponse(jobData)
 
@@ -359,8 +361,6 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                 })
             }
         }
-
-        jobAssignmentTracker.clear({ jobId: input.jobId, queueName: input.queueName })
 
         const failed = input.status === EngineResponseStatus.INTERNAL_ERROR || !isNil(error)
         await notifyInterceptorsJobFinished({ jobId: input.jobId, jobData, failed, log, context: 'completeJob' })
