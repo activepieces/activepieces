@@ -16,6 +16,9 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { authenticationSession } from '../../../lib/authentication-session';
+import { ChatContentColumn } from '../chat-panel/chat-content-column';
+import { ChatNotch } from '../chat-panel/chat-notch';
+import { ChatDock, ChatWindow } from '../chat-panel/chat-window';
 import {
   GlobalSearchProvider,
   useGlobalSearch,
@@ -158,23 +161,33 @@ function ProjectDashboardLayoutInner({
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
           <div
             className={cn(
-              'flex-1 flex flex-col overflow-hidden',
+              'relative flex-1 flex flex-col overflow-hidden',
               !isEmbedded && 'pr-2 pt-3 pb-3 max-md:pl-2 max-md:pt-2',
             )}
           >
             <div
               id="dashboard-content-container"
               className={cn(
-                'relative flex flex-col h-full bg-gray-1 overflow-clip',
+                'relative flex h-full bg-gray-1 overflow-clip',
                 !isEmbedded && 'rounded-xl shadow-panel border',
               )}
             >
-              {!hideHeader && (
-                <ProjectDashboardLayoutHeader key={currentProjectId} />
-              )}
-              <CreditsUsageAlert />
-              <div className="flex-1 overflow-auto">{children}</div>
+              {!isEmbedded && <ChatDock side="left" />}
+              <ChatContentColumn>
+                {!hideHeader && (
+                  <ProjectDashboardLayoutHeader key={currentProjectId} />
+                )}
+                <CreditsUsageAlert />
+                <div className="flex-1 overflow-auto">{children}</div>
+              </ChatContentColumn>
+              {!isEmbedded && <ChatDock side="right" />}
             </div>
+            {!isEmbedded && (
+              <>
+                <ChatNotch className="bottom-3" />
+                <ChatWindow />
+              </>
+            )}
           </div>
         </SidebarInset>
       </SidebarProvider>

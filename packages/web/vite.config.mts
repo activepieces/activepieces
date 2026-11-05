@@ -14,6 +14,7 @@ export default defineConfig(({ command, mode }) => {
   const AP_FAVICON = 'https://activepieces.com/favicon.ico';
 
   return {
+    experimental: { bundledDev: true },
     server: {
       // allowedHosts: ['wozcsvaint.loclx.io'],
       proxy: {
