@@ -55,7 +55,10 @@ const AcceptInvitation = () => {
             <Link2OffIcon className="size-5 text-gray-11" />
           </div>
           <div className="flex flex-col gap-1">
-            <h1 className="text-lg font-semibold">
+            <h1
+              className="text-lg font-semibold"
+              data-testid="invitation-dead-link"
+            >
               {t('This link no longer works')}
             </h1>
             <p className="text-sm text-gray-11">
@@ -107,7 +110,10 @@ const AcceptInvitation = () => {
               <span aria-hidden className="hidden sm:inline">
                 ·
               </span>
-              <span className="basis-full break-all sm:basis-auto">
+              <span
+                className="basis-full break-all sm:basis-auto"
+                data-testid="invitation-invited-as"
+              >
                 {t('Invited as {email}', { email: invitation.email })}
               </span>
             </p>
@@ -116,6 +122,7 @@ const AcceptInvitation = () => {
             <Button
               size="lg"
               className="w-full"
+              data-testid="invitation-accept-button"
               loading={isPending}
               onClick={() => mutate(token)}
             >
