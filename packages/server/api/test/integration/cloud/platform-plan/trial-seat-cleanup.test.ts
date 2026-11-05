@@ -8,6 +8,7 @@ import { autumnUtils } from '../../../../src/app/ee/platform/platform-plan/billi
 import { platformPlanRepo } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { selfServeTrialUtils } from '../../../../src/app/ee/platform/platform-plan/self-serve-trial-utils'
 import { trialSeatCleanup } from '../../../../src/app/ee/platform/platform-plan/trial-seat-cleanup'
+import { mcpGrantRevocation } from '../../../../src/app/mcp/oauth/token/mcp-grant-revocation'
 import { userRepo } from '../../../../src/app/user/user-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
@@ -94,6 +95,19 @@ describe('Seat grace after the self-serve trial', () => {
         for (const kept of [owner, preTrialUsers[0], trialUsers[0]]) {
             expect(await statusOf(kept)).toBe(UserStatus.ACTIVE)
         }
+    })
+
+    it('revokes the MCP grants of the users it deactivates, and of no one else', async () => {
+        const { platformId, owner, trialUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 2, trialEndedDaysAgo: 8 })
+        const revoke = vi.spyOn(mcpGrantRevocation, 'revokeActiveGrants')
+        stubRefresh()
+
+        await trialSeatCleanup(log).sweep()
+
+        const revokedUserIds = revoke.mock.calls.map(([{ scope }]) => ('userId' in scope ? scope.userId : null))
+        expect(revokedUserIds).toEqual([trialUsers[1].id])
+        expect(revoke.mock.calls[0][0].scope.platformId).toBe(platformId)
+        expect(revokedUserIds).not.toContain(owner.id)
     })
 
     it('counts again at the deadline and deactivates only the users still over the plan', async () => {

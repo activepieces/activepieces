@@ -8,6 +8,7 @@ import { transaction } from '../../../core/db/transaction'
 import { getBillingEnforcedKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
+import { mcpGrantRevocation } from '../../../mcp/oauth/token/mcp-grant-revocation'
 import { billingProvider } from '../../../platform/billing-provider'
 import { UserSchema } from '../../../user/user-entity'
 import { userRepo, userService } from '../../../user/user-service'
@@ -71,7 +72,7 @@ async function deactivateTrialUsersAndInvitationsOverLimit({ platformId, selfSer
         await userInvitationsService(log).lockPendingInvites({ platformId, entityManager })
         const seats = await seatsOverLimit({ platformId, usersLimit: plan.usersLimit, selfServeTrialDates, billingEnforced, log, entityManager })
         if (isNil(seats)) {
-            return { deactivatedUsers: 0, revokedInvites: 0 }
+            return { deactivatedUserIds: [], revokedInvites: 0 }
         }
         const revokedInvites = await userInvitationsService(log).revokeNewestInvitedBetween({ platformId, from: selfServeTrialDates.startedAt, to: selfServeTrialDates.endsAt, limit: seats.seatsOver, entityManager })
         const usersToDeactivate = seats.seatsOver - revokedInvites
@@ -82,12 +83,16 @@ async function deactivateTrialUsersAndInvitationsOverLimit({ platformId, selfSer
         if (newestTrialUsers.length > 0) {
             await userRepo(entityManager).update({ id: In(newestTrialUsers.map((user) => user.id)), platformId }, { status: UserStatus.INACTIVE })
         }
-        return { deactivatedUsers: newestTrialUsers.length, revokedInvites }
+        return { deactivatedUserIds: newestTrialUsers.map((user) => user.id), revokedInvites }
     })
-    if (removed.deactivatedUsers > 0 || removed.revokedInvites > 0) {
-        rejectedPromiseHandler(platformPlanTelemetry(log).onTrialSeatsDeactivated({ platformId, ...removed }), log)
+    for (const userId of removed.deactivatedUserIds) {
+        await mcpGrantRevocation.revokeActiveGrants({ scope: { userId, platformId }, log })
     }
-    log.info({ platform: { id: platformId }, seatGrace: { deactivatedCount: removed.deactivatedUsers, revokedInviteCount: removed.revokedInvites } }, 'Seat grace ended')
+    const deactivatedUsers = removed.deactivatedUserIds.length
+    if (deactivatedUsers > 0 || removed.revokedInvites > 0) {
+        rejectedPromiseHandler(platformPlanTelemetry(log).onTrialSeatsDeactivated({ platformId, deactivatedUsers, revokedInvites: removed.revokedInvites }), log)
+    }
+    log.info({ platform: { id: platformId }, seatGrace: { deactivatedCount: deactivatedUsers, revokedInviteCount: removed.revokedInvites } }, 'Seat grace ended')
 }
 
 async function findPlatformsWithUnlimitedSeats(): Promise<string[]> {
