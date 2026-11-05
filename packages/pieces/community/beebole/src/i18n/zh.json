@@ -1,6 +1,6 @@
 {
   "Time tracking and project management. Create companies, projects, people, and log time entries.": "时间跟踪和项目管理。创建公司、项目、人员和记录时间。",
-  "To get your Beebole API token:\n\n1. Log in to your Beebole account at https://beebole-apps.com\n2. Go to **Customize → API Token**\n3. Generate a new API token \n4. Copy the token and paste it below\n\nNeed help? See https://beebole.com/help/api": "要获取您的 Beebole API 令牌：\n\n1. 登录您的 Beebole 帐户在 https://beebole-apps. om\n2. 转到**自定义 → API 令牌**\n生成新的 API 令牌 \n4。复制令牌并粘贴到\n\n需要帮助？请见 https://beebole.com/help/api",
+  "To get your Beebole API token:\n\n1. Log in to your Beebole account at https://beebole-apps.com\n2. Go to **Customize → API Token**\n3. Generate a new API token \n4. Copy the token and paste it below\n\nNeed help? See https://beebole.com/help/api": "To get your Beebole API token:\n\n1. Log in to your Beebole account at https://beebole-apps.com\n2. Go to **Customize → API Token**\n3. Generate a new API token \n4. Copy the token and paste it below\n\nNeed help? See https://beebole.com/help/api",
   "Create Person": "创建人员",
   "Create Company": "创建公司",
   "Create Project": "创建项目",

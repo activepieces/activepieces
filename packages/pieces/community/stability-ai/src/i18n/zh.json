@@ -1,7 +1,7 @@
 {
   "Generative AI video model based on the image model Stable Diffusion.": "基于图像模型稳定传播的生成的 AI 视频模型。",
   "API Key": "API 密钥",
-  "Please visit https://platform.stability.ai/docs/getting-started/authentication to get your API Key": "请访问 https://platform.stability.ai/docs/getting-started/authorization 获取您的 API 密钥",
+  "Please visit https://platform.stability.ai/docs/getting-started/authentication to get your API Key": "Please visit https://platform.stability.ai/docs/getting-started/authentication to get your API Key",
   "Text to Image": "文本到图像",
   "Custom API Call": "自定义 API 呼叫",
   "Generate an image using a text prompt": "使用文本提示生成图像",

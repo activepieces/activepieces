@@ -1,6 +1,6 @@
 {
   "Parseur is a document/email parsing tool that extracts structured data from emails, attachments, PDFs, invoices, forms, etc. It supports dynamic templates and table fields, and delivers parsed output to integrations (e.g. via webhook or API). This integration enables reactive workflows based on new processed documents, failed processing, mailbox changes, and more.": "Parseur 是一个文档/电子邮件解析工具，可以从电子邮件、附件、PDF、发票、表格等中提取结构化数据。 它支持动态模板和表格字段，并将解析后的输出传送到集成中 (e)。 。通过 webhook 或 API。这个集成能够基于新处理文档、处理失败、邮件箱更改等的被动工作流。",
-  "Create a new API key in Account → API keys in the Parseur app: https://app.parseur.com/account/api-keys": "在Parseur应用中创建一个新的 API 密钥： https://app.parseur.com/account/api-key。",
+  "Create a new API key in Account → API keys in the Parseur app: https://app.parseur.com/account/api-keys": "Create a new API key in Account → API keys in the Parseur app: https://app.parseur.com/account/api-keys",
   "Get Parsed Document by ID": "通过ID获取解析文档",
   "Create Document": "创建文档",
   "Create Document from File": "从文件创建文档",

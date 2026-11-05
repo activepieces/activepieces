@@ -1,6 +1,6 @@
 {
   "AI-powered writing assistant for content creation, code generation, translations, and more using multiple AI models.": "用于内容创建、代码生成、翻译和更多使用多个AI模型的 AI驱动写作助手。",
-  "To get your TextCortex API key:\n1. Sign up for free at https://textcortex.com\n2. Go to your account settings\n3. Navigate to the API Key section\n4. Generate and copy your API key\n\nYour API key should start with 'gAAAAAB...'": "要获取您的 TextCortex API 密钥：\n1. 免费注册 https://textex.com\n2. 前往您的帐户设置\n导航到 API 密钥部分\n4. 生成并复制您的 API 密钥\n\n您的 API 密钥应以 'gAAAB...' 开始",
+  "To get your TextCortex API key:\n1. Sign up for free at https://textcortex.com\n2. Go to your account settings\n3. Navigate to the API Key section\n4. Generate and copy your API key\n\nYour API key should start with 'gAAAAAB...'": "To get your TextCortex API key:\n1. Sign up for free at https://textcortex.com\n2. Go to your account settings\n3. Navigate to the API Key section\n4. Generate and copy your API key\n\nYour API key should start with 'gAAAAAB...'",
   "Send Prompt": "发送提示",
   "Create Paraphrase": "创建参数",
   "Create Social Media Caption": "创建社交媒体标题",

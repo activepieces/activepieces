@@ -1,6 +1,6 @@
 {
   "Search and retrieve GIFs, stickers, and video clips from KLIPY's media library.": "从KLIPY的媒体库中搜索和检索GIF、贴纸和视频素材。",
-  "To get your App Key:\n1. Sign in to your KLIPY account at https://klipy.com\n2. Go to your dashboard and open **API Settings**\n3. Copy your **App Key**\n\nThe App Key is a unique identifier issued by KLIPY for your application.": "要获取您的应用程序密钥：\n1. 登录您的 KLIPY 帐户在 https://klipy 。 om\n2. 转到您的控制面板并打开 **API 设置**\n复制您的 **App 密钥**\n\n应用程序密钥是由KLIPY 为您的应用程序发布的唯一标识符。",
+  "To get your App Key:\n1. Sign in to your KLIPY account at https://klipy.com\n2. Go to your dashboard and open **API Settings**\n3. Copy your **App Key**\n\nThe App Key is a unique identifier issued by KLIPY for your application.": "To get your App Key:\n1. Sign in to your KLIPY account at https://klipy.com\n2. Go to your dashboard and open **API Settings**\n3. Copy your **App Key**\n\nThe App Key is a unique identifier issued by KLIPY for your application.",
   "Search GIFs": "搜索 GIF",
   "Search Stickers": "搜索貼圖",
   "Search Clips": "搜索素材",

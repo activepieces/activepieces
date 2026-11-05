@@ -29,7 +29,7 @@
   "The ID of an existing conversation. If not provided, a new conversation will be created.": "现有对话的 ID。如果没有提供，将创建一个新的会话。",
   "User location time zone in IANA format (e.g., America/New_York, Europe/London)": "IANA格式中的用户位置时区（如：美洲/纽约；欧洲/伦敦）",
   "Natural language query to search for relevant files. Maximum 1,500 characters.": "搜索相关文件的自然语言查询。最多1,500个字符。",
-  "KQL filter expression for OneDrive data source (https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference). Example: path:\"https://contoso-my.sharepoint.com/personal/user/Documents/\"": "OneDrive 数据源的 KQL 过滤器表达式(https://learn.microsoft.com/en-us/sharpoint/dev/general-development/keyword-query-language-kql-syntax-reference)。示例：路径:\"https://contoso-my.sharpoint.com/personal/user/Documents/\"",
+  "KQL filter expression for OneDrive data source (https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference). Example: path:\"https://contoso-my.sharepoint.com/personal/user/Documents/\"": "KQL filter expression for OneDrive data source (https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference). Example: path:\"https://contoso-my.sharepoint.com/personal/user/Documents/\"",
   "Array of metadata field names to include in results. Example: [\"title\", \"author\"]": "要包含在结果中的元数据字段名称数组。例如：[\"title\", \"author\"]",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
   "Appended to the URL as ?key=value.": "附加到 URL 作为 ?key=value。",
