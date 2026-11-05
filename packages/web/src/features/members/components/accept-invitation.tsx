@@ -36,7 +36,13 @@ const AcceptInvitation = () => {
       }
       navigate(`/sign-up?email=${encodeURIComponent(invitation?.email ?? '')}`);
     },
-    onError: () => internalErrorToast(),
+    onError: (acceptError) => {
+      if (api.isApError(acceptError, ErrorCode.ENTITY_NOT_FOUND)) {
+        refetch();
+        return;
+      }
+      internalErrorToast();
+    },
   });
 
   if (isLoading) {
