@@ -29,7 +29,7 @@ afterEach(() => {
 
 async function onPlan({ platformId, plan }: { platformId: string, plan: string }) {
     await platformPlanRepo().update({ platformId }, { plan })
-    await distributedStore.put(`platform_plan:self-serve-trial:v2:${platformId}`, { dates: null }, 60)
+    await distributedStore.put(`platform_plan:self-serve-trial:${platformId}`, { dates: null }, 60)
 }
 
 function stubBilling({ outcome }: { outcome: SelfServeTrialStartOutcome }) {

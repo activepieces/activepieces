@@ -84,7 +84,7 @@ vi.mock('../../../../../src/app/user/user-service', () => ({
 }))
 
 const PLATFORM_ID = 'platform-1'
-const TRIAL_KEY = `platform_plan:self-serve-trial:v2:${PLATFORM_ID}`
+const TRIAL_KEY = `platform_plan:self-serve-trial:${PLATFORM_ID}`
 const CREDS = { autumnCustomerId: 'cus_123', autumnApiKey: 'am_sk_customer' }
 const STARTED = { startedAt: '2099-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
 const PAST = { startedAt: '2026-10-01T09:00:00.000Z', endsAt: '2026-10-08T09:00:00.000Z' }
@@ -138,6 +138,10 @@ function runningTrialRow(dates: TrialDates): Record<string, unknown> {
 
 function endedTrialRow(dates: TrialDates): Record<string, unknown> {
     return { planId: PlanName.SELF_SERVE_TRIAL, status: ListSubscriptionsListStatus.Expired, startedAt: Date.parse(dates.startedAt), trialEndsAt: null, expiresAt: Date.parse(dates.endsAt) }
+}
+
+function cancelledTrialRow({ dates, cancelledAt }: { dates: TrialDates, cancelledAt: string }): Record<string, unknown> {
+    return { planId: PlanName.SELF_SERVE_TRIAL, status: ListSubscriptionsListStatus.Expired, startedAt: Date.parse(dates.startedAt), trialEndsAt: Date.parse(dates.endsAt), expiresAt: Date.parse(cancelledAt), canceledAt: Date.parse(cancelledAt) }
 }
 
 function ranOutTrialRow(dates: TrialDates): Record<string, unknown> {
@@ -361,6 +365,21 @@ describe('self-serve trial', () => {
 
         it('keeps the dates of a trial cancelled before its end', async () => {
             await refreshWith({ customer: customerWith({ trialUsed: true }), subscriptions: [endedTrialRow(PAST)] })
+
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: PAST })
+        })
+
+        it('drops the saved dates of a trial cancelled before its end', async () => {
+            store.set(TRIAL_KEY, { dates: STARTED })
+
+            await refreshWith({ customer: customerWith({ trialUsed: true }), subscriptions: [cancelledTrialRow({ dates: STARTED, cancelledAt: STARTED.startedAt })] })
+
+            expect(store.has(TRIAL_KEY)).toBe(false)
+            expect(mockOnTrialEnded).not.toHaveBeenCalled()
+        })
+
+        it('keeps the dates of a trial cancelled after its end', async () => {
+            await refreshWith({ customer: customerWith({ trialUsed: true }), subscriptions: [cancelledTrialRow({ dates: PAST, cancelledAt: '2026-10-09T09:00:00.000Z' })] })
 
             expect(store.get(TRIAL_KEY)).toEqual({ dates: PAST })
         })
