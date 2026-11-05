@@ -197,8 +197,8 @@ async function returnJobToQueue({ jobId, token, queueName, log, isDisconnectRecl
     log.info({ job: { id: jobId }, isDisconnectReclaim }, '[jobBroker#returnJobToQueue] job returned to queue')
 }
 
-async function notifyInterceptorsJobFinished({ jobId, jobData, failed, log }: { jobId: string, jobData: JobData, failed: boolean, log: FastifyBaseLogger }): Promise<void> {
-    for (const interceptor of interceptors) {
+async function notifyInterceptorsJobFinished({ interceptorsToNotify = interceptors, jobId, jobData, failed, log }: { interceptorsToNotify?: JobInterceptor[], jobId: string, jobData: JobData, failed: boolean, log: FastifyBaseLogger }): Promise<void> {
+    for (const interceptor of interceptorsToNotify) {
         const { error } = await tryCatch(() => interceptor.onJobFinished({ jobId, jobData, failed, log }))
         if (error) {
             log.error({ job: { id: jobId }, error: String(error) }, '[jobBroker] interceptor cleanup failed')
@@ -248,21 +248,11 @@ async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jo
     for (const interceptor of interceptors) {
         const result = await interceptor.preDispatch({ jobId, jobData, job, log })
         if (result.verdict === InterceptorVerdict.DISCARD) {
-            for (const passedInterceptor of passed) {
-                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }))
-                if (error) {
-                    log.error({ job: { id: jobId }, error: String(error) }, '[jobBroker] Failed to clean up interceptor on discard')
-                }
-            }
+            await notifyInterceptorsJobFinished({ interceptorsToNotify: passed, jobId, jobData, failed: false, log })
             return 'DISCARD'
         }
         if (result.verdict === InterceptorVerdict.REJECT) {
-            for (const passedInterceptor of passed) {
-                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, failed: false, log }))
-                if (error) {
-                    log.error({ job: { id: jobId }, error: String(error) }, '[jobBroker] Failed to clean up interceptor on reject')
-                }
-            }
+            await notifyInterceptorsJobFinished({ interceptorsToNotify: passed, jobId, jobData, failed: false, log })
             return { delayInMs: result.delayInMs, priority: result.priority }
         }
         passed.push(interceptor)
