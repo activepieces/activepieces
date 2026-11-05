@@ -265,11 +265,11 @@ If one flow does several heavy jobs in a row (for example: export data, then cle
 
 **How to fix it:** The causes are almost the same as for memory, so most of the same tips work:
 
-- **Bring in less data** (tip 1). Filter, set limits, and pick only the fields you need.
-- **Move heavy loop work into a separate flow** (tip 3). Every round of a loop is saved in the run history. With a separate flow, each item gets its own run history instead of one huge one.
-- **Pass the file, not what's inside it** (tip 6). The contents of a converted file take up a lot of space in the run history.
-- **Keep Code steps small** (tip 8). Only return what the next steps need.
-- **Split big jobs into several flows** (tip 9).
+- **Bring in less data**: Filter, set limits, and pick only the fields you need.
+- **Move heavy loop work into a separate flow**: Every round of a loop is saved in the run history. With a separate flow, each item gets its own run history instead of one huge one.
+- **Pass the file, not what's inside it**: The contents of a converted file take up a lot of space in the run history.
+- **Keep Code steps small** : Only return what the next steps need.
+- **Split big jobs into several flows** 
 
 ### **"Run Exceeded … Seconds, Try to Optimize Your Steps."**
 
