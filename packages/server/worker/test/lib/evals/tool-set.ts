@@ -9,13 +9,13 @@ import { agentToolPolicy } from '../../../src/lib/execute/jobs/ee/agent/agent-to
 import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { Replay } from './replay'
 
-async function connectMcp({ conversationId }: { conversationId: string }): Promise<McpTools> {
+async function connectMcp(): Promise<McpTools> {
     const baseUrl = devServerUrl()
     const res = await fetch(`${baseUrl}/v1/agents/eval/mcp-credentials`, { method: 'POST', headers: { 'api-key': devServerApiKey() } })
     if (!res.ok) {
         throw new Error(`Could not get MCP credentials from the dev server at ${baseUrl} (${res.status}). Is it running? ${await res.text()}`)
     }
-    const mcpCredentials = McpCredentials.parse(await res.json())
+    const { conversationId, projectName, ...mcpCredentials } = McpCredentials.parse(await res.json())
     const connection = await agentMcpClient.connect({ mcpCredentials, conversationId, log: silentLog })
     if (isNil(connection.mcpClient)) {
         throw new Error(`Could not connect to the dev server MCP at ${mcpCredentials.mcpServerUrl}`)
@@ -24,6 +24,7 @@ async function connectMcp({ conversationId }: { conversationId: string }): Promi
     return {
         toolSet: Object.fromEntries(Object.entries(connection.mcpToolSet).flatMap(([name, tool]) => isTool(tool) ? [[name, tool]] : [])),
         close: () => client.close(),
+        projectName,
     }
 }
 
@@ -138,7 +139,7 @@ const EVAL_USER_ID = 'eval-user'
 const EVAL_CONVERSATION_ID = 'eval-conversation'
 const EVAL_PROJECTS = [{ id: 'eval-project', displayName: 'Eval Project', type: 'TEAM' }]
 
-const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string() })
+const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string(), conversationId: z.string(), projectId: z.string(), projectName: z.string() })
 const ExecuteToolResponse = z.object({ result: z.unknown() })
 
 const silentLog: FastifyBaseLogger = {
@@ -161,4 +162,5 @@ export const evalToolSet = {
 type McpTools = {
     toolSet: ToolSet
     close: () => Promise<void>
+    projectName: string
 }

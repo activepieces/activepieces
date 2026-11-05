@@ -59,7 +59,8 @@ async function main(): Promise<void> {
     }
 
     const auth = await evalAgentTurn.resolveAuth()
-    const mcp = await evalToolSet.connectMcp({ conversationId: EVAL_CONVERSATION_ID })
+    const mcp = await evalToolSet.connectMcp()
+    console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
     const outcomes: DatasetOutcome[] = []
     try {
         for (const dataset of datasets) {
@@ -255,7 +256,6 @@ const ENV_FILE = '.env.dev'
 const DEFAULT_MODEL = 'z-ai/glm-5.3'
 const DEFAULT_DATASETS = ['chat-prod-failures', 'chat-core']
 const MUST_PASS_DATASETS = new Set(['chat-core'])
-const EVAL_CONVERSATION_ID = 'eval-conversation'
 const CONCURRENCY = 4
 const SHORT_SHA = 8
 const DEFAULT_REPEATS = 5

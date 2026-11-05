@@ -8,6 +8,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
@@ -61,7 +62,12 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
         if (isNil(credentials.mcpServerUrl) || isNil(credentials.mcpToken)) {
             return reply.status(StatusCodes.SERVICE_UNAVAILABLE).send({ message: 'Could not issue MCP credentials on this instance' })
         }
-        return reply.status(StatusCodes.OK).send(credentials)
+        const [project] = await projectService(request.log).getAllForUser({ platformId: platform.id, userId: platform.ownerId, isPrivileged: true })
+        if (isNil(project)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'The platform owner has no project to run evals in' })
+        }
+        const conversation = await agentConversationService(request.log).createConversation({ platformId: platform.id, userId: platform.ownerId, request: { projectId: project.id } })
+        return reply.status(StatusCodes.OK).send({ ...credentials, conversationId: conversation.id, projectId: project.id, projectName: project.displayName })
     })
 
     app.post('/eval/execute-tool', ExecuteToolRoute, async (request, reply) => {
