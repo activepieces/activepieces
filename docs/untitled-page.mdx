@@ -93,41 +93,6 @@ If your flow needs more memory, you can use either of these two ways:
 1. Change the flow using the tips in [**How to Build Flows That Use Less Memory**](https://app.mintlify.com/activepieces/activepieces/editor/ginikachukwu%2Fdraft-nov-5/&#x7E;/cfaaa836-06e3-46cb-9e16-746f708a3990#how-to-build-flows-that-use-less-memory). This is usually the quickest fix.
 2. Ask your IT team to give the workers more memory.
 
-### **For Your IT Team: Recommended Setup**
-
-| **Setting** | **Recommended** | **What this means** |
-| :-- | :-- | :-- |
-| Worker size | 0.5 vCPU / 1 GB memory | How much processing power and memory each worker gets. 0.5 vCPU is half of one processor, and 1 GB of memory is the working space for the flow it runs. |
-| AP_WORKER_CONCURRENCY | 1 | How many flows one worker runs at the same time. With 1, the worker handles one flow at a time and that flow gets all of its memory, like a cook preparing one order at a time with the whole counter to themselves. |
-| AP_SANDBOX_MEMORY_LIMIT | 1048576 (1 GB) | The most memory one flow is allowed to use inside the worker. This is the number users see in the error message. It's written in kilobytes, and 1,048,576 KB = 1 GB. It should never be bigger than the worker's own memory. |
-| AP_FILE_STORAGE_LOCATION | S3 | Where Activepieces keeps files. S3 is cloud file storage, like Amazon S3. It lets workers pass big files along in small chunks instead of loading the whole file into memory. |
-| AP_MAX_FILE_SIZE_MB | 25 (default) | The biggest single file one step can handle, in MB. |
-| AP_MAX_FLOW_RUN_LOG_SIZE_MB | 50 (default) | The most information that can be saved about one run, in MB. |
-| AP_FLOW_TIMEOUT_SECONDS | 600 (default) | How long a flow can run before it's stopped, in seconds. 600 seconds = 10 minutes. |
-
-### **Why We Recommend One Flow at a Time per Worker**
-
-Picture a cook with one counter:
-
-- **One order at a time (AP_WORKER_CONCURRENCY=1):** The cook has the whole counter for that order. If one order is huge and overflows the counter, only that order may face issues.
-- **Five orders at a time (AP_WORKER_CONCURRENCY=5):** Five orders share one counter. If one order takes up too much space, everything falls off and all five orders develop issues.
-
-The same applies to flows. With one flow per worker, each flow gets its own guaranteed memory, and a heavy flow only affects itself. With five per worker, one heavy flow can make all five fail at once.
-
-### **How to Give Flows More Memory**
-
-1. Give each worker more memory (a bigger counter), for example from 1 GB to 2 GB.
-2. Raise AP_SANDBOX_MEMORY_LIMIT (the per-flow memory limit) to match, keeping it no bigger than the worker's memory.
-3. Keep AP_WORKER_CONCURRENCY at 1 (one flow at a time per worker).
-
-If you keep running five flows per worker, make each worker about five times bigger (around 5 GB), so each flow still gets its share.
-
-### **How Many Workers Do You Need?**
-
-One worker for each flow you expect to run at the same time during your busiest period. For example, if 50 flows usually run at once, you need 50 workers.
-
-If more flows arrive than there are free workers, the extra ones wait in line and start as soon as a worker is free. They aren't lost, just delayed.
-
 ### **How to Check Memory Usage**
 
 Go to **Platform Admin → Operations → Workers** to see each worker's status and how much processing power, memory and disk space it is using.
