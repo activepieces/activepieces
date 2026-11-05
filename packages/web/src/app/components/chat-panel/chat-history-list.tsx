@@ -8,7 +8,16 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { ConversationStatusDot } from '@/app/routes/chat-with-ai/components/conversation-status-dot';
 import { Button } from '@/components/ui/button';
@@ -18,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { inputClass } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   ConversationIndicatorState,
@@ -36,7 +46,17 @@ import {
 // The panel's chat history: a search field over a grouped, keyboard-driven
 // list. Docked, it fills the panel; floating, it sits in the header dropdown.
 // Focus stays in the search field and the arrows move the highlight, like a
-// command palette.
+// command palette. Tab reaches the highlighted row's actions; F2 renames it and
+// Shift+F10 (or the context-menu key, or a right-click) opens its menu.
+//
+// Three row states, the same in both places:
+// - current chat: an accent bar and medium weight, always;
+// - under the pointer: a soft fill;
+// - keyboard highlight: the same fill plus a hairline ring, so it reads as a
+//   cursor and never gets confused with where the mouse happens to rest.
+//
+// The parent sets --history-bg, so the search bar and sticky headings are
+// solid in either surface.
 export function ChatHistoryList({
   currentId,
   onSelect,
@@ -50,8 +70,13 @@ export function ChatHistoryList({
 }) {
   const listId = useId();
   const [query, setQuery] = useState('');
-  const [highlight, setHighlight] = useState(-1);
+  const [highlight, setHighlight] = useState<Highlight>({
+    index: -1,
+    by: null,
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const {
@@ -85,25 +110,40 @@ export function ChatHistoryList({
   }, [conversations, query]);
   const flat = useMemo(() => groups.flatMap((g) => g.items), [groups]);
 
-  // Open on the current chat, so Enter right away is a no-op, not a jump.
+  // Whether there is more above or below, for the divider and the fades.
+  const measureEdges = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const top = el.scrollTop > 0;
+    const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+    setEdges((prev) =>
+      prev.top === top && prev.bottom === bottom ? prev : { top, bottom },
+    );
+  }, []);
+  useLayoutEffect(measureEdges, [measureEdges, flat.length, isLoading]);
+
+  // Open on the current chat, so Enter right away is a no-op, not a jump. The
+  // start isn't drawn as a highlight: the current marker already shows it.
   useEffect(() => {
-    if (highlight === -1 && flat.length > 0) {
+    if (highlight.index === -1 && flat.length > 0) {
       const start = Math.max(
         0,
         flat.findIndex((c) => c.id === currentId),
       );
-      setHighlight(start);
+      setHighlight({ index: start, by: null });
       // Wait for the dropdown to be placed and capped before scrolling it.
       // Not cancelled on cleanup: setting the highlight re-runs this effect.
-      requestAnimationFrame(() =>
+      if (start > 0) {
         requestAnimationFrame(() =>
-          listRef.current
-            ?.querySelector(`[data-index="${start}"]`)
-            ?.scrollIntoView({ block: 'center' }),
-        ),
-      );
+          requestAnimationFrame(() =>
+            listRef.current
+              ?.querySelector(`[data-index="${start}"]`)
+              ?.scrollIntoView({ block: 'center' }),
+          ),
+        );
+      }
     }
-  }, [flat, currentId, highlight]);
+  }, [flat, currentId, highlight.index]);
 
   // The server has no search, so a search pulls the older pages in too.
   useEffect(() => {
@@ -123,7 +163,8 @@ export function ChatHistoryList({
     fetchNextPage,
   ]);
 
-  const loadMoreNearEnd = () => {
+  const onScroll = () => {
+    measureEdges();
     const el = listRef.current;
     if (
       el &&
@@ -137,12 +178,17 @@ export function ChatHistoryList({
 
   const moveHighlight = (delta: number) => {
     if (flat.length === 0) return;
-    const next = Math.min(Math.max(highlight + delta, 0), flat.length - 1);
-    setHighlight(next);
+    const next = Math.min(
+      Math.max(highlight.index + delta, 0),
+      flat.length - 1,
+    );
+    setHighlight({ index: next, by: 'keyboard' });
     listRef.current
       ?.querySelector(`[data-index="${next}"]`)
       ?.scrollIntoView({ block: 'nearest' });
   };
+
+  const focusSearch = useCallback(() => inputRef.current?.focus(), []);
 
   const open = (conversation: AgentConversation) => {
     markRead(conversation.id);
@@ -151,6 +197,7 @@ export function ChatHistoryList({
 
   const onSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.nativeEvent.isComposing) return;
+    const picked = flat[highlight.index];
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
@@ -160,51 +207,78 @@ export function ChatHistoryList({
         event.preventDefault();
         moveHighlight(-1);
         break;
-      case 'Enter': {
-        const picked = flat[highlight];
+      case 'Home':
+      case 'End':
+        if (!query) {
+          event.preventDefault();
+          moveHighlight(event.key === 'Home' ? -flat.length : flat.length);
+        }
+        break;
+      case 'Enter':
         if (picked) {
           event.preventDefault();
           open(picked);
         }
         break;
-      }
+      case 'F2':
+        if (picked) {
+          event.preventDefault();
+          setEditingId(picked.id);
+        }
+        break;
+      case 'ContextMenu':
+      case 'F10':
+        if (picked && (event.key === 'ContextMenu' || event.shiftKey)) {
+          event.preventDefault();
+          setHighlight((h) => ({ ...h, by: 'keyboard' }));
+          setMenuFor(picked.id);
+        }
+        break;
       case 'Escape':
         if (query) {
           event.preventDefault();
           event.stopPropagation();
           setQuery('');
-          setHighlight(-1);
+          setHighlight({ index: -1, by: null });
         }
         break;
     }
   };
 
-  const activeOption = flat[highlight];
+  const activeOption = flat[highlight.index];
   let index = -1;
 
   return (
     <div className={cn('flex min-h-0 flex-col', className)}>
-      <div className="relative mx-3 mb-2 shrink-0">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-gray-10" />
+      <div
+        className={cn(
+          'relative z-10 shrink-0 border-b bg-(--history-bg) px-3 pt-1 pb-2 transition-colors duration-150',
+          edges.top ? 'border-gray-5' : 'border-transparent',
+        )}
+      >
+        <Search className="pointer-events-none absolute top-[calc(50%-2px)] left-5.5 size-3.5 -translate-y-1/2 text-gray-10" />
         <input
           ref={inputRef}
           autoFocus
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
-            setHighlight(-1);
+            setHighlight({ index: -1, by: null });
             listRef.current?.scrollTo({ top: 0 });
           }}
           onKeyDown={onSearchKeyDown}
           placeholder={t('Search chats')}
           aria-label={t('Search chats')}
+          aria-keyshortcuts="F2 Shift+F10"
           role="combobox"
           aria-expanded
           aria-controls={listId}
           aria-activedescendant={
-            activeOption ? `${listId}-${activeOption.id}` : undefined
+            activeOption && highlight.by
+              ? `${listId}-${activeOption.id}`
+              : undefined
           }
-          className="h-8 w-full rounded-lg border border-gray-6 bg-transparent pr-8 pl-8 text-sm text-gray-12 transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-gray-10 hover:border-gray-7 focus-visible:border-gray-8 focus-visible:ring-2 focus-visible:ring-gray-8/10"
+          className={cn(inputClass, 'h-8 pr-8 pl-8 shadow-none md:text-sm')}
         />
         {query && (
           <button
@@ -212,10 +286,10 @@ export function ChatHistoryList({
             aria-label={t('Clear search')}
             onClick={() => {
               setQuery('');
-              setHighlight(-1);
-              inputRef.current?.focus();
+              setHighlight({ index: -1, by: null });
+              focusSearch();
             }}
-            className="absolute top-1/2 right-1.5 flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-gray-10 transition-colors duration-100 hover:bg-gray-4 hover:text-gray-12"
+            className="absolute top-[calc(50%-2px)] right-4.5 flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-gray-10 transition-colors duration-100 hover:bg-gray-4 hover:text-gray-12"
           >
             <X className="size-3" />
           </button>
@@ -226,8 +300,12 @@ export function ChatHistoryList({
         id={listId}
         role="listbox"
         aria-label={t('Chat history')}
-        onScroll={loadMoreNearEnd}
+        onScroll={onScroll}
+        onMouseLeave={() =>
+          setHighlight((h) => (h.by === 'pointer' ? { ...h, by: null } : h))
+        }
         className="min-h-0 flex-auto overflow-y-auto overscroll-contain px-2 pb-2"
+        style={edges.bottom ? BOTTOM_FADE : undefined}
       >
         {isLoading ? (
           <HistorySkeleton />
@@ -246,7 +324,7 @@ export function ChatHistoryList({
             title={t('No chats yet')}
             body={t('Your conversations will show up here.')}
             action={
-              <Button variant="outline" size="xs" onClick={onNewChat}>
+              <Button variant="outline" size="xs" onClick={() => onNewChat()}>
                 {t('Start a chat')}
               </Button>
             }
@@ -261,19 +339,23 @@ export function ChatHistoryList({
         ) : (
           groups.map((group) => (
             <div key={group.label} role="group" aria-label={group.label}>
-              <div className="px-2 pt-3 pb-1 text-xs font-medium text-gray-10 first:pt-1">
+              {/* Sticky, with a short fade below it so rows slide under
+                  instead of being cut at a hard line. */}
+              <div className="sticky top-0 z-[1] -mx-2 bg-(--history-bg) px-4 pt-2.5 pb-1 text-xs font-medium text-gray-10 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-3 after:bg-linear-to-b after:from-(--history-bg) after:to-transparent">
                 {group.label}
               </div>
               {group.items.map((conversation) => {
                 index += 1;
                 const rowIndex = index;
+                const highlighted =
+                  rowIndex === highlight.index ? highlight.by : null;
                 return editingId === conversation.id ? (
                   <RenameRow
                     key={conversation.id}
                     initial={conversation.title ?? ''}
                     onDone={(title) => {
                       setEditingId(null);
-                      inputRef.current?.focus();
+                      focusSearch();
                       const next = title?.trim();
                       if (next && next !== conversation.title) {
                         void rename(conversation.id, next);
@@ -286,17 +368,25 @@ export function ChatHistoryList({
                     id={`${listId}-${conversation.id}`}
                     index={rowIndex}
                     conversation={conversation}
-                    highlighted={rowIndex === highlight}
+                    highlighted={highlighted}
+                    tabbable={rowIndex === highlight.index}
                     current={conversation.id === currentId}
                     indicator={getIndicator(conversation)}
-                    onHover={() => setHighlight(rowIndex)}
+                    menuOpen={menuFor === conversation.id}
+                    onMenuOpenChange={(next) =>
+                      setMenuFor(next ? conversation.id : null)
+                    }
+                    onHover={() =>
+                      setHighlight({ index: rowIndex, by: 'pointer' })
+                    }
                     onOpen={() => open(conversation)}
                     onRename={() => setEditingId(conversation.id)}
                     onDelete={() => {
                       void remove(conversation.id);
                       if (conversation.id === currentId) onNewChat();
-                      inputRef.current?.focus();
+                      focusSearch();
                     }}
+                    onMenuClosed={focusSearch}
                   />
                 );
               })}
@@ -314,42 +404,41 @@ export function ChatHistoryList({
   );
 }
 
-function HistoryRow({
+const HistoryRow = memo(function HistoryRow({
   id,
   index,
   conversation,
   highlighted,
+  tabbable,
   current,
   indicator,
+  menuOpen,
+  onMenuOpenChange,
   onHover,
   onOpen,
   onRename,
   onDelete,
-}: {
-  id: string;
-  index: number;
-  conversation: AgentConversation;
-  highlighted: boolean;
-  current: boolean;
-  indicator: ConversationIndicatorState | null;
-  onHover: () => void;
-  onOpen: () => void;
-  onRename: () => void;
-  onDelete: () => void;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  onMenuClosed,
+}: HistoryRowProps) {
+  const active = highlighted !== null || menuOpen;
+  const renaming = useRef(false);
   return (
     <div
       id={id}
       data-index={index}
       role="option"
-      aria-selected={highlighted}
+      aria-selected={highlighted !== null}
       aria-current={current || undefined}
-      onMouseMove={highlighted ? undefined : onHover}
+      onMouseMove={highlighted === 'pointer' ? undefined : onHover}
       onClick={onOpen}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        onMenuOpenChange(true);
+      }}
       className={cn(
-        'relative flex h-9 cursor-pointer items-center gap-2 rounded-lg pr-1 pl-3 text-sm transition-colors duration-100 active:bg-gray-4',
-        (highlighted || menuOpen) && 'bg-gray-3',
+        'relative flex h-9 cursor-pointer items-center gap-2 rounded-lg pr-1 pl-3 text-sm transition-[background-color,box-shadow] duration-100 active:bg-gray-4',
+        active && 'bg-gray-3',
+        highlighted === 'keyboard' && 'ring-1 ring-gray-7 ring-inset',
       )}
     >
       {current && (
@@ -362,7 +451,7 @@ function HistoryRow({
         title={conversationTitle(conversation)}
         className={cn(
           'min-w-0 flex-1 truncate',
-          conversation.title ? 'text-gray-12' : 'text-gray-11',
+          conversation.title || current ? 'text-gray-12' : 'text-gray-11',
           current && 'font-medium',
         )}
       >
@@ -375,22 +464,23 @@ function HistoryRow({
           title={new Date(conversation.updated).toLocaleString()}
           className={cn(
             'pr-1.5 text-xs text-gray-10 tabular-nums transition-opacity duration-100',
-            (highlighted || menuOpen) && 'opacity-0',
+            active && 'opacity-0',
           )}
         >
           {relativeTime(conversation.updated)}
         </time>
-        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenu open={menuOpen} onOpenChange={onMenuOpenChange}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon-xs"
+              tabIndex={tabbable ? 0 : -1}
               aria-label={t('Chat actions')}
               onClick={(event) => event.stopPropagation()}
               className={cn(
-                'absolute right-0 text-gray-11 opacity-0 transition-opacity duration-100 focus-visible:opacity-100',
-                highlighted && 'opacity-100',
-                menuOpen && 'bg-gray-4 opacity-100',
+                'absolute right-0 text-gray-11 opacity-0 transition-opacity duration-100 hover:bg-gray-5 hover:text-gray-12 focus-visible:opacity-100',
+                active && 'opacity-100',
+                menuOpen && 'bg-gray-5 text-gray-12',
               )}
             >
               <Ellipsis />
@@ -400,11 +490,23 @@ function HistoryRow({
             align="end"
             className="w-36"
             onClick={(event) => event.stopPropagation()}
-            onCloseAutoFocus={(event) => event.preventDefault()}
+            // Back to the search, so arrows and Esc keep working; a rename
+            // takes focus itself.
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              if (!renaming.current) onMenuClosed();
+              renaming.current = false;
+            }}
           >
-            <DropdownMenuItem onSelect={onRename}>
+            <DropdownMenuItem
+              onSelect={() => {
+                renaming.current = true;
+                onRename();
+              }}
+            >
               <Pencil className="size-4" />
               {t('Rename')}
+              <kbd className="ml-auto font-sans text-xs text-gray-10">F2</kbd>
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={onDelete}
@@ -417,6 +519,22 @@ function HistoryRow({
         </DropdownMenu>
       </span>
     </div>
+  );
+},
+rowPropsEqual);
+
+// Row callbacks are rebuilt on every list render; the row only needs to
+// re-render when what it shows changes.
+function rowPropsEqual(prev: HistoryRowProps, next: HistoryRowProps) {
+  return (
+    prev.id === next.id &&
+    prev.index === next.index &&
+    prev.conversation === next.conversation &&
+    prev.highlighted === next.highlighted &&
+    prev.tabbable === next.tabbable &&
+    prev.current === next.current &&
+    prev.indicator === next.indicator &&
+    prev.menuOpen === next.menuOpen
   );
 }
 
@@ -461,14 +579,14 @@ function RenameRow({
           finish(null);
         }
       }}
-      className="h-9 w-full rounded-lg border border-gray-8 bg-transparent px-3 text-sm text-gray-12 outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/20"
+      className={cn(inputClass, 'h-9 px-3 shadow-none md:text-sm')}
     />
   );
 }
 
 function HistorySkeleton() {
   return (
-    <div aria-hidden className="flex flex-col px-2 pt-1">
+    <div aria-hidden className="flex flex-col px-2 pt-2.5">
       <Skeleton className="mb-3 h-3 w-12" />
       {SKELETON_WIDTHS.map((width, i) => (
         <div key={i} className="flex h-9 items-center justify-between gap-6">
@@ -505,5 +623,27 @@ function HistoryMessage({
   );
 }
 
+type HistoryRowProps = {
+  id: string;
+  index: number;
+  conversation: AgentConversation;
+  highlighted: Highlight['by'];
+  tabbable: boolean;
+  current: boolean;
+  indicator: ConversationIndicatorState | null;
+  menuOpen: boolean;
+  onMenuOpenChange: (open: boolean) => void;
+  onHover: () => void;
+  onOpen: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+  onMenuClosed: () => void;
+};
+
+type Highlight = { index: number; by: 'keyboard' | 'pointer' | null };
+
+const BOTTOM_FADE: React.CSSProperties = {
+  maskImage: 'linear-gradient(to bottom, black calc(100% - 24px), transparent)',
+};
 const LOAD_MORE_OFFSET_PX = 160;
 const SKELETON_WIDTHS = ['72%', '54%', '64%', '40%', '58%', '48%'];

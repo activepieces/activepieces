@@ -14,7 +14,7 @@ import {
   Popover as PopoverPrimitive,
   Tooltip as TooltipPrimitive,
 } from 'radix-ui';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
@@ -23,6 +23,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -33,6 +34,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  ChatLayout,
+  DOCK_BREAKPOINT,
+} from '@/features/workspace/lib/chat-layout';
 import {
   ChatPanelMode,
   useChatPanel,
@@ -48,90 +53,121 @@ import { ChatHistoryList } from './chat-history-list';
 import { historyMotion } from './chat-history-motion';
 import { ChatHistoryPopover } from './chat-history-popover';
 import { ChatPanelEmptyState } from './chat-panel-empty-state';
-import { defaultFloat, FLOAT_DEFAULT, fitToWindow } from './chat-window';
+import {
+  defaultFloat,
+  FLOAT_DEFAULT,
+  fitToWindow,
+  useChatLayout,
+  useWindowAtLeast,
+} from './chat-window';
 
 // The panel's header and the chat itself. Rendered once, above the routes, by
 // ChatChromeHost, so it survives page changes.
 //
-// History opens where it fits the panel: docked, it takes over the body with
-// the chat kept mounted (and streaming) underneath; floating, it drops down
-// from the header so the card keeps its size.
+// History opens where it fits the panel: docked or in the sheet, it takes over
+// the body with the chat kept mounted (and streaming) underneath; floating, it
+// drops down from the header so the card keeps its size.
+//
+// The chat body is memoized and reads nothing from the panel's store: opening,
+// closing, dragging and docking re-render only this thin chrome.
 export function ChatChrome({
   onDragStart,
 }: {
   onDragStart: (event: React.PointerEvent<HTMLElement>) => void;
 }) {
   const navigate = useNavigate();
-  const { open, mode, conversationId, setConversationId, setOpen } =
-    useChatPanel();
+  const layout = useChatLayout();
+  const open = useChatPanel((s) => s.open);
+  const conversationId = useChatPanel((s) => s.conversationId);
   const reduced = useReducedMotion();
-  const { invalidate } = useChatHistoryActions();
   // The chat box reads its conversation once, when it mounts. A new session
   // starts it fresh; a conversation it creates is only remembered.
-  const [session, setSession] = useState<ChatSession>({
+  const [session, setSession] = useState<ChatSession>(() => ({
     key: 0,
-    conversationId,
-  });
-  // History belongs to the layout it was opened in: moving or closing the
-  // panel drops it, without an effect to reset it.
-  const [historyIn, setHistoryIn] = useState<ChatPanelMode | null>(null);
+    conversationId: useChatPanel.getState().conversationId,
+  }));
+  // History belongs to the layout it was opened in: moving the panel, the
+  // window narrowing it to a card, or closing it drops it.
+  const [historyIn, setHistoryIn] = useState<ChatLayout | null>(null);
   const [liveTitle, setLiveTitle] = useState<LiveTitle | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const historyButtonRef = useRef<HTMLButtonElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
-  const floating = mode === 'float';
-  const historyOpen = open && historyIn === mode;
-  const historyView = historyOpen && !floating;
+  const sheet = layout === 'sheet';
+  const dropdown = layout === 'float';
+  const historyOpen = open && historyIn === layout;
+  const historyView = historyOpen && !dropdown;
   const title = useConversationTitle({
     conversationId,
     liveTitle: liveTitle?.id === conversationId ? liveTitle.title : null,
   });
 
-  const focusChat = () =>
-    requestAnimationFrame(() =>
-      chatRef.current?.querySelector('textarea')?.focus(),
-    );
-  const closeHistory = () => setHistoryIn(null);
-  const backToChat = () => {
-    closeHistory();
-    focusChat();
-  };
-  const startFresh = (prompt?: string) => {
-    setConversationId(null);
-    setSession((s) => ({ key: s.key + 1, conversationId: null, prompt }));
-    backToChat();
-  };
-  const openConversation = (id: string) => {
-    if (id !== conversationId) {
-      setConversationId(id);
-      setSession((s) => ({ key: s.key + 1, conversationId: id }));
-    }
-    backToChat();
-  };
+  // Picking the panel up drops history too, even before it lands anywhere.
+  useEffect(
+    () =>
+      useChatPanel.subscribe((state, prev) => {
+        if (state.gesture === 'dragging' && prev.gesture !== 'dragging') {
+          setHistoryIn(null);
+        }
+      }),
+    [],
+  );
 
-  // Esc steps back from the docked history before it may close the panel. An
-  // input with text gets the key first, to clear itself.
+  const focusChat = useCallback(
+    () =>
+      requestAnimationFrame(() =>
+        chatRef.current?.querySelector('textarea')?.focus(),
+      ),
+    [],
+  );
+  const backToChat = useCallback(() => {
+    setHistoryIn(null);
+    focusChat();
+  }, [focusChat]);
+  const startFresh = useCallback(
+    (prompt?: string) => {
+      useChatPanel.getState().setConversationId(null);
+      setSession((s) => ({ key: s.key + 1, conversationId: null, prompt }));
+      backToChat();
+    },
+    [backToChat],
+  );
+  const openConversation = useCallback(
+    (id: string) => {
+      if (id !== useChatPanel.getState().conversationId) {
+        useChatPanel.getState().setConversationId(id);
+        setSession((s) => ({ key: s.key + 1, conversationId: id }));
+      }
+      backToChat();
+    },
+    [backToChat],
+  );
+
+  // Esc steps back from the history view before it may close the panel. It
+  // listens on the document, after a drag's own Esc on the window, and leaves
+  // a search with text, a rename or an open menu to handle the key first.
   useEffect(() => {
     if (!historyView) return;
     const onKey = (event: KeyboardEvent) => {
       const target = event.target;
+      const panel = headerRef.current?.parentElement;
       if (
         event.key !== 'Escape' ||
         event.defaultPrevented ||
+        !(target instanceof Node && panel?.contains(target)) ||
         (target instanceof HTMLInputElement &&
           (target.value || target.getAttribute('role') !== 'combobox')) ||
-        document.querySelector('[role="dialog"], [role="menu"]')
+        document.querySelector('[role="menu"], [role="alertdialog"]')
       ) {
         return;
       }
       event.preventDefault();
-      closeHistory();
-      focusChat();
+      backToChat();
     };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [historyView]);
+    document.addEventListener('keydown', onKey, true);
+    return () => document.removeEventListener('keydown', onKey, true);
+  }, [historyView, backToChat]);
 
   const shift = historyMotion.shift(reduced);
   const historyList = (
@@ -139,25 +175,39 @@ export function ChatChrome({
       className="flex-1"
       currentId={conversationId}
       onSelect={openConversation}
-      onNewChat={() => startFresh()}
+      onNewChat={startFresh}
     />
   );
+  const openFullPage = () => {
+    useChatPanel.getState().setOpen(false);
+    navigate(conversationId ? `${CHAT_ROUTE}/${conversationId}` : CHAT_ROUTE);
+  };
 
   return (
     <TooltipProvider delayDuration={500} skipDelayDuration={300}>
       <PopoverPrimitive.Root
-        open={historyOpen && floating}
-        onOpenChange={(next) => !next && closeHistory()}
+        open={historyOpen && dropdown}
+        onOpenChange={(next) => !next && setHistoryIn(null)}
       >
         <PopoverPrimitive.Anchor asChild>
           <div
             ref={headerRef}
+            data-chat-header
             onPointerDown={onDragStart}
-            className="group/header relative flex h-14 shrink-0 cursor-grab touch-none items-center gap-2 pr-3 pl-4 select-none"
+            className={cn(
+              'group/header relative flex h-14 shrink-0 touch-none items-center gap-2 pr-3 pl-4 select-none',
+              sheet ? 'cursor-default' : 'cursor-grab',
+            )}
           >
+            {/* The grip: a hint on a card or dock, a real handle on a sheet. */}
             <span
               aria-hidden
-              className="absolute top-1.5 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full bg-gray-5 transition-colors duration-150 group-hover/header:bg-gray-8"
+              className={cn(
+                'absolute left-1/2 -translate-x-1/2 rounded-full transition-colors duration-150',
+                sheet
+                  ? 'top-2 h-1 w-9 bg-gray-6'
+                  : 'top-1.5 h-1 w-8 bg-gray-5 group-hover/header:bg-gray-7',
+              )}
             />
             <div className="grid min-w-0 flex-1 items-center">
               <AnimatePresence initial={false}>
@@ -195,27 +245,27 @@ export function ChatChrome({
                 ref={historyButtonRef}
                 label={historyOpen ? t('Hide history') : t('History')}
                 pressed={historyOpen}
-                onClick={() => setHistoryIn(historyOpen ? null : mode)}
+                onClick={() => setHistoryIn(historyOpen ? null : layout)}
               >
                 <History />
               </HeaderButton>
               <HeaderButton label={t('New chat')} onClick={() => startFresh()}>
                 <Plus />
               </HeaderButton>
-              <LayoutMenu
-                onOpenFullPage={() => {
-                  setOpen(false);
-                  navigate(
-                    conversationId
-                      ? `${CHAT_ROUTE}/${conversationId}`
-                      : CHAT_ROUTE,
-                  );
-                }}
-              />
+              {sheet ? (
+                <HeaderButton
+                  label={t('Open full page')}
+                  onClick={openFullPage}
+                >
+                  <Maximize2 />
+                </HeaderButton>
+              ) : (
+                <LayoutMenu layout={layout} onOpenFullPage={openFullPage} />
+              )}
               <HeaderButton
                 label={t('Close')}
                 shortcut={TOGGLE_SHORTCUT}
-                onClick={() => setOpen(false)}
+                onClick={() => useChatPanel.getState().setOpen(false)}
               >
                 <X />
               </HeaderButton>
@@ -223,7 +273,7 @@ export function ChatChrome({
           </div>
         </PopoverPrimitive.Anchor>
         <ChatHistoryPopover
-          open={historyOpen && floating}
+          open={historyOpen && dropdown}
           headerRef={headerRef}
           triggerRef={historyButtonRef}
           onEscape={focusChat}
@@ -247,22 +297,10 @@ export function ChatChrome({
           }
           className="absolute inset-0"
         >
-          <AIChatBox
-            key={session.key}
-            incognito={false}
-            compact
-            conversationId={session.conversationId}
-            initialPrompt={session.prompt}
-            onConversationCreated={(id) => {
-              setConversationId(id);
-              invalidate();
-            }}
-            onTitleUpdate={(next) => {
-              const id = useChatPanel.getState().conversationId;
-              if (id) setLiveTitle({ id, title: next });
-              invalidate();
-            }}
-            emptyState={<ChatPanelEmptyState onPick={startFresh} />}
+          <ChatBody
+            session={session}
+            onStartFresh={startFresh}
+            onLiveTitle={setLiveTitle}
           />
         </motion.div>
         <AnimatePresence initial={false}>
@@ -280,7 +318,7 @@ export function ChatChrome({
                 x: shift,
                 transition: historyMotion.viewOut(reduced),
               }}
-              className="absolute inset-0 flex flex-col pt-1"
+              className="absolute inset-0 flex flex-col bg-gray-1 [--history-bg:var(--color-gray-1)]"
             >
               {historyList}
             </motion.div>
@@ -290,6 +328,39 @@ export function ChatChrome({
     </TooltipProvider>
   );
 }
+
+// The chat itself. Its props only change when a chat starts or is switched,
+// so nothing the panel does around it re-renders the conversation.
+const ChatBody = memo(function ChatBody({
+  session,
+  onStartFresh,
+  onLiveTitle,
+}: {
+  session: ChatSession;
+  onStartFresh: (prompt?: string) => void;
+  onLiveTitle: (title: LiveTitle) => void;
+}) {
+  const { invalidate } = useChatHistoryActions();
+  return (
+    <AIChatBox
+      key={session.key}
+      incognito={false}
+      compact
+      conversationId={session.conversationId}
+      initialPrompt={session.prompt}
+      onConversationCreated={(id) => {
+        useChatPanel.getState().setConversationId(id);
+        invalidate();
+      }}
+      onTitleUpdate={(next) => {
+        const id = useChatPanel.getState().conversationId;
+        if (id) onLiveTitle({ id, title: next });
+        invalidate();
+      }}
+      emptyState={<ChatPanelEmptyState onPick={onStartFresh} />}
+    />
+  );
+});
 
 function titleFade(reduced: boolean | null) {
   return {
@@ -322,7 +393,7 @@ function HeaderButton({
           aria-label={label}
           aria-pressed={pressed}
           className={cn(
-            'text-gray-11 transition-colors duration-150 active:bg-gray-5',
+            'text-gray-11 transition-colors duration-150 hover:text-gray-12 active:bg-gray-5 data-[state=open]:bg-gray-4 data-[state=open]:text-gray-12',
             pressed && 'bg-gray-4 text-gray-12',
             className,
           )}
@@ -360,20 +431,28 @@ const LAYOUTS: {
   { mode: 'float', label: 'Floating', icon: PictureInPicture2 },
 ];
 
-// The button shows where the panel sits now; its menu moves it, or hands the
+// The button shows where the panel sits now, which in a narrow window may not
+// be where the user asked for it; the menu says why and moves it, or hands the
 // conversation to the full chat page.
-function LayoutMenu({ onOpenFullPage }: { onOpenFullPage: () => void }) {
-  const { mode, float, floatSize, dock, floatAt } = useChatPanel();
+function LayoutMenu({
+  layout,
+  onOpenFullPage,
+}: {
+  layout: ChatLayout;
+  onOpenFullPage: () => void;
+}) {
+  const canDock = useWindowAtLeast(DOCK_BREAKPOINT);
   const CurrentIcon =
-    LAYOUTS.find((layout) => layout.mode === mode)?.icon ?? PanelLeft;
+    LAYOUTS.find((option) => option.mode === layout)?.icon ?? PanelLeft;
 
   const moveTo = (next: string) => {
+    const panel = useChatPanel.getState();
     if (next === 'left' || next === 'right') {
-      dock(next);
+      panel.dock(next);
       return;
     }
-    const size = fitToWindow(floatSize ?? FLOAT_DEFAULT);
-    floatAt(float ?? defaultFloat(size));
+    const size = fitToWindow(panel.floatSize ?? FLOAT_DEFAULT);
+    panel.floatAt(panel.float ?? defaultFloat(size));
   };
 
   return (
@@ -383,15 +462,24 @@ function LayoutMenu({ onOpenFullPage }: { onOpenFullPage: () => void }) {
           <CurrentIcon />
         </HeaderButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuRadioGroup value={mode} onValueChange={moveTo}>
-          {LAYOUTS.map(({ mode: layout, label, icon: Icon }) => (
-            <DropdownMenuRadioItem key={layout} value={layout}>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuRadioGroup value={layout} onValueChange={moveTo}>
+          {LAYOUTS.map(({ mode, label, icon: Icon }) => (
+            <DropdownMenuRadioItem
+              key={mode}
+              value={mode}
+              disabled={mode !== 'float' && !canDock}
+            >
               <Icon className="size-4" />
               {t(label)}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
+        {!canDock && (
+          <DropdownMenuLabel className="pt-1 pl-8 text-xs font-normal text-gray-10">
+            {t('Docking needs a wider window')}
+          </DropdownMenuLabel>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onOpenFullPage} className="pl-8">
           <Maximize2 className="size-4" />

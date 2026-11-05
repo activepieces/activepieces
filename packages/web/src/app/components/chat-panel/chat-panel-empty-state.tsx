@@ -30,8 +30,10 @@ export function ChatPanelEmptyState({
           <button
             key={suggestion}
             type="button"
+            title={t(suggestion)}
             onClick={() => onPick(t(suggestion))}
-            className="rounded-full border px-3 py-1.5 text-left text-sm text-gray-11 transition-colors duration-150 hover:bg-gray-3 hover:text-gray-12"
+            // One line each: a wrapped pill reads as a blob in a narrow panel.
+            className="max-w-full truncate rounded-full border px-3 py-1.5 text-left text-sm text-gray-11 transition-colors duration-150 outline-none hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8 active:bg-gray-4"
           >
             {t(suggestion)}
           </button>
