@@ -820,7 +820,13 @@
                   ]
                }
             ]
-         }
+        },
+        {
+          "tab": "Managing Memory and Queues",
+          "pages": [
+            "untitled-page"
+          ]
+        }
       ],
       "global": {}
    },
