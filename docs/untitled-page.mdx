@@ -240,10 +240,10 @@ If one flow does several heavy jobs in a row (for example: export data, then cle
 1. Open the failed run and find the step where it stopped.
 2. Look at what that step and the steps before it produced. Look for very long lists, big files or large blocks of text.
 3. **Pick the fix that matches:**
-   - A step brings in too much data → filter or limit it (tip 1).
-   - A loop with many rounds → move the loop's work into a separate flow (tip 3).
-   - A big CSV file → use Stream CSV to Subflows (tip 4).
-   - A big file → use an action from tip 5 and pass the file, not its contents (tip 6).
+   - A step brings in too much data → filter or limit it ([tip 1](https://app.mintlify.com/activepieces/activepieces/editor/ginikachukwu%2Fdraft-nov-5/&#x7E;/cfaaa836-06e3-46cb-9e16-746f708a3990#1-only-bring-in-the-data-you-need)).
+   - A loop with many rounds → move the loop's work into a separate flow ([tip 3](https://app.mintlify.com/activepieces/activepieces/editor/ginikachukwu%2Fdraft-nov-5/&#x7E;/cfaaa836-06e3-46cb-9e16-746f708a3990#3-move-heavy-loop-work-into-a-separate-flow)).
+   - A big CSV file → use Stream CSV to Subflows ([tip 4](https://app.mintlify.com/activepieces/activepieces/editor/ginikachukwu%2Fdraft-nov-5/&#x7E;/cfaaa836-06e3-46cb-9e16-746f708a3990#4-big-csv-files-use-stream-csv-to-subflows)).
+   - A big file → use an action from tip 5 and pass the file, not its contents ([tip 6](https://app.mintlify.com/activepieces/activepieces/editor/ginikachukwu%2Fdraft-nov-5/&#x7E;/cfaaa836-06e3-46cb-9e16-746f708a3990#6-pass-the-file-not-whats-inside-it)).
    - A Code step → make it return and load less (tip 8).
 4. **Test the flow again.**
 
