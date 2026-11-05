@@ -9,7 +9,6 @@ import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const OWNER_ID = 'owner-1';
-const LEAVES_LABEL = 'Leaves Oct 26';
 
 let users: TestUser[] = [];
 let invitations: TestInvitation[] = [];
@@ -134,7 +133,7 @@ beforeEach(() => {
   refreshBillingCaches.mockReset();
 });
 
-describe('DeactivateUsersDialog preselection', () => {
+describe('DeactivateUsersDialog selection', () => {
   it('shows a retry instead of empty lists when the users cannot load', async () => {
     const refetch = vi.fn().mockResolvedValue(undefined);
     allUsers.mockImplementation(() => ({
@@ -143,11 +142,7 @@ describe('DeactivateUsersDialog preselection', () => {
       refetch,
     }));
 
-    renderDialog({
-      targetSeats: 1,
-      currentUsers: 3,
-      preselectedUserIds: ['a'],
-    });
+    renderDialog({ targetSeats: 1, currentUsers: 3 });
 
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
     expect(submitButton().disabled).toBe(true);
@@ -155,23 +150,7 @@ describe('DeactivateUsersDialog preselection', () => {
     await waitFor(() => expect(refetch).toHaveBeenCalled());
   });
 
-  it('starts with the preselected users ticked and labels them', () => {
-    users = [user(OWNER_ID), user('a'), user('b'), user('c')];
-
-    renderDialog({
-      targetSeats: 2,
-      currentUsers: 4,
-      preselectedUserIds: ['a', 'b'],
-      preselectedLabel: LEAVES_LABEL,
-    });
-
-    expect(tickedStates()).toEqual(['true', 'true', 'false']);
-    expect(screen.getAllByText(LEAVES_LABEL)).toHaveLength(2);
-    expect(screen.getAllByText('Operator')).toHaveLength(1);
-    expect(submitButton().disabled).toBe(false);
-  });
-
-  it('shows the role of every user while nobody is preselected', () => {
+  it('starts with nobody ticked and shows the role of every user', () => {
     users = [user(OWNER_ID), user('a'), user('b')];
 
     renderDialog({ targetSeats: 1, currentUsers: 3 });
@@ -181,66 +160,15 @@ describe('DeactivateUsersDialog preselection', () => {
     expect(submitButton().disabled).toBe(true);
   });
 
-  it('ignores preselected users who cannot be deactivated', () => {
-    users = [
-      user(OWNER_ID),
-      user('a'),
-      { ...user('gone'), status: UserStatus.INACTIVE },
-    ];
-
-    renderDialog({
-      targetSeats: 1,
-      currentUsers: 3,
-      preselectedUserIds: [OWNER_ID, 'a', 'gone', 'unknown'],
-      preselectedLabel: LEAVES_LABEL,
-    });
-
-    expect(tickedStates()).toEqual(['true']);
-    expect(screen.getAllByText(LEAVES_LABEL)).toHaveLength(1);
-    expect(submitButton().disabled).toBe(true);
-  });
-
-  it('applies the preselection to users who arrive after the dialog opens', () => {
-    const { rerender } = renderDialog({
-      targetSeats: 1,
-      currentUsers: 3,
-      preselectedUserIds: ['a', 'b'],
-    });
-    expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
-
-    users = [user(OWNER_ID), user('a'), user('b')];
-    rerender({});
-
-    expect(tickedStates()).toEqual(['true', 'true']);
-    expect(submitButton().disabled).toBe(false);
-  });
-
-  it('keeps its starting selection when the preselection changes while open', () => {
-    users = [user(OWNER_ID), user('a'), user('b')];
-    const { rerender } = renderDialog({
-      targetSeats: 1,
-      currentUsers: 3,
-      preselectedUserIds: ['a'],
-    });
-    expect(tickedStates()).toEqual(['true', 'false']);
-
-    rerender({ preselectedUserIds: ['b'] });
-
-    expect(tickedStates()).toEqual(['true', 'false']);
-  });
-
-  it('lets the admin change who leaves before deactivating', async () => {
+  it('deactivates the users the admin ticks once they fit the plan', async () => {
     users = [user(OWNER_ID), user('a'), user('b'), user('c')];
     const { onOpenChange, onConfirmed } = renderDialog({
       targetSeats: 2,
       currentUsers: 4,
-      preselectedUserIds: ['a', 'b'],
-      preselectedLabel: LEAVES_LABEL,
     });
 
-    const [first, , third] = screen.getAllByRole('checkbox');
-    fireEvent.click(first);
-    expect(tickedStates()).toEqual(['false', 'true', 'false']);
+    const [, second, third] = screen.getAllByRole('checkbox');
+    fireEvent.click(second);
     expect(submitButton().disabled).toBe(true);
 
     fireEvent.click(third);

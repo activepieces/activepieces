@@ -4,7 +4,7 @@ import { system } from '../../helper/system/system'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { TRIAL_SEAT_GRACE_SWEEP_CRON, TRIAL_SEAT_GRACE_SWEEP_RETRY, trialSeatGrace } from '../platform/platform-plan/trial-seat-grace'
+import { TRIAL_SEAT_GRACE_SWEEP_CRON, TRIAL_SEAT_GRACE_SWEEP_RETRY, trialSeatCleanup } from '../platform/platform-plan/trial-seat-cleanup'
 import { licenseKeyUsageReportService } from './license-key-usage-report-service'
 
 export const licenseKeyUsageReportModule: FastifyPluginAsyncZod = async (app) => {
@@ -29,7 +29,7 @@ export const licenseKeyUsageReportModule: FastifyPluginAsyncZod = async (app) =>
     }
 
     systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_SEAT_GRACE_SWEEP, async () => {
-        await trialSeatGrace(app.log).sweep()
+        await trialSeatCleanup(app.log).sweep()
     })
 
     await systemJobsSchedule(app.log).upsertJob({

@@ -158,7 +158,7 @@ describe('sidebar usage card during the seat grace', () => {
 
     expect(
       screen.getByText(
-        "Users added during the trial beyond the plan's 5 seats will be deactivated on Oct 26. Manage seats, or upgrade to keep them.",
+        "Users and invitations added during the trial beyond the plan's 5 seats will be removed on Oct 26. Manage seats, or upgrade to keep them.",
       ),
     ).toBeTruthy();
     const line = screen.getByRole('button', {

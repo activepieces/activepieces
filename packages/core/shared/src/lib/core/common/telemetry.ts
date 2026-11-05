@@ -65,6 +65,7 @@ type TrialSeatsDeactivated = {
     platformId: string
     plan: string
     deactivatedUsers: number
+    revokedInvites: number
 }
 
 type InviteSent = {

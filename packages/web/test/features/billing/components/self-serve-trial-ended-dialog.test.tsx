@@ -17,7 +17,7 @@ const GRACE_ENDS_AT = new Date(2026, 9, 26, 12, 0, 0).toISOString();
 const state = vi.hoisted<TestState>(() => ({
   endsAt: '',
   graceEndsAt: null,
-  userIds: null,
+  seats: null,
 }));
 
 vi.mock('@/hooks/platform-hooks', () => ({
@@ -44,12 +44,12 @@ vi.mock('@/features/billing/hooks/billing-hooks', () => ({
   billingQueries: {
     usePlatformSubscription: () => ({
       data: {
-        plan: { plan: 'team' },
+        plan: { plan: 'team', usersLimit: state.seats?.usersLimit ?? null },
         autumnPlanName: 'Team',
-        seatGrace:
-          state.userIds === null
-            ? null
-            : { usedSeats: 9, userIds: state.userIds },
+        usage: {
+          activeUsers: state.seats?.activeUsers ?? 0,
+          invitedSeats: state.seats?.pendingInvitations ?? 0,
+        },
       },
     }),
   },
@@ -74,7 +74,7 @@ beforeAll(async () => {
 beforeEach(() => {
   window.localStorage.clear();
   state.graceEndsAt = null;
-  state.userIds = null;
+  state.seats = null;
   billingDialogHooks.useTrialSeatDialogStore.setState({ isOpen: false });
 });
 
@@ -83,36 +83,36 @@ describe('seat grace after the trial', () => {
     state.endsAt = dayjs().subtract(2, 'day').toISOString();
   });
 
-  it('warns how many users are over the plan and when they are deactivated', () => {
+  it('states the seats and what happens to the extra ones on the deadline', () => {
     state.graceEndsAt = GRACE_ENDS_AT;
-    state.userIds = ['a', 'b', 'c'];
+    state.seats = { activeUsers: 4, pendingInvitations: 2, usersLimit: 3 };
 
     render(<SelfServeTrialEndedDialog />);
 
     expect(
       screen.getByText(
-        "3 users added during the trial are over Team's seats and will be deactivated on Oct 26.",
+        'Team includes 3 seats. You have 4 active users and 2 pending invitations. On Oct 26, the pending invitations sent during the trial will be deleted first, then the users added during the trial will be deactivated as needed to fit your seats.',
       ),
     ).toBeDefined();
     expect(screen.getByRole('button', { name: 'Manage seats' })).toBeDefined();
   });
 
-  it('says is for a single user', () => {
+  it('uses the singular for one seat and one invitation', () => {
     state.graceEndsAt = GRACE_ENDS_AT;
-    state.userIds = ['a'];
+    state.seats = { activeUsers: 2, pendingInvitations: 1, usersLimit: 1 };
 
     render(<SelfServeTrialEndedDialog />);
 
     expect(
       screen.getByText(
-        "1 user added during the trial is over Team's seats and will be deactivated on Oct 26.",
+        'Team includes 1 seat. You have 2 active users and 1 pending invitation. On Oct 26, the pending invitations sent during the trial will be deleted first, then the users added during the trial will be deactivated as needed to fit your seats.',
       ),
     ).toBeDefined();
   });
 
   it('closes, remembers it was seen and opens the seat dialog from Manage seats', () => {
     state.graceEndsAt = GRACE_ENDS_AT;
-    state.userIds = ['a', 'b'];
+    state.seats = { activeUsers: 4, pendingInvitations: 0, usersLimit: 2 };
     render(<SelfServeTrialEndedDialog />);
     expect(screen.queryByText('seat check')).toBeNull();
 
@@ -129,7 +129,7 @@ describe('seat grace after the trial', () => {
   });
 
   it('leaves seats out when no grace is running', () => {
-    state.userIds = ['a', 'b'];
+    state.seats = { activeUsers: 4, pendingInvitations: 0, usersLimit: 2 };
 
     render(<SelfServeTrialEndedDialog />);
 
@@ -153,5 +153,9 @@ describe('seat grace after the trial', () => {
 type TestState = {
   endsAt: string;
   graceEndsAt: string | null;
-  userIds: string[] | null;
+  seats: {
+    activeUsers: number;
+    pendingInvitations: number;
+    usersLimit: number;
+  } | null;
 };
