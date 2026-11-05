@@ -203,7 +203,7 @@ async function returnJobToQueue({ jobId, token, queueName, log, isDisconnectRecl
 }
 
 async function failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueName, log, reclaimCount }: { job: Job, jobId: string, jobData: JobData, token: string, queueName: string, log: FastifyBaseLogger, reclaimCount: number }): Promise<void> {
-    const reason = `Job disconnected its worker ${reclaimCount} times without completing — likely OOM-killing the sandbox`
+    const reason = `Job disconnected its worker ${reclaimCount} times without completing — marking as failed to stop endless redelivery`
     log.error({ queueName, job: { id: jobId }, reclaimCount }, '[jobBroker#returnJobToQueue] Failing job after repeated worker disconnects')
     const error = new UnrecoverableError(reason)
     const waitingCaller = callerWaitingForResponse(jobData)
@@ -211,11 +211,6 @@ async function failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueNam
     const { error: finalizeError } = await tryCatch(async () => {
         if (waitingCaller) {
             await job.moveToCompleted({ response: undefined }, token, false)
-            await engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
-                status: EngineResponseStatus.INTERNAL_ERROR,
-                response: undefined,
-                error: reason,
-            })
             return
         }
         await job.moveToFailed(error, token, false)
@@ -229,6 +224,16 @@ async function failRepeatedlyReclaimedJob({ job, jobId, jobData, token, queueNam
             jobFailureLogger.logJobFailed({ queueName, jobId, jobType: jobData.jobType, error, log })
         }
         await jobReclaimCount.clear({ jobId, log })
+        if (waitingCaller) {
+            const { error: publishError } = await tryCatch(() => engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
+                status: EngineResponseStatus.INTERNAL_ERROR,
+                response: undefined,
+                error: reason,
+            }))
+            if (publishError) {
+                log.error({ job: { id: jobId }, error: String(publishError) }, '[jobBroker#returnJobToQueue] Failed to notify waiting caller of repeatedly-reclaimed job')
+            }
+        }
     }
 
     for (const interceptor of interceptors) {
