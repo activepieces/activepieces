@@ -40,25 +40,21 @@ const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
       case PropertyType.COLOR:
         return {
           ...acc,
-          [key]: '',
+          [key]: value.defaultValue ?? '',
         };
       case PropertyType.CHECKBOX:
         return {
           ...acc,
-          [key]: false,
+          [key]: value.defaultValue ?? false,
         };
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
       case PropertyType.MULTI_SELECT_DROPDOWN:
       case PropertyType.DATE_TIME:
-        return {
-          ...acc,
-          [key]: null,
-        };
       case PropertyType.FILE:
         return {
           ...acc,
-          [key]: null,
+          [key]: value.defaultValue ?? null,
         };
     }
   }, {} as Record<string, unknown>);
