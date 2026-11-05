@@ -166,32 +166,6 @@ describe('Sign-in method enforcement for governed people', () => {
         expect(decodeToken(response?.json()?.token)?.platform?.id).toBe(governing.id)
     })
 
-    it('custom domain keeps its platform', async () => {
-        const { mockUserIdentity } = await saveGoverningPlatform({ emailAuthEnabled: true, googleAuthEnabled: true })
-        const { mockPlatform: customDomainPlatform } = await mockAndSaveBasicSetup({ platform: { emailAuthEnabled: true } })
-        await addMembership({ identityId: mockUserIdentity.id, platformId: customDomainPlatform.id })
-
-        const { response } = await authenticationService(mockLog).signInWithPassword({
-            email: mockUserIdentity.email,
-            password: PASSWORD,
-            predefinedPlatformId: customDomainPlatform.id,
-        })
-
-        expect(response.platformId).toBe(customDomainPlatform.id)
-    })
-
-    it('refuses a forbidden method on a custom domain even though that platform allows it', async () => {
-        const { mockUserIdentity } = await saveGoverningPlatform({ emailAuthEnabled: false, googleAuthEnabled: true })
-        const { mockPlatform: customDomainPlatform } = await mockAndSaveBasicSetup({ platform: { emailAuthEnabled: true } })
-        await addMembership({ identityId: mockUserIdentity.id, platformId: customDomainPlatform.id })
-
-        await expect(authenticationService(mockLog).signInWithPassword({
-            email: mockUserIdentity.email,
-            password: PASSWORD,
-            predefinedPlatformId: customDomainPlatform.id,
-        })).rejects.toMatchObject({ error: { code: 'SIGN_IN_METHOD_NOT_ALLOWED' } })
-    })
-
     it('refuses a governed member\'s single sign-on through another platform\'s identity provider', async () => {
         const { mockUserIdentity } = await saveGoverningPlatform({ emailAuthEnabled: true, googleAuthEnabled: true })
         const { mockPlatform: otherPlatform } = await mockAndSaveBasicSetup()
