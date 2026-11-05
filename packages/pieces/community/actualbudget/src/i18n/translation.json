@@ -78,7 +78,7 @@
   "Whether the transaction has cleared": "Whether the transaction has cleared",
   "Raw description from the bank, kept as the original value": "Raw description from the bank, kept as the original value",
   "ID of the account to import into (from Get Accounts / List Accounts)": "ID of the account to import into (from Get Accounts / List Accounts)",
-  "JSON array of transactions. date = YYYY-MM-DD, amount = integer cents (negative = expense, -1250 = -12.50). Optional: payee_name, category (ID), notes, imported_id, cleared.": "JSON array of transactions. date = YYYY-MM-DD, amount = integer cents (negative = expense, -1250 = -12.50). Optional: payee_name, category (ID), notes, imported_id, cleared.",
+  "JSON array of transactions. date = YYYY-MM-DD, amount = integer cents as a number or string like \"-1250\" (negative = expense, -1250 = -12.50). Optional: payee_name, category (ID), notes, imported_id, cleared.": "JSON array of transactions. date = YYYY-MM-DD, amount = integer cents as a number or string like \"-1250\" (negative = expense, -1250 = -12.50). Optional: payee_name, category (ID), notes, imported_id, cleared.",
   "Month in YYYY-MM format, e.g. 2026-10": "Month in YYYY-MM format, e.g. 2026-10",
   "Account ID from List Accounts": "Account ID from List Accounts",
   "YYYY-MM-DD": "YYYY-MM-DD",
