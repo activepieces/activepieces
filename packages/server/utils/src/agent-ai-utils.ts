@@ -1,8 +1,8 @@
-import { ActivepiecesAiBilling, AIProviderName, isNil, spreadIfDefined, toError } from '@activepieces/core-utils';
+import { ActivepiecesAiBilling, AIProviderName, isNil, isObject, spreadIfDefined, toError } from '@activepieces/core-utils';
 import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
 import { agentProviderOptions } from './agent-provider-options'
 import { AI_TRACE_RUNTIME_CONTEXT, AiTraceContext, aiObservability } from './ai-observability'
-import { ModelMessage, TelemetryOptions } from 'ai'
+import { ModelMessage, Telemetry, TelemetryOptions } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
 import { modelCatalog } from './model-catalog'
 import { wideEvent } from './wide-event'
@@ -143,17 +143,22 @@ function effectiveToolNamesByCallId(messages: ModelMessage[]): Map<string, strin
     }))
 }
 
+function isTelemetryIntegration(candidate: unknown): candidate is Telemetry {
+    return isObject(candidate)
+}
+
 function buildTelemetry({ functionId, billing }: { functionId: string, billing?: ActivepiecesAiBilling }): AgentTelemetry {
     const logger = wideEvent.current()
     const posthog = aiObservability.integration()
     if (isNil(logger) && isNil(posthog)) {
         return {}
     }
-    const integrations = [
+    const candidates: unknown[] = [
         ...(isNil(logger) ? [] : [createEvlogIntegration(logger)]),
         ...(isNil(posthog) ? [] : [posthog]),
         ...(globalThis.AI_SDK_TELEMETRY_INTEGRATIONS ?? []),
     ]
+    const integrations = candidates.filter(isTelemetryIntegration)
     if (isNil(posthog)) {
         return { telemetry: { functionId, integrations } }
     }

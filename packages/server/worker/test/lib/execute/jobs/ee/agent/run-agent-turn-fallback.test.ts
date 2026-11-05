@@ -262,7 +262,7 @@ function answeringModel(text: string, sentOptions?: SharedV3ProviderOptions[]): 
                     { type: 'text-start' as const, id: 't' },
                     { type: 'text-delta' as const, id: 't', delta: text },
                     { type: 'text-end' as const, id: 't' },
-                    { type: 'finish' as const, finishReason: 'stop' as const, usage: USAGE },
+                    { type: 'finish' as const, finishReason: { unified: 'stop' as const, raw: 'stop' }, usage: USAGE },
                 ]),
             }
         },
@@ -278,7 +278,7 @@ function searchingModel(): MockLanguageModelV3 {
                 { type: 'text-delta' as const, id: 't', delta: 'Looking.' },
                 { type: 'text-end' as const, id: 't' },
                 { type: 'tool-call' as const, toolCallId: 'call-1', toolName: 'ap_web_search', input: '{"query":"x"}' },
-                { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
+                { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool-calls' }, usage: USAGE },
             ]),
         }),
     })
