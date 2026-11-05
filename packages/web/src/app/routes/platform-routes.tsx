@@ -542,11 +542,9 @@ export const platformRoutes = [
             basePath="/platform/workers"
             tabPaths={WORKERS_TAB_PATHS}
           >
-            <PlanFeatureSample feature="workerGroups">
-              <SuspenseWrapper>
-                <SettingsWorkersPage section="worker-groups" />
-              </SuspenseWrapper>
-            </PlanFeatureSample>
+            <SuspenseWrapper>
+              <SettingsWorkersPage section="worker-groups" />
+            </SuspenseWrapper>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
