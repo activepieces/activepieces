@@ -276,6 +276,23 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         }))
         return paginationHelper.createPage<UserInvitation>(await Promise.all(enrichedData), cursor)
     },
+    async withProjectRoles(invitations: UserInvitation[]): Promise<UserInvitation[]> {
+        const roleIds = invitations.map((invitation) => invitation.projectRoleId).filter((id): id is string => !isNil(id))
+        const roles = roleIds.length > 0 ? await projectRoleRepo().findBy({ id: In(roleIds) }) : []
+        return invitations.map((invitation) => {
+            if (isNil(invitation.projectRoleId)) {
+                return { ...invitation, projectRole: null }
+            }
+            const projectRole = roles.find((role) => role.id === invitation.projectRoleId)
+            if (isNil(projectRole)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: { entityType: 'project_role', entityId: invitation.projectRoleId, message: 'Project Role by id not found' },
+                })
+            }
+            return { ...invitation, projectRole }
+        })
+    },
     async delete({ id, platformId }: PlatformAndIdParams): Promise<void> {
         const invitation = await this.getOneOrThrow({ id, platformId })
         await repo().delete({

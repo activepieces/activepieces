@@ -3733,5 +3733,5 @@
   "1 hour ago": "1 hour ago",
   "{count} hours ago": "{count} hours ago",
   "No users match this filter": "No users match this filter",
-  "usersHiddenByStatusFilter": "{count, plural, =1 {1 user is hidden. Change the Status filter to see them.} other {# users are hidden. Change the Status filter to see them.}}"
+  "Try changing the status filter": "Try changing the status filter"
 }

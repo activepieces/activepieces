@@ -8,7 +8,7 @@ The Activepieces REST API reference. Source: `docs/endpoints/` plus generated `o
 
 ## Basics
 - **Auth** — API keys, generated in the Platform Dashboard (Platform/Enterprise editions; contact sales@activepieces.com). Pass as a Bearer token: `Authorization: Bearer {API_KEY}`.
-- **Pagination** — seek pagination via `limit` and `cursor` query params. Responses are `{ data, next, previous }` where `next`/`previous` are cursors.
+- **Pagination** — seek pagination via `limit` and `cursor` query params. Responses are `{ data, next, previous }` where `next`/`previous` are cursors. One internal exception: `GET /v1/users/with-invitations` merges two tables, so its cursor is an offset (see `platform-editions-ee/users.md`).
 
 ## Endpoint groups
 Each group has a schema page plus CRUD operations:

@@ -1,12 +1,14 @@
 import { isNil, Permission, SeekPage } from '@activepieces/core-utils';
 import {
   InvitationType,
+  PlatformUserListItem,
+  PlatformUserListStatus,
   UpdateUserRequestBody,
   User,
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
@@ -22,11 +24,7 @@ export const platformUserKeys = {
 
 export const platformUserHooks = {
   useUsers: () => {
-    const { data: currentUser } = userHooks.useCurrentUser();
-    const { checkAccess, isFetchingProjectRole } = useAuthorization();
-    const hasInvitePermission = checkAccess(Permission.WRITE_INVITATION);
-    const canListUsers =
-      !isNil(currentUser) && hasInvitePermission && !isFetchingProjectRole;
+    const canListUsers = useCanListPlatformUsers();
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
       queryFn: async () => {
@@ -35,6 +33,34 @@ export const platformUserHooks = {
         });
         return results;
       },
+      enabled: canListUsers,
+    });
+  },
+  useUsersWithInvitationsPage: ({
+    statuses,
+    cursor,
+    limit,
+  }: {
+    statuses: PlatformUserListStatus[];
+    cursor: string | undefined;
+    limit: number;
+  }) => {
+    const canListUsers = useCanListPlatformUsers();
+    return useQuery<SeekPage<PlatformUserListItem>, Error>({
+      queryKey: [
+        ...platformUserKeys.users,
+        'with-invitations',
+        statuses,
+        cursor,
+        limit,
+      ],
+      queryFn: () =>
+        platformUserApi.listWithInvitations({
+          cursor,
+          limit,
+          status: statuses.length > 0 ? statuses : undefined,
+        }),
+      placeholderData: keepPreviousData,
       enabled: canListUsers,
     });
   },
@@ -117,3 +143,13 @@ export const platformUserMutations = {
     });
   },
 };
+
+function useCanListPlatformUsers(): boolean {
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const { checkAccess, isFetchingProjectRole } = useAuthorization();
+  return (
+    !isNil(currentUser) &&
+    checkAccess(Permission.WRITE_INVITATION) &&
+    !isFetchingProjectRole
+  );
+}

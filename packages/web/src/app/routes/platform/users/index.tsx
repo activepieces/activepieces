@@ -1,11 +1,13 @@
 import {
-  UserInvitation,
+  INVITED_USER_STATUS,
+  PlatformUserListItem,
+  PlatformUserListStatus,
   UserStatus,
-  UserWithMetaInformation,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Gem, User } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -13,7 +15,12 @@ import {
   AdminPage,
   AdminPageHeader,
   adminPageResources,
+  adminPagination,
 } from '@/app/components/admin';
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { dataTableFilterUtils } from '@/components/custom/data-table/data-table-filter-utils';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
@@ -22,89 +29,56 @@ import { useSeatLimitGuard } from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
 import {
   platformUserHooks,
+  platformUserKeys,
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserActions } from './actions/user-actions';
-import {
-  createUsersTableColumns,
-  getUserRowStatus,
-  INVITED_USER_STATUS,
-  UserRowStatus,
-} from './columns';
+import { createUsersTableColumns } from './columns';
 
-export type UserRowData =
-  | {
-      id: string;
-      type: 'user';
-      data: UserWithMetaInformation;
-    }
-  | {
-      id: string;
-      type: 'invitation';
-      data: UserInvitation;
-    };
+export type UserRowData = PlatformUserListItem;
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const { isOutOfSeats, handleSeatLimitError, seatLimitDialog } =
     useSeatLimitGuard();
 
-  const {
-    data: usersData,
-    isLoading: usersLoading,
-    isError: usersError,
-    refetch: refetchUsers,
-  } = platformUserHooks.useUsers();
-
-  const {
-    data: invitationsData,
-    isLoading: invitationsLoading,
-    isError: invitationsError,
-    refetch: refetchInvitations,
-  } = platformUserHooks.usePlatformInvitations();
-
-  const refetch = () => {
-    refetchUsers();
-    refetchInvitations();
-  };
-
-  const combinedData: UserRowData[] = useMemo(() => {
-    const users: UserRowData[] =
-      usersData?.data?.map((user) => ({
-        id: user.id,
-        type: 'user' as const,
-        data: user,
-      })) ?? [];
-
-    const pendingInvitations: UserRowData[] =
-      invitationsData?.map((invitation) => ({
-        id: invitation.id,
-        type: 'invitation' as const,
-        data: invitation,
-      })) ?? [];
-
-    return [...users, ...pendingInvitations];
-  }, [usersData, invitationsData]);
-
   const [searchParams] = useSearchParams();
-  const selectedStatuses = dataTableFilterUtils.getSelectedValues({
-    searchParams,
-    key: STATUS_FILTER_KEY,
-    allowedValues: STATUS_FILTER_VALUES,
-    defaultValues: DEFAULT_STATUS_FILTER,
-  });
-  const visibleRows =
-    selectedStatuses.length === 0
-      ? combinedData
-      : combinedData.filter((row) =>
-          selectedStatuses.includes(getUserRowStatus(row)),
-        );
-  const hiddenUsersCount = combinedData.length - visibleRows.length;
+  const selectedStatuses = STATUS_FILTER_VALUES.filter((status) =>
+    dataTableFilterUtils
+      .getSelectedValues({
+        searchParams,
+        key: STATUS_FILTER_KEY,
+        allowedValues: STATUS_FILTER_VALUES,
+        defaultValues: DEFAULT_STATUS_FILTER,
+      })
+      .includes(status),
+  );
+  const isFiltered =
+    selectedStatuses.length > 0 &&
+    selectedStatuses.length < STATUS_FILTER_VALUES.length;
 
-  const isLoading = usersLoading || invitationsLoading;
-  const isError = usersError || invitationsError;
+  const {
+    data: usersPage,
+    isLoading,
+    isError,
+    isPlaceholderData,
+  } = platformUserHooks.useUsersWithInvitationsPage({
+    statuses: selectedStatuses,
+    cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+    limit: adminPagination.parseLimit(searchParams.get(LIMIT_QUERY_PARAM)),
+  });
+
+  const queryClient = useQueryClient();
+  const refetch = () => {
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
+      queryClient.invalidateQueries({
+        queryKey: platformUserKeys.invitations,
+      }),
+    ]).catch(() => undefined);
+  };
 
   const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
     onSuccess: refetch,
@@ -166,13 +140,11 @@ export default function UsersPage() {
       </AdminPageHeader>
       <AdminDataTable
         emptyStateTextTitle={
-          hiddenUsersCount > 0
-            ? t('No users match this filter')
-            : t('No users found')
+          isFiltered ? t('No users match this filter') : t('No users found')
         }
         emptyStateTextDescription={
-          hiddenUsersCount > 0
-            ? t('usersHiddenByStatusFilter', { count: hiddenUsersCount })
+          isFiltered
+            ? t('Try changing the status filter')
             : t('Start inviting users to your project')
         }
         emptyStateIcon={<User />}
@@ -190,13 +162,12 @@ export default function UsersPage() {
             defaultValues: DEFAULT_STATUS_FILTER,
           },
         ]}
-        page={{
-          data: visibleRows,
-          next: usersData?.next || null,
-          previous: usersData?.previous || null,
-        }}
-        hidePagination={true}
-        isLoading={isLoading}
+        page={usersPage}
+        hideFooterUntilNeeded
+        isLoading={
+          isLoading ||
+          (isPlaceholderData && (usersPage?.data.length ?? 0) === 0)
+        }
         isError={isError}
         errorStateEntity={t('users')}
         onRetry={refetch}
@@ -224,13 +195,13 @@ export default function UsersPage() {
 
 const STATUS_FILTER_KEY = 'status';
 
-const STATUS_FILTER_VALUES: UserRowStatus[] = [
+const STATUS_FILTER_VALUES: PlatformUserListStatus[] = [
   UserStatus.ACTIVE,
   UserStatus.INACTIVE,
   INVITED_USER_STATUS,
 ];
 
-const DEFAULT_STATUS_FILTER: UserRowStatus[] = [
+const DEFAULT_STATUS_FILTER: PlatformUserListStatus[] = [
   UserStatus.ACTIVE,
   INVITED_USER_STATUS,
 ];

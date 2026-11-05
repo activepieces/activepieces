@@ -215,12 +215,20 @@ const EventDestinationsPage = () => {
       </AdminPageHeader>
       <AdminDataTable
         columns={columns}
-        page={{ data: destinations, next: null, previous: null }}
+        page={{
+          data: [...destinations].sort(
+            (a, b) =>
+              b.created.localeCompare(a.created) || b.id.localeCompare(a.id),
+          ),
+          next: null,
+          previous: null,
+        }}
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('destinations')}
         onRetry={eventDestinationsCollectionUtils.refetch}
-        hidePagination={true}
+        pageInBrowser
+        hideFooterUntilNeeded
         onRowClick={(row, newWindow) =>
           newWindow
             ? openNewWindow(`${EVENT_STREAMING_PATH}/${row.id}`)

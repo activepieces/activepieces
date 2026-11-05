@@ -1,11 +1,12 @@
 import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/core-utils'
-import { ApEdition, ListUsersRequestBody, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateUserRequestBody, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ListPlatformUsersWithInvitationsRequest, ListUsersRequestBody, PLATFORM_USER_LIST_STATUSES, PlatformUserListItem, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateUserRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { system } from '../../helper/system/system'
 import { userService } from '../user-service'
+import { platformUserListService } from './platform-user-list.service'
 
 export const platformUserController: FastifyPluginAsyncZod = async (app) => {
 
@@ -17,6 +18,18 @@ export const platformUserController: FastifyPluginAsyncZod = async (app) => {
             platformId,
             externalId: req.query.externalId,
             cursorRequest: req.query.cursor ?? null,
+            limit: req.query.limit ?? 10,
+        })
+    })
+
+    app.get('/with-invitations', ListUsersWithInvitationsRequest, async (req) => {
+        const platformId = req.principal.platform.id
+        assertNotNullOrUndefined(platformId, 'platformId')
+
+        return platformUserListService(req.log).list({
+            platformId,
+            statuses: req.query.status ?? PLATFORM_USER_LIST_STATUSES,
+            cursor: req.query.cursor,
             limit: req.query.limit ?? 10,
         })
     })
@@ -71,6 +84,19 @@ const ListUsersRequest = {
     },
     config: {
         security: securityAccess.nonEmbedUsersOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+}
+
+const ListUsersWithInvitationsRequest = {
+    schema: {
+        querystring: ListPlatformUsersWithInvitationsRequest,
+        response: {
+            [StatusCodes.OK]: SeekPage(PlatformUserListItem),
+        },
+        hide: true,
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 

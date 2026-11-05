@@ -59,7 +59,16 @@ const SecretManagersPage = () => {
 
   const isSample = !platform.plan.secretManagersEnabled;
   const rows = isSample ? sampleData.secretManagers() : connections;
-  const page = rows ? { data: rows, next: null, previous: null } : undefined;
+  const page = rows
+    ? {
+        data: [...rows].sort(
+          (a, b) =>
+            a.created.localeCompare(b.created) || a.id.localeCompare(b.id),
+        ),
+        next: null,
+        previous: null,
+      }
+    : undefined;
 
   const columns: ColumnDef<
     RowDataWithActions<SecretManagerConnectionWithStatus>,
@@ -216,7 +225,8 @@ const SecretManagersPage = () => {
         isError={isSample ? false : isConnectionsError}
         errorStateEntity={t('secret managers')}
         onRetry={refetchConnections}
-        hidePagination={true}
+        pageInBrowser
+        hideFooterUntilNeeded
       />
     </AdminPage>
   );

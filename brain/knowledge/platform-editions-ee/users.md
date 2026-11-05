@@ -23,6 +23,7 @@ Manages user identity, platform membership, roles, and session security. A `User
 ### Endpoints
 - `GET /v1/users/me`, `POST /v1/users/me` (update firstName/lastName/profilePicture) — CE.
 - Platform admin CRUD (list, update role/status, delete) via `platform-user-controller.ts` — EE/Cloud.
+- `GET /v1/users/with-invitations` — the admin Users page's list. Platform invitations first, then users, each newest first, filtered by `status` (`ACTIVE`, `INACTIVE`, `INVITED`) on the server. It pages by **offset**, not seek cursors, because it merges two tables into one list; a cursor past the end returns an empty page whose `previous` points at the last page. Offsets mean a row can shift by one between pages if someone is invited or deactivated while an admin is paging. Hidden from the API reference; platform admins only.
 
 ### Gotchas
 - **Deleting a user also deletes its `UserIdentity`** on self-hosted (CE/EE), but only when no `User` row on any platform still references that identity. Skip that cleanup and the orphaned identity keeps the email claimed: re-inviting the same person dead-ends with `EXISTING_USER` / `INVITATION_ONLY_SIGN_UP` on sign-up and `INVALID_CREDENTIALS` on sign-in, and CE has no reset-password path to recover from it. `otp` rows cascade away with the identity.
