@@ -7,7 +7,7 @@ with built as (
   from events
   where event = '$ai_span'
     and properties.$ai_span_name = 'execute_tool ap_build_flow'
-    and timestamp > now() - interval __DAYS__ day
+    and timestamp > now() - interval __DAYS__ + 1 day
     and timestamp < now() - interval 1 day
 ),
 published as (
