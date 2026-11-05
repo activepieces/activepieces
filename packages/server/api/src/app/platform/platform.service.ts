@@ -410,6 +410,7 @@ async function assertOwnsNoPlatform({ identityId }: { identityId: string }): Pro
         .innerJoin('user', 'owner', 'owner.id = platform."ownerId"')
         .where('owner."identityId" = :identityId', { identityId })
         .andWhere('owner.status = :status', { status: UserStatus.ACTIVE })
+        .andWhere('owner."platformId" = platform.id')
         .getExists()
     if (ownsActivePlatform) {
         throw new ActivepiecesError({

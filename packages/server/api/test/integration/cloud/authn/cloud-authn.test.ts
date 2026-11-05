@@ -17,6 +17,7 @@ import {
     createMockPlatform,
     createMockPlatformPlan,
     createMockProject,
+    createMockUser,
     createMockUserIdentity,
     createMockUserInvitation,
     mockAndSaveBasicSetup,
@@ -818,6 +819,35 @@ describe('Authentication API', () => {
             const created = await databaseConnection().getRepository('platform').findOneByOrFail({ id: response?.json().platformId })
             const owner = await databaseConnection().getRepository('user').findOneByOrFail({ id: created.ownerId })
             expect(owner.identityId).toBe(mockUserIdentity.id)
+        })
+
+        it('Lets a user retry after a creation that stopped before linking the owner', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUserIdentity, mockUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER },
+            })
+            const unlinkedOwner = createMockUser({
+                identityId: mockUserIdentity.id,
+                platformId: null,
+                platformRole: PlatformRole.ADMIN,
+                status: UserStatus.ACTIVE,
+            })
+            await databaseConnection().getRepository('user').save(unlinkedOwner)
+            await databaseConnection().getRepository('platform').save(createMockPlatform({ ownerId: unlinkedOwner.id }))
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Retried Platform' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 })
