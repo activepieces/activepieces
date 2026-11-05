@@ -36,10 +36,10 @@ export async function upsertFoundingUserRow({ platformId, userId, researchToken,
     const seeded: { id: string }[] = await personalizationRepo().query(
         `
         INSERT INTO "chat_personalization" ("id", "created", "updated", "platformId", "userId", "domain", "companyText", "role", "status", "researchToken", "profile", "useCases")
-        SELECT $1, now(), now(), $2, $3, NULL, NULL, NULL, $4, NULL, $5::jsonb, $6::jsonb
+        SELECT $1, now(), now(), $2::varchar, $3, NULL, NULL, NULL, $4, NULL, $5::jsonb, $6::jsonb
         WHERE EXISTS (
             SELECT 1 FROM "chat_personalization"
-            WHERE "platformId" = $2 AND "userId" IS NULL AND "researchToken" = $7
+            WHERE "platformId" = $2::varchar AND "userId" IS NULL AND "researchToken" = $7
         )
         ON CONFLICT ("platformId", "userId") WHERE "userId" IS NOT NULL
         DO UPDATE SET
@@ -49,10 +49,13 @@ export async function upsertFoundingUserRow({ platformId, userId, researchToken,
             "updated" = now()
         WHERE "chat_personalization"."researchToken" = $7
            OR ("chat_personalization"."status" <> ALL($8::varchar[])
-               AND "chat_personalization"."useCases" IS NULL)
+               AND "chat_personalization"."useCases" IS NULL
+               AND NOT ("chat_personalization"."status" = $9
+                   AND "chat_personalization"."domain" IS NULL
+                   AND "chat_personalization"."companyText" IS NULL))
         RETURNING "id"
         `,
-        [apId(), platformId, userId, ChatPersonalizationStatus.READY, profile, useCases, researchToken, IN_FLIGHT_STATUSES],
+        [apId(), platformId, userId, ChatPersonalizationStatus.READY, profile, useCases, researchToken, IN_FLIGHT_STATUSES, ChatPersonalizationStatus.SKIPPED],
     )
     if (seeded.length === 0) {
         log.info({ platform: { id: platformId }, user: { id: userId }, researchToken }, '[chatPersonalization] Founding-user seed skipped, the run was superseded or that row has its own research')

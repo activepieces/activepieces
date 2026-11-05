@@ -1,6 +1,7 @@
-import { AIProviderName, isNil, spreadIfDefined, toError } from '@activepieces/core-utils';
+import { ActivepiecesAiBilling, AIProviderName, isNil, spreadIfDefined, toError } from '@activepieces/core-utils';
 import { agentPersistenceUtils, agentToolClassification, agentToolSkills, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
 import { agentProviderOptions } from './agent-provider-options'
+import { AI_TRACE_RUNTIME_CONTEXT, AiTraceContext, aiObservability } from './ai-observability'
 import { ModelMessage, TelemetryOptions } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
 import { modelCatalog } from './model-catalog'
@@ -8,6 +9,9 @@ import { wideEvent } from './wide-event'
 
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
+const UNKNOWN_MODEL_OUTPUT_CEILING: Partial<Record<AIProviderName, number>> = {
+    [AIProviderName.COHERE]: 4_000,
+}
 const KEEP_RECENT_TOOL_RESULTS = 6
 const COLLAPSE_OUTPUT_OVER_CHARS = 600
 // Tool results that are the agent's working memory of an action's input schema — never collapsed,
@@ -142,12 +146,24 @@ function effectiveToolNamesByCallId(messages: ModelMessage[]): Map<string, strin
     }))
 }
 
-function buildTelemetry({ functionId }: { functionId: string }): TelemetryOptions | undefined {
+function buildTelemetry({ functionId, billing }: { functionId: string, billing?: ActivepiecesAiBilling }): AgentTelemetry {
     const logger = wideEvent.current()
-    if (isNil(logger)) {
-        return undefined
+    const posthog = aiObservability.integration()
+    if (isNil(logger) && isNil(posthog)) {
+        return {}
     }
-    return { functionId, integrations: [createEvlogIntegration(logger), ...(globalThis.AI_SDK_TELEMETRY_INTEGRATIONS ?? [])] }
+    const integrations = [
+        ...(isNil(logger) ? [] : [createEvlogIntegration(logger)]),
+        ...(isNil(posthog) ? [] : [posthog]),
+        ...(globalThis.AI_SDK_TELEMETRY_INTEGRATIONS ?? []),
+    ]
+    if (isNil(posthog)) {
+        return { telemetry: { functionId, integrations } }
+    }
+    return {
+        telemetry: { functionId, integrations, includeRuntimeContext: AI_TRACE_RUNTIME_CONTEXT },
+        runtimeContext: aiObservability.runtimeContextOf({ billing }),
+    }
 }
 
 function toRecord(value: unknown): Record<string, unknown> {
@@ -397,7 +413,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {
     const catalog = await modelCatalog.load()
-    const ceilings = modelIds.map((modelId) => isNil(modelId) ? undefined : catalog.lookup({ provider, modelId })?.maxOutputTokens)
+    const ceilings = modelIds.map((modelId) => isNil(modelId) ? undefined : catalog.lookup({ provider, modelId })?.maxOutputTokens ?? UNKNOWN_MODEL_OUTPUT_CEILING[provider])
     return clampOutputTokens({ thinkingBudget, ceilings })
 }
 
@@ -422,3 +438,8 @@ export const agentAiUtils = {
 }
 
 export type { ContentPartLike }
+
+export type AgentTelemetry = {
+    telemetry?: TelemetryOptions<AiTraceContext>
+    runtimeContext?: AiTraceContext
+}

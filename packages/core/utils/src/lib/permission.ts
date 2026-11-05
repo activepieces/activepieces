@@ -2,6 +2,7 @@
 export enum Permission {
     READ_APP_CONNECTION = 'READ_APP_CONNECTION',
     WRITE_APP_CONNECTION = 'WRITE_APP_CONNECTION',
+    REPLACE_APP_CONNECTION = 'REPLACE_APP_CONNECTION',
     READ_FLOW = 'READ_FLOW',
     WRITE_FLOW = 'WRITE_FLOW',
     UPDATE_FLOW_STATUS = 'UPDATE_FLOW_STATUS',
@@ -66,4 +67,5 @@ export enum AIProviderName {
     MOONSHOT = 'moonshot',
     META = 'meta',
     NVIDIA = 'nvidia',
+    COHERE = 'cohere',
 }

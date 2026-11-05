@@ -169,6 +169,25 @@ type McpServerConnected = {
     platformId?: string
 }
 
+type ConnectionSwitchDecided = {
+    choice: ConnectionSwitchChoice
+    pieceName: string
+    clearedInputCount: number
+    replaceAvailable: boolean
+}
+
+type ConnectionReplaceOpened = {
+    source: ConnectionReplaceSource
+    pieceName?: string
+}
+
+type ConnectionReplaceCompleted = {
+    source: ConnectionReplaceSource
+    pieceName: string
+    flowCount: number
+    applyToPublishedVersions: boolean
+}
+
 type BaseTelemetryEvent<T, P> = {
     name: T
     payload: P
@@ -211,6 +230,21 @@ export enum TelemetryEventName {
     PLATFORM_ADMIN_SALES_CONTACTED = 'platform.admin.sales.contacted',
     PLATFORM_ADMIN_LIMIT_REACHED = 'platform.admin.limit.reached',
     PLATFORM_ADMIN_CONTROL_CLICKED = 'platform.admin.control.clicked',
+    CONNECTION_SWITCH_DECIDED = 'connection.switch.decided',
+    CONNECTION_REPLACE_OPENED = 'connection.replace.opened',
+    CONNECTION_REPLACE_COMPLETED = 'connection.replace.completed',
+}
+
+export enum ConnectionSwitchChoice {
+    SWITCH = 'switch',
+    REPLACE = 'replace',
+    CANCEL = 'cancel',
+}
+
+export enum ConnectionReplaceSource {
+    BUILDER_CONNECTIONS_BUTTON = 'builder_connections_button',
+    SWITCH_DIALOG = 'switch_dialog',
+    PROJECT_CONNECTIONS_PAGE = 'project_connections_page',
 }
 
 export enum PlatformAdminSurface {
@@ -261,6 +295,9 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED, PlatformAdminSalesContacted>
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED, PlatformAdminLimitReached>
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_CONTROL_CLICKED, PlatformAdminControlClicked>
+    | BaseTelemetryEvent<TelemetryEventName.CONNECTION_SWITCH_DECIDED, ConnectionSwitchDecided>
+    | BaseTelemetryEvent<TelemetryEventName.CONNECTION_REPLACE_OPENED, ConnectionReplaceOpened>
+    | BaseTelemetryEvent<TelemetryEventName.CONNECTION_REPLACE_COMPLETED, ConnectionReplaceCompleted>
 
 export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
     TelemetryEventName.ONBOARDING_COMPLETED,

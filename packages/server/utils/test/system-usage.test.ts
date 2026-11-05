@@ -1,4 +1,5 @@
 import os from 'os'
+import { resolve } from 'path'
 import { systemUsage } from '../src/system-usage'
 
 vi.mock('fs', () => ({
@@ -249,6 +250,26 @@ describe('getDiskInfo', () => {
 
         const result = await systemUsage.getDiskInfo()
         expect(result).toEqual({ total: 0, free: 0, used: 0, percentage: 0 })
+    })
+
+    it('should measure only the given path when one is passed', async () => {
+        mockCheckDiskSpace.mockResolvedValue({ diskPath: '/data', size: 10_000, free: 2_000 })
+
+        const result = await systemUsage.getDiskInfo('/data/cache')
+
+        expect(mockCheckDiskSpace).toHaveBeenCalledTimes(1)
+        expect(mockCheckDiskSpace).toHaveBeenCalledWith('/data/cache')
+        expect(result.percentage).toBe(80)
+    })
+
+    it('should resolve a relative path before measuring, because check-disk-space rejects non-absolute paths', async () => {
+        mockCheckDiskSpace.mockResolvedValue({ diskPath: '/', size: 10_000, free: 5_000 })
+
+        const result = await systemUsage.getDiskInfo('cache')
+
+        expect(mockCheckDiskSpace).toHaveBeenCalledTimes(1)
+        expect(mockCheckDiskSpace).toHaveBeenCalledWith(resolve('cache'))
+        expect(result.percentage).toBe(50)
     })
 })
 

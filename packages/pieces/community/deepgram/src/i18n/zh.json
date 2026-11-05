@@ -311,5 +311,7 @@
   "GET": "获取",
   "PATCH": "PATCH",
   "DELETE": "删除",
-  "HEAD": "黑色"
+  "HEAD": "黑色",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }
