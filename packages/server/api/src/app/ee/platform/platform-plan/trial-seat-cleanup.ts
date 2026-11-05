@@ -11,7 +11,7 @@ import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { billingProvider } from '../../../platform/billing-provider'
 import { UserSchema } from '../../../user/user-entity'
 import { userRepo, userService } from '../../../user/user-service'
-import { getInvitationExpiryCutoff, userInvitationsService } from '../../../user-invitations/user-invitation.service'
+import { EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER, getInvitationExpiryCutoff, userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { platformPlanTelemetry } from './platform-plan-telemetry'
 import { countUsedSeats, platformPlanRepo } from './platform-plan.service'
 
@@ -151,10 +151,11 @@ const ACTIVE_USERS_PER_PLATFORM = `SELECT "user"."platformId", COUNT(*) AS seats
     WHERE "user".status = :active
     GROUP BY "user"."platformId"`
 
-const PENDING_INVITES_PER_PLATFORM = `SELECT invitation."platformId", COUNT(*) AS seats
+const PENDING_INVITES_PER_PLATFORM = `SELECT invitation."platformId", COUNT(DISTINCT LOWER(invitation.email)) AS seats
     FROM user_invitation invitation
     WHERE invitation.status IN (:...pendingStatuses)
     AND invitation.updated > :expiryCutoff
+    AND ${EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER}
     GROUP BY invitation."platformId"`
 
 const USER_IS_NOT_THE_PLATFORM_OWNER = `NOT EXISTS (
