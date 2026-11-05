@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 import { podioAuth } from '../auth';
 import { podioApi } from '../common/api';
 import { podioProps } from '../common/props';
@@ -22,6 +22,14 @@ export const newWorkspaceTrigger = createTrigger({
     user_id: 234567
   },
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
+    paramName: 'code',
+  },
+  async onHandshake(context) {
+    await podioApi.validateHookIfVerification({ auth: context.auth, body: context.payload.body, hookId: await context.store.get<number>('podio_member_added_hook_id') });
+    return { status: 200 };
+  },
   async onEnable(context) {
     const { spaceId } = context.propsValue;
 
@@ -67,10 +75,6 @@ export const newWorkspaceTrigger = createTrigger({
   },
   async run(context) {
     const payload = context.payload.body;
-
-    if (await podioApi.validateHookIfVerification({ auth: context.auth, body: payload, hookId: await context.store.get<number>('podio_member_added_hook_id') })) {
-      return [];
-    }
 
     if (!payload || typeof payload !== 'object') {
       return [];
