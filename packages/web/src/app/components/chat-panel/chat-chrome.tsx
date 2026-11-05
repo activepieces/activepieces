@@ -16,6 +16,7 @@ import {
 } from 'radix-ui';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { ToastT } from 'sonner';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { Button } from '@/components/ui/button';
@@ -176,6 +177,7 @@ export function ChatChrome({
       currentId={conversationId}
       onSelect={openConversation}
       onNewChat={startFresh}
+      toastPosition={TOAST_POSITION[layout]}
     />
   );
   const openFullPage = () => {
@@ -497,3 +499,11 @@ type ChatSession = {
 };
 
 type LiveTitle = { id: string; title: string };
+
+// Toasts sit bottom-right; keep the undo toast off the panel's composer.
+const TOAST_POSITION: Record<ChatLayout, ToastT['position'] | undefined> = {
+  left: undefined,
+  right: 'bottom-center',
+  float: undefined,
+  sheet: 'top-center',
+};

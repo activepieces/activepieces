@@ -7,8 +7,8 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useCallback, useMemo } from 'react';
-import { toast } from 'sonner';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { toast, type ToastT } from 'sonner';
 
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
@@ -33,12 +33,16 @@ export function useChatHistory() {
       chatApi.listConversations({ limit: PAGE_SIZE, cursor: pageParam }),
   });
 
+  const hidden = useSyncExternalStore(
+    pendingDeletes.subscribe,
+    pendingDeletes.snapshot,
+  );
   const conversations = useMemo(
     () =>
       (query.data?.pages.flatMap((page) => page.data) ?? [])
-        .slice()
+        .filter((c) => !hidden.has(c.id))
         .sort((a, b) => b.updated.localeCompare(a.updated)),
-    [query.data],
+    [query.data, hidden],
   );
 
   return { ...query, conversations };
@@ -109,21 +113,78 @@ export function useChatHistoryActions() {
     [patchList, invalidate, queryClient],
   );
 
+  // The row goes at once; the server delete waits for the undo toast to
+  // expire, so Undo only has to show the row again.
   const remove = useCallback(
-    async (id: string) => {
-      patchList((items) => items.filter((c) => c.id !== id));
-      try {
-        await chatApi.deleteConversation(id);
-      } catch {
-        toast.error(t('Failed to delete conversation'));
-      }
-      invalidate();
+    (
+      id: string,
+      {
+        onUndo,
+        position,
+      }: { onUndo?: () => void; position?: ToastT['position'] } = {},
+    ) => {
+      pendingDeletes.add(id);
+      let settled = false;
+      const commit = async () => {
+        if (settled) return;
+        settled = true;
+        try {
+          await chatApi.deleteConversation(id);
+          patchList((items) => items.filter((c) => c.id !== id));
+        } catch {
+          toast.error(t('Failed to delete conversation'));
+        }
+        pendingDeletes.remove(id);
+        invalidate();
+      };
+      toast(t('Chat deleted'), {
+        duration: UNDO_MS,
+        position,
+        action: {
+          label: t('Undo'),
+          onClick: () => {
+            if (settled) return;
+            settled = true;
+            pendingDeletes.remove(id);
+            onUndo?.();
+          },
+        },
+        onAutoClose: () => void commit(),
+        onDismiss: () => void commit(),
+      });
     },
     [patchList, invalidate],
   );
 
   return { rename, remove, invalidate };
 }
+
+const UNDO_MS = 5000;
+
+// Chats deleted from the panel but still inside their undo window. The list
+// hides them even if the query refetches meanwhile.
+const pendingDeletes = (() => {
+  let ids = new Set<string>();
+  const listeners = new Set<() => void>();
+  const set = (next: Set<string>) => {
+    ids = next;
+    listeners.forEach((listener) => listener());
+  };
+  return {
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    snapshot: () => ids,
+    add: (id: string) => set(new Set(ids).add(id)),
+    remove: (id: string) => {
+      if (!ids.has(id)) return;
+      const next = new Set(ids);
+      next.delete(id);
+      set(next);
+    },
+  };
+})();
 
 export type HistoryGroup = {
   label: string;

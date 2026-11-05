@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import type { ToastT } from 'sonner';
 
 import { ConversationStatusDot } from '@/app/routes/chat-with-ai/components/conversation-status-dot';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ import {
   ConversationIndicatorState,
   useConversationIndicators,
 } from '@/features/chat/lib/use-conversation-indicators';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { cn } from '@/lib/utils';
 
 import {
@@ -61,11 +63,14 @@ export function ChatHistoryList({
   currentId,
   onSelect,
   onNewChat,
+  toastPosition,
   className,
 }: {
   currentId: string | null;
   onSelect: (id: string) => void;
   onNewChat: () => void;
+  // Where the undo toast goes, so it never covers the panel's composer.
+  toastPosition?: ToastT['position'];
   className?: string;
 }) {
   const listId = useId();
@@ -295,110 +300,135 @@ export function ChatHistoryList({
           </button>
         )}
       </div>
-      <div
-        ref={listRef}
-        id={listId}
-        role="listbox"
-        aria-label={t('Chat history')}
-        onScroll={onScroll}
-        onMouseLeave={() =>
-          setHighlight((h) => (h.by === 'pointer' ? { ...h, by: null } : h))
-        }
-        className="min-h-0 flex-auto overflow-y-auto overscroll-contain px-2 pb-2"
-        style={edges.bottom ? BOTTOM_FADE : undefined}
-      >
-        {isLoading ? (
-          <HistorySkeleton />
-        ) : isError && conversations.length === 0 ? (
-          <HistoryMessage
-            title={t("Couldn't load your chats")}
-            action={
-              <Button variant="outline" size="xs" onClick={() => refetch()}>
-                {t('Try again')}
-              </Button>
-            }
-          />
-        ) : conversations.length === 0 ? (
-          <HistoryMessage
-            icon
-            title={t('No chats yet')}
-            body={t('Your conversations will show up here.')}
-            action={
-              <Button variant="outline" size="xs" onClick={() => onNewChat()}>
-                {t('Start a chat')}
-              </Button>
-            }
-          />
-        ) : flat.length === 0 && !hasNextPage ? (
-          <HistoryMessage
-            title={t('No matches')}
-            body={t('No chat title contains “{query}”.', {
-              query: query.trim(),
-            })}
-          />
-        ) : (
-          groups.map((group) => (
-            <div key={group.label} role="group" aria-label={group.label}>
-              {/* Sticky, with a short fade below it so rows slide under
-                  instead of being cut at a hard line. */}
-              <div className="sticky top-0 z-[1] -mx-2 bg-(--history-bg) px-4 pt-2.5 pb-1 text-xs font-medium text-gray-10 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-3 after:bg-linear-to-b after:from-(--history-bg) after:to-transparent">
-                {group.label}
-              </div>
-              {group.items.map((conversation) => {
-                index += 1;
-                const rowIndex = index;
-                const highlighted =
-                  rowIndex === highlight.index ? highlight.by : null;
-                return editingId === conversation.id ? (
-                  <RenameRow
-                    key={conversation.id}
-                    initial={conversation.title ?? ''}
-                    onDone={(title) => {
-                      setEditingId(null);
-                      focusSearch();
-                      const next = title?.trim();
-                      if (next && next !== conversation.title) {
-                        void rename(conversation.id, next);
-                      }
-                    }}
-                  />
-                ) : (
-                  <HistoryRow
-                    key={conversation.id}
-                    id={`${listId}-${conversation.id}`}
-                    index={rowIndex}
-                    conversation={conversation}
-                    highlighted={highlighted}
-                    tabbable={rowIndex === highlight.index}
-                    current={conversation.id === currentId}
-                    indicator={getIndicator(conversation)}
-                    menuOpen={menuFor === conversation.id}
-                    onMenuOpenChange={(next) =>
-                      setMenuFor(next ? conversation.id : null)
-                    }
-                    onHover={() =>
-                      setHighlight({ index: rowIndex, by: 'pointer' })
-                    }
-                    onOpen={() => open(conversation)}
-                    onRename={() => setEditingId(conversation.id)}
-                    onDelete={() => {
-                      void remove(conversation.id);
-                      if (conversation.id === currentId) onNewChat();
-                      focusSearch();
-                    }}
-                    onMenuClosed={focusSearch}
-                  />
-                );
+      <div className="relative flex min-h-0 flex-auto flex-col">
+        {/* While the list is scrolled, rows slide under the stuck group
+          heading: a fade just below it, solid at first, so no line of row
+          text peeks out under the label. At rest it's off, so the first row
+          of each group stays crisp. Matches the heading's h-8. */}
+        <div
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute top-8 right-2 left-0 z-[3] h-4 bg-linear-to-b from-(--history-bg) from-50% to-transparent transition-opacity duration-150',
+            edges.top && !isLoading ? 'opacity-100' : 'opacity-0',
+          )}
+        />
+        <div
+          ref={listRef}
+          id={listId}
+          role="listbox"
+          aria-label={t('Chat history')}
+          onScroll={onScroll}
+          onMouseLeave={() =>
+            setHighlight((h) => (h.by === 'pointer' ? { ...h, by: null } : h))
+          }
+          className="min-h-0 flex-auto overflow-y-auto overscroll-contain px-2 pb-2"
+          style={edges.bottom ? BOTTOM_FADE : undefined}
+        >
+          {isLoading ? (
+            <HistorySkeleton />
+          ) : isError && conversations.length === 0 ? (
+            <HistoryMessage
+              title={t("Couldn't load your chats")}
+              action={
+                <Button variant="outline" size="xs" onClick={() => refetch()}>
+                  {t('Try again')}
+                </Button>
+              }
+            />
+          ) : conversations.length === 0 ? (
+            <HistoryMessage
+              icon
+              title={t('No chats yet')}
+              body={t('Your conversations will show up here.')}
+              action={
+                <Button variant="outline" size="xs" onClick={() => onNewChat()}>
+                  {t('Start a chat')}
+                </Button>
+              }
+            />
+          ) : flat.length === 0 && !hasNextPage ? (
+            <HistoryMessage
+              title={t('No matches')}
+              body={t('No chat title contains “{query}”.', {
+                query: query.trim(),
               })}
+            />
+          ) : (
+            groups.map((group) => (
+              <div key={group.label} role="group" aria-label={group.label}>
+                {/* Sticky and opaque; the fade under it is the overlay below. */}
+                <div className="sticky top-0 z-[2] -mx-2 h-8 bg-(--history-bg) px-4 pt-2.5 pb-1.5 text-xs font-medium text-gray-10">
+                  {group.label}
+                </div>
+                {group.items.map((conversation) => {
+                  index += 1;
+                  const rowIndex = index;
+                  const highlighted =
+                    rowIndex === highlight.index ? highlight.by : null;
+                  return editingId === conversation.id ? (
+                    <RenameRow
+                      key={conversation.id}
+                      initial={conversation.title ?? ''}
+                      onDone={(title) => {
+                        setEditingId(null);
+                        focusSearch();
+                        const next = title?.trim();
+                        if (next && next !== conversation.title) {
+                          void rename(conversation.id, next);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <HistoryRow
+                      key={conversation.id}
+                      id={`${listId}-${conversation.id}`}
+                      index={rowIndex}
+                      conversation={conversation}
+                      highlighted={highlighted}
+                      tabbable={rowIndex === highlight.index}
+                      current={conversation.id === currentId}
+                      indicator={getIndicator(conversation)}
+                      menuOpen={menuFor === conversation.id}
+                      onMenuOpenChange={(next) =>
+                        setMenuFor(next ? conversation.id : null)
+                      }
+                      onHover={() =>
+                        setHighlight({ index: rowIndex, by: 'pointer' })
+                      }
+                      onOpen={() => open(conversation)}
+                      onRename={() => setEditingId(conversation.id)}
+                      onDelete={() => {
+                        const wasOpen = conversation.id === currentId;
+                        remove(conversation.id, {
+                          position: toastPosition,
+                          // Undo puts the chat back where it was, unless
+                          // another one has been opened since.
+                          onUndo: wasOpen
+                            ? () => {
+                                if (useChatPanel.getState().conversationId) {
+                                  return;
+                                }
+                                onSelect(conversation.id);
+                              }
+                            : undefined,
+                        });
+                        if (wasOpen) onNewChat();
+                        focusSearch();
+                      }}
+                      onMenuClosed={focusSearch}
+                    />
+                  );
+                })}
+              </div>
+            ))
+          )}
+          {isFetchingNextPage && (
+            <div className="flex flex-col gap-1 px-2 pt-2">
+              <Skeleton className="h-4 w-3/5" />
+              <Skeleton className="mt-3 h-4 w-2/5" />
             </div>
-          ))
-        )}
-        {isFetchingNextPage && (
-          <div className="flex flex-col gap-1 px-2 pt-2">
-            <Skeleton className="h-4 w-3/5" />
-            <Skeleton className="mt-3 h-4 w-2/5" />
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
