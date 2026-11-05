@@ -16,9 +16,10 @@ published as (
   where event = 'flow.published'
     and timestamp > now() - interval __DAYS__ + 1 day
 )
-select trace_id, conversation_id, flow_id, timestamp
+select trace_id, any(conversation_id) as conversation_id, groupArray(flow_id) as flow_ids, min(timestamp) as timestamp
 from built
 where flow_id != ''
   and flow_id not in (select flow_id from published)
+group by trace_id
 order by rand()
 limit 10

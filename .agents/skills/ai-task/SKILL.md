@@ -435,11 +435,11 @@ Think the order is wrong? Say why in the ticket and re-run `/ai-task queue`, don
 1. **Window:** since the last report (Mon covers Fri to Mon, Wed covers Mon to Wed, Fri covers Wed to Fri). Default 3 days.
 2. **Sample** with PostHog `execute-sql` (replace `__DAYS__`):
    - `sql/quality-random.sql`: 10 random chat turns. **These are labeled blind.** Don't show judge verdicts, your own opinion or a draft label for them. They're how we check the judges, and a hint ruins the check.
-   - `sql/quality-built-not-published.sql`: 10 chats that built a flow which was never published.
+   - `sql/quality-built-not-published.sql`: 10 chat turns that built a flow which was never published (one row per turn, even when it built several).
 3. **Fill a PostHog review queue** named `Quality <date>` with those 20 traces, random ones first. Tell the user the queue link and how many each slice has. Ask Ziyad to also label 4 of them (2 random, 2 built-not-published), so we can see how often two people agree.
 4. **Numbers** for the same window:
-   - `sql/quality-judges.sql`: fail rate per PostHog judge. A judge that isn't in the plan's kept list gets one line saying so.
-   - Build → publish: the count from `quality-built-not-published.sql` against all builds in the window.
+   - `sql/quality-judges.sql`: fail rate per PostHog judge, with skipped (too large to grade) chats left out. A judge that isn't in the plan's kept list gets one line saying so.
+   - `sql/quality-publish-rate.sql`: how many chat-built flows were published, over every build in the window. Never use the 10-row sample for this.
 5. **Confirmed problems from the previous queue** (labels the user already gave, never your own reading):
    - Group the failing labels by problem type, with counts and trace ids.
    - For each type, search team AI for an open ticket first. If one exists, the draft is a comment with the new counts and trace ids. Otherwise draft a ticket in project P-AI-339 (Bug report form).
@@ -454,7 +454,7 @@ Think the order is wrong? Say why in the ticket and re-run `/ai-task queue`, don
 > **Quality, Mon 9 Nov: 20 chats queued, 2 problems to file.**
 >
 > - Queue: Quality 2026-11-09 (10 random, 10 built-not-published)
-> - Build → publish: 37 of 102 builds published (36%)
+> - Build → publish: 23 of 89 flows published (26%)
 > - Hallucination judge fails 35.6% of chats; we can't trust it until the labels say so
 > - From Friday's labels: "asks for info it already has" (4 of 20), "builds without a trigger" (2 of 20)
 >
