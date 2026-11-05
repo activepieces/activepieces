@@ -37,6 +37,7 @@ export const CurrentSubscriptionCard = ({
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = billingUtils.isYearlyPlan(info);
+  const planName = info.autumnPlanName ?? (isPaid ? info.plan.plan : t('Free'));
   const { platform } = platformHooks.useCurrentPlatform();
   const trial = platform.selfServeTrial;
   if (selfServeTrialTime.isRunning(trial)) {
@@ -58,7 +59,7 @@ export const CurrentSubscriptionCard = ({
           <span className="text-sm text-gray-11">
             {selfServeTrialCopy.trialEndSummary(trial.endsAt)}{' '}
             {t('After that, you are back on {plan}.', {
-              plan: info.autumnPlanName,
+              plan: planName,
             })}
           </span>
         </div>
@@ -79,7 +80,7 @@ export const CurrentSubscriptionCard = ({
       >
         <div className="flex items-start justify-between gap-2">
           <span className="text-2xl font-semibold text-gray-12">
-            {info.autumnPlanName}
+            {planName}
           </span>
           <Badge className="border-0 bg-panel text-accent-11 shadow-edge">
             {isYearly ? t('Yearly') : t('Monthly')}
@@ -105,7 +106,7 @@ export const CurrentSubscriptionCard = ({
       )}
     >
       <span className="text-sm text-gray-11">{t('Current plan')}</span>
-      <div className="text-2xl font-semibold">{info.autumnPlanName}</div>
+      <div className="text-2xl font-semibold">{planName}</div>
       <Button
         {...adminControl(AdminControl.BILLING_UPGRADE_OPEN)}
         className="w-full"
