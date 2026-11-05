@@ -10,6 +10,7 @@ export enum InvitationType {
 export enum InvitationStatus {
     PENDING = 'PENDING',
     ACCEPTED = 'ACCEPTED',
+    JOINED = 'JOINED',
 }
 
 export const UserInvitation = z.object({

@@ -101,7 +101,8 @@ describe('New members join default projects', () => {
         await savePlatformInvite({ email, platformId: mockPlatform.id, platformRole: PlatformRole.ADMIN })
 
         const first = await createScimUser({ platformId: mockPlatform.id, email })
-        expect(await databaseConnection().getRepository('user_invitation').countBy({ email, platformId: mockPlatform.id })).toBe(0)
+        expect(await databaseConnection().getRepository('user_invitation').countBy({ email, platformId: mockPlatform.id, status: InvitationStatus.ACCEPTED })).toBe(0)
+        expect(await databaseConnection().getRepository('user_invitation').countBy({ email, platformId: mockPlatform.id, status: InvitationStatus.JOINED })).toBe(1)
         await databaseConnection().getRepository('user').update({ id: first?.json().id }, { platformId: null })
         const second = await createScimUser({ platformId: mockPlatform.id, email })
 

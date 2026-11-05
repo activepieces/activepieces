@@ -671,6 +671,20 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.SAML_CONNECTION_REPLACED:
     case ApplicationEventName.SSO_DISABLED:
       return [];
+    case ApplicationEventName.USER_INVITATION_SENT:
+    case ApplicationEventName.USER_INVITATION_ACCEPTED:
+    case ApplicationEventName.USER_INVITATION_DELETED: {
+      const { invitation } = event.data;
+      return [
+        { label: t('Email'), value: invitation.email },
+        {
+          label: t('Role'),
+          value: invitation.platformRole
+            ? formatUtils.convertEnumToHumanReadable(invitation.platformRole)
+            : t('Project member'),
+        },
+      ];
+    }
     case ApplicationEventName.PROJECT_ROLE_CREATED:
     case ApplicationEventName.PROJECT_ROLE_UPDATED:
     case ApplicationEventName.PROJECT_ROLE_DELETED: {

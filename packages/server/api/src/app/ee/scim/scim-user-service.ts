@@ -80,7 +80,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         })
 
         if (!isNil(roleFromInvite)) {
-            await userInvitationsService(log).deleteAcceptedPlatformInvites({ email, platformId })
+            await userInvitationsService(log).markAcceptedPlatformInvitesJoined({ email, platformId })
         }
 
         await emailService(log).sendScimUserWelcome({

@@ -113,7 +113,7 @@ export const createMockUserInvitation = (userInvitation: Partial<UserInvitation>
         projectId: userInvitation.projectId,
         projectRole: userInvitation.projectRole,
         platformRole: userInvitation.platformRole,
-        status: userInvitation.status ?? faker.helpers.enumValue(InvitationStatus),
+        status: userInvitation.status ?? faker.helpers.arrayElement([InvitationStatus.PENDING, InvitationStatus.ACCEPTED]),
     }
 }
 

@@ -295,11 +295,10 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody?.platformId).toBe(mockPlatform.id)
 
-            // Invitation should be provisioned (deleted after processing)
-            const remainingInvitation = await databaseConnection()
+            const provisionedInvitation = await databaseConnection()
                 .getRepository('user_invitation')
                 .findOneBy({ id: mockUserInvitation.id })
-            expect(remainingInvitation).toBeNull()
+            expect(provisionedInvitation).toMatchObject({ status: InvitationStatus.JOINED })
 
             // No personal platform is auto-created; only the enterprise platform exists
             const allPlatforms = await databaseConnection().getRepository('platform').find()
