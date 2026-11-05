@@ -6,6 +6,7 @@ import {
   AgentHistoryMessage,
   FileProducedEvent,
   ImageGeneratedEvent,
+  LAZY_TOOL_NAME,
   ModelChoice,
   ModelOptions,
   PersistedAgentMessage,
@@ -35,6 +36,7 @@ function humanizePieceName(raw: string): string {
 }
 
 const TOOL_LABELS: Record<string, { active: string; done: string }> = {
+  [LAZY_TOOL_NAME]: { active: 'Working on it', done: 'Finished a step' },
   ap_execute_action: { active: 'Running action', done: 'Ran action' },
   ap_discover_action_auth: {
     active: 'Checking connections',
