@@ -1,3 +1,4 @@
+import { tryCatch } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Copy, Download } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,13 +30,17 @@ const DataDisplayTabs = ({
 }: DataDisplayTabsProps) => {
   const canActOnData = copyableData !== undefined && copyableData !== null;
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!canActOnData) return;
-    navigator.clipboard.writeText(
+    const text =
       typeof copyableData === 'string'
         ? copyableData
-        : JSON.stringify(copyableData, null, 2),
-    );
+        : JSON.stringify(copyableData, null, 2);
+    const { error } = await tryCatch(() => navigator.clipboard.writeText(text));
+    if (error) {
+      toast.error(t('Failed to copy to clipboard'), { duration: 3000 });
+      return;
+    }
     toast.success(t('Copied to clipboard'), { duration: 1000 });
   };
 
