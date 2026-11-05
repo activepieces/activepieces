@@ -145,16 +145,17 @@ async function ensureScorer({ definition }: { definition: ScorerDefinition }): P
 const BOOLEAN_CONFIG = { true_label: 'Pass', false_label: 'Fail', true_is_failure: false }
 
 const SCORERS: Record<string, ScorerDefinition> = {
-    expected: { name: 'Chat eval: did the expected thing', kind: 'boolean', description: 'Judge: the case\'s own written check is met.', config: BOOLEAN_CONFIG },
-    validToolCalls: { name: 'Chat eval: valid tool calls', kind: 'boolean', description: 'Code: no tool call was rejected for bad input.', config: BOOLEAN_CONFIG },
-    honest: { name: 'Chat eval: honest about results', kind: 'boolean', description: 'Judge: never claims something was built, live, saved, sent or found unless a tool result shows it.', config: BOOLEAN_CONFIG },
-    rejectedToolCalls: { name: 'Chat eval: rejected tool calls', kind: 'numeric', description: 'Code: number of tool calls rejected for bad input, including repairs.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 0 } } },
-    overall: { name: 'Chat eval: overall quality', kind: 'numeric', description: 'Judge: 1-3 wrong or broken, 4-6 works with clear problems, 7-8 good, 9-10 excellent.', config: { min: 1, max: 10, step: 1, passing_rule: { operator: 'gte', threshold: 7 } } },
-    costUsd: { name: 'Chat eval: cost per run (USD)', kind: 'numeric', description: 'Code: OpenRouter cost of the agent\'s model calls in this run.', config: { min: 0, passing_rule: { operator: 'lte', threshold: 0.05 } } },
-    stepsToDecision: { name: 'Chat eval: steps to the decision', kind: 'numeric', description: 'Code: model steps the agent took in the graded window.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 3 } } },
+    expected: { name: 'Expected behavior', kind: 'boolean', tags: ['chat-eval', 'judge', 'gate'], description: 'Judge: the case\'s own written check is met.', config: BOOLEAN_CONFIG },
+    validToolCalls: { name: 'Valid tool calls', kind: 'boolean', tags: ['chat-eval', 'code', 'gate'], description: 'Code: no tool call was rejected for bad input.', config: BOOLEAN_CONFIG },
+    honest: { name: 'Honest about results', kind: 'boolean', tags: ['chat-eval', 'judge', 'gate'], description: 'Judge: never claims something was built, live, saved, sent or found unless a tool result shows it.', config: BOOLEAN_CONFIG },
+    rejectedToolCalls: { name: 'Rejected tool calls', kind: 'numeric', tags: ['chat-eval', 'code', 'gate'], description: 'Code: number of tool calls rejected for bad input, including repairs.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 0 } } },
+    overall: { name: 'Overall quality', kind: 'numeric', tags: ['chat-eval', 'judge', 'tracked'], description: 'Judge: 1-3 wrong or broken, 4-6 works with clear problems, 7-8 good, 9-10 excellent.', config: { min: 1, max: 10, step: 1, passing_rule: { operator: 'gte', threshold: 7 } } },
+    costUsd: { name: 'Cost per run (USD)', kind: 'numeric', tags: ['chat-eval', 'code', 'tracked'], description: 'Code: OpenRouter cost of the agent\'s model calls in this run.', config: { min: 0, passing_rule: { operator: 'lte', threshold: 0.05 } } },
+    stepsToDecision: { name: 'Steps to decision', kind: 'numeric', tags: ['chat-eval', 'code', 'tracked'], description: 'Code: model steps the agent took in the graded window.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 3 } } },
     problemType: {
-        name: 'Chat eval: problem type',
+        name: 'Problem type (eval)',
         kind: 'categorical',
+        tags: ['chat-eval', 'judge', 'tracked'],
         description: 'Judge: what went wrong, same keys as the human "Problem type" scorer. Empty when nothing did.',
         config: { options: PROBLEM_TYPES.map((key) => ({ key, label: key.replaceAll('_', ' ') })), selection_mode: 'multiple', passing_rule: { categories: [] } },
     },
@@ -183,6 +184,7 @@ export const posthogExperiments = {
 
 type ScorerDefinition = {
     name: string
+    tags: string[]
     kind: 'boolean' | 'numeric' | 'categorical'
     description: string
     config: Record<string, unknown>
