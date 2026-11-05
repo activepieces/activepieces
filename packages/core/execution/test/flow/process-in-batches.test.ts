@@ -84,10 +84,10 @@ function addCodeStep({ name, parentStep, stepLocationRelativeToParent }: {
 }
 
 function applyAll(operations: FlowOperationRequest[], flowVersion: FlowVersion = emptyFlowVersion): FlowVersion {
-    return operations.reduce((flow, operation) => flowOperations.apply(flow, operation), flowVersion)
+    return operations.reduce((version, operation) => flowOperations.apply(version, operation), flowVersion)
 }
 
-function batchStepOf(flowVersion: FlowVersion, name = 'step_1'): ProcessInBatchesAction {
+function getBatchStepOrThrow(flowVersion: FlowVersion, name = 'step_1'): ProcessInBatchesAction {
     const step = flowStructureUtil.getActionOrThrow(name, flowVersion.trigger)
     if (step.type !== FlowActionType.PROCESS_IN_BATCHES) {
         throw new Error(`expected ${name} to be a process in batches step`)
@@ -102,7 +102,7 @@ function withFrozenTimestamps(flowVersion: FlowVersion): FlowVersion {
     }))
 }
 
-function batchStepSettings(batchSize: unknown): unknown {
+function batchStepUpdateRequest(batchSize: unknown): unknown {
     return {
         name: 'step_1',
         type: FlowActionType.PROCESS_IN_BATCHES,
@@ -115,7 +115,7 @@ function batchStepSettings(batchSize: unknown): unknown {
 describe('Process in Batches step', () => {
     it('adds a batch step with items and a batch size, and comes back valid', () => {
         const flowVersion = applyAll([addBatchStep({ batchSize: 25 })])
-        const step = batchStepOf(flowVersion)
+        const step = getBatchStepOrThrow(flowVersion)
 
         expect(step.settings).toEqual({ items: '{{ trigger }}', batchSize: 25 })
         expect(step.valid).toBe(true)
@@ -124,19 +124,19 @@ describe('Process in Batches step', () => {
 
     it.each([0, -1, 1.5])('marks the step invalid for a batch size of %s without clamping it', (batchSize) => {
         const flowVersion = applyAll([addBatchStep({ batchSize })])
-        const step = batchStepOf(flowVersion)
+        const step = getBatchStepOrThrow(flowVersion)
 
         expect(step.valid).toBe(false)
         expect(step.settings.batchSize).toBe(batchSize)
     })
 
     it('rejects a mention expression as a batch size at the API boundary', () => {
-        const result = UpdateActionRequest.safeParse(batchStepSettings('{{ trigger.count }}'))
+        const result = UpdateActionRequest.safeParse(batchStepUpdateRequest('{{ trigger.count }}'))
         expect(result.success).toBe(false)
     })
 
     it('reports the batch size floor with a message that is a translation key', () => {
-        const result = UpdateActionRequest.safeParse(batchStepSettings(0))
+        const result = UpdateActionRequest.safeParse(batchStepUpdateRequest(0))
         expect(result.success).toBe(false)
         expect(JSON.stringify(result.error)).toContain('batchSizeMustBeAtLeastOne')
     })
@@ -158,7 +158,7 @@ describe('Process in Batches step', () => {
             addCodeStep({ name: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH }),
             addCodeStep({ name: 'step_3', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER }),
         ])
-        expect(batchStepOf(withBody).firstLoopAction?.name).toBe('step_2')
+        expect(getBatchStepOrThrow(withBody).firstLoopAction?.name).toBe('step_2')
 
         const afterMove = applyAll([{
             type: FlowOperationType.MOVE_ACTION,
@@ -168,14 +168,14 @@ describe('Process in Batches step', () => {
                 stepLocationRelativeToNewParent: StepLocationRelativeToParent.INSIDE_BATCH,
             },
         }], withBody)
-        expect(batchStepOf(afterMove).firstLoopAction?.name).toBe('step_3')
-        expect(batchStepOf(afterMove).firstLoopAction?.nextAction?.name).toBe('step_2')
+        expect(getBatchStepOrThrow(afterMove).firstLoopAction?.name).toBe('step_3')
+        expect(getBatchStepOrThrow(afterMove).firstLoopAction?.nextAction?.name).toBe('step_2')
 
         const afterDuplicate = applyAll([{
             type: FlowOperationType.DUPLICATE_ACTION,
             request: { stepName: 'step_1' },
         }], afterMove)
-        const duplicated = batchStepOf(afterDuplicate, 'step_4')
+        const duplicated = getBatchStepOrThrow(afterDuplicate, 'step_4')
         expect(duplicated.settings.batchSize).toBe(10)
         expect(flowStructureUtil.getAllChildSteps(duplicated).map((step) => step.name)).toEqual(['step_4', 'step_5', 'step_6'])
 
@@ -184,13 +184,13 @@ describe('Process in Batches step', () => {
             parentStepName: 'step_1',
             stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
         }), afterMove)
-        expect(batchStepOf(afterPaste).nextAction?.name).toBe('step_4')
+        expect(getBatchStepOrThrow(afterPaste).nextAction?.name).toBe('step_4')
 
         const afterDelete = applyAll([{
             type: FlowOperationType.DELETE_ACTION,
             request: { names: ['step_3'] },
         }], afterMove)
-        expect(batchStepOf(afterDelete).firstLoopAction?.name).toBe('step_2')
+        expect(getBatchStepOrThrow(afterDelete).firstLoopAction?.name).toBe('step_2')
     })
 
     it('rejects the batch location on a loop parent and the loop location on a batch parent', () => {
@@ -298,7 +298,7 @@ describe('Process in Batches step', () => {
                 settings: { items: '{{ trigger }}', batchSize: 10 },
             },
         }], asLoop)
-        expect(batchStepOf(backToBatch).firstLoopAction?.name).toBe('step_2')
+        expect(getBatchStepOrThrow(backToBatch).firstLoopAction?.name).toBe('step_2')
     })
 
     it('allows a batch step after another batch step, and inside a top-level loop', () => {
@@ -340,7 +340,7 @@ describe('Process in Batches step', () => {
             .toEqual(['trigger', 'step_1', 'step_2', 'step_3'])
         expect(flowStructureUtil.findPathToStep(flowVersion.trigger, 'step_3').map((step) => step.name))
             .toEqual(['trigger', 'step_1', 'step_2'])
-        expect(flowStructureUtil.isChildOf(batchStepOf(flowVersion), 'step_3')).toBe(true)
+        expect(flowStructureUtil.isChildOf(getBatchStepOrThrow(flowVersion), 'step_3')).toBe(true)
     })
 
     it('round-trips a nested body through export and re-import', () => {
@@ -381,7 +381,7 @@ describe('Process in Batches step', () => {
                 },
             },
         }])
-        const step: FlowAction = batchStepOf(flowVersion)
+        const step: FlowAction = getBatchStepOrThrow(flowVersion)
 
         expect(step.settings.errorHandlingOptions?.continueOnFailure?.value).toBe(true)
         expect('continueOnFailureBranches' in step).toBe(false)

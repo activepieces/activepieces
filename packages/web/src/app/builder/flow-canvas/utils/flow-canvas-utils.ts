@@ -18,6 +18,7 @@ import { t } from 'i18next';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 
 import { batchRegionUtils } from './batch-region';
+import { canvasElementIds } from './canvas-element-ids';
 import { flowCanvasLayoutConsts } from './layout-consts';
 import {
   ApBigAddButtonNode,
@@ -27,6 +28,7 @@ import {
   ApGraph,
   ApGraphEndNode,
   ApLoopReturnNode,
+  ApNode,
   ApNodeType,
   ApStepNode,
   ApStraightLineEdge,
@@ -53,7 +55,10 @@ const createBigAddButtonGraph: (params: {
 }) => ApGraph = ({ parentStep, nodeData, orientation }) => {
   const layout = getLayout(orientation);
   const bigAddButtonNode: ApBigAddButtonNode = {
-    id: `${parentStep.name}-big-add-button-${nodeData.edgeId}`,
+    id: canvasElementIds.bigAddButtonId({
+      parentStepName: parentStep.name,
+      edgeId: nodeData.edgeId,
+    }),
     type: ApNodeType.BIG_ADD_BUTTON,
     position: { x: 0, y: 0 },
     data: nodeData,
@@ -75,7 +80,7 @@ const createBigAddButtonGraph: (params: {
 
   const straightLineEdge: ApStraightLineEdge = {
     id: `big-button-straight-line-for${nodeData.edgeId}`,
-    source: `${parentStep.name}-big-add-button-${nodeData.edgeId}`,
+    source: bigAddButtonNode.id,
     target: `${parentStep.name}-subgraph-end-${nodeData.edgeId}`,
     type: ApEdgeType.STRAIGHT_LINE as const,
     data: {
@@ -134,7 +139,7 @@ const createStepGraph: (params: {
   return {
     nodes: [stepNode, graphEndNode],
     edges:
-      !sharedFlowCanvasUtils.isContainerStep(step) &&
+      !sharedFlowCanvasUtils.isLoopOrBatchStep(step) &&
       !flowStructureUtil.isBranchedAction(step) &&
       !flowStructureUtil.hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
@@ -161,7 +166,7 @@ const buildFlowGraph: (params: {
   const childGraph =
     step.type === FlowActionType.PROCESS_IN_BATCHES
       ? buildBatchChildGraph({ step, orientation })
-      : sharedFlowCanvasUtils.isContainerStep(step)
+      : sharedFlowCanvasUtils.isLoopOrBatchStep(step)
       ? buildLoopChildGraph({ step, orientation })
       : flowStructureUtil.isBranchedAction(step)
       ? buildRouterChildGraph({ step, orientation })
@@ -206,14 +211,21 @@ function offsetGraph(
 
 function transposeGraphPositions(graph: ApGraph): ApGraph {
   return {
-    nodes: graph.nodes.map((node) => ({
-      ...node,
-      position: {
-        x: node.position.y,
-        y: node.position.x,
-      },
-    })),
+    nodes: graph.nodes.map(transposeNode),
     edges: graph.edges,
+  };
+}
+
+function transposeNode(node: ApNode): ApNode {
+  const position = { x: node.position.y, y: node.position.x };
+  if (node.type !== ApNodeType.BATCH_REGION) {
+    return { ...node, position };
+  }
+  const { width, height } = node.data.size;
+  return {
+    ...node,
+    position,
+    data: { ...node.data, size: { width: height, height: width } },
   };
 }
 
@@ -284,25 +296,25 @@ const buildBatchChildGraph: (params: {
           parentStepName: step.name,
           stepLocationRelativeToParent:
             StepLocationRelativeToParent.INSIDE_BATCH,
-          edgeId: `${step.name}-batch-start-edge`,
+          edgeId: canvasElementIds.batchStartEdgeId(step.name),
         },
         orientation,
       });
 
-  const childGraphAlongOffset =
+  const childGraphOffsetY =
     layout.stepAlongSize + layout.spaceAlongBetweenSteps;
   const childGraphAfterOffset = offsetGraph(childGraph, {
     x: 0,
-    y: childGraphAlongOffset,
+    y: childGraphOffsetY,
   });
 
   const subgraphEndSubNode: ApGraphEndNode = {
-    id: `${step.name}-batch-subgraph-end`,
+    id: canvasElementIds.batchSubgraphEndId(step.name),
     type: ApNodeType.GRAPH_END_WIDGET,
     position: {
       x: layout.stepCrossSize / 2,
       y:
-        childGraphAlongOffset +
+        childGraphOffsetY +
         calculateGraphBoundingBox({ graph: childGraph, orientation }).height +
         layout.spaceAlongBetweenSteps,
     },
@@ -312,7 +324,7 @@ const buildBatchChildGraph: (params: {
 
   const edges: ApEdge[] = [
     {
-      id: `${step.name}-batch-start-edge`,
+      id: canvasElementIds.batchStartEdgeId(step.name),
       source: step.name,
       target: `${step.name}-subgraph-end`,
       type: ApEdgeType.STRAIGHT_LINE as const,
@@ -773,19 +785,20 @@ export const flowCanvasUtils = {
     } else {
       console.warn('Flow end widget not found');
     }
-    const orientedGraph =
-      orientation === 'horizontal'
-        ? transposeGraphPositions(stepsGraph)
-        : stepsGraph;
     const batchRegionsGraph: ApGraph = {
       nodes: batchRegionUtils.buildBatchRegionNodes({
-        graph: orientedGraph,
+        graph: stepsGraph,
         version,
         orientation,
       }),
       edges: [],
     };
-    return mergeGraph(mergeGraph(orientedGraph, batchRegionsGraph), notesGraph);
+    const layoutGraph = mergeGraph(stepsGraph, batchRegionsGraph);
+    const orientedGraph =
+      orientation === 'horizontal'
+        ? transposeGraphPositions(layoutGraph)
+        : layoutGraph;
+    return mergeGraph(orientedGraph, notesGraph);
   },
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,

@@ -1,10 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  FlowActionType,
-  flowStructureUtil,
-  FlowVersion,
-  LoopOnItemsAction,
-} from '@activepieces/shared';
+import { LoopOnItemsAction } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
 import React from 'react';
@@ -14,6 +9,7 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { pieceSelectorUtils } from '@/features/pieces';
 
 import { TextInputWithMentions } from '../piece-properties/text-input-with-mentions';
 
@@ -70,7 +66,13 @@ const LargeListWarning = () => {
   if (isNil(itemsCount) || itemsCount < LARGE_LIST_THRESHOLD) {
     return null;
   }
-  if (isInsideBatch({ flowVersion, selectedStep })) {
+  if (
+    !isNil(selectedStep) &&
+    pieceSelectorUtils.isStepInsideBatch({
+      flowVersion,
+      stepName: selectedStep,
+    })
+  ) {
     return null;
   }
 
@@ -86,21 +88,5 @@ const LargeListWarning = () => {
     </Alert>
   );
 };
-
-const isInsideBatch = ({
-  flowVersion,
-  selectedStep,
-}: {
-  flowVersion: FlowVersion;
-  selectedStep: string | null;
-}): boolean =>
-  !isNil(selectedStep) &&
-  flowStructureUtil
-    .getAllSteps(flowVersion.trigger)
-    .some(
-      (step) =>
-        step.type === FlowActionType.PROCESS_IN_BATCHES &&
-        flowStructureUtil.isChildOf(step, selectedStep),
-    );
 
 const LARGE_LIST_THRESHOLD = 1000;

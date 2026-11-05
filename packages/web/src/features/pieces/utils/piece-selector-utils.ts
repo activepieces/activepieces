@@ -426,29 +426,54 @@ const getStepNameFromOperationType = (
       return 'trigger';
   }
 };
-const isInsideBatch = ({
+const isStepInsideBatch = ({
+  flowVersion,
+  stepName,
+}: {
+  flowVersion: FlowVersion;
+  stepName: string;
+}): boolean =>
+  flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .some(
+      (step) =>
+        step.type === FlowActionType.PROCESS_IN_BATCHES &&
+        flowStructureUtil.isChildOf(step, stepName),
+    );
+
+const getHiddenStepTypes = ({
   operation,
   flowVersion,
 }: {
   operation: PieceSelectorOperation;
   flowVersion: FlowVersion;
-}): boolean => {
-  if (operation.type !== FlowOperationType.ADD_ACTION) {
-    return false;
+}): FlowActionType[] => {
+  switch (operation.type) {
+    case FlowOperationType.UPDATE_TRIGGER:
+      return [];
+    case FlowOperationType.UPDATE_ACTION: {
+      const stepType = flowStructureUtil.getStep(
+        operation.stepName,
+        flowVersion.trigger,
+      )?.type;
+      if (stepType === FlowActionType.PROCESS_IN_BATCHES) {
+        return [FlowActionType.LOOP_ON_ITEMS];
+      }
+      return stepType === FlowActionType.LOOP_ON_ITEMS ||
+        isStepInsideBatch({ flowVersion, stepName: operation.stepName })
+        ? [FlowActionType.PROCESS_IN_BATCHES]
+        : [];
+    }
+    case FlowOperationType.ADD_ACTION: {
+      const { parentStep, stepLocationRelativeToParent } =
+        operation.actionLocation;
+      return stepLocationRelativeToParent ===
+        StepLocationRelativeToParent.INSIDE_BATCH ||
+        isStepInsideBatch({ flowVersion, stepName: parentStep })
+        ? [FlowActionType.PROCESS_IN_BATCHES]
+        : [];
+    }
   }
-  const { parentStep, stepLocationRelativeToParent } = operation.actionLocation;
-  if (
-    stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BATCH
-  ) {
-    return true;
-  }
-  return flowStructureUtil
-    .getAllSteps(flowVersion.trigger)
-    .some(
-      (step) =>
-        step.type === FlowActionType.PROCESS_IN_BATCHES &&
-        flowStructureUtil.isChildOf(step, parentStep),
-    );
 };
 
 export const pieceSelectorUtils = {
@@ -459,7 +484,8 @@ export const pieceSelectorUtils = {
   isChatTrigger,
   removeHiddenActions,
   getStepNameFromOperationType,
-  isInsideBatch,
+  isStepInsideBatch,
+  getHiddenStepTypes,
   isManualTrigger: isManualPieceTrigger,
   PIECE_SELECTOR_CLIPPING_THRESHOLD: 20 as const,
 };
