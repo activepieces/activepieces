@@ -195,7 +195,7 @@ function ConnectProviderForm({
               )}
             />
 
-            {info?.markdown && <SetupInstructions info={info} />}
+            {info && <SetupInstructions info={info} />}
 
             <FormField
               control={form.control}
@@ -391,7 +391,7 @@ function SetupInstructions({ info }: { info: AiProviderInfo }) {
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-2">
-        <ApMarkdown markdown={info.markdown} variant={MarkdownVariant.INFO} />
+        <ApMarkdown markdown={info.markdown()} variant={MarkdownVariant.INFO} />
       </CollapsibleContent>
     </Collapsible>
   );

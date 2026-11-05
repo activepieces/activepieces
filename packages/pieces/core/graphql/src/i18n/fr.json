@@ -17,5 +17,6 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "GraphQL": "GraphQL"
 }

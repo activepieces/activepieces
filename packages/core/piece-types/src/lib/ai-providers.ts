@@ -442,6 +442,7 @@ const NO_IMAGE_GENERATION_PROVIDERS = new Set<AIProviderName>([
     AIProviderName.MOONSHOT,
     AIProviderName.META,
     AIProviderName.NVIDIA,
+    AIProviderName.COHERE,
 ])
 
 export const OPENAI_COMPATIBLE_VENDOR_BASE_URLS: Record<OpenAiCompatibleVendor, string> = {
@@ -513,6 +514,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.MOONSHOT]: buildProviderCapabilities(AIProviderName.MOONSHOT),
     [AIProviderName.META]: buildProviderCapabilities(AIProviderName.META),
     [AIProviderName.NVIDIA]: buildProviderCapabilities(AIProviderName.NVIDIA),
+    [AIProviderName.COHERE]: buildProviderCapabilities(AIProviderName.COHERE),
 }
 
 export const aiProviderUtils = {

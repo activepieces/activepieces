@@ -1,10 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { streakAuth } from '../common/auth';
-import { streakApiCall } from '../common/client';
-import { flattenStreakBox } from '../common/flatten';
+import { boxOutputSchema } from '../common/output-schemas';
+import { getStreakBox, streakApiCall, writeBoxFields } from '../common/client';
+import { flattenStreakBox, toEmailList } from '../common/flatten';
 import { boxDropdown, pipelineDropdown, stageDropdown } from '../common/props';
-import { StreakBox } from '../common/types';
 
 export const updateBoxAction = createAction({
   auth: streakAuth,
@@ -13,12 +13,8 @@ export const updateBoxAction = createAction({
   displayName: 'Update Box',
   description:
     'Update the name, notes, stage, assignees, or custom fields on an existing box.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Update fields on an existing box identified by its box key, setting any of name, stage, notes, assignee emails, or custom fields (only provided fields change). Use when an agent needs to modify or advance an existing Streak record, such as moving a deal to a new stage. Idempotent: re-applying the same values leaves the box in the same state.',
-    idempotent: true,
-  },
+  audience: 'human',
+  outputSchema: boxOutputSchema,
   props: {
     pipelineKey: pipelineDropdown,
     boxKey: boxDropdown,
@@ -28,6 +24,11 @@ export const updateBoxAction = createAction({
       required: false,
     }),
     stageKey: stageDropdown,
+    clearNotes: Property.Checkbox({
+      displayName: 'Clear Notes',
+      description: 'Remove the current notes. Ignored when Notes is filled in.',
+      required: false,
+    }),
     notes: Property.LongText({
       displayName: 'Notes',
       description: 'Replaces the existing notes. Leave empty to keep them unchanged.',
@@ -47,30 +48,40 @@ export const updateBoxAction = createAction({
     }),
   },
   async run(context) {
-    const { boxKey, name, stageKey, notes, assignedToEmails, fields } =
+    const { boxKey, name, stageKey, notes, clearNotes, assignedToEmails, fields } =
       context.propsValue;
+    const apiKey = context.auth.secret_text;
 
     const body: Record<string, unknown> = {};
     if (name) body['name'] = name;
     if (stageKey) body['stageKey'] = stageKey;
     if (notes) body['notes'] = notes;
-    if (assignedToEmails && assignedToEmails.length > 0) {
-      body['assignedToSharingEntries'] = (assignedToEmails as string[]).map(
-        (email) => ({ email }),
-      );
-    }
-    if (fields && Object.keys(fields).length > 0) {
-      body['fields'] = fields;
+    else if (clearNotes === true) body['notes'] = '';
+    const emails = toEmailList(assignedToEmails);
+    if (emails.length > 0) {
+      body['assignedToSharingEntries'] = emails.map((email) => ({ email }));
     }
 
-    const response = await streakApiCall<StreakBox>({
-      apiKey: context.auth.secret_text,
-      method: HttpMethod.POST,
-      path: `/api/v1/boxes/${boxKey}`,
-      contentType: 'application/json',
-      body,
+    if (Object.keys(body).length > 0) {
+      await streakApiCall({
+        apiKey,
+        method: HttpMethod.POST,
+        path: `/api/v1/boxes/${encodeURIComponent(boxKey)}`,
+        contentType: 'application/json',
+        body,
+      });
+    }
+
+    await writeBoxFields({
+      apiKey,
+      boxKey,
+      fields: Object.entries(fields ?? {}).map(([fieldKey, value]) => ({
+        fieldKey,
+        value,
+      })),
     });
 
-    return flattenStreakBox(response.body);
+    const box = await getStreakBox({ apiKey, boxKey });
+    return flattenStreakBox(box);
   },
 });
