@@ -116,10 +116,13 @@ You're responsible for the memory your users' flows have. They can't change any 
 
 **If you host Activepieces on your own servers:**
 
-- Your IT team sets the limits, as described in the self-hosted section.
-- **Run one flow at a time per worker** (AP_WORKER_CONCURRENCY=1). With many customers sharing your setup, this matters more than usual: it stops one customer's heavy flow from making other customers' flows fail.
-- **Size your workers for your heaviest customers, not your average one.** If some customers process large files or long lists, their flows need more memory.
-- **Give your biggest or most important customers their own dedicated workers** (worker groups). Their flows then never compete with everyone else's for space.
+Your IT team sets the limits. Because many customers share your setup, three decisions matter most:
+
+- **One flow at a time on each worker:** Each customer’s flow gets its own space, so one customer’s heavy flow can’t make other customers’ flows fail. Like each cook handling one order at a time, with the whole counter to themselves.
+- **Workers big enough for your heaviest customers, not your average one:** If some customers process large files or long lists, their flows need more memory. Plan for them.
+- **Dedicated workers for your biggest or most important customers:** Their flows run on their own workers and never wait behind or compete with anyone else’s. Like giving a big client their own private kitchen.
+
+> **For your IT team:** One flow at a time is set with `AP_WORKER_CONCURRENCY=1`. Dedicated workers are set up with worker groups. Full details are in the Activepieces admin documentation.
 
 #### **Help Your Customers Help Themselves**
 
