@@ -283,10 +283,10 @@ If one flow does several heavy jobs in a row (for example: export data, then cle
 
 **How to fix it:**
 
-- **Handle fewer items per run.** Fetch records in pages and run the flow on a schedule, handling one group each time (tip 2).
-- **Move loop work into a separate flow** (tip 3). Each item then runs in its own flow with its own 10 minutes. If you tick **Wait for Response** in the **Call Flow** action, the main flow pauses while it waits, and that waiting doesn't count toward its time limit.
-- **Split big jobs into several flows** (tip 9). Each flow gets its own 10 minutes.
-- **Look for slow steps.** Open the run and check how long each step took. The time is shown on each step. A slow step is often an app that responds slowly, or a step that fetches far more data than it needs.
+- **Handle fewer items per run:** Fetch records in pages and run the flow on a schedule, handling one group each time .
+- **Move loop work into a separate flow**:. Each item then runs in its own flow with its own 10 minutes. If you tick **Wait for Response** in the **Call Flow** action, the main flow pauses while it waits, and that waiting doesn't count toward its time limit.
+- **Split big jobs into several flows**: Each flow gets its own 10 minutes.
+- **Look for slow steps:** Open the run and check how long each step took. The time is shown on each step. A slow step is often an app that responds slowly, or a step that fetches far more data than it needs.
 
 ## **Common Questions**
 
