@@ -30,6 +30,10 @@ import {
 } from '@/components/ui/tooltip';
 import { SidebarUsageLimits } from '@/features/billing';
 import { PlatformSwitcher } from '@/features/projects';
+import {
+  RAIL_WIDTH_REM,
+  SIDEBAR_WIDTH_REM,
+} from '@/features/workspace/lib/chat-layout';
 import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -58,9 +62,9 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
 
   return (
     <SidebarProvider
-      open={isPlatform || rail.open}
-      onOpenChange={isPlatform ? keepOpen : rail.onOpenChange}
-      keyboardShortcut={!isPlatform}
+      open={rail.open}
+      onOpenChange={rail.onOpenChange}
+      keyboardShortcut
       shortcutIgnoresEditable
       className="contents"
       style={SIDEBAR_STYLE}
@@ -208,6 +212,7 @@ function AppHeader() {
 function PlatformHeader() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
+  const { toggleSidebar } = useSidebar();
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
   const defaultRoute = determineDefaultRoute({
     checkAccess,
@@ -218,16 +223,29 @@ function PlatformHeader() {
     <SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton asChild>
+          <SidebarMenuButton
+            asChild
+            tooltip={t('Back to app')}
+            className="pr-10 group-data-[collapsible=icon]:pr-2"
+          >
             <Link
               to={defaultRoute}
               onMouseEnter={() => chevronRef.current?.startAnimation()}
               onMouseLeave={() => chevronRef.current?.stopAnimation()}
             >
               <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
-              <span>{t('Back to app')}</span>
+              <span className={sidebarStyles.labelFade}>
+                {t('Back to app')}
+              </span>
             </Link>
           </SidebarMenuButton>
+          <HeaderActions>
+            <HeaderIconButton
+              label={t('Close sidebar')}
+              icon={PanelLeftClose}
+              onClick={toggleSidebar}
+            />
+          </HeaderActions>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarHeader>
@@ -321,10 +339,6 @@ function HeaderIconButton({
   );
 }
 
-function keepOpen() {
-  return undefined;
-}
-
 const BRAND_BUTTON =
   'px-1.5 pr-18 font-medium group-data-[collapsible=icon]:pr-1.5';
 
@@ -332,8 +346,8 @@ const SIDEBAR_STYLE: React.CSSProperties & {
   '--sidebar-width': string;
   '--sidebar-width-icon': string;
 } = {
-  '--sidebar-width': '15.5rem',
-  '--sidebar-width-icon': '3rem',
+  '--sidebar-width': `${SIDEBAR_WIDTH_REM}rem`,
+  '--sidebar-width-icon': `${RAIL_WIDTH_REM}rem`,
 };
 
 export type AppSidebarMode = 'app' | 'platform';
