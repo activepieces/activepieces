@@ -97,7 +97,12 @@ export function OnboardingQuestionCard({
       onDismiss={onDismiss}
       active={active}
       title={
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-lg font-semibold sm:flex-nowrap sm:text-xl">
+        <div
+          className={cn(
+            'flex flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-lg font-semibold sm:text-xl',
+            !companyLocked && 'sm:flex-nowrap',
+          )}
+        >
           <span className="shrink-0">{t("I'm a")}</span>
           <OnboardingPill
             value={role}
