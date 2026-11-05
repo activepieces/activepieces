@@ -295,12 +295,12 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
     },
 
     async completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void> {
+        jobAssignmentTracker.clear({ jobId: input.jobId, queueName: input.queueName })
+
         const job = await fetchJobFromRedis(input.queueName, input.jobId, log)
         if (isNil(job)) {
             return
         }
-
-        jobAssignmentTracker.clear({ jobId: input.jobId, queueName: input.queueName })
 
         const jobData = JobData.parse(job.data)
         const waitingCaller = callerWaitingForResponse(jobData)
