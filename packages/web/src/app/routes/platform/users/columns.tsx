@@ -181,14 +181,22 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
       />
     ),
     cell: ({ row }) => {
-      if (row.original.type === 'invitation') {
-        return <StatusDot tone="warning">{t('Pending')}</StatusDot>;
+      switch (getUserRowStatus(row.original)) {
+        case UserStatus.ACTIVE:
+          return <StatusDot tone="success">{t('Activated')}</StatusDot>;
+        case INVITED_USER_STATUS:
+          return <StatusDot tone="warning">{t('Invited')}</StatusDot>;
+        default:
+          return <StatusDot tone="neutral">{t('Deactivated')}</StatusDot>;
       }
-      return row.original.data.status === UserStatus.ACTIVE ? (
-        <StatusDot tone="success">{t('Activated')}</StatusDot>
-      ) : (
-        <StatusDot tone="neutral">{t('Deactivated')}</StatusDot>
-      );
     },
   },
 ];
+
+export function getUserRowStatus(row: UserRowData): UserRowStatus {
+  return row.type === 'invitation' ? INVITED_USER_STATUS : row.data.status;
+}
+
+export const INVITED_USER_STATUS = 'INVITED';
+
+export type UserRowStatus = UserStatus | typeof INVITED_USER_STATUS;
