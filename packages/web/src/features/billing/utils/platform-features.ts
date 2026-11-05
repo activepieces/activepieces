@@ -1,61 +1,6 @@
 import { ApEdition, PlanName } from '@activepieces/shared';
 import { t } from 'i18next';
 
-export const PLATFORM_FEATURES = {
-  projects: {
-    featureKey: 'PROJECTS',
-    planThatHasFeature: PlanName.TEAM,
-  },
-  sso: {
-    featureKey: 'SSO',
-    planThatHasFeature: PlanName.TEAM,
-  },
-  projectRoles: {
-    featureKey: 'CUSTOM_ROLES',
-    planThatHasFeature: PlanName.TEAM,
-  },
-  globalConnections: {
-    featureKey: 'GLOBAL_CONNECTIONS',
-    planThatHasFeature: PlanName.TEAM,
-  },
-  apiKeys: {
-    featureKey: 'API',
-    planThatHasFeature: PlanName.TEAM,
-  },
-  secretManagers: {
-    featureKey: 'SECRET_MANAGERS',
-    planThatHasFeature: PlanName.ENTERPRISE,
-  },
-  auditLogs: {
-    featureKey: 'AUDIT_LOGS',
-    planThatHasFeature: PlanName.ENTERPRISE,
-  },
-  eventStreaming: {
-    featureKey: 'EVENT_DESTINATIONS',
-    planThatHasFeature: PlanName.ENTERPRISE,
-  },
-  templates: {
-    featureKey: 'TEMPLATES',
-    planThatHasFeature: PlanName.ENTERPRISE,
-  },
-  embedding: {
-    featureKey: 'SIGNING_KEYS',
-    planThatHasFeature: PlanName.ENTERPRISE,
-  },
-  branding: {
-    featureKey: 'BRANDING',
-    planThatHasFeature: PlanName.ENTERPRISE,
-  },
-  pieces: {
-    featureKey: 'PIECES',
-    planThatHasFeature: PlanName.ENTERPRISE,
-  },
-  aiProviders: {
-    featureKey: 'UNIVERSAL_AI',
-    planThatHasFeature: PlanName.PLUS,
-  },
-} satisfies Record<string, PlatformFeature>;
-
 function planThatHasFeature({
   featureKey,
   edition,
@@ -111,6 +56,61 @@ export const platformFeatures = {
   planBadgeLabel,
   askAdminToUpgradeText,
 };
+
+export const PLATFORM_FEATURES = {
+  projects: {
+    featureKey: 'PROJECTS',
+    planThatHasFeature: PlanName.TEAM,
+  },
+  sso: {
+    featureKey: 'SSO',
+    planThatHasFeature: PlanName.TEAM,
+  },
+  projectRoles: {
+    featureKey: 'CUSTOM_ROLES',
+    planThatHasFeature: PlanName.TEAM,
+  },
+  globalConnections: {
+    featureKey: 'GLOBAL_CONNECTIONS',
+    planThatHasFeature: PlanName.TEAM,
+  },
+  apiKeys: {
+    featureKey: 'API',
+    planThatHasFeature: PlanName.TEAM,
+  },
+  secretManagers: {
+    featureKey: 'SECRET_MANAGERS',
+    planThatHasFeature: PlanName.ENTERPRISE,
+  },
+  auditLogs: {
+    featureKey: 'AUDIT_LOGS',
+    planThatHasFeature: PlanName.ENTERPRISE,
+  },
+  eventStreaming: {
+    featureKey: 'EVENT_DESTINATIONS',
+    planThatHasFeature: PlanName.ENTERPRISE,
+  },
+  templates: {
+    featureKey: 'TEMPLATES',
+    planThatHasFeature: PlanName.ENTERPRISE,
+  },
+  embedding: {
+    featureKey: 'SIGNING_KEYS',
+    planThatHasFeature: PlanName.ENTERPRISE,
+  },
+  branding: {
+    featureKey: 'BRANDING',
+    planThatHasFeature: PlanName.ENTERPRISE,
+  },
+  pieces: {
+    featureKey: 'PIECES',
+    planThatHasFeature: PlanName.ENTERPRISE,
+  },
+  aiProviders: {
+    featureKey: 'UNIVERSAL_AI',
+    planThatHasFeature: PlanName.PLUS,
+  },
+} satisfies Record<string, PlatformFeature>;
 
 type PlatformFeature = {
   featureKey: FeatureKey;
