@@ -76,10 +76,10 @@ export function KeyModelList({
     selectedIds: listedIds.filter(isOn),
   });
   const page = filtered.slice(0, shown);
-  const filteredIds = filtered.map((model) => model.id);
-  const shownOnCount = filteredIds.filter(isOn).length;
+  const shownIds = page.map((model) => model.id);
+  const shownOnCount = shownIds.filter(isOn).length;
   const headerState =
-    filteredIds.length > 0 && shownOnCount === filteredIds.length
+    shownIds.length > 0 && shownOnCount === shownIds.length
       ? true
       : shownOnCount > 0
       ? 'indeterminate'
@@ -192,13 +192,9 @@ export function KeyModelList({
       >
         <Checkbox
           checked={headerState}
-          disabled={
-            isLoading || (!canSelect(filteredIds) && !canClear(filteredIds))
-          }
+          disabled={isLoading || (!canSelect(shownIds) && !canClear(shownIds))}
           onCheckedChange={() =>
-            headerState === true
-              ? clearIds(filteredIds)
-              : selectIds(filteredIds)
+            headerState === true ? clearIds(shownIds) : selectIds(shownIds)
           }
           aria-label={t('Select all')}
         />

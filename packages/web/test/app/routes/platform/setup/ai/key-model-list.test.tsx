@@ -189,4 +189,22 @@ describe('KeyModelList', () => {
     expect(screen.getByRole('checkbox', { name: 'GPT Main' })).toBeTruthy();
     expect(screen.queryByRole('checkbox', { name: 'GPT Other' })).toBeNull();
   });
+
+  it('leaves models behind show more alone when the header clears', () => {
+    const many: AIProviderModel[] = Array.from({ length: 25 }, (_, index) => ({
+      id: `m-${String(index).padStart(2, '0')}`,
+      name: `Model ${String(index).padStart(2, '0')}`,
+      type: AIProviderModelType.TEXT,
+    }));
+    const { onChange } = renderList({
+      config: { ...CONFIG, modelScope: 'all', modelIds: [] },
+      models: many,
+      tiersByModel: new Map(),
+      selection: { modelScope: 'all', modelIds: [] },
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
+    const next = onChange.mock.calls[0][0];
+    expect(next.modelScope).toBe('selected');
+    expect(next.modelIds).toHaveLength(5);
+  });
 });
