@@ -311,5 +311,7 @@
   "GET": "取得",
   "PATCH": "PATCH",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

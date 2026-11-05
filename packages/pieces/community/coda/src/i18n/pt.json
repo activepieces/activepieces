@@ -232,6 +232,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Row Created": "Nova Linha Criada",
   "Triggers when a new row is added to the selected table.": "Dispara quando uma nova linha é adicionada à tabela selecionada."
 }
