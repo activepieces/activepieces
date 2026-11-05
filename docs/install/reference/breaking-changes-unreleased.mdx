@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Rendex 0.2.0: Render to Image is no longer an agent tool
+
+From Rendex 0.2.0, **Render to Image** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Render Screenshot** tool instead, which takes the page as one of URL, HTML or Markdown.
+
+Render to Image steps upgraded to 0.2.0 also wait for the page's load event (instead of network idle) when the source is HTML or Markdown, because Rendex timed out on inline content with the old wait.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Render to Image at **Render Screenshot**. Flow steps keep working as before after upgrading.
+
 #### Folk 0.2.0: eight Folk actions are no longer agent tools, and Update Person/Company behave differently
 
 From Folk 0.2.0, **Create Person**, **Create Company**, **Get Person**, **Get Company**, **List People**, **Find Company**, **Update Person** and **Update Company** (the existing flow-builder actions) are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents get new tools instead: **Create Person**, **Create Company**, **Get Person**, **Get Company**, **Search People** (replaces List People), **Search Companies** (replaces Find Company), **Update Person** and **Update Company** (the `*_ai` actions, which take IDs and plain lists).
