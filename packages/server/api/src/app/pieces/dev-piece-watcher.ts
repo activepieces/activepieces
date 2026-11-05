@@ -44,10 +44,7 @@ async function buildPieces(app: FastifyInstance, piecesInfo: PieceInfo[]): Promi
         await Promise.all(piecesInfo.map(async (piece) => {
             await copyPackageJsonToDist(piece.pieceDirectory)
             await copyI18nToDist(piece.pieceDirectory)
-            const distPath = await utils.findDistPiecePathByPackageName(piece.packageName)
-            if (distPath) {
-                utils.clearPieceModuleCache(distPath)
-            }
+            utils.clearPieceModuleCache(join(piece.pieceDirectory, 'dist'))
         }))
 
         invalidateDevPieceCache()

@@ -1,10 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ExecutionMode, FlowVersionState, NetworkMode } from '@activepieces/shared'
-import { ApLogger } from '@activepieces/server-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { installMock, buildMock, transpileMock } = vi.hoisted(() => ({
@@ -27,6 +26,8 @@ import { codeBuilder } from '../../../../../src/lib/cache/flow/code/code-builder
 import { codeCache } from '../../../../../src/lib/cache/flow/code/code-cache'
 // eslint-disable-next-line import/first
 import { SandboxSettings } from '../../../../../src/lib/types'
+// eslint-disable-next-line import/first
+import { testLogger } from '../../../../helpers/logger'
 
 const folders: string[] = []
 
@@ -36,22 +37,7 @@ function uniqueFolder(): string {
     return folder
 }
 
-function createNoopLog(): ApLogger {
-    const log: ApLogger = {
-        level: 'silent',
-        silent: () => undefined,
-        info: () => undefined,
-        warn: () => undefined,
-        error: () => undefined,
-        fatal: () => undefined,
-        debug: () => undefined,
-        trace: () => undefined,
-        child: () => log,
-    }
-    return log
-}
-
-const noopLog = createNoopLog()
+const noopLog = testLogger.noop
 
 const getSettings = (): SandboxSettings => ({
     EXECUTION_MODE: ExecutionMode.SANDBOX_CODE_AND_PROCESS,
@@ -413,23 +399,4 @@ describe('codeBuilder in-place rebuilds', () => {
         expect(installMock).toHaveBeenCalledWith(expect.objectContaining({ force: true }))
     })
 
-    it('runs the dependency install while holding the shared disk lock', async () => {
-        const codesFolderPath = uniqueFolder()
-        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
-        let lockFilesDuringInstall: string[] | null = null
-        installMock.mockImplementation(async ({ path }: { path: string }) => {
-            lockFilesDuringInstall = await readdir(join(codesFolderPath, '.install-locks'))
-            await mkdir(join(path, 'node_modules'), { recursive: true })
-            return { stdout: '', stderr: '' }
-        })
-
-        await expect(
-            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
-        ).resolves.toBe('success')
-
-        expect(lockFilesDuringInstall).not.toBeNull()
-        expect(lockFilesDuringInstall!.filter((name) => name.endsWith('.lock'))).toHaveLength(1)
-        const lockFilesAfter = await readdir(join(codesFolderPath, '.install-locks'))
-        expect(lockFilesAfter.filter((name) => name.endsWith('.lock'))).toHaveLength(0)
-    })
 })

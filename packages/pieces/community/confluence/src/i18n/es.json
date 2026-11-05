@@ -550,6 +550,8 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Page": "Nueva página",
   "Updated Page": "Página actualizada",
   "New Comment on Page": "Nuevo comentario en la página",

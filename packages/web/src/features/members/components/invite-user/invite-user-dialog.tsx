@@ -332,9 +332,12 @@ const InviteUserDialogInternal = ({
       return;
     }
 
-    const newEmailsCount = emailsToInvite.filter(
-      (email) => !existingEmails.has(email.trim().toLowerCase()),
-    ).length;
+    const newEmailsCount = emailsToInvite.filter((email) => {
+      const normalized = email.trim().toLowerCase();
+      return (
+        !platformUserEmails.has(normalized) && !existingEmails.has(normalized)
+      );
+    }).length;
     if (newEmailsCount > 0 && !ensureSeatsAvailable(newEmailsCount)) {
       return;
     }

@@ -9,7 +9,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
-import { AuthenticationResult, authenticationUtils, SignInMethods } from './authentication-utils'
+import { AuthenticationResult, authenticationUtils } from './authentication-utils'
 import { zerobounce } from './lib/zerobounce'
 import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
@@ -208,15 +208,30 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
-    async discoverSignInMethods({ domain }: DiscoverSignInMethodsParams): Promise<SignInDiscovery> {
+    async findGoverningPlatform({ email }: FindGoverningPlatformParams): Promise<Omit<PlatformWithoutSensitiveData, 'usage'> | null> {
+        const domain = email.split('@')[1] ?? ''
         const domainOwnerPlatformId = await verifiedDomainHooks.get(log).findPlatformIdByDomain({ domain })
         if (isNil(domainOwnerPlatformId)) {
-            return { domainOwned: false }
+            return null
         }
-        const domainOwnerPlatform = await platformService(log).getOneWithPlanOrThrow(domainOwnerPlatformId)
-        return { domainOwned: true, methods: authenticationUtils(log).getSignInMethods({ platform: domainOwnerPlatform }) }
+        const governed = await isMemberOrAcceptedInvitee({ email, platformId: domainOwnerPlatformId, log })
+        if (!governed) {
+            return null
+        }
+        return platformService(log).getOneWithPlanOrThrow(domainOwnerPlatformId)
     },
 })
+
+async function isMemberOrAcceptedInvitee({ email, platformId, log }: IsMemberOrAcceptedInviteeParams): Promise<boolean> {
+    const identity = await userIdentityService(log).getIdentityByEmail(email)
+    if (!isNil(identity)) {
+        const member = await userService(log).getOneByIdentityAndPlatform({ identityId: identity.id, platformId })
+        if (!isNil(member)) {
+            return true
+        }
+    }
+    return userInvitationsService(log).hasAnyAcceptedInvitations({ email, platformId })
+}
 
 async function assertUserCanSwitchToPlatform(platform: PlatformWithoutSensitiveData | undefined): Promise<void> {
     if (isNil(platform)) {
@@ -341,10 +356,11 @@ type SwitchPlatformParams = {
     platformId: string
 }
 
-type DiscoverSignInMethodsParams = {
-    domain: string
+type FindGoverningPlatformParams = {
+    email: string
 }
 
-export type SignInDiscovery =
-    | { domainOwned: true, methods: SignInMethods }
-    | { domainOwned: false }
+type IsMemberOrAcceptedInviteeParams = FindGoverningPlatformParams & {
+    platformId: string
+    log: FastifyBaseLogger
+}
