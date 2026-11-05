@@ -193,3 +193,53 @@ describe('Sent version 2 (Standard Webhooks) signatures', () => {
     expect(sentSecurity.verify({ ...v2, version: 1 })).toBe(false);
   });
 });
+
+describe('signing secret length', () => {
+  const vector = {
+    secret: 'whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw',
+    id: 'msg_p5jXN8AQM9LWM0D4loKWxJek',
+    timestamp: '1614265330',
+    body: '{"test": 2432232314}',
+    signature: 'v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=',
+  };
+  function signWith(secretBytes: number) {
+    const key = Buffer.alloc(secretBytes, 7);
+    const signature = `v1,${createHmac('sha256', key)
+      .update(`${vector.id}.${vector.timestamp}.${vector.body}`)
+      .digest('base64')}`;
+    return sentSecurity.verify({
+      secret: `whsec_${key.toString('base64')}`,
+      webhookId: 'unused',
+      version: 2,
+      headers: {
+        'webhook-id': vector.id,
+        'webhook-timestamp': vector.timestamp,
+        'webhook-signature': signature,
+      },
+      rawBody: vector.body,
+      now: Number(vector.timestamp) * 1000,
+    });
+  }
+  it('accepts the published Standard Webhooks test vector (24-byte secret)', () => {
+    expect(
+      sentSecurity.verify({
+        secret: vector.secret,
+        webhookId: 'unused',
+        version: 2,
+        headers: {
+          'webhook-id': vector.id,
+          'webhook-timestamp': vector.timestamp,
+          'webhook-signature': vector.signature,
+        },
+        rawBody: vector.body,
+        now: Number(vector.timestamp) * 1000,
+      })
+    ).toBe(true);
+  });
+  it.each([24, 32, 48, 64])('accepts a %s-byte secret', (bytes) => {
+    expect(signWith(bytes)).toBe(true);
+  });
+  it.each([16, 23, 65])('rejects a %s-byte secret', (bytes) => {
+    expect(signWith(bytes)).toBe(false);
+  });
+});

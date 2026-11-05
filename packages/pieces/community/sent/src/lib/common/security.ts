@@ -121,7 +121,12 @@ function verify({
   const keyMaterial = secret.startsWith('whsec_') ? secret.slice(6) : secret;
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(keyMaterial)) return false;
   const key = Buffer.from(keyMaterial, 'base64');
-  if (key.length !== 32 || key.toString('base64') !== keyMaterial) return false;
+  if (
+    key.length < MIN_SECRET_BYTES ||
+    key.length > MAX_SECRET_BYTES ||
+    key.toString('base64') !== keyMaterial
+  )
+    return false;
   const digest = createHmac('sha256', key)
     .update(`${id}.${timestamp}.`, 'utf8')
     .update(rawBody)
@@ -135,6 +140,9 @@ function verify({
     );
   });
 }
+
+const MIN_SECRET_BYTES = 24;
+const MAX_SECRET_BYTES = 64;
 
 const HEADER_NAMES: Record<
   WebhookScheme,
