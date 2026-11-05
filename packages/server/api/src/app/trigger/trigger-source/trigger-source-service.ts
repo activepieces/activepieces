@@ -244,6 +244,7 @@ async function deleteAppEventListenersIfUnused({ flowId, projectId, otherSourceS
         flowId,
         projectId,
         simulate: otherSourceSimulate,
+        type: TriggerStrategy.APP_WEBHOOK,
     })
     if (otherSourceExists) {
         return

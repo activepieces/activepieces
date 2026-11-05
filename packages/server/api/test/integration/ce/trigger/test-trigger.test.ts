@@ -1,6 +1,7 @@
 import { apId } from '@activepieces/core-utils'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
+    Flow,
     FlowStatus,
     FlowTriggerType,
     FlowVersionState,
@@ -12,7 +13,9 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowSideEffects } from '../../../../src/app/flows/flow/flow-service-side-effects'
 import { appEventRoutingService } from '../../../../src/app/trigger/app-event-routing/app-event-routing.service'
+import { triggerSourceService } from '../../../../src/app/trigger/trigger-source/trigger-source-service'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -88,6 +91,44 @@ describe('POST /v1/test-trigger with the simulation strategy', () => {
     })
 })
 
+describe('disabling the published source of an app-webhook flow', () => {
+    it('keeps the app event listeners while an app-webhook test is running', async () => {
+        const { ctx, flowId, flowVersionId } = await createDraftFlowWithTrigger({ triggerType: TriggerStrategy.APP_WEBHOOK })
+        await saveTriggerSource({ projectId: ctx.project.id, flowId, flowVersionId, simulate: false })
+        await saveTriggerSource({ projectId: ctx.project.id, flowId, flowVersionId, simulate: true })
+        await saveAppEventListener({ projectId: ctx.project.id, flowId })
+
+        await triggerSourceService(app!.log).disable({ projectId: ctx.project.id, flowId, simulate: false, ignoreError: true })
+
+        expect(await db.findBy('app_event_routing', { flowId })).toHaveLength(1)
+    })
+
+    it('deletes the app event listeners when the running test uses a different trigger type', async () => {
+        const { ctx, flowId, flowVersionId } = await createDraftFlowWithTrigger({ triggerType: TriggerStrategy.APP_WEBHOOK })
+        await saveTriggerSource({ projectId: ctx.project.id, flowId, flowVersionId, simulate: false })
+        await saveTriggerSource({ projectId: ctx.project.id, flowId, flowVersionId, simulate: true, type: TriggerStrategy.WEBHOOK })
+        await saveAppEventListener({ projectId: ctx.project.id, flowId })
+
+        await triggerSourceService(app!.log).disable({ projectId: ctx.project.id, flowId, simulate: false, ignoreError: true })
+
+        expect(await db.findBy('app_event_routing', { flowId })).toHaveLength(0)
+    })
+
+    it('deletes the app event listeners when the flow is deleted while a test is running', async () => {
+        const { ctx, flowId, flowVersionId } = await createDraftFlowWithTrigger({ triggerType: TriggerStrategy.APP_WEBHOOK })
+        await db.update('flow', flowId, { publishedVersionId: flowVersionId })
+        await saveTriggerSource({ projectId: ctx.project.id, flowId, flowVersionId, simulate: false })
+        await saveTriggerSource({ projectId: ctx.project.id, flowId, flowVersionId, simulate: true })
+        await saveAppEventListener({ projectId: ctx.project.id, flowId })
+        const flowToDelete = await db.findOneByOrFail<Flow>('flow', { id: flowId })
+
+        await flowSideEffects(app!.log).preDelete({ flowToDelete })
+
+        expect(await db.findBy('trigger_source', { flowId })).toHaveLength(0)
+        expect(await db.findBy('app_event_routing', { flowId })).toHaveLength(0)
+    })
+})
+
 async function createDraftFlowWithTrigger({ triggerType }: { triggerType: TriggerStrategy }) {
     const ctx = await createTestContext(app!)
     const pieceName = `${PIECE_NAME_PREFIX}-${triggerType.toLowerCase()}`
@@ -136,7 +177,7 @@ async function createDraftFlowWithTrigger({ triggerType }: { triggerType: Trigge
     return { ctx, flowId: flow.id, flowVersionId: flowVersion.id }
 }
 
-async function saveTriggerSource({ projectId, flowId, flowVersionId, simulate }: SaveTriggerSourceParams): Promise<void> {
+async function saveTriggerSource({ projectId, flowId, flowVersionId, simulate, type = TriggerStrategy.APP_WEBHOOK }: SaveTriggerSourceParams): Promise<void> {
     const now = new Date().toISOString()
     await db.save('trigger_source', {
         id: apId(),
@@ -145,7 +186,7 @@ async function saveTriggerSource({ projectId, flowId, flowVersionId, simulate }:
         projectId,
         flowId,
         flowVersionId,
-        type: TriggerStrategy.APP_WEBHOOK,
+        type,
         triggerName: 'new_event',
         pieceName: 'app-webhook-piece',
         pieceVersion: PIECE_VERSION,
@@ -176,6 +217,7 @@ type SaveTriggerSourceParams = {
     flowId: string
     flowVersionId: string
     simulate: boolean
+    type?: TriggerStrategy
 }
 
 const PIECE_NAME_PREFIX = '@activepieces/piece-test-trigger'
