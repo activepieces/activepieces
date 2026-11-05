@@ -6,13 +6,12 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
-import sizeof from 'object-sizeof'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { storeEntryService } from './store-entry.service'
 
 export const storeEntryController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.post( '/', CreateRequest, async (request, reply) => {
-        const sizeOfValue = sizeof(request.body.value)
+        const sizeOfValue = Buffer.byteLength(JSON.stringify(request.body.value) ?? '', 'utf8')
         if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
             await reply.status(StatusCodes.REQUEST_TOO_LONG).send({})
             return
