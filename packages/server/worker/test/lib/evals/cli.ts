@@ -20,7 +20,7 @@ async function main(): Promise<void> {
         options: {
             'case': { type: 'string', multiple: true },
             'model': { type: 'string', default: DEFAULT_MODEL },
-            'dataset': { type: 'string', default: DEFAULT_DATASET },
+            'dataset': { type: 'string', multiple: true },
             'verbose': { type: 'boolean', default: false },
             'record': { type: 'boolean', default: false },
             'repeats': { type: 'string', default: String(DEFAULT_REPEATS) },
@@ -33,50 +33,71 @@ async function main(): Promise<void> {
     const repeats = Math.max(1, Number(values.repeats) || 1)
     const recordMode = values.record
     const onlyCases = new Set((values.case ?? []).map(Number))
-    const items = await posthogDataset.loadItems({ datasetName: values.dataset })
-    const cases = items
-        .map((item) => evalCase.fromDatasetItem(item))
-        .filter((candidate) => onlyCases.size === 0 || onlyCases.has(candidate.caseNumber))
-        .sort((a, b) => a.caseNumber - b.caseNumber)
-    if (!isNil(values['set-cut']) || !isNil(values['set-target'])) {
-        await setField({ cases, assignments: values['set-cut'] ?? [], field: 'cutBeforeStep', parse: parseStep })
-        await setField({ cases, assignments: values['set-target'] ?? [], field: 'targetTool', parse: (text) => text.length > 0 ? text : undefined })
-        return
-    }
-    if (values.steps) {
-        cases.forEach(printSteps)
-        return
+    const datasetNames = values.dataset ?? DEFAULT_DATASETS
+    const editing = !isNil(values['set-cut']) || !isNil(values['set-target']) || values.steps
+    if (editing && datasetNames.length !== 1) {
+        throw new Error('--steps, --set-cut and --set-target work on one dataset: pass --dataset <name>')
     }
     if (values.upload && (recordMode || onlyCases.size > 0)) {
         throw new Error('--upload is for the full release run only: drop --case and --record')
     }
-    console.log(`${cases.length} case(s) × ${repeats} run(s) from "${values.dataset}" · model ${values.model} · judge ${evalChecks.judgeModelId()} · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${values.upload ? ' · UPLOADS a release baseline to PostHog' : ' · nothing is uploaded'}`)
+    const datasets = await Promise.all(datasetNames.map(async (name) => ({
+        name,
+        cases: (await posthogDataset.loadItems({ datasetName: name }))
+            .map((item) => evalCase.fromDatasetItem(item))
+            .filter((candidate) => onlyCases.size === 0 || onlyCases.has(candidate.caseNumber))
+            .sort((a, b) => a.caseNumber - b.caseNumber),
+    })))
+    if (editing) {
+        const { cases } = datasets[0]
+        if (values.steps) {
+            cases.forEach(printSteps)
+        }
+        await setField({ cases, assignments: values['set-cut'] ?? [], field: 'cutBeforeStep', parse: parseStep })
+        await setField({ cases, assignments: values['set-target'] ?? [], field: 'targetTool', parse: (text) => text.length > 0 ? text : undefined })
+        return
+    }
 
     const auth = await evalAgentTurn.resolveAuth()
     const mcp = await evalToolSet.connectMcp({ conversationId: EVAL_CONVERSATION_ID })
-    const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
-    const results = await runInBatches({ runs, verbose: values.verbose, run: ({ candidate, trial }) => evaluate({ candidate, trial, mcpToolSet: mcp.toolSet, modelId: values.model, auth, recordMode }) })
-        .finally(async () => {
-            await mcp.close().catch(() => undefined)
-            await evalAgentTurn.cleanupAuth()
-        })
+    const outcomes: DatasetOutcome[] = []
+    try {
+        for (const dataset of datasets) {
+            outcomes.push(await runDataset({ dataset, repeats, recordMode, upload: values.upload, verbose: values.verbose, modelId: values.model, auth, mcpToolSet: mcp.toolSet }))
+        }
+    }
+    finally {
+        await mcp.close().catch(() => undefined)
+        await evalAgentTurn.cleanupAuth()
+    }
+    const broken = outcomes.filter((outcome) => outcome.broken)
+    console.log(`\n${broken.length === 0 ? '✓ Nothing broke' : `✗ Broken: ${broken.map((outcome) => outcome.reason).join('; ')}`}`)
+    process.exit(broken.length === 0 ? 0 : 1)
+}
 
+async function runDataset({ dataset, repeats, recordMode, upload, verbose, modelId, auth, mcpToolSet }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, modelId: string, auth: Record<string, unknown>, mcpToolSet: ToolSet }): Promise<DatasetOutcome> {
+    const { name, cases } = dataset
+    console.log(`\n=== ${name}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${upload ? ' · UPLOADS a release baseline to PostHog' : ' · nothing is uploaded'}`)
+    const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
+    const results = await runInBatches({ runs, verbose, run: ({ candidate, trial }) => evaluate({ candidate, trial, mcpToolSet, modelId, auth, recordMode }) })
     const summaries = cases.map((candidate) => summarize({ candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
-    console.log(`\nSummary (a case fails when at least half of its runs fail):`)
+    console.log(`\n${name} summary (a case fails when at least half of its runs fail):`)
     summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail`))
-    const count = (verdict: Verdict): number => summaries.filter((summary) => summary.verdict === verdict).length
-    console.log(`\n${count('pass')} pass · ${count('fail')} fail · ${summaries.length} cases`)
+    const failing = summaries.filter((summary) => summary.verdict === 'fail').length
+    console.log(`\n${summaries.length - failing} pass · ${failing} fail · ${summaries.length} cases`)
     if (recordMode) {
         await saveFixtures({ cases, results })
+        return { broken: false, reason: '' }
     }
-    if (values.upload) {
-        const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: values.dataset, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: values.model, promptVersion: promptVersion() })
-        console.log(`\nUploaded release baseline: experiment ${experimentId}`)
+    if (upload) {
+        const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion() })
+        console.log(`\nUploaded release baseline for ${name}: experiment ${experimentId}`)
     }
-    else if (!recordMode) {
-        await printDiff({ suiteKey: values.dataset, modelVersion: values.model, cases, summaries })
+    const regressed = upload ? 0 : await printDiff({ suiteKey: name, modelVersion: modelId, cases, summaries })
+    if (MUST_PASS_DATASETS.has(name) && failing > 0) {
+        return { broken: true, reason: `${failing} ${name} case(s) fail` }
     }
-    process.exit(count('fail') === 0 ? 0 : 1)
+    return regressed > 0 ? { broken: true, reason: `${regressed} ${name} case(s) regressed` } : { broken: false, reason: '' }
 }
 
 async function runInBatches({ runs, verbose, run }: { runs: PlannedRun[], verbose: boolean, run: (planned: PlannedRun) => Promise<CaseResult> }): Promise<CaseResult[]> {
@@ -108,22 +129,25 @@ function summarize({ candidate, results }: { candidate: EvalCase, results: CaseR
     return { caseNumber: candidate.caseNumber, pass, fail, verdict }
 }
 
-async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<void> {
+async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<number> {
     const { data: found, error } = await tryCatch(() => posthogExperiments.baseline({ suiteKey, modelVersion }))
     if (error) {
         console.log(`\nCould not read the release baseline from PostHog: ${error.message}`)
-        return
+        return 0
     }
     if (isNil(found)) {
         console.log(`\nNo release baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to diff against.`)
-        return
+        return 0
     }
     console.log(`\nDiff against the release baseline (commit ${found.applicationVersion.slice(0, SHORT_SHA)}, same model). A change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides:`)
-    cases.forEach((candidate) => {
+    const labels = cases.map((candidate) => {
         const before = found.counts.get(posthogExperiments.caseKey(candidate)) ?? { pass: 0, fail: 0 }
         const now = summaries.find((summary) => summary.caseNumber === candidate.caseNumber) ?? { pass: 0, fail: 0 }
-        console.log(`  case ${candidate.caseNumber}: ${describe(before)} → ${describe(now)}  ${diffLabel({ before: clearVerdict(before), now: clearVerdict(now) })}`)
+        const label = diffLabel({ before: clearVerdict(before), now: clearVerdict(now) })
+        console.log(`  case ${candidate.caseNumber}: ${describe(before)} → ${describe(now)}  ${label}`)
+        return label
     })
+    return labels.filter((label) => label === 'REGRESSED').length
 }
 
 function clearVerdict({ pass, fail }: VerdictCounts): Verdict | 'unclear' {
@@ -217,7 +241,8 @@ function print({ result, verbose }: { result: CaseResult, verbose: boolean }): v
 
 const ENV_FILE = '.env.dev'
 const DEFAULT_MODEL = 'z-ai/glm-5.3'
-const DEFAULT_DATASET = 'chat-regressions'
+const DEFAULT_DATASETS = ['chat-prod-failures', 'chat-core']
+const MUST_PASS_DATASETS = new Set(['chat-core'])
 const EVAL_CONVERSATION_ID = 'eval-conversation'
 const CONCURRENCY = 4
 const SHORT_SHA = 8
@@ -238,6 +263,11 @@ type CaseSummary = {
     pass: number
     fail: number
     verdict: Verdict
+}
+
+type DatasetOutcome = {
+    broken: boolean
+    reason: string
 }
 
 type PlannedRun = {

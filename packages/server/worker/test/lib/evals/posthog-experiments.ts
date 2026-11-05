@@ -87,6 +87,7 @@ function itemFor({ run, itemId }: { run: UploadedRun, itemId: string }): Record<
         payload: {
             input: { userMessage: run.candidate.userMessage, cutBeforeStep: run.candidate.cutBeforeStep ?? null, targetTool: run.candidate.targetTool ?? null },
             output: run.transcript.slice(0, TRANSCRIPT_MAX_CHARS),
+            expected_output: { checks: run.candidate.checks, problemType: run.candidate.problemType, codeCheck: run.candidate.codeCheck },
             metadata: { problemType: run.candidate.problemType, stops: run.stops },
         },
     }

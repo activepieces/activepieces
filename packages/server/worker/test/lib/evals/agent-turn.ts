@@ -24,7 +24,7 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
         allToolNames: Object.keys(tools),
         tier: { ...TIER, modelId },
         phaseState,
-        skills: { surface: 'CHAT', guides: evalPrompts.loadGuides() },
+        skills: { surface: 'CHAT', guides: evalPrompts.loadGuides(), preloaded: evalCase.preloadedSkills },
         abortSignal,
         log: {
             debug: () => {},
@@ -82,13 +82,13 @@ function pinned({ model }: { model: LanguageModel }): LanguageModel {
         throw new Error(`Expected a model instance for ${model}`)
     }
     const provider = process.env[PROVIDER_ENV] ?? DEFAULT_PROVIDER
+    const productionSampling = process.env[PRODUCTION_SAMPLING_ENV] === 'true'
     return wrapLanguageModel({
         model,
         middleware: {
             transformParams: async ({ params }) => ({
                 ...params,
-                temperature: 0,
-                seed: SEED,
+                ...(productionSampling ? {} : { temperature: 0, seed: SEED }),
                 providerOptions: {
                     ...params.providerOptions,
                     openrouter: { ...params.providerOptions?.['openrouter'], provider: { order: [provider], allow_fallbacks: false } },
@@ -169,6 +169,7 @@ const TIER = { id: 'smart', thinkingBudget: 10_000 }
 const SEED = 7
 const MAX_STEPS_TO_TARGET = 5
 const PROVIDER_ENV = 'EVALS_PROVIDER'
+const PRODUCTION_SAMPLING_ENV = 'EVALS_PRODUCTION_SAMPLING'
 const DEFAULT_PROVIDER = 'alibaba'
 const TERMINAL_DISPLAY_TOOLS = ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_connection_picker', 'ap_show_connection_required', 'ap_show_project_picker']
 const REJECTION_WARNINGS = new Set(['Repairing malformed tool call', 'Model called a tool that is not active in this phase'])

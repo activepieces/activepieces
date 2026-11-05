@@ -30,9 +30,26 @@ function fromDatasetItem(item: DatasetItem): EvalCase {
             { role: 'user', content: userMessage },
             ...turn.slice(0, prefixEnd).flatMap((message) => toModelMessages({ message, toolNamesById })),
         ],
+        preloadedSkills: loadedSkills({ messages: turn.slice(0, prefixEnd) }),
         steps: stepPositions.map((position, index) => summarizeStep({ index, assistant: turn[position], toolMessage: turn[position + 1] })),
         recordedToolCalls: [...recordedCalls({ messages: turn.slice(prefixEnd), toolNamesById }), ...(item.metadata.toolFixtures ?? [])],
     }
+}
+
+function loadedSkills({ messages }: { messages: TracedMessage[] }): string[] {
+    const rejectedIds = new Set(messages.flatMap((message) => message.parts.flatMap((part) => part.type === 'tool_call_response' && wasRejected(part.response) ? [part.id] : [])))
+    const names = messages.flatMap((message) => message.parts.flatMap((part) => {
+        if (part.type !== 'tool_call' || rejectedIds.has(part.id)) {
+            return []
+        }
+        const { toolName, input } = agentToolSkills.effectiveToolCall({ toolName: part.name, input: part.arguments })
+        if (toolName !== LOAD_SKILL_TOOL) {
+            return []
+        }
+        const parsed = LoadSkillInput.safeParse(input)
+        return parsed.success ? parsed.data.skills : []
+    }))
+    return [...new Set(names)]
 }
 
 function summarizeStep({ index, assistant, toolMessage }: { index: number, assistant: TracedMessage, toolMessage: TracedMessage | undefined }): StepSummary {
@@ -110,6 +127,8 @@ function asText(value: unknown): string {
 
 const REJECTED_PATTERN = /^AI_[A-Za-z]+Error|There is no tool named/
 const STEP_TEXT_PREVIEW = 80
+const LOAD_SKILL_TOOL = 'ap_load_skill'
+const LoadSkillInput = z.object({ skills: z.array(z.string()) })
 
 const TracedPart = z.discriminatedUnion('type', [
     z.object({ type: z.literal('text'), content: z.string() }),
@@ -170,6 +189,7 @@ export type EvalCase = {
     sourceTraceId: string | null
     cutBeforeStep: number | undefined
     targetTool: string | undefined
+    preloadedSkills: string[]
     userMessage: string
     messages: ModelMessage[]
     steps: StepSummary[]
