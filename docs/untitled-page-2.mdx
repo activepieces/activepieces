@@ -5,3 +5,126 @@ icon:
   style: "regular"
   library: "fontawesome"
 ---
+
+### **What is the queue?**
+
+The **queue** is the waiting line for your flows.
+
+Every time a flow is triggered, for example by a new email, a form submission or a schedule, it doesn’t always start straight away. It first joins a line. As soon as there’s room to run it, it leaves the line and starts.
+
+Most of the time a flow spends only a moment in the queue, so you never notice it. You only notice it when lots of flows are triggered at once.
+
+### **How you know a flow is waiting**
+
+In your run history, a waiting flow shows the status **Queued** (it has been triggered and is waiting for its turn to start). Once it starts, the status changes to **Running**.
+
+If you no longer need a queued run, you can **cancel** it. Only runs that are queued or paused can be cancelled.
+
+### **Why flows wait in the queue**
+
+There are two reasons a flow might wait.
+
+**1. Your project is running as many flows as it’s allowed at once.**<br />Each project has a limit on how many flows can run at the same time, called its **concurrency limit** (how many flows can run side by side). When that many flows are already running, new ones wait their turn.
+
+**2. All the workers are busy.**<br />If every worker is already running a flow, new flows wait until one finishes. This mostly applies to self-hosted installs.
+
+**Waiting flows are not lost.** A queued flow stays in line and starts as soon as there’s room.
+
+### **Queuing on Activepieces Cloud**
+
+On Cloud, the limit on how many flows a project can run at the same time depends on your plan:
+
+| **Plan** | **Flows that can run at the same time (per project)** |
+| :-- | :-- |
+| Free | 5 |
+| Plus and Team | 15 |
+| Enterprise | 30 |
+
+If a project is already running its maximum, any new flows join the queue and start as earlier ones finish.
+
+#### **Some flows go to the front of the line**
+
+Not all flows wait the same time. Activepieces gives some flows priority (they’re picked up first):
+
+| **Type of run** | **Priority** | **Why** |
+| :-- | :-- | :-- |
+| **Test runs** (when you click Test in the builder) | High, and they don’t count toward your limit | So you’re never stuck waiting while building |
+| **Flows that must reply instantly** (webhooks that wait for a response) | High | Another app is waiting for an answer |
+| **Normal flow runs** | Normal | Most of your flows |
+| **Flows started in batches by another flow** | Lower | So a big batch doesn’t block everything else |
+
+#### **Not all delays come from the queue**
+
+Some triggers **check for new data on a timer**, for example “New row in Google Sheets” or “New email”. By default they check **every 5 minutes**. If a new row was added just after a check, the flow can start up to 5 minutes later. That’s the trigger’s timer, not the queue.
+
+Triggers that react **instantly** (often called _webhooks_: the other app tells Activepieces the moment something happens) don’t have this wait.
+
+### **Queuing on self-hosted Enterprise**
+
+On a self-hosted install, your **IT team** decides how the queue behaves.
+
+#### **For your IT team**
+
+| **Setting** | **Default** | **What this means** |
+| :-- | :-- | :-- |
+| **Number of workers** | Set by your IT team | How many flows can run at the same time across the whole company. More workers means a shorter queue. |
+| **AP_WORKER_CONCURRENCY** | 5 (1 recommended) | How many flows one worker runs at once. See the memory guide for why 1 is recommended. |
+| **AP_PROJECT_RATE_LIMITER_ENABLED** | false (off) | Turns on per-project limits. **When it’s off, there are no per-project limits:** every project shares all the workers, first come, first served. |
+| **AP_DEFAULT_CONCURRENT_JOBS_LIMIT** | 5 | When per-project limits are on, how many flows each project can run at once unless an admin sets a different number for that project. |
+| **AP_TRIGGER_DEFAULT_POLL_INTERVAL** | 5 | How often, in minutes, triggers that check on a timer look for new data. |
+| **Redis** | Required | The system that stores the queue. If Redis loses its data, flows waiting in line are lost too, so your IT team should use a reliable Redis setup with backups or persistence turned on. |
+
+#### **Admin controls in the app**
+
+Go to **Platform Admin → Operations**:
+
+- **Health → Queue Health:** see how many runs are **Running** (being run by workers right now) and how many are **Queued** (waiting in line).
+- **Workers → Health:** see which workers are online and how busy they are.
+- **Workers → Worker groups:** set each project’s **concurrency limit** (how many flows it can run at once) and give important projects their **own dedicated workers**.
+
+Project members can see their project’s limit in **Project Settings → General** as **Max Concurrent Jobs**. Only admins can change it.
+
+### **Worker groups**
+
+By default, all projects share one queue and one set of workers. If one project suddenly triggers thousands of flows, everyone else waits behind it.
+
+A **worker group** gives a project its **own line and its own workers** (like giving a VIP table its own dedicated cook). Its flows never wait behind other projects. However, if no workers in that group are online, its flows wait until one comes back. They are not passed to the shared workers.
+
+### **How to Keep Your Queue Short**
+
+1. **Spread out your schedules:** If 20 flows all run “every hour, on the hour”, they all join the line at the same moment. Stagger them, for example at :05, :15 and :25.
+2. **Keep flows short:** A flow that runs for 9 minutes holds its spot for 9 minutes. Remove unnecessary steps, and split long processes into smaller flows.
+3. **Be careful with large batches:** Actions like **Call Flow** inside a loop, or **Stream CSV to Subflows**, can create hundreds or thousands of runs at once, and they can fill your project’s line. Find the middle ground: put more items in each run so you create fewer runs, but not so many that a single run runs out of memory. For example, send 200 rows per run instead of 1, or 50,000. In **Stream CSV to Subflows**, you set this with the **Rows per batch** field.
+4. **Only trigger when needed:** Add filters to your trigger, or an early condition step, so the flow stops quickly when there’s nothing to do.
+5. **Use separate projects for heavy work (self-hosted).** Put noisy, high-volume flows in their own project, so an admin can limit them or give them their own workers.
+
+### **What to do when flows are stuck in “Queued”**
+
+1. **Check how many flows are running in that project:** If you’ve reached your plan’s limit, flows will start as others finish.
+2. **Look for a burst:** Did a schedule, a large import or a batch just create many runs at once?
+3. Cancel runs you don’t need to free up the line.
+4. **Cloud:** if your project regularly hits the limit, upgrade your plan or spread the work out.
+5. **Self-hosted:** contact your IT team. They can check **Queue Health**, add workers, raise your project’s limit, or give it a worker group.
+
+### **Common questions**
+
+**Will a queued flow ever be skipped?**<br />No. It stays in line until it runs or you cancel it.
+
+**Do test runs use up my limit?**<br />No. Test runs from the builder don’t count and are picked up first.
+
+**Why did my flow start a few minutes after the event?**<br />Most likely the trigger checks on a timer, every 5 minutes by default. That’s not the queue.
+
+**Does a flow waiting in the queue count against its 10-minute time limit?**<br />That limit is meant to measure the time a flow spends running. Time waiting in line before it starts shouldn’t count.
+
+### **Quick reference**
+
+| **I want to…** | **Do this** |
+| :-- | :-- |
+| See if a flow is waiting | Look for **Queued** in run history |
+| Stop a waiting flow | Cancel the queued run |
+| Know my limit (Cloud) | Free 5 · Plus/Team 15 · Enterprise 30 flows at once per project |
+| See my project’s limit | **Project Settings → General → Max Concurrent Jobs** |
+| See the whole queue (admin) | **Platform Admin → Operations → Health → Queue Health** |
+| Give a project its own workers (admin) | **Platform Admin → Operations → Workers → Worker groups** |
+
+<br /><br />
