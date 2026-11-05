@@ -4,7 +4,11 @@ import { create } from 'zustand';
 
 import { CHAT_ROUTE, routesThatRequireProjectId } from '@/lib/route-utils';
 
-import { DOCK_BREAKPOINT, dockCrampsPage } from './chat-layout';
+import {
+  DOCK_BREAKPOINT,
+  dockCrampsPage,
+  startStructuralMove,
+} from './chat-layout';
 import { chatPanelIsDocked, useChatPanel } from './chat-panel-open';
 
 const PREFERENCE_KEY = 'primary-rail-collapsed';
@@ -67,6 +71,7 @@ export function useRailOpenState() {
   const onOpenChange = useCallback(
     (next: boolean) => {
       const { foldedForChat, foldDeclined } = useRail.getState();
+      startStructuralMove(next ? 'enter' : 'exit');
       update({
         preference: !next,
         foldedForChat: false,

@@ -59,6 +59,26 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), Math.max(min, max));
 }
 
+// The sidebar, the docked slot and the page move together, so they share one
+// duration, set by whichever move starts them: things arriving take longer
+// than things leaving. A move that is retargeted mid-way keeps its curve.
+const MOVE_MS = { enter: 220, exit: 160 } as const;
+export function startStructuralMove(kind: keyof typeof MOVE_MS) {
+  document.documentElement.style.setProperty('--ap-move', `${MOVE_MS[kind]}ms`);
+}
+
+// Read on every pointer move during a drag, so it's cached: getComputedStyle
+// there would force a style pass per event.
+let fontSize: number | null = null;
 function rootFontSize(): number {
-  return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  if (fontSize === null) {
+    fontSize =
+      parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  }
+  return fontSize;
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => {
+    fontSize = null;
+  });
 }

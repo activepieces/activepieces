@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { startStructuralMove } from './chat-layout';
+
 const STORAGE_KEY = 'chat-panel';
 
 const DEFAULTS: SavedChatPanel = {
@@ -55,11 +57,19 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
     gesture: 'idle',
     chatMounted: false,
     mountChat: () => set({ chatMounted: true }),
-    setOpen: (open) => update({ open }),
-    toggle: () => update({ open: !get().open }),
-    dock: (side) => update({ open: true, mode: side }),
-    floatAt: (position) =>
-      update({ open: true, mode: 'float', float: position }),
+    setOpen: (open) => {
+      startStructuralMove(open ? 'enter' : 'exit');
+      update({ open });
+    },
+    toggle: () => get().setOpen(!get().open),
+    dock: (side) => {
+      startStructuralMove('enter');
+      update({ open: true, mode: side });
+    },
+    floatAt: (position) => {
+      startStructuralMove('exit');
+      update({ open: true, mode: 'float', float: position });
+    },
     resizeFloat: (floatSize) => update({ floatSize }),
     setDockWidth: (dockWidth) => update({ dockWidth }),
     setConversationId: (conversationId) => update({ conversationId }),

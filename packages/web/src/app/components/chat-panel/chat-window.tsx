@@ -1,14 +1,22 @@
 import { t } from 'i18next';
-import { AnimatePresence, animate, motion, motionValue } from 'motion/react';
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  motionValue,
+  useTransform,
+} from 'motion/react';
 import {
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
+import { useShallow } from 'zustand/react/shallow';
 
 import {
   ChatLayout,
@@ -21,6 +29,7 @@ import {
   clamp,
   dockWidthFor,
   sidebarWidth,
+  startStructuralMove,
 } from '@/features/workspace/lib/chat-layout';
 import {
   ChatPanelSide,
@@ -50,6 +59,10 @@ const SNAP_ENTER = 72;
 const SNAP_EXIT = 120;
 // Pointer travel before a press on the header counts as a drag.
 const DRAG_THRESHOLD = 4;
+// A sheet swiped down past this share of the screen, or flicked faster than
+// this (px/ms), closes; anything less springs back.
+const SHEET_DISMISS_SHARE = 0.25;
+const SHEET_DISMISS_VELOCITY = 0.5;
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 // Anything that follows the pointer or comes to rest after a drop.
 const SETTLE = { type: 'spring', bounce: 0, visualDuration: 0.25 } as const;
@@ -62,9 +75,25 @@ export function useChatPanelHidden(): boolean {
   return useLocation().pathname.includes(CHAT_ROUTE);
 }
 
+// Where the panel sits right now. Re-renders only when that changes, not on
+// every resize event.
 export function useChatLayout(): ChatLayout {
   const mode = useChatPanel((s) => s.mode);
-  return chatLayoutFor(mode, useViewport().width);
+  return useSyncExternalStore(subscribeToResize, () =>
+    chatLayoutFor(mode, window.innerWidth),
+  );
+}
+
+export function useWindowAtLeast(width: number): boolean {
+  return useSyncExternalStore(
+    subscribeToResize,
+    () => window.innerWidth >= width,
+  );
+}
+
+function subscribeToResize(onChange: () => void) {
+  window.addEventListener('resize', onChange);
+  return () => window.removeEventListener('resize', onChange);
 }
 
 export function ChatDock({ side }: { side: ChatPanelSide }) {
@@ -108,17 +137,33 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
       slotEl.style.width = `${next}px`;
       hostEl.style.width = `${next}px`;
     };
-    const onUp = () => {
+    const end = (save: boolean) => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('keydown', onKey, true);
       unlock();
       setResizing(false);
-      setDockWidth(next);
+      if (save) {
+        setDockWidth(next);
+      } else {
+        slotEl.style.width = `${width}px`;
+        hostEl.style.width = `${width}px`;
+      }
+    };
+    const onUp = () => end(true);
+    // Esc puts the edge back where it was, like cancelling a drag.
+    const onKey = (key: KeyboardEvent) => {
+      if (key.key === 'Escape') {
+        key.preventDefault();
+        key.stopImmediatePropagation();
+        end(false);
+      }
     };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
+    window.addEventListener('keydown', onKey, true);
   };
 
   return (
@@ -129,14 +174,14 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
         'relative shrink-0 overflow-hidden max-md:hidden',
         // Same duration and curve as the sidebar, so they move as one.
         !resizing &&
-          'transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+          'transition-[width] duration-[var(--ap-move,200ms)] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
       )}
       style={{ width: slotOpen ? width : 0 }}
     >
       <div
         ref={host}
         className={cn(
-          'absolute inset-y-0',
+          'absolute inset-y-0 [contain:strict]',
           side === 'left' ? 'left-0 border-r' : 'right-0 border-l',
         )}
         style={{ width }}
@@ -190,10 +235,25 @@ export function ChatWindow() {
   const layout = useChatLayout();
   const viewport = useViewport();
   const { open, float, floatSize, gesture, toggle, setOpen, mountChat } =
-    useChatPanel();
+    useChatPanel(
+      useShallow((s) => ({
+        open: s.open,
+        float: s.float,
+        floatSize: s.floatSize,
+        gesture: s.gesture,
+        toggle: s.toggle,
+        setOpen: s.setOpen,
+        mountChat: s.mountChat,
+      })),
+    );
   const [zone, setZone] = useState<ChatPanelSide | null>(null);
   const [gripActive, setGripActive] = useState(false);
   const [card] = useState(() => createCardMotion(FLOAT_DEFAULT));
+  // The sheet's offset while it's swiped; its enter and exit animate it too.
+  const [sheetY] = useState(() => motionValue(0));
+  const scrimOpacity = useTransform(sheetY, (y) =>
+    clamp(1 - y / window.innerHeight, 0, 1),
+  );
   const sheet = layout === 'sheet';
   const floating =
     open && !hidden && !sheet && (layout === 'float' || gesture !== 'idle');
@@ -299,14 +359,20 @@ export function ChatWindow() {
       const target = event.target as HTMLElement;
       const state = useChatPanel.getState();
       const layoutNow = chatLayoutFor(state.mode, window.innerWidth);
+      // React bubbles events from portals (menus, tooltips, the history
+      // dropdown) through the header; only a press on the header itself drags.
       if (
         event.button !== 0 ||
-        layoutNow === 'sheet' ||
-        target.closest('button, a, input, textarea, [role="menuitem"]')
+        !event.currentTarget.contains(target) ||
+        target.closest('button, a, input, textarea, [role^="menuitem"]')
       ) {
         return;
       }
       event.preventDefault();
+      if (layoutNow === 'sheet') {
+        swipeSheet(event, sheetY);
+        return;
+      }
       // A press mid-settle catches the card where it is.
       const fromDock = layoutNow !== 'float' && state.gesture === 'idle';
       const from = fromDock ? rectOf(getChatNode()) : card.rect();
@@ -344,6 +410,8 @@ export function ChatWindow() {
         card.place(from);
         card.resize(floatTarget);
         stopFollow = card.width.on('change', follow);
+        // The slot closes as the card lifts out: an exit.
+        startStructuralMove('exit');
         useChatPanel.getState().setGesture('dragging');
       };
 
@@ -434,8 +502,9 @@ export function ChatWindow() {
         if (key.key !== 'Escape' || !moved) {
           return;
         }
+        // First claim on Esc: nothing under a drag should also react to it.
         key.preventDefault();
-        key.stopPropagation();
+        key.stopImmediatePropagation();
         onCancel();
       };
 
@@ -444,7 +513,7 @@ export function ChatWindow() {
       window.addEventListener('pointercancel', onCancel);
       window.addEventListener('keydown', onKey, true);
     },
-    [card],
+    [card, sheetY],
   );
 
   useEffect(() => {
@@ -515,6 +584,7 @@ export function ChatWindow() {
             exit="hidden"
             className={cn(
               'group/float fixed top-0 left-0 z-40 overflow-hidden rounded-xl border bg-gray-1 transition-shadow duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
+              gesture !== 'idle' && 'will-change-transform',
               gesture === 'dragging'
                 ? 'shadow-over'
                 : (gesture === 'idle' || layout === 'float') && 'shadow-lift',
@@ -532,15 +602,21 @@ export function ChatWindow() {
       </AnimatePresence>
       <AnimatePresence>
         {sheetOpen && (
+          // The scrim dims with the sheet's own offset, so a swipe lightens it.
           <motion.div
             key="chat-sheet-scrim"
             aria-hidden
-            className="fixed inset-0 z-40 bg-black/30"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 0.2 } }}
-            exit={{ opacity: 0, transition: { duration: 0.15 } }}
-            onClick={() => setOpen(false)}
-          />
+            className="fixed inset-0 z-40"
+            style={{ opacity: scrimOpacity }}
+          >
+            <motion.div
+              className="absolute inset-0 bg-black/30"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { duration: 0.2 } }}
+              exit={{ opacity: 0, transition: { duration: 0.16 } }}
+              onClick={() => setOpen(false)}
+            />
+          </motion.div>
         )}
         {sheetOpen && (
           <motion.section
@@ -551,6 +627,7 @@ export function ChatWindow() {
             initial="hidden"
             animate="shown"
             exit="hidden"
+            style={{ y: sheetY }}
             className="fixed inset-x-0 top-2 bottom-0 z-40 flex flex-col overflow-hidden rounded-t-xl border bg-gray-1 shadow-over"
           />
         )}
@@ -582,16 +659,76 @@ const floatCard = {
   }),
 };
 
+// In pixels, not %, so an exit can pick up from wherever a swipe left it.
 const sheetVariants = {
   hidden: () =>
     prefersReducedMotion()
       ? { opacity: 0, transition: { duration: 0.1 } }
-      : { y: '100%', transition: { duration: 0.2, ease: EASE_OUT } },
+      : {
+          y: window.innerHeight,
+          transition: { duration: 0.2, ease: EASE_OUT },
+        },
   shown: () =>
     prefersReducedMotion()
-      ? { opacity: 1, transition: { duration: 0.1 } }
+      ? { opacity: 1, y: 0, transition: { duration: 0.1 } }
       : { y: 0, opacity: 1, transition: { duration: 0.28, ease: EASE_OUT } },
 };
+
+// The sheet follows a downward swipe 1:1 and resists going up. Let go past a
+// quarter of the screen, or with a flick, and it closes; else it springs back.
+function swipeSheet(
+  event: React.PointerEvent<HTMLElement>,
+  sheetY: ReturnType<typeof motionValue<number>>,
+) {
+  const startY = event.clientY;
+  const base = sheetY.get();
+  let last = { y: startY, time: event.timeStamp };
+  let velocity = 0;
+  let moved = false;
+  let unlock: (() => void) | null = null;
+
+  const onMove = (move: PointerEvent) => {
+    const delta = move.clientY - startY;
+    if (!moved) {
+      if (Math.abs(delta) < DRAG_THRESHOLD) {
+        return;
+      }
+      moved = true;
+      sheetY.stop();
+      unlock = lockPointer('grabbing');
+    }
+    const offset = base + delta;
+    sheetY.set(offset >= 0 ? offset : -Math.sqrt(-offset) * 2);
+    const elapsed = move.timeStamp - last.time;
+    if (elapsed > 0) {
+      velocity = (move.clientY - last.y) / elapsed;
+      last = { y: move.clientY, time: move.timeStamp };
+    }
+  };
+  const end = (dismiss: boolean) => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onCancel);
+    unlock?.();
+    if (!moved) {
+      return;
+    }
+    if (dismiss) {
+      useChatPanel.getState().setOpen(false);
+      return;
+    }
+    animate(sheetY, 0, SETTLE);
+  };
+  const onUp = () =>
+    end(
+      sheetY.get() > window.innerHeight * SHEET_DISMISS_SHARE ||
+        velocity > SHEET_DISMISS_VELOCITY,
+    );
+  const onCancel = () => end(false);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onCancel);
+}
 
 function ResizeGrip({
   active,
