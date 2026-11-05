@@ -21,6 +21,36 @@ async function deleteConnection({ request, session, connectionId }: { request: A
   await deleteById({ request, session, resource: 'app-connections', id: connectionId });
 }
 
+async function createPlatformInvitation({ request, session, email }: { request: APIRequestContext; session: E2eSession; email: string }): Promise<CreatedInvitation> {
+  const response = await request.post('/api/v1/user-invitations', {
+    headers: { Authorization: `Bearer ${session.token}` },
+    data: { type: 'PLATFORM', email, platformRole: 'MEMBER' },
+  });
+  if (!response.ok()) {
+    throw new Error(`Inviting ${email} failed with ${response.status()}: ${await response.text()}`);
+  }
+  const invitation: { id: string; link?: string } = await response.json();
+  if (!invitation.link) {
+    await deleteInvitation({ request, session, invitationId: invitation.id });
+    throw new Error('The invitation came back without a link: this instance has SMTP configured, so it emails the link instead');
+  }
+  return { id: invitation.id, link: invitation.link };
+}
+
+async function readInvitationStatus({ request, link }: { request: APIRequestContext; link: string }): Promise<string> {
+  const token = new URL(link).searchParams.get('token') ?? '';
+  const response = await request.get('/api/v1/user-invitations/preview', { params: { token } });
+  if (!response.ok()) {
+    throw new Error(`Reading the invitation failed with ${response.status()}: ${await response.text()}`);
+  }
+  const preview: { status: string } = await response.json();
+  return preview.status;
+}
+
+async function deleteInvitation({ request, session, invitationId }: { request: APIRequestContext; session: E2eSession; invitationId: string }) {
+  await deleteById({ request, session, resource: 'user-invitations', id: invitationId });
+}
+
 async function deleteStaleData({ request, session }: { request: APIRequestContext; session: E2eSession }) {
   const staleFlows = await listStale({ request, session, resource: 'flows', nameOf: (flow: FlowSummary) => flow.version.displayName, cursor: undefined });
   for (const flow of staleFlows) {
@@ -124,11 +154,12 @@ const STALE_AFTER_MS = 60 * 60 * 1000;
 
 export const STORAGE_STATE = path.join(__dirname, '..', '.auth', 'user.json');
 export const E2E_PREFIX = 'E2E ';
-export const e2eApi = { readSession, deleteFlow, deleteConnection, deleteStaleData, describeFlow, describeRun };
+export const e2eApi = { readSession, deleteFlow, deleteConnection, deleteStaleData, describeFlow, describeRun, createPlatformInvitation, readInvitationStatus, deleteInvitation };
 
 export type E2eSession = { token: string; projectId: string };
 
-type Resource = 'flows' | 'app-connections';
+type Resource = 'flows' | 'app-connections' | 'user-invitations';
+type CreatedInvitation = { id: string; link: string };
 type FlowSummary = { id: string; created: string; version: { displayName: string } };
 type ConnectionSummary = { id: string; created: string; displayName: string };
 type FlowState = {
