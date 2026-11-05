@@ -55,6 +55,7 @@ export type Webhook = Subscription & {
   display_name: string;
   is_active: boolean;
   signing_secret?: string | null;
+  webhook_version?: number | null;
 };
 export type WebhookList = { webhooks: Webhook[]; pagination: Pagination };
 export type WebhookRequest = Subscription & {

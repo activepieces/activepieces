@@ -166,6 +166,9 @@ async function enable({
       ...pending,
       kind: 'active',
       id: webhook.id,
+      ...(typeof webhook.webhook_version === 'number'
+        ? { version: webhook.webhook_version }
+        : {}),
       secret: sentSecurity.encrypt({
         secret: webhook.signing_secret,
         apiKey,
@@ -204,10 +207,15 @@ async function run({
     encrypted: state.secret,
     webhookId: state.id,
   });
+  const scheme = sentSecurity.scheme({
+    version: state.version,
+    headers: payload.headers,
+  });
   if (
     !sentSecurity.verify({
       secret,
       webhookId: state.id,
+      version: scheme,
       headers: payload.headers,
       rawBody: payload.rawBody,
     })
@@ -225,19 +233,31 @@ async function run({
       : 'null'
   );
   if (!sentEvents.matches({ body, selected })) return [];
-  const eventHeader = sentSecurity.header({
-    headers: payload.headers,
-    name: 'X-Webhook-Event-Type',
-  });
-  if (
-    !sentValues.isRecord(body) ||
-    !eventHeader ||
-    eventHeader !== (body['event'] ?? body['field'])
-  )
+  if (!sentValues.isRecord(body))
+    throw new Error('Sent webhook body is not an event envelope.');
+  if (scheme === 1 && !eventHeaderMatches({ headers: payload.headers, body }))
     throw new Error(
       'Sent webhook event header does not match the signed event body.'
     );
   return [body];
+}
+
+function eventHeaderMatches({
+  headers,
+  body,
+}: {
+  headers: Record<string, unknown>;
+  body: Record<string, unknown>;
+}): boolean {
+  const eventHeader = sentSecurity.header({
+    headers,
+    name: 'X-Webhook-Event-Type',
+  });
+  return (
+    !!eventHeader &&
+    (eventHeader === (body['event'] ?? body['field']) ||
+      eventHeader === sentEvents.eventType(body))
+  );
 }
 
 export const sentWebhooks = { enable, disable, run };
@@ -263,6 +283,7 @@ export type PendingWebhook = {
 export type ActiveWebhook = Omit<PendingWebhook, 'kind'> & {
   kind: 'active';
   id: string;
+  version?: number;
   secret: EncryptedSecret;
 };
 export type WebhookState = PendingWebhook | ActiveWebhook;

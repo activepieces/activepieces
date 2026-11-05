@@ -57,6 +57,20 @@ function subscription(selected: string[]): Subscription {
   };
 }
 
+function eventType(body: Record<string, unknown>): unknown {
+  if (body['event'] !== undefined && body['event'] !== null)
+    return body['event'];
+  const payload = sentValues.isRecord(body['payload']) ? body['payload'] : {};
+  const status = payload['status'];
+  const subtype =
+    typeof status === 'string' && Object.hasOwn(TEMPLATE_SUBTYPES, status)
+      ? TEMPLATE_SUBTYPES[status]
+      : undefined;
+  return body['field'] === 'templates' && subtype
+    ? `templates.${subtype}`
+    : undefined;
+}
+
 function matches({
   body,
   selected,
@@ -70,30 +84,10 @@ function matches({
     typeof body['timestamp'] !== 'string'
   )
     return false;
-  const templateSubtypes: Record<string, string> = {
-    PENDING: 'pending',
-    APPROVED: 'approved',
-    REJECTED: 'rejected',
-    PAUSED: 'paused',
-    DISABLED: 'disabled',
-    DELETED: 'deleted',
-    PENDING_DELETION: 'deleted',
-    CATEGORY_UPDATED: 'category_updated',
-    QUALITY_UPDATED: 'quality_updated',
-  };
-  const status = body['payload']['status'];
-  const subtype =
-    typeof status === 'string' && Object.hasOwn(templateSubtypes, status)
-      ? templateSubtypes[status]
-      : undefined;
-  const eventType =
-    body['event'] ??
-    (body['field'] === 'templates' && subtype
-      ? `templates.${subtype}`
-      : undefined);
+  const derived = eventType(body);
   return selected.some((event) =>
     event.includes('.')
-      ? eventType === event && body['field'] === event.split('.')[0]
+      ? derived === event && body['field'] === event.split('.')[0]
       : body['field'] === event
   );
 }
@@ -141,4 +135,22 @@ const selector = Property.MultiSelectDropdown({
   },
 });
 
-export const sentEvents = { options, subscription, matches, selector };
+const TEMPLATE_SUBTYPES: Record<string, string> = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  PAUSED: 'paused',
+  DISABLED: 'disabled',
+  DELETED: 'deleted',
+  PENDING_DELETION: 'deleted',
+  CATEGORY_UPDATED: 'category_updated',
+  QUALITY_UPDATED: 'quality_updated',
+};
+
+export const sentEvents = {
+  options,
+  subscription,
+  matches,
+  eventType,
+  selector,
+};

@@ -39,9 +39,7 @@ describe('metadata and authentication', () => {
     expect(sent.auth).toBe(sentAuth);
     expect(sent.minimumSupportedRelease).toBe('0.90.2');
     expect(sent.authors).toEqual(['amari2000']);
-    expect(sent.logoUrl).toBe(
-      'https://www.sent.dm/icons/apple-touch-icon.png'
-    );
+    expect(sent.logoUrl).toBe('https://www.sent.dm/icons/apple-touch-icon.png');
   });
   it('validates through /me without rejecting unfamiliar key formats', async () => {
     const http = respond({
@@ -305,14 +303,39 @@ describe('payload validation', () => {
       sentMessage.build({ ...input, messageType: 'text' })
     ).toThrow();
   });
-  it('refuses non-text template parameters', () => {
+  it('sends mapped number and boolean template parameters as text', () => {
+    expect(
+      sentMessage.build({
+        recipients: ['+12025550123'],
+        messageType: 'template',
+        content: {
+          template_id: 'template',
+          parameters: { order_id: 12345, total: 9.5, vip: true, name: 'Alex' },
+        },
+      }).template
+    ).toEqual({
+      id: 'template',
+      parameters: {
+        order_id: '12345',
+        total: '9.5',
+        vip: 'true',
+        name: 'Alex',
+      },
+    });
+  });
+  it.each([
+    { nested: { a: 'b' } },
+    { list: ['a'] },
+    { empty: null },
+    { bad: NaN },
+  ])('refuses non-scalar template parameters: %j', (parameters) => {
     expect(() =>
       sentMessage.build({
         recipients: ['+12025550123'],
         messageType: 'template',
-        content: { template_id: 'template', parameters: { count: 4 } },
+        content: { template_id: 'template', parameters },
       })
-    ).toThrow('text values');
+    ).toThrow('Template parameters must be key/value pairs');
   });
 });
 

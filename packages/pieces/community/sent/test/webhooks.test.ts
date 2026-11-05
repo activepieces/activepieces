@@ -494,3 +494,123 @@ describe('secret encryption', () => {
     ).toThrow('cannot be unlocked');
   });
 });
+
+describe('version 2 webhook deliveries (Sent default since October 2026)', () => {
+  function v2Payload({ body, eventId }: { body: unknown; eventId: string }) {
+    const rawBody = JSON.stringify(body);
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const digest = createHmac(
+      'sha256',
+      Buffer.from(SIGNING_SECRET.slice(6), 'base64')
+    )
+      .update(`${eventId}.${timestamp}.${rawBody}`)
+      .digest('base64');
+    return {
+      rawBody,
+      body,
+      queryParams: {},
+      headers: {
+        'webhook-id': eventId,
+        'webhook-timestamp': timestamp,
+        'webhook-signature': `v1,${digest}`,
+      },
+    };
+  }
+  it('records the webhook version returned on create', async () => {
+    respond({ data: { ...webhookData(), webhook_version: 2 }, status: 201 });
+    const ctx = triggerContext<typeof newMessageReceived.props>({
+      profile_id: undefined,
+    });
+    await newMessageReceived.onEnable(ctx);
+    expect(
+      await ctx.store.get<WebhookState>(STORE_KEY, StoreScope.FLOW)
+    ).toMatchObject({ kind: 'active', version: 2 });
+  });
+  it.each([2, undefined])(
+    'New Message Received accepts a signed v2 delivery without an event-type header (version %s)',
+    async (version) => {
+      respond({
+        data: { ...webhookData(), webhook_version: version },
+        status: 201,
+      });
+      const ctx = triggerContext<typeof newMessageReceived.props>({
+        profile_id: undefined,
+      });
+      await newMessageReceived.onEnable(ctx);
+      ctx.payload = v2Payload({
+        body: newMessageReceived.sampleData,
+        eventId: 'msg_event_1',
+      });
+      expect(await newMessageReceived.run(ctx)).toEqual([
+        newMessageReceived.sampleData,
+      ]);
+    }
+  );
+  it('New Event filters v2 deliveries by the signed body', async () => {
+    respond({ data: { ...webhookData(), webhook_version: 2 }, status: 201 });
+    const ctx = triggerContext<typeof newEvent.props>({
+      profile_id: undefined,
+      events: ['templates.approved'],
+    });
+    await newEvent.onEnable(ctx);
+    const approved = {
+      field: 'templates',
+      event: 'templates.approved',
+      timestamp: '2026-01-15T10:30:00Z',
+      payload: { status: 'APPROVED', template_id: 'fake-template' },
+    };
+    ctx.payload = v2Payload({ body: approved, eventId: 'msg_event_2' });
+    expect(await newEvent.run(ctx)).toEqual([approved]);
+    ctx.payload = v2Payload({
+      body: { ...approved, event: 'templates.rejected' },
+      eventId: 'msg_event_3',
+    });
+    expect(await newEvent.run(ctx)).toEqual([]);
+  });
+  it('rejects a v2 delivery with a tampered body', async () => {
+    respond({ data: { ...webhookData(), webhook_version: 2 }, status: 201 });
+    const ctx = triggerContext<typeof newMessageReceived.props>({
+      profile_id: undefined,
+    });
+    await newMessageReceived.onEnable(ctx);
+    const signed = v2Payload({
+      body: newMessageReceived.sampleData,
+      eventId: 'msg_event_4',
+    });
+    ctx.payload = {
+      ...signed,
+      rawBody: signed.rawBody.replace('confirm', 'cancel'),
+    };
+    await expect(newMessageReceived.run(ctx)).rejects.toThrow(
+      'signature verification failed'
+    );
+  });
+  it('rejects v1-style headers on a webhook Sent reported as v2', async () => {
+    respond({ data: { ...webhookData(), webhook_version: 2 }, status: 201 });
+    const ctx = triggerContext<typeof newMessageReceived.props>({
+      profile_id: undefined,
+    });
+    await newMessageReceived.onEnable(ctx);
+    ctx.payload = signedPayload({ body: newMessageReceived.sampleData });
+    await expect(newMessageReceived.run(ctx)).rejects.toThrow(
+      'signature verification failed'
+    );
+  });
+  it('v1 still accepts the dotted header for an event-less template status', async () => {
+    respond({ data: { ...webhookData(), webhook_version: 1 }, status: 201 });
+    const ctx = triggerContext<typeof newEvent.props>({
+      profile_id: undefined,
+      events: ['templates.approved'],
+    });
+    await newEvent.onEnable(ctx);
+    const body = {
+      field: 'templates',
+      timestamp: '2026-01-15T10:30:00Z',
+      payload: { status: 'APPROVED' },
+    };
+    const signed = signedPayload({ body });
+    signed.headers['X-Webhook-Event-Type'] = 'templates.approved';
+    ctx.payload = signed;
+    expect(await newEvent.run(ctx)).toEqual([body]);
+  });
+});

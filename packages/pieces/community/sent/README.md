@@ -40,9 +40,9 @@ If saving a new webhook's signing secret and deleting that webhook both fail, re
 
 New Event also recognizes legacy template envelopes without `event` by mapping the signed `payload.status` to the [published template subtypes](https://docs.sent.dm/start/webhooks/event-types). Unknown statuses match only the unfiltered `templates` parent. The original envelope is returned unchanged, and the unsigned event header never determines the selected subtype.
 
-The piece verifies the raw request body with HMAC-SHA256, checks the webhook ID and a five-minute timestamp tolerance, and checks that the event header matches the signed body. Invalid signatures are rejected. Signing secrets are stored encrypted using a key derived from the connection API key. Disable webhook flows before rotating that key, then reconnect and enable the flows again.
+The piece verifies the raw request body with HMAC-SHA256 and a five-minute timestamp tolerance for both Sent webhook versions. Version 2 (the default for new webhooks) is checked with the `webhook-id`, `webhook-timestamp`, and `webhook-signature` headers. Version 1 is also checked against the stored webhook ID and the `X-Webhook-Event-Type` header. The piece records the version Sent reports when it creates the subscription. Invalid signatures are rejected. Signing secrets are stored encrypted using a key derived from the connection API key. Disable webhook flows before rotating that key, then reconnect and enable the flows again.
 
-Signature verification is not event deduplication: a valid delivery can be repeated within the timestamp window. Downstream flows that require once-only processing should deduplicate using the event's stable identifier before performing side effects.
+Signature verification is not event deduplication: a valid delivery can be repeated within the timestamp window. Downstream flows that require once-only processing should deduplicate using the event's stable identifier before performing side effects. Template Parameters accept text, number, and true/false values and send them as text.
 
 ## Development checks
 

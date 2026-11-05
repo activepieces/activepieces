@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createHmac } from 'node:crypto';
 import { sentSecurity } from '../src/lib/common/security';
 import { SIGNING_SECRET } from './helpers';
 
@@ -125,5 +126,70 @@ describe('Sent HMAC-SHA256 over original bytes', () => {
         },
       })
     ).toBe(true);
+  });
+});
+
+describe('Sent version 2 (Standard Webhooks) signatures', () => {
+  const eventId = 'msg_2f7c1d0e-version-two';
+  const timestamp = '1768473000';
+  const digest = createHmac(
+    'sha256',
+    Buffer.from(SIGNING_SECRET.slice(6), 'base64')
+  )
+    .update(`${eventId}.${timestamp}.${rawBody}`)
+    .digest('base64');
+  const v2Headers = {
+    'webhook-id': eventId,
+    'webhook-timestamp': timestamp,
+    'webhook-signature': `v1,${digest}`,
+  };
+  const v2 = { ...fixture, headers: v2Headers };
+  it('accepts a v2 delivery whose webhook-id is the per-event ID', () => {
+    expect(sentSecurity.verify({ ...v2, version: 2 })).toBe(true);
+    expect(sentSecurity.verify(v2)).toBe(true);
+  });
+  it('accepts a v2 signature among rotated signatures', () => {
+    expect(
+      sentSecurity.verify({
+        ...v2,
+        version: 2,
+        headers: {
+          ...v2Headers,
+          'webhook-signature': `v1,c3RhbGU= v1,${digest}`,
+        },
+      })
+    ).toBe(true);
+  });
+  it('rejects a v2 delivery signed over a different event ID', () => {
+    expect(
+      sentSecurity.verify({
+        ...v2,
+        version: 2,
+        headers: { ...v2Headers, 'webhook-id': 'msg_other' },
+      })
+    ).toBe(false);
+  });
+  it.each(['webhook-id', 'webhook-timestamp', 'webhook-signature'])(
+    'rejects a v2 delivery missing %s',
+    (name) => {
+      expect(
+        sentSecurity.verify({
+          ...v2,
+          version: 2,
+          headers: Object.fromEntries(
+            Object.entries(v2Headers).filter(([key]) => key !== name)
+          ),
+        })
+      ).toBe(false);
+    }
+  );
+  it('rejects a stale v2 timestamp', () => {
+    expect(
+      sentSecurity.verify({ ...v2, version: 2, now: fixture.now + 301000 })
+    ).toBe(false);
+  });
+  it('does not accept v1 headers on a webhook recorded as v2, or v2 headers on v1', () => {
+    expect(sentSecurity.verify({ ...fixture, version: 2 })).toBe(false);
+    expect(sentSecurity.verify({ ...v2, version: 1 })).toBe(false);
   });
 });

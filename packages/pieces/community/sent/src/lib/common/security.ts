@@ -79,20 +79,34 @@ function header({
   return typeof value === 'string' ? value : undefined;
 }
 
+function scheme({
+  version,
+  headers,
+}: {
+  version?: number;
+  headers: Record<string, unknown>;
+}): WebhookScheme {
+  if (version === 1 || version === 2) return version;
+  return header({ headers, name: 'webhook-signature' }) ? 2 : 1;
+}
+
 function verify({
   secret,
   webhookId,
+  version,
   headers,
   rawBody,
   now = Date.now(),
 }: VerifyInput): boolean {
   if (typeof rawBody !== 'string' && !Buffer.isBuffer(rawBody)) return false;
-  const id = header({ headers, name: 'X-Webhook-ID' });
-  const timestamp = header({ headers, name: 'X-Webhook-Timestamp' });
-  const signature = header({ headers, name: 'X-Webhook-Signature' });
+  const resolved = scheme({ version, headers });
+  const names = HEADER_NAMES[resolved];
+  const id = header({ headers, name: names.id });
+  const timestamp = header({ headers, name: names.timestamp });
+  const signature = header({ headers, name: names.signature });
   if (
     !id ||
-    id !== webhookId ||
+    (resolved === 1 && id !== webhookId) ||
     !timestamp ||
     !/^\d+$/.test(timestamp) ||
     !signature
@@ -122,11 +136,29 @@ function verify({
   });
 }
 
-export const sentSecurity = { encrypt, decrypt, header, verify };
+const HEADER_NAMES: Record<
+  WebhookScheme,
+  { id: string; timestamp: string; signature: string }
+> = {
+  1: {
+    id: 'X-Webhook-ID',
+    timestamp: 'X-Webhook-Timestamp',
+    signature: 'X-Webhook-Signature',
+  },
+  2: {
+    id: 'webhook-id',
+    timestamp: 'webhook-timestamp',
+    signature: 'webhook-signature',
+  },
+};
+
+export const sentSecurity = { encrypt, decrypt, header, scheme, verify };
+export type WebhookScheme = 1 | 2;
 export type EncryptedSecret = { iv: string; ciphertext: string; tag: string };
 export type VerifyInput = {
   secret: string;
   webhookId: string;
+  version?: number;
   headers: Record<string, unknown>;
   rawBody: unknown;
   now?: number;
