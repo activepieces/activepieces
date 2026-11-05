@@ -171,7 +171,7 @@ function coerceValue({
   if (type === 'DATE') {
     if (trimmed === '') return null;
     const epoch = /^-?\d+$/.test(trimmed) ? Number(trimmed) : Date.parse(trimmed);
-    if (Number.isNaN(epoch)) {
+    if (!Number.isFinite(epoch)) {
       throw new Error(
         `Field ${fieldKey} is a date; use an ISO date or epoch milliseconds.`,
       );
@@ -181,7 +181,7 @@ function coerceValue({
   if (type === 'NUMBER') {
     if (trimmed === '') return null;
     const num = Number(trimmed);
-    if (Number.isNaN(num)) {
+    if (!Number.isFinite(num)) {
       throw new Error(`Field ${fieldKey} is a number; "${value}" is not numeric.`);
     }
     return num;

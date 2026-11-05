@@ -12,8 +12,8 @@ const boxFields: OutputSchemaField[] = [
   { key: 'task_total', label: 'Task Total', format: 'number' },
   { key: 'file_count', label: 'File Count', format: 'number' },
   { key: 'gmail_thread_count', label: 'Gmail Thread Count', format: 'number' },
-  { key: 'creation_timestamp', label: 'Created At', format: 'datetime' },
-  { key: 'last_updated_timestamp', label: 'Last Updated At', format: 'datetime' },
+  { key: 'creation_timestamp', label: 'Created At (epoch ms)', format: 'number' },
+  { key: 'last_updated_timestamp', label: 'Last Updated At (epoch ms)', format: 'number' },
   { key: 'followers', label: 'Follower Keys' },
   { key: 'fields_json', label: 'Custom Fields (JSON)' },
 ];
@@ -23,10 +23,10 @@ const taskFields: OutputSchemaField[] = [
   { key: 'box_key', label: 'Box Key' },
   { key: 'text', label: 'Text' },
   { key: 'status', label: 'Status' },
-  { key: 'due_date_epoch_ms', label: 'Due Date', format: 'datetime' },
+  { key: 'due_date_epoch_ms', label: 'Due Date (epoch ms)', format: 'number' },
   { key: 'creator_key', label: 'Creator Key' },
-  { key: 'creation_date_epoch_ms', label: 'Created At', format: 'datetime' },
-  { key: 'last_updated_date_epoch_ms', label: 'Last Updated At', format: 'datetime' },
+  { key: 'creation_date_epoch_ms', label: 'Created At (epoch ms)', format: 'number' },
+  { key: 'last_updated_date_epoch_ms', label: 'Last Updated At (epoch ms)', format: 'number' },
   { key: 'assigned_to_emails', label: 'Assigned To (Emails)' },
 ];
 
@@ -35,7 +35,7 @@ const boxSummaryFields: OutputSchemaField[] = [
   { key: 'name', label: 'Name' },
   { key: 'pipeline_key', label: 'Pipeline Key' },
   { key: 'stage_key', label: 'Stage Key' },
-  { key: 'last_updated_timestamp_epoch_ms', label: 'Last Updated At', format: 'datetime' },
+  { key: 'last_updated_timestamp_epoch_ms', label: 'Last Updated At (epoch ms)', format: 'number' },
 ];
 
 const webhookBoxFields: OutputSchemaField[] = [
@@ -44,8 +44,8 @@ const webhookBoxFields: OutputSchemaField[] = [
   { key: 'pipelineKey', label: 'Pipeline Key' },
   { key: 'stageKey', label: 'Stage Key' },
   { key: 'creatorKey', label: 'Creator Key' },
-  { key: 'creationTimestamp', label: 'Created At', format: 'datetime' },
-  { key: 'lastUpdatedTimestamp', label: 'Last Updated At', format: 'datetime' },
+  { key: 'creationTimestamp', label: 'Created At (epoch ms)', format: 'number' },
+  { key: 'lastUpdatedTimestamp', label: 'Last Updated At (epoch ms)', format: 'number' },
 ];
 
 const webhookTaskFields: OutputSchemaField[] = [
@@ -53,9 +53,9 @@ const webhookTaskFields: OutputSchemaField[] = [
   { key: 'boxKey', label: 'Box Key' },
   { key: 'text', label: 'Text' },
   { key: 'status', label: 'Status' },
-  { key: 'dueDate', label: 'Due Date', format: 'datetime' },
+  { key: 'dueDate', label: 'Due Date (epoch ms)', format: 'number' },
   { key: 'creatorKey', label: 'Creator Key' },
-  { key: 'creationDate', label: 'Created At', format: 'datetime' },
+  { key: 'creationDate', label: 'Created At (epoch ms)', format: 'number' },
 ];
 
 const webhookContactFields: OutputSchemaField[] = [
@@ -64,8 +64,8 @@ const webhookContactFields: OutputSchemaField[] = [
   { key: 'familyName', label: 'Last Name' },
   { key: 'title', label: 'Title' },
   { key: 'emailAddresses', label: 'Email Addresses' },
-  { key: 'creationDate', label: 'Created At', format: 'datetime' },
-  { key: 'lastSavedTimestamp', label: 'Last Saved At', format: 'datetime' },
+  { key: 'creationDate', label: 'Created At (epoch ms)', format: 'number' },
+  { key: 'lastSavedTimestamp', label: 'Last Saved At (epoch ms)', format: 'number' },
 ];
 
 export const boxOutputSchema: OutputSchema = { fields: boxFields };
@@ -126,8 +126,8 @@ export const pipelineListOutputSchema: OutputSchema = {
         { key: 'description', label: 'Description' },
         { key: 'stage_count', label: 'Stage Count', format: 'number' },
         { key: 'field_count', label: 'Field Count', format: 'number' },
-        { key: 'creation_timestamp', label: 'Created At', format: 'datetime' },
-        { key: 'last_updated_timestamp', label: 'Last Updated At', format: 'datetime' },
+        { key: 'creation_timestamp', label: 'Created At (epoch ms)', format: 'number' },
+        { key: 'last_updated_timestamp', label: 'Last Updated At (epoch ms)', format: 'number' },
       ],
     },
   ],
@@ -181,7 +181,7 @@ export const commentOutputSchema: OutputSchema = {
     { key: 'box_key', label: 'Box Key' },
     { key: 'message', label: 'Message' },
     { key: 'creator_key', label: 'Creator Key' },
-    { key: 'creation_date_epoch_ms', label: 'Created At', format: 'datetime' },
+    { key: 'creation_date_epoch_ms', label: 'Created At (epoch ms)', format: 'number' },
   ],
 };
 
@@ -199,8 +199,8 @@ export const contactOutputSchema: OutputSchema = {
     { key: 'linkedin_handle', label: 'LinkedIn Handle' },
     { key: 'photo_url', label: 'Photo URL', format: 'image' },
     { key: 'other', label: 'Notes' },
-    { key: 'creation_date_epoch_ms', label: 'Created At', format: 'datetime' },
-    { key: 'last_saved_timestamp_epoch_ms', label: 'Last Saved At', format: 'datetime' },
+    { key: 'creation_date_epoch_ms', label: 'Created At (epoch ms)', format: 'number' },
+    { key: 'last_saved_timestamp_epoch_ms', label: 'Last Saved At (epoch ms)', format: 'number' },
   ],
 };
 
@@ -218,8 +218,8 @@ export const organizationOutputSchema: OutputSchema = {
     { key: 'linkedin_handle', label: 'LinkedIn Handle' },
     { key: 'logo_url', label: 'Logo URL', format: 'image' },
     { key: 'description', label: 'Description' },
-    { key: 'creation_date_epoch_ms', label: 'Created At', format: 'datetime' },
-    { key: 'last_saved_timestamp_epoch_ms', label: 'Last Saved At', format: 'datetime' },
+    { key: 'creation_date_epoch_ms', label: 'Created At (epoch ms)', format: 'number' },
+    { key: 'last_saved_timestamp_epoch_ms', label: 'Last Saved At (epoch ms)', format: 'number' },
   ],
 };
 
@@ -230,9 +230,9 @@ export const userOutputSchema: OutputSchema = {
     { key: 'lowercase_email', label: 'Lowercase Email', format: 'email' },
     { key: 'display_name', label: 'Display Name' },
     { key: 'is_oauth_complete', label: 'OAuth Complete', format: 'boolean' },
-    { key: 'creation_timestamp_epoch_ms', label: 'Created At', format: 'datetime' },
-    { key: 'last_updated_timestamp_epoch_ms', label: 'Last Updated At', format: 'datetime' },
-    { key: 'last_seen_timestamp_epoch_ms', label: 'Last Seen At', format: 'datetime' },
+    { key: 'creation_timestamp_epoch_ms', label: 'Created At (epoch ms)', format: 'number' },
+    { key: 'last_updated_timestamp_epoch_ms', label: 'Last Updated At (epoch ms)', format: 'number' },
+    { key: 'last_seen_timestamp_epoch_ms', label: 'Last Seen At (epoch ms)', format: 'number' },
   ],
 };
 
@@ -258,7 +258,7 @@ export const commentWebhookOutputSchema: OutputSchema = {
     { key: 'boxKey', label: 'Box Key' },
     { key: 'message', label: 'Message' },
     { key: 'creatorKey', label: 'Creator Key' },
-    { key: 'creationDate', label: 'Created At', format: 'datetime' },
+    { key: 'creationDate', label: 'Created At (epoch ms)', format: 'number' },
   ],
 };
 
@@ -268,7 +268,7 @@ export const meetingWebhookOutputSchema: OutputSchema = {
     { key: 'boxKey', label: 'Box Key' },
     { key: 'name', label: 'Name' },
     { key: 'notes', label: 'Notes' },
-    { key: 'timestamp', label: 'Meeting Time', format: 'datetime' },
+    { key: 'timestamp', label: 'Meeting Time (epoch ms)', format: 'number' },
   ],
 };
 
@@ -277,7 +277,7 @@ export const taskWebhookOutputSchema: OutputSchema = { fields: webhookTaskFields
 export const taskCompletedWebhookOutputSchema: OutputSchema = {
   fields: [
     ...webhookTaskFields,
-    { key: 'completedAt', label: 'Completed At', format: 'datetime' },
+    { key: 'completedAt', label: 'Completed At (epoch ms)', format: 'number' },
   ],
 };
 

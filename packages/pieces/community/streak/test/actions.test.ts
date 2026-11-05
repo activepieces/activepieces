@@ -125,6 +125,21 @@ describe('ai_update_box', () => {
       run({ action: aiUpdateBoxAction, propsValue: { box_key: 'box1', field_updates: [{ field_key: '1002', value: 'lots' }] } }),
     ).rejects.toThrow('number');
   });
+
+  it.each(['Infinity', '1e309'])('rejects %s for a number field instead of sending null', async (value) => {
+    const spy = mockResponses([BOX, FIELDS]);
+    await expect(
+      run({ action: aiUpdateBoxAction, propsValue: { box_key: 'box1', field_updates: [{ field_key: '1002', value }] } }),
+    ).rejects.toThrow('number');
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects an overflowing epoch for a date field', async () => {
+    mockResponses([BOX, FIELDS]);
+    await expect(
+      run({ action: aiUpdateBoxAction, propsValue: { box_key: 'box1', field_updates: [{ field_key: '1003', value: '9'.repeat(400) }] } }),
+    ).rejects.toThrow('date');
+  });
 });
 
 describe('discovery actions', () => {
