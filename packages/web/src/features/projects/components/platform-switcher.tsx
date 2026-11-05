@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Plus } from 'lucide-react';
@@ -27,6 +28,10 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const isCloud = edition === ApEdition.CLOUD;
+  const canCreatePlatform =
+    isCloud &&
+    !isNil(allProjects) &&
+    !allProjects.some((platform) => platform.isOwner);
 
   const platforms = React.useMemo(() => {
     if (!allProjects) return [];
@@ -69,7 +74,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
           </DropdownMenuItem>
         ))}
       </ScrollArea>
-      {isCloud && (
+      {canCreatePlatform && (
         <>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -92,7 +97,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
         </DropdownMenuTrigger>
         {dropdownContent}
       </DropdownMenu>
-      {isCloud && (
+      {canCreatePlatform && (
         <CreatePlatformDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}

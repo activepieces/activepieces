@@ -1,6 +1,6 @@
 import { ProjectRole } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ApEdition, DefaultProjectRole, InvitationStatus, InvitationType, OtpType, PlatformRole, ProjectType, UserStatus } from '@activepieces/shared'
+import { ApEdition, DefaultProjectRole, InvitationStatus, InvitationType, OtpType, PlatformRole, PrincipalType, ProjectType, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -10,7 +10,7 @@ import { signupNames } from '../../../../src/app/authentication/lib/signup-names
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { system } from '../../../../src/app/helper/system/system'
-import { decodeToken } from '../../../helpers/auth'
+import { decodeToken, generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
     CLOUD_PLATFORM_ID,
@@ -774,6 +774,50 @@ describe('Authentication API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('Rejects a user who already owns a platform', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const platformCountBefore = await databaseConnection().getRepository('platform').count()
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Second Platform' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(platformCountBefore)
+        })
+
+        it('Lets a member who owns no platform create one', async () => {
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUserIdentity, mockUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER },
+            })
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'My Own Platform' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const created = await databaseConnection().getRepository('platform').findOneByOrFail({ id: response?.json().platformId })
+            const owner = await databaseConnection().getRepository('user').findOneByOrFail({ id: created.ownerId })
+            expect(owner.identityId).toBe(mockUserIdentity.id)
         })
     })
 })
