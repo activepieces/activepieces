@@ -1,4 +1,6 @@
 import {
+    File,
+    FileType,
     FlowActionType,
     flowOperations,
     FlowOperationType,
@@ -10,6 +12,7 @@ import {
     PackageType,
     PieceType,
     PopulatedFlow,
+    SampleDataFileType,
     StepLocationRelativeToParent,
     UncategorizedFolderId,
 } from '@activepieces/shared'
@@ -24,7 +27,7 @@ import {
     createMockPieceMetadata,
     createMockProject,
 } from '../../../../helpers/mocks'
-import { createTestContext } from '../../../../helpers/test-context'
+import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -601,6 +604,34 @@ describe('Flow Operations API', () => {
             const body = response?.json()
             expect(body.version.trigger.nextAction).toBeUndefined()
         })
+
+        it('should delete the sample data of a deleted loop and of the steps inside it', async () => {
+            const ctx = await createTestContext(app!)
+            const flowId = await createFlowWithTestedLoop(ctx)
+            expect(await sampleDataStepNames(ctx)).toEqual(['step_1', 'step_1', 'step_2', 'step_2', 'step_3', 'step_3'])
+
+            const response = await ctx.post(`/v1/flows/${flowId}`, {
+                type: FlowOperationType.DELETE_ACTION,
+                request: { names: ['step_1'] },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await sampleDataStepNames(ctx)).toEqual(['step_3', 'step_3'])
+        })
+
+        it('should keep the loop sample data when only the step inside it is deleted', async () => {
+            const ctx = await createTestContext(app!)
+            const flowId = await createFlowWithTestedLoop(ctx)
+            expect(await sampleDataStepNames(ctx)).toEqual(['step_1', 'step_1', 'step_2', 'step_2', 'step_3', 'step_3'])
+
+            const response = await ctx.post(`/v1/flows/${flowId}`, {
+                type: FlowOperationType.DELETE_ACTION,
+                request: { names: ['step_2'] },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await sampleDataStepNames(ctx)).toEqual(['step_1', 'step_1', 'step_3', 'step_3'])
+        })
     })
 
     describe('POST /v1/flows/:id DUPLICATE_ACTION', () => {
@@ -954,3 +985,42 @@ describe('Flow Operations API', () => {
         })
     })
 })
+
+async function createFlowWithTestedLoop(ctx: TestContext): Promise<string> {
+    const createResponse = await ctx.post('/v1/flows', {
+        displayName: 'test flow',
+        projectId: ctx.project.id,
+    }, { query: { projectId: ctx.project.id } })
+    const flow: PopulatedFlow = createResponse?.json()
+    const codeSettings = {
+        input: {},
+        sourceCode: { code: 'export const code = async () => { return true; }', packageJson: '{}' },
+    }
+    const addActionRequests = [
+        { parentStep: 'trigger', action: { type: FlowActionType.LOOP_ON_ITEMS, displayName: 'Loop', name: 'step_1', settings: { items: '{{trigger.body}}' }, valid: true } },
+        { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP, action: { type: FlowActionType.CODE, displayName: 'Inside Loop', name: 'step_2', settings: codeSettings, valid: true } },
+        { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: { type: FlowActionType.CODE, displayName: 'After Loop', name: 'step_3', settings: codeSettings, valid: true } },
+    ]
+    for (const request of addActionRequests) {
+        const response = await ctx.post(`/v1/flows/${flow.id}`, { type: FlowOperationType.ADD_ACTION, request })
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+    }
+    for (const stepName of ['step_1', 'step_2', 'step_3']) {
+        for (const type of [SampleDataFileType.OUTPUT, SampleDataFileType.INPUT]) {
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.SAVE_SAMPLE_DATA,
+                request: { stepName, payload: { stepName }, type },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        }
+    }
+    return flow.id
+}
+
+async function sampleDataStepNames(ctx: TestContext): Promise<(string | undefined)[]> {
+    const files = await db.findBy<File>('file', { projectId: ctx.project.id })
+    return files
+        .filter((file) => file.type === FileType.SAMPLE_DATA || file.type === FileType.SAMPLE_DATA_INPUT)
+        .map((file) => file.metadata?.stepName)
+        .sort()
+}
