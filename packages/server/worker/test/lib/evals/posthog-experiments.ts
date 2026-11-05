@@ -60,19 +60,12 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
             }
         })
     }
-    const verdicts = new Map<string, Verdict>()
+    const counts = new Map<string, VerdictCounts>()
     for (const caseKey of new Set(items.map((item) => item.case_key))) {
         const values = items.filter((item) => item.case_key === caseKey).flatMap((item) => passedByItem.has(item.id) ? [passedByItem.get(item.id) === true] : [])
-        verdicts.set(caseKey, majority({ pass: values.filter(Boolean).length, fail: values.filter((value) => !value).length }))
+        counts.set(caseKey, { pass: values.filter(Boolean).length, fail: values.filter((value) => !value).length })
     }
-    return { experimentId: latest.id, applicationVersion: latest.application_version ?? 'unknown', verdicts }
-}
-
-function majority({ pass, fail }: { pass: number, fail: number }): Verdict {
-    if (pass + fail === 0) {
-        return 'no_verdict'
-    }
-    return fail * 2 >= pass + fail ? 'fail' : 'pass'
+    return { experimentId: latest.id, applicationVersion: latest.application_version ?? 'unknown', counts }
 }
 
 function caseKey(candidate: EvalCase): string {
@@ -181,10 +174,15 @@ export type UploadedRun = {
     transcript: string
 }
 
+export type VerdictCounts = {
+    pass: number
+    fail: number
+}
+
 export type Baseline = {
     experimentId: string
     applicationVersion: string
-    verdicts: Map<string, Verdict>
+    counts: Map<string, VerdictCounts>
 }
 
 type UploadParams = {

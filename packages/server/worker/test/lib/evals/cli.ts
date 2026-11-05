@@ -8,7 +8,7 @@ import { evalAgentTurn } from './agent-turn'
 import { CheckResult, evalChecks, Verdict } from './checks'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
-import { posthogExperiments } from './posthog-experiments'
+import { posthogExperiments, VerdictCounts } from './posthog-experiments'
 import { evalPrompts } from './prompts'
 import { evalToolSet } from './tool-set'
 
@@ -23,7 +23,7 @@ async function main(): Promise<void> {
             'dataset': { type: 'string', default: DEFAULT_DATASET },
             'verbose': { type: 'boolean', default: false },
             'record': { type: 'boolean', default: false },
-            'repeats': { type: 'string', default: '1' },
+            'repeats': { type: 'string', default: String(DEFAULT_REPEATS) },
             'steps': { type: 'boolean', default: false },
             'set-cut': { type: 'string', multiple: true },
             'set-target': { type: 'string', multiple: true },
@@ -119,22 +119,37 @@ async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKe
         console.log(`\nNo release baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to diff against.`)
         return
     }
-    console.log(`\nDiff against the release baseline (commit ${found.applicationVersion.slice(0, SHORT_SHA)}, same model):`)
+    console.log(`\nDiff against the release baseline (commit ${found.applicationVersion.slice(0, SHORT_SHA)}, same model). A change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} judged runs agree on both sides:`)
     cases.forEach((candidate) => {
-        const before = found.verdicts.get(posthogExperiments.caseKey(candidate)) ?? 'no_verdict'
-        const now = summaries.find((summary) => summary.caseNumber === candidate.caseNumber)?.verdict ?? 'no_verdict'
-        console.log(`  case ${candidate.caseNumber}: ${VERDICT_LABEL[before]} → ${VERDICT_LABEL[now]}${diffLabel({ before, now })}`)
+        const before = found.counts.get(posthogExperiments.caseKey(candidate)) ?? { pass: 0, fail: 0 }
+        const now = summaries.find((summary) => summary.caseNumber === candidate.caseNumber) ?? { pass: 0, fail: 0 }
+        console.log(`  case ${candidate.caseNumber}: ${describe(before)} → ${describe(now)}  ${diffLabel({ before: clearVerdict(before), now: clearVerdict(now) })}`)
     })
 }
 
-function diffLabel({ before, now }: { before: Verdict, now: Verdict }): string {
-    if (before === 'pass' && now === 'fail') {
-        return '  REGRESSED'
+function clearVerdict({ pass, fail }: VerdictCounts): Verdict | 'unclear' {
+    const judged = pass + fail
+    if (judged < MIN_JUDGED_RUNS) {
+        return 'unclear'
     }
-    if (before === 'fail' && now === 'pass') {
-        return '  FIXED'
+    if (pass >= judged * CLEAR_SHARE) {
+        return 'pass'
     }
-    return ''
+    return fail >= judged * CLEAR_SHARE ? 'fail' : 'unclear'
+}
+
+function describe({ pass, fail }: VerdictCounts): string {
+    return `${pass} pass/${fail} fail`
+}
+
+function diffLabel({ before, now }: { before: Verdict | 'unclear', now: Verdict | 'unclear' }): string {
+    if (before === 'unclear' || now === 'unclear') {
+        return 'unclear'
+    }
+    if (before === now) {
+        return 'same'
+    }
+    return now === 'fail' ? 'REGRESSED' : 'FIXED'
 }
 
 function gitSha(): string {
@@ -207,6 +222,9 @@ const DEFAULT_DATASET = 'chat-regressions'
 const EVAL_CONVERSATION_ID = 'eval-conversation'
 const CONCURRENCY = 4
 const SHORT_SHA = 8
+const DEFAULT_REPEATS = 5
+const MIN_JUDGED_RUNS = 3
+const CLEAR_SHARE = 0.8
 const PROMPT_HASH_CHARS = 12
 const VERDICT_MARK: Record<Verdict, string> = { pass: '✓', fail: '✗', no_verdict: '?' }
 const VERDICT_LABEL: Record<Verdict, string> = { pass: 'pass', fail: 'FAIL', no_verdict: 'no verdict' }
