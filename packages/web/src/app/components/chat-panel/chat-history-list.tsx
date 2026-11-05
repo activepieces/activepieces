@@ -469,54 +469,58 @@ const HistoryRow = memo(function HistoryRow({
         >
           {relativeTime(conversation.updated)}
         </time>
-        <DropdownMenu open={menuOpen} onOpenChange={onMenuOpenChange}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              tabIndex={tabbable ? 0 : -1}
-              aria-label={t('Chat actions')}
+        {/* Only the row under the cursor carries its menu: mounting one per
+            row made opening history cost a long frame. */}
+        {(active || tabbable) && (
+          <DropdownMenu open={menuOpen} onOpenChange={onMenuOpenChange}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                tabIndex={tabbable ? 0 : -1}
+                aria-label={t('Chat actions')}
+                onClick={(event) => event.stopPropagation()}
+                className={cn(
+                  'absolute right-0 text-gray-11 opacity-0 transition-opacity duration-100 hover:bg-gray-5 hover:text-gray-12 focus-visible:opacity-100',
+                  active && 'opacity-100',
+                  menuOpen && 'bg-gray-5 text-gray-12',
+                )}
+              >
+                <Ellipsis />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-36"
               onClick={(event) => event.stopPropagation()}
-              className={cn(
-                'absolute right-0 text-gray-11 opacity-0 transition-opacity duration-100 hover:bg-gray-5 hover:text-gray-12 focus-visible:opacity-100',
-                active && 'opacity-100',
-                menuOpen && 'bg-gray-5 text-gray-12',
-              )}
-            >
-              <Ellipsis />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-36"
-            onClick={(event) => event.stopPropagation()}
-            // Back to the search, so arrows and Esc keep working; a rename
-            // takes focus itself.
-            onCloseAutoFocus={(event) => {
-              event.preventDefault();
-              if (!renaming.current) onMenuClosed();
-              renaming.current = false;
-            }}
-          >
-            <DropdownMenuItem
-              onSelect={() => {
-                renaming.current = true;
-                onRename();
+              // Back to the search, so arrows and Esc keep working; a rename
+              // takes focus itself.
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                if (!renaming.current) onMenuClosed();
+                renaming.current = false;
               }}
             >
-              <Pencil className="size-4" />
-              {t('Rename')}
-              <kbd className="ml-auto font-sans text-xs text-gray-10">F2</kbd>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={onDelete}
-              className="text-danger-11 focus:text-danger-11"
-            >
-              <Trash2 className="size-4" />
-              {t('Delete')}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem
+                onSelect={() => {
+                  renaming.current = true;
+                  onRename();
+                }}
+              >
+                <Pencil className="size-4" />
+                {t('Rename')}
+                <kbd className="ml-auto font-sans text-xs text-gray-10">F2</kbd>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={onDelete}
+                className="text-danger-11 focus:text-danger-11"
+              >
+                <Trash2 className="size-4" />
+                {t('Delete')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </span>
     </div>
   );
