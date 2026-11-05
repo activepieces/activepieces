@@ -477,7 +477,7 @@ function LayoutMenu({
         </DropdownMenuRadioGroup>
         {!canDock && (
           <DropdownMenuLabel className="pt-1 pl-8 text-xs font-normal text-gray-10">
-            {t('Docking needs a wider window')}
+            {t('Needs a wider window')}
           </DropdownMenuLabel>
         )}
         <DropdownMenuSeparator />
