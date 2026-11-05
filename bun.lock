@@ -3757,7 +3757,7 @@
     },
     "packages/pieces/community/gistly": {
       "name": "@activepieces/piece-gistly",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7300,7 +7300,7 @@
     },
     "packages/pieces/community/podio": {
       "name": "@activepieces/piece-podio",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7554,7 +7554,7 @@
     },
     "packages/pieces/community/pushbullet": {
       "name": "@activepieces/piece-pushbullet",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7563,6 +7563,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/pushover": {
@@ -9543,7 +9544,7 @@
     },
     "packages/pieces/community/twitch": {
       "name": "@activepieces/piece-twitch",
-      "version": "0.1.2",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9553,6 +9554,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/twitter": {
