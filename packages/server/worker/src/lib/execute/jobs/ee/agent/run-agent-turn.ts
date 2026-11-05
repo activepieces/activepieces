@@ -120,6 +120,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     let fast = isNil(fastModel) ? undefined : await withOutputBudget({ turnModel: fastModel, peers })
     let modelIndex = 0
     let lastStepUsedFast = false
+    let completionLeftToModel = false
     const failedModelIds = new Set<string>()
     const current = (): BudgetedTurnModel => ranked[modelIndex]
     const hasNextModel = (): boolean => modelIndex < ranked.length - 1
@@ -185,6 +186,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 ? boundedContext
                 : { messages: [...(boundedContext.messages ?? currentMessages), ...finalStep.messages] }
             lastStepUsedFast = usesFastModel
+            completionLeftToModel = forcesCompletion && finalStep?.toolChoice === 'auto'
             onStepModel?.(stepModel)
             const thinkingOff = disableThinking || stepBudget.thinkingBudget === 0
             return {
@@ -386,6 +388,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         totalOutputTokens,
         toolCalls,
         answeredBy: lastStepUsedFast && !isNil(fast) ? fast : current(),
+        completionLeftToModel,
         allModelsFailed: !isNil(streamError) && runsATier && failedModelIds.size === unique(ranked.map((candidate) => candidate.modelId)).length,
     }
 }
@@ -695,6 +698,7 @@ export type AgentTurnResult = {
     totalOutputTokens: number
     toolCalls: AgentTurnToolCall[]
     answeredBy: TurnModel
+    completionLeftToModel: boolean
     allModelsFailed: boolean
 }
 

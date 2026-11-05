@@ -350,7 +350,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 },
             })
 
-            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, creditsExhausted, continuations, usage, totalInputTokens, totalOutputTokens } = turn
+            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, creditsExhausted, completionLeftToModel, continuations, usage, totalInputTokens, totalOutputTokens } = turn
 
             if (abortController.signal.aborted) {
                 if (streamError) {
@@ -426,7 +426,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
-            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted }) })
+            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted, missedStructuredOutput: completionLeftToModel && isNil(structured.output) }) })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -554,7 +554,7 @@ function candidateTurnModel({ candidate, billing, metadata }: { candidate: Agent
     }
 }
 
-function incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted }: { truncatedAfterRetries: boolean, budgetExceeded: boolean, creditsExhausted: boolean }): string | undefined {
+function incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted, missedStructuredOutput }: { truncatedAfterRetries: boolean, budgetExceeded: boolean, creditsExhausted: boolean, missedStructuredOutput: boolean }): string | undefined {
     if (truncatedAfterRetries) {
         return 'The response reached the output limit before the agent finished'
     }
@@ -563,6 +563,9 @@ function incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhaus
     }
     if (creditsExhausted) {
         return 'The run ran out of credits and was stopped'
+    }
+    if (missedStructuredOutput) {
+        return 'The agent reached its step limit without reporting its structured output'
     }
     return undefined
 }
