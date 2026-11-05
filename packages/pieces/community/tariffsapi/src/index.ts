@@ -1,7 +1,7 @@
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { tariffsApiAuth } from './lib/auth';
-import { apiKeyOf, TARIFFSAPI_BASE_URL } from './lib/common/client';
+import { apiKeyOf, assertTariffsApiUrl, TARIFFSAPI_BASE_URL } from './lib/common/client';
 import { resolveTariffAction } from './lib/actions/resolve-tariff';
 import { getByHtsAction } from './lib/actions/get-by-hts';
 
@@ -19,7 +19,10 @@ export const tariffsapi = createPiece({
     createCustomApiCallAction({
       baseUrl: () => TARIFFSAPI_BASE_URL,
       auth: tariffsApiAuth,
-      authMapping: async (auth) => ({ Authorization: `Bearer ${apiKeyOf(auth)}` }),
+      authMapping: async (auth, propsValue) => {
+        assertTariffsApiUrl({ propsValue });
+        return { Authorization: `Bearer ${apiKeyOf(auth)}` };
+      },
     }),
   ],
   triggers: [],

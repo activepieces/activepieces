@@ -7,9 +7,9 @@ export const tariffsApiAuth = PieceAuth.SecretText({
   description: 'Copy your API key from your [Tariffs API dashboard](https://tariffsapi.com).',
   validate: async ({ auth }) => {
     try {
-      await tariffsApiGet(apiKeyOf(auth), '/tariffs/by_hts/0101.21.00');
+      await tariffsApiGet({ apiKey: apiKeyOf(auth), path: '/tariffs/by_hts/0101.21.00' });
       return { valid: true };
-    } catch (error) {
+    } catch {
       return { valid: false, error: 'Invalid API key, or the key could not be checked.' };
     }
   },

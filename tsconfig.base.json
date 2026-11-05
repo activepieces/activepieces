@@ -1384,6 +1384,9 @@
       "@activepieces/piece-tapfiliate": [
         "packages/pieces/community/tapfiliate/src/index.ts"
       ],
+      "@activepieces/piece-tariffsapi": [
+        "packages/pieces/community/tariffsapi/src/index.ts"
+      ],
       "@activepieces/piece-tarvent": [
         "packages/pieces/community/tarvent/src/index.ts"
       ],
