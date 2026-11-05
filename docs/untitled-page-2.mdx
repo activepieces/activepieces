@@ -92,7 +92,7 @@ A **worker group** gives a project its **own line and its own workers** (like gi
 
 ### **How to Keep Your Queue Short**
 
-1. **Spread out your schedules:** If 20 flows all run “every hour, on the hour”, they all join the line at the same moment. Stagger them, for example at :05, :15 and :25.
+1. **Spread out your schedules:** The **Every Hour** and **Every Day** schedules always start at the top of the hour (:00). If many flows use them, they all join the line at once and some have to wait. Move your heaviest flows to a different minute: in the **Schedule** trigger, choose **Cron Expression** and enter, for example, `5 * * * *` (every hour at :05) or `25 9 * * *` (every day at 9:25).
 2. **Keep flows short:** A flow that runs for 9 minutes holds its spot for 9 minutes. Remove unnecessary steps, and split long processes into smaller flows.
 3. **Be careful with large batches:** Actions like **Call Flow** inside a loop, or **Stream CSV to Subflows**, can create hundreds or thousands of runs at once, and they can fill your project’s line. Find the middle ground: put more items in each run so you create fewer runs, but not so many that a single run runs out of memory. For example, send 200 rows per run instead of 1, or 50,000. In **Stream CSV to Subflows**, you set this with the **Rows per batch** field.
 4. **Only trigger when needed:** Add filters to your trigger, or an early condition step, so the flow stops quickly when there’s nothing to do.
