@@ -562,6 +562,10 @@ async function syncSelfServeTrialDates({ log, platformId, client, customer }: Sy
         log.warn({ error, platform: { id: platformId } }, 'Failed to list the self-serve trial subscriptions; keeping the cached trial dates')
         return cachedDates
     }
+    if (selfServeTrialUtils.wasLatestTrialCancelled(subscriptions)) {
+        await selfServeTrialUtils.deleteCachedTrial(platformId)
+        return null
+    }
     const dates = selfServeTrialUtils.latestTrialDates(subscriptions)
     if (isNil(dates)) {
         return cachedDates

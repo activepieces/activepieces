@@ -14,7 +14,7 @@ export const getCustomerStateMissKey = (platformId: PlatformId): string => `plat
 export const getEnrollAttemptKey = (platformId: PlatformId): string => `platform_plan:autumn-enroll-attempt:${platformId}`
 export const getAutumnEnrollLockKey = (platformId: PlatformId): string => `autumn_enroll_${platformId}`
 export const getSelfServeTrialStartLockKey = (platformId: PlatformId): string => `self_serve_trial_start_${platformId}`
-export const getSelfServeTrialDatesCacheKey = (platformId: PlatformId): string => `platform_plan:self-serve-trial:v2:${platformId}`
+export const getSelfServeTrialDatesCacheKey = (platformId: PlatformId): string => `platform_plan:self-serve-trial:${platformId}`
 export const getSelfServeTrialEndedRefreshKey = ({ platformId, endsAt }: { platformId: PlatformId, endsAt: string }): string => `self_serve_trial_ended_refresh_${platformId}_${endsAt}`
 export const getFreeLegacyCompAttemptKey = (platformId: PlatformId): string => `platform_plan:free-legacy-comp-attempt:${platformId}`
 export const getBillingOverviewFetchLockKey = (platformId: PlatformId): string => `billing_overview_fetch_${platformId}`
