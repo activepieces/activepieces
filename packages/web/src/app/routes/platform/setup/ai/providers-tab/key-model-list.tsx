@@ -150,12 +150,13 @@ export function KeyModelList({
             resetPaging();
           }}
           placeholder={t('Search models')}
-          className="max-w-xs grow-0"
+          className="min-w-48 flex-1"
         />
         <DataTableSelectPopover
           title={t('Capabilities')}
           selectedValues={new Set(capabilities)}
           options={capabilityOptions()}
+          className="rounded-md border-solid"
           handleFilterChange={(values) => {
             setCapabilities(CAPABILITIES.filter((c) => values.includes(c)));
             resetPaging();
@@ -178,7 +179,7 @@ export function KeyModelList({
           }}
         >
           <SelectTrigger
-            className="ml-auto w-36 shrink-0"
+            className="w-36 shrink-0 rounded-md border-gray-6 bg-gray-1 shadow-none"
             aria-label={t('Sort')}
           >
             <SelectValue />
