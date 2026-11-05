@@ -138,14 +138,13 @@ function buildSeed({ action, executionState, constants }: ExecuteParams): Barrie
         .filter((step) => !skippedStepNames.has(step.name))
         .flatMap((step) => findReferencedStepNames({ settings: step.settings, stepNames }))
     const [topLevelSteps, ...iterationSteps] = executionState.stepMapsAlongPath()
-    const enclosingLoopNames = new Set(executionState.currentPath.path.map(([loopName]) => loopName))
     return Array.from(new Set(referenced)).reduce<BarrierFanOutSource['seedSteps']>((seed, stepName) => {
         assertNotScopedToEnclosingIteration({ stepName, iterationSteps })
         const topLevelOutput = topLevelSteps[stepName]
         if (isNil(topLevelOutput)) {
             return seed
         }
-        return { ...seed, [stepName]: enclosingLoopNames.has(stepName) ? withoutPastIterations(topLevelOutput) : { ...topLevelOutput } }
+        return { ...seed, [stepName]: topLevelOutput.type === FlowActionType.LOOP_ON_ITEMS ? withoutPastIterations(topLevelOutput) : { ...topLevelOutput } }
     }, {})
 }
 
@@ -213,7 +212,7 @@ async function succeed({ action, executionState, stepOutput, output, stepStartTi
         .setVerdict({ status: FlowRunStatus.RUNNING })
 }
 
-const IDENTIFIER = /[a-zA-Z_][a-zA-Z0-9_]*/g
+const IDENTIFIER = /(?<![.\w$])[a-zA-Z_][a-zA-Z0-9_]*/g
 
 const LoopPosition = z.object({
     item: z.unknown(),
