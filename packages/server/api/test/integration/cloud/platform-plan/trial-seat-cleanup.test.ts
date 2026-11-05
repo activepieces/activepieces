@@ -254,6 +254,33 @@ describe('Seat grace after the self-serve trial', () => {
         expect(await statusOf(trialUsers[0])).toBe(UserStatus.INACTIVE)
     })
 
+    it('keeps every invitation of someone first invited before the trial, even one sent during it', async () => {
+        const { platformId, selfServeTrialDates, trialUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 1, trialEndedDaysAgo: 8 })
+        const email = 'invited-before-the-trial@example.com'
+        const earlierInvite = await saveInvitation({ platformId, email, created: dayjs(selfServeTrialDates.startedAt).subtract(1, 'day').toISOString() })
+        const trialInvite = await saveInvitation({ platformId, email, created: dayjs(selfServeTrialDates.startedAt).add(3, 'day').toISOString() })
+        stubRefresh()
+
+        await trialSeatCleanup(log).sweep()
+
+        expect(await db.findOneBy('user_invitation', { id: earlierInvite.id })).not.toBeNull()
+        expect(await db.findOneBy('user_invitation', { id: trialInvite.id })).not.toBeNull()
+        expect(await statusOf(trialUsers[0])).toBe(UserStatus.INACTIVE)
+    })
+
+    it('counts one seat for someone invited twice, so a platform that fits its seats is left alone', async () => {
+        const { platformId, selfServeTrialDates, trialUsers } = await setupPlatform({ usersLimit: 3, trialUsers: 1, trialEndedDaysAgo: 8 })
+        const email = 'invited-twice@example.com'
+        await saveInvitation({ platformId, email, created: dayjs(selfServeTrialDates.startedAt).add(2, 'day').toISOString() })
+        await saveInvitation({ platformId, email, created: dayjs(selfServeTrialDates.startedAt).add(3, 'day').toISOString() })
+        const refresh = stubRefresh()
+
+        await trialSeatCleanup(log).sweep()
+
+        expect(refresh.mock.calls.some(([, refreshed]) => refreshed === platformId)).toBe(false)
+        expect(await statusOf(trialUsers[0])).toBe(UserStatus.ACTIVE)
+    })
+
     it('skips a platform over its seats whose subscriptions show no trial, without refreshing it', async () => {
         const { platformId, trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 8 })
         trialDatesInAutumn.set(platformId, null)
@@ -368,9 +395,10 @@ async function setupPlatform({ usersLimit, preTrialUsers = 0, trialUsers = 0, em
     }
 }
 
-async function saveInvitation({ platformId, created }: SaveInvitationParams): Promise<{ id: string }> {
+async function saveInvitation({ platformId, created, email }: SaveInvitationParams): Promise<{ id: string }> {
     const invitation = createMockUserInvitation({
         platformId,
+        email,
         type: InvitationType.PLATFORM,
         platformRole: PlatformRole.MEMBER,
         status: InvitationStatus.PENDING,
@@ -419,6 +447,7 @@ async function statusOf(user: User): Promise<UserStatus> {
 type SaveInvitationParams = {
     platformId: string
     created: string
+    email?: string
 }
 
 type SetupPlatformParams = {

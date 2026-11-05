@@ -246,11 +246,11 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 WHERE invitation."platformId" = $1
                 AND invitation.status = ANY($2)
                 AND invitation.updated > $3
-                AND invitation.created >= $4
-                AND invitation.created <= $5
                 AND ${EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER}
                 GROUP BY LOWER(invitation.email)
-                ORDER BY MAX(invitation.created) DESC
+                HAVING MIN(invitation.created) >= $4
+                AND MIN(invitation.created) <= $5
+                ORDER BY MIN(invitation.created) DESC
                 LIMIT $6
             ), deleted AS (
                 DELETE FROM user_invitation invitation
@@ -443,7 +443,7 @@ function invitationsHoldingSeats<T extends ObjectLiteral>(query: SelectQueryBuil
 
 const SEAT_HOLDING_STATUSES = [InvitationStatus.PENDING, InvitationStatus.ACCEPTED]
 
-const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
+export const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
     SELECT 1
     FROM user_identity identity
     INNER JOIN "user" existing_user
