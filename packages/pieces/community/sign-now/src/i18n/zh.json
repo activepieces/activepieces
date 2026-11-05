@@ -52,7 +52,7 @@
   "The reason for cancelling the invite.": "取消邀请的原因。",
   "The file to upload. Accepted formats: .pdf, .doc, .docx, .odt, .rtf, .png, .jpg, .jpeg, .gif, .bmp, .xml, .xls, .xlsx, .ppt, .pptx, .ps, .eps. Maximum size: 50 MB.": "要上传的文件。接受的格式：.pdf、.doc、.docx、.odt、.rtf、.png、.jpg。 peg, .gif, .bmp, .xml, .xls, .xlsx, .ppt, .pptx, .ps, .eps. 最大大小: 50 MB.",
   "Enable if your document contains simple text tags that should be converted to fillable fields.": "如果您的文档包含了应该转换为可过滤字段的简单文本标签，请启用此功能。",
-  "The file to upload. Text tags in the document (e.g. {{t:s;r:y;o:\"Signer 1\";}}) will be converted to fillable fields. Accepted formats: .pdf, .doc, .docx, .odt, .rtf, .png, .jpg, .jpeg, .gif, .bmp, .xml, .xls, .xlsx, .ppt, .pptx, .ps, .eps. Maximum size: 50 MB.": "要上传的文件。文档中的文本标签 (例如{t:s;r:y;o:\"签名者1\";}}) 将被转换为可过滤字段。接受的格式： df, .doc, .docx, .odt, .rtf, .png, .jpg, .jpeg, .gif, .bmp, .xml, .xls, .xlsx, .ppt, .pptx, .ps, .eps. 最大大小: 50 MB.",
+  "The file to upload. Text tags in the document (e.g. {{t:s;r:y;o:\"Signer 1\";}}) will be converted to fillable fields. Accepted formats: .pdf, .doc, .docx, .odt, .rtf, .png, .jpg, .jpeg, .gif, .bmp, .xml, .xls, .xlsx, .ppt, .pptx, .ps, .eps. Maximum size: 50 MB.": "The file to upload. Text tags in the document (e.g. {{t:s;r:y;o:\"Signer 1\";}}) will be converted to fillable fields. Accepted formats: .pdf, .doc, .docx, .odt, .rtf, .png, .jpg, .jpeg, .gif, .bmp, .xml, .xls, .xlsx, .ppt, .pptx, .ps, .eps. Maximum size: 50 MB.",
   "The ID of the document to send for signing.": "要签名的文档的 ID。",
   "Must be the email address associated with your SignNow account.": "必须是与您的 SignNow账户关联的电子邮件地址。",
   "One entry per signer role. Each signer needs an email, role name, and signing order.": "每个签名角色一个条目。每个签名者需要一个电子邮件、角色名称和签名订单。",

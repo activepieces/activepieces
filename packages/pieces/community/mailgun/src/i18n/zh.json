@@ -2,7 +2,7 @@
   "Email delivery service for sending, receiving, and tracking emails": "发送、接收和跟踪邮件的邮件发送服务",
   "API Key": "API 密钥",
   "Region": "地区",
-  "Your Mailgun private API key (starts with `key-`)": "您的邮件枪专用API密钥(以“密钥”开头)",
+  "Your Mailgun private API key (starts with `key-`)": "Your Mailgun private API key (starts with `key-`)",
   "Select the region your Mailgun account is in. Most accounts use US.": "选择您的 Mailgun 帐户所在的区域。大多数帐户使用 US。",
   "US": "美国",
   "EU": "EU",

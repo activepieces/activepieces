@@ -80,7 +80,7 @@
   "How long to wait for the run to complete. Defaults to 600 seconds.": "等待运行完成多长时间。默认为600秒。",
   "Natural-language description of the target entities. e.g. \"AI companies that raised Series A funding in 2024\".": "目标实体的自然语言描述，例如“2024年筹集A系列资金的大赦公司”。",
   "Type of entities to find (e.g. \"company\", \"people\").": "要查找的实体类型(如“公司”、“人民”)。",
-  "Array of `{ \"name\": \"...\", \"description\": \"...\" }` objects describing the criteria each match must satisfy. Leave empty to auto-generate from the objective.": "\"欧洲共同体\"name\": \"...\", \"description\": \"...\" }\" 对象描述每场比赛必须满足的标准。留空则自动从目标中生成。",
+  "Array of `{ \"name\": \"...\", \"description\": \"...\" }` objects describing the criteria each match must satisfy. Leave empty to auto-generate from the objective.": "Array of `{ \"name\": \"...\", \"description\": \"...\" }` objects describing the criteria each match must satisfy. Leave empty to auto-generate from the objective.",
   "Generator tier — higher tiers use deeper search at higher cost.": "生成器层级——更高的层级以更高的成本进行更深入的搜索。",
   "Maximum number of matches to find (5–1000). Defaults to 100.": "要找到的匹配的最大数量(5-1000)，默认值为 100。",
   "Optional key/value metadata stored with the run.": "可选的密钥/值元数据存储在运行中。",

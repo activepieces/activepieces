@@ -2,7 +2,7 @@
   "AI Notetaker": "AI 记事者",
   "Key ID": "密钥ID",
   "Key Secret": "密钥密钥",
-  "You can obtain Key ID and secret from [API Keys Settings](https://app.leexi.ai/en/settings/api_keys).": "您可以从 [API 密钥设置](https://app.leexi.ai/en/settings/api_keys )获取密钥ID和秘密。",
+  "You can obtain Key ID and secret from [API Keys Settings](https://app.leexi.ai/en/settings/api_keys).": "You can obtain Key ID and secret from [API Keys Settings](https://app.leexi.ai/en/settings/api_keys).",
   "Get Call": "接来电",
   "Custom API Call": "自定义 API 呼叫",
   "Gets call details.": "获取呼叫详细信息。",
