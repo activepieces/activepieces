@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Spotify 0.7.0: Update Playlist is no longer an agent tool, and Get Playback State returns an object when nothing is playing
+
+From Spotify 0.7.0, **Update Playlist** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Update Playlist Details** tool instead, which takes Public and Collaborative as yes/no choices and leaves any field it is not given unchanged.
+
+Once a **Get Playback State** step is upgraded to 0.7.0, it returns `{ "is_playing": false, "device": null, "item": null }` when nothing is playing, instead of an empty string.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Update Playlist at **Update Playlist Details**. If a flow checks Get Playback State for an empty result, check `is_playing` (or `item` being empty) instead before upgrading the step to 0.7.0.
+
 #### Folk 0.2.0: eight Folk actions are no longer agent tools, and Update Person/Company behave differently
 
 From Folk 0.2.0, **Create Person**, **Create Company**, **Get Person**, **Get Company**, **List People**, **Find Company**, **Update Person** and **Update Company** (the existing flow-builder actions) are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents get new tools instead: **Create Person**, **Create Company**, **Get Person**, **Get Company**, **Search People** (replaces List People), **Search Companies** (replaces Find Company), **Update Person** and **Update Company** (the `*_ai` actions, which take IDs and plain lists).
