@@ -128,15 +128,16 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             expiresIn: dayjs.duration(7, 'days').asSeconds(),
         })
     },
-    async deleteFiles(s3Keys: string[]): Promise<void> {
+    async deleteFiles(s3Keys: string[]): Promise<string[]> {
         if (s3Keys.length === 0) {
-            return
+            return []
         }
         // Cloudflare R2 has a limit of 100 keys per request
         const MAX_KEYS_PER_REQUEST = 100
         const chunks = chunkArray(s3Keys, MAX_KEYS_PER_REQUEST)
 
         try {
+            const failedKeys: string[] = []
             for (const chunk of chunks) {
                 const deleteObjects = chunk.map(Key => ({ Key }))
                 const response = await getS3Client().send(new DeleteObjectsCommand({
@@ -152,7 +153,9 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                     log.warn({ count: errors.length, codes: errors.map((entry) => entry.Code) }, 'some files could not be deleted from s3')
                 }
                 log.info({ count: chunk.length - errors.length }, 'files deleted from s3')
+                failedKeys.push(...errors.flatMap((entry) => isNil(entry.Key) ? [] : [entry.Key]))
             }
+            return failedKeys
         }
         catch (error) {
             log.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
