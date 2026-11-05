@@ -1,15 +1,41 @@
 import { scrapelessApiAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleTrendsDataTypeOptions } from '../constants';
-import { createScrapelessClient } from '../services/scrapeless-api-client';
+import { scrapelessClient } from '../common/client';
 
-export const googleTrendsApi = createAction({
+const googleTrendsDataTypeOptions = [
+  {
+    label: 'Auto complete',
+    value: 'autocomplete',
+  },
+  {
+    label: 'Interest over time',
+    value: 'interest_over_time',
+  },
+  {
+    label: 'Compared breakdown by region',
+    value: 'compared_breakdown_by_region',
+  },
+  {
+    label: 'Interest by region',
+    value: 'interest_by_subregion',
+  },
+  {
+    label: 'Related queries',
+    value: 'related_queries',
+  },
+  {
+    label: 'Related topics',
+    value: 'related_topics',
+  },
+];
+
+export const getGoogleTrendsAction = createAction({
   auth: scrapelessApiAuth,
   name: 'google_trends_api',
   classification: 'SEARCH',
   displayName: 'Google Trends',
   description: 'Access popular keyword and interest data from Google Trends.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Fetches Google Trends data for one or more keywords via Scrapeless, with the data type selecting what to return (e.g. interest over time, compared breakdown by region, related queries). Choose this to analyze keyword popularity or interest trends over a date range. Note that interest_over_time and compared_breakdown_by_region accept up to 5 comma-separated queries while other data types accept only one. Read-only and idempotent with no side effects.', idempotent: true },
 
   props: {
@@ -52,7 +78,7 @@ export const googleTrendsApi = createAction({
   },
   async run({ propsValue, auth }) {
     try {
-      const client = createScrapelessClient(auth.secret_text);
+      const client = scrapelessClient.create({ auth });
 
       const input = {
         q: propsValue.q,
