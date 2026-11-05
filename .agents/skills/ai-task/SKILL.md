@@ -442,7 +442,7 @@ The scheduled half runs by itself: the Activepieces flow "AI team · Quality rev
    - `sql/quality-built-not-published.sql`: 10 chat turns that built a flow which was never published (one row per turn, even when it built several).
 3. **Fill a PostHog review queue** (fallback only) named `Quality <date>` with those 20 traces, random ones first. Tell the user the queue link and how many each slice has.
 4. **Numbers** (fallback only) for the same window:
-   - `sql/quality-judges.sql`: fail rate per PostHog judge, with skipped (too large to grade) chats left out. A judge that isn't in the plan's kept list gets one line saying so.
+   - `sql/quality-judges.sql`: fail rate per PostHog judge, with skipped runs (`$ai_evaluation_skipped`) left out. A judge that isn't in the plan's kept list gets one line saying so.
    - `sql/quality-publish-rate.sql`: how many chat-built flows were published, over every build in the window. Never use the 10-row sample for this.
 5. **Confirmed problems from the previous queue** (labels the user already gave, never your own reading):
    - Group the failing labels by problem type, with counts and trace ids.
@@ -459,7 +459,7 @@ The scheduled half runs by itself: the Activepieces flow "AI team · Quality rev
 >
 > - Queue: Quality 2026-11-08 (10 random, 10 built-not-published)
 > - Build → publish: 23 of 89 flows published (26%)
-> - Hallucination judge fails 35.6% of chats; we can't trust it until the labels say so
+> - Hallucination judge fails 5.2% of graded chats; we can't trust it until the labels say so
 > - From Friday's labels: "asks for info it already has" (4 of 20), "builds without a trigger" (2 of 20)
 >
 > **Want me to file these?**
