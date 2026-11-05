@@ -39,8 +39,6 @@ export const DeactivateUsersDialog = ({
   description,
   warning,
   actions,
-  preselectedUserIds,
-  preselectedLabel,
   onConfirmed,
 }: DeactivateUsersDialogProps) => {
   return (
@@ -54,8 +52,6 @@ export const DeactivateUsersDialog = ({
           description={description}
           warning={warning}
           actions={actions}
-          preselectedUserIds={preselectedUserIds}
-          preselectedLabel={preselectedLabel}
           onConfirmed={onConfirmed}
           onOpenChange={onOpenChange}
         />
@@ -71,8 +67,6 @@ function DeactivateUsersForm({
   description,
   warning,
   actions,
-  preselectedUserIds = [],
-  preselectedLabel,
   onConfirmed,
   onOpenChange,
 }: DeactivateUsersFormProps) {
@@ -84,7 +78,7 @@ function DeactivateUsersForm({
   const listsFailed = usersQuery.isError || invitationsQuery.isError;
   const queryClient = useQueryClient();
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
-    () => new Set(preselectedUserIds),
+    new Set(),
   );
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 
@@ -179,10 +173,7 @@ function DeactivateUsersForm({
           users={deactivatableUsers.map((user) => ({
             id: user.id,
             email: user.email,
-            trailingLabel:
-              preselectedUserIds.includes(user.id) && !isNil(preselectedLabel)
-                ? preselectedLabel
-                : roleLabel(user.platformRole),
+            trailingLabel: roleLabel(user.platformRole),
           }))}
           invitations={invitedEmails.map(({ email }) => ({
             id: email,
@@ -365,8 +356,6 @@ type DeactivateUsersDialogProps = {
   description?: string;
   warning?: string;
   actions?: ReactNode;
-  preselectedUserIds?: string[];
-  preselectedLabel?: string;
   onConfirmed: () => void;
 };
 

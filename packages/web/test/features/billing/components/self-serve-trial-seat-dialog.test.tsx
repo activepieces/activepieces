@@ -74,7 +74,6 @@ vi.mock(
       return props.open ? (
         <div>
           <p>{props.description}</p>
-          <p>{props.preselectedLabel}</p>
           {props.actions}
         </div>
       ) : null;
@@ -102,7 +101,7 @@ function infoOf(overrides: Partial<InfoState> = {}): InfoState {
   return {
     autumnPlanName: 'Team',
     plan: { plan: 'team', usersLimit: 2, scheduledUsersLimit: null },
-    seatGrace: { usedSeats: 9, seatLimit: 2, userIds: ['u1', 'u2'] },
+    usage: { activeUsers: 7, invitedSeats: 2 },
     ...overrides,
   };
 }
@@ -137,10 +136,9 @@ describe('seat dialog after the trial', () => {
     renderSeatDialog();
 
     expect(openedProps().open).toBe(false);
-    expect(screen.queryByText('Leaves Oct 26')).toBeNull();
   });
 
-  it('opens with the users who would leave already ticked', () => {
+  it('opens on the plan seats with nobody ticked and says who goes if the admin does nothing', () => {
     openDialog();
 
     renderSeatDialog();
@@ -149,11 +147,9 @@ describe('seat dialog after the trial', () => {
     expect(props.open).toBe(true);
     expect(props.targetSeats).toBe(2);
     expect(props.currentUsers).toBe(9);
-    expect(props.preselectedUserIds).toEqual(['u1', 'u2']);
-    expect(screen.getByText('Leaves Oct 26')).toBeDefined();
     expect(
       screen.getByText(
-        'Your Enterprise trial has ended and Team includes 2 seats. The users ticked below will be deactivated on Oct 26. Change who goes, or upgrade to keep everyone.',
+        "Your Enterprise trial has ended and Team includes 2 seats. Choose who to remove, or upgrade to keep everyone. If you don't, on Oct 26 the pending invitations sent during the trial will be deleted first, then the users added during the trial will be deactivated as needed to fit your seats.",
       ),
     ).toBeDefined();
   });
@@ -161,7 +157,7 @@ describe('seat dialog after the trial', () => {
   it('aims for the seats the server counts against, not a scheduled downgrade', () => {
     state.info = infoOf({
       plan: { plan: 'team', usersLimit: 5, scheduledUsersLimit: 1 },
-      seatGrace: { usedSeats: 7, seatLimit: 5, userIds: ['u1', 'u2'] },
+      usage: { activeUsers: 7, invitedSeats: 0 },
     });
     openDialog();
 
@@ -180,8 +176,10 @@ describe('seat dialog after the trial', () => {
     expect(state.dialogProps).toBeNull();
   });
 
-  it('renders nothing once the platform fits its seats', () => {
-    state.info = infoOf({ seatGrace: null });
+  it('renders nothing when the plan has no seat limit', () => {
+    state.info = infoOf({
+      plan: { plan: 'team', usersLimit: null, scheduledUsersLimit: null },
+    });
     openDialog();
 
     renderSeatDialog();
@@ -268,8 +266,6 @@ type DialogProps = {
   targetSeats: number;
   currentUsers: number;
   description?: string;
-  preselectedUserIds?: string[];
-  preselectedLabel?: string;
   actions?: React.ReactNode;
   onConfirmed: () => void;
 };
@@ -281,7 +277,10 @@ type InfoState = {
     usersLimit: number | null;
     scheduledUsersLimit: number | null;
   };
-  seatGrace: { usedSeats: number; seatLimit: number; userIds: string[] } | null;
+  usage: {
+    activeUsers: number;
+    invitedSeats: number;
+  };
 };
 
 type TestState = {

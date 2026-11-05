@@ -117,7 +117,7 @@ export function SeatGraceLine({ endsAt }: { endsAt: string }) {
       <TooltipContent side="right" className="max-w-64">
         {isPlatformAdmin
           ? t(
-              "Users added during the trial beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} will be deactivated on {date}. Manage seats, or upgrade to keep them.",
+              "Users and invitations added during the trial beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} will be removed on {date}. Manage seats, or upgrade to keep them.",
               params,
             )
           : t(
@@ -200,29 +200,26 @@ export function SelfServeTrialSeatDialog() {
       </Dialog>
     );
   }
-  const seatGrace = info?.seatGrace;
-  if (isNil(info) || isNil(seatGrace)) {
+  const usersLimit = info?.plan.usersLimit;
+  if (isNil(info) || isNil(usersLimit)) {
     return null;
   }
-  const seatLimit = seatGrace.seatLimit;
   const date = selfServeTrialTime.whenItEnds(graceEndsAt).date;
 
   return (
     <DeactivateUsersDialog
       open={isOpen}
       onOpenChange={(next) => !next && closeDialog()}
-      targetSeats={seatLimit}
-      currentUsers={seatGrace.usedSeats}
+      targetSeats={usersLimit}
+      currentUsers={info.usage.activeUsers + info.usage.invitedSeats}
       description={t(
-        'Your Enterprise trial has ended and {plan} includes {target, plural, =1 {1 seat} other {# seats}}. The users ticked below will be deactivated on {date}. Change who goes, or upgrade to keep everyone.',
+        "Your Enterprise trial has ended and {plan} includes {target, plural, =1 {1 seat} other {# seats}}. Choose who to remove, or upgrade to keep everyone. If you don't, on {date} the pending invitations sent during the trial will be deleted first, then the users added during the trial will be deactivated as needed to fit your seats.",
         {
           plan: info.autumnPlanName,
-          target: seatLimit,
+          target: usersLimit,
           date,
         },
       )}
-      preselectedUserIds={seatGrace.userIds}
-      preselectedLabel={t('Leaves {date}', { date })}
       actions={
         <Button
           {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}

@@ -47,12 +47,12 @@ export const platformPlanTelemetry = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async onTrialSeatsDeactivated({ platformId, deactivatedUsers }: TrialSeatsDeactivatedParams): Promise<void> {
+    async onTrialSeatsDeactivated({ platformId, deactivatedUsers, revokedInvites }: TrialSeatsDeactivatedParams): Promise<void> {
         await telemetry(log).trackPlatform({
             platformId,
             event: {
                 name: TelemetryEventName.TRIAL_SEATS_DEACTIVATED,
-                payload: { platformId, plan: PlanName.SELF_SERVE_TRIAL, deactivatedUsers },
+                payload: { platformId, plan: PlanName.SELF_SERVE_TRIAL, deactivatedUsers, revokedInvites },
             },
         })
     },
@@ -177,4 +177,5 @@ type SelfServeTrialEndedParams = {
 type TrialSeatsDeactivatedParams = {
     platformId: string
     deactivatedUsers: number
+    revokedInvites: number
 }

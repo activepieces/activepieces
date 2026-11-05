@@ -164,7 +164,6 @@ export function SelfServeTrialEndedDialog() {
   );
   const open = shouldShow && !isNil(info);
   const graceEndsAt = trial?.seatGraceEndsAt;
-  const overSeats = info?.seatGrace?.userIds.length ?? 0;
   const locked = selfServeTrialFeatures.lockedAfterTrial(platform.plan);
   const keptAfterTrial = [t('Flows, connections and data'), t('Your credits')];
 
@@ -188,32 +187,36 @@ export function SelfServeTrialEndedDialog() {
                 })}
             </DialogDescription>
           </div>
-          {!isNil(info) && !isNil(graceEndsAt) && overSeats > 0 && (
-            <div className="flex flex-col items-start gap-3 rounded-lg border border-warning-7 bg-warning-3 p-3.5 text-sm text-warning-11">
-              <p className="flex items-start gap-2.5">
-                <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-                {t(
-                  "{count, plural, =1 {1 user} other {# users}} added during the trial {count, plural, =1 {is} other {are}} over {plan}'s seats and will be deactivated on {date}.",
-                  {
-                    count: overSeats,
-                    plan: info.autumnPlanName,
-                    date: selfServeTrialTime.whenItEnds(graceEndsAt).date,
-                  },
-                )}
-              </p>
-              <Button
-                {...adminControl(AdminControl.TRIAL_SEATS_OPEN)}
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  markSeen();
-                  openSeatDialog();
-                }}
-              >
-                {t('Manage seats')}
-              </Button>
-            </div>
-          )}
+          {!isNil(info) &&
+            !isNil(graceEndsAt) &&
+            !isNil(info.plan.usersLimit) && (
+              <div className="flex flex-col items-start gap-3 rounded-lg border border-warning-7 bg-warning-3 p-3.5 text-sm text-warning-11">
+                <p className="flex items-start gap-2.5">
+                  <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+                  {t(
+                    '{plan} includes {limit, plural, =1 {1 seat} other {# seats}}. You have {users, plural, =1 {1 active user} other {# active users}} and {invitations, plural, =1 {1 pending invitation} other {# pending invitations}}. On {date}, the pending invitations sent during the trial will be deleted first, then the users added during the trial will be deactivated as needed to fit your seats.',
+                    {
+                      plan: info.autumnPlanName,
+                      limit: info.plan.usersLimit,
+                      users: info.usage.activeUsers,
+                      invitations: info.usage.invitedSeats,
+                      date: selfServeTrialTime.whenItEnds(graceEndsAt).date,
+                    },
+                  )}
+                </p>
+                <Button
+                  {...adminControl(AdminControl.TRIAL_SEATS_OPEN)}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    markSeen();
+                    openSeatDialog();
+                  }}
+                >
+                  {t('Manage seats')}
+                </Button>
+              </div>
+            )}
           <div className="flex flex-col gap-3">
             <span className="text-sm font-medium text-gray-12">
               {t('Everything you built is still here')}

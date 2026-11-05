@@ -36,8 +36,8 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan-telemetr
     }),
 }))
 
-vi.mock('../../../../../src/app/ee/platform/platform-plan/trial-seat-grace', () => ({
-    trialSeatGrace: () => ({ startOnTrialEnd: vi.fn().mockResolvedValue({}), settle: vi.fn().mockResolvedValue(undefined) }),
+vi.mock('../../../../../src/app/ee/platform/platform-plan/trial-seat-cleanup', () => ({
+    trialSeatCleanup: () => ({ startOnTrialEnd: vi.fn().mockResolvedValue({}), settle: vi.fn().mockResolvedValue(undefined) }),
 }))
 
 vi.mock('../../../../../src/app/database/redis-connections', () => ({

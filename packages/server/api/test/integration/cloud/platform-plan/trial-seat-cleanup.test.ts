@@ -2,13 +2,12 @@ import { InvitationStatus, InvitationType, PlanName, PlatformRole, PrincipalType
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { getBillingEnforcedKey, getBillingOverviewKey } from '../../../../src/app/database/redis/keys'
+import { getBillingEnforcedKey } from '../../../../src/app/database/redis/keys'
 import { distributedStore } from '../../../../src/app/database/redis-connections'
 import { autumnUtils } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
 import { platformPlanRepo } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { selfServeTrialUtils } from '../../../../src/app/ee/platform/platform-plan/self-serve-trial-utils'
-import { trialSeatGrace } from '../../../../src/app/ee/platform/platform-plan/trial-seat-grace'
-import { BillingOverview } from '../../../../src/app/platform/billing-provider'
+import { trialSeatCleanup } from '../../../../src/app/ee/platform/platform-plan/trial-seat-cleanup'
 import { userRepo } from '../../../../src/app/user/user-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
@@ -17,6 +16,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 
 let app: FastifyInstance | null = null
 let log: FastifyBaseLogger
+let trialDatesInAutumn: Map<string, SelfServeTrialDates | null>
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -27,6 +27,11 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
+beforeEach(() => {
+    trialDatesInAutumn = new Map()
+    vi.spyOn(autumnUtils, 'readSelfServeTrialDates').mockImplementation(async (_log, platformId) => trialDatesInAutumn.get(platformId) ?? null)
+})
+
 afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
@@ -34,41 +39,25 @@ afterEach(() => {
 
 describe('Seat grace after the self-serve trial', () => {
     it('runs while the trial has ended and users added during it are over the plan seats', async () => {
-        const { platformId, window, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3 })
+        const { platformId, selfServeTrialDates } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3 })
 
-        const plan = await platformPlanRepo().findOneByOrFail({ platformId })
-
-        expect(await trialSeatGrace(log).get({ plan })).toEqual({
-            usedSeats: 5,
-            seatLimit: 3,
-            userIds: [trialUsers[2].id, trialUsers[1].id],
-        })
-        const endsAt = dayjs(await trialSeatGrace(log).endsAt({ platformId, window }))
+        const endsAt = dayjs(await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates }))
         expect(endsAt.toISOString().slice(11)).toBe('15:30:00.000Z')
-        expect(endsAt.isBefore(dayjs(window.endsAt).add(7, 'day'))).toBe(false)
-        expect(endsAt.isBefore(dayjs(window.endsAt).add(8, 'day'))).toBe(true)
+        expect(endsAt.isBefore(dayjs(selfServeTrialDates.endsAt).add(7, 'day'))).toBe(false)
+        expect(endsAt.isBefore(dayjs(selfServeTrialDates.endsAt).add(8, 'day'))).toBe(true)
     })
 
     it('counts against the seats the plan has now, not a scheduled downgrade', async () => {
-        const { platformId, trialUsers } = await setupPlatform({ usersLimit: 3, trialUsers: 3 })
+        const { platformId, selfServeTrialDates } = await setupPlatform({ usersLimit: 4, trialUsers: 3 })
         await platformPlanRepo().update({ platformId }, { scheduledUsersLimit: 1 })
 
-        const plan = await platformPlanRepo().findOneByOrFail({ platformId })
-
-        expect(await trialSeatGrace(log).get({ plan })).toEqual({
-            usedSeats: 4,
-            seatLimit: 3,
-            userIds: [trialUsers[2].id],
-        })
+        expect(await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates })).toBeNull()
     })
 
     it('shows nothing when the platform fits its plan', async () => {
-        const { platformId, window } = await setupPlatform({ usersLimit: 5, preTrialUsers: 1, trialUsers: 3 })
+        const { platformId, selfServeTrialDates } = await setupPlatform({ usersLimit: 5, preTrialUsers: 1, trialUsers: 3 })
 
-        const plan = await platformPlanRepo().findOneByOrFail({ platformId })
-
-        expect(await trialSeatGrace(log).get({ plan })).toBeNull()
-        expect(await trialSeatGrace(log).endsAt({ platformId, window })).toBeNull()
+        expect(await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates })).toBeNull()
     })
 
     it('shows nothing while the trial still runs', async () => {
@@ -76,39 +65,28 @@ describe('Seat grace after the self-serve trial', () => {
         const running = { startedAt: dayjs().subtract(2, 'day').toISOString(), endsAt: dayjs().add(5, 'day').toISOString() }
         await selfServeTrialUtils.cacheTrialDates({ platformId, dates: running })
 
-        const plan = await platformPlanRepo().findOneByOrFail({ platformId })
-
-        expect(await trialSeatGrace(log).get({ plan })).toBeNull()
-        expect(await trialSeatGrace(log).endsAt({ platformId, window: running })).toBeNull()
+        expect(await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates: running })).toBeNull()
     })
 
-    it('counts embedded users like any other user and can pick them', async () => {
-        const { platformId, trialUsers, embeddedUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 2, embeddedTrialUsers: 3 })
+    it('counts embedded users like any other user', async () => {
+        const { platformId, selfServeTrialDates } = await setupPlatform({ usersLimit: 3, embeddedTrialUsers: 3 })
 
-        const plan = await platformPlanRepo().findOneByOrFail({ platformId })
-
-        expect(await trialSeatGrace(log).get({ plan })).toEqual({
-            usedSeats: 6,
-            seatLimit: 2,
-            userIds: [embeddedUsers[2].id, embeddedUsers[1].id, embeddedUsers[0].id, trialUsers[1].id],
-        })
+        expect(await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates })).not.toBeNull()
     })
 
     it('stops showing once the platform fits again', async () => {
-        const { platformId, window, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3 })
+        const { platformId, selfServeTrialDates, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3 })
 
         await deactivate([trialUsers[0], trialUsers[1]])
 
-        const plan = await platformPlanRepo().findOneByOrFail({ platformId })
-        expect(await trialSeatGrace(log).get({ plan })).toBeNull()
-        expect(await trialSeatGrace(log).endsAt({ platformId, window })).toBeNull()
+        expect(await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates })).toBeNull()
     })
 
     it('deactivates the users added during the trial beyond the plan seats once the deadline passes', async () => {
         const { owner, preTrialUsers, trialUsers, embeddedUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3, embeddedTrialUsers: 1, trialEndedDaysAgo: 8 })
         stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         for (const removed of [embeddedUsers[0], trialUsers[2], trialUsers[1]]) {
             expect(await statusOf(removed)).toBe(UserStatus.INACTIVE)
@@ -123,7 +101,7 @@ describe('Seat grace after the self-serve trial', () => {
         await deactivate([preTrialUsers[0]])
         stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         expect(await statusOf(trialUsers[2])).toBe(UserStatus.INACTIVE)
         expect(await statusOf(trialUsers[1])).toBe(UserStatus.ACTIVE)
@@ -135,7 +113,7 @@ describe('Seat grace after the self-serve trial', () => {
         await platformPlanRepo().update({ platformId }, { usersLimit: 10 })
         stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         for (const user of trialUsers) {
             expect(await statusOf(user)).toBe(UserStatus.ACTIVE)
@@ -147,7 +125,7 @@ describe('Seat grace after the self-serve trial', () => {
         await distributedStore.put(getBillingEnforcedKey(platformId), false, 300)
         stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         for (const user of trialUsers) {
             expect(await statusOf(user)).toBe(UserStatus.ACTIVE)
@@ -158,21 +136,21 @@ describe('Seat grace after the self-serve trial', () => {
         const { trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2 })
         stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         for (const user of trialUsers) {
             expect(await statusOf(user)).toBe(UserStatus.ACTIVE)
         }
     })
 
-    it('leaves a deadline more than three days past alone', async () => {
-        const { trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 12 })
+    it('still deactivates the users over the plan when the deadline passed days ago', async () => {
+        const { trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 30 })
         stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         for (const user of trialUsers) {
-            expect(await statusOf(user)).toBe(UserStatus.ACTIVE)
+            expect(await statusOf(user)).toBe(UserStatus.INACTIVE)
         }
     })
 
@@ -181,7 +159,7 @@ describe('Seat grace after the self-serve trial', () => {
         const [laterJoiner] = await addUsers({ platformId, count: 1, firstCreatedAt: dayjs().subtract(1, 'day').toISOString() })
         stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         expect(await statusOf(laterJoiner)).toBe(UserStatus.ACTIVE)
         for (const user of trialUsers) {
@@ -195,7 +173,7 @@ describe('Seat grace after the self-serve trial', () => {
         const { trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 7 })
         stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         for (const user of trialUsers) {
             expect(await statusOf(user)).toBe(UserStatus.ACTIVE)
@@ -211,7 +189,7 @@ describe('Seat grace after the self-serve trial', () => {
             }
         })
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         expect(await statusOf(trialUsers[1])).toBe(UserStatus.INACTIVE)
         expect(await statusOf(trialUsers[0])).toBe(UserStatus.INACTIVE)
@@ -229,18 +207,59 @@ describe('Seat grace after the self-serve trial', () => {
         }))
         stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         expect(await statusOf(trialUsers[0])).toBe(UserStatus.INACTIVE)
         expect(await statusOf(owner)).toBe(UserStatus.ACTIVE)
     })
 
-    it('skips a platform over its seats that never had a trial, without asking Autumn', async () => {
+    it('counts pending invitations toward the seats while the grace runs', async () => {
+        const { platformId, selfServeTrialDates } = await setupPlatform({ usersLimit: 2, trialUsers: 1 })
+        await saveInvitation({ platformId, created: dayjs(selfServeTrialDates.startedAt).add(3, 'day').toISOString() })
+
+        expect(await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates })).not.toBeNull()
+    })
+
+    it('revokes the invitations sent during the trial before it deactivates anyone', async () => {
+        const { platformId, selfServeTrialDates, trialUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 1, trialEndedDaysAgo: 8 })
+        const trialInvite = await saveInvitation({ platformId, created: dayjs(selfServeTrialDates.startedAt).add(3, 'day').toISOString() })
+        stubRefresh()
+
+        await trialSeatCleanup(log).sweep()
+
+        expect(await db.findOneBy('user_invitation', { id: trialInvite.id })).toBeNull()
+        expect(await statusOf(trialUsers[0])).toBe(UserStatus.ACTIVE)
+    })
+
+    it('deactivates trial users for the seats the revoked invitations do not free', async () => {
+        const { platformId, selfServeTrialDates, owner, trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 1, trialEndedDaysAgo: 8 })
+        const trialInvite = await saveInvitation({ platformId, created: dayjs(selfServeTrialDates.startedAt).add(3, 'day').toISOString() })
+        stubRefresh()
+
+        await trialSeatCleanup(log).sweep()
+
+        expect(await db.findOneBy('user_invitation', { id: trialInvite.id })).toBeNull()
+        expect(await statusOf(trialUsers[0])).toBe(UserStatus.INACTIVE)
+        expect(await statusOf(owner)).toBe(UserStatus.ACTIVE)
+    })
+
+    it('keeps an invitation sent before the trial', async () => {
+        const { platformId, selfServeTrialDates, trialUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 1, trialEndedDaysAgo: 8 })
+        const earlierInvite = await saveInvitation({ platformId, created: dayjs(selfServeTrialDates.startedAt).subtract(1, 'day').toISOString() })
+        stubRefresh()
+
+        await trialSeatCleanup(log).sweep()
+
+        expect(await db.findOneBy('user_invitation', { id: earlierInvite.id })).not.toBeNull()
+        expect(await statusOf(trialUsers[0])).toBe(UserStatus.INACTIVE)
+    })
+
+    it('skips a platform over its seats whose subscriptions show no trial, without refreshing it', async () => {
         const { platformId, trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 8 })
-        await selfServeTrialUtils.cacheTrialDates({ platformId, dates: null })
+        trialDatesInAutumn.set(platformId, null)
         const refresh = stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         expect(refresh.mock.calls.some(([, refreshed]) => refreshed === platformId)).toBe(false)
         for (const user of trialUsers) {
@@ -248,19 +267,44 @@ describe('Seat grace after the self-serve trial', () => {
         }
     })
 
-    it('reads the trial from Autumn when the cache has nothing, then ends the grace', async () => {
-        const { platformId, window, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3, trialEndedDaysAgo: 8 })
+    it('ends the grace from the trial dates in Autumn when nothing is cached', async () => {
+        const { platformId, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3, trialEndedDaysAgo: 8 })
         await selfServeTrialUtils.deleteCachedTrial(platformId)
-        vi.spyOn(autumnUtils, 'refreshEntitlements').mockImplementation(async (_log, refreshed) => {
-            if (refreshed === platformId) {
-                await selfServeTrialUtils.cacheTrialDates({ platformId, dates: window })
-            }
-        })
+        stubRefresh()
 
-        await trialSeatGrace(log).sweep()
+        await trialSeatCleanup(log).sweep()
 
         expect(await statusOf(trialUsers[2])).toBe(UserStatus.INACTIVE)
         expect(await statusOf(trialUsers[1])).toBe(UserStatus.INACTIVE)
+    })
+
+    it('ignores cached trial dates that Autumn no longer lists', async () => {
+        const { platformId, trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 8 })
+        trialDatesInAutumn.set(platformId, null)
+        stubRefresh()
+
+        await trialSeatCleanup(log).sweep()
+
+        for (const user of trialUsers) {
+            expect(await statusOf(user)).toBe(UserStatus.ACTIVE)
+        }
+    })
+
+    it('deactivates nobody when Autumn cannot list the trial, then fails the run so the job retries it', async () => {
+        const failing = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3, trialEndedDaysAgo: 8 })
+        const passing = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3, trialEndedDaysAgo: 8 })
+        vi.spyOn(autumnUtils, 'readSelfServeTrialDates').mockImplementation(async (_log, platformId) => {
+            if (platformId === failing.platformId) {
+                throw new Error('autumn is down')
+            }
+            return trialDatesInAutumn.get(platformId) ?? null
+        })
+        stubRefresh()
+
+        await expect(trialSeatCleanup(log).sweep()).rejects.toThrow('the sweep job retries them')
+
+        expect(await statusOf(passing.trialUsers[2])).toBe(UserStatus.INACTIVE)
+        expect(await statusOf(failing.trialUsers[2])).toBe(UserStatus.ACTIVE)
     })
 
     it('finishes the other deadlines when one fails, then fails the run so the job retries it', async () => {
@@ -272,54 +316,21 @@ describe('Seat grace after the self-serve trial', () => {
             }
         })
 
-        await expect(trialSeatGrace(log).sweep()).rejects.toThrow('the sweep job retries them')
+        await expect(trialSeatCleanup(log).sweep()).rejects.toThrow('the sweep job retries them')
 
         expect(await statusOf(passing.trialUsers[2])).toBe(UserStatus.INACTIVE)
         expect(await statusOf(failing.trialUsers[2])).toBe(UserStatus.ACTIVE)
     })
 
-    it('lists the users who would be deactivated to a platform admin in the billing info', async () => {
-        const { platformId, owner, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3 })
-        await distributedStore.put(getBillingOverviewKey(platformId), FREE_OVERVIEW, 300)
-        const token = await generateMockToken({ id: owner.id, type: PrincipalType.USER, platform: { id: platformId } })
-
-        const response = await app!.inject({
-            method: 'GET',
-            url: '/api/v1/platform-billing/info',
-            headers: { authorization: `Bearer ${token}` },
-        })
-
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.json().seatGrace).toEqual({ usedSeats: 5, seatLimit: 3, userIds: [trialUsers[2].id, trialUsers[1].id] })
-    })
-
-    it('keeps listing them when the billing info cannot tell whether billing is enforced', async () => {
-        const { platformId, owner, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3 })
-        await distributedStore.delete(getBillingEnforcedKey(platformId))
-        await distributedStore.put(getBillingOverviewKey(platformId), FREE_OVERVIEW, 300)
-        const token = await generateMockToken({ id: owner.id, type: PrincipalType.USER, platform: { id: platformId } })
-
-        const response = await app!.inject({
-            method: 'GET',
-            url: '/api/v1/platform-billing/info',
-            headers: { authorization: `Bearer ${token}` },
-        })
-
-        expect(response.json().seatGrace).toEqual({ usedSeats: 5, seatLimit: 3, userIds: [trialUsers[2].id, trialUsers[1].id] })
-    })
-
     it('shows no grace while billing is known not to be enforced', async () => {
-        const { platformId, window } = await setupPlatform({ usersLimit: 1, trialUsers: 2 })
+        const { platformId, selfServeTrialDates } = await setupPlatform({ usersLimit: 1, trialUsers: 2 })
         await distributedStore.put(getBillingEnforcedKey(platformId), false, 300)
 
-        const plan = await platformPlanRepo().findOneByOrFail({ platformId })
-
-        expect(await trialSeatGrace(log).get({ plan })).toBeNull()
-        expect(await trialSeatGrace(log).endsAt({ platformId, window })).toBeNull()
+        expect(await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates })).toBeNull()
     })
 
     it('tells every member the deadline on the platform while the grace runs', async () => {
-        const { platformId, window, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3 })
+        const { platformId, selfServeTrialDates, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3 })
         const token = await generateMockToken({ id: trialUsers[0].id, type: PrincipalType.USER, platform: { id: platformId } })
 
         const response = await app!.inject({
@@ -330,8 +341,8 @@ describe('Seat grace after the self-serve trial', () => {
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(response.json().selfServeTrial).toEqual({
-            ...window,
-            seatGraceEndsAt: await trialSeatGrace(log).endsAt({ platformId, window }),
+            ...selfServeTrialDates,
+            seatGraceEndsAt: await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates }),
         })
         expect(response.json().selfServeTrial.seatGraceEndsAt).not.toBeNull()
     })
@@ -339,21 +350,35 @@ describe('Seat grace after the self-serve trial', () => {
 
 async function setupPlatform({ usersLimit, preTrialUsers = 0, trialUsers = 0, embeddedTrialUsers = 0, trialEndedDaysAgo = 3 }: SetupPlatformParams): Promise<SetupPlatformResult> {
     const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({ plan: { usersLimit, scheduledUsersLimit: null } })
-    const window = {
+    const selfServeTrialDates = {
         startedAt: dayjs().subtract(trialEndedDaysAgo + 7, 'day').toISOString(),
         endsAt: dayjs().subtract(trialEndedDaysAgo, 'day').toISOString(),
     }
     await distributedStore.put(getBillingEnforcedKey(mockPlatform.id), true, 300)
-    await selfServeTrialUtils.cacheTrialDates({ platformId: mockPlatform.id, dates: window })
-    const duringTrial = dayjs(window.startedAt).add(2, 'day').toISOString()
+    await selfServeTrialUtils.cacheTrialDates({ platformId: mockPlatform.id, dates: selfServeTrialDates })
+    trialDatesInAutumn.set(mockPlatform.id, selfServeTrialDates)
+    const duringTrial = dayjs(selfServeTrialDates.startedAt).add(2, 'day').toISOString()
     return {
         platformId: mockPlatform.id,
         owner: mockOwner,
-        window,
-        preTrialUsers: await addUsers({ platformId: mockPlatform.id, count: preTrialUsers, firstCreatedAt: dayjs(window.startedAt).subtract(20, 'day').toISOString() }),
+        selfServeTrialDates,
+        preTrialUsers: await addUsers({ platformId: mockPlatform.id, count: preTrialUsers, firstCreatedAt: dayjs(selfServeTrialDates.startedAt).subtract(20, 'day').toISOString() }),
         trialUsers: await addUsers({ platformId: mockPlatform.id, count: trialUsers, firstCreatedAt: duringTrial }),
         embeddedUsers: await addUsers({ platformId: mockPlatform.id, count: embeddedTrialUsers, firstCreatedAt: dayjs(duringTrial).add(1, 'day').toISOString(), provider: UserIdentityProvider.JWT }),
     }
+}
+
+async function saveInvitation({ platformId, created }: SaveInvitationParams): Promise<{ id: string }> {
+    const invitation = createMockUserInvitation({
+        platformId,
+        type: InvitationType.PLATFORM,
+        platformRole: PlatformRole.MEMBER,
+        status: InvitationStatus.PENDING,
+        created,
+        updated: dayjs().toISOString(),
+    })
+    await db.save('user_invitation', invitation)
+    return invitation
 }
 
 async function addUsers({ platformId, count, firstCreatedAt, provider = UserIdentityProvider.EMAIL }: AddUsersParams): Promise<User[]> {
@@ -391,23 +416,9 @@ async function statusOf(user: User): Promise<UserStatus> {
     return (await userRepo().findOneByOrFail({ id: user.id })).status
 }
 
-const FREE_OVERVIEW: BillingOverview = {
-    startDate: dayjs().toISOString(),
-    endDate: dayjs().add(1, 'month').toISOString(),
-    nextBillingAmount: 0,
-    cancelAt: null,
-    trialEndsAt: null,
-    planName: 'Free',
-    scheduledPlanName: null,
-    hasPaymentMethod: false,
-    creditsResetInterval: null,
-    planInterval: null,
-    creditsFeature: null,
-    appSumoCreditsFeature: null,
-    seatsFeature: null,
-    includedSeats: null,
-    additionalSeats: null,
-    unavailable: false,
+type SaveInvitationParams = {
+    platformId: string
+    created: string
 }
 
 type SetupPlatformParams = {
@@ -421,7 +432,7 @@ type SetupPlatformParams = {
 type SetupPlatformResult = {
     platformId: string
     owner: User
-    window: SelfServeTrialDates
+    selfServeTrialDates: SelfServeTrialDates
     preTrialUsers: User[]
     trialUsers: User[]
     embeddedUsers: User[]
