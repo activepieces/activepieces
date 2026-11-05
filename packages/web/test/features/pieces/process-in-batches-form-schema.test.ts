@@ -9,7 +9,11 @@ const schema = formUtils.buildPieceSchema(
   null,
 );
 
-const buildStep = (settings: { items: string; batchSize: unknown }) => ({
+const buildStep = (settings: {
+  items: string;
+  batchSize: unknown;
+  timeoutSeconds?: unknown;
+}) => ({
   name: 'step_1',
   displayName: 'Process in Batches',
   type: FlowActionType.PROCESS_IN_BATCHES,
@@ -21,13 +25,15 @@ const buildStep = (settings: { items: string; batchSize: unknown }) => ({
 const messageFor = (
   result: { error?: { issues: { path: PropertyKey[]; message: string }[] } },
   field: string,
-) =>
-  result.error?.issues.find((issue) => issue.path.at(-1) === field)?.message;
+) => result.error?.issues.find((issue) => issue.path.at(-1) === field)?.message;
 
 describe('Process in Batches form schema', () => {
   it('accepts an items expression with a whole batch size', () => {
     const result = schema.safeParse(
-      buildStep({ items: '{{ trigger.items }}', batchSize: DEFAULT_BATCH_SIZE }),
+      buildStep({
+        items: '{{ trigger.items }}',
+        batchSize: DEFAULT_BATCH_SIZE,
+      }),
     );
     expect(result.success).toBe(true);
   });
@@ -46,6 +52,36 @@ describe('Process in Batches form schema', () => {
     expect(result.success).toBe(false);
     expect(messageFor(result, 'batchSize')).toBe('batchSizeMustBeAtLeastOne');
   });
+
+  it('accepts a missing timeout and a timeout of at least one hour', () => {
+    for (const timeoutSeconds of [undefined, 3600, 7200]) {
+      const result = schema.safeParse(
+        buildStep({
+          items: '{{ trigger.items }}',
+          batchSize: DEFAULT_BATCH_SIZE,
+          timeoutSeconds,
+        }),
+      );
+      expect(result.success).toBe(true);
+    }
+  });
+
+  it.each([0, -3600, 1800])(
+    'rejects a timeout below one hour (%s)',
+    (timeoutSeconds) => {
+      const result = schema.safeParse(
+        buildStep({
+          items: '{{ trigger.items }}',
+          batchSize: DEFAULT_BATCH_SIZE,
+          timeoutSeconds,
+        }),
+      );
+      expect(result.success).toBe(false);
+      expect(messageFor(result, 'timeoutSeconds')).toBe(
+        'batchTimeoutMustBeAtLeastOneHour',
+      );
+    },
+  );
 
   it.each([1.5, '10', undefined])(
     'rejects a non-integer batch size (%s)',
