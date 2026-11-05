@@ -93,9 +93,15 @@ export function ChatHistoryList({
         flat.findIndex((c) => c.id === currentId),
       );
       setHighlight(start);
-      listRef.current
-        ?.querySelector(`[data-index="${start}"]`)
-        ?.scrollIntoView({ block: 'nearest' });
+      // Wait for the dropdown to be placed and capped before scrolling it.
+      const frame = requestAnimationFrame(() =>
+        requestAnimationFrame(() =>
+          listRef.current
+            ?.querySelector(`[data-index="${start}"]`)
+            ?.scrollIntoView({ block: 'center' }),
+        ),
+      );
+      return () => cancelAnimationFrame(frame);
     }
   }, [flat, currentId, highlight]);
 
