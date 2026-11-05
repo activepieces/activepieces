@@ -2780,7 +2780,7 @@
     },
     "packages/pieces/community/doctly": {
       "name": "@activepieces/piece-doctly",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3249,7 +3249,7 @@
     },
     "packages/pieces/community/filetopdf": {
       "name": "@activepieces/piece-filetopdf",
-      "version": "0.0.9",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6167,12 +6167,13 @@
     },
     "packages/pieces/community/millionverifier": {
       "name": "@activepieces/piece-millionverifier",
-      "version": "0.1.9",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "csv-parse": "5.6.0",
       },
       "devDependencies": {
         "tslib": "^2.3.0",
@@ -6975,7 +6976,7 @@
     },
     "packages/pieces/community/parseur": {
       "name": "@activepieces/piece-parseur",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7284,7 +7285,7 @@
     },
     "packages/pieces/community/pocketbase": {
       "name": "@activepieces/piece-pocketbase",
-      "version": "0.0.6",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
