@@ -30,7 +30,6 @@ import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
 } from '@/components/custom/leave-without-saving';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -156,17 +155,6 @@ export function ConfigDetail({
     .filter(Boolean)
     .join(' · ');
   const nameMissing = draft.name.trim().length === 0;
-  const enabledModelCount = manualModels
-    ? draft.models.length
-    : draft.modelScope === 'all'
-    ? models.length
-    : draft.modelIds.length;
-  const allowedProjectCount =
-    draft.projectScope === 'all'
-      ? projects.length
-      : draft.projectScope === 'except'
-      ? projects.length - draft.projectIds.length
-      : draft.projectIds.length;
 
   const requestSave = () => {
     if (nameMissing || saveInFlight.current) {
@@ -260,11 +248,9 @@ export function ConfigDetail({
         >
           <TabsTrigger variant="outline" value="models">
             {t('Models')}
-            {!isLoadingModels && <TabCount count={enabledModelCount} />}
           </TabsTrigger>
           <TabsTrigger variant="outline" value="access">
             {t('Access')}
-            <TabCount count={allowedProjectCount} />
           </TabsTrigger>
           <TabsTrigger variant="outline" value="settings">
             {t('Settings')}
@@ -506,14 +492,6 @@ export function ConfigDetail({
         onDiscard={() => leaveBlocker.proceed?.()}
       />
     </>
-  );
-}
-
-function TabCount({ count }: { count: number }) {
-  return (
-    <Badge variant="secondary" className="ml-2 tabular-nums">
-      {count}
-    </Badge>
   );
 }
 
