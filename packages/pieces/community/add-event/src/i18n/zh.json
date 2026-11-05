@@ -98,7 +98,7 @@
   "Follow 3xx redirects instead of returning them as the response.": "跟随 3xx 重定向，而不是将其作为响应返回。",
   "Default": "默认设置",
   "Busy": "忙碌的",
-  "Free": "免费的",
+  "Free": "Free",
   "Yes": "Yes",
   "No": "No",
   "Going": "Going",
