@@ -5,7 +5,7 @@ import { AGENT_SKILLS, agentToolSkills } from '@activepieces/shared'
 function loadSystemPrompt(): string {
     return readFileSync(path.join(promptsDir(), 'chat-system-prompt.md'), 'utf-8')
         .replaceAll('{{PROJECT_LIST}}', EVAL_PROJECT_LIST)
-        .replaceAll('{{PROJECT_CONTEXT}}', EVAL_PROJECT_CONTEXT)
+        .replaceAll('{{PROJECT_CONTEXT}}', projectContext())
         .replaceAll('{{FRONTEND_URL}}', EVAL_FRONTEND_URL)
         + agentToolSkills.renderSkillsNote({ surface: 'CHAT' })
 }
@@ -13,6 +13,13 @@ function loadSystemPrompt(): string {
 function loadGuides(): Record<string, string> {
     const topics = AGENT_SKILLS.flatMap((skill) => skill.guideTopic === undefined ? [] : [skill.guideTopic])
     return Object.fromEntries(topics.map((topic) => [topic, readFileSync(path.join(promptsDir(), 'guides', `${topic}.md`), 'utf-8')]))
+}
+
+function projectContext(): string {
+    return readFileSync(path.join(promptsDir(), 'chat-project-context-selected.md'), 'utf-8')
+        .replaceAll('{{PROJECT_NAME}}', EVAL_PROJECT_NAME)
+        .replaceAll('{{PROJECT_ID}}', EVAL_PROJECT_ID)
+        .replaceAll('{{FRONTEND_URL}}', EVAL_FRONTEND_URL)
 }
 
 function promptsDir(): string {
@@ -31,8 +38,9 @@ function repoRoot(): string {
 
 const MAX_DEPTH = 12
 const EVAL_FRONTEND_URL = 'https://eval.activepieces.test'
-const EVAL_PROJECT_LIST = '- Eval Project (id: eval-project)'
-const EVAL_PROJECT_CONTEXT = 'No project is currently selected.'
+const EVAL_PROJECT_ID = 'eval-project'
+const EVAL_PROJECT_NAME = 'Eval Project'
+const EVAL_PROJECT_LIST = `- ${EVAL_PROJECT_NAME} (id: ${EVAL_PROJECT_ID})`
 
 export const evalPrompts = {
     loadSystemPrompt,

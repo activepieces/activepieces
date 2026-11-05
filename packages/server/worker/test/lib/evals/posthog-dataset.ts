@@ -11,11 +11,29 @@ async function loadItems({ datasetName }: { datasetName: string }): Promise<Data
     return collectItems({ datasetId: dataset.id, offset: 0, collected: [] })
 }
 
-async function addFixtures({ itemId, fixtures }: { itemId: string, fixtures: RecordedToolCall[] }): Promise<number> {
+async function addFixtures({ itemId, fixtures }: { itemId: string, fixtures: RecordedToolCall[] }): Promise<{ added: number, total: number }> {
     const item = StoredItem.parse(await request({ path: `/dataset_items/${itemId}/` }))
-    const toolFixtures = [...(item.metadata.toolFixtures ?? []), ...fixtures]
-    await request({ path: `/dataset_items/${itemId}/`, method: 'PATCH', body: { base_version: item.version, metadata: { ...item.metadata, toolFixtures } } })
-    return toolFixtures.length
+    const existing = item.metadata.toolFixtures ?? []
+    const seen = new Set(existing.map(fixtureKey))
+    const fresh = fixtures.filter((fixture) => {
+        const key = fixtureKey(fixture)
+        const isNew = !seen.has(key)
+        seen.add(key)
+        return isNew
+    })
+    if (fresh.length > 0) {
+        await request({ path: `/dataset_items/${itemId}/`, method: 'PATCH', body: { base_version: item.version, metadata: { ...item.metadata, toolFixtures: [...existing, ...fresh] } } })
+    }
+    return { added: fresh.length, total: existing.length + fresh.length }
+}
+
+async function setMetadataField({ itemId, field, value }: { itemId: string, field: string, value: unknown }): Promise<void> {
+    const item = StoredItem.parse(await request({ path: `/dataset_items/${itemId}/` }))
+    await request({ path: `/dataset_items/${itemId}/`, method: 'PATCH', body: { base_version: item.version, metadata: { ...item.metadata, [field]: value } } })
+}
+
+function fixtureKey(fixture: RecordedToolCall): string {
+    return JSON.stringify({ toolName: fixture.toolName, input: fixture.input })
 }
 
 async function collectItems({ datasetId, offset, collected }: { datasetId: string, offset: number, collected: DatasetItem[] }): Promise<DatasetItem[]> {
@@ -65,4 +83,5 @@ const StoredItem = z.object({
 export const posthogDataset = {
     loadItems,
     addFixtures,
+    setMetadataField,
 }

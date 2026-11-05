@@ -1,7 +1,7 @@
 import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
-import { AgentPhase, PersistedAgentPartType } from '@activepieces/shared'
+import { AgentPhase, agentToolSkills, PersistedAgentPartType } from '@activepieces/shared'
 import { aiUtils } from '@activepieces/server-utils'
-import { hasToolCall, isLoopFinished, LanguageModel, ModelMessage, ToolSet, wrapLanguageModel } from 'ai'
+import { hasToolCall, isLoopFinished, isStepCount, LanguageModel, StopCondition, ToolSet, wrapLanguageModel } from 'ai'
 import { AgentTurnResult, runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 import { EvalCase, RecordedToolCall } from './eval-case'
 import { evalPrompts } from './prompts'
@@ -13,14 +13,13 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
     const tools = evalToolSet.build({ mcpToolSet, replay: caseReplay, auth, recordMode })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const model = pinned({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
-    const messages: ModelMessage[] = [...evalCase.history, { role: 'user', content: evalCase.userMessage }]
     const warnings: string[] = []
     const abortSignal = AbortSignal.timeout(TURN_TIMEOUT_MS)
 
     const { data: result, error } = await tryCatch(() => runAgentTurn({
         models: [{ model, provider: AIProviderName.OPENROUTER, modelId, thinkingBudget: TIER.thinkingBudget }],
         systemPrompt: evalPrompts.loadSystemPrompt(),
-        messages,
+        messages: evalCase.messages,
         tools,
         allToolNames: Object.keys(tools),
         tier: { ...TIER, modelId },
@@ -37,7 +36,7 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
             },
             error: () => {},
         },
-        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stopped()],
+        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stopped(), ...gradedWindow({ evalCase })],
     }))
 
     if (abortSignal.aborted) {
@@ -55,6 +54,18 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
         stops: caseReplay.stops(),
         newFixtures: caseReplay.newFixtures(),
     }
+}
+
+function gradedWindow({ evalCase }: { evalCase: EvalCase }): StopCondition<ToolSet>[] {
+    if (isNil(evalCase.cutBeforeStep)) {
+        return []
+    }
+    const targetTool = evalCase.targetTool
+    if (isNil(targetTool)) {
+        return [isStepCount(1)]
+    }
+    const reachedTarget: StopCondition<ToolSet> = async ({ steps }) => steps.some((step) => step.toolCalls.some((call) => agentToolSkills.effectiveToolCall({ toolName: call.toolName, input: call.input }).toolName === targetTool))
+    return [reachedTarget, isStepCount(MAX_STEPS_TO_TARGET)]
 }
 
 function pinned({ model }: { model: LanguageModel }): LanguageModel {
@@ -147,6 +158,7 @@ const TRANSCRIPT_FIELD_MAX = 2_000
 const ERROR_PREVIEW_CHARS = 160
 const TIER = { id: 'smart', thinkingBudget: 10_000 }
 const SEED = 7
+const MAX_STEPS_TO_TARGET = 5
 const PROVIDER_ENV = 'EVALS_PROVIDER'
 const DEFAULT_PROVIDER = 'alibaba'
 const TERMINAL_DISPLAY_TOOLS = ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_connection_picker', 'ap_show_connection_required', 'ap_show_project_picker']

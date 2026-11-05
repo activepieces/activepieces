@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentPromptOverride, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_TEXT_LENGTH, PersistedAgentRole, SimulateAgentRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversationStatus, AgentPromptOverride, AgentRunSource, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_TEXT_LENGTH, PersistedAgentRole, SimulateAgentRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -11,6 +11,7 @@ import { platformService } from '../../platform/platform.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
+import { agentRpcHandlers } from './agent-rpc-handlers'
 import { agentMcp } from './mcp/agent-mcp'
 import { agentPrompt } from './prompt/agent-prompt'
 
@@ -61,6 +62,21 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
             return reply.status(StatusCodes.SERVICE_UNAVAILABLE).send({ message: 'Could not issue MCP credentials on this instance' })
         }
         return reply.status(StatusCodes.OK).send(credentials)
+    })
+
+    app.post('/eval/execute-tool', ExecuteToolRoute, async (request, reply) => {
+        const platform = await platformService(request.log).getOldestPlatform()
+        if (isNil(platform)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'No platform exists on this instance' })
+        }
+        const response = await agentRpcHandlers(request.log).executeAgentTool({
+            toolName: request.body.toolName,
+            toolInput: request.body.toolInput,
+            platformId: platform.id,
+            userId: platform.ownerId,
+            source: AgentRunSource.CHAT,
+        })
+        return reply.status(StatusCodes.OK).send(response)
     })
 
     app.post('/eval/simulate', SimulateRoute, async (request, reply) => {
@@ -263,6 +279,19 @@ const McpCredentialsRoute = {
     },
     schema: {
         tags: ['agent'],
+    },
+}
+
+const ExecuteToolRoute = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['agent'],
+        body: z.object({
+            toolName: z.string(),
+            toolInput: z.record(z.string(), z.unknown()),
+        }),
     },
 }
 

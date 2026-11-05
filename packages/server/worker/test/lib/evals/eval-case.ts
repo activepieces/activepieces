@@ -10,6 +10,11 @@ function fromDatasetItem(item: DatasetItem): EvalCase {
         throw new Error(`Dataset item ${item.id} has no user message to replay`)
     }
     const toolNamesById = toolNamesByCallId(messages)
+    const turn = messages.slice(userIndex + 1)
+    const stepPositions = turn.flatMap((message, position) => message.role === 'assistant' ? [position] : [])
+    const cutBeforeStep = item.metadata.cutBeforeStep
+    const prefixEnd = isNil(cutBeforeStep) ? 0 : (stepPositions[cutBeforeStep] ?? turn.length)
+    const userMessage = textOf(messages[userIndex])
     return {
         id: item.id,
         caseNumber: item.metadata.case,
@@ -17,9 +22,27 @@ function fromDatasetItem(item: DatasetItem): EvalCase {
         codeCheck: item.metadata.code_check,
         checks: item.expected_output.checks,
         sourceTraceId: item.source_trace_id,
-        history: messages.slice(0, userIndex).flatMap((message) => toModelMessages({ message, toolNamesById })),
-        userMessage: textOf(messages[userIndex]),
-        recordedToolCalls: [...recordedCalls({ messages: messages.slice(userIndex + 1), toolNamesById }), ...(item.metadata.toolFixtures ?? [])],
+        cutBeforeStep,
+        targetTool: item.metadata.targetTool,
+        userMessage,
+        messages: [
+            ...messages.slice(0, userIndex).flatMap((message) => toModelMessages({ message, toolNamesById })),
+            { role: 'user', content: userMessage },
+            ...turn.slice(0, prefixEnd).flatMap((message) => toModelMessages({ message, toolNamesById })),
+        ],
+        steps: stepPositions.map((position, index) => summarizeStep({ index, assistant: turn[position], toolMessage: turn[position + 1] })),
+        recordedToolCalls: [...recordedCalls({ messages: turn.slice(prefixEnd), toolNamesById }), ...(item.metadata.toolFixtures ?? [])],
+    }
+}
+
+function summarizeStep({ index, assistant, toolMessage }: { index: number, assistant: TracedMessage, toolMessage: TracedMessage | undefined }): StepSummary {
+    const responses = new Map((toolMessage?.role === 'tool' ? toolMessage.parts : []).flatMap((part) => part.type === 'tool_call_response' ? [[part.id, part.response] as const] : []))
+    return {
+        index,
+        text: textOf(assistant).slice(0, STEP_TEXT_PREVIEW),
+        toolCalls: assistant.parts.flatMap((part) => part.type === 'tool_call'
+            ? [{ toolName: agentToolSkills.effectiveToolCall({ toolName: part.name, input: part.arguments }).toolName, rejected: wasRejected(responses.get(part.id)) }]
+            : []),
     }
 }
 
@@ -86,6 +109,7 @@ function asText(value: unknown): string {
 }
 
 const REJECTED_PATTERN = /^AI_[A-Za-z]+Error|There is no tool named/
+const STEP_TEXT_PREVIEW = 80
 
 const TracedPart = z.discriminatedUnion('type', [
     z.object({ type: z.literal('text'), content: z.string() }),
@@ -120,6 +144,8 @@ export const DatasetItem = z.object({
         case: z.number(),
         problem_type: z.string(),
         code_check: z.string(),
+        cutBeforeStep: z.number().int().nonnegative().optional(),
+        targetTool: z.string().optional(),
         toolFixtures: z.array(ToolFixture).optional(),
     }),
     source_trace_id: z.string().nullable(),
@@ -142,7 +168,16 @@ export type EvalCase = {
     codeCheck: string
     checks: string[]
     sourceTraceId: string | null
-    history: ModelMessage[]
+    cutBeforeStep: number | undefined
+    targetTool: string | undefined
     userMessage: string
+    messages: ModelMessage[]
+    steps: StepSummary[]
     recordedToolCalls: RecordedToolCall[]
+}
+
+export type StepSummary = {
+    index: number
+    text: string
+    toolCalls: { toolName: string, rejected: boolean }[]
 }

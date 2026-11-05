@@ -10,12 +10,8 @@ import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee
 import { Replay } from './replay'
 
 async function connectMcp({ conversationId }: { conversationId: string }): Promise<McpTools> {
-    const apiKey = process.env[API_KEY_ENV]
-    if (isNil(apiKey) || apiKey.length === 0) {
-        throw new Error(`${API_KEY_ENV} is not set. It must match the running dev server's AP_API_KEY.`)
-    }
-    const baseUrl = (process.env[BASE_URL_ENV] ?? DEFAULT_BASE_URL).replace(/\/$/, '')
-    const res = await fetch(`${baseUrl}/v1/agents/eval/mcp-credentials`, { method: 'POST', headers: { 'api-key': apiKey } })
+    const baseUrl = devServerUrl()
+    const res = await fetch(`${baseUrl}/v1/agents/eval/mcp-credentials`, { method: 'POST', headers: { 'api-key': devServerApiKey() } })
     if (!res.ok) {
         throw new Error(`Could not get MCP credentials from the dev server at ${baseUrl} (${res.status}). Is it running? ${await res.text()}`)
     }
@@ -34,7 +30,13 @@ async function connectMcp({ conversationId }: { conversationId: string }): Promi
 function build({ mcpToolSet, replay, auth, recordMode }: { mcpToolSet: ToolSet, replay: Replay, auth: Record<string, unknown>, recordMode: boolean }): ToolSet {
     const taintState = agentWorkerTools.createTaintState({ carried: false })
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: EVAL_CONVERSATION_ID })
-    const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => replay.execute({ toolName, input: toolInput })
+    const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => resolveCall({
+        replay,
+        recordMode,
+        toolName,
+        input: toolInput,
+        live: () => executeOnDevServer({ toolName, toolInput }),
+    })
     const approve = async (): Promise<GateDecision> => ({ outcome: 'approved' })
     const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
     const noop = async (): Promise<void> => {}
@@ -50,14 +52,13 @@ function build({ mcpToolSet, replay, auth, recordMode }: { mcpToolSet: ToolSet, 
                     ...agentWorkerTools.createProviderSearchTools({ search: (request) => searchWeb({ request, auth }), billedAtCost: false, taintState }),
                 },
                 replay,
-                isRead: () => true,
                 recordMode,
             }),
             thinking: agentWorkerTools.createThinkingTools(),
             buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECTS[0].id }),
             email: {},
             agentSurface: agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval: approve, onGateOpened: noop }),
-            mcp: replayed({ tools: mcpToolSet, replay, isRead: (toolName) => !agentToolPhases.isBuildOnlyTool(toolName), recordMode }),
+            mcp: replayed({ tools: mcpToolSet, replay, recordMode }),
             configuredPiece: {},
             configuredFlow: {},
             knowledgeBase: {},
@@ -66,29 +67,58 @@ function build({ mcpToolSet, replay, auth, recordMode }: { mcpToolSet: ToolSet, 
     })
 }
 
-function replayed({ tools, replay, isRead, recordMode }: { tools: ToolSet, replay: Replay, isRead: (toolName: string) => boolean, recordMode: boolean }): ToolSet {
+function replayed({ tools, replay, recordMode }: { tools: ToolSet, replay: Replay, recordMode: boolean }): ToolSet {
     return Object.fromEntries(Object.entries(tools).map(([toolName, tool]) => {
         const liveExecute = tool.execute
         return [toolName, {
             ...tool,
-            execute: async (input: unknown, options: ToolExecutionOptions) => {
-                const read = isRead(toolName)
-                const fixture = replay.take({ toolName, input, sameInputOnly: read })
-                if (fixture.found) {
-                    return fixture.output
-                }
-                if (!read || isNil(liveExecute)) {
-                    return replay.stop({ toolName, input, kind: 'unrecorded_write' })
-                }
-                if (!recordMode) {
-                    return replay.stop({ toolName, input, kind: 'missing_fixture' })
-                }
-                const output: unknown = await liveExecute(input, options)
-                replay.record({ toolName, input, output })
-                return output
-            },
+            execute: async (input: unknown, options: ToolExecutionOptions) => resolveCall({
+                replay,
+                recordMode,
+                toolName,
+                input,
+                live: isNil(liveExecute) ? undefined : async () => liveExecute(input, options),
+            }),
         }]
     }))
+}
+
+async function resolveCall({ replay, recordMode, toolName, input, live }: { replay: Replay, recordMode: boolean, toolName: string, input: unknown, live: (() => Promise<unknown>) | undefined }): Promise<unknown> {
+    const read = !agentToolPhases.isBuildOnlyTool(toolName)
+    const fixture = replay.take({ toolName, input, sameInputOnly: read })
+    if (fixture.found) {
+        return fixture.output
+    }
+    if (!recordMode || isNil(live)) {
+        return replay.stop({ toolName, input, kind: read ? 'missing_fixture' : 'unrecorded_write' })
+    }
+    const output = await live()
+    replay.record({ toolName, input, output })
+    return output
+}
+
+async function executeOnDevServer({ toolName, toolInput }: { toolName: string, toolInput: Record<string, unknown> }): Promise<unknown> {
+    const res = await fetch(`${devServerUrl()}/v1/agents/eval/execute-tool`, {
+        method: 'POST',
+        headers: { 'api-key': devServerApiKey(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toolName, toolInput }),
+    })
+    if (!res.ok) {
+        return { error: `The dev server could not run ${toolName}: ${res.status} ${await res.text()}` }
+    }
+    return ExecuteToolResponse.parse(await res.json()).result
+}
+
+function devServerUrl(): string {
+    return (process.env[BASE_URL_ENV] ?? DEFAULT_BASE_URL).replace(/\/$/, '')
+}
+
+function devServerApiKey(): string {
+    const apiKey = process.env[API_KEY_ENV]
+    if (isNil(apiKey) || apiKey.length === 0) {
+        throw new Error(`${API_KEY_ENV} is not set. It must match the running dev server's AP_API_KEY.`)
+    }
+    return apiKey
 }
 
 function searchWeb({ request, auth }: { request: { system: string, prompt: string, abortSignal: AbortSignal }, auth: Record<string, unknown> }): ReturnType<typeof aiUtils.searchWeb> {
@@ -109,6 +139,7 @@ const EVAL_CONVERSATION_ID = 'eval-conversation'
 const EVAL_PROJECTS = [{ id: 'eval-project', displayName: 'Eval Project', type: 'TEAM' }]
 
 const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string() })
+const ExecuteToolResponse = z.object({ result: z.unknown() })
 
 const silentLog: FastifyBaseLogger = {
     level: 'silent',

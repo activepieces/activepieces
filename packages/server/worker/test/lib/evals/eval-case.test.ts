@@ -23,9 +23,14 @@ describe('evalCase.fromDatasetItem', () => {
         })
 
         expect(converted.userMessage).toBe('research my company')
-        expect(converted.history).toEqual([
+        expect(converted.messages).toEqual([
             { role: 'user', content: 'earlier question' },
             { role: 'assistant', content: [{ type: 'text', text: 'earlier answer' }] },
+            { role: 'user', content: 'research my company' },
+        ])
+        expect(converted.steps.map((step) => step.toolCalls)).toEqual([
+            [{ toolName: 'ap_web_search', rejected: true }],
+            [{ toolName: 'ap_web_search', rejected: false }],
         ])
         expect(converted.recordedToolCalls).toEqual([{ toolName: 'ap_web_search', input: { query: 'x' }, output: { answer: 'found it' } }])
     })

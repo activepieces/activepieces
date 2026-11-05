@@ -32,10 +32,6 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
         record: (call) => {
             recorded.push(call)
         },
-        execute: async ({ toolName, input }) => {
-            const lookup = take({ toolName, input, sameInputOnly: false })
-            return lookup.found ? lookup.output : stop({ toolName, input, kind: 'unrecorded_write' })
-        },
         stopped: () => stops.length > 0,
         stops: () => [...stops],
         newFixtures: () => [...recorded],
@@ -43,18 +39,21 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
 }
 
 function inputKey(input: unknown): string {
-    return JSON.stringify(withoutCardTitles(input))
+    return JSON.stringify(normalized(input))
 }
 
-function withoutCardTitles(value: unknown): unknown {
+function normalized(value: unknown): unknown {
+    if (typeof value === 'string') {
+        return value.trim().toLowerCase().replace(/\s+/g, ' ').replace(/^@activepieces\/piece-/, '').replace(/^https?:\/\/(www\.)?/, '').replace(/[?#].*$/, '').replace(/\/+$/, '')
+    }
     if (Array.isArray(value)) {
-        return value.map(withoutCardTitles)
+        return value.map(normalized)
     }
     if (typeof value === 'object' && value !== null) {
         return Object.fromEntries(Object.entries(value)
             .filter(([key]) => !CARD_TITLE_KEYS.has(key))
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([key, inner]) => [key, withoutCardTitles(inner)]))
+            .map(([key, inner]) => [key, normalized(inner)]))
     }
     return value
 }
@@ -78,7 +77,6 @@ export type Replay = {
     take: (params: { toolName: string, input: unknown, sameInputOnly: boolean }) => RecordedLookup
     stop: (params: { toolName: string, input: unknown, kind: ReplayStop['kind'] }) => unknown
     record: (call: RecordedToolCall) => void
-    execute: (params: { toolName: string, input: unknown }) => Promise<unknown>
     stopped: () => boolean
     stops: () => ReplayStop[]
     newFixtures: () => RecordedToolCall[]
