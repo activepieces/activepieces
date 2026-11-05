@@ -13,7 +13,7 @@ import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, proje
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { projectRoleRepo, projectRoleService } from '../ee/projects/project-role/project-role.service'
-import { applicationEvents } from '../helper/application-events'
+import { applicationEvents, MetaInformation } from '../helper/application-events'
 import { networkUtils } from '../helper/network-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
@@ -77,7 +77,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             invitationExpirySeconds: INVITATION_EXPIRY_SECONDS,
             resent: status === InvitationStatus.PENDING && userInvitationRecord.status === InvitationStatus.ACCEPTED,
         })
-        applicationEvents(request.log).sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation }), {
             action: ApplicationEventName.USER_INVITATION_SENT,
             data: await auditedInvitationData(invitation),
         })
@@ -144,7 +144,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.body.projectId,
         })
         if (result.revoked) {
-            applicationEvents(request.log).sendUserEvent(request, {
+            applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation }), {
                 action: ApplicationEventName.USER_INVITATION_DELETED,
                 data: await auditedInvitationData(invitation),
             })
@@ -171,7 +171,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             id: request.params.id,
             platformId: request.principal.platform.id,
         })
-        applicationEvents(request.log).sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation }), {
             action: ApplicationEventName.USER_INVITATION_DELETED,
             data: await auditedInvitationData(invitation),
         })
@@ -313,6 +313,15 @@ async function auditedInvitationData(invitation: UserInvitation): Promise<UserIn
     }
 }
 
+function invitationEventSource({ request, invitation }: InvitationEventSourceParams): MetaInformation {
+    return {
+        platformId: invitation.platformId,
+        projectId: invitation.projectId ?? undefined,
+        userId: request.principal.type === PrincipalType.USER ? request.principal.id : undefined,
+        ip: networkUtils.clientIp(request),
+    }
+}
+
 const ListUserInvitationsRequestParams = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE], {
@@ -413,4 +422,9 @@ type TrackInviteSentParams = {
     platformId: string
     event: TelemetryEvent
     log: FastifyBaseLogger
+}
+
+type InvitationEventSourceParams = {
+    request: FastifyRequest
+    invitation: UserInvitation
 }

@@ -1,5 +1,5 @@
-import { ProjectRole, RoleType } from '@activepieces/core-utils'
-import { ApplicationEventName, DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, PrincipalType, UserInvitation } from '@activepieces/shared'
+import { apId, ProjectRole, RoleType } from '@activepieces/core-utils'
+import { ApplicationEvent, ApplicationEventName, DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, PrincipalType, UserInvitation } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -9,7 +9,7 @@ import { userInvitationsService } from '../../../../src/app/user-invitations/use
 import { actionsEmitted } from '../../../helpers/application-events'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import { createMockProjectRole, createMockUserInvitation, mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { createMockProjectRole, createMockUserIdentity, createMockUserInvitation, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -91,11 +91,27 @@ describe('Invitation audit events', () => {
         expect(results.map((result) => result.firstAcceptance).sort()).toEqual([false, true])
     })
 
+    it('does not reject an accept that read the invitation before an overlapping accept joined and deleted it', async () => {
+        const { mockPlatform } = await createEnvironment()
+        const email = faker.internet.email().toLowerCase()
+        await db.save('user_identity', createMockUserIdentity({ email }))
+        const invitation = await saveInvitation({ platformId: mockPlatform.id, email, status: InvitationStatus.PENDING })
+        const service = userInvitationsService(mockLog)
+        const first = await service.accept({ invitationId: invitation.id, platformId: mockPlatform.id })
+        expect(await db.findOneBy('user_invitation', { id: invitation.id })).toBeNull()
+        const overlapping = await service.accept.call(
+            { ...service, getOneOrThrow: async () => invitation },
+            { invitationId: invitation.id, platformId: mockPlatform.id },
+        )
+        expect([first.firstAcceptance, overlapping.firstAcceptance]).toEqual([true, false])
+    })
+
     it('keeps the invitation link out of the audit event', async () => {
         const sendUserEventSpy = spyOnSendUserEvent()
         const { mockOwnerToken } = await createEnvironment()
         const sent = await inviteThroughApi({ token: mockOwnerToken, email: faker.internet.email() })
         expect(sent).toHaveProperty('link')
+        expect(sendUserEventSpy.mock.calls[0][0].projectId).toBeUndefined()
         expect(sendUserEventSpy.mock.calls[0][1].data).toStrictEqual({
             invitation: {
                 id: sent.id,
@@ -120,6 +136,7 @@ describe('Invitation audit events', () => {
         })
         expect(response.statusCode).toBe(StatusCodes.CREATED)
         expect(sendUserEventSpy.mock.calls[0][1].data.projectRole).toStrictEqual({ id: editorRole.id, name: editorRole.name })
+        expect(sendUserEventSpy.mock.calls[0][0]).toMatchObject({ projectId: mockProject.id })
     })
 
     it('records a custom project role by name', async () => {
@@ -136,11 +153,32 @@ describe('Invitation audit events', () => {
         expect(response.statusCode).toBe(StatusCodes.CREATED)
         expect(sendUserEventSpy.mock.calls[0][1].data.projectRole).toStrictEqual({ id: customRole.id, name: 'Reviewer' })
     })
+
+    it('saves an invitation sent with an API key to the audit log', async () => {
+        const { mockPlatform } = await createEnvironment({ auditLogEnabled: true })
+        const serviceToken = await generateMockToken({ id: apId(), type: PrincipalType.SERVICE, platform: { id: mockPlatform.id } })
+        const sent = await inviteThroughApi({ token: serviceToken, email: faker.internet.email() })
+        const [row] = await savedInvitationRows({ platformId: mockPlatform.id, action: ApplicationEventName.USER_INVITATION_SENT })
+        expect(row?.data).toMatchObject({ invitation: { id: sent.id, email: sent.email } })
+    })
+
+    it('saves the project of a project invitation on the audit row', async () => {
+        const { mockPlatform, mockProject, mockOwnerToken } = await createEnvironment({ auditLogEnabled: true })
+        const response = await app.inject({
+            method: 'POST',
+            url: '/api/v1/user-invitations',
+            headers: { authorization: `Bearer ${mockOwnerToken}` },
+            body: { email: faker.internet.email(), type: InvitationType.PROJECT, projectId: mockProject.id, projectRole: DefaultProjectRole.EDITOR },
+        })
+        expect(response.statusCode).toBe(StatusCodes.CREATED)
+        const [row] = await savedInvitationRows({ platformId: mockPlatform.id, action: ApplicationEventName.USER_INVITATION_SENT })
+        expect(row).toMatchObject({ projectId: mockProject.id, projectDisplayName: mockProject.displayName })
+    })
 })
 
-async function createEnvironment(): Promise<Environment> {
+async function createEnvironment({ auditLogEnabled = false }: CreateEnvironmentParams = {}): Promise<Environment> {
     const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
-        plan: { projectRolesEnabled: true, auditLogEnabled: false },
+        plan: { projectRolesEnabled: true, auditLogEnabled },
     })
     const mockOwnerToken = await generateMockToken({
         id: mockOwner.id,
@@ -176,6 +214,17 @@ async function saveInvitation({ platformId, email, status, projectId = null }: S
     return invitation
 }
 
+async function savedInvitationRows({ platformId, action }: SavedInvitationRowsParams): Promise<ApplicationEvent[]> {
+    for (let attempt = 0; attempt < 40; attempt++) {
+        const rows = await db.findBy<ApplicationEvent>('audit_event', { platformId, action })
+        if (rows.length > 0) {
+            return rows
+        }
+        await new Promise((resolve) => setTimeout(resolve, 25))
+    }
+    return []
+}
+
 async function signInvitationToken(invitationId: string): Promise<string> {
     const key = await jwtUtils.getJwtSecret()
     return jwtUtils.sign({
@@ -183,6 +232,15 @@ async function signInvitationToken(invitationId: string): Promise<string> {
         key,
         audience: JwtAudience.USER_INVITATION,
     })
+}
+
+type CreateEnvironmentParams = {
+    auditLogEnabled?: boolean
+}
+
+type SavedInvitationRowsParams = {
+    platformId: string
+    action: ApplicationEventName
 }
 
 type Environment = Pick<Awaited<ReturnType<typeof mockAndSaveBasicSetup>>, 'mockPlatform' | 'mockProject'> & {

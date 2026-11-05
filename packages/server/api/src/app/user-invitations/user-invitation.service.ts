@@ -298,9 +298,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async accept({ invitationId, platformId }: AcceptParams): Promise<AcceptResult> {
         const invitation = await this.getOneOrThrow({ id: invitationId, platformId })
         const firstAcceptance = await acceptIfPending({ id: invitation.id, platformId })
-        if (!firstAcceptance && !await repo().existsBy({ id: invitation.id, platformId, status: InvitationStatus.ACCEPTED })) {
-            throw invitationNotFound(invitation.id)
-        }
         if (firstAcceptance) {
             rejectedPromiseHandler(telemetry(log).trackPlatform({
                 platformId,
