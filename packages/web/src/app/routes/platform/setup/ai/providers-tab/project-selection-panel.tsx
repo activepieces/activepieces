@@ -76,7 +76,7 @@ export function ProjectSelectionPanel({
             checked={selectedIds.includes(row.original.id)}
             className="pointer-events-none"
           />
-          <ProjectSwatch project={row.original} className="size-7" />
+          <ProjectSwatch project={row.original} className="size-6" />
           <TextWithTooltip tooltipMessage={row.original.displayName}>
             <span className="truncate text-sm font-medium text-gray-12">
               {row.original.displayName}
