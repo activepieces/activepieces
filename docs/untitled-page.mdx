@@ -6,9 +6,9 @@ title: "Managing Memory in Your Flows"
 
 Every time a flow runs, Activepieces gives it a fixed amount of working space called **memory**. Think of it like a kitchen counter: everything the flow is working on has to fit on the counter at the same time. If the counter gets too full, the flow stops.
 
-Memory holds:
+Here's what your flow memory holds:
 
-- **The trigger data** (the information that started the flow, like a new email, a form submission or a new row in a sheet)
+- **The trigger data:** The information that started the flow, like a new email, a form submission or a new row in a sheet
 - **The result of every step** (everything each step produces is kept until the flow finishes, so later steps can use it)
 - **Every round of a loop** (when a flow repeats the same steps for each item in a list, the results of every round are kept, not just the last one)
 - **Files** (PDFs, spreadsheets, images or CSV files the flow downloads, creates or changes)
