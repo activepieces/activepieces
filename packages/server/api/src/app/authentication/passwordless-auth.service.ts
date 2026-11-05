@@ -79,6 +79,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         if (!codeIsValid) {
             throw new ActivepiecesError({ code: ErrorCode.INVALID_OTP, params: {} })
         }
+        await authenticationService(log).assertSignInMethodIsAllowed({ email, provider: UserIdentityProvider.EMAIL })
         const verifiedIdentity = identity.verified ? identity : await userIdentityService(log).verifyAndDiscardPassword(identity.id)
         await flagService(log).save({ id: ApFlagId.USER_CREATED, value: true })
 
