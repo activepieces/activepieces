@@ -2,7 +2,7 @@ with graded as (
   select
     toString(properties.$ai_evaluation_name) as judge,
     toString(properties.$ai_evaluation_result) as result,
-    toString(properties.$ai_evaluation_reasoning) like 'This session%not graded%' as skipped
+    toString(properties.$ai_evaluation_skipped) = 'true' as skipped
   from events
   where event = '$ai_evaluation'
     and timestamp > now() - interval __DAYS__ day

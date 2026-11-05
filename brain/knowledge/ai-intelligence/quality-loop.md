@@ -26,9 +26,9 @@ How the AI team learns what goes wrong in real chats, turns it into tests, and p
 - `gen_ai.agent.name = 'agent-turn'` marks a real chat turn in PostHog. Titles, memory, compaction and tool repair are separate traces (`agent-title`, `agent-memory`, `agent-compaction`, `agent-tool-repair`); count them out or every rate is off.
 - Traces don't say which door (chat, saved agent, agent builder, flow step) a turn came from yet. Add it before splitting quality by door (AI-185).
 - The chat → outcome join needs no new code: the `execute_tool ap_build_flow` span holds `flowId` in `gen_ai.tool.call.result`, and `flow.published` / `run.created` carry `flowId`. About 15% of build spans have no `flowId`.
-- Some PostHog judges read `true` as "problem found" (e.g. "Context too large"). Check a judge's polarity before reading its rate.
-- A "session too large, not graded" judge result is recorded as a fail on some judges. Filter it out with the reasoning text (see `sql/quality-judges.sql`).
-- Provider error messages land in traces as `$ai_error`, and some echo a partly masked API key. Secrets must be stripped at export (AI-182).
+- A judge's pass or fail comes from its `output_config`: `true_is_failure: false` means `true` passes. Our Hog checks return `true` for pass, so "Context too large = true" means the call passed.
+- Skipped judge runs (session too large, or anything else that couldn't be graded) still store `result = false`. Always filter on `$ai_evaluation_skipped`, never on the reasoning text: on Nov 5 the text match missed 2,673 of 2,720 skipped runs and made Hallucination look like 35% instead of 5%.
+- AI spans are scrubbed at export by `aiTraceScrubber`: fields named like token, password or secret are redacted at any JSON depth, including JSON inside text, and errors go out as their type only. A secret typed into chat as free text isn't caught.
 - The eval replay hands the agent a stub when it calls an unrecorded tool and keeps going, so a wrong tool can look fine until AI-194 lands.
 - Repeats of one case are not independent tries. A gate built on raw pass rates can only spot drops 2 to 3 times bigger than it looks like it can.
 
