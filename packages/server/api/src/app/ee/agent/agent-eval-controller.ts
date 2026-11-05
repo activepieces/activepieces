@@ -11,6 +11,7 @@ import { platformService } from '../../platform/platform.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
+import { agentMcp } from './mcp/agent-mcp'
 import { agentPrompt } from './prompt/agent-prompt'
 
 const API_KEY_HEADER = 'api-key'
@@ -48,6 +49,18 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
             return reply.status(StatusCodes.NOT_FOUND).send({ message: 'No platform exists on this instance' })
         }
         return reply.status(StatusCodes.OK).send({ platformId: platform.id })
+    })
+
+    app.post('/eval/mcp-credentials', McpCredentialsRoute, async (request, reply) => {
+        const platform = await platformService(request.log).getOldestPlatform()
+        if (isNil(platform)) {
+            return reply.status(StatusCodes.NOT_FOUND).send({ message: 'No platform exists on this instance' })
+        }
+        const credentials = await agentMcp.getCredentials({ platformId: platform.id, userId: platform.ownerId, log: request.log })
+        if (isNil(credentials.mcpServerUrl) || isNil(credentials.mcpToken)) {
+            return reply.status(StatusCodes.SERVICE_UNAVAILABLE).send({ message: 'Could not issue MCP credentials on this instance' })
+        }
+        return reply.status(StatusCodes.OK).send(credentials)
     })
 
     app.post('/eval/simulate', SimulateRoute, async (request, reply) => {
@@ -236,6 +249,15 @@ const PromptSourcesRoute = {
 }
 
 const SandboxPlatformRoute = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['agent'],
+    },
+}
+
+const McpCredentialsRoute = {
     config: {
         security: securityAccess.public(),
     },
