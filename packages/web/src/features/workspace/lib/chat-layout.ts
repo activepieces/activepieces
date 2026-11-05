@@ -47,14 +47,6 @@ export function dockWidthFor(savedWidth: number, cardWidth: number): number {
   );
 }
 
-// True when even a minimum-width dock leaves the page cramped.
-export function dockCrampsPage(viewportWidth: number, railOpen: boolean) {
-  return (
-    cardInnerWidth(viewportWidth, railOpen) - DOCK_MIN_WIDTH <
-    PAGE_COMFORT_WIDTH
-  );
-}
-
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), Math.max(min, max));
 }

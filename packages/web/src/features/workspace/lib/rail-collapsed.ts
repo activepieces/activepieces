@@ -4,20 +4,13 @@ import { create } from 'zustand';
 
 import { CHAT_ROUTE, routesThatRequireProjectId } from '@/lib/route-utils';
 
-import {
-  DOCK_BREAKPOINT,
-  dockCrampsPage,
-  startStructuralMove,
-} from './chat-layout';
+import { DOCK_BREAKPOINT, startStructuralMove } from './chat-layout';
 import { chatPanelIsDocked, useChatPanel } from './chat-panel-open';
 
 const PREFERENCE_KEY = 'primary-rail-collapsed';
 // Set while the rail is folded only to make room for the docked chat, so
 // closing the chat gives the sidebar back. Survives a reload, like the chat.
 const FOLDED_FOR_CHAT_KEY = 'primary-rail-folded-for-chat';
-// Set once the user re-opens a sidebar the chat folded. For the rest of the
-// session the chat never folds it again.
-const FOLD_DECLINED_KEY = 'primary-rail-chat-fold-declined';
 
 // Inside one agent the rail is furniture: the page has its own header, its own
 // conversation list and its own panel. The route only asks for it closed, so an
@@ -35,7 +28,6 @@ const ROUTES_THAT_HOLD_THE_RAIL_CLOSED = AGENT_ROUTES.flatMap((route) => [
 const useRail = create<RailState>(() => ({
   preference: readFlag(localStorage, PREFERENCE_KEY),
   foldedForChat: readFlag(localStorage, FOLDED_FOR_CHAT_KEY),
-  foldDeclined: readFlag(sessionStorage, FOLD_DECLINED_KEY),
   openedOn: null,
 }));
 
@@ -44,7 +36,6 @@ function update(patch: Partial<RailState>) {
   const state = useRail.getState();
   writeFlag(localStorage, PREFERENCE_KEY, state.preference);
   writeFlag(localStorage, FOLDED_FOR_CHAT_KEY, state.foldedForChat);
-  writeFlag(sessionStorage, FOLD_DECLINED_KEY, state.foldDeclined);
 }
 
 function railIsOpen(state: RailState, pathname: string): boolean {
@@ -70,14 +61,9 @@ export function useRailOpenState() {
 
   const onOpenChange = useCallback(
     (next: boolean) => {
-      const { foldedForChat, foldDeclined } = useRail.getState();
       startStructuralMove(next ? 'enter' : 'exit');
-      update({
-        preference: !next,
-        foldedForChat: false,
-        foldDeclined: foldDeclined || (next && foldedForChat),
-        openedOn: pathname,
-      });
+      // A choice made while docked stands until the chat docks again.
+      update({ preference: !next, foldedForChat: false, openedOn: pathname });
     },
     [pathname],
   );
@@ -89,52 +75,36 @@ export function railOpenNow(): boolean {
   return railIsOpen(useRail.getState(), window.location.pathname);
 }
 
-// Whether the rail will still be open once the chat docks, for previews.
-export function railOpenAfterDock(): boolean {
-  const open = railOpenNow();
-  if (!open || chatPanelIsDocked(useChatPanel.getState())) {
-    return open;
-  }
-  return !shouldFoldForDock();
-}
-
-function shouldFoldForDock(): boolean {
-  const viewport = window.innerWidth;
-  return (
-    !useRail.getState().foldDeclined &&
-    viewport >= DOCK_BREAKPOINT &&
-    dockCrampsPage(viewport, true)
-  );
-}
-
-function foldIfCramped() {
-  if (
-    chatPanelIsDocked(useChatPanel.getState()) &&
-    !useRail.getState().foldedForChat &&
-    railOpenNow() &&
-    shouldFoldForDock()
-  ) {
+// Docking the chat always folds the rail, in step with the dock opening: on
+// open, on a drop into a snap zone, on a dock from the menu. The user may open
+// it again while docked; the next dock folds it again. Undocking or closing
+// gives back what the user had. A reload keeps whatever the rail was.
+function foldForDock() {
+  if (window.innerWidth >= DOCK_BREAKPOINT && railOpenNow()) {
     update({ foldedForChat: true });
   }
 }
 
-// Docking the chat folds the sidebar once, only when the page would get
-// cramped. Undocking or closing gives back what the user had.
 useChatPanel.subscribe((chat, prev) => {
   const docked = chatPanelIsDocked(chat);
-  if (docked === chatPanelIsDocked(prev)) {
-    return;
-  }
-  if (docked) {
-    foldIfCramped();
-  } else if (useRail.getState().foldedForChat) {
+  const wasDocked = chatPanelIsDocked(prev);
+  if (docked && (!wasDocked || chat.docks !== prev.docks)) {
+    foldForDock();
+  } else if (!docked && wasDocked && useRail.getState().foldedForChat) {
     update({ foldedForChat: false });
   }
 });
-// The same holds when a docked chat is restored, or the window shrinks under
-// it. Once the user re-opens the sidebar, none of this applies again.
-foldIfCramped();
-window.addEventListener('resize', foldIfCramped);
+
+// Below the dock breakpoint a docked chat floats, so it only docks, and
+// folds, once the window widens past it.
+let wasWide = window.innerWidth >= DOCK_BREAKPOINT;
+window.addEventListener('resize', () => {
+  const wide = window.innerWidth >= DOCK_BREAKPOINT;
+  if (wide && !wasWide && chatPanelIsDocked(useChatPanel.getState())) {
+    foldForDock();
+  }
+  wasWide = wide;
+});
 
 function readFlag(storage: Storage, key: string): boolean {
   try {
@@ -155,6 +125,5 @@ function writeFlag(storage: Storage, key: string, value: boolean) {
 type RailState = {
   preference: boolean;
   foldedForChat: boolean;
-  foldDeclined: boolean;
   openedOn: string | null;
 };

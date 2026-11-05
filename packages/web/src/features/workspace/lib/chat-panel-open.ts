@@ -55,6 +55,7 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
   return {
     ...readSaved(),
     gesture: 'idle',
+    docks: 0,
     chatMounted: false,
     mountChat: () => set({ chatMounted: true }),
     setOpen: (open) => {
@@ -64,6 +65,7 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
     toggle: () => get().setOpen(!get().open),
     dock: (side) => {
       startStructuralMove('enter');
+      set({ docks: get().docks + 1 });
       update({ open: true, mode: side });
     },
     floatAt: (position) => {
@@ -101,6 +103,9 @@ type SavedChatPanel = {
 
 type ChatPanelState = SavedChatPanel & {
   gesture: ChatGesture;
+  // Counts explicit docks (menu, drop), so re-docking while already docked
+  // still reads as a dock. Not saved.
+  docks: number;
   chatMounted: boolean;
   mountChat: () => void;
   setOpen: (open: boolean) => void;
