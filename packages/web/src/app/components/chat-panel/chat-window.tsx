@@ -46,6 +46,7 @@ import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import { ChatChrome } from './chat-chrome';
+import { FollowAlongController } from './follow-along-controller';
 
 // The floating card's size until the user resizes it, and how small it may get.
 export const FLOAT_DEFAULT: FloatSize = { width: 400, height: 640 };
@@ -222,12 +223,17 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
 // page's layout only hosts the node it renders into.
 export function ChatChromeHost() {
   const mounted = useChatPanel((s) => s.chatMounted);
-  if (!mounted) {
-    return null;
-  }
-  return createPortal(
-    <ChatChrome onDragStart={(event) => dragStartHandler.current?.(event)} />,
-    getChatNode(),
+  return (
+    <>
+      <FollowAlongController />
+      {mounted &&
+        createPortal(
+          <ChatChrome
+            onDragStart={(event) => dragStartHandler.current?.(event)}
+          />,
+          getChatNode(),
+        )}
+    </>
   );
 }
 
@@ -1003,6 +1009,8 @@ function getChatNode(): HTMLDivElement {
   if (!chatNode) {
     chatNode = document.createElement('div');
     chatNode.className = 'flex h-full w-full flex-col';
+    // Lets follow-along tell typing in the chat from typing in the page.
+    chatNode.dataset.chatRoot = '';
   }
   return chatNode;
 }
