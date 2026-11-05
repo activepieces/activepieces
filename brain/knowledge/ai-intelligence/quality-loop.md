@@ -6,7 +6,7 @@ icon: 🔁
 
 How the AI team learns what goes wrong in real chats, turns it into tests, and proves a fix worked. The full plan is the "AI quality loop plan" document in Linear project P-AI-339; tickets AI-182 to AI-200 build it.
 
-**Quality review**: the Mon/Wed/Fri read of 20 real chat turns in a PostHog review queue, run with `/ai-task quality`. 10 random (labeled blind) and 10 that built a flow which was never published.
+**Quality review**: the Sun/Tue/Thu read of 20 real chat turns in a PostHog review queue, run with `/ai-task quality`. 10 random (labeled blind) and 10 that built a flow which was never published.
 **Blind label**: a human pass/fail plus problem type given without seeing any judge verdict or draft. Only blind labels can check a judge.
 **Problem type**: a named, recurring way chat fails, kept as a PostHog score definition. One Linear ticket per type.
 **Judge**: a PostHog online evaluator that scores every trace. We trust it only once its true-positive and true-negative rates hold on 20+ labeled fails and 20+ labeled passes. _Avoid_: "agreement %" as the trust measure.

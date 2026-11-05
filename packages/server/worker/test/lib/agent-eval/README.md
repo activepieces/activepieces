@@ -70,7 +70,7 @@ Regression cases live in `fixtures/*.json` — committed, so they're the team's 
 
 The fixtures here are hand-written and public. Tests built from real customer chats are **private**: they live in PostHog Datasets, never in this repo, `calibration/` or the CDN. The repo is open source, so a committed transcript is a published one.
 
-How real chats get here, and how a PR gets scored against them, is the AI quality loop: the "AI quality loop plan" document in Linear project P-AI-339, and the brain page `brain/knowledge/ai-intelligence/quality-loop.md`. The Mon/Wed/Fri review runs through `/ai-task quality`.
+How real chats get here, and how a PR gets scored against them, is the AI quality loop: the "AI quality loop plan" document in Linear project P-AI-339, and the brain page `brain/knowledge/ai-intelligence/quality-loop.md`. The Sun/Tue/Thu review runs through `/ai-task quality`.
 
 ## Nightly history
 
