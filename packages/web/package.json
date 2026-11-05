@@ -69,7 +69,7 @@
     "http-status-codes": "2.2.0",
     "i18next": "23.13.0",
     "i18next-browser-languagedetector": "8.0.0",
-    "i18next-http-backend": "3.0.5",
+    "i18next-http-backend": "4.0.2",
     "i18next-icu": "2.3.0",
     "input-otp": "1.4.2",
     "jszip": "3.10.1",
