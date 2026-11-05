@@ -58,7 +58,10 @@ export function SelfServeTrialDialog() {
   const open = !isNil(payload);
   const view = dialogViewForStartResult({
     result: startedTrial?.state,
-    shouldOfferTrial: shouldOfferTrial || trialStartFailed,
+    shouldOfferTrial:
+      (shouldOfferTrial &&
+        selfServeTrialFeatures.isIncludedInTrial(payload?.featureKey)) ||
+      trialStartFailed,
   });
   const busy = isStartingTrial;
   const close = () => {
@@ -84,7 +87,7 @@ export function SelfServeTrialDialog() {
           />
         );
       case DialogView.STARTED:
-        return <TrialStarted onClose={close} />;
+        return <TrialStarted endsAt={startedTrial?.endsAt} onClose={close} />;
       case DialogView.ALREADY_USED:
         return <TrialAlreadyUsed />;
       case DialogView.NOT_STARTED:
@@ -145,10 +148,18 @@ export function SelfServeTrialDialog() {
   );
 }
 
-export function TrialTimeline({ started }: { started: boolean }) {
+export function TrialTimeline({
+  started,
+  endsAt,
+}: {
+  started: boolean;
+  endsAt?: string | null;
+}) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: info } = billingQueries.usePlatformSubscription(platform.id);
-  const endDate = dayjs().add(SELF_SERVE_TRIAL_DAYS, 'day');
+  const endDate = isNil(endsAt)
+    ? dayjs().add(SELF_SERVE_TRIAL_DAYS, 'day')
+    : dayjs(endsAt);
   const steps = [
     started
       ? {
