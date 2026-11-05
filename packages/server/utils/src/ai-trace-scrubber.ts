@@ -69,34 +69,40 @@ function scrubAttribute({ key, value }: { key: string, value: AttributeValue | u
 function scrubText({ text }: { text: string }): string {
     const pieces: string[] = []
     let cursor = 0
+    let budget = text.length * SCAN_BUDGET_PER_CHAR
     let start = nextOpeningBracket({ text, from: 0 })
     while (start !== -1) {
-        const embedded = parseJsonAt({ text, start })
+        const scan = closingBracketIndex({ text, start, budget })
+        budget -= scan.scanned
+        if (budget <= 0) {
+            pieces.push(text.slice(cursor, start), REDACTED)
+            return pieces.join('')
+        }
+        const embedded = scan.close === -1 ? undefined : parseJson({ text: text.slice(start, scan.close + 1) })
         if (embedded === undefined) {
             start = nextOpeningBracket({ text, from: start + 1 })
             continue
         }
         pieces.push(text.slice(cursor, start), JSON.stringify(scrubJson({ value: embedded.value })))
-        cursor = embedded.end
+        cursor = scan.close + 1
         start = nextOpeningBracket({ text, from: cursor })
     }
     pieces.push(text.slice(cursor))
     return pieces.join('')
 }
 
-function parseJsonAt({ text, start }: { text: string, start: number }): { value: unknown, end: number } | undefined {
-    const close = closingBracketIndex({ text, start })
-    if (close === -1) {
-        return undefined
-    }
-    const { data, error } = tryCatchSync((): unknown => JSON.parse(text.slice(start, close + 1)))
-    return error ? undefined : { value: data, end: close + 1 }
+function parseJson({ text }: { text: string }): { value: unknown } | undefined {
+    const { data, error } = tryCatchSync((): unknown => JSON.parse(text))
+    return error ? undefined : { value: data }
 }
 
-function closingBracketIndex({ text, start }: { text: string, start: number }): number {
+function closingBracketIndex({ text, start, budget }: { text: string, start: number, budget: number }): { close: number, scanned: number } {
     let depth = 0
     let inString = false
     for (let index = start; index < text.length; index++) {
+        if (index - start >= budget) {
+            return { close: -1, scanned: index - start }
+        }
         const char = text[index]
         if (inString) {
             if (char === '\\') {
@@ -116,11 +122,11 @@ function closingBracketIndex({ text, start }: { text: string, start: number }): 
         else if (char === '}' || char === ']') {
             depth--
             if (depth === 0) {
-                return index
+                return { close: index, scanned: index - start + 1 }
             }
         }
     }
-    return -1
+    return { close: -1, scanned: text.length - start }
 }
 
 function nextOpeningBracket({ text, from }: { text: string, from: number }): number {
@@ -156,6 +162,8 @@ function isStringOrEmpty(item: unknown): item is string | null | undefined {
 }
 
 const REDACTED = '[REDACTED]'
+
+const SCAN_BUDGET_PER_CHAR = 10
 
 const SENSITIVE_KEY_PARTS = ['token', 'password', 'passwd', 'secret', 'apikey', 'authorization', 'credential', 'privatekey', 'accesskey', 'cookie']
 

@@ -49,6 +49,20 @@ describe('aiTraceScrubber', () => {
         expect(embedded).toEqual({ ...output, access_token: '[REDACTED]' })
     })
 
+    it('stays fast on bracket-heavy text and fails closed instead of leaking', () => {
+        const hostile = `${'['.repeat(100_000)} {"token":"hidden-after-brackets"}`
+        const startedAt = Date.now()
+
+        const span = exportOneSpan((tracer) => {
+            const s = tracer.startSpan('invoke_agent')
+            s.setAttribute('gen_ai.input.messages', hostile)
+            s.end()
+        })
+
+        expect(Date.now() - startedAt).toBeLessThan(1000)
+        expect(String(span.attributes['gen_ai.input.messages'])).not.toContain('hidden-after-brackets')
+    })
+
     it('redacts sensitive attributes by name and keeps numbers and plain text', () => {
         const span = exportOneSpan((tracer) => {
             const s = tracer.startSpan('invoke_agent')
