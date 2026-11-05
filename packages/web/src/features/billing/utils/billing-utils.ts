@@ -120,7 +120,7 @@ function scheduledCapNotice(info: PlatformBillingInformation): string {
 }
 
 function resolveCreditsReset({
-  dateFormat,
+  dateFormat = BILLING_DATE_FORMAT,
   ...params
 }: CreditsResetParams & { dateFormat?: string }): CreditsResetLine | null {
   const reset = resolveResetMoment(params);
