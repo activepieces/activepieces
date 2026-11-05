@@ -339,11 +339,11 @@ const USAGE_RECHECK_EVERY = 10
 const DISK_PRESSURE_SWEEP_LOCK_KEY = 'disk-pressure-sweep'
 const EVICTION_PAUSE_MS = 1000
 
-export const ACTION_RUN_CACHE_ACTIVE_WINDOW_MS = 15 * 60 * 1000
+export const ACTION_RUN_CACHE_ACTIVE_WINDOW_MS = 24 * 60 * 60 * 1000
 export const ACTION_RUN_CACHE_MAX_DIRS = 200
 export const CODE_CACHE_SWEEP_INTERVAL_MS = 30 * 60 * 1000
 export const CODE_CACHE_FIRST_SWEEP_DELAY_MS = 60 * 1000
-export const DISK_EVICTION_THRESHOLD_PERCENT = 80
+export const DISK_EVICTION_THRESHOLD_PERCENT = 90
 
 type CacheLocks = ReturnType<typeof diskLock>
 

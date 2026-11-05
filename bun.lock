@@ -3249,7 +3249,7 @@
     },
     "packages/pieces/community/filetopdf": {
       "name": "@activepieces/piece-filetopdf",
-      "version": "0.0.9",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7284,7 +7284,7 @@
     },
     "packages/pieces/community/pocketbase": {
       "name": "@activepieces/piece-pocketbase",
-      "version": "0.0.6",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
