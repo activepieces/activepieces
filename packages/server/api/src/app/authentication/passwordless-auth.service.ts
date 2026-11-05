@@ -2,6 +2,7 @@ import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { ApFlagId, OtpType, TelemetryEvent, TelemetryEventName, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { distributedLock } from '../database/redis-connections'
 import { flagService } from '../flags/flag.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
@@ -140,15 +141,22 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         const writeNames = async (): Promise<void> => {
             await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
         }
-        if (await userInvitationsService(log).hasAnyAcceptedInvitationsForEmail({ email: identity.email })) {
-            await writeNames()
-            await userInvitationsService(log).provisionUserInvitation({ email: identity.email })
-            const invitedPlatformId = await authenticationService(log).selectCloudSignInPlatformId({ identityId })
-            if (!isNil(invitedPlatformId)) {
-                const { user } = await userService(log).getOrCreateWithProject({ identity, platformId: invitedPlatformId })
-                const response = await authenticationUtils(log).getProjectAndToken({ userId: user.id, platformId: invitedPlatformId, projectId: null })
-                return { response, signedUp: true, provider: identity.provider }
-            }
+        const invitedPlatformId = await distributedLock(log).runExclusive({
+            key: `create-platform-${identityId}`,
+            timeoutInSeconds: 30,
+            fn: async () => {
+                if (!await userInvitationsService(log).hasAnyAcceptedInvitationsForEmail({ email: identity.email })) {
+                    return null
+                }
+                await writeNames()
+                await userInvitationsService(log).provisionUserInvitation({ email: identity.email })
+                return authenticationService(log).selectCloudSignInPlatformId({ identityId })
+            },
+        })
+        if (!isNil(invitedPlatformId)) {
+            const { user } = await userService(log).getOrCreateWithProject({ identity, platformId: invitedPlatformId })
+            const response = await authenticationUtils(log).getProjectAndToken({ userId: user.id, platformId: invitedPlatformId, projectId: null })
+            return { response, signedUp: true, provider: identity.provider }
         }
         const { response, provisioned } = await platformService(log).createPlatformWithProject({
             identityId,
