@@ -129,15 +129,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
         'https://www.activepieces.com/docs/admin-guide/guides/event-streaming',
     },
   },
-  workerGroups: {
-    isLocked: (plan) => !plan.workerGroupsEnabled,
-    teaser: {
-      featureKey: 'DEDICATED_WORKERS',
-      title: 'Unlock Worker Groups',
-      description:
-        'Reserve dedicated worker capacity for specific projects so a busy project never slows down the rest',
-    },
-  },
   pieces: {
     isLocked: (plan) => !plan.managePiecesEnabled,
     teaser: {
@@ -168,7 +159,6 @@ type PlanFeature =
   | 'secretManagers'
   | 'auditLogs'
   | 'eventStreaming'
-  | 'workerGroups'
   | 'pieces'
   | 'aiProviders';
 
