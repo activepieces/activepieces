@@ -86,14 +86,14 @@ const Settings2Icon = forwardRef<Settings2IconHandle, Settings2IconProps>(
           <path d="M19 7h-9" />
           <motion.circle
             animate={controls}
-            cx="17"
+            initial="normal"
             cy="17"
             r="3"
             variants={bottomCircleVariants}
           />
           <motion.circle
             animate={controls}
-            cx="7"
+            initial="normal"
             cy="7"
             r="3"
             variants={topCircleVariants}
