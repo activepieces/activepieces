@@ -174,7 +174,13 @@ async function enable({
     };
     await store.put(STORE_KEY, state, StoreScope.FLOW);
   } catch {
-    await remove({ apiKey, id: webhook.id, profileId: pending.profileId });
+    try {
+      await remove({ apiKey, id: webhook.id, profileId: pending.profileId });
+    } catch {
+      throw new Error(
+        'Could not save the Sent webhook signing secret or remove the external webhook. The pending subscription record was retained; retry disabling the flow to reconcile and remove it before enabling again.'
+      );
+    }
     await store.delete(STORE_KEY, StoreScope.FLOW);
     throw new Error(
       'Could not save the Sent webhook signing secret. The external webhook was removed; enable the flow again.'

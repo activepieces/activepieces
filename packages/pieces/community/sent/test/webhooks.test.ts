@@ -224,6 +224,65 @@ describe('webhook registration and cleanup', () => {
     );
     expect(http.mock.calls[1][0].method).toBe(HttpMethod.DELETE);
   });
+  it('retains recoverable state when both secret storage and compensation fail', async () => {
+    const http = respond({ data: webhookData(), status: 201 });
+    const ctx = triggerContext<typeof newMessageReceived.props>({
+      profile_id: 'original-profile',
+    });
+    const originalPut = ctx.store.put.bind(ctx.store);
+    vi.spyOn(ctx.store, 'put')
+      .mockImplementationOnce(originalPut)
+      .mockRejectedValueOnce(new Error('storage unavailable'));
+    http
+      .mockResolvedValueOnce({
+        status: 201,
+        headers: {},
+        body: { success: true, data: webhookData() },
+      })
+      .mockRejectedValueOnce(failure({ status: 500 }));
+    await expect(newMessageReceived.onEnable(ctx)).rejects.toThrow(
+      'retry disabling the flow'
+    );
+    const state = await ctx.store.get<WebhookState>(STORE_KEY, StoreScope.FLOW);
+    expect(state).toMatchObject({
+      kind: 'pending',
+      profileId: 'original-profile',
+    });
+    if (!state) throw new Error('Missing recovery state');
+    expect(JSON.stringify(state)).not.toContain(SIGNING_SECRET);
+    ctx.payload = signedPayload({ body: newMessageReceived.sampleData });
+    await expect(newMessageReceived.run(ctx)).rejects.toThrow('not registered');
+    ctx.propsValue.profile_id = 'changed-profile';
+    http
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: {},
+        body: {
+          success: true,
+          data: {
+            webhooks: [
+              { ...webhookData(), display_name: 'unrelated' },
+              { ...webhookData(), display_name: state.request.display_name },
+            ],
+            pagination: { has_more: false },
+          },
+        },
+      })
+      .mockResolvedValueOnce({ status: 204, headers: {}, body: undefined });
+    await newMessageReceived.onDisable(ctx);
+    expect(http.mock.calls.map(([request]) => request.method)).toEqual([
+      HttpMethod.POST,
+      HttpMethod.DELETE,
+      HttpMethod.GET,
+      HttpMethod.DELETE,
+    ]);
+    expect(http.mock.calls[3][0].headers?.['x-profile-id']).toBe(
+      'original-profile'
+    );
+    expect(await ctx.store.get(STORE_KEY, StoreScope.FLOW)).toBeNull();
+    await newMessageReceived.onDisable(ctx);
+    expect(http).toHaveBeenCalledTimes(4);
+  });
   it('reconciles a lost creation response when the flow is disabled', async () => {
     const http = respond({ data: webhookData(), status: 201 });
     http.mockRejectedValueOnce(new Error('timeout'));
@@ -258,6 +317,80 @@ describe('webhook registration and cleanup', () => {
 });
 
 describe('verified trigger output', () => {
+  it.each([
+    ['PENDING', 'pending'],
+    ['APPROVED', 'approved'],
+    ['REJECTED', 'rejected'],
+    ['PAUSED', 'paused'],
+    ['DISABLED', 'disabled'],
+    ['DELETED', 'deleted'],
+    ['PENDING_DELETION', 'deleted'],
+    ['CATEGORY_UPDATED', 'category_updated'],
+    ['QUALITY_UPDATED', 'quality_updated'],
+  ])(
+    'matches a selected legacy template subtype for %s',
+    async (status, subtype) => {
+      respond({ data: webhookData(), status: 201 });
+      const ctx = triggerContext<typeof newEvent.props>({
+        profile_id: undefined,
+        events: [`templates.${subtype}`],
+      });
+      await newEvent.onEnable(ctx);
+      const body = {
+        field: 'templates',
+        timestamp: '2026-01-15T10:30:00Z',
+        payload: { status, template_id: 'fake-template' },
+      };
+      const signed = signedPayload({ body });
+      signed.headers['X-Webhook-Event-Type'] = 'templates';
+      ctx.payload = signed;
+      expect(await newEvent.run(ctx)).toEqual([body]);
+    }
+  );
+  it.each([
+    { field: 'templates', payload: { status: 'UNKNOWN' } },
+    { field: 'templates', payload: { status: 'REJECTED' } },
+    {
+      field: 'templates',
+      event: 'templates.rejected',
+      payload: { status: 'APPROVED' },
+    },
+    { field: 'message', payload: { status: 'APPROVED' } },
+    { field: 'templates', payload: {} },
+  ])(
+    'does not promote an unrelated signed body to templates.approved: %j',
+    async (envelope) => {
+      respond({ data: webhookData(), status: 201 });
+      const ctx = triggerContext<typeof newEvent.props>({
+        profile_id: undefined,
+        events: ['templates.approved'],
+      });
+      await newEvent.onEnable(ctx);
+      const body = { ...envelope, timestamp: '2026-01-15T10:30:00Z' };
+      const signed = signedPayload({ body });
+      signed.headers['X-Webhook-Event-Type'] = 'templates.approved';
+      ctx.payload = signed;
+      expect(await newEvent.run(ctx)).toEqual([]);
+    }
+  );
+  it('rejects a mismatched header for a selected legacy template subtype', async () => {
+    respond({ data: webhookData(), status: 201 });
+    const ctx = triggerContext<typeof newEvent.props>({
+      profile_id: undefined,
+      events: ['templates.approved'],
+    });
+    await newEvent.onEnable(ctx);
+    ctx.payload = signedPayload({
+      body: {
+        field: 'templates',
+        timestamp: '2026-01-15T10:30:00Z',
+        payload: { status: 'APPROVED' },
+      },
+    });
+    await expect(newEvent.run(ctx)).rejects.toThrow(
+      'event header does not match'
+    );
+  });
   it.each(['message.delivered', ''])(
     'rejects an event header that differs from the signed body: %s',
     async (eventHeader) => {

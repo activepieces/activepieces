@@ -36,6 +36,10 @@ Custom API Call is restricted to `https://api.sent.dm/v3/`. Redirects must remai
 
 Configure a publicly reachable HTTPS webhook URL in Activepieces before enabling either flow. Enabling registers the subscription; enabling an unchanged subscription reuses it. Disabling removes the subscription. If cleanup fails, the subscription state is retained so disabling can be retried.
 
+If saving a new webhook's signing secret and deleting that webhook both fail, registration fails and incoming events are rejected. The pending record is retained. Retry disabling the flow to find and remove only the subscription matching its unique name and callback URL, then enable it again after storage is healthy.
+
+New Event also recognizes legacy template envelopes without `event` by mapping the signed `payload.status` to the [published template subtypes](https://docs.sent.dm/start/webhooks/event-types). Unknown statuses match only the unfiltered `templates` parent. The original envelope is returned unchanged, and the unsigned event header never determines the selected subtype.
+
 The piece verifies the raw request body with HMAC-SHA256, checks the webhook ID and a five-minute timestamp tolerance, and checks that the event header matches the signed body. Invalid signatures are rejected. Signing secrets are stored encrypted using a key derived from the connection API key. Disable webhook flows before rotating that key, then reconnect and enable the flows again.
 
 Signature verification is not event deduplication: a valid delivery can be repeated within the timestamp window. Downstream flows that require once-only processing should deduplicate using the event's stable identifier before performing side effects.

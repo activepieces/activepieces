@@ -70,9 +70,30 @@ function matches({
     typeof body['timestamp'] !== 'string'
   )
     return false;
+  const templateSubtypes: Record<string, string> = {
+    PENDING: 'pending',
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+    PAUSED: 'paused',
+    DISABLED: 'disabled',
+    DELETED: 'deleted',
+    PENDING_DELETION: 'deleted',
+    CATEGORY_UPDATED: 'category_updated',
+    QUALITY_UPDATED: 'quality_updated',
+  };
+  const status = body['payload']['status'];
+  const subtype =
+    typeof status === 'string' && Object.hasOwn(templateSubtypes, status)
+      ? templateSubtypes[status]
+      : undefined;
+  const eventType =
+    body['event'] ??
+    (body['field'] === 'templates' && subtype
+      ? `templates.${subtype}`
+      : undefined);
   return selected.some((event) =>
     event.includes('.')
-      ? body['event'] === event && body['field'] === event.split('.')[0]
+      ? eventType === event && body['field'] === event.split('.')[0]
       : body['field'] === event
   );
 }

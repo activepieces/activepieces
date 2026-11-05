@@ -126,8 +126,9 @@ export function failure({
 }
 
 export const API_KEY = 'test-only-key-with-no-prefix-validation';
-export const SIGNING_SECRET =
-  'whsec_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=';
+export const SIGNING_SECRET = `whsec_${Buffer.from(
+  Array.from({ length: 32 }, (_, index) => index)
+).toString('base64')}`;
 export const propertyContext: PropertyContext = baseContext();
 export const authServer = {
   apiUrl: 'https://activepieces.example/api/',
