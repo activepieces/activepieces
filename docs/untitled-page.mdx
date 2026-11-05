@@ -152,12 +152,16 @@ For example if you need just the lead name, do not pass in data from the entire 
 
 ![Data Loading Right](/images/data-loading-right.png "Data Loading Right")
 
-### **2. Work in Smaller Groups**
+### **2.**  Work in Smaller Groups
 
 Instead of handling 50,000 rows in one go:
 
-- Use the step's page or limit options (these let you fetch records a few hundred at a time).
-- Run the flow on a schedule (for example, every 15 minutes) and handle one group each time.
+- **Fetch fewer records at a time.** Click the step that fetches your data and look for a field like **Limit**, **Max Results** or **Page Size** (the name depends on the app). Set it to a smaller number, for example 200.
+- **Run the flow on a schedule** (for example, every 15 minutes) and handle one group each time.
+
+**Example:** In Google Sheets, use the **Get Next Rows** action and set **Group Size** to 200. It remembers where it stopped, so each run picks up the next 200 rows.
+
+If a step has no limit field, use its filters to bring in less data
 
 ### **3. Move Heavy Loop Work Into a Separate Flow**
 
