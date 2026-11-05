@@ -30,6 +30,25 @@ describe('aiTraceScrubber', () => {
         expect(JSON.parse(parsed.content[0].text).token).toBe('[REDACTED]')
     })
 
+    it('redacts JSON embedded in decorated piece action text, keeping the text around it', () => {
+        const output = { workspace: 'acme', access_token: 'hidden-oauth', items: [{ id: 1, note: 'a [bracket] in text' }] }
+        const actionText = `✅ Connect CRM completed (run run_1).\n\n${JSON.stringify(output)}\n\n(Long values above end with "…[truncated]" — shortened, not missing.)`
+        const toolResult = { content: [{ type: 'text', text: actionText }] }
+
+        const span = exportOneSpan((tracer) => {
+            const s = tracer.startSpan('execute_tool ap_run_action')
+            s.setAttribute('gen_ai.tool.call.result', JSON.stringify(toolResult))
+            s.end()
+        })
+
+        const text: string = JSON.parse(String(span.attributes['gen_ai.tool.call.result'])).content[0].text
+        expect(text).not.toContain('hidden-oauth')
+        expect(text.startsWith('✅ Connect CRM completed (run run_1).\n\n')).toBe(true)
+        expect(text.endsWith('shortened, not missing.)')).toBe(true)
+        const embedded = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1))
+        expect(embedded).toEqual({ ...output, access_token: '[REDACTED]' })
+    })
+
     it('redacts sensitive attributes by name and keeps numbers and plain text', () => {
         const span = exportOneSpan((tracer) => {
             const s = tracer.startSpan('invoke_agent')

@@ -67,11 +67,66 @@ function scrubAttribute({ key, value }: { key: string, value: AttributeValue | u
 }
 
 function scrubText({ text }: { text: string }): string {
-    if (!looksLikeJson(text)) {
-        return text
+    const pieces: string[] = []
+    let cursor = 0
+    let start = nextOpeningBracket({ text, from: 0 })
+    while (start !== -1) {
+        const embedded = parseJsonAt({ text, start })
+        if (embedded === undefined) {
+            start = nextOpeningBracket({ text, from: start + 1 })
+            continue
+        }
+        pieces.push(text.slice(cursor, start), JSON.stringify(scrubJson({ value: embedded.value })))
+        cursor = embedded.end
+        start = nextOpeningBracket({ text, from: cursor })
     }
-    const { data, error } = tryCatchSync((): unknown => JSON.parse(text))
-    return error ? text : JSON.stringify(scrubJson({ value: data }))
+    pieces.push(text.slice(cursor))
+    return pieces.join('')
+}
+
+function parseJsonAt({ text, start }: { text: string, start: number }): { value: unknown, end: number } | undefined {
+    const close = closingBracketIndex({ text, start })
+    if (close === -1) {
+        return undefined
+    }
+    const { data, error } = tryCatchSync((): unknown => JSON.parse(text.slice(start, close + 1)))
+    return error ? undefined : { value: data, end: close + 1 }
+}
+
+function closingBracketIndex({ text, start }: { text: string, start: number }): number {
+    let depth = 0
+    let inString = false
+    for (let index = start; index < text.length; index++) {
+        const char = text[index]
+        if (inString) {
+            if (char === '\\') {
+                index++
+            }
+            else if (char === '"') {
+                inString = false
+            }
+            continue
+        }
+        if (char === '"') {
+            inString = true
+        }
+        else if (char === '{' || char === '[') {
+            depth++
+        }
+        else if (char === '}' || char === ']') {
+            depth--
+            if (depth === 0) {
+                return index
+            }
+        }
+    }
+    return -1
+}
+
+function nextOpeningBracket({ text, from }: { text: string, from: number }): number {
+    const opening = /[[{]/g
+    opening.lastIndex = from
+    return opening.exec(text)?.index ?? -1
 }
 
 function scrubJson({ value }: { value: unknown }): unknown {
@@ -94,11 +149,6 @@ function holdsSecret({ key, value }: { key: string, value: unknown }): boolean {
 function isSensitiveKey(key: string): boolean {
     const normalized = key.toLowerCase().replace(/[^a-z]/g, '')
     return SENSITIVE_KEY_PARTS.some((part) => normalized.includes(part))
-}
-
-function looksLikeJson(text: string): boolean {
-    const trimmed = text.trimStart()
-    return trimmed.startsWith('{') || trimmed.startsWith('[')
 }
 
 function isStringOrEmpty(item: unknown): item is string | null | undefined {
