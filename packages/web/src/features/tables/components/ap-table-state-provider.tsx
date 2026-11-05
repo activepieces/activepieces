@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import { Field, Table, PopulatedRecord } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -7,6 +7,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -16,6 +17,10 @@ import { useStore } from 'zustand';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { buttonVariants } from '@/components/ui/button';
+import {
+  followAlong,
+  useOnFollowUpdate,
+} from '@/features/chat/lib/follow/follow-along';
 import {
   TableState,
   ApTableStore,
@@ -110,6 +115,12 @@ export function ApTableStateProvider({
     gcTime: 0,
   });
 
+  useFollowTableUpdates({
+    tableId,
+    records: records?.data,
+    rebuild: () => setRefreshKey((key) => key + 1),
+  });
+
   // rebuilds the table store from freshly fetched server state without
   // reloading the document (a full reload breaks the embed SDK handshake
   // inside an iframe)
@@ -172,6 +183,72 @@ export function ApTableStateProvider({
         </TableStateProviderWithTable>
       </TableLockProvider>
     </TableRefreshContext.Provider>
+  );
+}
+
+// While the chat edits this table: once a tool call's queries are fresh,
+// rebuild the store from them (like a take-over refresh) and light up the
+// rows and cells it added or changed. Waits while the user types in a cell.
+function useFollowTableUpdates({
+  tableId,
+  records,
+  rebuild,
+}: {
+  tableId: string | undefined;
+  records: PopulatedRecord[] | undefined;
+  rebuild: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const seen = useRef<PopulatedRecord[] | null>(null);
+  useEffect(() => {
+    if (seen.current === null && records) seen.current = records;
+  }, [records]);
+  useEffect(() => {
+    seen.current = null;
+  }, [tableId]);
+
+  useOnFollowUpdate(tableId ? { kind: 'table', id: tableId } : null, () => {
+    const apply = () => {
+      const fresh = queryClient.getQueryData<SeekPage<PopulatedRecord>>([
+        'records',
+        tableId,
+      ])?.data;
+      if (!fresh) return;
+      const before = new Map((seen.current ?? []).map((r) => [r.id, r]));
+      seen.current = fresh;
+      rebuild();
+      followAlong.flash(
+        fresh.flatMap((record) => {
+          const old = before.get(record.id);
+          if (!old) return [`table-row:${record.id}`];
+          return Object.entries(record.cells)
+            .filter(
+              ([fieldId, cell]) => old.cells[fieldId]?.value !== cell.value,
+            )
+            .map(([fieldId]) => `table-cell:${record.id}:${fieldId}`);
+        }),
+      );
+    };
+    if (!isEditingCell()) {
+      apply();
+      return;
+    }
+    const timer = setInterval(() => {
+      if (isEditingCell()) return;
+      clearInterval(timer);
+      apply();
+    }, 400);
+  });
+}
+
+function isEditingCell(): boolean {
+  const active = document.activeElement;
+  return (
+    active instanceof HTMLElement &&
+    active.closest('.rdg') !== null &&
+    (active instanceof HTMLInputElement ||
+      active instanceof HTMLTextAreaElement ||
+      active.isContentEditable)
   );
 }
 

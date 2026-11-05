@@ -1,12 +1,13 @@
 import { Permission } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import DataGrid, { DataGridHandle } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
 
 import { useTheme } from '@/components/providers/theme-provider';
+import { useFollowAlong } from '@/features/chat/lib/follow/follow-along';
 import {
   ApTableFooter,
   ApTableHeader,
@@ -105,8 +106,23 @@ const ApTableEditorPage = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [selectedCell]);
 
-  const columns = useTableColumns(createEmptyRecord);
+  const baseColumns = useTableColumns(createEmptyRecord);
   const rows = mapRecordsToRows(records, fields);
+  const flash = useFollowFlashes(gridRef);
+  const columns = useMemo(
+    () =>
+      baseColumns.map((column) => ({
+        ...column,
+        cellClass: (row: Row) =>
+          cn(
+            typeof column.cellClass === 'function'
+              ? column.cellClass(row)
+              : column.cellClass,
+            flash.cell(row.id, column.key) && 'ap-follow-flash',
+          ),
+      })),
+    [baseColumns, flash],
+  );
 
   const handleColumnsReorder = (sourceKey: string, targetKey: string) => {
     const sourceIndex = fields.findIndex((field) => field.uuid === sourceKey);
@@ -139,6 +155,9 @@ const ApTableEditorPage = () => {
               columns={columns}
               rows={rows}
               rowKeyGetter={(row: Row) => row.id}
+              rowClass={(row: Row) =>
+                flash.row(row.id) ? 'ap-follow-flash-row' : undefined
+              }
               selectedRows={selectedRecords}
               onSelectedRowsChange={setSelectedRecords}
               onColumnsReorder={handleColumnsReorder}
@@ -163,6 +182,60 @@ const ApTableEditorPage = () => {
     </div>
   );
 };
+
+// What the chat just changed in this table (see useFollowTableUpdates), by
+// grid row and column, and the first such row scrolled into view.
+function useFollowFlashes(gridRef: React.RefObject<DataGridHandle | null>) {
+  const flashes = useFollowAlong((state) => state.flashes);
+  const [records, fields, serverRecords, serverFields] = useTableState(
+    (state) => [
+      state.records,
+      state.fields,
+      state.serverRecords,
+      state.serverFields,
+    ],
+  );
+  const lit = useMemo(() => {
+    const rows = new Set<string>();
+    const cells = new Set<string>();
+    let firstRowIdx: number | null = null;
+    records.forEach((record, index) => {
+      const recordId = serverRecords[index]?.id;
+      if (!recordId) return;
+      let touched = false;
+      if (`table-row:${recordId}` in flashes) {
+        rows.add(record.uuid);
+        touched = true;
+      }
+      serverFields.forEach((field, fieldIndex) => {
+        const column = fields[fieldIndex]?.uuid;
+        if (column && `table-cell:${recordId}:${field.id}` in flashes) {
+          cells.add(`${record.uuid}:${column}`);
+          touched = true;
+        }
+      });
+      if (touched && firstRowIdx === null) firstRowIdx = index;
+    });
+    return {
+      row: (rowId: string) => rows.has(rowId),
+      cell: (rowId: string, columnKey: string) =>
+        cells.has(`${rowId}:${columnKey}`),
+      firstRowIdx,
+    };
+  }, [flashes, records, fields, serverRecords, serverFields]);
+
+  // The grid is rebuilt on each update; scroll once it has laid out.
+  useEffect(() => {
+    const rowIdx = lit.firstRowIdx;
+    if (rowIdx === null) return;
+    const frame = requestAnimationFrame(() =>
+      gridRef.current?.scrollToCell({ rowIdx, idx: 0 }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [lit.firstRowIdx, gridRef]);
+
+  return lit;
+}
 
 ApTableEditorPage.displayName = 'ApTableEditorPage';
 
