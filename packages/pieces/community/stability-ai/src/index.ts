@@ -7,11 +7,17 @@ import {
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { textToImage } from './lib/actions/text-to-image';
 
+const STABILITY_BASE_URL = 'https://api.stability.ai/v1';
+
 export const stabilityAiAuth = PieceAuth.CustomAuth({
-  description: `Please visit https://platform.stability.ai/docs/getting-started/authentication to get your API Key`,
+  description: `To get your API key:
+1. Sign in at [platform.stability.ai](https://platform.stability.ai).
+2. Open **Account → API Keys**.
+3. Copy a key and paste it below.`,
   props: {
     api_key: Property.ShortText({
       displayName: 'API Key',
+      description: 'Found under Account → API Keys on platform.stability.ai.',
       required: true,
     }),
   },
@@ -21,9 +27,9 @@ export const stabilityAiAuth = PieceAuth.CustomAuth({
 export const stabilityAi = createPiece({
   displayName: 'Stability AI',
   description:
-    'Generative AI video model based on the image model Stable Diffusion.',
+    'Generate images from text with Stable Diffusion models.',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/stability-ai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["Willianwg","camilou","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
@@ -31,7 +37,13 @@ export const stabilityAi = createPiece({
   actions: [
     textToImage,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.stability.ai/v1',
+      baseUrl: () => STABILITY_BASE_URL,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${STABILITY_BASE_URL}`,
+          placeholder: '/engines/list',
+        },
+      },
       auth: stabilityAiAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.props.api_key}`,

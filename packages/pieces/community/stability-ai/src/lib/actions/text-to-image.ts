@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
@@ -11,199 +15,236 @@ export const textToImage = createAction({
   name: 'text-to-image',
   classification: 'READ',
   displayName: 'Text to Image',
-  description: 'Generate an image using a text prompt',
+  description: 'Generate images from a text prompt.',
   audience: 'both',
   aiMetadata: {
     description:
       'Generates one or more images from a text prompt using a Stable Diffusion engine (selectable via the required Engine ID, e.g. SDXL or older v1/v2 models). Use to create original imagery from a description; optionally steer output with a style preset, dimensions, sampling steps, and prompt-adherence (cfg_scale). Not idempotent: each call invokes the generative model and returns fresh images, so repeating the same input yields different results.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'prompt',
+      display: 'section',
+      label: 'Image',
+      icon: 'text',
+      props: ['prompt', 'engine_id', 'style_preset'],
+    },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'sliders',
+      props: ['size_info', 'width', 'height', 'samples'],
+    },
+  ],
   props: {
     prompt: Property.ShortText({
       displayName: 'Prompt',
       required: true,
-      description: 'The text to transform in image.',
+      description: 'Describe the image you want.',
+      placeholder: 'A lighthouse on a cliff at sunset, oil painting',
     }),
-    cfg_scale: Property.Number({
-      displayName: 'cfg_scale',
-      description:
-        'How strictly the diffusion process adheres to the prompt text (higher values keep your image closer to your prompt) (MIN:0; MAX:35)',
-      required: false,
-      defaultValue: 7,
-    }),
-    height: Property.Number({
-      displayName: 'height',
-      description:
-        'Height of the image in pixels. Must be in increments of 64 and >= 128',
-      required: false,
-    }),
-    width: Property.Number({
-      displayName: 'width',
-      description:
-        'Width of the image in pixels. Must be in increments of 64 and >= 128',
-      required: false,
-    }),
-    samples: Property.ShortText({
-      displayName: 'samples',
-      description: 'Number of images to generate (MAX:10)',
-      required: false,
-    }),
-    steps: Property.Number({
-      displayName: 'steps',
-      description: 'Number of diffusion steps to run (MIN:10; MAX:150)',
-      required: false,
-    }),
-    weight: Property.Number({
-      displayName: 'weight',
-      defaultValue: 1,
-      required: false,
-    }),
-    clip_guidance_preset: Property.StaticDropdown({
-      displayName: 'clip_guidance_preset',
-      required: false,
+    engine_id: Property.StaticDropdown({
+      displayName: 'Model',
+      required: true,
+      description: 'The Stable Diffusion model that draws the image.',
       options: {
         options: [
           {
-            label: 'NONE',
-            value: 'NONE',
+            label: 'SDXL 1.0',
+            value: 'stable-diffusion-xl-1024-v1-0',
+            description: 'stable-diffusion-xl-1024-v1-0',
           },
           {
-            label: 'FAST_BLUE',
-            value: 'FAST_BLUE',
+            label: 'Stable Diffusion 2.1 (768 px)',
+            value: 'stable-diffusion-768-v2-1',
+            description: 'stable-diffusion-768-v2-1',
           },
           {
-            label: 'FAST_GREEN',
-            value: 'FAST_GREEN',
+            label: 'Stable Diffusion 2.1 (512 px)',
+            value: 'stable-diffusion-512-v2-1',
+            description: 'stable-diffusion-512-v2-1',
           },
           {
-            label: 'SIMPLE',
-            value: 'SIMPLE',
+            label: 'Stable Diffusion 2.0 (768 px)',
+            value: 'stable-diffusion-768-v2-0',
+            description: 'stable-diffusion-768-v2-0',
           },
           {
-            label: 'SLOW',
-            value: 'SLOW',
+            label: 'Stable Diffusion 2.0 (512 px)',
+            value: 'stable-diffusion-512-v2-0',
+            description: 'stable-diffusion-512-v2-0',
           },
           {
-            label: 'SLOWER',
-            value: 'SLOWER',
+            label: 'Stable Diffusion 1.5',
+            value: 'stable-diffusion-v1-5',
+            description: 'stable-diffusion-v1-5',
           },
           {
-            label: 'SLOWEST',
-            value: 'SLOWEST',
+            label: 'Stable Diffusion 1.4',
+            value: 'stable-diffusion-v1',
+            description: 'stable-diffusion-v1',
           },
         ],
       },
     }),
     style_preset: Property.StaticDropdown({
-      displayName: 'style_preset',
+      displayName: 'Style',
       required: false,
-      description:
-        'Pass in a style preset to guide the image model towards a particular style.',
+      description: 'Steers the image toward a look. Empty: no style.',
       options: {
         options: [
           {
-            label: 'enhance',
+            label: 'Enhance',
             value: 'enhance',
           },
           {
-            label: 'anime',
+            label: 'Anime',
             value: 'anime',
           },
           {
-            label: 'photographic',
+            label: 'Photographic',
             value: 'photographic',
           },
           {
-            label: 'digital-art',
+            label: 'Digital Art',
             value: 'digital-art',
           },
           {
-            label: 'comic-book',
+            label: 'Comic Book',
             value: 'comic-book',
           },
           {
-            label: 'fantasy-art',
+            label: 'Fantasy Art',
             value: 'fantasy-art',
           },
           {
-            label: 'line-art',
+            label: 'Line Art',
             value: 'line-art',
           },
           {
-            label: 'analog-film',
+            label: 'Analog Film',
             value: 'analog-film',
           },
           {
-            label: 'neon-punk',
+            label: 'Neon Punk',
             value: 'neon-punk',
           },
           {
-            label: 'isometric',
+            label: 'Isometric',
             value: 'isometric',
           },
           {
-            label: 'low-poly',
+            label: 'Low Poly',
             value: 'low-poly',
           },
           {
-            label: 'origami',
+            label: 'Origami',
             value: 'origami',
           },
           {
-            label: 'modeling-compound',
+            label: 'Modeling Compound',
             value: 'modeling-compound',
           },
           {
-            label: 'cinematic',
+            label: 'Cinematic',
             value: 'cinematic',
           },
           {
-            label: '3d-model',
+            label: '3D Model',
             value: '3d-model',
           },
           {
-            label: 'pixel-art',
+            label: 'Pixel Art',
             value: 'pixel-art',
           },
           {
-            label: 'tile-texture',
+            label: 'Tile Texture',
             value: 'tile-texture',
           },
         ],
       },
     }),
-    engine_id: Property.StaticDropdown({
-      displayName: 'Engine ID',
-      required: true,
+    size_info: Property.MarkDown({
+      value:
+        "Empty sizes use the model's native size: 1024 px for SDXL, 768 or 512 px for the others.",
+      variant: MarkdownVariant.INFO,
+    }),
+    width: Property.Number({
+      displayName: 'Width',
+      description: 'Pixels, a multiple of 64, at least 128.',
+      required: false,
+      width: 'half',
+    }),
+    height: Property.Number({
+      displayName: 'Height',
+      description: 'Pixels, a multiple of 64, at least 128.',
+      required: false,
+      width: 'half',
+    }),
+    samples: Property.ShortText({
+      displayName: 'Number of Images',
+      description: 'How many images to make, up to 10. Empty: 1.',
+      placeholder: '1',
+      required: false,
+    }),
+    cfg_scale: Property.Number({
+      displayName: 'Prompt Strength',
+      description:
+        'CFG scale, 0 to 35. Higher sticks closer to the prompt.',
+      required: false,
+      defaultValue: 7,
+      advanced: true,
+    }),
+    steps: Property.Number({
+      displayName: 'Steps',
+      description:
+        'Diffusion steps, 10 to 150. More steps take longer. Empty: 50.',
+      required: false,
+      advanced: true,
+    }),
+    weight: Property.Number({
+      displayName: 'Prompt Weight',
+      description: 'Multiplier on the prompt. Leave at 1 for normal results.',
+      defaultValue: 1,
+      required: false,
+      advanced: true,
+    }),
+    clip_guidance_preset: Property.StaticDropdown({
+      displayName: 'CLIP Guidance',
+      description: 'Slower presets follow the prompt more closely. Empty: None.',
+      required: false,
+      advanced: true,
       options: {
         options: [
           {
-            label: 'stable-diffusion-xl-1024-v1-0',
-            value: 'stable-diffusion-xl-1024-v1-0',
+            label: 'None',
+            value: 'NONE',
           },
           {
-            label: 'stable-diffusion-768-v2-1',
-            value: 'stable-diffusion-768-v2-1',
+            label: 'Fast Blue',
+            value: 'FAST_BLUE',
           },
           {
-            label: 'stable-diffusion-512-v2-1',
-            value: 'stable-diffusion-512-v2-1',
+            label: 'Fast Green',
+            value: 'FAST_GREEN',
           },
           {
-            label: 'stable-diffusion-768-v2-0',
-            value: 'stable-diffusion-768-v2-0',
+            label: 'Simple',
+            value: 'SIMPLE',
           },
           {
-            label: 'stable-diffusion-512-v2-0',
-            value: 'stable-diffusion-512-v2-0',
+            label: 'Slow',
+            value: 'SLOW',
           },
           {
-            label: 'stable-diffusion-v1-5',
-            value: 'stable-diffusion-v1-5',
+            label: 'Slower',
+            value: 'SLOWER',
           },
           {
-            label: 'stable-diffusion-v1',
-            value: 'stable-diffusion-v1',
+            label: 'Slowest',
+            value: 'SLOWEST',
           },
         ],
       },
