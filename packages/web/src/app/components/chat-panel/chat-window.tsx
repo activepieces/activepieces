@@ -53,16 +53,14 @@ const FLOAT_MIN: FloatSize = { width: 320, height: 400 };
 const DOCK_DEFAULT_WIDTH = 372;
 // A floating panel always keeps this much room from the window's edges.
 const EDGE = 16;
-// A snap zone runs from the window's edge to this far past the page card's
-// edge, so it sits right beside the sidebar, wherever the sidebar ends.
-const SNAP_REACH = 80;
+// The card snaps when its own edge reaches the page's edge (beside the
+// sidebar), or when the pointer reaches the window's edge. No dwell: the
+// preview shows at once, and releasing docks. Hold Alt to place it freely.
+const SNAP_REACH = 48;
 // An armed zone reaches a little further, so the preview never flickers on
 // the line.
-const SNAP_HOLD = 16;
-// A zone arms only once the pointer rests in it this long, below this speed
-// (px/ms), like macOS tiling. A quick slide into a corner never arms one.
-const SNAP_DWELL_MS = 180;
-const SNAP_REST_SPEED = 0.45;
+const SNAP_HOLD = 24;
+const POINTER_EDGE = 24;
 // Too narrow to dock: a push this close to the window's edge says why.
 const EDGE_PUSH = 24;
 // Pointer travel before a press on the header counts as a drag.
@@ -403,44 +401,24 @@ export function ChatWindow() {
       let geometry = snapGeometry();
       let zone: SnapTarget | null = null;
       let armed = false;
-      let dwell: ReturnType<typeof setTimeout> | null = null;
       let alt = event.altKey;
-      let last = { ...start, time: event.timeStamp };
-      let speed = 0;
-
-      const clearDwell = () => {
-        if (dwell !== null) {
-          clearTimeout(dwell);
-          dwell = null;
-        }
-      };
       const showCue = () =>
         setSnap(armed && zone ? cueFor(zone, geometry) : null);
-      const arm = () => {
-        dwell = null;
-        armed = zone !== null;
-        showCue();
-      };
-      // Resting in a zone arms it; a quick move restarts the wait. Leaving the
-      // zone, or holding Alt, drops the preview at once.
-      const updateSnap = (fast: boolean) => {
+      // Measured from where the floating card sits under the pointer, so the
+      // card's own edge decides, not the grab point.
+      const updateSnap = () => {
+        const left = pointer.x - grab.ratioX * floatTarget.width;
         const next = alt
           ? null
-          : snapTarget(pointer.x, geometry, armed ? zone : null);
+          : snapTarget(
+              { left, right: left + floatTarget.width, pointerX: pointer.x },
+              geometry,
+              zone,
+            );
         if (next !== zone) {
           zone = next;
-          clearDwell();
-          if (armed) {
-            armed = false;
-            showCue();
-          }
-        }
-        if (!zone || armed) {
-          return;
-        }
-        if (fast || dwell === null) {
-          clearDwell();
-          dwell = setTimeout(arm, SNAP_DWELL_MS);
+          armed = zone !== null;
+          showCue();
         }
       };
 
@@ -476,7 +454,6 @@ export function ChatWindow() {
         window.removeEventListener('keydown', onKey, true);
         window.removeEventListener('keyup', onKeyUp, true);
         window.removeEventListener('resize', onResize);
-        clearDwell();
         stopFollow?.();
         unlock();
         setSnap(null);
@@ -508,10 +485,6 @@ export function ChatWindow() {
 
       const onMove = (move: PointerEvent) => {
         pointer = { x: move.clientX, y: move.clientY };
-        const elapsed = Math.max(move.timeStamp - last.time, 1);
-        const step = Math.hypot(pointer.x - last.x, pointer.y - last.y);
-        speed = (speed + step / elapsed) / 2;
-        last = { ...pointer, time: move.timeStamp };
         alt = move.altKey;
         if (!moved) {
           if (
@@ -523,7 +496,7 @@ export function ChatWindow() {
           lift();
         }
         follow();
-        updateSnap(speed > SNAP_REST_SPEED);
+        updateSnap();
       };
 
       const onUp = () => {
@@ -568,7 +541,7 @@ export function ChatWindow() {
           key.preventDefault();
           alt = true;
           if (moved) {
-            updateSnap(false);
+            updateSnap();
           }
           return;
         }
@@ -584,7 +557,7 @@ export function ChatWindow() {
         if (key.key === 'Alt') {
           alt = false;
           if (moved) {
-            updateSnap(false);
+            updateSnap();
           }
         }
       };
@@ -592,7 +565,7 @@ export function ChatWindow() {
       const onResize = () => {
         geometry = snapGeometry();
         if (moved) {
-          updateSnap(false);
+          updateSnap();
           showCue();
         }
       };
@@ -864,7 +837,7 @@ function SnapPreview({ rect }: { rect: Rect }) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={CUE_MOTION}
-      className="pointer-events-none fixed z-30 rounded-lg bg-gray-12/6 ring-1 ring-gray-12/15 ring-inset"
+      className="pointer-events-none fixed z-30 rounded-xl border-2 border-accent-8 bg-accent-3/70 shadow-lift"
       style={{
         left: rect.x,
         top: rect.y,
@@ -1152,7 +1125,7 @@ function snapGeometry(): SnapGeometry {
 }
 
 function snapTarget(
-  pointerX: number,
+  at: { left: number; right: number; pointerX: number },
   geometry: SnapGeometry,
   current: SnapTarget | null,
 ): SnapTarget | null {
@@ -1162,14 +1135,20 @@ function snapTarget(
       return null;
     }
     const reach = EDGE_PUSH + hold('narrow');
-    return pointerX <= reach || pointerX >= geometry.viewport - reach
+    return at.pointerX <= reach || at.pointerX >= geometry.viewport - reach
       ? 'narrow'
       : null;
   }
-  if (pointerX <= geometry.leftEdge + SNAP_REACH + hold('left')) {
+  if (
+    at.left <= geometry.leftEdge + SNAP_REACH + hold('left') ||
+    at.pointerX <= POINTER_EDGE
+  ) {
     return 'left';
   }
-  if (pointerX >= geometry.rightEdge - SNAP_REACH - hold('right')) {
+  if (
+    at.right >= geometry.rightEdge - SNAP_REACH - hold('right') ||
+    at.pointerX >= geometry.viewport - POINTER_EDGE
+  ) {
     return 'right';
   }
   return null;
