@@ -19,7 +19,7 @@ function fromDatasetItem(item: DatasetItem): EvalCase {
         sourceTraceId: item.source_trace_id,
         history: messages.slice(0, userIndex).flatMap((message) => toModelMessages({ message, toolNamesById })),
         userMessage: textOf(messages[userIndex]),
-        recordedToolCalls: recordedCalls({ messages: messages.slice(userIndex + 1), toolNamesById }),
+        recordedToolCalls: [...recordedCalls({ messages: messages.slice(userIndex + 1), toolNamesById }), ...(item.metadata.toolFixtures ?? [])],
     }
 }
 
@@ -72,8 +72,8 @@ function recordedCalls({ messages, toolNamesById }: { messages: TracedMessage[],
         if (isNil(wireName)) {
             return []
         }
-        const { toolName } = agentToolSkills.effectiveToolCall({ toolName: wireName, input: argumentsById.get(part.id) })
-        return [{ toolName, output: part.response }]
+        const { toolName, input } = agentToolSkills.effectiveToolCall({ toolName: wireName, input: argumentsById.get(part.id) })
+        return [{ toolName, input, output: part.response }]
     }))
 }
 
@@ -103,6 +103,12 @@ const TracedMessage = z.object({
 
 const TracedMessages = z.array(TracedMessage)
 
+export const ToolFixture = z.object({
+    toolName: z.string(),
+    input: z.unknown(),
+    output: z.unknown(),
+})
+
 export const DatasetItem = z.object({
     id: z.string(),
     input: z.unknown(),
@@ -114,6 +120,7 @@ export const DatasetItem = z.object({
         case: z.number(),
         problem_type: z.string(),
         code_check: z.string(),
+        toolFixtures: z.array(ToolFixture).optional(),
     }),
     source_trace_id: z.string().nullable(),
 })
@@ -126,10 +133,7 @@ export type DatasetItem = z.infer<typeof DatasetItem>
 
 type TracedMessage = z.infer<typeof TracedMessage>
 
-export type RecordedToolCall = {
-    toolName: string
-    output: unknown
-}
+export type RecordedToolCall = z.infer<typeof ToolFixture>
 
 export type EvalCase = {
     id: string

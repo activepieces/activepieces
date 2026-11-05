@@ -1,18 +1,18 @@
 import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
 import { AgentPhase, PersistedAgentPartType } from '@activepieces/shared'
 import { aiUtils } from '@activepieces/server-utils'
-import { hasToolCall, isLoopFinished, ModelMessage, ToolSet } from 'ai'
+import { hasToolCall, isLoopFinished, LanguageModel, ModelMessage, ToolSet, wrapLanguageModel } from 'ai'
 import { AgentTurnResult, runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
-import { EvalCase } from './eval-case'
+import { EvalCase, RecordedToolCall } from './eval-case'
 import { evalPrompts } from './prompts'
-import { replay, ReplayDivergence } from './replay'
+import { replay, ReplayStop } from './replay'
 import { evalToolSet } from './tool-set'
 
-async function run({ evalCase, mcpToolSet, modelId, auth }: { evalCase: EvalCase, mcpToolSet: ToolSet, modelId: string, auth: Record<string, unknown> }): Promise<TurnOutcome> {
+async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCase: EvalCase, mcpToolSet: ToolSet, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<TurnOutcome> {
     const caseReplay = replay.create({ recordedToolCalls: evalCase.recordedToolCalls })
-    const tools = evalToolSet.build({ mcpToolSet, replay: caseReplay })
+    const tools = evalToolSet.build({ mcpToolSet, replay: caseReplay, auth, recordMode })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
-    const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null })
+    const model = pinned({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
     const messages: ModelMessage[] = [...evalCase.history, { role: 'user', content: evalCase.userMessage }]
     const warnings: string[] = []
     const abortSignal = AbortSignal.timeout(TURN_TIMEOUT_MS)
@@ -37,7 +37,7 @@ async function run({ evalCase, mcpToolSet, modelId, auth }: { evalCase: EvalCase
             },
             error: () => {},
         },
-        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.diverged()],
+        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stopped()],
     }))
 
     if (abortSignal.aborted) {
@@ -46,11 +46,36 @@ async function run({ evalCase, mcpToolSet, modelId, auth }: { evalCase: EvalCase
     if (isNil(result)) {
         throw new Error(`The turn produced no output: ${error instanceof Error ? error.message : String(error)}`)
     }
+    if (result.uiParts.length === 0) {
+        throw new Error(`The turn produced nothing (finish reason "${result.finishReason}"): ${result.streamError?.message ?? 'no error reported'}`)
+    }
     return {
         transcript: renderTranscript(result),
         rejectedToolInputs: [...warnings, ...rejectedToolParts(result)],
-        divergences: caseReplay.divergences(),
+        stops: caseReplay.stops(),
+        newFixtures: caseReplay.newFixtures(),
     }
+}
+
+function pinned({ model }: { model: LanguageModel }): LanguageModel {
+    if (typeof model === 'string') {
+        throw new Error(`Expected a model instance for ${model}`)
+    }
+    const provider = process.env[PROVIDER_ENV] ?? DEFAULT_PROVIDER
+    return wrapLanguageModel({
+        model,
+        middleware: {
+            transformParams: async ({ params }) => ({
+                ...params,
+                temperature: 0,
+                seed: SEED,
+                providerOptions: {
+                    ...params.providerOptions,
+                    openrouter: { ...params.providerOptions?.['openrouter'], provider: { order: [provider], allow_fallbacks: false } },
+                },
+            }),
+        },
+    })
 }
 
 function rejectedToolParts(result: AgentTurnResult): string[] {
@@ -121,6 +146,9 @@ const TURN_TIMEOUT_MS = 5 * 60_000
 const TRANSCRIPT_FIELD_MAX = 2_000
 const ERROR_PREVIEW_CHARS = 160
 const TIER = { id: 'smart', thinkingBudget: 10_000 }
+const SEED = 7
+const PROVIDER_ENV = 'EVALS_PROVIDER'
+const DEFAULT_PROVIDER = 'alibaba'
 const TERMINAL_DISPLAY_TOOLS = ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_connection_picker', 'ap_show_connection_required', 'ap_show_project_picker']
 const REJECTION_WARNINGS = new Set(['Repairing malformed tool call', 'Model called a tool that is not active in this phase'])
 const REJECTED_PATTERN = /Invalid input|InvalidToolInput|There is no tool named|Pass the tool name as/
@@ -136,5 +164,6 @@ type MintedKey = { apiKey: string, hash: string | null, provisionKey: string }
 export type TurnOutcome = {
     transcript: string
     rejectedToolInputs: string[]
-    divergences: ReplayDivergence[]
+    stops: ReplayStop[]
+    newFixtures: RecordedToolCall[]
 }

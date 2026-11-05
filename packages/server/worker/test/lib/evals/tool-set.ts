@@ -1,6 +1,7 @@
-import { isNil } from '@activepieces/core-utils'
-import { AgentRunSource } from '@activepieces/shared'
-import { ToolSet } from 'ai'
+import { aiProviderCredentials, AIProviderName, isNil } from '@activepieces/core-utils'
+import { AgentRunSource, agentToolPhases } from '@activepieces/shared'
+import { aiUtils } from '@activepieces/server-utils'
+import { ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { agentMcpClient } from '../../../src/lib/execute/jobs/ee/agent/agent-mcp-client'
@@ -30,10 +31,10 @@ async function connectMcp({ conversationId }: { conversationId: string }): Promi
     }
 }
 
-function build({ mcpToolSet, replay }: { mcpToolSet: ToolSet, replay: Replay }): ToolSet {
+function build({ mcpToolSet, replay, auth, recordMode }: { mcpToolSet: ToolSet, replay: Replay, auth: Record<string, unknown>, recordMode: boolean }): ToolSet {
     const taintState = agentWorkerTools.createTaintState({ carried: false })
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: EVAL_CONVERSATION_ID })
-    const executeTool = async (toolName: string): Promise<unknown> => replay.execute({ toolName })
+    const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => replay.execute({ toolName, input: toolInput })
     const approve = async (): Promise<GateDecision> => ({ outcome: 'approved' })
     const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
     const noop = async (): Promise<void> => {}
@@ -46,15 +47,17 @@ function build({ mcpToolSet, replay }: { mcpToolSet: ToolSet, replay: Replay }):
             web: replayed({
                 tools: {
                     ...agentWorkerTools.createWebTools({ taintState }),
-                    ...agentWorkerTools.createProviderSearchTools({ search: unreachableSearch, billedAtCost: false, taintState }),
+                    ...agentWorkerTools.createProviderSearchTools({ search: (request) => searchWeb({ request, auth }), billedAtCost: false, taintState }),
                 },
                 replay,
+                isRead: () => true,
+                recordMode,
             }),
             thinking: agentWorkerTools.createThinkingTools(),
             buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECTS[0].id }),
             email: {},
             agentSurface: agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval: approve, onGateOpened: noop }),
-            mcp: replayed({ tools: mcpToolSet, replay }),
+            mcp: replayed({ tools: mcpToolSet, replay, isRead: (toolName) => !agentToolPhases.isBuildOnlyTool(toolName), recordMode }),
             configuredPiece: {},
             configuredFlow: {},
             knowledgeBase: {},
@@ -63,22 +66,44 @@ function build({ mcpToolSet, replay }: { mcpToolSet: ToolSet, replay: Replay }):
     })
 }
 
-function replayed({ tools, replay }: { tools: ToolSet, replay: Replay }): ToolSet {
-    return Object.fromEntries(Object.entries(tools).map(([toolName, tool]) => [toolName, { ...tool, execute: async () => replay.execute({ toolName }) }]))
+function replayed({ tools, replay, isRead, recordMode }: { tools: ToolSet, replay: Replay, isRead: (toolName: string) => boolean, recordMode: boolean }): ToolSet {
+    return Object.fromEntries(Object.entries(tools).map(([toolName, tool]) => {
+        const liveExecute = tool.execute
+        return [toolName, {
+            ...tool,
+            execute: async (input: unknown, options: ToolExecutionOptions) => {
+                const read = isRead(toolName)
+                const fixture = replay.take({ toolName, input, sameInputOnly: read })
+                if (fixture.found) {
+                    return fixture.output
+                }
+                if (!read || isNil(liveExecute)) {
+                    return replay.stop({ toolName, input, kind: 'unrecorded_write' })
+                }
+                if (!recordMode) {
+                    return replay.stop({ toolName, input, kind: 'missing_fixture' })
+                }
+                const output: unknown = await liveExecute(input, options)
+                replay.record({ toolName, input, output })
+                return output
+            },
+        }]
+    }))
+}
+
+function searchWeb({ request, auth }: { request: { system: string, prompt: string, abortSignal: AbortSignal }, auth: Record<string, unknown> }): ReturnType<typeof aiUtils.searchWeb> {
+    return aiUtils.searchWeb({ ...request, credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId: SEARCH_MODEL_ID, billing: null })
 }
 
 function isTool(value: unknown): value is ToolSet[string] {
     return typeof value === 'object' && value !== null && 'inputSchema' in value
 }
 
-async function unreachableSearch(): Promise<never> {
-    throw new Error('Web search runs through replay in evals')
-}
-
 const API_KEY_ENV = 'AP_API_KEY'
 const BASE_URL_ENV = 'AP_EVAL_BASE_URL'
 const DEFAULT_BASE_URL = 'http://localhost:3000/api'
 const DISPLAY_TOOL_TIMEOUT_MS = 1_000
+const SEARCH_MODEL_ID = 'google/gemini-2.5-flash'
 const EVAL_USER_ID = 'eval-user'
 const EVAL_CONVERSATION_ID = 'eval-conversation'
 const EVAL_PROJECTS = [{ id: 'eval-project', displayName: 'Eval Project', type: 'TEAM' }]

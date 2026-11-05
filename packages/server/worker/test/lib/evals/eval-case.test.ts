@@ -27,6 +27,6 @@ describe('evalCase.fromDatasetItem', () => {
             { role: 'user', content: 'earlier question' },
             { role: 'assistant', content: [{ type: 'text', text: 'earlier answer' }] },
         ])
-        expect(converted.recordedToolCalls).toEqual([{ toolName: 'ap_web_search', output: { answer: 'found it' } }])
+        expect(converted.recordedToolCalls).toEqual([{ toolName: 'ap_web_search', input: { query: 'x' }, output: { answer: 'found it' } }])
     })
 })
