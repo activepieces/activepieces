@@ -451,6 +451,13 @@ describe('self-serve trial', () => {
             expect(await autumnUtils.readSelfServeTrialDates(log, PLATFORM_ID)).toEqual(PAST)
         })
 
+        it('reads no trial when the latest one was cancelled before its end', async () => {
+            const { autumnUtils } = await loadModules()
+            vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue({ listSubscriptions: async () => [cancelledTrialRow({ dates: STARTED, cancelledAt: STARTED.startedAt })] } as never)
+
+            expect(await autumnUtils.readSelfServeTrialDates(log, PLATFORM_ID)).toBeNull()
+        })
+
         it('returns nothing for a platform without Autumn credentials', async () => {
             const { autumnUtils } = await loadModules()
             vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue(null)
