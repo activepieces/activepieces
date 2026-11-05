@@ -231,7 +231,7 @@ function OnboardingPill({
       setDismissed(true);
       return;
     }
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       e.preventDefault();
       if (open && activeIndex >= 0) {
         pick(suggestions[activeIndex]);
