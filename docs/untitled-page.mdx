@@ -66,7 +66,7 @@ When Activepieces runs on your company's own servers, it has two main parts:
 
 | **Part** | **What it does** | **Example** |
 | :-- | :-- | :-- |
-| **The app** | The Activepieces software your company runs on its own servers. It's what you open in your browser (at your own web address) to build flows, see runs and manage settings. Behind the scenes, it also receives every request to run a flow, for example when a trigger fires, even when nobody has the page open. | The front desk of a restaurant, which takes the orders |
+| **The app** | The Activepieces software your company runs on its own servers. It's what you open in your browser (at your own web address) to build flows, see runs and manage settings. Behind the scenes, it also receives every request to run a flow. | The front desk of a restaurant, which takes the orders |
 | **Workers** | Separate machines, also on your company's servers, that do the work of running each flow, step by step | The cooks in the kitchen, who prepare the orders |
 
 When a flow is triggered, the app puts it in a waiting line (a list of flows waiting to run). The next free worker picks it up, runs it from start to finish, sends the result back to the app, and picks up the next one.
