@@ -1,6 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { streakAuth } from '../common/auth';
+import { userOutputSchema } from '../common/output-schemas';
 import { streakApiCall } from '../common/client';
 import { StreakUser } from '../common/types';
 
@@ -16,6 +17,7 @@ export const getCurrentUserAction = createAction({
       'Retrieve the Streak user account tied to the connected API key, including its user key, email, and display name. Use when an agent needs the current user\'s identity or user key (for example to set assignees or attribute actions). Takes no input; read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: userOutputSchema,
   props: {},
   async run(context) {
     const response = await streakApiCall<StreakUser>({
