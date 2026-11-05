@@ -5,12 +5,11 @@ import { straleAuth } from './lib/auth';
 import { searchCapabilities } from './lib/actions/search';
 import { executeCapability } from './lib/actions/execute';
 import { checkBalance } from './lib/actions/balance';
-import { trustProfile } from './lib/actions/trust-profile';
 
 export const strale = createPiece({
   displayName: 'Strale',
   description:
-    'Trust layer for AI agents. 271 quality-scored API capabilities: company verification across 27 countries, sanctions screening, IBAN/VAT validation, web intelligence, and more. Every result includes a quality score and audit trail.',
+    'Pay-per-call tools for AI agents: company records, compliance screening, IBAN and VAT validation, document extraction and web reading. Results are structured and carry the provenance of the data returned.',
   auth: straleAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/strale.png',
@@ -20,7 +19,6 @@ export const strale = createPiece({
     searchCapabilities,
     executeCapability,
     checkBalance,
-    trustProfile,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.strale.io',
       auth: straleAuth,

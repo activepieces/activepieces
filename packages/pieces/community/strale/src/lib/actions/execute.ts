@@ -11,7 +11,7 @@ export const executeCapability = createAction({
   auth: straleAuth,
   displayName: 'Execute Capability',
   description:
-    'Run any Strale capability by slug. Performs verifications, validations, lookups, and data extraction. Returns structured output with quality score and data provenance. Five free capabilities work without an API key.',
+    'Run any Strale capability by slug. Performs verifications, validations, lookups, and data extraction. Returns structured output with the provenance of the data returned. Some capabilities are free and work without an API key.',
   audience: 'both',
   aiMetadata: {
     description:
