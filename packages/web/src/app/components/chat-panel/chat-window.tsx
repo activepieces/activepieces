@@ -23,6 +23,7 @@ import {
   DOCK_BREAKPOINT,
   DOCK_MAX_WIDTH,
   DOCK_MIN_WIDTH,
+  MOBILE_BREAKPOINT,
   PAGE_COMFORT_WIDTH,
   cardInnerWidth,
   chatLayoutFor,
@@ -38,7 +39,6 @@ import {
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import {
-  railOpenAfterDock,
   railOpenNow,
   useRailOpen,
 } from '@/features/workspace/lib/rail-collapsed';
@@ -53,10 +53,18 @@ const FLOAT_MIN: FloatSize = { width: 320, height: 400 };
 const DOCK_DEFAULT_WIDTH = 372;
 // A floating panel always keeps this much room from the window's edges.
 const EDGE = 16;
-// Snapping is a deliberate push toward the window's own edge. Leaving takes a
-// little more travel than entering, so the preview never flickers on the line.
-const SNAP_ENTER = 72;
-const SNAP_EXIT = 120;
+// A snap zone runs from the window's edge to this far past the page card's
+// edge, so it sits right beside the sidebar, wherever the sidebar ends.
+const SNAP_REACH = 80;
+// An armed zone reaches a little further, so the preview never flickers on
+// the line.
+const SNAP_HOLD = 16;
+// A zone arms only once the pointer rests in it this long, below this speed
+// (px/ms), like macOS tiling. A quick slide into a corner never arms one.
+const SNAP_DWELL_MS = 180;
+const SNAP_REST_SPEED = 0.45;
+// Too narrow to dock: a push this close to the window's edge says why.
+const EDGE_PUSH = 24;
 // Pointer travel before a press on the header counts as a drag.
 const DRAG_THRESHOLD = 4;
 // A sheet swiped down past this share of the screen, or flicked faster than
@@ -64,6 +72,8 @@ const DRAG_THRESHOLD = 4;
 const SHEET_DISMISS_SHARE = 0.25;
 const SHEET_DISMISS_VELOCITY = 0.5;
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
+// The snap preview and the narrow-window hint come and go quickly.
+const CUE_MOTION = { duration: 0.12, ease: EASE_OUT };
 // Anything that follows the pointer or comes to rest after a drop.
 const SETTLE = { type: 'spring', bounce: 0, visualDuration: 0.25 } as const;
 const CARD_ID = 'dashboard-content-container';
@@ -246,7 +256,7 @@ export function ChatWindow() {
         mountChat: s.mountChat,
       })),
     );
-  const [zone, setZone] = useState<ChatPanelSide | null>(null);
+  const [snap, setSnap] = useState<SnapCue | null>(null);
   const [gripActive, setGripActive] = useState(false);
   const [card] = useState(() => createCardMotion(FLOAT_DEFAULT));
   // The sheet's offset while it's swiped; its enter and exit animate it too.
@@ -387,8 +397,52 @@ export function ChatWindow() {
       const unlock = lockPointer('grabbing');
       let pointer = start;
       let moved = false;
-      let side: ChatPanelSide | null = null;
       let stopFollow: (() => void) | null = null;
+      // Zone geometry is computed here and on resize, never read from layout
+      // while the pointer moves.
+      let geometry = snapGeometry();
+      let zone: SnapTarget | null = null;
+      let armed = false;
+      let dwell: ReturnType<typeof setTimeout> | null = null;
+      let alt = event.altKey;
+      let last = { ...start, time: event.timeStamp };
+      let speed = 0;
+
+      const clearDwell = () => {
+        if (dwell !== null) {
+          clearTimeout(dwell);
+          dwell = null;
+        }
+      };
+      const showCue = () =>
+        setSnap(armed && zone ? cueFor(zone, geometry) : null);
+      const arm = () => {
+        dwell = null;
+        armed = zone !== null;
+        showCue();
+      };
+      // Resting in a zone arms it; a quick move restarts the wait. Leaving the
+      // zone, or holding Alt, drops the preview at once.
+      const updateSnap = (fast: boolean) => {
+        const next = alt
+          ? null
+          : snapTarget(pointer.x, geometry, armed ? zone : null);
+        if (next !== zone) {
+          zone = next;
+          clearDwell();
+          if (armed) {
+            armed = false;
+            showCue();
+          }
+        }
+        if (!zone || armed) {
+          return;
+        }
+        if (fast || dwell === null) {
+          clearDwell();
+          dwell = setTimeout(arm, SNAP_DWELL_MS);
+        }
+      };
 
       const follow = () => {
         const size = { width: card.width.get(), height: card.height.get() };
@@ -420,15 +474,22 @@ export function ChatWindow() {
         window.removeEventListener('pointerup', onUp);
         window.removeEventListener('pointercancel', onCancel);
         window.removeEventListener('keydown', onKey, true);
+        window.removeEventListener('keyup', onKeyUp, true);
+        window.removeEventListener('resize', onResize);
+        clearDwell();
         stopFollow?.();
         unlock();
-        setZone(null);
+        setSnap(null);
       };
 
-      const settleIntoDock = (dockSide: ChatPanelSide) => {
+      // A cancel goes back to the dock it came from without docking again, so
+      // the rail stays as it was.
+      const settleIntoDock = (dockSide: ChatPanelSide, redock = true) => {
         const panel = useChatPanel.getState();
-        // Docking may fold the rail, so read where the dock lands afterwards.
-        panel.dock(dockSide);
+        // Docking folds the rail, so read where the dock lands afterwards.
+        if (redock) {
+          panel.dock(dockSide);
+        }
         const rect = dockRect(dockSide, railOpenNow());
         panel.setGesture('settling');
         if (!rect) {
@@ -447,6 +508,11 @@ export function ChatWindow() {
 
       const onMove = (move: PointerEvent) => {
         pointer = { x: move.clientX, y: move.clientY };
+        const elapsed = Math.max(move.timeStamp - last.time, 1);
+        const step = Math.hypot(pointer.x - last.x, pointer.y - last.y);
+        speed = (speed + step / elapsed) / 2;
+        last = { ...pointer, time: move.timeStamp };
+        alt = move.altKey;
         if (!moved) {
           if (
             Math.hypot(pointer.x - start.x, pointer.y - start.y) <
@@ -457,14 +523,12 @@ export function ChatWindow() {
           lift();
         }
         follow();
-        const next = snapZone(pointer.x, side);
-        if (next !== side) {
-          side = next;
-          setZone(next);
-        }
+        updateSnap(speed > SNAP_REST_SPEED);
       };
 
       const onUp = () => {
+        // Only a visible preview snaps; anything else drops as floating.
+        const side = armed && zone !== 'narrow' ? zone : null;
         finish();
         if (!moved) {
           return;
@@ -493,12 +557,21 @@ export function ChatWindow() {
           origin !== 'float' &&
           chatLayoutFor(origin, window.innerWidth) === origin
         ) {
-          settleIntoDock(origin);
+          settleIntoDock(origin, false);
         } else {
           settleFloating(from);
         }
       };
       const onKey = (key: KeyboardEvent) => {
+        // Holding Alt (Option) turns snapping off for as long as it's held.
+        if (key.key === 'Alt') {
+          key.preventDefault();
+          alt = true;
+          if (moved) {
+            updateSnap(false);
+          }
+          return;
+        }
         if (key.key !== 'Escape' || !moved) {
           return;
         }
@@ -507,11 +580,29 @@ export function ChatWindow() {
         key.stopImmediatePropagation();
         onCancel();
       };
+      const onKeyUp = (key: KeyboardEvent) => {
+        if (key.key === 'Alt') {
+          alt = false;
+          if (moved) {
+            updateSnap(false);
+          }
+        }
+      };
+      // The zones and the preview follow the window as it resizes.
+      const onResize = () => {
+        geometry = snapGeometry();
+        if (moved) {
+          updateSnap(false);
+          showCue();
+        }
+      };
 
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
       window.addEventListener('pointercancel', onCancel);
       window.addEventListener('keydown', onKey, true);
+      window.addEventListener('keyup', onKeyUp, true);
+      window.addEventListener('resize', onResize);
     },
     [card, sheetY],
   );
@@ -569,7 +660,9 @@ export function ChatWindow() {
   return createPortal(
     <>
       <AnimatePresence>
-        {zone && <SnapPreview key={zone} side={zone} />}
+        {snap?.kind === 'dock' && (
+          <SnapPreview key={snap.side} rect={snap.rect} />
+        )}
       </AnimatePresence>
       <AnimatePresence custom={open}>
         {floating && (
@@ -597,6 +690,9 @@ export function ChatWindow() {
             }}
           >
             <ResizeGrip active={gripActive} onPointerDown={startResize} />
+            <AnimatePresence>
+              {snap?.kind === 'narrow' && <NarrowHint />}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
@@ -760,26 +856,40 @@ function ResizeGrip({
   );
 }
 
-// Where the docked panel will land, shown while a drag is over a snap zone.
-function SnapPreview({ side }: { side: ChatPanelSide }) {
-  const rect = dockRect(side, railOpenAfterDock());
-  if (!rect) {
-    return null;
-  }
+// Exactly where the docked panel will land, shown once a zone is armed.
+function SnapPreview({ rect }: { rect: Rect }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1, transition: { duration: 0.15 } }}
-      exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.12 } }}
-      transition={{ ease: EASE_OUT }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={CUE_MOTION}
       className="pointer-events-none fixed z-30 rounded-lg bg-gray-12/6 ring-1 ring-gray-12/15 ring-inset"
       style={{
-        left: rect.x + 6,
-        top: rect.y + 6,
-        width: rect.width - 12,
-        height: rect.height - 12,
+        left: rect.x,
+        top: rect.y,
+        width: rect.width,
+        height: rect.height,
       }}
     />
+  );
+}
+
+// Pushing to the edge of a window too narrow to dock says why nothing snaps.
+function NarrowHint() {
+  return (
+    <motion.div
+      role="status"
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={CUE_MOTION}
+      className="pointer-events-none absolute inset-x-0 top-14 z-20 flex justify-center"
+    >
+      <span className="rounded-full bg-gray-12/85 px-2.5 py-1 text-xs font-medium text-gray-1 shadow-lift">
+        {t('Widen the window to dock')}
+      </span>
+    </motion.div>
   );
 }
 
@@ -995,9 +1105,14 @@ export function defaultFloat(size: FloatSize): FloatPosition {
 // border. Computed, not measured, since the rail may still be moving.
 function dockRect(side: ChatPanelSide, railOpen: boolean): Rect | null {
   const card = cardRect();
-  if (!card) {
-    return null;
-  }
+  return card ? dockRectIn(card, side, railOpen) : null;
+}
+
+function dockRectIn(
+  card: CardSpan,
+  side: ChatPanelSide,
+  railOpen: boolean,
+): Rect {
   const viewportWidth = window.innerWidth;
   const width = dockWidthFor(
     useChatPanel.getState().dockWidth,
@@ -1014,22 +1129,58 @@ function dockRect(side: ChatPanelSide, railOpen: boolean): Rect | null {
   };
 }
 
-function snapZone(
+// Everything a drag needs to place the zones and the preview, read once.
+// The zones sit at the page card's edges as they are once any move settles:
+// the rail never moves during a drag, and the slot a docked panel leaves is
+// inside the card. Docking always folds the rail, so the preview shows the
+// dock beside the folded rail.
+function snapGeometry(): SnapGeometry {
+  const viewport = window.innerWidth;
+  const card = cardRect();
+  return {
+    viewport,
+    dockable: viewport >= DOCK_BREAKPOINT,
+    leftEdge: sidebarWidth(railOpenNow()),
+    rightEdge: viewport - GUTTER_RIGHT,
+    previews: card
+      ? {
+          left: dockRectIn(card, 'left', false),
+          right: dockRectIn(card, 'right', false),
+        }
+      : null,
+  };
+}
+
+function snapTarget(
   pointerX: number,
-  current: ChatPanelSide | null,
-): ChatPanelSide | null {
-  if (window.innerWidth < DOCK_BREAKPOINT) {
-    return null;
+  geometry: SnapGeometry,
+  current: SnapTarget | null,
+): SnapTarget | null {
+  const hold = (target: SnapTarget) => (target === current ? SNAP_HOLD : 0);
+  if (!geometry.dockable) {
+    if (geometry.viewport < MOBILE_BREAKPOINT) {
+      return null;
+    }
+    const reach = EDGE_PUSH + hold('narrow');
+    return pointerX <= reach || pointerX >= geometry.viewport - reach
+      ? 'narrow'
+      : null;
   }
-  const reach = (side: ChatPanelSide) =>
-    side === current ? SNAP_EXIT : SNAP_ENTER;
-  if (pointerX <= reach('left')) {
+  if (pointerX <= geometry.leftEdge + SNAP_REACH + hold('left')) {
     return 'left';
   }
-  if (pointerX >= window.innerWidth - reach('right')) {
+  if (pointerX >= geometry.rightEdge - SNAP_REACH - hold('right')) {
     return 'right';
   }
   return null;
+}
+
+function cueFor(target: SnapTarget, geometry: SnapGeometry): SnapCue | null {
+  if (target === 'narrow') {
+    return { kind: 'narrow' };
+  }
+  const rect = geometry.previews?.[target];
+  return rect ? { kind: 'dock', side: target, rect } : null;
 }
 
 function cardRect(): DOMRect | null {
@@ -1042,3 +1193,15 @@ function rectOf(element: HTMLElement): Rect {
 }
 
 type Rect = FloatPosition & FloatSize;
+type CardSpan = { top: number; height: number };
+type SnapTarget = ChatPanelSide | 'narrow';
+type SnapCue =
+  | { kind: 'dock'; side: ChatPanelSide; rect: Rect }
+  | { kind: 'narrow' };
+type SnapGeometry = {
+  viewport: number;
+  dockable: boolean;
+  leftEdge: number;
+  rightEdge: number;
+  previews: Record<ChatPanelSide, Rect> | null;
+};
