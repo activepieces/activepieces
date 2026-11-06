@@ -61,10 +61,11 @@ export function formatStorageError({ error, queueName }: { error: object; queueN
 
 export const queueNameProp = Property.ShortText({
   displayName: 'Queue Name',
-  description: `The name of the queue. Every flow in the project that uses the same name shares the same queue. Up to ${MAX_QUEUE_NAME_LENGTH} characters in flow runs, or ${MAX_TEST_QUEUE_NAME_LENGTH} when testing this step on its own.`,
+  description: 'Flows in this project that use the same name share one queue.',
+  placeholder: 'new-leads',
   required: true,
 });
 
-export const sharedNotes = `- Queues are shared across the project: any flow using the same queue name reads and writes the same queue. A queue holds up to 512 KB of items.
-- Testing this single step uses a separate test queue. Test Flow and published runs use the real queue.
-- Use one flow run at a time per queue: runs that push or pull the same queue at the same moment can lose items or receive the same item twice.`;
+export const testQueueNote = 'Testing this step on its own uses a separate test queue. Test Flow and published runs use the real one.';
+
+export const concurrencyWarning = 'Run one flow at a time per queue. Runs that push or pull the same queue at the same moment can lose items or receive the same item twice.';

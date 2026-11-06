@@ -1,11 +1,9 @@
 import { Property, Store, createAction } from '@activepieces/pieces-framework';
-import { constructQueueName, queueNameProp, readQueue, sharedNotes } from '../common';
+import { constructQueueName, queueNameProp, readQueue, testQueueNote } from '../common';
 import { getQueueSizeOutputSchema } from '../output-schemas';
 
-const notes = `**Note:**
-- Counts the items waiting in the queue without reading or removing them. A queue that was never used counts as empty.
-${sharedNotes}
-`;
+const notes = `Counts the items without reading or removing them. A queue that was never used counts as empty.
+${testQueueNote}`;
 
 export const getQueueSize = createAction({
   audience: 'both',
@@ -15,7 +13,7 @@ export const getQueueSize = createAction({
   description: 'Count the items waiting in a queue',
   aiMetadata: {
     description:
-      'Counts the items currently waiting in a named project-scoped FIFO queue without reading or removing them. Use it as a guard before Pull items from queue or to branch on backlog size; use Peek at Queue when the items themselves are needed. Requires the exact queue name used by Push to Queue. Read-only and idempotent.',
+      'Counts the items currently waiting in a named project-scoped FIFO queue without reading or removing them. Use it as a guard before Pull Items from Queue or to branch on backlog size; use Peek at Queue when the items themselves are needed. Requires the exact queue name used by Push to Queue. Read-only and idempotent.',
     idempotent: true,
   },
   outputSchema: getQueueSizeOutputSchema,
