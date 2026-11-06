@@ -7,11 +7,11 @@ import { AgentTurnResult, runAgentTurn } from '../../../src/lib/execute/jobs/ee/
 import { EvalCase, RecordedToolCall } from './eval-case'
 import { evalPrompts } from './prompts'
 import { replay, ReplayStop } from './replay'
-import { evalToolSet } from './tool-set'
+import { evalToolSet, McpTools } from './tool-set'
 
-async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCase: EvalCase, mcpToolSet: ToolSet, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<TurnOutcome> {
+async function run({ evalCase, mcp, modelId, auth, recordMode }: { evalCase: EvalCase, mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<TurnOutcome> {
     const caseReplay = replay.create({ recordedToolCalls: evalCase.recordedToolCalls })
-    const tools = evalToolSet.build({ mcpToolSet, replay: caseReplay, auth, recordMode })
+    const tools = evalToolSet.build({ mcp, replay: caseReplay, auth, recordMode })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const { model, costUsd } = pinned({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
     const warnings: string[] = []
@@ -20,13 +20,13 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
 
     const { data: result, error } = await tryCatch(() => runAgentTurn({
         models: [{ model, provider: AIProviderName.OPENROUTER, modelId, thinkingBudget: TIER.thinkingBudget }],
-        systemPrompt: evalPrompts.loadSystemPrompt(),
+        systemPrompt: evalPrompts.systemPrompt(),
         messages: evalCase.messages,
         tools,
         allToolNames: Object.keys(tools),
         tier: { ...TIER, modelId },
         phaseState,
-        skills: { surface: 'CHAT', guides: evalPrompts.loadGuides(), preloaded: evalCase.preloadedSkills },
+        skills: { surface: 'CHAT', guides: evalPrompts.guides(), preloaded: evalCase.preloadedSkills },
         abortSignal,
         onStepModel: () => {
             steps += 1
@@ -41,7 +41,7 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
             },
             error: () => {},
         },
-        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stopped(), ...gradedWindow({ evalCase })],
+        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stops().length > 0, ...gradedWindow({ evalCase })],
     }))
 
     if (abortSignal.aborted) {
@@ -53,12 +53,13 @@ async function run({ evalCase, mcpToolSet, modelId, auth, recordMode }: { evalCa
     if (result.uiParts.length === 0) {
         throw new Error(`The turn produced nothing (finish reason "${result.finishReason}"): ${result.streamError?.message ?? 'no error reported'}`)
     }
+    const rejected = [...warnings, ...rejectedToolParts(result)]
     return {
         transcript: renderTranscript(result),
-        rejectedToolInputs: [...warnings, ...rejectedToolParts(result)],
+        rejectedToolInputs: rejected,
         stops: caseReplay.stops(),
         newFixtures: caseReplay.newFixtures(),
-        reachedTarget: reachedTarget({ evalCase, result, rejected: [...warnings, ...rejectedToolParts(result)] }),
+        reachedTarget: reachedTarget({ evalCase, result, rejected }),
         costUsd: costUsd(),
         steps,
     }

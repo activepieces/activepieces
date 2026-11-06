@@ -32,7 +32,6 @@ function create({ recordedToolCalls }: { recordedToolCalls: RecordedToolCall[] }
         record: (call) => {
             recorded.push(call)
         },
-        stopped: () => stops.length > 0,
         stops: () => [...stops],
         newFixtures: () => [...recorded],
     }
@@ -77,7 +76,6 @@ export type Replay = {
     take: (params: { toolName: string, input: unknown, sameInputOnly: boolean }) => RecordedLookup
     stop: (params: { toolName: string, input: unknown, kind: ReplayStop['kind'] }) => unknown
     record: (call: RecordedToolCall) => void
-    stopped: () => boolean
     stops: () => ReplayStop[]
     newFixtures: () => RecordedToolCall[]
 }

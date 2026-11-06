@@ -2,11 +2,12 @@ import { aiProviderCredentials, AIProviderName, isNil } from '@activepieces/core
 import { AgentRunSource, agentToolPhases } from '@activepieces/shared'
 import { aiUtils } from '@activepieces/server-utils'
 import { ToolExecutionOptions, ToolSet } from 'ai'
-import { FastifyBaseLogger } from 'fastify'
+import Fastify from 'fastify'
 import { z } from 'zod'
 import { agentMcpClient } from '../../../src/lib/execute/jobs/ee/agent/agent-mcp-client'
 import { agentToolPolicy } from '../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { agentWorkerTools, GateDecision } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
+import { EVAL_PROJECT } from './prompts'
 import { Replay } from './replay'
 
 async function connectMcp(): Promise<McpTools> {
@@ -25,18 +26,19 @@ async function connectMcp(): Promise<McpTools> {
         toolSet: Object.fromEntries(Object.entries(connection.mcpToolSet).flatMap(([name, tool]) => isTool(tool) ? [[name, tool]] : [])),
         close: () => client.close(),
         projectName,
+        conversationId,
     }
 }
 
-function build({ mcpToolSet, replay, auth, recordMode }: { mcpToolSet: ToolSet, replay: Replay, auth: Record<string, unknown>, recordMode: boolean }): ToolSet {
+function build({ mcp, replay, auth, recordMode }: { mcp: McpTools, replay: Replay, auth: Record<string, unknown>, recordMode: boolean }): ToolSet {
     const taintState = agentWorkerTools.createTaintState({ carried: false })
-    const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: EVAL_CONVERSATION_ID })
+    const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: EVAL_USER_ID, conversationId: mcp.conversationId })
     const executeTool = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => resolveCall({
         replay,
         recordMode,
         toolName,
         input: toolInput,
-        live: () => executeOnDevServer({ toolName, toolInput }),
+        live: () => executeOnDevServer({ toolName, toolInput, conversationId: mcp.conversationId }),
     })
     const approve = async (): Promise<GateDecision> => ({ outcome: 'approved' })
     const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
@@ -44,7 +46,7 @@ function build({ mcpToolSet, replay, auth, recordMode }: { mcpToolSet: ToolSet, 
     return agentToolPolicy.selectToolsForSource({
         source: AgentRunSource.CHAT,
         groups: {
-            local: agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: EVAL_PROJECTS }),
+            local: agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: [EVAL_PROJECT] }),
             display: agentWorkerTools.createDisplayTools({ waitForApproval: dismissCard, displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS, onConnectionSelected: noop, onGateOpened: noop }),
             crossProject: agentWorkerTools.createCrossProjectTools({ executeTool, eventEmitter, waitForApproval: approve, onGateOpened: noop, taintState }),
             web: replayed({
@@ -56,10 +58,10 @@ function build({ mcpToolSet, replay, auth, recordMode }: { mcpToolSet: ToolSet, 
                 recordMode,
             }),
             thinking: agentWorkerTools.createThinkingTools(),
-            buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECTS[0].id }),
+            buildPlan: agentWorkerTools.createBuildPlanTools({ eventEmitter, getProjectId: () => EVAL_PROJECT.id }),
             email: {},
             agentSurface: agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval: approve, onGateOpened: noop }),
-            mcp: replayed({ tools: mcpToolSet, replay, recordMode }),
+            mcp: replayed({ tools: mcp.toolSet, replay, recordMode }),
             configuredPiece: {},
             configuredFlow: {},
             knowledgeBase: {},
@@ -98,11 +100,11 @@ async function resolveCall({ replay, recordMode, toolName, input, live }: { repl
     return output
 }
 
-async function executeOnDevServer({ toolName, toolInput }: { toolName: string, toolInput: Record<string, unknown> }): Promise<unknown> {
+async function executeOnDevServer({ toolName, toolInput, conversationId }: { toolName: string, toolInput: Record<string, unknown>, conversationId: string }): Promise<unknown> {
     const res = await fetch(`${devServerUrl()}/v1/agents/eval/execute-tool`, {
         method: 'POST',
         headers: { 'api-key': devServerApiKey(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolName, toolInput }),
+        body: JSON.stringify({ toolName, toolInput, conversationId }),
     })
     if (!res.ok) {
         return { error: `The dev server could not run ${toolName}: ${res.status} ${await res.text()}` }
@@ -136,31 +138,20 @@ const DEFAULT_BASE_URL = 'http://localhost:3000/api'
 const DISPLAY_TOOL_TIMEOUT_MS = 1_000
 const SEARCH_MODEL_ID = 'google/gemini-2.5-flash'
 const EVAL_USER_ID = 'eval-user'
-const EVAL_CONVERSATION_ID = 'eval-conversation'
-const EVAL_PROJECTS = [{ id: 'eval-project', displayName: 'Eval Project', type: 'TEAM' }]
 
-const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string(), conversationId: z.string(), projectId: z.string(), projectName: z.string() })
+const McpCredentials = z.object({ mcpServerUrl: z.string(), mcpToken: z.string(), conversationId: z.string(), projectName: z.string() })
 const ExecuteToolResponse = z.object({ result: z.unknown() })
 
-const silentLog: FastifyBaseLogger = {
-    level: 'silent',
-    silent: () => undefined,
-    info: () => undefined,
-    warn: () => undefined,
-    error: () => undefined,
-    fatal: () => undefined,
-    debug: () => undefined,
-    trace: () => undefined,
-    child: () => silentLog,
-}
+const silentLog = Fastify({ logger: false }).log
 
 export const evalToolSet = {
     connectMcp,
     build,
 }
 
-type McpTools = {
+export type McpTools = {
     toolSet: ToolSet
     close: () => Promise<void>
     projectName: string
+    conversationId: string
 }

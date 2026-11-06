@@ -66,8 +66,8 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
         if (isNil(project)) {
             return reply.status(StatusCodes.NOT_FOUND).send({ message: 'The platform owner has no project to run evals in' })
         }
-        const conversation = await agentConversationService(request.log).createConversation({ platformId: platform.id, userId: platform.ownerId, request: { projectId: project.id } })
-        return reply.status(StatusCodes.OK).send({ ...credentials, conversationId: conversation.id, projectId: project.id, projectName: project.displayName })
+        const conversation = await agentConversationService(request.log).createConversation({ platformId: platform.id, userId: platform.ownerId, request: { projectId: project.id }, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
+        return reply.status(StatusCodes.OK).send({ ...credentials, conversationId: conversation.id, projectName: project.displayName })
     })
 
     app.post('/eval/execute-tool', ExecuteToolRoute, async (request, reply) => {
@@ -78,6 +78,7 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
         const response = await agentRpcHandlers(request.log).executeAgentTool({
             toolName: request.body.toolName,
             toolInput: request.body.toolInput,
+            conversationId: request.body.conversationId,
             platformId: platform.id,
             userId: platform.ownerId,
             source: AgentRunSource.CHAT,
@@ -297,6 +298,7 @@ const ExecuteToolRoute = {
         body: z.object({
             toolName: z.string(),
             toolInput: z.record(z.string(), z.unknown()),
+            conversationId: z.string(),
         }),
     },
 }

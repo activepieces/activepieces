@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto'
-import { isNil } from '@activepieces/core-utils'
+import { chunk, isNil } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { PROBLEM_TYPES, RunScores, Verdict } from './checks'
 import { EvalCase } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 
 async function upload({ runs, suiteKey, runSource, applicationVersion, modelVersion, promptVersion }: UploadParams): Promise<string> {
-    const scorers = await ensureScorers()
+    const scorers = await scorerIds()
     const id = randomUUID()
     const uploaded = runs.map((run) => ({ run, itemId: randomUUID() }))
     const results = uploaded.flatMap(({ run, itemId }) => resultsFor({ scores: run.scores, itemId, scorers }))
@@ -26,13 +26,11 @@ async function upload({ runs, suiteKey, runSource, applicationVersion, modelVers
             expected_result_count: results.length,
         },
     })
-    for (let start = 0; start < results.length; start += UPLOAD_BATCH) {
-        const batch = results.slice(start, start + UPLOAD_BATCH)
-        const itemIds = new Set(batch.map((result) => result.item_id))
+    for (const batch of chunk(uploaded, UPLOAD_BATCH_RUNS)) {
         await posthogDataset.request({
             path: `${EXPERIMENTS_PATH}${id}/upload/`,
             method: 'POST',
-            body: { items: uploaded.filter(({ itemId }) => itemIds.has(itemId)).map(({ run, itemId }) => itemFor({ run, itemId })), results: batch },
+            body: { items: batch.map(itemFor), results: batch.flatMap(({ run, itemId }) => resultsFor({ scores: run.scores, itemId, scorers })) },
         })
     }
     await posthogDataset.request({ path: `${EXPERIMENTS_PATH}${id}/complete/`, method: 'POST', body: {} })
@@ -45,12 +43,11 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
     if (isNil(latest)) {
         return null
     }
-    const scorers = await ensureScorers()
+    const scorers = await scorerIds()
     const gates = [scorers.expected, scorers.validToolCalls, scorers.honest]
     const items = await collectItems({ experimentId: latest.id, cursor: undefined, collected: [] })
     const failedByItem = new Map<string, boolean>()
-    for (let start = 0; start < items.length; start += CELLS_BATCH) {
-        const batch = items.slice(start, start + CELLS_BATCH)
+    for (const batch of chunk(items, CELLS_BATCH)) {
         const cells = ResultCells.parse(await posthogDataset.request({
             path: `${EXPERIMENTS_PATH}${latest.id}/result_cells/`,
             query: { item_ids: batch.map((item) => item.id).join(','), scorer_version_ids: gates.join(',') },
@@ -66,7 +63,7 @@ async function baseline({ suiteKey, modelVersion }: { suiteKey: string, modelVer
         const failed = items.filter((item) => item.case_key === key && failedByItem.has(item.id)).map((item) => failedByItem.get(item.id) === true)
         counts.set(key, { pass: failed.filter((value) => !value).length, fail: failed.filter(Boolean).length })
     }
-    return { experimentId: latest.id, applicationVersion: latest.application_version ?? 'unknown', counts }
+    return { applicationVersion: latest.application_version ?? 'unknown', counts }
 }
 
 function caseKey(candidate: EvalCase): string {
@@ -133,6 +130,11 @@ async function ensureScorers(): Promise<Scorers> {
     }
 }
 
+function scorerIds(): Promise<Scorers> {
+    scorersPromise = scorersPromise ?? ensureScorers()
+    return scorersPromise
+}
+
 async function ensureScorer({ definition }: { definition: ScorerDefinition }): Promise<string> {
     const existing = ScorerPage.parse(await posthogDataset.request({ path: SCORERS_PATH, query: { search: definition.name, limit: '100' } })).results.find((scorer) => scorer.name === definition.name && !scorer.archived)
     if (!isNil(existing)) {
@@ -141,6 +143,8 @@ async function ensureScorer({ definition }: { definition: ScorerDefinition }): P
     const created = Scorer.parse(await posthogDataset.request({ path: SCORERS_PATH, method: 'POST', body: { ...definition, description: `${definition.description} Written by bun run evals --upload.` } }))
     return created.current_version_id
 }
+
+let scorersPromise: Promise<Scorers> | null = null
 
 const BOOLEAN_CONFIG = { true_label: 'Pass', false_label: 'Fail', true_is_failure: false }
 
@@ -163,7 +167,7 @@ const SCORERS: Record<string, ScorerDefinition> = {
 
 const EXPERIMENTS_PATH = '/ai_observability/offline_experiments/'
 const SCORERS_PATH = '/llm_analytics/score_definitions/'
-const UPLOAD_BATCH = 1_000
+const UPLOAD_BATCH_RUNS = 100
 const CELLS_BATCH = 50
 const PAGE_SIZE = 100
 const SHORT_SHA = 8
@@ -218,7 +222,6 @@ export type VerdictCounts = {
 }
 
 export type Baseline = {
-    experimentId: string
     applicationVersion: string
     counts: Map<string, VerdictCounts>
 }

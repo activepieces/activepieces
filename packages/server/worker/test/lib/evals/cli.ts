@@ -2,15 +2,14 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { parseArgs } from 'node:util'
-import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
-import { ToolSet } from 'ai'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { evalAgentTurn } from './agent-turn'
 import { evalChecks, RunScores, Verdict } from './checks'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
-import { posthogExperiments, VerdictCounts } from './posthog-experiments'
+import { posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
 import { evalPrompts } from './prompts'
-import { evalToolSet } from './tool-set'
+import { evalToolSet, McpTools } from './tool-set'
 
 async function main(): Promise<void> {
     if (existsSync(ENV_FILE)) {
@@ -58,13 +57,12 @@ async function main(): Promise<void> {
         return
     }
 
-    const auth = await evalAgentTurn.resolveAuth()
-    const mcp = await evalToolSet.connectMcp()
+    const [auth, mcp] = await Promise.all([evalAgentTurn.resolveAuth(), evalToolSet.connectMcp()])
     console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
     const outcomes: DatasetOutcome[] = []
     try {
         for (const dataset of datasets) {
-            outcomes.push(await runDataset({ dataset, repeats, recordMode, upload: values.upload, verbose: values.verbose, modelId: values.model, auth, mcpToolSet: mcp.toolSet }))
+            outcomes.push(await runDataset({ dataset, repeats, recordMode, upload: values.upload, verbose: values.verbose, modelId: values.model, auth, mcp }))
         }
     }
     finally {
@@ -76,11 +74,11 @@ async function main(): Promise<void> {
     process.exit(broken.length === 0 ? 0 : 1)
 }
 
-async function runDataset({ dataset, repeats, recordMode, upload, verbose, modelId, auth, mcpToolSet }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, modelId: string, auth: Record<string, unknown>, mcpToolSet: ToolSet }): Promise<DatasetOutcome> {
+async function runDataset({ dataset, repeats, recordMode, upload, verbose, modelId, auth, mcp }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools }): Promise<DatasetOutcome> {
     const { name, cases } = dataset
     console.log(`\n=== ${name}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${upload ? ' · UPLOADS a release baseline to PostHog' : ' · nothing is uploaded'}`)
     const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
-    const results = await runInBatches({ runs, verbose, run: ({ candidate, trial }) => evaluate({ candidate, trial, mcpToolSet, modelId, auth, recordMode }) })
+    const results = await runPool({ runs, verbose, run: ({ candidate, trial }) => evaluate({ candidate, trial, mcp, modelId, auth, recordMode }) })
     const summaries = cases.map((candidate) => summarize({ candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
     console.log(`\n${name} summary (a case fails when at least half of its runs fail):`)
     summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · overall ${isNil(summary.overall) ? '-' : summary.overall.toFixed(1)}/10 · ${isNil(summary.costUsd) ? 'cost unknown' : `$${summary.costUsd.toFixed(4)}/run`}`))
@@ -101,19 +99,23 @@ async function runDataset({ dataset, repeats, recordMode, upload, verbose, model
     return regressed > 0 ? { broken: true, reason: `${regressed} ${name} case(s) regressed` } : { broken: false, reason: '' }
 }
 
-async function runInBatches({ runs, verbose, run }: { runs: PlannedRun[], verbose: boolean, run: (planned: PlannedRun) => Promise<CaseResult> }): Promise<CaseResult[]> {
+async function runPool({ runs, verbose, run }: { runs: PlannedRun[], verbose: boolean, run: (planned: PlannedRun) => Promise<CaseResult> }): Promise<CaseResult[]> {
+    const queue = [...runs]
     const results: CaseResult[] = []
-    for (const batch of chunk(runs, CONCURRENCY)) {
-        const done = await Promise.all(batch.map(run))
-        done.forEach((result) => print({ result, verbose }))
-        results.push(...done)
+    const worker = async (): Promise<void> => {
+        for (let next = queue.shift(); !isNil(next); next = queue.shift()) {
+            const result = await run(next)
+            print({ result, verbose })
+            results.push(result)
+        }
     }
+    await Promise.all(Array.from({ length: CONCURRENCY }, worker))
     return results
 }
 
-async function evaluate({ candidate, trial, mcpToolSet, modelId, auth, recordMode }: { candidate: EvalCase, trial: number, mcpToolSet: ToolSet, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<CaseResult> {
+async function evaluate({ candidate, trial, mcp, modelId, auth, recordMode }: { candidate: EvalCase, trial: number, mcp: McpTools, modelId: string, auth: Record<string, unknown>, recordMode: boolean }): Promise<CaseResult> {
     const { data, error } = await tryCatch(async () => {
-        const outcome = await evalAgentTurn.run({ evalCase: candidate, mcpToolSet, modelId, auth, recordMode })
+        const outcome = await evalAgentTurn.run({ evalCase: candidate, mcp, modelId, auth, recordMode })
         const scores = await evalChecks.grade({ evalCase: candidate, outcome, auth })
         return { scores, stops: outcome.stops.map((stop) => stop.reason), transcript: outcome.transcript, newFixtures: outcome.newFixtures }
     })
@@ -191,8 +193,8 @@ function gitSha(): string {
 }
 
 function promptVersion(): string {
-    const guides = evalPrompts.loadGuides()
-    const text = [evalPrompts.loadSystemPrompt(), ...Object.keys(guides).sort().map((topic) => guides[topic])].join('\n')
+    const guides = evalPrompts.guides()
+    const text = [evalPrompts.systemPrompt(), ...Object.keys(guides).sort().map((topic) => guides[topic])].join('\n')
     return createHash('sha256').update(text).digest('hex').slice(0, PROMPT_HASH_CHARS)
 }
 
@@ -289,12 +291,6 @@ type PlannedRun = {
     trial: number
 }
 
-type CaseResult = {
-    candidate: EvalCase
-    trial: number
-    verdict: Verdict
-    scores: RunScores
-    stops: string[]
-    transcript: string
+type CaseResult = UploadedRun & {
     newFixtures: RecordedToolCall[]
 }

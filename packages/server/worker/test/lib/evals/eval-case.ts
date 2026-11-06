@@ -19,9 +19,7 @@ function fromDatasetItem(item: DatasetItem): EvalCase {
         id: item.id,
         caseNumber: item.metadata.case,
         problemType: item.metadata.problem_type,
-        codeCheck: item.metadata.code_check,
         checks: item.expected_output.checks,
-        sourceTraceId: item.source_trace_id,
         cutBeforeStep,
         targetTool: item.metadata.targetTool,
         userMessage,
@@ -184,9 +182,7 @@ export type EvalCase = {
     id: string
     caseNumber: number
     problemType: string
-    codeCheck: string
     checks: string[]
-    sourceTraceId: string | null
     cutBeforeStep: number | undefined
     targetTool: string | undefined
     preloadedSkills: string[]
