@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { findMeetingByIdAction } from './lib/actions/find-meeting-by-id';
@@ -9,19 +9,13 @@ import { getUserDetailsAction } from './lib/actions/get-user-details';
 import { newTranscriptionCompletedTrigger } from './lib/triggers/new-transcription-complete';
 import { firefliesAiAuth } from './lib/auth';
 
-const markdownDescription = `
-To use Fireflies.ai, you need to get an API key:
-1. Login to your account at https://fireflies.ai.
-2. Navigate to Settings > Developer Settings in the left sidebar.
-3. Copy the API key from the API Key section.
-`;
-
 export const firefliesAi = createPiece({
 	displayName: 'Fireflies.ai',
 	description: 'Meeting assistant that automatically records, transcribes, and analyzes conversations',
 	logoUrl: 'https://cdn.activepieces.com/pieces/fireflies-ai.png',
 	authors: ['AnkitSharmaOnGithub'],
 	auth: firefliesAiAuth,
+	minimumSupportedRelease: '0.88.2',
 	actions: [
 		findMeetingByIdAction,
 		findRecentMeetingAction,
