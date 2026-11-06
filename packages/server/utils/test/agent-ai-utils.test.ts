@@ -600,6 +600,21 @@ describe('agentAiUtils.affordableOutputTokens', () => {
         })).resolves.toBe(42_000)
     })
 
+    it('caps a Cohere model the catalog has never heard of at the smallest Cohere output limit', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({ 'command-a-03-2025': 8_000 }))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.COHERE,
+            modelIds: ['command-a-03-2025'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(8_000)
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.COHERE,
+            modelIds: ['command-z-brand-new'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(4_000)
+    })
+
     it('does not shrink a turn because the catalog was unreachable', async () => {
         vi.spyOn(modelCatalog, 'load').mockResolvedValue({ lookup: () => undefined })
 

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-invoiceninja",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -16,6 +16,6 @@
   },
   "devDependencies": {
     "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

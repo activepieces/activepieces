@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { aiUtils, wideEvent } from '@activepieces/server-utils'
-import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -461,6 +461,11 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 log.info({ conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Run superseded by a newer message, exiting quietly')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
+            const configLostToDisconnect = source === AgentRunSource.FLOW_STEP && !configLoaded && err instanceof RpcTimeoutError && err.disconnected
+            if (configLostToDisconnect) {
+                log.warn({ error: err, conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Config response lost in transit, leaving the step to the redelivered copy or the stale sweep')
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
             const errorClass = classifyAgentRunError({ error: err, provider: runProvider })
             log[errorClass === 'internal' ? 'error' : 'warn']({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId }, agentRun: { errorClass, source } }, '[executeAgentRun] Agent job failed')
             const errorMessage = apErrorOf(err)?.message ?? formatPieceError(err).message
@@ -787,6 +792,10 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             const label = selected['label']
             selectedConnectionByPiece.set(pieceName, externalId)
             return { externalId, label: typeof label === 'string' ? label : externalId }
+        },
+        pieceNeedsNoConnection: async (pieceName) => {
+            const discovered = await executeCrossProjectTool('ap_discover_action_auth', { pieceName })
+            return isObject(discovered) && discovered['noAuthRequired'] === true
         },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)

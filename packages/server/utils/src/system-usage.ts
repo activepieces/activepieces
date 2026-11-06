@@ -1,5 +1,6 @@
 import fs from 'fs'
 import os from 'os'
+import { resolve } from 'path'
 import { tryCatch } from '@activepieces/core-utils';
 import { MachineInformation } from '@activepieces/shared';
 import checkDiskSpace from 'check-disk-space'
@@ -144,9 +145,9 @@ export const systemUsage = {
         }
     },
 
-    async getDiskInfo(): Promise<MachineInformation['diskInfo']> {
+    async getDiskInfo(measuredPath?: string): Promise<MachineInformation['diskInfo']> {
         const { data, error } = await tryCatch(async () => {
-            const paths = ['/', process.cwd()]
+            const paths = measuredPath === undefined ? ['/', process.cwd()] : [resolve(measuredPath)]
             for (const path of paths) {
                 const { data: disk } = await tryCatch(() => checkDiskSpace(path))
                 if (disk) {
