@@ -3,15 +3,6 @@ import { Property } from '@activepieces/pieces-framework';
 import { memAuth } from '../auth';
 import { CollectionListResponse, memClient } from '.';
 
-export const memProps = {
-  collectionDropdown,
-  yesNoFilter,
-  containsFilter,
-  dateFilters,
-  orderBy,
-  noteId,
-};
-
 function collectionDropdown<R extends boolean>({
   displayName,
   description,
@@ -124,3 +115,12 @@ function noteId({ description }: { description: string }) {
     required: true,
   });
 }
+
+export const memProps = {
+  collectionDropdown,
+  yesNoFilter,
+  containsFilter,
+  dateFilters,
+  orderBy,
+  noteId,
+};

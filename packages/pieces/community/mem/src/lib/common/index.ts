@@ -6,110 +6,6 @@ import {
 } from '@activepieces/pieces-common';
 import { OutputSchema, OutputSchemaField } from '@activepieces/pieces-framework';
 
-export const memClient = {
-  request,
-  encodePath,
-  toQuery,
-  yesNoToBoolean,
-  splitCollections,
-  describeFailure,
-  pollNotes,
-};
-
-export const memSchemas = {
-  requestId: {
-    fields: [{ key: 'request_id', label: 'Request ID' }],
-  },
-  note: { fields: noteFields() },
-  readNote: {
-    fields: [
-      ...noteFields(),
-      {
-        key: 'attachment_metadata',
-        label: 'Attachments',
-        labelKey: 'attachment_id',
-        listItems: [
-          { key: 'attachment_id', label: 'Attachment ID' },
-          { key: 'attachment_kind', label: 'Kind' },
-          { key: 'summary', label: 'Summary' },
-          { key: 'ocr_text', label: 'OCR Text' },
-        ],
-      },
-    ],
-  },
-  noteList: {
-    fields: [
-      { key: 'results', label: 'Notes', labelKey: 'title', listItems: noteListItemFields() },
-      { key: 'total', label: 'Total', format: 'number' },
-      { key: 'next_page', label: 'Next Page Cursor' },
-    ],
-  },
-  noteSearch: {
-    fields: [
-      { key: 'results', label: 'Notes', labelKey: 'title', listItems: noteListItemFields() },
-      { key: 'total', label: 'Total', format: 'number' },
-      { key: 'offset', label: 'Offset', format: 'number' },
-      { key: 'limit', label: 'Limit', format: 'number' },
-      { key: 'has_next_page', label: 'Has Next Page', format: 'boolean' },
-      { key: 'snapshot_id', label: 'Snapshot ID' },
-    ],
-  },
-  relatedNotes: {
-    fields: [
-      {
-        key: 'results',
-        label: 'Related Notes',
-        labelKey: 'title',
-        listItems: [
-          { key: 'id', label: 'Note ID' },
-          { key: 'title', label: 'Title' },
-          { key: 'snippet', label: 'Snippet' },
-          { key: 'preview', label: 'Preview' },
-          { key: 'score', label: 'Score', format: 'number' },
-          { key: 'collection_ids', label: 'Collection IDs' },
-          {
-            key: 'collections',
-            label: 'Collections',
-            labelKey: 'title',
-            listItems: [
-              { key: 'id', label: 'Collection ID' },
-              { key: 'title', label: 'Title' },
-            ],
-          },
-          { key: 'created_at', label: 'Created At', format: 'datetime' },
-          { key: 'updated_at', label: 'Updated At', format: 'datetime' },
-        ],
-      },
-      { key: 'total', label: 'Total', format: 'number' },
-    ],
-  },
-  collection: { fields: collectionFields() },
-  createdCollection: {
-    fields: collectionFields().filter((field) => field.key !== 'note_count'),
-  },
-  memIt: {
-    fields: [{ key: 'request_id', label: 'Request ID (the note appears in Mem a few seconds later)' }],
-  },
-  collectionList: {
-    fields: [
-      { key: 'results', label: 'Collections', labelKey: 'title', listItems: collectionFields() },
-      { key: 'total', label: 'Total', format: 'number' },
-      { key: 'next_page', label: 'Next Page Cursor' },
-    ],
-  },
-  collectionSearch: {
-    fields: [
-      { key: 'results', label: 'Collections', labelKey: 'title', listItems: collectionFields() },
-      { key: 'total', label: 'Total', format: 'number' },
-    ],
-  },
-  noteTrigger: {
-    fields: noteListItemFields().filter((field) => field.key !== 'content'),
-  },
-} satisfies Record<string, OutputSchema>;
-
-export { MemApiError };
-
 const BASE_URL = 'https://api.mem.ai/v2';
 
 const MAX_POLL_PAGES = 200;
@@ -361,6 +257,110 @@ function noteFields(): OutputSchemaField[] {
     { key: 'trashed_at', label: 'Trashed At', format: 'datetime' },
   ];
 }
+
+export const memClient = {
+  request,
+  encodePath,
+  toQuery,
+  yesNoToBoolean,
+  splitCollections,
+  describeFailure,
+  pollNotes,
+};
+
+export const memSchemas = {
+  requestId: {
+    fields: [{ key: 'request_id', label: 'Request ID' }],
+  },
+  note: { fields: noteFields() },
+  readNote: {
+    fields: [
+      ...noteFields(),
+      {
+        key: 'attachment_metadata',
+        label: 'Attachments',
+        labelKey: 'attachment_id',
+        listItems: [
+          { key: 'attachment_id', label: 'Attachment ID' },
+          { key: 'attachment_kind', label: 'Kind' },
+          { key: 'summary', label: 'Summary' },
+          { key: 'ocr_text', label: 'OCR Text' },
+        ],
+      },
+    ],
+  },
+  noteList: {
+    fields: [
+      { key: 'results', label: 'Notes', labelKey: 'title', listItems: noteListItemFields() },
+      { key: 'total', label: 'Total', format: 'number' },
+      { key: 'next_page', label: 'Next Page Cursor' },
+    ],
+  },
+  noteSearch: {
+    fields: [
+      { key: 'results', label: 'Notes', labelKey: 'title', listItems: noteListItemFields() },
+      { key: 'total', label: 'Total', format: 'number' },
+      { key: 'offset', label: 'Offset', format: 'number' },
+      { key: 'limit', label: 'Limit', format: 'number' },
+      { key: 'has_next_page', label: 'Has Next Page', format: 'boolean' },
+      { key: 'snapshot_id', label: 'Snapshot ID' },
+    ],
+  },
+  relatedNotes: {
+    fields: [
+      {
+        key: 'results',
+        label: 'Related Notes',
+        labelKey: 'title',
+        listItems: [
+          { key: 'id', label: 'Note ID' },
+          { key: 'title', label: 'Title' },
+          { key: 'snippet', label: 'Snippet' },
+          { key: 'preview', label: 'Preview' },
+          { key: 'score', label: 'Score', format: 'number' },
+          { key: 'collection_ids', label: 'Collection IDs' },
+          {
+            key: 'collections',
+            label: 'Collections',
+            labelKey: 'title',
+            listItems: [
+              { key: 'id', label: 'Collection ID' },
+              { key: 'title', label: 'Title' },
+            ],
+          },
+          { key: 'created_at', label: 'Created At', format: 'datetime' },
+          { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+        ],
+      },
+      { key: 'total', label: 'Total', format: 'number' },
+    ],
+  },
+  collection: { fields: collectionFields() },
+  createdCollection: {
+    fields: collectionFields().filter((field) => field.key !== 'note_count'),
+  },
+  memIt: {
+    fields: [{ key: 'request_id', label: 'Request ID (the note appears in Mem a few seconds later)' }],
+  },
+  collectionList: {
+    fields: [
+      { key: 'results', label: 'Collections', labelKey: 'title', listItems: collectionFields() },
+      { key: 'total', label: 'Total', format: 'number' },
+      { key: 'next_page', label: 'Next Page Cursor' },
+    ],
+  },
+  collectionSearch: {
+    fields: [
+      { key: 'results', label: 'Collections', labelKey: 'title', listItems: collectionFields() },
+      { key: 'total', label: 'Total', format: 'number' },
+    ],
+  },
+  noteTrigger: {
+    fields: noteListItemFields().filter((field) => field.key !== 'content'),
+  },
+} satisfies Record<string, OutputSchema>;
+
+export { MemApiError };
 
 export type NoteListItem = {
   id: string;
