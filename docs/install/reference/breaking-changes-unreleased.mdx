@@ -22,6 +22,20 @@ When Status is left empty, **Find Conversation** now searches every status. It u
 - If a flow relied on Find Conversation returning only active conversations, set Status to Active.
 - If a Find Conversation step has Tags set, check that the tags match the conversations you expect, or clear Tags to keep the old results.
 
+#### Knack 0.3.0: Create, Update and Find Record are no longer AI agent tools
+
+**Create Record**, **Update Record** and **Find Record** are now shown only in the flow builder. AI agents and MCP clients get **Create Record (Agent)**, **Update Record (Agent)**, **Search Records (Agent)** and **Get Record (Agent)** instead, plus **List Objects (Agent)** and **Get Object Fields (Agent)** to discover an app's tables and field keys.
+
+After you upgrade:
+
+- **Find Record** sends its filter in the documented `{ match, rules }` format.
+- **Delete Record** keeps Knack's `delete: true` and adds `deleted` and `id`. It now fails with a not-found error when Knack does not confirm the delete.
+- Error messages now show Knack's own error text and the HTTP status.
+
+#### What you need to do
+
+- Agents that used Create, Update or Find Record as tools: switch to the (Agent) actions.
+
 #### Base44 0.2.0: Find or Create Entity is no longer an AI agent tool, and the Entity Event trigger changes
 
 **Find or Create Entity** is now shown only in the flow builder. AI agents and MCP clients find a record with **Find Entity** or **List Entity Records** and create one with **Create Entity**.
