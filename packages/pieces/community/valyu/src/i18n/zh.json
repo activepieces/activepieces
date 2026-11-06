@@ -56,7 +56,7 @@
   "Timeout": "Timeout",
   "Follow redirects": "跟随重定向",
   "The search query to find relevant content.": "查找相关内容的搜索查询。",
-  "Maximum number of results to return (1-20 for standard API keys, up to 100 with special API key).": "返回结果的最大数量(用于标准 API 密钥，最多为 100 的 API 密钥)。",
+  "Maximum number of results to return (1-20 for standard API keys, up to 100 with special API key).": "Maximum number of results to return (1-20 for standard API keys, up to 100 with special API key).",
   "Type of search to perform. 'web' searches web content. 'proprietary' uses Valyu's full-text multimodal indices. 'news' returns only news articles.": "要执行的搜索类型。'web' 搜索网页内容。'proprietary' 使用Valyu的全文多式联运指数。'news' 只返回新闻文章。",
   "Enable fast mode for reduced latency but shorter results. Best for general purpose queries.": "启用快速模式以减少延迟但缩短结果。最适合于一般目的查询。",
   "Maximum price in dollars for a thousand retrievals (CPM). Only applies when provided.": "千次检索（CPM）的最大价格以美元计，只有在提供时才适用。",

@@ -223,7 +223,7 @@
   "Name of the company (e.g., enrichlayer)": "公司名称(例如浓缩层)",
   "Role to look up (e.g., ceo, cto, vp of engineering)": "要查找的角色（例如冰箱，vp of Engineering）",
   "Professional network company URL (e.g., https://www.linkedin.com/company/microsoft)": "专业网络公司URL(例如，https://www.linkedin.com/company/microsoft)",
-  "Maximum results per call (1-9999, default: 10)": "每次通话的最大结果(1-99999, 默认: 10)",
+  "Maximum results per call (1-9999, default: 10)": "Maximum results per call (1-9999, default: 10)",
   "Filter by current, past, or all employees": "按当前、过去或所有员工筛选",
   "Return full profiles instead of just URLs (+1 credit each)": "返回完整的个人资料，而不仅仅是URL (+1 redit each )",
   "Filter employees by title using boolean expression (e.g., \"founder\" OR \"co-founder\"). Base cost: 10 credits + 3 per match.": "使用布尔表达式（如“创始人”或“共同创始人”来筛选员工。基础费用：10 信用+3 每场比赛。",

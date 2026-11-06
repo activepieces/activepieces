@@ -1,6 +1,6 @@
 {
   "Trust layer for AI agents. 271 quality-scored API capabilities: company verification across 27 countries, sanctions screening, IBAN/VAT validation, web intelligence, and more. Every result includes a quality score and audit trail.": "AI 代理人信任层，271种质量得分的 API 能力：27个国家的公司核查，制裁筛选，IBAN/增值税验证，以及网络情报等等。 每项结果都包括质量分数和审计线索。",
-  "Your Strale API key (starts with sk_live_). Get one free at https://strale.dev/signup — includes 2.00 EUR trial credits. Some actions (Search, Trust Profile) work without a key.": "您的 Strale API 密钥 (以sk_live_开头)免费在 https://strale.dev/signup — 包括2。 0 欧元试点积分。有些动作(Search, Trust Profile) 在没有密钥的情况下工作。",
+  "Your Strale API key (starts with sk_live_). Get one free at https://strale.dev/signup — includes 2.00 EUR trial credits. Some actions (Search, Trust Profile) work without a key.": "Your Strale API key (starts with sk_live_). Get one free at https://strale.dev/signup — includes 2.00 EUR trial credits. Some actions (Search, Trust Profile) work without a key.",
   "Search Capabilities": "搜索能力",
   "Execute Capability": "执行能力",
   "Check Balance": "支票余额",

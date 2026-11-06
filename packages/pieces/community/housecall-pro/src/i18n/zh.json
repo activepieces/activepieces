@@ -221,7 +221,7 @@
   "The ID of the customer this job is for": "此作业的客户ID",
   "The ID of the address for this job": "此作业地址的 ID",
   "Invoice number must be unique across all of a company's jobs. If left blank, one will be automatically generated.": "发票号码必须是公司所有工作的唯一号码。如果留空，则自动生成发票。",
-  "Start time of job in ISO8601 format (e.g., 2021-01-14T20:14:00)": "以 ISO8601 格式开始工作时间(如：2021-01-14T20：14:00)",
+  "Start time of job in ISO8601 format (e.g., 2021-01-14T20:14:00)": "Start time of job in ISO8601 format (e.g., 2021-01-14T20:14:00)",
   "End time of job in ISO8601 format (e.g., 2021-01-14T21:14:00)": "以 ISO8601 格式完成任务的结束时间(例如2021-01-14T21:14:00)",
   "Integer value in minutes of arrival window": "以几分钟到达窗口的整数值",
   "Array of employee IDs to assign to the job": "指派给工作的员工ID",

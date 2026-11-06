@@ -85,7 +85,7 @@
   "Keep, shorten or expand your text. Sent as part of the instructions.": "Keep, shorten or expand your text. Sent as part of the instructions.",
   "How much text per slide. Sent as part of the instructions.": "How much text per slide. Sent as part of the instructions.",
   "Theme ID from \"List Themes\". If empty, Alai uses its default theme.": "Theme ID from \"List Themes\". If empty, Alai uses its default theme.",
-  "Vibe ID from \"List Vibes\".": "Stimmungs-ID aus \"Themen auflisten\".",
+  "Vibe ID from \"List Vibes\".": "Vibe ID from \"List Vibes\".",
   "Output language. If empty, Alai matches the input language.": "Ausgabesprache. Wenn leer, stimmt Alai die Eingabesprache ab.",
   "Design options per slide (1-4). More use more credits.": "Designoptionen pro Folie (1-4). Mehr verbraucht mehr Credits.",
   "IDs from \"Upload Images\" to use in the slides.": "IDs aus \"Bilder hochladen\", die in den Folien verwendet werden sollen.",

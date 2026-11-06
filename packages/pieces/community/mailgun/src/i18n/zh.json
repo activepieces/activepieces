@@ -78,7 +78,7 @@
   "JSON object with custom variables to store with this member, e.g. {\"age\": 30, \"city\": \"Paris\"}.": "具有自定义变量的JSON对象与该成员存储，例如 {\"age\": 30, \"city\": \"Paris\"}.",
   "Filter events by type.": "按类型筛选事件。",
   "Only applies to \"failed\" events. Filter by permanent (hard bounce) or temporary (soft bounce).": "仅适用于\"失败\"事件。按永久性(硬退货)或临时(软退货)过滤。",
-  "Start of the time range. RFC 2822 date (e.g. \"Fri, 28 Mar 2026 10:00:00 -0000\") or Unix timestamp (e.g. \"1711620000\"). Leave empty for Mailgun default (about 30 days ago).": "时间范围的起始。RFC 2822 date (e.g. \"Fri, 28 Mar 2026 10:00:00:00:00-0000\") 或 Unix timestamp (e). 。\"1711620000\"。对于Mailgun缺省留空(约30天前)。",
+  "Start of the time range. RFC 2822 date (e.g. \"Fri, 28 Mar 2026 10:00:00 -0000\") or Unix timestamp (e.g. \"1711620000\"). Leave empty for Mailgun default (about 30 days ago).": "Start of the time range. RFC 2822 date (e.g. \"Fri, 28 Mar 2026 10:00:00 -0000\") or Unix timestamp (e.g. \"1711620000\"). Leave empty for Mailgun default (about 30 days ago).",
   "End of the time range. Same format as Begin Date. Leave empty for now.": "时间范围结束。格式与开始日期相同。现在留空。",
   "Maximum number of events to return. Default is 100, max is 1000. Mailgun returns up to 300 per page — pagination is handled automatically.": "返回事件的最大数量。默认是 100，最大值为 1000。每页邮件枪返回最多为 300 — 自动处理分页。",
   "Select which event types to include in the statistics.": "选择要包含在统计中的事件类型。",
