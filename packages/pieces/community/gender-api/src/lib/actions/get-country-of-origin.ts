@@ -3,6 +3,35 @@ import { createAction, OutputSchema, Property } from '@activepieces/pieces-frame
 import { genderApiAuth } from '../common/auth';
 import { genderApiCommon } from '../common/client';
 
+function countryOfOriginOutputSchema(): OutputSchema {
+  return {
+    fields: [
+      { key: 'first_name', label: 'First Name' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'probability', label: 'Gender Probability', format: 'number' },
+      { key: 'result_found', label: 'Result Found', format: 'boolean' },
+      {
+        key: 'country_of_origin',
+        label: 'Countries of Origin',
+        labelKey: 'country_name',
+        listItems: [
+          { key: 'country', label: 'Country Code' },
+          { key: 'country_name', label: 'Country Name' },
+          { key: 'probability', label: 'Probability', format: 'number' },
+          { key: 'continental_region', label: 'Continental Region' },
+          { key: 'statistical_region', label: 'Statistical Region' },
+        ],
+      },
+      { key: 'language_of_origin', label: 'Language of Origin' },
+      { key: 'meaning', label: 'Meaning' },
+      { key: 'country_of_origin_map_url', label: 'Map URL', format: 'url' },
+      { key: 'credits_used', label: 'Credits Used', format: 'number' },
+    ],
+  };
+}
+
+const INPUT_TYPES: string[] = ['first_name', 'full_name', 'email'];
+
 export const getCountryOfOrigin = createAction({
   auth: genderApiAuth,
   name: 'getCountryOfOrigin',
@@ -78,32 +107,3 @@ export const getCountryOfOrigin = createAction({
     };
   },
 });
-
-function countryOfOriginOutputSchema(): OutputSchema {
-  return {
-    fields: [
-      { key: 'first_name', label: 'First Name' },
-      { key: 'gender', label: 'Gender' },
-      { key: 'probability', label: 'Gender Probability', format: 'number' },
-      { key: 'result_found', label: 'Result Found', format: 'boolean' },
-      {
-        key: 'country_of_origin',
-        label: 'Countries of Origin',
-        labelKey: 'country_name',
-        listItems: [
-          { key: 'country', label: 'Country Code' },
-          { key: 'country_name', label: 'Country Name' },
-          { key: 'probability', label: 'Probability', format: 'number' },
-          { key: 'continental_region', label: 'Continental Region' },
-          { key: 'statistical_region', label: 'Statistical Region' },
-        ],
-      },
-      { key: 'language_of_origin', label: 'Language of Origin' },
-      { key: 'meaning', label: 'Meaning' },
-      { key: 'country_of_origin_map_url', label: 'Map URL', format: 'url' },
-      { key: 'credits_used', label: 'Credits Used', format: 'number' },
-    ],
-  };
-}
-
-const INPUT_TYPES: string[] = ['first_name', 'full_name', 'email'];

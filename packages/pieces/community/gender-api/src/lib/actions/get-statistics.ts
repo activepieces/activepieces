@@ -3,6 +3,23 @@ import { createAction, OutputSchema } from '@activepieces/pieces-framework';
 import { genderApiAuth } from '../common/auth';
 import { genderApiCommon } from '../common/client';
 
+function statisticsOutputSchema(): OutputSchema {
+  return {
+    fields: [
+      { key: 'remaining_credits', label: 'Remaining Credits', format: 'number' },
+      { key: 'is_limit_reached', label: 'Limit Reached', format: 'boolean' },
+      {
+        key: 'usage_last_month',
+        label: 'Usage Last Month',
+        children: [
+          { key: 'date', label: 'Month', description: 'Year and month of the usage period (YYYY-MM)' },
+          { key: 'credits_used', label: 'Credits Used', format: 'number' },
+        ],
+      },
+    ],
+  };
+}
+
 export const getStatistics = createAction({
   auth: genderApiAuth,
   name: 'getStatistics',
@@ -37,20 +54,3 @@ export const getStatistics = createAction({
     };
   },
 });
-
-function statisticsOutputSchema(): OutputSchema {
-  return {
-    fields: [
-      { key: 'remaining_credits', label: 'Remaining Credits', format: 'number' },
-      { key: 'is_limit_reached', label: 'Limit Reached', format: 'boolean' },
-      {
-        key: 'usage_last_month',
-        label: 'Usage Last Month',
-        children: [
-          { key: 'date', label: 'Month', description: 'Year and month of the usage period (YYYY-MM)' },
-          { key: 'credits_used', label: 'Credits Used', format: 'number' },
-        ],
-      },
-    ],
-  };
-}
