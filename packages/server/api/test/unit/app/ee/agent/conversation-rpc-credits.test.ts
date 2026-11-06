@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { conversationRpc } from '../../../../../src/app/ee/agent/rpc/conversation-rpc'
-import { billingProvider } from '../../../../../src/app/platform/billing-provider'
+import { billingProvider, CreditCheckSpeed } from '../../../../../src/app/platform/billing-provider'
 
 const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as never
 const noopProvider = billingProvider.get(log)
@@ -18,7 +18,7 @@ describe('agentCreditsLeft', () => {
         expect(await check({ pendingCredits: 2 })).toBe(1)
         expect(await check({ pendingCredits: 3 })).toBe(0)
         expect(await check({ pendingCredits: 4 })).toBe(-1)
-        expect(mockCreditsState).toHaveBeenCalledWith('platform-1')
+        expect(mockCreditsState).toHaveBeenCalledWith({ platformId: 'platform-1', creditCheckSpeed: CreditCheckSpeed.BACKGROUND })
     })
 
     it('reports no limit on a platform that is not metered', async () => {

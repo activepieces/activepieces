@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
-import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditCheckSpeed, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, ShouldBlockOnCreditsParams, TrackFeatureParams } from '../../../../platform/billing-provider'
+import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditCheckSpeed, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, GetCreditsAndAppSumoStateParams, ShouldBlockOnCreditsParams, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
 
@@ -163,8 +163,8 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     shouldBlockOnCredits: async ({ platformId, creditCheckSpeed }: ShouldBlockOnCreditsParams) => {
         return (await computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs: CREDITS_CACHE_READ_TIMEOUT_MS[creditCheckSpeed] })).credits.blocked
     },
-    getCreditsAndAppSumoState: async (platformId: string) => {
-        return computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs: CREDITS_CACHE_READ_TIMEOUT_MS[CreditCheckSpeed.NORMAL] })
+    getCreditsAndAppSumoState: async ({ platformId, creditCheckSpeed }: GetCreditsAndAppSumoStateParams) => {
+        return computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs: CREDITS_CACHE_READ_TIMEOUT_MS[creditCheckSpeed] })
     },
     getConsumablesUsage: async (platformId: string) => {
         const { credits, appSumo } = await resolveCreditsCache(log, platformId)
