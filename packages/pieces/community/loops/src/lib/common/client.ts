@@ -1,31 +1,5 @@
 import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 
-export const LOOPS_BASE_URL = 'https://app.loops.so/api/v1';
-
-export const RESERVED_CONTACT_FIELDS = new Set([
-  'email',
-  'firstName',
-  'lastName',
-  'userId',
-  'subscribed',
-  'userGroup',
-  'source',
-  'mailingLists',
-]);
-
-export const loopsClient = {
-  request,
-  findContacts,
-  sliceArray,
-  buildContactBody,
-  requireOneIdentifier,
-  isRecord,
-  describeStatus,
-  RESERVED_CONTACT_FIELDS,
-};
-
-export { LoopsApiError };
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -209,6 +183,32 @@ class LoopsApiError extends Error {
     this.responseBody = responseBody;
   }
 }
+
+export const LOOPS_BASE_URL = 'https://app.loops.so/api/v1';
+
+export const RESERVED_CONTACT_FIELDS = new Set([
+  'email',
+  'firstName',
+  'lastName',
+  'userId',
+  'subscribed',
+  'userGroup',
+  'source',
+  'mailingLists',
+]);
+
+export const loopsClient = {
+  request,
+  findContacts,
+  sliceArray,
+  buildContactBody,
+  requireOneIdentifier,
+  isRecord,
+  describeStatus,
+  RESERVED_CONTACT_FIELDS,
+};
+
+export { LoopsApiError };
 
 type LoopsRequestParams = {
   apiKey: string;

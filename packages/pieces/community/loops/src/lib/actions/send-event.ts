@@ -4,6 +4,8 @@ import { loopsAuth } from '../auth';
 import { loopsClient } from '../common/client';
 import { loopsProps, loopsSchemas } from '../common/schemas';
 
+const RESERVED_EVENT_FIELDS = new Set(['eventName', 'email', 'userId', 'eventProperties', 'mailingLists']);
+
 export const sendEvent = createAction({
   name: 'send_event',
   classification: 'WRITE',
@@ -86,5 +88,3 @@ export const sendEvent = createAction({
     });
   },
 });
-
-const RESERVED_EVENT_FIELDS = new Set(['eventName', 'email', 'userId', 'eventProperties', 'mailingLists']);
