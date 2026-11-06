@@ -6,27 +6,38 @@ export const fetchCryptoPairPrice = createAction({
   name: 'fetch_crypto_pair_price',
   classification: 'READ',
   displayName: 'Fetch Pair Price',
-  description: 'Fetch the current price of a pair (e.g. BTC/USDT)',
+  description: 'Get the latest price of one coin in another, such as BTC in USDT.',
   audience: 'human',
   aiMetadata: { description: 'Fetches the current spot price of a trading pair from the public Binance market data API by combining two coin symbols (e.g. first coin BTC + second coin USDT). Use to look up the live exchange rate of one crypto asset against another. No authentication required; the symbol must be a pair that exists on Binance or the request fails. Read-only lookup, idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'pair',
+      display: 'section',
+      label: 'Trading Pair',
+      icon: 'tag',
+      props: ['first_coin', 'second_coin'],
+    },
+  ],
   props: {
     first_coin: Property.ShortText({
-      displayName: 'First Coin Symbol',
-      description:
-        "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')",
+      displayName: 'Base Asset',
+      description: 'The coin you want the price of.',
+      placeholder: 'BTC',
+      width: 'half',
       required: true,
     }),
     second_coin: Property.ShortText({
-      displayName: 'Second Coin Symbol',
-      description:
-        "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')",
+      displayName: 'Quote Asset',
+      description: 'The currency the price is given in.',
+      placeholder: 'USDT',
+      width: 'half',
       required: true,
     }),
   },
   async run(context) {
     const { first_coin, second_coin } = context.propsValue;
-    const first = binanceInput.symbol({ value: first_coin, fieldName: 'First Coin Symbol' });
-    const second = binanceInput.symbol({ value: second_coin, fieldName: 'Second Coin Symbol' });
+    const first = binanceInput.symbol({ value: first_coin, fieldName: 'Base Asset' });
+    const second = binanceInput.symbol({ value: second_coin, fieldName: 'Quote Asset' });
     return await fetchCryptoPairPriceImpl({ symbol: `${first}${second}` });
   },
 });
