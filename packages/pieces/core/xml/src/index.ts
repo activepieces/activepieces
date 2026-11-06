@@ -8,7 +8,7 @@ export const xml = createPiece({
   displayName: 'XML',
   description: 'Extensible Markup Language for storing and transporting data',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/xml.png',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
