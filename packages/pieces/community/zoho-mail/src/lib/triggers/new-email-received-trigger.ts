@@ -7,7 +7,6 @@ import {
 } from '@activepieces/pieces-common';
 import {
 	AppConnectionValueForAuthProperty,
-	PiecePropValueSchema,
 	TriggerStrategy,
 	createTrigger,
 } from '@activepieces/pieces-framework';
@@ -25,14 +24,15 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof zohoMailAuth>, P
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const { accountId, folderId } = propsValue;
 
+		const limit = lastFetchEpochMS === 0 ? 10 : 200;
 		let page = 1;
 		let hasMore = true;
 		const allMessages = [];
 
 		do {
 			const queryParams: QueryParams = {
-				start: page.toString(),
-				limit: lastFetchEpochMS === 0 ? '10' : '200',
+				start: ((page - 1) * limit + 1).toString(),
+				limit: limit.toString(),
 			};
 
 			if (folderId) {
@@ -56,15 +56,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof zohoMailAuth>, P
 				const receivedTime = Number(msg.receivedTime);
 				if (lastFetchEpochMS > 0 && receivedTime <= lastFetchEpochMS) {
 					hasMore = false;
-					break; // Stop processing this page
+					break;
 				}
-				allMessages.push(msg); // Only add if it's newer
+				allMessages.push(msg);
 			}
 
-			// if it's test mode, only fetch first page
 			if (lastFetchEpochMS === 0) break;
 
-			if (!hasMore) {
+			if (!hasMore || messages.length < limit) {
 				break;
 			}
 			page++;
@@ -94,7 +93,7 @@ export const newEmailReceivedTrigger = createTrigger({
 		folderId: folderId({
 			displayName: 'Folder',
 			description:
-				'Select the folder to watch. If empty, watches the inbox/all messages based on API default.',
+				"Leave empty to use Zoho Mail's default message list.",
 			required: false,
 		}),
 	},
