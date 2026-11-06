@@ -44,7 +44,7 @@ export const enrichCompany = createAction({
       organization: Record<string, unknown>;
     }>({
       method: HttpMethod.GET,
-      url: `https://api.apollo.io/v1/organizations/enrich?domain=${propsValue.domain}`,
+      url: `https://api.apollo.io/v1/organizations/enrich?domain=${encodeURIComponent(propsValue.domain)}`,
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': `${auth.secret_text}`,

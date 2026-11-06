@@ -45,7 +45,7 @@ export const organizationJobPostings = createAction({
       pagination: Record<string, unknown>;
     }>({
       method: HttpMethod.GET,
-      url: `https://api.apollo.io/api/v1/organizations/${propsValue.organization_id}/job_postings`,
+      url: `https://api.apollo.io/api/v1/organizations/${encodeURIComponent(propsValue.organization_id)}/job_postings`,
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
