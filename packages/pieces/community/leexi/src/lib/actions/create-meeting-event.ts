@@ -5,6 +5,23 @@ import { leexiApi } from '../common/client';
 import { LeexiMeetingEvent } from '../common/types';
 import { leexiOutputFields } from '../common/constants';
 
+function toIso({ value, label }: { value: string; label: string }): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Invalid ${label} "${value}". Use an ISO 8601 date such as 2026-01-31T10:00:00.000Z.`);
+  }
+  return date.toISOString();
+}
+
+function yesNoOptions() {
+  return {
+    options: [
+      { label: 'Yes', value: 'yes' },
+      { label: 'No', value: 'no' },
+    ],
+  };
+}
+
 export const createMeetingEventAction = createAction({
   name: 'create_meeting_event',
   classification: 'WRITE',
@@ -136,20 +153,3 @@ export const createMeetingEventAction = createAction({
     });
   },
 });
-
-function toIso({ value, label }: { value: string; label: string }): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    throw new Error(`Invalid ${label} "${value}". Use an ISO 8601 date such as 2026-01-31T10:00:00.000Z.`);
-  }
-  return date.toISOString();
-}
-
-function yesNoOptions() {
-  return {
-    options: [
-      { label: 'Yes', value: 'yes' },
-      { label: 'No', value: 'no' },
-    ],
-  };
-}

@@ -5,6 +5,53 @@ import { leexiApi } from '../common/client';
 import { LeexiCall, LeexiListResponse } from '../common/types';
 import { leexiOutputFields } from '../common/constants';
 
+function cleanList(values: unknown[] | undefined): string[] | undefined {
+  if (!values) {
+    return undefined;
+  }
+  const result = values
+    .filter((value): value is string => typeof value === 'string')
+    .map((value) => value.trim())
+    .filter((value) => value !== '');
+  return result.length > 0 ? result : undefined;
+}
+
+function toIso(value: string | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Invalid date "${value}". Use an ISO 8601 date such as 2026-01-31T00:00:00.000Z.`);
+  }
+  return date.toISOString();
+}
+
+function clampInt({ value, min, max, fallback }: { value: number | undefined; min: number; max: number; fallback: number }): number {
+  if (value === undefined || value === null || Number.isNaN(value)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, Math.floor(value)));
+}
+
+function slimCall(call: LeexiCall) {
+  return {
+    uuid: call.uuid,
+    title: call.title ?? null,
+    created_at: call.created_at,
+    performed_at: call.performed_at ?? null,
+    duration: call.duration ?? null,
+    direction: call.direction ?? null,
+    locale: call.locale ?? null,
+    source: call.source ?? null,
+    leexi_url: call.leexi_url ?? null,
+    conversation_type: call.conversation_type ?? null,
+    owner: call.owner ?? null,
+    participating_users: call.participating_users ?? [],
+    customers: call.customers ?? [],
+  };
+}
+
 export const queryCallsAction = createAction({
   name: 'query_calls',
   classification: 'SEARCH',
@@ -131,50 +178,3 @@ export const queryCallsAction = createAction({
     };
   },
 });
-
-function cleanList(values: unknown[] | undefined): string[] | undefined {
-  if (!values) {
-    return undefined;
-  }
-  const result = values
-    .filter((value): value is string => typeof value === 'string')
-    .map((value) => value.trim())
-    .filter((value) => value !== '');
-  return result.length > 0 ? result : undefined;
-}
-
-function toIso(value: string | undefined): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    throw new Error(`Invalid date "${value}". Use an ISO 8601 date such as 2026-01-31T00:00:00.000Z.`);
-  }
-  return date.toISOString();
-}
-
-function clampInt({ value, min, max, fallback }: { value: number | undefined; min: number; max: number; fallback: number }): number {
-  if (value === undefined || value === null || Number.isNaN(value)) {
-    return fallback;
-  }
-  return Math.min(max, Math.max(min, Math.floor(value)));
-}
-
-function slimCall(call: LeexiCall) {
-  return {
-    uuid: call.uuid,
-    title: call.title ?? null,
-    created_at: call.created_at,
-    performed_at: call.performed_at ?? null,
-    duration: call.duration ?? null,
-    direction: call.direction ?? null,
-    locale: call.locale ?? null,
-    source: call.source ?? null,
-    leexi_url: call.leexi_url ?? null,
-    conversation_type: call.conversation_type ?? null,
-    owner: call.owner ?? null,
-    participating_users: call.participating_users ?? [],
-    customers: call.customers ?? [],
-  };
-}

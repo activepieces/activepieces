@@ -9,78 +9,6 @@ import {
   MAX_FETCH_CALL_UUIDS_WITH_INCLUDE,
 } from '../common/constants';
 
-export const fetchCallDetailsAction = createAction({
-  name: 'fetch_call_details',
-  classification: 'READ',
-  auth: leexiAuth,
-  displayName: 'Fetch Call Details',
-  description: 'Get the AI summary, people and tasks of up to 20 Leexi calls.',
-  audience: 'ai',
-  aiMetadata: {
-    description:
-      'Fetches details for 1-20 Leexi calls by UUID (at most 5 when Include is set): title, performed_at, duration, direction, leexi_url, owner, participating users, customers, AI summary and follow-up tasks. Include can add AI notes (prompts), chapters and scorecards. Returns one entry per UUID with found=true and the call, or found=false with the error when that call does not exist, is outside the API key scope or has an invalid UUID (400/404/422). Any other failure (authentication, permission, rate limit, server error, network) fails the whole step so it can be retried. Get call UUIDs from Query Calls. Read-only.',
-    idempotent: true,
-  },
-  outputSchema: {
-    fields: [
-      {
-        key: 'results',
-        label: 'Results',
-        labelKey: 'uuid',
-        listItems: [
-          { key: 'uuid', label: 'Call UUID' },
-          { key: 'found', label: 'Found', format: 'boolean' },
-          { key: 'error', label: 'Error' },
-          {
-            key: 'call',
-            label: 'Call',
-            children: [
-              ...leexiOutputFields.callSummary.filter((f) =>
-                ['uuid', 'title', 'performed_at', 'duration', 'direction', 'leexi_url', 'owner', 'participating_users', 'customers'].includes(f.key),
-              ),
-              { key: 'summary', label: 'Summary' },
-              { key: 'tasks', label: 'Tasks', listItems: leexiOutputFields.task, labelKey: 'subject' },
-              { key: 'prompts', label: 'AI Notes (Prompts)' },
-              { key: 'chapters', label: 'Chapters' },
-              { key: 'scorecards', label: 'Scorecards' },
-            ],
-          },
-        ],
-      },
-      { key: 'found_count', label: 'Found Count', format: 'number' },
-      { key: 'not_found_count', label: 'Not Found Count', format: 'number' },
-    ],
-  },
-  props: {
-    call_uuids: Property.Array({
-      displayName: 'Call UUIDs',
-      description: 'Call UUIDs from Query Calls: 1-20, or up to 5 with Include.',
-      required: true,
-    }),
-    include: Property.StaticMultiSelectDropdown({
-      displayName: 'Include',
-      description: 'Extra sections to return. Limits the request to 5 calls.',
-      required: false,
-      options: {
-        options: [
-          { label: 'AI Notes (prompts)', value: 'prompts' },
-          { label: 'Chapters', value: 'chapters' },
-          { label: 'Scorecards', value: 'scorecards' },
-        ],
-      },
-    }),
-  },
-  async run(context) {
-    return await fetchCallDetails({
-      auth: context.auth,
-      callUuids: context.propsValue.call_uuids,
-      include: context.propsValue.include ?? [],
-    });
-  },
-});
-
-export const fetchCallDetailsInternals = { fetchCallDetails };
-
 const PER_CALL_STATUSES = [400, 404, 422];
 
 function normalizeUuids(values: unknown[] | undefined): string[] {
@@ -167,6 +95,78 @@ async function fetchCallDetails({
     not_found_count: results.filter((r) => !r.found).length,
   };
 }
+
+export const fetchCallDetailsAction = createAction({
+  name: 'fetch_call_details',
+  classification: 'READ',
+  auth: leexiAuth,
+  displayName: 'Fetch Call Details',
+  description: 'Get the AI summary, people and tasks of up to 20 Leexi calls.',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Fetches details for 1-20 Leexi calls by UUID (at most 5 when Include is set): title, performed_at, duration, direction, leexi_url, owner, participating users, customers, AI summary and follow-up tasks. Include can add AI notes (prompts), chapters and scorecards. Returns one entry per UUID with found=true and the call, or found=false with the error when that call does not exist, is outside the API key scope or has an invalid UUID (400/404/422). Any other failure (authentication, permission, rate limit, server error, network) fails the whole step so it can be retried. Get call UUIDs from Query Calls. Read-only.',
+    idempotent: true,
+  },
+  outputSchema: {
+    fields: [
+      {
+        key: 'results',
+        label: 'Results',
+        labelKey: 'uuid',
+        listItems: [
+          { key: 'uuid', label: 'Call UUID' },
+          { key: 'found', label: 'Found', format: 'boolean' },
+          { key: 'error', label: 'Error' },
+          {
+            key: 'call',
+            label: 'Call',
+            children: [
+              ...leexiOutputFields.callSummary.filter((f) =>
+                ['uuid', 'title', 'performed_at', 'duration', 'direction', 'leexi_url', 'owner', 'participating_users', 'customers'].includes(f.key),
+              ),
+              { key: 'summary', label: 'Summary' },
+              { key: 'tasks', label: 'Tasks', listItems: leexiOutputFields.task, labelKey: 'subject' },
+              { key: 'prompts', label: 'AI Notes (Prompts)' },
+              { key: 'chapters', label: 'Chapters' },
+              { key: 'scorecards', label: 'Scorecards' },
+            ],
+          },
+        ],
+      },
+      { key: 'found_count', label: 'Found Count', format: 'number' },
+      { key: 'not_found_count', label: 'Not Found Count', format: 'number' },
+    ],
+  },
+  props: {
+    call_uuids: Property.Array({
+      displayName: 'Call UUIDs',
+      description: 'Call UUIDs from Query Calls: 1-20, or up to 5 with Include.',
+      required: true,
+    }),
+    include: Property.StaticMultiSelectDropdown({
+      displayName: 'Include',
+      description: 'Extra sections to return. Limits the request to 5 calls.',
+      required: false,
+      options: {
+        options: [
+          { label: 'AI Notes (prompts)', value: 'prompts' },
+          { label: 'Chapters', value: 'chapters' },
+          { label: 'Scorecards', value: 'scorecards' },
+        ],
+      },
+    }),
+  },
+  async run(context) {
+    return await fetchCallDetails({
+      auth: context.auth,
+      callUuids: context.propsValue.call_uuids,
+      include: context.propsValue.include ?? [],
+    });
+  },
+});
+
+export const fetchCallDetailsInternals = { fetchCallDetails };
 
 export type FetchCallDetailsResult =
   | { uuid: string; found: true; call: Record<string, unknown> }

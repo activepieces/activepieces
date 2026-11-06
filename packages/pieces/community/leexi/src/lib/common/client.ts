@@ -12,12 +12,6 @@ export class LeexiApiError extends Error {
   }
 }
 
-export const leexiApi = {
-  request,
-  describeError,
-  buildQueryString,
-};
-
 function buildQueryString(query: LeexiQuery | undefined): string {
   if (!query) {
     return '';
@@ -108,6 +102,12 @@ async function request<T>({ auth, method, path, query, body }: LeexiRequestParam
     throw error;
   }
 }
+
+export const leexiApi = {
+  request,
+  describeError,
+  buildQueryString,
+};
 
 export type LeexiQuery = Record<string, string | number | boolean | string[] | undefined | null>;
 
