@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, isNil, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { formIdDropdown, submissionIdDropdown } from '../common/props';
@@ -10,17 +10,21 @@ export const getSingleResponse = createAction({
 	name: 'getSingleResponse',
 	classification: 'READ',
 	displayName: 'Get Single Response',
-	description: 'Retrieves a specific submission from a form.',
+	description: 'Gets one response to a form.',
 	audience: 'both',
 	aiMetadata: { description: 'Retrieves one specific submission from a Fillout form, keyed by form ID and submission ID. Use when you already know the submission ID and need its full details, rather than listing all responses. Read-only and idempotent.', idempotent: true },
 	outputSchema: getSingleResponseActionOutputSchema,
+	propertyGroups: [
+		{ key: 'response', display: 'section', label: 'Which response', icon: 'file', props: ['formId', 'submissionId'] },
+	],
 	props: {
 		formId: formIdDropdown,
 		submissionId: submissionIdDropdown,
 		includeEditLink: Property.Checkbox({
 			displayName: 'Include Edit Link',
 			required: false,
-			description: 'Include a link to edit the submission.',
+			advanced: true,
+			description: 'Adds a link where the answers can be edited.',
 		}),
 	},
 	async run(context) {
@@ -28,10 +32,10 @@ export const getSingleResponse = createAction({
 
 		const { formId, submissionId } = context.propsValue;
 
-		const queryParams: Record<string, any> = {};
-		if (context.propsValue['includeEditLink'] !== undefined) {
-			queryParams['includeEditLink'] = context.propsValue['includeEditLink'];
-		}
+		const { includeEditLink } = context.propsValue;
+		const queryParams: Record<string, string> = isNil(includeEditLink)
+			? {}
+			: { includeEditLink: String(includeEditLink) };
 
 		const response = await makeRequest(
 			apiKey,
