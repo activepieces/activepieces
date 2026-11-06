@@ -18,6 +18,23 @@ The new piece provides a separate native action for each of the 425 public API o
 
 Flows remain on the piece version they were built with until you upgrade. Before upgrading, reconnect with a workspace key carrying the required scopes, replace numeric IDs with workspace UUIDs, reconfigure step inputs and remap downstream fields from the current response. Check polling intervals and use test data before testing billable actions. Existing assistant/channel webhook destinations remain unchanged.
 
+#### Loops 0.2.0: Find Contact is no longer an AI agent tool
+
+**Find Contact** is now shown only in the flow builder. AI agents and MCP clients get **Find Contact by Email** and **Find Contact by User ID** instead.
+
+After you upgrade:
+
+- **Delete Contact** now fails with a clear message when both Email and User ID are filled, instead of sending both and getting a Loops error. Steps that fill only one of them keep working.
+- **Send Event** ignores `eventName`, `email`, `userId`, `eventProperties` and `mailingLists` if they appear inside Contact Properties.
+- **Create Contact**'s subscription option now reads Default / Subscribed / Unsubscribed instead of "No Change".
+
+#### What you need to do
+
+- Agents that used Find Contact as a tool: switch to Find Contact by Email or Find Contact by User ID.
+- If a Send Event step relied on Contact Properties to set one of those reserved fields, set the field directly.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Leexi 0.3.0: Get Call is no longer an AI agent tool
 
 **Get Call** is now shown only in the flow builder. AI agents and MCP clients get **Fetch Call Details** instead, which takes up to 20 call IDs at once.
