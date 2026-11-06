@@ -11,21 +11,32 @@ export const organizationJobPostings = createAction({
   name: 'organizationJobPostings',
   classification: 'SEARCH',
   displayName: 'Organization Job Postings',
-  description: 'Retrieve current job postings for a company to identify growing headcount areas',
+  description: "Get a company's current job postings.",
   audience: 'both',
   aiMetadata: {
     description: 'Retrieve the current job postings for a single company in the Apollo database, useful for spotting hiring activity and growth areas. Requires the Apollo organization ID (obtained from Organization Search). Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'company',
+      display: 'section',
+      label: 'Company',
+      icon: 'tag',
+      props: ['organization_id'],
+    },
+  ],
   props: {
     organization_id: Property.ShortText({
       displayName: 'Organization ID',
-      description: 'The Apollo ID of the organization to get job postings for',
+      description: 'Apollo organization ID, from the Organization Search action.',
+      placeholder: '5e66b6381e05b4008c8331b8',
       required: true,
     }),
     cacheResponse: Property.Checkbox({
       displayName: 'Cache Response',
-      description: 'Store the response in the project store for future use.',
+      description: 'Reuse a saved result for the same input. Saved results never expire.',
+      advanced: true,
       required: false,
       defaultValue: false,
     }),
@@ -45,15 +56,13 @@ export const organizationJobPostings = createAction({
       pagination: Record<string, unknown>;
     }>({
       method: HttpMethod.GET,
-      url: `https://api.apollo.io/api/v1/organizations/${propsValue.organization_id}/job_postings`,
+      url: `https://api.apollo.io/api/v1/organizations/${encodeURIComponent(propsValue.organization_id)}/job_postings`,
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
-         'x-api-key': `${auth.secret_text}`,
+        'x-api-key': `${auth.secret_text}`,
       },
     });
-
-    
 
     if (propsValue.cacheResponse) {
       await store.put(cacheKey, result.body.organization_job_postings || [], StoreScope.PROJECT);

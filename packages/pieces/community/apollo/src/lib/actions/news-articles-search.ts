@@ -1,6 +1,7 @@
 import { apolloAuth } from '../auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import {
+  MarkdownVariant,
   Property,
   StoreScope,
   createAction,
@@ -11,39 +12,62 @@ export const newsArticlesSearch = createAction({
   name: 'newsArticlesSearch',
   classification: 'SEARCH',
   displayName: 'News Articles Search',
-  description:
-    'Search for news articles related to companies in the Apollo database',
+  description: 'Find news about companies, such as hires and funding.',
   audience: 'both',
   aiMetadata: {
     description: 'Search the Apollo database for news articles about specific companies, filterable by news category and a published-date range. Use to surface recent events (hires, funding, contracts) for given organizations. Requires Apollo organization IDs (obtained from Organization Search). Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'companies',
+      display: 'section',
+      label: 'Companies',
+      icon: 'users',
+      props: ['organizations_info', 'organization_ids'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['categories', 'published_at_min', 'published_at_max'],
+    },
+  ],
   props: {
+    organizations_info: Property.MarkDown({
+      value: 'Get organization IDs from the **Organization Search** action.',
+      variant: MarkdownVariant.INFO,
+    }),
     organization_ids: Property.Array({
       displayName: 'Organization IDs',
-      description:
-        'The Apollo IDs for the companies you want to include in your search results. To find IDs, call the Organization Search endpoint.',
+      description: 'Apollo IDs of the companies to find news about.',
       required: true,
     }),
     categories: Property.Array({
       displayName: 'Categories',
       description:
-        'Filter your search to include only certain categories or sub-categories of news (e.g., hires, investment, contract)',
+        'News categories to include, such as hires, investment or contract.',
       required: false,
     }),
     published_at_min: Property.ShortText({
-      displayName: 'Published Date Min',
-      description: 'Lower bound of the date range (YYYY-MM-DD format)',
+      displayName: 'Published From',
+      description: 'Earliest publish date, as YYYY-MM-DD.',
+      placeholder: '2026-01-01',
+      width: 'half',
       required: false,
     }),
     published_at_max: Property.ShortText({
-      displayName: 'Published Date Max',
-      description: 'Upper bound of the date range (YYYY-MM-DD format)',
+      displayName: 'Published To',
+      description: 'Latest publish date, as YYYY-MM-DD.',
+      placeholder: '2026-12-31',
+      width: 'half',
       required: false,
     }),
     cacheResponse: Property.Checkbox({
       displayName: 'Cache Response',
-      description: 'Store the response in the project store for future use.',
+      description: 'Reuse a saved result for the same input. Saved results never expire.',
+      advanced: true,
       required: false,
       defaultValue: false,
     }),

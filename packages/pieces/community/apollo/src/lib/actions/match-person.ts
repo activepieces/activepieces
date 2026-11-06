@@ -10,21 +10,32 @@ export const matchPerson = createAction({
   name: 'matchPerson',
   classification: 'READ',
   displayName: 'Match Person',
-  description: 'Enrich a persons details using their email address',
+  description: "Get a person's profile from their email address.",
   audience: 'both',
   aiMetadata: {
     description: 'Look up and enrich a single person in the Apollo database by their email address, returning their profile data. Use when you have an email and need the matching contact/profile details. Read-only and idempotent; an optional project-store cache may return a previously fetched result for the same email.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'person',
+      display: 'section',
+      label: 'Person',
+      icon: 'user',
+      props: ['email'],
+    },
+  ],
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: ' The email address of the person to be matched',
+      description: 'Email address of the person to look up.',
+      placeholder: 'jane@acme.com',
       required: true,
     }),
     cacheResponse: Property.Checkbox({
       displayName: 'Cache Response',
-      description: 'Store the response in the project store for future use.',
+      description: 'Reuse a saved result for the same input. Saved results never expire.',
+      advanced: true,
       required: false,
       defaultValue: true,
     }),
@@ -50,7 +61,6 @@ export const matchPerson = createAction({
         'x-api-key': `${auth.secret_text}`,
       },
       body: {
-       
         email: propsValue.email,
       },
     });
