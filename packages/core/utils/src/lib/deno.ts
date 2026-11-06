@@ -10,8 +10,9 @@ export const deno = {
      */
     async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase, timeoutMs }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
+        const { os } = await getNodeApis()
         const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
-        child.stdin.end(buildRunProgram({ body, marker }))
+        child.stdin.end(buildRunProgram({ body, marker, tmpDir: os.tmpdir() }))
         const killTimer = timeoutMs === undefined ? undefined : setTimeout(() => child.kill('SIGKILL'), timeoutMs)
 
         return new Promise((resolve, reject) => {
@@ -60,12 +61,10 @@ export const deno = {
                     return
                 }
 
-                if (!message.success) {
+                if (message.success === false) {
                     reject(sandboxError.build({ error: message.error, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else if (code !== 0) {
-                    // e.g. an unhandled rejection fired after the result was printed — deno exits
-                    // non-zero, so the run must fail even though a success marker exists.
                     reject(sandboxError.build({ error: `Deno process exited with code ${code} and signal ${signal} after producing a result`, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else {
@@ -87,8 +86,9 @@ export const deno = {
 
     async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {}, idleTimeoutMs = DEFAULT_SESSION_IDLE_TIMEOUT_MS }: DenoSessionParams): Promise<DenoSession> {
         const marker = newResultMarker()
+        const { os } = await getNodeApis()
         const { child, denoPath, denoDir } = await spawnDeno({
-            entry: { body: buildSessionProgram({ bootstrapBody, marker }) },
+            entry: { body: buildSessionProgram({ bootstrapBody, marker, tmpDir: os.tmpdir() }) },
             permissions,
             cwd,
             memoryLimitMb,
@@ -135,7 +135,7 @@ export const deno = {
             }
             pending.delete(message.id)
             refreshWatchdog()
-            if (message.success) {
+            if (message.success === true) {
                 command.resolve(message.result)
             }
             else {
@@ -287,7 +287,7 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
         '--no-lock',
         '--no-remote',
         resolveNodeModules ? '--node-modules-dir=manual' : '--no-npm',
-        `--v8-flags=--max-old-space-size=${memoryLimitMb}`,
+        ...(memoryLimitMb === null ? [] : [`--v8-flags=--max-old-space-size=${memoryLimitMb}`]),
         ...toPermissionFlags({ permissions, tmpDir: os.tmpdir() }),
         ...permissions.includes(DenoPermission.ALL) ? [] : allowReadPaths.map((path) => `--allow-read=${path}`),
         entryArg,
@@ -335,9 +335,9 @@ function toPermissionFlags({ permissions, tmpDir }: { permissions: DenoPermissio
     })
 }
 
-function buildRunProgram({ body, marker }: { body: string, marker: string }): string {
+function buildRunProgram({ body, marker, tmpDir }: { body: string, marker: string, tmpDir: string }): string {
     return `
-${sandboxError.payloadSource}
+${sandboxError.payloadSourceFor({ tmpDir })}
 let settled = false;
 const emit = (payload) => {
     if (settled) return;
@@ -346,6 +346,11 @@ const emit = (payload) => {
 };
 globalThis.addEventListener('unhandledrejection', (event) => {
     event.preventDefault();
+    if (settled) {
+        const payload = toErrorPayload(event.reason);
+        console.error(\`Unhandled rejection after the step already returned a result: \${payload.message}\`);
+        return;
+    }
     emit({ success: false, error: toErrorPayload(event.reason) });
     Deno.exit(1);
 });
@@ -367,9 +372,9 @@ catch (error) {
  * stdin:  {"kind":"run","script":"step_1.a + 1","id":"0"}
  * stdout: MARKER{"id":"0","success":true,"result":42}
  */
-function buildSessionProgram({ bootstrapBody, marker }: { bootstrapBody: string, marker: string }): string {
+function buildSessionProgram({ bootstrapBody, marker, tmpDir }: { bootstrapBody: string, marker: string, tmpDir: string }): string {
     return `
-${sandboxError.payloadSource}
+${sandboxError.payloadSourceFor({ tmpDir })}
 ${bootstrapBody}
 ${SESSION_REPLY_CHANNEL(marker)}
 ${SESSION_REJECTION_TRACKING}
@@ -495,7 +500,7 @@ type DenoProgramParams = {
     body: string
     permissions: DenoPermission[]
     cwd?: string
-    memoryLimitMb?: number
+    memoryLimitMb?: number | null
     allowReadPaths?: string[]
     resolveNodeModules?: boolean
     env?: Record<string, string>
@@ -545,7 +550,7 @@ type SpawnDenoParams = {
     entry: string | { body: string }
     permissions: DenoPermission[]
     cwd?: string
-    memoryLimitMb: number
+    memoryLimitMb: number | null
     allowReadPaths: string[]
     resolveNodeModules: boolean
     env: Record<string, string>

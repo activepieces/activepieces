@@ -32,7 +32,7 @@ describe('Platform model tiers plan gate', () => {
         expect(list.statusCode).toBe(StatusCodes.OK)
     })
 
-    it('lets a downgraded platform delete its last tier and then its key', async () => {
+    it('lets a downgraded platform delete a key a tier uses, and deletes the tier with it', async () => {
         const ctx = await createTestContext(app!, { plan: { aiProvidersEnabled: true } })
         const key = await mockAndSaveAIProvider({
             platformId: ctx.platform.id,
@@ -42,13 +42,11 @@ describe('Platform model tiers plan gate', () => {
         const tier = (await ctx.post(TIERS, { name: 'Fast', emoji: '⚡', entries: [{ configId: key.id, modelId: 'gpt-4o' }] })).json()
         await databaseConnection().getRepository('platform_plan').update({ platformId: ctx.platform.id }, { aiProvidersEnabled: false })
 
-        const keyWhileUsed = await ctx.delete(`/v1/ai-providers/${key.id}`)
-        const deleteTier = await ctx.delete(`${TIERS}/${tier.id}`)
         const deleteKey = await ctx.delete(`/v1/ai-providers/${key.id}`)
+        const deleteTier = await ctx.delete(`${TIERS}/${tier.id}`)
 
-        expect(keyWhileUsed.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(deleteTier.statusCode).toBe(StatusCodes.NO_CONTENT)
         expect(deleteKey.statusCode).toBe(StatusCodes.NO_CONTENT)
+        expect(deleteTier.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
 
     it('allows writes when the plan has AI providers', async () => {

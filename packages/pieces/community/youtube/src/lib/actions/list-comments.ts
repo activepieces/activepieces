@@ -51,6 +51,22 @@ export const youtubeListCommentsAction = createAction({
       advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'video',
+      display: 'section',
+      label: 'Video',
+      icon: 'file',
+      props: ['videoId'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['order', 'maxResults'],
+    },
+  ],
   async run(context) {
     const accessToken = context.auth.access_token;
     const { videoId, order, maxResults, pageToken } = context.propsValue;

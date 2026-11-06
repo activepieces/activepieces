@@ -1,31 +1,21 @@
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
+import { CheckIcon, Package, Pencil, Trash } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { platformApi } from '@/api/platforms-api';
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import {
-  DataTable,
-  RowDataWithActions,
-  BulkAction,
-} from '@/components/custom/data-table';
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
+import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
-  ItemActions,
-} from '@/components/ui/item';
-import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -40,18 +30,25 @@ import {
 import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { validationUtils } from '@/lib/validation-utils';
 
 import { projectsTableColumns } from './columns';
 
 export default function ProjectsPage() {
-  const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform();
-  const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
+  const defaultProjectIds = useMemo(
+    () =>
+      new Set(
+        platform.plan.projectRolesEnabled ? platform.defaultProjectIds : [],
+      ),
+    [platform.plan.projectRolesEnabled, platform.defaultProjectIds],
+  );
 
   useEffect(() => {
     if (!searchParams.has('type')) {
@@ -82,23 +79,6 @@ export default function ProjectsPage() {
 
   const { data: allProjects } =
     projectCollectionUtils.useAllPlatformProjects(filters);
-
-  const {
-    mutate: toggleAutoCreatePersonalProjects,
-    isPending: isAutoCreatePersonalProjectsPending,
-  } = useMutation({
-    mutationFn: (autoCreatePersonalProjects: boolean) =>
-      platformApi.update({ autoCreatePersonalProjects }, platform.id),
-    onSuccess: (updatedPlatform) => {
-      setCurrentPlatform(queryClient, updatedPlatform);
-      toast.success(t('Automatic personal project creation updated'), {
-        duration: 3000,
-      });
-    },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
-    },
-  });
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -256,66 +236,103 @@ export default function ProjectsPage() {
           _: RowDataWithActions<ProjectWithLimits>[],
           resetSelection: () => void,
         ) => {
-          const canDeleteAny = selectedRows.some(
-            (row) => row.id !== currentProject?.id,
+          const deletableProjects = selectedRows.filter(
+            (row) =>
+              row.id !== currentProject?.id && !defaultProjectIds.has(row.id),
           );
+          const selectedDefaultProjects = selectedRows.filter((row) =>
+            defaultProjectIds.has(row.id),
+          );
+          const onlyDefaultProjectsBlockDelete =
+            deletableProjects.length === 0 &&
+            selectedDefaultProjects.length > 0;
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Projects')}
-                message={t(
-                  'The selected projects and all their data will be permanently deleted.',
-                )}
-                entityName={t('Projects')}
-                buttonText={t('Delete')}
-                controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
-                mutationFn={async () => {
-                  const deletableProjects = selectedRows.filter(
-                    (row) => row.id !== currentProject?.id,
-                  );
-                  projectCollectionUtils.delete(
-                    deletableProjects.map((row) => row.id),
-                  );
-                  resetSelection();
-                  setSelectedRows([]);
-                }}
-                onError={(error) => {
-                  toast.error(t('Error'), {
-                    description: errorToastMessage(error),
-                    duration: 3000,
-                  });
-                }}
-              >
-                {selectedRows.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-danger-11 hover:text-danger-11"
-                    disabled={!canDeleteAny}
-                    {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    tabIndex={onlyDefaultProjectsBlockDelete ? 0 : undefined}
+                    aria-label={
+                      onlyDefaultProjectsBlockDelete
+                        ? t(
+                            "Default projects can't be deleted. Remove them from default projects first.",
+                          )
+                        : undefined
+                    }
                   >
-                    <Trash className="mr-1 w-4" />
-                    {`${t('Delete')} (${selectedRows.length})`}
-                  </Button>
+                    <ConfirmationDeleteDialog
+                      title={t('Delete Projects')}
+                      message={
+                        <>
+                          {t(
+                            'The selected projects and all their data will be permanently deleted.',
+                          )}
+                          {selectedDefaultProjects.length > 0 && (
+                            <span className="block pt-2">
+                              {t('skippedDefaultProjects', {
+                                count: selectedDefaultProjects.length,
+                                names: selectedDefaultProjects
+                                  .map((row) => row.displayName)
+                                  .join(', '),
+                              })}{' '}
+                              <Link
+                                to="/platform/users/roles"
+                                className="whitespace-nowrap font-medium text-accent-11 hover:underline"
+                              >
+                                {t('Go to Roles & Access')}
+                              </Link>
+                            </span>
+                          )}
+                        </>
+                      }
+                      entityName={t('Projects')}
+                      buttonText={t('deleteProjectsCount', {
+                        count: deletableProjects.length,
+                      })}
+                      controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
+                      mutationFn={async () => {
+                        projectCollectionUtils.delete(
+                          deletableProjects.map((row) => row.id),
+                        );
+                        resetSelection();
+                        setSelectedRows([]);
+                      }}
+                      onError={(error) => {
+                        toast.error(t('Error'), {
+                          description: errorToastMessage(error),
+                          duration: 3000,
+                        });
+                      }}
+                    >
+                      {selectedRows.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-danger-11 hover:text-danger-11"
+                          disabled={deletableProjects.length === 0}
+                          {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
+                        >
+                          <Trash className="mr-1 w-4" />
+                          {`${t('Delete')} (${selectedRows.length})`}
+                        </Button>
+                      )}
+                    </ConfirmationDeleteDialog>
+                  </span>
+                </TooltipTrigger>
+                {onlyDefaultProjectsBlockDelete && (
+                  <TooltipContent>
+                    {t(
+                      "Default projects can't be deleted. Remove them from default projects first.",
+                    )}
+                  </TooltipContent>
                 )}
-              </ConfirmationDeleteDialog>
+              </Tooltip>
             </div>
           );
         },
       },
     ],
-    [selectedRows, currentProject],
-  );
-
-  const toolbarButtons = useMemo(
-    () => [
-      <CreateProjectButton
-        key="new-project"
-        variant="full"
-        projects={allProjects}
-      />,
-    ],
-    [allProjects],
+    [selectedRows, currentProject, defaultProjectIds],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {
@@ -341,7 +358,7 @@ export default function ProjectsPage() {
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                className="size-8 p-0"
+                size="icon-sm"
                 {...adminControl(AdminControl.PROJECTS_EDIT_OPEN)}
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -361,45 +378,25 @@ export default function ProjectsPage() {
   ];
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Projects')}
         description={t('Manage your automation projects')}
-      />
-      <div className="px-6 pt-4">
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <UserCircle />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
-            <ItemDescription>
-              {t(
-                'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
-              )}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <Switch
-              checked={platform.autoCreatePersonalProjects}
-              onCheckedChange={(checked) =>
-                toggleAutoCreatePersonalProjects(checked)
-              }
-              disabled={isAutoCreatePersonalProjectsPending}
-              {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
-            />
-          </ItemActions>
-        </Item>
-      </div>
-      <DataTable
+        resources={adminPageResources.projects}
+      >
+        <CreateProjectButton variant="full" projects={allProjects} />
+      </AdminPageHeader>
+      <AdminDataTable
         emptyStateTextTitle={t('No projects found')}
         emptyStateTextDescription={t(
           'Start by creating projects to manage your automation teams',
         )}
-        emptyStateIcon={<Package className="size-14" />}
+        emptyStateIcon={<Package />}
         onRowClick={async (project) => {
           await projectCollectionUtils.setCurrentProject(project.id);
-          navigate('/');
+          navigate(
+            authenticationSession.appendProjectRoutePrefix('/automations'),
+          );
         }}
         filters={[
           {
@@ -433,7 +430,6 @@ export default function ProjectsPage() {
         errorStateEntity={t('projects')}
         clientPagination={true}
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
         actions={actions}
       />
       <EditProjectDialog
@@ -450,6 +446,6 @@ export default function ProjectsPage() {
         }
         projectId={editDialogProjectId}
       />
-    </div>
+    </AdminPage>
   );
 }

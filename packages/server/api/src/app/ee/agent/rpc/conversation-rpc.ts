@@ -76,7 +76,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             updates.messages = input.messages
             updates.uiMessages = sanitizeObjectForPostgresql(input.uiMessages)
             if (input.title) updates.title = input.title
-            if (input.modelName && isNil(stored?.modelTierId)) updates.modelName = input.modelName
+            if (input.modelName && isNil(stored?.modelTierId) && isNil(stored?.providerConfigId)) updates.modelName = input.modelName
         }
         const failureAppend = isNil(input.failure) ? null : failureAppendFor({ stored: stored?.uiMessages ?? [], failure: input.failure })
         if (!isNil(failureAppend)) {

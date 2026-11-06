@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
+import { contactTriggerOutputSchema } from '../output-schemas';
 
 export const newUserTrigger = createTrigger({
 	auth: intercomAuth,
@@ -12,9 +13,10 @@ export const newUserTrigger = createTrigger({
 		description: 'Fires when a new user is created in Intercom. A user is an identified, signed-up contact (role "user"), as opposed to a lead. Outputs the newly created user contact object with its attributes.',
 	},
 	props: {},
+	outputSchema: contactTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -26,11 +28,11 @@ export const newUserTrigger = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.contacts.search({
 			query: {

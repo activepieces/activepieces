@@ -1,5 +1,11 @@
-import { AgentConversation } from '@activepieces/shared';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AgentConversation, SeekPage } from '@activepieces/shared';
+import {
+  InfiniteData,
+  QueryKey,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowUpRight,
@@ -50,15 +56,31 @@ export function ConversationList({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const { data: conversationsPage, isLoading: isLoadingConversations } =
-    useQuery({
-      queryKey: ['chat-conversations', agentId ?? 'chat'],
-      queryFn: () =>
-        chatApi.listConversations({
-          limit: 100,
-          ...(agentId === undefined ? {} : { agentId }),
-        }),
-    });
+  const {
+    data: conversationPages,
+    isLoading: isLoadingConversations,
+    isSuccess: conversationsLoaded,
+    hasNextPage,
+    isFetching,
+    isFetchNextPageError,
+    fetchNextPage,
+  } = useInfiniteQuery<
+    SeekPage<AgentConversation>,
+    Error,
+    InfiniteData<SeekPage<AgentConversation>>,
+    QueryKey,
+    string | undefined
+  >({
+    queryKey: ['chat-conversations', agentId ?? 'chat'],
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
+    queryFn: ({ pageParam }) =>
+      chatApi.listConversations({
+        limit: 100,
+        cursor: pageParam,
+        ...(agentId === undefined ? {} : { agentId }),
+      }),
+  });
 
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
@@ -75,11 +97,16 @@ export function ConversationList({
     },
   });
 
-  const allConversations = conversationsPage?.data ?? [];
+  const allConversations = useMemo(
+    () => conversationPages?.pages.flatMap((page) => page.data) ?? [],
+    [conversationPages],
+  );
 
   const { getIndicator, markRead } = useConversationIndicators({
     conversations: allConversations,
     activeId: selectedId ?? null,
+    scope: agentId ?? 'chat',
+    loaded: conversationsLoaded,
   });
 
   const conversations = useMemo(() => {
@@ -97,9 +124,43 @@ export function ConversationList({
     setShowBottomFade(el.scrollTop + el.clientHeight < el.scrollHeight - 5);
   }, []);
 
+  const skippedLoadMoreRef = useRef(false);
+
+  const loadMoreIfNearEnd = useCallback(() => {
+    const el = listRef.current;
+    const nearListEnd =
+      !!el &&
+      el.scrollTop + el.clientHeight >= el.scrollHeight - LOAD_MORE_OFFSET_PX;
+    const wantsMore = nearListEnd && hasNextPage;
+    skippedLoadMoreRef.current = wantsMore && isFetching;
+    if (wantsMore && !isFetching) {
+      fetchNextPage().catch(() => undefined);
+    }
+  }, [hasNextPage, isFetching, fetchNextPage]);
+
+  const fillsShortSearchResults =
+    searchQuery.trim().length > 0 && !isFetchNextPageError;
+
   useEffect(() => {
     checkFades();
-  }, [collapsed, conversations, checkFades]);
+    const retriesSkippedScroll =
+      skippedLoadMoreRef.current && !isFetchNextPageError;
+    if (fillsShortSearchResults || retriesSkippedScroll) {
+      loadMoreIfNearEnd();
+    }
+  }, [
+    collapsed,
+    conversations,
+    checkFades,
+    loadMoreIfNearEnd,
+    fillsShortSearchResults,
+    isFetchNextPageError,
+  ]);
+
+  const handleListScroll = useCallback(() => {
+    checkFades();
+    loadMoreIfNearEnd();
+  }, [checkFades, loadMoreIfNearEnd]);
 
   const { today, yesterday, older } = useMemo(() => {
     const todayStr = new Date().toDateString();
@@ -146,7 +207,7 @@ export function ConversationList({
       <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-gray-11 transition-colors hover:text-gray-12"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}
@@ -236,7 +297,7 @@ export function ConversationList({
               <Plus size={mobile ? 16 : 14} />
               {t('New chat')}
             </span>
-            {!mobile && <span className="text-[11px] opacity-50">⇧⌘O</span>}
+            {!mobile && <span className="text-xs opacity-50">⇧⌘O</span>}
           </button>
           {onCollapse !== undefined && (
             <ConversationsToggle open onClick={onCollapse} />
@@ -249,10 +310,7 @@ export function ConversationList({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('Search...')}
-              className={cn(
-                'h-7 pl-7 text-xs rounded-md',
-                mobile && 'h-9 pl-8 text-base',
-              )}
+              className={cn('h-7 pl-7 text-xs', mobile && 'h-9 pl-8 text-base')}
             />
           </div>
         )}
@@ -263,7 +321,7 @@ export function ConversationList({
         )}
         <div
           ref={listRef}
-          onScroll={checkFades}
+          onScroll={handleListScroll}
           className="h-full overflow-y-auto px-2 pb-3"
         >
           {isLoadingConversations ? (
@@ -320,3 +378,5 @@ export function ConversationList({
     </div>
   );
 }
+
+const LOAD_MORE_OFFSET_PX = 200;

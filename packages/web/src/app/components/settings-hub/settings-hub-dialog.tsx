@@ -76,10 +76,11 @@ function SettingsHubContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('Search')}
-              className="h-8 pl-7 text-sm"
+              size="sm"
+              className="pl-7 text-sm"
             />
             {query.trim().length > 0 && (
-              <div className="absolute left-0 top-full z-20 mt-1 w-[300px] max-w-[calc(100vw-3rem)] rounded-lg border bg-panel p-1.5 shadow-md">
+              <div className="absolute left-0 top-full z-20 mt-1 w-[300px] max-w-[calc(100vw-3rem)] rounded-xl border bg-panel p-1.5 shadow-md">
                 {results.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-gray-11">
                     {t('No results')}
@@ -114,7 +115,7 @@ function SettingsHubContent() {
           </div>
         </div>
         <nav className="px-2 pb-3 pt-3">
-          <div className="px-2 pb-1 text-[11px] font-medium text-gray-11">
+          <div className="px-2 pb-1 text-xs font-medium text-gray-11">
             {t('Settings')}
           </div>
           <div className="space-y-0.5">

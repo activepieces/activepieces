@@ -92,7 +92,7 @@ export function SpreadsheetPreview({
       <CopyButton
         textToCopy={previewUtils.buildTsv(table)}
         variant="ghost"
-        className="size-8"
+        size="icon-sm"
       />
       <DownloadButton
         fileName={fileName}
@@ -100,7 +100,7 @@ export function SpreadsheetPreview({
         mimeType="text/csv"
         extension="csv"
         variant="ghost"
-        className="size-8"
+        size="icon-sm"
       />
     </>
   );

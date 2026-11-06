@@ -49,6 +49,22 @@ export const youtubeDownloadCaptionAction = createAction({
       advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'caption',
+      display: 'section',
+      label: 'Caption',
+      icon: 'file',
+      props: ['captionId'],
+    },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'text',
+      props: ['format', 'targetLanguage'],
+    },
+  ],
   async run(context) {
     const { captionId, format, targetLanguage, onBehalfOfContentOwner } =
       context.propsValue;

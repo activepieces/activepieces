@@ -12,8 +12,9 @@ export const getProductVariantAction = createAction({
   aiMetadata: { description: 'Fetch a single product variant by its variant ID, returning details like price, SKU, and inventory item. Use when you have a specific variant ID; to find variants browse products first via Get Products. Read-only and idempotent.', idempotent: true },
   props: {
     id: Property.ShortText({
-      displayName: 'Product Variant',
-      description: 'The ID of the product variant.',
+      displayName: 'Variant ID',
+      description: "The number after /variants/ in the variant's admin URL.",
+      placeholder: '1234567890',
       required: true,
     }),
   },

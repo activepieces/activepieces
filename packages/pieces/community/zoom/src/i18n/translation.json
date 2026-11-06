@@ -1,6 +1,6 @@
 {
   "Video conferencing, web conferencing, webinars, screen sharing": "Video conferencing, web conferencing, webinars, screen sharing",
-  "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add the scopes for the actions you use:\n     - Meetings: **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **meeting:delete:meeting**\n     - Registrants: **meeting:write:registrant**\n     - Past meetings: **meeting:read:list_past_instances**\n     - Cloud recordings: **cloud_recording:read:list_user_recordings**\n     - Current user: **user:read:user**\n  6. After adding scopes to an existing app, reconnect this connection so Zoom grants them.": "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add the scopes for the actions you use:\n     - Meetings: **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **meeting:delete:meeting**\n     - Registrants: **meeting:write:registrant**\n     - Past meetings: **meeting:read:list_past_instances**\n     - Cloud recordings: **cloud_recording:read:list_user_recordings**\n     - Current user: **user:read:user**\n  6. After adding scopes to an existing app, reconnect this connection so Zoom grants them.",
+  "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add the scopes for the actions you use:\n     - Meetings: **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **meeting:delete:meeting**\n": "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add the scopes for the actions you use:\n     - Meetings: **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **meeting:delete:meeting**\n     - Registrants: **meeting:write:registrant**\n     - Past meetings: **meeting:read:list_past_instances**\n     - Cloud recordings: **cloud_recording:read:list_user_recordings**\n     - Current user: **user:read:user**\n  6. After adding scopes to an existing app, reconnect this connection so Zoom grants them.",
   "Create Zoom Meeting": "Create Zoom Meeting",
   "Create Zoom Meeting Registrant": "Create Zoom Meeting Registrant",
   "Find Zoom Meeting": "Find Zoom Meeting",
@@ -132,11 +132,11 @@
   "New agenda text.": "New agenda text.",
   "Turn on to remove the current agenda. Ignored when Agenda is filled in.": "Turn on to remove the current agenda. Ignored when Agenda is filled in.",
   "New passcode: up to 10 characters, letters, numbers and @ - _ * only.": "New passcode: up to 10 characters, letters, numbers and @ - _ * only.",
-  "Start video when the host joins.": "Start video when the host joins.",
-  "Start video when participants join.": "Start video when participants join.",
-  "Let participants join before the host.": "Let participants join before the host.",
-  "Mute participants when they join.": "Mute participants when they join.",
-  "Turn the waiting room on or off.": "Turn the waiting room on or off.",
+  "Start video when the host joins. Leave unchanged to keep the meeting's current setting.": "Start video when the host joins. Leave unchanged to keep the meeting's current setting.",
+  "Start video when participants join. Leave unchanged to keep the meeting's current setting.": "Start video when participants join. Leave unchanged to keep the meeting's current setting.",
+  "Let participants join before the host. Leave unchanged to keep the meeting's current setting.": "Let participants join before the host. Leave unchanged to keep the meeting's current setting.",
+  "Mute participants when they join. Leave unchanged to keep the meeting's current setting.": "Mute participants when they join. Leave unchanged to keep the meeting's current setting.",
+  "Turn the waiting room on or off. Leave unchanged to keep the meeting's current setting.": "Turn the waiting room on or off. Leave unchanged to keep the meeting's current setting.",
   "Which meetings to list.": "Which meetings to list.",
   "How many records to return in this page (1-300). Default 30.": "How many records to return in this page (1-300). Default 30.",
   "Leave empty for the first page. To get the next page, paste the Next Page Token from the previous run.": "Leave empty for the first page. To get the next page, paste the Next Page Token from the previous run.",
@@ -175,6 +175,9 @@
   "Evaluator/Recommender": "Evaluator/Recommender",
   "Influencer": "Influencer",
   "Not involved": "Not involved",
+  "Yes": "Yes",
+  "No": "No",
+  "Leave unchanged": "Leave unchanged",
   "Scheduled (all valid scheduled meetings)": "Scheduled (all valid scheduled meetings)",
   "Live (in progress)": "Live (in progress)",
   "Upcoming": "Upcoming",
@@ -185,5 +188,7 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

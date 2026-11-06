@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { adminLayout } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -51,7 +52,7 @@ export const PieceActionsAndTriggersSheet = ({
 }: PieceActionsAndTriggersSheetProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[600px] sm:max-w-[600px] flex flex-col p-0">
+      <SheetContent className={cn(adminLayout.sheet.md, 'flex flex-col p-0')}>
         <PieceActionsAndTriggersSheetBody
           key={pieceName}
           pieceName={pieceName}

@@ -294,6 +294,30 @@ describe('polling triggers', () => {
   });
 });
 
+describe('republish', () => {
+  it('keeps the checkpoint through onDisable and onEnable, so records created in between still fire', async () => {
+    const { store, data } = memoryStore({ [KEY]: 10 });
+    fakeFlowlu({ records: [{ id: 10 }, { id: 11 }] });
+
+    await runHook({ trigger: asRecord(newTaskTrigger), hook: 'onDisable', context: { store, isRepublish: true } });
+    await runHook({ trigger: asRecord(newTaskTrigger), hook: 'onEnable', context: { store, isRepublish: true } });
+    expect(data.get(KEY)).toBe(10);
+
+    const emitted = await runHook({ trigger: asRecord(newTaskTrigger), hook: 'run', context: { store } });
+    expect(emitted).toEqual([expect.objectContaining({ id: 11 })]);
+  });
+
+  it('still starts fresh when the flow is turned off and on', async () => {
+    const { store, data } = memoryStore({ [KEY]: 10 });
+    fakeFlowlu({ records: [{ id: 10 }, { id: 11 }] });
+
+    await runHook({ trigger: asRecord(newTaskTrigger), hook: 'onDisable', context: { store } });
+    expect(data.has(KEY)).toBe(false);
+    await runHook({ trigger: asRecord(newTaskTrigger), hook: 'onEnable', context: { store } });
+    expect(data.get(KEY)).toBe(11);
+  });
+});
+
 function poll({
   trigger,
   store,

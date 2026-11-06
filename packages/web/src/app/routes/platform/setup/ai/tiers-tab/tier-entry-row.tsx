@@ -21,9 +21,8 @@ import {
 import { EntryWarning, modelMeta } from '@/features/agents/ai-model/model-meta';
 import { cn } from '@/lib/utils';
 
+import { ModelDetailRow } from '../components/model-detail-row';
 import { keyStatusText } from '../providers-tab/key-status';
-
-import { ModelDetailRow } from './model-detail-row';
 
 export function TierEntryRow({
   entry,
@@ -78,7 +77,7 @@ export function TierEntryRow({
               <ScopeChip config={config} />
             )}
             {skipped && (
-              <span className="shrink-0 rounded-full border border-gray-6 px-1.5 text-xss text-gray-11">
+              <span className="shrink-0 rounded-full border border-gray-6 px-1.5 text-xs text-gray-11">
                 {t('Skipped in this project')}
               </span>
             )}
@@ -98,7 +97,7 @@ function ScopeChip({ config }: { config: AIProviderWithoutSensitiveData }) {
       <TooltipTrigger asChild>
         <span
           tabIndex={0}
-          className="shrink-0 rounded-full border border-gray-6 bg-gray-2 px-1.5 text-xss text-gray-11"
+          className="shrink-0 rounded-full border border-gray-6 bg-gray-2 px-1.5 text-xs text-gray-11"
         >
           {config.projectScope === 'except'
             ? t('exceptProjectsCount', { count: config.projectIds.length })

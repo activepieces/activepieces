@@ -89,6 +89,8 @@ export type WorkerToApiContract = {
     sendAgentEvent(input: SendAgentEventRequest): Promise<void>
     getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
     saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void>
+    beginAgentTask(input: BeginAgentTaskRequest): Promise<BeginAgentTaskResponse>
+    finishAgentTask(input: FinishAgentTaskRequest): Promise<void>
     saveAgentFile(input: SaveAgentFileRequest): Promise<SaveAgentFileResponse>
     readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse>
     updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void>
@@ -135,6 +137,7 @@ export type GetAgentConfigRequest = {
     messageSource?: 'onboarding'
     agentId?: string
     flowRunId?: string
+    waitpointId?: string
     projectId?: string | null
     userMessage: string
     modelName: string | null
@@ -164,8 +167,12 @@ export type AgentConfigResponse = {
     fastModelId: string
     imageModelId?: string
     searchCredentials?: AiProviderCredentials
+    searchProviderConfigId?: string
     searchModelId?: string
     imageCredentials?: AiProviderCredentials
+    imageProviderConfigId?: string
+    agentId?: string
+    projectId?: string
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
@@ -174,6 +181,7 @@ export type AgentConfigResponse = {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
     guides: Record<string, string>
+    taskSystemPrompt?: string
     aiTools: AgentAiToolsConfig
     emailEnabled: boolean
     agentsAvailable: boolean
@@ -197,6 +205,30 @@ export type SaveAgentMessagesRequest = {
     modelName?: string
     answeredBy?: AgentTurnModel
     failure?: { message: string, userMessage?: string }
+}
+
+export type BeginAgentTaskRequest = {
+    platformId: string
+    conversationId: string
+    title: string
+    taskId?: string
+}
+
+export type BeginAgentTaskResponse = {
+    taskId: string
+    claimId: string
+    messages: unknown[]
+}
+
+export type FinishAgentTaskRequest = {
+    platformId: string
+    conversationId: string
+    taskId: string
+    claimId: string
+    status: 'DONE' | 'BLOCKED' | 'FAILED'
+    messages: unknown[]
+    summary: string | null
+    artifacts: { type: string, id: string, name: string }[]
 }
 
 export type AgentTurnModel = {
@@ -504,6 +536,7 @@ export type SaveFlowStepFileRequest = {
 export type ReportAiUsageRequest = {
     billing: ActivepiecesAiBilling
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     idempotencyKey: string
     usage: AiUsageCharge
@@ -511,6 +544,10 @@ export type ReportAiUsageRequest = {
     generationId?: string
     inputTokens?: number
     outputTokens?: number
+    cacheReadTokens?: number
+    cacheWriteTokens?: number
+    reasoningTokens?: number
+    observedCostUsd?: number
     requestId?: string
     flowRun?: AiUsageFlowRunContext
     chat?: AiUsageChatContext
@@ -530,6 +567,7 @@ export type AiUsageChatContext = {
 export type AiUsageCharge =
     | { type: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: number }
     | { type: AiChargeBasis.FIXED_CREDITS, credits: number }
+    | { type: AiChargeBasis.USAGE_ONLY }
 
 export type ReadFlowStepFileRequest = {
     projectId: string

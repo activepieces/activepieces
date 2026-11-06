@@ -32,7 +32,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
     if (!allProjects) return [];
     return allProjects.map((platform) => ({
       name: platform.platformName,
-      id: platform.projects[0]?.platformId,
+      id: platform.platformId,
     }));
   }, [allProjects]);
 
@@ -42,7 +42,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
 
   const dropdownContent = (
     <DropdownMenuContent
-      className="w-56 rounded-lg z-60"
+      className="w-56 rounded-xl z-60"
       align="start"
       side="right"
       sideOffset={4}

@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -33,7 +34,7 @@ export function ConfirmExcludingRequiredActionsDialog({
       open={excludedRequiredActions !== null}
       onOpenChange={(open) => !open && onCancel()}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={adminLayout.dialog.sm}>
         {excludedRequiredActions && (
           <ConfirmExcludingRequiredActionsContent
             excludedRequiredActions={excludedRequiredActions}

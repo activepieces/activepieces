@@ -256,5 +256,6 @@
   "Opus": "Opus",
   "AAC": "AAC",
   "FLAC": "FLAC",
-  "Fine-Tuning": "Тонкая настройка"
+  "Fine-Tuning": "Тонкая настройка",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Сохраняется для всего проекта, поэтому другие потоки с этим ID продолжают ту же беседу."
 }

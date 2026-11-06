@@ -116,11 +116,13 @@ export const youtubeSearchAction = createAction({
       displayName: 'Published After',
       description: 'Only results published on or after this date.',
       required: false,
+      width: 'half',
     }),
     publishedBefore: Property.DateTime({
       displayName: 'Published Before',
       description: 'Only results published before this date.',
       required: false,
+      width: 'half',
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
@@ -317,6 +319,29 @@ export const youtubeSearchAction = createAction({
       },
     }),
   },
+  propertyGroups: [
+    {
+      key: 'query',
+      display: 'section',
+      label: 'Search for',
+      icon: 'filter',
+      props: ['query', 'type', 'channelId'],
+    },
+    {
+      key: 'published',
+      display: 'section',
+      label: 'Published',
+      icon: 'calendar',
+      props: ['publishedAfter', 'publishedBefore'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['order', 'maxResults'],
+    },
+  ],
   async run(context) {
     const {
       channelId,

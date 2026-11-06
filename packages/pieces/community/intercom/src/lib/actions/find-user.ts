@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
+import { findUserOutputSchema } from '../output-schemas';
 
 export const findUserAction = createAction({
 	auth: intercomAuth,
@@ -8,7 +9,7 @@ export const findUserAction = createAction({
 	classification: 'READ',
 	displayName: 'Find User',
 	description: 'Finds an existing user.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Look up a single existing user (signed-up contact) by email, Intercom ID, or external user ID. Read-only and repeatable; returns the first match plus a found flag and only matches role=user. To find a prospect instead, use Find Lead.', idempotent: true },
 	props: {
 		searchField: Property.StaticDropdown({
@@ -28,10 +29,11 @@ export const findUserAction = createAction({
 			required: true,
 		}),
 	},
+	outputSchema: findUserOutputSchema,
 	async run(context) {
 		const { searchField, searchValue } = context.propsValue;
 
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const contactResponse = await client.contacts.search({
 			query: {

@@ -57,7 +57,7 @@ export const CreateNewMenu = ({
       }}
     >
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className="w-48">
+      <DropdownMenuContent align={align} className="w-52">
         <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
           <DropdownMenuItem
             disabled={!userHasPermissionToWriteFlow || busy}

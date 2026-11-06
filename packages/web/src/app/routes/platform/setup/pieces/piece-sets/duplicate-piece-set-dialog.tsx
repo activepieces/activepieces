@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -104,7 +105,7 @@ export const DuplicatePieceSetDialog = ({
 }: DuplicatePieceSetDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.sm}>
         <DialogHeader>
           <DialogTitle>{t('Duplicate Piece Set')}</DialogTitle>
         </DialogHeader>

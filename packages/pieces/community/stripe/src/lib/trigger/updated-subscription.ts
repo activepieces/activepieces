@@ -28,6 +28,15 @@ export const stripeUpdatedSubscription = createTrigger({
     description:
       'Fires when an existing subscription is updated in Stripe (the customer.subscription.updated event), emitting the changed subscription. Optional filters narrow firing to a target new status or a specific customer ID. Use to react to plan changes, status transitions, or quantity updates.',
   },
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['status', 'customer'],
+    },
+  ],
   props: {
     status: Property.StaticDropdown({
       displayName: 'New Status',

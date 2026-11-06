@@ -1,38 +1,32 @@
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
 import { workableAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccountSubdomain } from '../common/get-subdomain';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { encodeId } from '../common/client';
+import { workableOps } from '../common/operations';
+import { accountSubdomainProp, candidateIdProp } from '../common/props';
+import { workableSchemas } from '../common/schemas';
 
 export const getCandidate = createAction({
   auth: workableAuth,
   name: 'getCandidate',
   classification: 'READ',
   displayName: 'Get Candidate',
-  description: "Gets candidate's information.",
+  description: "Gets a candidate's full profile.",
   audience: 'both',
-  aiMetadata: { description: 'Fetch a single Workable candidate record by its candidate ID. Use to look up a known candidate before rating, moving, or referencing them. Requires the exact candidate ID; this is a read-only lookup and is idempotent.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Fetch one Workable candidate by candidate ID, with contact details, stage, job, tags, skills, experience and education. Use before updating, moving or rating a known candidate. Read-only.',
+    idempotent: true,
+  },
+  outputSchema: workableSchemas.candidate,
   props: {
-    id: Property.ShortText({
-      displayName: "Candidate's Id",
-      required: true
-    })
+    account_subdomain: accountSubdomainProp,
+    id: candidateIdProp,
   },
   async run(context) {
-    // Action logic here
-    const candidateId = context.propsValue.id;
-    const accessToken = context.auth.secret_text;
-    const account = await getAccountSubdomain(accessToken);
-
-    //get candidate information
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://${account}.workable.com/spi/v3/candidates/${candidateId}`,
-      headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/json',
-      },
-    });
-
-    return response.body;
+    const client = workableOps.client({ auth: context.auth, subdomain: context.propsValue.account_subdomain });
+    const id = encodeId({ value: context.propsValue.id, label: 'Candidate ID' });
+    const body = await client.request({ method: HttpMethod.GET, path: `/candidates/${id}` });
+    return workableOps.unwrap({ body, key: 'candidate' });
   },
 });

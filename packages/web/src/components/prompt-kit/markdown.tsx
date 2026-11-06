@@ -10,14 +10,8 @@ import { CodeBlock, CodeBlockCode, CodeBlockGroup } from './code-block';
 import { Source } from './source';
 
 function normalizeMarkdownSpacing(markdown: string): string {
-  let text = markdown;
-
-  // Ensure headings have a blank line before them (fixes "text\n## Heading" streaming artifact).
-  // Uses multiline flag so ^ matches after every \n; only touches lines that start with #.
-  text = text.replace(/^(#{1,6}\s)/gm, '\n$1');
-
   // Ensure blank lines between non-empty content lines (except inside tables/code/lists)
-  const lines = text.split('\n');
+  const lines = markdown.split('\n');
   const result: string[] = [];
   let inCodeBlock = false;
 
@@ -53,7 +47,14 @@ function normalizeMarkdownSpacing(markdown: string): string {
       /^\s*[-*+]\s/.test(prevLine) ||
       /^\s*\d+[.)]\s/.test(prevLine);
 
-    if (i > 0 && prevLine !== '' && trimmed !== '' && !prevIsTableOrList) {
+    const isHeading = /^#{1,6}\s/.test(line);
+
+    if (
+      i > 0 &&
+      prevLine !== '' &&
+      trimmed !== '' &&
+      (!prevIsTableOrList || isHeading)
+    ) {
       result.push('');
     }
 
@@ -208,7 +209,7 @@ const HEADING_CLASSES: Record<HeadingTag, string> = {
   h3: 'text-sm font-semibold mt-4 first:mt-0 mb-2',
   h4: 'text-sm font-semibold mt-4 first:mt-0 mb-1',
   h5: 'text-sm font-semibold text-gray-11 mt-3 first:mt-0 mb-1',
-  h6: 'text-xs font-semibold uppercase tracking-wide text-gray-11 mt-3 first:mt-0 mb-1',
+  h6: 'text-xs font-semibold text-gray-11 mt-3 first:mt-0 mb-1',
 };
 
 const INITIAL_COMPONENTS: Partial<Components> = {
@@ -303,7 +304,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       return (
         <span
           className={cn(
-            'bg-gray-3 text-gray-12 rounded px-1.5 py-0.5 font-mono text-[0.85em]',
+            'bg-gray-3 text-gray-12 rounded-md px-1.5 py-0.5 font-mono text-[0.85em]',
             className,
           )}
           {...props}
@@ -342,7 +343,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       <img
         src={src}
         alt={alt ?? ''}
-        className="my-4 max-w-full rounded-lg border border-gray-6"
+        className="my-4 max-w-full rounded-xl border border-gray-6"
       />
     );
   },

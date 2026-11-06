@@ -31,10 +31,7 @@ export const DestinationKindCard = ({
         <span className="text-sm font-normal leading-normal text-gray-11">
           {option.description}
         </span>
-        <Badge
-          variant="outline"
-          className="rounded-md font-normal text-gray-11"
-        >
+        <Badge variant="outline" className="font-normal text-gray-11">
           {option.formatLabel}
         </Badge>
       </span>

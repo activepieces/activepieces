@@ -1,53 +1,29 @@
 import {
+	AppConnectionValueForAuthProperty,
 	createTrigger,
 	TriggerStrategy,
-	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import { confluenceAuth, confluenceAuthValue } from '../auth';
-import { confluenceApiCall, PaginatedResponse } from '../common';
-import { isNil } from '@activepieces/pieces-framework';
-import { spaceIdProp } from '../common/props';
-
-interface ConfluencePage {
-	id: string;
-	status: string;
-	title: string;
-	spaceId: string;
-	createdAt: string;
-	version: {
-		number: number;
-		createdAt: string;
-	};
-}
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { confluenceAuth } from '../auth';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { newPageOutputSchema } from '../output-schemas';
 
 const props = {
-	spaceId: spaceIdProp,
+	spaceId: confluenceProps.spaceId({ required: true }),
 };
 
-const PAGE_FETCH_LIMIT = 100;
-
-const polling: Polling<confluenceAuthValue,  { spaceId?: string,pageId?: string }> = {
+const polling: Polling<
+	AppConnectionValueForAuthProperty<typeof confluenceAuth>,  { spaceId?: string,pageId?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue }) {
-		const response = await confluenceApiCall<PaginatedResponse<ConfluencePage>>({
-			domain: auth.props.confluenceDomain,
-			username: auth.props.username,
-			password: auth.props.password,
-			version: 'v2',
-			method: HttpMethod.GET,
-			resourceUri: `/spaces/${propsValue.spaceId}/pages`,
-			query: {
-				limit: String(PAGE_FETCH_LIMIT),
-				sort: '-created-date',
-			},
+		const results = await confluenceApi.listSpacePages({
+			auth,
+			spaceId: propsValue.spaceId,
+			sort: '-created-date',
 		});
 
-		if (isNil(response.results)) {
-			return [];
-		}
-
-		return response.results.map((page) => ({
+		return results.map((page) => ({
 			epochMilliSeconds: new Date(page.createdAt).getTime(),
 			data: page,
 		}));
@@ -56,6 +32,7 @@ const polling: Polling<confluenceAuthValue,  { spaceId?: string,pageId?: string 
 
 export const newPageTrigger = createTrigger({
 	name: 'new-page',
+	outputSchema: newPageOutputSchema,
 	classification: 'READ',
 	displayName: 'New Page',
 	description: 'Triggers when a new page is created.',

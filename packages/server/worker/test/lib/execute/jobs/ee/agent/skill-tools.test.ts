@@ -60,6 +60,16 @@ describe('buildSkillSurface', () => {
         expect(surface.tools['ap_add_step']).toBeDefined()
     })
 
+    it('attaches a skill\'s tools directly once it is loaded', async () => {
+        const surface = chatSurface()
+        expect(surface.attachedToolNames()).not.toContain('ap_build_flow')
+        const playbook = String(await surface.tools['ap_load_skill']?.execute?.({ skills: ['flow_building'] }, CALL_OPTIONS))
+        expect(surface.attachedToolNames()).toEqual(expect.arrayContaining(['ap_build_flow', 'ap_add_step', 'ap_test_flow', ...surface.coreToolNames]))
+        expect(surface.attachedToolNames()).not.toContain('ap_list_tables')
+        expect(playbook).toContain('Tools now attached to you')
+        expect(playbook).not.toContain('Call: ap_lazy_tool with tool: "ap_build_flow"')
+    })
+
     it('lists tools no skill covers in the catalog note', () => {
         expect(chatSurface().catalogNote).toContain('mcp__gmail__send_email')
     })
@@ -105,7 +115,7 @@ describe('paid tools', () => {
         const surfaceFor = (canAfford: boolean) => buildSkillSurface({ tools, surface: 'CHAT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => canAfford })
 
         const lowPlaybook = String(await surfaceFor(false).tools['ap_load_skill']?.execute?.({ skills: ['web_and_media'] }, CALL_OPTIONS))
-        expect(lowPlaybook).toContain('### ap_fetch_url')
+        expect(lowPlaybook).toMatch(/attached to you[^\n]*\nap_fetch_url/)
         expect(lowPlaybook).not.toContain('### ap_web_search')
         expect(lowPlaybook).not.toContain('### ap_scrape_url')
         expect(lowPlaybook).toContain('balance cannot cover these paid tools: ap_web_search, ap_scrape_url')
@@ -196,6 +206,57 @@ describe('ap_lazy_tool', () => {
         })
         const rejected = await validateWrapped({ surface, value: { tool: 'ap_send_email', input: {}, title: 'Create task' } })
         expect(errorMessageOf(rejected)).toContain('Invalid input for "ap_send_email"')
+    })
+
+    function surfaceWithMcpTool({ additionalProperties }: { additionalProperties: boolean }) {
+        return buildSkillSurface({
+            tools: {
+                ...stubTools(CHAT_TOOL_NAMES),
+                ap_rename_flow: tool({ description: 'Rename a flow.', inputSchema: jsonSchema<Record<string, unknown>>({ type: 'object', properties: { flowId: { type: 'string' } }, required: ['flowId'], additionalProperties }), execute: async () => ({}) }),
+            },
+            surface: 'CHAT',
+            guides: {},
+            onSkillLoaded: vi.fn(),
+            canAffordPaidTool: () => true,
+        })
+    }
+
+    it('drops a top-level key a strict MCP tool does not declare instead of failing the call', async () => {
+        const checked = await validateWrapped({ surface: surfaceWithMcpTool({ additionalProperties: false }), value: { tool: 'ap_rename_flow', input: { flowId: 'f1', pieceName: '@activepieces/piece-tables' } } })
+
+        expect(checked).toMatchObject({ success: true, value: { input: { flowId: 'f1' } } })
+        expect(checked).not.toMatchObject({ value: { input: { pieceName: expect.anything() } } })
+    })
+
+    it('keeps extra keys for an MCP tool whose schema allows them', async () => {
+        const checked = await validateWrapped({ surface: surfaceWithMcpTool({ additionalProperties: true }), value: { tool: 'ap_rename_flow', input: { flowId: 'f1', note: 'kept' } } })
+
+        expect(checked).toMatchObject({ success: true, value: { input: { flowId: 'f1', note: 'kept' } } })
+    })
+
+    it('still rejects a call that is missing a required key', async () => {
+        const surface = surfaceWithJsonSchemaTool(async () => ({ renamed: true }))
+
+        const rejected = await validateWrapped({ surface, value: { tool: 'ap_rename_flow', input: { pieceName: 'x' } } })
+
+        expect(errorMessageOf(rejected)).toContain('Invalid input for "ap_rename_flow"')
+    })
+
+    it('shows the model what the target tool chooses to show, not its full output', async () => {
+        const surface = buildSkillSurface({
+            tools: {
+                ...stubTools(CHAT_TOOL_NAMES),
+                ap_rename_flow: tool({ description: 'Rename a flow.', inputSchema: z.object({ flowId: z.string() }), execute: async () => ({ renamed: true, internal: 'big' }), toModelOutput: () => ({ type: 'text', value: 'renamed' }) }),
+            },
+            surface: 'CHAT',
+            guides: {},
+            onSkillLoaded: vi.fn(),
+            canAffordPaidTool: () => true,
+        })
+
+        const shown = await surface.tools[LAZY_TOOL_NAME]?.toModelOutput?.({ toolCallId: 'call-1', input: { tool: 'ap_rename_flow', input: { flowId: 'f1' } }, output: { renamed: true, internal: 'big' } })
+
+        expect(shown).toEqual({ type: 'text', value: 'renamed' })
     })
 
     it('hands a JSON-schema tool its input unchanged', async () => {

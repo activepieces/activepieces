@@ -5,7 +5,9 @@ import {
   AgentRunSource,
   ApplicationEvent,
   ApplicationEventName,
+  SignUpEvent,
   summarizeApplicationEvent,
+  UserIdentityProvider,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -25,12 +27,20 @@ import {
   FileText,
   User,
   Clock,
+  ShieldCheck,
 } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { DataTable, DataTableFilters } from '@/components/custom/data-table';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+  adminLayout,
+} from '@/app/components/admin';
+import { buildEventLabels } from '@/app/routes/platform/infra/event-destinations/lib/event-labels';
+import { DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
@@ -52,6 +62,7 @@ import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { sampleData } from '../../sample-data';
 
@@ -63,6 +74,7 @@ export default function AuditLogsPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { data: projects } = projectCollectionUtils.useAll();
   const { data: users } = platformUserHooks.useUsers();
+  const eventLabels = buildEventLabels();
 
   const filters: DataTableFilters<keyof ApplicationEvent>[] = [
     {
@@ -71,7 +83,7 @@ export default function AuditLogsPage() {
       accessorKey: 'action',
       options: Object.values(ApplicationEventName).map((action) => {
         return {
-          label: formatUtils.convertEnumToHumanReadable(action),
+          label: eventLabels[action],
           value: action,
         };
       }),
@@ -121,19 +133,20 @@ export default function AuditLogsPage() {
   const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
-        description={t('Track activities done within your platform')}
+    <AdminPage>
+      <AdminPageHeader
         title={t('Audit Logs')}
+        description={t('Track activities done within your platform')}
+        resources={adminPageResources.auditLogs}
       >
         {!isSample && <AuditLogRetentionButton />}
-      </DashboardPageHeader>
-      <DataTable
+      </AdminPageHeader>
+      <AdminDataTable
         emptyStateTextTitle={t('No audit logs found')}
         emptyStateTextDescription={t(
           'Come back later when you have some activity to audit',
         )}
-        emptyStateIcon={<History className="size-14" />}
+        emptyStateIcon={<History />}
         filters={filters}
         columns={[
           {
@@ -153,7 +166,7 @@ export default function AuditLogsPage() {
                   {!isNil(icon?.icon) && (
                     <span className="text-gray-11 shrink-0">{icon.icon}</span>
                   )}
-                  {formatUtils.convertEnumToHumanReadable(row.original.action)}
+                  {eventLabels[row.original.action]}
                 </div>
               );
             },
@@ -238,8 +251,7 @@ export default function AuditLogsPage() {
               <Button
                 {...adminControl(AdminControl.AUDIT_LOG_EVENT_OPEN)}
                 variant="ghost"
-                size="icon"
-                className="size-8"
+                size="icon-sm"
                 onClick={() => {
                   setSelectedEvent(row.original);
                   setIsSheetOpen(true);
@@ -257,12 +269,10 @@ export default function AuditLogsPage() {
         onRetry={refetch}
       />
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col p-0">
+        <SheetContent className={cn(adminLayout.sheet.md, 'flex flex-col p-0')}>
           <SheetHeader className="px-6 py-4 border-b shrink-0">
             <SheetTitle className="text-base">
-              {formatUtils.convertEnumToHumanReadable(
-                selectedEvent?.action ?? '',
-              )}
+              {selectedEvent && eventLabels[selectedEvent.action]}
             </SheetTitle>
             <p className="text-sm text-gray-11 mt-1">
               {selectedEvent && convertToDetails(selectedEvent)}
@@ -270,7 +280,7 @@ export default function AuditLogsPage() {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-gray-11">
                 {t('Who & When')}
               </p>
               <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
@@ -308,15 +318,19 @@ export default function AuditLogsPage() {
               <>
                 <Separator />
                 <div className="px-6 py-5 flex flex-col gap-4">
-                  <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-gray-11">
                     {t('Event Details')}
                   </p>
                   <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
                     {extractEventDetails(selectedEvent).map(
-                      ({ label, value }) => (
+                      ({ label, value, muted }) => (
                         <Fragment key={label}>
                           <span className="text-gray-11">{label}</span>
-                          <span className="font-medium">{value}</span>
+                          <span
+                            className={muted ? 'text-gray-11' : 'font-medium'}
+                          >
+                            {value}
+                          </span>
                         </Fragment>
                       ),
                     )}
@@ -326,7 +340,7 @@ export default function AuditLogsPage() {
             )}
             <Separator />
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-gray-11">
                 {t('Full Payload')}
               </p>
               <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
@@ -334,7 +348,7 @@ export default function AuditLogsPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </AdminPage>
   );
 }
 
@@ -410,6 +424,26 @@ function convertToIcon(event: ApplicationEvent) {
       return {
         icon: <Clock className="size-4" />,
         tooltip: t('Audit log retention'),
+      };
+    case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+    case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+    case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+    case ApplicationEventName.SSO_DOMAIN_ADDED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+    case ApplicationEventName.SSO_DOMAIN_REMOVED:
+    case ApplicationEventName.SSO_DOMAIN_EXPIRED:
+    case ApplicationEventName.SAML_CONNECTED:
+    case ApplicationEventName.SAML_CONNECTION_REPLACED:
+    case ApplicationEventName.SSO_DISABLED:
+      return {
+        icon: <ShieldCheck className="size-4" />,
+        tooltip: t('Authentication'),
       };
     default:
       return undefined;
@@ -582,15 +616,18 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.FOLDER_DELETED:
       return [{ label: t('Folder'), value: event.data.folder.displayName }];
     case ApplicationEventName.USER_SIGNED_IN:
+      return [
+        methodRow({ label: t('Sign-in method'), method: event.data.method }),
+      ];
     case ApplicationEventName.USER_PASSWORD_RESET:
     case ApplicationEventName.USER_EMAIL_VERIFIED:
       return [];
     case ApplicationEventName.USER_SIGNED_UP:
       return [
-        {
-          label: t('Source'),
-          value: formatUtils.convertEnumToHumanReadable(event.data.source),
-        },
+        methodRow({ label: t('Sign-up method'), method: event.data.method }),
+        isNil(event.data.source)
+          ? notRecordedRow(t('Source'))
+          : { label: t('Source'), value: SOURCE_LABEL[event.data.source]() },
       ];
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return [
@@ -616,6 +653,24 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         },
       ];
     }
+    case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+    case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+    case ApplicationEventName.SSO_DOMAIN_ADDED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+    case ApplicationEventName.SSO_DOMAIN_REMOVED:
+    case ApplicationEventName.SSO_DOMAIN_EXPIRED:
+      return [{ label: t('Domain'), value: event.data.domain }];
+    case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+    case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+    case ApplicationEventName.SAML_CONNECTED:
+    case ApplicationEventName.SAML_CONNECTION_REPLACED:
+    case ApplicationEventName.SSO_DISABLED:
+      return [];
     case ApplicationEventName.PROJECT_ROLE_CREATED:
     case ApplicationEventName.PROJECT_ROLE_UPDATED:
     case ApplicationEventName.PROJECT_ROLE_DELETED: {
@@ -693,9 +748,26 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
   }
 }
 
+function methodRow({
+  label,
+  method,
+}: {
+  label: string;
+  method: UserIdentityProvider | undefined;
+}): EventDetailRow {
+  return isNil(method)
+    ? notRecordedRow(label)
+    : { label, value: METHOD_LABEL[method]() };
+}
+
+function notRecordedRow(label: string): EventDetailRow {
+  return { label, value: t('Not recorded'), muted: true };
+}
+
 type EventDetailRow = {
   label: string;
   value: string;
+  muted?: boolean;
 };
 
 const OUTCOME_LABEL: Record<AgentActionOutcome, () => string> = {
@@ -708,4 +780,20 @@ const RAN_FROM_LABEL: Record<AgentRunSource, () => string> = {
   [AgentRunSource.AGENT]: () => t('The agent page'),
   [AgentRunSource.CHAT]: () => t('Chat'),
   [AgentRunSource.AGENT_BUILDER]: () => t('The agent builder'),
+};
+
+const METHOD_LABEL: Record<UserIdentityProvider, () => string> = {
+  [UserIdentityProvider.EMAIL]: () => t('Email'),
+  [UserIdentityProvider.GOOGLE]: () => t('Google'),
+  [UserIdentityProvider.SAML]: () => t('SAML'),
+  [UserIdentityProvider.JWT]: () => t('JWT'),
+};
+
+const SOURCE_LABEL: Record<
+  NonNullable<SignUpEvent['data']['source']>,
+  () => string
+> = {
+  credentials: () => t('Credentials'),
+  sso: () => t('SSO'),
+  managed: () => t('Managed'),
 };

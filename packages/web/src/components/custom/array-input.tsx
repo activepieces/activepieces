@@ -108,9 +108,8 @@ const ArrayInput = React.memo(
                 <div className="flex items-center gap-3">
                   <SortableDragHandle
                     variant="outline"
-                    size="icon"
+                    size={thinInputs ? 'icon-xs' : 'icon-sm'}
                     disabled={disabled}
-                    className={cn('shrink-0 size-8', thinInputs && 'size-7')}
                   >
                     <GripVertical className="size-4" aria-hidden="true" />
                   </SortableDragHandle>
@@ -124,13 +123,13 @@ const ArrayInput = React.memo(
                       )
                     ) : (
                       <Input
-                        thin={thinInputs}
+                        size={thinInputs ? 'sm' : 'default'}
                         value={field.value}
                         onChange={(e) =>
                           updateFieldValue(index, e.target.value)
                         }
                         disabled={disabled}
-                        className="grow"
+                        className={cn('grow', thinInputs && 'h-7 px-2')}
                       />
                     )}
                   </div>
@@ -139,9 +138,8 @@ const ArrayInput = React.memo(
                     <Button
                       type="button"
                       variant="outline"
-                      size="icon"
+                      size={thinInputs ? 'icon-xs' : 'icon-sm'}
                       disabled={disabled}
-                      className={cn('shrink-0 size-8', thinInputs && 'size-7')}
                       onClick={() => {
                         remove(index);
                       }}

@@ -51,7 +51,7 @@ function renderSkillsNote({ surface }: { surface: SkillSurface }): string {
     const lines = [
         `\n\n${SKILLS_NOTE_HEADING}`,
         `Only a few tools are attached to you directly. Every other tool named in these instructions or listed below is real and reachable, but calling it by its own name fails: call \`${LAZY_TOOL_NAME}\` with its name as \`tool\` and its arguments as \`input\`, e.g. \`${LAZY_TOOL_NAME}({ "tool": "ap_validate_flow", "input": { "flowId": "..." } })\`.`,
-        `Never guess a tool's arguments. Load every skill the work needs in one \`${LOAD_SKILL_NAME}\` call, which returns each playbook and the input schema of every tool in it, or fetch one tool's schema with \`${GET_TOOL_SCHEMA_NAME}\`. A loaded skill stays in the conversation, so do not load it again.`,
+        `Never guess a tool's arguments. Load the skills the work in front of you needs, together in one \`${LOAD_SKILL_NAME}\` call, and load another when the work reaches it. Each returns its playbook and the input schema of every tool in it. Or fetch one tool's schema with \`${GET_TOOL_SCHEMA_NAME}\`. A loaded skill stays in the conversation, so do not load it again.`,
         'If a call is rejected for its input, fix it from the schema in the error and retry once.',
     ]
     return surface === 'CHAT' ? [...lines, '', 'Skills:', renderSkillIndex()].join('\n') : lines.join('\n')
@@ -100,6 +100,7 @@ const CORE_TOOL_NAMES: Record<SkillSurface, readonly string[]> = {
         'ap_get_piece_props',
         'ap_resolve_property_options',
         'ap_resolve_property_chain',
+        'ap_run_task',
     ],
     AGENT: [
         LOAD_SKILL_NAME,
@@ -134,11 +135,12 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
     },
     {
         name: 'flow_management',
-        loadWhen: 'before inspecting, renaming, duplicating, deleting, pausing or annotating an existing flow',
+        loadWhen: 'before inspecting, renaming, duplicating, moving to a folder, deleting, pausing or annotating an existing flow',
         entersBuildPhase: false,
         toolNames: [
             'ap_flow_structure', 'ap_read_step_code', 'ap_read_step_settings',
             'ap_rename_flow', 'ap_duplicate_flow', 'ap_delete_flow', 'ap_change_flow_status', 'ap_manage_notes',
+            'ap_list_folders', 'ap_move_flow_to_folder',
         ],
     },
     {
@@ -185,7 +187,7 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
         loadWhen: 'before searching the web, reading a web page, scraping a site, generating an image or sending an email',
         guideTopic: 'web_research',
         entersBuildPhase: false,
-        toolNames: ['ap_web_search', 'ap_fetch_url', 'ap_scrape_url', 'ap_generate_image', 'ap_send_email'],
+        toolNames: ['ap_web_search', 'ap_fetch_url', 'ap_scrape_url', 'ap_deep_research', 'ap_generate_image', 'ap_send_email'],
     },
     {
         name: 'interaction',

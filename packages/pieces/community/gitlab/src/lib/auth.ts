@@ -1,5 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { GITLAB_API_BASE } from './common/constants';
 
 export const gitlabAuth = PieceAuth.OAuth2({
   required: true,
@@ -8,9 +9,12 @@ export const gitlabAuth = PieceAuth.OAuth2({
   scope: ['api', 'read_user'],
   getConnectionIdentifier: async ({ auth }) => {
     try {
-      const response = await httpClient.sendRequest<{ email?: string; username?: string }>({
+      const response = await httpClient.sendRequest<{
+        email?: string;
+        username?: string;
+      }>({
         method: HttpMethod.GET,
-        url: 'https://gitlab.com/api/v4/user',
+        url: `${GITLAB_API_BASE}/user`,
         headers: { Authorization: `Bearer ${auth.access_token}` },
         timeout: 5000,
       });

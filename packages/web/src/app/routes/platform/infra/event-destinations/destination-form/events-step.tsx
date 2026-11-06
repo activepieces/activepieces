@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { useId, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
+import { adminSurface } from '@/app/components/admin';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -93,7 +94,7 @@ export const EventsStep = ({
         const groupCheckboxId = `${checkboxIdPrefix}-group`;
 
         return (
-          <FormItem className="flex flex-col gap-4">
+          <FormItem className="@container flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <SearchInput
                 placeholder={t('Search events')}
@@ -115,8 +116,13 @@ export const EventsStep = ({
               </Button>
             </div>
 
-            <div className="grid min-h-[340px] grid-cols-[240px_minmax(0,1fr)] overflow-hidden rounded-lg border">
-              <nav className="flex flex-col gap-0.5 border-r bg-gray-3 p-1.5">
+            <div
+              className={cn(
+                adminSurface.card,
+                'grid min-h-85 grid-cols-1 grid-rows-[auto_1fr] overflow-hidden @xl:grid-cols-[240px_minmax(0,1fr)] @xl:grid-rows-none',
+              )}
+            >
+              <nav className="flex gap-0.5 overflow-x-auto border-b bg-gray-3 p-1.5 @xl:flex-col @xl:border-r @xl:border-b-0">
                 {visibleGroups.map((group) => {
                   const isActive = group.key === activeGroup?.key;
                   const selectedCount = group.events.filter((event) =>
@@ -129,7 +135,7 @@ export const EventsStep = ({
                       onClick={() => setActiveGroupKey(group.key)}
                       aria-current={isActive ? 'true' : undefined}
                       className={cn(
-                        'flex h-[34px] items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition-colors',
+                        'flex h-8 shrink-0 items-center gap-2 rounded-md px-2.5 text-left text-sm transition-colors',
                         isActive
                           ? 'bg-panel font-semibold text-gray-12'
                           : 'hover:bg-gray-4',
@@ -147,7 +153,7 @@ export const EventsStep = ({
                 })}
               </nav>
 
-              <div className="flex flex-col gap-1 px-[18px] py-3.5">
+              <div className="flex flex-col gap-1 px-5 py-4">
                 {activeGroup === undefined ? (
                   <p className="py-6 text-center text-sm text-gray-11">
                     {t('No events match your search')}
@@ -208,7 +214,7 @@ export const EventsStep = ({
                           >
                             {eventLabels[event]}
                           </Label>
-                          <span className="font-mono text-xs text-gray-11">
+                          <span className="hidden font-mono text-xs text-gray-11 @md:inline">
                             {event}
                           </span>
                         </div>

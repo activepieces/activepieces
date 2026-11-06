@@ -1,6 +1,7 @@
-import { BaseModelSchema, isNil } from '@activepieces/core-utils'
+import { BaseModelSchema, isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
+import { ModelChoice } from '../ai-providers'
 
 const MIN_BARRIER_SIGNALS = 1
 const MAX_BARRIER_SIGNALS = 10_000
@@ -15,6 +16,7 @@ export const PlatformConfiguration = z.object({
         .min(MIN_BARRIER_SIGNALS, formErrors.atLeastOne)
         .max(MAX_BARRIER_SIGNALS, formErrors.atMostTenThousand),
     aiSpecificModelsVisible: z.boolean(),
+    defaultChatModel: Nullable(ModelChoice),
 })
 export type PlatformConfiguration = z.infer<typeof PlatformConfiguration>
 
@@ -27,6 +29,7 @@ export type PlatformConfigurationSettings = z.infer<typeof PlatformConfiguration
 
 export const UpdatePlatformConfigurationRequestBody = PlatformConfigurationSettings.partial().extend({
     aiSpecificModelsVisible: z.boolean().optional(),
+    defaultChatModel: Nullable(ModelChoice),
 })
 export type UpdatePlatformConfigurationRequestBody = z.infer<typeof UpdatePlatformConfigurationRequestBody>
 

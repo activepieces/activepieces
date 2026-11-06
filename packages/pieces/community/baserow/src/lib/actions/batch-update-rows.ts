@@ -8,8 +8,7 @@ export const batchUpdateRowsAction = createAction({
   classification: 'WRITE',
   outputSchema: batchRowsOutputSchema,
   displayName: 'Batch Update Rows',
-  description:
-    'Updates multiple rows in a single request. Each row must include an "id" field. Accepts up to 200 rows.',
+  description: 'Updates up to 200 rows in one request.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -17,12 +16,28 @@ export const batchUpdateRowsAction = createAction({
     idempotent: true,
   },
   auth: baserowAuth,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['table_id'],
+    },
+    {
+      key: 'rows',
+      display: 'section',
+      label: 'Rows to Update',
+      icon: 'code',
+      props: ['rows'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
     rows: Property.Json({
       displayName: 'Rows',
       description:
-        'A JSON array of objects. Each object must include an "id" field and the fields to update.',
+        'A JSON list of up to 200 rows, each with its id and the new values.',
       required: true,
       defaultValue: [{ id: 1, Name: 'Updated Row 1' }],
     }),
@@ -32,6 +47,9 @@ export const batchUpdateRowsAction = createAction({
     const rows = context.propsValue.rows;
     if (!Array.isArray(rows)) {
       throw new Error('Rows must be a JSON array.');
+    }
+    if (rows.length > 200) {
+      throw new Error('At most 200 rows per request.');
     }
     const client = await makeClient(context.auth);
     const response = await client.batchUpdateRows(table_id, rows);

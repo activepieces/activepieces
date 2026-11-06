@@ -20,11 +20,31 @@ export const updateContactAction = createAction({
     audience: 'both',
     aiMetadata: { description: 'Update properties on an existing HubSpot contact identified by Contact ID; only the supplied fields are changed. Applying the same values repeatedly is idempotent. Use a find action to resolve the contact ID first, or a create action to add a new contact.', idempotent: true },
     outputSchema: crmObjectOutputSchema,
+    propertyGroups: [
+        {
+            key: 'target',
+            display: 'section',
+            label: 'Contact to Update',
+            icon: 'tag',
+            props: ['contactId'],
+        },
+        {
+            key: 'changes',
+            display: 'section',
+            label: 'Changes',
+            icon: 'text',
+            props: ['changesInfo', 'objectProperties'],
+        },
+    ],
     props: {
         contactId: Property.ShortText({
             displayName: 'Contact ID',
             description: 'Map it from an earlier step like Find Contact.',
             required: true,
+        }),
+        changesInfo: Property.MarkDown({
+            value: 'Fields left empty keep their current value.',
+            variant: MarkdownVariant.INFO,
         }),
         objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.CONTACT, []),
         markdown: Property.MarkDown({

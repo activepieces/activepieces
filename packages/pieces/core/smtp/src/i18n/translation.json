@@ -32,5 +32,7 @@
   "Name shown in the inbox instead of your address.": "Name shown in the inbox instead of your address.",
   "Extra headers added to the email, as name and value pairs.": "Extra headers added to the email, as name and value pairs.",
   "Plain Text": "Plain Text",
-  "HTML": "HTML"
+  "HTML": "HTML",
+  "Recipients": "Recipients",
+  "SMTP": "SMTP"
 }

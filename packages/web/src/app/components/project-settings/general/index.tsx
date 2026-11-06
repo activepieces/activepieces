@@ -1,6 +1,8 @@
 import {
+  ApEdition,
   ApFlagId,
   ColorName,
+  getConcurrentJobsLimitForCloudPlan,
   PICKABLE_COLOR_NAMES,
   PlatformRole,
   PROJECT_COLOR_PALETTE,
@@ -30,6 +32,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
+import { workerGroupsLock } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -60,6 +63,14 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
   const { data: defaultConcurrentJobsLimit } = flagsHooks.useFlag<number>(
     ApFlagId.DEFAULT_CONCURRENT_JOBS_LIMIT,
   );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
+  const planConcurrentJobsLimit = getConcurrentJobsLimitForCloudPlan(
+    platform.plan.plan,
+  );
+  const concurrentJobsPlaceholderValue = isCloud
+    ? planConcurrentJobsLimit
+    : defaultConcurrentJobsLimit;
   const showGeneralSettings = project.type === ProjectType.TEAM;
   const showExternalIdSettings =
     platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN;
@@ -88,7 +99,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                           <Button
                             type="button"
                             variant="outline"
-                            className="h-10 px-3 rounded-r-none border-r flex items-center gap-1"
+                            className="rounded-r-none border-r gap-1"
                             disabled={form.formState.disabled}
                           >
                             <div
@@ -108,9 +119,9 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                                 key={colorName}
                                 type="button"
                                 variant="ghost"
-                                size="icon"
+                                size="icon-sm"
                                 className={cn(
-                                  'h-8 w-8 rounded-sm transition-all hover:scale-110 p-0',
+                                  'transition-all hover:scale-110',
                                   PROJECT_COLOR_SWATCH[currentColor] ===
                                     PROJECT_COLOR_SWATCH[colorName] &&
                                     'ring-2 ring-offset-2 ring-offset-panel ring-gray-12',
@@ -142,7 +153,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                       {...field}
                       id="projectName"
                       placeholder={t('Project Name')}
-                      className="h-10 rounded-l-none border-l-0"
+                      className="rounded-l-none border-l-0"
                       disabled={form.formState.disabled}
                     />
                     <FormMessage />
@@ -165,7 +176,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                   {...field}
                   id="externalId"
                   placeholder={t('org-3412321')}
-                  className="h-10 font-mono"
+                  className="font-mono"
                   disabled={form.formState.disabled}
                 />
                 <FormDescription className="text-xs text-gray-11">
@@ -202,7 +213,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
             )}
           />
         )}
-        {!platform.plan.workerGroupsEnabled &&
+        {workerGroupsLock.reason({ edition, plan: platform.plan }) !== null &&
           platformRole === PlatformRole.ADMIN && (
             <FormField
               name="maxConcurrentJobs"
@@ -219,19 +230,27 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                     id="maxConcurrentJobs"
                     type="number"
                     min={1}
+                    max={isCloud ? planConcurrentJobsLimit : undefined}
                     placeholder={
-                      defaultConcurrentJobsLimit
+                      concurrentJobsPlaceholderValue
                         ? t('Default ({value})', {
-                            value: defaultConcurrentJobsLimit,
+                            value: concurrentJobsPlaceholderValue,
                           })
                         : t('Default')
                     }
                     value={field.value ?? ''}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      if (!e.target.value) {
+                        field.onChange(null);
+                        return;
+                      }
+                      const value = Number(e.target.value);
                       field.onChange(
-                        e.target.value ? Number(e.target.value) : null,
-                      )
-                    }
+                        isCloud
+                          ? Math.min(value, planConcurrentJobsLimit)
+                          : value,
+                      );
+                    }}
                     onClear={() => field.onChange(null)}
                     disabled={form.formState.disabled || !isRateLimiterEnabled}
                   />
@@ -239,6 +258,11 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                     {isRateLimiterEnabled === false
                       ? t(
                           'The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.',
+                        )
+                      : isCloud
+                      ? t(
+                          'Maximum number of flows that can run at the same time for this project, up to the {value} allowed by your plan',
+                          { value: planConcurrentJobsLimit },
                         )
                       : t(
                           'Maximum number of flows that can run at the same time for this project',

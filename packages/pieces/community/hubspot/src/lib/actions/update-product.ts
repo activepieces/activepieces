@@ -20,11 +20,31 @@ export const updateProductAction = createAction({
     audience: 'both',
     aiMetadata: { description: 'Updates properties on an existing product identified by its product ID, such as name, price, description, or tax, then returns the refreshed product. Use to modify a known product in the product library. Idempotent: applying the same property values converges to the same product state.', idempotent: true },
     outputSchema: crmObjectOutputSchema,
+    propertyGroups: [
+        {
+            key: 'target',
+            display: 'section',
+            label: 'Product to Update',
+            icon: 'tag',
+            props: ['productId'],
+        },
+        {
+            key: 'changes',
+            display: 'section',
+            label: 'Changes',
+            icon: 'text',
+            props: ['changesInfo', 'objectProperties'],
+        },
+    ],
     props: {
         productId:Property.ShortText({
             displayName:'Product ID',
             description:'Map it from an earlier step like Find Product.',
             required:true
+        }),
+        changesInfo: Property.MarkDown({
+            value: 'Fields left empty keep their current value.',
+            variant: MarkdownVariant.INFO,
         }),
         objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.PRODUCT,[]),
         markdown: Property.MarkDown({

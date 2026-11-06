@@ -97,6 +97,15 @@ export const newCustomObjectTrigger = createTrigger({
 		description:
 			'Fires when a new record of the selected HubSpot custom object type is created. Each event represents one custom-object record with the properties chosen to retrieve plus standard fields like object ID and create date. Polls by creation date; does not fire on updates to existing records.',
 	},
+	propertyGroups: [
+		{
+			key: 'object',
+			display: 'section',
+			label: 'Object Type',
+			icon: 'tag',
+			props: ['customObjectType'],
+		},
+	],
 	props: {
 		customObjectType: customObjectDropdown,
 		markdown: Property.MarkDown({

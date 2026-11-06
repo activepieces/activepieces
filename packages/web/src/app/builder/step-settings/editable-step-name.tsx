@@ -111,7 +111,7 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                 className={cn(
                   'flex items-center gap-1.5 min-w-0',
                   !readonly &&
-                    'cursor-text rounded-sm hover:text-gray-12/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8',
+                    'cursor-text rounded-md hover:text-gray-12/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8',
                 )}
               >
                 <span className="truncate text-gray-12">
@@ -132,14 +132,14 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                         {tooltipTitle}
                       </span>
                       {pieceVersion && (
-                        <span className="text-[11px] font-mono text-gray-1/90">
+                        <span className="text-xs font-mono text-gray-1/90">
                           (v{pieceVersion})
                         </span>
                       )}
                     </div>
                   )}
                   {!tooltipTitle && pieceVersion && (
-                    <span className="text-[11px] font-mono text-gray-1/90">
+                    <span className="text-xs font-mono text-gray-1/90">
                       (v{pieceVersion})
                     </span>
                   )}
@@ -160,8 +160,8 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-6 shrink-0 text-gray-11 hover:text-gray-12"
+                size="icon-xs"
+                className="text-gray-11 hover:text-gray-12"
                 onClick={handleStartEditing}
                 aria-label={t('Edit Branch Name')}
               >

@@ -177,5 +177,6 @@
   "Only disputes for this charge. Empty: all.": "Только споры по этому списанию. Пусто: все.",
   "Only disputes for this payment. Empty: all.": "Только споры по этому платежу. Пусто: все.",
   "Only updates where the subscription's status is this.": "Только обновления, где подписка в этом статусе.",
-  "Only sessions for this customer. Empty: all.": "Только сессии этого клиента. Пусто: все."
+  "Only sessions for this customer. Empty: all.": "Только сессии этого клиента. Пусто: все.",
+  "Empty fields keep their current value.": "Пустые поля сохраняют текущее значение."
 }

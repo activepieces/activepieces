@@ -6,6 +6,8 @@ icon: ⏱️
 
 `npx @activepieces/cli benchmark` load-tests a deployment's sync-webhook path and attributes *where* latency goes, so a self-hosted setup can be compared apples-to-apples against Activepieces' published reference numbers. Available in CE, EE, Cloud.
 
+Nightly CI results (`.github/workflows/benchmark.yml`, scheduled runs only) are stored in ClickHouse and charted on the HyperDX [Nightly Benchmark](https://hyperdx.clickhouse.cloud/dashboards/6ab2f0392d54d4a63406098f) dashboard.
+
 ### How it works
 - Builds a `webhook → data-mapper → return-response` flow. Instead of a raw `--concurrency`, it **auto-discovers the deployment shape** (`GET /v1/worker-machines`) and drives load = the effective **execution slot** count, so a healthy deploy queues ~zero by construction. Any queue-wait it reports is a real finding (usually driven concurrency > slots).
 - Attributes latency from each `FlowRun.timeline` into QUEUE / PROVISION / BOOT / RUN, cross-checked against live BullMQ queue depth.

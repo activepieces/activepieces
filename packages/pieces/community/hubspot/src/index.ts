@@ -148,6 +148,12 @@ export const hubspot = createPiece({
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${getHubspotAccessToken(auth)}`,
 			}),
+			props: {
+				url: {
+					description: 'Full URL, or a path relative to https://api.hubapi.com',
+					placeholder: '/crm/v3/objects/contacts',
+				},
+			},
 		}),
 	],
 	triggers: [

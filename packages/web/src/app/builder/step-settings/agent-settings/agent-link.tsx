@@ -4,11 +4,14 @@ import {
   spreadIfDefined,
 } from '@activepieces/core-utils';
 import {
+  AgentConfig,
   AgentPieceProps,
+  AgentProviderModel,
   AgentSummary,
   AgentToolType,
   AgentVisibility,
   McpAuthType,
+  ModelOptions,
   Permission,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -19,6 +22,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent-link-utils';
+import { agentModelUtils } from '@/app/builder/step-settings/agent-settings/agent-model-utils';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
@@ -31,16 +35,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import {
   agentsQueries,
   useAgentsAvailable,
 } from '@/features/agents/hooks/agents-hooks';
-import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-export const AgentLink = ({ disabled }: AgentLinkProps) => {
+export const AgentLink = ({ disabled, pieceVersion }: AgentLinkProps) => {
   const form = useFormContext();
   const projectId = authenticationSession.getProjectId() ?? undefined;
   const agentsAvailable = useAgentsAvailable();
@@ -82,13 +86,15 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
     : !linked.isPublished
     ? t('Not published yet. Publish it before this flow can run.')
     : undefined;
-  const { tiers: flowTiers } = aiProviderQueries.useModelTiers('flow');
-  const modelLabel =
-    (linkedConfig?.provider === AIProviderName.ACTIVEPIECES
-      ? flowTiers.find((tier) => tier.id === linkedConfig.modelName)?.label
-      : undefined) ??
-    linkedConfig?.modelName ??
-    undefined;
+  const { data: modelOptions } = aiModelHooks.useModelOptions({
+    projectId: projectId ?? '',
+    surface: 'agent',
+    tierId: linkedConfig?.modelTierId ?? undefined,
+  });
+  const modelLabel = modelLabelOf({
+    config: linkedConfig,
+    options: modelOptions,
+  });
   const toolPieces = new Set(
     (linked?.toolPieceNames ?? []).map((pieceName) =>
       pieceName.replace('@activepieces/piece-', ''),
@@ -132,18 +138,14 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
       linkedConfig.maxSteps,
       { shouldValidate: true },
     );
-    if (!isNil(linkedConfig.provider) && !isNil(linkedConfig.modelName)) {
+    const model = detachedModelOf({
+      config: linkedConfig,
+      withTiers: agentModelUtils.supportsTiers({ pieceVersion }),
+    });
+    if (!isNil(model)) {
       form.setValue(
         `settings.input.${AgentPieceProps.AI_PROVIDER_MODEL}`,
-        {
-          provider: linkedConfig.provider,
-          model: linkedConfig.modelName,
-          picked: 'user',
-          ...spreadIfDefined(
-            'configId',
-            linkedConfig.providerConfigId ?? undefined,
-          ),
-        },
+        model,
         { shouldValidate: true },
       );
     }
@@ -207,7 +209,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           </Button>
         </PermissionNeededTooltip>
       ) : (
-        <div className="flex flex-col gap-2.5 rounded-lg border p-3">
+        <div className="flex flex-col gap-2.5 rounded-xl border p-3">
           {summaryText && (
             <TextWithTooltip tooltipMessage={summaryText}>
               <p className="line-clamp-2 text-xs text-gray-11">{summaryText}</p>
@@ -217,7 +219,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           {(!isNil(modelLabel) || toolChips.length > 0) && (
             <div className="flex flex-wrap items-center gap-1.5">
               {!isNil(modelLabel) && (
-                <Badge variant="accent" className="font-normal">
+                <Badge variant="secondary" className="font-normal">
                   {modelLabel}
                 </Badge>
               )}
@@ -284,8 +286,55 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
   );
 };
 
+function modelLabelOf({
+  config,
+  options,
+}: {
+  config: AgentConfig | undefined;
+  options: ModelOptions | undefined;
+}): string | undefined {
+  if (isNil(config)) {
+    return undefined;
+  }
+  if (!isNil(config.modelTierId)) {
+    const tierId =
+      options?.movedTiers[config.modelTierId] ?? config.modelTierId;
+    return options?.tiers.find((tier) => tier.id === tierId)?.name;
+  }
+  if (config.provider === AIProviderName.ACTIVEPIECES) {
+    return (
+      options?.credits?.tiers.find((tier) => tier.id === config.modelName)
+        ?.label ??
+      config.modelName ??
+      undefined
+    );
+  }
+  return config.modelName ?? undefined;
+}
+
+function detachedModelOf({
+  config,
+  withTiers,
+}: {
+  config: AgentConfig;
+  withTiers: boolean;
+}): AgentProviderModel | null {
+  if (!isNil(config.modelTierId)) {
+    return withTiers ? { modelTierId: config.modelTierId } : null;
+  }
+  if (isNil(config.provider) || isNil(config.modelName)) {
+    return null;
+  }
+  return {
+    provider: config.provider,
+    model: config.modelName,
+    ...spreadIfDefined('configId', config.providerConfigId ?? undefined),
+  };
+}
+
 type AgentLinkProps = {
   disabled: boolean;
+  pieceVersion: string;
 };
 
 const MAX_TOOL_CHIPS = 3;

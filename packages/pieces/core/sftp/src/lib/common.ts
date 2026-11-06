@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/pieces-framework';
+import { isNil, tryCatch } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { ServerHostKeyAlgorithm } from 'ssh2';
 import { Client as FTPClient } from 'basic-ftp';
@@ -87,7 +87,7 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
     return sftp as T;
   } else {
     const ftpClient = new FTPClient(undefined, { allowSeparateTransferHost: true });
-    await ftpClient.access({
+    const { error } = await tryCatch(() => ftpClient.access({
       host,
       port,
       user: username,
@@ -96,7 +96,11 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
       secureOptions: {
         rejectUnauthorized: !(allow_unauthorized_certificates ?? false),
       }
-    });
+    }));
+    if (error) {
+      ftpClient.close();
+      throw error;
+    }
     return ftpClient as T;
   }
 }

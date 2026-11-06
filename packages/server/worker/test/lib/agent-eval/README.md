@@ -28,10 +28,30 @@ A clean working tree means baseline == candidate (it runs once and says "no prom
 | Flag | Use it when |
 |---|---|
 | *(none)* | Re-open the cached run instantly (runs live only if there's no cache yet). No LLM cost. |
-| `--fresh` | You edited the prompt and want fresh results. |
+| `--fresh` | You want fresh results: ignores the cached run and starts a stopped run over. |
 | `--candidate <path>` | A/B an explicit prompt file instead of your working tree. |
+| `--baseline-model <id>` | Run the baseline arm on another OpenRouter model (default: the fixture model). |
+| `--candidate-model <id>` | Run the candidate arm on another OpenRouter model (default: the fixture model). |
+| `--limit <n>` | Run only the first `n` fixtures — try a model cheaply before the full suite. |
+| `--only <ids>` | Run only these fixtures (comma-separated ids). |
+| `--concurrency <n>` | Evaluate `n` fixtures at once (default 4). Lower it if you hit provider rate limits. |
+| `--max-cost <usd>` | Stop starting new fixtures once this many dollars are spent (agent + judge). |
+
+Each fixture is saved to `.agent-eval/partial-run.json` as soon as it finishes. If a run stops (Ctrl+C, a crash, or the cost cap), run the same command again without `--fresh` and it picks up where it left off, skipping fixtures already done. A changed prompt, model, judge or fixture starts that work over. The cap only stops new fixtures from starting, so fixtures already running finish and the total can go over by up to `--concurrency` fixtures.
 
 For a non-interactive pass/fail gate (scripts/CI), use `npm run agent-evals:ci`.
+
+## Compare models
+
+```bash
+npm run agent-evals -- --baseline-model anthropic/claude-sonnet-4.6 --candidate-model openai/gpt-5.2
+```
+
+Each arm is a prompt plus a model. With a clean working tree only the model differs; if the prompt changed too, the dashboard warns that the comparison mixes two variables. Model ids are OpenRouter slugs, run through the same chat turn (`runAgentTurn`), prompt, skills and tools as production chat.
+
+The judge is Jev (`typesafe/jev-1.13`) on OpenRouter's Decisions API: it answers each rubric as a probability of passing, so a failing check shows `Jev P(pass) = 0.31` instead of a written reason. In the same call Jev also picks what kind of failure it was (hallucinated, gave up, wrong action, asked too much, broke a rule, unsafe action, poor tone, other). The dashboard counts these per model on the "why it failed" line, and the fixture view tags each failed check with one. Set `CHAT_EVAL_JUDGE_MODEL` to any OpenRouter chat model to judge with that model instead.
+
+The dashboard shows score and cost per arm. **Cost** is what OpenRouter reported for the agent's own calls, summed over every repeat; `—` means at least one call reported no cost. Judge cost is shown on its own line and is not counted in the comparison.
 
 ## In the reviewer
 
@@ -46,9 +66,15 @@ Regression cases live in `fixtures/*.json` — committed, so they're the team's 
 
 **To add or edit a fixture, see [`fixtures/README.md`](fixtures/README.md)** — schema, a copy-paste skeleton, and the full assertion/judge catalog.
 
+## Real chats as test cases
+
+The fixtures here are hand-written and public. Tests built from real customer chats are **private**: they live in PostHog Datasets, never in this repo, `calibration/` or the CDN. The repo is open source, so a committed transcript is a published one.
+
+How real chats get here, and how a PR gets scored against them, is the AI quality loop: the "AI quality loop plan" document in Linear project P-AI-339, and the brain page `brain/knowledge/ai-intelligence/quality-loop.md`. The Sun/Tue/Thu review runs through `/ai-task quality`.
+
 ## Nightly history
 
-The nightly job runs each fixture 3 times and publishes the results JSON to `https://cdn.activepieces.com/ai/evals/runs/<utc-time>-<sha>.json` (public). The Config Console reads that prefix for its trend page.
+The nightly job runs each fixture 3 times and publishes the results JSON to `https://cdn.activepieces.com/ai/evals/runs/<utc-time>-<sha>.json` (public). The Config Console reads that prefix for its trend page. Because it is public, it must only ever hold results for the hand-written fixtures, never for private cases (AI-183).
 
 ## Artifacts
 

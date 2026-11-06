@@ -1,6 +1,6 @@
 import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, PersistedAgentMessageSchema, PersistedAgentRole, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, PersistedAgentMessageSchema, PersistedAgentRole, SubagentProgressEvent, ToolProgressEvent } from '@activepieces/shared'
 import { JSONSchema7, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
@@ -61,7 +61,7 @@ export function truncateLargeResult(result: unknown): unknown {
         maxBytes: MAX_TOOL_RESULT_BYTES,
         wrap: (json) => buildOversizeEnvelope({
             result,
-            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved]${sizeNote} Truncated values are marked with "…[truncated]".\n\n${json}`,
+            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved]${sizeNote} Truncated values are marked with "…[truncated]". This is not the full data, so never answer as if you saw all of it: narrow the request (a filter, fewer items or fields), or hand the digging to a task when you can.\n\n${json}`,
         }),
     })
     return fitted ?? buildOversizeEnvelope({
@@ -178,6 +178,7 @@ export type AgentEventEmitter = {
     emitImageGenerated(data: ImageGeneratedEvent): void
     emitFileProduced(data: FileProducedEvent): void
     emitBuildPlan(data: BuildPlanEvent): void
+    emitSubagentProgress(data: SubagentProgressEvent): void
 }
 
 export type TaintState = { tainted: boolean }

@@ -1,22 +1,23 @@
-﻿import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const getProject = createAction({
   auth: ninjapipeAuth,
   name: 'get_project',
   classification: 'READ',
   displayName: 'Get Project',
-  description: 'Retrieves a project by ID.',
+  description: 'Gets one project by ID.',
   audience: 'both',
-  aiMetadata: { description: 'Fetch a single project by its ID. Read-only lookup for inspecting one project; to enumerate or search projects use the list-projects action instead.', idempotent: true },
+  aiMetadata: { description: 'Fetch a single NinjaPipe project by ID. Read-only.', idempotent: true },
+  outputSchema: ninjapipeSchemas.project,
   props: {
-    projectId: ninjapipeCommon.projectDropdownRequired,
+    projectId: ninjapipeProps.projectRequired(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.GET, path: `/projects/${encodeURIComponent(String(context.propsValue.projectId))}` });
-    return flattenCustomFields(response.body);
+    const id = ninjapipeClient.pathId({ value: context.propsValue.projectId, field: 'Project' });
+    return ninjapipeClient.getRecord({ auth: ninjapipeClient.readAuth(context.auth), path: `/projects/${id}`, operation: 'get project' });
   },
 });

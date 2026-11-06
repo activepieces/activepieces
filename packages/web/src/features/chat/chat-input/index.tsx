@@ -70,7 +70,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
         e.preventDefault();
         if (!disabled && (input || files.length > 0)) {
           handleSubmit(e as unknown as React.FormEvent);
@@ -89,7 +89,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
         }}
       >
         <form onSubmit={handleSubmit} className="flex flex-col">
-          <div className="rounded-lg border shadow-xs">
+          <div className="rounded-xl border shadow-xs">
             {files.length > 0 && (
               <div
                 className="px-4 py-3 w-full transition-all overflow-hidden"

@@ -9,6 +9,7 @@ import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentApprovalGate } from './agent-approval-gate'
+import { agentChatModel } from './agent-chat-model'
 import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
@@ -131,14 +132,19 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             projects: await agentHelpers.getUserProjects({ platformId, userId, log }),
         })
         const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
-        await agentHelpers.assertRunProviderConfigured({
-            platformId,
-            log,
-            scope: runScope,
-            modelTierId: runTierId,
-            ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
-            ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
-        })
+        if (runsOnAgentModel) {
+            await agentHelpers.assertRunProviderConfigured({
+                platformId,
+                log,
+                scope: runScope,
+                modelTierId: runTierId,
+                ...spreadIfDefined('provider', agentConfig.provider ?? undefined),
+                ...spreadIfDefined('providerConfigId', agentConfig.providerConfigId ?? undefined),
+            })
+        }
+        else {
+            await agentChatModel(log).assertRunnable({ platformId, conversation, scope: runScope })
+        }
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         const carriesConfiguredTools = !isNil(agentConfig) && !isBuilder
@@ -293,13 +299,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
     app.post('/memory/import', ImportMemoryRoute, async (request) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        const draft = await agentMemoryAi.extract({ platformId, text: request.body.text, log: request.log })
+        const draft = await agentMemoryAi.extract({ platformId, userId, text: request.body.text, log: request.log })
         const current = await agentHelpers.getUserMemory({ platformId, userId })
         return agentHelpers.saveUserMemory({
             platformId,
             userId,
-            memories: [...current.memories, ...draft.memories],
-            baseMemories: current.memories,
+            memories: { next: [...current.memories, ...draft.memories], base: current.memories },
         })
     })
 

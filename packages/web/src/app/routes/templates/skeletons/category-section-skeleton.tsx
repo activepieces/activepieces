@@ -34,11 +34,11 @@ export const CategorySectionSkeleton = ({
           </div>
         </div>
 
-        <CarouselContent className="pb-3">
+        <CarouselContent className="gap-0 pb-3">
           {[...Array(4)].map((_, index) => (
             <CarouselItem
               key={index}
-              className="basis-full sm:basis-1/3 lg:basis-1/4 xl:basis-1/5 min-w-[350px]"
+              className="pr-4 basis-full sm:basis-1/3 lg:basis-1/4 xl:basis-1/5 min-w-[350px]"
             >
               <TemplateCardSkeleton showCategoryCarouselButton={hideHeader} />
             </CarouselItem>

@@ -98,8 +98,7 @@ export const voiceChange = createAction({
       if (file) {
         try {
           const fileBuffer = Buffer.from(file.base64, "base64");
-          const blob = new Blob([fileBuffer]);
-          formData.append("file", blob, file.filename);
+          formData.append("file", fileBuffer, { filename: file.filename });
         } catch (e) {
           throw new Error("Failed to process uploaded file. Ensure it's a valid audio file.");
         }

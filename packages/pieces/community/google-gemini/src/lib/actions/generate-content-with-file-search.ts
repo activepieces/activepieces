@@ -13,6 +13,11 @@ export const generateContentWithFileSearchAction = createAction({
   name: 'generate_content_with_filesearch',
   classification: 'WRITE',
   auth: googleGeminiAuth,
+  propertyGroups: [
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt'] },
+    { key: 'source', display: 'section', label: 'Search in', icon: 'file', props: ['file', 'fileStoreName'] },
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model'] },
+  ],
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',

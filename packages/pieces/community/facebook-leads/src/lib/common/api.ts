@@ -11,11 +11,12 @@ import type {
 	FacebookLeadsUser,
 } from './types';
 
-async function getMe({ accessToken }: { accessToken: string }): Promise<FacebookLeadsUser> {
+async function getMe({ accessToken, timeout }: { accessToken: string; timeout?: number }): Promise<FacebookLeadsUser> {
 	return await facebookLeadsClient.request<FacebookLeadsUser>({
 		method: HttpMethod.GET,
 		path: '/me',
 		query: { access_token: accessToken, fields: 'id,name' },
+		timeout,
 	});
 }
 

@@ -1,6 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { loopsAuth, LOOPS_BASE_URL } from '../auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { loopsAuth } from '../auth';
+import { loopsClient } from '../common/client';
+import { loopsProps, loopsSchemas } from '../common/schemas';
+
+const RESERVED_EVENT_FIELDS = new Set(['eventName', 'email', 'userId', 'eventProperties', 'mailingLists']);
 
 export const sendEvent = createAction({
   name: 'send_event',
@@ -9,9 +13,10 @@ export const sendEvent = createAction({
   description:
     'Sends an event to Loops for a contact. Events can trigger email automations configured in your Loops dashboard.',
   audience: 'both',
+  outputSchema: loopsSchemas.success,
   aiMetadata: {
     description:
-      'Sends a named event for a contact to Loops, which can trigger email automations configured in the dashboard; the contact is identified by email or internal user ID (at least one is required), and the call can also attach event properties and update mailing-list memberships or contact properties. Use to fire behavioral events like signup or purchase. The event name must match one set up in Loops. Not idempotent: each call records a new event occurrence.',
+      'Sends a named event for a contact to Loops, which can trigger email automations configured in the dashboard. The contact is identified by email or internal user ID (at least one required) and is created if missing. If both are given, Loops matches on either one and overwrites the other on the matched contact. Send only one unless you mean to change the other. Can attach event properties, update mailing-list memberships and set contact properties. Not idempotent: each call records a new event, unless the same idempotencyKey is reused within 24 hours (Loops then rejects it with 409).',
     idempotent: false,
   },
   auth: loopsAuth,
@@ -23,8 +28,7 @@ export const sendEvent = createAction({
     }),
     userId: Property.ShortText({
       displayName: 'User ID',
-      description:
-        'Your internal user ID of the contact (used if email is not provided).',
+      description: 'Your internal user ID of the contact (used if email is not provided).',
       required: false,
     }),
     eventName: Property.ShortText({
@@ -35,59 +39,52 @@ export const sendEvent = createAction({
     }),
     eventProperties: Property.Object({
       displayName: 'Event Properties',
-      description:
-        'Optional key-value pairs to attach to the event (used in email templates).',
+      description: 'Optional key-value pairs to attach to the event (used in email templates).',
       required: false,
     }),
     mailingLists: Property.Object({
       displayName: 'Mailing Lists',
       description:
-        'Subscribe or unsubscribe this contact from mailing lists. Provide list IDs as keys with `true` (subscribe) or `false` (unsubscribe) as values.',
+        'Mailing list IDs as keys with `true` (subscribe) or `false` (unsubscribe) as values. Use "List Mailing Lists" to find the IDs.',
       required: false,
     }),
     contactProperties: Property.Object({
       displayName: 'Contact Properties',
       description:
-        'Optional contact property updates to apply when the event is sent.',
+        'Optional contact property updates to apply when the event is sent. Keys eventName, email, userId, eventProperties and mailingLists are ignored.',
       required: false,
     }),
+    idempotencyKey: loopsProps.idempotencyKeyProp(),
   },
   async run(context) {
-    const { email, userId, eventName, eventProperties, mailingLists, contactProperties } =
+    const { email, userId, eventName, eventProperties, mailingLists, contactProperties, idempotencyKey } =
       context.propsValue;
 
     if (!email && !userId) {
       throw new Error('Either "Email" or "User ID" must be provided.');
     }
 
-    const body: Record<string, unknown> = { eventName };
+    const contactFields: Record<string, unknown> = {};
+    if (loopsClient.isRecord(contactProperties)) {
+      for (const [key, value] of Object.entries(contactProperties)) {
+        if (!RESERVED_EVENT_FIELDS.has(key)) {
+          contactFields[key] = value;
+        }
+      }
+    }
 
+    const body: Record<string, unknown> = { ...contactFields, eventName };
     if (email) body['email'] = email;
     if (userId) body['userId'] = userId;
+    if (loopsClient.isRecord(eventProperties)) body['eventProperties'] = eventProperties;
+    if (loopsClient.isRecord(mailingLists)) body['mailingLists'] = mailingLists;
 
-    if (eventProperties && typeof eventProperties === 'object') {
-      body['eventProperties'] = eventProperties;
-    }
-
-    if (mailingLists && typeof mailingLists === 'object') {
-      body['mailingLists'] = mailingLists;
-    }
-
-    if (contactProperties && typeof contactProperties === 'object') {
-      Object.assign(body, contactProperties);
-    }
-
-    const response = await httpClient.sendRequest<Record<string, unknown>>({
+    return loopsClient.request<Record<string, unknown>>({
+      apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${LOOPS_BASE_URL}/events/send`,
-      headers: {
-        Authorization: `Bearer ${context.auth.secret_text}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      path: '/events/send',
       body,
+      idempotencyKey: idempotencyKey?.trim() || undefined,
     });
-
-    return response.body;
   },
 });

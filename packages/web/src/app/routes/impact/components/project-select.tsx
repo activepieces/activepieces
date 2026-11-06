@@ -57,13 +57,14 @@ export function ProjectSelect({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
+          size="sm"
           role="combobox"
           aria-expanded={open}
-          className="w-auto gap-2 font-normal h-8"
+          className="w-auto font-normal"
         >
           {selectedProject?.type === ProjectType.TEAM ? (
             <Avatar
-              className="size-4 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold leading-none"
+              className="size-4 shrink-0 flex items-center justify-center rounded-sm text-xs font-semibold leading-none"
               style={{
                 backgroundColor:
                   PROJECT_COLOR_PALETTE[selectedProject.icon.color].color,
@@ -108,7 +109,7 @@ export function ProjectSelect({
                 >
                   {isTeam && project ? (
                     <Avatar
-                      className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold leading-none"
+                      className="size-5 shrink-0 flex items-center justify-center rounded-sm text-xs font-semibold leading-none"
                       style={{
                         backgroundColor:
                           PROJECT_COLOR_PALETTE[project.icon.color].color,

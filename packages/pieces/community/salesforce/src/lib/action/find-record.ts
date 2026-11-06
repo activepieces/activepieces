@@ -9,7 +9,7 @@ export const findRecord = createAction({
     name: 'find_record',
     classification: 'SEARCH',
     displayName: 'Find Record',
-    description: 'Finds a record by a field value.',
+    description: 'Finds records where a field equals a value, up to 200.',
     audience: 'human',
     aiMetadata: { description: 'Look up records of a chosen Salesforce object where a single field equals an exact value (read-only, returns up to 200 matches). Pick this for simple equality lookups by a known field such as Email or Name; for multi-condition filters, joins, or sorting use Run Query (SOQL) instead.', idempotent: true },
     outputSchema: rawQueryOutputSchema,
@@ -18,7 +18,8 @@ export const findRecord = createAction({
         field: salesforcesCommon.field,
         search_value: Property.ShortText({
             displayName: 'Search Value',
-            description: 'The value to search for in the selected field.',
+            description: 'Matched exactly against the field.',
+            placeholder: 'Acme',
             required: true,
         })
     },

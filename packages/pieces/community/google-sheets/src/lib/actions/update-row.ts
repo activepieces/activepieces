@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, createGoogleClient, Dimension, objectToArray, ValueInputOption } from '../common/common';
 import { googleSheetsAuth } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
@@ -19,12 +19,39 @@ export const updateRowAction = createAction({
     idempotent: true,
   },
   displayName: 'Update Row',
+  propertyGroups: [
+    {
+      key: 'spreadsheet',
+      display: 'section',
+      label: 'Spreadsheet',
+      icon: 'file',
+      props: ['spreadsheetId', 'sheetId'],
+    },
+    {
+      key: 'target_row',
+      display: 'section',
+      label: 'Row',
+      icon: 'markdown',
+      props: ['row_id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['empty_fields_info', 'first_row_headers', 'values'],
+    },
+  ],
   props: {
     ...commonProps,
     row_id: Property.Number({
       displayName: 'Row Number',
       description: 'The row number to update',
       required: true,
+    }),
+    empty_fields_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
     }),
     first_row_headers: isFirstRowHeaderProp(),
     values: rowValuesProp(),

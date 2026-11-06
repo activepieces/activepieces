@@ -4,7 +4,6 @@ import { ApEdition, FileCompression, FileType, FlowActionType, FlowStatus, flowS
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { distributedLock, distributedStore } from '../database/redis-connections'
-import { workerGroupService } from '../ee/platform/platform-plan/worker-group.service'
 import { fileService } from '../file/file.service'
 import Paginator from '../helper/pagination/paginator'
 import { system } from '../helper/system/system'
@@ -12,7 +11,8 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
-import { projectWorkerGroupService } from '../project/project-worker-group.service'
+import { platformWorkerGroupService } from '../workers/worker-groups/platform-worker-group.service'
+import { projectWorkerGroupService } from '../workers/worker-groups/project-worker-group.service'
 import { flowService } from './flow/flow.service'
 
 
@@ -114,7 +114,7 @@ async function computeScope(input: PrewarmDataRequest, log: FastifyBaseLogger): 
             platformId = await projectService(log).getPlatformId(projectIds[0])
         }
         else {
-            platformId = await workerGroupService(log).getWorkerGroupPlatformId({ workerGroupId: input.workerGroupId }) ?? undefined
+            platformId = await platformWorkerGroupService(log).getWorkerGroupPlatformId({ workerGroupId: input.workerGroupId }) ?? undefined
             if (isNil(platformId)) {
                 return null
             }
@@ -153,7 +153,7 @@ function extractCodeSteps(flowVersion: FlowVersion): PrewarmCodeStep[] {
             sourceCode: step.settings.sourceCode,
             flowVersionId: flowVersion.id,
             flowVersionState: flowVersion.state,
-            useDeno: step.settings.useDeno ?? false,
+            useDeno: step.settings.useDeno !== false,
         }))
 }
 

@@ -1,4 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { makeRequest } from './common/client';
 
 const markdownDescription = `
 To use Campaign Monitor, you need to get an API key:
@@ -9,7 +11,23 @@ To use Campaign Monitor, you need to get an API key:
 `;
 
 export const campaignMonitorAuth = PieceAuth.SecretText({
-    displayName: 'API Key',
-    description: markdownDescription,
-    required: true,
+  displayName: 'API Key',
+  description: markdownDescription,
+  required: true,
+  validate: async ({ auth }) => {
+    try {
+      await makeRequest({
+        auth: { apiKey: auth },
+        method: HttpMethod.GET,
+        path: '/systemdate.json',
+      });
+      return { valid: true };
+    } catch {
+      return {
+        valid: false,
+        error:
+          'Invalid API key. Copy it from Account Settings → API keys in Campaign Monitor.',
+      };
+    }
+  },
 });

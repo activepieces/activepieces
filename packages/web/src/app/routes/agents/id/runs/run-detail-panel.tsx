@@ -262,11 +262,7 @@ const ToolCall = ({
 const Payload = ({ label, value }: { label: string; value: unknown }) => (
   <JsonViewer
     json={value}
-    title={
-      <span className="text-xss font-medium uppercase tracking-wider text-gray-11">
-        {label}
-      </span>
-    }
+    title={<span className="text-xs font-medium text-gray-11">{label}</span>}
     hideDownload
   />
 );

@@ -97,8 +97,13 @@ export function OnboardingQuestionCard({
       onDismiss={onDismiss}
       active={active}
       title={
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-lg font-semibold sm:text-xl">
-          <span>{t("I'm a")}</span>
+        <div
+          className={cn(
+            'flex flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-lg font-semibold sm:text-xl',
+            !companyLocked && 'sm:flex-nowrap',
+          )}
+        >
+          <span className="shrink-0">{t("I'm a")}</span>
           <OnboardingPill
             value={role}
             onChange={(text) => {
@@ -116,7 +121,7 @@ export function OnboardingQuestionCard({
             ariaLabel={t('Your role')}
             autoFocus={focusField === 'role'}
           />
-          <span>{t('at')}</span>
+          <span className="shrink-0">{t('at')}</span>
           {companyLocked ? (
             <span className="text-gray-12/80">{company}</span>
           ) : (
@@ -226,7 +231,7 @@ function OnboardingPill({
       setDismissed(true);
       return;
     }
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       e.preventDefault();
       if (open && activeIndex >= 0) {
         pick(suggestions[activeIndex]);
@@ -237,16 +242,22 @@ function OnboardingPill({
   };
 
   return (
-    <span className="relative inline-grid max-w-full">
-      <span
-        aria-hidden
-        className="invisible col-start-1 row-start-1 overflow-hidden whitespace-pre px-3.5 py-1.5"
-      >
-        {value || (rotating ? example : ariaLabel)}
-      </span>
+    <span className="relative inline-grid min-w-0 max-w-full flex-auto">
+      {[...examples, value || (rotating ? '' : ariaLabel)].map(
+        (text, index) => (
+          <span
+            key={index}
+            aria-hidden
+            className="invisible col-start-1 row-start-1 overflow-hidden whitespace-pre px-3.5 py-1.5"
+          >
+            {text}
+          </span>
+        ),
+      )}
       <input
         ref={inputRef}
         type="text"
+        size={1}
         role="combobox"
         value={value}
         onChange={(e) => {
@@ -271,7 +282,7 @@ function OnboardingPill({
         autoFocus={autoFocus}
         autoComplete="off"
         spellCheck={false}
-        className="col-start-1 row-start-1 w-full min-w-0 max-w-full rounded-lg bg-gray-3/60 px-3.5 py-1.5 text-gray-12 caret-accent-9 ring-1 ring-transparent transition-[background-color,box-shadow] placeholder:text-gray-11 focus:bg-accent-3 focus:outline-none focus:ring-accent-8/50"
+        className="col-start-1 row-start-1 w-full min-w-0 max-w-full rounded-xl bg-gray-3/60 px-3.5 py-1.5 text-gray-12 caret-accent-9 ring-1 ring-transparent transition-[background-color,box-shadow] placeholder:text-gray-11 focus:bg-accent-3 focus:outline-none focus:ring-accent-8/50"
       />
       {rotating && (
         <span className="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-3.5">
@@ -310,7 +321,7 @@ function OnboardingPill({
                 }}
                 onMouseEnter={() => setHighlighted(index)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left',
+                  'flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left',
                   index === activeIndex && 'bg-gray-4 text-gray-12',
                 )}
               >
@@ -319,7 +330,7 @@ function OnboardingPill({
                     src={suggestion.logo}
                     alt=""
                     size="xxs"
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                 )}
                 <span className="truncate">{suggestion.value}</span>

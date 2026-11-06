@@ -20,12 +20,14 @@ beforeAll(async () => {
     // The boundary suite asserts the locked profile (the code-only modes) — an
     // empty permission set, so beyond the step-dir read grant every syscall
     // (fs/net/env/run) is denied.
-    denoCodeSandbox = denoModule.denoCodeSandbox([])
+    denoCodeSandbox = denoModule.denoCodeSandbox({ permissions: [], codeStepMemoryLimitMb: 128 })
     stepDir = await mkdtemp(path.join(tmpdir(), 'ap-deno-test-'))
 })
 
 afterAll(async () => {
-    await rm(stepDir, { recursive: true, force: true })
+    if (stepDir) {
+        await rm(stepDir, { recursive: true, force: true })
+    }
 })
 
 async function runModule(source: string, inputs: Record<string, unknown> = {}): Promise<unknown> {
@@ -57,7 +59,7 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('gives each run its own DENO_DIR and removes it after the run', async () => {
-            const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+            const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
             const codeFilePath = path.join(stepDir, 'index.ts')
             await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
 
@@ -76,7 +78,7 @@ describe('denoCodeSandbox permission boundary', () => {
             const originalMode = process.env.AP_EXECUTION_MODE
             try {
                 process.env.AP_EXECUTION_MODE = 'SANDBOX_CODE_ONLY'
-                const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+                const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
                 const codeFilePath = path.join(stepDir, 'index.ts')
                 await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
 
@@ -96,7 +98,7 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('with the ENV permission exposes only PATH, never the engine env', async () => {
-            const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+            const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
             const codeFilePath = path.join(stepDir, 'index.ts')
             await writeFile(codeFilePath, `export const code = async () => ({ keys: Object.keys(Deno.env.toObject()).sort(), missing: process.env.AP_EXECUTION_MODE ?? null })`)
             const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
@@ -112,7 +114,7 @@ describe('denoCodeSandbox permission boundary', () => {
                 const codeFilePath = path.join(stepDir, 'index.ts')
                 await writeFile(codeFilePath, `export const code = async () => ({ secret: process.env.MY_PROPAGATED_SECRET ?? null, unlisted: process.env.MY_UNLISTED_SECRET ?? null, keys: Object.keys(Deno.env.toObject()).sort() })`)
 
-                const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+                const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
                 const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
                 expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['DENO_DIR', 'MY_PROPAGATED_SECRET', 'PATH'] })
 
@@ -460,7 +462,7 @@ describe('denoCodeSandbox permission profiles', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async function runWith(permissions: any[], source: string): Promise<unknown> {
-        const sandbox = denoModule.denoCodeSandbox(permissions)
+        const sandbox = denoModule.denoCodeSandbox({ permissions, codeStepMemoryLimitMb: 128 })
         const codeFilePath = path.join(dir, 'index.ts')
         await writeFile(codeFilePath, source)
         return sandbox.runCodeModule({ codeFilePath, inputs: {} })
@@ -494,5 +496,92 @@ describe('denoCodeSandbox permission profiles', () => {
             const out = await runWith([DenoPermission.ALL], grants(tmpdir()))
             expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', sys: 'granted', readEtc: 'granted', readTmp: 'granted', writeTmp: 'granted' })
         })
+    })
+})
+
+describe('deno code sandbox memory limit', () => {
+    const ALLOCATE_240_MB = `export const code = async () => {
+        const chunks = [];
+        for (let i = 0; i < 30; i++) {
+            chunks.push(new Array(1_000_000).fill(i));
+        }
+        return chunks.length;
+    }`
+
+    it('kills a step whose heap exceeds the configured cap', async () => {
+        const capped = denoModule.denoCodeSandbox({ permissions: [], codeStepMemoryLimitMb: 128 })
+        const codeFilePath = path.join(stepDir, 'index.ts')
+        await writeFile(codeFilePath, ALLOCATE_240_MB)
+        await expectRejection(capped.runCodeModule({ codeFilePath, inputs: {} }), /signal SIG/)
+    })
+
+    it('runs the same step when codeStepMemoryLimitMb is null', async () => {
+        const uncapped = denoModule.denoCodeSandbox({ permissions: [], codeStepMemoryLimitMb: null })
+        const codeFilePath = path.join(stepDir, 'index.ts')
+        await writeFile(codeFilePath, ALLOCATE_240_MB)
+        await expect(uncapped.runCodeModule({ codeFilePath, inputs: {} })).resolves.toBe(30)
+    })
+})
+
+describe('post-result rejections', () => {
+    it('does not fail the run when a promise the step left unawaited rejects after the result was already returned', async () => {
+        const source = `export const code = async () => {
+    setTimeout(() => {
+        Promise.reject(new Error('late boom'));
+    }, 50);
+    return 'ok';
+};`
+        await expect(runModule(source)).resolves.toBe('ok')
+    })
+})
+
+describe('permission-denied error hints', () => {
+    function tmpGrantedSandbox() {
+        return denoModule.denoCodeSandbox({
+            permissions: [denoModule.DenoPermission.WRITE_TMP, denoModule.DenoPermission.READ_TMP, denoModule.DenoPermission.ENV],
+            codeStepMemoryLimitMb: 128,
+        })
+    }
+
+    async function runInTmpGrantedSandbox(source: string): Promise<unknown> {
+        const codeFilePath = path.join(stepDir, 'index.ts')
+        await writeFile(codeFilePath, source)
+        return tmpGrantedSandbox().runCodeModule({ codeFilePath, inputs: {} })
+    }
+
+    it('tells the step only os.tmpdir() is writable, when tmp access is granted but the written path is not', async () => {
+        await expectRejection(
+            runInTmpGrantedSandbox(`export const code = async () => Deno.writeTextFile('/not-allowed/x.txt', 'x')`),
+            /Requires write access.*Only os\.tmpdir\(\) is writable from a code step\./,
+        )
+    })
+
+    it('tells the step tmp and the step directory are readable, when tmp access is granted but the read path is not', async () => {
+        await expectRejection(
+            runInTmpGrantedSandbox(`export const code = async () => Deno.readTextFile('/etc/hosts')`),
+            /Requires read access.*Only os\.tmpdir\(\) and the step's own directory are readable from a code step\./,
+        )
+    })
+
+    it('tells the step writes are unavailable, in the locked (code-only) profile', async () => {
+        await expectRejection(
+            runModule(`export const code = async () => Deno.writeTextFile('/tmp/ap-pwned.txt', 'hi')`),
+            /Requires write access.*Writes are not available to a code step in this execution mode\./,
+        )
+    })
+
+    it('tells the step only its own directory is readable, in the locked (code-only) profile', async () => {
+        await expectRejection(
+            runModule(`export const code = async () => Deno.readTextFile('/etc/hosts')`),
+            /Requires read access.*Only the step's own directory is readable by a code step in this execution mode\./,
+        )
+    })
+
+    it('leaves non-filesystem permission errors unchanged', async () => {
+        const thrown = await runModule(`export const code = async () => (await fetch('https://example.com')).status`)
+            .then(() => null, (error: Error) => error)
+        expect(thrown).toBeInstanceOf(Error)
+        expect(String(thrown)).toMatch(/Requires net access/)
+        expect(String(thrown)).not.toMatch(/os\.tmpdir\(\)|readable|writable|Writes are not available/)
     })
 })

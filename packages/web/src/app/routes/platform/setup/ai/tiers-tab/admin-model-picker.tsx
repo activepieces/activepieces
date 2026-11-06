@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   AIProviderModel,
   AIProviderWithoutSensitiveData,
@@ -11,6 +12,10 @@ import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  ModelDetail,
+  ModelDetailCard,
+} from '@/features/agents/ai-model/model-detail-card';
+import {
   KeyModelsById,
   modelMeta,
   PickableModel,
@@ -23,10 +28,10 @@ import {
   ModelPickerItem,
   ModelPickerPopover,
 } from '@/features/agents/ai-model/model-picker-popover';
+import { SectionHeading } from '@/features/agents/ai-model/section-heading';
 import { cn } from '@/lib/utils';
 
 import { KeyStatusBadge } from '../providers-tab/key-status';
-import { ProviderLogo } from '../providers-tab/provider-logo';
 
 export function AdminModelPicker({
   configs,
@@ -44,57 +49,50 @@ export function AdminModelPicker({
   const pickable: PickableModel[] = configs.flatMap((config) =>
     (keyModels[config.id]?.models ?? []).map((model) => ({ config, model })),
   );
-  const toItem = (
-    item: RankedModel,
-    { showKey }: { showKey: boolean },
-  ): ModelPickerItem<PlatformModelTierEntry> => {
-    const entry = { configId: item.config.id, modelId: item.model.id };
-    const taken = exclude.some((other) => modelMeta.sameEntry(other, entry));
-    const info = modelMeta.providerInfoOf({ provider: item.config.provider });
-    return {
-      id: modelMeta.entryKey({ entry }),
-      value: entry,
-      name: item.model.name,
-      searchText: `${item.model.name} ${item.model.id} ${item.config.name} ${item.config.provider}`,
-      subtitle: showKey ? item.config.name : undefined,
-      leading:
-        info.logoUrl === '' ? undefined : (
-          <LogoPlate src={info.logoUrl} alt={info.name} size="xxs" />
-        ),
-      model: item.model,
-      note:
-        item.tradeOffs.length === 0
-          ? undefined
-          : item.tradeOffs.map(tradeOffText).join(' · '),
-      disabled: taken,
-      selected: taken,
-    };
-  };
-  const groups: ModelPickerGroup<PlatformModelTierEntry>[] =
+  const sections: { kind: SectionKind; items: RankedModel[] }[] =
     mode === 'fallback'
-      ? modelMeta
-          .rankForFallback({ main, candidates: pickable })
-          .map((group) => ({
-            id: group.kind,
-            heading: rankedHeading({ kind: group.kind }),
-            items: group.items.map((item) => toItem(item, { showKey: true })),
-          }))
-      : configs.flatMap((config) => {
-          const items = pickable
-            .filter((item) => item.config.id === config.id)
-            .map((item) =>
-              toItem({ ...item, tradeOffs: [] }, { showKey: false }),
-            );
-          return items.length === 0
-            ? []
-            : [
-                {
-                  id: config.id,
-                  heading: <KeyHeading config={config} />,
-                  items,
-                },
-              ];
-        });
+      ? modelMeta.rankForFallback({ main, candidates: pickable })
+      : [
+          {
+            kind: 'keys',
+            items: pickable.map((item) => ({ ...item, tradeOffs: [] })),
+          },
+        ];
+  const built = sections.flatMap(({ kind, items }) =>
+    items.map((item) => ({ kind, ...buildItem({ item, exclude }) })),
+  );
+  const detailById = new Map(
+    built.map(({ item, detail }) => [item.id, detail] as const),
+  );
+  const groups: ModelPickerGroup<PlatformModelTierEntry>[] = sections.flatMap(
+    ({ kind }) =>
+      configs.flatMap((config) => {
+        const items = built
+          .filter(
+            (entry) =>
+              entry.kind === kind && entry.item.value.configId === config.id,
+          )
+          .map(({ item }) => item);
+        return items.length === 0
+          ? []
+          : [
+              {
+                id: `${kind}:${config.id}`,
+                section: kind,
+                sectionHeading: (
+                  <SectionHeading
+                    dot={SECTION_DOT[kind]}
+                    label={sectionLabel({ kind })}
+                  />
+                ),
+                heading: <KeyHeading config={config} />,
+                collapsible: true,
+                defaultOpen: configs.length === 1 || kind === 'full',
+                items,
+              },
+            ];
+      }),
+  );
   const loadingKeys = configs.filter(
     (config) => keyModels[config.id]?.isLoading === true,
   );
@@ -123,22 +121,81 @@ export function AdminModelPicker({
       onOpenChange={onOpenChange}
       align={align}
       anchorOnly={anchorOnly}
+      detail={(item) => {
+        const detail = detailById.get(item.id);
+        return isNil(detail) ? null : <ModelDetailCard detail={detail} />;
+      }}
     >
       {children}
     </ModelPickerPopover>
   );
 }
 
+function buildItem({
+  item,
+  exclude,
+}: {
+  item: RankedModel;
+  exclude: PlatformModelTierEntry[];
+}): {
+  item: ModelPickerItem<PlatformModelTierEntry>;
+  detail: ModelDetail;
+} {
+  const entry = { configId: item.config.id, modelId: item.model.id };
+  const taken = exclude.some((other) => modelMeta.sameEntry(other, entry));
+  const info = modelMeta.providerInfoOf({ provider: item.config.provider });
+  const note =
+    item.tradeOffs.length === 0
+      ? undefined
+      : item.tradeOffs.map(tradeOffText).join(' · ');
+  const contextTokens = item.model.metadata?.contextTokens;
+  return {
+    item: {
+      id: modelMeta.entryKey({ entry }),
+      value: entry,
+      name: item.model.name,
+      searchText: `${item.model.name} ${item.model.id} ${item.config.name} ${item.config.provider}`,
+      trailing: isNil(contextTokens)
+        ? undefined
+        : modelMeta.formatContext({ tokens: contextTokens }),
+      note,
+      disabled: taken,
+      selected: taken,
+    },
+    detail: {
+      title: item.model.name,
+      leading:
+        info.logoUrl === '' ? undefined : (
+          <LogoPlate src={info.logoUrl} alt={info.name} size="xs" tint />
+        ),
+      description: note,
+      model: {
+        provider: item.config.provider,
+        modelId: item.model.id,
+        name: item.model.name,
+        keyName: item.config.name,
+        ...(isNil(item.model.metadata)
+          ? {}
+          : { metadata: item.model.metadata }),
+      },
+      runsOn: item.config.name,
+      fallbacks: [],
+      showPrices: true,
+    },
+  };
+}
+
 function KeyHeading({ config }: { config: AIProviderWithoutSensitiveData }) {
+  const info = modelMeta.providerInfoOf({ provider: config.provider });
   return (
-    <span className="flex items-center gap-2">
-      <ProviderLogo
-        info={modelMeta.providerInfoOf({ provider: config.provider })}
-        size="sm"
-      />
-      <span>{config.name}</span>
+    <>
+      {info.logoUrl !== '' && (
+        <LogoPlate src={info.logoUrl} alt={info.name} size="xs" tint />
+      )}
+      <span className="truncate font-semibold text-gray-12">{config.name}</span>
+      <span className="truncate text-xs text-gray-10">{info.name}</span>
       {config.status !== 'active' && <KeyStatusBadge status={config.status} />}
-    </span>
+    </>
   );
 }
 
@@ -211,16 +268,17 @@ function emptyTextOf({
     : t('No models match');
 }
 
-function rankedHeading({ kind }: { kind: RankedGroup['kind'] }): string {
+function sectionLabel({ kind }: { kind: SectionKind }): string {
   switch (kind) {
+    case 'keys':
+    case 'all':
+      return t('Your keys');
     case 'full':
       return t('Full matches');
     case 'tradeOff':
       return t('With trade-offs');
     case 'other':
       return t('Other models');
-    default:
-      return t('Models');
   }
 }
 
@@ -234,6 +292,16 @@ function tradeOffText(tradeOff: TradeOff): string {
       return t('No tool calling');
   }
 }
+
+const SECTION_DOT: Record<SectionKind, string> = {
+  keys: 'bg-gray-10',
+  full: 'bg-success-10',
+  tradeOff: 'bg-warning-10',
+  other: 'bg-gray-10',
+  all: 'bg-gray-10',
+};
+
+type SectionKind = RankedGroup['kind'] | 'keys';
 
 type AdminModelPickerProps = {
   configs: AIProviderWithoutSensitiveData[];

@@ -9,7 +9,7 @@ import { SelectUtilButton } from './select-util-button';
 
 export type SearchInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
-  'onChange'
+  'onChange' | 'size'
 > & {
   onChange: (value: string) => void;
 };

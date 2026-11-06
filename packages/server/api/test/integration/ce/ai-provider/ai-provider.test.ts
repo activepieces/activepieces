@@ -56,6 +56,25 @@ describe('AI Providers API', () => {
         })
     })
 
+    describe('the first key on a platform', () => {
+        const createCustom = (displayName: string) => ctx.post('/v1/ai-providers', {
+            provider: AIProviderName.CUSTOM,
+            displayName,
+            config: { baseUrl: 'https://api.example.com/v1', apiKeyHeader: 'Authorization', models: [] },
+            auth: { apiKey: 'test-key' },
+        })
+
+        it('becomes the Default AI key, and later keys do not', async () => {
+            const first = (await createCustom('First'))?.json()
+            const second = (await createCustom('Second'))?.json()
+
+            expect(first.enabledForChat).toBe(true)
+            expect(second.enabledForChat).toBe(false)
+            const rows = await db.findBy<{ id: string, enabledForChat: boolean }>('ai_provider', { platformId: ctx.platform.id })
+            expect(rows.filter((row) => row.enabledForChat).map((row) => row.id)).toEqual([first.id])
+        })
+    })
+
     describe('POST /v1/ai-providers/:id (update)', () => {
         it('should update defaultHeaders on an existing provider', async () => {
             const provider = await mockAndSaveAIProvider({

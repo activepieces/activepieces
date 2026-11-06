@@ -92,7 +92,6 @@ export const HeadersField = ({
             type="button"
             variant="outline"
             size="icon"
-            className="size-9 shrink-0"
             onClick={() => {
               remove(index);
               form.trigger('headers').catch(() => undefined);

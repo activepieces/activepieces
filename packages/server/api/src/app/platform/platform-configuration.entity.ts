@@ -34,6 +34,10 @@ export const PlatformConfigurationEntity = new EntitySchema<PlatformConfiguratio
             nullable: false,
             default: true,
         },
+        defaultChatModel: {
+            type: 'jsonb',
+            nullable: true,
+        },
     },
     indices: [
         {

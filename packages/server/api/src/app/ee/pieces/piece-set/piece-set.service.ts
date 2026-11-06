@@ -19,6 +19,7 @@ type ListParams = {
     platformId: string
     cursor?: string
     limit?: number
+    name?: string
 }
 
 type GetOneParams = {
@@ -88,7 +89,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         return isNil(assigned) ? this.getOrCreateDefaultPieceSet(platformId) : assigned
     },
 
-    async list({ platformId, cursor, limit = 10 }: ListParams): Promise<SeekPage<PieceSet>> {
+    async list({ platformId, cursor, limit = 10, name }: ListParams): Promise<SeekPage<PieceSet>> {
         const boundedLimit = Math.min(limit, MAX_PIECE_SET_PAGE_SIZE)
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
@@ -100,9 +101,11 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor: newCursor } = await paginator.paginate(
-            pieceSetRepo().createQueryBuilder('piece_set').where({ platformId }),
-        )
+        const queryBuilder = pieceSetRepo().createQueryBuilder('piece_set').where({ platformId })
+        if (name) {
+            queryBuilder.andWhere('piece_set.name ILIKE :name', { name: `%${escapeLikeBackslashes(name)}%` })
+        }
+        const { data, cursor: newCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<PieceSet>(data, newCursor)
     },
 
@@ -237,6 +240,10 @@ function resolveKey({ key, name }: { key?: string | null, name: string }): strin
         return key
     }
     return `${kebabCase(name)}-${apId().slice(0, 8)}`
+}
+
+function escapeLikeBackslashes(value: string): string {
+    return value.replace(/\\/g, '\\\\')
 }
 
 function rethrowKeyConflict(error: unknown): never {

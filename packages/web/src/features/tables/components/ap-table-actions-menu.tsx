@@ -178,7 +178,6 @@ const ApTableActionsMenu = ({
         setIsOpen={setIsImportTableDialogOpen}
         showTrigger={false}
         tableId={table.id}
-        allowedFileTypes={['json', 'csv']}
         onImportSuccess={() => {
           refetch?.();
         }}

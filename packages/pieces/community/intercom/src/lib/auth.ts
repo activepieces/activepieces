@@ -1,9 +1,6 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import {
-	AuthenticationType,
-	httpClient,
-	HttpMethod,
-} from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getIntercomBaseUrl, INTERCOM_API_VERSION, isRecord, verifiedTlsDispatcher } from './common/client';
 
 const regionProp = Property.StaticDropdown({
 	displayName: 'Region',
@@ -53,17 +50,16 @@ const intercomCustomAuth = PieceAuth.CustomAuth({
 	},
 	validate: async ({ auth }) => {
 		try {
-			await httpClient.sendRequest({
-				method: HttpMethod.GET,
-				url: `https://api.${auth.region}.io/me`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: auth.accessToken,
-				},
-			});
+			await sendMeRequest({ token: auth.accessToken, region: auth.region, timeout: 15000 });
 			return { valid: true };
 		} catch (e) {
-			return { valid: false, error: (e as Error).message };
+			const response = isRecord(e) ? e['response'] : undefined;
+			const status = isRecord(response) ? response['status'] : undefined;
+			if (status === 401 || status === 403) {
+				return { valid: false, error: 'Invalid access token or wrong region. Check both and try again.' };
+			}
+			const detail = typeof status === 'number' ? `Intercom answered with HTTP ${status}.` : e instanceof Error ? e.message : String(e);
+			return { valid: false, error: `Could not validate the connection. ${detail}` };
 		}
 	},
 	getConnectionIdentifier: async ({ auth }) =>
@@ -79,19 +75,39 @@ async function fetchAdminLabel({
 	token: string;
 	region: unknown;
 }): Promise<string | undefined> {
-	const host = typeof region === 'string' && region.length > 0 ? region : 'intercom';
 	try {
-		const response = await httpClient.sendRequest<IntercomAdmin>({
-			method: HttpMethod.GET,
-			url: `https://api.${host}.io/me`,
-			headers: { Authorization: `Bearer ${token}` },
-			timeout: 5000,
-		});
-		const admin = response.body;
+		const admin = await sendMeRequest({ token, region, timeout: 5000 });
 		return admin.email || admin.name || admin.app?.name || undefined;
 	} catch {
 		return undefined;
 	}
+}
+
+async function sendMeRequest({
+	token,
+	region,
+	timeout,
+}: {
+	token: string;
+	region: unknown;
+	timeout: number;
+}): Promise<IntercomAdmin> {
+	const dispatcher = await verifiedTlsDispatcher();
+	const response = await httpClient.sendRequest<IntercomAdmin>(
+		{
+			method: HttpMethod.GET,
+			url: `${getIntercomBaseUrl(region)}/me`,
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Intercom-Version': INTERCOM_API_VERSION,
+				Accept: 'application/json',
+			},
+			timeout,
+			followRedirects: false,
+		},
+		{ dispatcher },
+	);
+	return response.body;
 }
 
 type IntercomAdmin = { email?: string; name?: string; app?: { name?: string } };

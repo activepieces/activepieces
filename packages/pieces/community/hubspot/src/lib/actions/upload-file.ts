@@ -16,6 +16,22 @@ export const uploadFileAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Upload a file into a chosen folder in the HubSpot File Manager with a given name and access level. Each call uploads a new file rather than replacing an existing one, so it is not idempotent.', idempotent: false },
 	outputSchema: uploadFileOutputSchema,
+	propertyGroups: [
+		{
+			key: 'file',
+			display: 'section',
+			label: 'File',
+			icon: 'paperclip',
+			props: ['file', 'fileName'],
+		},
+		{
+			key: 'destination',
+			display: 'section',
+			label: 'Save To',
+			icon: 'inbox',
+			props: ['folderId', 'accessLevel'],
+		},
+	],
 	props: {
 		folderId: Property.Dropdown({
 			auth: hubspotAuth,

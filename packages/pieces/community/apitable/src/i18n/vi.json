@@ -67,5 +67,8 @@
   "Field names to include. Empty: every field.": "Tên trường cần bao gồm. Để trống: mọi trường.",
   "Records returned per page.": "Số bản ghi trả về mỗi trang.",
   "Caps matching records before paging. Empty: no cap.": "Giới hạn số kết quả khớp trước khi phân trang. Để trống: không giới hạn.",
-  "Which page to return, starting at 1.": "Trang cần trả về, bắt đầu từ 1."
+  "Which page to return, starting at 1.": "Trang cần trả về, bắt đầu từ 1.",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "Trường để trống sẽ để trống. Một số loại cột, như tệp đính kèm và công thức, không được liệt kê.",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "Trường để trống giữ nguyên giá trị hiện tại; ô không được đánh dấu sẽ bị xóa. Một số loại cột, như tệp đính kèm và công thức, không được liệt kê."
 }

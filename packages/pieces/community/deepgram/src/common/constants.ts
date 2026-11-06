@@ -1,4 +1,5 @@
 export const BASE_URL = 'https://api.deepgram.com/v1';
+export const AGENT_BASE_URL = 'https://agent.deepgram.com/v1';
 
 export const LANG_OPTIONS = [
   { label: 'bg', value: 'bg' },
@@ -57,4 +58,27 @@ export const LANG_OPTIONS = [
   { label: 'tr', value: 'tr' },
   { label: 'uk', value: 'uk' },
   { label: 'vi', value: 'vi' },
+];
+
+export const DEFAULT_STT_MODEL = 'nova-3';
+
+export const DEFAULT_AI_VOICE = 'aura-2-thalia-en';
+
+export const MAX_TTS_CHARACTERS = 2000;
+
+export const TTS_ENCODING_OPTIONS = [
+  { label: 'MP3', value: 'mp3' },
+  { label: 'Linear PCM 16-bit (WAV)', value: 'linear16' },
+  { label: 'FLAC', value: 'flac' },
+  { label: 'μ-law (WAV)', value: 'mulaw' },
+  { label: 'A-law (WAV)', value: 'alaw' },
+  { label: 'Opus (OGG)', value: 'opus' },
+  { label: 'AAC', value: 'aac' },
+];
+
+export const REDACT_OPTIONS = [
+  { label: 'Payment card data (PCI)', value: 'pci' },
+  { label: 'Personal information (PII)', value: 'pii' },
+  { label: 'Health information (PHI)', value: 'phi' },
+  { label: 'Numbers', value: 'numbers' },
 ];

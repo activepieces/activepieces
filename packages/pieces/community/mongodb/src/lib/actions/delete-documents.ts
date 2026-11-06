@@ -1,20 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mongodbAuth } from '../..';
+import { mongodbAuth } from '../auth';
 import { deleteDocumentsOutputSchema } from '../output-schemas';
-import { mongodbCommon, mongodbConnect } from '../common';
+import { mongodbClient } from '../common/client';
+import { mongodbProps } from '../common/props';
 
-export default createAction({
+export const deleteDocumentsAction = createAction({
   auth: mongodbAuth,
   name: 'delete_documents',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Documents',
   description: 'Delete documents from a collection',
-  audience: 'both',
+  audience: 'human',
   outputSchema: deleteDocumentsOutputSchema,
   aiMetadata: { description: 'Removes every document matching a filter from a MongoDB collection via deleteMany. Use to delete records in bulk; an empty filter would match and delete all documents in the collection, so scope the filter carefully. The filter is required. Mutating and destructive; repeating the call deletes whatever now matches, so it is not idempotent.', idempotent: false },
   props: {
-    database: mongodbCommon.database,
-    collection: mongodbCommon.collection(),
+    database: mongodbProps.database({ required: false }),
+    collection: mongodbProps.collection({ required: true }),
     filter: Property.Json({
       displayName: 'Filter',
       description: 'MongoDB query to select documents to delete (e.g., {"status": "archived"})',
@@ -22,7 +23,7 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = await mongodbConnect(context.auth);
+    const client = await mongodbClient.create({ auth: context.auth });
 
     try {
       if (!context.propsValue.collection) {

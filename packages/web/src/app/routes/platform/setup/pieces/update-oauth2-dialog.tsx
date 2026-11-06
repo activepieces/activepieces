@@ -6,6 +6,7 @@ import { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -106,7 +107,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
           </TooltipContent>
         </Tooltip>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>
 
         <Form {...form}>
@@ -127,12 +128,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                   <Label htmlFor="clientId" showRequiredIndicator>
                     {t('Client ID')}
                   </Label>
-                  <Input
-                    {...field}
-                    required
-                    id="clientId"
-                    className="rounded-sm"
-                  />
+                  <Input {...field} required id="clientId" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -148,7 +144,6 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                     {...field}
                     required
                     id="clientSecret"
-                    className="rounded-sm"
                     type="password"
                   />
                   <FormMessage />

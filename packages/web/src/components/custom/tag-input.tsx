@@ -16,7 +16,7 @@ import {
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-type TagInputProps = Omit<InputProps, 'value' | 'onChange'> & {
+type TagInputProps = Omit<InputProps, 'value' | 'onChange' | 'size'> & {
   value?: ReadonlyArray<string>;
   onChange: (value: ReadonlyArray<string>) => void;
   validateItem?: (item: string) => boolean;
@@ -57,7 +57,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   const effectiveBadgeClassName =
     badgeClassName ||
     (type === 'email'
-      ? 'rounded-sm border border-gray-6 bg-gray-3 font-normal'
+      ? 'rounded-md border border-gray-6 bg-gray-3 font-normal'
       : undefined);
 
   const effectiveInvalidBadgeClassName =
@@ -139,7 +139,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                 const badge = (
                   <Badge
                     key={item}
-                    variant={'accent'}
+                    variant={'secondary'}
                     className={cn(
                       'font-medium max-w-full cursor-default',
                       effectiveBadgeClassName,

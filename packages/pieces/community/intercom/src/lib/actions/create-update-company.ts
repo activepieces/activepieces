@@ -2,6 +2,7 @@ import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
 import dayjs from 'dayjs';
+import { companyOutputSchema } from '../output-schemas';
 
 export const createOrUpdateCompanyAction = createAction({
 	auth: intercomAuth,
@@ -12,8 +13,8 @@ export const createOrUpdateCompanyAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Upsert a company: Intercom matches on the Company ID you provide and updates that company if it exists, otherwise creates a new one. Company ID cannot be changed after creation. Repeating with the same Company ID and fields converges on the same record, so it is effectively idempotent.',
-		idempotent: true,
+			'Create or update a company. With a Company ID, Intercom updates the company that has it or creates one with it, so a retry converges; without a Company ID every call creates a new company. Company ID cannot be changed after creation.',
+		idempotent: false,
 	},
 	props: {
 		companyId: Property.ShortText({
@@ -57,6 +58,7 @@ export const createOrUpdateCompanyAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: companyOutputSchema,
 	async run(context) {
 		const {
 			companyId,
@@ -74,7 +76,7 @@ export const createOrUpdateCompanyAction = createAction({
 			throw new Error('Provide a Company ID or a Name to create or update a company.');
 		}
 
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.companies.createOrUpdate({
 			company_id: companyId,

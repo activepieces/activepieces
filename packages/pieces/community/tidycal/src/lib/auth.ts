@@ -3,14 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { AppConnectionType } from '@activepieces/pieces-framework';
 import { calltidycalapi } from './common';
 
-const markdown = `
-# Personal Access Token
-1- Visit https://tidycal.com/integrations/oauth and click on "Create a new token"
-2- Enter a name for your token and click on "Create"
-`;
+const markdown = `To create a personal access token:
+1. In TidyCal, open [Manage API keys](https://tidycal.com/integrations/advanced) under Integrations.
+2. On the **Personal tokens** tab, click **Create token**, enter a name and click **Create**.
+3. Copy the token now: TidyCal shows it only once.
+
+API access needs a paid TidyCal plan.`;
 
 export const tidyCalAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
+  displayName: 'Personal Access Token',
   description: markdown,
   required: true,
   validate: async ({ auth }) => {
@@ -25,7 +26,7 @@ export const tidyCalAuth = PieceAuth.SecretText({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid API Key',
+        error: 'Invalid personal access token.',
       };
     }
   },

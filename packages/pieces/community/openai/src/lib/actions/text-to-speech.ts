@@ -14,6 +14,11 @@ export const textToSpeech = createAction({
 	displayName: 'Text-to-Speech',
 	description: 'Turn text into a spoken audio file.',
 	aiMetadata: { description: 'Synthesizes spoken audio from text using an OpenAI TTS model and one of six prebuilt voices (alloy, echo, fable, onyx, nova, shimmer), writing the result as an mp3, opus, aac, or flac file at a playback speed between 0.25 and 4. This is the text-to-audio direction of this piece; transcribe and translate go the other way, turning audio into text. Requires the text, a TTS-capable model, a voice, and an output format. Not idempotent: each call renders a new audio file.', idempotent: false },
+	propertyGroups: [
+		{ key: 'script', display: 'section', label: 'Script', icon: 'text', props: ['text'] },
+		{ key: 'speaker', display: 'section', label: 'Speaker', icon: 'user', props: ['model', 'voice'] },
+		{ key: 'output', display: 'section', label: 'Output', icon: 'file', props: ['format'] },
+	],
 	props: {
 		text: Property.LongText({
 			displayName: 'Text',
@@ -83,13 +88,14 @@ export const textToSpeech = createAction({
 			required: true,
 			description: 'The audio file type.',
 			defaultValue: 'mp3',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'MP3', value: 'mp3' },
-					{ label: 'Opus', value: 'opus' },
-					{ label: 'AAC', value: 'aac' },
-					{ label: 'FLAC', value: 'flac' },
+					{ label: 'MP3', value: 'mp3', icon: 'file' },
+					{ label: 'Opus', value: 'opus', icon: 'file' },
+					{ label: 'AAC', value: 'aac', icon: 'file' },
+					{ label: 'FLAC', value: 'flac', icon: 'file' },
 				],
 			},
 		}),
@@ -99,6 +105,10 @@ export const textToSpeech = createAction({
 			defaultValue: 1.0,
 			required: false,
 			advanced: true,
+			display: 'stepper',
+			min: 0.25,
+			max: 4,
+			step: 0.25,
 		}),
 		fileName: Property.ShortText({
 			displayName: 'File Name',

@@ -1,8 +1,10 @@
 import {
   ApErrorParams,
+  Permission,
   ErrorCode,
   isNil,
   SeekPage,
+  unique,
 } from '@activepieces/core-utils';
 import {
   getAuthPropertyForValue,
@@ -12,6 +14,7 @@ import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
+  FlowVersionState,
   ListAppConnectionsRequestQuery,
   PLACEHOLDER_CONNECTION_TYPE,
   ReplaceAppConnectionsRequestBody,
@@ -30,7 +33,11 @@ import {
 } from '@/components/custom/data-table';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { agentsApi } from '@/features/agents/api/agents';
+import { useAgentsAvailable } from '@/features/agents/hooks/agents-hooks';
+import { flowsApi } from '@/features/flows/api/flows-api';
 import { projectMembersApi } from '@/features/members/api/project-members-api';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -45,6 +52,8 @@ import {
 type UseReplaceConnectionsProps = {
   setDialogOpen: (isOpen: boolean) => void;
   refetch: () => void;
+  onReplaced?: (request: ReplaceAppConnectionsRequestBody) => void;
+  connections: AppConnectionWithoutSensitiveData[];
 };
 
 type UseRenameAppConnectionProps = {
@@ -71,6 +80,21 @@ type UseUpsertAppConnectionProps = {
     open: boolean,
     connection?: AppConnectionWithoutSensitiveData,
   ) => void;
+};
+
+function useReplaceConnectionAccess() {
+  const { embedState } = useEmbedding();
+  const hasPermissionToReplace = useAuthorization().checkAccess(
+    Permission.REPLACE_APP_CONNECTION,
+  );
+  return {
+    showReplace: !embedState.hideReplaceConnection,
+    hasPermissionToReplace,
+  };
+}
+
+export const appConnectionsHooks = {
+  useReplaceConnectionAccess,
 };
 
 export const appConnectionsMutations = {
@@ -301,15 +325,27 @@ export const appConnectionsMutations = {
   useReplaceConnections: ({
     setDialogOpen,
     refetch,
+    onReplaced,
+    connections,
   }: UseReplaceConnectionsProps) => {
     return useMutation({
       mutationFn: async (request: ReplaceAppConnectionsRequestBody) => {
         await appConnectionsApi.replace(request);
       },
-      onSuccess: () => {
+      onSuccess: (_, request) => {
+        const displayNameOf = (id: string) =>
+          connections.find((connection) => connection.id === id)?.displayName ??
+          id;
         toast.success(t('Success'), {
-          description: t('Connections replaced successfully'),
+          description: t(
+            'Replaced connection {sourceName} with connection {targetName}',
+            {
+              sourceName: displayNameOf(request.sourceAppConnectionId),
+              targetName: displayNameOf(request.targetAppConnectionId),
+            },
+          ),
         });
+        onReplaced?.(request);
         setDialogOpen(false);
         refetch();
       },
@@ -377,6 +413,27 @@ export const appConnectionsQueries = {
     });
   },
 
+  useFlowsAndAgentsUsingConnections: ({
+    connections,
+    enabled,
+  }: {
+    connections: ConnectionToCheck[];
+    enabled: boolean;
+  }) => {
+    const agentsAvailable = useAgentsAvailable();
+    return useQuery({
+      queryKey: ['app-connection-usage', connections, agentsAvailable],
+      queryFn: () =>
+        listFlowsAndAgentsUsingConnections({
+          connections,
+          agentsAvailable,
+        }),
+      enabled,
+      staleTime: 0,
+      gcTime: 0,
+    });
+  },
+
   useListSearchParams: () => {
     const { search } = useLocation();
     return useMemo(() => {
@@ -422,3 +479,74 @@ export const appConnectionsQueries = {
     });
   },
 };
+
+async function listFlowsAndAgentsUsingConnections({
+  connections,
+  agentsAvailable,
+}: {
+  connections: ConnectionToCheck[];
+  agentsAvailable: boolean;
+}) {
+  const projectIds = unique(
+    connections.flatMap((connection) => connection.projectIds),
+  );
+  const usagePerProject = await Promise.all(
+    projectIds.map((projectId) =>
+      listFlowsAndAgentsUsingConnectionsInProject({
+        projectId,
+        externalIds: connections
+          .filter((connection) => connection.projectIds.includes(projectId))
+          .map((connection) => connection.externalId),
+        agentsAvailable,
+      }),
+    ),
+  );
+  return {
+    flows: usagePerProject.flatMap((usage) => usage.flows),
+    agents: usagePerProject.flatMap((usage) => usage.agents),
+  };
+}
+
+async function listFlowsAndAgentsUsingConnectionsInProject({
+  projectId,
+  externalIds,
+  agentsAvailable,
+}: {
+  projectId: string;
+  externalIds: string[];
+  agentsAvailable: boolean;
+}) {
+  const flowsRequest = {
+    projectId,
+    connectionExternalIds: externalIds,
+    cursor: undefined,
+    limit: 1000,
+  };
+  const [draftFlowsPage, publishedFlowsPage, agentsPage] = await Promise.all([
+    flowsApi.list(flowsRequest),
+    flowsApi.list({
+      ...flowsRequest,
+      versionState: FlowVersionState.LOCKED,
+    }),
+    agentsAvailable
+      ? agentsApi.list({
+          projectId,
+          connectionExternalIds: externalIds,
+          limit: 100,
+        })
+      : null,
+  ]);
+  const draftFlowIds = new Set(draftFlowsPage.data.map((flow) => flow.id));
+  return {
+    flows: [
+      ...draftFlowsPage.data,
+      ...publishedFlowsPage.data.filter((flow) => !draftFlowIds.has(flow.id)),
+    ],
+    agents: agentsPage?.data ?? [],
+  };
+}
+
+type ConnectionToCheck = Pick<
+  AppConnectionWithoutSensitiveData,
+  'externalId' | 'projectIds'
+>;

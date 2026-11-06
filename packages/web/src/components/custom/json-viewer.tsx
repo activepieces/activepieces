@@ -72,7 +72,7 @@ const JsonViewer = React.memo(
     return (
       <div
         className={cn(
-          'rounded-lg border border-solid border-gray-6 overflow-hidden relative',
+          'rounded-xl border border-solid border-gray-6 overflow-hidden relative',
           className,
         )}
       >
@@ -140,6 +140,7 @@ const JsonViewer = React.memo(
                       style={{
                         overflowX: 'auto',
                         padding: '0.5rem',
+                        backgroundColor: 'transparent',
                         wordBreak: 'break-word',
                       }}
                       theme={viewerTheme}
