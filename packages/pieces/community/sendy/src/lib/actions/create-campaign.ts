@@ -139,11 +139,10 @@ export const createCampaignAction = createAction({
       description: 'Off saves the campaign as a draft.',
       required: false,
       defaultValue: false,
-      reveals: ['schedule', 'timezone'],
     }),
     schedule: Property.DateTime({
       displayName: 'Schedule',
-      description: 'Send at this time instead of now. Minutes must be a multiple of 5.',
+      description: 'With Send Campaign on, sends at this time. Minutes in steps of 5.',
       placeholder: '2026-06-15T18:05:00Z',
       required: false,
     }),
@@ -652,7 +651,7 @@ export const createCampaignAction = createAction({
     { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['title', 'subject', 'html', 'plainText'] },
     { key: 'audience', display: 'section', label: 'Audience', icon: 'users', props: ['audienceInfo', 'lists', 'excludeLists', 'segments', 'excludeSegments'] },
     { key: 'tracking', display: 'section', label: 'Tracking', icon: 'sliders', props: ['trackOpens', 'trackClicks'] },
-    { key: 'sending', display: 'section', label: 'Sending', icon: 'calendar', props: ['autoSend'] },
+    { key: 'sending', display: 'section', label: 'Sending', icon: 'calendar', props: ['autoSend', 'schedule', 'timezone'] },
   ],
   async run(context) {
     return await createCampaign(context.auth, {
