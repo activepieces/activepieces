@@ -9,12 +9,13 @@ export const getUserDetailsAction = createAction({
 	name: 'get-user-details',
 	classification: 'READ',
 	displayName: 'Get User Details',
-	description: 'Retrieves profile information by ID.',
+	description: "Gets a Fireflies user's profile by user ID.",
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a Fireflies user profile (name, email, admin status, transcript counts, integrations) by user ID. Use when the agent needs account details for a specific user; requires the exact user ID. Read-only and idempotent.', idempotent: true },
 	props: {
 		userId: Property.ShortText({
 			displayName: 'User ID',
+			description: "Map it from an earlier step, such as a meeting's user ID.",
 			required: true,
 		}),
 	},
