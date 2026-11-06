@@ -1,6 +1,7 @@
 import { apolloAuth } from '../auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import {
+  MarkdownVariant,
   Property,
   StoreScope,
   createAction,
@@ -11,61 +12,92 @@ export const peopleSearch = createAction({
   name: 'peopleSearch',
   classification: 'SEARCH',
   displayName: 'People Search',
-  description:
-    'Search for people in the Apollo database (does not return email/phone, use enrichment for that)',
+  description: 'Find people in Apollo. Results have no email or phone.',
   audience: 'both',
   aiMetadata: {
     description: 'Search the Apollo database for people using filters such as keywords, job titles, seniority, location, and their organization (domain, location, employee-count range). Use to find prospects matching criteria; note the results do not include email or phone, so use Match Person enrichment for contact details. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'person',
+      display: 'section',
+      label: 'Person',
+      icon: 'user',
+      props: [
+        'results_info',
+        'q_keywords',
+        'person_titles',
+        'person_seniorities',
+        'person_locations',
+      ],
+    },
+    {
+      key: 'company',
+      display: 'section',
+      label: 'Company',
+      icon: 'tag',
+      props: [
+        'organization_ids',
+        'q_organization_domains',
+        'organization_num_employees_ranges',
+        'organization_locations',
+      ],
+    },
+  ],
   props: {
+    results_info: Property.MarkDown({
+      value:
+        "Results have no email or phone. Use **Match Person** to look up a person's details.",
+      variant: MarkdownVariant.INFO,
+    }),
     q_keywords: Property.ShortText({
       displayName: 'Keywords',
-      description: 'Search keywords for people',
+      description: "Words to match anywhere in the person's profile.",
+      placeholder: 'marketing',
       required: false,
     }),
     person_titles: Property.Array({
-      displayName: 'Person Titles',
-      description: 'Filter by job titles (e.g., "CEO", "Sales Manager")',
+      displayName: 'Job Titles',
+      description: 'Job titles to match, such as CEO or Sales Manager.',
       required: false,
     }),
     person_locations: Property.Array({
-      displayName: 'Person Locations',
-      description: 'Filter by person locations',
+      displayName: 'Locations',
+      description: 'Where the person lives, such as california or london.',
       required: false,
     }),
     person_seniorities: Property.Array({
-      displayName: 'Person Seniorities',
-      description:
-        'Filter by seniority levels (e.g., "senior", "manager", "director")',
+      displayName: 'Seniorities',
+      description: 'Seniority levels, such as senior, manager or director.',
       required: false,
     }),
     organization_ids: Property.Array({
       displayName: 'Organization IDs',
-      description: 'Filter by specific organization IDs',
+      description: 'Apollo IDs of the companies they work at.',
       required: false,
     }),
     organization_num_employees_ranges: Property.Array({
-      displayName: 'Organization Employee Ranges',
-      description:
-        'Filter by organization employee count ranges (e.g., "1,10", "250,500")',
+      displayName: 'Employee Count Ranges',
+      description: 'Company size ranges as min,max, such as 1,10 or 250,500.',
       required: false,
     }),
     q_organization_domains: Property.Array({
       displayName: 'Organization Domains',
-      description: 'Filter by organization domains',
+      description: 'Domains of the companies they work at, such as apollo.io.',
       required: false,
     }),
     organization_locations: Property.Array({
       displayName: 'Organization Locations',
-      description: 'Filter by organization locations',
+      description: 'Headquarters locations of their company.',
       required: false,
     }),
-
     cacheResponse: Property.Checkbox({
       displayName: 'Cache Response',
-      description: 'Store the response in the project store for future use.',
+      description:
+        'Reuse a saved result for the same input. Saved results never expire.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
