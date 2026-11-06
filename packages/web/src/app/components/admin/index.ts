@@ -1,6 +1,7 @@
 export { AdminPage, AdminPageHeader, AdminSection } from './admin-page';
 export { AdminResources, AdminVideoDialog } from './admin-resources';
 export type { AdminResource } from './admin-resources';
+export { adminDocs } from './admin-docs';
 export { adminPageResources } from './admin-page-resources';
 export { adminSurface } from './admin-surface';
 export { adminLayout } from './admin-layout';

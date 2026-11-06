@@ -2,6 +2,7 @@ import {
 	httpClient,
 	HttpMethod,
 } from '@activepieces/pieces-common';
+import { FilesService } from '@activepieces/pieces-framework';
 import Ajv from 'ajv';
 import { randomUUID } from 'crypto';
 
@@ -19,42 +20,36 @@ export const forSimpleOutputFormat = (format: string): string => {
   return format;
 }
 
-// Download and save screenshot(s) - works for both single scrape and crawl results
-export async function downloadAndSaveScreenshot(screenshotTarget: any, context: any): Promise<void> {
-  const screenshotUrl = screenshotTarget.screenshot;
+const FILE_EXTENSIONS_BY_MIME_TYPE: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'application/pdf': 'pdf',
+};
+
+export async function saveFirecrawlFile({
+  context,
+  firecrawlFileUrl,
+}: {
+  context: { files: FilesService };
+  firecrawlFileUrl: string;
+}): Promise<{ fileName: string; fileUrl: string }> {
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: screenshotUrl,
+    url: firecrawlFileUrl,
     responseType: 'arraybuffer'
   });
 
-  const fileName = `screenshot-${randomUUID()}.png`;
+  const contentTypeHeader = response.headers?.['content-type'];
+  const fileMimetype = typeof contentTypeHeader === 'string' ? contentTypeHeader.split(';')[0].trim().toLowerCase() : '';
+  const fileName = `firecrawl-${randomUUID()}.${FILE_EXTENSIONS_BY_MIME_TYPE[fileMimetype] ?? 'bin'}`;
   const fileUrl = await context.files.write({
     fileName: fileName,
     data: Buffer.from(response.body),
   });
 
-  screenshotTarget.screenshot = {
-    fileName: fileName,
-    fileUrl: fileUrl,
-  };
-}
-
-export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context: any): Promise<void> {
-
-  if (!crawlResult.data || !Array.isArray(crawlResult.data)) {
-    return;
-  }
-
-  for (const data of crawlResult.data) {
-    if (data.screenshot) {
-      try {
-        await downloadAndSaveScreenshot(data, context);
-      } catch (error) {
-        console.error(`Failed to download screenshot for page: ${error}`);
-      }
-    }
-  }
+  return { fileName, fileUrl };
 }
 
 // scrape, extract and crawl uses this function
@@ -151,12 +146,52 @@ export async function polling(
     if (jobStatus === 'completed') {
       return statusResponse.body;
     } else if (jobStatus === 'failed') {
-        throw new Error(`${actionType.charAt(0).toUpperCase()}. job failed: ${JSON.stringify(statusResponse.body)}`);
+        throw new Error(`${JOB_NAMES[actionType]} job failed: ${JSON.stringify(statusResponse.body)}`);
     }
   }
 
   // exit loop time out
-  throw new Error(`${actionType.charAt(0).toUpperCase()}. job timed out after ${timeoutSeconds} second(s)`);
+  throw new Error(`${JOB_NAMES[actionType]} job timed out after ${timeoutSeconds} seconds`);
 }
 
+export async function followCrawlPages({
+  firstPage,
+  auth,
+}: {
+  firstPage: CrawlStatusPage;
+  auth: string;
+}): Promise<CrawlStatusPage> {
+  let data = firstPage.data ?? [];
+  let next = firstPage.next;
+  const visited = new Set<string>();
+  while (isFirecrawlApiUrl(next) && !visited.has(next)) {
+    visited.add(next);
+    const response = await httpClient.sendRequest<CrawlStatusPage>({
+      method: HttpMethod.GET,
+      url: next,
+      headers: {
+        'Authorization': `Bearer ${auth}`,
+      },
+    });
+    data = [...data, ...(response.body.data ?? [])];
+    next = response.body.next;
+  }
+  return { ...firstPage, data, next: null };
+}
+
+function isFirecrawlApiUrl(url: string | null | undefined): url is string {
+  return typeof url === 'string' && url.startsWith(`${FIRECRAWL_API_BASE_URL}/`);
+}
+
+const JOB_NAMES: Record<'extract' | 'crawl', string> = {
+  extract: 'Extract',
+  crawl: 'Crawl',
+};
+
 export const FIRECRAWL_ORIGIN = 'activepieces';
+
+export type CrawlStatusPage = {
+  data?: Record<string, unknown>[];
+  next?: string | null;
+  [key: string]: unknown;
+};

@@ -5,6 +5,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { aiModelCandidates } from '../../../../src/app/ai/ai-model-candidates'
+import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
@@ -241,6 +242,60 @@ describe('an agent on a platform tier', () => {
         expect(stored.modelTierId).toBe(tier.id)
     })
 })
+
+describe('a Run Agent flow step on a platform tier', () => {
+    it('is queued with only a tier id, and hands the tier to the worker', async () => {
+        const { ctx, tier } = await tierOnKey({ servesOwnProject: true })
+        const add = vi.fn()
+        vi.spyOn(jobQueueModule, 'jobQueue').mockImplementation((log) => ({ ...originalJobQueue(log), add }))
+
+        const response = await startFlowStepRun({ ctx, body: { modelTierId: tier.id } })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const job = add.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
+        expect(job.data.modelTierId).toBe(tier.id)
+        expect(job.data.provider).toBeUndefined()
+    })
+
+    it('is refused before it is queued when the tier\'s main model cannot call tools', async () => {
+        const { ctx, tier } = await tierOnKey({ servesOwnProject: true })
+        mockCatalogWithoutToolsFor({ modelId: TIER_MODEL })
+
+        const response = await startFlowStepRun({ ctx, body: { modelTierId: tier.id } })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('is refused when the tier\'s main key does not serve the flow\'s project', async () => {
+        const { ctx, tier } = await tierOnKey({ servesOwnProject: false })
+
+        const response = await startFlowStepRun({ ctx, body: { modelTierId: tier.id } })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+})
+
+describe('a chat message on a tier whose main model stopped calling tools', () => {
+    it('is refused at send, not left to fail in the worker', async () => {
+        const { ctx, tier } = await tierOnKey({ servesOwnProject: true })
+        const conversation = await createConversation({ ctx, body: { modelTierId: tier.id } })
+        mockCatalogWithoutToolsFor({ modelId: TIER_MODEL })
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello' })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+})
+
+async function startFlowStepRun({ ctx, body }: { ctx: TestContext, body: Record<string, unknown> }): Promise<{ statusCode: number }> {
+    const engineToken = await accessTokenManager(app.log).generateEngineToken({ jobId: apId(), projectId: ctx.project.id, platformId: ctx.platform.id })
+    return app.inject({
+        method: 'POST',
+        url: '/api/v1/agents/runs',
+        headers: { authorization: `Bearer ${engineToken}` },
+        body: { instruction: 'sweep the inbox', flowRunId: apId(), waitpointId: apId(), ...body },
+    })
+}
 
 async function context(): Promise<TestContext> {
     return createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true, aiProvidersEnabled: true } })

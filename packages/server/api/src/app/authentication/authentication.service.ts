@@ -13,6 +13,7 @@ import { AuthenticationResult, authenticationUtils } from './authentication-util
 import { zerobounce } from './lib/zerobounce'
 import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
+import { verifiedDomainHooks } from './verified-domain-hooks'
 
 const PLATFORM_CONTROLLED_PROVIDERS = new Set([UserIdentityProvider.JWT, UserIdentityProvider.SAML])
 
@@ -134,11 +135,11 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         if (system.getEdition() !== ApEdition.CLOUD) {
             return null
         }
-        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
+        const memberships = await platformService(log).listPlatformMembershipsForIdentity({ identityId })
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
-        const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? platforms.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
-        const licensed = platforms.find((p) => !isNil(p.plan.licenseKey))
-        return lastUsed?.id ?? licensed?.id ?? platforms[0]?.id ?? null
+        const lastUsed = memberships.find((membership) => membership.platform.id === identity.lastLoggedInPlatformId)
+        const withProjects = memberships.find((membership) => membership.hasProjects)
+        return (lastUsed ?? withProjects ?? memberships[0])?.platform.id ?? null
     },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResult> {
         const platformId = isNil(params.predefinedPlatformId) ? await selectCloudSignInPlatformIdByEmail({ email: params.email, log }) : params.predefinedPlatformId
@@ -194,7 +195,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         return { response, signedUp: created }
     },
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
-        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
+        const platforms = await platformService(log).listPlatformsForIdentity({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
         await assertUserCanSwitchToPlatform(platform)
 
@@ -207,7 +208,30 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
+    async findGoverningPlatform({ email }: FindGoverningPlatformParams): Promise<Omit<PlatformWithoutSensitiveData, 'usage'> | null> {
+        const domain = email.split('@')[1] ?? ''
+        const domainOwnerPlatformId = await verifiedDomainHooks.get(log).findPlatformIdByDomain({ domain })
+        if (isNil(domainOwnerPlatformId)) {
+            return null
+        }
+        const governed = await isMemberOrAcceptedInvitee({ email, platformId: domainOwnerPlatformId, log })
+        if (!governed) {
+            return null
+        }
+        return platformService(log).getOneWithPlanOrThrow(domainOwnerPlatformId)
+    },
 })
+
+async function isMemberOrAcceptedInvitee({ email, platformId, log }: IsMemberOrAcceptedInviteeParams): Promise<boolean> {
+    const identity = await userIdentityService(log).getIdentityByEmail(email)
+    if (!isNil(identity)) {
+        const member = await userService(log).getOneByIdentityAndPlatform({ identityId: identity.id, platformId })
+        if (!isNil(member)) {
+            return true
+        }
+    }
+    return userInvitationsService(log).hasAnyAcceptedInvitations({ email, platformId })
+}
 
 async function assertUserCanSwitchToPlatform(platform: PlatformWithoutSensitiveData | undefined): Promise<void> {
     if (isNil(platform)) {
@@ -288,6 +312,7 @@ function refusedSignUpError({ email, provider }: SignUpParams): ActivepiecesErro
     })
 }
 
+
 type SelectCloudSignInPlatformIdParams = {
     identityId: string
 }
@@ -329,4 +354,13 @@ type SignInWithPasswordParams = {
 type SwitchPlatformParams = {
     identityId: string
     platformId: string
+}
+
+type FindGoverningPlatformParams = {
+    email: string
+}
+
+type IsMemberOrAcceptedInviteeParams = FindGoverningPlatformParams & {
+    platformId: string
+    log: FastifyBaseLogger
 }

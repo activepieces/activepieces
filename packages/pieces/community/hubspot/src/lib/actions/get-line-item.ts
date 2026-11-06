@@ -15,6 +15,15 @@ export const getLineItemAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single line item by its HubSpot line item ID, returning default and any requested additional properties. Use when you already have the line item ID and need its details (price, quantity, product). Read-only and idempotent.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Line Item',
+			icon: 'tag',
+			props: ['lineItemId'],
+		},
+	],
 	props: {
 		lineItemId: Property.ShortText({
 			displayName: 'Line Item ID',

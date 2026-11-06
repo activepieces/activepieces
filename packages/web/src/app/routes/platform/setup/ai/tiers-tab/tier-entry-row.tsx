@@ -21,9 +21,8 @@ import {
 import { EntryWarning, modelMeta } from '@/features/agents/ai-model/model-meta';
 import { cn } from '@/lib/utils';
 
+import { ModelDetailRow } from '../components/model-detail-row';
 import { keyStatusText } from '../providers-tab/key-status';
-
-import { ModelDetailRow } from './model-detail-row';
 
 export function TierEntryRow({
   entry,

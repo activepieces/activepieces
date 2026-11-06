@@ -24,7 +24,10 @@ async function enable({ auth, store, collection, field, isRepublish }: PollParam
   await store.put(STORE_KEY, checkpointFrom({ objects: newest, field, previous: { ts: 0, ids: [] } }));
 }
 
-async function disable({ store }: { store: Store }): Promise<void> {
+async function disable({ store, isRepublish }: { store: Store; isRepublish?: boolean }): Promise<void> {
+  if (isRepublish) {
+    return;
+  }
   await store.delete(STORE_KEY);
 }
 

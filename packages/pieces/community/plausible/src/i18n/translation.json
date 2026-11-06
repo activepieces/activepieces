@@ -128,6 +128,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Traffic Spike": "Traffic Spike",
   "Triggers once when current visitors exceed a threshold, then resets when they drop below it": "Triggers once when current visitors exceed a threshold, then resets when they drop below it",
   "Visitor Threshold": "Visitor Threshold",

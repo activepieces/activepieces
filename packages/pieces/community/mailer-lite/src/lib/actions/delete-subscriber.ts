@@ -1,5 +1,5 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { mailerLiteAuth } from '../auth';
 import { mailerLiteCommon } from '../common';
 import { mailerLiteApi } from '../common/client';
@@ -20,6 +20,10 @@ export const deleteSubscriberAction = createAction({
 	outputSchema: deleteSubscriberOutputSchema,
 	props: {
 		subscriberId: mailerLiteCommon.subscriberId(true),
+		delete_info: Property.MarkDown({
+			value: 'MailerLite keeps their data in case they re-subscribe.',
+			variant: MarkdownVariant.INFO,
+		}),
 	},
 	async run(context) {
 		const client = new MailerLite({ api_key: context.auth.secret_text });

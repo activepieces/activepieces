@@ -94,6 +94,7 @@ export const DictionaryInput = ({
             value={key}
             disabled={disabled}
             placeholder={keyPlaceholder}
+            aria-label={t('Key')}
             className={cn('basis-[50%] max-w-[50%]', keyInputClassName)}
             onChange={(e) => onChangeValue(index, undefined, e.target.value)}
           />
@@ -109,6 +110,7 @@ export const DictionaryInput = ({
                 value={value}
                 disabled={disabled}
                 placeholder={valuePlaceholder}
+                aria-label={t('Value')}
                 onChange={(e) =>
                   onChangeValue(index, e.target.value, undefined)
                 }

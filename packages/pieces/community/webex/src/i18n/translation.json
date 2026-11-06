@@ -66,6 +66,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New room": "New room",
   "New meeting": "New meeting",
   "Triggers when a new room is created": "Triggers when a new room is created",

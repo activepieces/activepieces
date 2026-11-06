@@ -38,14 +38,24 @@ vi.mock('@/features/agents/hooks/agents-hooks', () => ({
   },
 }));
 
-vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
-  aiProviderQueries: {
-    useModelTiers: () => ({
-      tiers: [
-        { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5' },
-        { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8' },
-      ],
-      defaultTierId: 'fast',
+vi.mock('@/features/agents/ai-model/hooks', () => ({
+  aiModelHooks: {
+    useModelOptions: () => ({
+      data: {
+        tiers: [{ id: 'tier-1', name: 'Expert' }],
+        credits: {
+          providerConfigId: 'managed',
+          defaultTierId: 'fast',
+          tiers: [
+            { id: 'fast', label: 'Fast' },
+            { id: 'premium', label: 'Heavy' },
+          ],
+        },
+        keys: [],
+        defaultChoice: null,
+        movedTiers: { 'old-tier': 'tier-1' },
+        specificModelsHidden: false,
+      },
     }),
   },
 }));
@@ -118,11 +128,22 @@ function agent({
   };
 }
 
-const Harness = ({ agentId }: { agentId?: string }) => {
+const formValues = vi.hoisted(() => ({
+  read: (() => ({})) as () => Record<string, unknown>,
+}));
+
+const Harness = ({
+  agentId,
+  pieceVersion,
+}: {
+  agentId?: string;
+  pieceVersion: string;
+}) => {
   const form = useForm({ defaultValues: { settings: { input: { agentId } } } });
+  formValues.read = () => form.getValues();
   return (
     <FormProvider {...form}>
-      <AgentLink disabled={false} />
+      <AgentLink disabled={false} pieceVersion={pieceVersion} />
     </FormProvider>
   );
 };
@@ -130,13 +151,31 @@ const Harness = ({ agentId }: { agentId?: string }) => {
 let container: HTMLDivElement;
 let root: Root;
 
-function render(agentId?: string) {
+function render(agentId?: string, pieceVersion = '0.14.1') {
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => {
-    root.render(<Harness agentId={agentId} />);
+    root.render(<Harness agentId={agentId} pieceVersion={pieceVersion} />);
   });
+}
+
+function detach() {
+  const button = [...container.querySelectorAll('button')].find(
+    (candidate) => candidate.textContent === 'Detach'
+  );
+  act(() => {
+    button?.click();
+  });
+}
+
+function storedModel(): unknown {
+  const settings = formValues.read()['settings'];
+  return typeof settings === 'object' &&
+    settings !== null &&
+    'input' in settings
+    ? (settings.input as Record<string, unknown>)['aiProviderModel']
+    : undefined;
 }
 
 beforeEach(() => {
@@ -160,7 +199,7 @@ describe('the agent picker on a Run Agent step', () => {
     render();
 
     expect(container.querySelector('[data-testid="agent-picker"]')).not.toBe(
-      null,
+      null
     );
     expect(container.textContent).toContain('Ops');
   });
@@ -190,7 +229,7 @@ describe('the agent picker on a Run Agent step', () => {
     render('');
 
     expect(container.querySelector('[data-testid="agent-picker"]')).not.toBe(
-      null,
+      null
     );
     expect(container.textContent).not.toContain('cannot run');
   });
@@ -202,7 +241,7 @@ describe('the agent picker on a Run Agent step', () => {
     render();
 
     expect(
-      container.querySelector('[data-testid="agent-picker-error"]'),
+      container.querySelector('[data-testid="agent-picker-error"]')
     ).not.toBe(null);
   });
 
@@ -228,14 +267,61 @@ describe('the agent picker on a Run Agent step', () => {
 
     expect(container.textContent).toContain('anthropic/claude-opus-4.8');
   });
+
+  it('names an agent on a platform tier by the tier name, following a move', () => {
+    state.linkedAgent = linkedAgent({ modelTierId: 'old-tier' });
+
+    render('ext-Ops');
+
+    expect(container.textContent).toContain('Expert');
+  });
+
+  it('keeps the agent tier on the step when it is detached', () => {
+    state.linkedAgent = linkedAgent({ modelTierId: 'tier-1' });
+
+    render('ext-Ops');
+    detach();
+
+    expect(storedModel()).toEqual({ modelTierId: 'tier-1' });
+  });
+
+  it('copies no tier onto a step whose piece version cannot send one', () => {
+    state.linkedAgent = linkedAgent({ modelTierId: 'tier-1' });
+
+    render('ext-Ops', '0.14.0');
+    detach();
+
+    expect(storedModel()).toBeUndefined();
+  });
+
+  it('copies a specific model with its key when detached', () => {
+    state.linkedAgent = linkedAgent({
+      provider: AIProviderName.OPENAI,
+      modelName: 'gpt-test',
+      providerConfigId: 'key-1',
+    });
+
+    render('ext-Ops');
+    detach();
+
+    expect(storedModel()).toEqual({
+      provider: AIProviderName.OPENAI,
+      model: 'gpt-test',
+      configId: 'key-1',
+    });
+  });
 });
 
 function linkedAgent({
-  provider,
-  modelName,
+  provider = null,
+  modelName = null,
+  providerConfigId = null,
+  modelTierId = null,
 }: {
-  provider: AIProviderName;
-  modelName: string;
+  provider?: AIProviderName | null;
+  modelName?: string | null;
+  providerConfigId?: string | null;
+  modelTierId?: string | null;
 }) {
   return {
     id: 'id-Ops',
@@ -243,6 +329,8 @@ function linkedAgent({
     published: {
       provider,
       modelName,
+      providerConfigId,
+      modelTierId,
       instructions: 'Answer tickets.',
       tools: [],
       structuredOutput: [],

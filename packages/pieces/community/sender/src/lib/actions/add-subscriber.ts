@@ -1,16 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { groupIdsDropdown, makeSenderRequest, senderAuth } from '../common/common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { group } from 'console';
-
+import { senderAuth } from '../auth';
+import { senderApi } from '../common/api';
+import { senderProps } from '../common/props';
+import { senderSubscriberWriteOutputSchema } from '../output-schemas';
 
 export const addUpdateSubscriberAction = createAction({
   auth: senderAuth,
   name: 'add_update_subscriber',
+  outputSchema: senderSubscriberWriteOutputSchema,
   classification: 'WRITE',
   displayName: 'Add / Update Subscriber',
   description: 'Add a new subscriber or update existing subscriber\'s data',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Upserts a subscriber in a Sender account by email: creates the contact if the email is new, otherwise updates its name, phone, group membership, and custom fields. Use to ensure a contact exists with given details before campaigns or grouping. Keyed on email, so repeating the same call is idempotent (no duplicate contact); note the optional flag that triggers automation workflows on the subscriber.', idempotent: true },
   props: {
     email: Property.ShortText({
@@ -33,7 +34,7 @@ export const addUpdateSubscriberAction = createAction({
       description: 'Subscriber phone number',
       required: false,
     }),
-    groups: groupIdsDropdown,
+    groups: senderProps.groupIds({ required: false }),
     customFields: Property.Json({
       displayName: 'Custom Fields',
       description: 'JSON object with custom field keys and values',
@@ -47,36 +48,15 @@ export const addUpdateSubscriberAction = createAction({
     }),
   },
   async run(context) {
-    const subscriberData: any = {
+    return await senderApi.upsertSubscriber({
+      auth: context.auth,
       email: context.propsValue.email,
-    };
-
-    if (context.propsValue.firstname) {
-      subscriberData.firstname = context.propsValue.firstname;
-    }
-    if (context.propsValue.lastname) {
-      subscriberData.lastname = context.propsValue.lastname;
-    }
-    if (context.propsValue.phone) {
-      subscriberData.phone = context.propsValue.phone;
-    }
-    if (context.propsValue.groups) {
-      subscriberData.groups = context.propsValue.groups;
-    }
-    if (context.propsValue.customFields) {
-      subscriberData.fields = context.propsValue.customFields;
-    }
-    if (context.propsValue.triggerAutomation) {
-      subscriberData.trigger_automation = true;
-    }
-
-    const response = await makeSenderRequest(
-      context.auth.secret_text,
-      '/subscribers',
-      HttpMethod.POST,
-      subscriberData
-    );
-
-    return response.body;
+      firstname: context.propsValue.firstname,
+      lastname: context.propsValue.lastname,
+      phone: context.propsValue.phone,
+      groups: context.propsValue.groups,
+      customFields: context.propsValue.customFields,
+      triggerAutomation: context.propsValue.triggerAutomation ? true : undefined,
+    });
   },
 });

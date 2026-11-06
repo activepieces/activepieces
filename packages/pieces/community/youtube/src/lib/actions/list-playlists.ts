@@ -40,6 +40,22 @@ export const youtubeListPlaylistsAction = createAction({
       advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'channel',
+      display: 'section',
+      label: 'Channel',
+      icon: 'user',
+      props: ['channelId'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['maxResults'],
+    },
+  ],
   async run(context) {
     const accessToken = context.auth.access_token;
     const { channelId, maxResults, pageToken } = context.propsValue;

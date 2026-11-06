@@ -14,9 +14,9 @@ export const detectDocumentText = createAction({
   classification: 'READ',
   displayName: 'Detect Document Text',
   description:
-    'Extract plain text from a document. Faster and cheaper than Analyze Document — use this when you only need the text content without forms or tables. Supports JPEG and PNG via direct upload; PDF and TIFF via S3 only.',
+    'Extract plain text from a document. Faster and cheaper than Analyze Document — use this when you only need the text content without forms or tables. Supports JPEG, PNG, and single-page PDF or TIFF, uploaded directly or from S3.',
   audience: 'both',
-  aiMetadata: { description: 'Synchronously OCR a single-page document with AWS Textract and return its plain text content (lines and words), without forms, tables, or signatures. Choose it when you only need the raw text — it is faster and cheaper than Analyze Document. The source can be an uploaded file (JPEG/PNG only) or an S3 object (also PDF/TIFF, single-page only). Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
+  aiMetadata: { description: 'Synchronously OCR a single-page document with AWS Textract and return its plain text content (lines and words), without forms, tables, or signatures. Choose it when you only need the raw text — it is faster and cheaper than Analyze Document. The source can be an uploaded file or an S3 object in JPEG, PNG, or single-page PDF/TIFF format. Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',
@@ -54,7 +54,7 @@ export const detectDocumentText = createAction({
         return {
           file: Property.File({
             displayName: 'File',
-            description: 'The document to read. Only JPEG and PNG are supported for direct upload (max 5 MB). For PDF or TIFF files, use the "From S3 bucket" option instead.',
+            description: 'The document to read: JPEG, PNG, or a single-page PDF or TIFF (max 10 MB).',
             required: true,
           }),
         };
@@ -70,7 +70,7 @@ export const detectDocumentText = createAction({
     const s3Key = source === 's3' ? (document['s3Key'] as string) : undefined;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient({ auth: context.auth.props, server: context.server });
       const documentInput = buildDocumentInput(file, s3Bucket, s3Key);
 
       const response = await client.send(

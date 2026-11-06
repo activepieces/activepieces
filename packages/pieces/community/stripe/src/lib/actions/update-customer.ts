@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
@@ -26,7 +30,14 @@ export const stripeUpdateCustomer = createAction({
       display: 'section',
       label: 'Customer',
       icon: 'user',
-      props: ['customer', 'name', 'email', 'phone', 'description'],
+      props: [
+        'customer',
+        'empty_fields_info',
+        'name',
+        'email',
+        'phone',
+        'description',
+      ],
     },
     {
       key: 'address',
@@ -37,10 +48,11 @@ export const stripeUpdateCustomer = createAction({
     },
   ],
   props: {
-    customer: {
-      ...stripeCommon.customer,
-      description: 'Only the fields you fill in below are changed.',
-    },
+    customer: stripeCommon.customer,
+    empty_fields_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
 
     email: Property.ShortText({
       displayName: 'Email',

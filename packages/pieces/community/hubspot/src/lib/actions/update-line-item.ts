@@ -21,11 +21,31 @@ export const updateLineItemAction = createAction({
     audience: 'both',
     aiMetadata: { description: 'Update properties (product, quantity, price, etc.) on an existing HubSpot line item identified by Line Item ID; only supplied fields change. Applying the same values repeatedly is idempotent. Use a find action to obtain the line item ID first.', idempotent: true },
     outputSchema: crmObjectOutputSchema,
+    propertyGroups: [
+        {
+            key: 'target',
+            display: 'section',
+            label: 'Line Item to Update',
+            icon: 'tag',
+            props: ['lineItemId'],
+        },
+        {
+            key: 'changes',
+            display: 'section',
+            label: 'Changes',
+            icon: 'text',
+            props: ['changesInfo', 'productId', 'objectProperties'],
+        },
+    ],
     props: {
         lineItemId: Property.ShortText({
             displayName: 'Line Item ID',
             description: 'Map it from an earlier step like Find Line Item.',
             required: true,
+        }),
+        changesInfo: Property.MarkDown({
+            value: 'Fields left empty keep their current value.',
+            variant: MarkdownVariant.INFO,
         }),
         productId: productDropdown({
             displayName: 'Product',

@@ -6,6 +6,7 @@ import {
   CloudflareGatewayProviderConfig,
   formErrors,
   OpenAICompatibleProviderConfig,
+  PlatformModelTier,
   Project,
   ProviderModelConfig,
   UpdateAIProviderRequest,
@@ -13,13 +14,12 @@ import {
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Activity, KeyRound, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { KeyRound, RefreshCw, Trash2 } from 'lucide-react';
+import { ReactNode, useRef, useState } from 'react';
 import { z } from 'zod';
 
 import {
   AdminPageHeader,
-  AdminSection,
   DangerZone,
   SettingsPanel,
   SettingsRow,
@@ -40,6 +40,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { AiProviderInfo } from '@/features/agents';
 import {
   KeyScopeImpact,
@@ -51,9 +57,11 @@ import { platformModelTierQueries } from '@/features/platform-admin/hooks/platfo
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
+import { AiCenterTrail } from '../components/ai-center-trail';
+
+import { KeyModelList } from './key-model-list';
 import { KeyStatusBadge } from './key-status';
 import { ManualModelList } from './manual-model-list';
-import { ModelSelectionPanel } from './model-selection-panel';
 import { ProjectSelectionPanel } from './project-selection-panel';
 import { providerCredentials } from './provider-credentials';
 import { ProviderLogo } from './provider-logo';
@@ -66,6 +74,7 @@ export function ConfigDetail({
   onSave,
   onDelete,
   onReplaceCredentials,
+  initialTab = 'models',
   isRechecking,
   onRecheck,
   onBack,
@@ -77,6 +86,7 @@ export function ConfigDetail({
   onSave: (request: UpdateAIProviderRequest) => Promise<{ error: unknown }>;
   onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
+  initialTab?: ConfigDetailTab;
   isRechecking: boolean;
   onRecheck: () => void;
   onBack: () => void;
@@ -112,6 +122,16 @@ export function ConfigDetail({
         type: AIProviderModelType.TEXT,
       })),
   ];
+  const staleIds = draft.modelIds.filter(
+    (modelId) => !models.some((model) => model.id === modelId),
+  );
+  const tiersByModel = tierNamesByModel({
+    tiers: tiers ?? [],
+    configId: config.id,
+  });
+  const usedByTierCount = (tiers ?? []).filter((tier) =>
+    tier.entries.some((entry) => entry.configId === config.id),
+  ).length;
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
   const leaveBlocker = useWarnBeforeLosingChanges({
     hasChanges: dirty,
@@ -127,18 +147,14 @@ export function ConfigDetail({
   ]
     .filter(Boolean)
     .join(' · ');
+  const metaLine = [
+    info.name,
+    usedByTierCount > 0 && t('usedByTiersCount', { count: usedByTierCount }),
+    statusDetail,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   const nameMissing = draft.name.trim().length === 0;
-  const enabledModelCount = manualModels
-    ? draft.models.length
-    : draft.modelScope === 'all'
-    ? models.length
-    : draft.modelIds.length;
-  const allowedProjectCount =
-    draft.projectScope === 'all'
-      ? projects.length
-      : draft.projectScope === 'except'
-      ? projects.length - draft.projectIds.length
-      : draft.projectIds.length;
 
   const requestSave = () => {
     if (nameMissing || saveInFlight.current) {
@@ -198,198 +214,223 @@ export function ConfigDetail({
   return (
     <>
       <AdminPageHeader
-        title={draft.name}
-        back={{ label: t('Providers'), to: '/platform/ai' }}
+        title={
+          <AiCenterTrail
+            crumbs={[{ label: t('Providers'), to: '/platform/ai' }]}
+            current={draft.name}
+          />
+        }
         badge={<KeyStatusBadge status={config.status} />}
         description={
           <span className="flex items-center gap-2">
             <ProviderLogo info={info} size="sm" />
-            {info.name}
+            {metaLine}
           </span>
         }
         resources={adminPageResources.aiProviders}
-      />
-
-      <AdminSection
-        title={t('General')}
-        description={t('How this key is labelled and authorised.')}
       >
-        <SettingsPanel flush>
-          <div className="flex flex-col gap-2 px-5 py-4">
-            <Label htmlFor="config-name">{t('Name')}</Label>
-            <Input
-              id="config-name"
-              value={draft.name}
-              onChange={(event) =>
-                setDraft({ ...draft, name: event.target.value })
-              }
-              className="max-w-sm"
-              aria-invalid={nameMissing}
-            />
-            {nameMissing && (
-              <p className="text-sm text-danger-11">{t(formErrors.required)}</p>
-            )}
-          </div>
-          <SettingsRow
-            icon={<KeyRound />}
-            title={t('Credentials')}
-            description={t('Stored securely')}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onReplaceCredentials}
-              {...adminControl(AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN)}
-            >
-              {t('Replace')}
-            </Button>
-          </SettingsRow>
-          <SettingsRow
-            icon={<Activity />}
-            title={t('Status')}
-            description={statusDetail || undefined}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              loading={isRechecking}
-              onClick={onRecheck}
-              {...adminControl(AdminControl.AI_PROVIDER_KEY_RECHECK_RUN)}
-            >
-              {t('Recheck')}
-            </Button>
-          </SettingsRow>
-        </SettingsPanel>
-      </AdminSection>
-
-      <AdminSection
-        title={
-          <SectionTitle
-            title={t('Models')}
-            count={isLoadingModels ? undefined : enabledModelCount}
-          />
-        }
-        description={
-          manualModels
-            ? t('Model ids exposed through this key.')
-            : t('Which of this key’s models the platform may use.')
-        }
-        action={
-          manualModels ? undefined : (
-            <ScopeTabs
-              value={draft.modelScope}
-              onChange={(value) =>
-                setDraft({
-                  ...draft,
-                  modelScope: value === 'all' ? 'all' : 'selected',
-                  modelIds: value === 'all' ? [] : draft.modelIds,
-                })
-              }
-              options={[
-                { value: 'all', label: t('All models') },
-                { value: 'selected', label: t('Only selected') },
-              ]}
-            />
-          )
-        }
-      >
-        {manualModels ? (
-          <ManualModelList
-            models={draft.models}
-            suggestedModelIds={suggestedModelIds}
-            onChange={(models) => setDraft({ ...draft, models })}
-          />
-        ) : (
-          draft.modelScope === 'selected' && (
-            <ModelSelectionPanel
-              models={selectableModels}
-              selectedIds={draft.modelIds}
-              isLoading={isLoadingModels}
-              onChange={(modelIds) => setDraft({ ...draft, modelIds })}
-            />
-          )
-        )}
-      </AdminSection>
-
-      <AdminSection
-        title={
-          <SectionTitle
-            title={t('Project access')}
-            count={allowedProjectCount}
-          />
-        }
-        description={
-          draft.projectScope === 'except'
-            ? t(
-                'Every project except these — new projects get access automatically.',
-              )
-            : draft.projectScope === 'selected'
-            ? t('Only these projects can use this key.')
-            : t('Every project on this platform can use it.')
-        }
-        action={
-          <ScopeTabs
-            value={draft.projectScope}
-            onChange={(value) =>
-              setDraft({
-                ...draft,
-                projectScope:
-                  value === 'all'
-                    ? 'all'
-                    : value === 'except'
-                    ? 'except'
-                    : 'selected',
-                projectIds: value === 'all' ? [] : draft.projectIds,
-              })
-            }
-            options={[
-              { value: 'all', label: t('All') },
-              { value: 'selected', label: t('Only selected') },
-              { value: 'except', label: t('All except') },
-            ]}
-          />
-        }
-      >
-        {draft.projectScope !== 'all' && (
-          <ProjectSelectionPanel
-            projects={projects}
-            selectedIds={draft.projectIds}
-            onChange={(projectIds) => setDraft({ ...draft, projectIds })}
-          />
-        )}
-      </AdminSection>
-
-      <DangerZone>
-        <SettingsRow
-          title={t('Delete this key')}
-          description={t('Flows and agents that use it will fail.')}
+        <Button
+          variant="outline"
+          size="sm"
+          loading={isRechecking}
+          onClick={onRecheck}
+          {...adminControl(AdminControl.AI_PROVIDER_KEY_RECHECK_RUN)}
         >
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setDeleteOpen(true)}
-            {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
-          >
-            <Trash2 className="size-4" />
-            {t('Delete')}
-          </Button>
-        </SettingsRow>
-        <ConfirmationDeleteDialog
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-          title={t('Delete {name}', { name: config.name })}
-          message={t('Flows and agents that use this key will fail.')}
-          entityName={config.name}
-          showToast={true}
-          onError={() => undefined}
-          controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
-          mutationFn={async () => {
-            await onDelete();
-            leavingOnPurpose.current = true;
-            onBack();
-          }}
-        />
-      </DangerZone>
+          <RefreshCw className="size-4" />
+          {t('Recheck')}
+        </Button>
+      </AdminPageHeader>
+
+      <Tabs defaultValue={initialTab} className="flex flex-col gap-6">
+        <TabsList
+          variant="outline"
+          className="w-full justify-start border-b border-gray-6"
+        >
+          <TabsTrigger variant="outline" value="models">
+            {t('Models')}
+          </TabsTrigger>
+          <TabsTrigger variant="outline" value="access">
+            {t('Access')}
+          </TabsTrigger>
+          <TabsTrigger variant="outline" value="settings">
+            {t('Settings')}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent
+          value="models"
+          forceMount
+          className="mt-0 data-[state=inactive]:hidden"
+        >
+          {manualModels ? (
+            <SettingsPanel flush>
+              <PanelHeader
+                title={t('Models')}
+                description={t('Model ids exposed through this key.')}
+              />
+              <ManualModelList
+                models={draft.models}
+                suggestedModelIds={suggestedModelIds}
+                tiersByModel={tiersByModel}
+                onChange={(models) => setDraft({ ...draft, models })}
+              />
+            </SettingsPanel>
+          ) : (
+            <KeyModelList
+              config={config}
+              models={draft.modelScope === 'all' ? models : selectableModels}
+              staleIds={staleIds}
+              tiersByModel={tiersByModel}
+              selection={{
+                modelScope: draft.modelScope,
+                modelIds: draft.modelIds,
+              }}
+              isLoading={isLoadingModels}
+              onChange={(selection) => setDraft({ ...draft, ...selection })}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent
+          value="access"
+          forceMount
+          className="mt-0 data-[state=inactive]:hidden"
+        >
+          <SettingsPanel flush>
+            <PanelHeader
+              title={t('Project access')}
+              description={
+                draft.projectScope === 'except'
+                  ? t(
+                      'Every project except these — new projects get access automatically.',
+                    )
+                  : draft.projectScope === 'selected'
+                  ? t('Only these projects can use this key.')
+                  : t('Every project on this platform can use it.')
+              }
+              action={
+                <ScopeSelect
+                  value={draft.projectScope}
+                  onChange={(value) =>
+                    setDraft({
+                      ...draft,
+                      projectScope:
+                        value === 'all'
+                          ? 'all'
+                          : value === 'except'
+                          ? 'except'
+                          : 'selected',
+                      projectIds: value === 'all' ? [] : draft.projectIds,
+                    })
+                  }
+                  options={[
+                    { value: 'all', label: t('All') },
+                    { value: 'selected', label: t('Only selected') },
+                    { value: 'except', label: t('All except') },
+                  ]}
+                />
+              }
+            />
+            {draft.projectScope !== 'all' && (
+              <ProjectSelectionPanel
+                projects={projects}
+                selectedIds={draft.projectIds}
+                onChange={(projectIds) => setDraft({ ...draft, projectIds })}
+              />
+            )}
+          </SettingsPanel>
+        </TabsContent>
+
+        <TabsContent
+          value="settings"
+          forceMount
+          className="mt-0 flex flex-col gap-6 data-[state=inactive]:hidden"
+        >
+          <SettingsPanel title={t('General')} flush>
+            <SettingsRow
+              title={<Label htmlFor="config-name">{t('Name')}</Label>}
+              description={t('Shown wherever this key is picked.')}
+              below={
+                nameMissing && (
+                  <p className="text-sm text-danger-11">
+                    {t(formErrors.required)}
+                  </p>
+                )
+              }
+            >
+              <Input
+                id="config-name"
+                value={draft.name}
+                onChange={(event) =>
+                  setDraft({ ...draft, name: event.target.value })
+                }
+                className="w-64"
+                aria-invalid={nameMissing}
+              />
+            </SettingsRow>
+            <SettingsRow
+              icon={<KeyRound />}
+              title={t('Credentials')}
+              description={t('Stored securely')}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={dirty ? 0 : undefined}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={dirty}
+                      onClick={onReplaceCredentials}
+                      {...adminControl(
+                        AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN,
+                      )}
+                    >
+                      {t('Replace')}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {dirty && (
+                  <TooltipContent>
+                    {t('Save or discard your changes first')}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </SettingsRow>
+          </SettingsPanel>
+
+          <DangerZone>
+            <SettingsRow
+              title={t('Delete this key')}
+              description={t('Flows and agents that use it will fail.')}
+            >
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteOpen(true)}
+                {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
+              >
+                <Trash2 className="size-4" />
+                {t('Delete')}
+              </Button>
+            </SettingsRow>
+            <ConfirmationDeleteDialog
+              open={deleteOpen}
+              onOpenChange={setDeleteOpen}
+              title={t('Delete {name}', { name: config.name })}
+              message={t('Flows and agents that use this key will fail.')}
+              entityName={config.name}
+              showToast={true}
+              onError={() => undefined}
+              controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
+              mutationFn={async () => {
+                await onDelete();
+                leavingOnPurpose.current = true;
+                onBack();
+              }}
+            />
+          </DangerZone>
+        </TabsContent>
+      </Tabs>
 
       {dirty && (
         <div className="sticky bottom-4 z-20 mt-auto flex justify-center px-4">
@@ -454,17 +495,24 @@ export function ConfigDetail({
   );
 }
 
-function SectionTitle({ title, count }: { title: string; count?: number }) {
-  return (
-    <span className="flex items-baseline gap-2">
-      {title}
-      {count !== undefined && (
-        <span className="text-sm font-normal tabular-nums text-gray-11">
-          {count}
-        </span>
-      )}
-    </span>
-  );
+function tierNamesByModel({
+  tiers,
+  configId,
+}: {
+  tiers: PlatformModelTier[];
+  configId: string;
+}): Map<string, string[]> {
+  return tiers.reduce((byModel, tier) => {
+    tier.entries
+      .filter((entry) => entry.configId === configId)
+      .forEach((entry) =>
+        byModel.set(entry.modelId, [
+          ...(byModel.get(entry.modelId) ?? []),
+          tier.name,
+        ]),
+      );
+    return byModel;
+  }, new Map<string, string[]>());
 }
 
 function scopeImpactText(impact: KeyScopeImpact): string {
@@ -480,7 +528,27 @@ function scopeImpactText(impact: KeyScopeImpact): string {
   });
 }
 
-function ScopeTabs({
+function PanelHeader({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
+  return (
+    <header className="flex flex-wrap items-start justify-between gap-4 p-4">
+      <div className="flex min-w-0 flex-col gap-1">
+        <h2 className="text-sm font-semibold text-gray-12">{title}</h2>
+        <p className="text-sm text-gray-11">{description}</p>
+      </div>
+      {action}
+    </header>
+  );
+}
+
+function ScopeSelect({
   value,
   onChange,
   options,
@@ -534,3 +602,5 @@ type ConfigDraft = {
   projectScope: AiProviderProjectScope;
   projectIds: string[];
 };
+
+export type ConfigDetailTab = 'models' | 'access' | 'settings';

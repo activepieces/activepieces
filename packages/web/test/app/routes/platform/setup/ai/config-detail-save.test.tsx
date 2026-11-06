@@ -25,7 +25,7 @@ import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 const selectMock = vi.hoisted(() => ({
   onValueChange: undefined as undefined | ((value: string) => void),
@@ -88,10 +88,9 @@ vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-status', () => ({
   KeyStatusBadge: () => null,
 }));
 
-vi.mock(
-  '@/app/routes/platform/setup/ai/providers-tab/model-selection-panel',
-  () => ({ ModelSelectionPanel: () => null }),
-);
+vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-model-list', () => ({
+  KeyModelList: () => null,
+}));
 
 vi.mock(
   '@/app/routes/platform/setup/ai/providers-tab/project-selection-panel',
@@ -161,7 +160,7 @@ const gatewayConfig: AIProviderWithoutSensitiveData = {
 describe('ConfigDetail save (manual models)', () => {
   let container: HTMLDivElement;
   let root: Root;
-  let onSave: ReturnType<typeof vi.fn>;
+  let onSave: Mock<React.ComponentProps<typeof ConfigDetail>['onSave']>;
 
   const render = () => {
     onSave = vi.fn().mockResolvedValue({ error: null });
@@ -173,7 +172,7 @@ describe('ConfigDetail save (manual models)', () => {
             info={{
               provider: AIProviderName.CLOUDFLARE_GATEWAY,
               name: 'Cloudflare AI Gateway',
-              markdown: '',
+              markdown: () => '',
               logoUrl: '',
             }}
             projects={[]}
@@ -201,11 +200,12 @@ describe('ConfigDetail save (manual models)', () => {
   };
 
   const flipTypeBadge = (modelId: string) => {
-    const chip = Array.from(container.querySelectorAll('span')).find(
-      (candidate) => candidate.textContent?.startsWith(modelId),
-    );
-    const badge = chip?.querySelector<HTMLButtonElement>(
-      'button[title="Model Type"]',
+    const badge = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        'button[title="Model Type"]',
+      ),
+    ).find((candidate) =>
+      candidate.parentElement?.textContent?.startsWith(modelId),
     );
     expect(badge).toBeDefined();
     act(() => {

@@ -1,14 +1,19 @@
 import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { bookingIdDropdown, zohoBookingsAuth, zohoBookingsCommon } from '../common';
+import * as z from 'zod/mini';
+import { zohoBookingsAuth } from '../auth';
+import { zohoBookingsApi } from '../common/api';
+import { zohoBookingsProps } from '../common/props';
+import { getAppointmentDetailsOutputSchema } from '../output-schemas';
 
-export const getAppointmentDetails = createAction({
+export const getAppointmentDetailsAction = createAction({
   auth: zohoBookingsAuth,
   name: 'getAppointmentDetails',
+  outputSchema: getAppointmentDetailsOutputSchema,
+  classification: 'READ',
   displayName: 'Get Appointment Details',
   description: 'Get details of an appointment using its booking ID',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieve the full details of a single Zoho Bookings appointment by its booking ID. Use the from/to time range to locate the booking ID first. Read-only and idempotent.',
@@ -25,27 +30,20 @@ export const getAppointmentDetails = createAction({
       description: 'The end time of the appointment (in ISO 8601 format)',
       required: false,
     }),
-    booking_id: bookingIdDropdown
+    booking_id: zohoBookingsProps.bookingId({ required: true }),
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const location = auth.props?.['location'] as string || 'zoho.com';
 
-    // Validate props using Zod schema
-    await propsValidation.validateZod(propsValue, zohoBookingsCommon.getAppointmentDetailsSchema);
+    await propsValidation.validateZod(propsValue, schema);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${zohoBookingsCommon.baseUrl(location)}/getappointment`,
-      headers: {
-        Authorization: `Zoho-oauthtoken ${auth.access_token}`,
-        
-      },
-      queryParams: {
-        booking_id: propsValue.booking_id as string,
-      },
+    return await zohoBookingsApi.getAppointment({
+      auth,
+      bookingId: propsValue.booking_id,
     });
-
-    return response.body;
   },
 });
+
+const schema = {
+  booking_id: z.string().check(z.minLength(1)),
+};

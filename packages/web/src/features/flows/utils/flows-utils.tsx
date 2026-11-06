@@ -42,17 +42,32 @@ export const flowsUtils = {
       case FlowTriggerType.PIECE: {
         const schedule = flow.triggerSource?.schedule;
         switch (schedule?.type) {
-          case TriggerSourceScheduleType.INTERVAL:
-            return t(
-              'Run every {minutes, plural, =1 {minute} other {# minutes}}',
-              { minutes: Math.round(schedule.intervalMs / 60_000) },
+          case TriggerSourceScheduleType.INTERVAL: {
+            const minutes = Math.round(schedule.intervalMs / 60_000);
+            return flow.triggerSource?.pieceName ===
+              '@activepieces/piece-schedule' ? (
+              t('Runs every {minutes, plural, =1 {minute} other {# minutes}}', {
+                minutes,
+              })
+            ) : (
+              <>
+                {t(
+                  'Checks for new data every {minutes, plural, =1 {minute} other {# minutes}}.',
+                  { minutes },
+                )}
+                <br />
+                {t('The flow runs only when there is new data.')}
+              </>
             );
+          }
           case TriggerSourceScheduleType.CRON_EXPRESSION:
-            return `${t('Run')} ${cronstrue
-              .toString(schedule.cronExpression, { locale: 'en' })
-              .toLocaleLowerCase()}`;
+            return t('Runs {schedule}', {
+              schedule: cronstrue
+                .toString(schedule.cronExpression, { locale: 'en' })
+                .toLocaleLowerCase(),
+            });
           default:
-            return t('Real time flow');
+            return t('Runs as soon as new data arrives');
         }
       }
       case FlowTriggerType.EMPTY:

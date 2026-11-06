@@ -31,6 +31,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Lead": "New Lead",
   "Trigger when a new lead is captured by your Orimon chatbot": "Trigger when a new lead is captured by your Orimon chatbot",
   "Markdown": "Markdown",

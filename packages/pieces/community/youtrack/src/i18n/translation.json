@@ -123,6 +123,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Issue": "New Issue",
   "Updated Issue": "Updated Issue",
   "Triggers when a new issue is created in any project you can access.": "Triggers when a new issue is created in any project you can access.",

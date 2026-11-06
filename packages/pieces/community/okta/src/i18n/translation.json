@@ -71,6 +71,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Event": "New Event",
   "Fires when a new Okta event is generated": "Fires when a new Okta event is generated",
   "Event Types to Monitor": "Event Types to Monitor",

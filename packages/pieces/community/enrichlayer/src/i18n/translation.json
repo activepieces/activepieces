@@ -414,5 +414,7 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

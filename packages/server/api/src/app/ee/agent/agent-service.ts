@@ -1,9 +1,12 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
-import { ActivepiecesError, AIProviderName, apId, ApId, connectionTemplate, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, unique, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentFlowTool, AgentKnowledgeBaseTool, AgentListSort, AgentMoveLoss, AgentMoveLossKind, AgentMovePreview, AgentRunSource, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ApId, connectionTemplate, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, tryCatch, unique, UserId } from '@activepieces/core-utils'
+import { Agent, AgentConfig, AgentFlowTool, AgentKnowledgeBaseTool, AgentListSort, AgentMoveLoss, AgentMoveLossKind, AgentMovePreview, AgentRunSource, AgentSummary, agentUtils, AgentVisibility, aiProviderUtils, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm'
+import { aiKeyScope } from '../../ai/ai-key-scope'
+import { aiModelOptionsService, aiModelOptionsUtils } from '../../ai/ai-model-options-service'
+import { AIProviderSchema } from '../../ai/ai-provider-entity'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -16,6 +19,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order, OrderByConfig } from '../../helper/pagination/paginator'
 import { knowledgeBaseService } from '../../knowledge-base/knowledge-base.service'
 import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
+import { platformConfigurationService } from '../../platform/platform-configuration.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
@@ -55,7 +59,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async list({ platformId, userId, projectId, search, sort, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
+    async list({ platformId, userId, projectId, search, sort, cursor, limit, connectionExternalIds }: ListParams): Promise<SeekPage<AgentSummary>> {
         const readableProjects = await resolveReadableProjects({ platformId, userId, projectId, log })
         const readableProjectIds = readableProjects.map((project) => project.id)
         if (readableProjectIds.length === 0) {
@@ -81,6 +85,13 @@ export const agentService = (log: FastifyBaseLogger) => ({
                 qb.where('LOWER(agent."displayName") LIKE :needle', { needle: `%${needle}%` })
                     .orWhere('LOWER(COALESCE(agent."description", \'\')) LIKE :needle', { needle: `%${needle}%` })
             }))
+        }
+        if (!isNil(connectionExternalIds) && connectionExternalIds.length > 0) {
+            const connectionAuths = connectionExternalIds.flatMap((externalId) => [externalId, connectionTemplate.wrapExternalId(externalId) ?? externalId])
+            query.andWhere(`EXISTS (
+                SELECT 1 FROM jsonb_array_elements((agent."draft"->'tools') || COALESCE(agent."published"->'tools', '[]'::jsonb)) AS tool
+                WHERE tool->'pieceMetadata'->'predefinedInput'->>'auth' = ANY(:connectionAuths)
+            )`, { connectionAuths })
         }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
@@ -113,27 +124,19 @@ export const agentService = (log: FastifyBaseLogger) => ({
     async update({ id, projectId, platformId, userId, request, goLive = false }: UpdateParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayChangeWhoCanSee({ agent, request, projectId, userId, log })
-        const visibility = request.visibility ?? agent.visibility
-        const sharedWithUserIds = await resolveShare({
-            visibility,
-            requested: request.sharedWithUserIds,
-            stored: agent.sharedWithUserIds,
-            projectId,
-            log,
-        })
-        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(await withPinnedKey({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }))
+        const requestedDraft = isNil(request.draft) ? null : sanitizeObjectForPostgresql(await withPinnedKey({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }))
         await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
-        const goingLive = goLive && agentUtils.isPublishable(draft)
-        const published = goingLive ? draft : agent.published
-        if (goingLive) {
-            assertDraftIsCoherent(draft)
-            await assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log })
-        }
         await transaction(async (entityManager) => {
-            await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            const draft = requestedDraft ?? locked.draft
+            const visibility = request.visibility ?? locked.visibility
+            const sharedWithUserIds = await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: locked.sharedWithUserIds, projectId, log })
+            const goingLive = goLive && agentUtils.isPublishable(draft)
             if (goingLive) {
-                await assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log })
+                assertDraftIsCoherent(draft)
+                await assertMayPublishWhatFlowsAlreadyRun({ agent: locked, projectId, platformId, userId, log })
             }
+            const published = goingLive ? draft : locked.published
             await entityManager.getRepository(AgentEntity).save({ id, ...omit(request, ['goLive', 'draft', 'visibility', 'sharedWithUserIds']), draft, published, visibility, sharedWithUserIds })
         })
         return this.getOneOrThrow({ id, projectId, userId })
@@ -446,6 +449,16 @@ async function withDefaultModel({ draft, platformId, projectId, log }: {
     if (!isNil(draft.modelName) || !isNil(draft.modelTierId)) {
         return draft
     }
+    const platformDefault = (await platformConfigurationService(log).getOrCreateForPlatform({ platformId })).defaultChatModel
+    if (!isNil(platformDefault)) {
+        const { data: options } = await tryCatch(() => aiModelOptionsService(log).list({ platformId, projectId, surface: 'agent' }))
+        const usable = isNil(options) ? null : aiModelOptionsUtils.usableChoice({ choice: platformDefault, tiers: options.tiers, credits: options.credits ?? null, keys: options.keys, movedTiers: options.movedTiers })
+        if (!isNil(usable)) {
+            return usable.type === 'tier'
+                ? { ...draft, modelTierId: usable.tierId, provider: null, providerConfigId: null, modelName: null }
+                : { ...draft, provider: usable.provider, providerConfigId: usable.providerConfigId, modelName: usable.modelId, modelTierId: null }
+        }
+    }
     const chatKey = await aiProviderService(log).getChatKey({ platformId, scope: { type: 'project', projectId } })
     if (isNil(chatKey)) {
         return draft
@@ -453,11 +466,19 @@ async function withDefaultModel({ draft, platformId, projectId, log }: {
     const { provider, id: providerConfigId } = chatKey
     const modelName = provider === AIProviderName.ACTIVEPIECES
         ? agentHelpers.resolveTier({ tierId: null, surface: 'flow' }).id
-        : agentHelpers.defaultModelIdForProvider({ provider, surface: 'flow', config: chatKey.config, modelScope: chatKey.modelScope, modelIds: chatKey.modelIds })
+        : firstChatModelId({ key: chatKey }) ?? agentHelpers.defaultModelIdForProvider({ provider, surface: 'flow', config: chatKey.config, modelScope: chatKey.modelScope, modelIds: chatKey.modelIds })
     if (isNil(modelName)) {
         return { ...draft, provider, providerConfigId }
     }
     return { ...draft, provider, providerConfigId, modelName }
+}
+
+function firstChatModelId({ key }: { key: AIProviderSchema }): string | undefined {
+    if (!isNil(aiKeyScope.manualModelIdsOf({ config: key.config }))) {
+        return undefined
+    }
+    return aiProviderUtils.runnableChatModelIds({ provider: key.provider })
+        .find((modelId) => aiKeyScope.scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId }))
 }
 
 async function withPinnedKey({ draft, platformId, projectId, log }: {
@@ -734,6 +755,7 @@ type ListParams = {
     sort?: AgentListSort
     cursor?: Cursor
     limit?: number
+    connectionExternalIds?: string[]
 }
 
 type MoveParams = {

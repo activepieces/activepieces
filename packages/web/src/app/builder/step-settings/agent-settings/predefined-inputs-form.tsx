@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { connectionTemplate, isNil } from '@activepieces/core-utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import { FieldControlMode, PredefinedInputField } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,9 +7,10 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { LogoPlate } from '@/components/custom/logo-plate';
+import { ConnectionSelect } from '@/app/connections/connection-select';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Form, FormField } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -18,11 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  ConnectionDropdown,
-  usePieceToolsDialogStore,
-} from '@/features/agents';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePieceToolsDialogStore } from '@/features/agents';
+import { appConnectionsQueries } from '@/features/connections';
 import { piecesHooks } from '@/features/pieces';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 
@@ -46,9 +47,21 @@ export const PredefinedInputsForm = () => {
     selectedAction,
     selectedPiece: piece,
   } = usePieceToolsDialogStore();
-  const { pieces } = piecesHooks.usePieces({});
+  const { pieces, isLoading: isLoadingPieces } = piecesHooks.usePieces({});
   const selectedPiece = pieces?.find((p) => p.name === piece?.pieceName);
   const requireAuth = selectedAction?.requireAuth ?? true;
+  const { isLoading: isLoadingConnections } =
+    appConnectionsQueries.useAppConnections({
+      request: {
+        pieceName: selectedPiece?.name ?? '',
+        projectId: authenticationSession.getProjectId()!,
+        limit: 1000,
+      },
+      pieceAuth: selectedPiece?.auth,
+      extraKeys: [selectedPiece?.name, authenticationSession.getProjectId()!],
+      staleTime: 0,
+      enabled: requireAuth && !isNil(selectedPiece?.auth),
+    });
   const formSchema = useMemo(
     () => createPredefinedInputsFormSchema(requireAuth),
     [requireAuth],
@@ -67,8 +80,9 @@ export const PredefinedInputsForm = () => {
   );
   const defaultValues = useMemo<PredefinedInputsFormValues>(() => {
     const values: PredefinedInputsFormValues = {};
-    if (requireAuth && predefinedInputs?.auth) {
-      values.auth = predefinedInputs.auth;
+    const auth = connectionTemplate.wrapExternalId(predefinedInputs?.auth);
+    if (requireAuth && !isNil(auth)) {
+      values.auth = auth;
     }
     if (predefinedInputs?.fields) {
       Object.entries(predefinedInputs.fields).forEach(([key, field]) => {
@@ -113,13 +127,12 @@ export const PredefinedInputsForm = () => {
 
     return () => subscription.unsubscribe();
   }, [form, setPredefinedInputs]);
-  const handleAuthChange = (value: string | null) => {
-    const newAuth = !isNil(value) ? value : undefined;
+  const handleAuthChange = (value: string) => {
     setPredefinedInputs({
-      auth: newAuth,
+      auth: connectionTemplate.unwrapExternalId(value) ?? undefined,
       fields: predefinedInputs?.fields || {},
     });
-    form.setValue('auth', value ?? '');
+    form.setValue('auth', value);
   };
   const getModeForProperty = (propertyName: string): FieldControlMode =>
     predefinedInputs?.fields?.[propertyName]?.mode ??
@@ -151,120 +164,115 @@ export const PredefinedInputsForm = () => {
     }
   };
   const pieceHasAuth = requireAuth && selectedPiece?.auth;
+  if (isLoadingPieces || isLoadingConnections) {
+    return (
+      <div className="flex flex-col gap-4 p-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className="w-full h-10" />
+        ))}
+      </div>
+    );
+  }
   return (
     <Form {...form}>
       <ScrollArea className="h-full">
-        <div className="flex items-start border-b gap-3 p-4">
-          <LogoPlate
-            className="size-11 rounded-md p-1.5"
-            border
-            src={selectedPiece?.logoUrl}
-            alt=""
-          />
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium">
-              {selectedAction?.displayName}
-            </div>
-            {selectedAction?.description && (
-              <p className="mt-0.5 text-xs text-gray-11 line-clamp-2">
-                {selectedAction.description}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="space-y-6 p-4">
-          {pieceHasAuth && !isNil(selectedPiece) && (
-            <ConnectionDropdown
+        {pieceHasAuth && !isNil(selectedPiece) && (
+          <div className="flex flex-col gap-2 p-4 border-b">
+            <Label showRequiredIndicator>{t('Connection')}</Label>
+            <ConnectionSelect
               piece={selectedPiece}
-              value={form.watch('auth') as string | null}
+              value={
+                connectionTemplate.wrapExternalId(form.watch('auth')) ??
+                undefined
+              }
               onChange={handleAuthChange}
-              placeholder={t('Connect your account')}
             />
-          )}
-          {Object.keys(properties).length > 0 && (
-            <div className="space-y-5">
-              {Object.entries(properties).map(([propertyName, property]) => {
-                const isMarkdown = property.type === PropertyType.MARKDOWN;
+          </div>
+        )}
+        {Object.keys(properties).length > 0 && (
+          <div className="flex flex-col gap-3 p-4">
+            <span className="text-xs text-gray-11">{t('Inputs')}</span>
+            {Object.entries(properties).map(([propertyName, property]) => {
+              const isMarkdown = property.type === PropertyType.MARKDOWN;
 
-                if (isMarkdown) {
-                  return (
-                    <ApMarkdown
-                      key={propertyName}
-                      markdown={property.description}
-                      variables={{}}
-                      variant={property.variant}
-                    />
-                  );
-                }
-
-                const mode = getModeForProperty(propertyName);
-                const showInput = mode === FieldControlMode.CHOOSE_YOURSELF;
+              if (isMarkdown) {
                 return (
-                  <div key={propertyName} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium">
-                        {property.displayName} {property.required && '*'}
-                      </h3>
-                      <Select
-                        value={mode}
-                        onValueChange={(v) =>
-                          handleModeChange(propertyName, v as FieldControlMode)
-                        }
-                      >
-                        <SelectTrigger className="w-80">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={FieldControlMode.AGENT_DECIDE}>
-                            {t('Let agent decide')}
-                          </SelectItem>
-                          <SelectItem value={FieldControlMode.CHOOSE_YOURSELF}>
-                            {t('Set value myself')}
-                          </SelectItem>
-                          {!property.required && (
-                            <SelectItem value={FieldControlMode.LEAVE_EMPTY}>
-                              {t('Leave empty')}
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {showInput && (
-                      <FormField
-                        name={propertyName}
-                        control={form.control}
-                        render={({ field }) =>
-                          selectGenericFormComponentForProperty({
-                            field,
-                            hideLabel: true,
-                            propertyName,
-                            inputName: propertyName,
-                            property,
-                            allowDynamicValues: false,
-                            markdownVariables: {},
-                            useMentionTextInput: true,
-                            disabled: false,
-                            dynamicInputModeToggled: false,
-                            form,
-                            dynamicPropsInfo: {
-                              pieceName: selectedPiece?.name ?? '',
-                              pieceVersion: selectedPiece?.version ?? '',
-                              actionOrTriggerName: selectedAction?.name ?? '',
-                              placedInside: 'predefinedAgentInputs',
-                              updateFormSchema: null,
-                              updatePropertySettingsSchema: null,
-                            },
-                            propertySettings: null,
-                          })
-                        }
-                      />
-                    )}
-                  </div>
+                  <ApMarkdown
+                    key={propertyName}
+                    markdown={property.description}
+                    variables={{}}
+                    variant={property.variant}
+                  />
                 );
-              })}
-            </div>
-          )}
-        </div>
+              }
+
+              const mode = getModeForProperty(propertyName);
+              const showInput = mode === FieldControlMode.CHOOSE_YOURSELF;
+              return (
+                <div key={propertyName} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label showRequiredIndicator={property.required}>
+                      {property.displayName}
+                    </Label>
+                    <Select
+                      value={mode}
+                      onValueChange={(v) =>
+                        handleModeChange(propertyName, v as FieldControlMode)
+                      }
+                    >
+                      <SelectTrigger className="w-80">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={FieldControlMode.AGENT_DECIDE}>
+                          {t('Let agent decide')}
+                        </SelectItem>
+                        <SelectItem value={FieldControlMode.CHOOSE_YOURSELF}>
+                          {t('Set value myself')}
+                        </SelectItem>
+                        {!property.required && (
+                          <SelectItem value={FieldControlMode.LEAVE_EMPTY}>
+                            {t('Leave empty')}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {showInput && (
+                    <FormField
+                      name={propertyName}
+                      control={form.control}
+                      render={({ field }) =>
+                        selectGenericFormComponentForProperty({
+                          field,
+                          hideLabel: true,
+                          propertyName,
+                          inputName: propertyName,
+                          property,
+                          allowDynamicValues: false,
+                          markdownVariables: {},
+                          useMentionTextInput: true,
+                          disabled: false,
+                          dynamicInputModeToggled: false,
+                          form,
+                          dynamicPropsInfo: {
+                            pieceName: selectedPiece?.name ?? '',
+                            pieceVersion: selectedPiece?.version ?? '',
+                            actionOrTriggerName: selectedAction?.name ?? '',
+                            placedInside: 'predefinedAgentInputs',
+                            updateFormSchema: null,
+                            updatePropertySettingsSchema: null,
+                          },
+                          propertySettings: null,
+                        })
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </ScrollArea>
     </Form>
   );

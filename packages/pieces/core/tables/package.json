@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-tables",
-  "version": "0.5.3",
+  "version": "0.6.4",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@types/qs": "6.14.0",
-    "vitest": "3.2.6",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "vitest": "5.0.5"
   }
 }

@@ -9,7 +9,7 @@ const { mockCapture, mockAlias, mockGetEdition, mockIsProductTelemetryEnabled } 
 }))
 
 vi.mock('posthog-node', () => ({
-    PostHog: vi.fn(() => ({ capture: mockCapture, alias: mockAlias, identify: vi.fn(), groupIdentify: vi.fn(), flush: vi.fn(), shutdown: vi.fn() })),
+    PostHog: vi.fn(function () { return { capture: mockCapture, alias: mockAlias, identify: vi.fn(), groupIdentify: vi.fn(), flush: vi.fn(), shutdown: vi.fn() } }),
 }))
 
 vi.mock('../../../../src/app/platform/platform-configuration.service', () => ({

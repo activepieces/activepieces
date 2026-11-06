@@ -17,9 +17,9 @@ export const analyzeDocument = createAction({
   classification: 'READ',
   displayName: 'Analyze Document',
   description:
-    'Extract text, forms (key-value pairs), tables, and signatures from a document. Supports JPEG and PNG via direct upload; PDF and TIFF via S3 only. For multi-page PDFs, use Start Document Analysis instead.',
+    'Extract text, forms (key-value pairs), tables, and signatures from a document. Supports JPEG, PNG, and single-page PDF or TIFF, uploaded directly or from S3. For multi-page PDFs, use Analyze Document from S3 (Multi-Page) instead.',
   audience: 'both',
-  aiMetadata: { description: 'Synchronously analyze a single-page document with AWS Textract to pull out forms (key-value pairs), tables, and signatures, optionally answering natural-language queries about it. Choose it when you need structured layout extraction rather than just raw text (use Detect Document Text for plain text only) and the document is one page. The source can be an uploaded file (JPEG/PNG only) or an S3 object (also PDF/TIFF, single-page only); for multi-page PDFs use the S3 multi-page action. Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
+  aiMetadata: { description: 'Synchronously analyze a single-page document with AWS Textract to pull out forms (key-value pairs), tables, and signatures, optionally answering natural-language queries about it. Choose it when you need structured layout extraction rather than just raw text (use Detect Document Text for plain text only) and the document is one page. The source can be an uploaded file or an S3 object in JPEG, PNG, or single-page PDF/TIFF format; for multi-page PDFs use the S3 multi-page action. Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',
@@ -48,7 +48,7 @@ export const analyzeDocument = createAction({
             }),
             s3Key: Property.ShortText({
               displayName: 'S3 File Path',
-              description: 'The path to the file in your S3 bucket (e.g. "documents/invoice.pdf"). PDF and TIFF are supported for single-page documents only. For multi-page PDFs, use the Start Document Analysis action instead.',
+              description: 'The path to the file in your S3 bucket (e.g. "documents/invoice.pdf"). PDF and TIFF are supported for single-page documents only. For multi-page PDFs, use the Analyze Document from S3 (Multi-Page) action instead.',
               required: true,
             }),
           };
@@ -56,7 +56,7 @@ export const analyzeDocument = createAction({
         return {
           file: Property.File({
             displayName: 'File',
-            description: 'The document to analyze. Only JPEG and PNG are supported for direct upload (max 5 MB). For PDF or TIFF files, use the "From S3 bucket" option instead.',
+            description: 'The document to analyze: JPEG, PNG, or a single-page PDF or TIFF (max 10 MB). For multi-page PDFs, use the Analyze Document from S3 (Multi-Page) action instead.',
             required: true,
           }),
         };
@@ -90,7 +90,7 @@ export const analyzeDocument = createAction({
     const s3Key = source === 's3' ? (document['s3Key'] as string) : undefined;
 
     try {
-      const client = createTextractClient(context.auth.props);
+      const client = await createTextractClient({ auth: context.auth.props, server: context.server });
       const documentInput = buildDocumentInput(file, s3Bucket, s3Key);
 
       // Always strip QUERIES from dropdown value — it requires QueriesConfig

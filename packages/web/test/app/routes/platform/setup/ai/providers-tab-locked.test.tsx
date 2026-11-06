@@ -19,6 +19,10 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
+vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
+  platformModelTierQueries: { useAdminList: () => ({ data: [] }) },
+}));
+
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({
@@ -62,7 +66,6 @@ vi.mock('@/features/platform-admin', () => {
       }),
     },
     aiProviderMutations: {
-      useToggleChatProvider: mutation,
       useDeleteAiProvider: mutation,
       useRecheckAiProvider: mutation,
       useUpdateAiProvider: mutation,
@@ -76,7 +79,12 @@ vi.mock('@/features/projects', () => ({
 
 vi.mock('@/features/agents', () => ({
   SUPPORTED_AI_PROVIDERS: [
-    { provider: 'anthropic', name: 'Anthropic', markdown: '', logoUrl: '' },
+    {
+      provider: 'anthropic',
+      name: 'Anthropic',
+      markdown: () => '',
+      logoUrl: '',
+    },
   ],
 }));
 
@@ -95,6 +103,10 @@ vi.mock(
   () => ({ ConnectProviderDialog: () => null }),
 );
 
+vi.mock(
+  '@/app/routes/platform/setup/ai/providers-tab/default-chat-model-card',
+  () => ({ DefaultChatModelCard: () => null }),
+);
 vi.mock('@/app/routes/platform/setup/ai/providers-tab/config-detail', () => ({
   ConfigDetail: () => <h1>Key detail</h1>,
 }));
@@ -126,13 +138,16 @@ beforeEach(() => {
 });
 
 describe('providers tab on a plan without aiProvidersEnabled', () => {
-  it('lists existing keys with delete only and an upgrade note', () => {
+  it('lists existing keys with delete only and a read-only header', () => {
     state.providers = [ANTHROPIC_KEY];
 
     renderTab();
 
+    expect(screen.getByText('Read-only')).toBeDefined();
     expect(
-      screen.getByText('Your plan does not include Bring your own AI keys'),
+      screen.getByText(
+        "Your plan doesn't include your own AI keys. You can still delete them.",
+      ),
     ).toBeDefined();
     expect(screen.getAllByText('Trial Anthropic key').length).toBeGreaterThan(
       0,
@@ -140,9 +155,9 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
     expect(screen.queryAllByRole('combobox')).toEqual([]);
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDefined();
     expect(screen.queryAllByRole('button', { name: /Add key/ })).toEqual([]);
-    expect(screen.queryAllByRole('button', { name: /Trial Anthropic/ })).toEqual(
-      [],
-    );
+    expect(
+      screen.queryAllByRole('button', { name: /Trial Anthropic/ }),
+    ).toEqual([]);
     expect(screen.queryAllByText('Also available')).toEqual([]);
   });
 
@@ -163,7 +178,9 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
       screen.getByRole('heading', { name: 'Unlock AI Center' }),
     ).toBeDefined();
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
   });
 });
@@ -179,7 +196,9 @@ describe('providers tab on a plan with aiProvidersEnabled', () => {
       screen.getAllByRole('button', { name: /Add key/ }).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
     expect(
       screen.queryAllByRole('heading', { name: 'Unlock AI Center' }),

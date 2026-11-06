@@ -28,7 +28,6 @@ import {
   adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -37,15 +36,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { RequestTrial } from '@/features/billing';
-import { workersQueries } from '@/features/platform-admin';
+import { workerGroupsLock, workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
 import { SandboxesPopover } from './sandboxes-popover';
-import { WorkerAssignmentsTab } from './worker-assignments-tab';
 import { WorkerConfigsPopover } from './worker-configs-popover';
+import { LockedWorkerGroups } from './worker-groups/locked-worker-groups';
+import { WorkerGroupsPage } from './worker-groups/worker-groups-page';
 
 export default function WorkersPage({ section }: WorkersPageProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -54,6 +54,18 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
 
   const fleetType = workersData?.[0]?.type;
+
+  if (section === 'worker-groups') {
+    const lockReason = workerGroupsLock.reason({
+      edition,
+      plan: platform.plan,
+    });
+    return lockReason === null ? (
+      <WorkerGroupsPage />
+    ) : (
+      <LockedWorkerGroups reason={lockReason} />
+    );
+  }
 
   return (
     <AdminPage>
@@ -138,20 +150,6 @@ export default function WorkersPage({ section }: WorkersPageProps) {
             <WorkerCard key={worker.id} worker={worker} index={index} />
           ))}
         </div>
-      )}
-
-      {section === 'worker-groups' && (
-        <LockedFeatureGuard
-          featureKey="DEDICATED_WORKERS"
-          locked={!platform.plan.workerGroupsEnabled}
-          lockTitle={t('Unlock Worker Groups')}
-          lockDescription={t(
-            'Reserve dedicated worker capacity for specific projects so a busy project never slows down the rest',
-          )}
-          lockDocumentationUrl="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
-        >
-          <WorkerAssignmentsTab />
-        </LockedFeatureGuard>
       )}
     </AdminPage>
   );

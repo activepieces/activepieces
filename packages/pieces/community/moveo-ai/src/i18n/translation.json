@@ -24,6 +24,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Dialog Expired": "Dialog Expired",
   "Dialog Insights": "Dialog Insights",
   "Triggers when the dialog expires.": "Triggers when the dialog expires.",

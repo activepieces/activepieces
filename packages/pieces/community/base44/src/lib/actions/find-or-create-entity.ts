@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { base44Auth } from '../..';
-import { createClient, Base44Error, type Base44Client } from '@base44/sdk';
+import { base44Auth, base44Common } from '../common/client';
 
 export const findOrCreateEntity = createAction({
   auth: base44Auth,
@@ -8,8 +7,14 @@ export const findOrCreateEntity = createAction({
   classification: 'WRITE',
   displayName: 'Find or Create Entity',
   description: 'Find a matching entity record, or create one if not found',
-  audience: 'both',
-  aiMetadata: { description: 'Searches a Base44 app for an existing record of a given entity type matching a JSON query, and creates one from the supplied data only if no match is found. Use this upsert-style action to avoid duplicates when you want a record to exist but should not create a second copy. Because creation is gated on the search query, it is effectively idempotent so long as the query reliably identifies the same record.', idempotent: true },
+  audience: 'human',
+  outputSchema: {
+    fields: [
+      { key: 'found', label: 'Found', format: 'boolean' },
+      { key: 'created', label: 'Created', format: 'boolean' },
+      { key: 'entity', label: 'Entity', children: base44Common.recordFields },
+    ],
+  },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',
@@ -30,59 +35,21 @@ export const findOrCreateEntity = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const appId = auth.props.appId;
-    const token = auth.props.token;
     const { entityType, searchQuery, createData } = propsValue;
-
-    if (!appId) {
-      throw new Error('App ID is required.');
-    }
-
-    const base44: Base44Client = createClient({
-      appId,
-      token,
-      serviceToken: token,
-    });
-
+    const query = base44Common.requireJsonObject({ value: searchQuery, label: 'Search Query' });
+    const data = base44Common.requireJsonObject({ value: createData, label: 'Create Data' });
+    const handler = await base44Common.getEntityHandler({ auth: auth.props, entityType });
     try {
-      const entitiesModule = token
-        ? base44.asServiceRole.entities as Record<string, {
-            filter: (query: Record<string, unknown>) => Promise<unknown[]>;
-            create: (data: Record<string, unknown>) => Promise<unknown>;
-          }>
-        : base44.entities as Record<string, {
-            filter: (query: Record<string, unknown>) => Promise<unknown[]>;
-            create: (data: Record<string, unknown>) => Promise<unknown>;
-          }>;
-
-      const results = await entitiesModule[entityType].filter(searchQuery as Record<string, unknown>);
-
-      if (Array.isArray(results) && results.length > 0) {
-        return {
-          found: true,
-          created: false,
-          entity: results[0],
-        };
+      const results = base44Common.toRecordList(
+        await handler.filter(query, undefined, 1),
+      );
+      if (results.length > 0) {
+        return { found: true, created: false, entity: results[0] };
       }
-
-      const newEntity = await entitiesModule[entityType].create(createData as Record<string, unknown>);
-
-      return {
-        found: false,
-        created: true,
-        entity: newEntity,
-      };
+      const newEntity = await handler.create(data);
+      return { found: false, created: true, entity: base44Common.toRecord(newEntity) };
     } catch (error: unknown) {
-      if (error instanceof Base44Error) {
-        if (error.status === 404) {
-          throw new Error(`Entity type "${entityType}" not found. Please check the name.`);
-        }
-        if (error.status === 401 || error.status === 403) {
-          throw new Error('Authentication failed. Please check your credentials.');
-        }
-        throw new Error(`Failed: ${error.message}`);
-      }
-      throw new Error(`Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw base44Common.toBase44Error({ error, entityType, operation: 'find or create the record' });
     }
   },
 });

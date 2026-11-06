@@ -1,8 +1,8 @@
-import { createAction, Property, InputPropertyMap } from '@activepieces/pieces-framework';
+import { createAction, Property, InputPropertyMap, MarkdownVariant } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat, FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
-import { scrapeUrlActionOutputSchema } from '../output-schemas';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, saveFirecrawlFile, forJsonOutputFormat, FIRECRAWL_API_BASE_URL, FIRECRAWL_ORIGIN } from '../common/common';
+import { scrapeActionOutputSchema } from '../output-schemas';
 
 function forDefaultScreenshot(): any {
   return {
@@ -16,25 +16,20 @@ export const scrape = createAction({
   name: 'scrape',
   classification: 'READ',
   displayName: 'Scrape Website',
-  description: 'Scrape a website by performing a series of actions like clicking, typing, taking screenshots, and extracting data.',
+  description: 'Read one web page as Markdown, HTML, links, a screenshot or JSON.',
   audience: 'human',
-  outputSchema: scrapeUrlActionOutputSchema,
+  outputSchema: scrapeActionOutputSchema,
   aiMetadata: { description: 'Fetches the content of a single web page and returns it in a chosen format (markdown, HTML, links, summary, screenshot, or AI-extracted JSON). Choose this to read one specific URL; for many pages use Crawl, and for a structured data pull across several known URLs use Extract Structured Data. Optionally runs browser actions (click, type, wait, screenshot) before scraping. Read-only against the target, so repeating the same call is safe.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'Website URL',
-      description: 'The webpage URL to scrape.',
+      description: 'The page to read.',
+      placeholder: 'https://example.com/pricing',
       required: true,
     }),
-    timeout: Property.Number({
-      displayName: 'Timeout (ms)',
-      description: 'Maximum time to wait for the page to load (in milliseconds).',
-      required: false,
-      defaultValue: 60000,
-    }),
     useActions: Property.Checkbox({
-      displayName: 'Perform Actions Before Scraping',
-      description: 'Enable to perform a sequence of actions on the page before scraping (like clicking buttons, filling forms, etc.). See [Firecrawl Actions Documentation](https://docs.firecrawl.dev/api-reference/endpoint/scrape#body-actions) for details on available actions and their parameters.',
+      displayName: 'Run Browser Actions',
+      description: 'Click, type or wait on the page before it is read.',
       required: false,
       defaultValue: false,
     }),
@@ -54,7 +49,7 @@ export const scrape = createAction({
         return {
           actions: Property.Json({
             displayName: 'Actions',
-            description: 'Sequence of actions to perform on the page.',
+            description: 'Steps run in order. Replace the example with your own.',
             required: false,
             defaultValue: [
               {
@@ -73,16 +68,23 @@ export const scrape = createAction({
               {
                 type: 'screenshot',
               },
+              {
+                type: 'pdf',
+                format: 'A4',
+              },
             ],
           }),
         };
       },
     }),
-
+    screenshot_note: Property.MarkDown({
+      value: 'A full-page screenshot is also saved with every scrape.',
+      variant: MarkdownVariant.INFO,
+    }),
     formats: Property.Dropdown({
       auth: firecrawlAuth,
       displayName: 'Output Format',
-      description: 'Choose what format you want your output in.',
+      description: 'What the step returns for the page.',
       required: true,
       refreshers: [],
       options: async () => {
@@ -95,7 +97,7 @@ export const scrape = createAction({
             { label: 'Links', value: 'links' },
             { label: 'Images', value: 'images' },
             { label: 'Screenshot', value: 'screenshot' },
-            { label: 'JSON', value: 'json' }
+            { label: 'JSON', value: 'json' },
           ]
         };
       },
@@ -117,7 +119,7 @@ export const scrape = createAction({
         const map: InputPropertyMap = {
           prompt: Property.LongText({
             displayName: 'Extraction Prompt',
-            description: 'Describe what information you want to extract.',
+            description: 'What to pull from the page, in plain words.',
             required: false,
             defaultValue: 'Extract the following data from the provided text.',
           }),
@@ -142,14 +144,14 @@ export const scrape = createAction({
         return {
           mode: Property.StaticDropdown<'simple' | 'advanced'>({
             displayName: 'Data Schema Type',
-            description: 'For complex schema, you can use advanced mode.',
             required: true,
             defaultValue: 'simple',
+            display: 'cards',
             options: {
               disabled: false,
               options: [
-                { label: 'Simple', value: 'simple' },
-                { label: 'Advanced', value: 'advanced' },
+                { label: 'Simple', value: 'simple', description: 'A list of fields', icon: 'text' },
+                { label: 'Advanced', value: 'advanced', description: 'A JSON Schema', icon: 'code' },
               ],
             },
           }),
@@ -173,8 +175,7 @@ export const scrape = createAction({
           return {
             fields: Property.Json({
               displayName: 'JSON Schema',
-              description:
-                'Learn more about JSON Schema here: https://json-schema.org/learn/getting-started-step-by-step',
+              description: 'The shape of the data to return, as a JSON Schema.',
               required: true,
               defaultValue: {
                 type: 'object',
@@ -193,24 +194,23 @@ export const scrape = createAction({
         }
         return {
           fields: Property.Array({
-            displayName: 'Data Definition',
+            displayName: 'Fields to Extract',
+            description: 'One row per value to pull from the page.',
             required: true,
             properties: {
               name: Property.ShortText({
                 displayName: 'Name',
-                description:
-                  'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+                description: 'Letters, numbers, _ . or - only.',
+                placeholder: 'price',
                 required: true,
               }),
               description: Property.LongText({
                 displayName: 'Description',
-                description:
-                  'Brief description of the data, this hints for the AI on what to look for',
+                description: 'What the value is, as a hint for the AI.',
                 required: false,
               }),
               type: Property.StaticDropdown({
                 displayName: 'Data Type',
-                description: 'Type of parameter.',
                 required: true,
                 defaultValue: 'string',
                 options: {
@@ -223,7 +223,8 @@ export const scrape = createAction({
                 },
               }),
               isRequired: Property.Checkbox({
-                displayName: 'Fail if Not present?',
+                displayName: 'Required Field',
+                description: 'The AI must return a value for this field.',
                 required: true,
                 defaultValue: false,
               }),
@@ -232,21 +233,45 @@ export const scrape = createAction({
         };
       },
     }),
+    timeout: Property.Number({
+      displayName: 'Timeout',
+      description: 'Milliseconds to wait for the page to load.',
+      required: false,
+      defaultValue: 60000,
+      advanced: true,
+    }),
+    storeInCache: Property.Checkbox({
+      displayName: 'Use Cache',
+      description: 'On: Firecrawl keeps the page and may serve a cached copy.',
+      required: false,
+      defaultValue: false,
+      advanced: true,
+    }),
   },
+  propertyGroups: [
+    { key: 'page', display: 'section', label: 'Page', icon: 'file', props: ['url', 'useActions', 'actionProperties'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'code', props: ['screenshot_note', 'formats', 'extractPrompt', 'extractMode', 'extractSchema'] },
+  ],
   async run(context) {
     const { auth, propsValue } = context;
+    const shouldStoreInCache = propsValue.storeInCache ?? false;
     const body: Record<string, any> = {
       url: propsValue.url,
       origin: FIRECRAWL_ORIGIN,
       timeout: propsValue.timeout,
+      storeInCache: shouldStoreInCache,
     };
-    
+
+    if (!shouldStoreInCache) {
+      body['maxAge'] = 0;
+    }
+
     if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
       body['actions'] = propsValue.actionProperties['actions'] || [];
     }
-    
+
     const format = propsValue.formats as string;
-    const formatsArray: any[] = []; 
+    const formatsArray: Array<string | Record<string, unknown>> = [];
 
     // user selection
     if (format === 'screenshot') {
@@ -286,15 +311,44 @@ export const scrape = createAction({
     });
 
     const result = response.body;
-    await downloadAndSaveScreenshot(result.data, context);
+    if (!result?.data) {
+      throw new Error(`Firecrawl returned no page data${result?.error ? `: ${result.error}` : ''}`);
+    }
+    const savedScreenshot = result.data.screenshot
+      ? await saveFirecrawlFile({ context, firecrawlFileUrl: result.data.screenshot })
+      : undefined;
+    const savedPdfs = await Promise.all(
+      (result.data.actions?.pdfs ?? []).map((pdfUrl: string) =>
+        saveFirecrawlFile({ context, firecrawlFileUrl: pdfUrl })
+      )
+    );
+    const savedActionScreenshots = await Promise.all(
+      (result.data.actions?.screenshots ?? []).map((screenshotUrl: string) =>
+        saveFirecrawlFile({ context, firecrawlFileUrl: screenshotUrl })
+      )
+    );
+    const javascriptReturns = result.data.actions?.javascriptReturns ?? [];
+    const scrapes = result.data.actions?.scrapes ?? [];
 
-    // reorder the data object to put screenshot first, then user's selected format only
-    result.data = {
-      screenshot: result.data.screenshot,
-      [format]: result.data[format],
-      metadata: result.data.metadata
+    const output: { success: boolean; data: Record<string, unknown> } = {
+      success: result.success,
+      data: {
+        screenshot: savedScreenshot,
+        actions: {
+          pdfs: savedPdfs,
+          screenshots: savedActionScreenshots,
+          javascriptReturns,
+          scrapes,
+        },
+        metadata: result.data.metadata,
+        warning: result.data.warning,
+      },
     };
 
-    return result;
+    if (format !== 'screenshot') {
+      output.data[format] = result.data[format];
+    }
+
+    return output;
   },
-}); 
+});

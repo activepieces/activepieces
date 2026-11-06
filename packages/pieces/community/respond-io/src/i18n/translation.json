@@ -74,6 +74,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Contact Tag Updated": "Contact Tag Updated",
   "Contact Updated": "Contact Updated",
   "Conversation Closed": "Conversation Closed",

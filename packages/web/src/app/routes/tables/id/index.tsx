@@ -52,11 +52,12 @@ const ApTableEditorPage = () => {
 
   // the lock lives in the table state provider, above the take-over refresh
   // remount boundary, so refreshing never releases the just-acquired lock
-  const { lockedBy, takeOver } = useTableLock();
+  const { lockedBy, acquiring, takeOver } = useTableLock();
+  const blockedByLock = !!lockedBy || acquiring;
 
   useEffect(() => {
-    setLockedByOtherUser(!!lockedBy);
-  }, [lockedBy, setLockedByOtherUser]);
+    setLockedByOtherUser(blockedByLock);
+  }, [blockedByLock, setLockedByOtherUser]);
 
   const gridRef = useRef<DataGridHandle>(null);
   const { resolvedTheme } = useTheme();
@@ -66,7 +67,7 @@ const ApTableEditorPage = () => {
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
-  const canEdit = userHasTableWritePermission && !lockedBy;
+  const canEdit = userHasTableWritePermission && !blockedByLock;
   const isAllowedToCreateRecord =
     canEdit && maxRecords && records.length < maxRecords;
 

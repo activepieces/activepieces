@@ -18,11 +18,12 @@ const markdown = `
 - Keep the other settings unchanged (default).
 `;
 
-export const gravityFormsNewSubmission = createTrigger({
+export const newSubmissionTrigger = createTrigger({
   name: 'new-submission',
   classification: 'READ',
   displayName: 'New Submission',
   auth: PieceAuth.None(),
+  requireAuth: false,
   description: 'Triggers when form receives a new submission',
   aiMetadata: {
     description:
@@ -35,11 +36,11 @@ export const gravityFormsNewSubmission = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {},
-  async onEnable(context) {
-    // Empty
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // Empty
+  async onDisable() {
+    return;
   },
   async run(context) {
     return [context.payload];

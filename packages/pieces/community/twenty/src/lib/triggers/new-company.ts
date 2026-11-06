@@ -5,13 +5,13 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
-  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { twentyAuth } from '../auth';
-import { twentyRequest, parseRecords } from '../common';
+import { twentyApi } from '../common/api';
+import { newCompanyOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof twentyAuth>,
@@ -19,26 +19,19 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const body = await twentyRequest(
-      auth,
-      HttpMethod.GET,
-      '/rest/companies',
-      undefined,
-      { 'sort[createdAt]': 'desc', 'limit': '100' },
-    );
-
-    const records = parseRecords(body);
+    const records = await twentyApi.listRecentCompanies({ auth });
 
     return records.map((item) => ({
-      epochMilliSeconds: dayjs(item['createdAt'] as string).valueOf(),
+      epochMilliSeconds: dayjs(item.createdAt).valueOf(),
       data: item,
     }));
   },
 };
 
-export const newCompany = createTrigger({
+export const newCompanyTrigger = createTrigger({
   auth: twentyAuth,
   name: 'new_company',
+  outputSchema: newCompanyOutputSchema,
   classification: 'READ',
   displayName: 'New Company',
   description: 'Triggers when a new company is created in Twenty CRM.',

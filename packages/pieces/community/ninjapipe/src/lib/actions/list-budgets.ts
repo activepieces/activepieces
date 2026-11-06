@@ -1,42 +1,40 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, extractItems, flattenArray, getAuth, ninjapipeCommon } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const listBudgets = createAction({
   auth: ninjapipeAuth,
   name: 'list_budgets',
   classification: 'SEARCH',
   displayName: 'List Budgets',
-  description: 'Retrieves a list of budgets.',
+  description: 'Lists budgets one page at a time, or all pages with Return All.',
   audience: 'both',
-  aiMetadata: { description: 'Read-only listing of budgets in NinjaPipe, with optional search text and pagination. Pick this to browse or find budgets; enable Return All to page through every match instead of a single page. Safe to repeat.', idempotent: true },
+  aiMetadata: {
+    description: 'List NinjaPipe budgets with allocated, spent and remaining amounts, filtered by search text or status. Returns one page (limit 1-100, use nextPage to continue) or every page with Return All (capped at 5,000; hasMore tells when the cap cut it short). Read-only.',
+    idempotent: true,
+  },
+  outputSchema: ninjapipeSchemas.budgetList,
   props: {
-    limit: ninjapipeCommon.limitProperty,
-    search: ninjapipeCommon.searchProperty,
-    returnAll: Property.Checkbox({ displayName: 'Return All', description: 'Retrieve all budgets using pagination.', required: false, defaultValue: false }),
-    page: Property.Number({ displayName: 'Page', description: 'Page number when not using Return All.', required: false, defaultValue: 1 }),
+    search: ninjapipeProps.search(),
+    statusFilter: Property.ShortText({ displayName: 'Status', description: 'Only budgets with this status.', required: false }),
+    sortBy: ninjapipeProps.staticDropdown({ displayName: 'Sort By', description: 'Field to sort by. Default: created_at.', values: ['created_at', 'updated_at', 'name'] }),
+    sortOrder: ninjapipeProps.staticDropdown({ displayName: 'Sort Order', description: 'Default: desc.', values: ['desc', 'asc'] }),
+    limit: ninjapipeProps.limit(),
+    page: ninjapipeProps.page(),
+    returnAll: ninjapipeProps.returnAll(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const qs: Record<string, string> = { limit: String(context.propsValue.limit ?? 20), page: String(context.propsValue.page ?? 1) };
-    if (context.propsValue.search) qs['search'] = context.propsValue.search;
-    if (context.propsValue.returnAll) {
-      const results: unknown[] = [];
-      let page = 1;
-      const limit = 100;
-      let hasMore = true;
-      while (hasMore) {
-        const response = await ninjapipeApiCall<{ data?: unknown[] }>({ auth, method: HttpMethod.GET, path: '/budgets', queryParams: { ...qs, limit: String(limit), page: String(page) } });
-        const items = extractItems(response.body);
-        results.push(...items);
-        hasMore = items.length === limit && page < 1000;
-        page++;
-      }
-      return flattenArray(results);
-    }
-    const response = await ninjapipeApiCall<{ data?: unknown[] }>({ auth, method: HttpMethod.GET, path: '/budgets', queryParams: qs });
-    const items = extractItems(response.body);
-    return flattenArray(items);
+    const p = context.propsValue;
+    return ninjapipeClient.runList({
+      auth: ninjapipeClient.readAuth(context.auth),
+      path: '/budgets',
+      query: { search: p.search, status: p.statusFilter, sort_by: p.sortBy, sort_order: p.sortOrder },
+      operation: 'list budgets',
+      returnAll: p.returnAll,
+      page: p.page,
+      limit: p.limit,
+    });
   },
 });

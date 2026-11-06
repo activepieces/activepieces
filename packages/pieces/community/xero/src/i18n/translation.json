@@ -506,6 +506,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Contact": "New Contact",
   "New or Updated Contact": "New or Updated Contact",
   "New Sales Invoice": "New Sales Invoice",

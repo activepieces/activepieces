@@ -1,8 +1,13 @@
-import { KnowledgeBaseFile } from '@activepieces/shared';
+import {
+  ApFlagId,
+  KnowledgeBaseEmbeddingSource,
+  KnowledgeBaseFile,
+} from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { validationUtils } from '@/lib/validation-utils';
 
@@ -13,6 +18,18 @@ export const useKnowledgeBaseFiles = () => {
   return useQuery<KnowledgeBaseFile[]>({
     queryKey: ['knowledge-base-files', projectId],
     queryFn: () => knowledgeBaseApi.list(),
+  });
+};
+
+export const useKnowledgeBaseEmbeddingSource = () => {
+  const projectId = authenticationSession.getProjectId();
+  const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
+    ApFlagId.PGVECTOR_AVAILABLE,
+  );
+  return useQuery<KnowledgeBaseEmbeddingSource>({
+    queryKey: ['knowledge-base-embedding-source', projectId],
+    queryFn: () => knowledgeBaseApi.embeddingSource(),
+    enabled: projectId !== null && pgvectorAvailable === true,
   });
 };
 
@@ -50,7 +67,7 @@ function uploadErrorMessage(error: unknown): string {
     switch (error.response?.data?.params?.message) {
       case 'KNOWLEDGE_BASE_NEEDS_AI_PROVIDER':
         return t(
-          'Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.',
+          'No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.',
         );
       case 'KNOWLEDGE_BASE_FILE_HAS_NO_TEXT':
         return t('This file has no text that can be searched.');
