@@ -2,12 +2,12 @@ import { ActivepiecesAiConsumerSource, AIProviderName } from '@activepieces/core
 import { aiProviderCredentials } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { reportFixedCredits } = vi.hoisted(() => ({ reportFixedCredits: vi.fn() }))
+const { reportFixedCredits, reportUsageOnly } = vi.hoisted(() => ({ reportFixedCredits: vi.fn(), reportUsageOnly: vi.fn() }))
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
     aiUtils: { createModelForImages: () => ({ modelId: 'gpt-image-1.5' }) },
-    activepiecesAiCost: { reportFixedCredits },
+    activepiecesAiCost: { reportFixedCredits, reportUsageOnly },
 }))
 
 vi.mock('ai', async (importOriginal) => ({
@@ -20,6 +20,7 @@ const { getGeneratedImage } = await import('../../../../../src/lib/execute/jobs/
 describe('getGeneratedImage charging', () => {
     beforeEach(() => {
         reportFixedCredits.mockReset()
+        reportUsageOnly.mockReset()
     })
 
     it('charges a fixed credit for a flow step on an own key', async () => {
@@ -28,10 +29,11 @@ describe('getGeneratedImage charging', () => {
         expect(reportFixedCredits).toHaveBeenCalledTimes(1)
     })
 
-    it('adds no fixed credit when the chat turn already charged for the call', async () => {
+    it('adds no fixed credit when the chat turn already charged for the call, but still records the image for usage', async () => {
         await generate({ turnAlreadyCharged: true })
 
         expect(reportFixedCredits).not.toHaveBeenCalled()
+        expect(reportUsageOnly).toHaveBeenCalledTimes(1)
     })
 })
 

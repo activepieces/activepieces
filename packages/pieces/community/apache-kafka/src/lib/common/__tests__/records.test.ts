@@ -89,7 +89,79 @@ describe('kafkaRecords', () => {
       { key: 'order-1', value: 'hello', headers: { source: 'checkout' }, partition: 1 },
     ])
     expect(() => kafkaRecords.readOutboundMessages([])).toThrow('Add at least one message')
-    expect(() => kafkaRecords.readOutboundMessage({ value: '' }, 0)).toThrow('Message 1 needs a value')
-    expect(() => kafkaRecords.readOutboundMessage({ value: 'hello', partition: -1 }, 0)).toThrow('Partition must be a whole number')
+    expect(() => kafkaRecords.readOutboundMessage({ value: { value: '' }, index: 0 })).toThrow('Message 1 needs a value')
+    expect(() => kafkaRecords.readOutboundMessage({ value: { value: 'hello', partition: -1 }, index: 0 })).toThrow('Partition must be a whole number')
+  })
+
+  it('plans pending reads from committed offsets and skips caught-up partitions', () => {
+    expect(kafkaRecords.pendingTargets({
+      topicOffsets: [
+        { partition: 0, low: '0', high: '10' },
+        { partition: 1, low: '5', high: '7' },
+        { partition: 2, low: '0', high: '4' },
+      ],
+      committed: [
+        { partition: 0, offset: '10' },
+        { partition: 1, offset: '2' },
+        { partition: 2, offset: '1' },
+      ],
+    })).toEqual([
+      { partition: 1, offset: '5', end: '7' },
+      { partition: 2, offset: '1', end: '4' },
+    ])
+  })
+
+  it('plans recent reads per partition and skips empty partitions', () => {
+    expect(kafkaRecords.recentTargets({
+      topicOffsets: [
+        { partition: 0, low: '0', high: '10' },
+        { partition: 1, low: '2', high: '3' },
+        { partition: 2, low: '4', high: '4' },
+      ],
+      count: 5,
+    })).toEqual([
+      { partition: 0, offset: '5', end: '10' },
+      { partition: 1, offset: '2', end: '3' },
+    ])
+  })
+
+  it('orders sampled records newest first and keeps the requested count', () => {
+    const record = { topic: 't', partition: 0, key: null, payload: 'x', headers: {} }
+    expect(kafkaRecords.newestFirst({
+      records: [
+        { ...record, offset: '1', timestamp: '100' },
+        { ...record, offset: '2', timestamp: '300' },
+        { ...record, offset: '3', timestamp: '200' },
+      ],
+      count: 2,
+    }).map((entry) => entry.offset)).toEqual(['2', '3'])
+  })
+
+  it('maps one send response to per-message offsets', () => {
+    expect(kafkaRecords.publishResults({
+      topic: 'orders',
+      messages: [
+        { value: 'a', partition: 1 },
+        { value: 'b', partition: 1, key: 'k' },
+      ],
+      metadata: [{ topicName: 'orders', partition: 1, errorCode: 0, baseOffset: '41' }],
+    })).toEqual([
+      { topic: 'orders', key: null, partition: 1, offset: '41' },
+      { topic: 'orders', key: 'k', partition: 1, offset: '42' },
+    ])
+  })
+  it('re-applies the start policy when the committed offset is past the end of a truncated log', () => {
+    const plan = kafkaRecords.startOffsetPlan({
+      topicOffsets: [{ partition: 0, low: '0', high: '100' }, { partition: 1, low: '0', high: '50' }],
+      committed: [{ partition: 0, offset: '1000' }, { partition: 1, offset: '40' }],
+      fromBeginning: false,
+    })
+    expect(plan).toEqual([{ partition: 0, offset: '100' }])
+  })
+
+  it('knows when a sample window already starts at the beginning of every partition', () => {
+    const topicOffsets = [{ partition: 0, low: '0', high: '3' }, { partition: 1, low: '5', high: '100' }]
+    expect(kafkaRecords.reachesLogStart({ topicOffsets, targets: kafkaRecords.recentTargets({ topicOffsets, count: 5 }) })).toBe(false)
+    expect(kafkaRecords.reachesLogStart({ topicOffsets, targets: kafkaRecords.recentTargets({ topicOffsets, count: 500 }) })).toBe(true)
   })
 })

@@ -44,7 +44,7 @@ export const telegramRequestApprovalMessageAction = createAction({
       const waitpoint = await context.run.createWaitpoint({
         type: 'WEBHOOK',
       });
-      const confirmationLink = `${waitpoint.resumeUrl}/confirm?chat_id=${encodeURIComponent(chat_id)}`;
+      const confirmationLink = `${waitpoint.publicResumeUrl ?? waitpoint.resumeUrl}/confirm?chat_id=${encodeURIComponent(chat_id)}`;
 
       // Send message with a single button opening the confirmation page (the recipient
       // chooses Approve/Disapprove there). A single link keeps the message-preview

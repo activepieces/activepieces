@@ -299,13 +299,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
     app.post('/memory/import', ImportMemoryRoute, async (request) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        const draft = await agentMemoryAi.extract({ platformId, text: request.body.text, log: request.log })
+        const draft = await agentMemoryAi.extract({ platformId, userId, text: request.body.text, log: request.log })
         const current = await agentHelpers.getUserMemory({ platformId, userId })
         return agentHelpers.saveUserMemory({
             platformId,
             userId,
-            memories: [...current.memories, ...draft.memories],
-            baseMemories: current.memories,
+            memories: { next: [...current.memories, ...draft.memories], base: current.memories },
         })
     })
 

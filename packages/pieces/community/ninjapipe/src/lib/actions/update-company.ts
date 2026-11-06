@@ -1,52 +1,51 @@
-﻿import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeFields } from '../common/fields';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const updateCompany = createAction({
   auth: ninjapipeAuth,
   name: 'update_company',
   classification: 'WRITE',
   displayName: 'Update Company',
-  description: 'Updates a company by ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Updates an existing company (CRM account) identified by Company ID, applying only the fields you supply (name, contact details, address, status, owner, notes, custom fields); omitted fields are left unchanged. Requires a valid company ID; repeating with the same values is safe.', idempotent: true },
+  description: 'Updates a company. Fields left blank keep their value; use Clear Fields to empty them.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Update a NinjaPipe company by ID. Only filled fields change and Clear Fields empties fields; custom fields are merged with the existing ones. Re-running with the same input gives the same result.',
+    idempotent: true,
+  },
+  outputSchema: ninjapipeSchemas.company,
   props: {
-    companyId: ninjapipeCommon.companyDropdownRequired,
+    companyId: ninjapipeProps.companyRequired(),
     name: Property.ShortText({ displayName: 'Name', required: false }),
-    industry: Property.ShortText({ displayName: 'Industry', required: false }),
-    website: Property.ShortText({ displayName: 'Website', required: false }),
     email: Property.ShortText({ displayName: 'Email', required: false }),
     phone: Property.ShortText({ displayName: 'Phone', required: false }),
-    address: Property.LongText({ displayName: 'Address', required: false }),
-    city: Property.ShortText({ displayName: 'City', required: false }),
-    zip: Property.ShortText({ displayName: 'ZIP Code', required: false }),
-    country: ninjapipeCommon.countryDropdown,
-    state: Property.ShortText({ displayName: 'State', required: false }),
+    website: Property.ShortText({ displayName: 'Website', required: false }),
+    industry: Property.ShortText({ displayName: 'Industry', required: false }),
     status: Property.ShortText({ displayName: 'Status', required: false }),
-    owner: Property.ShortText({ displayName: 'Owner', required: false }),
-    notes: Property.LongText({ displayName: 'Notes', required: false }),
-    customFields: Property.Object({ displayName: 'Custom Fields', required: false }),
+    owner: ninjapipeProps.member({ displayName: 'Owner', description: 'Workspace member who owns the company (owner_id).' }),
+    customFields: ninjapipeProps.customFields({ update: true }),
+    clearFields: ninjapipeProps.clearFields({ fields: { email: 'Email', phone: 'Phone', website: 'Website', industry: 'Industry', status: 'Status' } }),
   },
   async run(context) {
-    const auth = getAuth(context);
+    const auth = ninjapipeClient.readAuth(context.auth);
     const p = context.propsValue;
-    const body: Record<string, unknown> = {};
-    if (p.name) body['name'] = p.name;
-    if (p.industry) body['industry'] = p.industry;
-    if (p.website) body['website'] = p.website;
-    if (p.email) body['email'] = p.email;
-    if (p.phone) body['phone'] = p.phone;
-    if (p.address) body['address'] = p.address;
-    if (p.city) body['city'] = p.city;
-    if (p.zip) body['zip'] = p.zip;
-    if (p.country) body['country'] = p.country;
-    if (p.state) body['state'] = p.state;
-    if (p.status) body['status'] = p.status;
-    if (p.owner) body['owner'] = p.owner;
-    if (p.notes) body['notes'] = p.notes;
-    if (p.customFields && typeof p.customFields === 'object') body['custom_fields'] = p.customFields;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({ auth, method: HttpMethod.PUT, path: `/companies/${encodeURIComponent(String(p.companyId))}`, body });
-    return flattenCustomFields(response.body);
+    const path = `/companies/${ninjapipeClient.pathId({ value: p.companyId, field: 'Company' })}`;
+    const fields = await ninjapipeFields.mergeCustomFields({ auth, path, fields: p.customFields, operation: 'read company' });
+    const changes = ninjapipeFields.compact({
+      name: p.name,
+      email: p.email,
+      phone: p.phone,
+      website: p.website,
+      industry: p.industry,
+      status: p.status,
+      owner_id: p.owner,
+      fields,
+    });
+    const body = ninjapipeFields.requireChanges({ body: ninjapipeFields.withClears({ body: changes, clear: p.clearFields }), what: 'company' });
+    return ninjapipeClient.sendRecord({ auth, method: HttpMethod.PUT, path, body, operation: 'update company' });
   },
 });
