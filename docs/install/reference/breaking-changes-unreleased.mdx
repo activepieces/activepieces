@@ -19,6 +19,55 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 Steps keep running on the version they were built with until you upgrade them.
 
+#### Knack 0.3.0: Create, Update and Find Record are no longer AI agent tools
+
+**Create Record**, **Update Record** and **Find Record** are now shown only in the flow builder. AI agents and MCP clients get **Create Record (Agent)**, **Update Record (Agent)**, **Search Records (Agent)** and **Get Record (Agent)** instead, plus **List Objects (Agent)** and **Get Object Fields (Agent)** to discover an app's tables and field keys.
+
+After you upgrade:
+
+- **Find Record** sends its filter in the documented `{ match, rules }` format.
+- **Delete Record** keeps Knack's `delete: true` and adds `deleted` and `id`. It now fails with a not-found error when Knack does not confirm the delete.
+- Error messages now show Knack's own error text and the HTTP status.
+
+#### What you need to do
+
+- Agents that used Create, Update or Find Record as tools: switch to the (Agent) actions.
+
+#### Base44 0.2.0: Find or Create Entity is no longer an AI agent tool, and the Entity Event trigger changes
+
+**Find or Create Entity** is now shown only in the flow builder. AI agents and MCP clients find a record with **Find Entity** or **List Entity Records** and create one with **Create Entity**.
+
+- **Entity Event** in **Updated** mode no longer fires for brand-new records. On 0.1.9 a new record fired it, because its updated date was newer than the last check. From 0.2.0 it fires only once a record is edited after it was created. Use **Created** mode, or a second trigger, to catch new records.
+- Record dates (`created_date`, `updated_date`) now end in `Z`, so they read as UTC (for example `2026-11-01T12:56:20.141000Z`).
+- Search Query, Entity Data, Create Data and Update Data must be a JSON object. A list or other value now fails the step. Before, it was read as `{}`, so Find or Create Entity returned an unrelated record and Create Entity made an empty one.
+
+#### What you need to do
+
+- Agents that used Find or Create Entity as a tool: use Find Entity, then Create Entity.
+- Flows that use Entity Event in Updated mode to catch every change: add a Created-mode trigger for new records.
+- Flows that parse record dates as text: expect the trailing `Z`.
+- Other flow steps keep working unchanged.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Twitch 0.2.0: connections must be reconnected for the new actions
+
+Twitch 0.2.0 adds actions for your channel, chat, moderation, schedule, ads, clips and stream markers, and followers. Many of them, including reads such as subscriptions, followed channels and streams, polls, predictions, chatters, followers, VIPs and moderators, need Twitch scopes that the connection now asks for. Twitch connections made before 0.2.0 don't have them.
+
+The **Stream Started** trigger also changes once upgraded: it ignores blank entries and fails if no valid channel name is left, instead of watching Twitch's top live streams.
+
+#### What you need to do
+
+Reconnect your Twitch connection before you use any of the new actions, including the ones that only read data. Existing Stream Started triggers keep working on the old connection.
+
+#### Pushbullet 0.3.0: Send a Note and Send a Link are no longer agent tools
+
+**Send a Note** and **Send a Link** are now shown only in the flow builder. AI agents and MCP clients get **Send Note** and **Send Link** instead, plus new tools to list pushes, devices and chats, dismiss or delete a push, and read the current user. Both builder actions also gain an optional target (a device or an email).
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Send a Note or Send a Link as a tool, switch it to Send Note or Send Link. Flow steps keep working and stay on the version they were built with until you upgrade them.
+
 #### Streak 0.2.0: Update Box is no longer an agent tool and now saves custom fields, and triggers output an object
 
 **Update Box** is now shown only in the flow builder. AI agents and MCP clients get a separate agent version of **Update Box**, which takes the box key and a list of `{field_key, value}` updates as plain text. Update Box also now saves custom field values through Streak's field endpoint (before, they were sent in the box update and silently ignored), returns the box as it is after the update, and has a new Clear Notes option.
