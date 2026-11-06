@@ -195,14 +195,20 @@ export const recordService = {
             const changed = cellsToUpsert.length > 0
             if (changed) {
                 await entityManager
+                    .getRepository(RecordEntity)
+                    .update({ id, projectId, tableId }, { updated: () => 'now()' })
+                await entityManager
                     .getRepository(CellEntity)
                     .upsert(cellsToUpsert, ['projectId', 'fieldId', 'recordId'])
             }
 
+            const updatedRecordEntity = changed
+                ? await entityManager.getRepository(RecordEntity).findOneByOrFail({ id, projectId, tableId })
+                : record
             const cells = changed
                 ? await entityManager.getRepository(CellEntity).find({ where: { projectId, recordId: id } })
                 : storedCells
-            const [updatedRecord] = formatRecords([{ ...record, cells }], fields)
+            const [updatedRecord] = formatRecords([{ ...updatedRecordEntity, cells }], fields)
             return { record: updatedRecord, changed }
         })
     },
