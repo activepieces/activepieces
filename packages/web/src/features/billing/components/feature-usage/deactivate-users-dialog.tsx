@@ -85,7 +85,14 @@ function DeactivateUsersForm({
   const deactivatableUsers = (users ?? []).filter(
     (user) => user.status === UserStatus.ACTIVE && user.id !== platform.ownerId,
   );
-  const invitedEmails = groupByEmail(invitations ?? []);
+  const userEmails = new Set(
+    (users ?? []).map((user) => user.email.toLowerCase()),
+  );
+  const invitedEmails = groupByEmail(
+    (invitations ?? []).filter(
+      (invitation) => !userEmails.has(invitation.email.toLowerCase()),
+    ),
+  );
 
   const usersToDeactivate = deactivatableUsers.filter((user) =>
     selectedUserIds.has(user.id),

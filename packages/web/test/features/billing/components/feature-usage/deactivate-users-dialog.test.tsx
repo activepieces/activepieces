@@ -232,6 +232,15 @@ describe('DeactivateUsersDialog invitations', () => {
     expect(deleteInvitation).toHaveBeenCalledWith('invite-2');
   });
 
+  it('hides an invite for someone who is already a user', () => {
+    users = [user(OWNER_ID), user('a')];
+    invitations = [invitation('invite-1', 'A@example.com')];
+
+    renderDialog({ targetSeats: 1, currentUsers: 2 });
+
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+  });
+
   it('stays open after a partial failure and retries only what is still there', async () => {
     users = [user(OWNER_ID), user('operator-1')];
     invitations = [invitation('invite-1')];

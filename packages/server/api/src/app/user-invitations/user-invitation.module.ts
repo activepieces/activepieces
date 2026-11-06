@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, RoleType, SeekPage } from '@activepieces/core-utils'
-import { ApplicationEventName, InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, ServicePrincipal, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationEvent, UserInvitationWithLink, UserPrincipal } from '@activepieces/shared'
+import { ApplicationEventName, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, ServicePrincipal, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationEvent, UserInvitationWithLink, UserPrincipal } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -19,7 +19,7 @@ import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
-import { INVITATION_EXPIRY_SECONDS, userInvitationsService } from './user-invitation.service'
+import { userInvitationsService } from './user-invitation.service'
 
 export const invitationModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
@@ -114,14 +114,6 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             limit: request.query.limit ?? 10,
         })
         await reply.status(StatusCodes.OK).send(invitations)
-    })
-
-    app.get('/reserving-seats', ListInvitationsReservingSeatsRequestParams, async (request) => {
-        return userInvitationsService(request.log).listInvitesReservingSeats({
-            platformId: request.principal.platform.id,
-            cursor: request.query.cursor ?? null,
-            limit: request.query.limit ?? 10,
-        })
     })
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
@@ -357,21 +349,6 @@ const ListUserInvitationsRequestParams = {
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListUserInvitationsRequest,
-        response: {
-            [StatusCodes.OK]: SeekPage(UserInvitation),
-        },
-    },
-}
-
-const ListInvitationsReservingSeatsRequestParams = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        querystring: z.object({
-            cursor: z.string().optional(),
-            limit: z.coerce.number().optional(),
-        }),
         response: {
             [StatusCodes.OK]: SeekPage(UserInvitation),
         },

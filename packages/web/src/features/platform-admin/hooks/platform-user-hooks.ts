@@ -1,8 +1,10 @@
 import { isNil, Permission, SeekPage } from '@activepieces/core-utils';
 import {
+  INVITATION_EXPIRY_SECONDS,
   InvitationType,
   UpdateUserRequestBody,
   User,
+  UserInvitation,
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
@@ -64,11 +66,23 @@ export const platformUserHooks = {
   },
   useInvitesReservingSeats: () => {
     return useQuery({
-      queryFn: () =>
-        fetchAllPages({
-          fetchPage: (cursor) =>
-            userInvitationApi.listReservingSeats({ cursor, limit: PAGE_SIZE }),
-        }),
+      queryFn: async () => {
+        const [platformInvitations, projectInvitations] = await Promise.all([
+          userInvitationApi.listAll({
+            type: InvitationType.PLATFORM,
+            projectId: null,
+            limit: PAGE_SIZE,
+          }),
+          userInvitationApi.listAll({
+            type: InvitationType.PROJECT,
+            projectId: null,
+            limit: PAGE_SIZE,
+          }),
+        ]);
+        return [...platformInvitations, ...projectInvitations].filter(
+          isUnexpired,
+        );
+      },
       queryKey: platformUserKeys.invitesReservingSeats,
       staleTime: 0,
     });
@@ -144,6 +158,13 @@ function useCanListUsers(): boolean {
   const { checkAccess, isFetchingProjectRole } = useAuthorization();
   const hasInvitePermission = checkAccess(Permission.WRITE_INVITATION);
   return !isNil(currentUser) && hasInvitePermission && !isFetchingProjectRole;
+}
+
+function isUnexpired(invitation: UserInvitation): boolean {
+  return (
+    Date.parse(invitation.updated) >
+    Date.now() - INVITATION_EXPIRY_SECONDS * 1000
+  );
 }
 
 async function fetchAllPages<T>({

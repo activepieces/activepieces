@@ -210,15 +210,9 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
         })
     })
 
-    describe('Invites reserving seats', () => {
-        it('lists the platform and project invites that hold a seat', async () => {
-            const { mockOwnerToken, mockPlatform, mockProject, ownerEmail } = await setupPlatform({ usersLimit: 10 })
-            const pendingEmail = faker.internet.email().toLowerCase()
-            const acceptedEmail = faker.internet.email().toLowerCase()
-            await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.PENDING, email: pendingEmail })
-            await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.ACCEPTED, email: acceptedEmail })
-            await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.PENDING, createdDaysAgo: 8 })
-            await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.PENDING, email: ownerEmail })
+    describe('Listing invites that hold a seat', () => {
+        it('lists project invites of every project when no project is given', async () => {
+            const { mockOwnerToken, mockPlatform, mockProject } = await setupPlatform({ usersLimit: 10 })
             const adminRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
             const projectInvitation = createMockUserInvitation({
                 platformId: mockPlatform.id,
@@ -229,43 +223,16 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
             })
             await db.save('user_invitation', projectInvitation)
 
-            const response = await listReservingSeats({ token: mockOwnerToken })
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/user-invitations',
+                headers: { authorization: `Bearer ${mockOwnerToken}` },
+                query: { type: InvitationType.PROJECT },
+            })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
             const emails = response.json<SeekPage<UserInvitation>>().data.map((invitation) => invitation.email)
-            expect(emails.sort()).toEqual([acceptedEmail, pendingEmail, projectInvitation.email].sort())
-        })
-
-        it('pages through the invites with a cursor', async () => {
-            const { mockOwnerToken, mockPlatform } = await setupPlatform({ usersLimit: 10 })
-            const emails = [1, 2, 3].map(() => faker.internet.email().toLowerCase())
-            for (const email of emails) {
-                await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.PENDING, email })
-            }
-
-            const first = (await listReservingSeats({ token: mockOwnerToken, query: { limit: '2' } })).json<SeekPage<UserInvitation>>()
-            const second = (await listReservingSeats({ token: mockOwnerToken, query: { limit: '2', cursor: first.next ?? '' } })).json<SeekPage<UserInvitation>>()
-
-            expect(first.data).toHaveLength(2)
-            expect(second.data).toHaveLength(1)
-            expect(second.next).toBeNull()
-            expect([...first.data, ...second.data].map((invitation) => invitation.email).sort()).toEqual(emails.sort())
-        })
-
-        it('refuses a platform member', async () => {
-            const { mockPlatform } = await setupPlatform({ usersLimit: 10 })
-            const { mockUser: member } = await mockBasicUser({
-                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER },
-            })
-            const memberToken = await generateMockToken({
-                id: member.id,
-                type: PrincipalType.USER,
-                platform: { id: mockPlatform.id },
-            })
-
-            const response = await listReservingSeats({ token: memberToken })
-
-            expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(emails).toEqual([projectInvitation.email])
         })
     })
 })
@@ -342,15 +309,6 @@ function invite({ token, apiKey, email, projectId }: {
             type: InvitationType.PLATFORM,
             platformRole: PlatformRole.ADMIN,
         },
-    })
-}
-
-function listReservingSeats({ token, query }: { token: string, query?: Record<string, string> }): ReturnType<NonNullable<typeof app>['inject']> {
-    return app!.inject({
-        method: 'GET',
-        url: '/api/v1/user-invitations/reserving-seats',
-        headers: { authorization: `Bearer ${token}` },
-        query,
     })
 }
 

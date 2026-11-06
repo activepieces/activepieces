@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { ApEdition, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ApEdition, INVITATION_EXPIRY_SECONDS, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
@@ -264,23 +264,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         `, [platformId, SEAT_HOLDING_STATUSES, getInvitationExpiryCutoff(), from, to, limit])
         return Number(rows[0]?.revoked ?? 0)
     },
-    async listInvitesReservingSeats({ platformId, cursor, limit }: ListInvitesReservingSeatsParams): Promise<SeekPage<UserInvitation>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursor)
-        const paginator = buildPaginator({
-            entity: UserInvitationEntity,
-            alias: 'invitation',
-            query: {
-                limit,
-                order: 'ASC',
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
-            },
-        })
-        const query = invitationsHoldingSeats(repo().createQueryBuilder('invitation'), platformId)
-            .andWhere(EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER)
-        const { data, cursor: nextCursor } = await paginator.paginate(query)
-        return paginationHelper.createPage<UserInvitation>(data, nextCursor)
-    },
     async countAdditionalSeatsNeeded({
         email,
         platformId,
@@ -418,8 +401,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         })
     },
 })
-
-export const INVITATION_EXPIRY_SECONDS = dayjs.duration(7, 'days').asSeconds()
 
 export function getInvitationExpiryCutoff(): string {
     return dayjs().subtract(INVITATION_EXPIRY_SECONDS, 'seconds').toISOString()
@@ -709,12 +690,6 @@ type RevokeNewestInvitedBetweenParams = {
     to: string
     limit: number
     entityManager: EntityManager
-}
-
-type ListInvitesReservingSeatsParams = {
-    platformId: string
-    cursor: string | null
-    limit: number
 }
 
 type GetOneByPlatformIdAndEmailParams = {
