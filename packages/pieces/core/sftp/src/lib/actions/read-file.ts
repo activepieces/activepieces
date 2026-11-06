@@ -28,11 +28,13 @@ export const readFileContent = createAction({
   name: 'read_file_content',
   classification: 'READ',
   displayName: 'Read File Content',
-  description: 'Read the content of a file.',
+  description: 'Download a file so later steps can use it.',
   aiMetadata: { description: 'Downloads one file from the connected FTP, FTPS or SFTP server by remote path and returns it as a file reference that later steps can consume. Use it to fetch the content of a file whose path you know; run List Folder Contents first when you still need to discover which paths exist. Requires an exact remote file path - it does not glob, search or recurse; read-only and idempotent.', idempotent: true },
   props: {
     filePath: Property.ShortText({
       displayName: 'File Path',
+      description: 'Full path of the file to download.',
+      placeholder: './reports/today.csv',
       required: true,
     }),
   },
