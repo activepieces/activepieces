@@ -1116,7 +1116,7 @@
     },
     "packages/pieces/community/base44": {
       "name": "@activepieces/piece-base44",
-      "version": "0.1.9",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1126,6 +1126,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/baserow": {
@@ -4444,7 +4445,7 @@
     },
     "packages/pieces/community/help-scout": {
       "name": "@activepieces/piece-help-scout",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4454,6 +4455,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/heygen": {
@@ -5089,7 +5091,7 @@
     },
     "packages/pieces/community/knack": {
       "name": "@activepieces/piece-knack",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5098,6 +5100,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/knock": {
@@ -5210,7 +5213,7 @@
     },
     "packages/pieces/community/leexi": {
       "name": "@activepieces/piece-leexi",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5220,6 +5223,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/lemlist": {

@@ -15,12 +15,11 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { KeyRound, RefreshCw, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import { z } from 'zod';
 
 import {
   AdminPageHeader,
-  AdminSection,
   DangerZone,
   SettingsPanel,
   SettingsRow,
@@ -31,7 +30,6 @@ import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
 } from '@/components/custom/leave-without-saving';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -134,9 +132,6 @@ export function ConfigDetail({
   const usedByTierCount = (tiers ?? []).filter((tier) =>
     tier.entries.some((entry) => entry.configId === config.id),
   ).length;
-  const withTierModels = (modelIds: string[]) => [
-    ...new Set([...modelIds, ...tiersByModel.keys()]),
-  ];
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
   const leaveBlocker = useWarnBeforeLosingChanges({
     hasChanges: dirty,
@@ -160,17 +155,6 @@ export function ConfigDetail({
     .filter(Boolean)
     .join(' · ');
   const nameMissing = draft.name.trim().length === 0;
-  const enabledModelCount = manualModels
-    ? draft.models.length
-    : draft.modelScope === 'all'
-    ? models.length
-    : draft.modelIds.length;
-  const allowedProjectCount =
-    draft.projectScope === 'all'
-      ? projects.length
-      : draft.projectScope === 'except'
-      ? projects.length - draft.projectIds.length
-      : draft.projectIds.length;
 
   const requestSave = () => {
     if (nameMissing || saveInFlight.current) {
@@ -264,11 +248,9 @@ export function ConfigDetail({
         >
           <TabsTrigger variant="outline" value="models">
             {t('Models')}
-            {!isLoadingModels && <TabCount count={enabledModelCount} />}
           </TabsTrigger>
           <TabsTrigger variant="outline" value="access">
             {t('Access')}
-            <TabCount count={allowedProjectCount} />
           </TabsTrigger>
           <TabsTrigger variant="outline" value="settings">
             {t('Settings')}
@@ -280,58 +262,33 @@ export function ConfigDetail({
           forceMount
           className="mt-0 data-[state=inactive]:hidden"
         >
-          <AdminSection
-            title={t('Models')}
-            description={
-              manualModels
-                ? t('Model ids exposed through this key.')
-                : t('Which of this key’s models the platform may use.')
-            }
-            action={
-              manualModels ? undefined : (
-                <ScopeTabs
-                  value={draft.modelScope}
-                  disabled={isLoadingModels}
-                  onChange={(value) =>
-                    setDraft({
-                      ...draft,
-                      modelScope: value === 'all' ? 'all' : 'selected',
-                      modelIds:
-                        value === 'all'
-                          ? []
-                          : withTierModels(models.map((model) => model.id)),
-                    })
-                  }
-                  options={[
-                    { value: 'all', label: t('All models') },
-                    { value: 'selected', label: t('Only selected') },
-                  ]}
-                />
-              )
-            }
-          >
-            {manualModels ? (
+          {manualModels ? (
+            <SettingsPanel flush>
+              <PanelHeader
+                title={t('Models')}
+                description={t('Model ids exposed through this key.')}
+              />
               <ManualModelList
                 models={draft.models}
                 suggestedModelIds={suggestedModelIds}
                 tiersByModel={tiersByModel}
                 onChange={(models) => setDraft({ ...draft, models })}
               />
-            ) : (
-              <KeyModelList
-                config={config}
-                models={draft.modelScope === 'all' ? models : selectableModels}
-                staleIds={staleIds}
-                tiersByModel={tiersByModel}
-                allModels={draft.modelScope === 'all'}
-                selectedIds={draft.modelIds}
-                isLoading={isLoadingModels}
-                onChange={(modelIds) =>
-                  setDraft({ ...draft, modelIds: withTierModels(modelIds) })
-                }
-              />
-            )}
-          </AdminSection>
+            </SettingsPanel>
+          ) : (
+            <KeyModelList
+              config={config}
+              models={draft.modelScope === 'all' ? models : selectableModels}
+              staleIds={staleIds}
+              tiersByModel={tiersByModel}
+              selection={{
+                modelScope: draft.modelScope,
+                modelIds: draft.modelIds,
+              }}
+              isLoading={isLoadingModels}
+              onChange={(selection) => setDraft({ ...draft, ...selection })}
+            />
+          )}
         </TabsContent>
 
         <TabsContent
@@ -339,40 +296,41 @@ export function ConfigDetail({
           forceMount
           className="mt-0 data-[state=inactive]:hidden"
         >
-          <AdminSection
-            title={t('Project access')}
-            description={
-              draft.projectScope === 'except'
-                ? t(
-                    'Every project except these — new projects get access automatically.',
-                  )
-                : draft.projectScope === 'selected'
-                ? t('Only these projects can use this key.')
-                : t('Every project on this platform can use it.')
-            }
-            action={
-              <ScopeTabs
-                value={draft.projectScope}
-                onChange={(value) =>
-                  setDraft({
-                    ...draft,
-                    projectScope:
-                      value === 'all'
-                        ? 'all'
-                        : value === 'except'
-                        ? 'except'
-                        : 'selected',
-                    projectIds: value === 'all' ? [] : draft.projectIds,
-                  })
-                }
-                options={[
-                  { value: 'all', label: t('All') },
-                  { value: 'selected', label: t('Only selected') },
-                  { value: 'except', label: t('All except') },
-                ]}
-              />
-            }
-          >
+          <SettingsPanel flush>
+            <PanelHeader
+              title={t('Project access')}
+              description={
+                draft.projectScope === 'except'
+                  ? t(
+                      'Every project except these — new projects get access automatically.',
+                    )
+                  : draft.projectScope === 'selected'
+                  ? t('Only these projects can use this key.')
+                  : t('Every project on this platform can use it.')
+              }
+              action={
+                <ScopeSelect
+                  value={draft.projectScope}
+                  onChange={(value) =>
+                    setDraft({
+                      ...draft,
+                      projectScope:
+                        value === 'all'
+                          ? 'all'
+                          : value === 'except'
+                          ? 'except'
+                          : 'selected',
+                      projectIds: value === 'all' ? [] : draft.projectIds,
+                    })
+                  }
+                  options={[
+                    { value: 'all', label: t('All') },
+                    { value: 'selected', label: t('Only selected') },
+                    { value: 'except', label: t('All except') },
+                  ]}
+                />
+              }
+            />
             {draft.projectScope !== 'all' && (
               <ProjectSelectionPanel
                 projects={projects}
@@ -380,66 +338,65 @@ export function ConfigDetail({
                 onChange={(projectIds) => setDraft({ ...draft, projectIds })}
               />
             )}
-          </AdminSection>
+          </SettingsPanel>
         </TabsContent>
 
         <TabsContent
           value="settings"
           forceMount
-          className="mt-0 flex flex-col gap-8 data-[state=inactive]:hidden"
+          className="mt-0 flex flex-col gap-6 data-[state=inactive]:hidden"
         >
-          <AdminSection
-            title={t('General')}
-            description={t('How this key is labelled and authorised.')}
-          >
-            <SettingsPanel flush>
-              <div className="flex flex-col gap-2 px-5 py-4">
-                <Label htmlFor="config-name">{t('Name')}</Label>
-                <Input
-                  id="config-name"
-                  value={draft.name}
-                  onChange={(event) =>
-                    setDraft({ ...draft, name: event.target.value })
-                  }
-                  className="max-w-sm"
-                  aria-invalid={nameMissing}
-                />
-                {nameMissing && (
+          <SettingsPanel title={t('General')} flush>
+            <SettingsRow
+              title={<Label htmlFor="config-name">{t('Name')}</Label>}
+              description={t('Shown wherever this key is picked.')}
+              below={
+                nameMissing && (
                   <p className="text-sm text-danger-11">
                     {t(formErrors.required)}
                   </p>
+                )
+              }
+            >
+              <Input
+                id="config-name"
+                value={draft.name}
+                onChange={(event) =>
+                  setDraft({ ...draft, name: event.target.value })
+                }
+                className="w-64"
+                aria-invalid={nameMissing}
+              />
+            </SettingsRow>
+            <SettingsRow
+              icon={<KeyRound />}
+              title={t('Credentials')}
+              description={t('Stored securely')}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={dirty ? 0 : undefined}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={dirty}
+                      onClick={onReplaceCredentials}
+                      {...adminControl(
+                        AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN,
+                      )}
+                    >
+                      {t('Replace')}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {dirty && (
+                  <TooltipContent>
+                    {t('Save or discard your changes first')}
+                  </TooltipContent>
                 )}
-              </div>
-              <SettingsRow
-                icon={<KeyRound />}
-                title={t('Credentials')}
-                description={t('Stored securely')}
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span tabIndex={dirty ? 0 : undefined}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={dirty}
-                        onClick={onReplaceCredentials}
-                        {...adminControl(
-                          AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN,
-                        )}
-                      >
-                        {t('Replace')}
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  {dirty && (
-                    <TooltipContent>
-                      {t('Save or discard your changes first')}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </SettingsRow>
-            </SettingsPanel>
-          </AdminSection>
+              </Tooltip>
+            </SettingsRow>
+          </SettingsPanel>
 
           <DangerZone>
             <SettingsRow
@@ -538,14 +495,6 @@ export function ConfigDetail({
   );
 }
 
-function TabCount({ count }: { count: number }) {
-  return (
-    <Badge variant="secondary" className="ml-2 tabular-nums">
-      {count}
-    </Badge>
-  );
-}
-
 function tierNamesByModel({
   tiers,
   configId,
@@ -579,19 +528,37 @@ function scopeImpactText(impact: KeyScopeImpact): string {
   });
 }
 
-function ScopeTabs({
+function PanelHeader({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
+  return (
+    <header className="flex flex-wrap items-start justify-between gap-4 p-4">
+      <div className="flex min-w-0 flex-col gap-1">
+        <h2 className="text-sm font-semibold text-gray-12">{title}</h2>
+        <p className="text-sm text-gray-11">{description}</p>
+      </div>
+      {action}
+    </header>
+  );
+}
+
+function ScopeSelect({
   value,
-  disabled = false,
   onChange,
   options,
 }: {
   value: string;
-  disabled?: boolean;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
 }) {
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled}>
+    <Select value={value} onValueChange={onChange}>
       <SelectTrigger size="sm" className="w-44 shrink-0">
         <SelectValue />
       </SelectTrigger>
