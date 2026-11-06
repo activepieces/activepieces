@@ -25,6 +25,104 @@ After you upgrade:
 
 Steps keep running on the version they were built with until you upgrade them.
 
+#### Leexi 0.3.0: Get Call is no longer an AI agent tool
+
+**Get Call** is now shown only in the flow builder. AI agents and MCP clients get **Fetch Call Details** instead, which takes up to 20 call IDs at once.
+
+#### What you need to do
+
+- Agents that used Get Call as a tool: switch to Fetch Call Details.
+- Flows using the **New Call Created** trigger: after you upgrade the step and publish, the next polls emit every call created since the flow was first turned on (up to 2,000 per poll) until they catch up, because the old trigger never moved its checkpoint forward. Expect a burst of runs after the upgrade, or turn the flow off and on again to start from now.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Help Scout 0.3.0: five actions are no longer AI agent tools, and Find Conversation searches every status and applies Tags
+
+**Create Conversation**, **Send Reply**, **Add Note**, **Update Customer Properties** and **Find Conversation** are now shown only in the flow builder. AI agents and MCP clients get new ID-based actions instead, including Search Conversations, Get Conversation, Update Conversation and the list actions for mailboxes, users and tags.
+
+When Status is left empty, **Find Conversation** now searches every status. It used to fall back to Help Scout's default of active only, so closed and pending conversations were never found.
+
+**Find Conversation** now applies the Tags filter. It used to send the tags under a name Help Scout ignores, so the filter never applied. A step with Tags set now returns only conversations that carry those tags, so it can find a different conversation or none.
+
+#### What you need to do
+
+- Agents that used the old Help Scout actions as tools: switch to the new agent actions.
+- If a flow relied on Find Conversation returning only active conversations, set Status to Active.
+- If a Find Conversation step has Tags set, check that the tags match the conversations you expect, or clear Tags to keep the old results.
+
+#### Knack 0.3.0: Create, Update and Find Record are no longer AI agent tools
+
+**Create Record**, **Update Record** and **Find Record** are now shown only in the flow builder. AI agents and MCP clients get **Create Record (Agent)**, **Update Record (Agent)**, **Search Records (Agent)** and **Get Record (Agent)** instead, plus **List Objects (Agent)** and **Get Object Fields (Agent)** to discover an app's tables and field keys.
+
+After you upgrade:
+
+- **Find Record** sends its filter in the documented `{ match, rules }` format.
+- **Delete Record** keeps Knack's `delete: true` and adds `deleted` and `id`. It now fails with a not-found error when Knack does not confirm the delete.
+- Error messages now show Knack's own error text and the HTTP status.
+
+#### What you need to do
+
+- Agents that used Create, Update or Find Record as tools: switch to the (Agent) actions.
+
+#### Base44 0.2.0: Find or Create Entity is no longer an AI agent tool, and the Entity Event trigger changes
+
+**Find or Create Entity** is now shown only in the flow builder. AI agents and MCP clients find a record with **Find Entity** or **List Entity Records** and create one with **Create Entity**.
+
+- **Entity Event** in **Updated** mode no longer fires for brand-new records. On 0.1.9 a new record fired it, because its updated date was newer than the last check. From 0.2.0 it fires only once a record is edited after it was created. Use **Created** mode, or a second trigger, to catch new records.
+- Record dates (`created_date`, `updated_date`) now end in `Z`, so they read as UTC (for example `2026-11-01T12:56:20.141000Z`).
+- Search Query, Entity Data, Create Data and Update Data must be a JSON object. A list or other value now fails the step. Before, it was read as `{}`, so Find or Create Entity returned an unrelated record and Create Entity made an empty one.
+
+#### What you need to do
+
+- Agents that used Find or Create Entity as a tool: use Find Entity, then Create Entity.
+- Flows that use Entity Event in Updated mode to catch every change: add a Created-mode trigger for new records.
+- Flows that parse record dates as text: expect the trailing `Z`.
+- Other flow steps keep working unchanged.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Twitch 0.2.0: connections must be reconnected for the new actions
+
+Twitch 0.2.0 adds actions for your channel, chat, moderation, schedule, ads, clips and stream markers, and followers. Many of them, including reads such as subscriptions, followed channels and streams, polls, predictions, chatters, followers, VIPs and moderators, need Twitch scopes that the connection now asks for. Twitch connections made before 0.2.0 don't have them.
+
+The **Stream Started** trigger also changes once upgraded: it ignores blank entries and fails if no valid channel name is left, instead of watching Twitch's top live streams.
+
+#### What you need to do
+
+Reconnect your Twitch connection before you use any of the new actions, including the ones that only read data. Existing Stream Started triggers keep working on the old connection.
+
+#### Pushbullet 0.3.0: Send a Note and Send a Link are no longer agent tools
+
+**Send a Note** and **Send a Link** are now shown only in the flow builder. AI agents and MCP clients get **Send Note** and **Send Link** instead, plus new tools to list pushes, devices and chats, dismiss or delete a push, and read the current user. Both builder actions also gain an optional target (a device or an email).
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Send a Note or Send a Link as a tool, switch it to Send Note or Send Link. Flow steps keep working and stay on the version they were built with until you upgrade them.
+
+#### Streak 0.2.0: Update Box is no longer an agent tool and now saves custom fields, and triggers output an object
+
+**Update Box** is now shown only in the flow builder. AI agents and MCP clients get a separate agent version of **Update Box**, which takes the box key and a list of `{field_key, value}` updates as plain text. Update Box also now saves custom field values through Streak's field endpoint (before, they were sent in the box update and silently ignored), returns the box as it is after the update, and has a new Clear Notes option.
+
+Streak sends its webhook body as a JSON string. Up to 0.1.1, every Streak trigger passed that raw string to the flow as the trigger output. From 0.2.0, the triggers parse it and output the event as an object, so you can map its fields (for example `{{trigger.boxKey}}`) directly.
+
+#### What you need to do
+
+If a Code step after a Streak trigger runs `JSON.parse` on the trigger output, remove the parse and map the fields directly once you upgrade the trigger to 0.2.0, because the output is already an object and parsing it again fails. If a Run Agent step or MCP client uses Update Box as a tool, add the new agent version of Update Box to it. Flow steps keep working and stay on the version they were built with until you upgrade them; after upgrading, check that custom field values you set are the ones you want saved, because they now reach Streak.
+
+#### Bexio 0.3.0: the existing actions are no longer agent tools
+
+All 23 existing Bexio actions are now shown only in the flow builder. AI agents and MCP clients get new `bexio_` tools instead, which take IDs as text and cover the same jobs and more.
+
+Once a step is upgraded to Bexio 0.3.0:
+
+- **Update Product** ignores the **In Stock** field. Bexio only accepts it when a product is created and rejects it on edit, so the action no longer sends it. Set stock management in **Create Product** instead.
+- **Update Person** edits the contact with POST instead of PATCH, which Bexio treats as a restore.
+- **New Product** now reads the newest products first. The first time the flow is enabled or republished on 0.3.0, the trigger starts again from the current newest product, so it does not fire for products created before the upgrade. Without this, accounts with more than 500 products would get one run for every old product above the stored position. A product created between the last check on the old version and the upgrade does not fire.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses a Bexio action as a tool, switch it to the matching `bexio_` tool. Flow steps that use these actions keep working. Steps keep running on the version they were built with until you upgrade them.
+
 #### Folk 0.2.0: eight Folk actions are no longer agent tools, and Update Person/Company behave differently
 
 From Folk 0.2.0, **Create Person**, **Create Company**, **Get Person**, **Get Company**, **List People**, **Find Company**, **Update Person** and **Update Company** (the existing flow-builder actions) are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents get new tools instead: **Create Person**, **Create Company**, **Get Person**, **Get Company**, **Search People** (replaces List People), **Search Companies** (replaces Find Company), **Update Person** and **Update Company** (the `*_ai` actions, which take IDs and plain lists).

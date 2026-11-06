@@ -1,9 +1,10 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { pocketbaseAuth } from '../../index';
-import { pocketbaseAuthenticate, normalizeHost } from '../common/client';
+import { pocketbaseAuth } from '../auth';
+import { pocketbaseClient } from '../common/client';
+import { pocketbaseProps } from '../common/props';
 
-export const getRecord = createAction({
+export const getRecordAction = createAction({
   name: 'getRecord',
   classification: 'READ',
   displayName: 'Get Record',
@@ -12,47 +13,27 @@ export const getRecord = createAction({
   aiMetadata: { description: 'Fetches one record from a PocketBase collection by its record ID, optionally expanding relations or limiting returned fields. Use when you already know the exact record ID; to search or list by criteria use Get List or Get Full List instead. Read-only and idempotent.', idempotent: true },
   auth: pocketbaseAuth,
   props: {
-    collection: Property.ShortText({
-      displayName: 'Collection Name',
-      description: 'The name of the PocketBase collection',
-      required: true,
-    }),
+    collection: pocketbaseProps.collection({ required: true }),
     recordId: Property.ShortText({
       displayName: 'Record ID',
       description: 'ID of the record to view',
       required: true,
     }),
-    expand: Property.ShortText({
-      displayName: 'Expand',
-      description: 'Auto expand relations. E.g.: relField1,relField2.subRelField',
-      required: false,
-    }),
-    fields: Property.ShortText({
-      displayName: 'Fields',
-      description: 'Comma separated fields to return. E.g.: *,expand.relField.name',
-      required: false,
-    }),
+    expand: pocketbaseProps.expand({ required: false }),
+    fields: pocketbaseProps.fields({ required: false }),
   },
   async run(context) {
-    const { host: rawHost, email, password } = context.auth.props;
-    const host = normalizeHost(rawHost);
     const { collection, recordId, expand, fields } = context.propsValue;
-
-    const token = await pocketbaseAuthenticate(host, email, password);
 
     const queryParams: Record<string, string> = {};
     if (expand) queryParams['expand'] = expand;
     if (fields) queryParams['fields'] = fields;
 
-    const response = await httpClient.sendRequest({
+    return await pocketbaseClient.request({
+      auth: context.auth,
       method: HttpMethod.GET,
-      url: `${host}/api/collections/${encodeURIComponent(collection)}/records/${encodeURIComponent(recordId)}`,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      queryParams,
+      path: `/api/collections/${encodeURIComponent(collection)}/records/${encodeURIComponent(recordId)}`,
+      query: queryParams,
     });
-
-    return response.body;
   },
 });
