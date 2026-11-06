@@ -7,6 +7,7 @@ import { testimonialActionOutputSchema } from '../output-schemas';
 export const getTestimonialAction = createAction({
   auth: senjaAuth,
   name: 'get_testimonial',
+  classification: 'READ',
   displayName: 'Get Testimonial',
   description: 'Retrieve a specific testimonial by its ID.',
   audience: 'human',

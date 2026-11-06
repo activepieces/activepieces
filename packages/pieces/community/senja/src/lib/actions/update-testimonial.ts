@@ -7,6 +7,7 @@ import { testimonialActionOutputSchema } from '../output-schemas';
 export const updateTestimonialAction = createAction({
   auth: senjaAuth,
   name: 'update_testimonial',
+  classification: 'WRITE',
   displayName: 'Update Testimonial',
   description: 'Approve, unapprove, or update tags on an existing testimonial.',
   audience: 'human',
