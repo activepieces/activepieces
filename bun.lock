@@ -10522,7 +10522,7 @@
     },
     "packages/pieces/community/zoho-mail": {
       "name": "@activepieces/piece-zoho-mail",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10534,6 +10534,7 @@
       "devDependencies": {
         "@types/mailparser": "3.4.6",
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/zoo": {

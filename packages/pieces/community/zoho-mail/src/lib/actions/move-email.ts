@@ -20,13 +20,12 @@ export const moveEmailAction = createAction({
 		accountId: accountId({ displayName: 'Account', required: true }),
 		folderId: folderId({ displayName: 'Current Folder', required: true }),
 		messageId: messageId({
-			displayName: 'Message ID',
-			description: 'The ID of the email message to move.',
+			displayName: 'Email',
+			description: 'Pick from the 50 newest in the folder, or map a message ID.',
 			required: true,
 		}),
 		destfolderId: folderId({
 			displayName: 'Destination Folder',
-			description: 'Select the folder to move the email to.',
 			required: true,
 		}),
 	},

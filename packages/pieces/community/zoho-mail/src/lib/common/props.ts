@@ -34,14 +34,17 @@ export const accountId = (params: DropdownParams) =>
 				resourceUri: '/accounts',
 			});
 
+			const options = response.data.map((account) => {
+				return {
+					label: account.displayName || account.accountId,
+					value: account.accountId,
+				};
+			});
+
 			return {
 				disabled: false,
-				options: response.data.map((account) => {
-					return {
-						label: account.displayName || account.accountId,
-						value: account.accountId,
-					};
-				}),
+				...(options.length === 0 ? { placeholder: 'No accounts found.' } : {}),
+				options,
 			};
 		},
 	});
@@ -63,7 +66,7 @@ export const folderId = (params: DropdownParams) =>
 			}
 			if (!accountId) {
 				return {
-					placeholder: 'Please select Account first.',
+					placeholder: 'Please select an account first.',
 					options: [],
 					disabled: true,
 				};
@@ -79,14 +82,17 @@ export const folderId = (params: DropdownParams) =>
 				resourceUri: `/accounts/${accountId}/folders`,
 			});
 
+			const options = response.data.map((folder) => {
+				return {
+					label: folder.path || folder.folderId,
+					value: folder.folderId,
+				};
+			});
+
 			return {
 				disabled: false,
-				options: response.data.map((folder) => {
-					return {
-						label: folder.path || folder.folderId,
-						value: folder.folderId,
-					};
-				}),
+				...(options.length === 0 ? { placeholder: 'No folders found.' } : {}),
+				options,
 			};
 		},
 	});
@@ -108,14 +114,14 @@ export const messageId = (params: DropdownParams) =>
 			}
 			if (!accountId) {
 				return {
-					placeholder: 'Please select Account first.',
+					placeholder: 'Please select an account first.',
 					options: [],
 					disabled: true,
 				};
 			}
 			if (!folderId) {
 				return {
-					placeholder: 'Please select Folder first.',
+					placeholder: 'Please select a folder first.',
 					options: [],
 					disabled: true,
 				};
@@ -124,7 +130,7 @@ export const messageId = (params: DropdownParams) =>
 			const authValue = auth as PiecePropValueSchema<typeof zohoMailAuth>;
 
 			const response = await zohoMailApiCall<{
-				data: { messageId: string; subject: string }[];
+				data: { messageId: string; subject: string; fromAddress?: string }[];
 			}>({
 				auth: authValue,
 				method: HttpMethod.GET,
@@ -135,14 +141,18 @@ export const messageId = (params: DropdownParams) =>
 				},
 			});
 
+			const options = response.data.map((message) => {
+				const subject = message.subject || '(No subject)';
+				return {
+					label: message.fromAddress ? `${subject} (${message.fromAddress})` : subject,
+					value: message.messageId,
+				};
+			});
+
 			return {
 				disabled: false,
-				options: response.data.map((message) => {
-					return {
-						label: message.subject,
-						value: message.messageId,
-					};
-				}),
+				...(options.length === 0 ? { placeholder: 'No emails in this folder.' } : {}),
+				options,
 			};
 		},
 	});
@@ -164,7 +174,7 @@ export const fromAddress = (params: DropdownParams) =>
 			}
 			if (!accountId) {
 				return {
-					placeholder: 'Please select Account first.',
+					placeholder: 'Please select an account first.',
 					options: [],
 					disabled: true,
 				};
@@ -179,14 +189,17 @@ export const fromAddress = (params: DropdownParams) =>
 				resourceUri: `/accounts/${accountId}`,
 			});
 
+			const options = response.data.sendMailDetails.map((account) => {
+				return {
+					label: account.fromAddress,
+					value: account.fromAddress,
+				};
+			});
+
 			return {
 				disabled: false,
-				options: response.data.sendMailDetails.map((account) => {
-					return {
-						label: account.fromAddress,
-						value: account.fromAddress,
-					};
-				}),
+				...(options.length === 0 ? { placeholder: 'No send-from addresses found.' } : {}),
+				options,
 			};
 		},
 	});

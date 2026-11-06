@@ -17,64 +17,96 @@ export const sendEmailAction = createAction({
 			'Sends a new email from a Zoho Mail account to one recipient, with optional CC/BCC, read receipt, and a single file attachment; body is sent as HTML or plain text per the chosen format. Use to dispatch outbound mail. Not idempotent: each call sends a separate message.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{ key: 'sender', display: 'section', label: 'Sender', icon: 'user', props: ['accountId', 'fromAddress'] },
+		{
+			key: 'recipients',
+			display: 'section',
+			label: 'Send to',
+			icon: 'send',
+			props: ['toAddress', 'ccAddress', 'bccAddress'],
+		},
+		{
+			key: 'message',
+			display: 'section',
+			label: 'Message',
+			icon: 'text',
+			props: ['subject', 'mailFormat', 'content'],
+		},
+		{
+			key: 'attachment',
+			display: 'section',
+			label: 'Attachment',
+			icon: 'paperclip',
+			props: ['attachment', 'attachmentName'],
+		},
+	],
 	props: {
 		accountId: accountId({ displayName: 'Account', required: true }),
-		fromAddress: fromAddress({ displayName: 'From Email Address', required: true }),
+		fromAddress: fromAddress({ displayName: 'From', required: true }),
 		toAddress: Property.ShortText({
-			displayName: 'To Email Address',
-			description: "Recipient's email address.",
+			displayName: 'To',
+			placeholder: 'recipient@example.com',
 			required: true,
 		}),
-
+		ccAddress: Property.ShortText({
+			displayName: 'Cc',
+			placeholder: 'cc@example.com',
+			width: 'half',
+			required: false,
+		}),
+		bccAddress: Property.ShortText({
+			displayName: 'Bcc',
+			placeholder: 'bcc@example.com',
+			width: 'half',
+			required: false,
+		}),
 		subject: Property.LongText({
 			displayName: 'Subject',
+			placeholder: 'Invoice for March',
 			required: true,
 		}),
-
 		mailFormat: Property.StaticDropdown({
-			displayName: 'Mail Format',
+			displayName: 'Body Format',
+			description: 'How the text in Body is interpreted.',
 			required: true,
+			display: 'cards',
 			options: {
 				options: [
-					{ label: 'HTML', value: 'html' },
-					{ label: 'Plain Text', value: 'plaintext' },
+					{ label: 'HTML', value: 'html', description: 'Formatted', icon: 'code' },
+					{ label: 'Plain Text', value: 'plaintext', description: 'Sent as written', icon: 'text' },
 				],
 			},
 			defaultValue: 'html',
 		}),
 		content: Property.LongText({
-			displayName: 'Content',
-			description: 'HTML or plain text content of the email.',
+			displayName: 'Body',
+			description: 'Write HTML markup when Body Format is HTML.',
 			required: true,
 		}),
-		ccAddress: Property.ShortText({
-			displayName: 'CC Email Address',
-			description: "CC recipient's email address.",
+		attachment: Property.File({
+			displayName: 'File',
+			width: 'half',
 			required: false,
 		}),
-		bccAddress: Property.ShortText({
-			displayName: 'BCC Email Address',
-			description: "BCC recipient's email address.",
+		attachmentName: Property.ShortText({
+			displayName: 'File Name',
+			description: 'Overrides the uploaded file name.',
+			placeholder: 'report.pdf',
+			width: 'half',
 			required: false,
 		}),
 		askReceipt: Property.StaticDropdown({
-			displayName: 'Ask for Read Receipt',
+			displayName: 'Read Receipt',
+			description: 'Ask recipients to confirm they opened the email.',
 			required: false,
+			advanced: true,
 			options: {
 				options: [
 					{ label: 'Yes', value: 'yes' },
 					{ label: 'No', value: 'no' },
 				],
 			},
-		}),
-		attachment: Property.File({
-			displayName: 'Attachment',
-			required: false,
-		}),
-		attachmentName: Property.ShortText({
-			displayName: 'Attachment Name',
-			description: 'In case you want to change the name of the attachment.',
-			required: false,
 		}),
 	},
 	async run(context) {

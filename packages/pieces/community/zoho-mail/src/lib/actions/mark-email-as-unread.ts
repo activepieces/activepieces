@@ -8,7 +8,7 @@ export const markEmailAsUnreadAction = createAction({
 	auth: zohoMailAuth,
 	name: 'mark_email_as_unread',
 	classification: 'WRITE',
-	displayName: 'Mark Emai as Unread',
+	displayName: 'Mark Email as Unread',
 	description: 'Marks an email as unread.',
 	audience: 'both',
 	aiMetadata: {
@@ -20,8 +20,8 @@ export const markEmailAsUnreadAction = createAction({
 		accountId: accountId({ displayName: 'Account', required: true }),
 		folderId: folderId({ displayName: 'Folder', required: true }),
 		messageId: messageId({
-			displayName: 'Message ID',
-			description: 'The ID of the email message to mark as unread.',
+			displayName: 'Email',
+			description: 'Pick from the 50 newest in the folder, or map a message ID.',
 			required: true,
 		}),
 	},

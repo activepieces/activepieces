@@ -4,7 +4,7 @@ export const zohoMailAuth = PieceAuth.OAuth2({
 	props: {
 		location: Property.StaticDropdown({
 			displayName: 'Location',
-			description: 'The location of your Zoho Mail account.',
+			description: 'The region your Zoho account is hosted in.',
 			required: true,
 			options: {
 				options: [
@@ -36,7 +36,7 @@ export const zohoMailAuth = PieceAuth.OAuth2({
 			},
 		}),
 	},
-	description: 'Authentication for Zoho Desk',
+	description: 'Connect your Zoho Mail account.',
 	scope: [
 		'ZohoMail.accounts.READ',
 		'ZohoMail.messages.ALL',
