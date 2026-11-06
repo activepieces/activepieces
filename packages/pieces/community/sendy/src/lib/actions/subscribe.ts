@@ -69,7 +69,7 @@ export const subscribeAction = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       email: z.string().check(z.email()),
-      referrer: z.string().check(z.url()),
+      referrer: z.optional(z.string().check(z.url())),
     });
 
     return await subscribe(context.auth, {
