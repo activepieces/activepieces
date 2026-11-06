@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { bufferAuth } from '../common/auth';
 import { bufferClient } from '../common/client';
 import { bufferProps } from '../common/props';
@@ -65,28 +69,51 @@ export const createIdea = createAction({
   },
   props: {
     organizationId: bufferProps.organizationId(),
+    ideaContentNote: Property.MarkDown({
+      value: 'An idea needs at least a title, text or one image.',
+      variant: MarkdownVariant.INFO,
+    }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'A short title or headline for the idea.',
+      description: 'A short headline for the idea.',
+      placeholder: 'Behind-the-scenes video series',
       required: false,
     }),
     text: Property.LongText({
       displayName: 'Text',
-      description: 'The main body of the idea.',
+      description: 'The idea itself, as much or as little as you need.',
+      placeholder: 'Weekly clips from the studio, posted on Fridays.',
       required: false,
     }),
     imageUrls: Property.Array({
       displayName: 'Image URLs',
-      description: 'Public URLs of images to attach to the idea.',
+      description: 'Public links to images to attach to the idea.',
       required: false,
     }),
     aiAssisted: Property.Checkbox({
       displayName: 'AI Assisted',
-      description: 'Mark this idea as created with AI assistance.',
+      description: 'Marks the idea in Buffer as written with AI.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Save to',
+      icon: 'inbox',
+      props: ['organizationId'],
+    },
+    {
+      key: 'idea',
+      display: 'section',
+      label: 'Idea',
+      icon: 'text',
+      props: ['ideaContentNote', 'title', 'text', 'imageUrls'],
+    },
+  ],
   async run(context) {
     const { organizationId, title, text, imageUrls, aiAssisted } =
       context.propsValue;
