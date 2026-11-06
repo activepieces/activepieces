@@ -1,0 +1,22 @@
+{
+  "Forms that turn visitors into leads, meetings that book them, and workflows that follow up.": "Forms that turn visitors into leads, meetings that book them, and workflows that follow up.",
+  "Sign in to Claritia and pick the workspace to connect.": "Sign in to Claritia and pick the workspace to connect.",
+  "Form": "Form",
+  "Leave empty for every form.": "Leave empty for every form.",
+  "Workflow": "Workflow",
+  "New Fill": "New Fill",
+  "Triggers when someone fills in a form.": "Triggers when someone fills in a form.",
+  "New Booking": "New Booking",
+  "Triggers when someone books a meeting.": "Triggers when someone books a meeting.",
+  "Booking Canceled": "Booking Canceled",
+  "Triggers when a meeting is canceled.": "Triggers when a meeting is canceled.",
+  "Lead Routed": "Lead Routed",
+  "Triggers when routing gives a lead an owner, or finds none.": "Triggers when routing gives a lead an owner, or finds none.",
+  "Find Fill": "Find Fill",
+  "Finds the latest fill from an email.": "Finds the latest fill from an email.",
+  "Email": "Email",
+  "Add Contact to Workflow": "Add Contact to Workflow",
+  "Adds someone to a live workflow, making the contact if it's new.": "Adds someone to a live workflow, making the contact if it's new.",
+  "First name": "First name",
+  "Last name": "Last name"
+}
