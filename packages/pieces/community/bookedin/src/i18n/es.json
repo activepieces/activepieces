@@ -56,6 +56,6 @@
   "PUT": "PUT",
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar"
 }
