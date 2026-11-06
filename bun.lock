@@ -5513,7 +5513,7 @@
     },
     "packages/pieces/community/loops": {
       "name": "@activepieces/piece-loops",
-      "version": "0.1.2",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5521,6 +5521,7 @@
         "@activepieces/pieces-framework": "workspace:*",
       },
       "devDependencies": {
+        "vitest": "5.0.5",
         "tslib": "2.6.2",
       },
     },
@@ -5854,7 +5855,7 @@
     },
     "packages/pieces/community/mem": {
       "name": "@activepieces/piece-mem",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5862,6 +5863,7 @@
         "@activepieces/pieces-framework": "workspace:*",
       },
       "devDependencies": {
+        "vitest": "5.0.5",
         "tslib": "2.6.2",
       },
     },
@@ -10812,7 +10814,7 @@
     },
     "packages/pieces/core/pdf": {
       "name": "@activepieces/piece-pdf",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
