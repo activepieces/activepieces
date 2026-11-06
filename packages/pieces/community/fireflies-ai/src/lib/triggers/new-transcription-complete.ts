@@ -9,26 +9,20 @@ export const newTranscriptionCompletedTrigger = createTrigger({
 	name: 'new_transcription_completed',
 	classification: 'READ',
 	displayName: 'New Transcription Completed',
-	description: 'Triggered when a new meeting is transcribed.',
+	description: 'Fires when Fireflies finishes transcribing a meeting.',
 	aiMetadata: {
 		description: 'Fires when Fireflies finishes transcribing a meeting, emitting the completed transcript with its summary, speakers, attendees, and media URLs. Represents a freshly available, fully processed meeting record. Requires a manually configured Fireflies webhook.',
 	},
 	props: {
 		webhookInstructions: Property.MarkDown({
-			value: `
-			## Fireflies.ai Webhook Setup
-			To use this trigger, you need to manually set up a webhook in your Fireflies.ai account:
+			value: `Set up the webhook in Fireflies:
 
-			1. Login to your Fireflies.ai account.
-			2. Navigate to **Settings** > **Developer Settings** in the left sidebar.
-			3. Enter the following URL in the webhooks field:
-			\`\`\`text
-			{{webhookUrl}}
-			\`\`\`
-			4. Click Save to register the webhook.
-
-			This webhook will be triggered when a meeting transcription is completed.
-			`,
+1. Log in to Fireflies and open **Settings** > **Developer Settings**.
+2. Paste this URL into the **Webhook** field:
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
+3. Click **Save**.`,
 		}),
 	},
 	type: TriggerStrategy.WEBHOOK,
