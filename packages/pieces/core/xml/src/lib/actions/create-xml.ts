@@ -1,4 +1,4 @@
-import { createAction, OutputSchema, Property, tryCatch } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, OutputSchema, Property, tryCatch } from '@activepieces/pieces-framework';
 import { XMLBuilder, XMLValidator } from 'fast-xml-parser';
 
 export const createXml = createAction({
@@ -6,26 +6,39 @@ export const createXml = createAction({
   name: 'create-xml',
   classification: 'READ',
   displayName: 'Create XML',
-  description: 'Build an XML document from JSON, with attributes, repeated elements, CDATA and an optional XML declaration',
+  description: 'Build an XML document from JSON, with attributes, lists and CDATA.',
   aiMetadata: {
     description: 'Builds a well-formed XML string from a JSON object or array: each key becomes an element, each array item becomes a repeated element with the same name, keys prefixed "@_" become attributes of their parent element (including namespace declarations such as "@_xmlns:soap"), "#text" sets the text of an element that also has attributes, and "#cdata" writes a CDATA section. This is the same JSON shape that Convert XML to JSON returns, so the two actions round-trip. Use it to produce a SOAP envelope, legacy API payload, RSS feed, sitemap or file body; prefer it over Convert JSON to XML, which merges list items into one element. A top-level array or several top-level keys are wrapped in one root element ("root" unless Root Element is set). Fails with the offending key and line number when a key is not a valid XML name, and fails when the JSON is nested more than 100 levels deep. Deterministic and idempotent.',
     idempotent: true,
   },
   outputSchema: createXmlOutputSchema(),
+  propertyGroups: [
+    { key: 'document', display: 'section', label: 'Document', icon: 'code', props: ['keyGuide', 'json'] },
+    { key: 'elements', display: 'section', label: 'Element Names', icon: 'type', props: ['rootElement', 'listItemElement'] },
+    { key: 'output', display: 'section', label: 'Output Format', icon: 'sliders', props: ['prettyPrint', 'includeDeclaration', 'selfCloseEmptyElements'] },
+  ],
   props: {
+    keyGuide: Property.MarkDown({
+      variant: MarkdownVariant.INFO,
+      value: 'Each key becomes an element and each list item a repeated element. Keys starting with `@_` become attributes, `#text` sets the text of an element that has attributes, and `#cdata` writes a CDATA section. Example: `{"book": {"@_id": "1", "title": "Dune"}}`. The output of **Convert XML to JSON** works as-is, and a `?xml` key writes your own declaration.',
+    }),
     json: Property.Json({
       displayName: 'JSON',
-      description: 'Each key becomes an element and each list item becomes a repeated element. Keys starting with "@_" become attributes, "#text" sets the text of an element that has attributes, and "#cdata" writes a CDATA section. Example: {"book": {"@_id": "1", "title": "Dune", "tag": ["scifi", "classic"]}}. The output of Convert XML to JSON can be used as-is.',
+      description: 'The JSON to turn into XML, using the keys explained above.',
       required: true,
     }),
     rootElement: Property.ShortText({
       displayName: 'Root Element',
-      description: 'Wraps the output in one element with this name. Leave empty if your JSON already has a single top-level key. If the JSON is a list or has several top-level keys and this is empty, "root" is used.',
+      description: 'Wraps everything in one element. Empty: "root" for lists or many keys.',
+      placeholder: 'catalog',
+      width: 'half',
       required: false,
     }),
     listItemElement: Property.ShortText({
       displayName: 'List Item Element',
-      description: 'Element name for each item when the JSON itself is a list. Defaults to "item".',
+      description: 'Name of each item when the JSON is a list. Empty: "item".',
+      placeholder: 'book',
+      width: 'half',
       required: false,
     }),
     prettyPrint: Property.Checkbox({
@@ -36,7 +49,7 @@ export const createXml = createAction({
     }),
     includeDeclaration: Property.Checkbox({
       displayName: 'Include XML Declaration',
-      description: 'Start the output with <?xml version="1.0" encoding="UTF-8"?>. To use a different declaration, add a "?xml" key to your JSON instead, e.g. {"?xml": {"@_version": "1.0", "@_standalone": "yes"}}.',
+      description: 'Start the output with <?xml version="1.0" encoding="UTF-8"?>.',
       required: false,
       defaultValue: false,
     }),
@@ -48,17 +61,23 @@ export const createXml = createAction({
     }),
     attributePrefix: Property.ShortText({
       displayName: 'Attribute Prefix',
-      description: 'Keys starting with this prefix become attributes. Defaults to "@_", the prefix Convert XML to JSON uses.',
+      description: 'Keys starting with this become attributes. Defaults to "@_".',
+      placeholder: '@_',
+      advanced: true,
       required: false,
     }),
     textKey: Property.ShortText({
       displayName: 'Text Key',
-      description: 'Key that holds the text of an element that also has attributes. Defaults to "#text".',
+      description: 'Key for the text of an element with attributes. Defaults to "#text".',
+      placeholder: '#text',
+      advanced: true,
       required: false,
     }),
     cdataKey: Property.ShortText({
       displayName: 'CDATA Key',
-      description: 'Key whose value is written as a CDATA section, so it is not escaped. Defaults to "#cdata".',
+      description: 'Key written as CDATA, so it is not escaped. Defaults to "#cdata".',
+      placeholder: '#cdata',
+      advanced: true,
       required: false,
     }),
   },
