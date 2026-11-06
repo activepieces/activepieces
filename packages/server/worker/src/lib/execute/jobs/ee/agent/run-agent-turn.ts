@@ -103,6 +103,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         tools,
         surface: skills.surface,
         guides: skills.guides,
+        preloadedSkills: skills.preloaded,
         onSkillLoaded: (skill) => {
             if (skill.entersBuildPhase) {
                 phaseState.phase = 'build'
@@ -669,7 +670,7 @@ export type RunAgentTurnParams = {
     priorToolCalls?: ChatToolCall[]
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
-    skills?: { surface: SkillSurface, guides: Record<string, string> }
+    skills?: { surface: SkillSurface, guides: Record<string, string>, preloaded?: string[] }
 }
 
 export type AgentTurnResult = {
