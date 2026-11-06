@@ -14,6 +14,13 @@ import {
 } from '../common/common';
 import { extractStructuredDataActionOutputSchema } from '../output-schemas';
 
+function hasToolCall(message: Anthropic.Messages.Message): boolean {
+  return message.content.some((block) => block.type === 'tool_use');
+}
+
+const EXTRACTION_TOOL_NAME = 'extract_structured_data';
+const AUTO_TOOL_SYSTEM_PROMPT = `Always answer by calling the ${EXTRACTION_TOOL_NAME} tool exactly once.`;
+
 export const extractStructuredDataAction = createAction({
   audience: 'both',
   auth: claudeAuth,
@@ -332,13 +339,6 @@ export const extractStructuredDataAction = createAction({
     return args;
   },
 });
-
-function hasToolCall(message: Anthropic.Messages.Message): boolean {
-  return message.content.some((block) => block.type === 'tool_use');
-}
-
-const EXTRACTION_TOOL_NAME = 'extract_structured_data';
-const AUTO_TOOL_SYSTEM_PROMPT = `Always answer by calling the ${EXTRACTION_TOOL_NAME} tool exactly once.`;
 
 type AIFunctionArgumentDefinition = {
   type: 'object';

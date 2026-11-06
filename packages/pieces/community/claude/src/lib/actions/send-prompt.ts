@@ -17,6 +17,23 @@ import {
   unauthorizedMessage,
 } from '../common/common';
 import { askClaudeActionOutputSchema } from '../output-schemas';
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function extractReplyText(message: Anthropic.Messages.Message): string {
+  const text = message.content
+    .flatMap((block) => (block.type === 'text' ? [block.text] : []))
+    .join('\n')
+    .trim();
+  if (text.length === 0) {
+    throw new Error(
+      `Claude returned no text (stop_reason: ${message.stop_reason ?? 'unknown'}). Try raising Max Tokens or rephrasing the prompt.`
+    );
+  }
+  return text;
+}
+
 export const askClaude = createAction({
   audience: 'both',
   auth: claudeAuth,
@@ -222,20 +239,3 @@ export const askClaude = createAction({
     return response;
   },
 });
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function extractReplyText(message: Anthropic.Messages.Message): string {
-  const text = message.content
-    .flatMap((block) => (block.type === 'text' ? [block.text] : []))
-    .join('\n')
-    .trim();
-  if (text.length === 0) {
-    throw new Error(
-      `Claude returned no text (stop_reason: ${message.stop_reason ?? 'unknown'}). Try raising Max Tokens or rephrasing the prompt.`
-    );
-  }
-  return text;
-}
