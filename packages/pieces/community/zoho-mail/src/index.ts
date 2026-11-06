@@ -22,7 +22,7 @@ export const zohoMail = createPiece({
 	authors: ['onyedikachi-david', 'kishanprmr', 'kdurek'],
 	description:
 		'Zoho Mail is a powerful email service that allows you to manage your email, contacts, and calendars efficiently.',
-	minimumSupportedRelease: '0.36.1',
+	minimumSupportedRelease: '0.88.2',
 	categories: [PieceCategory.COMMUNICATION],
 	actions: [
 		getEmailDetailsAction,
@@ -34,6 +34,12 @@ export const zohoMail = createPiece({
 		sendEmailAction,
 		createCustomApiCallAction({
 			auth: zohoMailAuth,
+			props: {
+				url: {
+					description: 'Full URL, or a path relative to https://mail.<Location>/api.',
+					placeholder: '/accounts',
+				},
+			},
 			baseUrl: (auth) => {
 				const authValue = auth as PiecePropValueSchema<typeof zohoMailAuth>;
 				const location = authValue.props?.['location'] ?? 'zoho.com';
