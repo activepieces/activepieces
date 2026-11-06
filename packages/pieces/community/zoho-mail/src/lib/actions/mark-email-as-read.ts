@@ -20,8 +20,8 @@ export const markEmailAsReadAction = createAction({
 		accountId: accountId({ displayName: 'Account', required: true }),
 		folderId: folderId({ displayName: 'Folder', required: true }),
 		messageId: messageId({
-			displayName: 'Message ID',
-			description: 'The ID of the email message to mark as read.',
+			displayName: 'Email',
+			description: 'Pick from the 50 newest in the folder, or map a message ID.',
 			required: true,
 		}),
 	},
