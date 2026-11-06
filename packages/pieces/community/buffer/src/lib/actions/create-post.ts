@@ -45,7 +45,7 @@ export const createPost = createAction({
   classification: 'WRITE',
   displayName: 'Create Post',
   description:
-    'Create a post in Buffer and add it to the queue, share it next, share it now, or schedule it for a custom time.',
+    'Queue, schedule or publish a post on one or more Buffer channels.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -57,62 +57,119 @@ export const createPost = createAction({
     channelIds: bufferProps.channelIds(true),
     text: Property.LongText({
       displayName: 'Text',
-      description: 'The text content of the post.',
+      description: 'Posted as written to every channel you picked.',
+      placeholder: 'Our spring collection is live!',
       required: true,
     }),
     mode: Property.StaticDropdown({
-      displayName: 'Share Mode',
-      description: 'When and how the post should be published.',
+      displayName: 'When to Publish',
       required: true,
       defaultValue: 'addToQueue',
       options: {
         disabled: false,
         options: [
-          { label: 'Add to Queue', value: 'addToQueue' },
-          { label: 'Share Next (skip the queue)', value: 'shareNext' },
-          { label: 'Share Now', value: 'shareNow' },
-          { label: 'Schedule for Custom Time', value: 'customScheduled' },
+          {
+            label: 'Add to Queue',
+            value: 'addToQueue',
+            description: 'Next open slot',
+            icon: 'inbox',
+          },
+          {
+            label: 'Share Next',
+            value: 'shareNext',
+            description: 'Top of queue',
+            icon: 'sliders',
+          },
+          {
+            label: 'Share Now',
+            value: 'shareNow',
+            description: 'Right away',
+            icon: 'send',
+          },
+          {
+            label: 'Schedule',
+            value: 'customScheduled',
+            description: 'At a set time',
+            icon: 'calendar',
+          },
         ],
       },
+      display: 'cards',
     }),
     dueAt: Property.DateTime({
       displayName: 'Scheduled Time',
       description:
-        'When to publish the post. Required when Share Mode is "Schedule for Custom Time". ISO 8601 (UTC).',
+        'Used only with Schedule; times without an offset are read as UTC.',
+      placeholder: '2026-12-01T09:00:00Z',
       required: false,
     }),
     schedulingType: Property.StaticDropdown({
-      displayName: 'Scheduling Type',
+      displayName: 'How to Publish',
       description:
-        'Use "Automatic" for channels Buffer can publish to directly. Use "Notification" for channels that require manual publishing via the Buffer mobile app (e.g. Instagram personal accounts).',
+        'Pick Notification for channels Buffer cannot post to directly.',
       required: true,
       defaultValue: 'automatic',
       options: {
         disabled: false,
         options: [
-          { label: 'Automatic', value: 'automatic' },
-          { label: 'Notification (manual publish)', value: 'notification' },
+          {
+            label: 'Automatic',
+            value: 'automatic',
+            description: 'Buffer posts it',
+            icon: 'send',
+          },
+          {
+            label: 'Notification',
+            value: 'notification',
+            description: 'Via mobile app',
+            icon: 'user',
+          },
         ],
       },
+      display: 'cards',
     }),
     saveToDraft: Property.Checkbox({
       displayName: 'Save as Draft',
       description:
-        'Save the post as a draft instead of scheduling it. Drafts are not published until explicitly scheduled.',
+        'Keep the post as a draft in Buffer instead of publishing it.',
       required: false,
       defaultValue: false,
     }),
     imageUrls: Property.Array({
       displayName: 'Image URLs',
-      description: 'Public URLs of images to attach to the post.',
+      description: 'Public links to images to attach to the post.',
       required: false,
     }),
     linkUrl: Property.ShortText({
       displayName: 'Link URL',
-      description: 'A link to attach to the post (used as a link preview).',
+      description: 'Shown on the post as a link preview.',
+      placeholder: 'https://example.com/article',
       required: false,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Post to',
+      icon: 'users',
+      props: ['organizationId', 'channelIds'],
+    },
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Content',
+      icon: 'text',
+      props: ['text', 'imageUrls', 'linkUrl'],
+    },
+    {
+      key: 'publishing',
+      display: 'section',
+      label: 'Publishing',
+      icon: 'calendar',
+      props: ['mode', 'dueAt', 'schedulingType', 'saveToDraft'],
+    },
+  ],
   async run(context) {
     const {
       channelIds,
@@ -127,7 +184,7 @@ export const createPost = createAction({
 
     if (mode === 'customScheduled' && !dueAt) {
       throw new Error(
-        'Scheduled Time is required when Share Mode is "Schedule for Custom Time".',
+        'Pick a Scheduled Time to schedule this post.',
       );
     }
 

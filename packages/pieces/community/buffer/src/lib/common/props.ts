@@ -36,17 +36,20 @@ async function fetchPosts({
   accessToken,
   organizationId,
   channelIds,
+  statuses,
   statusFilter,
   first = 50,
 }: {
   accessToken: string;
   organizationId: string;
   channelIds?: string[];
+  statuses?: string[];
   statusFilter?: (status: string | undefined) => boolean;
   first?: number;
 }): Promise<BufferPost[]> {
   const filter: Record<string, unknown> = {};
   if (channelIds && channelIds.length > 0) filter['channelIds'] = channelIds;
+  if (statuses && statuses.length > 0) filter['status'] = statuses;
 
   const data = await bufferClient.graphql<{
     posts: { edges?: Array<{ node: BufferPost }> };
@@ -88,7 +91,7 @@ export const bufferProps = {
     Property.Dropdown<string, true, typeof bufferAuth>({
       auth: bufferAuth,
       displayName: 'Organization',
-      description: 'The Buffer organization to use.',
+      description: 'The Buffer organization that owns your channels.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -101,6 +104,13 @@ export const bufferProps = {
         }
         try {
           const organizations = await fetchOrganizations(auth.secret_text);
+          if (organizations.length === 0) {
+            return {
+              disabled: false,
+              options: [],
+              placeholder: 'No organizations found.',
+            };
+          }
           return {
             disabled: false,
             options: organizations.map((org) => ({
@@ -111,7 +121,7 @@ export const bufferProps = {
         } catch {
           return {
             disabled: true,
-            placeholder: 'Failed to load organizations.',
+            placeholder: 'Failed to load organizations. Check your connection.',
             options: [],
           };
         }
@@ -122,7 +132,7 @@ export const bufferProps = {
     Property.MultiSelectDropdown<string, boolean, typeof bufferAuth>({
       auth: bufferAuth,
       displayName: 'Channels',
-      description: 'The Buffer channels to publish to.',
+      description: 'One post is created for each channel you pick.',
       required,
       refreshers: ['organizationId'],
       options: async ({ auth, organizationId }) => {
@@ -138,6 +148,13 @@ export const bufferProps = {
             auth.secret_text,
             organizationId as string,
           );
+          if (channels.length === 0) {
+            return {
+              disabled: false,
+              options: [],
+              placeholder: 'No channels found. Connect one in Buffer first.',
+            };
+          }
           return {
             disabled: false,
             options: channels.map((channel) => ({
@@ -148,7 +165,7 @@ export const bufferProps = {
         } catch {
           return {
             disabled: true,
-            placeholder: 'Failed to load channels.',
+            placeholder: 'Failed to load channels. Check your connection.',
             options: [],
           };
         }
@@ -175,6 +192,13 @@ export const bufferProps = {
             auth.secret_text,
             organizationId as string,
           );
+          if (channels.length === 0) {
+            return {
+              disabled: false,
+              options: [],
+              placeholder: 'No channels found. Connect one in Buffer first.',
+            };
+          }
           return {
             disabled: false,
             options: channels.map((channel) => ({
@@ -185,7 +209,7 @@ export const bufferProps = {
         } catch {
           return {
             disabled: true,
-            placeholder: 'Failed to load channels.',
+            placeholder: 'Failed to load channels. Check your connection.',
             options: [],
           };
         }
