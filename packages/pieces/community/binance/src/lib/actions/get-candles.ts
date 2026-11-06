@@ -78,10 +78,6 @@ export const getCandles = createAction({
       description: 'How many candles to return, up to 1000.',
       required: false,
       defaultValue: DEFAULT_LIMIT,
-      display: 'stepper',
-      min: 1,
-      max: 1000,
-      step: 1,
     }),
   },
   propertyGroups: [

@@ -21,13 +21,9 @@ export const getOrderBook = createAction({
     symbol: symbolProp,
     limit: Property.Number({
       displayName: 'Depth',
-      description: 'Price levels on each side. Over 100 uses more of the rate limit.',
+      description: 'Price levels on each side, up to 5000. Over 100 uses more rate limit.',
       required: false,
       defaultValue: DEFAULT_DEPTH,
-      display: 'stepper',
-      min: 1,
-      max: 5000,
-      step: 1,
     }),
   },
   propertyGroups: [

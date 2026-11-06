@@ -35,13 +35,9 @@ export const listTradingPairs = createAction({
     }),
     limit: Property.Number({
       displayName: 'Maximum Pairs',
-      description: 'Most pairs to return. The output also gives the total match count.',
+      description: 'Most pairs to return, up to 1500. Output also gives the total count.',
       required: false,
       defaultValue: DEFAULT_LIMIT,
-      display: 'stepper',
-      min: 1,
-      max: MAX_LIMIT,
-      step: 1,
     }),
   },
   propertyGroups: [
