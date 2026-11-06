@@ -12,15 +12,15 @@ export const unsubscribeMultipleAction = createAction({
   name: 'unsubscribe_multiple',
   classification: 'DESTRUCTIVE',
   auth: sendyAuth,
-  displayName: 'Unsubscribe Multiple Lists',
-  description: 'Unsubscribe a subscriber from multiple lists',
+  displayName: 'Unsubscribe from Multiple Lists',
+  description: 'Unsubscribe someone from several lists at once.',
   audience: 'both',
   aiMetadata: { description: 'Marks the same subscriber, identified by email, as unsubscribed across several Sendy lists in one call, iterating over each selected list while keeping the records. Use to opt a contact out of multiple lists at once; for a single list use Unsubscribe. Requires the lists and a valid email; repeating the call on already-unsubscribed lists has no further effect, so it is idempotent.', idempotent: true },
   props: {
     lists: Property.MultiSelectDropdown({
       auth: sendyAuth,
       displayName: 'Lists',
-      description: 'Select the lists to subscribe to',
+      description: 'The lists to unsubscribe them from.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) =>
@@ -28,7 +28,8 @@ export const unsubscribeMultipleAction = createAction({
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: "The user's email",
+      description: "The subscriber's email address.",
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },
@@ -37,7 +38,7 @@ export const unsubscribeMultipleAction = createAction({
       email: z.string().check(z.email()),
     });
 
-    const returnValues: any[] = [];
+    const returnValues: Awaited<ReturnType<typeof unsubscribe>>[] = [];
 
     for (const list of context.propsValue.lists) {
       const rc = await unsubscribe(context.auth, {
