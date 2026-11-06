@@ -10,26 +10,45 @@ export const getYoutubeComments = createAction({
   classification: 'SEARCH',
   displayName: 'Get YouTube Comments',
   description:
-    'Fetch comments from  YouTube video with options to sort and limit results.',
+    "Get a video's comments, newest or top first.",
   audience: 'both',
   aiMetadata: { description: 'Fetches comments for a YouTube video given its watch URL, optionally capped by a limit (default 10, max 100) and ordered newest-first or by top engagement. Use to read audience reactions or feed comment text into analysis. Read-only and idempotent, though results may shift as new comments are posted.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'video',
+      display: 'section',
+      label: 'Video',
+      icon: 'file',
+      props: ['url'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit', 'sortBy'],
+    },
+  ],
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',
-      description:
-        'The URL of the YouTube video to fetch comments from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)',
+      description: "Copy it from the video's page in your browser.",
+      placeholder: 'https://www.youtube.com/watch?v=VIDEO_ID',
       required: true,
     }),
     limit: Property.Number({
-      displayName: 'Limit',
-      description:
-        'The number of comments to retrieve (default is 10, maximum is 100).',
+      displayName: 'Max Comments',
+      description: 'How many comments to fetch, up to 100.',
       required: false,
       defaultValue: 10,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
     }),
     sortBy: Property.StaticDropdown({
       displayName: 'Sort By',
-      description: 'The sorting order for the comments.',
+      description: 'Top puts the most-engaged comments first.',
       required: false,
       options: {
         options: [
