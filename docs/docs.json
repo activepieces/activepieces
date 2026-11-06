@@ -820,7 +820,14 @@
                   ]
                }
             ]
-         }
+        },
+        {
+          "tab": "Memory and Queue Management",
+          "pages": [
+            "untitled-page",
+            "untitled-page-2"
+          ]
+        }
       ],
       "global": {}
    },
