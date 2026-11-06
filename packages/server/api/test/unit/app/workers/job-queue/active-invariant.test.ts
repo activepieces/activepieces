@@ -77,7 +77,7 @@ async function runSimulation(params: { queueName: string, workers: number, jobs:
         queueName,
         worker: bullWorker,
         dequeue,
-        onOrphanedJob: (jobId, token) => returnJobToQueue(jobId, token),
+        onOrphanedJob: ({ jobId, token }) => returnJobToQueue(jobId, token),
         log,
     })
 
