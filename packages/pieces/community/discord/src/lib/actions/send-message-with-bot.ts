@@ -23,6 +23,22 @@ export const sendMessageWithBot = createAction({
   audience: 'human',
   aiMetadata: { description: 'Posts a new message (optionally with file attachments) to a Discord channel or thread using a bot token. Use when an agent needs to send bot-authored content to a known channel ID. Requires the bot to have access to that channel; each call posts a separate message, so it is not idempotent.', idempotent: false },
   outputSchema: discordMessageOutputSchema,
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Send to',
+      icon: 'send',
+      props: ['channel_id'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['message', 'files'],
+    },
+  ],
   props: {
     channel_id: discordCommon.channel,
     message: Property.LongText({

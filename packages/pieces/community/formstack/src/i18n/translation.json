@@ -65,6 +65,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Submission": "New Submission",
   "New Form": "New Form",
   "Triggers when a form receives a new submission": "Triggers when a form receives a new submission",

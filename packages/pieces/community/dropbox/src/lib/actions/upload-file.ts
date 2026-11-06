@@ -7,6 +7,7 @@ import {
   streamUtils,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { dropboxCommon } from '../common';
 import { uploadedFileOutputSchema } from '../output-schemas';
 
 const CONTENT_API_URL = 'https://content.dropboxapi.com/2';
@@ -17,42 +18,46 @@ export const dropboxUploadFile = createAction({
   auth: dropboxAuth,
   name: 'upload_dropbox_file',
   classification: 'WRITE',
-  description: 'Upload a file',
+  description: 'Upload a file to Dropbox',
   audience: 'both',
   aiMetadata: { description: 'Uploads a file (provided as a URL or base64 file object) to the given Dropbox path in add mode. Files over 150 MB are uploaded in chunks automatically. Use to store binary or arbitrary file content; prefer the create-text-file action when the source is plain text. Not idempotent: each call uploads, so repeating it can create autorenamed duplicates rather than overwriting.', idempotent: false },
-  displayName: 'Upload file',
+  displayName: 'Upload File',
   outputSchema: uploadedFileOutputSchema,
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Destination', icon: 'file', props: ['path'] },
+    { key: 'content', display: 'section', label: 'Content', icon: 'paperclip', props: ['file'] },
+  ],
   props: {
     path: Property.ShortText({
       displayName: 'Path',
-      description:
-        'The path where the file should be saved (e.g. /folder1/file.txt)',
+      description: 'Path to save to, including the file name.',
+      placeholder: '/Uploads/report.pdf',
       required: true,
     }),
     file: Property.File({
       displayName: 'File',
-      description: 'The file URL or base64 to upload',
+      description: 'A file from an earlier step, or a public URL.',
       required: true,
       streaming: true,
     }),
     autorename: Property.Checkbox({
       displayName: 'Auto Rename',
-      description:
-        "If there's a conflict, as determined by mode, have the Dropbox server try to autorename the file to avoid conflict.",
+      description: 'If the name is taken, save under a new name instead of failing.',
       defaultValue: false,
       required: false,
+      advanced: true,
     }),
     mute: Property.Checkbox({
-      displayName: 'Mute',
-      description:
-        "Normally, users are made aware of any file modifications in their Dropbox account via notifications in the client software. If true, this tells the clients that this modification shouldn't result in a user notification.",
+      displayName: 'Mute Notifications',
+      description: "Don't notify the account's Dropbox apps about this change.",
       required: false,
+      advanced: true,
     }),
     strict_conflict: Property.Checkbox({
-      displayName: 'Strict conflict',
-      description:
-        'Be more strict about how each WriteMode detects conflict. For example, always return a conflict error when mode = WriteMode.update and the given "rev" doesn\'t match the existing file\'s "rev", even if the existing file has been deleted.',
+      displayName: 'Strict Conflict',
+      description: 'Fail even when a file with identical contents is already there.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
@@ -139,7 +144,7 @@ async function sendToDropbox<ResponseBody>({
     url: `${CONTENT_API_URL}/${endpoint}`,
     body,
     headers: {
-      'Dropbox-API-Arg': encodeApiArg(apiArg),
+      'Dropbox-API-Arg': dropboxCommon.encodeApiArg(apiArg),
       'Content-Type': 'application/octet-stream',
       'Content-Length': contentLength != null ? String(contentLength) : undefined,
     },
@@ -150,9 +155,4 @@ async function sendToDropbox<ResponseBody>({
   });
 
   return response.body;
-}
-
-// For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
-function encodeApiArg(value: unknown): string {
-  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, (character) => '\\u'+('000'+character.charCodeAt(0).toString(16)).slice(-4));
 }

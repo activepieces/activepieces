@@ -100,6 +100,7 @@ const CORE_TOOL_NAMES: Record<SkillSurface, readonly string[]> = {
         'ap_get_piece_props',
         'ap_resolve_property_options',
         'ap_resolve_property_chain',
+        'ap_run_task',
     ],
     AGENT: [
         LOAD_SKILL_NAME,
@@ -186,7 +187,7 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
         loadWhen: 'before searching the web, reading a web page, scraping a site, generating an image or sending an email',
         guideTopic: 'web_research',
         entersBuildPhase: false,
-        toolNames: ['ap_web_search', 'ap_fetch_url', 'ap_scrape_url', 'ap_generate_image', 'ap_send_email'],
+        toolNames: ['ap_web_search', 'ap_fetch_url', 'ap_scrape_url', 'ap_deep_research', 'ap_generate_image', 'ap_send_email'],
     },
     {
         name: 'interaction',

@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClientFromAuth } from '../common/pinecone-client';
+import { pineconeApi } from '../common/api';
+import type { PineconeLegacyCreateIndexRequest, PineconeLegacyIndexSpec } from '../common/types';
 import { pineconeAuth } from '../auth';
+import { createIndexOutputSchema } from '../output-schemas';
 
-export const createIndex = createAction({
+export const createIndexAction = createAction({
   auth: pineconeAuth,
   name: 'create_index',
+  outputSchema: createIndexOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Index',
   description: 'Creates a new Pinecone index with custom settings.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new Pinecone vector index in the connected project, supporting both serverless (cloud + region) and pod-based (environment + pod type) deployments selected via the index type. Use to provision a fresh index before storing or querying vectors; not for adding data to an existing one. Requires a unique name and, for dense indexes, a positive dimension. Not idempotent: re-running creates or conflicts with an index, though enabling Suppress Conflicts lets a repeat call against an existing index avoid erroring.', idempotent: false },
   props: {
     name: Property.ShortText({
@@ -35,7 +38,7 @@ export const createIndex = createAction({
       },
       defaultValue: 'serverless'
     }),
-    cloud: Property.StaticDropdown({
+    cloud: Property.StaticDropdown<'aws' | 'gcp' | 'azure'>({
       displayName: 'Cloud Provider',
       description:
         'The public cloud where you would like your index hosted (for serverless)',
@@ -102,7 +105,7 @@ export const createIndex = createAction({
         'The number of pods to be used in the index. This should be equal to shards x replicas.',
       required: false
     }),
-    metric: Property.StaticDropdown({
+    metric: Property.StaticDropdown<'cosine' | 'euclidean' | 'dotproduct'>({
       displayName: 'Metric',
       description:
         'The distance metric to use. Defaults to cosine for dense indexes, dotproduct for sparse indexes.',
@@ -115,7 +118,7 @@ export const createIndex = createAction({
         ]
       }
     }),
-    vectorType: Property.StaticDropdown({
+    vectorType: Property.StaticDropdown<'dense' | 'sparse'>({
       displayName: 'Vector Type',
       description:
         'The type of vectors to store. Dense is default for most use cases.',
@@ -210,10 +213,8 @@ export const createIndex = createAction({
       }
     }
 
-    const pc = createPineconeClientFromAuth(context.auth);
-
     try {
-      let spec: any;
+      let spec: PineconeLegacyIndexSpec | undefined;
 
       if (indexType === 'serverless') {
         if (!cloud) {
@@ -258,29 +259,36 @@ export const createIndex = createAction({
         };
       }
 
-      const createIndexOptions: any = {
+      if (!spec) {
+        throw new Error(
+          'You must pass a `pods` or `serverless` `spec` object in order to create an index.'
+        );
+      }
+
+      const resolvedMetric = metric || (vType === 'sparse' ? 'dotproduct' : 'cosine');
+
+      const createIndexRequest: PineconeLegacyCreateIndexRequest = {
         name: name,
         dimension: dimension,
         spec: spec,
-        ...(metric && { metric }),
-        ...(vectorType && { vector_type: vectorType }),
-        ...(deletionProtection !== undefined && { 
-          deletionProtection: deletionProtection ? 'enabled' : 'disabled' 
+        metric: resolvedMetric,
+        ...(vectorType && { vectorType }),
+        ...(deletionProtection !== undefined && {
+          deletionProtection: deletionProtection ? 'enabled' : 'disabled'
         }),
-        ...(tags && { tags }),
-        waitUntilReady: waitUntilReady || false,
-        suppressConflicts: suppressConflicts || false
+        ...(tags && {
+          tags: Object.fromEntries(
+            Object.entries(tags).map(([key, value]) => [key, String(value)])
+          )
+        })
       };
 
-      if (!createIndexOptions.metric) {
-        if (vType === 'sparse') {
-          createIndexOptions.metric = 'dotproduct';
-        } else {
-          createIndexOptions.metric = 'cosine';
-        }
-      }
-
-      const response = await pc.createIndex(createIndexOptions);
+      const response = await pineconeApi.createLegacyIndex({
+        auth: context.auth,
+        request: createIndexRequest,
+        waitUntilReady: waitUntilReady || false,
+        suppressConflicts: suppressConflicts || false
+      });
 
       return {
         success: true,
@@ -288,14 +296,13 @@ export const createIndex = createAction({
         dimension: dimension,
         indexType: indexType,
         spec: spec,
-        metric: createIndexOptions.metric,
+        metric: resolvedMetric,
         vectorType: vType,
         ...(tags && { tags }),
         message: 'Index created successfully',
         ...(response && { response })
       };
     } catch (caught) {
-      console.log('Failed to create index.', caught);
       return caught;
     }
   }

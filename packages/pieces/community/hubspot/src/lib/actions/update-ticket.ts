@@ -16,11 +16,31 @@ export const updateTicketAction = createAction({
     audience: 'both',
     aiMetadata: { description: 'Updates properties on an existing support ticket identified by its ticket ID, such as subject, pipeline, stage, or custom fields, then returns the refreshed ticket. Use to modify a known ticket. Idempotent: applying the same property values converges to the same ticket state.', idempotent: true },
     outputSchema: crmObjectOutputSchema,
+    propertyGroups: [
+        {
+            key: 'target',
+            display: 'section',
+            label: 'Ticket to Update',
+            icon: 'tag',
+            props: ['ticketId'],
+        },
+        {
+            key: 'changes',
+            display: 'section',
+            label: 'Changes',
+            icon: 'text',
+            props: ['changesInfo', 'ticketName', 'pipelineId', 'pipelineStageId', 'objectProperties'],
+        },
+    ],
     props: {
         ticketId: Property.ShortText({
             displayName: 'Ticket ID',
             description: 'Map it from an earlier step like Find Ticket.',
             required: true,
+        }),
+        changesInfo: Property.MarkDown({
+            value: 'Fields left empty keep their current value.',
+            variant: MarkdownVariant.INFO,
         }),
         ticketName: Property.ShortText({
             displayName: 'Ticket Name',

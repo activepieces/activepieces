@@ -20,6 +20,22 @@ export const stripeCreateProduct = createAction({
       'Creates a new product object in Stripe (the catalog item that prices attach to), with optional description, images, URL, and metadata. Use before creating a price or when adding a sellable item. Not idempotent: each call creates a distinct product.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'product',
+      display: 'section',
+      label: 'Product',
+      icon: 'tag',
+      props: ['name', 'description', 'active'],
+    },
+    {
+      key: 'images',
+      display: 'section',
+      label: 'Images',
+      icon: 'paperclip',
+      props: ['images'],
+    },
+  ],
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',

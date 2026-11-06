@@ -1,8 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
-import { sharedProps } from '../common/props';
+import { iloveSchemas } from '../common/schemas';
+import { regionOf, rowFiles, sharedProps, webhookOf } from '../common/props';
 import { runAndStoreResult } from '../common/runner';
-import { UploadInput } from '../common/client';
 
 export const jpgToPdfAction = createAction({
   auth: iloveapiAuth,
@@ -11,6 +11,7 @@ export const jpgToPdfAction = createAction({
   displayName: 'JPG to PDF',
   description: 'Convert one or more images (JPG/PNG) into a PDF document.',
   audience: 'both',
+  outputSchema: iloveSchemas.toolResult,
   aiMetadata: {
     description:
       'Convert one or more JPG/PNG images into PDF, with control over orientation, page size, and margin. By default all images are merged into a single PDF; disable "Merge into single PDF" to instead get one PDF per image. Each run produces new output rather than reusing a prior result.',
@@ -82,16 +83,10 @@ export const jpgToPdfAction = createAction({
       throw new Error('At least one image is required.');
     }
 
-    const uploads: UploadInput[] = images.map((entry) => {
-      const file = (entry as { file: { base64: string; filename: string } }).file;
-      if (!file?.base64) {
-        throw new Error('Each row must include an image file.');
-      }
-      return {
-        kind: 'file',
-        file: { base64: file.base64, filename: file.filename },
-      };
-    });
+    const uploads = rowFiles({ rows: images, label: 'Images' });
+    if (margin !== undefined && margin !== null && (!Number.isFinite(margin) || margin < 0)) {
+      throw new Error('Margin must be a number of pixels, 0 or more.');
+    }
 
     const options: Record<string, unknown> = {
       orientation: orientation ?? 'portrait',
@@ -104,6 +99,8 @@ export const jpgToPdfAction = createAction({
 
     return await runAndStoreResult({
       auth: context.auth.secret_text,
+      region: regionOf(context.propsValue.region),
+      webhook: webhookOf(context.propsValue.webhook_url),
       files: context.files,
       tool: 'imagepdf',
       uploads,

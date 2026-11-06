@@ -1,7 +1,7 @@
 import { httpClient } from '@activepieces/pieces-common';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { aiProps } from './props';
+import { aiModel, aiProps } from './props';
 
 vi.mock('@activepieces/pieces-common', async (importOriginal) => {
   const original = await importOriginal<Record<string, unknown>>();
@@ -26,12 +26,6 @@ const publishedTiers = {
     defaultTierId: 'turbo',
   },
 };
-
-const bundledTierOptions = [
-  { label: 'Fast', value: 'fast' },
-  { label: 'Expert', value: 'smart' },
-  { label: 'Heavy', value: 'premium' },
-];
 
 const catalog = [
   { id: 'anthropic/claude-haiku-4.5', name: 'Claude Haiku 4.5', type: 'text' },
@@ -67,39 +61,6 @@ beforeEach(() => {
   answer({ tiers: publishedTiers });
 });
 
-describe('the managed text model dropdown', () => {
-  it('offers the published flow tiers and stores the tier id', async () => {
-    const state = await modelOptions({ provider: 'activepieces', modelType: 'text' });
-
-    expect(state.options).toEqual([
-      { label: 'Fast', value: 'fast' },
-      { label: 'Deep', value: 'deep' },
-    ]);
-  });
-
-  it('never asks for the model catalog, because a tier is all a managed text step stores', async () => {
-    await modelOptions({ provider: 'activepieces', modelType: 'text' });
-
-    expect(requestedUrls().some((url) => url.includes('v1/ai-providers/tiers'))).toBe(true);
-    expect(requestedUrls().some((url) => url.includes('/models'))).toBe(false);
-  });
-
-  it('offers the release\'s tiers, still as tier ids, when the server has no tiers route', async () => {
-    answer({ tiers: null });
-    const state = await modelOptions({ provider: 'activepieces', modelType: 'text' });
-
-    expect(state.options).toEqual(bundledTierOptions);
-    expect(requestedUrls().some((url) => url.includes('/models'))).toBe(false);
-  });
-
-  it('offers the release\'s tiers when the published flow list is empty', async () => {
-    answer({ tiers: { ...publishedTiers, flow: { tiers: [], defaultTierId: '' } } });
-    const state = await modelOptions({ provider: 'activepieces', modelType: 'text' });
-
-    expect(state.options).toEqual(bundledTierOptions);
-  });
-});
-
 describe('the managed image model dropdown', () => {
   it('stays on concrete models, because no image tier is published', async () => {
     const state = await modelOptions({ provider: 'activepieces', modelType: 'image' });
@@ -112,23 +73,46 @@ describe('the managed image model dropdown', () => {
 });
 
 describe('a provider the customer brought their own key for', () => {
-  it('lists concrete models and never asks for tiers', async () => {
-    const state = await modelOptions({ provider: 'openai', modelType: 'text' });
+  it('lists concrete image models and never asks for tiers', async () => {
+    const state = await modelOptions({ provider: 'openai', modelType: 'image' });
 
     expect(state.options).toEqual([
-      { label: 'Claude Haiku 4.5', value: 'anthropic/claude-haiku-4.5' },
-      { label: 'Claude Sonnet 4.6', value: 'anthropic/claude-sonnet-4.6' },
+      { label: 'Gemini Flash Image', value: 'google/gemini-3.1-flash-image' },
     ]);
     expect(requestedUrls().every((url) => !url.includes('/tiers'))).toBe(true);
   });
 
   it('asks for a provider first when none is picked', async () => {
-    const state = await aiProps({ modelType: 'text' }).model.options(
+    const state = await aiProps({ modelType: 'image' }).model.options(
       {},
       createMockActionContext({ propsValue: {} }),
     );
 
     expect(state.disabled).toBe(true);
     expect(state.placeholder).toBe('Select a provider first');
+  });
+});
+
+describe('the AI Model pick on text steps', () => {
+  it('sends a platform tier as a tier id only', () => {
+    expect(aiModel.resolve({ modelTierId: 'tier_1', provider: 'openai', model: 'gpt-5.5' })).toEqual({ modelTierId: 'tier_1' });
+  });
+
+  it('sends a model pick with its key', () => {
+    expect(aiModel.resolve({ provider: 'openai', model: 'gpt-5.5', configId: 'key_1' })).toEqual({
+      provider: 'openai',
+      modelId: 'gpt-5.5',
+      providerConfigId: 'key_1',
+    });
+  });
+
+  it('sends a Credits tier slug as the model id', () => {
+    expect(aiModel.resolve({ provider: 'activepieces', model: 'smart' })).toEqual({ provider: 'activepieces', modelId: 'smart' });
+  });
+
+  it('refuses an empty or unknown pick with a clear message', () => {
+    expect(() => aiModel.resolveOrThrow({})).toThrow('Pick a tier or a provider and model for this step');
+    expect(() => aiModel.resolveOrThrow({ provider: 'nope', model: 'x' })).toThrow();
+    expect(() => aiModel.resolveOrThrow('{{step_1.model}}')).toThrow();
   });
 });

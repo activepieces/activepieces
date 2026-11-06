@@ -2,7 +2,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../../auth';
 import { githubApiCall } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ownerProp, repoProp, githubError } from './common';
+import {
+  ownerProp,
+  repoProp,
+  githubError,
+  triStateProp,
+  triStateValue,
+} from './common';
 import { repositoryBodyOutputSchema } from '../../output-schemas';
 
 export const githubUpdateRepositoryAction = createAction({
@@ -14,7 +20,7 @@ export const githubUpdateRepositoryAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates a repository (PATCH /repos/{owner}/{repo}), setting only the fields you provide — name, description, private, default_branch, has_issues, or archived. Idempotent: applying the same values again leaves the repo in the same state. Archiving is reversible only via the GitHub UI/API by un-setting archived.',
+      'Updates a repository (PATCH /repos/{owner}/{repo}), setting only the fields you provide — name, description, private, default_branch, has_issues, or archived. private, has_issues and archived take yes, no or unchanged; leave them out or pass unchanged to keep the current visibility, Issues setting and archive state. Idempotent: applying the same values again leaves the repo in the same state. Archiving is reversible by setting archived to no.',
     idempotent: true,
   },
   props: {
@@ -28,39 +34,40 @@ export const githubUpdateRepositoryAction = createAction({
       displayName: 'Description',
       required: false,
     }),
-    private: Property.Checkbox({
+    private: triStateProp({
       displayName: 'Private',
-      required: false,
+      description: 'Yes makes the repository private, No makes it public.',
     }),
     default_branch: Property.ShortText({
       displayName: 'Default Branch',
       description: 'Resolve via List Branches.',
       required: false,
     }),
-    has_issues: Property.Checkbox({
+    has_issues: triStateProp({
       displayName: 'Has Issues',
-      required: false,
+      description: 'Yes turns Issues on, No turns them off.',
     }),
-    archived: Property.Checkbox({
+    archived: triStateProp({
       displayName: 'Archived',
-      description: 'Set true to archive the repository (read-only state).',
-      required: false,
+      description:
+        'Yes archives the repository (read-only state), No unarchives it.',
     }),
   },
   outputSchema: repositoryBodyOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue;
+    const isPrivate = triStateValue(propsValue.private);
+    const hasIssues = triStateValue(propsValue.has_issues);
+    const archived = triStateValue(propsValue.archived);
     const body: Record<string, unknown> = {};
     if (propsValue.name !== undefined) body['name'] = propsValue.name;
     if (propsValue.description !== undefined)
       body['description'] = propsValue.description;
-    if (propsValue.private !== undefined) body['private'] = propsValue.private;
+    if (isPrivate !== undefined) body['private'] = isPrivate;
     if (propsValue.default_branch !== undefined)
       body['default_branch'] = propsValue.default_branch;
-    if (propsValue.has_issues !== undefined)
-      body['has_issues'] = propsValue.has_issues;
-    if (propsValue.archived !== undefined)
-      body['archived'] = propsValue.archived;
+    if (hasIssues !== undefined) body['has_issues'] = hasIssues;
+    if (archived !== undefined) body['archived'] = archived;
     try {
       const response = await githubApiCall({
         auth,

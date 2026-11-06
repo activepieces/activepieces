@@ -1,15 +1,17 @@
-import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { QueryParams } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
-import { clockifyApiCall } from '../common/client';
-import { projectId, taskId, workspaceId } from '../common/props';
+import { clockifyApi } from '../common/api';
+import { clockifyProps } from '../common/props';
+import { webhookTimeEntryOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'new-time-entry-trigger';
 
 export const newTimeEntryTrigger = createTrigger({
 	auth: clockifyAuth,
 	name: 'new-time-entry',
+	outputSchema: webhookTimeEntryOutputSchema,
 	classification: 'READ',
 	displayName: 'New Time Entry',
 	description: 'Triggers when a new time entry is created.',
@@ -19,47 +21,38 @@ export const newTimeEntryTrigger = createTrigger({
 	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
-		workspaceId: workspaceId({
-			displayName: 'Workspace',
-			required: true,
-		}),
-		projectId: projectId({
-			displayName: 'Project',
-			required: false,
-		}),
-		taskId: taskId({
-			displayName: 'Task',
-			required: false,
-		}),
+		workspaceId: clockifyProps.workspaceId({ required: true }),
+		projectId: clockifyProps.projectId({ required: false }),
+		taskId: clockifyProps.taskId({ required: false }),
 	},
 	async onEnable(context) {
 		const { workspaceId, projectId, taskId } = context.propsValue;
 
-		const payload: Record<string, any> = {
-			url: context.webhookUrl,
-			webhookEvent: 'NEW_TIME_ENTRY',
-		};
+		let triggerSourceType: string | undefined;
+		let triggerSource: string[] | undefined;
 
 		if (workspaceId) {
-			payload['triggerSourceType'] = 'WORKSPACE_ID';
-			payload['triggerSource'] = [workspaceId];
+			triggerSourceType = 'WORKSPACE_ID';
+			triggerSource = [workspaceId];
 		}
 
 		if (projectId) {
-			payload['triggerSourceType'] = 'PROJECT_ID';
-			payload['triggerSource'] = [projectId];
+			triggerSourceType = 'PROJECT_ID';
+			triggerSource = [projectId];
 		}
 
 		if (taskId) {
-			payload['triggerSourceType'] = 'TASK_ID';
-			payload['triggerSource'] = [taskId];
+			triggerSourceType = 'TASK_ID';
+			triggerSource = [taskId];
 		}
 
-		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.POST,
-			resourceUri: `/workspaces/${workspaceId}/webhooks`,
-			body: payload,
+		const response = await clockifyApi.createWebhook({
+			auth: context.auth,
+			workspaceId,
+			url: context.webhookUrl,
+			webhookEvent: 'NEW_TIME_ENTRY',
+			triggerSourceType,
+			triggerSource,
 		});
 
 		await context.store.put<string>(TRIGGER_KEY, response.id);
@@ -70,36 +63,24 @@ export const newTimeEntryTrigger = createTrigger({
 		const webhookId = await context.store.get<string>(TRIGGER_KEY);
 
 		if (!isNil(webhookId)) {
-			await clockifyApiCall({
-				apiKey: context.auth.secret_text,
-				method: HttpMethod.DELETE,
-				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
-			});
+			await clockifyApi.deleteWebhook({ auth: context.auth, workspaceId, webhookId });
 		}
 	},
 	async test(context) {
 		const { workspaceId, projectId, taskId } = context.propsValue;
-		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/user`,
-		});
-
-		const userId = currentUserResponse.id;
+		const currentUser = await clockifyApi.getCurrentUser({ auth: context.auth });
 
 		const qs: QueryParams = { hydrated: 'true', page: '1', 'page-size': '5' };
 
-		if (projectId) qs['project'] = projectId as string;
-		if (taskId) qs['task'] = taskId as string;
+		if (projectId) qs['project'] = projectId;
+		if (taskId) qs['task'] = taskId;
 
-		const response = await clockifyApiCall<{id:string}[]>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
+		return await clockifyApi.listUserTimeEntries({
+			auth: context.auth,
+			workspaceId,
+			userId: currentUser.id,
 			query: qs,
 		});
-
-		return response;
 	},
 	async run(context) {
 		return [context.payload.body];

@@ -6,6 +6,8 @@ select
   countIf(not mapContains(LogAttributes, 'inputTokens')) as turns_without_tokens,
   round(avgIf(toUInt64OrZero(LogAttributes['inputTokens']), mapContains(LogAttributes, 'inputTokens'))) as avg_input,
   round(avgIf(toUInt64OrZero(LogAttributes['cacheWriteTokens']), mapContains(LogAttributes, 'cacheWriteTokens'))) as avg_cache_write,
+  countIf(toUInt64OrZero(LogAttributes['taskInputTokens']) > 0) as turns_with_tasks,
+  round(avgIf(toUInt64OrZero(LogAttributes['taskInputTokens']), toUInt64OrZero(LogAttributes['taskInputTokens']) > 0)) as avg_task_input,
   round(sumIf(toUInt64OrZero(LogAttributes['cacheReadTokens']), mapContains(LogAttributes, 'inputTokens')) / sumIf(toUInt64OrZero(LogAttributes['inputTokens']), mapContains(LogAttributes, 'inputTokens')) * 100, 1) as cache_read_pct
 from default.otel_logs
 where Timestamp > now() - interval __DAYS__ day

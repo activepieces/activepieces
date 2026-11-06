@@ -3,11 +3,16 @@ import { Channel, Guild, Role } from '../common/models';
 import { Property } from '@activepieces/pieces-framework';
 import { discordAuth } from '../auth';
 
+export const channelNotFoundMessage = (name: string) =>
+  `No channel named "${name}" was found. Either it does not exist, or the bot lacks the View Channel permission on it (Discord hides those channels from the bot). Check the name, or grant the bot's role View Channel on that channel.`;
+
 export const discordCommon = {
+  baseUrl: 'https://discord.com/api/v9',
   channel: Property.Dropdown({
     auth: discordAuth,
     displayName: 'Channel',
-    description: 'Channels from every server the bot has joined.',
+    description:
+      'Channels from every server the bot has joined. Only channels where the bot has the View Channel permission are listed.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -64,7 +69,8 @@ export const discordCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'No channels found in the servers the bot has joined',
+          placeholder:
+            'No channels found. Make sure the bot has the View Channel permission on the channels you need.',
         };
 
       return { options };

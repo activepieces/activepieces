@@ -66,7 +66,6 @@ vi.mock('@/features/platform-admin', () => {
       }),
     },
     aiProviderMutations: {
-      useToggleChatProvider: mutation,
       useDeleteAiProvider: mutation,
       useRecheckAiProvider: mutation,
       useUpdateAiProvider: mutation,
@@ -80,7 +79,12 @@ vi.mock('@/features/projects', () => ({
 
 vi.mock('@/features/agents', () => ({
   SUPPORTED_AI_PROVIDERS: [
-    { provider: 'anthropic', name: 'Anthropic', markdown: '', logoUrl: '' },
+    {
+      provider: 'anthropic',
+      name: 'Anthropic',
+      markdown: () => '',
+      logoUrl: '',
+    },
   ],
 }));
 
@@ -99,6 +103,10 @@ vi.mock(
   () => ({ ConnectProviderDialog: () => null }),
 );
 
+vi.mock(
+  '@/app/routes/platform/setup/ai/providers-tab/default-chat-model-card',
+  () => ({ DefaultChatModelCard: () => null }),
+);
 vi.mock('@/app/routes/platform/setup/ai/providers-tab/config-detail', () => ({
   ConfigDetail: () => <h1>Key detail</h1>,
 }));
@@ -130,13 +138,16 @@ beforeEach(() => {
 });
 
 describe('providers tab on a plan without aiProvidersEnabled', () => {
-  it('lists existing keys with delete only and an upgrade note', () => {
+  it('lists existing keys with delete only and a read-only header', () => {
     state.providers = [ANTHROPIC_KEY];
 
     renderTab();
 
+    expect(screen.getByText('Read-only')).toBeDefined();
     expect(
-      screen.getByText('Your plan does not include Bring your own AI keys'),
+      screen.getByText(
+        "Your plan doesn't include your own AI keys. You can still delete them.",
+      ),
     ).toBeDefined();
     expect(screen.getAllByText('Trial Anthropic key').length).toBeGreaterThan(
       0,

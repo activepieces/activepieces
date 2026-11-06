@@ -1,9 +1,11 @@
+import { isNil } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
-import { AddConversationCreditsParams, AiUsageHooks } from '../../ai/ai-usage-hooks'
+import { AddConversationCreditsParams, AiUsageHooks, UnpinConversationsFromKeyParams } from '../../ai/ai-usage-hooks'
+import { agentChatModel } from './agent-chat-model'
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { agentHelpers } from './agent-helpers'
 
-export const agentConversationCreditsHooks = (_log: FastifyBaseLogger): AiUsageHooks => ({
+export const agentConversationCreditsHooks = (log: FastifyBaseLogger): AiUsageHooks => ({
     async addConversationCredits({ conversationId, credits }: AddConversationCreditsParams): Promise<void> {
         const wholeCredits = Math.round(credits)
         if (wholeCredits === 0) {
@@ -17,4 +19,28 @@ export const agentConversationCreditsHooks = (_log: FastifyBaseLogger): AiUsageH
             .where('id = :conversationId', { conversationId })
             .execute()
     },
+    async unpinConversationsFromKey({ manager, platformId, configId, key }: UnpinConversationsFromKeyParams): Promise<void> {
+        const repo = manager.getRepository(AgentConversationEntity)
+        const pinned = await repo.find({
+            where: { platformId, providerConfigId: configId },
+            select: { id: true, projectId: true, modelName: true },
+        })
+        const stale = isNil(key) ? pinned : pinned.filter((conversation) => !agentChatModel(log).keyServes({ key, conversation }))
+        if (stale.length === 0) {
+            return
+        }
+        await manager.query(
+            `
+            UPDATE "agent_conversation" AS conversation
+            SET "providerConfigId" = NULL
+            FROM unnest($3::varchar[], $4::varchar[]) AS stale(id, "modelName")
+            WHERE conversation."platformId" = $1
+              AND conversation."providerConfigId" = $2
+              AND conversation.id = stale.id
+              AND conversation."modelName" IS NOT DISTINCT FROM stale."modelName"
+            `,
+            [platformId, configId, stale.map((conversation) => conversation.id), stale.map((conversation) => conversation.modelName ?? null)],
+        )
+    },
 })
+

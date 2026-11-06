@@ -1,58 +1,30 @@
 import {
-  createTrigger,
-  TriggerStrategy,
-  AppConnectionValueForAuthProperty,
+	AppConnectionValueForAuthProperty,
+	createTrigger,
+	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
-import { confluenceAuth, confluenceAuthValue } from '../auth';
-import { confluenceApiCall, PaginatedResponse } from '../common';
-import { pageIdProp, spaceIdProp } from '../common/props';
-
-interface ConfluenceAttachment {
-  id: string;
-  title: string;
-  pageId?: string;
-  mediaType: string;
-  fileSize: number;
-  version: {
-    number: number;
-    createdAt: string;
-  };
-  downloadLink?: string;
-}
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { confluenceAuth } from '../auth';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { newAttachmentOutputSchema } from '../output-schemas';
 
 const props = {
-  spaceId: spaceIdProp,
-  pageId: pageIdProp,
+  spaceId: confluenceProps.spaceId({ required: true }),
+  pageId: confluenceProps.pageId({ required: true }),
 };
 
-const polling: Polling<confluenceAuthValue, { spaceId?: string; pageId?: string }> = {
+const polling: Polling<
+	AppConnectionValueForAuthProperty<typeof confluenceAuth>, { spaceId?: string; pageId?: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, propsValue }) {
-    const response = await confluenceApiCall<
-      PaginatedResponse<ConfluenceAttachment>
-    >({
-      domain: auth.props.confluenceDomain,
-      username: auth.props.username,
-      password: auth.props.password,
-      version: 'v2',
-      method: HttpMethod.GET,
-      resourceUri: `/pages/${propsValue.pageId}/attachments`,
-      query: {
-        limit: '100',
-        sort: '-created-date',
-      },
+    const results = await confluenceApi.listPageAttachments({
+      auth,
+      pageId: propsValue.pageId,
+      sort: '-created-date',
     });
 
-    if (isNil(response.results)) return [];
-
-    return response.results
+    return results
       .filter((a) => a.version.number === 1)
       .map((attachment) => ({
         epochMilliSeconds: new Date(attachment.version.createdAt).getTime(),
@@ -63,6 +35,7 @@ const polling: Polling<confluenceAuthValue, { spaceId?: string; pageId?: string 
 
 export const newAttachmentTrigger = createTrigger({
   name: 'new-attachment',
+  outputSchema: newAttachmentOutputSchema,
   classification: 'READ',
   displayName: 'New Attachment',
   description:

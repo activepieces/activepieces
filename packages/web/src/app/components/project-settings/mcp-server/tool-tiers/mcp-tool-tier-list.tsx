@@ -231,7 +231,7 @@ function TierRow({
       <ItemMedia variant="icon">
         <Icon className="size-4 text-gray-11" />
       </ItemMedia>
-      <ItemContent>
+      <ItemContent className="max-sm:basis-[calc(100%-3.5rem)]">
         <ItemTitle>
           {copy.label}
           {tier.locked && (
@@ -249,9 +249,11 @@ function TierRow({
             />
           )}
         </ItemTitle>
-        <ItemDescription>{copy.description}</ItemDescription>
+        <ItemDescription className="max-sm:line-clamp-none">
+          {copy.description}
+        </ItemDescription>
       </ItemContent>
-      <ItemActions className="gap-4">
+      <ItemActions className="gap-4 max-sm:w-full max-sm:justify-between max-sm:pl-12">
         <Button
           variant="ghost"
           size="sm"

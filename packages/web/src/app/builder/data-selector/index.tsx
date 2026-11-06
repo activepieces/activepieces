@@ -6,6 +6,7 @@ import {
   FlowTrigger,
   FlowTriggerType,
   flowStructureUtil,
+  PieceAudienceFilter,
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -19,7 +20,7 @@ import { SearchInput } from '@/components/custom/search-input';
 import { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
-import { piecesApi } from '@/features/pieces';
+import { pieceQueryKey, piecesApi } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
@@ -68,24 +69,43 @@ function buildAdvancedStructure(
   isFocusInsideListMapperModeInput: boolean,
   targetStepName: string,
 ): DataSelectorTreeNode[] {
-  return steps.map((step) => {
-    try {
-      return dataSelectorUtils.traverseStep(
-        step,
-        sampleData,
-        isFocusInsideListMapperModeInput,
-        targetStepName,
-      );
-    } catch {
-      return {
-        key: `error-${step.name}`,
-        data: {
-          type: 'chunk' as const,
-          displayName: `Error loading ${step.name}`,
-        },
-      };
-    }
-  });
+  return steps.map((step) =>
+    traverseStepOrErrorNode({
+      step,
+      sampleData,
+      zipArraysOfProperties: isFocusInsideListMapperModeInput,
+      targetStepName,
+    }),
+  );
+}
+
+function traverseStepOrErrorNode({
+  step,
+  sampleData,
+  zipArraysOfProperties,
+  targetStepName,
+}: {
+  step: StepInfo;
+  sampleData: Record<string, unknown>;
+  zipArraysOfProperties: boolean;
+  targetStepName: string;
+}): DataSelectorTreeNode {
+  try {
+    return dataSelectorUtils.traverseStep(
+      step,
+      sampleData,
+      zipArraysOfProperties,
+      targetStepName,
+    );
+  } catch {
+    return {
+      key: `error-${step.name}`,
+      data: {
+        type: 'chunk' as const,
+        displayName: `Error loading ${step.name}`,
+      },
+    };
+  }
 }
 
 type DataSelectorProps = {
@@ -168,12 +188,18 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
 
   const pieceQueries = useQueries({
     queries: piecePairs.map(({ pieceName, pieceVersion }) => ({
-      queryKey: ['piece', pieceName, pieceVersion],
+      queryKey: pieceQueryKey({
+        name: pieceName,
+        version: pieceVersion,
+        locale: i18n.language,
+        audience: PieceAudienceFilter.ALL,
+      }),
       queryFn: () =>
         piecesApi.get({
           name: pieceName,
           version: pieceVersion,
           locale: i18n.language as LocalesEnum,
+          audience: PieceAudienceFilter.ALL,
         }),
       staleTime: Infinity,
     })),
@@ -207,6 +233,20 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       steps.map((step) => {
         const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
         const stepData = sampleData[step.name];
+
+        if (
+          dataSelectorUtils.shouldShowStepAsFlatList({
+            isFocusInsideListMapperModeInput,
+            stepOutput: stepData,
+          })
+        ) {
+          return traverseStepOrErrorNode({
+            step,
+            sampleData,
+            zipArraysOfProperties: true,
+            targetStepName: selectedStepName,
+          });
+        }
 
         if (
           typeof stepData === 'string' ||
@@ -276,22 +316,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             sampleData: stepData,
           });
         }
-        try {
-          return dataSelectorUtils.traverseStep(
-            step,
-            sampleData,
-            isFocusInsideListMapperModeInput,
-            selectedStepName,
-          );
-        } catch {
-          return {
-            key: `error-${step.name}`,
-            data: {
-              type: 'chunk' as const,
-              displayName: `Error loading ${step.name}`,
-            },
-          };
-        }
+        return traverseStepOrErrorNode({
+          step,
+          sampleData,
+          zipArraysOfProperties: false,
+          targetStepName: selectedStepName,
+        });
       }),
     [
       steps,

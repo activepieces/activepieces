@@ -1,6 +1,6 @@
 {
   "Create stunning designs with Canva's powerful design automation tools": "Create stunning designs with Canva's powerful design automation tools",
-  "\nTo connect Canva, follow these steps:\n1. Go to https://www.canva.com/developers/integrations and sign in.\n2. Click **Create an integration** and fill in the app name and description.\n3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.\n4. Under **Configure** → **Scopes**, enable: `design:content:read`, `design:content:write`, `design:meta:read`, `asset:read`, `asset:write`, `folder:read`, `folder:write`.\n5. Copy the **Client ID** and **Client secret** and paste them abo": "\nTo connect Canva, follow these steps:\n1. Go to https://www.canva.com/developers/integrations and sign in.\n2. Click **Create an integration** and fill in the app name and description.\n3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.\n4. Under **Configure** → **Scopes**, enable: `design:content:read`, `design:content:write`, `design:meta:read`, `asset:read`, `asset:write`, `folder:read`, `folder:write`.\n5. Copy the **Client ID** and **Client secret** and paste them above.\n",
+  "\nTo connect Canva, follow these steps:\n1. Go to https://www.canva.com/developers/integrations and sign in.\n2. Click **Create an integration** and fill in the app name and description.\n3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.\n4. Under **Configure** → **Scopes**, enable: `design:content:read`, `design:content:write`, `design:meta:read`, `asset:read`, `asset:write`, `folder:read`, `folder:write`, `profile:read`.\n5. Copy the **Client ID** and **Client secret** an": "\nTo connect Canva, follow these steps:\n1. Go to https://www.canva.com/developers/integrations and sign in.\n2. Click **Create an integration** and fill in the app name and description.\n3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.\n4. Under **Configure** → **Scopes**, enable: `design:content:read`, `design:content:write`, `design:meta:read`, `asset:read`, `asset:write`, `folder:read`, `folder:write`, `profile:read`.\n5. Copy the **Client ID** and **Client secret** and paste them above.\n",
   "Create Design": "Create Design",
   "Get Design": "Get Design",
   "Upload Asset": "Upload Asset",
@@ -58,9 +58,9 @@
   "Query Parameters": "Paramètres de requête",
   "Body Type": "Body Type",
   "Body": "Body",
-  "Response is Binary ?": "Réponse binaire ?",
-  "No Error on Failure": "Pas d'erreur en cas d'échec",
-  "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Response is Binary": "La réponse est binaire",
+  "Return Error as Output": "Renvoyer l'erreur comme sortie",
+  "Timeout": "Délai d'expiration",
   "Follow redirects": "Follow redirects",
   "Choose how to create your design - preset templates or custom dimensions": "Choose how to create your design - preset templates or custom dimensions",
   "⚠️ Only fill this if you selected \"Preset Design Type\" above": "⚠️ Only fill this if you selected \"Preset Design Type\" above",
@@ -96,7 +96,11 @@
   "Select the folder to retrieve metadata for": "Select the folder to retrieve metadata for",
   "Select the asset to retrieve metadata for": "Select the asset to retrieve metadata for",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement depuis votre connexion.",
+  "Appended to the URL as ?key=value.": "Ajouté à l'URL sous la forme ?key=value.",
   "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDF, images, etc.",
+  "On a failed request, output the error instead of failing the step.": "En cas d'échec de la requête, renvoyer l'erreur au lieu de faire échouer l'étape.",
+  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Secondes d'attente de la réponse. Vide : jusqu'à la limite du flux (10 min).",
+  "Follow 3xx redirects instead of returning them as the response.": "Suivre les redirections 3xx au lieu de les renvoyer comme réponse.",
   "📋 Preset Design Type (Document, Whiteboard, Presentation)": "📋 Preset Design Type (Document, Whiteboard, Presentation)",
   "📐 Custom Dimensions (Specify width & height)": "📐 Custom Dimensions (Specify width & height)",
   "Document (Canva Docs)": "Document (Canva Docs)",
@@ -136,9 +140,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "HEAD"
 }

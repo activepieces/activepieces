@@ -1,6 +1,6 @@
-import { AiStepAction, createAction, isNil, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AgentPieceProps, AiStepAction, createAction, isNil, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import { runOnWorker } from '../../common/ai-step';
-import { aiProps, aiProviderSelection } from '../../common/props';
+import { aiModel, AiModelRequestFields } from '../../common/props';
 import { buildWebSearchOptionsProperty, sanitizeWebSearchOptions, usesNativeWebSearchTools } from '../../common/web-search';
 
 export const askAI = createAction({
@@ -9,14 +9,14 @@ export const askAI = createAction({
   classification: 'READ',
   displayName: 'Ask AI',
   description: 'Ask AI to analyze, explain, draft or decide using your flow data.',
-  aiMetadata: { description: 'Sends a free-form prompt to a text model and returns its answer, optionally continuing a multi-turn thread via a Conversation Key or grounding the reply with web search. Pick it for open-ended reasoning, drafting, or judgement over flow data; prefer summarizeText to condense text, classifyText for a fixed label set, extractStructuredData for typed fields, or run_agent when the task needs tools and multiple steps. Requires a provider/model plus a prompt; not idempotent, since each call generates a fresh answer and a Conversation Key appends the exchange to stored history.', idempotent: false },
+  aiMetadata: { description: 'Sends a free-form prompt to a text model and returns its answer, optionally continuing a multi-turn thread via a Conversation Key or grounding the reply with web search. Pick it for open-ended reasoning, drafting, or judgement over flow data; prefer summarizeText to condense text, classifyText for a fixed label set, extractStructuredData for typed fields, or run_agent when the task needs tools and multiple steps. Requires an AI Model (a tier or a provider/model) plus a prompt; not idempotent, since each call generates a fresh answer and a Conversation Key appends the exchange to stored history.', idempotent: false },
   propertyGroups: [
     {
       key: 'ai_model',
       display: 'section',
       label: 'AI Model',
       icon: 'sliders',
-      props: ['provider', 'model'],
+      props: [AgentPieceProps.AI_PROVIDER_MODEL],
     },
     {
       key: 'request',
@@ -27,8 +27,7 @@ export const askAI = createAction({
     },
   ],
   props: {
-    provider: aiProps({ modelType: 'text' }).provider,
-    model: aiProps({ modelType: 'text' }).model,
+    [AgentPieceProps.AI_PROVIDER_MODEL]: aiModel.prop(),
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
@@ -64,19 +63,15 @@ export const askAI = createAction({
       description: 'Let the AI search the web before it answers.',
     }),
     webSearchOptions: buildWebSearchOptionsProperty(
-      (propsValue) => ({
-        provider: aiProviderSelection.resolve(propsValue['provider'])?.provider,
-        model: propsValue['model'] as string | undefined,
-      }),
-      ['webSearch', 'provider', 'model'],
+      (propsValue) => webSearchModelOf(aiModel.resolve(propsValue[AgentPieceProps.AI_PROVIDER_MODEL])),
+      ['webSearch', AgentPieceProps.AI_PROVIDER_MODEL],
     ),
   },
   async run(context) {
-    const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
+    const model = aiModel.resolveOrThrow(context.propsValue.aiProviderModel);
     const webSearchEnabled = !!context.propsValue.webSearch;
     const webSearchOptions = webSearchOptionsToSend({
-      provider,
-      model: context.propsValue.model,
+      ...webSearchModelOf(model),
       saved: context.propsValue.webSearchOptions,
     });
     const storageKey = conversationStorageKey(context.propsValue.conversationKey);
@@ -85,9 +80,7 @@ export const askAI = createAction({
       context,
       buildRequest: async () => ({
         action: AiStepAction.ASK_AI,
-        provider,
-        ...spreadIfDefined('providerConfigId', configId),
-        modelId: context.propsValue.model,
+        ...model,
         prompt: context.propsValue.prompt,
         ...spreadIfDefined('maxOutputTokens', context.propsValue.maxOutputTokens),
         ...spreadIfDefined('temperature', isNil(context.propsValue.creativity) ? undefined : context.propsValue.creativity / 100),
@@ -108,9 +101,16 @@ export const askAI = createAction({
   },
 });
 
-function webSearchOptionsToSend({ provider, model, saved }: { provider: string; model: string; saved: unknown }): Record<string, unknown> {
+function webSearchModelOf(fields: AiModelRequestFields | undefined): { provider: string | undefined; model: string | undefined } {
+  if (isNil(fields) || 'modelTierId' in fields) {
+    return { provider: undefined, model: undefined };
+  }
+  return { provider: fields.provider, model: fields.modelId };
+}
+
+function webSearchOptionsToSend({ provider, model, saved }: { provider: string | undefined; model: string | undefined; saved: unknown }): Record<string, unknown> {
   const options = sanitizeWebSearchOptions(saved);
-  if (usesNativeWebSearchTools({ provider, model })) {
+  if (!isNil(provider) && usesNativeWebSearchTools({ provider, model })) {
     return options;
   }
   const { includeSources: _onlyWithNativeTools, ...rest } = options;

@@ -1,19 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluenceApiCall, confluenceRawRequest } from '../common';
-
-type AttachmentResponse = {
-	id: string;
-	title: string;
-	mediaType: string;
-	fileSize: number;
-	downloadLink: string;
-};
+import { confluenceApi } from '../common/api';
+import { downloadAttachmentOutputSchema } from '../output-schemas';
 
 export const downloadAttachmentAction = createAction({
 	auth: confluenceAuth,
 	name: 'download-attachment',
+	outputSchema: downloadAttachmentOutputSchema,
 	classification: 'READ',
 	displayName: 'Download Attachment',
 	description: 'Downloads an attachment file by its ID and returns it as a file.',
@@ -29,23 +22,11 @@ export const downloadAttachmentAction = createAction({
 	async run(context) {
 		const { attachmentId } = context.propsValue;
 
-		const attachment = await confluenceApiCall<AttachmentResponse>({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.GET,
-			version: 'v2',
-			resourceUri: `/attachments/${attachmentId}`,
-		});
+		const attachment = await confluenceApi.getAttachment({ auth: context.auth, attachmentId });
 
-		const buffer = await confluenceRawRequest<Buffer>({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.GET,
-			url: `/wiki${attachment.downloadLink}`,
-			responseType: 'arraybuffer',
-			followRedirects: true,
+		const buffer = await confluenceApi.downloadAttachment({
+			auth: context.auth,
+			downloadLink: attachment.downloadLink,
 		});
 
 		const file = await context.files.write({

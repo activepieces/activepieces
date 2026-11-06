@@ -2,6 +2,7 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { ConsumeJobRequest } from '@activepieces/shared'
 import { Worker as BullMQWorker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
 
 const WAITER_TIMEOUT_MS = 50_000
 const ERROR_RETRY_DELAY_MS = 5_000
@@ -10,14 +11,14 @@ function createQueueDispatcher(params: {
     queueName: string
     worker: BullMQWorker
     dequeue: (worker: BullMQWorker, queueName: string, log: FastifyBaseLogger) => Promise<ConsumeJobRequest | null>
-    onOrphanedJob: (jobId: string, token: string, queueName: string, log: FastifyBaseLogger) => Promise<void>
+    onOrphanedJob: (params: { jobId: string, token: string, queueName: string, log: FastifyBaseLogger }) => Promise<void>
     log: FastifyBaseLogger
 }): QueueDispatcher {
     const { queueName, worker, dequeue, onOrphanedJob, log } = params
     const waiters: Waiter[] = []
     let loopRunning = false
 
-    async function poll(): Promise<ConsumeJobRequest | null> {
+    async function poll(socket?: Pick<Socket, 'connected'>): Promise<ConsumeJobRequest | null> {
         return new Promise<ConsumeJobRequest | null>((resolve) => {
             const timer = setTimeout(() => {
                 const idx = waiters.findIndex(w => w.resolve === resolve)
@@ -27,7 +28,7 @@ function createQueueDispatcher(params: {
                 resolve(null)
             }, WAITER_TIMEOUT_MS)
 
-            waiters.push({ resolve, timer })
+            waiters.push({ resolve, timer, socket })
             startLoop()
         })
     }
@@ -53,10 +54,10 @@ function createQueueDispatcher(params: {
                 continue
             }
 
-            const waiter = waiters.shift()
+            const waiter = takeConnectedWaiter()
             if (isNil(waiter)) {
                 log.warn({ queueName, job: { id: job.jobId } }, '[QueueDispatcher] job dequeued but no waiter available, returning to queue')
-                const { error: orphanError } = await tryCatch(() => onOrphanedJob(job.jobId, job.token, job.queueName, log))
+                const { error: orphanError } = await tryCatch(() => onOrphanedJob({ jobId: job.jobId, token: job.token, queueName: job.queueName, log }))
                 if (orphanError) {
                     log.error({ queueName, job: { id: job.jobId }, error: String(orphanError) }, '[QueueDispatcher] failed to return orphaned job to queue')
                 }
@@ -67,6 +68,16 @@ function createQueueDispatcher(params: {
             waiter.resolve(job)
         }
         loopRunning = false
+    }
+
+    function takeConnectedWaiter(): Waiter | undefined {
+        let waiter = waiters.shift()
+        while (!isNil(waiter) && waiter.socket?.connected === false) {
+            clearTimeout(waiter.timer)
+            waiter.resolve(null)
+            waiter = waiters.shift()
+        }
+        return waiter
     }
 
     function close(): void {
@@ -93,10 +104,11 @@ function sleep(ms: number): Promise<void> {
 type Waiter = {
     resolve: (value: ConsumeJobRequest | null) => void
     timer: ReturnType<typeof setTimeout>
+    socket?: Pick<Socket, 'connected'>
 }
 
 export type QueueDispatcher = {
-    poll(): Promise<ConsumeJobRequest | null>
+    poll(socket?: Pick<Socket, 'connected'>): Promise<ConsumeJobRequest | null>
     close(): void
     waiterCount(): number
 }

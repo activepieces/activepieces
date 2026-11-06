@@ -18,6 +18,10 @@ export const createReply = createAction({
     description: 'Post a reply to an existing tweet.',
     audience: 'both',
     aiMetadata: { description: 'Posts a reply to an existing tweet on X/Twitter, optionally attaching up to three images. Use this when responding to a specific tweet rather than creating a standalone post; requires the target tweet ID and non-empty reply text. Not idempotent — each call publishes a separate new reply.', idempotent: false },
+    propertyGroups: [
+      { key: 'destination', display: 'section', label: 'Reply to', icon: 'reply', props: ['tweet_id'] },
+      { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['text', 'image_1'] },
+    ],
     props: {
       tweet_id: Property.LongText({
         displayName: 'Tweet ID',

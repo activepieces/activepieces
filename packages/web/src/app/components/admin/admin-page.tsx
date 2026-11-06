@@ -143,11 +143,12 @@ function AdminBackLink({ back }: { back: AdminPageBack }) {
 const WIDTH_CLASS: Record<AdminPageWidth, string> = {
   full: '',
   content: adminLayout.contentWidth,
+  wide: 'mx-auto max-w-5xl',
 };
 
 type AdminPageBack = { label: string; to: string };
 
-type AdminPageWidth = 'full' | 'content';
+type AdminPageWidth = 'full' | 'content' | 'wide';
 
 type AdminPageProps = {
   width?: AdminPageWidth;

@@ -22,7 +22,7 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 }));
 vi.mock('@/features/agents', () => ({
   ModelPicker: () => <div data-testid="model" />,
-  PROVIDER_EMBEDDING_MODELS: {},
+  useKnowledgeBaseEmbeddingSource: () => ({ data: undefined }),
   AgentStructuredOutput: () => <div data-testid="structured" />,
   KnowledgeBaseSection: () => <div data-testid="knowledge" />,
   useAgentsAvailable: () => true,

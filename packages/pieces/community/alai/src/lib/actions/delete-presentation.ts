@@ -1,35 +1,36 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
 import { alaiAuth } from '../common/auth';
+import { alaiClient } from '../common/client';
+import { alaiOutputSchemas } from '../common/output-schemas';
+import { presentationIdProp } from './shared-props';
 
 export const deletePresentation = createAction({
   auth: alaiAuth,
   name: 'deletePresentation',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Presentation',
-  description: 'Delete a presentation by its ID.',
+  description: 'Permanently delete a presentation.',
   audience: 'both',
+  outputSchema: alaiOutputSchemas.deletePresentation,
   aiMetadata: {
     description:
-      'Permanently delete an Alai presentation by its ID. Use this to remove a deck the user no longer needs. Destructive but idempotent: once deleted, repeating the call with the same ID leaves the same end state. Requires the presentation ID.',
-    idempotent: true,
+      'Permanently deletes an Alai presentation by its ID; this cannot be undone. Fails with a not-found error if the ID does not exist or was already deleted, so a repeated call errors.',
+    idempotent: false,
   },
   props: {
-    presentationId: Property.ShortText({
-      displayName: 'Presentation ID',
-      description: 'The ID of the presentation to delete.',
-      required: true,
-    }),
+    presentationId: presentationIdProp('The presentation to delete.'),
   },
-  async run(context) {
-    const { presentationId } = context.propsValue;
-    const response = await httpClient.sendRequest({
+  async run({ auth, propsValue }) {
+    const presentationId = alaiClient.pathId({ value: propsValue.presentationId, label: 'Presentation ID' });
+    const body = await alaiClient.request<{ success?: boolean; presentation_id?: string }>({
+      apiKey: auth.props.apiKey,
       method: HttpMethod.DELETE,
-      url: `https://slides-api.getalai.com/api/v1/presentations/${presentationId}`,
-      headers: {
-        Authorization: `Bearer ${context.auth.props.apiKey}`,
-      },
+      path: `/presentations/${presentationId}`,
     });
-    return response.body;
+    if (body?.success === false) {
+      throw new Error(`Alai did not delete presentation ${propsValue.presentationId}.`);
+    }
+    return { success: true, presentation_id: body?.presentation_id ?? propsValue.presentationId.trim() };
   },
 });

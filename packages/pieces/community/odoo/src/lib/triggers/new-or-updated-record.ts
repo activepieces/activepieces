@@ -57,7 +57,7 @@ export const newOrUpdatedRecordTrigger = createTrigger({
     });
   },
   async onDisable(context) {
-    await odooPolling.onDisable({ store: context.store });
+    await odooPolling.onDisable({ store: context.store, isRepublish: context.isRepublish });
   },
   async run(context) {
     return odooPolling.run({

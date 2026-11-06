@@ -87,6 +87,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Conversation Created": "Conversation Created",
   "Conversation Assigned": "Conversation Assigned",
   "New Customer": "New Customer",

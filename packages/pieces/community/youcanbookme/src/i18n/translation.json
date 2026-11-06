@@ -49,6 +49,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Booking": "New Booking",
   "Trigger when a new booking is made": "Trigger when a new booking is made",
   "Markdown": "Markdown",

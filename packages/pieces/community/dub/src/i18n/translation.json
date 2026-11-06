@@ -140,6 +140,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Link Clicked": "Link Clicked",
   "Link Created": "Link Created",
   "Triggers in real time whenever one of your Dub short links is clicked.": "Triggers in real time whenever one of your Dub short links is clicked.",

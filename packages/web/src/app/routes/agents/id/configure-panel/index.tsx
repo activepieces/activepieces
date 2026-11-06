@@ -49,13 +49,13 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   AgentStructuredOutput,
   ModelPicker,
-  PROVIDER_EMBEDDING_MODELS,
+  NoEmbeddingSourceNote,
+  useKnowledgeBaseEmbeddingSource,
 } from '@/features/agents';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
 import { agentsMutations } from '@/features/agents/hooks/agents-hooks';
 import { MoveAgentDialog } from '@/features/agents/move-agent-dialog';
-import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import {
   ApProjectDisplay,
   getProjectName,
@@ -224,8 +224,7 @@ const ConfigureBehaviorTab = ({
 }) => {
   const tools = form.watch('draft.tools') ?? [];
   const draft = form.watch('draft');
-  const { data: chatProvider } = aiProviderQueries.useChatProvider();
-  const provider = chatProvider?.provider;
+  const { data: embeddingSource } = useKnowledgeBaseEmbeddingSource();
   const knowledgeCount = tools.filter(
     (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
   ).length;
@@ -292,17 +291,17 @@ const ConfigureBehaviorTab = ({
             });
           }}
         />
-        {knowledgeCount > 0 && !isNil(provider) && (
-          <p className="text-xs text-gray-11">
-            {PROVIDER_EMBEDDING_MODELS[provider]
-              ? t('Embedding model for knowledge base: {model}', {
-                  model: PROVIDER_EMBEDDING_MODELS[provider],
-                })
-              : t(
-                  'Your chat provider does not support knowledge base embeddings.',
-                )}
-          </p>
-        )}
+        {knowledgeCount > 0 &&
+          !isNil(embeddingSource) &&
+          (isNil(embeddingSource.modelId) ? (
+            <NoEmbeddingSourceNote className="text-xs text-gray-11" />
+          ) : (
+            <p className="text-xs text-gray-11">
+              {t('Embedding model for knowledge base: {model}', {
+                model: embeddingSource.modelId,
+              })}
+            </p>
+          ))}
       </FormItem>
       <FormField
         control={form.control}

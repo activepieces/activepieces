@@ -1,5 +1,6 @@
 import { AgentRunSource, FlowOperationType, FlowStatus } from '@activepieces/core-execution'
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { UserIdentityProvider } from '../../core/authentication/user-identity'
 import {
     AgentActionExecutedEvent,
     AgentActionKind,
@@ -8,7 +9,9 @@ import {
     ApplicationEvent,
     ApplicationEventName,
     AuditLogRetentionUpdatedEvent,
+    AuthenticationDomainEvent,
     AuthenticationEvent,
+    AuthenticationSettingEvent,
     ConnectionEvent,
     FlowActivatedEvent,
     FlowApprovalEvent,
@@ -26,6 +29,7 @@ import {
     ProjectRoleEvent,
     SigningKeyEvent,
     SignUpEvent,
+    UserSignedInEvent,
     VariableEvent,
 } from './index'
 
@@ -261,7 +265,14 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             }
             return mock
         }
-        case ApplicationEventName.USER_SIGNED_IN:
+        case ApplicationEventName.USER_SIGNED_IN: {
+            const mock: UserSignedInEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.USER_SIGNED_IN,
+                data: { user, method: UserIdentityProvider.EMAIL },
+            }
+            return mock
+        }
         case ApplicationEventName.USER_PASSWORD_RESET:
         case ApplicationEventName.USER_EMAIL_VERIFIED: {
             const mock: AuthenticationEvent = {
@@ -275,7 +286,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             const mock: SignUpEvent = {
                 ...baseEnvelope,
                 action: ApplicationEventName.USER_SIGNED_UP,
-                data: { source: 'credentials', user },
+                data: { source: 'credentials', method: UserIdentityProvider.EMAIL, user },
             }
             return mock
         }
@@ -303,6 +314,36 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     retentionDays: 90,
                     instanceLimitDays: null,
                 },
+            }
+            return mock
+        }
+        case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+        case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+        case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+        case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+        case ApplicationEventName.SAML_CONNECTED:
+        case ApplicationEventName.SAML_CONNECTION_REPLACED:
+        case ApplicationEventName.SSO_DISABLED: {
+            const mock: AuthenticationSettingEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {},
+            }
+            return mock
+        }
+        case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+        case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+        case ApplicationEventName.SSO_DOMAIN_ADDED:
+        case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+        case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+        case ApplicationEventName.SSO_DOMAIN_REMOVED:
+        case ApplicationEventName.SSO_DOMAIN_EXPIRED: {
+            const mock: AuthenticationDomainEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: { domain: 'acme.com' },
             }
             return mock
         }

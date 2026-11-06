@@ -1,6 +1,6 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { aiCostReporter, apDayjs, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { aiCostReporter, aiObservability, apDayjs, apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuditLogRetentionUpdatedEvent, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation, VariableWithoutSensitiveData } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
@@ -17,6 +17,8 @@ import { aiToolConfigModule } from './ai/ai-tool-config.module'
 import { aiUsageHooks } from './ai/ai-usage-hooks'
 import { aiUsageService } from './ai/ai-usage-service'
 import { platformModelTierModule } from './ai/platform-model-tier.module'
+import { aiUsageJobs } from './ai/usage/ai-usage-jobs'
+import { aiUsageModule } from './ai/usage/ai-usage.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -24,6 +26,7 @@ import { platformAppConnectionModule } from './app-connection/platform-app-conne
 import { authenticationModule } from './authentication/authentication.module'
 import { otpModule } from './authentication/otp/otp-module'
 import { passwordlessAuthModule } from './authentication/passwordless-auth.module'
+import { verifiedDomainHooks } from './authentication/verified-domain-hooks'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { oidcModule } from './core/security/oidc/oidc.module'
@@ -46,7 +49,9 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
+import { authnSsoSamlService } from './ee/authentication/saml-authn/authn-sso-saml-service'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
+import { embedSubdomainService } from './ee/embed-subdomain/embed-subdomain.service'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { flowApprovalModule } from './ee/flows/flow-approval/flow-approval.module'
 import { eeFlowPublishHook } from './ee/flows/flow-approval/flow-publish-hook'
@@ -59,6 +64,7 @@ import { pieceSetRequiredActions } from './ee/pieces/piece-set/piece-set-require
 import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
+import { denoMigrationModule } from './ee/platform/admin/deno-migration.module'
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
 import { autumnBillingProvider } from './ee/platform/platform-plan/billing-providers/autumn-billing'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
@@ -66,6 +72,8 @@ import { platformTeardownJobs } from './ee/platform/platform-teardown-jobs'
 import { eventDestinationEntitlementHooks } from './ee/platform-webhooks/event-destination-entitlement-hooks'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
+import { personalProjectsModule } from './ee/projects/personal-projects/personal-projects.module'
+import { personalProjectsService } from './ee/projects/personal-projects/personal-projects.service'
 import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
@@ -76,6 +84,7 @@ import { projectRoleModule } from './ee/projects/project-role/project-role.modul
 import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
+import { userEnterpriseHooks } from './ee/users/ee-user-hooks'
 import { userModule } from './ee/users/user.module'
 import { eventDestinationHooks } from './event-destinations/event-destinations-hooks'
 import { fileModule } from './file/file.module'
@@ -123,6 +132,7 @@ import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
 import { triggerModule } from './trigger/trigger.module'
 import { platformUserModule } from './user/platform/platform-user-module'
+import { userHooks } from './user/user-hooks'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
 import { resumePageHooks } from './waitpoints/resume-page-hooks'
@@ -288,6 +298,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.CREATE_MISSING_PERSONAL_PROJECTS, (data) => personalProjectsService(app.log).createMissingHandler(data))
 
     systemJobHandlers.registerJobHandler(SystemJobName.CHAT_STALE_SWEEP, async () => {
         await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
@@ -350,6 +361,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(adminPlatformModule)
+            await app.register(denoMigrationModule)
             await app.register(pieceUpgradeModule)
             await app.register(adminPlatformTemplatesCloudModule)
             await app.register(platformProjectModule)
@@ -371,6 +383,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
+            await app.register(personalProjectsModule)
             await app.register(projectReleaseModule)
             await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
@@ -383,10 +396,17 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
+            userHooks.set(userEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
-            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            await aiUsageJobs.register(app.log)
+            await app.register(aiUsageModule)
+            resumePageHooks.set((log) => ({
+                getTheme: (params) => appearanceHelper.getTheme({ ...params, log }),
+                getPublicApiBaseUrl: (params) => embedSubdomainService(log).getPublicApiBaseUrl(params),
+            }))
+            verifiedDomainHooks.set(authnSsoSamlService)
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
@@ -394,6 +414,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(denoMigrationModule)
             await app.register(pieceUpgradeModule)
             await app.register(platformPlanModule)
             await app.register(platformProjectModule)
@@ -412,6 +433,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
+            await app.register(personalProjectsModule)
             await app.register(projectReleaseModule)
             await app.register(projectReplaceModule)
             await app.register(globalConnectionModule)
@@ -424,15 +446,22 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(aiToolConfigModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
+            userHooks.set(userEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
-            resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            await aiUsageJobs.register(app.log)
+            await app.register(aiUsageModule)
+            resumePageHooks.set((log) => ({
+                getTheme: (params) => appearanceHelper.getTheme({ ...params, log }),
+                getPublicApiBaseUrl: (params) => embedSubdomainService(log).getPublicApiBaseUrl(params),
+            }))
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
             break
         case ApEdition.COMMUNITY:
+            await app.register(denoMigrationModule)
             await app.register(platformProjectModule)
             await app.register(communityPiecesModule)
             await app.register(otpModule)
@@ -487,6 +516,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const pieces = process.env.AP_DEV_PIECES
 
     assertReleaseReadable(app.log)
+    aiObservability.init({ enabled: system.getEdition() === ApEdition.CLOUD })
     aiCostReporter.install({
         log: app.log,
         report: (request) => aiUsageService(app.log).report(request),

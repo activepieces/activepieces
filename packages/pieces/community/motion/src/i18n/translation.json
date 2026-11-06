@@ -58,6 +58,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Task Created": "Task Created",
   "Triggers when a new task is created.": "Triggers when a new task is created."
 }

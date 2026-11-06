@@ -8,19 +8,35 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/features/agents', () => ({
-  PROVIDER_EMBEDDING_MODELS: { openai: 'text-embedding-3-small' },
+const source = vi.hoisted(() => ({
+  loaded: true,
+  provider: null as string | null,
 }));
 
-const chat = vi.hoisted(() => ({ provider: undefined as string | undefined }));
-
-vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
-  aiProviderQueries: {
-    useChatProvider: () => ({
-      data:
-        chat.provider === undefined ? undefined : { provider: chat.provider },
+vi.mock(
+  '@/features/agents/agent-tools/knowledge-base-dialog/knowledge-base-hooks',
+  () => ({
+    useKnowledgeBaseEmbeddingSource: () => ({
+      data: source.loaded
+        ? {
+            provider: source.provider,
+            modelId: source.provider === null ? null : 'text-embedding-3-small',
+          }
+        : undefined,
     }),
-  },
+  }),
+);
+
+const viewer = vi.hoisted(() => ({ isAdmin: false }));
+
+vi.mock('@/hooks/authorization-hooks', () => ({
+  useIsPlatformAdmin: () => viewer.isAdmin,
+}));
+
+vi.mock('react-router-dom', () => ({
+  Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
 
 vi.mock('@/hooks/flags-hooks', () => ({
@@ -83,7 +99,9 @@ function canAddKnowledge(): boolean {
 }
 
 beforeEach(() => {
-  chat.provider = undefined;
+  source.loaded = true;
+  source.provider = null;
+  viewer.isAdmin = false;
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -97,24 +115,35 @@ afterEach(() => {
 });
 
 describe('adding knowledge to an agent', () => {
-  it('is offered when the chat key can embed, whatever the step picked', () => {
-    chat.provider = AIProviderName.OPENAI;
+  it("is offered when the server reports a provider that embeds this project's files", () => {
+    source.provider = AIProviderName.OPENAI;
 
     render();
 
     expect(canAddKnowledge()).toBe(true);
   });
 
-  it('is explained when the chat key cannot embed', () => {
-    chat.provider = AIProviderName.ANTHROPIC;
-
+  it("tells a builder to ask the admin when no key can embed this project's files", () => {
     render();
 
     expect(canAddKnowledge()).toBe(false);
-    expect(container.textContent).toContain('requires a provider');
+    expect(container.textContent).toContain('Ask your admin');
+    expect(container.querySelector('a')).toBeNull();
   });
 
-  it('is explained when the project has no chat key', () => {
+  it('links an admin to the Embeddings capability', () => {
+    viewer.isAdmin = true;
+
+    render();
+
+    expect(container.querySelector('a')?.getAttribute('href')).toBe(
+      '/platform/ai/capabilities',
+    );
+  });
+
+  it('is not offered before the server answers', () => {
+    source.loaded = false;
+
     render();
 
     expect(canAddKnowledge()).toBe(false);

@@ -44,6 +44,6 @@ export function toError(value: unknown): Error {
         return new Error(value)
     }
     const { data: serialized } = tryCatchSync(() => JSON.stringify(value))
-    return new Error(serialized ?? String(value))
+    return new Error(serialized ?? String(value), { cause: value })
 }
 

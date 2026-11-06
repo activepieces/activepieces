@@ -147,6 +147,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Testimonial Event": "Testimonial Event",
   "Triggers when a testimonial is created, updated, or deleted in Senja.": "Triggers when a testimonial is created, updated, or deleted in Senja.",
   "Markdown": "Markdown",

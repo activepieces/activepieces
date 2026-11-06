@@ -1,4 +1,4 @@
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, SubagentTaskStatus } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { agentSurfaceNotes } from '../../../../../src/app/ee/agent/prompt/agent-surface-notes'
 
@@ -24,7 +24,7 @@ const IDENTITY = {
     },
 }
 
-const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, imageEditAvailable: true, emailAvailable: true, agentsAvailable: true }
+const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, imageEditAvailable: true, emailAvailable: true, agentsAvailable: true, tasksAvailable: true }
 
 function notesFor(source: AgentRunSource): string {
     return agentSurfaceNotes.buildRunNotes({
@@ -78,6 +78,14 @@ describe('what each surface is told it can do', () => {
         expect(notesFor(AgentRunSource.AGENT)).not.toContain('Saved agents')
     })
 
+    it('only points the chat at deep research when it can search the web', () => {
+        const withSearch = agentSurfaceNotes.buildRunNotes({ source: AgentRunSource.CHAT, currentDate: 'Tuesday, August 18, 2026', ...EVERYTHING_AVAILABLE, userEmail: 'owner@acme.com', memory: { instructions: '', memories: [] } })
+        const withoutSearch = agentSurfaceNotes.buildRunNotes({ source: AgentRunSource.CHAT, currentDate: 'Tuesday, August 18, 2026', ...EVERYTHING_AVAILABLE, searchAvailable: false, userEmail: 'owner@acme.com', memory: { instructions: '', memories: [] } })
+
+        expect(withSearch).toContain('ap_deep_research')
+        expect(withoutSearch).not.toContain('ap_deep_research')
+    })
+
     it('tells a chat run about everything it has', () => {
         const notes = notesFor(AgentRunSource.CHAT)
 
@@ -126,7 +134,7 @@ describe('what each surface is told it can do', () => {
         const notes = agentSurfaceNotes.buildRunNotes({
             source: AgentRunSource.CHAT,
             currentDate: 'Tuesday, August 18, 2026',
-            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, imageEditAvailable: false, emailAvailable: false, agentsAvailable: false,
+            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, imageEditAvailable: false, emailAvailable: false, agentsAvailable: false, tasksAvailable: false,
             userEmail: 'owner@acme.com',
             userIdentity: null,
             connections: null,
@@ -137,6 +145,22 @@ describe('what each surface is told it can do', () => {
         expect(notes).not.toContain('Saved agents')
         expect(notes).not.toContain('ap_web_search')
         expect(notes).not.toContain('ap_send_email')
+        expect(notes).not.toContain('ap_run_task')
+    })
+
+    it('tells chat about task agents only when they exist, and lists the conversation tasks to resume', () => {
+        expect(notesFor(AgentRunSource.CHAT)).toContain('ap_run_task')
+        const withTasks = agentSurfaceNotes.buildRunNotes({
+            source: AgentRunSource.CHAT,
+            currentDate: 'Tuesday, August 18, 2026',
+            ...EVERYTHING_AVAILABLE,
+            tasks: [{ id: 'task1', title: 'Build Save order', status: SubagentTaskStatus.DONE, artifacts: [{ type: 'flow', id: 'f1', name: 'Save order' }] }],
+            userEmail: 'owner@acme.com',
+            userIdentity: IDENTITY,
+            connections: null,
+            memory: { instructions: null, memories: [] },
+        })
+        expect(withTasks).toContain('- taskId task1, "Build Save order", done; made flow "Save order" (f1)')
     })
 })
 

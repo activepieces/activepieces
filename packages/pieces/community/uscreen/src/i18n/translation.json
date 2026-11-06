@@ -52,6 +52,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Paid Order": "Paid Order",
   "New User": "New User",
   "Began to Play Video": "Began to Play Video",
