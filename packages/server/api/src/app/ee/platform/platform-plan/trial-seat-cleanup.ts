@@ -26,7 +26,7 @@ export const trialSeatCleanup = (log: FastifyBaseLogger) => ({
             return null
         }
         const plan = await platformPlanRepo().findOneBy({ platformId })
-        const seats = await seatsOverLimit({ platformId, usersLimit: plan?.usersLimit, selfServeTrialDates, billingEnforced: await billingEnforcedOrUnknown(platformId), log })
+        const seats = await seatsOverLimit({ platformId, usersLimit: plan?.usersLimit, billingEnforced: await billingEnforcedOrUnknown(platformId), log })
         return isNil(seats) ? null : trialGracePeriodEndsAt(selfServeTrialDates).toISOString()
     },
     async sweep(): Promise<void> {
@@ -53,7 +53,7 @@ export const trialSeatCleanup = (log: FastifyBaseLogger) => ({
 
 async function deactivateExtraUsersIfDeadlinePassed({ platformId, log }: PlatformLogParams): Promise<void> {
     const selfServeTrial = await billingProvider.get(log).getSelfServeTrialInfo({ platformId, bypassCacheAndFetchFromProvider: true })
-    if (selfServeTrial.state !== SelfServeTrialState.ACTIVE && selfServeTrial.state !== SelfServeTrialState.ENDED) {
+    if (selfServeTrial.state !== SelfServeTrialState.ENDED) {
         return
     }
     if (trialGracePeriodEndsAt(selfServeTrial).isAfter(dayjs())) {
@@ -73,7 +73,7 @@ async function deactivateTrialUsersAndInvitationsOverLimit({ platformId, selfSer
             .getOneOrFail()
         await userService(log).lockActiveByPlatformId({ platformId, entityManager })
         await userInvitationsService(log).lockPendingInvites({ platformId, entityManager })
-        const seats = await seatsOverLimit({ platformId, usersLimit: plan.usersLimit, selfServeTrialDates, billingEnforced, log, entityManager })
+        const seats = await seatsOverLimit({ platformId, usersLimit: plan.usersLimit, billingEnforced, log, entityManager })
         if (isNil(seats)) {
             return { deactivatedUserIds: [], revokedInvites: 0 }
         }
@@ -123,7 +123,7 @@ async function findPlatformsOverTheirSeats(): Promise<string[]> {
     return rows.map((row) => row.platformId)
 }
 
-async function seatsOverLimit({ platformId, usersLimit, billingEnforced, log, entityManager }: SeatsToRemoveParams): Promise<SeatsOverLimit | null> {
+async function seatsOverLimit({ platformId, usersLimit, billingEnforced, log, entityManager }: SeatsOverLimitParams): Promise<SeatsOverLimit | null> {
     if (!billingEnforced || isNil(usersLimit)) {
         return null
     }
@@ -187,10 +187,9 @@ type DeactivateTrialUsersAndInvitationsOverLimitParams = PlatformLogParams & {
     selfServeTrialDates: SelfServeTrialDates
 }
 
-type SeatsToRemoveParams = {
+type SeatsOverLimitParams = {
     platformId: string
     usersLimit: number | null | undefined
-    selfServeTrialDates: SelfServeTrialDates
     billingEnforced: boolean
     log: FastifyBaseLogger
     entityManager?: EntityManager
