@@ -4,12 +4,15 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { bolnaaiAuth } from '../common/auth';
+import { bolnaSchemas } from '../common/schemas';
+
 export const callCompletionReport = createTrigger({
   auth: bolnaaiAuth,
   name: 'callCompletionReport',
   classification: 'READ',
   displayName: 'Call Completion Report',
-  description: 'Triggers when  Bolna call report  it is completed',
+  description: 'Triggers when a Bolna call is completed and its report is sent to the webhook.',
+  outputSchema: bolnaSchemas.executionSchema,
   aiMetadata: {
     description:
       'Fires when a Bolna AI voice call finishes and its execution report is pushed to the configured webhook, emitting only calls with a completed status. Use to act on call outcomes such as transcript, duration, cost, and recording once a conversation has ended. Requires manually configuring the Bolna agent to push execution data to the webhook URL.',
@@ -127,18 +130,17 @@ export const callCompletionReport = createTrigger({
     provider: 'plivo',
   },
   type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    // implement webhook creation logic
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // implement webhook deletion logic
+  async onDisable() {
+    return;
   },
   async run(context) {
-    const payload = context.payload.body as any;
-
-    if (payload.status != 'completed') {
+    const payload: unknown = context.payload.body;
+    if (!bolnaSchemas.isRecord(payload) || payload['status'] !== 'completed') {
       return [];
     }
-    return [context.payload.body];
+    return [payload];
   },
 });
