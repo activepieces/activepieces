@@ -62,6 +62,7 @@ describe('trial running or ended', () => {
     const dates = trial && {
       startedAt: dayjs(NOW).subtract(5, 'day').toISOString(),
       endsAt: trial.toISOString(),
+      seatGraceEndsAt: null,
     };
     expect(selfServeTrialTime.isRunning(dates)).toBe(running);
     expect(selfServeTrialTime.hasEnded(dates)).toBe(ended);

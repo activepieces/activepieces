@@ -25,6 +25,12 @@ export const userInvitationApi = {
       { projectId },
     );
   },
+  listReservingSeats: (request: ListReservingSeatsRequest) => {
+    return api.get<SeekPage<UserInvitation>>(
+      '/v1/user-invitations/reserving-seats',
+      request,
+    );
+  },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/user-invitations/${id}`);
   },
@@ -54,3 +60,8 @@ async function listAllPages({
     ...(await listAllPages({ request, cursor: page.next })),
   ];
 }
+
+type ListReservingSeatsRequest = {
+  cursor?: string;
+  limit: number;
+};

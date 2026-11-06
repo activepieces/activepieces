@@ -75,6 +75,10 @@ vi.mock('../../../../../src/app/database/redis-connections', () => ({
     },
 }))
 
+vi.mock('../../../../../src/app/ee/platform/platform-plan/trial-seat-cleanup', () => ({
+    trialSeatCleanup: () => ({ endsAt: vi.fn().mockResolvedValue(null) }),
+}))
+
 vi.mock('../../../../../src/app/platform/platform.service', () => ({
     platformService: () => ({ getOneOrThrow: async () => ({ id: 'platform-1', ownerId: 'user-1' }) }),
 }))
@@ -435,6 +439,39 @@ describe('self-serve trial', () => {
             await refreshWith({ customer: customerWith({ addOn: STARTED }), subscriptions: [runningTrialRow(STARTED)] })
 
             expect(mockOnTrialEnded).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('readSelfServeTrialDates', () => {
+        it('reads the latest trial from the subscriptions, ignoring the cache', async () => {
+            const { autumnUtils } = await loadModules()
+            store.set(TRIAL_KEY, { dates: STARTED })
+            vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue({ listSubscriptions: async () => [ranOutTrialRow(PAST)] } as never)
+
+            expect(await autumnUtils.readSelfServeTrialDates(log, PLATFORM_ID)).toEqual(PAST)
+        })
+
+        it('reads no trial when the latest one was cancelled before its end', async () => {
+            const { autumnUtils } = await loadModules()
+            vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue({ listSubscriptions: async () => [cancelledTrialRow({ dates: STARTED, cancelledAt: STARTED.startedAt })] } as never)
+
+            expect(await autumnUtils.readSelfServeTrialDates(log, PLATFORM_ID)).toBeNull()
+        })
+
+        it('returns nothing for a platform without Autumn credentials', async () => {
+            const { autumnUtils } = await loadModules()
+            vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue(null)
+
+            expect(await autumnUtils.readSelfServeTrialDates(log, PLATFORM_ID)).toBeNull()
+        })
+
+        it('throws when Autumn cannot list the subscriptions', async () => {
+            const { autumnUtils } = await loadModules()
+            vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue({ listSubscriptions: async () => {
+                throw new Error('autumn is down')
+            } } as never)
+
+            await expect(autumnUtils.readSelfServeTrialDates(log, PLATFORM_ID)).rejects.toThrow('autumn is down')
         })
     })
 })
