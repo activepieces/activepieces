@@ -252,28 +252,33 @@ export enum SelfServeTrialState {
     INELIGIBLE = 'ineligible',
     ACTIVE = 'active',
     ENDED = 'ended',
-    USED = 'used',
-    UNAVAILABLE = 'unavailable',
 }
 
-export const SelfServeTrialStatus = z.object({
-    state: z.enum(SelfServeTrialState),
-    startedAt: z.string().nullable(),
-    endsAt: z.string().nullable(),
+export const StartedSelfServeTrial = z.object({
+    state: z.enum([SelfServeTrialState.ACTIVE, SelfServeTrialState.ENDED]),
+    startedAt: z.string(),
+    endsAt: z.string(),
+    seatGraceEndsAt: z.string().nullable(),
 })
-export type SelfServeTrialStatus = z.infer<typeof SelfServeTrialStatus>
+export type StartedSelfServeTrial = z.infer<typeof StartedSelfServeTrial>
 
-export const PlatformSelfServeTrial = SelfServeTrialDates.extend({
-    seatGraceEndsAt: Nullable(z.string()),
+export const NotStartedSelfServeTrial = z.object({
+    state: z.enum([SelfServeTrialState.ELIGIBLE, SelfServeTrialState.INELIGIBLE]),
+    startedAt: z.null(),
+    endsAt: z.null(),
+    seatGraceEndsAt: z.null(),
 })
-export type PlatformSelfServeTrial = z.infer<typeof PlatformSelfServeTrial>
+export type NotStartedSelfServeTrial = z.infer<typeof NotStartedSelfServeTrial>
+
+export const SelfServeTrialInfo = z.discriminatedUnion('state', [StartedSelfServeTrial, NotStartedSelfServeTrial])
+export type SelfServeTrialInfo = z.infer<typeof SelfServeTrialInfo>
 
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
-    selfServeTrial: PlatformSelfServeTrial.optional(),
+    selfServeTrial: StartedSelfServeTrial.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
@@ -371,6 +376,6 @@ export const PlatformBillingInformation = z.object({
     billingUnavailable: z.boolean(),
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
-    selfServeTrial: SelfServeTrialStatus,
+    selfServeTrial: SelfServeTrialInfo,
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

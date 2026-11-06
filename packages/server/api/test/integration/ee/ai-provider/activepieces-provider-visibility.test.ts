@@ -3,6 +3,7 @@ import { SelfServeTrialDates } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
+import { autumnConsole } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
 import { selfServeTrialUtils } from '../../../../src/app/ee/platform/platform-plan/self-serve-trial-utils'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -22,6 +23,7 @@ afterAll(async () => {
 
 async function visibleProviders({ embeddingEnabled, trial }: VisibleProvidersParams) {
     const ctx = await createTestContext(app!, { plan: { embeddingEnabled } })
+    vi.spyOn(autumnConsole, 'getCreds').mockResolvedValue({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
     if (trial !== undefined) {
         await selfServeTrialUtils.cacheTrialDates({ platformId: ctx.platform.id, dates: trial })
     }

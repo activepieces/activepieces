@@ -2,7 +2,11 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-attribute, jest-dom/prefer-to-have-class, jest-dom/prefer-to-have-text-content -- @testing-library/jest-dom is not a dependency of packages/web */
-import { ApEdition, PlatformSelfServeTrial } from '@activepieces/shared';
+import {
+  ApEdition,
+  SelfServeTrialInfo,
+  SelfServeTrialState,
+} from '@activepieces/shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
@@ -109,8 +113,9 @@ function unlimitedCredits({
   };
 }
 
-function graceEndingIn(days: number): PlatformSelfServeTrial {
+function graceEndingIn(days: number): SelfServeTrialInfo {
   return {
+    state: SelfServeTrialState.ENDED,
     startedAt: dayjs(NOW).subtract(10, 'day').toISOString(),
     endsAt: dayjs(NOW).subtract(3, 'day').toISOString(),
     seatGraceEndsAt: dayjs(NOW).add(days, 'day').hour(12).toISOString(),
@@ -208,6 +213,7 @@ describe('sidebar usage card during the seat grace', () => {
   it('keeps the running trial line while a trial is active', () => {
     state.selfServeTrial = {
       ...graceEndingIn(3),
+      state: SelfServeTrialState.ACTIVE,
       endsAt: dayjs(NOW).add(5, 'day').toISOString(),
     };
 
@@ -231,6 +237,6 @@ type CreditsState = {
 
 type TestState = {
   credits: CreditsState | null;
-  selfServeTrial: PlatformSelfServeTrial | undefined;
+  selfServeTrial: SelfServeTrialInfo | undefined;
   isPlatformAdmin: boolean;
 };

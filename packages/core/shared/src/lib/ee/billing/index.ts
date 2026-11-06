@@ -1,6 +1,6 @@
 import { isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { AiCreditsAutoTopUpState, ConsumableFeatureId, PlanName, PlatformPlanWithOnlyLimits, SelfServeTrialState, SelfServeTrialStatus, UnconsumableFeatureId } from '../../management/platform'
+import { AiCreditsAutoTopUpState, ConsumableFeatureId, NotStartedSelfServeTrial, PlanName, PlatformPlanWithOnlyLimits, UnconsumableFeatureId } from '../../management/platform'
 
 export const AdjustUnconsumableFeatureQuantityParams = z.object({
     featureId: z.enum(UnconsumableFeatureId),
@@ -182,8 +182,9 @@ export const SELF_SERVE_TRIAL_PLANS: readonly string[] = [
 
 export const isEligibleForSelfServeTrial = (plan: string | null | undefined): boolean => !isNil(plan) && SELF_SERVE_TRIAL_PLANS.includes(plan)
 
-export const UNAVAILABLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = {
-    state: SelfServeTrialState.UNAVAILABLE,
+export const notStartedSelfServeTrial = (state: NotStartedSelfServeTrial['state']): NotStartedSelfServeTrial => ({
+    state,
     startedAt: null,
     endsAt: null,
-}
+    seatGraceEndsAt: null,
+})

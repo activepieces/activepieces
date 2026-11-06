@@ -270,30 +270,6 @@ export function TrialAlreadyUsed() {
   );
 }
 
-export function TrialNotStarted({ onClose }: { onClose: () => void }) {
-  return (
-    <DialogFrame
-      title={t('We could not start your trial')}
-      description={t(
-        'The Enterprise plan trial is not available for your platform right now. Please try again later, or talk to our team.',
-      )}
-      actions={
-        <div className="flex flex-col-reverse gap-2 sm:flex-row">
-          <Button variant="outline" onClick={onClose}>
-            {t('Close')}
-          </Button>
-          <SelfServeTrialSalesLink
-            locationInWebApp={
-              SalesLinkLocationInWebApp.ENTERPRISE_TRIAL_UNAVAILABLE
-            }
-            variant="default"
-          />
-        </div>
-      }
-    />
-  );
-}
-
 function howToGetIt({
   actionWhenLocked,
   planThatHasFeature,

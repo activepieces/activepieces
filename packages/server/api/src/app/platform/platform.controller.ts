@@ -1,6 +1,6 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformResponse, PlatformSelfServeTrial, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
+import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformResponse, PlatformWithoutSensitiveData, PrincipalType, SelfServeTrialState, SERVICE_KEY_SECURITY_OPENAPI, StartedSelfServeTrial, UpdatePlatformRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -197,12 +197,18 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     }
 }
 
-async function addSelfServeTrialToPlatform<T extends PlatformWithoutSensitiveData>({ platform, log, includeSelfServeTrial }: AddSelfServeTrialToPlatformParams<T>): Promise<T & { selfServeTrial?: PlatformSelfServeTrial }> {
+async function addSelfServeTrialToPlatform<T extends PlatformWithoutSensitiveData>({ platform, log, includeSelfServeTrial }: AddSelfServeTrialToPlatformParams<T>): Promise<T & { selfServeTrial?: StartedSelfServeTrial }> {
     if (!includeSelfServeTrial) {
         return platform
     }
-    const selfServeTrial = await billingProvider.get(log).getCachedSelfServeTrialInfo(platform.id)
-    return isNil(selfServeTrial) ? platform : { ...platform, selfServeTrial }
+    const selfServeTrial = await billingProvider.get(log).getSelfServeTrialInfo({ platformId: platform.id })
+    switch (selfServeTrial.state) {
+        case SelfServeTrialState.ACTIVE:
+        case SelfServeTrialState.ENDED:
+            return { ...platform, selfServeTrial }
+        default:
+            return platform
+    }
 }
 
 const CreatePlatformEndpoint = {

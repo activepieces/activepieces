@@ -1,4 +1,4 @@
-import { PlanName, SelfServeTrialState, SelfServeTrialStatus } from '@activepieces/shared'
+import { PlanName, SelfServeTrialInfo, SelfServeTrialState } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { autumnConsole, autumnUtils, SelfServeTrialStartResult } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
@@ -6,7 +6,7 @@ import { platformPlanRepo } from '../../../../src/app/ee/platform/platform-plan/
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
-const ELIGIBLE: SelfServeTrialStatus = { state: SelfServeTrialState.ELIGIBLE, startedAt: null, endsAt: null }
+const ELIGIBLE: SelfServeTrialInfo = { state: SelfServeTrialState.ELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null }
 const STARTED = { startedAt: '2026-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
 
 let app: FastifyInstance | null = null
@@ -37,7 +37,7 @@ describe('Self-serve trial API', () => {
 
         expect(status.statusCode).toBe(StatusCodes.OK)
         expect(status.json().selfServeTrial).toEqual(ELIGIBLE)
-        expect(start.json()).toEqual({ state: SelfServeTrialState.ACTIVE, ...STARTED })
+        expect(start.json()).toEqual({ state: SelfServeTrialState.ACTIVE, ...STARTED, seatGraceEndsAt: null })
         expect(startTrial).toHaveBeenCalledWith({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
     })
 })

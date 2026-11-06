@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-attribute, jest-dom/prefer-to-have-class, jest-dom/prefer-to-have-text-content -- @testing-library/jest-dom is not a dependency of packages/web */
-import { PlatformSelfServeTrial } from '@activepieces/shared';
+import { SelfServeTrialInfo, SelfServeTrialState } from '@activepieces/shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
@@ -68,8 +68,9 @@ function renderIndicator() {
   );
 }
 
-function graceEndingIn(days: number): PlatformSelfServeTrial {
+function graceEndingIn(days: number): SelfServeTrialInfo {
   return {
+    state: SelfServeTrialState.ENDED,
     startedAt: dayjs(NOW).subtract(10, 'day').toISOString(),
     endsAt: dayjs(NOW).subtract(3, 'day').toISOString(),
     seatGraceEndsAt: dayjs(NOW).add(days, 'day').hour(12).toISOString(),
@@ -123,6 +124,7 @@ describe('platform admin plan indicator during the seat grace', () => {
   it('leads with the running trial while one is active', () => {
     state.selfServeTrial = {
       ...graceEndingIn(3),
+      state: SelfServeTrialState.ACTIVE,
       endsAt: dayjs(NOW).add(5, 'day').toISOString(),
     };
 
@@ -149,6 +151,6 @@ describe('platform admin plan indicator during the seat grace', () => {
 
 type TestState = {
   plan: string;
-  selfServeTrial: PlatformSelfServeTrial | undefined;
+  selfServeTrial: SelfServeTrialInfo | undefined;
   isPlatformAdmin: boolean;
 };

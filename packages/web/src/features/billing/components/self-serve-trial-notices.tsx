@@ -1,7 +1,8 @@
 import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
-  UpgradeLocationInWebApp,
   SalesLinkLocationInWebApp,
+  SelfServeTrialState,
+  UpgradeLocationInWebApp,
 } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
@@ -56,7 +57,7 @@ export function SelfServeTrialEndingAlert() {
 
   if (
     !isPlatformAdmin ||
-    !selfServeTrialTime.isRunning(trial) ||
+    trial?.state !== SelfServeTrialState.ACTIVE ||
     !(ending || justStarted) ||
     dismissed
   ) {
@@ -152,7 +153,7 @@ export function SelfServeTrialEndedDialog() {
   const { dismissed: alreadySeen, dismiss: markSeen } =
     useRememberedDismissal(storageKey);
   const endedRecently =
-    selfServeTrialTime.hasEnded(trial) &&
+    trial?.state === SelfServeTrialState.ENDED &&
     selfServeTrialTime.calendarDaysBetween({
       from: trial.endsAt,
       to: Date.now(),
@@ -180,7 +181,7 @@ export function SelfServeTrialEndedDialog() {
             </DialogTitle>
             <DialogDescription className="text-base text-pretty">
               {!isNil(info) &&
-                selfServeTrialTime.hasEnded(trial) &&
+                trial?.state === SelfServeTrialState.ENDED &&
                 t('It ended on {date}. You are back on {plan}.', {
                   date: selfServeTrialTime.whenItEnds(trial.endsAt).date,
                   plan: info.autumnPlanName,

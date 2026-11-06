@@ -1,10 +1,10 @@
-import { InvitationStatus, InvitationType, PlanName, PlatformRole, PrincipalType, SelfServeTrialDates, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, PlanName, PlatformRole, PrincipalType, SelfServeTrialDates, SelfServeTrialState, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { getBillingEnforcedKey } from '../../../../src/app/database/redis/keys'
 import { distributedStore } from '../../../../src/app/database/redis-connections'
-import { autumnUtils } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
+import { autumnConsole, autumnUtils } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
 import { platformPlanRepo } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { selfServeTrialUtils } from '../../../../src/app/ee/platform/platform-plan/self-serve-trial-utils'
 import { trialSeatCleanup } from '../../../../src/app/ee/platform/platform-plan/trial-seat-cleanup'
@@ -31,6 +31,7 @@ afterAll(async () => {
 beforeEach(() => {
     trialDatesInAutumn = new Map()
     vi.spyOn(autumnUtils, 'readSelfServeTrialDates').mockImplementation(async (_log, platformId) => trialDatesInAutumn.get(platformId) ?? null)
+    vi.spyOn(autumnConsole, 'getCreds').mockResolvedValue({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
 })
 
 afterEach(() => {
@@ -382,6 +383,7 @@ describe('Seat grace after the self-serve trial', () => {
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(response.json().selfServeTrial).toEqual({
+            state: SelfServeTrialState.ENDED,
             ...selfServeTrialDates,
             seatGraceEndsAt: await trialSeatCleanup(log).endsAt({ platformId, selfServeTrialDates }),
         })

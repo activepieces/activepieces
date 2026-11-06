@@ -4,6 +4,7 @@ import {
   ApFlagId,
   PlanName,
   PlatformBillingInformation,
+  SelfServeTrialState,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
@@ -34,7 +35,6 @@ import {
   SelfServeTrialBillingStatus,
   useCancelSubscriptionGuard,
   billingDialogHooks,
-  selfServeTrialTime,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -133,7 +133,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
   const licenseKeyCopy = licenseKeySectionCopy({
     hasLicenseKey,
     isCloud,
-    trialRunning: selfServeTrialTime.isRunning(platform.selfServeTrial),
+    trialRunning: platform.selfServeTrial?.state === SelfServeTrialState.ACTIVE,
   });
 
   return (

@@ -41,30 +41,3 @@ describe('days left in the trial', () => {
     expect(selfServeTrialTime.daysLeft(endsAt.toISOString())).toBe(expected);
   });
 });
-
-describe('trial running or ended', () => {
-  it.each([
-    { name: 'no trial', trial: undefined, running: false, ended: false },
-    {
-      name: 'a trial that ends later',
-      trial: dayjs(NOW).add(2, 'day'),
-      running: true,
-      ended: false,
-    },
-    {
-      name: 'a trial that ended',
-      trial: dayjs(NOW).subtract(1, 'minute'),
-      running: false,
-      ended: true,
-    },
-  ])('$name', ({ trial, running, ended }) => {
-    vi.useFakeTimers({ now: NOW });
-    const dates = trial && {
-      startedAt: dayjs(NOW).subtract(5, 'day').toISOString(),
-      endsAt: trial.toISOString(),
-      seatGraceEndsAt: null,
-    };
-    expect(selfServeTrialTime.isRunning(dates)).toBe(running);
-    expect(selfServeTrialTime.hasEnded(dates)).toBe(ended);
-  });
-});

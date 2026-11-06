@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
-import { UpgradeLocationInWebApp } from '@activepieces/shared';
+import { SelfServeTrialState, UpgradeLocationInWebApp } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as React from 'react';
@@ -31,6 +31,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
         id: 'platform-1',
         plan: { usersLimit: 2 },
         selfServeTrial: {
+          state: SelfServeTrialState.ENDED,
           startedAt: '2026-10-12T12:00:00.000Z',
           endsAt: '2026-10-19T12:00:00.000Z',
           seatGraceEndsAt: state.graceEndsAt,

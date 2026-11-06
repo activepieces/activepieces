@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, PlatformSelfServeTrial, PurchasablePlan, RunEnvironment, SeatsBillableFeature, SelfServeTrialDates, SelfServeTrialStatus, UNAVAILABLE_SELF_SERVE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, notStartedSelfServeTrial, PurchasablePlan, RunEnvironment, SeatsBillableFeature, SelfServeTrialInfo, SelfServeTrialState, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AiUsageBlock } from '../ai/usage/ai-usage-block'
 import { hooksFactory } from '../helper/hooks-factory'
@@ -74,19 +74,10 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
         return { events: [], nextCursor: null }
     },
     getSelfServeTrialInfo: async () => {
-        return UNAVAILABLE_SELF_SERVE_TRIAL
+        return notStartedSelfServeTrial(SelfServeTrialState.INELIGIBLE)
     },
     startSelfServeTrial: async () => {
-        return UNAVAILABLE_SELF_SERVE_TRIAL
-    },
-    getCachedSelfServeTrialInfo: async () => {
-        return null
-    },
-    getSelfServeTrialDates: async () => {
-        return null
-    },
-    isOnSelfServeTrial: async () => {
-        return false
+        return notStartedSelfServeTrial(SelfServeTrialState.INELIGIBLE)
     },
 }))
 
@@ -453,11 +444,13 @@ export type BillingProvider = {
     getConsumablesUsage(platformId: string): Promise<ConsumablesUsage>
     getCreditUsage(params: CreditUsageByProjectParams): Promise<CreditUsage>
     listUsageEvents(params: ListUsageEventsParams): Promise<UsageEventsPage>
-    getSelfServeTrialInfo(platformId: string): Promise<SelfServeTrialStatus>
-    startSelfServeTrial(platformId: string): Promise<SelfServeTrialStatus>
-    getCachedSelfServeTrialInfo(platformId: string): Promise<PlatformSelfServeTrial | null>
-    getSelfServeTrialDates(platformId: string): Promise<SelfServeTrialDates | null>
-    isOnSelfServeTrial(platformId: string): Promise<boolean>
+    getSelfServeTrialInfo(params: GetSelfServeTrialInfoParams): Promise<SelfServeTrialInfo>
+    startSelfServeTrial(platformId: string): Promise<SelfServeTrialInfo>
+}
+
+export type GetSelfServeTrialInfoParams = {
+    platformId: string
+    bypassCacheAndFetchFromProvider?: boolean
 }
 
 export type ListUsageEventsParams = {

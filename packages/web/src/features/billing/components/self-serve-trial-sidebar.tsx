@@ -1,8 +1,9 @@
 import { isNil, tryCatch } from '@activepieces/core-utils';
 import {
   PlanName,
-  UpgradeLocationInWebApp,
   SalesLinkLocationInWebApp,
+  SelfServeTrialState,
+  UpgradeLocationInWebApp,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -140,7 +141,7 @@ export function EnterprisePlanIndicator() {
   if (!isPlatformAdmin) {
     return null;
   }
-  if (selfServeTrialTime.isRunning(trial)) {
+  if (trial?.state === SelfServeTrialState.ACTIVE) {
     return <TrialIndicator endsAt={trial.endsAt} />;
   }
   if (!isNil(graceEndsAt)) {

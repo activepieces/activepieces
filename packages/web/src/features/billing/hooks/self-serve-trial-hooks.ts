@@ -4,7 +4,7 @@ import {
   ApFlagId,
   PlatformBillingInformation,
   SelfServeTrialState,
-  SelfServeTrialStatus,
+  SelfServeTrialInfo,
   UpgradeLocationInWebApp,
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -18,10 +18,7 @@ import { platformBillingApi } from '../api/billing-plans-api';
 import { enterpriseDocs } from '../utils/billing-utils';
 import { FeatureKey, platformFeatures } from '../utils/platform-features';
 import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
-import {
-  selfServeTrialTime,
-  TRIAL_DAYS,
-} from '../utils/self-serve-trial-utils';
+import { TRIAL_DAYS } from '../utils/self-serve-trial-utils';
 
 import {
   billingDialogHooks,
@@ -52,7 +49,7 @@ export function useActionWhenLocked({
   ) {
     return ActionWhenLocked.START_TRIAL;
   }
-  if (selfServeTrialTime.hasEnded(platform.selfServeTrial)) {
+  if (platform.selfServeTrial?.state === SelfServeTrialState.ENDED) {
     return ActionWhenLocked.UPGRADE_AFTER_TRIAL;
   }
   return ActionWhenLocked.UPGRADE;
@@ -139,13 +136,13 @@ export const selfServeTrialHooks = {
     return data?.state === SelfServeTrialState.ELIGIBLE;
   },
   useStartSelfServeTrial: (
-    onStarted?: (status: SelfServeTrialStatus) => void,
+    onStarted?: (status: SelfServeTrialInfo) => void,
   ) => {
     const queryClient = useQueryClient();
     const { platform } = platformHooks.useCurrentPlatform();
     return useMutation({
       mutationFn: platformBillingApi.startSelfServeTrial,
-      onSuccess: (status: SelfServeTrialStatus) => {
+      onSuccess: (status: SelfServeTrialInfo) => {
         queryClient.setQueryData<PlatformBillingInformation>(
           billingKeys.platformSubscription(platform.id),
           (info) => (isNil(info) ? info : { ...info, selfServeTrial: status }),

@@ -1,4 +1,5 @@
-import { ApEdition, PlanName, SelfServeTrialState, SelfServeTrialStatus } from '@activepieces/shared'
+import { ErrorCode } from '@activepieces/core-utils'
+import { ApEdition, PlanName, SelfServeTrialInfo, SelfServeTrialState } from '@activepieces/shared'
 import { ListSubscriptionsListStatus } from 'autumn-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SelfServeTrialStartOutcome, SelfServeTrialStartResult } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
@@ -92,9 +93,8 @@ const TRIAL_KEY = `platform_plan:self-serve-trial:${PLATFORM_ID}`
 const CREDS = { autumnCustomerId: 'cus_123', autumnApiKey: 'am_sk_customer' }
 const STARTED = { startedAt: '2099-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
 const PAST = { startedAt: '2026-10-01T09:00:00.000Z', endsAt: '2026-10-08T09:00:00.000Z' }
-const ACTIVE: SelfServeTrialStatus = { state: SelfServeTrialState.ACTIVE, ...STARTED }
-const USED: SelfServeTrialStatus = { state: SelfServeTrialState.USED, startedAt: null, endsAt: null }
-const INELIGIBLE: SelfServeTrialStatus = { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null }
+const ACTIVE: SelfServeTrialInfo = { state: SelfServeTrialState.ACTIVE, ...STARTED, seatGraceEndsAt: null }
+const INELIGIBLE: SelfServeTrialInfo = { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null }
 const FREE_PLAN = { plan: PlanName.FREE }
 const log = { warn: vi.fn(), error: vi.fn(), info: vi.fn() } as never
 
@@ -164,18 +164,18 @@ describe('self-serve trial', () => {
 
     describe('getSelfServeTrialInfo', () => {
         it.each([
-            { name: 'no trial on Free', dates: null, plan: FREE_PLAN, expected: { state: SelfServeTrialState.ELIGIBLE, startedAt: null, endsAt: null } },
-            { name: 'a running trial', dates: STARTED, plan: FREE_PLAN, expected: { state: SelfServeTrialState.ACTIVE, ...STARTED } },
-            { name: 'a trial past its end', dates: PAST, plan: FREE_PLAN, expected: { state: SelfServeTrialState.ENDED, ...PAST } },
-            { name: 'an AppSumo platform', dates: null, plan: { ...FREE_PLAN, plan: PlanName.APPSUMO }, expected: { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null } },
-            { name: 'an Enterprise platform', dates: null, plan: { ...FREE_PLAN, plan: PlanName.ENTERPRISE }, expected: { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null } },
-            { name: 'a Plus chat platform', dates: null, plan: { ...FREE_PLAN, plan: PlanName.PLUS_CHAT }, expected: { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null } },
+            { name: 'no trial on Free', dates: null, plan: FREE_PLAN, expected: { state: SelfServeTrialState.ELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null } },
+            { name: 'a running trial', dates: STARTED, plan: FREE_PLAN, expected: { state: SelfServeTrialState.ACTIVE, ...STARTED, seatGraceEndsAt: null } },
+            { name: 'a trial past its end', dates: PAST, plan: FREE_PLAN, expected: { state: SelfServeTrialState.ENDED, ...PAST, seatGraceEndsAt: null } },
+            { name: 'an AppSumo platform', dates: null, plan: { ...FREE_PLAN, plan: PlanName.APPSUMO }, expected: { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null } },
+            { name: 'an Enterprise platform', dates: null, plan: { ...FREE_PLAN, plan: PlanName.ENTERPRISE }, expected: { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null } },
+            { name: 'a Plus chat platform', dates: null, plan: { ...FREE_PLAN, plan: PlanName.PLUS_CHAT }, expected: { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null } },
         ])('reads $name', async ({ dates, plan, expected }) => {
             const { autumnBillingProvider } = await enrolledProvider()
             store.set(TRIAL_KEY, { dates })
             mockGetPlan.mockResolvedValue(plan)
 
-            const status = await autumnBillingProvider(log).getSelfServeTrialInfo(PLATFORM_ID)
+            const status = await autumnBillingProvider(log).getSelfServeTrialInfo({ platformId: PLATFORM_ID })
 
             expect(status).toEqual(expected)
         })
@@ -185,7 +185,7 @@ describe('self-serve trial', () => {
             store.set(TRIAL_KEY, { dates: null })
             mockGetPlan.mockResolvedValue({ ...FREE_PLAN, plan: planName })
 
-            const status = await autumnBillingProvider(log).getSelfServeTrialInfo(PLATFORM_ID)
+            const status = await autumnBillingProvider(log).getSelfServeTrialInfo({ platformId: PLATFORM_ID })
 
             expect(status.state).toBe(SelfServeTrialState.ELIGIBLE)
         })
@@ -195,50 +195,68 @@ describe('self-serve trial', () => {
             const resolveClient = vi.spyOn(autumnUtils, 'resolveClientForPlatform')
             mockGetPlan.mockResolvedValue(FREE_PLAN)
 
-            const status = await autumnBillingProvider(log).getSelfServeTrialInfo(PLATFORM_ID)
+            const status = await autumnBillingProvider(log).getSelfServeTrialInfo({ platformId: PLATFORM_ID })
 
             expect(status.state).toBe(SelfServeTrialState.ELIGIBLE)
             expect(resolveClient).not.toHaveBeenCalled()
         })
     })
 
-    describe('isOnSelfServeTrial', () => {
-        it.each([
-            { name: 'a running trial', cached: { dates: STARTED }, expected: true },
-            { name: 'no trial', cached: { dates: null }, expected: false },
-        ])('reads $name from the cache', async ({ cached, expected }) => {
-            const { autumnBillingProvider, autumnUtils } = await loadModules()
-            const resolveClient = vi.spyOn(autumnUtils, 'resolveClientForPlatform')
-            store.set(TRIAL_KEY, cached)
-
-            expect(await autumnBillingProvider(log).isOnSelfServeTrial(PLATFORM_ID)).toBe(expected)
-            expect(resolveClient).not.toHaveBeenCalled()
-        })
-
-        it('reads an ended trial as over and refreshes the entitlements so the plan drops it', async () => {
-            const { autumnBillingProvider, autumnUtils } = await loadModules()
+    describe('getSelfServeTrialInfo from the cache', () => {
+        it('reads an ended trial as ended and refreshes the entitlements so the plan drops it', async () => {
+            const { autumnBillingProvider, autumnUtils } = await enrolledProvider()
             const refresh = vi.spyOn(autumnUtils, 'refreshEntitlements').mockResolvedValue(undefined)
             store.set(TRIAL_KEY, { dates: PAST })
 
-            expect(await autumnBillingProvider(log).isOnSelfServeTrial(PLATFORM_ID)).toBe(false)
+            expect((await autumnBillingProvider(log).getSelfServeTrialInfo({ platformId: PLATFORM_ID })).state).toBe(SelfServeTrialState.ENDED)
             await vi.waitFor(() => expect(refresh).toHaveBeenCalledWith(log, PLATFORM_ID))
         })
 
         it('releases the refresh claim when the refresh after an ended trial fails, so the next read retries it', async () => {
-            const { autumnBillingProvider, autumnUtils } = await loadModules()
+            const { autumnBillingProvider, autumnUtils } = await enrolledProvider()
             vi.spyOn(autumnUtils, 'refreshEntitlements').mockRejectedValue(new Error('Autumn is down'))
             store.set(TRIAL_KEY, { dates: PAST })
 
-            expect(await autumnBillingProvider(log).isOnSelfServeTrial(PLATFORM_ID)).toBe(false)
+            await autumnBillingProvider(log).getSelfServeTrialInfo({ platformId: PLATFORM_ID })
             await vi.waitFor(() => expect(mockStoreDelete).toHaveBeenCalledWith(`self_serve_trial_ended_refresh_${PLATFORM_ID}_${PAST.endsAt}`))
         })
 
-        it('reads no trial when the cache has nothing, without asking Autumn', async () => {
-            const { autumnBillingProvider, autumnUtils } = await loadModules()
-            const resolveClient = vi.spyOn(autumnUtils, 'resolveClientForPlatform')
+        it('does not refresh the entitlements while the trial runs', async () => {
+            const { autumnBillingProvider, autumnUtils } = await enrolledProvider()
+            const refresh = vi.spyOn(autumnUtils, 'refreshEntitlements').mockResolvedValue(undefined)
+            store.set(TRIAL_KEY, { dates: STARTED })
 
-            expect(await autumnBillingProvider(log).isOnSelfServeTrial(PLATFORM_ID)).toBe(false)
-            expect(resolveClient).not.toHaveBeenCalled()
+            expect((await autumnBillingProvider(log).getSelfServeTrialInfo({ platformId: PLATFORM_ID })).state).toBe(SelfServeTrialState.ACTIVE)
+            expect(refresh).not.toHaveBeenCalled()
+        })
+
+        it('reads a failed cached read as ineligible', async () => {
+            const { autumnBillingProvider } = await enrolledProvider()
+            mockGetPlan.mockRejectedValueOnce(new Error('database is down'))
+
+            const info = await autumnBillingProvider(log).getSelfServeTrialInfo({ platformId: PLATFORM_ID })
+
+            expect(info.state).toBe(SelfServeTrialState.INELIGIBLE)
+        })
+    })
+
+    describe('getSelfServeTrialInfo bypassing the cache', () => {
+        it('reads the trial from Autumn, not the cache', async () => {
+            const { autumnBillingProvider, autumnUtils } = await enrolledProvider()
+            vi.spyOn(autumnUtils, 'readSelfServeTrialDates').mockResolvedValue(STARTED)
+            store.set(TRIAL_KEY, { dates: PAST })
+
+            const info = await autumnBillingProvider(log).getSelfServeTrialInfo({ platformId: PLATFORM_ID, bypassCacheAndFetchFromProvider: true })
+
+            expect(info).toEqual(ACTIVE)
+        })
+
+        it('throws when Autumn cannot be read, instead of falling back to the cache', async () => {
+            const { autumnBillingProvider, autumnUtils } = await enrolledProvider()
+            vi.spyOn(autumnUtils, 'readSelfServeTrialDates').mockRejectedValue(new Error('Autumn is down'))
+            store.set(TRIAL_KEY, { dates: STARTED })
+
+            await expect(autumnBillingProvider(log).getSelfServeTrialInfo({ platformId: PLATFORM_ID, bypassCacheAndFetchFromProvider: true })).rejects.toThrow('Autumn is down')
         })
     })
 
@@ -290,13 +308,21 @@ describe('self-serve trial', () => {
             expect(consoleStart).not.toHaveBeenCalled()
         })
 
-        it('reads a start the console refuses as used, without remembering it', async () => {
-            const { status } = await startTrial({ outcome: { result: SelfServeTrialStartResult.USED } })
+        it('fails a start the console refuses as used with an already-used error, without remembering it', async () => {
+            await expect(startTrial({ outcome: { result: SelfServeTrialStartResult.USED } })).rejects.toMatchObject({ error: { code: ErrorCode.SELF_SERVE_TRIAL_ALREADY_USED } })
 
-            expect(status).toEqual(USED)
             expect(mockPlanUpdate).not.toHaveBeenCalled()
             expect(store.get(TRIAL_KEY)).toEqual({ dates: null })
             expect(mockOnTrialStarted).not.toHaveBeenCalled()
+        })
+
+        it('fails the start when the platform has no billing credentials, without asking the console', async () => {
+            const { autumnBillingProvider, autumnConsole } = await enrolledProvider()
+            vi.spyOn(autumnConsole, 'getCreds').mockResolvedValue(null)
+            const consoleStart = vi.spyOn(autumnConsole, 'startSelfServeTrial')
+
+            await expect(autumnBillingProvider(log).startSelfServeTrial(PLATFORM_ID)).rejects.toThrow('Autumn credentials must exist')
+            expect(consoleStart).not.toHaveBeenCalled()
         })
 
         it('reads a plan the console refuses as ineligible, without remembering it', async () => {

@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { InvitationStatus, SELF_SERVE_TRIAL_PLANS, SelfServeTrialDates, UserStatus } from '@activepieces/shared'
+import { InvitationStatus, SELF_SERVE_TRIAL_PLANS, SelfServeTrialDates, SelfServeTrialState, UserStatus } from '@activepieces/shared'
 import { JobsOptions } from 'bullmq'
 import dayjs, { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -52,11 +52,14 @@ export const trialSeatCleanup = (log: FastifyBaseLogger) => ({
 })
 
 async function deactivateExtraUsersIfDeadlinePassed({ platformId, log }: PlatformLogParams): Promise<void> {
-    const selfServeTrialDates = await billingProvider.get(log).getSelfServeTrialDates(platformId)
-    if (isNil(selfServeTrialDates) || trialGracePeriodEndsAt(selfServeTrialDates).isAfter(dayjs())) {
+    const selfServeTrial = await billingProvider.get(log).getSelfServeTrialInfo({ platformId, bypassCacheAndFetchFromProvider: true })
+    if (selfServeTrial.state !== SelfServeTrialState.ACTIVE && selfServeTrial.state !== SelfServeTrialState.ENDED) {
         return
     }
-    await deactivateTrialUsersAndInvitationsOverLimit({ platformId, selfServeTrialDates, log })
+    if (trialGracePeriodEndsAt(selfServeTrial).isAfter(dayjs())) {
+        return
+    }
+    await deactivateTrialUsersAndInvitationsOverLimit({ platformId, selfServeTrialDates: selfServeTrial, log })
 }
 
 async function deactivateTrialUsersAndInvitationsOverLimit({ platformId, selfServeTrialDates, log }: DeactivateTrialUsersAndInvitationsOverLimitParams): Promise<void> {

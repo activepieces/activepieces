@@ -1,5 +1,3 @@
-import { isNil } from '@activepieces/core-utils';
-import { SelfServeTrialDates } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 
@@ -11,18 +9,6 @@ function calendarDaysBetween({
   to: Date | string | number;
 }): number {
   return dayjs(to).startOf('day').diff(dayjs(from).startOf('day'), 'day');
-}
-
-function isRunning(
-  trial: SelfServeTrialDates | undefined,
-): trial is SelfServeTrialDates {
-  return !isNil(trial) && dayjs(trial.endsAt).isAfter(dayjs());
-}
-
-function hasEnded(
-  trial: SelfServeTrialDates | undefined,
-): trial is SelfServeTrialDates {
-  return !isNil(trial) && !dayjs(trial.endsAt).isAfter(dayjs());
 }
 
 function daysLeft(endsAt: string): number {
@@ -65,8 +51,6 @@ function trialEndSummary(endsAt: string): string {
 
 export const selfServeTrialTime = {
   calendarDaysBetween,
-  isRunning,
-  hasEnded,
   daysLeft,
   formatDate,
   whenItEnds,

@@ -1,4 +1,5 @@
-import { DefaultProjectRole, PlanName, SelfServeTrialState, SelfServeTrialStatus } from '@activepieces/shared'
+import { ErrorCode } from '@activepieces/core-utils'
+import { DefaultProjectRole, PlanName, SelfServeTrialInfo, SelfServeTrialState } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { distributedStore } from '../../../../src/app/database/redis-connections'
@@ -8,10 +9,9 @@ import { createMemberContext, createTestContext } from '../../../helpers/test-co
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const STARTED = { startedAt: '2026-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
-const ELIGIBLE: SelfServeTrialStatus = { state: SelfServeTrialState.ELIGIBLE, startedAt: null, endsAt: null }
-const INELIGIBLE: SelfServeTrialStatus = { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null }
-const ACTIVE: SelfServeTrialStatus = { state: SelfServeTrialState.ACTIVE, ...STARTED }
-const USED: SelfServeTrialStatus = { state: SelfServeTrialState.USED, startedAt: null, endsAt: null }
+const ELIGIBLE: SelfServeTrialInfo = { state: SelfServeTrialState.ELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null }
+const INELIGIBLE: SelfServeTrialInfo = { state: SelfServeTrialState.INELIGIBLE, startedAt: null, endsAt: null, seatGraceEndsAt: null }
+const ACTIVE: SelfServeTrialInfo = { state: SelfServeTrialState.ACTIVE, ...STARTED, seatGraceEndsAt: null }
 
 let app: FastifyInstance | null = null
 
@@ -109,7 +109,7 @@ describe('Self-serve trial API', () => {
         expect(startTrial).toHaveBeenCalledTimes(1)
     })
 
-    it('answers a start the console refuses as used and asks the console again on the next start', async () => {
+    it('refuses a start the console reports as used with 409, and asks the console again on the next start', async () => {
         const ctx = await createTestContext(app!)
         await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
         const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.USED } })
@@ -118,9 +118,10 @@ describe('Self-serve trial API', () => {
         const status = await ctx.get('/v1/platform-billing/info')
         const second = await ctx.post('/v1/platform-billing/self-serve-trial')
 
-        expect(first.json()).toEqual(USED)
+        expect(first.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(first.json().code).toBe(ErrorCode.SELF_SERVE_TRIAL_ALREADY_USED)
         expect(status.json().selfServeTrial).toEqual(ELIGIBLE)
-        expect(second.json()).toEqual(USED)
+        expect(second.statusCode).toBe(StatusCodes.CONFLICT)
         expect(startTrial).toHaveBeenCalledTimes(2)
     })
 
@@ -135,6 +136,6 @@ describe('Self-serve trial API', () => {
         const after = await member.get(`/v1/platforms/${ctx.platform.id}`)
 
         expect(before.json().selfServeTrial).toBeUndefined()
-        expect(after.json().selfServeTrial).toEqual({ ...STARTED, seatGraceEndsAt: null })
+        expect(after.json().selfServeTrial).toEqual(ACTIVE)
     })
 })

@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-attribute, jest-dom/prefer-to-have-class, jest-dom/prefer-to-have-text-content -- @testing-library/jest-dom is not a dependency of packages/web */
+import { SelfServeTrialState } from '@activepieces/shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
@@ -27,6 +28,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
         id: 'platform-1',
         plan: { plan: 'team' },
         selfServeTrial: {
+          state: SelfServeTrialState.ENDED,
           startedAt: dayjs(state.endsAt).subtract(7, 'day').toISOString(),
           endsAt: state.endsAt,
           seatGraceEndsAt: state.graceEndsAt,

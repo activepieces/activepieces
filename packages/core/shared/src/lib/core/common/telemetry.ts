@@ -275,7 +275,6 @@ export enum SalesLinkLocationInWebApp {
     ENTERPRISE_TRIAL_ENDED = 'enterprise_trial_ended',
     ENTERPRISE_TRIAL_ENDING = 'enterprise_trial_ending',
     ENTERPRISE_TRIAL_START = 'enterprise_trial_start',
-    ENTERPRISE_TRIAL_UNAVAILABLE = 'enterprise_trial_unavailable',
     ENTERPRISE_TRIAL_USED = 'enterprise_trial_used',
     LOCKED_FEATURE = 'locked_feature',
     PLAN_SELECTOR = 'plan_selector',

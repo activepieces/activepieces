@@ -1,10 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  PlanName,
   PlatformBillingInformation,
+  SalesLinkLocationInWebApp,
+  SelfServeTrialState,
   TelemetryEventName,
   UserWithMetaInformation,
-  SalesLinkLocationInWebApp,
-  PlanName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Gem } from 'lucide-react';
@@ -26,10 +27,7 @@ import {
 } from '../hooks/self-serve-trial-hooks';
 import { billingUtils, enterpriseMotion } from '../utils/billing-utils';
 import { FeatureKey } from '../utils/platform-features';
-import {
-  selfServeTrialCopy,
-  selfServeTrialTime,
-} from '../utils/self-serve-trial-utils';
+import { selfServeTrialCopy } from '../utils/self-serve-trial-utils';
 
 export const CurrentSubscriptionCard = ({
   info,
@@ -40,7 +38,7 @@ export const CurrentSubscriptionCard = ({
   const planName = info.autumnPlanName ?? (isPaid ? info.plan.plan : t('Free'));
   const { platform } = platformHooks.useCurrentPlatform();
   const trial = platform.selfServeTrial;
-  if (selfServeTrialTime.isRunning(trial)) {
+  if (trial?.state === SelfServeTrialState.ACTIVE) {
     return (
       <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
         <div className="flex items-center gap-2 text-sm text-gray-11">

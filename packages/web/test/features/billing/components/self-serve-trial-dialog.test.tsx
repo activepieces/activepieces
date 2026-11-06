@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+import { ErrorCode } from '@activepieces/core-utils';
 import { SelfServeTrialState } from '@activepieces/shared';
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ let offer = false;
 let payload: { featureKey?: string; postTrialActivationCallback?: () => Promise<unknown> } | null =
   null;
 let startFailed = false;
+let startError: unknown = null;
 let liveStatus:
   | { state: string; startedAt: string | null; endsAt: string | null }
   | undefined;
@@ -68,6 +70,7 @@ vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
         data: undefined,
         isPending: false,
         isError: startFailed,
+        error: startError,
         mutate,
         reset: vi.fn(),
       };
@@ -125,6 +128,7 @@ beforeEach(() => {
   offer = true;
   payload = { featureKey: 'PROJECTS' };
   startFailed = false;
+  startError = null;
   liveStatus = undefined;
   edition = 'cloud';
   mutate.mockClear();
@@ -162,5 +166,32 @@ describe('starting the trial from a blocked change', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
     });
     expect(postTrialActivationCallback).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('a start the console refuses as used', () => {
+  it('shows that the trial was already used', () => {
+    startFailed = true;
+    startError = {
+      isAxiosError: true,
+      response: { data: { code: ErrorCode.SELF_SERVE_TRIAL_ALREADY_USED } },
+    };
+
+    render(dialog());
+
+    expect(
+      screen.getByText('Your Enterprise plan trial was already used'),
+    ).toBeDefined();
+  });
+
+  it('keeps the start view with its error for any other failure', () => {
+    startFailed = true;
+    startError = { isAxiosError: true, response: { data: {} } };
+
+    render(dialog());
+
+    expect(
+      screen.queryByText('Your Enterprise plan trial was already used'),
+    ).toBeNull();
   });
 });
