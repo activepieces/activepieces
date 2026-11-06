@@ -1,17 +1,19 @@
 import { apId } from '@activepieces/core-utils'
-import { FieldType, FilterOperator } from '@activepieces/shared'
+import { FieldType, FilterOperator, TableWebhookEventType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import qs from 'qs'
+import { webhookService } from '../../../../src/app/webhooks/webhook.service'
 import { db } from '../../../helpers/db'
 import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
     createMockCell,
     createMockField,
+    createMockFlow,
     createMockRecord,
     createMockTable,
 } from '../../../helpers/mocks'
-import { TestContext } from '../../../helpers/test-context'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -237,6 +239,23 @@ describe('Record API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             expect(body.cells[field2.id].value).toBe('new-cell-value')
+        })
+
+        it('should keep the last value when a field appears twice in one update', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const [record] = await saveRecordsWithValues({ ctx, table, field, values: ['qualified'] })
+
+            const response = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [
+                    { fieldId: field.id, value: 'won' },
+                    { fieldId: field.id, value: 'lost' },
+                ],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().cells[field.id].value).toBe('lost')
         })
 
         it('should return 404 for non-existent record', async () => {
@@ -616,6 +635,123 @@ describe('Record API', () => {
             expect((await ctx.get(`/v1/records/${otherRecord.id}`))?.statusCode).toBe(StatusCodes.OK)
         })
     })
+
+    describe('POST /v1/records/:id (Record Updated event)', () => {
+        afterEach(() => {
+            vi.restoreAllMocks()
+        })
+
+        it('should fire only when a cell value actually changes', async () => {
+            const ctx = await createTestContext(app!)
+            const { table, field } = await createTableWithField(ctx)
+            const [record] = await saveRecordsWithValues({ ctx, table, field, values: ['qualified'] })
+            const { countRuns } = await subscribeFlowToRecordUpdated({ ctx, tableId: table.id })
+
+            const sameValue = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [{ fieldId: field.id, value: 'qualified' }],
+            })
+            const noCells = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [],
+            })
+            await settle()
+            const runsForWritesThatChangedNothing = countRuns()
+
+            const realChange = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [{ fieldId: field.id, value: 'won' }],
+            })
+            await vi.waitFor(() => expect(countRuns()).toBeGreaterThan(runsForWritesThatChangedNothing))
+            await settle()
+
+            expect([sameValue?.statusCode, noCells?.statusCode, realChange?.statusCode]).toEqual([StatusCodes.OK, StatusCodes.OK, StatusCodes.OK])
+            expect(sameValue?.json().cells[field.id].value).toBe('qualified')
+            expect(realChange?.json().cells[field.id].value).toBe('won')
+            expect({
+                runsForWritesThatChangedNothing,
+                runsForTheRealChange: countRuns() - runsForWritesThatChangedNothing,
+            }).toEqual({
+                runsForWritesThatChangedNothing: 0,
+                runsForTheRealChange: 1,
+            })
+        })
+
+        it('should fire when a value is written to a field that had no cell yet', async () => {
+            const ctx = await createTestContext(app!)
+            const { table, field } = await createTableWithField(ctx)
+            const record = createMockRecord({ tableId: table.id, projectId: ctx.project.id })
+            await db.save('record', record)
+            const { countRuns } = await subscribeFlowToRecordUpdated({ ctx, tableId: table.id })
+
+            const response = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [{ fieldId: field.id, value: 'qualified' }],
+            })
+
+            await settle()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().cells[field.id].value).toBe('qualified')
+            expect(countRuns()).toBe(1)
+        })
+
+        it('should fire when a null value clears a non-empty cell', async () => {
+            const ctx = await createTestContext(app!)
+            const { table, field } = await createTableWithField(ctx)
+            const [record] = await saveRecordsWithValues({ ctx, table, field, values: ['qualified'] })
+            const { countRuns } = await subscribeFlowToRecordUpdated({ ctx, tableId: table.id })
+
+            const response = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [{ fieldId: field.id, value: null }],
+            })
+            await settle()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().cells[field.id].value).toBe('')
+            expect(countRuns()).toBe(1)
+        })
+
+        it('should not fire when an empty value is written to a field that had no cell yet', async () => {
+            const ctx = await createTestContext(app!)
+            const { table, field } = await createTableWithField(ctx)
+            const record = createMockRecord({ tableId: table.id, projectId: ctx.project.id })
+            await db.save('record', record)
+            const { countRuns } = await subscribeFlowToRecordUpdated({ ctx, tableId: table.id })
+
+            const response = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [{ fieldId: field.id, value: '' }],
+            })
+            await settle()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().cells[field.id].value).toBeNull()
+            expect(countRuns()).toBe(0)
+        })
+
+        it('should not fire when the only differing cell targets a field outside the table', async () => {
+            const ctx = await createTestContext(app!)
+            const { table, field } = await createTableWithField(ctx)
+            const { field: otherTableField } = await createTableWithField(ctx)
+            const [record] = await saveRecordsWithValues({ ctx, table, field, values: ['qualified'] })
+            const { countRuns } = await subscribeFlowToRecordUpdated({ ctx, tableId: table.id })
+
+            const response = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [
+                    { fieldId: field.id, value: 'qualified' },
+                    { fieldId: otherTableField.id, value: 'won' },
+                ],
+            })
+            await settle()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().cells[field.id].value).toBe('qualified')
+            expect(countRuns()).toBe(0)
+        })
+    })
 })
 
 async function createTableWithField(ctx: TestContext) {
@@ -642,3 +778,24 @@ async function saveRecordsWithValues({ ctx, table, field, values }: { ctx: TestC
     await db.save('cell', cells)
     return records
 }
+
+async function subscribeFlowToRecordUpdated({ ctx, tableId }: { ctx: TestContext, tableId: string }) {
+    const handleWebhook = vi.spyOn(webhookService, 'handleWebhook').mockResolvedValue({ status: StatusCodes.OK, body: {}, headers: {} })
+    const flow = createMockFlow({ projectId: ctx.project.id })
+    await db.save('flow', flow)
+    const response = await ctx.post(`/v1/tables/${tableId}/webhooks`, {
+        events: [TableWebhookEventType.RECORD_UPDATED],
+        webhookUrl: `http://localhost:4200/api/v1/webhooks/${flow.id}`,
+        flowId: flow.id,
+    })
+    expect(response?.statusCode).toBe(StatusCodes.OK)
+    return {
+        countRuns: (): number => handleWebhook.mock.calls.filter(([params]) => params.flowId === flow.id).length,
+    }
+}
+
+function settle(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, SETTLE_MS))
+}
+
+const SETTLE_MS = 1000
