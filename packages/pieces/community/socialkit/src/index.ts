@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, createCustomApiCallAction, HttpHeaders } from '@activepieces/pieces-common';
+import { createPiece } from "@activepieces/pieces-framework";
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { getYoutubeDetails } from './lib/actions/get-youtube-details';
@@ -13,7 +13,7 @@ const socialkitApiUrl = 'https://api.socialkit.dev';
 export const socialkit = createPiece({
   displayName: "Socialkit",
   auth: socialkitAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: "https://cdn.activepieces.com/pieces/socialkit.png",
   authors: ['david-oluwaseun420'],
   categories: [PieceCategory.CONTENT_AND_FILES],
@@ -28,8 +28,17 @@ export const socialkit = createPiece({
       authMapping: async (auth) => {
         return {
           'x-access-key': auth.secret_text
-        } as HttpHeaders;
-      }
+        };
+      },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${socialkitApiUrl}`,
+          placeholder: '/youtube/stats',
+        },
+        queryParams: {
+          description: 'Most SocialKit endpoints take the video link as the url parameter.',
+        },
+      },
     })
   ],
   triggers: [
