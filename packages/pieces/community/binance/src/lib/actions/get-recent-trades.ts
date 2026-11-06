@@ -21,11 +21,15 @@ export const getRecentTrades = createAction({
     symbol: symbolProp,
     limit: Property.Number({
       displayName: 'Number of Trades',
-      description: 'How many of the most recent trades to return, 1 to 1000. Defaults to 50.',
+      description: 'How many of the latest trades to return, up to 1000.',
       required: false,
       defaultValue: DEFAULT_LIMIT,
     }),
   },
+  propertyGroups: [
+    { key: 'pair', display: 'section', label: 'Trading Pair', icon: 'tag', props: ['symbol'] },
+    { key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit'] },
+  ],
   outputSchema: getRecentTradesOutputSchema,
   async run(context) {
     const symbol = binanceInput.symbol({ value: context.propsValue.symbol });

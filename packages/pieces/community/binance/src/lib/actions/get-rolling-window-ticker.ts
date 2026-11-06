@@ -21,11 +21,16 @@ export const getRollingWindowTicker = createAction({
     symbol: symbolProp,
     window_size: Property.ShortText({
       displayName: 'Window Size',
-      description: 'How far back the window reaches: a number and a unit, 1m to 59m (minutes), 1h to 23h (hours) or 1d to 7d (days), for example 15m, 4h or 7d. Units cannot be combined. Defaults to 1h.',
+      description: 'Minutes (1m–59m), hours (1h–23h) or days (1d–7d) back from now.',
+      placeholder: '15m, 4h or 7d',
       required: false,
       defaultValue: DEFAULT_WINDOW,
     }),
   },
+  propertyGroups: [
+    { key: 'pair', display: 'section', label: 'Trading Pair', icon: 'tag', props: ['symbol'] },
+    { key: 'period', display: 'section', label: 'Period', icon: 'calendar', props: ['window_size'] },
+  ],
   outputSchema: getRollingWindowTickerOutputSchema,
   async run(context) {
     const symbol = binanceInput.symbol({ value: context.propsValue.symbol });
