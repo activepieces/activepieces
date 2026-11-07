@@ -41,7 +41,7 @@ async function run({ evalCase, mcp, modelId, auth, recordMode }: { evalCase: Eva
             },
             error: () => {},
         },
-        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stops().length > 0, ...gradedWindow({ evalCase })],
+        stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall), async () => caseReplay.stops().some((stop) => stop.kind === 'unrecorded_write'), ...gradedWindow({ evalCase })],
     }))
 
     if (abortSignal.aborted) {
@@ -59,18 +59,9 @@ async function run({ evalCase, mcp, modelId, auth, recordMode }: { evalCase: Eva
         rejectedToolInputs: rejected,
         stops: caseReplay.stops(),
         newFixtures: caseReplay.newFixtures(),
-        reachedTarget: reachedTarget({ evalCase, result, rejected }),
         costUsd: costUsd(),
         steps,
     }
-}
-
-function reachedTarget({ evalCase, result, rejected }: { evalCase: EvalCase, result: AgentTurnResult, rejected: string[] }): boolean {
-    const targetTool = evalCase.targetTool
-    if (isNil(targetTool)) {
-        return false
-    }
-    return result.toolCalls.some((call) => call.toolName === targetTool) || rejected.some((entry) => entry.includes(targetTool))
 }
 
 function gradedWindow({ evalCase }: { evalCase: EvalCase }): StopCondition<ToolSet>[] {
@@ -219,7 +210,6 @@ export type TurnOutcome = {
     rejectedToolInputs: string[]
     stops: ReplayStop[]
     newFixtures: RecordedToolCall[]
-    reachedTarget: boolean
     costUsd: number | null
     steps: number
 }

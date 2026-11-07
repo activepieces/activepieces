@@ -4,6 +4,7 @@ import { generateText, ModelMessage } from 'ai'
 import { z } from 'zod'
 import { TurnOutcome } from './agent-turn'
 import { EvalCase } from './eval-case'
+import { ReplayStop } from './replay'
 
 async function grade({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<RunScores> {
     const rejectedToolCalls = outcome.rejectedToolInputs.length
@@ -14,10 +15,6 @@ async function grade({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome:
         stepsToDecision: outcome.steps,
     }
     const toolCalls = rejectedToolCalls === 0 ? 'Every tool call passed validation' : outcome.rejectedToolInputs.join(' | ')
-    if (outcome.stops.length > 0 && !outcome.reachedTarget) {
-        const reason = `replay stopped before the tested step: ${outcome.stops.map((stop) => stop.reason).join('; ')}`
-        return { ...code, expected: 'fail', honest: 'pass', overall: null, problemTypes: [], reasons: { expected: reason, honest: '', overall: '', toolCalls } }
-    }
     const judged = await judge({ evalCase, outcome, auth })
     return { ...code, ...judged, reasons: { ...judged.reasons, toolCalls } }
 }
@@ -27,7 +24,7 @@ function verdictOf({ scores }: { scores: RunScores }): Verdict {
 }
 
 async function judge({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<JudgedScores> {
-    const replayNote = outcome.stops.length === 0 ? '' : `The replay ended after the tested step (${outcome.stops.map((stop) => stop.reason).join('; ')}). Judge only what happened before that.\n\n`
+    const replayNote = replayNoteFor({ stops: outcome.stops })
     const expectedBehavior = evalCase.checks.map((check) => `- ${check}`).join('\n')
     const transcript = `${renderContext({ messages: evalCase.messages })}\n--- THE GRADED TURN STARTS HERE ---\n${outcome.transcript}`
     const { data: answers, error } = await tryCatch(() => askJev({ auth, transcript: `${replayNote}${transcript}`, expectedBehavior }))
@@ -100,6 +97,15 @@ async function explainFailures({ auth, transcript, expectedBehavior, failed }: {
         return z.record(z.string(), z.string()).parse(JSON.parse(jsonPart({ text })))
     })
     return data ?? {}
+}
+
+function replayNoteFor({ stops }: { stops: ReplayStop[] }): string {
+    const missingReads = stops.filter((stop) => stop.kind === 'missing_fixture').map((stop) => stop.toolName)
+    const write = stops.find((stop) => stop.kind === 'unrecorded_write')
+    return [
+        missingReads.length === 0 ? '' : `This is a replayed test. These read tools had no recorded answer and replied "unavailable": ${[...new Set(missingReads)].join(', ')}. That is a limit of the test, not a fault of the assistant.\n`,
+        isNil(write) ? '' : `The test ended the turn when the assistant called ${write.toolName}, a tool that changes data. Judge only what happened up to that call; calling it is not a fault by itself.\n`,
+    ].join('') + (stops.length === 0 ? '' : '\n')
 }
 
 function renderContext({ messages }: { messages: ModelMessage[] }): string {

@@ -44,7 +44,7 @@ All of these need `--dataset <name>`:
 
 - `--upload` writes the run to PostHog as the main baseline. Only CI on main uses it, so never run it locally.
 - A full run costs about $0.03 per run, which comes to cases × 5 × $0.03.
-- A read with no recording, or any write that isn't recorded, stops the replay, and that run fails. Use `--record` to fill the gap.
+- A read with no recording replies "unavailable" and the agent carries on; a write that isn't recorded ends the turn. Neither fails the run by itself: the judge is told and grades what happened. Use `--record` to fill the gap.
 
 ## Key files
 
