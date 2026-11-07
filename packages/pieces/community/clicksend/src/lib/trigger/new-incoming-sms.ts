@@ -1,4 +1,9 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  MarkdownVariant,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { callClickSendApi } from '../common';
 import { clicksendAuth } from '../..';
@@ -16,7 +21,13 @@ export const clicksendNewIncomingSms = createTrigger({
     description:
       'Fires when ClickSend receives an inbound SMS to any of the account dedicated numbers, delivering the incoming message and its sender, recipient, and content details. Represents a new reply or inbound text arriving at the account.',
   },
-  props: {},
+  props: {
+    info: Property.MarkDown({
+      value:
+        'Turning this flow on adds an inbound rule in ClickSend that forwards every SMS sent to your dedicated numbers here.',
+      variant: MarkdownVariant.INFO,
+    }),
+  },
 
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
