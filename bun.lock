@@ -1170,7 +1170,7 @@
     },
     "packages/pieces/community/beehiiv": {
       "name": "@activepieces/piece-beehiiv",
-      "version": "0.4.2",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
