@@ -1,0 +1,68 @@
+# Sent
+
+Send and track SMS, WhatsApp, and RCS messages through the [Sent v3 API](https://docs.sent.dm/reference/api). See the [sandbox guide](https://docs.sent.dm/reference/api/test-mode) and [webhook security documentation](https://docs.sent.dm/start/webhooks/signature-verification) before testing.
+
+## Connection
+
+In the [Sent Dashboard](https://app.sent.dm), open **Settings → API Keys** and create a key with the permissions needed by your flows. Enter it in the piece's **API Key** connection field. The connection is validated using `GET /me`; the key is sent in `x-api-key`.
+
+Organization keys can select a **Sender Profile** in the relevant steps. Standalone and profile keys should leave that field empty. Approved templates and webhook events load from Sent using the selected connection and profile.
+
+## Actions
+
+| Action | Purpose |
+| --- | --- |
+| Get Account | Read the connected account. |
+| List Contacts | List or search contacts with pagination. |
+| Get Contact | Read a contact using an ID from List Contacts. |
+| Get Phone Number Details | Look up an E.164 phone number. |
+| Send Message | Send text or an approved template, with optional sandbox and idempotency settings. |
+| Get Message Status | Look up a message's delivery status. |
+| Get Message Activities | Read a message's activity history. |
+| Custom API Call | Call another Sent v3 endpoint using the connection. |
+
+Send Message returns asynchronous acceptance, not proof of delivery. Map a recipient's `data.recipients[].message_id` into the status and activities actions. Selecting multiple channels broadcasts separate messages; it does not define a fallback order.
+
+Enable **Sandbox** to validate a message request without sending it. Sandbox responses can contain simulated IDs that are not available to subsequent lookup requests; use an existing test message ID when testing those lookups. Keep sandbox enabled throughout test flows.
+
+For a send retry, reuse the same explicit **Idempotency Key** within Sent's 24-hour window. Use a new key for each intentional send, including each loop item. The piece makes no automatic HTTP retries. A timeout does not establish whether Sent accepted a request.
+
+Custom API Call is restricted to `https://api.sent.dm/v3/`. Redirects must remain disabled, and the connection supplies `x-api-key`. Organization keys can add `x-profile-id` in Headers. Custom calls can modify data; their method and body determine whether they are safe to repeat.
+
+## Webhook triggers
+
+- **New Event** subscribes to the selected Sent events.
+- **New Message Received** subscribes to inbound `message.received` events.
+
+Configure a publicly reachable HTTPS webhook URL in Activepieces before enabling either flow. Enabling registers the subscription; enabling an unchanged subscription reuses it. Disabling removes the subscription. If cleanup fails, the subscription state is retained so disabling can be retried.
+
+If saving a new webhook's signing secret and deleting that webhook both fail, registration fails and incoming events are rejected. The pending record is retained. Retry disabling the flow to find and remove only the subscription matching its unique name and callback URL, then enable it again after storage is healthy.
+
+New Event also recognizes legacy template envelopes without `event` by mapping the signed `payload.status` to the [published template subtypes](https://docs.sent.dm/start/webhooks/event-types). Unknown statuses match only the unfiltered `templates` parent. The original envelope is returned unchanged, and the unsigned event header never determines the selected subtype.
+
+The piece verifies the raw request body with HMAC-SHA256 and a five-minute timestamp tolerance for both Sent webhook versions. Version 2 (the default for new webhooks) is checked with the `webhook-id`, `webhook-timestamp`, and `webhook-signature` headers. Version 1 is also checked against the stored webhook ID and the `X-Webhook-Event-Type` header. The piece records the version Sent reports when it creates the subscription. Invalid signatures are rejected. Signing secrets are stored encrypted using a key derived from the connection API key. Disable webhook flows before rotating that key, then reconnect and enable the flows again.
+
+Signature verification is not event deduplication: a valid delivery can be repeated within the timestamp window. Downstream flows that require once-only processing should deduplicate using the event's stable identifier before performing side effects. Template Parameters accept text, number, and true/false values and send them as text.
+
+## Development checks
+
+From the repository root, install the locked dependencies with `bun install --frozen-lockfile`, then run:
+
+```sh
+npx turbo run test lint typecheck build --filter=@activepieces/piece-sent...
+```
+
+The tests cover request mapping, dynamic fields, input validation, credential redaction, signatures, encrypted subscription state, idempotent subscription retries, reuse, and cleanup. Live verification requires a Sent test account and, for webhooks, a reachable HTTPS endpoint. Never commit API keys or captured customer data.
+
+## Manual review without customer messages
+
+Use a dedicated test account, an existing test contact, a test phone number you control, and an existing test message ID. Obtain reviewer credentials privately from Sent; do not put credentials in a GitHub issue, PR, exported flow, or screenshot. A message ID returned by a sandbox send may be simulated and is not suitable for status/activity lookups.
+
+1. Start local Activepieces with `sent` and `manual-trigger` in `AP_DEV_PIECES`. Create a Sent connection using the test API key. Saving it validates authentication with `/me`.
+2. Create a Manual Trigger flow. Add **Get Account**, **List Contacts** (filter to your test contact), **Get Contact** (map `data.contacts[0].id` from List Contacts), and **Get Phone Number Details** (your test number).
+3. Add **Custom API Call**, method `GET`, URL `/me`, with redirects disabled. Do not use a mutating custom request for this review.
+4. Add **Send Message** with one controlled test recipient, **Sandbox enabled**, text content, and a unique explicit Idempotency Key. Test the step twice without changing its inputs; confirm the returned message ID is unchanged. Do not disable Sandbox. Switch Message Type to Template to verify approved options and parameters, then restore your intended test inputs. Organization-key reviewers can also check the Sender Profile options; profile keys use their connected account automatically.
+5. Add **Get Message Status** and **Get Message Activities**, both using the existing real test message ID supplied with the test account. Test each action individually and inspect its successful output. This covers all eight actions without sending a new real message.
+6. Create two separate webhook flows: **New Event** selecting `message.received`, and **New Message Received**. Add Get Account after each trigger. Configure a temporary HTTPS endpoint that exposes only the required Activepieces webhook routes, then enable the flows.
+7. In Sent, find each subscription created by Activepieces and use its test-delivery facility with an inbound-message test event. Confirm a successful Activepieces run and downstream Get Account output for each flow. These are provider-generated synthetic events, not handset replies. Re-enable an unchanged subscription and confirm it is reused rather than duplicated. The automated security suite verifies tampered-body and stale-signature rejection.
+8. Disable both flows and verify their specific Sent subscriptions are removed. Remove the temporary connection, stop the tunnel, and revoke the reviewer key. Do not remove unrelated subscriptions. Redact account data from any evidence shared publicly.
