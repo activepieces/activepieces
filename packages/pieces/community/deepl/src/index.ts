@@ -8,33 +8,38 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 import { translateText } from './lib/actions/translate-text';
 
 const markdownDescription = `
-Follow these instructions to get your DeepL API Key:
+To get your DeepL API key:
 
 1. Log in to your DeepL account.
-2. Visit https://www.deepl.com/account/summary
-3. Go to the API section and obtain your DeepL API Key.
+2. Open **API Keys** at https://www.deepl.com/your-account/keys
+3. Copy a key and paste it below.
+
+Free plan keys end in \`:fx\`.
 `;
 export const deeplAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
   props: {
     key: Property.ShortText({
-      displayName: 'Api key',
-      description: 'Enter the api key',
+      displayName: 'API Key',
+      description: 'Found under API Keys in your DeepL account.',
       required: true,
     }),
     type: Property.StaticDropdown({
-      displayName: 'Api url',
-      description: 'Select api url',
+      displayName: 'Plan',
+      description: 'The plan your key belongs to; Free keys end in :fx.',
       required: true,
+      display: 'cards',
       options: {
         options: [
           {
-            label: 'Free API',
+            label: 'Free',
             value: 'free',
+            description: 'api-free.deepl.com',
           },
           {
-            label: 'Paid API',
+            label: 'Pro',
             value: 'paid',
+            description: 'api.deepl.com',
           },
         ],
       },
@@ -62,6 +67,13 @@ export const deepl = createPiece({
       authMapping: async (auth) => ({
         Authorization: `DeepL-Auth-Key ${auth.props.key}`,
       }),
+      props: {
+        url: {
+          description:
+            "Full URL, or a path relative to your plan's DeepL API address.",
+          placeholder: '/usage',
+        },
+      },
     }),
   ],
   triggers: [],
