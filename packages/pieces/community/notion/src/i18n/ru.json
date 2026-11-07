@@ -74,5 +74,7 @@
   "Triggers when an item is added to a database.": "Включает при добавлении элемента в базу данных.",
   "Triggers when an item is updated in a database.": "Включает при обновлении элемента в базу данных.",
   "Triggers whenever someone adds a new comment to a specific Notion page. Perfect for notifications, review workflows, or automated responses to team feedback.": "Триггеры всякий раз, когда кто-то добавляет новый комментарий на конкретную страницу Notion. Идеально подходит для уведомлений, обзоров рабочих процессов или автоматических ответов на командные отзывы.",
-  "Triggers whenever any page in your Notion workspace is modified or updated. Ideal for syncing content changes, backup processes, or notifying teams about documentation updates.": "Включает всякий раз, когда любая страница в Вашем проекте Notion изменена или обновлена. Идеально подходит для синхронизации изменений, резервных копий или команд об обновлениях документации."
+  "Triggers whenever any page in your Notion workspace is modified or updated. Ideal for syncing content changes, backup processes, or notifying teams about documentation updates.": "Включает всякий раз, когда любая страница в Вашем проекте Notion изменена или обновлена. Идеально подходит для синхронизации изменений, резервных копий или команд об обновлениях документации.",
+  "Empty fields keep their current value. Checkboxes are always saved as shown.": "Пустые поля сохраняют текущее значение. Флажки всегда сохраняются так, как показаны.",
+  "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you.": "Добавьте заголовок Notion-Version, например 2022-02-22. Авторизация добавляется автоматически."
 }

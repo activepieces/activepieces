@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { callClickUpApi } from '../../common';
+import { callClickUpApi, clickupCommon } from '../../common';
 import { clickupAuth } from '../../auth';
 import { checklistOutputSchema } from '../../output-schemas';
 
@@ -33,10 +33,10 @@ export const clickupUpdateChecklistItem = createAction({
       displayName: 'Item Name',
       required: false,
     }),
-    resolved: Property.Checkbox({
-      description: 'Whether the checklist item is resolved (checked)',
+    resolved: clickupCommon.optionalBoolean({
       displayName: 'Resolved',
-      required: false,
+      description:
+        'Whether the checklist item is resolved (checked). Leave empty or pick Leave unchanged to keep the current setting.',
     }),
     assignee: Property.Number({
       description: 'The user ID to assign this checklist item to',
@@ -51,14 +51,17 @@ export const clickupUpdateChecklistItem = createAction({
     }),
   },
   async run(configValue) {
-    const { checklist_id, checklist_item_id, name, resolved, assignee, parent } =
+    const { checklist_id, checklist_item_id, name, assignee, parent } =
       configValue.propsValue;
+    const resolved = clickupCommon.optionalBooleanValue(
+      configValue.propsValue.resolved
+    );
 
     const body: Record<string, unknown> = {};
     if (name !== undefined && name !== null && name !== '') {
       body['name'] = name;
     }
-    if (resolved !== undefined && resolved !== null) {
+    if (resolved !== undefined) {
       body['resolved'] = resolved;
     }
     if (assignee !== undefined && assignee !== null) {

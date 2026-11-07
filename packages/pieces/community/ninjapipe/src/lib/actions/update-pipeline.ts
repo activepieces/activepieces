@@ -1,47 +1,36 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeFields } from '../common/fields';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const updatePipeline = createAction({
   auth: ninjapipeAuth,
   name: 'update_pipeline',
   classification: 'WRITE',
   displayName: 'Update Pipeline',
-  description: 'Updates a pipeline by ID.',
+  description: 'Renames a pipeline or changes its type, description or status. Stages are not changed.',
   audience: 'both',
-  aiMetadata: { description: 'Update an existing pipeline identified by ID, changing only the fields you supply (name, pipeline type, description, or status); omitted fields are left unchanged. Use to edit a known pipeline rather than create one. Idempotent — applying the same field values repeatedly yields the same result.', idempotent: true },
+  aiMetadata: {
+    description: 'Update a NinjaPipe pipeline by ID: name, type, description or status. Only filled fields change; stages stay as they are. Re-running with the same input gives the same result.',
+    idempotent: true,
+  },
+  outputSchema: ninjapipeSchemas.pipeline,
   props: {
-    pipelineId: ninjapipeCommon.pipelineDropdownRequired,
+    pipelineId: ninjapipeProps.pipelineRequired(),
     name: Property.ShortText({ displayName: 'Name', required: false }),
-    pipelineType: Property.StaticDropdown({
-      displayName: 'Pipeline Type',
-      required: false,
-      options: {
-        options: [
-          { label: 'Contacts', value: 'contacts' },
-          { label: 'Deals', value: 'deals' },
-          { label: 'General', value: 'general' },
-        ],
-      },
-    }),
+    pipelineType: ninjapipeProps.staticDropdown({ displayName: 'Pipeline Type', description: 'What this pipeline tracks.', values: ['contacts', 'deals', 'general'] }),
     description: Property.LongText({ displayName: 'Description', required: false }),
     status: Property.ShortText({ displayName: 'Status', required: false }),
+    clearFields: ninjapipeProps.clearFields({ fields: { description: 'Description' } }),
   },
   async run(context) {
-    const auth = getAuth(context);
     const p = context.propsValue;
-    const body: Record<string, unknown> = {};
-    if (p.name) body['name'] = p.name;
-    if (p.pipelineType) body['pipeline_type'] = p.pipelineType;
-    if (p.description !== undefined) body['description'] = p.description;
-    if (p.status) body['status'] = p.status;
-    const response = await ninjapipeApiCall<Record<string, unknown>>({
-      auth,
-      method: HttpMethod.PUT,
-      path: `/pipelines/${encodeURIComponent(String(p.pipelineId))}`,
-      body,
-    });
-    return flattenCustomFields(response.body);
+    const path = `/pipelines/${ninjapipeClient.pathId({ value: p.pipelineId, field: 'Pipeline' })}`;
+    const changes = ninjapipeFields.compact({ name: p.name, pipeline_type: p.pipelineType, description: p.description, status: p.status });
+    const body = ninjapipeFields.requireChanges({ body: ninjapipeFields.withClears({ body: changes, clear: p.clearFields }), what: 'pipeline' });
+    return ninjapipeClient.sendRecord({ auth: ninjapipeClient.readAuth(context.auth), method: HttpMethod.PUT, path, body, operation: 'update pipeline' });
   },
 });

@@ -2,12 +2,23 @@ import {
   createTrigger,
   TriggerStrategy,
   FilesService,
+  tryCatch,
+  isNil,
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { parseStream, convertAttachment } from '../common/data';
 import { newLabeledEmailTriggerOutputSchema } from '../output-schemas';
+
+function isExpiredHistoryIdError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    Number(error.code) === 404
+  );
+}
 
 async function enrichGmailMessage({
   gmail,
@@ -74,6 +85,12 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
+    if (
+      context.isRepublish &&
+      !isNil(await context.store.get('lastHistoryId'))
+    ) {
+      return;
+    }
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
 
@@ -84,6 +101,9 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
     await context.store.put('lastHistoryId', profile.data.historyId);
   },
   onDisable: async (context) => {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('lastHistoryId');
   },
   run: async (context) => {
@@ -92,12 +112,22 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
 
     const lastHistoryId = await context.store.get('lastHistoryId');
 
-    const historyResponse = await gmail.users.history.list({
-      userId: 'me',
-      startHistoryId: lastHistoryId as string,
-      labelId: context.propsValue.label.id,
-      historyTypes: ['labelAdded', 'messageAdded'],
-    });
+    const { data: historyResponse, error } = await tryCatch(() =>
+      gmail.users.history.list({
+        userId: 'me',
+        startHistoryId: lastHistoryId as string,
+        labelId: context.propsValue.label.id,
+        historyTypes: ['labelAdded', 'messageAdded'],
+      })
+    );
+    if (error) {
+      if (!isExpiredHistoryIdError(error)) {
+        throw error;
+      }
+      const profile = await gmail.users.getProfile({ userId: 'me' });
+      await context.store.put('lastHistoryId', profile.data.historyId);
+      return [];
+    }
 
     const labeledMessages = new Map<string, string>();
     const results = [];

@@ -676,9 +676,11 @@ export function DataTable<
         </Table>
       </div>
       {!hidePagination && !virtualizeRows && (
-        <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 px-2 py-4 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-gray-11">{t('Rows per page')}</span>
+            <span className="text-gray-11 whitespace-nowrap">
+              {t('Rows per page')}
+            </span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
@@ -702,44 +704,46 @@ export function DataTable<
               </SelectContent>
             </Select>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1"
-            onClick={() => {
-              if (clientPagination) {
-                table.previousPage();
-              } else {
-                setCurrentCursor(previousPageCursor);
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={() => {
+                if (clientPagination) {
+                  table.previousPage();
+                } else {
+                  setCurrentCursor(previousPageCursor);
+                }
+              }}
+              disabled={
+                clientPagination
+                  ? !table.getCanPreviousPage()
+                  : !previousPageCursor
               }
-            }}
-            disabled={
-              clientPagination
-                ? !table.getCanPreviousPage()
-                : !previousPageCursor
-            }
-          >
-            <ChevronLeft className="h-4 w-4" />
-            {t('Previous')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1"
-            onClick={() => {
-              if (clientPagination) {
-                table.nextPage();
-              } else {
-                setCurrentCursor(nextPageCursor);
+            >
+              <ChevronLeft className="h-4 w-4" />
+              {t('Previous')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={() => {
+                if (clientPagination) {
+                  table.nextPage();
+                } else {
+                  setCurrentCursor(nextPageCursor);
+                }
+              }}
+              disabled={
+                clientPagination ? !table.getCanNextPage() : !nextPageCursor
               }
-            }}
-            disabled={
-              clientPagination ? !table.getCanNextPage() : !nextPageCursor
-            }
-          >
-            {t('Next')}
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+            >
+              {t('Next')}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
       {bulkActions.length > 0 && (

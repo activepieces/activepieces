@@ -1,4 +1,4 @@
-import { createTrigger, Property, Store, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, Property, Store, TriggerStrategy } from '@activepieces/pieces-framework';
 import { shortIoAuth } from '../common/auth';
 import { ShortIoAuthValue } from '../common/client';
 import { shortIoLinkQueries } from '../common/link-queries';
@@ -220,10 +220,16 @@ export const newLinkCreatedTrigger = createTrigger({
   },
   async onEnable(context) {
     const domain = shortIoLinks.parseDomainProp(context.propsValue.domain);
+    if (context.isRepublish && (!isNil(await context.store.get(STATE_KEY)) || !isNil(await context.store.get(LEGACY_IDS_KEY)))) {
+      return;
+    }
     await context.store.delete(LEGACY_IDS_KEY);
     await baseline({ auth: context.auth, domain, store: context.store });
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete(STATE_KEY);
     await context.store.delete(LEGACY_IDS_KEY);
   },

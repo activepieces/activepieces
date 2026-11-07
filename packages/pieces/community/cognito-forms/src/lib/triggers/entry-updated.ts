@@ -1,9 +1,6 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { cognitoFormsAuth } from '../auth';
+import { sampleEntry, webhookInstructions } from '../common/trigger-helpers';
 
 export const entryUpdatedTrigger = createTrigger({
   name: 'entry_updated',
@@ -11,33 +8,22 @@ export const entryUpdatedTrigger = createTrigger({
   displayName: 'Entry Updated',
   description: 'Triggers when an existing form entry is updated.',
   aiMetadata: {
-    description: 'Fires when an existing entry in a Cognito Forms form is updated, delivering the updated entry data. Requires the form to be configured to post JSON to the webhook URL on entry update.',
+    description: 'Fires when an existing entry in a Cognito Forms form is updated, delivering the updated entry with its field values at the top level and status, dates and links under "Entry". Requires the form to post JSON to the webhook URL on update. Cognito Forms may resend an update if delivery fails.',
   },
   auth: cognitoFormsAuth,
   props: {
     webhookInstructions: Property.MarkDown({
-      value: `
-          To use this trigger, you need to manually set up a webhook in your Cognito Forms account:
-    
-          1. Login to your Cognito Forms account.
-          2. Select desired form and go to Form Settings.
-          3. Enable **Post JSON Data to Website** and add following URL in **Update Entry Endpoint** field:
-          \`\`\`text
-          {{webhookUrl}}
-          \`\`\`
-          4. Click Save to save the form changes.
-          `,
+      value: webhookInstructions('Update Entry Endpoint'),
     }),
   },
   type: TriggerStrategy.WEBHOOK,
-  sampleData: undefined,
-  async onEnable(context) {
-    // No need to register webhooks programmatically as user will do it manually
+  sampleData: sampleEntry,
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // No need to unregister webhooks as user will do it manually
+  async onDisable() {
+    return;
   },
-
   async run(context) {
     return [context.payload.body];
   },

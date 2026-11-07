@@ -10,7 +10,7 @@ export const listIssueCommentsAction = createAction({
 	name: 'list_issue_comments',
 	classification: 'SEARCH',
 	displayName: 'List Issue Comments',
-	description: 'Returns all comments for an issue.',
+	description: "Lists an issue's comments, newest or oldest first.",
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -25,27 +25,50 @@ export const listIssueCommentsAction = createAction({
 			displayName: 'Order By',
 			required: true,
 			defaultValue: '-created',
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
 					{
-						label: 'Created (Descending)',
+						label: 'Newest First',
 						value: '-created',
+						icon: 'calendar',
 					},
 					{
-						label: 'Created (Ascending)',
+						label: 'Oldest First',
 						value: '+created',
+						icon: 'calendar',
 					},
 				],
 			},
 		}),
 		limit: Property.Number({
-			displayName: 'Limit',
-			description: 'Maximum number of results',
+			displayName: 'Max Results',
+			description: 'Most comments to return.',
 			required: true,
 			defaultValue: 10,
+			display: 'stepper',
+			min: 1,
+			max: 5000,
+			step: 1,
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'issue',
+			display: 'section',
+			label: 'Issue',
+			icon: 'inbox',
+			props: ['projectId', 'issueId'],
+		},
+		{
+			key: 'results',
+			display: 'section',
+			label: 'Results',
+			icon: 'sliders',
+			props: ['orderBy', 'limit'],
+		},
+	],
 	async run(context) {
 		const { issueId, orderBy, limit } = context.propsValue;
 

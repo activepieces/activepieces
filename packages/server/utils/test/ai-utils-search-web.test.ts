@@ -47,6 +47,7 @@ function searchAnthropic(): ReturnType<typeof aiUtils.searchWeb> {
     return aiUtils.searchWeb({
         credentials: aiProviderCredentials({ provider: AIProviderName.ANTHROPIC, auth: { apiKey: 'key' }, config: {} }),
         modelId: 'claude-haiku-4-5',
+        billing: null,
         system: 'Search.',
         prompt: 'activepieces pricing',
         abortSignal: new AbortController().signal,

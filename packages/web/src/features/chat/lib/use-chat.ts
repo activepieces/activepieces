@@ -16,9 +16,9 @@ import {
   subagentProgressId,
   SubagentProgressEvent,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { api } from '@/lib/api';
 import { chatDebug } from '@/lib/chat-debug-logger';
@@ -32,7 +32,7 @@ import {
 } from './chat-store';
 import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
-import { chatUtils } from './chat-utils';
+import { ChatModelPick, chatUtils } from './chat-utils';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 function applyQuickRepliesToStore({
@@ -90,7 +90,6 @@ function restoreReceiptsIntoStore({
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const AGENT_POLL_INTERVAL_MS = 5_000;
 const TOOL_GATES_WITHOUT_A_PIECE = new Set([
   'ap_send_email',
   'ap_test_flow',
@@ -189,16 +188,6 @@ function buildRunningTaskPart({
     state: 'input-available' as const,
     input: { title },
   };
-}
-
-function appendGatePart({
-  messages,
-  gate,
-}: {
-  messages: ChatUIMessage[];
-  gate: PendingGate;
-}): ChatUIMessage[] {
-  return appendTrailingPart({ messages, part: buildGatePart(gate) });
 }
 
 function appendRunningTaskParts({
@@ -324,16 +313,24 @@ function injectFilePartsIntoLastUserMessage({
   return result;
 }
 
+function isSendCancelled({
+  statusRef,
+}: {
+  statusRef: { current: SendStatus };
+}): boolean {
+  return statusRef.current.type === 'cancelled';
+}
+
 type SendStatus =
   | { type: 'idle' }
   | { type: 'submitting' }
   | { type: 'cancelled' }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string | null };
 
 export function useAgentChat({
   agentId,
   builder,
-  defaultModelName,
+  projectId,
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
@@ -341,7 +338,7 @@ export function useAgentChat({
 }: {
   agentId?: string;
   builder?: boolean;
-  defaultModelName?: string | null;
+  projectId?: string | null;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
@@ -353,9 +350,11 @@ export function useAgentChat({
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
   );
-  const [modelName, setModelNameState] = useState<string | null>(null);
+  const [modelPick, setModelPickState] = useState<ChatModelPick | null>(null);
+  const [conversationProjectId, setConversationProjectId] = useState<
+    string | null
+  >(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
   const sendStatusRef = useRef<SendStatus>({ type: 'idle' });
   const onCreditsExhaustedRef = useRef(onCreditsExhausted);
@@ -375,10 +374,13 @@ export function useAgentChat({
     { name: string; mimeType: AgentAllowedMimeType; data: string }[] | undefined
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
+  const lastSentRef = useRef<{ content: string; files?: File[] } | null>(null);
   const conversationIdRef = useRef<string | null>(null);
-  const modelNameRef = useRef<string | null>(null);
-  const defaultModelNameRef = useRef(defaultModelName ?? null);
-  defaultModelNameRef.current = defaultModelName ?? null;
+  const modelPickRef = useRef<ChatModelPick | null>(null);
+  const savedPickRef = useRef<ChatModelPick | null>(null);
+  const pickSaveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  const projectIdRef = useRef(projectId ?? null);
+  projectIdRef.current = projectId ?? null;
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -628,9 +630,7 @@ export function useAgentChat({
           );
         updateSendStatus({
           type: 'error',
-          message: failureIsInTranscript
-            ? t('The last reply did not finish. Please try again.')
-            : opts.errorMessage,
+          message: failureIsInTranscript ? null : opts.errorMessage,
         });
       } else if (!hasReply && !opts?.suppressNoReply) {
         updateSendStatus({
@@ -666,9 +666,7 @@ export function useAgentChat({
   }, [isStreamActive]);
 
   const isStreaming =
-    isStreamActive ||
-    sendStatusRef.current.type === 'submitting' ||
-    isPollingForAgentReply;
+    isStreamActive || sendStatusRef.current.type === 'submitting';
 
   const isAwaitingResponse =
     streamPhase === 'awaiting-stream' ||
@@ -694,11 +692,8 @@ export function useAgentChat({
   ]);
 
   const error =
-    sendStatus.type === 'error'
-      ? sendStatus.message
-      : streamError
-      ? streamError
-      : null;
+    sendStatus.type === 'error' ? sendStatus.message : streamError ?? null;
+  const failed = sendStatus.type === 'error' || !isNil(streamError);
 
   const wasCancelled = sendStatus.type === 'cancelled';
 
@@ -738,7 +733,6 @@ export function useAgentChat({
     commitInFlightTurn();
     stopStream();
     setOptimisticUserMessage(null);
-    setIsPollingForAgentReply(false);
     updateSendStatus({ type: 'cancelled' });
     const convId = conversationIdRef.current;
     if (convId) {
@@ -749,16 +743,34 @@ export function useAgentChat({
   const createConversation = useCallback(
     async ({
       title,
-      modelName,
-    }: { title?: string | null; modelName?: string | null } = {}) => {
+      pick,
+    }: { title?: string | null; pick?: ChatModelPick | null } = {}) => {
+      const chatProjectId = projectIdRef.current;
       const conv = await chatApi.createConversation({
         title: title ?? null,
-        modelName: modelName ?? null,
-        ...(agentId === undefined ? {} : { agentId }),
+        ...(agentId === undefined
+          ? {
+              ...(pick ?? {}),
+              ...(isNil(chatProjectId) ? {} : { projectId: chatProjectId }),
+            }
+          : { agentId }),
         ...(builder === undefined ? {} : { builder }),
       });
+      setConversationProjectId(conv.projectId ?? null);
+      savedPickRef.current = pick ?? null;
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
+      const latestPick = modelPickRef.current;
+      if (!isNil(latestPick) && latestPick !== (pick ?? null)) {
+        pickSaveQueueRef.current = pickSaveQueueRef.current.then(async () => {
+          const { error } = await tryCatch(() =>
+            chatApi.updateConversation(conv.id, latestPick),
+          );
+          if (isNil(error)) {
+            savedPickRef.current = latestPick;
+          }
+        });
+      }
       return conv;
     },
     [agentId, builder],
@@ -771,9 +783,14 @@ export function useAgentChat({
       options?: { messageSource?: AgentMessageSource },
     ) => {
       updateSendStatus({ type: 'submitting' });
+      await pickSaveQueueRef.current;
+      if (isSendCancelled({ statusRef: sendStatusRef })) {
+        return;
+      }
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
+      lastSentRef.current = { content, files };
 
       const optimisticUser: ChatUIMessage = {
         id: `optimistic-${Date.now()}`,
@@ -822,7 +839,7 @@ export function useAgentChat({
         const { error: convError } = await tryCatch(async () => {
           const conv = await createConversation({
             title: content.slice(0, 100),
-            modelName: modelNameRef.current ?? defaultModelNameRef.current,
+            pick: modelPickRef.current,
           });
           onConversationCreatedRef.current?.(conv.id);
         });
@@ -830,11 +847,14 @@ export function useAgentChat({
           setOptimisticUserMessage(null);
           updateSendStatus({
             type: 'error',
-            message: convError.message ?? 'Failed to start conversation',
+            message: api.extractServerErrorMessage(
+              convError,
+              'Failed to start conversation',
+            ),
           });
           return;
         }
-        if (sendStatusRef.current.type === 'cancelled') {
+        if (isSendCancelled({ statusRef: sendStatusRef })) {
           setOptimisticUserMessage(null);
           return;
         }
@@ -892,7 +912,10 @@ export function useAgentChat({
         } else {
           updateSendStatus({
             type: 'error',
-            message: sendError.message ?? 'Failed to send message',
+            message: api.extractServerErrorMessage(
+              sendError,
+              'Failed to send message',
+            ),
           });
         }
       }
@@ -908,6 +931,16 @@ export function useAgentChat({
     ],
   );
 
+  const retryLastMessage = useCallback(
+    (fallbackContent: string) => {
+      const lastSent = lastSentRef.current;
+      return isNil(lastSent)
+        ? sendMessage(fallbackContent)
+        : sendMessage(lastSent.content, lastSent.files);
+    },
+    [sendMessage],
+  );
+
   const setConversationId = useCallback(
     async (id: string) => {
       if (
@@ -918,7 +951,6 @@ export function useAgentChat({
       )
         return;
       stopStream();
-      setIsPollingForAgentReply(false);
       updateSendStatus({ type: 'idle' });
       conversationIdRef.current = id;
       setConversationIdState(id);
@@ -927,6 +959,7 @@ export function useAgentChat({
 
       pendingFilesRef.current = undefined;
       lastSentFileNamesRef.current = [];
+      lastSentRef.current = null;
       setOptimisticUserMessage(null);
 
       setIsLoadingHistory(true);
@@ -952,8 +985,15 @@ export function useAgentChat({
         data: historyResult.data.data,
         setState: store.setState,
       });
-      modelNameRef.current = convResult.data.modelName ?? null;
-      setModelNameState(convResult.data.modelName ?? null);
+      const savedPick: ChatModelPick = {
+        modelTierId: convResult.data.modelTierId ?? null,
+        providerConfigId: convResult.data.providerConfigId ?? null,
+        modelName: convResult.data.modelName ?? null,
+      };
+      modelPickRef.current = savedPick;
+      savedPickRef.current = savedPick;
+      setModelPickState(savedPick);
+      setConversationProjectId(convResult.data.projectId ?? null);
       if (convResult.data.status === AgentConversationStatus.STREAMING) {
         const lastAssistantIdx = mapped.findLastIndex(
           (m) => m.role === 'assistant',
@@ -986,9 +1026,12 @@ export function useAgentChat({
       } else {
         setPersistedMessages(mapped);
         if (convResult.data.status === AgentConversationStatus.ERROR) {
+          const failureIsInTranscript = mapped.at(-1)?.role === 'assistant';
           updateSendStatus({
             type: 'error',
-            message: t('The last reply did not finish. Please try again.'),
+            message: failureIsInTranscript
+              ? null
+              : t('The last reply did not finish. Please try again.'),
           });
         }
       }
@@ -997,73 +1040,35 @@ export function useAgentChat({
     [stopStream, startStream, updateSendStatus, store, t],
   );
 
-  useQuery({
-    queryKey: ['chat-agent-poll', conversationId],
-    queryFn: async () => {
-      if (!conversationId || conversationIdRef.current !== conversationId)
-        return null;
-      const [messagesResult, convResult] = await Promise.all([
-        chatApi.getMessages(conversationId),
-        chatApi.getConversation(conversationId),
-      ]);
-      if (conversationIdRef.current !== conversationId) return null;
-      const mapped = chatUtils.mapHistoryToUIMessages(messagesResult.data);
-      const current = persistedMessagesRef.current;
-      // Never let a poll shrink the visible history — only apply growth or
-      // in-place part updates, never a truncation.
-      const hasChanged =
-        mapped.length >= current.length &&
-        (mapped.length !== current.length ||
-          mapped.some((m, i) => m.parts.length !== current[i]?.parts.length));
-      if (hasChanged) {
-        setPersistedMessages(mapped);
-        const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
-        applyQuickRepliesToStore({ setState: store.setState, data: restored });
-      }
-      if (convResult.status !== AgentConversationStatus.STREAMING) {
-        setIsPollingForAgentReply(false);
-      } else {
-        const hasBlockingCard = chatStoreSelectors.hasBlockingCard({
-          state: store.getState(),
-          lastAssistantMessage: mapped[mapped.length - 1],
-        });
-        if (!hasBlockingCard) {
-          const { data: gate } = await tryCatch(() =>
-            chatApi.getPendingGate(conversationId),
-          );
-          if (gate && conversationIdRef.current === conversationId) {
-            store.setState((prev) => ({
-              toolCallMeta: {
-                ...prev.toolCallMeta,
-                ...buildToolCallMetaFromGate(gate),
-              },
-            }));
-            setPersistedMessages((prev) =>
-              appendGatePart({ messages: prev, gate }),
-            );
-          }
-        }
-      }
-      return mapped;
-    },
-    enabled: isPollingForAgentReply && !isStreamActive,
-    refetchInterval: AGENT_POLL_INTERVAL_MS,
-  });
-
-  const setModelName = useCallback(async (newModelName: string) => {
-    modelNameRef.current = newModelName;
-    setModelNameState(newModelName);
+  const setModelPick = useCallback(async (newPick: ChatModelPick) => {
+    modelPickRef.current = newPick;
+    setModelPickState(newPick);
     const convId = conversationIdRef.current;
-    if (convId) {
-      await chatApi
-        .updateConversation(convId, { modelName: newModelName })
-        .catch(() => undefined);
+    if (isNil(convId)) {
+      return;
+    }
+    const save = pickSaveQueueRef.current.then(() =>
+      tryCatch(() => chatApi.updateConversation(convId, newPick)),
+    );
+    pickSaveQueueRef.current = save;
+    const { error } = await save;
+    if (isNil(error)) {
+      savedPickRef.current = newPick;
+      return;
+    }
+    const stillLatest =
+      modelPickRef.current === newPick && conversationIdRef.current === convId;
+    if (stillLatest) {
+      modelPickRef.current = savedPickRef.current;
+      setModelPickState(savedPickRef.current);
+      toast.error(t("Couldn't switch the model. Try again."));
     }
   }, []);
 
   return {
     conversationId,
-    modelName,
+    conversationProjectId,
+    modelPick,
     messages,
     isStreaming,
     isResumedStream,
@@ -1071,9 +1076,11 @@ export function useAgentChat({
     wasCancelled,
     isLoadingHistory,
     error,
+    failed,
     sendMessage,
+    retryLastMessage,
     cancelStream,
     setConversationId,
-    setModelName,
+    setModelPick,
   };
 }

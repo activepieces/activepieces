@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatch } from '@activepieces/core-utils';
 import {
   PopulatedFlow,
   TelemetryEventName,
@@ -56,6 +56,7 @@ export type ImportFlowDialogProps =
   | {
       insideBuilder: true;
       flowId: string;
+      savePendingEdits: () => Promise<void>;
     };
 
 const readTemplateJson = async (
@@ -175,6 +176,12 @@ const ImportFlowDialog = (
       );
     } else {
       setErrorMessage('');
+      if (props.insideBuilder) {
+        const { error: saveError } = await tryCatch(props.savePendingEdits);
+        if (!isNil(saveError)) {
+          return;
+        }
+      }
       importFlows(templates);
     }
   };

@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { ContactItemSchema, ContactItem } from '../schemas';
 import { insightoAuth } from '../..';
@@ -32,10 +32,16 @@ export const newContact = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('seen_contacts'))) {
+      return;
+    }
     // Initialize with empty seen contacts
     await context.store.put('seen_contacts', []);
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('seen_contacts');
   },
   async run(context) {

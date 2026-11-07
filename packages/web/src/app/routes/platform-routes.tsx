@@ -63,6 +63,11 @@ const EmbedPage = React.lazy(() =>
 const SSOPage = React.lazy(() =>
   import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
 );
+const SamlSetupPage = React.lazy(() =>
+  import('./platform/security/sso/saml-setup-page').then((m) => ({
+    default: m.SamlSetupPage,
+  })),
+);
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const GeneralPage = React.lazy(() =>
@@ -106,6 +111,7 @@ const AI_TAB_PATHS = {
   providers: '',
   capabilities: 'capabilities',
   tiers: 'tiers',
+  usage: 'usage',
 };
 const PIECES_TAB_PATHS = { pieces: '', 'piece-sets': 'piece-sets' };
 
@@ -195,6 +201,54 @@ export const platformRoutes = [
             <PlanFeatureSample feature="aiProviders">
               <SuspenseWrapper>
                 <AIProvidersPage section="tiers" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/ai/usage',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Usage">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="usage" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/ai/usage/:dimension',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Usage">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="usage-list" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/ai/usage/:dimension/:id',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Usage">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="usage-detail" />
               </SuspenseWrapper>
             </PlanFeatureSample>
           </LegacyTabRedirect>
@@ -420,12 +474,26 @@ export const platformRoutes = [
     path: '/platform/sso',
     element: (
       <PlatformLayout>
-        <PageTitle title="SSO">
+        <PageTitle title="Authentication">
           <PlanFeatureSample feature="sso">
             <SuspenseWrapper>
               <SSOPage />
             </SuspenseWrapper>
           </PlanFeatureSample>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/sso/saml',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Single sign-on">
+          <PlanFeatureGuard feature="sso">
+            <SuspenseWrapper>
+              <SamlSetupPage />
+            </SuspenseWrapper>
+          </PlanFeatureGuard>
         </PageTitle>
       </PlatformLayout>
     ),

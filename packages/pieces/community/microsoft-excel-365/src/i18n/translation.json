@@ -184,6 +184,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Row": "New Row",
   "New Row in Table": "New Row in Table",
   "New Worksheet": "New Worksheet",

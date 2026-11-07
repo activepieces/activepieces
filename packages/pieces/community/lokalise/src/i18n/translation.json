@@ -146,6 +146,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Key Added": "Key Added",
   "Key Updated": "Key Updated",
   "Translation Updated": "Translation Updated",

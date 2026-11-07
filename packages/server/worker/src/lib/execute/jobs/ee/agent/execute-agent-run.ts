@@ -1,6 +1,6 @@
-import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { aiUtils, wideEvent } from '@activepieces/server-utils'
+import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -13,7 +13,7 @@ import { creditLedger } from './credit-ledger'
 import { declinedActions } from './declined-actions'
 import { classifyAgentRunError, delayWithJitter, drainOf, firstStepUsesFastModel, isTransientFailureText, NO_STEP_CONTENT, runAgentTurn, StreamDrain, trackStepContent, TurnModel } from './run-agent-turn'
 import { taskContext } from './tools/task-context'
-import { createTaskSubagentTools } from './tools/task-subagent-tools'
+import { createTaskSubagentTools, taskTokensOf } from './tools/task-subagent-tools'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -103,6 +103,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('messageSource', data.messageSource),
                 ...spreadIfDefined('agentId', data.agentId),
                 ...spreadIfDefined('flowRunId', flowRunId),
+                ...spreadIfDefined('waitpointId', waitpointId),
                 ...spreadIfDefined('provider', data.provider),
                 ...spreadIfDefined('providerConfigId', data.providerConfigId),
                 ...spreadIfDefined('modelTierId', data.modelTierId),
@@ -116,7 +117,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const { credentials } = config
             const { provider } = credentials
             const searchCredentials = config.searchCredentials ?? credentials
+            const searchProviderConfigId = isNil(config.searchCredentials) ? config.providerConfigId : config.searchProviderConfigId
             const imageCredentials = config.imageCredentials ?? credentials
+            const imageProviderConfigId = isNil(config.imageCredentials) ? config.providerConfigId : config.imageProviderConfigId
             runProvider = provider
             runModelId = config.modelId
             source = config.source
@@ -128,20 +131,27 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const billing: ActivepiecesAiBilling = {
                 source: ActivepiecesAiConsumerSource.CHAT,
                 platformId,
-                projectId: projectId ?? null,
+                projectId: config.projectId ?? projectId ?? null,
                 conversationId,
                 chat: { userId, turnIndex: config.previousUiMessages.length, tier: config.tier.id },
+                context: usageContextOf({ source, data, agentId: data.agentId ?? config.agentId }),
             }
+            wideEvent.set({
+                ...spreadIfDefined('user', isNil(userId) ? undefined : { id: userId }),
+                ...spreadIfDefined('project', isNil(billing.projectId) ? undefined : { id: billing.projectId }),
+            })
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
                 billing,
                 turnAlreadyCharged: true,
+                ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
             const fastModel = aiUtils.createModel({
                 credentials, modelId: config.fastModelId,
                 billing,
                 turnAlreadyCharged: true,
+                ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
             const turnModels = turnModelsFor({ config, model, billing, metadata: { platformId, conversationId, runId } })
             const fastTurnModel: TurnModel | undefined = isNil(config.platformTier)
@@ -211,12 +221,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const readImage = async (fileId: string) => toResolvedAiFile({
                 stored: await ctx.apiClient.readAgentFile({ platformId, conversationId, fileId, ...spreadIfDefined('projectId', projectId ?? undefined) }),
             })
-            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials: imageCredentials, billing, readImage })
+            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials: imageCredentials, providerConfigId: imageProviderConfigId, billing, readImage })
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
                 ...(providerSearchActive ? agentWorkerTools.createProviderSearchTools({
-                    search: (request) => aiUtils.searchWeb({ ...request, credentials: searchCredentials, modelId: config.searchModelId ?? config.fastModelId, billing, turnAlreadyCharged: true }),
+                    search: (request) => aiUtils.searchWeb({ ...request, credentials: searchCredentials, modelId: config.searchModelId ?? config.fastModelId, billing, turnAlreadyCharged: true, ...spreadIfDefined('providerConfigId', searchProviderConfigId) }),
                     billedAtCost: searchCredentials.provider === AIProviderName.ACTIVEPIECES,
                     taintState,
                 }) : {}),
@@ -264,7 +274,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
                 log,
                 run: (stepMcpToolSet) => {
-                    const baseTools = { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) }
+                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
                     const taskTools = createTaskSubagentTools({
                         tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
                         taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
@@ -356,7 +366,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         ...(config.previousUiMessages as PersistedAgentMessage[]),
                         ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
                     ],
-                    ...answeredByOf({ config, answeredBy: turn.answeredBy }),
+                    ...answeredByOf({ answeredBy: turn.answeredBy }),
                 }
                 const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveAgentMessages(cancelSavePayload))
                 if (cancelSaveError) {
@@ -384,6 +394,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
 
             const autoTitle = await autoTitlePromise
+            const taskTokens = taskTokensOf({ parts: uiParts })
 
             log.info({
                 conversation: { id: conversationId },
@@ -396,6 +407,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 model: { id: turn.answeredBy.modelId },
                 finishReason: turn.finishReason,
                 truncatedAfterRetries,
+                taskInputTokens: taskTokens.input,
+                taskOutputTokens: taskTokens.output,
             }, 'Chat message completed')
 
             const thinkingDurationMs = Date.now() - thinkingStartTime
@@ -409,7 +422,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) && isNil(config.platformTier) ? config.tier.id : undefined),
-                ...answeredByOf({ config, answeredBy: turn.answeredBy }),
+                ...answeredByOf({ answeredBy: turn.answeredBy }),
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
@@ -446,6 +459,11 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         catch (err) {
             if (apErrorOf(err)?.code === ErrorCode.AGENT_RUN_SUPERSEDED) {
                 log.info({ conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Run superseded by a newer message, exiting quietly')
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
+            const configLostToDisconnect = source === AgentRunSource.FLOW_STEP && !configLoaded && err instanceof RpcTimeoutError && err.disconnected
+            if (configLostToDisconnect) {
+                log.warn({ error: err, conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Config response lost in transit, leaving the step to the redelivered copy or the stale sweep')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
             const errorClass = classifyAgentRunError({ error: err, provider: runProvider })
@@ -504,8 +522,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
     },
 }
 
-function answeredByOf({ config, answeredBy }: { config: AgentConfigResponse, answeredBy: TurnModel }): Pick<SaveAgentMessagesRequest, 'answeredBy'> {
-    return isNil(config.platformTier) ? {} : { answeredBy: { provider: answeredBy.provider, modelId: answeredBy.modelId } }
+function answeredByOf({ answeredBy }: { answeredBy: TurnModel }): Pick<SaveAgentMessagesRequest, 'answeredBy'> {
+    return { answeredBy: { provider: answeredBy.provider, modelId: answeredBy.modelId } }
+}
+
+function usageContextOf({ source, data, agentId }: { source: AgentRunSource, data: ExecuteAgentRunJobData, agentId: string | undefined }): AiCallContext {
+    const origin = AGENT_RUN_USAGE_ORIGIN[source]
+    const environment = source === AgentRunSource.AGENT_BUILDER ? AiUsageEnvironment.TESTING : data.environment ?? AiUsageEnvironment.PRODUCTION
+    return { origin, environment, ...spreadIfDefined('agentId', agentId), ...spreadIfDefined('flowId', data.flowId), ...spreadIfDefined('flowRunId', data.flowRunId) }
 }
 
 function turnModelsFor({ config, model, billing, metadata }: { config: AgentConfigResponse, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {
@@ -522,7 +546,7 @@ function turnModelsFor({ config, model, billing, metadata }: { config: AgentConf
 
 function candidateTurnModel({ candidate, billing, metadata }: { candidate: AgentModelCandidate, billing: ActivepiecesAiBilling, metadata?: ModelMetadata }): TurnModel {
     return {
-        model: aiUtils.createModel({ credentials: candidate, modelId: candidate.modelId, billing, turnAlreadyCharged: true, ...spreadIfDefined('metadata', metadata) }),
+        model: aiUtils.createModel({ credentials: candidate, modelId: candidate.modelId, billing, turnAlreadyCharged: true, providerConfigId: candidate.providerConfigId, ...spreadIfDefined('metadata', metadata) }),
         provider: candidate.provider,
         modelId: candidate.modelId,
         thinkingBudget: candidate.thinkingBudget,
@@ -591,10 +615,11 @@ function imagesInConversation(uiMessages: unknown[]): { fileId: string, descript
         .flatMap((part) => part.type === PersistedAgentPartType.IMAGE ? [{ fileId: part.fileId, description: part.prompt ?? part.title ?? 'image' }] : [])
 }
 
-function pickImageGenerator({ falApiKey, imageModelId, credentials, billing, readImage }: {
+function pickImageGenerator({ falApiKey, imageModelId, credentials, providerConfigId, billing, readImage }: {
     falApiKey: string | undefined
     imageModelId: string | undefined
     credentials: AiProviderCredentials
+    providerConfigId: string | undefined
     billing: ActivepiecesAiBilling
     readImage: ImageToolParams['readImage']
 }): Pick<ImageToolParams, 'generate' | 'billedAtCost' | 'readImage'> | undefined {
@@ -605,7 +630,7 @@ function pickImageGenerator({ falApiKey, imageModelId, credentials, billing, rea
         return undefined
     }
     return {
-        generate: agentWorkerTools.providerImageGenerator({ credentials, modelId: imageModelId, billing }),
+        generate: agentWorkerTools.providerImageGenerator({ credentials, providerConfigId, modelId: imageModelId, billing }),
         billedAtCost: credentials.provider === AIProviderName.ACTIVEPIECES,
         readImage,
     }
@@ -737,6 +762,11 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         }))
     }
 
+    const isDeclaredReadOnly = async ({ pieceName, actionName }: { pieceName: string, actionName: string }): Promise<boolean | undefined> => {
+        const { result } = await ctx.apiClient.executeAgentTool({ toolName: '__action_read_only', toolInput: { pieceName, actionName }, platformId, userId, source, conversationId })
+        return typeof result === 'boolean' ? result : undefined
+    }
+
     const piecesTheAuthorGaveAnAccount = new Set(source !== AgentRunSource.AGENT ? [] : configuredPieceTools
         .filter((tool) => !isNil(tool.pieceMetadata.predefinedInput?.auth))
         .map((tool) => tool.pieceMetadata.pieceName))
@@ -763,6 +793,10 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             selectedConnectionByPiece.set(pieceName, externalId)
             return { externalId, label: typeof label === 'string' ? label : externalId }
         },
+        pieceNeedsNoConnection: async (pieceName) => {
+            const discovered = await executeCrossProjectTool('ap_discover_action_auth', { pieceName })
+            return isObject(discovered) && discovered['noAuthRequired'] === true
+        },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)
             await tryCatch(() => ctx.apiClient.executeAgentTool({
@@ -774,7 +808,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, taintState })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
         ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}

@@ -1,6 +1,6 @@
 {
   "Open-source alternative to Calendly": "Open-source alternative to Calendly",
-  "API Key provided by cal.com": "API Key provided by cal.com",
+  "To get your API key:\n1. Open [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) in Cal.com.\n2. Create a new key and choose when it expires.\n3. Copy the key (it starts with `cal_`) and paste it here.": "To get your API key:\n1. Open [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) in Cal.com.\n2. Create a new key and choose when it expires.\n3. Copy the key (it starts with `cal_`) and paste it here.",
   "List Event Types": "List Event Types",
   "Get Event Type": "Get Event Type",
   "Create Event Type": "Create Event Type",
@@ -141,7 +141,7 @@
   "If set, replaces the entire weekly availability array, e.g. [{\"days\": [\"Monday\"], \"startTime\": \"09:00\", \"endTime\": \"17:00\"}].": "If set, replaces the entire weekly availability array, e.g. [{\"days\": [\"Monday\"], \"startTime\": \"09:00\", \"endTime\": \"17:00\"}].",
   "If set, replaces the entire date-overrides array, e.g. [{\"date\": \"2026-05-20\", \"startTime\": \"12:00\", \"endTime\": \"13:00\"}].": "If set, replaces the entire date-overrides array, e.g. [{\"date\": \"2026-05-20\", \"startTime\": \"12:00\", \"endTime\": \"13:00\"}].",
   "e.g. Monday.": "e.g. Monday.",
-  "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Add cal-api-version (2026-05-01 for /bookings). Auth is added for you.": "Add cal-api-version (2026-05-01 for /bookings). Auth is added for you.",
   "Appended to the URL as ?key=value.": "Appended to the URL as ?key=value.",
   "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "On a failed request, output the error instead of failing the step.": "On a failed request, output the error instead of failing the step.",
@@ -162,10 +162,14 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Booking Cancelled": "Booking Cancelled",
-  "Booking Created": "Booking Created",
+  "New Booking": "New Booking",
   "Booking Rescheduled": "Booking Rescheduled",
-  "Create a webhook to monitor when Booking Cancelled": "Create a webhook to monitor when Booking Cancelled",
-  "Create a webhook to monitor when Booking Created": "Create a webhook to monitor when Booking Created",
-  "Create a webhook to monitor when Booking Rescheduled": "Create a webhook to monitor when Booking Rescheduled"
+  "Triggers when a Cal.com booking is cancelled.": "Triggers when a Cal.com booking is cancelled.",
+  "Triggers when someone books a meeting with you on Cal.com.": "Triggers when someone books a meeting with you on Cal.com.",
+  "Triggers when a Cal.com booking is moved to a new time.": "Triggers when a Cal.com booking is moved to a new time.",
+  "Markdown": "Markdown",
+  "This webhook is added to your Cal.com account when you publish the flow and removed when you turn it off. It fires for bookings on the account that owns the API key.": "This webhook is added to your Cal.com account when you publish the flow and removed when you turn it off. It fires for bookings on the account that owns the API key."
 }

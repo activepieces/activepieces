@@ -508,5 +508,12 @@
   "September": "September",
   "October": "Oktober",
   "November": "November",
-  "December": "Dezember"
+  "December": "Dezember",
+  "Input": "Eingabe",
+  "Output": "Ausgabe",
+  "Start": "Start",
+  "End": "End",
+  "Shift": "Shift",
+  "When": "When",
+  "Date Helper": "Datumshelfer"
 }

@@ -232,26 +232,25 @@ export const youtubeNewVideoTrigger = createTrigger({
       },
     },
   },
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return pollingHelper.test(polling, {
-      auth,
-      store,
-      propsValue,
-      files,
-    });
+  async test(context): Promise<unknown[]> {
+    return pollingHelper.test(polling, context);
   },
-  async onEnable({ propsValue, store }): Promise<void> {
+  async onEnable({ propsValue, store, isRepublish }): Promise<void> {
+    if (isRepublish && !isNil(await store.get('_seenVideoIds'))) {
+      return;
+    }
     let channelId = await store.get<string>('channelId');
     if (isNil(channelId)) {
       channelId = await getChannelId(propsValue.channel_identifier);
       await store.put('channelId', channelId);
     }
     const items = await getRssItems(channelId);
-    if (items.length > 0) {
-      await store.put('_seenVideoIds', items.map((item) => getId(item)));
-    }
+    await store.put('_seenVideoIds', items.map((item) => getId(item)));
   },
-  async onDisable({ store }): Promise<void> {
+  async onDisable({ store, isRepublish }): Promise<void> {
+    if (isRepublish) {
+      return;
+    }
     await store.delete('_seenVideoIds');
     await store.delete('channelId');
   },

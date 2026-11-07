@@ -522,3 +522,66 @@ describe('deno code sandbox memory limit', () => {
         await expect(uncapped.runCodeModule({ codeFilePath, inputs: {} })).resolves.toBe(30)
     })
 })
+
+describe('post-result rejections', () => {
+    it('does not fail the run when a promise the step left unawaited rejects after the result was already returned', async () => {
+        const source = `export const code = async () => {
+    setTimeout(() => {
+        Promise.reject(new Error('late boom'));
+    }, 50);
+    return 'ok';
+};`
+        await expect(runModule(source)).resolves.toBe('ok')
+    })
+})
+
+describe('permission-denied error hints', () => {
+    function tmpGrantedSandbox() {
+        return denoModule.denoCodeSandbox({
+            permissions: [denoModule.DenoPermission.WRITE_TMP, denoModule.DenoPermission.READ_TMP, denoModule.DenoPermission.ENV],
+            codeStepMemoryLimitMb: 128,
+        })
+    }
+
+    async function runInTmpGrantedSandbox(source: string): Promise<unknown> {
+        const codeFilePath = path.join(stepDir, 'index.ts')
+        await writeFile(codeFilePath, source)
+        return tmpGrantedSandbox().runCodeModule({ codeFilePath, inputs: {} })
+    }
+
+    it('tells the step only os.tmpdir() is writable, when tmp access is granted but the written path is not', async () => {
+        await expectRejection(
+            runInTmpGrantedSandbox(`export const code = async () => Deno.writeTextFile('/not-allowed/x.txt', 'x')`),
+            /Requires write access.*Only os\.tmpdir\(\) is writable from a code step\./,
+        )
+    })
+
+    it('tells the step tmp and the step directory are readable, when tmp access is granted but the read path is not', async () => {
+        await expectRejection(
+            runInTmpGrantedSandbox(`export const code = async () => Deno.readTextFile('/etc/hosts')`),
+            /Requires read access.*Only os\.tmpdir\(\) and the step's own directory are readable from a code step\./,
+        )
+    })
+
+    it('tells the step writes are unavailable, in the locked (code-only) profile', async () => {
+        await expectRejection(
+            runModule(`export const code = async () => Deno.writeTextFile('/tmp/ap-pwned.txt', 'hi')`),
+            /Requires write access.*Writes are not available to a code step in this execution mode\./,
+        )
+    })
+
+    it('tells the step only its own directory is readable, in the locked (code-only) profile', async () => {
+        await expectRejection(
+            runModule(`export const code = async () => Deno.readTextFile('/etc/hosts')`),
+            /Requires read access.*Only the step's own directory is readable by a code step in this execution mode\./,
+        )
+    })
+
+    it('leaves non-filesystem permission errors unchanged', async () => {
+        const thrown = await runModule(`export const code = async () => (await fetch('https://example.com')).status`)
+            .then(() => null, (error: Error) => error)
+        expect(thrown).toBeInstanceOf(Error)
+        expect(String(thrown)).toMatch(/Requires net access/)
+        expect(String(thrown)).not.toMatch(/os\.tmpdir\(\)|readable|writable|Writes are not available/)
+    })
+})

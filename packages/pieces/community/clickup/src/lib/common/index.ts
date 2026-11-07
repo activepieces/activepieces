@@ -483,7 +483,40 @@ export const clickupCommon = {
         };
       },
     }),
+  optionalBoolean: ({
+    displayName,
+    description,
+  }: {
+    displayName: string;
+    description: string;
+  }) =>
+    Property.StaticDropdown<string, false>({
+      displayName,
+      description,
+      required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+          { label: 'Leave unchanged', value: 'unchanged' },
+        ],
+      },
+    }),
+  optionalBooleanValue,
 };
+
+function optionalBooleanValue(value: unknown): boolean | undefined {
+  const normalized =
+    typeof value === 'string' ? value.trim().toLowerCase() : value;
+  if (normalized === true || normalized === 'yes' || normalized === 'true') {
+    return true;
+  }
+  if (normalized === false || normalized === 'no' || normalized === 'false') {
+    return false;
+  }
+  return undefined;
+}
 
 async function listWorkspaces(accessToken: string) {
   return (

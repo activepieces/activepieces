@@ -24,6 +24,29 @@ export const createDealAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Creates a new deal in HubSpot, requiring a deal name plus a pipeline and stage, and returns the created deal. Use to open a new opportunity; use Update Deal to modify an existing one. Not idempotent: each call creates a separate deal, so guard against duplicates.', idempotent: false },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'deal',
+			display: 'section',
+			label: 'Deal',
+			icon: 'tag',
+			props: ['dealname'],
+		},
+		{
+			key: 'pipeline',
+			display: 'section',
+			label: 'Pipeline',
+			icon: 'sliders',
+			props: ['pipelineId', 'pipelineStageId'],
+		},
+		{
+			key: 'details',
+			display: 'section',
+			label: 'Details',
+			icon: 'text',
+			props: ['objectProperties'],
+		},
+	],
 	props: {
 		dealname: Property.ShortText({
 			displayName: 'Deal Name',

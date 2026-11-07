@@ -81,6 +81,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Published Post": "New Published Post",
   "Triggers when a post is published in Postiz": "Triggers when a post is published in Postiz",
   "**Webhook URL**\n```text\n{{webhookUrl}}\n```\n- **API Key**: copy the URL above, then add it in Postiz under **Settings > Webhooks**. Postiz has no API to do this for you.\n- **API Key + Email & Password**: nothing to do — the webhook is created in Postiz when this flow is published and removed when it is disabled.\n\nPostiz only delivers to public HTTPS URLs, so this trigger needs an Activepieces instance reachable from the internet.": "**Webhook URL**\n```text\n{{webhookUrl}}\n```\n- **API Key**: copy the URL above, then add it in Postiz under **Settings > Webhooks**. Postiz has no API to do this for you.\n- **API Key + Email & Password**: nothing to do — the webhook is created in Postiz when this flow is published and removed when it is disabled.\n\nPostiz only delivers to public HTTPS URLs, so this trigger needs an Activepieces instance reachable from the internet."

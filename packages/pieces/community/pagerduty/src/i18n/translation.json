@@ -74,6 +74,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Incident": "New Incident",
   "Incident Resolved": "Incident Resolved",
   "Incident Acknowledged": "Incident Acknowledged",

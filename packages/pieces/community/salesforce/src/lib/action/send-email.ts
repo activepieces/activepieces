@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi ,salesforcesCommon } from '../common';
@@ -8,26 +8,36 @@ export const sendEmail = createAction({
     auth: salesforceAuth,
     name: 'send_email',
     classification: 'WRITE',
-    displayName: 'Send Email',
-    description: 'Sends an email to a Contact or Lead by creating an EmailMessage record.',
+    displayName: 'Log Email',
+    description: 'Records an email on a contact or lead. Salesforce does not send it.',
     audience: 'human',
     aiMetadata: { description: 'Send an email to a Contact or Lead (body may be plain text or HTML) and log it as an EmailMessage, optionally related to another record. Not idempotent — each call sends and records another email.', idempotent: false },
     outputSchema: sobjectCreateResponseOutputSchema,
+    propertyGroups: [
+        { key: 'recipient', display: 'section', label: 'Recipient', icon: 'send', props: ['delivery_warning', 'recipientId', 'relatedToId'] },
+        { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['subject', 'body'] },
+    ],
     props: {
+        delivery_warning: Property.MarkDown({
+            value: 'Salesforce saves this email as sent but does not deliver it. Use an email piece to send mail.',
+            variant: MarkdownVariant.WARNING,
+        }),
         recipientId: salesforcesCommon.recipient,
         subject: Property.ShortText({
             displayName: 'Subject',
             required: true,
+            placeholder: 'Following up on our call',
         }),
         body: Property.LongText({
             displayName: 'Body',
-            description: 'The content of the email. Can be plain text or HTML.',
+            description: 'Plain text or HTML.',
             required: true,
         }),
         relatedToId: Property.ShortText({
-            displayName: 'Related To ID (Optional)',
-            description: 'The ID of a record to relate the email to (e.g., an Account, Opportunity, or Case ID).',
+            displayName: 'Related Record ID',
+            description: 'Account, case or other record ID, from its URL or an earlier step.',
             required: false,
+            placeholder: '0015g00000XyZ12AAB',
         })
     },
     async run(context) {

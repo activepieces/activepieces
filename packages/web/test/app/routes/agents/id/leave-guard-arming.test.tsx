@@ -42,7 +42,7 @@ vi.mock('@/features/agents', () => ({
       />
     </>
   ),
-  PROVIDER_EMBEDDING_MODELS: {},
+  useKnowledgeBaseEmbeddingSource: () => ({ data: undefined }),
   AgentStructuredOutput: () => <div data-testid="structured" />,
   KnowledgeBaseSection: () => <div data-testid="knowledge" />,
   useAgentsAvailable: () => true,

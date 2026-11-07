@@ -14,6 +14,15 @@ export const subtraction = createAction({
   displayName: 'Subtraction',
   description: 'Subtract one number from another.',
   aiMetadata: { description: 'Compute the difference of two numbers. It returns second_number - first_number: first_number is the amount being subtracted (labelled "Number to Subtract") and second_number is the value it is subtracted from (labelled "Starting Number"). Pick this for a two-operand subtraction only, using the sibling Addition, Multiplication, Division, or Modulo actions for other operations and the Code piece for multi-term formulas; read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'numbers',
+      display: 'section',
+      label: 'Numbers',
+      icon: 'markdown',
+      props: ['first_number', 'second_number'],
+    },
+  ],
   props: {
     first_number: Property.Number({
       displayName: 'Number to Subtract',

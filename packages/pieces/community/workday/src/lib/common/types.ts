@@ -29,6 +29,26 @@ export type WorkdayBusinessObject = {
 	wqlDataSource?: string;
 };
 
+export type WorkdaySoapObject = {
+	label: string;
+	value: string;
+	service: string;
+	operation: string;
+	referenceElement: string;
+	idType: string;
+	recordElement: string;
+	referencesInCriteria?: boolean;
+	idsRequired?: boolean;
+	transactionLog?: boolean;
+	responseGroup?: string[];
+};
+
+export type WorkdaySoapGetPage = {
+	records: WorkdayRecord[];
+	totalPages: number;
+	asOfEntryDateTime?: string;
+};
+
 export type WorkdayRecord = Record<string, unknown>;
 
 export type WorkdayPage<T> = {
@@ -48,6 +68,12 @@ export type WorkdaySoapEnvelope<T extends WorkdayRecord> = {
 				Reason?: unknown;
 			};
 		};
+	};
+};
+
+export type WorkdayServerTimestampBody = {
+	Server_Timestamp?: {
+		Server_Timestamp_Data?: string;
 	};
 };
 

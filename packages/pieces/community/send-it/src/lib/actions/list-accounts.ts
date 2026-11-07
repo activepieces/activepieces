@@ -1,7 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../auth';
-import { sendItRequest } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { sendItAuth } from '../common/auth';
+import { apiKeyOf } from '../common/client';
+import { sendItOutputSchemas } from '../common/output-schemas';
+import { sendItRequests, validateLimit } from '../common/requests';
 
 export const listAccounts = createAction({
   auth: sendItAuth,
@@ -12,15 +13,18 @@ export const listAccounts = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Retrieves the social media accounts currently connected to the SendIt account. Use this to discover which platforms are available before publishing or scheduling, or to verify a connection exists. Takes no input. Idempotent: it is a read-only lookup.',
+      'Lists the social media accounts connected to SendIt (id, platform, username, connectedAt). Use it to see which platform values can be published to before Publish Post or Schedule Post. count is the number returned in this response. Read-only and idempotent.',
     idempotent: true,
   },
-  props: {},
+  props: {
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum accounts to return (1-100). Empty uses the SendIt default.',
+      required: false,
+    }),
+  },
+  outputSchema: sendItOutputSchemas.accountList,
   async run(context) {
-    return await sendItRequest(
-      context.auth.secret_text,
-      HttpMethod.GET,
-      '/accounts'
-    );
+    return sendItRequests.listAccounts({ apiKey: apiKeyOf(context.auth), limit: validateLimit({ value: context.propsValue.limit, label: 'Limit', max: 100 }) });
   },
 });

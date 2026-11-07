@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/ai-providers",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
@@ -16,16 +16,17 @@
     "@ai-sdk/amazon-bedrock": "5.0.38",
     "@ai-sdk/anthropic": "4.0.25",
     "@ai-sdk/azure": "4.0.26",
+    "@ai-sdk/cohere": "4.0.16",
     "@ai-sdk/google": "4.0.29",
     "@ai-sdk/google-vertex": "5.0.36",
     "@ai-sdk/openai": "4.0.25",
     "@ai-sdk/openai-compatible": "3.0.18",
     "@openrouter/ai-sdk-provider": "3.0.0",
     "ai": "7.0.44",
-    "ai-gateway-provider": "4.0.0"
+    "ai-gateway-provider": "4.0.0",
+    "tslib": "2.6.2"
   },
   "devDependencies": {
-    "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "5.0.5"
   }
 }

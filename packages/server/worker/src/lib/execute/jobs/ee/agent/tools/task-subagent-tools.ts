@@ -24,14 +24,14 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
         [TASK_TOOL_NAME]: tool({
             description: 'Hand one self-contained goal to a focused sub-agent with its own fresh context and the same tools you have (read, search, build, update, execute; risky actions still ask the user for approval). Use it when it buys something: independent goals that can run in parallel (several calls in one step run at once), or noisy preparation with a short answer (going through many records or runs, investigating a failure). Build flows yourself, even several at once, and make small edits yourself. It cannot ask the user anything: when it needs something only the user can give it finishes as blocked and says what; ask the user for it in your own words, then pass their answer back. Pass taskId to continue a task you started earlier in this conversation (after a block, or for a follow-up on what it built).',
             inputSchema: taskInput,
-            toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify(omit(output, ['activity', 'billedToolCalls'])) }),
+            toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify(omit(output, ['activity', 'billedToolCalls', 'tokens'])) }),
             execute: async ({ title, brief, taskId }, { toolCallId }) => runTask({ deps, title, brief, taskId, progressId: toolCallId }),
         }),
         ...(searchAvailable ? {
             [RESEARCH_TOOL_NAME]: tool({
                 description: 'Research one or more subjects in depth on the live web. One sub-agent per subject runs in parallel: it searches, reads the actual pages and returns a short sourced brief, and the user watches the research live. Use it whenever the answer needs facts from real pages, such as comparing tools or vendors, pricing and plans, reviews and complaints, competitors, or API docs. Prefer it over several ap_web_search calls. Use ap_web_search only for one quick fact. Compare the briefs and do the final step yourself (the recommendation, the image, the build).',
                 inputSchema: researchInput,
-                toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify({ tasks: output.tasks.map((task: TaskRunOutput) => omit(task, ['activity', 'billedToolCalls'])) }) }),
+                toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify({ tasks: output.tasks.map((task: TaskRunOutput) => omit(task, ['activity', 'billedToolCalls', 'tokens'])) }) }),
                 execute: async ({ question, subjects, context }, { toolCallId }) => {
                     const researchSlot = pLimit(RESEARCHERS_AT_ONCE)
                     const tasks = await Promise.all(subjects.map((subject, index) => researchSlot(() => runTask({
@@ -41,11 +41,17 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
                         progressId: subagentProgressId.forSubject({ toolCallId, index }),
                         kind: 'research',
                     }))))
-                    return { tasks, billedToolCalls: tasks.flatMap((task) => task.billedToolCalls ?? []) }
+                    return { tasks, billedToolCalls: tasks.flatMap((task) => task.billedToolCalls ?? []), tokens: sumTokens(tasks.map((task) => task.tokens ?? NO_TOKENS)) }
                 },
             }),
         } : {}),
     }
+}
+
+export function taskTokensOf({ parts }: { parts: PersistedAgentPart[] }): TaskTokens {
+    return sumTokens(parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && SUB_AGENT_TOOL_NAMES.includes(part.toolName) && isObject(part.output) && isTaskTokens(part.output['tokens'])
+        ? [part.output['tokens']]
+        : []))
 }
 
 async function runTask({ deps, title, brief, taskId, progressId, kind = 'task' }: {
@@ -125,6 +131,7 @@ async function runTask({ deps, title, brief, taskId, progressId, kind = 'task' }
         ...(isNil(result.needs) ? {} : { needs: result.needs }),
         activity,
         billedToolCalls: billedToolCalls(turn.uiParts),
+        tokens: { input: turn.totalInputTokens, output: turn.totalOutputTokens },
     }
 }
 
@@ -188,6 +195,8 @@ async function continueTurn({ title, turnParams, previous, request, overrides }:
     return {
         ...next,
         uiParts: [...previous.uiParts, ...next.uiParts],
+        totalInputTokens: previous.totalInputTokens + next.totalInputTokens,
+        totalOutputTokens: previous.totalOutputTokens + next.totalOutputTokens,
         accumulatedResponseMessages: [...previous.accumulatedResponseMessages, requestMessage, ...next.accumulatedResponseMessages],
     }
 }
@@ -366,6 +375,14 @@ function searchResults(output: unknown): SubagentLink[] {
     })
 }
 
+function sumTokens(tokens: TaskTokens[]): TaskTokens {
+    return tokens.reduce((total, next) => ({ input: total.input + next.input, output: total.output + next.output }), NO_TOKENS)
+}
+
+function isTaskTokens(value: unknown): value is TaskTokens {
+    return isObject(value) && typeof value['input'] === 'number' && typeof value['output'] === 'number'
+}
+
 function billedToolCalls(parts: PersistedAgentPart[]): { toolName: string, output: unknown }[] {
     return parts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.COMPLETED && chatBilling.isFlatBilledToolCall({ toolName: part.toolName, output: part.output })
         ? [{ toolName: part.toolName, output: billingOutput(part.output) }]
@@ -427,6 +444,8 @@ const STATUS_BY_RESULT: Record<TaskResult['status'], FinishAgentTaskRequest['sta
 
 const TASK_TOOL_NAME = 'ap_run_task'
 const RESEARCH_TOOL_NAME = 'ap_deep_research'
+const SUB_AGENT_TOOL_NAMES = [TASK_TOOL_NAME, RESEARCH_TOOL_NAME]
+const NO_TOKENS: TaskTokens = { input: 0, output: 0 }
 const RESEARCHERS_AT_ONCE = 4
 const TASK_SKILL_SURFACE: SkillSurface = 'CHAT'
 const REPORT_REQUEST = `You stopped without reporting. Call ${TASK_COMPLETION_TOOL_NAME} now with your result.`
@@ -503,4 +522,10 @@ type TaskRunOutput = {
     needs?: string
     activity?: SubagentActivity
     billedToolCalls?: { toolName: string, output: unknown }[]
+    tokens?: TaskTokens
+}
+
+export type TaskTokens = {
+    input: number
+    output: number
 }

@@ -5,6 +5,7 @@ import { AppConnectionType } from '@activepieces/pieces-framework';
 
 import { workdayApi } from '../src/lib/common/api';
 import { workdayClient } from '../src/lib/common/client';
+import { workdayUtils } from '../src/lib/common/utils';
 
 const AUTH = {
 	type: AppConnectionType.OAUTH2,
@@ -474,5 +475,94 @@ describe('SOAP request bodies', () => {
 			}),
 		).rejects.toThrow('Tax ID and Tax ID Type must be set together');
 		expect(sendRequest).not.toHaveBeenCalled();
+	});
+});
+
+describe('SOAP business object paging', () => {
+	function workersPage({ page, totalPages }: { page: number; totalPages: number }): string {
+		return `<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wd="urn:com.workday/bsvc"><env:Body><wd:Get_Workers_Response><wd:Response_Filter><wd:As_Of_Entry_DateTime>2026-10-02T00:00:00.000Z</wd:As_Of_Entry_DateTime></wd:Response_Filter><wd:Response_Results><wd:Total_Pages>${totalPages}</wd:Total_Pages><wd:Page>${page}</wd:Page></wd:Response_Results><wd:Response_Data><wd:Worker><wd:Worker_Reference><wd:ID wd:type="WID">w${page}</wd:ID></wd:Worker_Reference></wd:Worker></wd:Response_Data></wd:Get_Workers_Response></env:Body></env:Envelope>`;
+	}
+
+	it('fetches every page and reuses the first page as-of time', async () => {
+		sendRequest
+			.mockResolvedValueOnce(resp(workersPage({ page: 1, totalPages: 2 })))
+			.mockResolvedValueOnce(resp(workersPage({ page: 2, totalPages: 2 })));
+		const records = await workdayApi.listSoapObjects({
+			auth: ISU_AUTH,
+			object: workdayUtils.resolveSoapObject({ value: 'workers' }),
+		});
+		expect(records.map((record) => record['id'])).toEqual(['w1', 'w2']);
+		const second = String((sendRequest.mock.calls[1][0] as HttpRequest).body);
+		expect(second).toContain(
+			'<bsvc:As_Of_Entry_DateTime>2026-10-02T00:00:00.000Z</bsvc:As_Of_Entry_DateTime><bsvc:Page>2</bsvc:Page>',
+		);
+		expect((sendRequest.mock.calls[0][0] as HttpRequest).url).toBe(
+			'https://wd2-impl-services1.workday.com/ccx/service/mytenant/Human_Resources/v47.0',
+		);
+	});
+
+	it('fetches every page when no limit is given, so triggers never drop changes', async () => {
+		sendRequest.mockImplementation(async (request: HttpRequest) => {
+			const page = Number(/<bsvc:Page>(\d+)<\/bsvc:Page>/.exec(String(request.body))?.[1] ?? 1);
+			return resp(workersPage({ page, totalPages: 51 }));
+		});
+		const records = await workdayApi.listSoapObjects({
+			auth: ISU_AUTH,
+			object: workdayUtils.resolveSoapObject({ value: 'workers' }),
+		});
+		expect(sendRequest).toHaveBeenCalledTimes(51);
+		expect(records.at(-1)?.['id']).toBe('w51');
+	});
+
+	it("ends the change window at Workday's own clock, not ours", async () => {
+		sendRequest
+			.mockResolvedValueOnce(
+				resp(
+					'<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wd="urn:com.workday/bsvc"><env:Body><wd:Server_Timestamp><wd:Server_Timestamp_Data>2026-10-15T01:00:00.000-07:00</wd:Server_Timestamp_Data></wd:Server_Timestamp></env:Body></env:Envelope>',
+				),
+			)
+			.mockResolvedValueOnce(resp(workersPage({ page: 1, totalPages: 1 })));
+		const result = await workdayApi.listChangedSoapObjects({
+			auth: ISU_AUTH,
+			object: workdayUtils.resolveSoapObject({ value: 'workers' }),
+			sinceEpochMS: Date.parse('2026-10-15T07:00:00.000Z'),
+		});
+		const body = String((sendRequest.mock.calls[1][0] as HttpRequest).body);
+		expect(body).toContain('<bsvc:Updated_From>2026-10-15T07:00:00.000Z</bsvc:Updated_From>');
+		expect(body).toContain('<bsvc:Updated_Through>2026-10-15T08:00:00.000Z</bsvc:Updated_Through>');
+		expect(result.updatedThroughEpochMS).toBe(Date.parse('2026-10-15T08:00:00.000Z'));
+		expect(result.records.map((record) => record['id'])).toEqual(['w1']);
+	});
+
+	it('only fetches payees by ID', async () => {
+		await expect(
+			workdayApi.listSoapObjects({
+				auth: ISU_AUTH,
+				object: workdayUtils.resolveSoapObject({ value: 'payees' }),
+			}),
+		).rejects.toThrow('Payee can only be fetched by ID. Use Get Business Object Details.');
+		expect(sendRequest).not.toHaveBeenCalled();
+	});
+
+	it('refuses to watch objects without change tracking', async () => {
+		await expect(
+			workdayApi.listChangedSoapObjects({
+				auth: ISU_AUTH,
+				object: workdayUtils.resolveSoapObject({ value: 'locations' }),
+				sinceEpochMS: 0,
+			}),
+		).rejects.toThrow("Workday does not track changes for Location, so it can't be watched.");
+		expect(sendRequest).not.toHaveBeenCalled();
+	});
+
+	it('uses a per-call WWS version when given', async () => {
+		sendRequest.mockResolvedValue(resp(SOAP_OK));
+		await workdayApi.callSoapOperation({
+			auth: ISU_AUTH,
+			service: 'Staffing',
+			operationXml: '<bsvc:Get_Positions_Request/>',
+			version: 'v45.0',
+		});
+		expect((sendRequest.mock.calls[0][0] as HttpRequest).url).toContain('/Staffing/v45.0');
 	});
 });

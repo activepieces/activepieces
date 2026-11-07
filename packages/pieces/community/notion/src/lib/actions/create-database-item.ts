@@ -21,6 +21,22 @@ export const createDatabaseItem = createAction({
       'Creates a new row (page) in a specific Notion database, setting its property fields and optionally appending body content. Use when an agent must add a structured record (task, contact, ticket) to a known database; requires the target database_id and field values matching that database schema. Not idempotent: each call creates a separate item, so guard against duplicates.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'database',
+      display: 'section',
+      label: 'Database',
+      icon: 'inbox',
+      props: ['database_id'],
+    },
+    {
+      key: 'new_item',
+      display: 'section',
+      label: 'New item',
+      icon: 'sliders',
+      props: ['databaseFields', 'content'],
+    },
+  ],
   props: {
     database_id: notionCommon.database_id,
     databaseFields: notionCommon.databaseFields,

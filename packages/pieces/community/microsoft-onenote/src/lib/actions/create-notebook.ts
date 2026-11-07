@@ -1,15 +1,17 @@
-import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { oneNoteAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { microsoftOneNoteAuth } from '../auth';
+import { microsoftOneNoteClient } from '../common/client';
+import type { Notebook } from '../common/types';
+import { createNotebookOutputSchema } from '../output-schemas';
 
-export const createNotebook = createAction({
-	auth: oneNoteAuth,
+export const createNotebookAction = createAction({
+	auth: microsoftOneNoteAuth,
 	name: 'create_notebook',
+	outputSchema: createNotebookOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Notebook',
 	description: 'Creates a notebook.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new OneNote notebook for the authenticated user, given a display name. Use as the top-level container before adding sections and pages; the name must be unique, under 128 characters, and avoid characters such as ?*/:<>|\'"%~. Not idempotent: each call attempts to create another notebook.', idempotent: false },
 	props: {
 		displayName: Property.ShortText({
@@ -22,21 +24,14 @@ export const createNotebook = createAction({
 		const { auth, propsValue } = context;
 		const { displayName } = propsValue;
 
-		const authValue = auth as OAuth2PropertyValue;
-		const cloud = authValue.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(authValue.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = microsoftOneNoteClient.create({ auth });
 
 		const notebookBody = {
 			displayName,
 		};
 
 		try {
-			const response = await client.api('/me/onenote/notebooks').post(notebookBody);
+			const response: Notebook = await client.api('/me/onenote/notebooks').post(notebookBody);
 
 			return {
 				id: response.id,
@@ -53,8 +48,8 @@ export const createNotebook = createAction({
 				links: response.links,
 				self: response.self,
 			};
-		} catch (error: any) {
-			throw new Error(`Failed to create notebook: ${error.message || 'Unknown error'}`);
+		} catch (error) {
+			throw new Error(`Failed to create notebook: ${(error instanceof Error && error.message) || 'Unknown error'}`);
 		}
 	},
 });

@@ -22,6 +22,10 @@ export const askOpenRouterAction = createAction({
   description: 'Send a prompt to any model on OpenRouter and get the reply.',
   aiMetadata: { description: 'Sends a single prompt to any model in the OpenRouter catalog through one unified completions endpoint and returns the generated text, with optional temperature, top-p, and max-token controls. It is the only first-class action in the piece and is single-turn - no conversation memory, no system-role array, and no image or audio input - so use the sibling Custom API Call for any other OpenRouter endpoint, and prefer a vendor-specific piece such as OpenAI, Anthropic, or Groq when the model must come from one provider. Requires a model id from the OpenRouter model list and a prompt; not idempotent: each call bills a fresh generation and may return different text for the same input.', idempotent: false },
   auth: openRouterAuth,
+  propertyGroups: [
+    { key: 'ai_model', display: 'section', label: 'AI Model', icon: 'sliders', props: ['model'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt'] },
+  ],
   props: {
     model: Property.Dropdown({
       auth: openRouterAuth,

@@ -269,3 +269,95 @@ describe('toWorkdayModule', () => {
 		expect(() => workdayUtils.toWorkdayModule({ module: 'finance' })).toThrow();
 	});
 });
+
+describe('SOAP business objects', () => {
+	const workers = workdayUtils.resolveSoapObject({ value: 'workers' });
+
+	it('builds a Get request with references, change window, paging and response group', () => {
+		const xml = workdayUtils.buildSoapGetRequest({
+			object: workers,
+			ids: ['3aa5550b7fe348b98d7b5741afc65534', '21<001'],
+			updatedFrom: '2026-10-01T00:00:00.000Z',
+			updatedThrough: '2026-10-02T00:00:00.000Z',
+			page: 2,
+			asOfEntryDateTime: '2026-10-02T00:00:00.000Z',
+		});
+		expect(xml).toContain('<bsvc:Get_Workers_Request xmlns:bsvc="urn:com.workday/bsvc">');
+		expect(xml).toContain(
+			'<bsvc:Worker_Reference><bsvc:ID bsvc:type="WID">3aa5550b7fe348b98d7b5741afc65534</bsvc:ID></bsvc:Worker_Reference>',
+		);
+		expect(xml).toContain('<bsvc:ID bsvc:type="Employee_ID">21&lt;001</bsvc:ID>');
+		expect(xml).toContain('<bsvc:Updated_From>2026-10-01T00:00:00.000Z</bsvc:Updated_From>');
+		expect(xml).toContain(
+			'<bsvc:Response_Filter><bsvc:As_Of_Entry_DateTime>2026-10-02T00:00:00.000Z</bsvc:As_Of_Entry_DateTime><bsvc:Page>2</bsvc:Page><bsvc:Count>100</bsvc:Count></bsvc:Response_Filter>',
+		);
+		expect(xml).toContain('<bsvc:Include_Reference>true</bsvc:Include_Reference>');
+		expect(xml.indexOf('Request_References')).toBeLessThan(xml.indexOf('Request_Criteria'));
+		expect(xml.indexOf('Request_Criteria')).toBeLessThan(xml.indexOf('Response_Filter'));
+		expect(xml.indexOf('Response_Filter')).toBeLessThan(xml.indexOf('Response_Group'));
+	});
+
+	it('puts payee references inside the request criteria', () => {
+		const xml = workdayUtils.buildSoapGetRequest({
+			object: workdayUtils.resolveSoapObject({ value: 'payees' }),
+			ids: ['21001'],
+		});
+		expect(xml).not.toContain('Request_References');
+		expect(xml).toContain(
+			'<bsvc:Request_Criteria><bsvc:Payee_Reference><bsvc:ID bsvc:type="Employee_ID">21001</bsvc:ID></bsvc:Payee_Reference></bsvc:Request_Criteria>',
+		);
+	});
+
+	it('reads records, paging info and simplifies references', () => {
+		const page = workdayUtils.readSoapGetPage({
+			object: workers,
+			body: {
+				Get_Workers_Response: {
+					Response_Filter: { As_Of_Entry_DateTime: '2026-10-02T00:00:00.000Z' },
+					Response_Results: { Total_Results: 101, Total_Pages: 2 },
+					Response_Data: {
+						Worker: {
+							Worker_Reference: {
+								ID: [
+									{ '#text': 'abc', '@_type': 'WID' },
+									{ '#text': 21001, '@_type': 'Employee_ID' },
+								],
+							},
+							Worker_Descriptor: 'Logan McNeil',
+							Worker_Data: {
+								Location_Reference: {
+									'@_Descriptor': 'San Francisco',
+									ID: { '#text': 'loc', '@_type': 'WID' },
+								},
+							},
+						},
+					},
+				},
+			},
+		});
+		expect(page.totalPages).toBe(2);
+		expect(page.asOfEntryDateTime).toBe('2026-10-02T00:00:00.000Z');
+		expect(page.records).toEqual([
+			{
+				id: 'abc',
+				Worker_Reference: { WID: 'abc', Employee_ID: '21001' },
+				Worker_Descriptor: 'Logan McNeil',
+				Worker_Data: { Location_Reference: { WID: 'loc', descriptor: 'San Francisco' } },
+			},
+		]);
+	});
+
+	it('lists only change-tracked objects for triggers', () => {
+		const tracked = workdayUtils
+			.soapObjects({ transactionLogOnly: true })
+			.map((item) => item.value);
+		expect(tracked).toEqual([
+			'workers',
+			'job_profiles',
+			'positions',
+			'job_requisitions',
+			'evergreen_requisitions',
+		]);
+		expect(() => workdayUtils.resolveSoapObject({ value: 'nope' })).toThrow();
+	});
+});

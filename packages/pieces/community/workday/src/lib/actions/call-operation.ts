@@ -6,6 +6,29 @@ import { workdayApi } from '../common/api';
 import { workdayProps } from '../common/props';
 import { workdayUtils } from '../common/utils';
 
+const SOAP_SERVICES = [
+	'Absence_Management',
+	'Benefits_Administration',
+	'Cash_Management',
+	'Compensation',
+	'Compensation_Review',
+	'Financial_Management',
+	'Human_Resources',
+	'Identity_Management',
+	'Integrations',
+	'Learning',
+	'Payroll',
+	'Payroll_Interface',
+	'Performance_Management',
+	'Recruiting',
+	'Resource_Management',
+	'Revenue_Management',
+	'Staffing',
+	'Talent',
+	'Time_Tracking',
+	'Workforce_Planning',
+];
+
 export const callOperationAction = createAction({
 	auth: workdayAuth,
 	name: 'call_operation',
@@ -39,9 +62,22 @@ export const callOperationAction = createAction({
 				'REST sub-resource or SOAP operation path, e.g. `/cases/{id}/reopen` or `Close_Job_Requisition`.',
 			required: true,
 		}),
-		soapService: Property.ShortText({
-			displayName: 'SOAP Service Name',
-			description: 'Required for SOAP operations, e.g. `Staffing` or `Human_Resources`.',
+		soapService: Property.StaticDropdown({
+			displayName: 'SOAP Service',
+			description: 'Workday Web Service that owns the operation. Required for SOAP operations.',
+			required: false,
+			options: {
+				disabled: false,
+				options: SOAP_SERVICES.map((service) => ({
+					label: service.replace(/_/g, ' '),
+					value: service,
+				})),
+			},
+		}),
+		soapVersion: Property.ShortText({
+			displayName: 'SOAP Version',
+			description:
+				'Workday Web Services version for this call, e.g. `v45.0`. Leave empty to use the connection version (default v47.0).',
 			required: false,
 		}),
 		httpMethod: Property.StaticDropdown<HttpMethod, false>({
@@ -72,7 +108,7 @@ export const callOperationAction = createAction({
 	async run({ auth, propsValue }) {
 		if (propsValue.operationType === 'soap') {
 			if (!propsValue.soapService) {
-				throw new Error('SOAP Service Name is required for SOAP operations.');
+				throw new Error('SOAP Service is required for SOAP operations.');
 			}
 			const xml =
 				propsValue.soapBody && propsValue.soapBody.trim().length > 0
@@ -82,6 +118,7 @@ export const callOperationAction = createAction({
 				auth,
 				service: propsValue.soapService,
 				operationXml: xml,
+				version: propsValue.soapVersion,
 			});
 			return workdayUtils.flattenRecord({ value: result });
 		}

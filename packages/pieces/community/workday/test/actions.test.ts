@@ -79,6 +79,17 @@ describe('get_business_object_details_batch', () => {
 			'https://wd2-impl-services1.workday.com/ccx/api/recruiting/v4/mytenant/jobPostings/1',
 		);
 	});
+
+	it('returns nothing for an empty ID list instead of listing every record', async () => {
+		const out = await getBusinessObjectDetailsBatchAction.run(
+			context(
+				{ source: 'wws', businessObject: { objectType: 'workers' }, objectIds: [] },
+				AUTH_WITH_ISU,
+			),
+		);
+		expect(out).toEqual({ total_count: 0, records: [] });
+		expect(sendRequest).not.toHaveBeenCalled();
+	});
 });
 
 describe('search_business_object_batch', () => {

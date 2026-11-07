@@ -223,7 +223,7 @@ async function aiProviderGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
         '',
         '5. Click Save',
         '',
-        'After setup, use ap_list_ai_models to discover available models for Run Agent steps.',
+        'After setup, use ap_list_ai_models to discover available models for AI steps.',
     )
 
     return { content: [{ type: 'text', text: lines.join('\n') }] }

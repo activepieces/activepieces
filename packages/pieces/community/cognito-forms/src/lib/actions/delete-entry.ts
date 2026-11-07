@@ -1,33 +1,27 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
 import { cognitoFormsAuth } from '../auth';
-import { formIdDropdown } from '../common/props';
+import { deleteEntry } from '../common/delete';
+import { entryIdText, formIdDropdown } from '../common/props';
+import { deleteEntryOutputSchema } from '../output-schemas';
 
 export const deleteEntryAction = createAction({
   auth: cognitoFormsAuth,
   name: 'delete_entry',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Entry',
-  description: 'Deletes a specified entry.',
-  audience: 'both',
-  aiMetadata: { description: 'Permanently deletes a single entry from a Cognito Forms form, identified by its entry ID. Choose this to remove a specific submission you can identify by ID. Idempotent: once the entry is gone, repeating the call converges to the same deleted state.', idempotent: true },
+  description: 'Permanently deletes an entry. Entries that are already gone are reported as already deleted.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'Permanently deletes one Cognito Forms entry by form and entry ID. Idempotent: deleting an entry that no longer exists succeeds with already_deleted true.',
+    idempotent: true,
+  },
+  outputSchema: deleteEntryOutputSchema,
   props: {
     formId: formIdDropdown,
-    entryId: Property.ShortText({
-      displayName: 'Entry ID',
-      required: true,
-      description: 'Enter the ID of the entry to delete.',
-    }),
+    entryId: entryIdText('The entry number (for example 12) or the full entry ID (for example 5-12) of the entry to delete.'),
   },
   async run(context) {
-    const apiKey = context.auth;
     const { formId, entryId } = context.propsValue;
-
-    return await makeRequest(
-      apiKey,
-      HttpMethod.DELETE,
-      `/forms/${formId}/entries/${entryId}`
-    );
+    return deleteEntry({ apiKey: context.auth.secret_text, formId, entryId });
   },
 });

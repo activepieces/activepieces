@@ -17,6 +17,15 @@ export const getPageAction = createAction({
 		idempotent: true,
 	},
 	outputSchema: pageOutputSchema,
+	propertyGroups: [
+		{
+			key: 'page',
+			display: 'section',
+			label: 'Page',
+			icon: 'file',
+			props: ['pageType', 'pageId'],
+		},
+	],
 	props: {
 		pageType: pageType,
 		pageId: Property.ShortText({
