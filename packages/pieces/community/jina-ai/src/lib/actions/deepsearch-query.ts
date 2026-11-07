@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
 import { jinaAiAuth } from '../auth';
@@ -28,13 +28,14 @@ export const deepSearchQueryAction = createAction({
       },
     }),
     prompt:Property.LongText({
-      displayName:'Prompt',
+      displayName:'Question',
+      description: 'What you want DeepSearch to research and answer.',
+      placeholder: 'Which EU countries changed their VAT rates this year?',
       required:true
     }),
     reasoning_effort: Property.StaticDropdown({
       displayName: 'Reasoning Effort',
-      description:
-        'Constrains effort on reasoning for reasoning models. Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response.',
+      description: 'Lower is faster and uses fewer tokens.',
       required: false,
       defaultValue: 'medium',
       options: {
@@ -45,59 +46,85 @@ export const deepSearchQueryAction = createAction({
         ],
       },
     }),
-    budget_tokens: Property.Number({
-      displayName: 'Budget Tokens',
-      description:
-        'This determines the maximum number of tokens allowed for DeepSearch process. Larger budgets can improve response quality by enabling more exhaustive search for complex queries.',
-      required: false,
-      defaultValue: 0,
+    domains_info: Property.MarkDown({
+      value: 'Enter one domain per line. Leave all three empty to search the whole web.',
+      variant: MarkdownVariant.INFO,
     }),
-    max_attempts: Property.Number({
-      displayName: 'Max Attempts',
-      description:
-        'The maximum number of retries for solving a problem in DeepSearch process. A larger value allows DeepSearch to retry solving the problem by using different reasoning approaches and strategies.',
+    boost_hostnames: Property.LongText({
+      displayName: 'Preferred Domains',
+      description: 'Ranked higher when picking sources.',
+      placeholder: 'wikipedia.org',
       required: false,
-      defaultValue: 1,
     }),
-    no_direct_answer: Property.Checkbox({
-      displayName: 'No Direct Answer',
-      description:
-        "Forces the model to take further thinking/search steps even when the query seems trivial. Useful if you're using DeepSearch in scenarios where you're certain the query always needs DeepSearch, rather than for trivial questions.",
+    bad_hostnames: Property.LongText({
+      displayName: 'Excluded Domains',
+      description: 'Never used as sources.',
+      placeholder: 'example-spam.com',
       required: false,
-      defaultValue: false,
+    }),
+    only_hostnames: Property.LongText({
+      displayName: 'Only These Domains',
+      description: 'No other domains are used.',
+      placeholder: 'nature.com',
+      required: false,
     }),
     max_returned_urls: Property.Number({
       displayName: 'Max Returned URLs',
-      description:
-        'The maximum number of URLs to include in the final answer/chunk. URLs are sorted by relevance and other important factors.',
+      description: 'Most source URLs to include in the answer.',
       required: false,
       defaultValue: 1,
     }),
     response_format: Property.Json({
       displayName: 'Structured Output',
       description:
-        'JSON schema for structured output format. Example: { "type": "json_schema", "json_schema": { "type": "object", "properties": { "numerical_answer_only": { "type": "number" } } } }',
+        `A response_format object: {"type": "json_schema", "json_schema": {…}}. Empty: plain text.`,
       required: false,
+      advanced: true,
     }),
-    boost_hostnames: Property.LongText({
-      displayName: 'Good Domains',
-      description:
-        'A list of domains that are given a higher priority for content retrieval. Useful for domain-specific, high-quality sources that provide valuable content.',
+    budget_tokens: Property.Number({
+      displayName: 'Token Budget',
+      description: "Most tokens DeepSearch may use. 0: Jina's default.",
       required: false,
+      defaultValue: 0,
+      advanced: true,
     }),
-    bad_hostnames: Property.LongText({
-      displayName: 'Bad Domains',
-      description:
-        'A list of domains to be strictly excluded from content retrieval. Typically used to filter out known spam, low-quality, or irrelevant websites.',
+    max_attempts: Property.Number({
+      displayName: 'Max Attempts',
+      description: 'How many times DeepSearch may retry with a new approach.',
       required: false,
+      defaultValue: 1,
+      advanced: true,
     }),
-    only_hostnames: Property.LongText({
-      displayName: 'Only Domains',
-      description:
-        'A list of domains to be exclusively included in content retrieval. All other domains will be ignored. Useful for domain-specific searches.',
+    no_direct_answer: Property.Checkbox({
+      displayName: 'Always Search First',
+      description: 'Search and reason even when the question looks simple.',
       required: false,
+      defaultValue: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'research',
+      display: 'section',
+      label: 'Research',
+      icon: 'text',
+      props: ['model', 'prompt', 'reasoning_effort'],
+    },
+    {
+      key: 'sources',
+      display: 'section',
+      label: 'Sources',
+      icon: 'filter',
+      props: [
+        'domains_info',
+        'boost_hostnames',
+        'bad_hostnames',
+        'only_hostnames',
+        'max_returned_urls',
+      ],
+    },
+  ],
   async run(context) {
     const {
       model,
