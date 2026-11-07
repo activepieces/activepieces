@@ -63,7 +63,7 @@ export class BuilderPage extends BasePage {
   }
 
   async setCode(code: string) {
-    await this.replaceEditorText({ testId: 'code-editor', text: code });
+    await this.replaceText({ field: this.sidebar().getByTestId('code-editor'), text: code });
   }
 
   async setTextInput({ name, value }: { name: string; value: string }) {
