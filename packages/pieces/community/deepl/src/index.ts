@@ -60,9 +60,9 @@ export const deepl = createPiece({
     translateText,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        (auth as { type: string }).type === 'free'
+        auth?.props.type === 'free'
           ? 'https://api-free.deepl.com/v2'
-          : 'https://api.deepl.com/v2', // Replace with the actual base URL
+          : 'https://api.deepl.com/v2',
       auth: deeplAuth,
       authMapping: async (auth) => ({
         Authorization: `DeepL-Auth-Key ${auth.props.key}`,
