@@ -7,7 +7,7 @@ export const deleteContacts = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Contacts',
   auth: krispcallAuth,
-  description: 'Delete contacts from krispcall.',
+  description: 'Delete contacts from your KrispCall account by phone number.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -16,8 +16,8 @@ export const deleteContacts = createAction({
   },
   props: {
     contacts: Property.Array({
-      displayName: 'Contacts',
-      description: 'Enter contact which you want to delete.',
+      displayName: 'Phone Numbers',
+      description: 'Phone numbers of the contacts to delete, with the country code.',
       required: false,
     }),
   },
