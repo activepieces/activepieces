@@ -26,10 +26,33 @@ export const generateContent = createAction({
       'Sends a prompt (with optional system instruction) to a Gemini model on Google Vertex AI and returns the generated text. Multimodal: you can attach files, public image URLs, or a YouTube video URL for the model to analyze alongside the prompt. Use for free-form text generation, summarization, extraction, or analysis of supplied media. Requires a Vertex AI service-account credential and a region/model selection. Not idempotent — each call is a fresh generation and output varies (especially with non-zero temperature).',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['userMessage', 'systemMessage'],
+    },
+    {
+      key: 'settings',
+      display: 'section',
+      label: 'Settings',
+      icon: 'sliders',
+      props: ['location', 'model'],
+    },
+    {
+      key: 'attachments',
+      display: 'section',
+      label: 'Attachments',
+      icon: 'paperclip',
+      props: ['files', 'imageUrls', 'youtubeUrl'],
+    },
+  ],
   props: {
     location: Property.Dropdown({
       displayName: 'Location',
-      description: 'Google Cloud region where your Vertex AI resources are hosted.',
+      description: 'Google Cloud region that runs the model.',
       required: true,
       refreshers: [],
       defaultValue: 'us-central1',
@@ -39,7 +62,7 @@ export const generateContent = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
-      description: 'Gemini model to use for content generation.',
+      description: 'Gemini model that writes the response.',
       required: true,
       refreshers: ['location'],
       defaultValue: 'gemini-2.5-flash',
@@ -51,19 +74,21 @@ export const generateContent = createAction({
         ),
     }),
     systemMessage: Property.LongText({
-      displayName: 'System Message',
-      description: "Instructions that guide the model's behavior throughout the conversation.",
+      displayName: 'System Instructions',
+      description: 'How the model should behave, such as its role or tone.',
+      placeholder: 'You are a helpful assistant that answers in short bullet points.',
       required: false,
     }),
     userMessage: Property.LongText({
-      displayName: 'User Message',
-      description: 'The prompt to send to the model.',
+      displayName: 'Prompt',
+      description: 'What you want the model to write or answer.',
+      placeholder: 'Summarize this customer email in three bullet points.',
       required: true,
     }),
     files: Property.Array({
       displayName: 'Files',
       required: false,
-      description: 'Optional files to include in the prompt (images, PDFs, text, audio, video)',
+      description: 'Images, PDFs, text, audio or video for the model to read.',
       properties: {
         file: Property.File({
           displayName: 'File',
@@ -74,30 +99,31 @@ export const generateContent = createAction({
     youtubeUrl: Property.ShortText({
       displayName: 'YouTube URL',
       required: false,
-      description: 'Optional public YouTube video URL for the AI to use as a reference.',
+      description: 'Public YouTube video the model watches.',
+      placeholder: 'https://www.youtube.com/watch?v=...',
     }),
     imageUrls: Property.Array({
       displayName: 'Image URLs',
-      description:
-        'Public image URLs to include alongside the user message. The model will analyze these images.',
+      description: 'Public image links the model looks at.',
       required: false,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
-      description:
-        'Controls randomness. Lower values are more deterministic (0–2). Leave empty to use the model default.',
+      description: 'From 0 to 2; lower gives steadier answers. Empty: model default.',
       required: false,
+      advanced: true,
     }),
     maxOutputTokens: Property.Number({
       displayName: 'Max Output Tokens',
-      description: 'Maximum number of tokens to generate. Leave empty to use the model default.',
+      description: 'Longest reply, in tokens. Empty: model default.',
       required: false,
+      advanced: true,
     }),
     thinkingLevel: Property.StaticDropdown({
       displayName: 'Thinking Level',
-      description:
-        'Controls how much the model thinks before responding. Supported on Gemini 2.5 and later models.',
+      description: 'Gemini 3 models only. Leave empty when using Thinking Budget.',
       required: false,
+      advanced: true,
       options: {
         options: [
           { label: 'Low', value: ThinkingLevel.LOW },
@@ -107,16 +133,16 @@ export const generateContent = createAction({
       },
     }),
     thinkingBudget: Property.Number({
-      displayName: 'Thinking Budget (tokens)',
-      description:
-        'Maximum number of tokens the model can use for internal reasoning. Set to 0 to disable thinking. Supported on Gemini 2.5 and later models.',
+      displayName: 'Thinking Budget',
+      description: 'Reasoning tokens for Gemini 2.5 models; 0 turns it off where allowed.',
       required: false,
+      advanced: true,
     }),
     includeThoughts: Property.Checkbox({
-      displayName: 'Include Thoughts in Response',
-      description:
-        "When enabled, the model's reasoning is returned alongside the final response. Supported on Gemini 2.5 and later models.",
+      displayName: 'Include Thoughts',
+      description: "Adds the model's reasoning summary to the Candidates output.",
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
