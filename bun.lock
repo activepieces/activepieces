@@ -1179,6 +1179,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/bettermode": {
