@@ -6,6 +6,7 @@ import {
 import {
   HttpMethod,
   HttpMessageBody,
+  HttpResponse,
   httpClient,
   AuthenticationType,
   QueryParams,
@@ -13,21 +14,24 @@ import {
 import { clicksendAuth } from '../..';
 
 export const clicksendCommon = {
+  baseUrl: 'https://rest.clicksend.com/v3',
+
   phone_number: Property.ShortText({
-    description: 'The phone number (with country code, e.g., +1234567890)',
+    description: 'International format, with the country code.',
     displayName: 'Phone Number',
     required: true,
+    placeholder: '+14155550123',
   }),
 
   email: Property.ShortText({
-    description: 'The email address',
     displayName: 'Email Address',
     required: true,
+    placeholder: 'jane@example.com',
   }),
 
   contact_list_id: Property.Dropdown({
     auth: clicksendAuth,
-    displayName: 'Contact List ID',
+    displayName: 'Contact List',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -35,7 +39,7 @@ export const clicksendCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account first.',
+          placeholder: 'Connect your ClickSend account first.',
         };
       }
 
@@ -43,32 +47,49 @@ export const clicksendCommon = {
 
       const options: DropdownOption<number>[] = [];
 
-      let currentPage = 1;
-      let hasNext = true;
+      try {
+        let currentPage = 1;
+        let hasNext = true;
 
-      do {
-        const response = await callClickSendApi<{
-          data: {
-            next_page_url?: string;
-            data: { list_id: number; list_name: string }[];
-          };
-        }>({
-          method: HttpMethod.GET,
-          username: authValue.username,
-          password: authValue.password,
-          path: '/lists',
-          query: { page: currentPage.toString(), limit: '100' },
-        });
+        do {
+          const response = await callClickSendApi<{
+            data: {
+              next_page_url?: string;
+              data: { list_id: number; list_name: string }[];
+            };
+          }>({
+            method: HttpMethod.GET,
+            username: authValue.username,
+            password: authValue.password,
+            path: '/lists',
+            query: { page: currentPage.toString(), limit: '100' },
+          });
 
-        const items = response.body.data?.data ?? [];
+          const items = response.body.data?.data ?? [];
 
-        for (const list of items) {
-          options.push({ label: list.list_name, value: list.list_id });
-        }
+          for (const list of items) {
+            options.push({ label: list.list_name, value: list.list_id });
+          }
 
-        currentPage++;
-        hasNext = !!response.body.data?.next_page_url;
-      } while (hasNext);
+          currentPage++;
+          hasNext = !!response.body.data?.next_page_url;
+        } while (hasNext);
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Could not load contact lists. Check your connection.',
+        };
+      }
+
+      if (options.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No contact lists found. Create one first.',
+        };
+      }
+
       return {
         disabled: false,
         options,
@@ -78,15 +99,23 @@ export const clicksendCommon = {
 
   contact_id: Property.Dropdown({
     auth: clicksendAuth,
-    displayName: 'Contact ID',
+    displayName: 'Contact',
     required: true,
     refreshers: ['contact_list_id'],
     options: async ({ auth, contact_list_id }) => {
-      if (!auth || !contact_list_id) {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account first.',
+          placeholder: 'Connect your ClickSend account first.',
+        };
+      }
+
+      if (!contact_list_id) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Select a contact list first.',
         };
       }
 
@@ -94,32 +123,57 @@ export const clicksendCommon = {
 
       const options: DropdownOption<number>[] = [];
 
-      let currentPage = 1;
-      let hasNext = true;
+      try {
+        let currentPage = 1;
+        let hasNext = true;
 
-      do {
-        const response = await callClickSendApi<{
-          data: {
-            next_page_url?: string;
-            data: { contact_id: number; email: string }[];
-          };
-        }>({
-          method: HttpMethod.GET,
-          username: authValue.username,
-          password: authValue.password,
-          path: `/lists/${contact_list_id}/contacts`,
-          query: { page: currentPage.toString(), limit: '100' },
-        });
+        do {
+          const response = await callClickSendApi<{
+            data: {
+              next_page_url?: string;
+              data: {
+                contact_id: number;
+                email?: string;
+                first_name?: string;
+                last_name?: string;
+                phone_number?: string;
+              }[];
+            };
+          }>({
+            method: HttpMethod.GET,
+            username: authValue.username,
+            password: authValue.password,
+            path: `/lists/${contact_list_id}/contacts`,
+            query: { page: currentPage.toString(), limit: '100' },
+          });
 
-        const items = response.body.data?.data ?? [];
+          const items = response.body.data?.data ?? [];
 
-        for (const contact of items) {
-          options.push({ label: contact.email, value: contact.contact_id });
-        }
+          for (const contact of items) {
+            options.push({
+              label: buildContactLabel(contact),
+              value: contact.contact_id,
+            });
+          }
 
-        currentPage++;
-        hasNext = !!response.body.data?.next_page_url;
-      } while (hasNext);
+          currentPage++;
+          hasNext = !!response.body.data?.next_page_url;
+        } while (hasNext);
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Could not load contacts. Check your connection.',
+        };
+      }
+
+      if (options.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No contacts in this list.',
+        };
+      }
 
       return {
         disabled: false,
@@ -137,7 +191,7 @@ export const clicksendCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account first.',
+          placeholder: 'Connect your ClickSend account first.',
         };
       }
       const authValue = auth;
@@ -175,10 +229,10 @@ interface clickSendApiParams {
 
 export async function callClickSendApi<T extends HttpMessageBody>(
   params: clickSendApiParams
-) {
+): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
     method: params.method,
-    url: `https://rest.clicksend.com/v3${params.path}`,
+    url: `${clicksendCommon.baseUrl}${params.path}`,
     authentication: {
       type: AuthenticationType.BASIC,
       username: params.username,
@@ -190,4 +244,19 @@ export async function callClickSendApi<T extends HttpMessageBody>(
     body: params.body,
     queryParams: params.query,
   });
+}
+
+function buildContactLabel(contact: {
+  contact_id: number;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+}): string {
+  const name = `${contact.first_name ?? ''} ${contact.last_name ?? ''}`.trim();
+  const detail = contact.email || contact.phone_number;
+  if (name && detail) {
+    return `${name} (${detail})`;
+  }
+  return name || detail || `Contact ${contact.contact_id}`;
 }
