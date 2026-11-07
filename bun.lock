@@ -1032,7 +1032,7 @@
     },
     "packages/pieces/community/azure-openai": {
       "name": "@activepieces/piece-azure-openai",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1044,6 +1044,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "5.0.5",
       },
     },
     "packages/pieces/community/backblaze": {
