@@ -18,6 +18,22 @@ export const createBoard = createAction({
       'Creates a new Pinterest board to organize Pins, with a name and optional description and privacy level. Use before adding Pins when no suitable board exists. Each call creates a separate board even with identical input, so it is not idempotent.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Board',
+      icon: 'text',
+      props: ['name', 'description'],
+    },
+    {
+      key: 'visibility',
+      display: 'section',
+      label: 'Visibility',
+      icon: 'users',
+      props: ['privacy'],
+    },
+  ],
   props: {
     ad_account_id: adAccountIdDropdown,
     name: Property.ShortText({
@@ -35,7 +51,6 @@ export const createBoard = createAction({
       displayName: 'Privacy',
       required: false,
       defaultValue: 'PUBLIC',
-      display: 'cards',
       options: {
         options: [
           {
