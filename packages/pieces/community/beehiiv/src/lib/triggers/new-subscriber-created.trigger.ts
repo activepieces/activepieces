@@ -12,7 +12,7 @@ export const newSubscriberCreatedTrigger = createTrigger({
 	name: 'beehiiv_new_subscriber_created',
 	classification: 'READ',
 	displayName: 'New Subscriber Created',
-	description: 'Triggers when a new subscriber is created (before email confirmation).',
+	description: 'Triggers when someone subscribes, before they confirm their email.',
 	aiMetadata: {
 		description: 'Fires when a new subscriber is created in the selected beehiiv publication (subscription.created event), before any email confirmation step, emitting the newly created subscription record.',
 	},

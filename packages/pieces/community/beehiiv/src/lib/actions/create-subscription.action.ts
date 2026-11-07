@@ -16,51 +16,56 @@ export const createSubscriptionAction = createAction({
 		publicationId: publicationId,
 		email: Property.ShortText({
 			displayName: 'Email',
-			description: 'The email address of the new subscription.',
+			description: 'Email address to subscribe.',
+			placeholder: 'jane@example.com',
 			required: true,
 		}),
 		reactivate_existing: Property.Checkbox({
 			displayName: 'Reactivate Existing',
-			description:
-				'Whether to reactivate the subscription if they have already unsubscribed. Use only if the subscription is knowingly resubscribing.',
+			description: 'Resubscribe this email if it unsubscribed before, with their consent.',
 			required: false,
 			defaultValue: false,
 		}),
 		send_welcome_email: Property.Checkbox({
 			displayName: 'Send Welcome Email',
-			description: 'Whether to send the default welcome email to the subscription.',
+			description: "Send the publication's welcome email to the new subscriber.",
 			required: false,
 			defaultValue: false,
 		}),
 		utm_source: Property.ShortText({
 			displayName: 'UTM Source',
-			description: 'The source of the subscription.',
+			placeholder: 'twitter',
 			required: false,
+			advanced: true,
 		}),
 		utm_medium: Property.ShortText({
 			displayName: 'UTM Medium',
-			description: 'The medium of the subscription.',
+			placeholder: 'social',
 			required: false,
+			advanced: true,
 		}),
 		utm_campaign: Property.ShortText({
 			displayName: 'UTM Campaign',
-			description: 'The acquisition campaign of the subscription.',
+			placeholder: 'spring_launch',
 			required: false,
+			advanced: true,
 		}),
 		referring_site: Property.ShortText({
 			displayName: 'Referring Site',
-			description: 'The website that the subscription was referred from.',
+			placeholder: 'https://blog.example.com',
 			required: false,
+			advanced: true,
 		}),
 		referral_code: Property.ShortText({
 			displayName: 'Referral Code',
-			description: "A subscription's referral_code to give them credit for the new subscription.",
+			description: "A subscriber's referral code, to credit them for this signup.",
 			required: false,
+			advanced: true,
 		}),
 		tier: Property.StaticDropdown({
 			displayName: 'Subscription Tier',
-			description: 'The tier for this subscription.',
 			required: false,
+			width: 'half',
 			options: {
 				options: [
 					{ label: 'Free', value: 'free' },
@@ -71,21 +76,48 @@ export const createSubscriptionAction = createAction({
 		custom_fields: customFields,
 		stripe_customer_id: Property.ShortText({
 			displayName: 'Stripe Customer ID',
-			description: 'The Stripe customer ID for this subscription.',
+			description: 'Links the subscriber to a Stripe customer.',
+			placeholder: 'cus_123',
 			required: false,
+			width: 'half',
 		}),
 		double_opt_override: Property.ShortText({
 			displayName: 'Double Opt-in Override',
-			description: 'Override publication double-opt settings for this subscription.',
+			description: "Enter on or off to override the publication's double opt-in setting.",
+			placeholder: 'on',
 			required: false,
+			advanced: true,
 		}),
 		premium_tier_ids: Property.Array({
 			displayName: 'Premium Tier IDs',
-			description: 'The IDs of the premium tiers this subscription is associated with.',
+			description: 'IDs of the premium tiers to give this subscriber.',
 			required: false,
 		}),
-		automation_ids: automationId('Automation IDs','Enroll the subscription into automations after their subscription has been created.',false),
+		automation_ids: automationId('Automations','Enroll the new subscriber in these automations.',false),
 	},
+	propertyGroups: [
+		{
+			key: 'subscriber',
+			display: 'section',
+			label: 'Subscriber',
+			icon: 'user',
+			props: ['publicationId', 'email', 'custom_fields'],
+		},
+		{
+			key: 'signup',
+			display: 'section',
+			label: 'Sign-up',
+			icon: 'send',
+			props: ['reactivate_existing', 'send_welcome_email', 'automation_ids'],
+		},
+		{
+			key: 'plan',
+			display: 'section',
+			label: 'Plan',
+			icon: 'tag',
+			props: ['tier', 'stripe_customer_id', 'premium_tier_ids'],
+		},
+	],
 	async run(context) {
 		const {
 			publicationId,
@@ -106,6 +138,18 @@ export const createSubscriptionAction = createAction({
 		const automationIds = context.propsValue.automation_ids ?? [];
 		const premiumTierIds = context.propsValue.premium_tier_ids ?? [];
 
+		const transformedCustomFields = Object.entries(customFields)
+			.filter(([_, value]) => {
+				if (Array.isArray(value)) {
+					return value.length > 0;
+				}
+				return value !== undefined && value !== null && value !== '';
+			})
+			.map(([key, value]) => ({
+				name: key,
+				value: value,
+			}));
+
 		const response = await beehiivApiCall({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
@@ -124,10 +168,7 @@ export const createSubscriptionAction = createAction({
 				premium_tier_ids: premiumTierIds.length > 0 ? premiumTierIds : undefined,
 				stripe_customer_id,
 				automation_ids: automationIds.length > 0 ? automationIds : undefined,
-				custom_fields: Object.entries(customFields).map(([key, value]) => ({
-					name: key,
-					value: value,
-				})),
+				custom_fields: transformedCustomFields.length > 0 ? transformedCustomFields : undefined,
 			},
 		});
 
