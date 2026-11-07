@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { customFields, publicationId, subscriptionId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
@@ -15,10 +15,15 @@ export const updateSubscriptionAction = createAction({
 	props: {
 		publicationId: publicationId,
 		subscriptionId: subscriptionId(true),
+		changes_info: Property.MarkDown({
+			value: 'Empty fields keep their current value. Toggles are always sent.',
+			variant: MarkdownVariant.INFO,
+		}),
 		tier: Property.StaticDropdown({
 			displayName: 'Subscription Tier',
-			description: 'Set the tier for this subscription.',
+			description: 'New tier for this subscriber.',
 			required: false,
+			width: 'half',
 			options: {
 				options: [
 					{ label: 'Free', value: 'free' },
@@ -28,16 +33,34 @@ export const updateSubscriptionAction = createAction({
 		}),
 		stripe_customer_id: Property.ShortText({
 			displayName: 'Stripe Customer ID',
-			description: 'The Stripe Customer ID of the subscription.',
+			description: 'Links the subscriber to a Stripe customer.',
+			placeholder: 'cus_123',
 			required: false,
+			width: 'half',
 		}),
 		unsubscribe: Property.Checkbox({
 			displayName: 'Unsubscribe',
-			description: 'Whether to unsubscribe this subscription from the publication.',
+			description: 'Unsubscribe this person from the publication.',
 			required: false,
 		}),
 		custom_fields: customFields,
 	},
+	propertyGroups: [
+		{
+			key: 'subscriber',
+			display: 'section',
+			label: 'Subscriber',
+			icon: 'user',
+			props: ['publicationId', 'subscriptionId'],
+		},
+		{
+			key: 'changes',
+			display: 'section',
+			label: 'Changes',
+			icon: 'sliders',
+			props: ['changes_info', 'tier', 'stripe_customer_id', 'unsubscribe', 'custom_fields'],
+		},
+	],
 	async run(context) {
 		const { publicationId, subscriptionId, tier, stripe_customer_id, unsubscribe } =
 			context.propsValue;
@@ -46,10 +69,10 @@ export const updateSubscriptionAction = createAction({
 
 		const body: Record<string, unknown> = {};
 
-		if (tier !== undefined) {
+		if (tier) {
 			body['tier'] = tier;
 		}
-		if (stripe_customer_id !== undefined) {
+		if (stripe_customer_id) {
 			body['stripe_customer_id'] = stripe_customer_id;
 		}
 		if (unsubscribe !== undefined) {
@@ -72,7 +95,6 @@ export const updateSubscriptionAction = createAction({
 			body['custom_fields'] = transformedCustomFields;
 		}
 
-		console.log(JSON.stringify(body));
 		const response = await beehiivApiCall({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.PUT,
