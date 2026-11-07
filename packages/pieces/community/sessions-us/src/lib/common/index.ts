@@ -33,12 +33,8 @@ export const properties = {
 };
 
 export async function getTimezones(): Promise<string[]> {
-  const timezones = await httpClient.sendRequest({
-    url: 'http://worldtimeapi.org/api/timezone',
-    method: HttpMethod.GET,
-  });
-
-  return timezones.body as string[];
+  const zones = Intl.supportedValuesOf('timeZone');
+  return zones.includes('UTC') ? zones : ['UTC', ...zones];
 }
 
 export async function getEvents(
