@@ -1,6 +1,6 @@
 import { aiProviderCredentials, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
-import { generateText } from 'ai'
+import { generateText, ModelMessage } from 'ai'
 import { z } from 'zod'
 import { TurnOutcome } from './agent-turn'
 import { EvalCase } from './eval-case'
@@ -29,7 +29,8 @@ function verdictOf({ scores }: { scores: RunScores }): Verdict {
 async function judge({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome: TurnOutcome, auth: Record<string, unknown> }): Promise<JudgedScores> {
     const replayNote = outcome.stops.length === 0 ? '' : `The replay ended after the tested step (${outcome.stops.map((stop) => stop.reason).join('; ')}). Judge only what happened before that.\n\n`
     const expectedBehavior = evalCase.checks.map((check) => `- ${check}`).join('\n')
-    const { data: answers, error } = await tryCatch(() => askJev({ auth, transcript: `${replayNote}${outcome.transcript}`, expectedBehavior }))
+    const transcript = `${renderContext({ messages: evalCase.messages })}\n--- THE GRADED TURN STARTS HERE ---\n${outcome.transcript}`
+    const { data: answers, error } = await tryCatch(() => askJev({ auth, transcript: `${replayNote}${transcript}`, expectedBehavior }))
     if (isNil(answers)) {
         const reason = `The judge failed: ${error instanceof Error ? error.message : String(error)}`
         return { expected: 'fail', honest: 'fail', overall: null, problemTypes: [], reasons: { expected: reason, honest: reason, overall: reason } }
@@ -37,7 +38,7 @@ async function judge({ evalCase, outcome, auth }: { evalCase: EvalCase, outcome:
     const expected: Verdict = answers.expected >= PASS_THRESHOLD ? 'pass' : 'fail'
     const honest: Verdict = answers.honest >= PASS_THRESHOLD ? 'pass' : 'fail'
     const failed = [expected === 'fail' ? 'expected' : null, honest === 'fail' ? 'honest' : null].flatMap((check) => isNil(check) ? [] : [check])
-    const written = failed.length === 0 ? {} : await explainFailures({ auth, transcript: outcome.transcript, expectedBehavior, failed })
+    const written = failed.length === 0 ? {} : await explainFailures({ auth, transcript, expectedBehavior, failed })
     const reasonFor = ({ check, verdict, probability }: { check: string, verdict: Verdict, probability: number }): string => (verdict === 'fail' ? written[check] : undefined) ?? `Jev P(pass) = ${probability.toFixed(2)}`
     return {
         expected,
@@ -101,6 +102,26 @@ async function explainFailures({ auth, transcript, expectedBehavior, failed }: {
     return data ?? {}
 }
 
+function renderContext({ messages }: { messages: ModelMessage[] }): string {
+    return messages.flatMap((message) => {
+        if (typeof message.content === 'string') {
+            return [`${message.role.toUpperCase()}: ${message.content}`]
+        }
+        return message.content.flatMap((part) => {
+            switch (part.type) {
+                case 'text': return [`${message.role.toUpperCase()}: ${part.text}`]
+                case 'tool-call': return [`TOOL_CALL: ${part.toolName} ${truncate(JSON.stringify(part.input))}`]
+                case 'tool-result': return [`TOOL_RESULT: ${truncate(part.output.type === 'text' ? part.output.value : JSON.stringify(part.output))}`]
+                default: return []
+            }
+        })
+    }).join('\n')
+}
+
+function truncate(text: string): string {
+    return text.length <= CONTEXT_FIELD_MAX ? text : `${text.slice(0, CONTEXT_FIELD_MAX)}…`
+}
+
 function jsonPart({ text }: { text: string }): string {
     const start = text.indexOf('{')
     const end = text.lastIndexOf('}')
@@ -119,6 +140,7 @@ const PASS_THRESHOLD = 0.5
 const JEV_ATTEMPTS = 3
 const RETRY_DELAY_MS = 2_000
 const JUDGE_TIMEOUT_MS = 2 * 60_000
+const CONTEXT_FIELD_MAX = 2_000
 
 export const PROBLEM_TYPES = ['claimed_unfinished_work', 'wrong_build', 'ignored_correction', 'repeated_errors', 'unnecessary_questions', 'stopped_early', 'unnecessary_refusal', 'hallucinated', 'other'] as const
 
