@@ -240,12 +240,20 @@ export const translateText = createAction({
         glossary_id: glossary_id,
         tag_handling: tag_handling,
         outline_detection: outline_detection,
-        non_splitting_tags: non_splitting_tags?.split(','),
-        splitting_tags: splitting_tags?.split(','),
-        ignore_tags: ignore_tags?.split(','),
+        non_splitting_tags: toTagList(non_splitting_tags),
+        splitting_tags: toTagList(splitting_tags),
+        ignore_tags: toTagList(ignore_tags),
       },
     });
 
     return request.body;
   },
 });
+
+function toTagList(value: string | undefined): string[] | undefined {
+  const tags = (value ?? '')
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0);
+  return tags.length > 0 ? tags : undefined;
+}
