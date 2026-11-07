@@ -16,8 +16,8 @@ export const newIncomingCall = createTrigger({
         domain: domainProp(),
         users: usersProp(),
         status: Property.StaticDropdown({
-            displayName: 'Status',
-            description: 'Filter by call status',
+            displayName: 'Call Status',
+            description: 'Fire on ringing, on answer, or both.',
             required: false,
             options: {
                 options: [
