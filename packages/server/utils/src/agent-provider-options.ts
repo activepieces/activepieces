@@ -41,12 +41,20 @@ function buildSystemPromptWithCaching({ systemPrompt, provider }: { systemPrompt
     }
 }
 
+function supportsForcedToolChoice({ modelId }: { modelId: string }): boolean {
+    const normalizedModelId = modelId.toLowerCase().replace(/\./g, '-')
+    return !FORCED_TOOL_CHOICE_REJECTING_MODELS.some((family) => normalizedModelId.includes(family))
+}
+
 export const agentProviderOptions = {
     buildProviderOptions,
     buildSystemPromptWithCaching,
+    supportsForcedToolChoice,
 }
 
 const ADAPTIVE_ONLY_ANTHROPIC_MODELS = ['claude-opus-4-7', 'claude-opus-4-8', 'claude-opus-5', 'claude-sonnet-5', 'claude-haiku-5', 'claude-fable-5', 'claude-mythos-5']
+
+const FORCED_TOOL_CHOICE_REJECTING_MODELS = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1', 'claude-mythos-5-1']
 
 type OpenRouterReasoningDirective =
     | { enabled: false }

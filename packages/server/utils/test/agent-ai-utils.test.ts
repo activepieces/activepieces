@@ -515,6 +515,20 @@ describe('buildProviderOptions', () => {
     })
 })
 
+describe('supportsForcedToolChoice', () => {
+    for (const modelId of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1', 'claude-mythos-5-1', 'anthropic/claude-opus-5.5', 'anthropic/claude-sonnet-5.5', 'anthropic/claude-fable-5.1', 'anthropic.claude-opus-5-5', 'us.anthropic.claude-sonnet-5-5-v1:0', 'claude-opus-5-5@20261001']) {
+        it(`is false for ${modelId}, which rejects tool_choice any and tool`, () => {
+            expect(agentAiUtils.supportsForcedToolChoice({ modelId })).toBe(false)
+        })
+    }
+
+    for (const modelId of ['claude-opus-5', 'claude-sonnet-5', 'claude-fable-5', 'claude-haiku-5-5', 'claude-opus-4-8', 'anthropic/claude-haiku-4.5', 'anthropic.claude-opus-5', 'gpt-5.6', 'gemini-2.5-flash']) {
+        it(`is true for ${modelId}, which still accepts a forced tool call`, () => {
+            expect(agentAiUtils.supportsForcedToolChoice({ modelId })).toBe(true)
+        })
+    }
+})
+
 describe('a message transform never hands the provider an empty history', () => {
     const onlyThinking: ModelMessage[] = [
         { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,

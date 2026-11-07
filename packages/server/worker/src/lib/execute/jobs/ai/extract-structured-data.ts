@@ -1,5 +1,5 @@
 import { ActivepiecesAiBilling, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
+import { agentAiUtils, aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { ExtractStructuredDataJobData, ResolveAiProviderResponse } from '@activepieces/shared'
 import { generateText, jsonSchema, ModelMessage, tool, UserModelMessage } from 'ai'
 import { ResolvedAiFile } from './ai-files'
@@ -26,14 +26,16 @@ export async function extractStructuredData({ data, resolved, modelId, flowStep,
         inputSchema: schemaDefinition,
         execute: async (extracted) => extracted,
     })
+    const forcesToolCall = agentAiUtils.supportsForcedToolChoice({ modelId })
 
     try {
         const result = await generateText({
             model,
             ...spreadIfDefined('maxRetries', maxRetries),
             ...spreadIfDefined('maxOutputTokens', data.maxOutputTokens),
+            ...spreadIfDefined('instructions', forcesToolCall ? undefined : CALL_EXTRACTION_TOOL_INSTRUCTION),
             tools: { extractData: extractionTool },
-            toolChoice: 'required',
+            toolChoice: forcesToolCall ? 'required' : 'auto',
             messages: buildMessages({ data, files }),
         })
         const toolCalls = result.toolCalls
@@ -101,6 +103,8 @@ function restoreFieldNames({ extracted, sanitizedNameMap }: { extracted: unknown
         return restored
     }, {})
 }
+
+const CALL_EXTRACTION_TOOL_INSTRUCTION = 'Always respond by calling the extractData tool exactly once with the extracted values. Do not reply with plain text.'
 
 type SimpleField = {
     name: string
