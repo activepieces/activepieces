@@ -29,6 +29,10 @@ export const markMessageAsRead = createAction({
 			defaultValue: false,
 		}),
 	},
+	propertyGroups: [
+		{ key: 'account', display: 'section', label: 'Business Number', icon: 'user', props: ['phone_number_id'] },
+		{ key: 'message', display: 'section', label: 'Message', icon: 'inbox', props: ['message_id', 'show_typing_indicator'] },
+	],
 	async run(context) {
 		const { phone_number_id, message_id, show_typing_indicator } = context.propsValue;
 		return whatsappClient.request<{ success: boolean }>({

@@ -38,6 +38,10 @@ export const listMessageTemplates = createAction({
 			required: false,
 		}),
 	},
+	propertyGroups: [
+		{ key: 'search', display: 'section', label: 'Search', icon: 'filter', props: ['status'] },
+		{ key: 'results', display: 'section', label: 'Results', icon: 'sliders', props: ['limit'] },
+	],
 	async run(context) {
 		const { status, limit } = context.propsValue;
 		const queryParams: QueryParams = {

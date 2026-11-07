@@ -50,6 +50,10 @@ export const uploadMedia = createAction({
 			},
 		}),
 	},
+	propertyGroups: [
+		{ key: 'account', display: 'section', label: 'Business Number', icon: 'user', props: ['phone_number_id'] },
+		{ key: 'file', display: 'section', label: 'File', icon: 'paperclip', props: ['file', 'mime_type'] },
+	],
 	async run(context) {
 		const { phone_number_id, file, mime_type } = context.propsValue;
 		const multipart = whatsappClient.buildMultipartBody({

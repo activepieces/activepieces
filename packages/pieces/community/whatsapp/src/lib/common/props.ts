@@ -68,11 +68,12 @@ const templateCategory = Property.StaticDropdown({
 	displayName: 'Category',
 	description: 'Meta reviews and prices the template by category. Utility for transactional updates, Marketing for promotions, Authentication for one-time passcodes.',
 	required: true,
+	display: 'cards',
 	options: {
 		options: [
-			{ label: 'Marketing', value: 'MARKETING' },
-			{ label: 'Utility', value: 'UTILITY' },
-			{ label: 'Authentication', value: 'AUTHENTICATION' },
+			{ label: 'Marketing', value: 'MARKETING', icon: 'tag', description: 'Promotions' },
+			{ label: 'Utility', value: 'UTILITY', icon: 'inbox', description: 'Order updates' },
+			{ label: 'Authentication', value: 'AUTHENTICATION', icon: 'user', description: 'One-time codes' },
 		],
 	},
 });
