@@ -13,21 +13,35 @@ export const findCampaign = createAction({
   description: 'Search all campaigns for the specified query terms',
   audience: 'both',
   aiMetadata: { description: 'Searches all campaigns in the account by a free-text query (matching titles, subject lines, and related fields) and returns the matches. Use to locate a campaign by name or wording before reading or acting on it. Read-only and idempotent; a query is required.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['query'],
+    },
+  ],
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'Search terms to find campaigns',
+      description: 'Words to look for in campaign titles and content.',
+      placeholder: 'October newsletter',
       required: true,
     }),
     fields: Property.LongText({
-      displayName: 'Fields',
-      description: 'Comma-separated list of fields to return',
+      displayName: 'Include Fields',
+      description: 'Comma-separated, in dot notation. Empty returns every field.',
+      placeholder: 'results.campaign.id',
       required: false,
+      advanced: true,
     }),
     exclude_fields: Property.LongText({
       displayName: 'Exclude Fields',
-      description: 'Comma-separated list of fields to exclude',
+      description: 'Comma-separated, in dot notation.',
+      placeholder: '_links',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

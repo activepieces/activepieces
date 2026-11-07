@@ -126,7 +126,7 @@ export const mailChimpLinkClickedTrigger = createTrigger({
   name: 'link_clicked',
   classification: 'READ',
   displayName: 'Link Clicked',
-  description: 'Fires when a recipient clicks a specified link in a campaign',
+  description: 'Fires when a subscriber clicks a link in a campaign email',
   aiMetadata: {
     description: 'Fires when a recipient in the selected audience (list) clicks a link in a campaign email. The event carries the subscriber email, campaign id, clicked URL, and client/location metadata.',
   },

@@ -7,21 +7,39 @@ export const updateSubscriberInList = createAction({
   auth: mailchimpAuth,
   name: 'update_member_in_list',
   classification: 'WRITE',
-  displayName: 'Update Member in an Audience (List)',
-  description: 'Update a member in an existing Mailchimp audience (list)',
+  displayName: 'Update Subscriber Status',
+  description: 'Change the status of a subscriber already in an audience',
   audience: 'both',
   aiMetadata: { description: 'Updates the subscription status (subscribed, unsubscribed, cleaned, pending, transactional) of an existing member in an audience (list), identified by email. Use to change a known contact\'s status; the member must already exist, or the call fails. Idempotent: setting the same status repeatedly converges to that state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber to Update',
+      icon: 'user',
+      props: ['list_id', 'email'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['status'],
+    },
+  ],
   props: {
+    list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
-      displayName: 'Email',
-      description: 'Email of the new contact',
+      displayName: 'Email Address',
+      description: 'Must already be in the audience.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
-    list_id: mailchimpCommon.mailChimpListIdDropdown,
     status: Property.StaticDropdown<
       'subscribed' | 'unsubscribed' | 'cleaned' | 'pending' | 'transactional'
     >({
       displayName: 'Status',
+      description: 'The new status for this subscriber.',
       required: true,
       options: {
         options: [

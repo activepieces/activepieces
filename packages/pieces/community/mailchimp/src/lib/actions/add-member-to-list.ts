@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
@@ -14,16 +14,40 @@ export const addMemberToList = createAction({
   description: 'Add a new subscriber to an audience or update existing subscriber',
   audience: 'both',
   aiMetadata: { description: 'Upserts a member into a Mailchimp audience (list) keyed on the email address: creates the subscriber if absent (using the "status if new" value) or updates the existing record otherwise. Use to ensure a contact exists with given status, name, language, or VIP flag without checking first. Requires the target list and email; repeating with the same input is safe and converges to the same member state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'subscriber',
+      display: 'section',
+      label: 'Subscriber',
+      icon: 'user',
+      props: ['list_id', 'email_address'],
+    },
+    {
+      key: 'status',
+      display: 'section',
+      label: 'Status',
+      icon: 'sliders',
+      props: ['status_if_new', 'status'],
+    },
+    {
+      key: 'profile',
+      display: 'section',
+      label: 'Profile',
+      icon: 'users',
+      props: ['profile_info', 'first_name', 'last_name', 'language', 'email_type', 'vip'],
+    },
+  ],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email_address: Property.ShortText({
       displayName: 'Email Address',
-      description: 'Email address for the subscriber',
+      description: 'The subscriber to add or update.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     status_if_new: Property.StaticDropdown({
       displayName: 'Status if New',
-      description: 'Status for new subscribers',
+      description: 'Status for a subscriber who is not in the audience yet.',
       required: true,
       options: {
         options: [
@@ -35,10 +59,48 @@ export const addMemberToList = createAction({
         ],
       },
     }),
+    status: Property.StaticDropdown({
+      displayName: 'Status',
+      description: 'Changes the status of an existing subscriber.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Subscribed', value: 'subscribed' },
+          { label: 'Unsubscribed', value: 'unsubscribed' },
+          { label: 'Cleaned', value: 'cleaned' },
+          { label: 'Pending', value: 'pending' },
+          { label: 'Transactional', value: 'transactional' },
+        ],
+      },
+    }),
+    profile_info: Property.MarkDown({
+      value: 'For an existing subscriber, empty text fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
+    first_name: Property.ShortText({
+      displayName: 'First Name',
+      placeholder: 'Jane',
+      required: false,
+      width: 'half',
+    }),
+    last_name: Property.ShortText({
+      displayName: 'Last Name',
+      placeholder: 'Doe',
+      required: false,
+      width: 'half',
+    }),
+    language: Property.ShortText({
+      displayName: 'Language',
+      description: 'Two-letter language code.',
+      placeholder: 'en',
+      required: false,
+      width: 'half',
+    }),
     email_type: Property.StaticDropdown({
       displayName: 'Email Type',
-      description: 'Type of email this member wants to receive',
+      description: 'Email format the subscriber receives.',
       required: false,
+      width: 'half',
       options: {
         options: [
           { label: 'HTML', value: 'html' },
@@ -46,46 +108,18 @@ export const addMemberToList = createAction({
         ],
       },
     }),
-    status: Property.StaticDropdown({
-      displayName: 'Status',
-      description: 'Current status of subscriber (for updates)',
-      required: false,
-      options: {
-        options: [
-          { label: 'Subscribed', value: 'subscribed' },
-          { label: 'Unsubscribed', value: 'unsubscribed' },
-          { label: 'Cleaned', value: 'cleaned' },
-          { label: 'Pending', value: 'pending' },
-          { label: 'Transactional', value: 'transactional' },
-        ],
-      },
-    }),
-    first_name: Property.ShortText({
-      displayName: 'First Name',
-      description: 'First name of the subscriber',
-      required: false,
-    }),
-    last_name: Property.ShortText({
-      displayName: 'Last Name',
-      description: 'Last name of the subscriber',
-      required: false,
-    }),
-    language: Property.ShortText({
-      displayName: 'Language',
-      description: 'Subscriber language (e.g., "en", "es", "fr")',
-      required: false,
-    }),
     vip: Property.Checkbox({
       displayName: 'VIP',
-      description: 'VIP status for subscriber',
+      description: 'On marks the subscriber as VIP; off removes VIP status.',
       required: false,
       defaultValue: false,
     }),
     skip_merge_validation: Property.Checkbox({
       displayName: 'Skip Merge Validation',
-      description: 'Accept member data without merge field values even if required',
+      description: 'Save the subscriber even if required merge fields are empty.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   async run(context) {

@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
@@ -13,10 +13,36 @@ export const createCampaign = createAction({
   description: 'Create a new Mailchimp campaign',
   audience: 'both',
   aiMetadata: { description: 'Creates a new draft campaign of a chosen type (regular, plain-text, A/B, RSS, or variate) targeting an audience (list), and optionally sets its content from inline HTML, a hosted URL, or a template depending on the selected content type. Use to set up a campaign for later sending; this does not send it. Not idempotent: each call creates a distinct campaign.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'campaign',
+      display: 'section',
+      label: 'Campaign',
+      icon: 'send',
+      props: ['campaign_type', 'list_id', 'title', 'subject_line'],
+    },
+    {
+      key: 'sender',
+      display: 'section',
+      label: 'Sender',
+      icon: 'user',
+      props: ['from_name', 'from_email', 'reply_to', 'to_name'],
+    },
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Content',
+      icon: 'file',
+      props: ['content_info', 'content_type', 'content_url', 'template_id', 'html_content'],
+    },
+  ],
   props: {
+    content_info: Property.MarkDown({
+      value: 'Fill in only the field that matches the content type.',
+      variant: MarkdownVariant.INFO,
+    }),
     campaign_type: Property.StaticDropdown({
       displayName: 'Campaign Type',
-      description: 'The type of campaign to create',
       required: true,
       options: {
         options: [
@@ -31,60 +57,69 @@ export const createCampaign = createAction({
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     subject_line: Property.ShortText({
       displayName: 'Subject Line',
-      description: 'The subject line for the campaign',
+      placeholder: 'Our October news',
       required: true,
     }),
     title: Property.ShortText({
       displayName: 'Campaign Title',
-      description: 'The title of the campaign',
+      description: 'Internal name, not shown to subscribers.',
+      placeholder: 'October newsletter',
       required: true,
     }),
     from_name: Property.ShortText({
       displayName: 'From Name',
-      description: 'The name that will appear in the "From" field',
+      placeholder: 'Acme',
       required: true,
+      width: 'half',
     }),
     from_email: Property.ShortText({
       displayName: 'From Email',
-      description: 'The email address that will appear in the "From" field',
+      placeholder: 'news@acme.com',
       required: true,
+      width: 'half',
     }),
     reply_to: Property.ShortText({
-      displayName: 'Reply To Email',
-      description: 'The email address that will receive replies',
+      displayName: 'Reply-To Email',
+      placeholder: 'support@acme.com',
       required: true,
+      width: 'half',
     }),
     to_name: Property.ShortText({
       displayName: 'To Name',
-      description: 'The name that will appear in the "To" field (e.g., *|FNAME|*)',
+      description: 'Name shown in the To field, merge tags allowed.',
+      placeholder: '*|FNAME|*',
       required: false,
+      width: 'half',
     }),
     content_type: Property.StaticDropdown({
       displayName: 'Content Type',
       description: 'How the campaign content is put together',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Template', value: 'template' },
-          { label: 'HTML', value: 'html' },
-          { label: 'URL', value: 'url' },
-          { label: 'Multichannel', value: 'multichannel' },
+          { label: 'Template', value: 'template', description: 'Saved template', icon: 'file' },
+          { label: 'HTML', value: 'html', description: 'Custom HTML', icon: 'code' },
+          { label: 'URL', value: 'url', description: 'Web page', icon: 'paperclip' },
+          { label: 'Multichannel', value: 'multichannel', description: 'In Mailchimp', icon: 'send' },
         ],
       },
     }),
     content_url: Property.ShortText({
       displayName: 'Content URL',
-      description: 'The URL where the campaign content is hosted (required if content_type is "url")',
+      description: 'Used when the content type is URL.',
+      placeholder: 'https://example.com/newsletter.html',
       required: false,
     }),
     template_id: Property.ShortText({
       displayName: 'Template ID',
-      description: 'The ID of the template to use (required if content_type is "template")',
+      description: "Used for Template content; the ID is in the template's URL.",
+      placeholder: '12345',
       required: false,
     }),
     html_content: Property.LongText({
       displayName: 'HTML Content',
-      description: 'The HTML content for the campaign (required if content_type is "html")',
+      description: 'Used when the content type is HTML.',
       required: false,
     }),
   },

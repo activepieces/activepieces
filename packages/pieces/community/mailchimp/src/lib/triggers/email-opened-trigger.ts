@@ -101,7 +101,7 @@ export const mailChimpEmailOpenedTrigger = createTrigger({
   name: 'email_opened',
   classification: 'READ',
   displayName: 'Email Opened',
-  description: 'Fires when a recipient opens a an email in a specific campaign',
+  description: 'Fires when a subscriber opens a campaign email sent to this audience',
   aiMetadata: {
     description: 'Fires when a recipient in the selected audience (list) opens a campaign email. The event carries the subscriber email, campaign id, and client/location metadata.',
   },

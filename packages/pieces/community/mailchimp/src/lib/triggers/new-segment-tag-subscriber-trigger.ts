@@ -128,17 +128,30 @@ export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
     description: 'Fires when a subscriber in the selected audience (list) joins a segment or is given a tag; an optional segment ID or tag name narrows it to a specific segment/tag, otherwise it monitors all of them. The event carries the subscriber email and segment/tag details.',
   },
   type: TriggerStrategy.WEBHOOK,
+  propertyGroups: [
+    {
+      key: 'watch',
+      display: 'section',
+      label: 'What to Watch',
+      icon: 'filter',
+      props: ['list_id', 'segment_id', 'tag_name'],
+    },
+  ],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     segment_id: Property.ShortText({
-      displayName: 'Segment ID (Optional)',
-      description: 'The specific segment ID to monitor. Leave empty to monitor all segments.',
+      displayName: 'Segment ID',
+      description: "Empty watches every segment; the ID is in the segment's URL.",
+      placeholder: '12345',
       required: false,
+      width: 'half',
     }),
     tag_name: Property.ShortText({
-      displayName: 'Tag Name (Optional)',
-      description: 'The specific tag name to monitor. Leave empty to monitor all tags.',
+      displayName: 'Tag Name',
+      description: 'Empty watches every tag.',
+      placeholder: 'Customers',
       required: false,
+      width: 'half',
     }),
   },
   sampleData: {

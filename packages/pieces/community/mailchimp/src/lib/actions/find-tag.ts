@@ -13,11 +13,21 @@ export const findTag = createAction({
   description: 'Search for tags on a list by name',
   audience: 'both',
   aiMetadata: { description: 'Searches the tags defined on an audience (list): an empty tag-name fetches all tags, while a provided name filters to matching tags. Use to discover available tags or confirm a tag exists before tagging contacts. Requires the target list; read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['list_id', 'name'],
+    },
+  ],
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     name: Property.ShortText({
       displayName: 'Tag Name',
-      description: 'Search query to filter tags (optional - if empty, returns all tags)',
+      description: 'Part of a tag name. Empty lists every tag.',
+      placeholder: 'Custom',
       required: false,
     }),
   },
