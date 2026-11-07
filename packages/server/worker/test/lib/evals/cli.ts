@@ -8,6 +8,7 @@ import { evalChecks, RunScores, Verdict } from './checks'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 import { posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
+import { progressTable } from './progress-table'
 import { evalPrompts } from './prompts'
 import { evalToolSet, McpTools } from './tool-set'
 
@@ -78,7 +79,19 @@ async function runDataset({ dataset, repeats, recordMode, upload, verbose, model
     const { name, cases } = dataset
     console.log(`\n=== ${name}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
     const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
-    const results = await runPool({ runs, verbose, run: ({ candidate, trial }) => evaluate({ candidate, trial, mcp, modelId, auth, recordMode }) })
+    const table = process.stdout.isTTY && !verbose ? progressTable.create({ cases, repeats, verdictOf: (counts) => caseVerdict({ datasetName: name, ...counts }) }) : null
+    const results = await runPool({
+        runs,
+        run: (planned) => {
+            table?.start(planned)
+            return evaluate({ ...planned, mcp, modelId, auth, recordMode })
+        },
+        onResult: (result) => isNil(table) ? print({ result, verbose }) : table.finish({ ...result, runCostUsd: result.scores.costUsd }),
+    })
+    table?.stop()
+    if (!isNil(table)) {
+        results.filter((result) => result.verdict === 'fail').sort((a, b) => a.candidate.caseNumber - b.candidate.caseNumber || a.trial - b.trial).forEach((result) => print({ result, verbose }))
+    }
     const summaries = cases.map((candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
     console.log(`\n${name} summary (a case passes when ${passRule(name)}):`)
     summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · overall ${isNil(summary.overall) ? '-' : summary.overall.toFixed(1)}/10 · ${isNil(summary.costUsd) ? 'cost unknown' : `$${summary.costUsd.toFixed(4)}/run`}`))
@@ -99,13 +112,13 @@ async function runDataset({ dataset, repeats, recordMode, upload, verbose, model
     return regressed > 0 ? { broken: true, reason: `${regressed} ${name} case(s) regressed` } : { broken: false, reason: '' }
 }
 
-async function runPool({ runs, verbose, run }: { runs: PlannedRun[], verbose: boolean, run: (planned: PlannedRun) => Promise<CaseResult> }): Promise<CaseResult[]> {
+async function runPool({ runs, run, onResult }: { runs: PlannedRun[], run: (planned: PlannedRun) => Promise<CaseResult>, onResult: (result: CaseResult) => void }): Promise<CaseResult[]> {
     const queue = [...runs]
     const results: CaseResult[] = []
     const worker = async (): Promise<void> => {
         for (let next = queue.shift(); !isNil(next); next = queue.shift()) {
             const result = await run(next)
-            print({ result, verbose })
+            onResult(result)
             results.push(result)
         }
     }
@@ -247,7 +260,7 @@ function printSteps(candidate: EvalCase): void {
 }
 
 function print({ result, verbose }: { result: CaseResult, verbose: boolean }): void {
-    console.log(`\n${VERDICT_MARK[result.verdict]} case ${result.candidate.caseNumber} [${result.candidate.problemType}]`)
+    console.log(`\n${VERDICT_MARK[result.verdict]} case ${result.candidate.caseNumber} run ${result.trial + 1} [${result.candidate.problemType}]`)
     if (verbose) {
         console.log(`    starts at step ${result.candidate.cutBeforeStep ?? 0} · ${result.candidate.messages.length} message(s) before it · fixtures: ${result.candidate.recordedToolCalls.map((call) => call.toolName).join(', ') || 'none'}`)
         console.log(`    USER: ${result.candidate.userMessage}`)
