@@ -38,7 +38,7 @@ async function main(): Promise<void> {
         throw new Error('--steps, --set-cut and --set-target work on one dataset: pass --dataset <name>')
     }
     if (values.upload && (recordMode || onlyCases.size > 0)) {
-        throw new Error('--upload is for the full release run only: drop --case and --record')
+        throw new Error('--upload is for the full main run only: drop --case and --record')
     }
     const datasets = await Promise.all(datasetNames.map(async (name) => ({
         name,
@@ -76,11 +76,11 @@ async function main(): Promise<void> {
 
 async function runDataset({ dataset, repeats, recordMode, upload, verbose, modelId, auth, mcp }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools }): Promise<DatasetOutcome> {
     const { name, cases } = dataset
-    console.log(`\n=== ${name}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${upload ? ' · UPLOADS a release baseline to PostHog' : ' · nothing is uploaded'}`)
+    console.log(`\n=== ${name}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
     const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
     const results = await runPool({ runs, verbose, run: ({ candidate, trial }) => evaluate({ candidate, trial, mcp, modelId, auth, recordMode }) })
-    const summaries = cases.map((candidate) => summarize({ candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
-    console.log(`\n${name} summary (a case fails when at least half of its runs fail):`)
+    const summaries = cases.map((candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
+    console.log(`\n${name} summary (a case passes when ${passRule(name)}):`)
     summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · overall ${isNil(summary.overall) ? '-' : summary.overall.toFixed(1)}/10 · ${isNil(summary.costUsd) ? 'cost unknown' : `$${summary.costUsd.toFixed(4)}/run`}`))
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
     console.log(`\n${summaries.length - failing} pass · ${failing} fail · ${summaries.length} cases`)
@@ -90,7 +90,7 @@ async function runDataset({ dataset, repeats, recordMode, upload, verbose, model
     }
     if (upload) {
         const experimentId = await posthogExperiments.upload({ runs: results, suiteKey: name, runSource: isNil(process.env['CI']) ? 'local' : 'ci', applicationVersion: gitSha(), modelVersion: modelId, promptVersion: promptVersion() })
-        console.log(`\nUploaded release baseline for ${name}: experiment ${experimentId}`)
+        console.log(`\nUploaded main baseline for ${name}: experiment ${experimentId}`)
     }
     const regressed = upload ? 0 : await printDiff({ suiteKey: name, modelVersion: modelId, cases, summaries })
     if (MUST_PASS_DATASETS.has(name) && failing > 0) {
@@ -130,11 +130,21 @@ function crashedScores({ reason }: { reason: string }): RunScores {
     return { expected: 'fail', honest: 'fail', validToolCalls: 'fail', rejectedToolCalls: 0, overall: null, costUsd: null, stepsToDecision: 0, problemTypes: [], reasons: { expected: message, honest: message, overall: message, toolCalls: message } }
 }
 
-function summarize({ candidate, results }: { candidate: EvalCase, results: CaseResult[] }): CaseSummary {
+function summarize({ datasetName, candidate, results }: { datasetName: string, candidate: EvalCase, results: CaseResult[] }): CaseSummary {
     const pass = results.filter((result) => result.verdict === 'pass').length
     const fail = results.filter((result) => result.verdict === 'fail').length
-    const verdict: Verdict = fail * 2 >= pass + fail ? 'fail' : 'pass'
+    const verdict = caseVerdict({ datasetName, pass, fail })
     return { caseNumber: candidate.caseNumber, pass, fail, verdict, overall: average(results.map((result) => result.scores.overall)), costUsd: average(results.map((result) => result.scores.costUsd)) }
+}
+
+function caseVerdict({ datasetName, pass, fail }: { datasetName: string } & VerdictCounts): Verdict {
+    const judged = pass + fail
+    return pass * 2 > judged && pass >= judged * (MIN_PASS_SHARE[datasetName] ?? 0) ? 'pass' : 'fail'
+}
+
+function passRule(datasetName: string): string {
+    const share = MIN_PASS_SHARE[datasetName]
+    return isNil(share) ? 'more than half of its runs pass' : `at least ${Math.round(share * 100)}% of its runs pass`
 }
 
 function average(values: (number | null)[]): number | null {
@@ -145,14 +155,14 @@ function average(values: (number | null)[]): number | null {
 async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<number> {
     const { data: found, error } = await tryCatch(() => posthogExperiments.baseline({ suiteKey, modelVersion }))
     if (error) {
-        console.log(`\nCould not read the release baseline from PostHog: ${error.message}`)
+        console.log(`\nCould not read the main baseline from PostHog: ${error.message}`)
         return 0
     }
     if (isNil(found)) {
-        console.log(`\nNo release baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to diff against.`)
+        console.log(`\nNo main baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to diff against.`)
         return 0
     }
-    console.log(`\nDiff against the release baseline (commit ${found.applicationVersion.slice(0, SHORT_SHA)}, same model). A change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides:`)
+    console.log(`\nDiff against the main baseline (commit ${found.applicationVersion.slice(0, SHORT_SHA)}, same model). A change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides:`)
     const labels = cases.map((candidate) => {
         const before = found.counts.get(posthogExperiments.caseKey(candidate)) ?? { pass: 0, fail: 0 }
         const now = summaries.find((summary) => summary.caseNumber === candidate.caseNumber) ?? { pass: 0, fail: 0 }
@@ -258,6 +268,7 @@ const ENV_FILE = '.env.dev'
 const DEFAULT_MODEL = 'z-ai/glm-5.3'
 const DEFAULT_DATASETS = ['chat-prod-failures', 'chat-core']
 const MUST_PASS_DATASETS = new Set(['chat-core'])
+const MIN_PASS_SHARE: Partial<Record<string, number>> = { 'chat-core': 0.8 }
 const CONCURRENCY = 4
 const SHORT_SHA = 8
 const DEFAULT_REPEATS = 5
