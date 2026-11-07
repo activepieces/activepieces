@@ -21,38 +21,36 @@ export const classifyContentAction = createAction({
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'The model to use for classification.',
+      description: 'Image URLs need a CLIP model.',
       required: true,
       defaultValue: 'jina-clip-v2',
       options: {
         options: [
           {
-            label:
-              'jina-clip-v2 - Multilingual multimodal embeddings for texts and images',
+            label: 'jina-clip-v2: text and images',
             value: 'jina-clip-v2',
           },
           {
-            label:
-              'jina-embeddings-v3 - Frontier multilingual embedding model with SOTA performance',
+            label: 'jina-embeddings-v3: text only',
             value: 'jina-embeddings-v3',
           },
           {
-            label:
-              'jina-clip-v1 - Multimodal embedding models for images and English text',
+            label: 'jina-clip-v1: images and English text',
             value: 'jina-clip-v1',
           },
         ],
       },
     }),
     input: Property.LongText({
-      displayName: 'Text',
+      displayName: 'Text or Image URL',
       description:
-        'Text or image URL to classify. URLs will be treated as images, other strings as text.',
+        'A URL is classified as an image, anything else as text.',
+      placeholder: 'Paste text or an image URL',
       required: true,
     }),
     labels: Property.Array({
       displayName: 'Labels',
-      description: 'The labels to classify the content into.',
+      description: 'Categories to choose from. The best match is returned.',
       required: true,
     }),
   },
