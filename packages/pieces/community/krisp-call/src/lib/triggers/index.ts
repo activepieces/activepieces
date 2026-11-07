@@ -1,12 +1,13 @@
 import { krispcallAuth } from '../auth';
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
-import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework"
+import { MarkdownVariant, Property, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework"
 
 export const triggers = [
     {
         name: 'newVoicemail',
         displayName: 'New Voicemail',
-        description: 'Trigger when a new voicemail is received.',
+        description: 'Runs when one of your KrispCall numbers gets a voicemail.',
+        event: 'new voicemail',
         aiMetadata: {
             description: 'Fires when a new voicemail is left on a connected KrispCall number, representing a recorded caller message (with caller number, duration, call time, and audio link).',
         },
@@ -21,8 +22,9 @@ export const triggers = [
     },
     {
         name: 'newMms',
-        displayName: 'New MMS/SMS',
-        description: 'Trigger when a new MMS/SMS is received.',
+        displayName: 'New SMS or MMS',
+        description: 'Runs when one of your KrispCall numbers receives an SMS or MMS.',
+        event: 'SMS or MMS you receive',
         aiMetadata: {
             description: 'Fires when an inbound SMS or MMS is received on a connected KrispCall number, representing a message from an external sender (with from/to numbers, text content, and any media link).',
         },
@@ -38,7 +40,8 @@ export const triggers = [
     {
         name: 'newContact',
         displayName: 'New Contact',
-        description: 'Trigger when a new contact is added.',
+        description: 'Runs when a contact is added in KrispCall.',
+        event: 'new contact',
         aiMetadata: {
             description: 'Fires when a new contact is added to the connected KrispCall account, representing a newly created contact record (with name, contact number, email, company, and address).',
         },
@@ -55,7 +58,8 @@ export const triggers = [
     {
         name: 'newCallLog',
         displayName: 'New Call Log',
-        description: 'Trigger when a new call log is recorded.',
+        description: 'Runs when a call is logged in KrispCall.',
+        event: 'new call log',
         aiMetadata: {
             description: 'Fires when a new call log entry is recorded on the connected KrispCall account, representing a completed call (inbound or outbound) with from/to numbers, direction, duration, outcome, and recording link.',
         },
@@ -72,8 +76,9 @@ export const triggers = [
     },
     {
         name: 'OutboundSMS/MMS',
-        displayName: 'Outbound MMS/SMS',
-        description: 'Trigger when a new MMS/SMS is sent.',
+        displayName: 'New Outbound SMS or MMS',
+        description: 'Runs when an SMS or MMS is sent from one of your KrispCall numbers.',
+        event: 'SMS or MMS you send',
         aiMetadata: {
             description: 'Fires when an outbound SMS or MMS is sent from a connected KrispCall number, representing a message dispatched to an external recipient (with from/to numbers, text content, and any media link).',
         },
@@ -94,7 +99,12 @@ export const triggers = [
         auth: krispcallAuth,
         description: trigger.description,
         aiMetadata: trigger.aiMetadata,
-        props: {},
+        props: {
+            info: Property.MarkDown({
+                value: `Turning this flow on tells KrispCall to send every ${trigger.event} here.`,
+                variant: MarkdownVariant.INFO,
+            }),
+        },
         sampleData: trigger.sampleData,
         type: TriggerStrategy.WEBHOOK,
         async onEnable(context) {
