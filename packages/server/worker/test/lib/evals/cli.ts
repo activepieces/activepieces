@@ -10,6 +10,7 @@ import { posthogDataset } from './posthog-dataset'
 import { posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
 import { progressTable } from './progress-table'
 import { evalPrompts } from './prompts'
+import { resultsBrowser } from './results-browser'
 import { evalToolSet, McpTools } from './tool-set'
 
 async function main(): Promise<void> {
@@ -60,26 +61,35 @@ async function main(): Promise<void> {
 
     const [auth, mcp] = await Promise.all([evalAgentTurn.resolveAuth(), evalToolSet.connectMcp()])
     console.log(`Dev server MCP tools run in project "${mcp.projectName}"`)
-    const outcomes: DatasetOutcome[] = []
+    const live = Boolean(process.stdout.isTTY) && !values.verbose
+    const browse = live && Boolean(process.stdin.isTTY)
+    const ran: RanDataset[] = []
     try {
         for (const dataset of datasets) {
-            outcomes.push(await runDataset({ dataset, repeats, recordMode, upload: values.upload, verbose: values.verbose, modelId: values.model, auth, mcp }))
+            ran.push(await runDataset({ dataset, repeats, recordMode, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp }))
         }
     }
     finally {
         await mcp.close().catch(() => undefined)
         await evalAgentTurn.cleanupAuth()
     }
+    if (browse) {
+        await resultsBrowser.open({ datasets: ran.map(({ name, cases, results }) => ({ name, cases, runs: results, verdictOf: (candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }).verdict })) })
+    }
+    const outcomes: DatasetOutcome[] = []
+    for (const dataset of ran) {
+        outcomes.push(await reportDataset({ ...dataset, live, browse, recordMode, upload: values.upload, modelId: values.model }))
+    }
     const broken = outcomes.filter((outcome) => outcome.broken)
     console.log(`\n${broken.length === 0 ? '✓ Nothing broke' : `✗ Broken: ${broken.map((outcome) => outcome.reason).join('; ')}`}`)
     process.exit(broken.length === 0 ? 0 : 1)
 }
 
-async function runDataset({ dataset, repeats, recordMode, upload, verbose, modelId, auth, mcp }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools }): Promise<DatasetOutcome> {
+async function runDataset({ dataset, repeats, recordMode, upload, verbose, live, modelId, auth, mcp }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools }): Promise<RanDataset> {
     const { name, cases } = dataset
     console.log(`\n=== ${name}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} (reasons ${evalChecks.reasonModelId}) · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
     const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
-    const table = process.stdout.isTTY && !verbose ? progressTable.create({ cases, repeats, verdictOf: (counts) => caseVerdict({ datasetName: name, ...counts }) }) : null
+    const table = live ? progressTable.create({ cases, repeats, verdictOf: (counts) => caseVerdict({ datasetName: name, ...counts }) }) : null
     const results = await runPool({
         runs,
         run: (planned) => {
@@ -89,12 +99,18 @@ async function runDataset({ dataset, repeats, recordMode, upload, verbose, model
         onResult: (result) => isNil(table) ? print({ result, verbose }) : table.finish({ ...result, runCostUsd: result.scores.costUsd }),
     })
     table?.stop()
-    if (!isNil(table)) {
-        results.filter((result) => result.verdict === 'fail').sort((a, b) => a.candidate.caseNumber - b.candidate.caseNumber || a.trial - b.trial).forEach((result) => print({ result, verbose }))
+    return { name, cases, results }
+}
+
+async function reportDataset({ name, cases, results, live, browse, recordMode, upload, modelId }: RanDataset & { live: boolean, browse: boolean, recordMode: boolean, upload: boolean, modelId: string }): Promise<DatasetOutcome> {
+    if (live && !browse) {
+        results.filter((result) => result.verdict === 'fail').sort((a, b) => a.candidate.caseNumber - b.candidate.caseNumber || a.trial - b.trial).forEach((result) => print({ result, verbose: false }))
     }
     const summaries = cases.map((candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
     console.log(`\n${name} summary (a case passes when ${passRule(name)}):`)
-    summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · overall ${isNil(summary.overall) ? '-' : summary.overall.toFixed(1)}/10 · ${isNil(summary.costUsd) ? 'cost unknown' : `$${summary.costUsd.toFixed(4)}/run`}`))
+    if (!live) {
+        summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · overall ${isNil(summary.overall) ? '-' : summary.overall.toFixed(1)}/10 · ${isNil(summary.costUsd) ? 'cost unknown' : `$${summary.costUsd.toFixed(4)}/run`}`))
+    }
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
     console.log(`\n${summaries.length - failing} pass · ${failing} fail · ${summaries.length} cases`)
     if (recordMode) {
@@ -303,6 +319,12 @@ type CaseSummary = {
     verdict: Verdict
     overall: number | null
     costUsd: number | null
+}
+
+type RanDataset = {
+    name: string
+    cases: EvalCase[]
+    results: CaseResult[]
 }
 
 type DatasetOutcome = {

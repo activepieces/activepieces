@@ -24,8 +24,9 @@ icon: 🧪
 
 ## Reading the result
 
-- In a terminal a live table shows one mark per run (✓, ✗, spinner, `·` not started), runs done, cost so far and elapsed time. A case gets its verdict as soon as the remaining runs can't change it. Outside a terminal (CI logs) it prints line by line.
-- Failed runs print below the table with the reason from each failed check.
+- In a terminal a live table shows each case's ask, one mark per run (✓, ✗, spinner, `·` not started), runs done, cost so far and elapsed time. A case gets its verdict as soon as the remaining runs can't change it. Outside a terminal (CI logs) it prints line by line.
+- When the runs finish, a results browser opens: ↑↓ to move, Enter to open a case's runs and then a run's failure reasons and transcript, Esc to go back, a case number to jump, q to quit. The verdicts and the baseline diff print after you quit.
+- **Judge:** Jev 1.14 answers each check (`EVALS_JUDGE_MODEL` overrides it). Only a failed check gets a written reason, from Haiku 5.5; a passed one shows `Jev P(pass)`.
 - **Case verdict:** a `chat-core` case passes when at least 80% of its runs pass. Any other case passes when more than half pass.
 - **Diff:** each case shows `before → now` against the main baseline: `same`, `FIXED`, `REGRESSED` or `unclear`. A change counts only when at least 80% of at least 3 runs agree on both sides.
 - **Exit code:** 1 when a `chat-core` case fails or any case regresses, 0 otherwise. `chat-prod-failures` failures alone never fail the run.
@@ -47,5 +48,5 @@ All of these need `--dataset <name>`:
 
 ## Key files
 
-- `packages/server/worker/test/lib/evals/`: the CLI (`cli.ts`), replay, checks and live table
+- `packages/server/worker/test/lib/evals/`: the CLI (`cli.ts`), replay, judge (`checks.ts`), live table and results browser
 - `packages/server/api/src/app/ee/agent/agent-eval-controller.ts`: the dev-server routes the CLI calls (`agentEvalModule`)
