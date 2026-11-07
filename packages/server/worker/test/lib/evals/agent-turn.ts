@@ -13,7 +13,7 @@ async function run({ evalCase, mcp, modelId, auth, recordMode }: { evalCase: Eva
     const caseReplay = replay.create({ recordedToolCalls: evalCase.recordedToolCalls })
     const tools = evalToolSet.build({ mcp, replay: caseReplay, auth, recordMode })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
-    const { model, costUsd } = pinned({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
+    const { model, costUsd } = withCost({ model: aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth, config: {} }), modelId, billing: null }) })
     const warnings: string[] = []
     let steps = 0
     const abortSignal = AbortSignal.timeout(TURN_TIMEOUT_MS)
@@ -85,12 +85,10 @@ function gradedWindow({ evalCase }: { evalCase: EvalCase }): StopCondition<ToolS
     return [reachedTarget, isStepCount(MAX_STEPS_TO_TARGET)]
 }
 
-function pinned({ model }: { model: LanguageModel }): { model: LanguageModel, costUsd: () => number | null } {
+function withCost({ model }: { model: LanguageModel }): { model: LanguageModel, costUsd: () => number | null } {
     if (typeof model === 'string') {
         throw new Error(`Expected a model instance for ${model}`)
     }
-    const provider = process.env[PROVIDER_ENV] ?? DEFAULT_PROVIDER
-    const productionSampling = process.env[PRODUCTION_SAMPLING_ENV] === 'true'
     const ledger = { calls: 0, reported: 0, totalUsd: 0 }
     const record = (providerMetadata: SharedV4ProviderMetadata | undefined): void => {
         const cost = activepiecesAiCost.openRouterCostOf(providerMetadata)
@@ -104,10 +102,9 @@ function pinned({ model }: { model: LanguageModel }): { model: LanguageModel, co
         middleware: {
             transformParams: async ({ params }) => ({
                 ...params,
-                ...(productionSampling ? {} : { temperature: 0, seed: SEED }),
                 providerOptions: {
                     ...params.providerOptions,
-                    openrouter: { ...params.providerOptions?.['openrouter'], provider: { order: [provider], allow_fallbacks: false }, usage: { include: true } },
+                    openrouter: { ...params.providerOptions?.['openrouter'], usage: { include: true } },
                 },
             }),
             wrapGenerate: async ({ doGenerate }) => {
@@ -204,11 +201,7 @@ const TURN_TIMEOUT_MS = 5 * 60_000
 const TRANSCRIPT_FIELD_MAX = 2_000
 const ERROR_PREVIEW_CHARS = 160
 const TIER = { id: 'smart', thinkingBudget: 10_000 }
-const SEED = 7
 const MAX_STEPS_TO_TARGET = 5
-const PROVIDER_ENV = 'EVALS_PROVIDER'
-const PRODUCTION_SAMPLING_ENV = 'EVALS_PRODUCTION_SAMPLING'
-const DEFAULT_PROVIDER = 'alibaba'
 const TERMINAL_DISPLAY_TOOLS = ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_connection_picker', 'ap_show_connection_required', 'ap_show_project_picker']
 const REJECTION_WARNINGS = new Set(['Repairing malformed tool call', 'Model called a tool that is not active in this phase'])
 const REJECTED_PATTERN = /Invalid input|InvalidToolInput|There is no tool named|Pass the tool name as/
