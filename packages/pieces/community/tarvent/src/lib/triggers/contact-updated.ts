@@ -1,7 +1,8 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const contactUpdatedTrigger = createTrigger({
   auth: tarventAuth,
@@ -10,32 +11,17 @@ export const contactUpdatedTrigger = createTrigger({
   displayName: 'Contact Profile Updated',
   description: 'Triggers when a contact\'s profile is updated.',
   aiMetadata: {
-    description: 'Fires when a contact\'s profile fields are updated in Tarvent. Represents a change to an existing contact\'s details.',
+    description: 'Fires when a contact\'s profile fields are updated in Tarvent. Retried deliveries with the same event ID are ignored. Represents a change to an existing contact\'s details.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.contactEvent,
   props: {
     include: tarventCommon.include,
     audienceId: tarventCommon.audienceId(false, 'If specified, the trigger will only fire if contact is in the selected audience.'),
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),
     tagId: tarventCommon.tagId(false, 'If specified, the trigger will only fire if contact has the selected tag.')
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'contactUpdated');
-    await context.store.put<CreateWebhookResponse>('tarvent_contact_updated', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_contact_updated',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'contactUpdated', storeKey: 'tarvent_contact_updated' }),
   sampleData: {
     "id": "000000000000000000",
     "dateUtc": "2022-09-27T17:37:26.482913Z",
@@ -53,46 +39,34 @@ export const contactUpdatedTrigger = createTrigger({
     },
     "payload": {
       "audienceId": "000000000000000000",
-      "contact": {
-        "id": "000000000000000000",
-        "key": "Kayla@tarvent.com",
-        "email": "Kayla@tarvent.com",
-        "status": 1,
-        "rating": 3,
-        "firstName": "Kayla",
-        "lastName": "Johnson",
-        "streetAddress": "165 Caprice Court",
-        "streetAddress2": "Suite A",
-        "addressLocality": "Castle Rock",
-        "addressRegion": "Colorado",
-        "postalCode": "80109",
-        "addressCountry": "United States",
-        "latitude": 39.38363820960583,
-        "longitude": -104.86229586128452,
-        "timeZone": "Mountain Standard Time",
-        "language": "en",
-        "sendFormat": 1,
-        "optInUtc": "2022-08-28T17:37:26.6236851Z",
-        "optInSource": 6,
-        "optInIp": "0.0.0.0",
-        "confirmedUtc": "2022-08-29T17:37:26.6236972Z",
-        "confirmedIp": "0.0.0.0",
-        "optOutUtc": null,
-        "optOutSource": null,
-        "optOutIp": null,
-        "optOutReason": "",
-        "groups": [
-          "359949389556096655",
-          "359949389556097786"
-        ],
-        "tags": [
-          "TarventTest",
-          "TarventTest2",
-          "TarventTest3"
-        ],
-        "profileFields": null,
-        "createdUtc": "2022-08-28T17:37:26.6237782Z",
-        "modifiedUtc": "2022-09-17T17:37:26.6237797Z"
+      contact: {
+        id: '1594408175877314400',
+        email: 'aptest+4@example.com',
+        key: 'aptest+4@example.com',
+        status: '1',
+        rating: '',
+        firstname: 'ApTest',
+        lastname: 'Example',
+        streetaddress: '',
+        streetaddress2: '',
+        addresslocality: '',
+        addressregion: '',
+        postalcode: '',
+        addresscountry: '',
+        longitude: '',
+        latitude: '',
+        language: '',
+        timezone: '',
+        sendformat: '1',
+        optinsource: '6',
+        optinip: '',
+        optinutc: '10/21/2026 20:44:25',
+        confirmedutc: '',
+        confirmedip: '',
+        createdutc: '10/21/2026 20:44:25',
+        modifiedutc: '10/21/2026 20:44:25',
+        groups: '[]',
+        tags: '[]',
       }
     }
   },

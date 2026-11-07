@@ -1,18 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework'
 import { kafkaAuth } from '../auth'
 import { kafkaClient } from '../common/client'
+import { kafkaOutputSchemas } from '../output-schemas'
 
 export const publishMessages = createAction({
   auth: kafkaAuth,
   name: 'publish_messages',
   displayName: 'Publish messages',
   description: 'Publishes several messages to a Kafka topic in one step and returns a partition and offset for each.',
-  audience: 'both',
+  audience: 'human',
   classification: 'WRITE',
   aiMetadata: {
-    description: 'Publish multiple messages to one Apache Kafka topic in a single step and return each message partition and offset. Use Publish message when there is only one record. Messages are sent in order on one connection, waiting for all in-sync replicas. A retry publishes the batch again.',
+    description: 'Publish multiple messages to one Apache Kafka topic in a single step and return each message partition and offset. Use Publish message when there is only one record. All messages go to the brokers in one request, in order within each partition, waiting for all in-sync replicas. A retry publishes the batch again.',
     idempotent: false,
   },
+  outputSchema: kafkaOutputSchemas.publishMessages,
   props: {
     topic: Property.ShortText({
       displayName: 'Topic',

@@ -74,7 +74,7 @@ export const todoist = createPiece({
 	description: 'To-do list and task manager',
 	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
-	authors: ['MyWay', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud','sanket-a11y'],
+	authors: ['MyWay', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'sanket-a11y', 'OdaiAhmed99'],
 	categories: [PieceCategory.PRODUCTIVITY],
 	auth: todoistAuth,
 	actions: [

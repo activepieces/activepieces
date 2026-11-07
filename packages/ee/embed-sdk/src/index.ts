@@ -119,6 +119,7 @@ export interface ActivepiecesVendorInit {
   data: {
     hideSidebar: boolean;
     hideFlowNameInBuilder?: boolean;
+    hideConnectionsInBuilder?: boolean;
     disableNavigationInBuilder: boolean | 'keep_home_button_only';
     hideFolders?: boolean;
     hideTables?: boolean;
@@ -137,6 +138,7 @@ export interface ActivepiecesVendorInit {
     hidePageHeader?: boolean;
     hideActiveUsers?: boolean;
     hideGlobalSearch?: boolean;
+    hideReplaceConnection?: boolean;
     formulasDocsUrl?: string;
     gtmContainerId?: string;
     clarityProjectId?: string;
@@ -163,6 +165,7 @@ type EmbeddingParam = {
   builder?: {
     disableNavigation?: boolean;
     hideFlowName?: boolean;
+    hideConnections?: boolean;
     homeButtonIcon: 'back' | 'logo';
     homeButtonClickedHandler?: (data: {
       route: string;
@@ -179,6 +182,7 @@ type EmbeddingParam = {
   hideTables?: boolean;
   hideActiveUsers?: boolean;
   hideGlobalSearch?: boolean;
+  hideReplaceConnection?: boolean;
   formulasDocsUrl?: string;
   analytics?: {
     gtmContainerId?: string;
@@ -206,7 +210,7 @@ export type McpCredentials = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.16.0";
+  readonly _sdkVersion = "0.17.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -340,6 +344,7 @@ class ActivepiecesEmbedded {
                 hideFolders: this._embeddingState?.hideFolders ?? false,
                 hideTables: this._embeddingState?.hideTables ?? false,
                 hideFlowNameInBuilder: this._embeddingState?.builder?.hideFlowName ?? false,
+                hideConnectionsInBuilder: this._embeddingState?.builder?.hideConnections ?? true,
                 jwtToken: this._jwtToken,
                 initialRoute,
                 fontUrl: this._embeddingState?.styling?.fontUrl,
@@ -354,6 +359,7 @@ class ActivepiecesEmbedded {
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
                 hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
                 hideGlobalSearch: this._embeddingState?.hideGlobalSearch ?? false,
+                hideReplaceConnection: this._embeddingState?.hideReplaceConnection ?? false,
                 formulasDocsUrl: this._embeddingState?.formulasDocsUrl,
                 gtmContainerId: this._embeddingState?.analytics?.gtmContainerId,
                 clarityProjectId: this._embeddingState?.analytics?.clarityProjectId,

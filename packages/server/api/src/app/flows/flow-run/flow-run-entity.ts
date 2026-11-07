@@ -12,7 +12,7 @@ import {
     BaseColumnSchemaPart,
 } from '../../database/database-common'
 
-type FlowRunSchema = FlowRunWithDispatchIndex & {
+type FlowRunSchema = FlowRun & {
     project: Project
     flow: Flow
     flowVersion: FlowVersion
@@ -217,7 +217,3 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
     },
 })
-
-export type FlowRunWithDispatchIndex = FlowRun & {
-    dispatchIndex?: number | null
-}

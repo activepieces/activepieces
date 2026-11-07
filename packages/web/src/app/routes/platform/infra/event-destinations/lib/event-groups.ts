@@ -88,6 +88,28 @@ function buildEventGroups(): EventGroup[] {
       ],
     },
     {
+      key: 'authentication',
+      title: t('Authentication & SSO'),
+      events: [
+        ApplicationEventName.EMAIL_SIGN_IN_ENABLED,
+        ApplicationEventName.EMAIL_SIGN_IN_DISABLED,
+        ApplicationEventName.GOOGLE_SIGN_IN_ENABLED,
+        ApplicationEventName.GOOGLE_SIGN_IN_DISABLED,
+        ApplicationEventName.ALLOWED_DOMAIN_ADDED,
+        ApplicationEventName.ALLOWED_DOMAIN_REMOVED,
+        ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED,
+        ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED,
+        ApplicationEventName.SSO_DOMAIN_ADDED,
+        ApplicationEventName.SSO_DOMAIN_VERIFIED,
+        ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED,
+        ApplicationEventName.SSO_DOMAIN_REMOVED,
+        ApplicationEventName.SSO_DOMAIN_EXPIRED,
+        ApplicationEventName.SAML_CONNECTED,
+        ApplicationEventName.SAML_CONNECTION_REPLACED,
+        ApplicationEventName.SSO_DISABLED,
+      ],
+    },
+    {
       key: 'projects',
       title: t('Projects'),
       events: [

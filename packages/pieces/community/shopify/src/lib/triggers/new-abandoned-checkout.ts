@@ -121,10 +121,11 @@ export const newAbandonedCheckout = createTrigger({
     });
     await saveScan({ store, scan, enabledAt });
   },
-  async onDisable({ auth, propsValue, store }) {
-    await pollingHelper.onDisable(polling, { auth, propsValue, store });
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, context);
   },
-  async run({ auth, propsValue, store, files }) {
+  async run(context) {
+    const { auth, store } = context;
     const scanCursor = await store.get<number>(SCAN_CURSOR_KEY);
     if (!isNil(scanCursor)) {
       const enabledAt = (await store.get<number>(SCAN_ENABLED_AT_KEY)) ?? undefined;
@@ -135,10 +136,10 @@ export const newAbandonedCheckout = createTrigger({
     if (isNil(await store.get(LAST_ITEM_KEY))) {
       await store.put(LAST_ITEM_KEY, READ_FROM_FIRST_CHECKOUT);
     }
-    return await pollingHelper.poll(polling, { auth, propsValue, store, files });
+    return await pollingHelper.poll(polling, context);
   },
-  async test({ auth, propsValue, store, files }) {
-    return await pollingHelper.test(polling, { auth, propsValue, store, files });
+  async test(context) {
+    return await pollingHelper.test(polling, context);
   },
 });
 

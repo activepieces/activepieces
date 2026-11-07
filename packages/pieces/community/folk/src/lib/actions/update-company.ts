@@ -1,6 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
+import { folkOutputSchemas } from '../output-schemas';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { folkClient } from '../common/client';
+import { folkLegacy } from '../common/legacy';
 import { folkProps } from '../common/props';
 
 export const updateCompany = createAction({
@@ -9,7 +12,8 @@ export const updateCompany = createAction({
   classification: 'WRITE',
   displayName: 'Update Company',
   description: 'Update an existing company in your Folk workspace. Select the company from the dropdown to update its details.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: folkOutputSchemas.legacyCompanyWrite,
   aiMetadata: {
     description: 'Updates fields on an existing Folk company identified by its company ID; only the fields you supply are changed. Use when you already know the target company ID (look it up first with Find Company or Get Company). Not idempotent in general: re-running mutates the record on each call and supplied arrays such as emails or groups replace prior values, so resubmitting the same input is not guaranteed to be a no-op.',
     idempotent: false,
@@ -78,44 +82,17 @@ export const updateCompany = createAction({
     groupId: folkProps.group_id(false, 'Group ID'),
   },
     async run(context) {
-    const { companyId, name, description, industry, addresses, emails, phones, urls, groupId } = context.propsValue;
-
-    const companyData: any = {};
-
-    if (name) companyData.name = name;
-    if (description) companyData.description = description;
-    if (industry) companyData.industry = industry;
-
-    if (addresses && Array.isArray(addresses)) {
-      companyData.addresses = addresses.map((addr: any) => addr.value || addr);
+    const { companyId, ...props } = context.propsValue;
+    const body = folkLegacy.companyBody({ props });
+    if (Object.keys(body).length === 0) {
+      throw new Error('Nothing to update. Fill in at least one field to change.');
     }
-
-    if (emails && Array.isArray(emails)) {
-      companyData.emails = emails.map((e: any) => e.value || e);
-    }
-
-    if (phones && Array.isArray(phones)) {
-      companyData.phones = phones.map((p: any) => p.value || p);
-    }
-
-    if (urls && Array.isArray(urls)) {
-      companyData.urls = urls.map((u: any) => u.value || u);
-    }
-
-    if (groupId) {
-      companyData.groups = [{ id: groupId }];
-    }
-
-    const response = await folkClient.updateCompany({
-      apiKey: context.auth,
-      companyId: companyId as string,
-      data: companyData,
+    const company = await folkClient.sendData<Record<string, unknown>>({
+      auth: context.auth,
+      method: HttpMethod.PATCH,
+      path: `/v1/companies/${folkClient.idSegment({ value: String(companyId ?? ''), label: 'Company' })}`,
+      body,
     });
-
-    return {
-      company: response.data,
-      success: true,
-    };
+    return { company, success: true };
   },
 });
-

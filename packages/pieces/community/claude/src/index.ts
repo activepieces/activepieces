@@ -21,7 +21,7 @@ export const claude = createPiece({
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['dennisrongo','kishanprmr'],
+  authors: ['dennisrongo', 'kishanprmr', 'OdaiAhmed99'],
   actions: [
     askClaude,
     extractStructuredDataAction,
@@ -41,6 +41,16 @@ export const claude = createPiece({
         return {
           'x-api-key': `${auth.secret_text}`,
         };
+      },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${baseUrl}`,
+          placeholder: '/models',
+        },
+        headers: {
+          description:
+            'Add anthropic-version: 2023-06-01. Your API key is added for you.',
+        },
       },
     }),
   ],

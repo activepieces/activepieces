@@ -1,6 +1,6 @@
 import { createAction, InputPropertyMap, Property } from '@activepieces/pieces-framework';
 import { QueryResult } from 'pg';
-import { postgresAuth } from '../..';
+import { postgresAuth } from '../auth';
 import { pgClient, PostgresColumn, postgresCommon, postgresUtils } from '../common';
 import { insertRowsOutputSchema } from '../output-schemas';
 
@@ -10,12 +10,21 @@ export const insertRows = createAction({
   classification: 'WRITE',
   displayName: 'Insert Multiple Rows',
   description: 'Inserts many rows into a table in a single transaction',
-  audience: 'both',
+  audience: 'human',
   outputSchema: insertRowsOutputSchema,
   aiMetadata: {
     description: 'Inserts an array of rows into a PostgreSQL table, each row a map of column names to values, using multi-row INSERT statements inside one transaction: if any row fails, none are inserted. Columns a row omits get the column default. Returns the inserted count and, when Return Inserted Rows is on, the stored rows including generated ids. Use instead of repeated single inserts for bulk loads. Not idempotent: each call appends new rows, so repeating it adds duplicates or errors on a unique-key collision.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'rows',
+      display: 'section',
+      label: 'Data to insert',
+      icon: 'inbox',
+      props: ['table', 'batch'],
+    },
+  ],
   props: {
     table: postgresCommon.table,
     batch: Property.DynamicProperties({
@@ -56,12 +65,14 @@ export const insertRows = createAction({
       displayName: 'Keep Empty Strings',
       description: 'Insert empty fields as empty strings instead of the column default.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
     return_rows: Property.Checkbox({
       displayName: 'Return Inserted Rows',
-      description: 'Return the inserted rows, including generated ids. Needs SELECT permission on the table.',
+      description: 'Return inserted rows with generated ids. Needs SELECT permission too.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
