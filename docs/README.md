@@ -1,16 +1,6 @@
-# Mintlify Starter Kit
+# Activepieces Docs
 
-Use the starter kit to get your docs deployed and ready to customize.
-
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
-
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
-
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+Source for the Activepieces documentation published at [activepieces.com/docs](https://www.activepieces.com/docs), built with [Mintlify](https://mintlify.com). Navigation is configured in `docs.json`.
 
 ## Development
 
