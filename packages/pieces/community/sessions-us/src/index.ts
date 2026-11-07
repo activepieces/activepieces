@@ -6,6 +6,7 @@ import {
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { baseUrl } from './lib/common';
 import { createEvent } from './lib/actions/create-event';
 import { createSession } from './lib/actions/create-session';
 import { publishEvent } from './lib/actions/publish-event';
@@ -63,6 +64,12 @@ export const sessionsUs = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.app.sessions.us/api',
       auth: sessionAuth,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${baseUrl}`,
+          placeholder: '/sessions',
+        },
+      },
       authMapping: async (auth) => ({
         'x-api-key': `${auth.secret_text}`,
       }),
