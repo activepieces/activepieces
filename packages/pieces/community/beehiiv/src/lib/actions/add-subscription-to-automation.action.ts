@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { automationId, publicationId, subscriptionId } from '../common/props';
@@ -14,25 +14,47 @@ export const addSubscriptionToAutomationAction = createAction({
 	aiMetadata: { description: 'Enrolls an existing subscriber into a beehiiv automation journey for the given publication and automation ID. The subscriber can be identified either by email or by subscription ID — provide exactly one. Use to start a subscriber on an automation. Not idempotent: each call creates a new journey enrollment.', idempotent: false },
 	props: {
 		publicationId: publicationId,
-		automationId: automationId('Automation ID', '', true,true),
+		automationId: automationId('Automation', 'Inactive automations are not listed.', true, true),
+		subscriber_info: Property.MarkDown({
+			value: 'Enter an email or pick a subscriber, not both.',
+			variant: MarkdownVariant.INFO,
+		}),
 		email: Property.ShortText({
-			displayName: 'Subscription Email',
-			description: 'The email address of the subscription. Provide either Email or Subscription ID.',
+			displayName: 'Email',
+			placeholder: 'jane@example.com',
 			required: false,
 		}),
 		subscription_id:subscriptionId(),
 		double_opt_override: Property.ShortText({
 			displayName: 'Double Opt-in Override',
-			description: 'Override publication double-opt settings for this subscription (e.g., "on").',
+			description: "Enter on or off to override the publication's double opt-in setting.",
+			placeholder: 'on',
 			required: false,
+			advanced: true,
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'automation',
+			display: 'section',
+			label: 'Automation',
+			icon: 'send',
+			props: ['publicationId', 'automationId'],
+		},
+		{
+			key: 'subscriber',
+			display: 'section',
+			label: 'Subscriber',
+			icon: 'user',
+			props: ['subscriber_info', 'email', 'subscription_id'],
+		},
+	],
 	async run(context) {
 		const { publicationId, automationId, email, subscription_id, double_opt_override } =
 			context.propsValue;
 
 		if (!email && !subscription_id) {
-			throw new Error('Either Subscription Email or Subscription ID must be provided.');
+			throw new Error('Enter an email or pick a subscriber.');
 		}
 
 		const body: Record<string, unknown> = {};
