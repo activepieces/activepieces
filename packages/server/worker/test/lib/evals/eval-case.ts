@@ -18,6 +18,7 @@ function fromDatasetItem(item: DatasetItem): EvalCase {
     return {
         id: item.id,
         caseNumber: item.metadata.case,
+        title: item.metadata.title ?? item.expected_output.checks.join(' '),
         problemType: item.metadata.problem_type,
         checks: item.expected_output.checks,
         cutBeforeStep,
@@ -160,6 +161,7 @@ export const DatasetItem = z.object({
     metadata: z.object({
         case: z.number(),
         problem_type: z.string(),
+        title: z.string().optional(),
         code_check: z.string(),
         cutBeforeStep: z.number().int().nonnegative().optional(),
         targetTool: z.string().optional(),
@@ -181,6 +183,7 @@ export type RecordedToolCall = z.infer<typeof ToolFixture>
 export type EvalCase = {
     id: string
     caseNumber: number
+    title: string
     problemType: string
     checks: string[]
     cutBeforeStep: number | undefined

@@ -46,12 +46,12 @@ function render({ cases, repeats, marks, verdictOf, costUsd, frame, elapsedMs }:
         const pass = row.filter((value) => value === 'pass').length
         const fail = row.filter((value) => value === 'fail').length
         const symbols = row.map((value) => symbol({ value, frame })).join(' ')
-        return `  ${pad(String(candidate.caseNumber), 4)}  ${pad(candidate.checks.join(' ').replace(/\s+/g, ' ').trim(), TESTS_WIDTH)}  ${symbols}  ${pad(String(pass), 4)}  ${pad(String(fail), 4)}  ${status({ row, pass, fail, verdictOf })}`
+        return `  ${pad(String(candidate.caseNumber), 4)}  ${pad(candidate.title, TITLE_WIDTH)}  ${symbols}  ${pad(String(pass), 4)}  ${pad(String(fail), 4)}  ${status({ row, pass, fail, verdictOf })}`
     })
     return [
         `  ${header}`,
         '',
-        `  ${pad('case', 4)}  ${pad('tests', TESTS_WIDTH)}  ${pad('runs', repeats * 2 - 1)}  pass  fail  status`,
+        `  ${pad('case', 4)}  ${pad('title', TITLE_WIDTH)}  ${pad('runs', repeats * 2 - 1)}  pass  fail  status`,
         ...rows,
     ]
 }
@@ -85,7 +85,7 @@ function formatElapsed(ms: number): string {
 }
 
 const FRAME_MS = 100
-const TESTS_WIDTH = 50
+const TITLE_WIDTH = 34
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'

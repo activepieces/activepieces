@@ -108,7 +108,7 @@ function render({ view, rows, datasets, typed, width, height }: { view: View, ro
             const lines = rows.map((row, index) => {
                 const passed = row.runs.filter((run) => run.verdict === 'pass').length
                 const dataset = datasets.length > 1 ? `${pad(row.dataset, 20)} ` : ''
-                const text = fit(`${dataset}${pad(String(row.candidate.caseNumber), 3)} ${VERDICT_TEXT[row.verdict]}  ${passed}/${row.runs.length}  ${oneLine(row.candidate.checks.join(' '))}`, width - 2)
+                const text = fit(`${dataset}${pad(String(row.candidate.caseNumber), 3)} ${VERDICT_TEXT[row.verdict]}  ${passed}/${row.runs.length}  ${row.candidate.title}`, width - 2)
                 return selectable({ text, verdict: row.verdict, selected: index === view.index })
             })
             return [
@@ -131,7 +131,7 @@ function render({ view, rows, datasets, typed, width, height }: { view: View, ro
                 return selectable({ text, verdict: run.verdict, selected: index === view.index })
             })
             return [
-                header({ left: `case ${row.candidate.caseNumber} · ${VERDICT_TEXT[row.verdict]} · ${passed}/${row.runs.length} runs pass`, right: '↑↓ move · enter transcript · esc back · q quit', width }),
+                header({ left: `case ${row.candidate.caseNumber} ${row.candidate.title} · ${VERDICT_TEXT[row.verdict]} · ${passed}/${row.runs.length} runs pass`, right: '↑↓ move · enter transcript · esc back · q quit', width }),
                 '',
                 ...intro,
                 ...windowed({ lines, index: view.index, size: height - 3 - intro.length }),
