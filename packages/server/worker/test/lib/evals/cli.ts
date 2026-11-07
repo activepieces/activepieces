@@ -140,7 +140,9 @@ async function reportDataset({ name, cases, results, explained, live, browse, re
     }
     const summaries = cases.map((candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
     console.log(`\n${colors.bold(`${name} summary`)} ${colors.dim(`(a case passes when ${passRule(name)})`)}`)
-    cases.forEach((candidate, index) => printExplanation({ summary: summaries[index], title: candidate.title, explanation: explained.get(candidate.id) }))
+    if (!browse) {
+        cases.forEach((candidate, index) => printExplanation({ summary: summaries[index], title: candidate.title, explanation: explained.get(candidate.id) }))
+    }
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
     const clearlyFailing = summaries.filter((summary) => clearVerdict(summary) === 'fail').length
     console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} ${colors.dim(`(${clearlyFailing} clearly)`)} · ${summaries.length} cases`)

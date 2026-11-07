@@ -124,10 +124,11 @@ function render({ view, rows, datasets, typed, width, height }: { view: View, ro
             const passed = row.runs.filter((run) => run.verdict === 'pass').length
             const explanation = row.explanation
             const intro = [
-                ...wrap({ text: `USER: ${oneLine(row.candidate.userMessage)}`, width: width - 2 }),
-                ...wrap({ text: `expected: ${explanation?.expected ?? row.candidate.checks.join(' ')}`, width: width - 2 }),
-                ...(explanation?.happened ?? []).flatMap((line) => wrap({ text: `happened: ${line}`, width: width - 2 })),
-                ...(isNil(explanation) ? [] : wrap({ text: `means: ${explanation.means}`, width: width - 2 }).map((line) => `${BOLD}${line}${RESET}`)),
+                ...labeled({ label: 'expected', lines: [explanation?.expected ?? row.candidate.checks.join(' ')], width }),
+                ...labeled({ label: 'happened', lines: explanation?.happened ?? [], width }),
+                ...labeled({ label: 'means', lines: isNil(explanation) ? [] : [explanation.means], width }).map((line) => `${BOLD}${line}${RESET}`),
+                '',
+                ...wrap({ text: `${DIM}user asked:${RESET} ${oneLine(row.candidate.userMessage)}`, width: width - 2 }).slice(0, USER_PREVIEW_LINES),
                 '',
             ].map((line) => `  ${line}`)
             const lines = row.runs.map((run, index) => {
@@ -169,6 +170,12 @@ function firstFailure(run: UploadedRun): string {
 function header({ left, right, width }: { left: string, right: string, width: number }): string {
     const gap = Math.max(2, width - left.length - right.length)
     return `${BOLD}${fit(`${left}${' '.repeat(gap)}${right}`, width)}${RESET}`
+}
+
+function labeled({ label, lines, width }: { label: string, lines: string[], width: number }): string[] {
+    const indent = ' '.repeat(LABEL_WIDTH + 2)
+    return lines.flatMap((line, index) => wrap({ text: line, width: width - LABEL_WIDTH - 4 })
+        .map((part, partIndex) => index === 0 && partIndex === 0 ? `${DIM}${label.padEnd(LABEL_WIDTH)}${RESET}  ${part}` : `${indent}${part}`))
 }
 
 function windowed({ lines, index, size }: { lines: string[], index: number, size: number }): string[] {
@@ -226,8 +233,11 @@ const BOLD = '\x1b[1m'
 const INVERSE = '\x1b[7m'
 const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'
+const DIM = '\x1b[2m'
 const YELLOW = '\x1b[33m'
 const RESET = '\x1b[0m'
+const LABEL_WIDTH = 8
+const USER_PREVIEW_LINES = 2
 const VERDICT_TEXT: Record<RunVerdict, string> = { pass: '✓ pass', fail: '✗ fail', unknown: '? unclear' }
 const VERDICT_COLOR: Record<RunVerdict, string> = { pass: GREEN, fail: RED, unknown: YELLOW }
 
