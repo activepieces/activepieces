@@ -44,7 +44,10 @@ export const cleanRowAction = createAction({
         'Fields left empty are cleared. Fields you fill in are saved as entered.',
       variant: MarkdownVariant.INFO,
     }),
-    table_fields: baserowCommon.tableFields(true),
+    table_fields: baserowCommon.tableFields({
+      required: true,
+      withLinkBy: false,
+    }),
   },
   async run(context) {
     const { table_id, row_id, table_fields } = context.propsValue;
@@ -52,12 +55,9 @@ export const cleanRowAction = createAction({
     const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id!);
 
-    const fieldTypeMap: Record<string, string> = {};
-    for (const column of tableSchema) {
-      fieldTypeMap[column.name] = column.type;
-    }
-
-    const formattedFields = formatFieldValues(table_fields!, fieldTypeMap, {
+    const formattedFields = formatFieldValues({
+      input: table_fields!,
+      fields: tableSchema,
       skipEmpty: false,
     });
     return await client.updateRow(table_id!, row_id!, formattedFields);
