@@ -15,17 +15,19 @@ export const getTranscriptAction = createAction({
   props: {
     url: Property.ShortText({
       displayName: 'YouTube URL',
-      description: 'The URL of a single YouTube video.',
+      description: 'A single video, not a playlist or channel.',
+      placeholder: 'https://youtu.be/dQw4w9WgXcQ',
       required: true,
     }),
     lang: Property.ShortText({
-      displayName: 'Language Preference',
-      description: 'Preferred language of the transcript. If not available, the first available language will be returned.',
+      displayName: 'Language',
+      description: 'ISO 639-1 code. Falls back to the first available language.',
+      placeholder: 'en',
       required: false,
     }),
     text: Property.Checkbox({
       displayName: 'Merge Text',
-      description: 'If true, the transcript will be merged into a single text instead of timestamped chunks.',
+      description: 'Off returns timestamped chunks instead of one block of text.',
       required: false,
       defaultValue: true,
     })
