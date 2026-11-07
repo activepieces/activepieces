@@ -8,7 +8,7 @@ export const getRecordingSummary = createAction({
   name: 'getRecordingSummary',
   classification: 'READ',
   displayName: 'Get Recording Summary',
-  description: 'Get the AI-generated summary of a meeting recording. Works with both OAuth and API key connections.',
+  description: 'Get the AI summary of a meeting recording.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -17,11 +17,13 @@ export const getRecordingSummary = createAction({
   },
   auth: fathomAuth,
   props: {
-    recording_id: fathomProps.recordingDropdown({ description: 'Select the meeting recording to get the summary for' }),
+    recording_id: fathomProps.recordingDropdown({ description: 'Pick from your recent meetings, or map a recording ID.' }),
     destination_url: Property.ShortText({
       displayName: 'Destination URL',
-      description: 'Optional: URL where Fathom will POST the summary. Leave empty to get data directly in response.',
+      description: 'Fathom POSTs the summary here instead of returning it.',
+      placeholder: 'https://example.com/webhook',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: fathomOutputSchemas.legacySummary,
