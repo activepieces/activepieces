@@ -8,6 +8,27 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Anthropic Claude 0.9.0: retired models are replaced at run time, and Extended Thinking Mode uses Claude Sonnet 5.5
+
+Anthropic has retired several Claude models, so steps that still pointed at them failed. From Anthropic Claude 0.9.0, **Ask Claude**, **Extract Structured Data** and **Count Tokens** switch a retired model to the current model of the same family when the step runs:
+
+- Claude Sonnet 4, Sonnet 3.7, Sonnet 3.5, Sonnet 3 and Claude 2.x run on `claude-sonnet-5-5`.
+- Claude Sonnet 4.5 is deprecated, not retired yet (Anthropic retires it on 2026-11-30). It is switched to `claude-sonnet-5-5` early, so steps keep working after that date.
+- Claude Opus 4.1, Opus 4 and Opus 3 run on `claude-opus-5-5`.
+- Claude Haiku 3.5 and Haiku 3 run on `claude-haiku-5-5`.
+
+Other changes once a step is upgraded to 0.9.0:
+
+- **Extended Thinking Mode** in Ask Claude now runs on `claude-sonnet-5-5` with adaptive thinking, instead of the retired Claude Sonnet 3.7. The **Budget Tokens** field is removed, because Claude sets its own thinking budget.
+- The Claude 5.5 models think by default, and Maximum Tokens covers the thinking and the reply together. When Extended Thinking Mode is off, Ask Claude and Extract Structured Data ask these models for low thinking effort (`output_config.effort: low`), so most of Maximum Tokens stays free for the reply.
+- **Temperature** is sent only to models that accept it: Claude Sonnet 4.6, Opus 4.6, Opus 4.5, Haiku 4.5, Sonnet 4.5 and older. On newer models the field is ignored.
+- On Claude Sonnet 5.5, Opus 5.5, Fable 5.1 and Mythos 5.1, Extract Structured Data lets the model choose the extraction tool (`tool_choice: auto`) and tells it to call that tool, because these models do not accept a forced tool choice. If the model replies with text only, the step asks once more before it fails. Haiku 5.5 and older models are still forced to call the tool.
+- A **Roles** list that ends with an assistant turn (prefill) now fails with a 400 error on the Claude 5.5 models, because they do not accept prefill. End Roles with a user turn instead.
+
+#### What you need to do
+
+If you want a different model than the replacement, open the step and pick a model explicitly. Answers, extracted data and token cost can differ on the newer models, so check flows whose later steps depend on the exact output. If a long reply on a 5.5 model is cut off, raise Maximum Tokens. Steps keep running on the version they were built with until you upgrade them.
+
 #### Loops 0.2.0: Find Contact is no longer an AI agent tool
 
 **Find Contact** is now shown only in the flow builder. AI agents and MCP clients get **Find Contact by Email** and **Find Contact by User ID** instead.
