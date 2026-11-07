@@ -17,8 +17,8 @@ export const findTeamMemberByEmail = createAction({
   },
   auth: fathomAuth,
   props: {
-    email: Property.ShortText({ displayName: 'Email', description: 'Email address of the member, e.g. jane@acme.com.', required: true }),
-    team: Property.ShortText({ displayName: 'Team', description: 'Optional exact team name to search within.', required: false }),
+    email: Property.ShortText({ displayName: 'Email', description: "The member's exact email address.", placeholder: 'jane@acme.com', required: true }),
+    team: Property.ShortText({ displayName: 'Team', description: 'Exact team name. Empty: every team.', placeholder: 'Sales', required: false }),
   },
   outputSchema: fathomOutputSchemas.teamMemberLookup,
   async run({ auth, propsValue }) {

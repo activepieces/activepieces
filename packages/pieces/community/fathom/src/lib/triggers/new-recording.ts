@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { randomUUID } from 'node:crypto';
-import { AppConnectionType, createTrigger, Property, Store, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AppConnectionType, createTrigger, MarkdownVariant, Property, Store, TriggerStrategy } from '@activepieces/pieces-framework';
 import { fathomAuth, FathomAuthValue } from '../common/auth';
 import { FathomApiError, fathomClient } from '../common/client';
 import { fathomWebhook } from '../common/webhook';
@@ -11,16 +11,31 @@ export const newRecording = createTrigger({
   name: 'newRecording',
   classification: 'READ',
   displayName: 'New Recording',
-  description: 'Fires when Fathom finishes processing a new meeting recording. Turn on at least one of the Include options.',
+  description: 'Fires when Fathom finishes processing a new meeting recording.',
   aiMetadata: {
     description:
       'Fires when Fathom finishes processing a new meeting recording, delivering its metadata plus whichever of transcript, summary, action items and CRM matches are enabled (at least one must be). Scope is configurable: your own recordings, recordings shared with you externally, recordings you shared with teams, and team recordings you can access. Deliveries are signature-checked and retries de-duplicated.',
   },
+  propertyGroups: [
+    {
+      key: 'recordings',
+      display: 'section',
+      label: 'Recordings',
+      icon: 'inbox',
+      props: ['triggered_for'],
+    },
+    {
+      key: 'include',
+      display: 'section',
+      label: 'Include in each delivery',
+      icon: 'sliders',
+      props: ['include_note', 'include_summary', 'include_transcript', 'include_action_items', 'include_crm_matches'],
+    },
+  ],
   props: {
     triggered_for: Property.MultiSelectDropdown({
       auth: fathomAuth,
-      displayName: 'Trigger For',
-      description: 'Select which types of recordings should trigger this webhook',
+      displayName: 'Recording Types',
       required: true,
       refreshers: [],
       options: async () => {
@@ -36,27 +51,27 @@ export const newRecording = createTrigger({
       },
       defaultValue: ['my_recordings'],
     }),
-    include_transcript: Property.Checkbox({
-      displayName: 'Include Transcript',
-      description: 'Include the transcript in the webhook payload',
-      required: false,
-      defaultValue: false,
+    include_note: Property.MarkDown({
+      value: 'Turn on at least one option. Fathom sends only the content that is on.',
+      variant: MarkdownVariant.INFO,
     }),
     include_summary: Property.Checkbox({
       displayName: 'Include Summary',
-      description: 'Include the summary in the webhook payload. Fathom needs at least one Include option turned on.',
       required: false,
       defaultValue: true,
     }),
+    include_transcript: Property.Checkbox({
+      displayName: 'Include Transcript',
+      required: false,
+      defaultValue: false,
+    }),
     include_action_items: Property.Checkbox({
       displayName: 'Include Action Items',
-      description: 'Include the action items in the webhook payload',
       required: false,
       defaultValue: false,
     }),
     include_crm_matches: Property.Checkbox({
       displayName: 'Include CRM Matches',
-      description: 'Include CRM matches in the webhook payload',
       required: false,
       defaultValue: false,
     }),
@@ -118,7 +133,7 @@ export const newRecording = createTrigger({
     }
     const triggeredFor = (context.propsValue.triggered_for ?? []).filter((value): value is string => typeof value === 'string');
     if (triggeredFor.length === 0) {
-      throw new Error('Pick at least one recording type in Trigger For.');
+      throw new Error('Pick at least one recording type in Recording Types.');
     }
     const webhook = await fathomClient.requestObject({
       auth: context.auth,

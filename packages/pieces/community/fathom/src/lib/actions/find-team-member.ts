@@ -8,7 +8,7 @@ export const findTeamMember = createAction({
   name: 'findTeamMember',
   classification: 'SEARCH',
   displayName: 'Find Team Member',
-  description: 'List the members of your Fathom account, optionally only those of one team. To look up one person, use Find Team Member by Email.',
+  description: 'List the members of your Fathom account, or of one team.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -19,13 +19,15 @@ export const findTeamMember = createAction({
   props: {
     team: Property.ShortText({
       displayName: 'Team',
-      description: 'Team name to filter by',
+      description: 'Exact team name. Empty: every team.',
+      placeholder: 'Sales',
       required: false,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'Cursor for pagination (from previous response)',
+      description: "The next page's cursor from the previous run. Empty: first page.",
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: fathomOutputSchemas.legacyTeamMembers,
