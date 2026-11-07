@@ -28,4 +28,10 @@ export const customApiCall = createCustomApiCallAction({
     if (!accessToken) throw new Error('Failed to obtain access token');
     return { Authorization: `Bearer ${accessToken}` };
   },
+  props: {
+    url: {
+      description: "Full URL, or a path relative to your project's Vertex AI address.",
+      placeholder: '/locations/us-central1/endpoints',
+    },
+  },
 });
