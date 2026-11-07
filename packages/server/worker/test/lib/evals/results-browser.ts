@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
-import { Verdict } from './checks'
+import { CaseExplanation, caseSummary } from './case-summary'
+import { RunVerdict, Verdict } from './checks'
 import { EvalCase } from './eval-case'
 import { UploadedRun } from './posthog-experiments'
 
@@ -8,6 +9,7 @@ async function open({ datasets }: { datasets: BrowsedDataset[] }): Promise<void>
         dataset: dataset.name,
         candidate,
         verdict: dataset.verdictOf(candidate),
+        explanation: dataset.explanationOf(candidate),
         runs: dataset.runs.filter((run) => run.candidate.id === candidate.id).sort((a, b) => a.trial - b.trial),
     })))
     if (rows.length === 0) {
@@ -120,18 +122,21 @@ function render({ view, rows, datasets, typed, width, height }: { view: View, ro
         case 'runs': {
             const row = rows[view.caseIndex]
             const passed = row.runs.filter((run) => run.verdict === 'pass').length
+            const explanation = row.explanation
             const intro = [
                 ...wrap({ text: `USER: ${oneLine(row.candidate.userMessage)}`, width: width - 2 }),
-                ...row.candidate.checks.flatMap((check) => wrap({ text: `expected: ${check}`, width: width - 2 })),
+                ...wrap({ text: `expected: ${explanation?.expected ?? row.candidate.checks.join(' ')}`, width: width - 2 }),
+                ...(explanation?.happened ?? []).flatMap((line) => wrap({ text: `happened: ${line}`, width: width - 2 })),
+                ...(isNil(explanation) ? [] : wrap({ text: `means: ${explanation.means}`, width: width - 2 }).map((line) => `${BOLD}${line}${RESET}`)),
                 '',
             ].map((line) => `  ${line}`)
             const lines = row.runs.map((run, index) => {
-                const detail = run.verdict === 'pass' ? `overall ${run.scores.overall ?? '-'}/10` : firstFailure(run)
+                const detail = run.verdict === 'pass' ? `${run.scores.stepsToDecision} step(s)` : firstFailure(run)
                 const text = fit(`run ${run.trial + 1}  ${VERDICT_TEXT[run.verdict]}  ${oneLine(detail)}`, width - 2)
                 return selectable({ text, verdict: run.verdict, selected: index === view.index })
             })
             return [
-                header({ left: `case ${row.candidate.caseNumber} ${row.candidate.title} · ${VERDICT_TEXT[row.verdict]} · ${passed}/${row.runs.length} runs pass`, right: '↑↓ move · enter transcript · esc back · q quit', width }),
+                header({ left: `case ${row.candidate.caseNumber} ${row.candidate.title} · ${VERDICT_TEXT[row.verdict]} · ${row.explanation?.reliability ?? `${passed}/${row.runs.length} runs pass`}`, right: '↑↓ move · enter transcript · esc back · q quit', width }),
                 '',
                 ...intro,
                 ...windowed({ lines, index: view.index, size: height - 3 - intro.length }),
@@ -141,8 +146,8 @@ function render({ view, rows, datasets, typed, width, height }: { view: View, ro
             const row = rows[view.caseIndex]
             const run = row.runs[view.runIndex]
             const body = [
-                ...failures(run).flatMap((reason) => wrap({ text: `✗ ${reason}`, width })),
-                `overall ${run.scores.overall ?? '-'}/10 · ${run.scores.stepsToDecision} step(s) · ${isNil(run.scores.costUsd) ? 'cost unknown' : `$${run.scores.costUsd.toFixed(4)}`}`,
+                ...caseSummary.failures(run).flatMap((reason) => wrap({ text: `✗ ${reason}`, width })),
+                `${run.scores.stepsToDecision} step(s) · ${isNil(run.scores.costUsd) ? 'cost unknown' : `$${run.scores.costUsd.toFixed(4)}`}`,
                 '',
                 ...run.transcript.split('\n').flatMap((line) => wrap({ text: line, width })),
             ]
@@ -157,18 +162,8 @@ function render({ view, rows, datasets, typed, width, height }: { view: View, ro
     }
 }
 
-function failures(run: UploadedRun): string[] {
-    const { scores } = run
-    return [
-        scores.expected === 'fail' ? `did the expected thing: ${scores.reasons.expected}` : null,
-        scores.honest === 'fail' ? `honest about results: ${scores.reasons.honest}` : null,
-        scores.validToolCalls === 'fail' ? `valid tool calls: ${scores.reasons.toolCalls}` : null,
-        ...run.stops.map((reason) => `replay stopped: ${reason}`),
-    ].flatMap((reason) => isNil(reason) ? [] : [reason])
-}
-
 function firstFailure(run: UploadedRun): string {
-    return failures(run)[0] ?? 'failed'
+    return caseSummary.failures(run)[0] ?? 'failed'
 }
 
 function header({ left, right, width }: { left: string, right: string, width: number }): string {
@@ -182,13 +177,13 @@ function windowed({ lines, index, size }: { lines: string[], index: number, size
     return lines.slice(start, start + visible)
 }
 
-function selectable({ text, verdict, selected }: { text: string, verdict: Verdict, selected: boolean }): string {
+function selectable({ text, verdict, selected }: { text: string, verdict: RunVerdict, selected: boolean }): string {
     return selected ? `${INVERSE}› ${text}${RESET}` : `  ${colorVerdict({ text, verdict })}`
 }
 
-function colorVerdict({ text, verdict }: { text: string, verdict: Verdict }): string {
+function colorVerdict({ text, verdict }: { text: string, verdict: RunVerdict }): string {
     const label = VERDICT_TEXT[verdict]
-    return text.replace(label, `${verdict === 'pass' ? GREEN : RED}${label}${RESET}`)
+    return text.replace(label, `${VERDICT_COLOR[verdict]}${label}${RESET}`)
 }
 
 function wrap({ text, width }: { text: string, width: number }): string[] {
@@ -231,8 +226,10 @@ const BOLD = '\x1b[1m'
 const INVERSE = '\x1b[7m'
 const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'
+const YELLOW = '\x1b[33m'
 const RESET = '\x1b[0m'
-const VERDICT_TEXT: Record<Verdict, string> = { pass: '✓ pass', fail: '✗ fail' }
+const VERDICT_TEXT: Record<RunVerdict, string> = { pass: '✓ pass', fail: '✗ fail', unknown: '? unclear' }
+const VERDICT_COLOR: Record<RunVerdict, string> = { pass: GREEN, fail: RED, unknown: YELLOW }
 
 export const resultsBrowser = {
     open,
@@ -243,6 +240,7 @@ type Row = {
     candidate: EvalCase
     verdict: Verdict
     runs: UploadedRun[]
+    explanation: CaseExplanation | undefined
 }
 
 type View =
@@ -255,4 +253,5 @@ export type BrowsedDataset = {
     cases: EvalCase[]
     runs: UploadedRun[]
     verdictOf: (candidate: EvalCase) => Verdict
+    explanationOf: (candidate: EvalCase) => CaseExplanation | undefined
 }

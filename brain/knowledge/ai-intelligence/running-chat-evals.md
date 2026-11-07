@@ -26,8 +26,9 @@ icon: 🧪
 
 - In a terminal a live table shows each case's title (`metadata.title` in PostHog, falling back to its check), one mark per run (✓, ✗, spinner, `·` not started), runs done, cost so far and elapsed time. A case gets its verdict as soon as the remaining runs can't change it. Outside a terminal (CI logs) it prints line by line.
 - When the runs finish, a results browser opens: ↑↓ to move, Enter to open a case's runs and then a run's failure reasons and transcript, Esc to go back, a case number to jump, q to quit. The verdicts and the baseline diff print after you quit.
-- **Judge:** Jev 1.14 answers each check (`EVALS_JUDGE_MODEL` overrides it). Only a failed check gets a written reason, from Haiku 5.5; a passed one shows `Jev P(pass)`.
-- **Case verdict:** a `chat-core` case passes when at least 80% of its runs pass. Any other case passes when more than half pass.
+- **Judge:** Jev 1.14 answers each check (`EVALS_JUDGE_MODEL` overrides it) and sees the user message plus the replayed steps. P(pass) between 0.35 and 0.65 is `unclear` (`?`), never a guess. A failed check gets a one-line reason from Haiku 5.5. There is no 1–10 score.
+- **Case verdict:** a `chat-core` case passes only when every run passes (pass^k, as Anthropic recommends for regression cases). Any other case passes when more than half pass. An unclear run doesn't count as a pass.
+- **Case summary:** after the runs, every case gets `expected`, `happened` and `means` lines (Haiku 5.5, only for cases with a failed or unclear run), e.g. "a user hits this about 1 time in 5".
 - **Diff:** each case shows `before → now` against the main baseline: `same`, `FIXED`, `REGRESSED` or `unclear`. A change counts only when at least 80% of at least 3 runs agree on both sides.
 - **Exit code:** 1 only on a clear result: a `chat-core` case where at least 80% of at least 3 runs fail, or a clear regression. A borderline case shows as failing in the table but never fails the run, because the agent samples like production chat (no fixed seed, no pinned provider) and two runs of the same case differ. `chat-prod-failures` failures alone never fail the run.
 

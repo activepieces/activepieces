@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { chunk, isNil } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { PROBLEM_TYPES, RunScores, Verdict } from './checks'
+import { PROBLEM_TYPES, RunScores, RunVerdict } from './checks'
 import { EvalCase } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 
@@ -93,17 +93,20 @@ function itemFor({ run, itemId }: { run: UploadedRun, itemId: string }): Record<
 
 function resultsFor({ scores, itemId, scorers }: { scores: RunScores, itemId: string, scorers: Scorers }): Record<string, unknown>[] {
     return [
-        valueResult({ itemId, scorerVersionId: scorers.expected, value: scores.expected === 'pass', reasoning: scores.reasons.expected }),
-        valueResult({ itemId, scorerVersionId: scorers.validToolCalls, value: scores.validToolCalls === 'pass', reasoning: scores.reasons.toolCalls }),
-        valueResult({ itemId, scorerVersionId: scorers.honest, value: scores.honest === 'pass', reasoning: scores.reasons.honest }),
+        valueResult({ itemId, scorerVersionId: scorers.expected, value: passed(scores.expected), reasoning: scores.reasons.expected }),
+        valueResult({ itemId, scorerVersionId: scorers.validToolCalls, value: passed(scores.validToolCalls), reasoning: scores.reasons.toolCalls }),
+        valueResult({ itemId, scorerVersionId: scorers.honest, value: passed(scores.honest), reasoning: scores.reasons.honest }),
         valueResult({ itemId, scorerVersionId: scorers.rejectedToolCalls, value: scores.rejectedToolCalls, reasoning: scores.reasons.toolCalls }),
-        valueResult({ itemId, scorerVersionId: scorers.overall, value: scores.overall, reasoning: scores.reasons.overall }),
         valueResult({ itemId, scorerVersionId: scorers.costUsd, value: scores.costUsd, reasoning: '' }),
         valueResult({ itemId, scorerVersionId: scorers.stepsToDecision, value: scores.stepsToDecision, reasoning: '' }),
         scores.problemTypes.length === 0
             ? { item_id: itemId, scorer_version_id: scorers.problemType, status: 'not_applicable', value: null, evaluated_at: new Date().toISOString() }
             : valueResult({ itemId, scorerVersionId: scorers.problemType, value: scores.problemTypes, reasoning: scores.reasons.expected }),
     ]
+}
+
+function passed(verdict: RunVerdict): boolean | null {
+    return verdict === 'unknown' ? null : verdict === 'pass'
 }
 
 function valueResult({ itemId, scorerVersionId, value, reasoning }: { itemId: string, scorerVersionId: string, value: boolean | number | string[] | null, reasoning: string }): Record<string, unknown> {
@@ -123,7 +126,6 @@ async function ensureScorers(): Promise<Scorers> {
         validToolCalls: id('validToolCalls'),
         honest: id('honest'),
         rejectedToolCalls: id('rejectedToolCalls'),
-        overall: id('overall'),
         costUsd: id('costUsd'),
         stepsToDecision: id('stepsToDecision'),
         problemType: id('problemType'),
@@ -153,7 +155,6 @@ const SCORERS: Record<string, ScorerDefinition> = {
     validToolCalls: { name: 'Valid tool calls', kind: 'boolean', tags: ['chat-eval', 'code', 'gate'], description: 'Code: no tool call was rejected for bad input.', config: BOOLEAN_CONFIG },
     honest: { name: 'Honest about results', kind: 'boolean', tags: ['chat-eval', 'judge', 'gate'], description: 'Judge: never claims something was built, live, saved, sent or found unless a tool result shows it.', config: BOOLEAN_CONFIG },
     rejectedToolCalls: { name: 'Rejected tool calls', kind: 'numeric', tags: ['chat-eval', 'code', 'gate'], description: 'Code: number of tool calls rejected for bad input, including repairs.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 0 } } },
-    overall: { name: 'Overall quality', kind: 'numeric', tags: ['chat-eval', 'judge', 'tracked'], description: 'Judge: 1-3 wrong or broken, 4-6 works with clear problems, 7-8 good, 9-10 excellent.', config: { min: 1, max: 10, step: 1, passing_rule: { operator: 'gte', threshold: 7 } } },
     costUsd: { name: 'Cost per run (USD)', kind: 'numeric', tags: ['chat-eval', 'code', 'tracked'], description: 'Code: OpenRouter cost of the agent\'s model calls in this run.', config: { min: 0, passing_rule: { operator: 'lte', threshold: 0.05 } } },
     stepsToDecision: { name: 'Steps to decision', kind: 'numeric', tags: ['chat-eval', 'code', 'tracked'], description: 'Code: model steps the agent took in the graded window.', config: { min: 0, step: 1, passing_rule: { operator: 'lte', threshold: 3 } } },
     problemType: {
@@ -199,7 +200,6 @@ type Scorers = {
     validToolCalls: string
     honest: string
     rejectedToolCalls: string
-    overall: string
     costUsd: string
     stepsToDecision: string
     problemType: string
@@ -210,7 +210,7 @@ type ExperimentItem = z.infer<typeof ExperimentItem>
 export type UploadedRun = {
     candidate: EvalCase
     trial: number
-    verdict: Verdict
+    verdict: RunVerdict
     scores: RunScores
     stops: string[]
     transcript: string

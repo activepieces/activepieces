@@ -1,4 +1,4 @@
-import { Verdict } from './checks'
+import { RunVerdict, Verdict } from './checks'
 import { EvalCase } from './eval-case'
 
 function create({ cases, repeats, verdictOf }: { cases: EvalCase[], repeats: number, verdictOf: (counts: { pass: number, fail: number }) => Verdict }): ProgressTable {
@@ -39,12 +39,12 @@ function create({ cases, repeats, verdictOf }: { cases: EvalCase[], repeats: num
 
 function render({ cases, repeats, marks, verdictOf, costUsd, frame, elapsedMs }: { cases: EvalCase[], repeats: number, marks: Map<string, Mark[]>, verdictOf: (counts: { pass: number, fail: number }) => Verdict, costUsd: number, frame: number, elapsedMs: number }): string[] {
     const all = [...marks.values()].flat()
-    const done = all.filter((value) => value === 'pass' || value === 'fail').length
+    const done = all.filter((value) => value !== 'running' && value !== 'waiting').length
     const header = `${done}/${all.length} runs · $${costUsd.toFixed(2)} · ${formatElapsed(elapsedMs)}`
     const rows = cases.map((candidate) => {
         const row = marks.get(candidate.id) ?? []
         const pass = row.filter((value) => value === 'pass').length
-        const fail = row.filter((value) => value === 'fail').length
+        const fail = row.filter((value) => value === 'fail' || value === 'unknown').length
         const symbols = row.map((value) => symbol({ value, frame })).join(' ')
         return `  ${pad(String(candidate.caseNumber), 4)}  ${pad(candidate.title, TITLE_WIDTH)}  ${symbols}  ${pad(String(pass), 4)}  ${pad(String(fail), 4)}  ${status({ row, pass, fail, verdictOf })}`
     })
@@ -70,6 +70,7 @@ function symbol({ value, frame }: { value: Mark, frame: number }): string {
     switch (value) {
         case 'pass': return `${GREEN}✓${RESET}`
         case 'fail': return `${RED}✗${RESET}`
+        case 'unknown': return `${YELLOW}?${RESET}`
         case 'running': return SPINNER[frame % SPINNER.length]
         case 'waiting': return `${DIM}·${RESET}`
     }
@@ -89,6 +90,7 @@ const TITLE_WIDTH = 34
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'
+const YELLOW = '\x1b[33m'
 const DIM = '\x1b[2m'
 const RESET = '\x1b[0m'
 
@@ -96,10 +98,10 @@ export const progressTable = {
     create,
 }
 
-type Mark = Verdict | 'running' | 'waiting'
+type Mark = RunVerdict | 'running' | 'waiting'
 
 export type ProgressTable = {
     start: (run: { candidate: EvalCase, trial: number }) => void
-    finish: (run: { candidate: EvalCase, trial: number, verdict: Verdict, runCostUsd: number | null }) => void
+    finish: (run: { candidate: EvalCase, trial: number, verdict: RunVerdict, runCostUsd: number | null }) => void
     stop: () => void
 }

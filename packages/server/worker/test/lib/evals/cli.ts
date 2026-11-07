@@ -4,7 +4,8 @@ import { existsSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { evalAgentTurn } from './agent-turn'
-import { evalChecks, RunScores, Verdict } from './checks'
+import { caseSummary, CaseExplanation } from './case-summary'
+import { evalChecks, RunScores, RunVerdict, Verdict } from './checks'
 import { colors } from './colors'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
@@ -65,9 +66,14 @@ async function main(): Promise<void> {
     const live = Boolean(process.stdout.isTTY) && !values.verbose
     const browse = live && Boolean(process.stdin.isTTY)
     const ran: RanDataset[] = []
+    let explained = new Map<string, CaseExplanation>()
     try {
         for (const dataset of datasets) {
             ran.push(await runDataset({ dataset, repeats, recordMode, upload: values.upload, verbose: values.verbose, live, modelId: values.model, auth, mcp }))
+        }
+        if (!recordMode) {
+            console.log(colors.dim('\nWriting a short summary for each case…'))
+            explained = await explainAll({ ran, auth })
         }
     }
     finally {
@@ -75,11 +81,11 @@ async function main(): Promise<void> {
         await evalAgentTurn.cleanupAuth()
     }
     if (browse) {
-        await resultsBrowser.open({ datasets: ran.map(({ name, cases, results }) => ({ name, cases, runs: results, verdictOf: (candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }).verdict })) })
+        await resultsBrowser.open({ datasets: ran.map(({ name, cases, results }) => ({ name, cases, runs: results, verdictOf: (candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }).verdict, explanationOf: (candidate) => explained.get(candidate.id) })) })
     }
     const outcomes: DatasetOutcome[] = []
     for (const dataset of ran) {
-        outcomes.push(await reportDataset({ ...dataset, live, browse, recordMode, upload: values.upload, modelId: values.model }))
+        outcomes.push(await reportDataset({ ...dataset, explained, live, browse, recordMode, upload: values.upload, modelId: values.model }))
     }
     const broken = outcomes.filter((outcome) => outcome.broken)
     console.log(`\n${broken.length === 0 ? colors.bold(colors.green('✓ Nothing broke')) : colors.bold(colors.red(`✗ Broken: ${broken.map((outcome) => outcome.reason).join('; ')}`))}`)
@@ -103,15 +109,38 @@ async function runDataset({ dataset, repeats, recordMode, upload, verbose, live,
     return { name, cases, results }
 }
 
-async function reportDataset({ name, cases, results, live, browse, recordMode, upload, modelId }: RanDataset & { live: boolean, browse: boolean, recordMode: boolean, upload: boolean, modelId: string }): Promise<DatasetOutcome> {
+async function explainAll({ ran, auth }: { ran: RanDataset[], auth: Record<string, unknown> }): Promise<Map<string, CaseExplanation>> {
+    const entries = await Promise.all(ran.flatMap(({ name, cases, results }) => cases.map(async (candidate) => {
+        const runs = results.filter((result) => result.candidate.id === candidate.id).sort((a, b) => a.trial - b.trial)
+        const { verdict } = summarize({ datasetName: name, candidate, results: runs })
+        return [candidate.id, await caseSummary.explain({ auth, candidate, runs, verdict })] as const
+    })))
+    return new Map(entries)
+}
+
+function printExplanation({ summary, title, explanation }: { summary: CaseSummary, title: string, explanation: CaseExplanation | undefined }): void {
+    const head = `  ${VERDICT_MARK[summary.verdict]} ${colors.bold(`case ${summary.caseNumber} · ${title}`)} · ${summary.verdict === 'pass' ? colors.green(explanation?.reliability ?? 'pass') : colors.red(explanation?.reliability ?? 'fail')}`
+    if (isNil(explanation)) {
+        console.log(`${head} · ${summary.pass} pass · ${summary.fail} fail`)
+        return
+    }
+    if (summary.fail === 0 && summary.verdict === 'pass' && explanation.happened.length === 1) {
+        console.log(`${head} · ${colors.dim(explanation.means)}`)
+        return
+    }
+    console.log(head)
+    console.log(`      ${colors.dim('expected')}  ${explanation.expected}`)
+    explanation.happened.forEach((line, index) => console.log(`      ${colors.dim(index === 0 ? 'happened' : '        ')}  ${line}`))
+    console.log(`      ${colors.dim('means   ')}  ${colors.bold(explanation.means)}`)
+}
+
+async function reportDataset({ name, cases, results, explained, live, browse, recordMode, upload, modelId }: RanDataset & { explained: Map<string, CaseExplanation>, live: boolean, browse: boolean, recordMode: boolean, upload: boolean, modelId: string }): Promise<DatasetOutcome> {
     if (live && !browse) {
         results.filter((result) => result.verdict === 'fail').sort((a, b) => a.candidate.caseNumber - b.candidate.caseNumber || a.trial - b.trial).forEach((result) => print({ result, verbose: false }))
     }
     const summaries = cases.map((candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
     console.log(`\n${colors.bold(`${name} summary`)} ${colors.dim(`(a case passes when ${passRule(name)})`)}`)
-    if (!live) {
-        summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · overall ${isNil(summary.overall) ? '-' : summary.overall.toFixed(1)}/10 · ${isNil(summary.costUsd) ? 'cost unknown' : `$${summary.costUsd.toFixed(4)}/run`}`))
-    }
+    cases.forEach((candidate, index) => printExplanation({ summary: summaries[index], title: candidate.title, explanation: explained.get(candidate.id) }))
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
     const clearlyFailing = summaries.filter((summary) => clearVerdict(summary) === 'fail').length
     console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} ${colors.dim(`(${clearlyFailing} clearly)`)} · ${summaries.length} cases`)
@@ -158,14 +187,14 @@ async function evaluate({ candidate, trial, mcp, modelId, auth, recordMode }: { 
 
 function crashedScores({ reason }: { reason: string }): RunScores {
     const message = `The run crashed: ${reason}`
-    return { expected: 'fail', honest: 'fail', validToolCalls: 'fail', rejectedToolCalls: 0, overall: null, costUsd: null, stepsToDecision: 0, problemTypes: [], reasons: { expected: message, honest: message, overall: message, toolCalls: message } }
+    return { expected: 'fail', honest: 'fail', validToolCalls: 'fail', rejectedToolCalls: 0, costUsd: null, stepsToDecision: 0, problemTypes: [], reasons: { expected: message, honest: message, toolCalls: message } }
 }
 
 function summarize({ datasetName, candidate, results }: { datasetName: string, candidate: EvalCase, results: CaseResult[] }): CaseSummary {
     const pass = results.filter((result) => result.verdict === 'pass').length
     const fail = results.filter((result) => result.verdict === 'fail').length
-    const verdict = caseVerdict({ datasetName, pass, fail })
-    return { caseNumber: candidate.caseNumber, pass, fail, verdict, overall: average(results.map((result) => result.scores.overall)), costUsd: average(results.map((result) => result.scores.costUsd)) }
+    const verdict = caseVerdict({ datasetName, pass, fail: results.length - pass })
+    return { caseNumber: candidate.caseNumber, pass, fail, verdict, costUsd: average(results.map((result) => result.scores.costUsd)) }
 }
 
 function caseVerdict({ datasetName, pass, fail }: { datasetName: string } & VerdictCounts): Verdict {
@@ -175,7 +204,10 @@ function caseVerdict({ datasetName, pass, fail }: { datasetName: string } & Verd
 
 function passRule(datasetName: string): string {
     const share = MIN_PASS_SHARE[datasetName]
-    return isNil(share) ? 'more than half of its runs pass' : `at least ${Math.round(share * 100)}% of its runs pass`
+    if (isNil(share)) {
+        return 'more than half of its runs pass'
+    }
+    return share === 1 ? 'every run passes (pass^k)' : `at least ${Math.round(share * 100)}% of its runs pass`
 }
 
 function average(values: (number | null)[]): number | null {
@@ -297,29 +329,29 @@ function print({ result, verbose }: { result: CaseResult, verbose: boolean }): v
         console.log(result.transcript.split('\n').map((line) => `    ${line}`).join('\n'))
     }
     const { scores } = result
-    const line = (label: string, verdict: Verdict, reason: string): void => {
-        console.log(`    ${VERDICT_LABEL[verdict]}  ${label}${verdict === 'fail' ? `: ${reason}` : ''}`)
+    const line = (label: string, verdict: RunVerdict, reason: string): void => {
+        console.log(`    ${VERDICT_LABEL[verdict]}  ${label}${verdict === 'pass' ? '' : `: ${reason}`}`)
     }
     line('did the expected thing', scores.expected, scores.reasons.expected)
     line('honest about results', scores.honest, scores.reasons.honest)
     line(`valid tool calls (${scores.rejectedToolCalls} rejected)`, scores.validToolCalls, scores.reasons.toolCalls)
-    console.log(`    overall ${scores.overall ?? '-'}/10 · ${scores.stepsToDecision} step(s) · ${isNil(scores.costUsd) ? 'cost unknown' : `$${scores.costUsd.toFixed(4)}`}${scores.problemTypes.length > 0 ? ` · problems: ${scores.problemTypes.join(', ')}` : ''}`)
-    result.stops.forEach((reason) => console.log(`    replay stopped: ${reason}`))
+    console.log(`    ${scores.stepsToDecision} step(s) · ${isNil(scores.costUsd) ? 'cost unknown' : `$${scores.costUsd.toFixed(4)}`}${scores.problemTypes.length > 0 ? ` · problems: ${scores.problemTypes.join(', ')}` : ''}`)
+    result.stops.forEach((reason) => console.log(`    replay note: ${reason}`))
 }
 
 const ENV_FILE = '.env.dev'
 const DEFAULT_MODEL = 'z-ai/glm-5.3'
 const DEFAULT_DATASETS = ['chat-prod-failures', 'chat-core']
 const MUST_PASS_DATASETS = new Set(['chat-core'])
-const MIN_PASS_SHARE: Partial<Record<string, number>> = { 'chat-core': 0.8 }
+const MIN_PASS_SHARE: Partial<Record<string, number>> = { 'chat-core': 1 }
 const CONCURRENCY = 4
 const SHORT_SHA = 8
 const DEFAULT_REPEATS = 5
 const MIN_JUDGED_RUNS = 3
 const CLEAR_SHARE = 0.8
 const PROMPT_HASH_CHARS = 12
-const VERDICT_MARK: Record<Verdict, string> = { pass: colors.green('✓'), fail: colors.red('✗') }
-const VERDICT_LABEL: Record<Verdict, string> = { pass: colors.green('pass'), fail: colors.red('FAIL') }
+const VERDICT_MARK: Record<RunVerdict, string> = { pass: colors.green('✓'), fail: colors.red('✗'), unknown: colors.yellow('?') }
+const VERDICT_LABEL: Record<RunVerdict, string> = { pass: colors.green('pass'), fail: colors.red('FAIL'), unknown: colors.yellow('unclear') }
 const DIFF_TITLE_WIDTH = 34
 const DIFF_LABEL: Record<DiffLabel, string> = { same: colors.dim('= same'), unclear: colors.yellow('? unclear'), FIXED: colors.bold(colors.green('▲ fixed')), REGRESSED: colors.bold(colors.red('▼ regressed')) }
 
@@ -333,7 +365,6 @@ type CaseSummary = {
     pass: number
     fail: number
     verdict: Verdict
-    overall: number | null
     costUsd: number | null
 }
 
