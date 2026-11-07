@@ -136,13 +136,13 @@ export const clicksendCreateContactAction = createAction({
       ...(email && { email }),
       ...(first_name && { first_name }),
       ...(last_name && { last_name }),
-      ...(company_name && { company_name }),
+      ...(company_name && { organization_name: company_name }),
       ...(address_line_1 && { address_line_1 }),
       ...(address_line_2 && { address_line_2 }),
-      ...(city && { city }),
-      ...(state && { state }),
-      ...(postal_code && { postal_code }),
-      ...(country && { country }),
+      ...(city && { address_city: city }),
+      ...(state && { address_state: state }),
+      ...(postal_code && { address_postal_code: postal_code }),
+      ...(country && { address_country: country }),
     };
     try {
       const response =  await callClickSendApi({
