@@ -1,5 +1,6 @@
 import {
   DynamicPropsValue,
+  MarkdownVariant,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -27,10 +28,33 @@ export const createCredential = createAction({
     description: 'Issues a Certopus certificate/credential for a single recipient under a given organisation, event, and category, supplying the recipient email plus the category-specific data fields. Use to grant a certificate to one person; the generate and publish flags control whether Certopus immediately produces and publishes it. Not idempotent — each call creates a new credential, so repeating it issues duplicates.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'credential',
+      display: 'section',
+      label: 'Credential',
+      icon: 'tag',
+      props: ['organisation', 'event', 'category'],
+    },
+    {
+      key: 'recipient',
+      display: 'section',
+      label: 'Recipient',
+      icon: 'user',
+      props: ['email', 'fields'],
+    },
+    {
+      key: 'options',
+      display: 'section',
+      label: 'Options',
+      icon: 'sliders',
+      props: ['generate', 'publish', 'options_info'],
+    },
+  ],
   props: {
     organisation: Property.Dropdown({
       auth: certopusAuth,
-      displayName: 'Organisations',
+      displayName: 'Organisation',
       refreshers: [],
       required: true,
       options: async ({ auth }) => {
@@ -38,7 +62,7 @@ export const createCredential = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please enter your API key first.',
+            placeholder: 'Please connect your account first.',
           };
         }
         const client = makeClient(auth.secret_text);
@@ -63,7 +87,7 @@ export const createCredential = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please enter your API key first.',
+            placeholder: 'Please connect your account first.',
           };
         }
         if (!organisation) {
@@ -75,7 +99,6 @@ export const createCredential = createAction({
         }
         const client = makeClient(auth.secret_text);
         const res = await client.listEvents(organisation as string);
-        console.log(res);
 
         return {
           disabled: false,
@@ -89,6 +112,7 @@ export const createCredential = createAction({
     category: Property.Dropdown({
       auth: certopusAuth,
       displayName: 'Category',
+      description: 'Decides which recipient fields appear below.',
       refreshers: ['organisation', 'event'],
       required: true,
       options: async ({ auth, organisation, event }) => {
@@ -96,7 +120,7 @@ export const createCredential = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please enter your API key first.',
+            placeholder: 'Please connect your account first.',
           };
         }
         if (!organisation) {
@@ -118,7 +142,6 @@ export const createCredential = createAction({
           organisation as string,
           event as string
         );
-        console.log(res);
 
         return {
           disabled: false,
@@ -131,19 +154,25 @@ export const createCredential = createAction({
     }),
     generate: Property.Checkbox({
       displayName: 'Generate',
-      description: 'Automatically generate the crentials',
+      description: 'Produce the credential in Certopus right away.',
       defaultValue: false,
-      required: true,
+      required: false,
+      width: 'half',
     }),
     publish: Property.Checkbox({
       displayName: 'Publish',
-      description: 'Automatically publish the crentials',
+      description: 'Make it available to the recipient right away.',
       defaultValue: false,
-      required: true,
+      required: false,
+      width: 'half',
+    }),
+    options_info: Property.MarkDown({
+      value: 'If either is off, you finish that step by hand in Certopus.',
+      variant: MarkdownVariant.INFO,
     }),
     email: Property.ShortText({
       displayName: 'Recipient Email',
-      description: 'Email address of the recipient',
+      placeholder: 'name@example.com',
       required: true,
     }),
     fields: Property.DynamicProperties({
@@ -168,11 +197,9 @@ export const createCredential = createAction({
               category.toString()
             );
           recipientFields.forEach((field: RecipientField) => {
-            //skil email field as it already included
             if (field.key !== 'email') {
               const params = {
                 displayName: field.label,
-                description: `Enter data for the ${field.label} field`,
                 required: true,
               };
               fields[field.key] = Property.ShortText(params);
@@ -196,8 +223,8 @@ export const createCredential = createAction({
         organisationId: organisation,
         eventId: event,
         categoryId: category,
-        publish: publish,
-        generate: generate,
+        publish: publish ?? false,
+        generate: generate ?? false,
         recipients: [
           {
             email: email,
