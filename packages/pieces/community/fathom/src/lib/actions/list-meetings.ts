@@ -1,4 +1,4 @@
-import { AppConnectionType, createAction, Property } from '@activepieces/pieces-framework';
+import { AppConnectionType, createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { fathomAuth } from '../common/auth';
 import { FathomApiError } from '../common/client';
 import { fathomInputs } from '../common/props';
@@ -9,7 +9,7 @@ export const listMeetings = createAction({
   name: 'listMeetings',
   classification: 'SEARCH',
   displayName: 'List Meetings',
-  description: 'List meetings with optional filters. Follows every page unless you set Max Pages.',
+  description: 'List meetings, with optional filters. Follows every page unless capped.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -17,20 +17,38 @@ export const listMeetings = createAction({
     idempotent: true,
   },
   auth: fathomAuth,
+  propertyGroups: [
+    {
+      key: 'people',
+      display: 'section',
+      label: 'People and teams',
+      icon: 'users',
+      props: ['calendar_invitees_domains', 'calendar_invitees_domains_type', 'recorded_by', 'teams', 'calendar_invitees'],
+    },
+    {
+      key: 'time',
+      display: 'section',
+      label: 'Time window',
+      icon: 'calendar',
+      props: ['created_after', 'created_before'],
+    },
+    {
+      key: 'include',
+      display: 'section',
+      label: 'Include with each meeting',
+      icon: 'sliders',
+      props: ['include_note', 'include_summary', 'include_transcript', 'include_action_items', 'include_crm_matches'],
+    },
+  ],
   props: {
-    calendar_invitees: Property.Array({
-      displayName: 'Calendar Invitees',
-      description: 'Email addresses of calendar invitees to filter by. Fathom no longer documents this filter and may ignore it; prefer Calendar Invitees Domains or Recorded By.',
-      required: false,
-    }),
     calendar_invitees_domains: Property.Array({
-      displayName: 'Calendar Invitees Domains',
-      description: 'Domains of the companies to filter by (e.g., acme.com)',
+      displayName: 'Invitee Domains',
+      description: 'Only meetings with invitees from these domains, e.g. acme.com.',
       required: false,
     }),
     calendar_invitees_domains_type: Property.StaticDropdown({
-      displayName: 'Calendar Invitees Domains Type',
-      description: 'Filter by whether calendar invitee list includes external email domains',
+      displayName: 'Internal or External',
+      description: 'Only internal meetings, or only ones with an outside invitee.',
       required: false,
       options: {
         options: [
@@ -43,57 +61,66 @@ export const listMeetings = createAction({
     }),
     recorded_by: Property.Array({
       displayName: 'Recorded By',
-      description: 'Email addresses of users who recorded meetings',
+      description: 'Emails of the people who recorded the meeting.',
       required: false,
     }),
     teams: Property.Array({
       displayName: 'Teams',
-      description: 'Team names to filter by (e.g., Sales, Engineering)',
+      description: 'Team names, e.g. Sales.',
+      required: false,
+    }),
+    calendar_invitees: Property.Array({
+      displayName: 'Invitee Emails',
+      description: 'Fathom no longer documents this filter and may ignore it.',
       required: false,
     }),
     created_after: Property.ShortText({
       displayName: 'Created After',
-      description: 'Filter to meetings created after this timestamp (e.g., 2025-01-01T00:00:00Z)',
+      description: 'ISO 8601 date-time.',
+      placeholder: '2026-01-01T00:00:00Z',
       required: false,
     }),
     created_before: Property.ShortText({
       displayName: 'Created Before',
-      description: 'Filter to meetings created before this timestamp (e.g., 2025-01-01T00:00:00Z)',
+      description: 'ISO 8601 date-time.',
+      placeholder: '2026-01-01T00:00:00Z',
       required: false,
     }),
-    include_transcript: Property.Checkbox({
-      displayName: 'Include Transcript',
-      description: 'Include the transcript for each meeting. API key connections only; with OAuth use Get Recording Transcript.',
-      required: false,
-      defaultValue: false,
+    include_note: Property.MarkDown({
+      value: 'Summary and transcript need an API key connection. With OAuth, use Get Recording Summary or Get Recording Transcript.',
+      variant: MarkdownVariant.INFO,
     }),
     include_summary: Property.Checkbox({
       displayName: 'Include Summary',
-      description: 'Include the summary for each meeting. API key connections only; with OAuth use Get Recording Summary.',
+      required: false,
+      defaultValue: false,
+    }),
+    include_transcript: Property.Checkbox({
+      displayName: 'Include Transcript',
       required: false,
       defaultValue: false,
     }),
     include_action_items: Property.Checkbox({
       displayName: 'Include Action Items',
-      description: 'Include the action items for each meeting',
       required: false,
       defaultValue: false,
     }),
     include_crm_matches: Property.Checkbox({
       displayName: 'Include CRM Matches',
-      description: 'Include CRM matches for each meeting',
       required: false,
       defaultValue: false,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'Cursor for pagination (from previous response)',
+      description: "The next page's cursor from the previous run. Empty: first page.",
       required: false,
+      advanced: true,
     }),
     max_pages: Property.Number({
       displayName: 'Max Pages',
-      description: 'Stop after this many pages of meetings. Leave empty to fetch every page (each page holds about 10 meetings).',
+      description: 'Pages to fetch, about 10 meetings each. Empty: every page.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: fathomOutputSchemas.legacyMeetingPages,
