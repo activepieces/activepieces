@@ -5,6 +5,7 @@ import { parseArgs } from 'node:util'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { evalAgentTurn } from './agent-turn'
 import { evalChecks, RunScores, Verdict } from './checks'
+import { colors } from './colors'
 import { evalCase, EvalCase, RecordedToolCall } from './eval-case'
 import { posthogDataset } from './posthog-dataset'
 import { posthogExperiments, UploadedRun, VerdictCounts } from './posthog-experiments'
@@ -81,13 +82,13 @@ async function main(): Promise<void> {
         outcomes.push(await reportDataset({ ...dataset, live, browse, recordMode, upload: values.upload, modelId: values.model }))
     }
     const broken = outcomes.filter((outcome) => outcome.broken)
-    console.log(`\n${broken.length === 0 ? '✓ Nothing broke' : `✗ Broken: ${broken.map((outcome) => outcome.reason).join('; ')}`}`)
+    console.log(`\n${broken.length === 0 ? colors.bold(colors.green('✓ Nothing broke')) : colors.bold(colors.red(`✗ Broken: ${broken.map((outcome) => outcome.reason).join('; ')}`))}`)
     process.exit(broken.length === 0 ? 0 : 1)
 }
 
 async function runDataset({ dataset, repeats, recordMode, upload, verbose, live, modelId, auth, mcp }: { dataset: { name: string, cases: EvalCase[] }, repeats: number, recordMode: boolean, upload: boolean, verbose: boolean, live: boolean, modelId: string, auth: Record<string, unknown>, mcp: McpTools }): Promise<RanDataset> {
     const { name, cases } = dataset
-    console.log(`\n=== ${name}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} (reasons ${evalChecks.reasonModelId}) · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
+    console.log(`\n${colors.bold(colors.cyan(`=== ${name}`))}: ${cases.length} case(s) × ${repeats} run(s) · model ${modelId} · judge ${evalChecks.judgeModelId()} (reasons ${evalChecks.reasonModelId}) · ${recordMode ? 'RECORD mode: missing reads run live and are saved to PostHog' : 'fixtures only'}${upload ? ' · UPLOADS a main baseline to PostHog' : ' · nothing is uploaded'}`)
     const runs = cases.flatMap((candidate) => Array.from({ length: repeats }, (_, trial) => ({ candidate, trial })))
     const table = live ? progressTable.create({ cases, repeats, verdictOf: (counts) => caseVerdict({ datasetName: name, ...counts }) }) : null
     const results = await runPool({
@@ -107,12 +108,12 @@ async function reportDataset({ name, cases, results, live, browse, recordMode, u
         results.filter((result) => result.verdict === 'fail').sort((a, b) => a.candidate.caseNumber - b.candidate.caseNumber || a.trial - b.trial).forEach((result) => print({ result, verbose: false }))
     }
     const summaries = cases.map((candidate) => summarize({ datasetName: name, candidate, results: results.filter((result) => result.candidate.id === candidate.id) }))
-    console.log(`\n${name} summary (a case passes when ${passRule(name)}):`)
+    console.log(`\n${colors.bold(`${name} summary`)} ${colors.dim(`(a case passes when ${passRule(name)})`)}`)
     if (!live) {
         summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · overall ${isNil(summary.overall) ? '-' : summary.overall.toFixed(1)}/10 · ${isNil(summary.costUsd) ? 'cost unknown' : `$${summary.costUsd.toFixed(4)}/run`}`))
     }
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
-    console.log(`\n${summaries.length - failing} pass · ${failing} fail · ${summaries.length} cases`)
+    console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} · ${summaries.length} cases`)
     if (recordMode) {
         await saveFixtures({ cases, results })
         return { broken: false, reason: '' }
@@ -184,21 +185,24 @@ function average(values: (number | null)[]): number | null {
 async function printDiff({ suiteKey, modelVersion, cases, summaries }: { suiteKey: string, modelVersion: string, cases: EvalCase[], summaries: CaseSummary[] }): Promise<number> {
     const { data: found, error } = await tryCatch(() => posthogExperiments.baseline({ suiteKey, modelVersion }))
     if (error) {
-        console.log(`\nCould not read the main baseline from PostHog: ${error.message}`)
+        console.log(colors.yellow(`\nCould not read the main baseline from PostHog: ${error.message}`))
         return 0
     }
     if (isNil(found)) {
-        console.log(`\nNo main baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to diff against.`)
+        console.log(colors.yellow(`\nNo main baseline in PostHog yet for ${suiteKey} on ${modelVersion}, so there is nothing to diff against.`))
         return 0
     }
-    console.log(`\nDiff against the main baseline (commit ${found.applicationVersion.slice(0, SHORT_SHA)}, same model). A change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides:`)
+    console.log(`\n${colors.bold(`Diff vs main baseline ${found.applicationVersion.slice(0, SHORT_SHA)}`)} ${colors.dim(`same model · a change counts only when at least ${Math.round(CLEAR_SHARE * 100)}% of at least ${MIN_JUDGED_RUNS} runs agree on both sides`)}`)
+    console.log(colors.dim(`  ${padEnd('case', 4)}  ${padEnd('title', DIFF_TITLE_WIDTH)}  ${padEnd('baseline', 8)}  ${padEnd('now', 8)}  change`))
     const labels = cases.map((candidate) => {
         const before = found.counts.get(posthogExperiments.caseKey(candidate)) ?? { pass: 0, fail: 0 }
         const now = summaries.find((summary) => summary.caseNumber === candidate.caseNumber) ?? { pass: 0, fail: 0 }
         const label = diffLabel({ before: clearVerdict(before), now: clearVerdict(now) })
-        console.log(`  case ${candidate.caseNumber}: ${describe(before)} → ${describe(now)}  ${label}`)
+        console.log(`  ${padEnd(String(candidate.caseNumber), 4)}  ${padEnd(candidate.title, DIFF_TITLE_WIDTH)}  ${describe(before)}  ${describe(now)}  ${DIFF_LABEL[label]}`)
         return label
     })
+    const count = (label: DiffLabel): number => labels.filter((candidate) => candidate === label).length
+    console.log(`  ${colors.green(`${count('FIXED')} fixed`)} · ${count('REGRESSED') > 0 ? colors.red(`${count('REGRESSED')} regressed`) : '0 regressed'} · ${colors.yellow(`${count('unclear')} unclear`)} · ${colors.dim(`${count('same')} same`)}`)
     return labels.filter((label) => label === 'REGRESSED').length
 }
 
@@ -213,11 +217,20 @@ function clearVerdict({ pass, fail }: VerdictCounts): Verdict | 'unclear' {
     return fail >= judged * CLEAR_SHARE ? 'fail' : 'unclear'
 }
 
-function describe({ pass, fail }: VerdictCounts): string {
-    return `${pass} pass/${fail} fail`
+function describe(counts: VerdictCounts): string {
+    const text = padEnd(`${counts.pass}/${counts.pass + counts.fail}`, 8)
+    const verdict = clearVerdict(counts)
+    if (verdict === 'unclear') {
+        return colors.yellow(text)
+    }
+    return verdict === 'pass' ? colors.green(text) : colors.red(text)
 }
 
-function diffLabel({ before, now }: { before: Verdict | 'unclear', now: Verdict | 'unclear' }): string {
+function padEnd(text: string, width: number): string {
+    return text.length > width ? `${text.slice(0, width - 1)}…` : text.padEnd(width)
+}
+
+function diffLabel({ before, now }: { before: Verdict | 'unclear', now: Verdict | 'unclear' }): DiffLabel {
     if (before === 'unclear' || now === 'unclear') {
         return 'unclear'
     }
@@ -304,8 +317,10 @@ const DEFAULT_REPEATS = 5
 const MIN_JUDGED_RUNS = 3
 const CLEAR_SHARE = 0.8
 const PROMPT_HASH_CHARS = 12
-const VERDICT_MARK: Record<Verdict, string> = { pass: '✓', fail: '✗' }
-const VERDICT_LABEL: Record<Verdict, string> = { pass: 'pass', fail: 'FAIL' }
+const VERDICT_MARK: Record<Verdict, string> = { pass: colors.green('✓'), fail: colors.red('✗') }
+const VERDICT_LABEL: Record<Verdict, string> = { pass: colors.green('pass'), fail: colors.red('FAIL') }
+const DIFF_TITLE_WIDTH = 34
+const DIFF_LABEL: Record<DiffLabel, string> = { same: colors.dim('= same'), unclear: colors.yellow('? unclear'), FIXED: colors.bold(colors.green('▲ fixed')), REGRESSED: colors.bold(colors.red('▼ regressed')) }
 
 main().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error))
@@ -326,6 +341,8 @@ type RanDataset = {
     cases: EvalCase[]
     results: CaseResult[]
 }
+
+type DiffLabel = 'same' | 'unclear' | 'FIXED' | 'REGRESSED'
 
 type DatasetOutcome = {
     broken: boolean
