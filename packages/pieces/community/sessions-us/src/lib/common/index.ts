@@ -13,19 +13,23 @@ export const baseUrl = 'https://api.app.sessions.us/api';
 export const properties = {
   permission: Property.StaticDropdown({
     displayName: 'Permission',
-    description:
-      'Personal applies for the user only, organization applies to every event that is made by a user of the organization.',
+    description: 'Whose items fire this trigger.',
     required: true,
     defaultValue: 'personal',
+    display: 'cards',
     options: {
       options: [
         {
           label: 'Personal',
           value: 'personal',
+          description: 'Only yours',
+          icon: 'user',
         },
         {
           label: 'Organization',
           value: 'organization',
+          description: 'Your whole org',
+          icon: 'users',
         },
       ],
     },
