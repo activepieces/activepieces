@@ -12,31 +12,46 @@ export const createEvent = createAction({
   name: 'create_event',
   classification: 'WRITE',
   displayName: 'Create Event',
-  description: 'Quickly create an event.',
+  description: 'Creates a draft event people can register for once published.',
   audience: 'both',
   aiMetadata: { description: 'Create a new event on Sessions.us with a name, start/end time, and timezone. Use when an agent needs to schedule an event (a public, registration-based gathering, as opposed to a private session). Creates a new event each call, so it is not idempotent — repeating it produces duplicate events.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'text',
+      props: ['name'],
+    },
+    {
+      key: 'schedule',
+      display: 'section',
+      label: 'Schedule',
+      icon: 'calendar',
+      props: ['startAt', 'plannedEnd', 'timezone'],
+    },
+  ],
   props: {
     name: Property.ShortText({
       displayName: 'Event Name',
-      description: 'The name of the event',
       required: true,
+      placeholder: 'Product launch webinar',
     }),
     startAt: Property.DateTime({
       displayName: 'Starts At',
-      description: 'Select a date and time',
       required: true,
+      width: 'half',
       defaultValue: new Date().toISOString(),
     }),
     plannedEnd: Property.DateTime({
       displayName: 'Ends At',
-      description: 'Select a date and time',
       required: true,
+      width: 'half',
       defaultValue: new Date().toISOString(),
     }),
     timezone: Property.Dropdown({
       auth: sessionAuth,
       displayName: 'Timezone',
-      description: 'The timezone which the session will take place.',
       required: true,
       refreshers: [],
       options: async () => {
