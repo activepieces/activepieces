@@ -31,6 +31,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "form submission": "form submission",
   "Triggered when a form is submitted": "Triggered when a form is submitted",
   "Markdown": "Markdown",

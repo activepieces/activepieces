@@ -59,7 +59,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async list({ platformId, userId, projectId, search, sort, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
+    async list({ platformId, userId, projectId, search, sort, cursor, limit, connectionExternalIds }: ListParams): Promise<SeekPage<AgentSummary>> {
         const readableProjects = await resolveReadableProjects({ platformId, userId, projectId, log })
         const readableProjectIds = readableProjects.map((project) => project.id)
         if (readableProjectIds.length === 0) {
@@ -85,6 +85,13 @@ export const agentService = (log: FastifyBaseLogger) => ({
                 qb.where('LOWER(agent."displayName") LIKE :needle', { needle: `%${needle}%` })
                     .orWhere('LOWER(COALESCE(agent."description", \'\')) LIKE :needle', { needle: `%${needle}%` })
             }))
+        }
+        if (!isNil(connectionExternalIds) && connectionExternalIds.length > 0) {
+            const connectionAuths = connectionExternalIds.flatMap((externalId) => [externalId, connectionTemplate.wrapExternalId(externalId) ?? externalId])
+            query.andWhere(`EXISTS (
+                SELECT 1 FROM jsonb_array_elements((agent."draft"->'tools') || COALESCE(agent."published"->'tools', '[]'::jsonb)) AS tool
+                WHERE tool->'pieceMetadata'->'predefinedInput'->>'auth' = ANY(:connectionAuths)
+            )`, { connectionAuths })
         }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
@@ -117,27 +124,19 @@ export const agentService = (log: FastifyBaseLogger) => ({
     async update({ id, projectId, platformId, userId, request, goLive = false }: UpdateParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayChangeWhoCanSee({ agent, request, projectId, userId, log })
-        const visibility = request.visibility ?? agent.visibility
-        const sharedWithUserIds = await resolveShare({
-            visibility,
-            requested: request.sharedWithUserIds,
-            stored: agent.sharedWithUserIds,
-            projectId,
-            log,
-        })
-        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(await withPinnedKey({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }))
+        const requestedDraft = isNil(request.draft) ? null : sanitizeObjectForPostgresql(await withPinnedKey({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }))
         await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
-        const goingLive = goLive && agentUtils.isPublishable(draft)
-        const published = goingLive ? draft : agent.published
-        if (goingLive) {
-            assertDraftIsCoherent(draft)
-            await assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log })
-        }
         await transaction(async (entityManager) => {
-            await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            const draft = requestedDraft ?? locked.draft
+            const visibility = request.visibility ?? locked.visibility
+            const sharedWithUserIds = await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: locked.sharedWithUserIds, projectId, log })
+            const goingLive = goLive && agentUtils.isPublishable(draft)
             if (goingLive) {
-                await assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log })
+                assertDraftIsCoherent(draft)
+                await assertMayPublishWhatFlowsAlreadyRun({ agent: locked, projectId, platformId, userId, log })
             }
+            const published = goingLive ? draft : locked.published
             await entityManager.getRepository(AgentEntity).save({ id, ...omit(request, ['goLive', 'draft', 'visibility', 'sharedWithUserIds']), draft, published, visibility, sharedWithUserIds })
         })
         return this.getOneOrThrow({ id, projectId, userId })
@@ -756,6 +755,7 @@ type ListParams = {
     sort?: AgentListSort
     cursor?: Cursor
     limit?: number
+    connectionExternalIds?: string[]
 }
 
 type MoveParams = {

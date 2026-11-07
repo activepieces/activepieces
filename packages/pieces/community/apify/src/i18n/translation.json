@@ -220,6 +220,17 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Where to Read": "Where to Read",
+  "How Many Items": "How Many Items",
+  "What to Run": "What to Run",
+  "What to Send": "What to Send",
+  "Results": "Results",
+  "Input Changes": "Input Changes",
+  "Which Record": "Which Record",
+  "Page to Scrape": "Page to Scrape",
+  "How to Load It": "How to Load It",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Watch Actor Runs": "Watch Actor Runs",
   "Watch Task Runs": "Watch Task Runs",
   "Fires when a run of the Actor ends with a chosen status.": "Fires when a run of the Actor ends with a chosen status.",
@@ -227,5 +238,7 @@
   "Markdown": "Markdown",
   "Statuses": "Statuses",
   "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.": "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.",
-  "Run outcomes that start the flow.": "Run outcomes that start the flow."
+  "Run outcomes that start the flow.": "Run outcomes that start the flow.",
+  "What to Watch": "What to Watch",
+  "When to Fire": "When to Fire"
 }

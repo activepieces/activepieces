@@ -32,6 +32,27 @@ function toRichText(content: string): Array<{ text: { content: string } }> {
   return chunks.length > 0 ? chunks : [{ text: { content: '' } }];
 }
 
+function isLegacyBoolean(value: unknown): value is boolean {
+  return typeof value === 'boolean';
+}
+
+function resolveChecked(value: unknown): boolean | undefined {
+  if (isLegacyBoolean(value)) {
+    return value;
+  }
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'yes' || normalized === 'true') {
+    return true;
+  }
+  if (normalized === 'no' || normalized === 'false') {
+    return false;
+  }
+  return undefined;
+}
+
 export const notionUpdateBlock = createAction({
   auth: notionAuth,
   name: 'notion_update_block',
@@ -41,7 +62,7 @@ export const notionUpdateBlock = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      "Replaces the text content of a single existing block by id (resolve via notion_get_block_children). Use to edit one block's text in place; to add new blocks use notion_append_to_page. Safe to retry — re-applying the same content converges. The block_type must match the actual block's type; text is split at Notion's 2000-char-per-object cap. For to_do blocks also set checked; for code blocks set language.",
+      "Replaces the text content of a single existing block by id (resolve via notion_get_block_children). Use to edit one block's text in place; to add new blocks use notion_append_to_page. Safe to retry — re-applying the same content converges. The block_type must match the actual block's type; text is split at Notion's 2000-char-per-object cap. For to_do blocks set checked to yes/no only to change the state; omit it (or 'unchanged') to keep the current state. For code blocks set language only to change it; omit it to keep the current language.",
     idempotent: true,
   },
   outputSchema: notionUpdateBlockActionOutputSchema,
@@ -79,11 +100,19 @@ export const notionUpdateBlock = createAction({
         ],
       },
     }),
-    checked: Property.Checkbox({
+    checked: Property.StaticDropdown<string>({
       displayName: 'Checked',
       description:
-        'For to_do blocks only: whether the checkbox is checked. Ignored for other block types.',
+        'To-do blocks only: tick, untick, or leave the checkbox unchanged.',
       required: false,
+      defaultValue: 'unchanged',
+      options: {
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+          { label: 'Leave unchanged', value: 'unchanged' },
+        ],
+      },
     }),
     language: Property.ShortText({
       displayName: 'Language',
@@ -107,15 +136,14 @@ export const notionUpdateBlock = createAction({
       notionVersion: '2022-02-22',
     });
 
-    const body: Record<string, any> = {
+    const checkedState = resolveChecked(checked);
+    const body: Record<string, unknown> = {
       rich_text: toRichText(content),
+      ...(type === 'to_do' && checkedState !== undefined
+        ? { checked: checkedState }
+        : {}),
+      ...(type === 'code' && language ? { language } : {}),
     };
-    if (type === 'to_do') {
-      body['checked'] = checked ?? false;
-    }
-    if (type === 'code') {
-      body['language'] = language ?? 'plain text';
-    }
 
     try {
       return await notion.blocks.update({

@@ -426,7 +426,7 @@ function NavButton({ label, shortcut, icon: Icon, onClick }: NavButtonProps) {
         </span>
       </TooltipTrigger>
       <TooltipContent>
-        {label} <span className="text-gray-11">{shortcut}</span>
+        {label} <span className="text-gray-1/70">{shortcut}</span>
       </TooltipContent>
     </Tooltip>
   );

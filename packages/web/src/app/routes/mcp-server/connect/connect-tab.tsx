@@ -8,7 +8,7 @@ import { useMcpNav } from '../mcp-nav';
 
 import { ClientInstructions } from './client-instructions';
 import { ClientPicker } from './client-picker';
-import { ConnectLanding } from './connect-landing';
+import { ConnectPage } from './connect-page';
 
 export function ConnectTab({
   serverUrl,
@@ -25,15 +25,14 @@ export function ConnectTab({
     () => mcpClientCatalog.clients({ serverUrl, websiteName, isCloud }),
     [serverUrl, websiteName, isCloud],
   );
-  const selected = clients.find((client) => client.key === clientKey) ?? null;
 
+  const selected = clients.find((client) => client.key === clientKey) ?? null;
   if (view === 'client' && selected !== null) {
     return (
       <ClientInstructions
+        key={selected.key}
         client={selected}
-        serverUrl={serverUrl}
         isReachableFromInternet={isReachableFromInternet}
-        totalClients={clients.length}
       />
     );
   }
@@ -42,5 +41,5 @@ export function ConnectTab({
     return <ClientPicker clients={clients} serverUrl={serverUrl} />;
   }
 
-  return <ConnectLanding clients={clients} serverUrl={serverUrl} />;
+  return <ConnectPage clients={clients} />;
 }

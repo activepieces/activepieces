@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { queryMetabaseApi } from '../common';
 import { metabaseAuth } from '../..';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { getQuestionOutputSchema } from '../output-schemas';
 
 interface MetabaseParam {
   id: string;
@@ -12,12 +13,13 @@ interface MetabaseParam {
 
 export const getQuestion = createAction({
   name: 'getQuestion',
+  outputSchema: getQuestionOutputSchema,
   classification: 'READ',
   auth: metabaseAuth,
   requireAuth: true,
   displayName: 'Get question',
   description: 'Fetch the results of a Metabase question',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Runs a saved Metabase question (card) by its ID and returns the query result rows. Use to pull live data from an existing report rather than writing raw SQL. Optionally pass a parameters object (keyed by parameter slug) to filter the query; slugs not defined on the card are ignored. Read-only and idempotent — re-running with the same inputs re-executes the query without side effects.',

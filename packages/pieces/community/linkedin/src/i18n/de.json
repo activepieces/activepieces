@@ -81,5 +81,10 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Post": "Posten",
+  "Link Preview": "Link Preview",
+  "Post As": "Post As",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

@@ -183,6 +183,7 @@ export function ModelPickerPopover<T>({
 
   const list = (
     <Command
+      className="max-h-[calc(var(--radix-popover-content-available-height)-2px)]"
       shouldFilter={false}
       value={highlighted}
       onValueChange={(value) => {
@@ -214,7 +215,7 @@ export function ModelPickerPopover<T>({
       {notices}
       <CommandList
         className={cn(
-          'overflow-y-auto',
+          'min-h-0 overflow-y-auto',
           detail === undefined ? 'max-h-80' : 'max-h-96',
         )}
         onPointerMove={(event) => {

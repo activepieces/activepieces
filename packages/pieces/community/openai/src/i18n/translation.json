@@ -237,5 +237,22 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Settings": "Settings",
+  "Message": "Message",
+  "History": "History",
+  "Source": "Source",
+  "Output": "Output",
+  "Content": "Content",
+  "Search": "Search",
+  "Search in": "Search in",
+  "Edit": "Edit",
+  "Script": "Script",
+  "Speaker": "Speaker",
+  "Recording": "Recording",
+  "Spoken in": "Spoken in",
+  "Upload": "Upload",
+  "Use for": "Use for",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

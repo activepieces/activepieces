@@ -316,6 +316,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Ad in Spyder": "New Ad in Spyder",
   "New Ad in Board": "New Ad in Board",
   "New Swipefile Ad": "New Swipefile Ad",
@@ -327,7 +329,7 @@
   "Polling Interval (minutes)": "Polling Interval (minutes)",
   "Board": "Board",
   "A brand from your Spyder watchlist.": "A brand from your Spyder watchlist.",
-  "How many of the newest ads to check each time (1 to 50, default 10). Foreplay charges 1 credit per ad returned, so every poll can cost up to this many credits.": "How many of the newest ads to check each time (1 to 50, default 10). Foreplay charges 1 credit per ad returned, so every poll can cost up to this many credits.",
+  "How many of the newest ads to check per page (1 to 50, default 10). Foreplay charges 1 credit per ad returned. A quiet poll costs one page; if a whole page is new, the trigger reads further pages until it reaches an ad it has already seen, up to 5 pages per poll (worst case 5 × this many credits), and carries on from where it stopped on the next poll so no ad is skipped.": "How many of the newest ads to check per page (1 to 50, default 10). Foreplay charges 1 credit per ad returned. A quiet poll costs one page; if a whole page is new, the trigger reads further pages until it reaches an ad it has already seen, up to 5 pages per poll (worst case 5 × this many credits), and carries on from where it stopped on the next poll so no ad is skipped.",
   "No longer used; Activepieces sets the polling schedule.": "No longer used; Activepieces sets the polling schedule.",
   "The board to watch.": "The board to watch."
 }

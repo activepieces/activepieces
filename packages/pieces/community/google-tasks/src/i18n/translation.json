@@ -87,8 +87,13 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Add to": "Add to",
+  "Task": "Task",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Task": "New Task",
   "Triggers when a task is added or edited in a list.": "Triggers when a task is added or edited in a list.",
   "Markdown": "Markdown",
-  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "Edits to a task fire this trigger again, so the same task can arrive more than once."
+  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "Edits to a task fire this trigger again, so the same task can arrive more than once.",
+  "Watch": "Watch"
 }

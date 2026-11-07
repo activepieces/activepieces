@@ -63,6 +63,18 @@ export const adminPageResources = {
       path: 'admin-guide/guides/ai-capabilities',
     }),
   ],
+  aiTiers: [
+    docs({
+      label: () => t('AI tiers guide'),
+      path: 'admin-guide/guides/ai-tiers',
+    }),
+  ],
+  aiUsage: [
+    docs({
+      label: () => t('AI usage guide'),
+      path: 'admin-guide/guides/ai-usage',
+    }),
+  ],
   pieces: [
     docs({
       label: () => t('Pieces guide'),
@@ -122,6 +134,16 @@ export const adminPageResources = {
     docs({
       label: () => t('Workers guide'),
       path: 'admin-guide/guides/workers',
+    }),
+  ],
+  workerGroups: [
+    docs({
+      label: () => t('Worker groups guide'),
+      path: 'install/configure-operate/worker-groups',
+    }),
+    docs({
+      label: () => t('Start a worker'),
+      path: 'install/configure-operate/separate-workers',
     }),
   ],
   health: [

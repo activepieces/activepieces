@@ -10,8 +10,9 @@ export const deno = {
      */
     async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase, timeoutMs }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
+        const { os } = await getNodeApis()
         const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
-        child.stdin.end(buildRunProgram({ body, marker }))
+        child.stdin.end(buildRunProgram({ body, marker, tmpDir: os.tmpdir() }))
         const killTimer = timeoutMs === undefined ? undefined : setTimeout(() => child.kill('SIGKILL'), timeoutMs)
 
         return new Promise((resolve, reject) => {
@@ -85,8 +86,9 @@ export const deno = {
 
     async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {}, idleTimeoutMs = DEFAULT_SESSION_IDLE_TIMEOUT_MS }: DenoSessionParams): Promise<DenoSession> {
         const marker = newResultMarker()
+        const { os } = await getNodeApis()
         const { child, denoPath, denoDir } = await spawnDeno({
-            entry: { body: buildSessionProgram({ bootstrapBody, marker }) },
+            entry: { body: buildSessionProgram({ bootstrapBody, marker, tmpDir: os.tmpdir() }) },
             permissions,
             cwd,
             memoryLimitMb,
@@ -333,9 +335,9 @@ function toPermissionFlags({ permissions, tmpDir }: { permissions: DenoPermissio
     })
 }
 
-function buildRunProgram({ body, marker }: { body: string, marker: string }): string {
+function buildRunProgram({ body, marker, tmpDir }: { body: string, marker: string, tmpDir: string }): string {
     return `
-${sandboxError.payloadSource}
+${sandboxError.payloadSourceFor({ tmpDir })}
 let settled = false;
 const emit = (payload) => {
     if (settled) return;
@@ -370,9 +372,9 @@ catch (error) {
  * stdin:  {"kind":"run","script":"step_1.a + 1","id":"0"}
  * stdout: MARKER{"id":"0","success":true,"result":42}
  */
-function buildSessionProgram({ bootstrapBody, marker }: { bootstrapBody: string, marker: string }): string {
+function buildSessionProgram({ bootstrapBody, marker, tmpDir }: { bootstrapBody: string, marker: string, tmpDir: string }): string {
     return `
-${sandboxError.payloadSource}
+${sandboxError.payloadSourceFor({ tmpDir })}
 ${bootstrapBody}
 ${SESSION_REPLY_CHANNEL(marker)}
 ${SESSION_REJECTION_TRACKING}

@@ -187,6 +187,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Entry": "New Entry",
   "New Absence Enquiry": "New Absence Enquiry",
   "Triggers when a new time entry is created": "Triggers when a new time entry is created",

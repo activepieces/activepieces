@@ -36,43 +36,30 @@ export const rssNewItemTrigger = createTrigger({
     rss_feed_url: rssFeedUrl,
   },
   outputSchema: newItemTriggerOutputSchema,
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return await pollingHelper.test(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-      files: files,
-    });
+  async test(context): Promise<unknown[]> {
+    return await pollingHelper.test(polling, context);
   },
-  async onEnable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onEnable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
+  async onEnable(context): Promise<void> {
+    await pollingHelper.onEnable(polling, context);
   },
 
-  async onDisable({ auth, propsValue, store }): Promise<void> {
+  async onDisable(context): Promise<void> {
+    if (context.isRepublish) {
+      return;
+    }
+    const { store } = context;
     const lastFetchDate = await store.get<number>('_lastRssPublishDate');
     if (!isNil(lastFetchDate)) {
       await store.delete('_lastRssPublishDate');
     }
-    await pollingHelper.onDisable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
-  async run({ auth, propsValue, store, files }): Promise<unknown[]> {
+  async run(context): Promise<unknown[]> {
+    const { store } = context;
     const lastFetchDate = await store.get<number>('_lastRssPublishDate');
     const newItems = (
-      await pollingHelper.poll(polling, {
-        auth,
-        store: store,
-        propsValue: propsValue, 
-        files: files,
-      })
+      await pollingHelper.poll(polling, context)
     ).filter((f) => {
       if (isNil(lastFetchDate)) {
         return true;

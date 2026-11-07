@@ -94,6 +94,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Campaign Status Changed": "Campaign Status Changed",
   "New Lead Added": "New Lead Added",
   "Triggers when a campaign status changes (completed, paused, etc.).": "Triggers when a campaign status changes (completed, paused, etc.).",

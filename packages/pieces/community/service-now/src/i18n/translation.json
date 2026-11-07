@@ -199,6 +199,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Record": "New Record",
   "Updated Record": "Updated Record",
   "New Comment or Work Note": "New Comment or Work Note",

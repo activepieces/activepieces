@@ -28,6 +28,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Payment": "New Payment",
   "New Plan": "New Plan",
   "Payment Succeeds": "Payment Succeeds",

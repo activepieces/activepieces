@@ -700,6 +700,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New ticket in view": "New ticket in view",
   "New Ticket": "New Ticket",
   "Updated Ticket": "Updated Ticket",

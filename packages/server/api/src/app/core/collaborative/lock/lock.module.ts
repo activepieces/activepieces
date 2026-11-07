@@ -16,7 +16,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                 callback?.({ acquired: false, lock: null })
                 return
             }
-            const { resourceId, force } = request.data
+            const { resourceId, force, editorSessionId } = request.data
             app.log.info({ resourceId }, '[Lock] LOCK_RESOURCE event received')
             try {
                 const resource = await collaborativeResource.resolve({ resourceId, projectId })
@@ -39,11 +39,12 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                     projectId,
                     userId: principal.id,
                     userDisplayName: displayName,
+                    editorSessionId,
                     force,
                 })
 
                 if (result.acquired) {
-                    trackLockedResource({ socket, resourceId })
+                    trackLockedResource({ socket, resourceId, editorSessionId: editorSessionId ?? null })
                     socket.to(projectId).emit(WebsocketClientEvent.RESOURCE_LOCKED, {
                         resourceId,
                         userId: principal.id,
@@ -67,12 +68,13 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
             if (!request.success) {
                 return
             }
-            const { resourceId } = request.data
+            const { resourceId, editorSessionId } = request.data
             try {
                 const released = await lockService(app.log).release({
                     resourceId,
                     projectId,
                     userId: principal.id,
+                    editorSessionId,
                 })
                 untrackLockedResource({ socket, resourceId })
                 if (released) {
@@ -88,20 +90,20 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-const lockedResourceIdsBySocket = new WeakMap<Socket, ReadonlySet<string>>()
+const lockedResourcesBySocket = new WeakMap<Socket, ReadonlyMap<string, string | null>>()
 const socketsWithLockDisconnectHandler = new WeakSet<Socket>()
 
-function trackLockedResource({ socket, resourceId }: TrackParams): void {
-    const held = lockedResourceIdsBySocket.get(socket) ?? new Set<string>()
-    lockedResourceIdsBySocket.set(socket, new Set([...held, resourceId]))
+function trackLockedResource({ socket, resourceId, editorSessionId }: TrackParams): void {
+    const held = lockedResourcesBySocket.get(socket) ?? new Map<string, string | null>()
+    lockedResourcesBySocket.set(socket, new Map([...held, [resourceId, editorSessionId]]))
 }
 
-function untrackLockedResource({ socket, resourceId }: TrackParams): void {
-    const held = lockedResourceIdsBySocket.get(socket)
+function untrackLockedResource({ socket, resourceId }: UntrackParams): void {
+    const held = lockedResourcesBySocket.get(socket)
     if (isNil(held)) {
         return
     }
-    lockedResourceIdsBySocket.set(socket, new Set([...held].filter(id => id !== resourceId)))
+    lockedResourcesBySocket.set(socket, new Map([...held].filter(([id]) => id !== resourceId)))
 }
 
 function registerLockDisconnectHandler({ socket, userId, projectId, app }: RegisterDisconnectHandlerParams): void {
@@ -110,12 +112,13 @@ function registerLockDisconnectHandler({ socket, userId, projectId, app }: Regis
     }
     socketsWithLockDisconnectHandler.add(socket)
     socket.once('disconnect', async () => {
-        const held = lockedResourceIdsBySocket.get(socket) ?? new Set<string>()
-        for (const resourceId of held) {
+        const held = lockedResourcesBySocket.get(socket) ?? new Map<string, string | null>()
+        for (const [resourceId, editorSessionId] of held) {
             const released = await lockService(app.log).release({
                 resourceId,
                 projectId,
                 userId,
+                editorSessionId,
             })
             if (released) {
                 websocketService.to(projectId).emit(WebsocketClientEvent.RESOURCE_UNLOCKED, {
@@ -127,6 +130,12 @@ function registerLockDisconnectHandler({ socket, userId, projectId, app }: Regis
 }
 
 type TrackParams = {
+    socket: Socket
+    resourceId: string
+    editorSessionId: string | null
+}
+
+type UntrackParams = {
     socket: Socket
     resourceId: string
 }

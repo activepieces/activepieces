@@ -59,6 +59,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Email Received": "Email Received",
   "Email Status Changed": "Email Status Changed",
   "Email Priority Changed": "Email Priority Changed",

@@ -1,15 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest } from '../common';
+import { twentyApi } from '../common/api';
+import { createCompanyOutputSchema } from '../output-schemas';
 
-export const createCompany = createAction({
+export const createCompanyAction = createAction({
   auth: twentyAuth,
   name: 'create_company',
+  outputSchema: createCompanyOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Company',
   description: 'Creates a new company record in Twenty CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new company in Twenty CRM. Use when adding an organization to the CRM; company name is required, with optional domain, address, and employee count. Not idempotent: each call inserts a new record with no de-duplication, so repeated calls create duplicate companies.', idempotent: false },
   props: {
     name: Property.ShortText({
@@ -33,16 +34,12 @@ export const createCompany = createAction({
   async run(context) {
     const { name, domainName, address, employees } = context.propsValue;
 
-    return await twentyRequest(
-      context.auth,
-      HttpMethod.POST,
-      '/rest/companies',
-      {
-        name,
-        domainName: domainName ? { primaryLinkUrl: domainName, primaryLinkLabel: '' } : undefined,
-        address: address ? { addressStreet1: address } : undefined,
-        employees: employees ?? undefined,
-      },
-    );
+    return await twentyApi.createCompany({
+      auth: context.auth,
+      name,
+      domainName,
+      address,
+      employees,
+    });
   },
 });

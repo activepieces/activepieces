@@ -162,6 +162,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Task Arrival": "Task Arrival",
   "Task Assigned": "Task Assigned",
   "Task Cloned": "Task Cloned",

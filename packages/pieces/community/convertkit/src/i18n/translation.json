@@ -381,6 +381,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Trigger when a tag is added to a subscriber": "Trigger when a tag is added to a subscriber",
   "Trigger when a tag is removed from a subscriber": "Trigger when a tag is removed from a subscriber",
   "Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.": "Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.",

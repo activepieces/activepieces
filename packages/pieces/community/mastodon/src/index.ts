@@ -96,17 +96,17 @@ import { newStatusFromAccount } from './lib/triggers/new-status-from-account';
 import { newStatusWithHashtag } from './lib/triggers/new-status-with-hashtag';
 
 const markdownDescription = `
-**Base Url**: The base url of your Mastodon instance (e.g \`https://mastodon.social\`)
+**Base URL**: the address of your Mastodon server, for example \`https://mastodon.social\`.
 
-**Access Token**: To get your access token, follow the steps below:
+**Access Token**:
 
-1. Go to your **Profile** -> **Preferences** -> **Development** -> **New Application**
-2. Fill the Information
-3. Under **Scopes**, tick **read** and **write** (the form pre-selects only \`profile\`)
-4. Click on **Create Application**
-5. Copy access token from **Your access token**
+1. In Mastodon, open **Preferences** > **Development** > **New Application**.
+2. Enter any application name.
+3. Under **Scopes**, tick **read** and **write** (only \`profile\` is ticked by default).
+4. Click **Submit**, then open the application.
+5. Copy **Your access token** and paste it below.
 
-If an existing connection fails with a missing-scope error, edit the application in Mastodon, tick **read** and **write**, save (this regenerates the token) and paste the new token here.
+If a step later fails with a missing-scope error, tick **read** and **write** on the application, save (this creates a new token) and paste the new token here.
 `;
 
 export const mastodonAuth = PieceAuth.CustomAuth({
@@ -114,14 +114,14 @@ export const mastodonAuth = PieceAuth.CustomAuth({
   props: {
     base_url: Property.ShortText({
       displayName: 'Base URL',
-      description: 'The base URL of your Mastodon instance',
+      description: 'Address of your Mastodon server.',
+      placeholder: 'https://mastodon.social',
       defaultValue: 'https://mastodon.social/',
       required: true,
     }),
     access_token: Property.ShortText({
       displayName: 'Access Token',
-      description:
-        'The access token for your Mastodon account, check the documentation for how to get this',
+      description: 'Created under Preferences > Development; see the steps above.',
       required: true,
     }),
   },
@@ -134,7 +134,7 @@ export const mastodon = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
   categories: [PieceCategory.COMMUNICATION],
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   authors: ["denieler","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mastodonAuth,
   actions: [
@@ -228,10 +228,14 @@ export const mastodon = createPiece({
         auth?.props?.base_url.replace(/\/$/, '') + '/api/v1',
       auth: mastodonAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${
-          (auth ).props .access_token
-        }`,
+        Authorization: `Bearer ${auth.props.access_token}`,
       }),
+      props: {
+        url: {
+          description: "Full URL, or a path relative to your server's /api/v1 address.",
+          placeholder: '/accounts/verify_credentials',
+        },
+      },
     }),
   ],
   triggers: [newMention, newFollower, newStatusFromAccount, newStatusWithHashtag],

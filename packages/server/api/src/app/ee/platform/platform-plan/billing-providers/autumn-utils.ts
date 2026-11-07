@@ -7,6 +7,7 @@ import {
     type Balance,
     type CheckParams,
     type EventsAggregateParams,
+    type EventsListParams,
     type GetCustomerParams,
     type GetCustomerResponse,
     type ListPlansParams,
@@ -30,6 +31,7 @@ const AUTUMN_CONSOLE_URL = system.getOrThrow(AppSystemProp.AUTUMN_CONSOLE_URL).r
 const edition = system.getEdition()
 const CONSOLE_REQUEST_TIMEOUT_MS = 30000
 const AUTUMN_GET_CUSTOMER_TIMEOUT_MS = 5000
+const AUTUMN_LIST_EVENTS_TIMEOUT_MS = 15000
 const CREDITS_CACHE_TTL_SECONDS = 60 * 60
 const FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS = 5 * 60
 
@@ -62,6 +64,9 @@ export const autumnUtils = {
             },
             aggregateEvents(params: WithoutCustomerId<EventsAggregateParams>) {
                 return client.events.aggregate({ customerId, ...params })
+            },
+            listEvents(params: WithoutCustomerId<EventsListParams>) {
+                return client.events.list({ customerId, ...params }, { timeoutMs: AUTUMN_LIST_EVENTS_TIMEOUT_MS })
             },
         }
     },

@@ -68,6 +68,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Customer": "New Customer",
   "New Project": "New Project",
   "New User": "New User",

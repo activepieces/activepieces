@@ -62,6 +62,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Lead Status Changed": "Lead Status Changed",
   "New Contact Added": "New Contact Added",
   "New Lead Created": "New Lead Created",

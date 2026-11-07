@@ -4,7 +4,6 @@ import { Editor } from '@tiptap/core';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
 import { t } from 'i18next';
 import { useRef, useState } from 'react';
-import { useDebouncedCallback } from 'use-debounce';
 
 import { MarkdownInput } from '@/components/custom/markdown-input';
 import {
@@ -22,14 +21,14 @@ import { NoteFooter } from './note-footer';
 import { NoteTools } from './note-tools';
 
 const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
-  const [draggedNote, resizeNote, note, readonly] = useBuilderStateContext(
-    (state) => [
+  const [draggedNote, resizeNote, note, readonly, noteRefreshCount] =
+    useBuilderStateContext((state) => [
       state.draggedNote,
       state.resizeNote,
       state.getNoteById(props.id),
       state.readonly,
-    ],
-  );
+      state.noteRefreshCounts[props.id] ?? 0,
+    ]);
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: props.id,
     data: {
@@ -104,6 +103,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         )}
       >
         <NoteContent
+          key={noteRefreshCount}
           note={{
             ...note,
             size,
@@ -124,13 +124,6 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
     state.updateContent,
     state.readonly,
   ]);
-  const debouncedUpdateContent = useDebouncedCallback(
-    (id: string, content: string) => {
-      updateContent(id, content);
-    },
-    500,
-  );
-
   const editorRef = useRef<Editor | null>(null);
   return (
     <div
@@ -198,7 +191,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
                 onChange={(value: string) => {
                   if (value !== localNote.content) {
                     setLocalNote({ ...localNote, content: value });
-                    debouncedUpdateContent(id, value);
+                    updateContent(id, value);
                   }
                 }}
               />

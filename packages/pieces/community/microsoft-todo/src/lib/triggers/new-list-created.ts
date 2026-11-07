@@ -42,7 +42,7 @@ export const newListCreatedTrigger = createTrigger({
     },
 
     async onEnable(context) {
-        await pollingHelper.poll(polling, context as any);
+        await pollingHelper.onEnable(polling, context as any);
     },
 
     async onDisable(context) {
