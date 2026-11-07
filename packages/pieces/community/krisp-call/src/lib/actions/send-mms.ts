@@ -14,7 +14,7 @@ export const sendMms = createAction({
   classification: 'WRITE',
   displayName: 'Send MMS',
   auth: krispcallAuth,
-  description: 'Send mms in krispcall.',
+  description: 'Send images or files from one of your KrispCall numbers.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -24,8 +24,8 @@ export const sendMms = createAction({
   props: {
     from_number: Property.Dropdown({
       auth: krispcallAuth,
-      displayName: 'from number',
-      description: 'Select an number',
+      displayName: 'From Number',
+      description: 'The KrispCall number the message is sent from.',
       required: true,
       refreshers: ['auth'],
       refreshOnSearch: false,
@@ -34,21 +34,29 @@ export const sendMms = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please connect your account first',
+            placeholder: 'Connect your KrispCall account first.',
           };
         }
-          try {
-          const authVaue = auth.props;
+        try {
+          const authValue = auth.props;
           const res = await httpClient.sendRequest<Item[]>({
             method: HttpMethod.GET,
             url: 'https://app.krispcall.com/api/v3/platform/activepiece/get-numbers',
             headers: {
-              'X-API-KEY': authVaue.apiKey,
+              'X-API-KEY': authValue.apiKey,
             },
           });
-          const mappedOptions = res?.body?.map((item) => {
+          const numbers = res.body ?? [];
+          if (numbers.length === 0) {
             return {
-              label: item.name,
+              disabled: false,
+              options: [],
+              placeholder: 'No numbers found in your KrispCall account.',
+            };
+          }
+          const mappedOptions = numbers.map((item) => {
+            return {
+              label: item.name ? `${item.name} (${item.number})` : item.number,
               value: item.number,
             };
           });
@@ -58,28 +66,48 @@ export const sendMms = createAction({
             options: mappedOptions,
           };
         } catch (error) {
-          // Handle error
           console.error(error);
-          return { disabled: true, options: [] }; // Return empty options array or handle error accordingly
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Could not load your numbers. Check your connection.',
+          };
         }
       },
     }),
     to_number: Property.ShortText({
       displayName: 'To Number',
-      description: 'Enter the number to which you want to send sms.',
+      description: 'International format, with the country code.',
+      placeholder: '+14155550123',
       required: true,
     }),
     content: Property.ShortText({
-      displayName: 'content',
-      description: 'Enter your message here.',
+      displayName: 'Message',
+      description: 'Optional text sent with the media.',
       required: false,
     }),
     medias: Property.Array({
-      displayName: 'Medias url',
-      description: 'Enter medias urls',
+      displayName: 'Media URLs',
+      description: 'Public links to the images or files to send, one per item.',
       required: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Send to',
+      icon: 'send',
+      props: ['to_number'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['from_number', 'content', 'medias'],
+    },
+  ],
   async run({ auth, propsValue }) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
