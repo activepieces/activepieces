@@ -45,6 +45,12 @@ export const supadata = createPiece({
     createCustomApiCallAction({
       auth: supadataAuth,
       baseUrl: () => supadataConfig.baseUrl,
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${supadataConfig.baseUrl}`,
+          placeholder: '/me',
+        },
+      },
       authMapping: async (auth) => ({
         [supadataConfig.accessTokenHeaderKey]: auth.secret_text,
       }),
