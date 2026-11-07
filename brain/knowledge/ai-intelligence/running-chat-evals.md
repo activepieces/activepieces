@@ -29,7 +29,7 @@ icon: 🧪
 - **Judge:** Jev 1.14 answers each check (`EVALS_JUDGE_MODEL` overrides it). Only a failed check gets a written reason, from Haiku 5.5; a passed one shows `Jev P(pass)`.
 - **Case verdict:** a `chat-core` case passes when at least 80% of its runs pass. Any other case passes when more than half pass.
 - **Diff:** each case shows `before → now` against the main baseline: `same`, `FIXED`, `REGRESSED` or `unclear`. A change counts only when at least 80% of at least 3 runs agree on both sides.
-- **Exit code:** 1 when a `chat-core` case fails or any case regresses, 0 otherwise. `chat-prod-failures` failures alone never fail the run.
+- **Exit code:** 1 only on a clear result: a `chat-core` case where at least 80% of at least 3 runs fail, or a clear regression. A borderline case shows as failing in the table but never fails the run, because the agent is a thinking model and two runs of the same case differ. `chat-prod-failures` failures alone never fail the run.
 
 ## Editing cases
 

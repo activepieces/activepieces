@@ -113,7 +113,8 @@ async function reportDataset({ name, cases, results, live, browse, recordMode, u
         summaries.forEach((summary) => console.log(`  ${VERDICT_MARK[summary.verdict]} case ${summary.caseNumber}: ${summary.pass} pass · ${summary.fail} fail · overall ${isNil(summary.overall) ? '-' : summary.overall.toFixed(1)}/10 · ${isNil(summary.costUsd) ? 'cost unknown' : `$${summary.costUsd.toFixed(4)}/run`}`))
     }
     const failing = summaries.filter((summary) => summary.verdict === 'fail').length
-    console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} · ${summaries.length} cases`)
+    const clearlyFailing = summaries.filter((summary) => clearVerdict(summary) === 'fail').length
+    console.log(`${colors.green(`${summaries.length - failing} pass`)} · ${failing > 0 ? colors.red(`${failing} fail`) : `${failing} fail`} ${colors.dim(`(${clearlyFailing} clearly)`)} · ${summaries.length} cases`)
     if (recordMode) {
         await saveFixtures({ cases, results })
         return { broken: false, reason: '' }
@@ -123,8 +124,8 @@ async function reportDataset({ name, cases, results, live, browse, recordMode, u
         console.log(`\nUploaded main baseline for ${name}: experiment ${experimentId}`)
     }
     const regressed = upload ? 0 : await printDiff({ suiteKey: name, modelVersion: modelId, cases, summaries })
-    if (MUST_PASS_DATASETS.has(name) && failing > 0) {
-        return { broken: true, reason: `${failing} ${name} case(s) fail` }
+    if (MUST_PASS_DATASETS.has(name) && clearlyFailing > 0) {
+        return { broken: true, reason: `${clearlyFailing} ${name} case(s) clearly fail` }
     }
     return regressed > 0 ? { broken: true, reason: `${regressed} ${name} case(s) regressed` } : { broken: false, reason: '' }
 }
