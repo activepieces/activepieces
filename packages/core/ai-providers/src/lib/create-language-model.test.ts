@@ -205,6 +205,35 @@ describe('createLanguageModel', () => {
         expect(nvidia.url).toBe('https://integrate.api.nvidia.com/v1/chat/completions')
     })
 
+    describe('Cohere, on its native v2 chat API', () => {
+        const sendToCohere = (toolChoice: Parameters<ReturnType<typeof createLanguageModel>['doGenerate']>[0]['toolChoice']) => {
+            const model = buildFor(AIProviderName.COHERE)
+            return captureSentRequest(() => model.doGenerate({ ...forcedCall, tools: [...forcedCall.tools, { type: 'function', name: 'search', inputSchema: { type: 'object', properties: {} } }], toolChoice }))
+        }
+        const toolNames = (body: Record<string, unknown>) => (Array.isArray(body.tools) ? body.tools.map((tool: { function: { name: string } }) => tool.function.name) : [])
+
+        it('sends the key to the Cohere chat endpoint', async () => {
+            const request = await generateHi(buildFor(AIProviderName.COHERE))
+
+            expect(request.url).toBe('https://api.cohere.com/v2/chat')
+            expect(request.headers.get('authorization')).toBe('Bearer test-key')
+        })
+
+        it('forces a named tool as REQUIRED with only that tool offered', async () => {
+            const { body } = await sendToCohere({ type: 'tool', toolName: 'extractData' })
+
+            expect(body.tool_choice).toBe('REQUIRED')
+            expect(toolNames(body)).toEqual(['extractData'])
+        })
+
+        it('forces any tool as REQUIRED', async () => {
+            const { body } = await sendToCohere({ type: 'required' })
+
+            expect(body.tool_choice).toBe('REQUIRED')
+            expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
+    })
+
     describe('Meta, which only accepts tool_choice auto', () => {
         const tools = [
             { type: 'function' as const, name: 'extractData', inputSchema: { type: 'object' as const, properties: {} } },

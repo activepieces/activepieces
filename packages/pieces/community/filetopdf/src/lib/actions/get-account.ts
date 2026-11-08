@@ -1,11 +1,12 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { filetopdfAuth } from '../common/auth';
-import { filetopdfApiCall } from '../common/client';
+import { filetopdfAuth } from '../auth';
+import { filetopdfApi } from '../common/api';
+import { getAccountOutputSchema } from '../output-schemas';
 
-export const getAccount = createAction({
+export const getAccountAction = createAction({
   auth: filetopdfAuth,
   name: 'get_account',
+  outputSchema: getAccountOutputSchema,
   classification: 'READ',
   displayName: 'Get Account Status',
   description:
@@ -18,12 +19,7 @@ export const getAccount = createAction({
   },
   props: {},
   async run(context) {
-    const envelope = await filetopdfApiCall<AccountEnvelope>({
-      apiKey: context.auth.secret_text,
-      method: HttpMethod.GET,
-      resourceUri: '/account',
-    });
-    const data = envelope.data;
+    const data = await filetopdfApi.getAccount({ auth: context.auth });
     return {
       workspaceId: data?.workspace_id,
       plan: data?.plan,
@@ -32,13 +28,3 @@ export const getAccount = createAction({
     };
   },
 });
-
-interface AccountEnvelope {
-  status: string;
-  data?: {
-    workspace_id: string;
-    plan: string;
-    credits_remaining: number;
-    subscription_status: string;
-  };
-}

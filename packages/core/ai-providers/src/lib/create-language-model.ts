@@ -1,6 +1,7 @@
 import { AiProviderCredentials, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
 import { OPENAI_COMPATIBLE_VENDOR_BASE_URLS } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
+import { createCohere } from '@ai-sdk/cohere'
 import { createVertex } from '@ai-sdk/google-vertex'
 import { createVertexAnthropic } from '@ai-sdk/google-vertex/anthropic'
 import { createVertexMaas } from '@ai-sdk/google-vertex/maas'
@@ -100,6 +101,10 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
                 model: wrapLanguageModel({ model: responses, middleware: autoToolChoiceOnly }),
                 providerOptionsName: 'openai',
             })
+        }
+        case AIProviderName.COHERE: {
+            const { apiKey } = credentials.auth
+            return createCohere({ apiKey, ...observed })(modelId)
         }
         case AIProviderName.OPENROUTER:
         case AIProviderName.ACTIVEPIECES: {
