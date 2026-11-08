@@ -32,3 +32,39 @@ describe('loginsToRequest', () => {
         expect(result).toEqual(['kishanprmr'])
     })
 })
+
+describe('roundRobinPicks', () => {
+    const team = (at: string) => ({ event: 'review_requested', created_at: at, requested_team: { slug: 'core' } })
+    const user = (login: string, at: string) => ({ event: 'review_requested', created_at: at, requested_reviewer: { login } })
+
+    it('picks the first user requested right after the team, not the Co-Owner requested later', () => {
+        const events = [
+            { event: 'committed', created_at: '2026-11-05T19:26:30Z' },
+            team('2026-11-05T19:26:32Z'),
+            user('AbdulTheActivePiecer', '2026-11-05T19:26:33Z'),
+            user('othmanemad', '2026-11-05T19:26:36Z'),
+        ]
+        expect(requestCoOwnerReview.roundRobinPicks({ events, keep: ['othmanemad'] })).toEqual(['AbdulTheActivePiecer'])
+    })
+
+    it('never picks the Co-Owner, even when round-robin chose them', () => {
+        const events = [team('2026-11-05T19:26:32Z'), user('OthmanEmad', '2026-11-05T19:26:33Z')]
+        expect(requestCoOwnerReview.roundRobinPicks({ events, keep: ['othmanemad'] })).toEqual([])
+    })
+
+    it('ignores a user requested long after the team', () => {
+        const events = [team('2026-11-05T19:26:32Z'), user('kareem834', '2026-11-05T19:40:00Z')]
+        expect(requestCoOwnerReview.roundRobinPicks({ events, keep: ['othmanemad'] })).toEqual([])
+    })
+
+    it('takes one pick for each team request', () => {
+        const events = [
+            team('2026-11-05T19:26:32Z'),
+            { ...team('2026-11-05T19:26:32Z'), requested_team: { slug: 'pieces' } },
+            user('ziyadev', '2026-11-05T19:26:33Z'),
+            user('kishanprmr', '2026-11-05T19:26:33Z'),
+            user('lina-alomari', '2026-11-05T19:26:34Z'),
+        ]
+        expect(requestCoOwnerReview.roundRobinPicks({ events, keep: ['othmanemad'] })).toEqual(['ziyadev', 'kishanprmr'])
+    })
+})

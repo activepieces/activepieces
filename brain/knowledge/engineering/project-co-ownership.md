@@ -111,7 +111,7 @@ Two projects, ending 2026-12-04. For each concern, record where it first appears
 - Other projects also use Ready for Development. The status means "Co-Owner approved" only on a project with a Co-Owner label.
 - The gate fails closed: an agent that cannot read the project, its labels or its status stops.
 - The ruleset accepts any code-owner approval, so GitHub does not enforce the Co-Owner. The pilot counts merges without one.
-- GitHub round-robin adds a second reviewer even when the Co-Owner is already requested, unless the team's code review assignment has "Count existing requests" on.
+- GitHub round-robin picks a reviewer the moment the PR opens, before any Co-Owner request can exist, so "Count existing requests" never prevents it. The `Linear ticket check` workflow removes that pick: the first user request within 5 seconds after a team request, unless it is the Co-Owner. When the Co-Owner is the author, the pick stays.
 - A Co-Owner without write access is skipped as a code owner, so the PR cannot merge on that approval.
 - Agents cannot read Discord. A window result or a concern reaches Linear only through `/decide`.
 - A concern in a private message does not count. Only the Discord post of the approach note, or the PR, is on the record.
