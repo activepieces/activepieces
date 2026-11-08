@@ -375,7 +375,7 @@ function ChatBoxContent({
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
 
   return (
-    <div className="flex flex-col h-full flex-1 min-w-0">
+    <div className="@container/chat flex flex-col h-full flex-1 min-w-0">
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div

@@ -3740,5 +3740,13 @@
   "Not now": "Not now",
   "Saw the memory import suggestion": "Saw the memory import suggestion",
   "Opened memory import from chat": "Opened memory import from chat",
-  "Imported memory from chat": "Imported memory from chat"
+  "Imported memory from chat": "Imported memory from chat",
+  "Working": "Working",
+  "Needs you": "Needs you",
+  "Hide details": "Hide details",
+  "Show details": "Show details",
+  "Open {name}": "Open {name}",
+  "Remove {name}": "Remove {name}",
+  "Open image": "Open image",
+  "Nothing matches \"{query}\"": "Nothing matches \"{query}\""
 }

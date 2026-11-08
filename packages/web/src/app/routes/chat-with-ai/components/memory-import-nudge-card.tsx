@@ -9,7 +9,13 @@ import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { chatApi } from '@/features/chat/lib/chat-api';
 
-import { ChatCard } from './chat-card-primitives';
+import {
+  ChatCard,
+  ChatCardActions,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from './chat-ui/chat-card';
 
 export function MemoryImportNudgeCard({
   conversationId,
@@ -75,28 +81,26 @@ export function MemoryImportNudgeCard({
   };
 
   return (
-    <ChatCard className="mt-2 shadow-none">
-      <div className="flex items-start gap-3">
-        <Brain className="size-5 shrink-0 text-accent-11" />
-        <div className="flex-1 min-w-0 space-y-1">
-          <p className="text-sm font-medium">
-            {t('Chat works better when it knows you')}
-          </p>
-          <p className="text-sm text-gray-11">
-            {t(
-              'Bring what ChatGPT or Claude already know about you, so chat starts from there.',
-            )}
-          </p>
-          <div className="flex items-center gap-2 pt-2">
-            <Button size="sm" onClick={openImport}>
-              {t('Bring my memory')}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={hide}>
-              {t('Not now')}
-            </Button>
-          </div>
-        </div>
-      </div>
+    <ChatCard className="mt-2">
+      <ChatCardHeader
+        tile={<ChatCardTile kind="bits" icon={Brain} />}
+        title={t('Chat works better when it knows you')}
+      />
+      <ChatCardBody>
+        <p className="text-sm text-gray-11">
+          {t(
+            'Bring what ChatGPT or Claude already know about you, so chat starts from there.',
+          )}
+        </p>
+      </ChatCardBody>
+      <ChatCardActions>
+        <Button size="sm" onClick={openImport}>
+          {t('Bring my memory')}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={hide}>
+          {t('Not now')}
+        </Button>
+      </ChatCardActions>
       <ImportMemoryDialog
         open={importOpen}
         onOpenChange={setImportOpen}
