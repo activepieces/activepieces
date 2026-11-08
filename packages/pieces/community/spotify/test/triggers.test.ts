@@ -320,8 +320,6 @@ describe('new_recently_played_track paging', () => {
   });
 });
 
-type FakeResponse = { status: number; body: unknown };
-
 describe('qa trigger edge cases', () => {
   test('recently played: an empty response with null cursors keeps the checkpoint', async () => {
     const { store, data } = memoryStore();
@@ -378,3 +376,76 @@ describe('qa trigger edge cases', () => {
     expect(await hook({ trigger: newPlaylistItem, name: 'run', ctx })).toEqual([]);
   });
 });
+
+describe('republish keeps the checkpoint (self-hosted order: onDisable without a flag, then onEnable with isRepublish)', () => {
+  const recent = (n: number, at: string) => ({ played_at: at, track: { uri: uri(n) }, context: null });
+  const cases = [
+    {
+      name: 'new_saved_track',
+      trigger: newSavedTrack,
+      key: 'new_saved_track_checkpoint',
+      propsValue: {},
+      before: () => [saved({ n: 1, addedAt: '2026-01-01T00:00:00Z' })],
+      after: () => [saved({ n: 2, addedAt: '2026-01-02T00:00:00Z' }), saved({ n: 1, addedAt: '2026-01-01T00:00:00Z' })],
+      body: (items: unknown[]) => ({ items, next: null }),
+    },
+    {
+      name: 'new_recently_played_track',
+      trigger: newRecentlyPlayedTrack,
+      key: 'new_recently_played_track_checkpoint',
+      propsValue: {},
+      before: () => [recent(1, '2026-01-01T00:00:00.000Z')],
+      after: () => [recent(2, '2026-01-02T00:00:00.000Z'), recent(1, '2026-01-01T00:00:00.000Z')],
+      body: (items: unknown[]) => ({ items, next: null, cursors: null }),
+    },
+    {
+      name: 'new_playlist_item',
+      trigger: newPlaylistItem,
+      key: 'new_playlist_item_checkpoint',
+      propsValue: { playlist_id: PL },
+      before: () => [playlistEntry({ n: 1, addedAt: '2026-01-01T00:00:00Z' })],
+      after: () => [playlistEntry({ n: 1, addedAt: '2026-01-01T00:00:00Z' }), playlistEntry({ n: 2, addedAt: '2026-01-02T00:00:00Z' })],
+      body: (items: unknown[]) => ({ items, next: null, total: items.length }),
+    },
+    {
+      name: 'playlist_items_changed',
+      trigger: playlistItemsChanged,
+      key: 'playlist_changed_trigger_hash_v2',
+      propsValue: { playlist_id: PL },
+      before: () => [playlistEntry({ n: 1, addedAt: '2026-01-01T00:00:00Z' })],
+      after: () => [playlistEntry({ n: 1, addedAt: '2026-01-01T00:00:00Z' }), playlistEntry({ n: 2, addedAt: '2026-01-02T00:00:00Z' })],
+      body: (items: unknown[]) => ({ items, next: null, total: items.length }),
+    },
+  ];
+
+  for (const c of cases) {
+    test(`${c.name}: an item added before the republish still fires after it`, async () => {
+      const { store, data } = memoryStore();
+      let items: unknown[] = c.before();
+      stubFetch(() => ({ status: 200, body: c.body(items) }));
+      const ctx = { store, propsValue: c.propsValue };
+      await hook({ trigger: c.trigger, name: 'onEnable', ctx });
+      const baseline = data.get(c.key);
+      items = c.after();
+      await hook({ trigger: c.trigger, name: 'onDisable', ctx });
+      expect(data.get(c.key)).toEqual(baseline);
+      await hook({ trigger: c.trigger, name: 'onEnable', ctx: { ...ctx, isRepublish: true } });
+      expect(data.get(c.key)).toEqual(baseline);
+      expect(await hook({ trigger: c.trigger, name: 'run', ctx })).toHaveLength(1);
+    });
+
+    test(`${c.name}: turning the flow off and on starts fresh`, async () => {
+      const { store } = memoryStore();
+      let items: unknown[] = c.before();
+      stubFetch(() => ({ status: 200, body: c.body(items) }));
+      const ctx = { store, propsValue: c.propsValue };
+      await hook({ trigger: c.trigger, name: 'onEnable', ctx });
+      items = c.after();
+      await hook({ trigger: c.trigger, name: 'onDisable', ctx });
+      await hook({ trigger: c.trigger, name: 'onEnable', ctx });
+      expect(await hook({ trigger: c.trigger, name: 'run', ctx })).toEqual([]);
+    });
+  }
+});
+
+type FakeResponse = { status: number; body: unknown };

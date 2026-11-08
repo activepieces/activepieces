@@ -74,11 +74,8 @@ export default createTrigger({
     const items = Array.isArray(res.items) ? res.items : [];
     await store.put(CHECKPOINT_KEY, spotifyPolling.baseline({ entries: toEntries(items) }), StoreScope.FLOW);
   },
-  onDisable: async ({ store, isRepublish }) => {
-    if (isRepublish) {
-      return;
-    }
-    await store.delete(CHECKPOINT_KEY, StoreScope.FLOW);
+  onDisable: async () => {
+    return;
   },
   run: async ({ store, auth }) => {
     const stored = await store.get<SpotifyCheckpoint>(CHECKPOINT_KEY, StoreScope.FLOW);

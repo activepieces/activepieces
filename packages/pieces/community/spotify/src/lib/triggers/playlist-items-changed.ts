@@ -101,13 +101,10 @@ export default createTrigger({
     const items = await fetchAll({ client, playlistId });
     const stored: StoredHash = { playlistId, hash: hashOf(items) };
     await store.put(HASH_KEY, stored, StoreScope.FLOW);
-  },
-  onDisable: async ({ store, isRepublish }) => {
-    if (isRepublish) {
-      return;
-    }
-    await store.delete(HASH_KEY, StoreScope.FLOW);
     await store.delete(LEGACY_HASH_KEY, StoreScope.FLOW);
+  },
+  onDisable: async () => {
+    return;
   },
   run: async ({ store, auth, propsValue }) => {
     const playlistId = playlistOf(propsValue.playlist_id);
