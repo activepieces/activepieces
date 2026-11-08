@@ -64,7 +64,7 @@ export const platformBillingApi = {
   },
   startSelfServeTrial() {
     return api.post<SelfServeTrialStatus>(
-      '/v1/platform-billing/self-serve-trial/start',
+      '/v1/platform-billing/self-serve-trial',
       {},
     );
   },
