@@ -250,6 +250,10 @@ function saveConversationId(conversationId: string | null) {
   }
 }
 
+function readAutoFollow(): boolean {
+  return safeStorage.read({ area: 'local', key: AUTO_FOLLOW_KEY }) !== 'false';
+}
+
 function readLastPage(): string | null {
   return safeStorage.read({ area: 'session', key: TAB_LAST_PAGE_KEY });
 }
@@ -279,6 +283,7 @@ const TAB_VIEW_KEY = 'chat:view';
 const TAB_CONVERSATION_KEY = 'chat:conv';
 const LAST_CONVERSATION_KEY = 'chat:last-conv';
 const TAB_LAST_PAGE_KEY = 'chat:last-page';
+const AUTO_FOLLOW_KEY = 'chat:auto-follow';
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -309,6 +314,7 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
     ...readSaved(),
     conversationId: readConversationId(),
     lastPage: readLastPage(),
+    autoFollow: readAutoFollow(),
     newChatToken: 0,
     pendingPrompt: undefined,
     gesture: 'idle',
@@ -384,6 +390,15 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
       setConversation({ conversationId, pendingPrompt: undefined }),
     conversationMissing: () => setConversation({ conversationId: null }),
     setGesture: (gesture) => set({ gesture }),
+    setAutoFollow: (autoFollow) => {
+      if (autoFollow === get().autoFollow) return;
+      set({ autoFollow });
+      safeStorage.writeFlag({
+        area: 'local',
+        key: AUTO_FOLLOW_KEY,
+        value: autoFollow,
+      });
+    },
     setLastPage: (lastPage) => {
       if (lastPage === get().lastPage) return;
       set({ lastPage });
@@ -434,6 +449,7 @@ type SavedChatPanel = {
 type ChatPanelState = SavedChatPanel & {
   conversationId: string | null;
   lastPage: string | null;
+  autoFollow: boolean;
   newChatToken: number;
   pendingPrompt?: string;
   gesture: ChatGesture;
@@ -461,5 +477,6 @@ type ChatPanelState = SavedChatPanel & {
   conversationCreated: (conversationId: string) => void;
   conversationMissing: () => void;
   setGesture: (gesture: ChatGesture) => void;
+  setAutoFollow: (autoFollow: boolean) => void;
   setLastPage: (lastPage: string) => void;
 };
