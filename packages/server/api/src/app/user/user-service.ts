@@ -146,7 +146,7 @@ export const userService = (log: FastifyBaseLogger) => ({
             .andWhere('user.status = :status', { status: UserStatus.ACTIVE })
     },
     async lockActiveByPlatformId({ platformId, entityManager }: ActiveByPlatformIdParams): Promise<void> {
-        await this.activeUsersQuery({ platformId, entityManager }).setLock('pessimistic_write').select('user.id').getMany()
+        await this.activeUsersQuery({ platformId, entityManager }).setLock('for_no_key_update').select('user.id').getMany()
     },
     async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)

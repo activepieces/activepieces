@@ -1,18 +1,20 @@
-import { InvitationStatus, InvitationType, PlanName, PlatformRole, PrincipalType, SelfServeTrialDates, SelfServeTrialState, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { apId, chunk, InvitationStatus, InvitationType, isNil, PlanName, PlatformRole, PrincipalType, SelfServeTrialDates, SelfServeTrialState, tryCatch, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { transaction } from '../../../../src/app/core/db/transaction'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { getBillingEnforcedKey } from '../../../../src/app/database/redis/keys'
 import { distributedStore } from '../../../../src/app/database/redis-connections'
 import { autumnConsole, autumnUtils } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
-import { platformPlanRepo } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
+import { platformPlanRepo, platformPlanService } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 import { selfServeTrialUtils } from '../../../../src/app/ee/platform/platform-plan/self-serve-trial-utils'
 import { trialSeatCleanup } from '../../../../src/app/ee/platform/platform-plan/trial-seat-cleanup'
 import { mcpGrantRevocation } from '../../../../src/app/mcp/oauth/token/mcp-grant-revocation'
 import { userRepo } from '../../../../src/app/user/user-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import { createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { createMockProject, createMockUser, createMockUserIdentity, createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -100,15 +102,26 @@ describe('Seat grace after the self-serve trial', () => {
 
     it('revokes the MCP grants of the users it deactivates, and of no one else', async () => {
         const { platformId, owner, trialUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 2, trialEndedDaysAgo: 8 })
-        const revoke = vi.spyOn(mcpGrantRevocation, 'revokeActiveGrants')
+        const grants = await saveMcpGrants({ platformId, users: [owner, ...trialUsers] })
         stubRefresh()
 
         await trialSeatCleanup(log).sweep()
 
-        const revokedUserIds = revoke.mock.calls.map(([{ scope }]) => ('userId' in scope ? scope.userId : null))
-        expect(revokedUserIds).toEqual([trialUsers[1].id])
-        expect(revoke.mock.calls[0][0].scope.platformId).toBe(platformId)
-        expect(revokedUserIds).not.toContain(owner.id)
+        expect(await isRevoked(grants[trialUsers[1].id])).toBe(true)
+        expect(await isRevoked(grants[trialUsers[0].id])).toBe(false)
+        expect(await isRevoked(grants[owner.id])).toBe(false)
+    })
+
+    it('keeps the MCP grants when the deactivation rolls back', async () => {
+        const { platformId, trialUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 2, trialEndedDaysAgo: 8 })
+        const grants = await saveMcpGrants({ platformId, users: trialUsers })
+        vi.spyOn(mcpGrantRevocation, 'revokeUsersActiveGrantsInTransaction').mockRejectedValue(new Error('grant table unavailable'))
+        stubRefresh()
+
+        await expect(trialSeatCleanup(log).sweep()).rejects.toThrow('the sweep job retries them')
+
+        expect(await statusOf(trialUsers[1])).toBe(UserStatus.ACTIVE)
+        expect(await isRevoked(grants[trialUsers[1].id])).toBe(false)
     })
 
     it('counts again at the deadline and deactivates only the users still over the plan', async () => {
@@ -391,6 +404,71 @@ describe('Seat grace after the self-serve trial', () => {
     })
 })
 
+describe.runIf(process.env.AP_DB_TYPE === 'POSTGRES' && process.env.AP_TRIAL_SEAT_CLEANUP_BENCHMARK === 'true')('Seat grace cleanup under load', () => {
+    it.each([1_000, 10_000])('measures how long a platform with %i trial users stays locked', async (count) => {
+        const { platformId, selfServeTrialDates } = await setupPlatform({ usersLimit: 10, trialEndedDaysAgo: 8 })
+        const [keptUser] = await addUsers({ platformId, count: 1, firstCreatedAt: dayjs(selfServeTrialDates.startedAt).subtract(20, 'day').toISOString() })
+        await bulkAddTrialSeats({ platformId, count, firstCreatedAt: dayjs(selfServeTrialDates.startedAt).add(1, 'day').toISOString() })
+        stubRefresh()
+
+        const sweepStartedAt = performance.now()
+        const sweep = trialSeatCleanup(log).sweep()
+        const lockedAt = await waitUntilPlanIsLocked(platformId)
+        const [adminDeactivationWaitMs, ownedProjectInsertWaitMs, inviteSeatCheckWaitMs] = await Promise.all([
+            msSince({ from: lockedAt, until: userRepo().update({ id: keptUser.id }, { externalId: apId() }) }),
+            msSince({ from: lockedAt, until: db.save('project', createMockProject({ platformId, ownerId: keptUser.id })) }),
+            msSince({ from: lockedAt, until: tryCatch(() => transaction((entityManager) => platformPlanService(log).checkUsersExceededLimit({ platformId, entityManager }))) }),
+        ])
+        await sweep
+        const sweepMs = performance.now() - sweepStartedAt
+
+        process.stdout.write(`${JSON.stringify({ trialUsers: count, trialInvites: count / 10, sweepMs: Math.round(sweepMs), adminDeactivationWaitMs, ownedProjectInsertWaitMs, inviteSeatCheckWaitMs })}\n`)
+        expect(await statusOf(keptUser)).toBe(UserStatus.ACTIVE)
+    }, 300_000)
+})
+
+async function bulkAddTrialSeats({ platformId, count, firstCreatedAt }: AddUsersParams): Promise<void> {
+    const identities = Array.from({ length: count }, () => createMockUserIdentity({ verified: true }))
+    const users = identities.map((identity, index) => createMockUser({
+        identityId: identity.id,
+        platformId,
+        platformRole: PlatformRole.MEMBER,
+        status: UserStatus.ACTIVE,
+        created: dayjs(firstCreatedAt).add(index, 'second').toISOString(),
+    }))
+    const invitations = Array.from({ length: count / 10 }, (_, index) => createMockUserInvitation({
+        platformId,
+        type: InvitationType.PLATFORM,
+        platformRole: PlatformRole.MEMBER,
+        status: InvitationStatus.PENDING,
+        created: dayjs(firstCreatedAt).add(index, 'second').toISOString(),
+        updated: dayjs().toISOString(),
+    }))
+    for (const batch of chunk(identities, 1_000)) {
+        await databaseConnection().getRepository('user_identity').insert(batch)
+    }
+    for (const batch of chunk(users, 1_000)) {
+        await userRepo().insert(batch)
+    }
+    for (const batch of chunk(invitations, 1_000)) {
+        await databaseConnection().getRepository('user_invitation').insert(batch)
+    }
+}
+
+async function waitUntilPlanIsLocked(platformId: string): Promise<number> {
+    const { error } = await tryCatch(() => databaseConnection().query('SELECT 1 FROM platform_plan WHERE "platformId" = $1 FOR UPDATE NOWAIT', [platformId]))
+    if (!isNil(error)) {
+        return performance.now()
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1))
+    return waitUntilPlanIsLocked(platformId)
+}
+
+async function msSince({ from, until }: { from: number, until: Promise<unknown> }): Promise<number> {
+    await until
+    return Math.round(performance.now() - from)
+}
+
 async function setupPlatform({ usersLimit, preTrialUsers = 0, trialUsers = 0, embeddedTrialUsers = 0, trialEndedDaysAgo = 3 }: SetupPlatformParams): Promise<SetupPlatformResult> {
     const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({ plan: { usersLimit, scheduledUsersLimit: null } })
     const selfServeTrialDates = {
@@ -458,6 +536,24 @@ async function deactivate(users: User[]): Promise<void> {
 
 async function statusOf(user: User): Promise<UserStatus> {
     return (await userRepo().findOneByOrFail({ id: user.id })).status
+}
+
+async function saveMcpGrants({ platformId, users }: { platformId: string, users: User[] }): Promise<Record<string, string>> {
+    const grants = users.map((user) => ({
+        id: apId(),
+        refreshToken: apId(),
+        clientId: apId(),
+        userId: user.id,
+        platformId,
+        expiresAt: dayjs().add(30, 'day').toISOString(),
+        revoked: false,
+    }))
+    await db.save('mcp_oauth_token', grants)
+    return Object.fromEntries(grants.map((grant) => [grant.userId, grant.id]))
+}
+
+async function isRevoked(grantId: string): Promise<boolean> {
+    return (await db.findOneByOrFail<{ revoked: boolean }>('mcp_oauth_token', { id: grantId })).revoked
 }
 
 type SaveInvitationParams = {

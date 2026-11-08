@@ -75,7 +75,7 @@ async function deactivateTrialUsersAndInvitationsOverLimit({ platformId, selfSer
         await userInvitationsService(log).lockPendingInvites({ platformId, entityManager })
         const seats = await seatsOverLimit({ platformId, usersLimit: plan.usersLimit, billingEnforced, log, entityManager })
         if (isNil(seats)) {
-            return { deactivatedUserIds: [], revokedInvites: 0 }
+            return { deactivatedUserIds: [], revokedInvites: 0, revokedGrantIds: [] }
         }
         const revokedInvites = await userInvitationsService(log).revokeNewestInvitedBetween({ platformId, from: selfServeTrialDates.startedAt, to: selfServeTrialDates.endsAt, limit: seats.seatsOver, entityManager })
         const usersToDeactivate = seats.seatsOver - revokedInvites
@@ -83,14 +83,14 @@ async function deactivateTrialUsersAndInvitationsOverLimit({ platformId, selfSer
             .orderBy('user.created', 'DESC')
             .limit(usersToDeactivate)
             .getMany()
-        if (newestTrialUsers.length > 0) {
-            await userRepo(entityManager).update({ id: In(newestTrialUsers.map((user) => user.id)), platformId }, { status: UserStatus.INACTIVE })
+        const deactivatedUserIds = newestTrialUsers.map((user) => user.id)
+        if (deactivatedUserIds.length > 0) {
+            await userRepo(entityManager).update({ id: In(deactivatedUserIds), platformId }, { status: UserStatus.INACTIVE })
         }
-        return { deactivatedUserIds: newestTrialUsers.map((user) => user.id), revokedInvites }
+        const revokedGrantIds = await mcpGrantRevocation.revokeUsersActiveGrantsInTransaction({ platformId, userIds: deactivatedUserIds, entityManager })
+        return { deactivatedUserIds, revokedInvites, revokedGrantIds }
     })
-    for (const userId of removed.deactivatedUserIds) {
-        await mcpGrantRevocation.revokeActiveGrants({ scope: { userId, platformId }, log })
-    }
+    await mcpGrantRevocation.blockRevokedGrants({ grantIds: removed.revokedGrantIds, platformId, log })
     const deactivatedUsers = removed.deactivatedUserIds.length
     if (deactivatedUsers > 0 || removed.revokedInvites > 0) {
         rejectedPromiseHandler(platformPlanTelemetry(log).onTrialSeatsDeactivated({ platformId, deactivatedUsers, revokedInvites: removed.revokedInvites }), log)
