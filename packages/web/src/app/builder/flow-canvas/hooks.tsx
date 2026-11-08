@@ -180,48 +180,51 @@ const useRefreshDraftOnFollow = () => {
   useEffect(() => {
     seen.current = flowFingerprints(store.getState());
   }, [flowId, store]);
-  useOnFollowUpdate({ kind: 'flow', id: flowId }, () => {
-    const { selectedStep, draftRefreshCount } = store.getState();
-    if (selectedStep && isEditingStepSettings()) {
-      stepReloadHold.hold({ stepName: selectedStep, draftRefreshCount });
-    }
-    refreshDraft()
-      .catch(() => false)
-      .then(() => {
-        const state = store.getState();
-        if (state.draftRefreshCount === draftRefreshCount) {
-          stepReloadHold.releaseIfUnchanged(draftRefreshCount);
-        }
-        const next = flowFingerprints(state);
-        const before = seen.current ?? new Map<string, string>();
-        seen.current = next;
-        const changed = [...next]
-          .filter(([name, print]) => before.get(name) !== print)
-          .map(([name]) => name);
-        followAlong.flash(
-          changed.map((name) =>
-            name.startsWith(FLOW_META_PREFIX)
-              ? `${name}:${flowId}`
-              : `flow-step:${name}`,
-          ),
-        );
-        const last = changed
-          .filter((name) => !name.startsWith(FLOW_META_PREFIX))
-          .at(-1);
-        if (last && aiHighlight.mayScroll()) {
-          setTimeout(() => {
-            if (isStepVisible(last)) return;
-            const { zoom } = getViewport();
-            fitView({
-              nodes: [{ id: last }],
-              duration: aiHighlight.prefersReducedMotion() ? 0 : 450,
-              minZoom: zoom,
-              maxZoom: zoom,
-            }).catch(() => undefined);
-          }, 120);
-        }
-      })
-      .catch(() => undefined);
+  useOnFollowUpdate({
+    resource: { kind: 'flow', id: flowId },
+    handler: () => {
+      const { selectedStep, draftRefreshCount } = store.getState();
+      if (selectedStep && isEditingStepSettings()) {
+        stepReloadHold.hold({ stepName: selectedStep, draftRefreshCount });
+      }
+      refreshDraft()
+        .catch(() => false)
+        .then(() => {
+          const state = store.getState();
+          if (state.draftRefreshCount === draftRefreshCount) {
+            stepReloadHold.releaseIfUnchanged(draftRefreshCount);
+          }
+          const next = flowFingerprints(state);
+          const before = seen.current ?? new Map<string, string>();
+          seen.current = next;
+          const changed = [...next]
+            .filter(([name, print]) => before.get(name) !== print)
+            .map(([name]) => name);
+          followAlong.flash(
+            changed.map((name) =>
+              name.startsWith(FLOW_META_PREFIX)
+                ? `${name}:${flowId}`
+                : `flow-step:${name}`,
+            ),
+          );
+          const last = changed
+            .filter((name) => !name.startsWith(FLOW_META_PREFIX))
+            .at(-1);
+          if (last && aiHighlight.mayScroll()) {
+            setTimeout(() => {
+              if (isStepVisible(last)) return;
+              const { zoom } = getViewport();
+              fitView({
+                nodes: [{ id: last }],
+                duration: aiHighlight.prefersReducedMotion() ? 0 : 450,
+                minZoom: zoom,
+                maxZoom: zoom,
+              }).catch(() => undefined);
+            }, 120);
+          }
+        })
+        .catch(() => undefined);
+    },
   });
 };
 

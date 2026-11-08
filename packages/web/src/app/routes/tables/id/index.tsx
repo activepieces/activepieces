@@ -221,6 +221,7 @@ function useAiTableHighlights(gridRef: React.RefObject<DataGridHandle | null>) {
       let touched = false;
       if (`table-row-deleted:${recordId}` in flashes) {
         rows.set(record.uuid, 'ap-ai-fade-out');
+        touched = true;
       } else if (`table-row:${recordId}` in flashes) {
         rows.set(record.uuid, 'ap-ai-glow-row');
         touched = true;

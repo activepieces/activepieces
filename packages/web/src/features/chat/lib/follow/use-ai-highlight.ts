@@ -2,20 +2,28 @@ import { useEffect } from 'react';
 
 import { resourceRegistry } from '../resources/registry';
 
-import { FollowChange, followAlong, useFollowAlong } from './follow-along';
+import { RunChange, followAlong, useFollowAlong } from './follow-along';
 
 export function useAiHighlight(key: string): boolean {
   useEffect(() => {
     const unseen = Object.values(useFollowAlong.getState().runs)
       .flatMap((run) => run.changes)
-      .filter((change) => touches({ change, key }) && !shown.has(change));
+      .filter(
+        (change) =>
+          touches({ change, key }) && !shown.has(shownKey({ change, key })),
+      );
     if (unseen.length > 0) {
-      unseen.forEach((change) => shown.add(change));
+      unseen.forEach((change) => shown.add(shownKey({ change, key })));
       followAlong.flash([key]);
     }
     return followAlong.onToolDone((change) => {
-      if (!touches({ change, key })) return;
-      shown.add(change);
+      const done = {
+        toolCallId: change.toolCallId,
+        highlights: change.highlights,
+        changed: resourceRegistry.isChange(change.outcome),
+      };
+      if (!touches({ change: done, key })) return;
+      shown.add(shownKey({ change: done, key }));
       followAlong.flash([key]);
     });
   }, [key]);
@@ -51,12 +59,20 @@ function touches({
   change,
   key,
 }: {
-  change: FollowChange;
+  change: HighlightSource;
   key: string;
 }): boolean {
-  return (
-    resourceRegistry.isChange(change.outcome) && change.highlights.includes(key)
-  );
+  return change.changed && change.highlights.includes(key);
+}
+
+function shownKey({
+  change,
+  key,
+}: {
+  change: HighlightSource;
+  key: string;
+}): string {
+  return `${change.toolCallId}:${key}`;
 }
 
 function mayScroll(): boolean {
@@ -99,7 +115,7 @@ function installTracking(): void {
   });
 }
 
-const shown = new WeakSet<FollowChange>();
+const shown = new Set<string>();
 let tracking = false;
 let lastUserScrollAt = 0;
 let runStartedAt = 0;
@@ -119,3 +135,5 @@ export const aiHighlight = {
   scrollIntoView,
   prefersReducedMotion,
 };
+
+type HighlightSource = Pick<RunChange, 'toolCallId' | 'highlights' | 'changed'>;

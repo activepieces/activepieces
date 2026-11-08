@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { Ban, Check, Contrast, Lock, LucideIcon, X } from 'lucide-react';
 import { Suspense, useEffect, useRef, useState } from 'react';
+import { create } from 'zustand';
 
 import { followAlong } from '@/features/chat/lib/follow/follow-along';
 import {
@@ -207,10 +208,10 @@ function Announcement({
 }) {
   const [text, setText] = useState('');
   useEffect(() => {
-    const replyKey = String(lastStreamingAt);
-    const recent = Date.now() - lastStreamingAt < ANNOUNCE_WINDOW_MS;
-    if (!recent || announcedReplies.has(replyKey)) return;
-    announcedReplies.add(replyKey);
+    const { streamingAt, announcedAt } = useAnnouncer.getState();
+    const recent = Date.now() - streamingAt < ANNOUNCE_WINDOW_MS;
+    if (!recent || announcedAt === streamingAt) return;
+    useAnnouncer.setState({ announcedAt: streamingAt });
     let fired = false;
     const timer = setTimeout(() => {
       fired = true;
@@ -225,7 +226,7 @@ function Announcement({
     }, ANNOUNCE_DELAY_MS);
     return () => {
       clearTimeout(timer);
-      if (!fired) announcedReplies.delete(replyKey);
+      if (!fired) useAnnouncer.setState({ announcedAt });
     };
   }, [lines, containerRef]);
   return (
@@ -236,7 +237,7 @@ function Announcement({
 }
 
 function markReplyStreaming(): void {
-  lastStreamingAt = Date.now();
+  useAnnouncer.setState({ streamingAt: Date.now() });
 }
 
 function ProjectName({ projectId }: { projectId: string }) {
@@ -255,8 +256,10 @@ function isLinkable(line: ChangeLine): boolean {
   return !line.facts.deleted && line.state !== 'forbidden';
 }
 
-let lastStreamingAt = 0;
-const announcedReplies = new Set<string>();
+const useAnnouncer = create<AnnouncerState>(() => ({
+  streamingAt: 0,
+  announcedAt: 0,
+}));
 
 const ANNOUNCE_DELAY_MS = 600;
 const ANNOUNCE_WINDOW_MS = 15_000;
@@ -333,3 +336,8 @@ const COUNTED_FACTS: {
 ];
 
 export const changesAnnouncer = { markReplyStreaming };
+
+type AnnouncerState = {
+  streamingAt: number;
+  announcedAt: number;
+};

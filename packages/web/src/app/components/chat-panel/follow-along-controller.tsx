@@ -1,3 +1,4 @@
+import { tryCatch } from '@activepieces/core-utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -86,10 +87,11 @@ export function FollowAlongController() {
         if (change.op === 'view') followAlong.view(change.resource);
       }
       const keys = resourceRegistry.queryKeys(change.resource);
-      Promise.all(
-        keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+      tryCatch(() =>
+        Promise.all(
+          keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+        ),
       )
-        .catch(() => undefined)
         .then(() => afterSettle(() => followAlong.publishUpdated(change)))
         .catch(() => undefined);
     });
@@ -98,6 +100,10 @@ export function FollowAlongController() {
   useEffect(() => {
     followAlong.offer(null);
   }, [conversationId]);
+
+  useEffect(() => {
+    if (phase === 'idle') followAlong.offer(null);
+  }, [phase]);
 
   useEffect(() => {
     const onPage = (event: Event) => {
@@ -123,19 +129,14 @@ export function FollowAlongController() {
     if (pathChanged) selfNavRef.current = null;
     const viewAsked = state.goRequests !== seenGoRequests.current;
     seenGoRequests.current = state.goRequests;
+    const userNavigated = pathChanged && !selfNavigated && !viewAsked;
+    if (userNavigated) followAlong.offer(null);
     const target = state.target;
     if (!target || !state.following) return;
     const onTarget = resourceRegistry.isOn(pathname, target);
 
-    if (
-      pathChanged &&
-      !selfNavigated &&
-      !onTarget &&
-      !viewAsked &&
-      state.phase === 'editing'
-    ) {
+    if (userNavigated && !onTarget && state.phase === 'editing') {
       followAlong.stopFollowing();
-      followAlong.offer(null);
       return;
     }
     if (onTarget) {
@@ -209,11 +210,25 @@ export function FollowAlongController() {
     const onInput = () => {
       lastInput = Date.now();
     };
-    const events = ['keydown', 'pointerdown', 'wheel', 'input'] as const;
+    const events: (keyof WindowEventMap)[] = [
+      'keydown',
+      'pointerdown',
+      'wheel',
+      'input',
+    ];
     events.forEach((name) =>
       window.addEventListener(name, onInput, { capture: true, passive: true }),
     );
     const timer = setInterval(() => {
+      const latest = useFollowAlong.getState();
+      if (
+        latest.offer !== offer ||
+        !latest.following ||
+        latest.phase === 'idle'
+      ) {
+        clearInterval(timer);
+        return;
+      }
       if (
         Date.now() - lastInput < IDLE_MS ||
         !chatAtBottom() ||
