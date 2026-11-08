@@ -13,10 +13,8 @@ import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { isMac } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
-import { useChatPanelHidden } from './chat-window';
+import { useChatWidth } from './chat-window';
 
-// A square cutout with the 24px icon centred in it, nudged 1px down: the open
-// gutter under the card makes the bottom read emptier than the top.
 const ICON = 24;
 const NOTCH = 48;
 const INSET_X = (NOTCH - ICON) / 2;
@@ -26,17 +24,14 @@ const SHADOW_COVER = 4;
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 export function ChatNotch({ className }: { className?: string }) {
-  const hidden = useChatPanelHidden();
-  const open = useChatPanel((s) => s.open);
   const setOpen = useChatPanel((s) => s.setOpen);
-  const isHidden = hidden || open;
+  const isHidden = useChatWidth() !== 'closed';
   const progress = useMotionValue(isHidden ? 0 : 1);
 
   useEffect(() => {
     const controls = animate(progress, isHidden ? 0 : 1, {
       duration: 0.2,
       ease: EASE_OUT,
-      // Closing waits for the icon to leave; opening leads and the icon follows.
       delay: isHidden ? 0.05 : 0,
     });
     return () => controls.stop();
@@ -110,8 +105,6 @@ export function ChatNotch({ className }: { className?: string }) {
   );
 }
 
-// On hover the two text lines write themselves in again, one just after the
-// other. One quiet motion: nothing else moves.
 const writeLine = (order: number) => ({
   hover: {
     pathLength: [0, 1],
@@ -119,8 +112,6 @@ const writeLine = (order: number) => ({
   },
 });
 
-// C3: an ink bubble with a solid accent spark, so the way into chat is easy to
-// spot. Only the notch gets the color; elsewhere the icon stays one color.
 function NotchChatIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -145,9 +136,6 @@ function NotchChatIcon({ className }: { className?: string }) {
   );
 }
 
-// The card's outline around the notch as one curve, so it stays coherent while
-// it grows. SVG coordinates, the card's bottom-left corner at (0, NOTCH_BOX).
-// `progress` runs 0 (closed) to 1 (open).
 function notchOutline(progress: number) {
   const b = NOTCH_BOX;
   const w = Math.max(0.01, NOTCH * progress);
@@ -171,7 +159,6 @@ function notchOutline(progress: number) {
       b - 0.5
     } ${w + fillet} ${b - 0.5}`,
   ].join(' ');
-  // Runs a few px past the card so it also covers the card's drop shadow.
   const fill = `${edge.replace('M 0.5', 'M 0')} L ${w + fillet} ${
     b + SHADOW_COVER
   } L 0 ${b + SHADOW_COVER} Z`;

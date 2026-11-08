@@ -18,6 +18,22 @@ const projectIdKey = 'projectId';
 export const authenticationSession = {
   setProjectId(projectId: string) {
     ApStorage.getInstance().setItem(projectIdKey, projectId);
+    notifySessionChanged();
+  },
+  subscribe(listener: () => void): () => void {
+    let scheduled = false;
+    const onStorage = () => {
+      if (scheduled) {
+        return;
+      }
+      scheduled = true;
+      queueMicrotask(() => {
+        scheduled = false;
+        listener();
+      });
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   },
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
     if (isEmbedding) {
@@ -26,7 +42,7 @@ export const authenticationSession = {
     ApStorage.getInstance().setItem(tokenKey, response.token);
     saveProjectIdOrClear(response.projectId);
     queryClient.invalidateQueries({ queryKey: ['flags'] });
-    window.dispatchEvent(new Event('storage'));
+    notifySessionChanged();
   },
   isJwtExpired(token: string): boolean {
     if (!token) {
@@ -112,7 +128,7 @@ export const authenticationSession = {
       return;
     }
     ApStorage.getInstance().setItem(projectIdKey, projectId);
-    window.dispatchEvent(new Event('storage'));
+    notifySessionChanged();
   },
   isLoggedIn(): boolean {
     const token = this.getToken();
@@ -124,6 +140,7 @@ export const authenticationSession = {
   clearSession() {
     ApStorage.getInstance().removeItem(projectIdKey);
     ApStorage.getInstance().removeItem(tokenKey);
+    notifySessionChanged();
   },
   logOut() {
     const hadSession = !isNil(this.getToken());
@@ -134,6 +151,10 @@ export const authenticationSession = {
     window.location.href = '/sign-in';
   },
 };
+
+function notifySessionChanged(): void {
+  window.dispatchEvent(new Event('storage'));
+}
 
 function getDecodedJwt(token: string): Principal {
   return jwtDecode<Principal>(token);

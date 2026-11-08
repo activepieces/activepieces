@@ -7,12 +7,12 @@ import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-import { useChatPanelHidden } from '../chat-panel/chat-window';
+import { useChatWidth } from '../chat-panel/chat-window';
 
 export function MobileSidebarBar() {
   const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const branding = flagsHooks.useWebsiteBranding();
-  const chatHidden = useChatPanelHidden();
+  const fullPage = useChatWidth() === 'full';
   const openChat = useChatPanel((s) => s.setOpen);
 
   if (!isMobile) {
@@ -40,8 +40,7 @@ export function MobileSidebarBar() {
       <span className="truncate text-sm font-medium text-gray-12">
         {branding.websiteName}
       </span>
-      {/* The notch has no room on a phone, so the chat opens from here. */}
-      {!chatHidden && (
+      {!fullPage && (
         <Button
           variant="ghost"
           size="icon"

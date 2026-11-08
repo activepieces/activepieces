@@ -12,13 +12,16 @@ import {
 import { UIMessageChunk } from 'ai';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useSocket } from '@/components/providers/socket-provider';
+import {
+  socketConnection,
+  useSocket,
+} from '@/components/providers/socket-provider';
 import { chatDebug } from '@/lib/chat-debug-logger';
 
 import { ChatUIMessage } from './chat-types';
 import { chunkReducer, StreamingState } from './chunk-reducer';
 import { chatDemo } from './demo/chat-demo';
-import { followAlong } from './follow/follow-along';
+import { followAlong, RunContext } from './follow/follow-along';
 
 const THROTTLE_MS = 100;
 const STALE_CHECK_INTERVAL_MS = 15_000;
@@ -66,6 +69,7 @@ export function useStreamingReducer({
   const chunkBufferRef = useRef<UIMessageChunk[]>([]);
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const followRunRef = useRef<RunContext | null>(null);
 
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
@@ -142,7 +146,10 @@ export function useStreamingReducer({
     }
     chunkBufferRef.current = [];
     reducerStateRef.current = null;
-    followAlong.endRun();
+    if (followRunRef.current) {
+      followAlong.endRun(followRunRef.current);
+      followRunRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
@@ -262,7 +269,18 @@ export function useStreamingReducer({
           updatePhase('streaming');
           lastChunkTimeRef.current = Date.now();
           const chunks = Array.isArray(event.data) ? event.data : [event.data];
-          followAlong.onChunks(chunks);
+          if (!followRunRef.current) {
+            const sentRunId = activeRunIdRef.current;
+            followRunRef.current = {
+              conversationId,
+              runId:
+                sentRunId ??
+                event.runId ??
+                `${conversationId}:${expectedGeneration}`,
+              attach: sentRunId ? 'sent' : 'resumed',
+            };
+          }
+          followAlong.onChunks(chunks, followRunRef.current);
           for (const chunk of chunks) {
             chunkBufferRef.current.push(chunk as UIMessageChunk);
           }
@@ -308,7 +326,7 @@ export function useStreamingReducer({
       };
 
       socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
-      // Dev only: scripted demo replies arrive here instead of the socket.
+      const releaseSocket = socketConnection.hold();
       const offDemo = chatDemo.onEvent(handler);
 
       const reconnectHandler = () => {
@@ -331,6 +349,7 @@ export function useStreamingReducer({
       }, STALE_CHECK_INTERVAL_MS);
 
       cleanupRef.current = () => {
+        releaseSocket();
         socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
         socket.off('connect', reconnectHandler);
         offDemo();

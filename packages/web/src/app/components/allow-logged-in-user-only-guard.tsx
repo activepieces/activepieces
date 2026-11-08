@@ -1,6 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { SocketProvider } from '@/components/providers/socket-provider';
 import { AutomaticTrialActivation } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -28,9 +27,9 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   flagsHooks.useFlags();
   projectCollectionUtils.useCurrentProject();
   return (
-    <SocketProvider>
+    <>
       <AutomaticTrialActivation />
       {children}
-    </SocketProvider>
+    </>
   );
 };

@@ -1,15 +1,13 @@
 import { useCallback } from 'react';
-import { matchPath, useLocation } from 'react-router-dom';
+import { matchPath, useLocation, useMatches } from 'react-router-dom';
 import { create } from 'zustand';
 
-import { CHAT_ROUTE, routesThatRequireProjectId } from '@/lib/route-utils';
+import { routesThatRequireProjectId } from '@/lib/route-utils';
 
 import { DOCK_BREAKPOINT, startStructuralMove } from './chat-layout';
 import { chatPanelIsDocked, useChatPanel } from './chat-panel-open';
 
 const PREFERENCE_KEY = 'primary-rail-collapsed';
-// Set while the rail is folded only to make room for the docked chat, so
-// closing the chat gives the sidebar back. Survives a reload, like the chat.
 const FOLDED_FOR_CHAT_KEY = 'primary-rail-folded-for-chat';
 
 // Inside one agent the rail is furniture: the page has its own header, its own
@@ -38,21 +36,28 @@ function update(patch: Partial<RailState>) {
   writeFlag(localStorage, FOLDED_FOR_CHAT_KEY, state.foldedForChat);
 }
 
-function railIsOpen(state: RailState, pathname: string): boolean {
+function railIsOpen({
+  state,
+  pathname,
+  chatPage,
+}: {
+  state: RailState;
+  pathname: string;
+  chatPage: boolean;
+}): boolean {
   const routeHoldsItClosed =
     state.openedOn !== pathname &&
     ROUTES_THAT_HOLD_THE_RAIL_CLOSED.some(
       (route) => matchPath(route, pathname) !== null,
     );
-  // The chat page hides the panel, so it has no reason to hold the rail.
-  const chatHoldsItClosed =
-    state.foldedForChat && !pathname.includes(CHAT_ROUTE);
+  const chatHoldsItClosed = state.foldedForChat && !chatPage;
   return !(state.preference || routeHoldsItClosed || chatHoldsItClosed);
 }
 
 export function useRailOpen(): boolean {
   const { pathname } = useLocation();
-  return useRail((state) => railIsOpen(state, pathname));
+  const chatPage = useMatches().some(({ handle }) => isChatPageHandle(handle));
+  return useRail((state) => railIsOpen({ state, pathname, chatPage }));
 }
 
 export function useRailOpenState() {
@@ -62,7 +67,6 @@ export function useRailOpenState() {
   const onOpenChange = useCallback(
     (next: boolean) => {
       startStructuralMove(next ? 'enter' : 'exit');
-      // A choice made while docked stands until the chat docks again.
       update({ preference: !next, foldedForChat: false, openedOn: pathname });
     },
     [pathname],
@@ -72,13 +76,13 @@ export function useRailOpenState() {
 }
 
 export function railOpenNow(): boolean {
-  return railIsOpen(useRail.getState(), window.location.pathname);
+  return railIsOpen({
+    state: useRail.getState(),
+    pathname: window.location.pathname,
+    chatPage: false,
+  });
 }
 
-// Docking the chat always folds the rail, in step with the dock opening: on
-// open, on a drop into a snap zone, on a dock from the menu. The user may open
-// it again while docked; the next dock folds it again. Undocking or closing
-// gives back what the user had. A reload keeps whatever the rail was.
 function foldForDock() {
   if (window.innerWidth >= DOCK_BREAKPOINT && railOpenNow()) {
     update({ foldedForChat: true });
@@ -95,8 +99,6 @@ useChatPanel.subscribe((chat, prev) => {
   }
 });
 
-// Below the dock breakpoint a docked chat floats, so it only docks, and
-// folds, once the window widens past it.
 let wasWide = window.innerWidth >= DOCK_BREAKPOINT;
 window.addEventListener('resize', () => {
   const wide = window.innerWidth >= DOCK_BREAKPOINT;
@@ -118,8 +120,17 @@ function writeFlag(storage: Storage, key: string, value: boolean) {
   try {
     storage.setItem(key, String(value));
   } catch {
-    // Private mode or full storage: the rail still works, it just forgets.
+    return;
   }
+}
+
+function isChatPageHandle(handle: unknown): boolean {
+  return (
+    typeof handle === 'object' &&
+    handle !== null &&
+    'chat' in handle &&
+    handle.chat === 'full'
+  );
 }
 
 type RailState = {

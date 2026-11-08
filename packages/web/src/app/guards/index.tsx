@@ -1,7 +1,6 @@
 import { Permission } from '@activepieces/core-utils';
 import { lazy, Suspense } from 'react';
 import {
-  Outlet,
   RouterProvider,
   createBrowserRouter,
   createMemoryRouter,
@@ -11,15 +10,13 @@ import { PageTitle } from '@/app/components/page-title';
 import { authRoutes } from '@/app/routes/auth-routes';
 import { platformRoutes } from '@/app/routes/platform-routes';
 import { projectRoutes } from '@/app/routes/project-routes';
-import { publicRoutes } from '@/app/routes/public-routes';
+import { publicRoutes, templateRoutes } from '@/app/routes/public-routes';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
-import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
-import { ChatChromeHost } from '../components/chat-panel/chat-window';
+import { AppShellRoute, shellHandles } from '../components/app-shell';
 import { RouteErrorBoundary } from '../components/global-error-boundary';
-import { ProjectDashboardLayout } from '../components/project-layout';
 
 import { AgentsFlagGuard } from './agents-flag-guard';
 import { DefaultRoute } from './default-route';
@@ -34,23 +31,21 @@ const ChatWithAIPage = lazyWithRetry(
   'chat-with-ai',
 );
 
-function chatElement() {
-  return (
-    <AllowOnlyLoggedInUserOnlyGuard>
-      <ProjectDashboardLayout>
-        <PageTitle title="Chat">
-          <Suspense fallback={<RouteLoadingBar />}>
-            <ChatWithAIPage />
-          </Suspense>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    </AllowOnlyLoggedInUserOnlyGuard>
-  );
-}
+const chatElement = (
+  <PageTitle title="Chat">
+    <Suspense fallback={<RouteLoadingBar />}>
+      <ChatWithAIPage />
+    </Suspense>
+  </PageTitle>
+);
 
 const chatRoutes = [
-  { path: '/chat', element: chatElement() },
-  { path: '/chat/:conversationId', element: chatElement() },
+  { path: '/chat', handle: shellHandles.chat, element: chatElement },
+  {
+    path: '/chat/:conversationId',
+    handle: shellHandles.chat,
+    element: chatElement,
+  },
 ];
 
 const AgentsPage = lazyWithRetry(
@@ -58,25 +53,20 @@ const AgentsPage = lazyWithRetry(
   'agents',
 );
 
-// The list spans every project the caller can read, so it has no project of its own to sit under.
-// A single agent does, and stays project-scoped in project-routes.
 const agentRoutes = [
   {
     path: '/agents',
+    handle: shellHandles.project,
     element: (
-      <AllowOnlyLoggedInUserOnlyGuard>
-        <AgentsFlagGuard>
-          <ProjectDashboardLayout>
-            <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
-              <PageTitle title="Agents">
-                <Suspense fallback={<RouteLoadingBar />}>
-                  <AgentsPage />
-                </Suspense>
-              </PageTitle>
-            </RoutePermissionGuard>
-          </ProjectDashboardLayout>
-        </AgentsFlagGuard>
-      </AllowOnlyLoggedInUserOnlyGuard>
+      <AgentsFlagGuard>
+        <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+          <PageTitle title="Agents">
+            <Suspense fallback={<RouteLoadingBar />}>
+              <AgentsPage />
+            </Suspense>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </AgentsFlagGuard>
     ),
   },
 ];
@@ -103,16 +93,15 @@ const devRoutes =
       ]
     : [];
 
-const routes = [
-  ...devRoutes,
-  ...publicRoutes,
-  ...projectRoutes,
-  ...authRoutes,
-  ...platformRoutes,
+const shellRoutes = [
   ...chatRoutes,
   ...agentRoutes,
+  ...projectRoutes,
+  ...platformRoutes,
+  ...templateRoutes,
   {
     path: '/projects/:projectId',
+    handle: shellHandles.project,
     element: (
       <TokenCheckerWrapper>
         <DefaultRoute></DefaultRoute>
@@ -121,6 +110,7 @@ const routes = [
   },
   {
     path: '/*',
+    handle: shellHandles.publicProject,
     element: (
       <PageTitle title="Redirect">
         <DefaultRoute></DefaultRoute>
@@ -129,24 +119,17 @@ const routes = [
   },
 ];
 
-// One pathless parent keeps the chat panel mounted across every page.
-const routesWithErrorBoundary = [
+const routes = [
+  ...[...devRoutes, ...publicRoutes, ...authRoutes].map(withErrorElement),
   {
-    element: (
-      <>
-        <Outlet />
-        <ChatChromeHost />
-      </>
-    ),
-    children: routes.map((route) => ({
-      errorElement: <RouteErrorBoundary />,
-      ...route,
-    })),
+    element: <AppShellRoute />,
+    errorElement: <RouteErrorBoundary />,
+    children: shellRoutes.map(withErrorElement),
   },
 ];
 
-export const memoryRouter = createMemoryRouter(routesWithErrorBoundary);
-const browserRouter = createBrowserRouter(routesWithErrorBoundary);
+export const memoryRouter = createMemoryRouter(routes);
+const browserRouter = createBrowserRouter(routes);
 
 const ApRouter = () => {
   const { embedState } = useEmbedding();
@@ -155,3 +138,7 @@ const ApRouter = () => {
 };
 
 export { ApRouter };
+
+function withErrorElement<T extends object>(route: T) {
+  return { errorElement: <RouteErrorBoundary />, ...route };
+}

@@ -38,7 +38,7 @@ import {
 import { chatDemo } from '@/features/chat/lib/demo/chat-demo';
 import { playDemoScenario } from '@/features/chat/lib/demo/play-scenario';
 import {
-  ChatLayout,
+  ChatWidth,
   DOCK_BREAKPOINT,
 } from '@/features/workspace/lib/chat-layout';
 import {
@@ -60,13 +60,10 @@ import {
   defaultFloat,
   FLOAT_DEFAULT,
   fitToWindow,
-  useChatLayout,
+  useChatWidth,
   useWindowAtLeast,
 } from './chat-window';
 
-// `?chatDemo=<scenarioId>` (demo builds only) opens the panel docked so the
-// chat mounts, then plays that scenario once. `&chatDock=left|float` picks
-// where it opens (right by default).
 let autoplayed = false;
 if (chatDemo.autoplayScenarioId) {
   const where = new URLSearchParams(window.location.search).get('chatDock');
@@ -80,49 +77,33 @@ if (chatDemo.autoplayScenarioId) {
   }, 0);
 }
 
-// The panel's header and the chat itself. Rendered once, above the routes, by
-// ChatChromeHost, so it survives page changes.
-//
-// History opens where it fits the panel: docked or in the sheet, it takes over
-// the body with the chat kept mounted (and streaming) underneath; floating, it
-// drops down from the header so the card keeps its size.
-//
-// The chat body is memoized and reads nothing from the panel's store: opening,
-// closing, dragging and docking re-render only this thin chrome.
 export function ChatChrome({
   onDragStart,
 }: {
   onDragStart: (event: React.PointerEvent<HTMLElement>) => void;
 }) {
   const navigate = useNavigate();
-  const layout = useChatLayout();
-  const open = useChatPanel((s) => s.open);
+  const layout = useChatWidth();
   const conversationId = useChatPanel((s) => s.conversationId);
+  const newChatToken = useChatPanel((s) => s.newChatToken);
+  const pendingPrompt = useChatPanel((s) => s.pendingPrompt);
   const reduced = useReducedMotion();
-  // The chat box reads its conversation once, when it mounts. A new session
-  // starts it fresh; a conversation it creates is only remembered.
-  const [session, setSession] = useState<ChatSession>(() => ({
-    key: 0,
-    conversationId: useChatPanel.getState().conversationId,
-  }));
-  // History belongs to the layout it was opened in: moving the panel, the
-  // window narrowing it to a card, or closing it drops it.
-  const [historyIn, setHistoryIn] = useState<ChatLayout | null>(null);
+  const [historyIn, setHistoryIn] = useState<ChatWidth | null>(null);
   const [liveTitle, setLiveTitle] = useState<LiveTitle | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const historyButtonRef = useRef<HTMLButtonElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
+  const full = layout === 'full';
   const sheet = layout === 'sheet';
   const dropdown = layout === 'float';
-  const historyOpen = open && historyIn === layout;
+  const historyOpen = layout !== 'closed' && historyIn === layout;
   const historyView = historyOpen && !dropdown;
   const title = useConversationTitle({
     conversationId,
     liveTitle: liveTitle?.id === conversationId ? liveTitle.title : null,
   });
 
-  // Picking the panel up drops history too, even before it lands anywhere.
   useEffect(
     () =>
       useChatPanel.subscribe((state, prev) => {
@@ -146,24 +127,19 @@ export function ChatChrome({
   }, [focusChat]);
   const startFresh = useCallback(
     (prompt?: string) => {
-      useChatPanel.getState().setConversationId(null);
-      setSession((s) => ({ key: s.key + 1, conversationId: null, prompt }));
+      useChatPanel.getState().newChat(prompt);
       backToChat();
     },
     [backToChat],
   );
   const openConversation = useCallback(
     (id: string) => {
-      if (id !== useChatPanel.getState().conversationId) {
-        useChatPanel.getState().setConversationId(id);
-        setSession((s) => ({ key: s.key + 1, conversationId: id }));
-      }
+      useChatPanel.getState().openConversation(id);
       backToChat();
     },
     [backToChat],
   );
 
-  // Dev only: a demo scenario opens here, in a fresh chat or a seeded one.
   const { invalidate } = useChatHistoryActions();
   useEffect(
     () =>
@@ -184,9 +160,23 @@ export function ChatChrome({
     playDemoScenario(scenarioId);
   }, []);
 
-  // Esc steps back from the history view before it may close the panel. It
-  // listens on the document, after a drag's own Esc on the window, and leaves
-  // a search with text, a rename or an open menu to handle the key first.
+  useEffect(() => {
+    if (layout === 'closed') return;
+    const onKey = (event: KeyboardEvent) => {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
+        !event.altKey &&
+        event.key.toLowerCase() === 'o'
+      ) {
+        event.preventDefault();
+        startFresh();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [layout, startFresh]);
+
   useEffect(() => {
     if (!historyView) return;
     const onKey = (event: KeyboardEvent) => {
@@ -219,10 +209,8 @@ export function ChatChrome({
       toastPosition={TOAST_POSITION[layout]}
     />
   );
-  const openFullPage = () => {
-    useChatPanel.getState().setOpen(false);
+  const openFullPage = () =>
     navigate(conversationId ? `${CHAT_ROUTE}/${conversationId}` : CHAT_ROUTE);
-  };
 
   return (
     <TooltipProvider delayDuration={500} skipDelayDuration={300}>
@@ -234,22 +222,24 @@ export function ChatChrome({
           <div
             ref={headerRef}
             data-chat-header
-            onPointerDown={onDragStart}
+            onPointerDown={full ? undefined : onDragStart}
             className={cn(
-              'group/header relative flex h-14 shrink-0 touch-none items-center gap-2 pr-3 pl-4 select-none',
-              sheet ? 'cursor-default' : 'cursor-grab',
+              'group/header relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-4',
+              !full && 'touch-none select-none',
+              full || sheet ? 'cursor-default' : 'cursor-grab',
             )}
           >
-            {/* The grip: a hint on a card or dock, a real handle on a sheet. */}
-            <span
-              aria-hidden
-              className={cn(
-                'absolute left-1/2 -translate-x-1/2 rounded-full transition-colors duration-150',
-                sheet
-                  ? 'top-2 h-1 w-9 bg-gray-6'
-                  : 'top-1.5 h-1 w-8 bg-gray-5 group-hover/header:bg-gray-7',
-              )}
-            />
+            {!full && (
+              <span
+                aria-hidden
+                className={cn(
+                  'absolute left-1/2 -translate-x-1/2 rounded-full transition-colors duration-150',
+                  sheet
+                    ? 'top-2 h-1 w-9 bg-gray-6'
+                    : 'top-1.5 h-1 w-8 bg-gray-5 group-hover/header:bg-gray-7',
+                )}
+              />
+            )}
             <div className="grid min-w-0 flex-1 items-center">
               <AnimatePresence initial={false}>
                 {historyView ? (
@@ -293,23 +283,26 @@ export function ChatChrome({
               <HeaderButton label={t('New chat')} onClick={() => startFresh()}>
                 <Plus />
               </HeaderButton>
-              {sheet ? (
+              {!full &&
+                (sheet ? (
+                  <HeaderButton
+                    label={t('Open full page')}
+                    onClick={openFullPage}
+                  >
+                    <Maximize2 />
+                  </HeaderButton>
+                ) : (
+                  <LayoutMenu layout={layout} onOpenFullPage={openFullPage} />
+                ))}
+              {!full && (
                 <HeaderButton
-                  label={t('Open full page')}
-                  onClick={openFullPage}
+                  label={t('Close')}
+                  shortcut={TOGGLE_SHORTCUT}
+                  onClick={() => useChatPanel.getState().setOpen(false)}
                 >
-                  <Maximize2 />
+                  <X />
                 </HeaderButton>
-              ) : (
-                <LayoutMenu layout={layout} onOpenFullPage={openFullPage} />
               )}
-              <HeaderButton
-                label={t('Close')}
-                shortcut={TOGGLE_SHORTCUT}
-                onClick={() => useChatPanel.getState().setOpen(false)}
-              >
-                <X />
-              </HeaderButton>
             </div>
           </div>
         </PopoverPrimitive.Anchor>
@@ -339,7 +332,10 @@ export function ChatChrome({
           className="absolute inset-0"
         >
           <ChatBody
-            session={session}
+            full={full}
+            conversationId={conversationId}
+            newChatToken={newChatToken}
+            prompt={pendingPrompt}
             onStartFresh={startFresh}
             onLiveTitle={setLiveTitle}
           />
@@ -370,35 +366,44 @@ export function ChatChrome({
   );
 }
 
-// The chat itself. Its props only change when a chat starts or is switched,
-// so nothing the panel does around it re-renders the conversation.
 const ChatBody = memo(function ChatBody({
-  session,
+  full,
+  conversationId,
+  newChatToken,
+  prompt,
   onStartFresh,
   onLiveTitle,
 }: {
-  session: ChatSession;
+  full: boolean;
+  conversationId: string | null;
+  newChatToken: number;
+  prompt?: string;
   onStartFresh: (prompt?: string) => void;
   onLiveTitle: (title: LiveTitle) => void;
 }) {
   const { invalidate } = useChatHistoryActions();
   return (
     <AIChatBox
-      key={session.key}
       incognito={false}
-      compact
-      conversationId={session.conversationId}
-      initialPrompt={session.prompt}
+      compact={!full}
+      conversationId={conversationId}
+      newChatToken={newChatToken}
+      initialPrompt={prompt}
       onConversationCreated={(id) => {
-        useChatPanel.getState().setConversationId(id);
+        useChatPanel.getState().conversationCreated(id);
         invalidate();
       }}
+      onConversationMissing={() =>
+        useChatPanel.getState().conversationMissing()
+      }
       onTitleUpdate={(next) => {
         const id = useChatPanel.getState().conversationId;
         if (id) onLiveTitle({ id, title: next });
         invalidate();
       }}
-      emptyState={<ChatPanelEmptyState onPick={onStartFresh} />}
+      emptyState={
+        full ? undefined : <ChatPanelEmptyState onPick={onStartFresh} />
+      }
     />
   );
 });
@@ -411,8 +416,6 @@ function titleFade(reduced: boolean | null) {
   };
 }
 
-// A 32px ghost icon button with a tooltip naming it, and its shortcut if any.
-// Extra props pass through, so it can also be a menu's trigger.
 function HeaderButton({
   label,
   shortcut,
@@ -472,14 +475,11 @@ const LAYOUTS: {
   { mode: 'float', label: 'Floating', icon: PictureInPicture2 },
 ];
 
-// The button shows where the panel sits now, which in a narrow window may not
-// be where the user asked for it; the menu says why and moves it, or hands the
-// conversation to the full chat page.
 function LayoutMenu({
   layout,
   onOpenFullPage,
 }: {
-  layout: ChatLayout;
+  layout: ChatWidth;
   onOpenFullPage: () => void;
 }) {
   const canDock = useWindowAtLeast(DOCK_BREAKPOINT);
@@ -531,16 +531,11 @@ function LayoutMenu({
   );
 }
 
-type ChatSession = {
-  key: number;
-  conversationId: string | null;
-  prompt?: string;
-};
-
 type LiveTitle = { id: string; title: string };
 
-// Toasts sit bottom-right; keep the undo toast off the panel's composer.
-const TOAST_POSITION: Record<ChatLayout, ToastT['position'] | undefined> = {
+const TOAST_POSITION: Record<ChatWidth, ToastT['position'] | undefined> = {
+  full: 'bottom-center',
+  closed: undefined,
   left: undefined,
   right: 'bottom-center',
   float: undefined,

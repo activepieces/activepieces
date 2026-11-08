@@ -3,6 +3,8 @@ import { create } from 'zustand';
 import { startStructuralMove } from './chat-layout';
 
 const STORAGE_KEY = 'chat-panel';
+const TAB_CONVERSATION_KEY = 'chat:conv';
+const LAST_CONVERSATION_KEY = 'chat:last-conv';
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -10,50 +12,25 @@ const DEFAULTS: SavedChatPanel = {
   float: null,
   floatSize: null,
   dockWidth: 372,
-  conversationId: null,
 };
-
-function readSaved(): SavedChatPanel {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
-  } catch {
-    return DEFAULTS;
-  }
-}
-
-function save({
-  open,
-  mode,
-  float,
-  floatSize,
-  dockWidth,
-  conversationId,
-}: SavedChatPanel) {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        open,
-        mode,
-        float,
-        floatSize,
-        dockWidth,
-        conversationId,
-      }),
-    );
-  } catch {
-    // Private mode or full storage: the panel still works, it just forgets.
-  }
-}
 
 export const useChatPanel = create<ChatPanelState>((set, get) => {
   const update = (patch: Partial<SavedChatPanel>) => {
     set(patch);
     save(get());
   };
+  const setConversation = (
+    patch: Pick<ChatPanelState, 'conversationId'> &
+      Partial<Pick<ChatPanelState, 'newChatToken' | 'pendingPrompt'>>,
+  ) => {
+    set(patch);
+    saveConversationId(patch.conversationId);
+  };
   return {
     ...readSaved(),
+    conversationId: readConversationId(),
+    newChatToken: 0,
+    pendingPrompt: undefined,
     gesture: 'idle',
     docks: 0,
     chatMounted: false,
@@ -74,22 +51,89 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
     },
     resizeFloat: (floatSize) => update({ floatSize }),
     setDockWidth: (dockWidth) => update({ dockWidth }),
-    setConversationId: (conversationId) => update({ conversationId }),
+    openConversation: (conversationId) => {
+      if (conversationId === get().conversationId) return;
+      setConversation({ conversationId, pendingPrompt: undefined });
+    },
+    newChat: (prompt) =>
+      setConversation({
+        conversationId: null,
+        newChatToken: get().newChatToken + 1,
+        pendingPrompt: prompt,
+      }),
+    conversationCreated: (conversationId) =>
+      setConversation({ conversationId, pendingPrompt: undefined }),
+    conversationMissing: () => setConversation({ conversationId: null }),
     setGesture: (gesture) => set({ gesture }),
   };
 });
 
-// A docked panel takes room from the page, so the sidebar may fold for it.
 export function chatPanelIsDocked(state: ChatPanelState): boolean {
   return state.open && state.mode !== 'float';
+}
+
+function readSaved(): SavedChatPanel {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
+  } catch {
+    return DEFAULTS;
+  }
+}
+
+function save({ open, mode, float, floatSize, dockWidth }: SavedChatPanel) {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ open, mode, float, floatSize, dockWidth }),
+    );
+  } catch {
+    return;
+  }
+}
+
+function readConversationId(): string | null {
+  try {
+    const tab = sessionStorage.getItem(TAB_CONVERSATION_KEY);
+    if (tab !== null) return tab || null;
+    const seeded =
+      localStorage.getItem(LAST_CONVERSATION_KEY) ?? migrateOldConversationId();
+    sessionStorage.setItem(TAB_CONVERSATION_KEY, seeded ?? '');
+    return seeded;
+  } catch {
+    return null;
+  }
+}
+
+function migrateOldConversationId(): string | null {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  const parsed: unknown = raw ? JSON.parse(raw) : null;
+  const old =
+    typeof parsed === 'object' &&
+    parsed !== null &&
+    'conversationId' in parsed &&
+    typeof parsed.conversationId === 'string'
+      ? parsed.conversationId
+      : null;
+  if (old) localStorage.setItem(LAST_CONVERSATION_KEY, old);
+  return old;
+}
+
+function saveConversationId(conversationId: string | null) {
+  try {
+    sessionStorage.setItem(TAB_CONVERSATION_KEY, conversationId ?? '');
+    if (conversationId) {
+      localStorage.setItem(LAST_CONVERSATION_KEY, conversationId);
+    }
+  } catch {
+    return;
+  }
 }
 
 export type ChatPanelSide = 'left' | 'right';
 export type ChatPanelMode = ChatPanelSide | 'float';
 export type FloatPosition = { x: number; y: number };
 export type FloatSize = { width: number; height: number };
-// `dragging` follows the pointer; `settling` is the card easing to rest after
-// a drop, a cancel or a layout change, before a dock takes the chat over.
 export type ChatGesture = 'idle' | 'dragging' | 'settling';
 
 type SavedChatPanel = {
@@ -98,13 +142,13 @@ type SavedChatPanel = {
   float: FloatPosition | null;
   floatSize: FloatSize | null;
   dockWidth: number;
-  conversationId: string | null;
 };
 
 type ChatPanelState = SavedChatPanel & {
+  conversationId: string | null;
+  newChatToken: number;
+  pendingPrompt?: string;
   gesture: ChatGesture;
-  // Counts explicit docks (menu, drop), so re-docking while already docked
-  // still reads as a dock. Not saved.
   docks: number;
   chatMounted: boolean;
   mountChat: () => void;
@@ -114,6 +158,9 @@ type ChatPanelState = SavedChatPanel & {
   floatAt: (position: FloatPosition) => void;
   resizeFloat: (size: FloatSize) => void;
   setDockWidth: (width: number) => void;
-  setConversationId: (conversationId: string | null) => void;
+  openConversation: (conversationId: string) => void;
+  newChat: (prompt?: string) => void;
+  conversationCreated: (conversationId: string) => void;
+  conversationMissing: () => void;
   setGesture: (gesture: ChatGesture) => void;
 };

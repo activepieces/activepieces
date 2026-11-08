@@ -41,7 +41,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { useAgentsNavVisible } from '@/features/agents';
-import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
   getProjectName,
@@ -122,9 +121,6 @@ function DriversGroup() {
               to="/chat"
               icon={ChatSparkIcon}
               label={t('Chat')}
-              onClick={() =>
-                window.dispatchEvent(new Event(chatUtils.newChatEvent))
-              }
             />
           )}
           {reachesMcp && (

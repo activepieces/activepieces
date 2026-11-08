@@ -4,84 +4,103 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
+  FollowChange,
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
-import { followResources } from '@/features/chat/lib/follow/follow-resources';
+import { resourceRegistry } from '@/features/chat/lib/resources/registry';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 
-const TYPING_RECHECK_MS = 400;
-
-// Moves the main area to whatever the chat is editing, and keeps the pages
-// fresh as each tool call lands. Mounted once, above the routes.
 export function FollowAlongController() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const queryClient = useQueryClient();
   const embedded = useEmbedding().embedState.isEmbedded;
   const targetKey = useFollowAlong((s) =>
-    s.target ? followResources.keyOf(s.target) : null,
+    s.target ? resourceRegistry.keyOf(s.target) : null,
   );
   const following = useFollowAlong((s) => s.following);
   const phase = useFollowAlong((s) => s.phase);
   const goRequests = useFollowAlong((s) => s.goRequests);
   const lastPath = useRef(pathname);
   const seenGoRequests = useRef(goRequests);
-
-  // Each finished tool call: refetch what it touched, then let the open page
-  // apply it in place (and flash what changed).
-  useEffect(
-    () =>
-      followAlong.onToolDone((change) => {
-        const keys = followResources.queryKeysOf(change.resource);
-        void Promise.all(
-          keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
-        )
-          .catch(() => undefined)
-          .then(() => followAlong.publishUpdated(change));
-      }),
-    [queryClient],
-  );
+  const selfNavRef = useRef<string | null>(null);
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
 
   useEffect(() => {
-    // Read fresh state: this effect may run in the same commit that stopped
-    // following.
+    const goTo = ({ route, replace }: { route: string; replace: boolean }) => {
+      selfNavRef.current = route.split('?')[0];
+      navigate(route, { replace });
+    };
+    const leaveIfDeleted = (change: FollowChange) => {
+      if (change.op !== 'delete' || !change.navigable || embedded) return;
+      if (!resourceRegistry.isOn(pathnameRef.current, change.resource)) return;
+      goTo({
+        route: resourceRegistry.parentRoute(change.resource),
+        replace: true,
+      });
+    };
+    return followAlong.onToolDone((change) => {
+      leaveIfDeleted(change);
+      const keys = resourceRegistry.queryKeys(change.resource);
+      Promise.all(
+        keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+      )
+        .catch(() => undefined)
+        .then(() => followAlong.publishUpdated(change))
+        .catch(() => undefined);
+    });
+  }, [queryClient, navigate, embedded]);
+
+  useEffect(() => {
     const state = useFollowAlong.getState();
     const pathChanged = lastPath.current !== pathname;
     lastPath.current = pathname;
+    const selfNavigated = selfNavRef.current === pathname;
+    if (pathChanged) selfNavRef.current = null;
     const viewAsked = state.goRequests !== seenGoRequests.current;
     seenGoRequests.current = state.goRequests;
     const target = state.target;
     if (!target || !state.following) return;
-    const onTarget = followResources.isOn(pathname, target);
+    const onTarget = resourceRegistry.isOn(pathname, target);
 
-    // The user went somewhere else mid-task: stop following. The tool card's
-    // "View" brings them back.
-    if (pathChanged && !onTarget && !viewAsked && state.phase === 'editing') {
+    if (
+      pathChanged &&
+      !selfNavigated &&
+      !onTarget &&
+      !viewAsked &&
+      state.phase === 'editing'
+    ) {
       followAlong.stopFollowing();
       return;
     }
     if (onTarget) return;
     if (!viewAsked) {
-      // Only a live run moves the page on its own, and never off the full
-      // chat page or inside an embed.
       if (state.phase !== 'editing') return;
       if (embedded || pathname.includes(CHAT_ROUTE)) return;
+      if (!resourceRegistry.isInCurrentProject(target)) return;
     }
 
-    const route = followResources.routeOf(target);
-    if (viewAsked || !isTypingInPage()) {
+    const goToTarget = () => {
+      const route = resourceRegistry.route(target);
+      selfNavRef.current = route;
       navigate(route);
+    };
+    if (viewAsked || !isTypingInPage()) {
+      goToTarget();
       return;
     }
-    // Never pull the page away while the user types in it: wait until they
-    // leave the field.
     const timer = setInterval(() => {
       if (isTypingInPage()) return;
       clearInterval(timer);
       const latest = useFollowAlong.getState();
-      if (latest.following && latest.target) {
-        navigate(followResources.routeOf(latest.target));
+      if (
+        latest.following &&
+        latest.target &&
+        resourceRegistry.keyOf(latest.target) === resourceRegistry.keyOf(target)
+      ) {
+        goToTarget();
       }
     }, TYPING_RECHECK_MS);
     return () => clearInterval(timer);
@@ -105,3 +124,5 @@ function isTypingInPage(): boolean {
   }
   return false;
 }
+
+const TYPING_RECHECK_MS = 400;

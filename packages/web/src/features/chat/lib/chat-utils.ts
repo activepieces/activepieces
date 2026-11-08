@@ -654,7 +654,6 @@ function pickOf({ choice }: { choice: ModelChoice }): ChatModelPick {
 }
 
 export const chatUtils = {
-  newChatEvent: 'ap:new-chat',
   choiceOf,
   pickOf,
   reopensSameConversation,

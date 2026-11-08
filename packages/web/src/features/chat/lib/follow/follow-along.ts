@@ -2,23 +2,14 @@ import { isObject } from '@activepieces/core-utils';
 import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
 
-import { FollowResource, followResources } from './follow-resources';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 
-// "Follow along": while the chat edits a flow, table or agent, the main area
-// shows it and the user watches it change.
-//
-// The chat's stream reader hands every chunk to `onChunks` (server and demo
-// streams alike). From tool calls on resources this keeps:
-// - the target: the resource the chat is working on now,
-// - the phase: editing while a run touches it, done briefly after,
-// - following: whether the main area tracks the target (on at each new run,
-//   off once the user stops following or navigates away).
-// The controller (app/components/chat-panel/follow-along-controller.tsx) does
-// the navigation and query invalidation; pages subscribe to updates to
-// refresh in place and flash what changed.
-
-const DONE_VISIBLE_MS = 2600;
-export const FLASH_MS = 1200;
+import {
+  ResourceOp,
+  ResourceOutcome,
+  ResourceRef,
+  resourceRegistry,
+} from '../resources/registry';
 
 export const useFollowAlong = create<FollowState>(() => ({
   target: null,
@@ -26,44 +17,109 @@ export const useFollowAlong = create<FollowState>(() => ({
   following: true,
   goRequests: 0,
   flashes: {},
+  runs: {},
 }));
 
 const set = useFollowAlong.setState;
 const get = useFollowAlong.getState;
 
-const calls = new Map<string, { toolName: string; input: unknown }>();
+const calls = new Map<string, PendingCall>();
 let doneTimer: ReturnType<typeof setTimeout> | null = null;
 
-function onChunks(chunks: readonly unknown[]): void {
+function onChunks(chunks: readonly unknown[], ctx: RunContext): void {
+  ensureRun(ctx);
   for (const chunk of chunks) {
     if (!isObject(chunk) || typeof chunk.toolCallId !== 'string') continue;
     if (chunk.type === 'tool-input-available') {
       const toolName = typeof chunk.toolName === 'string' ? chunk.toolName : '';
-      if (!followResources.kindOf(toolName)) continue;
-      calls.set(chunk.toolCallId, { toolName, input: chunk.input });
-      begin();
-      const resource = followResources.resolve({
+      if (!resourceRegistry.isKnownTool(toolName)) continue;
+      calls.set(chunk.toolCallId, {
         toolName,
         input: chunk.input,
+        runId: ctx.runId,
       });
-      if (resource) setTarget(resource);
+      if (mayNavigate(ctx)) begin();
     } else if (chunk.type === 'tool-output-available') {
       const call = calls.get(chunk.toolCallId);
       if (!call) continue;
       calls.delete(chunk.toolCallId);
-      const resource = followResources.resolve({
-        ...call,
-        output: chunk.output,
-      });
-      if (!resource) continue;
-      setTarget(resource);
-      toolDoneListeners.forEach((listener) =>
-        listener({ resource, toolName: call.toolName, input: call.input }),
-      );
+      onToolOutput({ call, output: chunk.output, ctx });
     } else if (chunk.type === 'tool-output-error') {
       calls.delete(chunk.toolCallId);
     }
   }
+}
+
+function onToolOutput({
+  call,
+  output,
+  ctx,
+}: {
+  call: PendingCall;
+  output: unknown;
+  ctx: RunContext;
+}): void {
+  const resolved = resourceRegistry.resolve({
+    toolName: call.toolName,
+    input: call.input,
+    output,
+  });
+  if (!resolved) return;
+  const change: FollowChange = {
+    resource: resolved.ref,
+    op: resolved.op,
+    outcome: resolved.outcome,
+    highlights: resolved.highlights,
+    toolName: call.toolName,
+    input: call.input,
+    conversationId: ctx.conversationId,
+    runId: ctx.runId,
+    navigable: mayNavigate(ctx),
+  };
+  recordChange(change);
+  if (!resourceRegistry.isChange(change.outcome)) return;
+  if (change.op === 'delete') {
+    clearTargetIf(change.resource);
+  } else if (change.navigable) {
+    setTarget(change.resource);
+  }
+  toolDoneListeners.forEach((listener) => listener(change));
+}
+
+function mayNavigate(
+  ctx: Pick<RunContext, 'conversationId' | 'attach'>,
+): boolean {
+  return (
+    ctx.attach === 'sent' &&
+    ctx.conversationId === useChatPanel.getState().conversationId
+  );
+}
+
+function ensureRun(ctx: RunContext): void {
+  const existing = get().runs[ctx.runId];
+  if (existing && !existing.ended) return;
+  set({
+    runs: {
+      ...get().runs,
+      [ctx.runId]: {
+        conversationId: ctx.conversationId,
+        attach: ctx.attach,
+        changes: existing?.changes ?? [],
+        ended: false,
+      },
+    },
+  });
+}
+
+function recordChange(change: FollowChange): void {
+  const run = get().runs[change.runId];
+  if (!run) return;
+  set({
+    runs: {
+      ...get().runs,
+      [change.runId]: { ...run, changes: [...run.changes, change] },
+    },
+  });
 }
 
 function begin(): void {
@@ -76,24 +132,55 @@ function begin(): void {
   }
 }
 
-function setTarget(resource: FollowResource): void {
+function setTarget(resource: ResourceRef): void {
   const current = get().target;
   if (
     current &&
-    followResources.keyOf(current) === followResources.keyOf(resource)
+    resourceRegistry.keyOf(current) === resourceRegistry.keyOf(resource)
   ) {
-    if (resource.name && resource.name !== current.name) {
-      set({ target: { ...current, name: resource.name } });
+    const name = resource.name ?? current.name;
+    const projectId = resource.projectId ?? current.projectId;
+    if (name !== current.name || projectId !== current.projectId) {
+      set({ target: { ...current, name, projectId } });
     }
     return;
   }
   set({ target: resource });
 }
 
-// The run ended (finished, failed, cancelled or the chat switched away).
-function endRun(): void {
-  calls.clear();
-  if (get().phase !== 'editing') return;
+function clearTargetIf(resource: ResourceRef): void {
+  const current = get().target;
+  if (
+    current &&
+    resourceRegistry.keyOf(current) === resourceRegistry.keyOf(resource)
+  ) {
+    set({ target: null });
+  }
+}
+
+function endRun({
+  conversationId,
+  runId,
+}: {
+  conversationId: string;
+  runId: string;
+}): void {
+  [...calls].forEach(([toolCallId, call]) => {
+    if (call.runId === runId) calls.delete(toolCallId);
+  });
+  const run = get().runs[runId];
+  if (!run || run.conversationId !== conversationId || run.ended) return;
+  const runs = { ...get().runs, [runId]: { ...run, ended: true } };
+  set({ runs });
+  const navigableLive = Object.values(runs).some(
+    (other) =>
+      !other.ended &&
+      mayNavigate({
+        conversationId: other.conversationId,
+        attach: other.attach,
+      }),
+  );
+  if (navigableLive || get().phase !== 'editing') return;
   set({ phase: 'done' });
   doneTimer = setTimeout(() => {
     doneTimer = null;
@@ -105,12 +192,11 @@ function stopFollowing(): void {
   set({ following: false });
 }
 
-// "View" on a tool card: show the resource and follow it again.
-function view(resource: FollowResource): void {
+function view(resource: ResourceRef): void {
   const current = get().target;
   const same =
     current &&
-    followResources.keyOf(current) === followResources.keyOf(resource);
+    resourceRegistry.keyOf(current) === resourceRegistry.keyOf(resource);
   set({
     target: same ? current : resource,
     following: true,
@@ -137,10 +223,6 @@ function flash(keys: string[]): void {
   }, FLASH_MS);
 }
 
-// ---------------------------------------------------------------------------
-// Events: the controller hears each finished tool call, invalidates queries,
-// then tells the resource's page it was updated.
-
 const toolDoneListeners = new Set<(change: FollowChange) => void>();
 const updateListeners = new Set<(change: FollowChange) => void>();
 
@@ -153,19 +235,17 @@ function publishUpdated(change: FollowChange): void {
   updateListeners.forEach((listener) => listener(change));
 }
 
-// For a page showing `resource`: runs `handler` after each chat tool call that
-// changed it, once its queries are fresh.
 export function useOnFollowUpdate(
-  resource: Pick<FollowResource, 'kind' | 'id'> | null,
+  resource: Pick<ResourceRef, 'kind' | 'id'> | null,
   handler: (change: FollowChange) => void,
 ): void {
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
-  const key = resource ? followResources.keyOf(resource) : null;
+  const key = resource ? resourceRegistry.keyOf(resource) : null;
   useEffect(() => {
     if (!key) return;
     const listener = (change: FollowChange) => {
-      if (followResources.keyOf(change.resource) === key) {
+      if (resourceRegistry.keyOf(change.resource) === key) {
         handlerRef.current(change);
       }
     };
@@ -190,18 +270,41 @@ export const followAlong = {
   publishUpdated,
 };
 
+const DONE_VISIBLE_MS = 2600;
+const FLASH_MS = 1200;
+
+export type RunContext = {
+  conversationId: string;
+  runId: string;
+  attach: 'sent' | 'resumed';
+};
+
 export type FollowChange = {
-  resource: FollowResource;
+  resource: ResourceRef;
+  op: ResourceOp;
+  outcome: ResourceOutcome;
+  highlights: string[];
   toolName: string;
   input: unknown;
+  conversationId: string;
+  runId: string;
+  navigable: boolean;
+};
+
+type PendingCall = { toolName: string; input: unknown; runId: string };
+
+type FollowRun = {
+  conversationId: string;
+  attach: RunContext['attach'];
+  changes: FollowChange[];
+  ended: boolean;
 };
 
 type FollowState = {
-  target: FollowResource | null;
+  target: ResourceRef | null;
   phase: 'idle' | 'editing' | 'done';
   following: boolean;
-  // Bumped by "View", so the controller navigates even if already following.
   goRequests: number;
-  // Flash keys currently lit (see flash()), e.g. `flow-step:step_2`.
   flashes: Record<string, number>;
+  runs: Record<string, FollowRun>;
 };

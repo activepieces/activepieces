@@ -8,11 +8,10 @@ import {
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
 import {
-  FollowResourceKind,
-  followResources,
-} from '@/features/chat/lib/follow/follow-resources';
+  ResourceKind,
+  resourceRegistry,
+} from '@/features/chat/lib/resources/registry';
 
-// A quiet strip at the top of the page the chat is editing.
 export function FollowBar() {
   const { pathname } = useLocation();
   const reduceMotion = useReducedMotion();
@@ -23,7 +22,7 @@ export function FollowBar() {
     target !== null &&
     following &&
     phase !== 'idle' &&
-    followResources.isOn(pathname, target);
+    resourceRegistry.isOn(pathname, target);
 
   return (
     <AnimatePresence initial={false}>
@@ -80,14 +79,20 @@ function LiveDot() {
   );
 }
 
-const EDITING_LABEL: Record<FollowResourceKind, () => string> = {
+const EDITING_LABEL: Record<ResourceKind, () => string> = {
   flow: () => t('Chat is editing this flow'),
   table: () => t('Chat is editing this table'),
   agent: () => t('Chat is editing this agent'),
+  run: () => t('Chat is working on this run'),
+  connection: () => t('Chat is editing your connections'),
+  folder: () => t('Chat is editing your automations'),
 };
 
-const DONE_LABEL: Record<FollowResourceKind, () => string> = {
+const DONE_LABEL: Record<ResourceKind, () => string> = {
   flow: () => t('Chat finished editing this flow'),
   table: () => t('Chat finished editing this table'),
   agent: () => t('Chat finished editing this agent'),
+  run: () => t('Chat finished working on this run'),
+  connection: () => t('Chat finished editing your connections'),
+  folder: () => t('Chat finished editing your automations'),
 };

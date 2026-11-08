@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Bot, Table2, Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -8,16 +7,13 @@ import { agentsApi } from '@/features/agents/api/agents';
 import { AnyToolPart, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { followAlong } from '@/features/chat/lib/follow/follow-along';
 import {
-  FollowResource,
-  FollowResourceKind,
-  followResources,
-} from '@/features/chat/lib/follow/follow-resources';
+  ResourceKind,
+  ResourceRef,
+  resourceRegistry,
+} from '@/features/chat/lib/resources/registry';
 import { flowsApi } from '@/features/flows';
 import { tablesApi } from '@/features/tables';
 import { cn } from '@/lib/utils';
-
-// "Leads table · View": the resource a tool call edited. View opens it beside
-// the chat and follows it again.
 
 export function ResourceChips({
   parts,
@@ -27,11 +23,11 @@ export function ResourceChips({
   className?: string;
 }) {
   const resources = useMemo(() => {
-    const seen = new Map<string, FollowResource>();
+    const seen = new Map<string, ResourceRef>();
     for (const part of parts) {
       const resource = resourceOfPart(part);
       if (!resource) continue;
-      const key = followResources.keyOf(resource);
+      const key = resourceRegistry.keyOf(resource);
       const known = seen.get(key);
       if (!known || (!known.name && resource.name)) seen.set(key, resource);
     }
@@ -42,7 +38,7 @@ export function ResourceChips({
     <div className={cn('flex flex-wrap gap-1.5', className)}>
       {resources.map((resource) => (
         <ResourceChip
-          key={followResources.keyOf(resource)}
+          key={resourceRegistry.keyOf(resource)}
           resource={resource}
         />
       ))}
@@ -65,13 +61,16 @@ export function ToolResourceChip({
   ) : null;
 }
 
-function ResourceChip({ resource }: { resource: FollowResource }) {
+function ResourceChip({ resource }: { resource: ResourceRef }) {
   const { pathname } = useLocation();
   const name = useResourceName(resource);
-  const here = followResources.isOn(pathname, resource);
-  const Icon = ICONS[resource.kind];
-  const noun = NOUNS[resource.kind]();
-  const label = name ? withNoun(name, noun) : CAPITALIZED[resource.kind]();
+  const here = resourceRegistry.isOn(pathname, resource);
+  const {
+    icon: Icon,
+    label: kindLabel,
+    noun,
+  } = resourceRegistry.kindInfo(resource.kind);
+  const label = name ? withNoun(name, noun) : kindLabel;
 
   return (
     <button
@@ -91,62 +90,51 @@ function ResourceChip({ resource }: { resource: FollowResource }) {
           here ? 'text-gray-11' : 'font-medium text-accent-11',
         )}
       >
-        {here ? t('Viewing') : t('View')}
+        {here ? t('Viewing') : t('Open')}
       </span>
     </button>
   );
 }
 
-function resourceOfPart(part: AnyToolPart): FollowResource | null {
-  if (part.state === 'output-error' || part.state === 'output-denied') {
-    return null;
-  }
-  return followResources.resolve({
+function resourceOfPart(part: AnyToolPart): ResourceRef | null {
+  if (part.state !== 'output-available') return null;
+  const resolved = resourceRegistry.resolve({
     toolName: chatPartUtils.getToolPartName(part),
     input: part.input,
-    output: part.state === 'output-available' ? part.output : undefined,
+    output: part.output,
   });
+  if (
+    !resolved ||
+    resolved.op === 'delete' ||
+    !resourceRegistry.isChange(resolved.outcome)
+  ) {
+    return null;
+  }
+  return resolved.ref;
 }
 
-function useResourceName(resource: FollowResource): string | null {
+function useResourceName(resource: ResourceRef): string | null {
+  const fetchName = FETCH_NAME[resource.kind];
   const { data } = useQuery({
     queryKey: ['chat-resource-name', resource.kind, resource.id],
-    queryFn: () => FETCH_NAME[resource.kind](resource.id),
-    enabled: !resource.name,
+    queryFn: () => (fetchName ? fetchName(resource.id) : null),
+    enabled: !resource.name && fetchName !== undefined,
     staleTime: 30_000,
     retry: false,
   });
   return resource.name ?? data ?? null;
 }
 
-// "Leads" -> "Leads table"; "Leads table" stays as is.
 function withNoun(name: string, noun: string): string {
   return name.toLowerCase().endsWith(noun.toLowerCase())
     ? name
     : `${name} ${noun}`;
 }
 
-const FETCH_NAME: Record<FollowResourceKind, (id: string) => Promise<string>> =
-  {
-    flow: (id) => flowsApi.get(id).then((flow) => flow.version.displayName),
-    table: (id) => tablesApi.getById(id).then((table) => table.name),
-    agent: (id) => agentsApi.get(id).then((agent) => agent.displayName),
-  };
-
-const ICONS: Record<FollowResourceKind, typeof Workflow> = {
-  flow: Workflow,
-  table: Table2,
-  agent: Bot,
-};
-
-const NOUNS: Record<FollowResourceKind, () => string> = {
-  flow: () => t('flow'),
-  table: () => t('table'),
-  agent: () => t('agent'),
-};
-
-const CAPITALIZED: Record<FollowResourceKind, () => string> = {
-  flow: () => t('Flow'),
-  table: () => t('Table'),
-  agent: () => t('Agent'),
+const FETCH_NAME: Partial<
+  Record<ResourceKind, (id: string) => Promise<string>>
+> = {
+  flow: (id) => flowsApi.get(id).then((flow) => flow.version.displayName),
+  table: (id) => tablesApi.getById(id).then((table) => table.name),
+  agent: (id) => agentsApi.get(id).then((agent) => agent.displayName),
 };

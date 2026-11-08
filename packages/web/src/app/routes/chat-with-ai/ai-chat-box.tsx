@@ -57,54 +57,11 @@ import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
-export function AIChatBox({
-  incognito,
-  initialPrompt,
-  agentId,
-  builder,
-  onTurnEnd,
-  emptyState,
-  footerNote,
-  placeholder,
-  conversationId,
-  onTitleUpdate,
-  onConversationCreated,
-  compact,
-}: AIChatBoxProps) {
-  const projectId = authenticationSession.getProjectId();
-  const gated =
-    agentId === undefined && isNil(conversationId) && !isNil(projectId);
-  const { data: options, isLoading } = aiModelHooks.useModelOptions({
-    projectId: projectId ?? '',
-    surface: 'chat',
-    enabled: gated,
-  });
-
-  if (gated && isLoading) {
-    return <MessageSkeletons />;
-  }
-
-  if (gated && !isNil(options) && !hasAnyModel({ options })) {
-    return <SetupRequiredState />;
-  }
-
+export function AIChatBox(props: AIChatBoxProps) {
   return (
     <ChatStoreProvider>
       <TaskPanelLayout>
-        <ChatBoxContent
-          incognito={incognito}
-          initialPrompt={initialPrompt}
-          agentId={agentId}
-          builder={builder}
-          onTurnEnd={onTurnEnd}
-          emptyState={emptyState}
-          footerNote={footerNote}
-          placeholder={placeholder}
-          conversationId={conversationId}
-          onTitleUpdate={onTitleUpdate}
-          onConversationCreated={onConversationCreated}
-          compact={compact}
-        />
+        <ChatBoxContent {...props} />
       </TaskPanelLayout>
     </ChatStoreProvider>
   );
@@ -122,11 +79,20 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
+  onConversationMissing,
+  newChatToken,
   compact,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
   const sessionProjectId = authenticationSession.getProjectId();
+  const gate = useModelGate({
+    gated:
+      agentId === undefined &&
+      isNil(initialConversationId) &&
+      !isNil(sessionProjectId),
+    projectId: sessionProjectId,
+  });
 
   const {
     conversationId,
@@ -144,6 +110,7 @@ function ChatBoxContent({
     retryLastMessage,
     cancelStream,
     setConversationId,
+    startNew,
     setModelPick,
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
@@ -152,6 +119,7 @@ function ChatBoxContent({
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
+    onConversationMissing,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
   });
 
@@ -244,18 +212,40 @@ function ChatBoxContent({
     ],
   );
 
-  const sentInitialPrompt = useRef(false);
+  const [hasInput, setHasInput] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [session, setSession] = useState(newChatToken ?? 0);
+  const sentInitialPrompt = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (newChatToken === undefined || newChatToken === session) return;
+    startNew();
+    setHasSentMessage(false);
+    setHasInput(false);
+    setPromptOpen(false);
+    sentInitialPrompt.current = null;
+    setSession(newChatToken);
+  }, [newChatToken, session, startNew]);
 
   useEffect(() => {
     const shouldSendInitialPrompt =
       initialPrompt !== undefined &&
       initialPrompt.trim().length > 0 &&
       !initialConversationId &&
-      !sentInitialPrompt.current;
+      gate === 'ready' &&
+      session === (newChatToken ?? 0) &&
+      sentInitialPrompt.current !== session;
     if (!shouldSendInitialPrompt) return;
-    sentInitialPrompt.current = true;
+    sentInitialPrompt.current = session;
     handleSend(initialPrompt).catch(() => undefined);
-  }, [initialPrompt, initialConversationId, handleSend]);
+  }, [
+    initialPrompt,
+    initialConversationId,
+    handleSend,
+    gate,
+    session,
+    newChatToken,
+  ]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -280,8 +270,6 @@ function ChatBoxContent({
 
   const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
-  const [hasInput, setHasInput] = useState(false);
-  const [promptOpen, setPromptOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
   const personalization = usePersonalization({ enabled: !incognito });
@@ -363,6 +351,14 @@ function ChatBoxContent({
     SeekPage<AgentConversation>
   >(['chat-conversations']);
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
+
+  if (gate === 'loading') {
+    return <MessageSkeletons />;
+  }
+
+  if (gate === 'setup') {
+    return <SetupRequiredState />;
+  }
 
   return (
     <div className="flex flex-col h-full flex-1 min-w-0">
@@ -580,6 +576,23 @@ function ChatBoxContent({
   );
 }
 
+function useModelGate({
+  gated,
+  projectId,
+}: {
+  gated: boolean;
+  projectId: string | null;
+}): ModelGate {
+  const { data: options, isLoading } = aiModelHooks.useModelOptions({
+    projectId: projectId ?? '',
+    surface: 'chat',
+    enabled: gated,
+  });
+  if (gated && isLoading) return 'loading';
+  if (gated && !isNil(options) && !hasAnyModel({ options })) return 'setup';
+  return 'ready';
+}
+
 function hasAnyModel({ options }: { options: ModelOptions }): boolean {
   return (
     options.tiers.length > 0 ||
@@ -627,7 +640,10 @@ type AIChatBoxProps = {
   placeholder?: string;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
+  onConversationMissing?: () => void;
   onTitleUpdate?: (title: string) => void;
-  // A side panel: no onboarding card and no personalization chip.
+  newChatToken?: number;
   compact?: boolean;
 };
+
+type ModelGate = 'loading' | 'setup' | 'ready';
