@@ -1,11 +1,9 @@
 import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { AlertCircle, ImageIcon } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ImageIcon, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { TextShimmer } from '@/components/ui/text-shimmer';
 import {
   AnyToolPart,
   CardSkeletonPhase,
@@ -13,7 +11,15 @@ import {
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
-import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+
+import {
+  ChatCard,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from './chat-ui/chat-card';
+import { ChatStatusText } from './chat-ui/chat-status';
 
 export function CardSkeleton({
   cardKind,
@@ -26,25 +32,57 @@ export function CardSkeleton({
   part: AnyToolPart;
   description: string | null;
 }) {
-  const isPending = phase === 'pending';
-  const { revealed, isLong } = useSkeletonReveal(isPending);
+  const { revealed, isLong } = useSkeletonReveal(phase === 'pending');
+  const pieceName = chatPartUtils.extractPieceNames(
+    isObject(part.input) ? part.input : undefined,
+  )[0];
+  const { summary } = piecesHooks.usePieceSummary({ name: pieceName ?? '' });
 
-  if (phase === 'failed') {
-    return <CardSkeletonFailed cardKind={cardKind} />;
-  }
-  // Hold a beat before painting the skeleton so sub-250ms tools never flash one.
   if (!revealed) return null;
 
-  const label = isLong ? t('Still working…') : labelForCard({ cardKind, part });
+  const isImage = cardKind === 'image';
+  const tile =
+    pieceName && !isImage ? (
+      <ChatCardTile kind="app" pieceName={pieceName} />
+    ) : (
+      <ChatCardTile kind="bits" icon={isImage ? ImageIcon : Zap} />
+    );
 
-  if (cardKind === 'image') {
-    return <GeneratedImageCardSkeleton label={description ?? label} />;
+  if (phase === 'failed') {
+    return (
+      <ChatCard className={isImage ? 'max-w-md' : undefined}>
+        <ChatCardHeader
+          tile={tile}
+          title={
+            isImage
+              ? t("Couldn't generate the image")
+              : t("This step didn't complete")
+          }
+          meta={joinMeta([summary?.displayName, failureReason(part)])}
+          trailing={<ChatStatusText status="failed" />}
+        />
+      </ChatCard>
+    );
   }
-  return <ActionReceiptCardSkeleton label={description ?? label} part={part} />;
-}
 
-const REVEAL_DELAY_MS = 250;
-const LONG_RUNNING_MS = 10_000;
+  return (
+    <ChatCard className={isImage ? 'max-w-md' : undefined}>
+      <ChatCardHeader
+        tile={tile}
+        title={description ?? labelForCard({ cardKind, part })}
+        meta={isLong ? t('Still working…') : summary?.displayName}
+        trailing={<ChatStatusText status="working" />}
+      />
+      <ChatCardBody>
+        {isImage ? (
+          <Skeleton className="aspect-[4/3] w-full rounded-lg" />
+        ) : (
+          <Skeleton className="h-2.5 w-28" />
+        )}
+      </ChatCardBody>
+    </ChatCard>
+  );
+}
 
 function useSkeletonReveal(active: boolean) {
   const [revealed, setRevealed] = useState(!active);
@@ -80,90 +118,14 @@ function labelForCard({
   return chatUtils.formatToolActionName({ part });
 }
 
-function GeneratedImageCardSkeleton({ label }: { label: string }) {
-  return (
-    <motion.div
-      className="my-2 max-w-md overflow-hidden rounded-xl border bg-panel"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <Skeleton className="aspect-[4/3] w-full rounded-none" />
-      <div className="flex items-center justify-between gap-2 p-2">
-        <TextShimmer
-          as="span"
-          className="min-w-0 truncate text-xs text-gray-11"
-          duration={2}
-        >
-          {label}
-        </TextShimmer>
-        <ImageIcon className="size-4 shrink-0 text-gray-9" />
-      </div>
-    </motion.div>
-  );
+function failureReason(part: AnyToolPart): string | undefined {
+  return part.state === 'output-error' ? part.errorText : undefined;
 }
 
-function ActionReceiptCardSkeleton({
-  label,
-  part,
-}: {
-  label: string;
-  part: AnyToolPart;
-}) {
-  const input = isObject(part.input)
-    ? (part.input as Record<string, unknown>)
-    : undefined;
-  const pieceName = chatPartUtils.extractPieceNames(input)[0];
-
-  return (
-    <motion.div
-      className="my-2 overflow-hidden rounded-xl border bg-gray-1"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <div className="px-3.5 pb-2.5 pt-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          {pieceName ? (
-            <PieceIconWithPieceName
-              pieceName={pieceName}
-              size="xs"
-              border={false}
-              showTooltip={false}
-            />
-          ) : (
-            <Skeleton className="size-6 shrink-0 rounded-md" />
-          )}
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <TextShimmer
-              as="div"
-              className="truncate text-xs font-medium"
-              duration={2}
-            >
-              {label}
-            </TextShimmer>
-            <Skeleton className="h-2.5 w-16" />
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
+function joinMeta(values: Array<string | undefined>): string | undefined {
+  const parts = values.filter((value): value is string => Boolean(value));
+  return parts.length > 0 ? parts.join(' · ') : undefined;
 }
 
-function CardSkeletonFailed({ cardKind }: { cardKind: PendingCardKind }) {
-  return (
-    <motion.div
-      className="my-2 flex items-center gap-2.5 rounded-xl border bg-gray-1 px-3.5 py-2.5 text-gray-11"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <AlertCircle className="size-4 shrink-0 text-gray-11" />
-      <span className="text-xs">
-        {cardKind === 'image'
-          ? t("Couldn't generate the image")
-          : t("This step didn't complete")}
-      </span>
-    </motion.div>
-  );
-}
+const REVEAL_DELAY_MS = 250;
+const LONG_RUNNING_MS = 10_000;

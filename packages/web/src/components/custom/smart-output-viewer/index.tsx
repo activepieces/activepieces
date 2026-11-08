@@ -115,84 +115,83 @@ function OutputViewerShell({
   );
 }
 
+function friendlyContentFor({
+  json,
+  pieceSchema,
+}: {
+  json: unknown;
+  pieceSchema: OutputSchema | null;
+}): React.ReactNode | null {
+  if (typeof json === 'string') {
+    return <OutputTextDisplay text={json} />;
+  }
+  if (Array.isArray(json) && json.length > 0) {
+    const arrayView = selectArrayFriendlyView({
+      items: json,
+      schema: pieceSchema,
+    });
+    switch (arrayView.kind) {
+      case 'object':
+        return arrayView.schema ? (
+          <OutputFieldList json={arrayView.item} schema={arrayView.schema} />
+        ) : (
+          <OutputGenericFieldList json={arrayView.item} />
+        );
+      case 'table':
+        return <OutputTableView items={json} />;
+      case 'schema':
+        return <OutputSchemaArrayList items={json} schema={arrayView.schema} />;
+      default:
+        return <OutputArrayList items={json} />;
+    }
+  }
+  if (isObject(json)) {
+    return pieceSchema ? (
+      <OutputFieldList json={json} schema={pieceSchema} />
+    ) : (
+      <OutputGenericFieldList json={json} />
+    );
+  }
+  return null;
+}
+
 function SmartOutputViewer({
   json,
   title,
   pieceSchema,
 }: SmartOutputViewerProps) {
-  const pieceDefinedSchema = pieceSchema ?? null;
-  const isJsonObject = isObject(json);
-
-  if (typeof json === 'string') {
-    return (
-      <OutputViewerShell
-        json={json}
-        title={title}
-        friendlyContent={<OutputTextDisplay text={json} />}
-      />
-    );
+  const friendlyContent = friendlyContentFor({
+    json,
+    pieceSchema: pieceSchema ?? null,
+  });
+  if (friendlyContent === null) {
+    return <JsonViewer json={json} title={title} />;
   }
-
-  if (Array.isArray(json) && json.length > 0) {
-    const arrayView = selectArrayFriendlyView({
-      items: json,
-      schema: pieceDefinedSchema,
-    });
-    const friendlyContent =
-      arrayView.kind === 'object' ? (
-        // A single-item array reads best as just its element: show the lone
-        // object's fields directly (curated by the schema if present) — no
-        // table, no "Item N" wrapper.
-        arrayView.schema ? (
-          <OutputFieldList json={arrayView.item} schema={arrayView.schema} />
-        ) : (
-          <OutputGenericFieldList json={arrayView.item} />
-        )
-      ) : arrayView.kind === 'table' ? (
-        <OutputTableView items={json} />
-      ) : arrayView.kind === 'schema' ? (
-        <OutputSchemaArrayList items={json} schema={arrayView.schema} />
-      ) : (
-        <OutputArrayList items={json} />
-      );
-    return (
-      <OutputViewerShell
-        json={json}
-        title={title}
-        friendlyContent={friendlyContent}
-      />
-    );
-  }
-
-  if (pieceDefinedSchema && isJsonObject) {
-    return (
-      <OutputViewerShell
-        json={json}
-        title={title}
-        friendlyContent={
-          <OutputFieldList json={json} schema={pieceDefinedSchema} />
-        }
-      />
-    );
-  }
-
-  if (isJsonObject) {
-    return (
-      <OutputViewerShell
-        json={json}
-        title={title}
-        friendlyContent={<OutputGenericFieldList json={json} />}
-      />
-    );
-  }
-
-  return <JsonViewer json={json} title={title} />;
+  return (
+    <OutputViewerShell
+      json={json}
+      title={title}
+      friendlyContent={friendlyContent}
+    />
+  );
 }
 
-export { SmartOutputViewer };
+function SmartOutputFriendlyView({
+  json,
+  pieceSchema,
+}: SmartOutputFriendlyViewProps) {
+  return friendlyContentFor({ json, pieceSchema: pieceSchema ?? null });
+}
+
+export { SmartOutputViewer, SmartOutputFriendlyView };
 
 type SmartOutputViewerProps = {
   json: unknown;
   title: string;
+  pieceSchema?: OutputSchema | null;
+};
+
+type SmartOutputFriendlyViewProps = {
+  json: unknown;
   pieceSchema?: OutputSchema | null;
 };

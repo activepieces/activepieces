@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Brain, ChevronDown, Volume2, VolumeOff } from 'lucide-react';
+import { Brain, Layers, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
@@ -12,7 +12,6 @@ import {
 } from '@/components/prompt-kit/message';
 import { Source } from '@/components/prompt-kit/source';
 import { StreamingText } from '@/components/prompt-kit/streaming-text';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import {
@@ -21,6 +20,7 @@ import {
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { useTts } from '@/features/chat/lib/use-tts';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
 import {
@@ -32,6 +32,7 @@ import {
 import {
   getTextFromParts,
   isConnectionPickerData,
+  normalizePieceName,
   parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
@@ -40,6 +41,8 @@ import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
+import { ChatCard, ChatCardFold, ChatCardTile } from './chat-ui/chat-card';
+import { ChatStatusText } from './chat-ui/chat-status';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
 import { FeedbackButtons } from './feedback-buttons';
@@ -245,6 +248,10 @@ function MessageBlocks({
   isResumed?: boolean;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const doneTitles = useMemo(
+    () => buildDoneTitles(message.parts),
+    [message.parts],
+  );
   const lastThinkingIdx = blocks.findLastIndex((b) => b.kind === 'thinking');
   const lastTextIdx = blocks.findLastIndex((b) => b.kind === 'text');
   const hasActiveDisplayCard = blocks.some(
@@ -444,7 +451,11 @@ function MessageBlocks({
                 key={`card-${block.kind}-${block.toolCallId}`}
                 className="py-2"
               >
-                <OutcomeCard block={block} toolCallMeta={toolCallMeta} />
+                <OutcomeCard
+                  block={block}
+                  toolCallMeta={toolCallMeta}
+                  doneTitles={doneTitles}
+                />
               </div>
             );
           case 'card-group':
@@ -453,6 +464,7 @@ function MessageBlocks({
                 key={`card-group-${i}`}
                 cards={block.cards}
                 toolCallMeta={toolCallMeta}
+                doneTitles={doneTitles}
               />
             );
           case 'card-skeleton':
@@ -502,20 +514,33 @@ function MessageBlocks({
 function OutcomeCard({
   block,
   toolCallMeta,
+  doneTitles,
+  flat,
 }: {
   block: OutcomeCardBlock;
   toolCallMeta: Record<string, ToolCallMeta>;
+  doneTitles: ReadonlyMap<string, string>;
+  flat?: boolean;
 }) {
+  const doneTitle = doneTitles.get(block.toolCallId);
   switch (block.kind) {
     case 'action-receipt': {
       const receipt = toolCallMeta[block.toolCallId]?.actionReceipt;
       if (!receipt) return null;
-      return <ActionReceiptCard receipt={receipt} />;
+      return (
+        <ActionReceiptCard
+          receipt={receipt}
+          doneTitle={doneTitle}
+          flat={flat}
+        />
+      );
     }
     case 'image': {
       const image = toolCallMeta[block.toolCallId]?.image;
       if (!image) return null;
-      return <GeneratedImageCard image={image} />;
+      return (
+        <GeneratedImageCard image={image} doneTitle={doneTitle} flat={flat} />
+      );
     }
     case 'files': {
       const files = toolCallMeta[block.toolCallId]?.files;
@@ -533,46 +558,92 @@ function OutcomeCard({
   }
 }
 
-// A run of adjacent outcome cards collapses into one quiet, expandable group so
-// a batch of writes doesn't flood the timeline. Collapsed by default — the count
-// header tells the user how many landed; expanding reveals each card.
 function CardGroup({
   cards,
   toolCallMeta,
+  doneTitles,
 }: {
   cards: OutcomeCardBlock[];
   toolCallMeta: Record<string, ToolCallMeta>;
+  doneTitles: ReadonlyMap<string, string>;
 }) {
-  const [open, setOpen] = useState(false);
+  const { receipts, pieceNames } = useMemo(() => {
+    const found = cards.flatMap((card) => {
+      const receipt =
+        card.kind === 'action-receipt'
+          ? toolCallMeta[card.toolCallId]?.actionReceipt
+          : undefined;
+      return receipt ? [receipt] : [];
+    });
+    return {
+      receipts: found,
+      pieceNames: [
+        ...new Set(found.map((r) => normalizePieceName(r.pieceName))),
+      ],
+    };
+  }, [cards, toolCallMeta]);
+  const { summaries } = piecesHooks.usePieceSummariesByNames({
+    names: pieceNames,
+  });
+  const failedCount = receipts.filter((r) => r.status === 'failed').length;
+  const appNames = summaries.map((summary) => summary.displayName);
+  const meta = appNames.length > 0 ? appNames.join(', ') : undefined;
+
   return (
     <div className="py-2">
-      <Collapsible open={open} onOpenChange={setOpen}>
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className="flex w-full items-center gap-1.5 text-left text-sm text-gray-11 transition-colors hover:text-gray-12"
+      <ChatCard>
+        <ChatCardFold
+          defaultOpen={false}
+          tile={
+            pieceNames[0] ? (
+              <ChatCardTile kind="app" pieceName={pieceNames[0]} />
+            ) : (
+              <ChatCardTile kind="bits" icon={Layers} />
+            )
+          }
+          title={t('chatOutcomeCount', { count: cards.length })}
+          meta={meta}
+          trailing={
+            failedCount > 0 ? (
+              <ChatStatusText status="failed">
+                {t('{count, plural, =1 {1 failed} other {# failed}}', {
+                  count: failedCount,
+                })}
+              </ChatStatusText>
+            ) : (
+              <ChatStatusText status="done" />
+            )
+          }
         >
-          <span>{t('chatOutcomeCount', { count: cards.length })}</span>
-          <ChevronDown
-            className={cn(
-              'size-3.5 shrink-0 opacity-50 transition-transform duration-300',
-              open && 'rotate-180',
-            )}
-          />
-        </button>
-        <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-          <div className="mt-2 flex flex-col gap-2">
+          <div className="flex flex-col">
             {cards.map((card, idx) => (
-              <OutcomeCard
+              <div
                 key={`${card.kind}-${card.toolCallId}-${idx}`}
-                block={card}
-                toolCallMeta={toolCallMeta}
-              />
+                className="border-t border-gray-6"
+              >
+                <OutcomeCard
+                  block={card}
+                  toolCallMeta={toolCallMeta}
+                  doneTitles={doneTitles}
+                  flat
+                />
+              </div>
             ))}
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+        </ChatCardFold>
+      </ChatCard>
     </div>
+  );
+}
+
+function buildDoneTitles(
+  parts: ChatUIMessage['parts'],
+): ReadonlyMap<string, string> {
+  return new Map(
+    parts.filter(chatPartUtils.isAnyToolPart).flatMap((part) => {
+      const { doneTitle } = chatPartUtils.extractToolTitles(part);
+      return doneTitle ? [[chatPartUtils.getToolCallId(part), doneTitle]] : [];
+    }),
   );
 }
 
