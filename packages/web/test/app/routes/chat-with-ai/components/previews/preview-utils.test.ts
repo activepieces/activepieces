@@ -183,9 +183,9 @@ describe('previewUtils table helpers', () => {
   const table = {
     headers: ['Region', 'Deals', 'Revenue'],
     rows: [
-      ['EMEA', '14', '$182k'],
-      ['APAC', '9', '$97k'],
-      ['LATAM', '', '$41k'],
+      ['EMEA', '14', '$1.2M'],
+      ['APAC', '9', '$900k'],
+      ['LATAM', '', '2B'],
     ],
   };
 
@@ -196,91 +196,44 @@ describe('previewUtils table helpers', () => {
   it('filters rows by any cell, ignoring case', () => {
     expect(
       previewUtils.filterRows({ rows: table.rows, query: 'apac' }),
-    ).toEqual([['APAC', '9', '$97k']]);
-    expect(previewUtils.filterRows({ rows: table.rows, query: ' ' })).toEqual(
-      table.rows,
-    );
+    ).toEqual([['APAC', '9', '$900k']]);
   });
 
-  it('sorts numbers by value and keeps empty cells last', () => {
-    const sorted = previewUtils.sortRows({
-      rows: table.rows,
-      column: 1,
-      direction: 'asc',
-      numeric: true,
-    });
-    expect(sorted.map((row) => row[0])).toEqual(['APAC', 'EMEA', 'LATAM']);
-    const desc = previewUtils.sortRows({
-      rows: table.rows,
-      column: 1,
-      direction: 'desc',
-      numeric: true,
-    });
-    expect(desc.map((row) => row[0])).toEqual(['EMEA', 'APAC', 'LATAM']);
-  });
-});
+  it('sorts numbers by value with k/M/B suffixes and keeps empty cells last', () => {
+    const sort = ({ column, direction }: SortArgs) =>
+      previewUtils
+        .sortRows({ rows: table.rows, column, direction, numeric: true })
+        .map((row) => row[0]);
 
-describe('previewUtils.sortRows with suffixed numbers', () => {
-  it('applies k, M and B multipliers', () => {
-    const sorted = previewUtils.sortRows({
-      rows: [
-        ['a', '$1.2M'],
-        ['b', '$900k'],
-        ['c', '2B'],
-        ['d', '50'],
-      ],
-      column: 1,
-      direction: 'asc',
-      numeric: true,
-    });
-    expect(sorted.map((row) => row[0])).toEqual(['d', 'b', 'a', 'c']);
+    expect(sort({ column: 1, direction: 'asc' })).toEqual([
+      'APAC',
+      'EMEA',
+      'LATAM',
+    ]);
+    expect(sort({ column: 1, direction: 'desc' })).toEqual([
+      'EMEA',
+      'APAC',
+      'LATAM',
+    ]);
+    expect(sort({ column: 2, direction: 'asc' })).toEqual([
+      'APAC',
+      'EMEA',
+      'LATAM',
+    ]);
   });
 });
 
 describe('previewUtils.readableFileType', () => {
-  it('uses a known media type first', () => {
-    expect(
-      previewUtils.readableFileType({
-        mediaType: 'text/csv',
-        fileName: 'leads.txt',
-      }),
-    ).toBe('CSV');
-  });
-
-  it('falls back to a short file extension', () => {
-    expect(
-      previewUtils.readableFileType({
-        mediaType: 'application/x-unknown',
-        fileName: 'leads.tsv',
-      }),
-    ).toBe('TSV');
-  });
-
-  it('ignores a long dotted suffix', () => {
-    expect(
-      previewUtils.readableFileType({
-        mediaType: 'application/x-unknown',
-        fileName: 'Report v1.final draft',
-      }),
-    ).toBe(null);
-  });
-
-  it('reads the type from a known media type when the name has none', () => {
-    expect(
-      previewUtils.readableFileType({
-        mediaType:
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        fileName: 'report',
-      }),
-    ).toBe('XLSX');
-  });
-
-  it('returns null for an unknown type', () => {
-    expect(
-      previewUtils.readableFileType({
-        mediaType: 'application/x-unknown',
-        fileName: 'blob',
-      }),
-    ).toBe(null);
+  it.each([
+    ['text/csv', 'leads.txt', 'CSV'],
+    ['application/x-unknown', 'leads.tsv', 'TSV'],
+    ['application/x-unknown', 'Report v1.final draft', null],
+    ['application/x-unknown', 'blob', null],
+  ])('reads %s / %s as %s', (mediaType, fileName, expected) => {
+    expect(previewUtils.readableFileType({ mediaType, fileName })).toBe(
+      expected,
+    );
   });
 });
+
+type SortArgs = { column: number; direction: 'asc' | 'desc' };

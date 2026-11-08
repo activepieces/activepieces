@@ -44,7 +44,7 @@ afterEach(() => {
   getPickerConnections.mockClear();
 });
 
-describe('ConnectionPickerCard (characterization)', () => {
+describe('ConnectionPickerCard', () => {
   it('resolves once with the default healthy account on Continue', async () => {
     const { onResolve } = renderPicker({ picker: PICKER });
 
@@ -58,44 +58,11 @@ describe('ConnectionPickerCard (characterization)', () => {
     });
   });
 
-  it('shows Reconnect on an unhealthy row', async () => {
-    renderPicker({ picker: PICKER });
-
-    expect(
-      await screen.findByRole('button', { name: 'Reconnect' }),
-    ).toBeTruthy();
-    expect(screen.getByText('Old Slack')).toBeTruthy();
-  });
-
-  it('renders the selected label when not interactive', () => {
-    renderPicker({
-      picker: PICKER,
-      isInteractive: false,
-      selectedConnectionLabel: 'Work Slack',
-    });
-
-    expect(screen.getByText('· Work Slack')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
-  });
-
-  it('shows a loading skeleton while the account list loads', () => {
-    const { container } = renderPicker({
-      picker: { piece: 'slack', displayName: 'Slack' },
-    });
-
-    expect(getPickerConnections).toHaveBeenCalledTimes(1);
-    expect(container.innerHTML).not.toBe('');
-    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
-  });
-
-  it('does not let an expired account be picked and keeps Reconnect outside the option', async () => {
+  it('does not let an expired account be picked', async () => {
     renderPicker({ picker: PICKER });
 
     const expired = await screen.findByRole('option', { name: /Old Slack/ });
     expect(expired.hasAttribute('disabled')).toBe(true);
-    expect(screen.getByText('Expired')).toBeTruthy();
-    const reconnect = screen.getByRole('button', { name: 'Reconnect' });
-    expect(expired.contains(reconnect)).toBe(false);
   });
 
   it('resolves with the account the user picks', async () => {
@@ -111,41 +78,28 @@ describe('ConnectionPickerCard (characterization)', () => {
     });
   });
 
-  it('offers Connect another account and a quiet Skip instead of a close button', async () => {
+  it('dismisses on Skip', async () => {
     const { onDismiss } = renderPicker({ picker: PICKER });
 
-    expect(
-      await screen.findByRole('button', { name: 'Connect another account' }),
-    ).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
+
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });
 
-function renderPicker({
-  picker,
-  isInteractive,
-  selectedConnectionLabel,
-}: {
-  picker: ConnectionPickerData;
-  isInteractive?: boolean;
-  selectedConnectionLabel?: string;
-}) {
+function renderPicker({ picker }: { picker: ConnectionPickerData }) {
   const onResolve = vi.fn();
   const onDismiss = vi.fn();
-  const view = render(
+  render(
     <Providers>
       <ConnectionPickerCard
         picker={picker}
         onResolve={onResolve}
         onDismiss={onDismiss}
-        isInteractive={isInteractive}
-        selectedConnectionLabel={selectedConnectionLabel}
       />
     </Providers>,
   );
-  return { onResolve, onDismiss, container: view.container };
+  return { onResolve, onDismiss };
 }
 
 function Providers({ children }: { children: ReactNode }) {

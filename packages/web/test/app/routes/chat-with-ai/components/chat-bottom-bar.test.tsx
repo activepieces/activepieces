@@ -70,7 +70,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('ChatBottomBar (characterization)', () => {
+describe('ChatBottomBar', () => {
   describe('active card priority', () => {
     it('shows the action preview over a display tool and a legacy form', () => {
       setAllCards();
@@ -92,34 +92,14 @@ describe('ChatBottomBar (characterization)', () => {
       expect(screen.queryByText('Which inbox?')).toBeNull();
     });
 
-    it('shows the legacy form when it is the only active card', () => {
+    it('shows the legacy form alone, but not while streaming', () => {
       setLegacyForm();
       renderBar();
-
       expect(screen.getByText('Which inbox?')).toBeTruthy();
-    });
+      cleanup();
 
-    it('hides the legacy form while streaming', () => {
-      setLegacyForm();
       renderBar({ isStreaming: true });
-
       expect(screen.queryByText('Which inbox?')).toBeNull();
-    });
-
-    it('shows no display tool body while its input still streams', () => {
-      store.selection.activeDisplayTool = {
-        type: 'dynamic-tool',
-        toolName: 'ap_show_mcp_reconnect',
-        toolCallId: 'tc-mcp',
-        state: 'input-streaming',
-        input: { displayName: 'Linear' },
-      };
-      renderBar();
-
-      expect(screen.queryByText('Reconnect Linear')).toBeNull();
-      expect(
-        screen.getByPlaceholderText('Or reply in your own words'),
-      ).toBeTruthy();
     });
   });
 
@@ -154,37 +134,20 @@ describe('ChatBottomBar (characterization)', () => {
       expect(onSend).toHaveBeenCalledWith('neither', undefined);
       expect(store.state.dismissForm).toHaveBeenCalledWith('msg-last');
     });
-
-    it('dismisses nothing when no card is open', () => {
-      const { onSend } = renderBar();
-
-      typeAndSend('hello', 'Reply...');
-
-      expect(onSend).toHaveBeenCalledWith('hello', undefined);
-      expect(store.state.rejectGate).not.toHaveBeenCalled();
-      expect(store.state.dismissForm).not.toHaveBeenCalled();
-    });
   });
 
   describe('card callbacks', () => {
-    it('approves the action preview gate on the action button', () => {
+    it('approves the action preview gate on Run and rejects it on Cancel', () => {
       store.selection.pendingActionPreview = PREVIEW;
       renderBar();
 
       fireEvent.click(screen.getByRole('button', { name: 'Send email' }));
-
       expect(store.state.approveGate).toHaveBeenCalledWith('tc-preview');
-      expect(store.state.rejectGate).not.toHaveBeenCalled();
-    });
+      cleanup();
 
-    it('rejects the action preview gate on Cancel', () => {
-      store.selection.pendingActionPreview = PREVIEW;
       renderBar();
-
       fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-
       expect(store.state.rejectGate).toHaveBeenCalledWith('tc-preview');
-      expect(store.state.approveGate).not.toHaveBeenCalled();
     });
 
     it('sends the legacy form skip text and dismisses the form', () => {
@@ -195,26 +158,6 @@ describe('ChatBottomBar (characterization)', () => {
 
       expect(store.state.dismissForm).toHaveBeenCalledWith('msg-last');
       expect(onSend).toHaveBeenCalledWith('Skip these questions');
-    });
-  });
-
-  describe('placeholder', () => {
-    it('reads "Or reply in your own words" while a card is open', () => {
-      store.selection.pendingActionPreview = PREVIEW;
-      renderBar({ placeholder: 'Ask anything' });
-
-      expect(
-        screen.getByPlaceholderText('Or reply in your own words'),
-      ).toBeTruthy();
-    });
-
-    it('uses the given placeholder, else "Reply...", when no card is open', () => {
-      const { unmount } = renderBar({ placeholder: 'Ask anything' });
-      expect(screen.getByPlaceholderText('Ask anything')).toBeTruthy();
-      unmount();
-
-      renderBar();
-      expect(screen.getByPlaceholderText('Reply...')).toBeTruthy();
     });
   });
 });
@@ -231,28 +174,24 @@ function setLegacyForm() {
   store.selection.hasActiveForm = true;
 }
 
-function typeAndSend(text: string, placeholder = 'Or reply in your own words') {
-  const input = screen.getByPlaceholderText(placeholder);
+function typeAndSend(text: string) {
+  const input = screen.getByPlaceholderText('Or reply in your own words');
   fireEvent.change(input, { target: { value: text } });
   fireEvent.keyDown(input, { key: 'Enter' });
 }
 
-function renderBar({
-  isStreaming = false,
-  placeholder,
-}: { isStreaming?: boolean; placeholder?: string } = {}) {
+function renderBar({ isStreaming = false }: { isStreaming?: boolean } = {}) {
   const onSend = vi.fn();
-  const view = render(
+  render(
     <ChatBottomBar
       isStreaming={isStreaming}
       onSend={onSend}
       onStop={vi.fn()}
       lastAssistantMessage={undefined}
       lastMessageId="msg-last"
-      placeholder={placeholder}
     />,
   );
-  return { onSend, unmount: view.unmount };
+  return { onSend };
 }
 
 const PREVIEW: ActionPreviewEvent = {

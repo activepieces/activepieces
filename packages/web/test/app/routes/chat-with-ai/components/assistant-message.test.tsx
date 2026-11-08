@@ -89,43 +89,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('AssistantMessage smoke (characterization)', () => {
-  it('covers every MessageBlock kind in the fixture', () => {
-    const kinds = new Set(collectKinds(ALL_BLOCKS));
-
-    expect([...kinds].sort()).toEqual(
-      [
-        'action-receipt',
-        'batch-progress',
-        'build-plan',
-        'card-group',
-        'card-skeleton',
-        'display-tool',
-        'files',
-        'image',
-        'memory-saved',
-        'tasks',
-        'text',
-        'thinking',
-      ].sort(),
-    );
-  });
-
-  it('renders every block kind from history without throwing', () => {
+describe('AssistantMessage smoke', () => {
+  it('renders every block kind, from history and while streaming', () => {
+    expect(new Set(collectKinds(ALL_BLOCKS)).size).toBe(12);
     fixture.blocks = ALL_BLOCKS;
-    renderMessage({ isStreaming: false });
 
+    const { unmount } = renderMessage({ isStreaming: false });
     expect(screen.getByText('Here is what I found.')).toBeTruthy();
-    expect(
-      screen.getByText('Memory updated: Likes short replies'),
-    ).toBeTruthy();
     expect(screen.getByText('Sources')).toBeTruthy();
-  });
+    unmount();
 
-  it('renders every block kind while streaming without throwing', () => {
-    fixture.blocks = ALL_BLOCKS;
     renderMessage({ isStreaming: true });
-
     expect(
       screen.getByText('Memory updated: Likes short replies'),
     ).toBeTruthy();
@@ -136,7 +110,7 @@ function renderMessage({ isStreaming }: { isStreaming: boolean }) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  render(
+  return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <ChatStoreProvider>

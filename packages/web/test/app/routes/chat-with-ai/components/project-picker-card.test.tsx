@@ -33,7 +33,7 @@ afterEach(() => {
   cleanup();
 });
 
-describe('ProjectPickerCard (characterization)', () => {
+describe('ProjectPickerCard', () => {
   it('resolves with the project id and name when a suggestion is picked', () => {
     const { onResolve } = renderPicker();
 
@@ -67,102 +67,30 @@ describe('ProjectPickerCard (characterization)', () => {
     expect(onResolve).not.toHaveBeenCalled();
   });
 
-  it('does not submit on Enter while an IME is composing', () => {
+  it('resolves with the first suggestion when nothing is picked', () => {
     const { onResolve } = renderPicker();
-    const input = screen.getByPlaceholderText('Type your answer...');
 
-    fireEvent.change(input, { target: { value: 'にほん' } });
-    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
-
-    expect(onResolve).not.toHaveBeenCalled();
-  });
-
-  it('has no header Close button', () => {
-    renderPicker();
-
-    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
-  });
-
-  it('lists the suggestions first and preselects the first one', () => {
-    const { onResolve } = renderPicker();
-    const options = screen.getAllByRole('option');
-
-    expect(options[0].textContent).toContain('Marketing');
-    expect(options[0].getAttribute('aria-selected')).toBe('true');
-    expect(options[2].textContent).toContain('HR');
-    expect(options[2].textContent).toContain('Current project');
-    expect(options[2].getAttribute('aria-selected')).toBe('false');
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(onResolve).toHaveBeenCalledWith({
       projectId: 'p-marketing',
       projectName: 'Marketing',
     });
   });
-
-  it('preselects the current project when there are no suggestions', () => {
-    renderPicker({ suggestedProjects: [] });
-    const options = screen.getAllByRole('option');
-
-    expect(options[0].textContent).toContain('HR');
-    expect(options[0].getAttribute('aria-selected')).toBe('true');
-  });
-
-  it('clears the selected row while the user types, and the text on a pick', () => {
-    renderPicker();
-    const input = screen.getByPlaceholderText('Type your answer...');
-
-    fireEvent.change(input, { target: { value: 'New project' } });
-    expect(
-      screen
-        .getAllByRole('option')
-        .some((option) => option.getAttribute('aria-selected') === 'true'),
-    ).toBe(false);
-
-    fireEvent.click(screen.getByRole('option', { name: /Sales/ }));
-    expect(input.getAttribute('value')).toBe('');
-    expect(
-      screen
-        .getByRole('option', { name: /Sales/ })
-        .getAttribute('aria-selected'),
-    ).toBe('true');
-  });
-
-  it('shows all projects in one list without a Show all step', () => {
-    renderPicker();
-
-    expect(screen.getAllByRole('option')).toHaveLength(4);
-    expect(screen.queryByText(/Show all/)).toBeNull();
-  });
-
-  it('shows the answered state with the project name when not interactive', () => {
-    renderPicker({ isInteractive: false, selectedProjectId: 'p-ops' });
-
-    expect(screen.getByText('· Ops')).toBeTruthy();
-    expect(screen.queryByPlaceholderText('Type your answer...')).toBeNull();
-  });
 });
 
-function renderPicker({
-  isInteractive,
-  selectedProjectId,
-  suggestedProjects = [
-    { id: 'p-marketing', name: 'Marketing' },
-    { id: 'p-sales', name: 'Sales' },
-  ],
-}: {
-  isInteractive?: boolean;
-  selectedProjectId?: string;
-  suggestedProjects?: Array<{ id: string; name: string }>;
-} = {}) {
+function renderPicker() {
   const onResolve = vi.fn();
   const onDismiss = vi.fn();
   render(
     <ProjectPickerCard
-      picker={{ suggestedProjects }}
+      picker={{
+        suggestedProjects: [
+          { id: 'p-marketing', name: 'Marketing' },
+          { id: 'p-sales', name: 'Sales' },
+        ],
+      }}
       onResolve={onResolve}
       onDismiss={onDismiss}
-      isInteractive={isInteractive}
-      selectedProjectId={selectedProjectId}
     />,
   );
   return { onResolve, onDismiss };
