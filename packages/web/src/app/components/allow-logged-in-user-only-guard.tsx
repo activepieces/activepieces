@@ -23,6 +23,10 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   if (authenticationSession.isOnboarding()) {
     return <Navigate to="/create-platform" replace />;
   }
+  return <LoggedInSession>{children}</LoggedInSession>;
+};
+
+function LoggedInSession({ children }: { children: React.ReactNode }) {
   platformHooks.useCurrentPlatform();
   flagsHooks.useFlags();
   projectCollectionUtils.useCurrentProject();
@@ -32,4 +36,4 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
       {children}
     </>
   );
-};
+}

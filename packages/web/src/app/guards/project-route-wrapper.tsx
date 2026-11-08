@@ -4,7 +4,7 @@ import React from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { projectCollectionUtils, projectHooks } from '@/features/projects';
+import { projectCollectionUtils } from '@/features/projects';
 
 import { authenticationSession } from '../../lib/authentication-session';
 import { RouteHandle } from '../components/app-shell';
@@ -97,7 +97,6 @@ function ProjectAccessGuard({
 }) {
   const hasAccessToProject =
     projectCollectionUtils.useHasAccessToProject(projectId);
-  projectHooks.useReloadPageIfProjectIdChanged(projectId);
 
   if (!hasAccessToProject) {
     toast.error(t('Invalid Access'), {

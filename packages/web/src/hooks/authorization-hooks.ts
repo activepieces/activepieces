@@ -27,7 +27,11 @@ export const useAuthorization = (projectId?: string) => {
     },
     retry: false,
     enabled:
-      !isNil(edition) && edition !== ApEdition.COMMUNITY && !isNil(platformId),
+      !isNil(edition) &&
+      edition !== ApEdition.COMMUNITY &&
+      !isNil(platformId) &&
+      !isNil(scopedProjectId) &&
+      scopedProjectId !== '',
   });
 
   const checkAccess = (permission: Permission) => {

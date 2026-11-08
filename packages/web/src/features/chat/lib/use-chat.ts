@@ -16,6 +16,7 @@ import {
   subagentProgressId,
   SubagentProgressEvent,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -352,6 +353,7 @@ export function useAgentChat({
   onConversationMissing?: () => void;
 } = {}) {
   const store = useChatStoreApi();
+  const queryClient = useQueryClient();
   const toolCallMeta = useChatStoreContext((state) => state.toolCallMeta);
 
   const [conversationId, setConversationIdState] = useState<string | null>(
@@ -779,7 +781,7 @@ export function useAgentChat({
           const { error } = await tryCatch(() =>
             chatApi.updateConversation(conv.id, latestPick),
           );
-          if (isNil(error)) {
+          if (isNil(error) && gen === sessionGenRef.current) {
             savedPickRef.current = latestPick;
           }
         });
@@ -873,6 +875,9 @@ export function useAgentChat({
                   : {}),
               }),
             );
+            queryClient
+              .invalidateQueries({ queryKey: ['chat-conversations'] })
+              .catch(() => undefined);
           }
           return;
         }
@@ -953,6 +958,7 @@ export function useAgentChat({
       updateSendStatus,
       commitInFlightTurn,
       store,
+      queryClient,
     ],
   );
   const retryLastMessage = useCallback(
@@ -1024,7 +1030,7 @@ export function useAgentChat({
         }
         updateSendStatus({
           type: 'error',
-          message: 'Conversation not found',
+          message: t('Conversation not found'),
         });
         return;
       }
@@ -1087,10 +1093,11 @@ export function useAgentChat({
       }
       setIsLoadingHistory(false);
     },
-    [resetSession, startStream, updateSendStatus, store, t],
+    [resetSession, startStream, updateSendStatus, store],
   );
 
   const setModelPick = useCallback(async (newPick: ChatModelPick) => {
+    const gen = sessionGenRef.current;
     modelPickRef.current = newPick;
     setModelPickState(newPick);
     const convId = conversationIdRef.current;
@@ -1102,6 +1109,9 @@ export function useAgentChat({
     );
     pickSaveQueueRef.current = save;
     const { error } = await save;
+    if (gen !== sessionGenRef.current) {
+      return;
+    }
     if (isNil(error)) {
       savedPickRef.current = newPick;
       return;

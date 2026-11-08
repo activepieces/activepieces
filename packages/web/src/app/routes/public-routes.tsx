@@ -110,7 +110,7 @@ export const templateRoutes = [
   },
   {
     path: '/templates/:templateId',
-    handle: shellHandles.publicProject,
+    handle: shellHandles.templateDetails,
     element: <TemplateDetailsWrapper />,
   },
 ];
