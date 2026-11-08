@@ -394,6 +394,8 @@
   "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Member Added": "Member Added",
   "Member Edited": "Member Edited",
   "Member Deleted": "Member Deleted",

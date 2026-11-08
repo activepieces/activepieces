@@ -21,11 +21,11 @@ export const discordListChannels = createAction({
   name: 'discord_list_channels',
   classification: 'SEARCH',
   displayName: 'List Channels',
-  description: 'Enumerate all channels in a guild.',
+  description: 'Enumerate the channels in a guild that the bot can view.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists all channels in a guild by guild ID (GET /guilds/{guild_id}/channels), returning IDs, names, and types. Use to enumerate channels or to resolve a name to an ID (use Find Channel for a single exact-name lookup). Read-only and idempotent.',
+      'Lists all channels in a guild by guild ID (GET /guilds/{guild_id}/channels), returning IDs, names, and types. Use to enumerate channels or to resolve a name to an ID (use Find Channel for a single exact-name lookup). Only channels the bot has View Channel permission on are returned; others are omitted by Discord. Read-only and idempotent.',
     idempotent: true,
   },
   outputSchema: discordListChannelsActionOutputSchema,

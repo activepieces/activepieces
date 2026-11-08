@@ -1,6 +1,8 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioAi } from '../common/ai-helpers';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const updateCompanyAction = createAction({
   auth: bexioAuth,
@@ -8,7 +10,8 @@ export const updateCompanyAction = createAction({
   classification: 'WRITE',
   displayName: 'Update Company',
   description: 'Update an existing company contact',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.contactOutputSchema,
   aiMetadata: { description: 'Updates fields on an existing company-type contact in Bexio identified by its contact id; only supplied fields change. Use to modify a known organization; pick Create Company to add a new one or Update Person for an individual. Resolve the contact id with Find Company first. Idempotent: re-sending the same values converges to the same contact state.', idempotent: true },
   props: {
     contact_id: Property.Dropdown({
@@ -432,69 +435,69 @@ export const updateCompanyAction = createAction({
       contact_type_id: 1, // 1 = company
     };
 
-    if (props['name_1']) {
+    if (isSet(props['name_1'])) {
       requestBody['name_1'] = props['name_1'];
     }
     if (props['name_2'] !== undefined) {
       requestBody['name_2'] = props['name_2'] || null;
     }
-    if (props['nr'] !== undefined && props['nr'] !== null && props['nr'] !== '') {
+    if (isSet(props['nr'])) {
       requestBody['nr'] = props['nr'];
     } else if (props['nr'] === '') {
       requestBody['nr'] = null;
     }
-    if (props['salutation_id']) {
+    if (isSet(props['salutation_id'])) {
       requestBody['salutation_id'] = props['salutation_id'];
     }
-    if (props['title_id']) {
+    if (isSet(props['title_id'])) {
       requestBody['title_id'] = props['title_id'];
     }
-    if (props['street_name']) {
+    if (isSet(props['street_name'])) {
       requestBody['street_name'] = props['street_name'];
     }
-    if (props['house_number']) {
+    if (isSet(props['house_number'])) {
       requestBody['house_number'] = props['house_number'];
     }
-    if (props['address_addition']) {
+    if (isSet(props['address_addition'])) {
       requestBody['address_addition'] = props['address_addition'];
     }
-    if (props['postcode']) {
+    if (isSet(props['postcode'])) {
       requestBody['postcode'] = props['postcode'];
     }
-    if (props['city']) {
+    if (isSet(props['city'])) {
       requestBody['city'] = props['city'];
     }
-    if (props['country_id']) {
+    if (isSet(props['country_id'])) {
       requestBody['country_id'] = props['country_id'];
     }
-    if (props['mail']) {
+    if (isSet(props['mail'])) {
       requestBody['mail'] = props['mail'];
     }
-    if (props['mail_second']) {
+    if (isSet(props['mail_second'])) {
       requestBody['mail_second'] = props['mail_second'];
     }
-    if (props['phone_fixed']) {
+    if (isSet(props['phone_fixed'])) {
       requestBody['phone_fixed'] = props['phone_fixed'];
     }
-    if (props['phone_fixed_second']) {
+    if (isSet(props['phone_fixed_second'])) {
       requestBody['phone_fixed_second'] = props['phone_fixed_second'];
     }
-    if (props['phone_mobile']) {
+    if (isSet(props['phone_mobile'])) {
       requestBody['phone_mobile'] = props['phone_mobile'];
     }
-    if (props['fax']) {
+    if (isSet(props['fax'])) {
       requestBody['fax'] = props['fax'];
     }
-    if (props['url']) {
+    if (isSet(props['url'])) {
       requestBody['url'] = props['url'];
     }
-    if (props['skype_name']) {
+    if (isSet(props['skype_name'])) {
       requestBody['skype_name'] = props['skype_name'];
     }
-    if (props['remarks']) {
+    if (isSet(props['remarks'])) {
       requestBody['remarks'] = props['remarks'];
     }
-    if (props['language_id']) {
+    if (isSet(props['language_id'])) {
       requestBody['language_id'] = props['language_id'];
     }
     if (props['contact_group_ids'] && Array.isArray(props['contact_group_ids']) && props['contact_group_ids'].length > 0) {
@@ -503,17 +506,25 @@ export const updateCompanyAction = createAction({
     if (props['contact_branch_ids'] && Array.isArray(props['contact_branch_ids']) && props['contact_branch_ids'].length > 0) {
       requestBody['contact_branch_ids'] = props['contact_branch_ids'].join(',');
     }
-    if (props['user_id']) {
+    if (isSet(props['user_id'])) {
       requestBody['user_id'] = props['user_id'];
     }
-    if (props['owner_id']) {
+    if (isSet(props['owner_id'])) {
       requestBody['owner_id'] = props['owner_id'];
     }
 
-    // Docs specify POST for updates (not PATCH)
-    const response = await client.post(`/2.0/contact/${contactId}`, requestBody);
+    const body = await bexioAi.fillRequired({
+      auth: context.auth,
+      getPath: `/2.0/contact/${contactId}`,
+      body: requestBody,
+      required: ['name_1', 'user_id', 'owner_id'],
+    });
+    const response = await client.post(`/2.0/contact/${contactId}`, body);
 
     return response;
   },
 });
 
+function isSet(value: unknown): boolean {
+  return value !== undefined && value !== null && value !== '';
+}

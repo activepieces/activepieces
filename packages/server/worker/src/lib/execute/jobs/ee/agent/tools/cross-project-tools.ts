@@ -61,7 +61,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
 
     return {
         ap_discover_action_auth: tool({
-            description: 'Check what authentication a piece needs and find available connections. Call this BEFORE ap_execute_action to determine if auth is needed.',
+            description: 'Check what authentication a piece needs and find available connections. In chat you rarely need it: ap_show_connection_picker runs this check itself, so call the card directly. Use this only when you need the auth details without showing a card.',
             inputSchema: z.object({
                 ...cardTitleFields,
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
@@ -82,7 +82,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
         }),
 
         ap_execute_action: tool({
-            description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Use ap_discover_action_auth first to check if auth is needed. The system manages connections automatically after the user selects one. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
+            description: 'Execute a piece action once or in batch. Before the FIRST call to an action you have not already inspected this conversation, call ap_get_piece_props to get the exact prop names, required fields, dropdown values, and dynamic sub-field shapes — never guess the input shape (guessing fails validation and wastes turns). Get the connection through ap_show_connection_picker, which also checks whether the piece needs one. The system manages connections automatically after the user selects one. If a call fails, fix the input from the returned error and retry ONCE; do not re-send a near-identical call repeatedly. For batch execution, provide an items array where each element is a complete input object for one invocation.',
             inputSchema: z.object({
                 ...cardTitleFields,
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-gmail"'),
