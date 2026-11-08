@@ -47,7 +47,7 @@ export function FlowBuildCard({
   const tile = <ChatCardTile kind="bits" icon={Workflow} />;
   const steps = (
     <ChatCardBody className="gap-0">
-      <ul className="flex flex-col">
+      <ul className="flex flex-col divide-y divide-gray-4 rounded-lg border border-gray-5 bg-gray-2 px-3">
         {build.steps.map((step) => (
           <BuildStepRow key={step.id} step={step} />
         ))}
@@ -139,7 +139,7 @@ function OpenInBuilderButton({
 function BuildStepRow({ step }: { step: BuildPlanStep }) {
   const status = chatStatusUtils.fromBuildStep(step.status);
   return (
-    <li className="flex min-h-9 items-center gap-3 border-t border-gray-4 py-2 text-sm">
+    <li className="flex min-h-9 items-center gap-3 py-2 text-sm">
       {status ? (
         <ChatStatusIcon status={status} />
       ) : (

@@ -65,11 +65,11 @@ function fromBatch({
   progress,
   ended = false,
 }: {
-  progress: Pick<BatchProgressData, 'done' | 'failed'>;
+  progress: Pick<BatchProgressData, 'done' | 'failed' | 'succeeded'>;
   ended?: boolean;
 }): ChatStatus {
   if (!progress.done) return ended ? 'stopped' : 'working';
-  return progress.failed > 0 ? 'failed' : 'done';
+  return progress.failed > 0 && progress.succeeded === 0 ? 'failed' : 'done';
 }
 
 function fromReceipt(status: ActionReceiptEvent['status']): ChatStatus {

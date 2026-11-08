@@ -226,6 +226,8 @@ describe('previewUtils table helpers', () => {
 describe('previewUtils.readableFileType', () => {
   it.each([
     ['text/csv', 'leads.txt', 'CSV'],
+    ['text/plain', 'invoice.pdf', 'PDF'],
+    ['text/plain', 'notes', 'TXT'],
     ['application/x-unknown', 'leads.tsv', 'TSV'],
     ['application/x-unknown', 'Report v1.final draft', null],
     ['application/x-unknown', 'blob', null],

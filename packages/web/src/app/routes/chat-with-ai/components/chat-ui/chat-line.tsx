@@ -59,12 +59,12 @@ export function ChatLine({
       {detail &&
         (typeof detail === 'string' ? (
           <TextWithTooltip tooltipMessage={detail}>
-            <span className="min-w-0 shrink truncate text-sm text-gray-11">
+            <span className="min-w-0 shrink-[9999] truncate text-sm text-gray-11">
               · {detail}
             </span>
           </TextWithTooltip>
         ) : (
-          <span className="min-w-0 shrink truncate text-sm text-gray-11">
+          <span className="min-w-0 shrink-[9999] truncate text-sm text-gray-11">
             · {detail}
           </span>
         ))}

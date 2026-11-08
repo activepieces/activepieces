@@ -21,7 +21,7 @@ export function ChatKeyValue({ rows, className }: ChatKeyValueProps) {
               {row.label}
             </dt>
           </TextWithTooltip>
-          <dd className="min-w-0 flex-1 break-words font-mono text-xs leading-5 text-gray-12">
+          <dd className="min-w-0 flex-1 break-words text-sm leading-5 text-gray-12">
             {row.value}
           </dd>
         </div>

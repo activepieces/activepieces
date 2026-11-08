@@ -6,6 +6,8 @@ import { SearchInput } from '@/components/custom/search-input';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { cn } from '@/lib/utils';
 
+import { ChatScrollFade } from '../chat-ui/chat-scroll-fade';
+
 import {
   buildDownloadAction,
   PreviewCard,
@@ -166,7 +168,7 @@ function SpreadsheetTable({
   className,
 }: SpreadsheetTableProps) {
   return (
-    <div className={cn('overflow-x-auto', className)}>
+    <ChatScrollFade axis="x" className={className}>
       <table className="w-full text-sm">
         <thead className="sticky top-0 z-10">
           <tr className="border-b border-gray-5 bg-gray-2">
@@ -232,7 +234,7 @@ function SpreadsheetTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ChatScrollFade>
   );
 }
 

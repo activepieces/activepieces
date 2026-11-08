@@ -155,6 +155,11 @@ function ChatBoxContent({
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
   });
 
+  const errorDetail =
+    error === t('The last reply did not finish. Please try again.')
+      ? null
+      : error;
+
   const setStoreConversationId = useChatStoreContext(
     (s) => s.setConversationId,
   );
@@ -484,9 +489,9 @@ function ChatBoxContent({
                         {t('Try again')}
                       </Button>
                     </div>
-                    {error && (
+                    {errorDetail && (
                       <p className="ml-5.5 text-sm text-danger-11 break-words">
-                        {error}
+                        {errorDetail}
                       </p>
                     )}
                   </motion.div>

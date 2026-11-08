@@ -239,11 +239,13 @@ function readableFileType({
   mediaType: string;
   fileName: string;
 }): string | null {
-  const subtype = mediaType.toLowerCase().split(';')[0].split('/')[1] ?? '';
-  const fromMediaType = MEDIA_SUBTYPE_LABELS[subtype.trim()];
-  if (fromMediaType) return fromMediaType;
+  const subtype = (
+    mediaType.toLowerCase().split(';')[0].split('/')[1] ?? ''
+  ).trim();
   const ext = fileExtension(fileName);
-  return /^[a-z0-9]{1,5}$/.test(ext) ? ext.toUpperCase() : null;
+  const fromExtension = /^[a-z0-9]{1,5}$/.test(ext) ? ext.toUpperCase() : null;
+  if (subtype === 'plain' && fromExtension) return fromExtension;
+  return MEDIA_SUBTYPE_LABELS[subtype] ?? fromExtension;
 }
 
 const NUMERIC_CELL = /^[-+]?[$€£¥]?\s?[-+]?\d[\d,]*(\.\d+)?\s?[%kKmMbB]?$/;

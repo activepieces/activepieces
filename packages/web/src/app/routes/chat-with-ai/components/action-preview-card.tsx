@@ -23,6 +23,7 @@ import {
   ChatCardTile,
 } from './chat-ui/chat-card';
 import { ChatKeyValue } from './chat-ui/chat-key-value';
+import { ChatScrollFade } from './chat-ui/chat-scroll-fade';
 import { ChatStatusText } from './chat-ui/chat-status';
 import { HtmlPreview } from './previews/html-preview';
 
@@ -153,7 +154,12 @@ function ExpandableValue({ param }: { param: RichInputParam }) {
             <HtmlPreview html={param.value} label={param.key} />
           </div>
         ) : (
-          <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-gray-5 bg-gray-2 px-3 py-2 text-xs text-gray-12">
+          <pre
+            className={cn(
+              'mt-2 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-gray-5 bg-gray-2 px-3 py-2 text-gray-12',
+              param.kind === 'json' ? 'font-mono text-xs' : 'font-sans text-sm',
+            )}
+          >
             {param.value}
           </pre>
         )}
@@ -176,41 +182,46 @@ function BatchTable({
   const remaining = totalCount - samples.length;
 
   return (
-    <div className="min-w-0 overflow-x-auto rounded-lg border border-gray-5">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-gray-5 bg-gray-2 text-xs text-gray-11">
-          <tr>
-            {columns.map((column) => (
-              <th key={column} className="px-3 py-2 font-normal">
-                {column}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-4 border-t border-gray-4">
-          {rows.map((params, rowIndex) => (
-            <tr key={rowIndex}>
-              {columns.map((column) => {
-                const text = cellText(params.find((p) => p.key === column));
-                return (
-                  <td key={column} className="max-w-60 px-3 py-2 text-gray-12">
-                    <TextWithTooltip tooltipMessage={text}>
-                      <p className="truncate">{text}</p>
-                    </TextWithTooltip>
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-          {remaining > 0 && (
+    <div className="min-w-0 rounded-lg border border-gray-5">
+      <ChatScrollFade axis="x" className="min-w-0 rounded-lg">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-gray-5 bg-gray-2 text-xs text-gray-11">
             <tr>
-              <td colSpan={columns.length} className="px-3 py-2 text-gray-11">
-                {t('and {count} more', { count: remaining })}
-              </td>
+              {columns.map((column) => (
+                <th key={column} className="px-3 py-2 font-normal">
+                  {column}
+                </th>
+              ))}
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-4 border-t border-gray-4">
+            {rows.map((params, rowIndex) => (
+              <tr key={rowIndex}>
+                {columns.map((column) => {
+                  const text = cellText(params.find((p) => p.key === column));
+                  return (
+                    <td
+                      key={column}
+                      className="max-w-60 px-3 py-2 text-gray-12"
+                    >
+                      <TextWithTooltip tooltipMessage={text}>
+                        <p className="truncate">{text}</p>
+                      </TextWithTooltip>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            {remaining > 0 && (
+              <tr>
+                <td colSpan={columns.length} className="px-3 py-2 text-gray-11">
+                  {t('and {count} more', { count: remaining })}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </ChatScrollFade>
     </div>
   );
 }
@@ -240,7 +251,7 @@ function classifyParam(key: string, value: unknown): InputParam {
     }
     return { kind: 'scalar', key, text: value };
   }
-  return { kind: 'text', key, value: JSON.stringify(value, null, 2) };
+  return { kind: 'json', key, value: JSON.stringify(value, null, 2) };
 }
 
 function looksLikeHtml(value: string): boolean {
@@ -249,5 +260,9 @@ function looksLikeHtml(value: string): boolean {
 }
 
 type ScalarInputParam = { kind: 'scalar'; key: string; text: string };
-type RichInputParam = { kind: 'html' | 'text'; key: string; value: string };
+type RichInputParam = {
+  kind: 'html' | 'text' | 'json';
+  key: string;
+  value: string;
+};
 type InputParam = ScalarInputParam | RichInputParam;

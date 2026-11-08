@@ -48,7 +48,7 @@ export function LiveReasoning({ text }: { text: string }) {
         className={cn(
           'ml-5.5 max-h-10 overflow-hidden text-sm leading-5 text-gray-11 break-words',
           overflowing &&
-            '[mask-image:linear-gradient(to_bottom,transparent,black_45%)]',
+            '[mask-image:linear-gradient(to_bottom,rgb(0_0_0/0.45),black_50%)]',
         )}
       >
         <motion.div ref={contentRef} style={{ y: rollY }}>

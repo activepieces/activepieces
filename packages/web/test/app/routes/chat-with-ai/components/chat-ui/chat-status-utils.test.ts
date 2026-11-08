@@ -41,18 +41,19 @@ describe('chatStatusUtils', () => {
   });
 
   it.each([
-    [{ done: false, failed: 0 }, 'working'],
-    [{ done: false, failed: 3 }, 'working'],
-    [{ done: true, failed: 0 }, 'done'],
-    [{ done: true, failed: 2 }, 'failed'],
+    [{ done: false, failed: 0, succeeded: 0 }, 'working'],
+    [{ done: false, failed: 3, succeeded: 2 }, 'working'],
+    [{ done: true, failed: 0, succeeded: 12 }, 'done'],
+    [{ done: true, failed: 2, succeeded: 10 }, 'done'],
+    [{ done: true, failed: 12, succeeded: 0 }, 'failed'],
   ] as const)('maps batch %o to %s', (progress, expected) => {
     expect(chatStatusUtils.fromBatch({ progress })).toBe(expected);
   });
 
   it.each([
-    [{ done: false, failed: 0 }, true, 'stopped'],
-    [{ done: false, failed: 0 }, false, 'working'],
-    [{ done: true, failed: 1 }, true, 'failed'],
+    [{ done: false, failed: 0, succeeded: 0 }, true, 'stopped'],
+    [{ done: false, failed: 0, succeeded: 0 }, false, 'working'],
+    [{ done: true, failed: 1, succeeded: 0 }, true, 'failed'],
   ] as const)(
     'maps batch %o with ended=%s to %s',
     (progress, ended, expected) => {

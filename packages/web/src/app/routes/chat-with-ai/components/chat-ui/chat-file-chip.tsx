@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { FileText, X } from 'lucide-react';
 import prettyBytes from 'pretty-bytes';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,15 +24,24 @@ export function ChatFileChip({
   const meta = [type, size === undefined ? undefined : prettyBytes(size)]
     .filter((part) => part !== undefined && part.length > 0)
     .join(' · ');
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const showThumbnail =
+    thumbnailUrl !== undefined && loadedUrl === thumbnailUrl;
   const body = (
     <>
-      {thumbnailUrl ? (
+      {thumbnailUrl && (
         <img
           src={thumbnailUrl}
           alt=""
-          className="size-8 shrink-0 rounded-md object-cover"
+          onLoad={() => setLoadedUrl(thumbnailUrl)}
+          onError={() => setLoadedUrl(null)}
+          className={cn(
+            'size-8 shrink-0 rounded-md object-cover',
+            !showThumbnail && 'hidden',
+          )}
         />
-      ) : (
+      )}
+      {!showThumbnail && (
         <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-2 text-gray-11">
           <FileText className="size-4" />
         </span>

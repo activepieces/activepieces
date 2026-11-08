@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
+import { ChatScrollFade } from './chat-scroll-fade';
+
 export function ChatOption({
   mode,
   label,
@@ -58,12 +60,17 @@ export function ChatOption({
       onKeyUp={onKeyDown ? preventSpaceClick : undefined}
       onFocus={onFocus}
       className={cn(
-        'flex min-w-0 flex-1 items-center gap-2.5 self-stretch rounded-lg px-2.5 text-left text-sm text-gray-12 outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50 disabled:opacity-50',
+        'flex min-w-0 flex-1 items-center gap-2.5 self-stretch rounded-lg px-2.5 text-left text-sm text-gray-12 outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50',
+        action ? 'disabled:text-gray-11' : 'disabled:opacity-50',
         description ? 'py-2' : 'py-1.5',
         action ? 'focus-visible:bg-transparent' : cn(rowClass, focusBg),
       )}
     >
-      <OptionMark mode={mode} selected={selected} />
+      <OptionMark
+        mode={mode}
+        selected={selected}
+        dimmed={Boolean(action && disabled)}
+      />
       {leading && <span className="flex shrink-0 items-center">{leading}</span>}
       <span className="flex min-w-0 flex-1 flex-col">
         <TruncatedText
@@ -124,6 +131,7 @@ export function ChatOptionList({
   const [query, setQuery] = useState('');
   const showSearch = items.length > SEARCH_THRESHOLD;
   const visible = showSearch ? filterItems({ items, query }) : items;
+  const hasDescriptions = items.some((item) => item.description);
   const roving = useOptionRoving({
     items: visible,
     selected,
@@ -178,12 +186,17 @@ export function ChatOptionList({
           </Button>
         </div>
       ) : (
-        <div
+        <ChatScrollFade
+          axis="y"
           role={CONTAINER_ROLE_BY_MODE[mode]}
           aria-label={ariaLabel}
           className={cn(
             'flex flex-col gap-0.5',
-            showSearch && 'max-h-68.5 overflow-y-auto',
+            showSearch
+              ? hasDescriptions
+                ? 'max-h-62'
+                : 'max-h-57'
+              : 'overflow-y-visible',
           )}
         >
           {visible.map((item, index) => {
@@ -219,7 +232,7 @@ export function ChatOptionList({
             );
             return option;
           })}
-        </div>
+        </ChatScrollFade>
       )}
       {writeYourOwn && (
         <ChatWriteYourOwn
@@ -392,9 +405,11 @@ function TruncatedText({
 function OptionMark({
   mode,
   selected,
+  dimmed,
 }: {
   mode: ChatOptionMode;
   selected: boolean;
+  dimmed: boolean;
 }) {
   if (mode === 'action') return null;
   if (mode === 'radio') {
@@ -403,6 +418,7 @@ function OptionMark({
         aria-hidden
         className={cn(
           'size-4 shrink-0 rounded-full',
+          dimmed && 'opacity-50',
           selected
             ? 'border-[5px] border-accent-9'
             : 'border-[1.5px] border-gray-7',
@@ -415,6 +431,7 @@ function OptionMark({
       aria-hidden
       className={cn(
         'flex size-4 shrink-0 items-center justify-center rounded',
+        dimmed && 'opacity-50',
         selected
           ? 'bg-accent-9 text-on-accent'
           : 'border-[1.5px] border-gray-7',

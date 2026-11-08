@@ -4,7 +4,6 @@ import { Zap } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 import {
@@ -24,24 +23,17 @@ export function BatchProgressCard({
   ended?: boolean;
 }) {
   const status = chatStatusUtils.fromBatch({ progress, ended });
-  const percentage =
-    progress.total > 0
-      ? Math.round((progress.completed / progress.total) * 100)
-      : 0;
   const failures = progress.results.filter((result) => !result.success);
-  const meta = [
-    t('{done} of {total}', {
-      done: progress.completed,
-      total: progress.total,
-    }),
-    ...(progress.failed > 0
-      ? [
-          t('{count, plural, =1 {1 failed} other {# failed}}', {
-            count: progress.failed,
-          }),
-        ]
-      : []),
-  ].join(' · ');
+  const countText = t('{done} of {total}', {
+    done: progress.done ? progress.succeeded : progress.completed,
+    total: progress.total,
+  });
+  const failedText =
+    progress.failed > 0
+      ? t('{count, plural, =1 {1 failed} other {# failed}}', {
+          count: progress.failed,
+        })
+      : null;
 
   return (
     <ChatCard>
@@ -49,24 +41,58 @@ export function BatchProgressCard({
         defaultOpen={!(progress.done && progress.failed === 0)}
         tile={<ChatCardTile kind="bits" icon={Zap} />}
         title={progress.label}
-        meta={meta}
+        meta={
+          <>
+            {countText}
+            {failedText && (
+              <>
+                {' · '}
+                <span className="text-danger-11">{failedText}</span>
+              </>
+            )}
+          </>
+        }
+        metaText={failedText ? `${countText} · ${failedText}` : countText}
         trailing={<ChatStatusText status={status} />}
       >
         <ChatCardBody>
-          <Progress
-            value={percentage}
-            className="h-1.5 bg-gray-4"
-            indicatorClassName={cn(
-              'transition-all duration-500',
-              BAR_CLASS[status],
-            )}
-          />
+          <BatchBar progress={progress} status={status} />
           {progress.done && failures.length > 0 && (
             <FailureList failures={failures} />
           )}
         </ChatCardBody>
       </ChatCardFold>
     </ChatCard>
+  );
+}
+
+function BatchBar({
+  progress,
+  status,
+}: {
+  progress: BatchProgressData;
+  status: ChatStatus;
+}) {
+  const share = (count: number) =>
+    progress.total > 0 ? `${(count / progress.total) * 100}%` : '0%';
+  const succeeded = Math.max(progress.completed - progress.failed, 0);
+  return (
+    <div
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={progress.total}
+      aria-valuenow={progress.completed}
+      className="flex h-1.5 w-full overflow-hidden rounded-full bg-gray-4"
+    >
+      <div
+        className={cn('h-full transition-all duration-500', BAR_CLASS[status])}
+        style={{ width: share(succeeded) }}
+      />
+      <div
+        className="h-full bg-danger-9 transition-all duration-500"
+        style={{ width: share(progress.failed) }}
+      />
+    </div>
   );
 }
 
