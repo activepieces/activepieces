@@ -10,6 +10,7 @@ import {
   Check,
   CircleAlert,
   CircleCheck,
+  CircleHelp,
   Circle,
   CircleX,
   Clock,
@@ -43,6 +44,7 @@ import {
   Minus,
   Moon,
   Package,
+  Palette,
   Pause,
   Pencil,
   Phone,
@@ -83,6 +85,7 @@ import {
   Zap,
 } from 'lucide-react';
 
+import { MultiQuestion } from '@/features/chat/lib/chat-store-types';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { cn } from '@/lib/utils';
 
@@ -173,7 +176,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   wifi: Wifi,
 };
 
-export function DynamicLucideIcon({
+function DynamicLucideIcon({
   name,
   className,
 }: {
@@ -187,14 +190,19 @@ export function DynamicLucideIcon({
 export function OptionIcon({
   piece,
   icon,
+  label,
   selected,
   variant,
 }: {
   piece?: string;
   icon?: string;
+  label?: string;
   selected?: boolean;
-  variant: 'grid' | 'list';
+  variant: 'grid' | 'list' | 'plain';
 }) {
+  if (variant === 'plain') {
+    return <PlainOptionIcon piece={piece} icon={icon} label={label} />;
+  }
   if (piece) {
     return (
       <PieceIconWithPieceName
@@ -224,3 +232,45 @@ export function OptionIcon({
     </span>
   );
 }
+
+function PlainOptionIcon({
+  piece,
+  icon,
+  label,
+}: {
+  piece?: string;
+  icon?: string;
+  label?: string;
+}) {
+  if (piece) {
+    return (
+      <PieceIconWithPieceName
+        pieceName={normalizePieceName(piece)}
+        size="xs"
+        border={false}
+        showTooltip={false}
+      />
+    );
+  }
+  if (icon) {
+    return <DynamicLucideIcon name={icon} className="size-5 text-gray-11" />;
+  }
+  return (
+    <span
+      aria-hidden
+      className="flex size-5 shrink-0 items-center justify-center rounded bg-gray-4 text-xs font-medium text-gray-11"
+    >
+      {label?.trim().charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
+export const QUESTION_TYPE_ICON: Record<MultiQuestion['type'], LucideIcon> = {
+  choice: CircleHelp,
+  multi_choice: CircleHelp,
+  date: Calendar,
+  date_range: Calendar,
+  time: Clock,
+  slider: SlidersHorizontal,
+  color: Palette,
+};

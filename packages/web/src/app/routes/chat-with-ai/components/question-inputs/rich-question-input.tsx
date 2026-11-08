@@ -1,30 +1,149 @@
-import { format } from 'date-fns';
+import { addDays, format, isSameDay, nextMonday, startOfDay } from 'date-fns';
 import { t } from 'i18next';
-import { ArrowRight, Check, ChevronRight } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
-import { DateRange } from 'react-day-picker';
 
-import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
 import {
   MultiQuestion,
   RichOption,
 } from '@/features/chat/lib/chat-store-types';
-import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { cn } from '@/lib/utils';
 
-import { normalizePieceName } from '../../lib/message-parsers';
+import { ChatOptionList } from '../chat-ui/chat-option';
 
-import { DynamicLucideIcon } from './question-icon';
+import { OptionIcon } from './question-icon';
+import { questionMetaUtils } from './question-meta';
+
+export function RichQuestionInput({
+  question,
+  value,
+  onChange,
+  onSubmit,
+}: RichQuestionInputProps) {
+  useEffect(() => {
+    if (value !== undefined) return;
+    if (question.type === 'slider') {
+      const initial = questionMetaUtils.sliderStart(question);
+      onChange({
+        display: questionMetaUtils.sliderDisplay({
+          value: initial,
+          unit: question.unit,
+        }),
+        value: initial,
+      });
+    }
+    if (question.type === 'color') {
+      const initial = question.presets?.[0] ?? accentHex();
+      if (initial) onChange({ display: initial, value: initial });
+    }
+  }, [question, value, onChange]);
+
+  switch (question.type) {
+    case 'multi_choice': {
+      const selected = Array.isArray(value)
+        ? value.filter((v): v is string => typeof v === 'string')
+        : [];
+      return (
+        <MultiChoiceInput
+          question={question.question}
+          options={question.options}
+          value={selected}
+          onChange={(next) =>
+            onChange({ display: next.join(', '), value: next })
+          }
+        />
+      );
+    }
+    case 'date':
+      return (
+        <DateInput
+          value={value instanceof Date ? value : undefined}
+          onChange={(date) =>
+            onChange({
+              display: date ? format(date, 'MMM d, yyyy') : '',
+              value: date,
+            })
+          }
+        />
+      );
+    case 'date_range': {
+      const range = questionMetaUtils.isDateRange(value) ? value : undefined;
+      return (
+        <Calendar
+          mode="range"
+          selected={range}
+          onSelect={(next) =>
+            onChange({
+              display: questionMetaUtils.rangeDisplay(next),
+              value: next,
+            })
+          }
+          className="w-fit p-0"
+        />
+      );
+    }
+    case 'time':
+      return (
+        <TimeInput
+          question={question.question}
+          value={typeof value === 'string' ? value : ''}
+          onChange={(next) => onChange({ display: next, value: next })}
+          onSubmit={onSubmit}
+        />
+      );
+    case 'slider': {
+      const current =
+        typeof value === 'number'
+          ? value
+          : questionMetaUtils.sliderStart(question);
+      return (
+        <Slider
+          aria-label={question.question}
+          min={question.min}
+          max={question.max}
+          step={question.step ?? 1}
+          value={[current]}
+          onValueChange={(next) =>
+            onChange({
+              display: questionMetaUtils.sliderDisplay({
+                value: next[0],
+                unit: question.unit,
+              }),
+              value: next[0],
+            })
+          }
+          className="py-2"
+        />
+      );
+    }
+    case 'color':
+      return (
+        <ColorInput
+          value={typeof value === 'string' ? value : ''}
+          presets={question.presets}
+          onChange={(next) => onChange({ display: next, value: next })}
+        />
+      );
+    case 'choice':
+      return null;
+  }
+}
 
 function MultiChoiceInput({
+  question,
   options,
   value,
   onChange,
 }: {
+  question: string;
   options: RichOption[];
   value: string[];
   onChange: (next: string[]) => void;
@@ -37,96 +156,115 @@ function MultiChoiceInput({
     );
   }
   return (
-    <div className="flex flex-col gap-1.5">
-      {options.map((option) => {
-        const selected = value.includes(option.label);
-        return (
-          <button
-            key={option.label}
-            type="button"
-            onClick={() => toggle(option.label)}
-            aria-pressed={selected}
-            className={cn(
-              'group flex items-center gap-3 rounded-xl border border-gray-6/60 px-3 py-2 text-start text-sm transition-colors hover:bg-gray-3',
-              selected && 'border-accent-7 bg-accent-3',
-            )}
-          >
-            <span
+    <ChatOptionList
+      mode="check"
+      ariaLabel={question}
+      numbered
+      searchPlaceholder={t('Search options')}
+      items={options.map((option) => ({
+        id: option.label,
+        label: option.label,
+        description: option.description,
+        leading:
+          option.piece || option.icon ? (
+            <OptionIcon
+              piece={option.piece}
+              icon={option.icon}
+              variant="plain"
+            />
+          ) : undefined,
+      }))}
+      selected={value}
+      onPick={toggle}
+    />
+  );
+}
+
+function DateInput({
+  value,
+  onChange,
+}: {
+  value: Date | undefined;
+  onChange: (next: Date | undefined) => void;
+}) {
+  const [month, setMonth] = useState<Date>(value ?? new Date());
+  const today = startOfDay(new Date());
+  const quickPicks = [
+    { label: t('Today'), date: today },
+    { label: t('Tomorrow'), date: addDays(today, 1) },
+    { label: t('Next Monday'), date: nextMonday(today) },
+  ];
+
+  function pick(date: Date) {
+    setMonth(date);
+    onChange(date);
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Calendar
+        mode="single"
+        selected={value}
+        onSelect={onChange}
+        month={month}
+        onMonthChange={setMonth}
+        className="w-fit p-0"
+      />
+      <div className="flex flex-wrap gap-2">
+        {quickPicks.map((quickPick) => {
+          const active =
+            value !== undefined && isSameDay(value, quickPick.date);
+          return (
+            <button
+              key={quickPick.label}
+              type="button"
+              aria-pressed={active}
+              onClick={() => pick(quickPick.date)}
               className={cn(
-                'flex size-5 shrink-0 items-center justify-center rounded-md border border-gray-6 transition-colors',
-                selected && 'border-accent-9 bg-accent-9 text-on-accent',
+                'h-8 rounded-full border px-3 text-sm transition-colors',
+                active
+                  ? 'border-accent-7 bg-accent-3 text-accent-11'
+                  : 'border-gray-6 text-gray-12 hover:bg-gray-4',
               )}
             >
-              {selected && <Check className="size-3.5" />}
-            </span>
-            {option.piece ? (
-              <PieceIconWithPieceName
-                pieceName={normalizePieceName(option.piece)}
-                size="sm"
-                border={false}
-                showTooltip={false}
-              />
-            ) : (
-              option.icon && (
-                <DynamicLucideIcon
-                  name={option.icon}
-                  className="size-4 text-gray-11"
-                />
-              )
-            )}
-            <span className="flex-1 min-w-0 leading-snug">
-              <span className="block truncate">{option.label}</span>
-              {option.description && (
-                <span className="block truncate text-xs text-gray-11">
-                  {option.description}
-                </span>
-              )}
-            </span>
-          </button>
-        );
-      })}
+              {quickPick.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function SliderInput({
-  min,
-  max,
-  step,
-  unit,
+function TimeInput({
+  question,
   value,
   onChange,
+  onSubmit,
 }: {
-  min: number;
-  max: number;
-  step?: number;
-  unit?: string;
-  value: number;
-  onChange: (next: number) => void;
+  question: string;
+  value: string;
+  onChange: (next: string) => void;
+  onSubmit: () => void;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    inputRef.current?.focus({ preventScroll: true });
+  }, []);
   return (
-    <div className="px-1">
-      <div className="mb-4 flex items-baseline justify-between">
-        <span className="text-2xl font-semibold tabular-nums text-gray-12">
-          {value}
-          {unit ? (
-            <span className="ms-1 text-base text-gray-11">{unit}</span>
-          ) : null}
-        </span>
-        <span className="text-xs tabular-nums text-gray-11">
-          {min}
-          {' – '}
-          {max}
-        </span>
-      </div>
-      <Slider
-        min={min}
-        max={max}
-        step={step ?? 1}
-        value={[value]}
-        onValueChange={(v) => onChange(v[0])}
-      />
-    </div>
+    <Input
+      ref={inputRef}
+      type="time"
+      aria-label={question}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+        event.preventDefault();
+        onSubmit();
+      }}
+      className="w-40"
+    />
   );
 }
 
@@ -139,239 +277,69 @@ function ColorInput({
   presets?: string[];
   onChange: (next: string) => void;
 }) {
+  const hasPresets = presets !== undefined && presets.length > 0;
   return (
-    <div className="flex flex-col gap-3">
-      {presets && presets.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-3">
+      {hasPresets && (
+        <div className="flex flex-wrap items-center gap-2.5">
           {presets.map((hex) => (
             <button
               key={hex}
               type="button"
               aria-label={hex}
+              aria-pressed={value.toLowerCase() === hex.toLowerCase()}
               onClick={() => onChange(hex)}
               className={cn(
-                'size-8 rounded-full border border-gray-6/60 transition-transform hover:scale-110',
+                'size-7 rounded-full border border-gray-6 transition-shadow',
                 value.toLowerCase() === hex.toLowerCase() &&
-                  'ring-2 ring-accent-9 ring-offset-2 ring-offset-gray-1',
+                  'ring-2 ring-accent-9 ring-offset-2 ring-offset-panel',
               )}
               style={{ backgroundColor: hex }}
             />
           ))}
+          <span aria-hidden className="h-6 w-px bg-gray-6" />
         </div>
       )}
-      <div className="flex items-center gap-3">
-        <HexColorPicker
-          color={value}
-          onChange={onChange}
-          style={{ width: '100%', height: 140 }}
-        />
-      </div>
-      <div className="flex items-center gap-2">
-        <span
-          aria-hidden
-          className="size-7 shrink-0 rounded-md border border-gray-6/60"
-          style={{ backgroundColor: value }}
-        />
+      <div className="flex h-8 items-center gap-2 rounded-lg border border-gray-6 px-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-label={t('Open the colour picker')}
+              className="size-4 shrink-0 rounded border border-gray-6"
+              style={{ backgroundColor: value || undefined }}
+            />
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-auto p-3">
+            <HexColorPicker color={value} onChange={onChange} />
+          </PopoverContent>
+        </Popover>
         <Input
+          aria-label={t('Hex colour')}
           value={value}
           maxLength={7}
-          onChange={(e) => onChange(e.target.value)}
-          size="sm"
-          className="w-28 font-mono text-sm uppercase"
+          onChange={(event) => onChange(event.target.value)}
+          className="h-auto w-20 border-0 bg-transparent p-0 font-mono text-sm uppercase shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
         />
       </div>
     </div>
   );
 }
 
-export function RichQuestionInput({
-  question,
-  fieldId,
-  displayValue,
-  value,
-  onChange,
-  onSubmit,
-  onSkip,
-  isLastStep,
-}: {
+function accentHex(): string | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue('--accent-9')
+    .trim();
+  return HEX_PATTERN.test(raw) ? raw : null;
+}
+
+const HEX_PATTERN = /^#[0-9a-f]{6}$/i;
+
+type RichQuestionInputProps = {
   question: MultiQuestion;
-  fieldId: string;
-  displayValue: string;
   value: unknown;
   onChange: (next: { display: string; value: unknown }) => void;
   onSubmit: () => void;
-  onSkip: () => void;
-  isLastStep: boolean;
-}) {
-  const hasAnswer = displayValue.trim().length > 0;
-
-  useEffect(() => {
-    if (value !== undefined) return;
-    if (question.type === 'slider') {
-      const initial =
-        question.defaultValue ?? Math.round((question.min + question.max) / 2);
-      onChange({
-        display: formatSliderDisplay(initial, question.unit),
-        value: initial,
-      });
-    }
-    if (question.type === 'color') {
-      const initial = question.presets?.[0] ?? '#8142E3';
-      onChange({ display: initial, value: initial });
-    }
-  }, [question, value, onChange]);
-
-  return (
-    <div className="flex flex-col gap-4">
-      {renderControl({ question, fieldId, displayValue, value, onChange })}
-
-      <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={onSkip}>
-          {t('Skip')}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          className="gap-1.5"
-          disabled={!hasAnswer}
-          onClick={onSubmit}
-        >
-          {isLastStep ? t('Send') : t('Next')}
-          {isLastStep ? (
-            <ArrowRight className="size-4" />
-          ) : (
-            <ChevronRight className="size-4" />
-          )}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function formatSliderDisplay(value: number, unit?: string): string {
-  return unit ? `${value} ${unit}` : `${value}`;
-}
-
-function renderControl({
-  question,
-  fieldId,
-  displayValue,
-  value,
-  onChange,
-}: {
-  question: MultiQuestion;
-  fieldId: string;
-  displayValue: string;
-  value: unknown;
-  onChange: (next: { display: string; value: unknown }) => void;
-}) {
-  switch (question.type) {
-    case 'multi_choice': {
-      const selected = Array.isArray(value)
-        ? value.filter((v): v is string => typeof v === 'string')
-        : [];
-      return (
-        <MultiChoiceInput
-          options={question.options}
-          value={selected}
-          onChange={(next) =>
-            onChange({ display: next.join(', '), value: next })
-          }
-        />
-      );
-    }
-    case 'date': {
-      const selected = value instanceof Date ? value : undefined;
-      return (
-        <div className="flex justify-center">
-          <Calendar
-            mode="single"
-            selected={selected}
-            onSelect={(date) =>
-              onChange({
-                display: date ? format(date, 'MMM d, yyyy') : '',
-                value: date,
-              })
-            }
-          />
-        </div>
-      );
-    }
-    case 'date_range': {
-      const range = isDateRange(value) ? value : undefined;
-      return (
-        <div className="flex justify-center">
-          <Calendar
-            mode="range"
-            selected={range}
-            onSelect={(next) =>
-              onChange({
-                display: formatRange(next),
-                value: next,
-              })
-            }
-          />
-        </div>
-      );
-    }
-    case 'time': {
-      const current = typeof value === 'string' ? value : '';
-      return (
-        <Input
-          id={fieldId}
-          type="time"
-          value={current}
-          onChange={(e) =>
-            onChange({ display: e.target.value, value: e.target.value })
-          }
-          className="w-40"
-        />
-      );
-    }
-    case 'slider': {
-      const current =
-        typeof value === 'number'
-          ? value
-          : question.defaultValue ??
-            Math.round((question.min + question.max) / 2);
-      return (
-        <SliderInput
-          min={question.min}
-          max={question.max}
-          step={question.step}
-          unit={question.unit}
-          value={current}
-          onChange={(next) =>
-            onChange({
-              display: formatSliderDisplay(next, question.unit),
-              value: next,
-            })
-          }
-        />
-      );
-    }
-    case 'color': {
-      const current =
-        typeof value === 'string' && value ? value : displayValue || '#8142E3';
-      return (
-        <ColorInput
-          value={current}
-          presets={question.presets}
-          onChange={(next) => onChange({ display: next, value: next })}
-        />
-      );
-    }
-    default:
-      return null;
-  }
-}
-
-function isDateRange(value: unknown): value is DateRange {
-  return !!value && typeof value === 'object' && 'from' in value;
-}
-
-function formatRange(range: DateRange | undefined): string {
-  if (!range?.from) return '';
-  if (!range.to) return format(range.from, 'MMM d, yyyy');
-  return `${format(range.from, 'MMM d')} – ${format(range.to, 'MMM d, yyyy')}`;
-}
+};

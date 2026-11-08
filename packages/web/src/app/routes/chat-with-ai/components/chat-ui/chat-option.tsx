@@ -305,6 +305,7 @@ export function ChatWriteYourOwn({
   onSubmit,
   placeholder,
   mode = 'radio',
+  restingLabel,
   shape = 'row',
   inputRef,
 }: ChatWriteYourOwnProps) {
@@ -322,21 +323,35 @@ export function ChatWriteYourOwn({
       )}
     >
       <DashedMark mode={mode} />
-      <Input
-        ref={inputRef}
-        id={fieldId}
-        aria-label={placeholder}
-        value={value}
-        placeholder={placeholder}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
-          if (!active) return;
-          event.preventDefault();
-          onSubmit();
-        }}
-        className="h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-gray-9 focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
-      />
+      <span className="relative flex min-w-0 flex-1">
+        <Input
+          ref={inputRef}
+          id={fieldId}
+          aria-label={placeholder}
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+            if (!active) return;
+            event.preventDefault();
+            onSubmit();
+          }}
+          className={cn(
+            'peer h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-gray-9 focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent',
+            restingLabel &&
+              'placeholder:text-transparent focus:placeholder:text-gray-9',
+          )}
+        />
+        {restingLabel && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 hidden items-center truncate text-sm text-gray-9 peer-placeholder-shown:flex peer-focus:hidden"
+          >
+            {restingLabel}
+          </span>
+        )}
+      </span>
     </label>
   );
 }
@@ -655,6 +670,7 @@ type ChatWriteYourOwnProps = {
   onSubmit: () => void;
   placeholder: string;
   mode?: 'radio' | 'check';
+  restingLabel?: string;
   shape?: 'row' | 'tile';
   inputRef?: Ref<HTMLInputElement>;
 };

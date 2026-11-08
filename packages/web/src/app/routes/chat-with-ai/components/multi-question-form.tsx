@@ -1,40 +1,31 @@
 import { t } from 'i18next';
-import {
-  ArrowRight,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from 'react';
+import { Check } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 
 import { MultiQuestion } from '../lib/message-parsers';
 
-import { InteractiveCardShell } from './interactive-card-shell';
-import { OptionIcon } from './question-inputs/question-icon';
+import {
+  ChatCard,
+  ChatCardActions,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from './chat-ui/chat-card';
+import {
+  ChatOptionGrid,
+  ChatOptionItem,
+  ChatOptionList,
+} from './chat-ui/chat-option';
+import { ChatStatusText } from './chat-ui/chat-status';
+import {
+  OptionIcon,
+  QUESTION_TYPE_ICON,
+} from './question-inputs/question-icon';
+import { questionMetaUtils } from './question-inputs/question-meta';
 import { RichQuestionInput } from './question-inputs/rich-question-input';
-
-const MAX_ICON_GRID_LABEL = 24;
-
-function isChoiceQuestion(
-  q: MultiQuestion,
-): q is Extract<MultiQuestion, { type: 'choice' }> {
-  return q.type === 'choice';
-}
 
 export function MultiQuestionForm({
   questions,
@@ -49,25 +40,9 @@ export function MultiQuestionForm({
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [answerValues, setAnswerValues] = useState<Record<number, unknown>>({});
   const [submitted, setSubmitted] = useState(false);
-  const [focusedRow, setFocusedRow] = useState<number | 'custom' | null>(null);
-  const [hoveredRow, setHoveredRow] = useState<number | 'custom' | null>(null);
-  const fieldId = useId();
-  const firstOptionRef = useRef<HTMLDivElement | null>(null);
-  const lastOptionRef = useRef<HTMLDivElement | null>(null);
-  const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const customAnswerInputRef = useRef<HTMLInputElement>(null);
-  const lastFocusedElRef = useRef<HTMLElement | null>(null);
 
   const isLastStep = currentStep === questions.length - 1;
   const currentAnswer = answers[currentStep]?.trim() ?? '';
-
-  useEffect(() => {
-    const target = firstOptionRef.current;
-    if (target && lastFocusedElRef.current !== target) {
-      target.focus({ preventScroll: true });
-      lastFocusedElRef.current = target;
-    }
-  }, [currentStep]);
 
   function setAnswer(value: string) {
     setAnswers((prev) => ({ ...prev, [currentStep]: value }));
@@ -80,14 +55,6 @@ export function MultiQuestionForm({
     },
     [currentStep],
   );
-
-  function setFirstOptionEl(el: HTMLDivElement | null) {
-    firstOptionRef.current = el;
-    if (el && lastFocusedElRef.current !== el) {
-      el.focus({ preventScroll: true });
-      lastFocusedElRef.current = el;
-    }
-  }
 
   function buildRecap(finalAnswers: Record<number, string>): string[] {
     return questions
@@ -145,397 +112,221 @@ export function MultiQuestionForm({
 
   if (submitted) {
     return (
-      <motion.div
-        className="my-3 flex items-center gap-2 text-sm text-gray-11"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
+      <div className="my-3 flex items-center gap-2 text-sm text-gray-11 motion-safe:animate-chat-enter">
         <Check className="size-4 text-success-11" />
         <span>{t('Answers submitted')}</span>
-      </motion.div>
+      </div>
     );
   }
 
   const q = questions[currentStep];
   if (!q) return null;
 
+  const value = answerValues[currentStep];
+  const meta = [
+    questions.length > 1
+      ? t('Question {current} of {total}', {
+          current: currentStep + 1,
+          total: questions.length,
+        })
+      : null,
+    questionMetaUtils.hint({ question: q, value }),
+  ]
+    .filter((part): part is string => !!part)
+    .join(' · ');
+  const summary = questionMetaUtils.footerSummary({ question: q, value });
+  const pickedCount =
+    q.type === 'multi_choice' && Array.isArray(value) ? value.length : 0;
+
   return (
-    <InteractiveCardShell
-      onDismiss={() => onDismiss?.()}
-      title={
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`q-${currentStep}`}
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -12 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Label
-              htmlFor={fieldId}
-              className="block text-base font-semibold leading-snug text-gray-12"
-            >
-              {q.question}
-            </Label>
-          </motion.div>
-        </AnimatePresence>
-      }
-      headerExtra={
-        <>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setCurrentStep((s) => s - 1)}
-            disabled={currentStep === 0}
-            aria-label={t('Back')}
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <span className="text-xs tabular-nums px-1">
-            {t('{current} of {total}', {
-              current: currentStep + 1,
-              total: questions.length,
-            })}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => handleNext()}
-            disabled={!currentAnswer}
-            aria-label={t('Next')}
-          >
-            <ChevronRight className="size-4" />
-          </Button>
-        </>
-      }
-    >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`opts-${currentStep}`}
-          initial={{ opacity: 0, x: 12 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -12 }}
-          transition={{ duration: 0.2 }}
+    <ChatCard turn>
+      <ChatCardHeader
+        tile={<ChatCardTile kind="bits" icon={QUESTION_TYPE_ICON[q.type]} />}
+        title={q.question}
+        meta={meta}
+        trailing={<ChatStatusText status="needs-you" />}
+      />
+      <ChatCardBody key={currentStep}>
+        {q.type === 'choice' ? (
+          <ChoiceBody
+            question={q}
+            answer={answers[currentStep]}
+            setAnswer={setAnswer}
+            onPick={handleNext}
+          />
+        ) : (
+          <RichQuestionInput
+            question={q}
+            value={value}
+            onChange={setRichAnswer}
+            onSubmit={() => handleNext()}
+          />
+        )}
+      </ChatCardBody>
+      <ChatCardActions>
+        <Button
+          type="button"
+          size="sm"
+          disabled={!currentAnswer}
+          onClick={() => handleNext()}
         >
-          {isChoiceQuestion(q) ? (
-            <ChoiceBody
-              question={q}
-              fieldId={fieldId}
-              answer={answers[currentStep]}
-              focusedRow={focusedRow}
-              hoveredRow={hoveredRow}
-              setFocusedRow={setFocusedRow}
-              setHoveredRow={setHoveredRow}
-              setAnswer={setAnswer}
-              onPick={handleNext}
-              onSkip={handleSkip}
-              firstOptionRef={firstOptionRef}
-              lastOptionRef={lastOptionRef}
-              optionRefs={optionRefs}
-              customAnswerInputRef={customAnswerInputRef}
-              setFirstOptionEl={setFirstOptionEl}
-            />
-          ) : (
-            <RichQuestionInput
-              question={q}
-              fieldId={fieldId}
-              displayValue={answers[currentStep] ?? ''}
-              value={answerValues[currentStep]}
-              onChange={setRichAnswer}
-              onSubmit={() => handleNext()}
-              onSkip={handleSkip}
-              isLastStep={isLastStep}
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </InteractiveCardShell>
+          {nextLabel({ isLastStep, pickedCount })}
+        </Button>
+        {currentStep > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentStep((s) => s - 1)}
+          >
+            {t('Back')}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-gray-11"
+          onClick={handleSkip}
+        >
+          {t('Skip')}
+        </Button>
+        {summary && (
+          <span className="ml-auto text-xs tabular-nums text-gray-11">
+            {summary}
+          </span>
+        )}
+      </ChatCardActions>
+    </ChatCard>
   );
 }
 
 function ChoiceBody({
   question,
-  fieldId,
   answer,
-  focusedRow,
-  hoveredRow,
-  setFocusedRow,
-  setHoveredRow,
   setAnswer,
   onPick,
-  onSkip,
-  firstOptionRef,
-  lastOptionRef,
-  optionRefs,
-  customAnswerInputRef,
-  setFirstOptionEl,
 }: {
   question: Extract<MultiQuestion, { type: 'choice' }>;
-  fieldId: string;
   answer: string | undefined;
-  focusedRow: number | 'custom' | null;
-  hoveredRow: number | 'custom' | null;
-  setFocusedRow: React.Dispatch<React.SetStateAction<number | 'custom' | null>>;
-  setHoveredRow: React.Dispatch<React.SetStateAction<number | 'custom' | null>>;
   setAnswer: (value: string) => void;
   onPick: (value: string) => void;
-  onSkip: () => void;
-  firstOptionRef: React.MutableRefObject<HTMLDivElement | null>;
-  lastOptionRef: React.MutableRefObject<HTMLDivElement | null>;
-  optionRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
-  customAnswerInputRef: React.RefObject<HTMLInputElement | null>;
-  setFirstOptionEl: (el: HTMLDivElement | null) => void;
 }) {
   const options = question.options;
   const allowCustom = question.allowCustom !== false;
-  const isCustomTextActive =
-    allowCustom && !!answer && !options.some((o) => o.label === answer);
+  const isOption = options.some((o) => o.label === answer);
+  const customValue = allowCustom && answer && !isOption ? answer : '';
 
-  const selectedIndex = options.findIndex((o) => answer === o.label);
-  const lastOptionIndex = options.length - 1;
-  const isOptionActive = (i: number) =>
-    focusedRow === i || hoveredRow === i || selectedIndex === i;
-  const isCustomActive =
-    focusedRow === 'custom' || hoveredRow === 'custom' || isCustomTextActive;
-  const isMidSepHidden = (i: number) =>
-    isOptionActive(i) || isOptionActive(i - 1);
-  const isBottomSepHidden = isOptionActive(lastOptionIndex) || isCustomActive;
+  if (options.length === 0) {
+    return allowCustom ? (
+      <FreeTextInput
+        question={question.question}
+        value={customValue}
+        onChange={setAnswer}
+        onSubmit={() => onPick(customValue.trim())}
+      />
+    ) : null;
+  }
 
-  const useIconGrid =
+  const useGrid =
     options.length >= 2 &&
+    options.length <= MAX_GRID_OPTIONS &&
+    options.some((o) => !!o.icon || !!o.piece) &&
     options.every(
-      (o) => (!!o.icon || !!o.piece) && o.label.length <= MAX_ICON_GRID_LABEL,
+      (o) => !o.description && o.label.length <= MAX_ICON_GRID_LABEL,
     );
+  const items: ChatOptionItem[] = options.map((option) => ({
+    id: option.label,
+    label: option.label,
+    description: option.description,
+    leading:
+      useGrid || option.piece || option.icon ? (
+        <OptionIcon
+          piece={option.piece}
+          icon={option.icon}
+          label={option.label}
+          variant="plain"
+        />
+      ) : undefined,
+  }));
+  const selected = answer && isOption ? [answer] : [];
+  const writeYourOwn = allowCustom
+    ? {
+        value: customValue,
+        onChange: setAnswer,
+        onSubmit: () => onPick(customValue.trim()),
+        placeholder: t('Type your answer...'),
+        restingLabel: t('Something else…'),
+      }
+    : undefined;
 
-  return (
-    <div>
-      {useIconGrid ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {options.map((option) => {
-            const selected = answer === option.label;
-            return (
-              <button
-                key={option.label}
-                type="button"
-                onClick={() => onPick(option.label)}
-                aria-pressed={selected}
-                className={cn(
-                  'flex flex-col items-center gap-2 rounded-xl border border-gray-6/60 px-3 py-4 text-center text-sm transition-colors hover:bg-gray-3',
-                  selected && 'border-accent-7 bg-accent-3 hover:bg-accent-4',
-                )}
-              >
-                <OptionIcon
-                  piece={option.piece}
-                  icon={option.icon}
-                  selected={selected}
-                  variant="grid"
-                />
-                <span className="leading-snug">{option.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div role="menu" aria-label={question.question} className="gap-0">
-          {options.map((option, i) => {
-            const selected = answer === option.label;
-            const isFirst = i === 0;
-            const isLast = i === options.length - 1;
-            return (
-              <Fragment key={option.label}>
-                {i > 0 && (
-                  <div className="px-3">
-                    <Separator
-                      className={cn(
-                        'bg-gray-6/60 transition-opacity duration-150',
-                        isMidSepHidden(i) && 'opacity-0',
-                      )}
-                    />
-                  </div>
-                )}
-                <div
-                  role="menuitemradio"
-                  tabIndex={
-                    focusedRow === i || (focusedRow === null && isFirst)
-                      ? 0
-                      : -1
-                  }
-                  aria-checked={selected}
-                  ref={(el) => {
-                    optionRefs.current[i] = el;
-                    if (isFirst) setFirstOptionEl(el);
-                    if (isLast) lastOptionRef.current = el;
-                  }}
-                  onClick={() => onPick(option.label)}
-                  onMouseEnter={() => setHoveredRow(i)}
-                  onMouseLeave={() =>
-                    setHoveredRow((prev) => (prev === i ? null : prev))
-                  }
-                  onFocus={() => setFocusedRow(i)}
-                  onBlur={() =>
-                    setFocusedRow((prev) => (prev === i ? null : prev))
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      onPick(option.label);
-                      return;
-                    }
-                    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                      e.preventDefault();
-                      return;
-                    }
-                    if (e.key === 'ArrowDown') {
-                      e.preventDefault();
-                      if (isLast) {
-                        customAnswerInputRef.current?.focus();
-                      } else {
-                        setFocusedRow(i + 1);
-                        optionRefs.current[i + 1]?.focus();
-                      }
-                      return;
-                    }
-                    if (e.key === 'ArrowUp') {
-                      e.preventDefault();
-                      if (isFirst) {
-                        customAnswerInputRef.current?.focus();
-                      } else {
-                        setFocusedRow(i - 1);
-                        optionRefs.current[i - 1]?.focus();
-                      }
-                      return;
-                    }
-                  }}
-                  className={cn(
-                    'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-gray-3 outline-none',
-                    focusedRow === i &&
-                      !selected &&
-                      'bg-gray-3 hover:bg-gray-4',
-                    selected && 'bg-gray-4 hover:bg-gray-5',
-                  )}
-                >
-                  {option.piece || option.icon ? (
-                    <OptionIcon
-                      piece={option.piece}
-                      icon={option.icon}
-                      selected={selected || focusedRow === i}
-                      variant="list"
-                    />
-                  ) : (
-                    <span
-                      aria-hidden
-                      className={cn(
-                        'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors',
-                        focusedRow === i && 'bg-gray-12 text-gray-1',
-                        selected && 'bg-gray-12 text-gray-1',
-                      )}
-                    >
-                      {i + 1}
-                    </span>
-                  )}
-                  <span className="flex-1 min-w-0 leading-snug">
-                    <span className="block">{option.label}</span>
-                    {option.description && (
-                      <span className="block text-xs text-gray-11">
-                        {option.description}
-                      </span>
-                    )}
-                  </span>
-                </div>
-              </Fragment>
-            );
-          })}
-        </div>
-      )}
-
-      {allowCustom && (
-        <>
-          <div className="px-3">
-            <Separator
-              className={cn(
-                'bg-gray-6/60 transition-opacity duration-150',
-                isBottomSepHidden && 'opacity-0',
-              )}
-            />
-          </div>
-
-          <label
-            htmlFor={fieldId}
-            onMouseEnter={() => setHoveredRow('custom')}
-            onMouseLeave={() =>
-              setHoveredRow((prev) => (prev === 'custom' ? null : prev))
-            }
-            onFocus={() => setFocusedRow('custom')}
-            onBlur={() =>
-              setFocusedRow((prev) => (prev === 'custom' ? null : prev))
-            }
-            className={cn(
-              'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-text transition-colors hover:bg-gray-3 focus-within:bg-gray-3',
-              isCustomTextActive && 'bg-gray-3 hover:bg-gray-4',
-            )}
-          >
-            <span
-              aria-hidden
-              className={cn(
-                'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-gray-11 transition-colors group-focus-within:bg-gray-12 group-focus-within:text-gray-1',
-                isCustomTextActive && 'bg-gray-12 text-gray-1',
-              )}
-            >
-              <Pencil className="size-3.5" />
-            </span>
-            <Input
-              ref={customAnswerInputRef}
-              id={fieldId}
-              className="h-auto flex-1 min-w-0 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 focus-visible:border-0 dark:bg-transparent"
-              placeholder={t('Type your answer...')}
-              value={isCustomTextActive ? answer : ''}
-              onFocus={() => {
-                if (options.some((o) => o.label === (answer ?? ''))) {
-                  setAnswer('');
-                }
-              }}
-              onChange={(e) => setAnswer(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowUp' && lastOptionRef.current) {
-                  e.preventDefault();
-                  lastOptionRef.current.focus();
-                  return;
-                }
-                if (e.key === 'ArrowDown' && firstOptionRef.current) {
-                  e.preventDefault();
-                  firstOptionRef.current.focus();
-                  return;
-                }
-                if (
-                  e.key === 'Enter' &&
-                  !e.nativeEvent.isComposing &&
-                  (answer ?? '').trim()
-                ) {
-                  e.preventDefault();
-                  onPick((answer ?? '').trim());
-                }
-              }}
-            />
-            <Button
-              type="button"
-              variant={isCustomTextActive ? 'default' : 'outline'}
-              size={isCustomTextActive ? 'icon-xs' : 'xs'}
-              onClick={() =>
-                isCustomTextActive ? onPick((answer ?? '').trim()) : onSkip()
-              }
-              aria-label={isCustomTextActive ? t('Send') : t('Skip')}
-            >
-              {isCustomTextActive ? (
-                <ArrowRight className="size-4" />
-              ) : (
-                t('Skip')
-              )}
-            </Button>
-          </label>
-        </>
-      )}
-    </div>
+  return useGrid ? (
+    <ChatOptionGrid
+      mode="radio"
+      items={items}
+      selected={selected}
+      onPick={onPick}
+      ariaLabel={question.question}
+      writeYourOwn={writeYourOwn}
+    />
+  ) : (
+    <ChatOptionList
+      mode="radio"
+      items={items}
+      selected={selected}
+      onPick={onPick}
+      ariaLabel={question.question}
+      writeYourOwn={writeYourOwn}
+      numbered
+      searchPlaceholder={t('Search options')}
+    />
   );
+}
+
+function FreeTextInput({
+  question,
+  value,
+  onChange,
+  onSubmit,
+}: {
+  question: string;
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    inputRef.current?.focus({ preventScroll: true });
+  }, []);
+  return (
+    <Input
+      ref={inputRef}
+      aria-label={question}
+      placeholder={t('Type your answer...')}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+        if (!value.trim()) return;
+        event.preventDefault();
+        onSubmit();
+      }}
+    />
+  );
+}
+
+function nextLabel({
+  isLastStep,
+  pickedCount,
+}: {
+  isLastStep: boolean;
+  pickedCount: number;
+}): string {
+  if (isLastStep) return t('Send');
+  if (pickedCount > 0) {
+    return t('Next · {count} picked', { count: pickedCount });
+  }
+  return t('Next');
 }
 
 function withoutStep<T>({
@@ -549,3 +340,6 @@ function withoutStep<T>({
     Object.entries(record).filter(([key]) => Number(key) !== step),
   );
 }
+
+const MAX_ICON_GRID_LABEL = 24;
+const MAX_GRID_OPTIONS = 9;
