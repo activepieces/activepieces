@@ -188,5 +188,14 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "Page": "Pagina",
+  "Output": "Uitvoer",
+  "Pages": "Pages",
+  "What to extract": "What to extract",
+  "Site": "Website",
+  "Limits": "Limits",
+  "Webhook": "Webhook",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

@@ -1,17 +1,38 @@
-import { ApFile } from '@activepieces/pieces-framework';
+import type { AppConnectionType } from '@activepieces/pieces-framework';
 
-// Common Types
-export interface AuthenticationParams {
-  apiKey: string;
-}
+export type ParseurAuthValue = {
+  type: AppConnectionType.SECRET_TEXT;
+  secret_text: string;
+};
 
-type TemplateSample = {
+export type ParseurWebhookEvent =
+  | 'document.processed'
+  | 'document.processed.flattened'
+  | 'document.template_needed'
+  | 'document.export_failed'
+  | 'table.processed';
+
+export type ParseurWebhook = {
+  id: number;
+  event: ParseurWebhookEvent;
+  target: string;
+  name: string;
+  headers: Record<string, string>;
+  category: 'CUSTOM' | 'ZAPIER' | 'MAKE' | 'FLOW' | 'N8N';
+  parser_field_set: string[];
+};
+
+export type ParseurWebhookInformation = {
+  webhookId: number;
+};
+
+type ParseurTemplateSample = {
   template_id: number;
   name: string;
   sample_count: number;
 };
 
-type OcrPage = {
+type ParseurOcrPage = {
   image: {
     url: string;
     width: number;
@@ -22,22 +43,27 @@ type OcrPage = {
   included_in_range: boolean;
 };
 
-type Webhook = {
-  id: number;
-  event:
-    | 'document.processed'
-    | 'document.processed.flattened'
-    | 'document.template_needed'
-    | 'document.export_failed'
-    | 'table.processed';
-  target: string;
-  name: string;
-  headers: Record<string, string>;
-  category: 'CUSTOM' | 'ZAPIER' | 'MAKE' | 'FLOW' | 'N8N';
-  parser_field_set: string[];
-};
+type ParseurDocumentStatus =
+  | 'INCOMING'
+  | 'ANALYZING'
+  | 'PROGRESS'
+  | 'PARSEDOK'
+  | 'PARSEDKO'
+  | 'SKIPPED'
+  | 'SPLIT'
+  | 'EXPORTKO'
+  | 'TRANSKO'
+  | 'INVALID';
 
-interface BaseParser {
+type ParseurDocumentStatusSource =
+  | 'AI'
+  | 'AUTO'
+  | 'CSV'
+  | 'METADATA'
+  | 'TEMPLATE'
+  | 'TRANSFORM';
+
+type ParseurBaseParser = {
   account_uuid: string;
   ai_engine: string;
   attachments_only: boolean;
@@ -110,31 +136,27 @@ interface BaseParser {
   credit_count_field: boolean;
   mailbox_id_field: boolean;
   parsing_engine_field: boolean;
-}
+};
 
-interface Parser extends BaseParser {
+type ParseurParser = ParseurBaseParser & {
   split_keywords: null;
   split_page: null;
   split_page_range_set: string[];
   available_webhook_set: string[];
   webhook_set: string[];
   table_set: string[];
-}
+};
 
-interface ParserDiet extends BaseParser {
+type ParseurParserDiet = ParseurBaseParser & {
   split_keywords: { keyword: string; is_before: boolean }[] | null;
   split_page: number | null;
   split_page_range_set: { start_index: number; end_index: number }[];
-  template_count: number;
-  webhook_count: number;
-  attachments_field: boolean;
-  original_document_field: boolean;
-  available_webhook_set: Webhook[];
-  webhook_set: Webhook[];
+  available_webhook_set: ParseurWebhook[];
+  webhook_set: ParseurWebhook[];
   table_set: { id: string; name: string }[];
-}
+};
 
-interface Document {
+type ParseurDocumentSummary = {
   attached_to: null;
   id: number;
   match_master_template: boolean;
@@ -159,9 +181,9 @@ interface Document {
   json_download_url: string;
   csv_download_url: string;
   xls_download_url: string;
-}
+};
 
-interface DocumentDiet {
+type ParseurDocumentDiet = {
   attached_to: number | null;
   id: number;
   name: string;
@@ -171,19 +193,9 @@ interface DocumentDiet {
   parser: number;
   processed: string;
   received: string;
-  sample_set: TemplateSample[];
-  status_source: 'AI' | 'AUTO' | 'CSV' | 'METADATA' | 'TEMPLATE' | 'TRANSFORM';
-  status:
-    | 'INCOMING'
-    | 'ANALYZING'
-    | 'PROGRESS'
-    | 'PARSEDOK'
-    | 'PARSEDKO'
-    | 'SKIPPED'
-    | 'SPLIT'
-    | 'EXPORTKO'
-    | 'TRANSKO'
-    | 'INVALID';
+  sample_set: ParseurTemplateSample[];
+  status_source: ParseurDocumentStatusSource;
+  status: ParseurDocumentStatus;
   template: number | null;
   credits_used: number;
   conventional_credits_used: number;
@@ -197,44 +209,9 @@ interface DocumentDiet {
   csv_download_url: string;
   xls_download_url: string;
   result: string | null;
-}
+};
 
-export interface WebhookInformation {
-  webhookId: number;
-}
-// API Types
-export interface ListDocumentsParams extends AuthenticationParams {
-  parserId: number;
-  page?: number;
-  page_size?: number;
-  search?: string;
-  ordering?:
-    | 'name'
-    | '-name'
-    | 'created'
-    | '-created'
-    | 'processed'
-    | '-processed'
-    | 'status'
-    | '-status';
-  received_after?: string; // yyyy-mm-dd
-  received_before?: string; // yyyy-mm-dd
-  tz?: string; // Example: "Asia/Singapore"
-  with_result?: boolean;
-}
-
-export interface ListDocumentsResponse {
-  count: number;
-  current: number;
-  total: number;
-  results: (DocumentDiet | Document)[];
-}
-
-export interface GetParsedDocumentByIdParams extends AuthenticationParams {
-  documentId: string;
-}
-
-export interface GetParsedDocumentByIdResponse {
+export type ParseurDocument = {
   attached_to: number | null;
   id: number;
   match_master_template: boolean;
@@ -244,19 +221,9 @@ export interface GetParsedDocumentByIdResponse {
   parser: number;
   processed: string;
   received: string;
-  sample_set: TemplateSample[];
-  status_source: 'AI' | 'AUTO' | 'CSV' | 'METADATA' | 'TEMPLATE' | 'TRANSFORM';
-  status:
-    | 'INCOMING'
-    | 'ANALYZING'
-    | 'PROGRESS'
-    | 'PARSEDOK'
-    | 'PARSEDKO'
-    | 'SKIPPED'
-    | 'SPLIT'
-    | 'EXPORTKO'
-    | 'TRANSKO'
-    | 'INVALID';
+  sample_set: ParseurTemplateSample[];
+  status_source: ParseurDocumentStatusSource;
+  status: ParseurDocumentStatus;
   template: number | null;
   credits_used: number;
   conventional_credits_used: number;
@@ -272,10 +239,50 @@ export interface GetParsedDocumentByIdResponse {
   content: string;
   next_id: number | null;
   previous_id: number | null;
-  ocr_page_set: OcrPage[];
-}
+  ocr_page_set: ParseurOcrPage[];
+};
 
-export interface CreateDocumentParams extends AuthenticationParams {
+export type ParseurListDocumentsResponse = {
+  count: number;
+  current: number;
+  total: number;
+  results: (ParseurDocumentDiet | ParseurDocumentSummary)[];
+};
+
+export type ParseurListMailboxesResponse = {
+  count: number;
+  current: number;
+  total: number;
+  results: (ParseurParserDiet | ParseurParser)[];
+};
+
+export type ParseurCreateDocumentResponse = {
+  message: string;
+};
+
+export type ParseurCreateDocumentFromFileResponse = {
+  message: string;
+  attachments: { name: string; DocumentID: string }[];
+};
+
+export type ParseurNotificationResponse = {
+  notification_set: {
+    info: string[];
+  };
+};
+
+export type ParseurListQuery = Record<string, string | undefined>;
+
+export type ParseurRecord = Record<string, unknown>;
+
+export type ParseurPage<T> = {
+  count: number;
+  current: number;
+  total: number;
+  results: T[];
+};
+
+export type ParseurEmailDocument = {
   subject: string;
   from: string;
   recipient: string;
@@ -284,99 +291,5 @@ export interface CreateDocumentParams extends AuthenticationParams {
   bcc?: string;
   body_html?: string;
   body_plain?: string;
-  message_headers?: Record<string, string>;
-}
-
-export interface CreateDocumentResponse {
-  message: string;
-}
-
-export interface CreateDocumentFromFileParams extends AuthenticationParams {
-  parserId: number;
-  file: ApFile;
-}
-
-export interface CreateDocumentFromFileResponse {
-  message: string;
-  attachments: { name: string; DocumentID: string }[];
-}
-
-export interface ReprocessDocumentParams extends AuthenticationParams {
-  documentId: string;
-}
-
-export interface ReprocessDocumentResponse {
-  notification_set: {
-    info: string[];
-  };
-}
-
-export interface ListMailboxesParams extends AuthenticationParams {
-  page?: number;
-  page_size?: number;
-  search?: string;
-  ordering?:
-    | 'name'
-    | '-name'
-    | 'document_count'
-    | '-document_count'
-    | 'template_count'
-    | '-template_count'
-    | 'PARSEDOK_count'
-    | '-PARSEDOK_count'
-    | 'PARSEDKO_count'
-    | '-PARSEDKO_count'
-    | 'QUOTAEXC_count'
-    | '-QUOTAEXC_count'
-    | 'EXPORTKO_count'
-    | '-EXPORTKO_count'
-    | 'TRANSKO_count'
-    | '-TRANSKO_count';
-}
-
-export interface ListMailboxesResponse {
-  count: number;
-  current: number;
-  total: number;
-  results: (ParserDiet | Parser)[];
-}
-
-export interface CreateWebhookParams extends AuthenticationParams {
-  event:
-    | 'document.processed'
-    | 'document.processed.flattened'
-    | 'document.template_needed'
-    | 'document.export_failed'
-    | 'table.processed';
-  target: string;
-  name?: string;
-  headers?: Record<string, string>;
-  category: 'CUSTOM' | 'ZAPIER' | 'MAKE' | 'FLOW' | 'N8N';
-  parser_field_set?: string[];
-}
-
-export interface CreateWebhookResponse {
-  id: number;
-  event:
-    | 'document.processed'
-    | 'document.processed.flattened'
-    | 'document.template_needed'
-    | 'document.export_failed'
-    | 'table.processed';
-  target: string;
-  name: string;
-  headers: Record<string, string>;
-  category: 'CUSTOM' | 'ZAPIER' | 'MAKE' | 'FLOW' | 'N8N';
-  parser_field_set: string[];
-}
-
-export interface EnableWebhookParams extends AuthenticationParams {
-  webhookId: number;
-  mailboxId: number;
-}
-
-export interface DeleteWebhookParams extends AuthenticationParams {
-  webhookId: number;
+  message_headers?: unknown;
 };
-
-
