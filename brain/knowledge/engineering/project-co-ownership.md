@@ -111,7 +111,9 @@ Two projects, ending 2026-12-04. For each concern, record where it first appears
 - Other projects also use Ready for Development. The status means "Co-Owner approved" only on a project with a Co-Owner label.
 - The gate fails closed: an agent that cannot read the project, its labels or its status stops.
 - The ruleset accepts any code-owner approval, so GitHub does not enforce the Co-Owner. The pilot counts merges without one.
-- GitHub round-robin adds a second reviewer even when the Co-Owner is already requested, unless the team's code review assignment has "Count existing requests" on.
+- GitHub round-robin picks a reviewer the moment the PR opens, before any Co-Owner request can exist, so "Count existing requests" never prevents it. The `Linear ticket check` workflow removes that pick: the first user request within 5 seconds after a team request, unless it is the Co-Owner. An author's own `--reviewer` request lands after the pick, so it stays. GitHub has already notified the pick, so the removal does not stop that email.
+- The workflow removes nothing when the Co-Owner is the author, when the Co-Owner is not in every requested team (the ruleset needs a code owner of each team), or when someone requested the pick again later.
+- The workflow cannot read team membership, so `TEAM_MEMBERS` in `tools/scripts/request-co-owner-review.ts` copies it. When a team changes, update the list from `gh api orgs/activepieces/teams/<team>/members`. A missing login fails safe: the pick stays. Delete the removal code when the pilot ends.
 - A Co-Owner without write access is skipped as a code owner, so the PR cannot merge on that approval.
 - An agent reads a Discord post only through the `read` tool of the Discord MCP server, when its engineer has connected it (see *discord-questions*). A window result or a concern reaches Linear only through `/decide` or the `decide` tool.
 - A concern in a private message does not count. Only the Discord post of the approach note, or the PR, is on the record.
