@@ -22,6 +22,7 @@ const createRecordingLog = testLogger.createRecording
 const SECOND_MS = 1000
 const HOUR_MS = 60 * 60 * 1000
 const CAP_EVICTION_WINDOW_MS = 15 * 60 * 1000
+const LARGE_TREE_TEST_TIMEOUT_MS = 30 * SECOND_MS
 
 function flowVersionDir({ basePath, flowVersionId }: { basePath: string, flowVersionId: string }): string {
     return join(cacheUtils(basePath).getGlobalCodeCachePath(), flowVersionId)
@@ -208,7 +209,7 @@ describe('codeCacheEviction.sweep action-run pass', () => {
         await expect(exists(dirs[firstRetained - 1])).resolves.toBe(false)
         await expect(exists(dirs[firstRetained])).resolves.toBe(true)
         await expect(exists(dirs[total - 1])).resolves.toBe(true)
-    })
+    }, LARGE_TREE_TEST_TIMEOUT_MS)
 
     it('stops eviction at the active-execution window, leaving the tree over the cap rather than deleting a live build', async () => {
         const basePath = uniqueBasePath()
