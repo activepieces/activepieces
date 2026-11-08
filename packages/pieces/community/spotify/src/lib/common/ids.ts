@@ -117,4 +117,6 @@ export const spotifyIds = {
 
 export const SPOTIFY_KINDS = ['track', 'album', 'artist', 'playlist', 'show', 'episode', 'audiobook', 'user'] as const;
 
+export const SPOTIFY_LIBRARY_WRITE_KINDS: readonly SpotifyKind[] = SPOTIFY_KINDS.filter((kind) => kind !== 'artist');
+
 export type SpotifyKind = (typeof SPOTIFY_KINDS)[number];
