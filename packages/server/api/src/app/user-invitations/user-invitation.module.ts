@@ -1,5 +1,5 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, RoleType, SeekPage } from '@activepieces/core-utils'
+import { ApplicationEventName, InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationEvent, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -12,7 +12,9 @@ import { distributedLock } from '../database/redis-connections'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { projectRoleService } from '../ee/projects/project-role/project-role.service'
+import { projectRoleRepo, projectRoleService } from '../ee/projects/project-role/project-role.service'
+import { applicationEvents, MetaInformation } from '../helper/application-events'
+import { networkUtils } from '../helper/network-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
@@ -75,6 +77,10 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             invitationExpirySeconds: INVITATION_EXPIRY_SECONDS,
             resent: status === InvitationStatus.PENDING && userInvitationRecord.status === InvitationStatus.ACCEPTED,
         })
+        applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation, userId: actingUserId(request) }), {
+            action: ApplicationEventName.USER_INVITATION_SENT,
+            data: await auditedInvitationData(invitation),
+        })
         rejectedPromiseHandler(trackInviteSent({
             principal: request.principal,
             platformId,
@@ -112,21 +118,37 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
         const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(request.body.invitationToken)
-        const { registered } = await userInvitationsService(request.log).accept({
+        const { registered, firstAcceptance } = await userInvitationsService(request.log).accept({
             invitationId: invitation.id,
             platformId: invitation.platformId,
         })
+        if (firstAcceptance) {
+            applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation, userId: null }), {
+                action: ApplicationEventName.USER_INVITATION_ACCEPTED,
+                data: await auditedInvitationData(invitation),
+            })
+        }
         await landNextSignInOnInvitedPlatform({ email: invitation.email, platformId: invitation.platformId, log: request.log })
         await reply.status(StatusCodes.OK).send({ ...invitation, registered })
     })
 
     app.post('/:id/remove-project', RemoveProjectFromInvitationRequestParams, async (request, reply) => {
         await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+        const invitation = await userInvitationsService(request.log).getOneOrThrow({
+            id: request.params.id,
+            platformId: request.principal.platform.id,
+        })
         const result = await userInvitationsService(request.log).removeProjectFromPlatformInvite({
             id: request.params.id,
             platformId: request.principal.platform.id,
             projectId: request.body.projectId,
         })
+        if (result.revoked) {
+            applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation, userId: actingUserId(request) }), {
+                action: ApplicationEventName.USER_INVITATION_DELETED,
+                data: await auditedInvitationData(invitation),
+            })
+        }
         await reply.status(StatusCodes.OK).send(result)
     })
 
@@ -148,6 +170,10 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         await userInvitationsService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,
+        })
+        applicationEvents(request.log).sendUserEvent(invitationEventSource({ request, invitation, userId: actingUserId(request) }), {
+            action: ApplicationEventName.USER_INVITATION_DELETED,
+            data: await auditedInvitationData(invitation),
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
@@ -270,6 +296,37 @@ async function trackInviteSent({ principal, platformId, event, log }: TrackInvit
     await telemetry(log).trackPlatform({ platformId, event })
 }
 
+async function auditedInvitationData(invitation: UserInvitation): Promise<UserInvitationEvent['data']> {
+    const projectRole = isNil(invitation.projectRoleId) ? null : await projectRoleRepo().findOneBy([
+        { id: invitation.projectRoleId, platformId: invitation.platformId },
+        { id: invitation.projectRoleId, type: RoleType.DEFAULT },
+    ])
+    return {
+        invitation: {
+            id: invitation.id,
+            email: invitation.email,
+            type: invitation.type,
+            platformRole: invitation.platformRole,
+            projectId: invitation.projectId,
+        },
+        projectRole: isNil(projectRole) ? null : { id: projectRole.id, name: projectRole.name },
+    }
+}
+
+function invitationEventSource({ request, invitation, userId }: InvitationEventSourceParams): MetaInformation {
+    return {
+        platformId: invitation.platformId,
+        projectId: invitation.projectId ?? undefined,
+        userId,
+        ip: networkUtils.clientIp(request),
+        fallBackToProjectOwner: false,
+    }
+}
+
+function actingUserId(request: FastifyRequest): string | null {
+    return request.principal.type === PrincipalType.USER ? request.principal.id : null
+}
+
 const ListUserInvitationsRequestParams = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE], {
@@ -370,4 +427,10 @@ type TrackInviteSentParams = {
     platformId: string
     event: TelemetryEvent
     log: FastifyBaseLogger
+}
+
+type InvitationEventSourceParams = {
+    request: FastifyRequest
+    invitation: UserInvitation
+    userId: string | null
 }
