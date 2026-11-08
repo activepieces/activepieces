@@ -42,12 +42,13 @@ describe('memory import nudge', () => {
         expect(await nudgeEligible(ctx)).toBe(false)
     })
 
-    it('is not offered when the user already has memory', async () => {
+    it('is not offered or claimable when the user already has memory', async () => {
         const ctx = await chatContext()
         await ctx.post('/v1/agents/memory', { memories: { next: ['Works in sales'], base: [] } })
         await startChat(ctx)
 
         expect(await nudgeEligible(ctx)).toBe(false)
+        expect(await claimNudge(ctx)).toBe(false)
     })
 })
 

@@ -368,6 +368,9 @@ async function memoryImportNudgeEligible({ platformId, userId }: { platformId: s
 }
 
 async function claimMemoryImportNudge({ platformId, userId }: { platformId: string, userId: string }): Promise<boolean> {
+    if (!await memoryImportNudgeEligible({ platformId, userId })) {
+        return false
+    }
     const repo = userMemoryRepo()
     await repo.createQueryBuilder()
         .insert()
