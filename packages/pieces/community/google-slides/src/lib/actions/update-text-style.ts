@@ -25,14 +25,10 @@ export const updateTextStyle = createAction({
     row: slidesProps.cellRowProp(),
     column: slidesProps.cellColumnProp(),
     ...slidesProps.textRangeProps(),
-    bold: Property.Checkbox({ displayName: 'Bold', description: 'true or false; leave unset to keep.', required: false }),
-    italic: Property.Checkbox({ displayName: 'Italic', description: 'true or false; leave unset to keep.', required: false }),
-    underline: Property.Checkbox({ displayName: 'Underline', description: 'true or false; leave unset to keep.', required: false }),
-    strikethrough: Property.Checkbox({
-      displayName: 'Strikethrough',
-      description: 'true or false; leave unset to keep.',
-      required: false,
-    }),
+    bold: triStateStyleProp('Bold'),
+    italic: triStateStyleProp('Italic'),
+    underline: triStateStyleProp('Underline'),
+    strikethrough: triStateStyleProp('Strikethrough'),
     font_family: Property.ShortText({
       displayName: 'Font Family',
       description: 'Google Fonts family name, e.g. "Roboto" or "Montserrat".',
@@ -110,4 +106,20 @@ function readLink(value: unknown): string | null | undefined {
     throw new Error(`Link URL must start with http:// or https://, got "${text}".`);
   }
   return text;
+}
+
+function triStateStyleProp(displayName: string) {
+  return Property.StaticDropdown<string>({
+    displayName,
+    description: `"yes" to turn ${displayName.toLowerCase()} on, "no" to turn it off; leave empty to keep it unchanged.`,
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        { label: 'Leave unchanged', value: '' },
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
+      ],
+    },
+  });
 }

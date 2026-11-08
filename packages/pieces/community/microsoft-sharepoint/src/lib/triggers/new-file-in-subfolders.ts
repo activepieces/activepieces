@@ -11,12 +11,14 @@ import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
+import { newFileInSubfoldersOutputSchema } from '../output-schemas';
 
 const clientState = 'activepieces_sharepoint_subfolder_trigger';
 
 export const newFileInSubfoldersTrigger = createTrigger({
   auth: microsoftSharePointAuth,
   name: 'new_file_in_subfolders',
+  outputSchema: newFileInSubfoldersOutputSchema,
   classification: 'READ',
   displayName: 'New File in Subfolders',
   description: 'Fires when a new file is added anywhere in the first-level subfolders of a folder. Note: This trigger will not monitor subfolders created after the flow is activated.',

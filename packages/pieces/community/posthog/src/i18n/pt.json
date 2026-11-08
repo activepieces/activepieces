@@ -212,6 +212,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Event": "Novo evento",
   "Triggers when a new event is captured in PostHog": "Aciona quando um novo evento é capturado no PostHog",
   "Event Name Filter": "Filtro de Nome do Evento",

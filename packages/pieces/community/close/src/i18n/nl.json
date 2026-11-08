@@ -229,6 +229,7 @@
   "nextCursor from the previous page.": "nextCursor from the previous page.",
   "Words to find, e.g. company name or email.": "Words to find, e.g. company name or email.",
   "emailacct_... from Get Current User.": "emailacct_... from Get Current User.",
+  "Pass an empty string to clear it.": "Pass an empty string to clear it.",
   "Replaces all emails on the contact.": "Replaces all emails on the contact.",
   "Replaces all phones on the contact.": "Replaces all phones on the contact.",
   "Replaces all URLs on the contact.": "Replaces all URLs on the contact.",
@@ -276,11 +277,12 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Aanvraag",
+  "Data to send": "Gegevens om te verzenden",
   "New Lead Created": "Nieuwe Lead aangemaakt",
   "New Contact Added": "Nieuwe contactpersoon toegevoegd",
   "New Opportunity Added": "Nieuwe kans toegevoegd",
   "Triggers when a new lead is created.": "Triggert wanneer een nieuwe lead wordt gemaakt.",
   "Triggers when a new contact is created.": "Triggert wanneer een nieuw contact wordt aangemaakt.",
-  "Triggers when a new opportunity is created.": "Triggert wanneer een nieuwe kans wordt gecreëerd.",
-  "Pass an empty string to clear it.": "Pass an empty string to clear it."
+  "Triggers when a new opportunity is created.": "Triggert wanneer een nieuwe kans wordt gecreëerd."
 }
