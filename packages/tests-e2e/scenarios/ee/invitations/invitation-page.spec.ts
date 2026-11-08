@@ -15,7 +15,7 @@ test.describe('Invitation page', () => {
     expect(await e2eApi.readInvitationStatus({ request, link: invitation.link })).toBe('PENDING');
 
     await invitationPage.accept();
-    await page.waitForURL((url) => url.pathname === '/sign-up' && url.searchParams.get('email') === email);
+    await page.waitForURL((url) => url.pathname === '/sign-in' && url.searchParams.get('email') === email);
     expect(await e2eApi.readInvitationStatus({ request, link: invitation.link })).toBe('ACCEPTED');
   });
 
