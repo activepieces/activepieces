@@ -4,8 +4,8 @@ import {
   AlertCircle,
   Check,
   Circle,
-  ExternalLink,
   Loader2,
+  PanelLeft,
   Rocket,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -15,9 +15,14 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
+import {
+  ResourceRef,
+  resourceRegistry,
+} from '@/features/chat/lib/resources/registry';
 import { authenticationSession } from '@/lib/authentication-session';
-import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
+
+import { onResourceLinkClick } from './changes-summary';
 
 const CARD_BASE =
   'bg-[color-mix(in_oklab,var(--swatch-6-mark)_5%,color-mix(in_oklab,var(--panel)_75%,var(--gray-5)))]';
@@ -123,16 +128,21 @@ function OpenInBuilderButton({
   projectId: string;
   flowId: string;
 }) {
-  const openNewWindow = useNewWindow();
+  const resource: ResourceRef = { kind: 'flow', id: flowId, projectId };
   return (
     <Button
+      asChild
       size="sm"
       variant="ghost"
       className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
-      onClick={() => openNewWindow(`/projects/${projectId}/flows/${flowId}`)}
     >
-      <ExternalLink className="h-3.5 w-3.5" />
-      {t('Open in builder')}
+      <a
+        href={resourceRegistry.route(resource)}
+        onClick={(event) => onResourceLinkClick({ event, resource })}
+      >
+        <PanelLeft className="h-3.5 w-3.5" />
+        {t('Open in builder')}
+      </a>
     </Button>
   );
 }

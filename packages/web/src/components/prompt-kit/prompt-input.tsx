@@ -133,8 +133,6 @@ function PromptInputTextarea({
     [disableAutosize, maxHeight],
   );
 
-  // Stable, so React doesn't detach and re-attach it on every render: each
-  // attach measures the textarea, which forces a layout of the whole page.
   const handleRef = useCallback(
     (el: HTMLTextAreaElement | null) => {
       textareaRef.current = el;

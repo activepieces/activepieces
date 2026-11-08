@@ -9,10 +9,6 @@ import {
 
 import type { DemoConversation } from './demo-backend';
 
-// A long list of made-up chats for the history view: every date group, untitled
-// chats, very long titles, markdown in titles, one still streaming and one that
-// failed. They live in memory only; opening one shows a short sample transcript.
-
 const PREFIX = 'demo-hist-';
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -145,7 +141,6 @@ function materialize(id: string): DemoConversation | null {
   const conv = list().find((c) => c.id === id);
   if (!conv) return null;
   return {
-    // Opening a fake chat settles it; nothing is really streaming.
     conv: { ...conv, status: AgentConversationStatus.IDLE },
     scenarioId: null,
     messages: transcript(conv.title ?? null),

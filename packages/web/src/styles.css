@@ -193,6 +193,7 @@
 @theme {
   --ease-*: initial;
   --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
+  --ease-move: cubic-bezier(0.22, 1, 0.36, 1);
 
   --transition-duration-1500: 1500ms;
 
@@ -488,13 +489,6 @@
 
   &::-webkit-scrollbar {
     display: none;
-  }
-}
-
-@layer base {
-  :root {
-    --ap-move-wide: 320ms;
-    --ap-move-back: 260ms;
   }
 }
 
@@ -824,7 +818,6 @@
     --glow-primary: 0 12px 40px -12px color-mix(in oklab, var(--accent-9), transparent 65%);
     --ai-mark: var(--accent-10);
     --ai-glow: color-mix(in oklab, var(--accent-10) 20%, transparent);
-    --ai-edge: inset 2px 0 0 0 var(--ai-mark);
     --edge: 0 0 0 1px var(--gray-4);
     --panel-shadow:
       0 0 0 1px color-mix(in oklab, var(--gray-12), transparent 92%),

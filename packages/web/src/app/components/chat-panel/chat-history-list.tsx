@@ -98,7 +98,7 @@ export function ChatHistoryList({
           conversationTitle(c).toLowerCase().includes(needle),
         )
       : conversations;
-    return groupByRecency(matches);
+    return groupByRecency({ conversations: matches });
   }, [conversations, query]);
   const flat = useMemo(() => groups.flatMap((g) => g.items), [groups]);
 
@@ -139,7 +139,7 @@ export function ChatHistoryList({
       !isFetchingNextPage &&
       !isFetchNextPageError
     ) {
-      void fetchNextPage();
+      fetchNextPage().catch(() => undefined);
     }
   }, [
     searching,
@@ -158,7 +158,7 @@ export function ChatHistoryList({
       !isFetchingNextPage &&
       el.scrollTop + el.clientHeight >= el.scrollHeight - LOAD_MORE_OFFSET_PX
     ) {
-      void fetchNextPage();
+      fetchNextPage().catch(() => undefined);
     }
   };
 
@@ -350,7 +350,9 @@ export function ChatHistoryList({
                         focusSearch();
                         const next = title?.trim();
                         if (next && next !== conversation.title) {
-                          void rename(conversation.id, next);
+                          rename({ id: conversation.id, title: next }).catch(
+                            () => undefined,
+                          );
                         }
                       }}
                     />
@@ -375,7 +377,8 @@ export function ChatHistoryList({
                       onRename={() => setEditingId(conversation.id)}
                       onDelete={() => {
                         const wasOpen = conversation.id === currentId;
-                        remove(conversation.id, {
+                        remove({
+                          id: conversation.id,
                           position: toastPosition,
                           onUndo: wasOpen
                             ? () => {
@@ -471,7 +474,7 @@ const HistoryRow = memo(function HistoryRow({
             active && 'opacity-0',
           )}
         >
-          {relativeTime(conversation.updated)}
+          {relativeTime({ iso: conversation.updated })}
         </time>
         {(active || tabbable) && (
           <DropdownMenu open={menuOpen} onOpenChange={onMenuOpenChange}>

@@ -12,6 +12,7 @@ import { SidebarInset } from '@/components/ui/sidebar-shadcn';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { templatesApi } from '@/features/templates';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
@@ -136,7 +137,9 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                 )}
               >
                 <div
-                  id={embedded && isBuilder ? undefined : CARD_ID}
+                  id={
+                    embedded && isBuilder ? undefined : chatLayoutUtils.CARD_ID
+                  }
                   className={cn(
                     'relative flex h-full overflow-clip',
                     isPlatform ? 'bg-(--admin-page)' : 'bg-gray-1',
@@ -223,8 +226,6 @@ function useReloadOnProjectChangedElsewhere({
 function isRouteHandle(value: unknown): value is RouteHandle {
   return typeof value === 'object' && value !== null && 'shell' in value;
 }
-
-const CARD_ID = 'dashboard-content-container';
 
 const PAGE_CLASS: Record<RouteHandle['shell'], string> = {
   project: 'flex-1 overflow-auto',

@@ -8,6 +8,8 @@ import {
   useTransform,
 } from 'motion/react';
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -18,6 +20,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { ToasterProps } from 'sonner';
+import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 
 import { describeChange } from '@/app/routes/chat-with-ai/components/changes-summary';
@@ -28,75 +31,36 @@ import { resourceRegistry } from '@/features/chat/lib/resources/registry';
 import { useConversationChanges } from '@/features/chat/lib/use-conversation-changes';
 import {
   ChatWidth,
-  DOCK_BREAKPOINT,
-  DOCK_MAX_WIDTH,
-  DOCK_MIN_WIDTH,
-  MOBILE_BREAKPOINT,
-  PAGE_COMFORT_WIDTH,
-  cardInnerWidth,
-  chatLayoutFor,
-  chatWidthFor,
-  clamp,
-  dockWidthFor,
-  sidebarWidth,
-  startStructuralMove,
+  chatLayoutUtils,
 } from '@/features/workspace/lib/chat-layout';
 import {
-  bindChatRouter,
+  chatPanelUtils,
   ChatPanelSide,
   FloatPosition,
   FloatSize,
-  MOBILE_SHEET_HASH,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import {
   railOpenNow,
   useRailOpen,
 } from '@/features/workspace/lib/rail-collapsed';
+import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { useShellHandle } from '../app-shell';
 
 import { ChatChrome, ChatLastPageTracker } from './chat-chrome';
-import { ChatDemoCorner } from './chat-demo-corner';
+import { chatDom } from './chat-dom';
 import { FollowAlongController } from './follow-along-controller';
-
-export const FLOAT_DEFAULT: FloatSize = { width: 400, height: 640 };
-const FLOAT_MIN: FloatSize = { width: 320, height: 400 };
-const DOCK_DEFAULT_WIDTH = 372;
-const EDGE = 16;
-const SNAP_REACH = 48;
-const SNAP_HOLD = 24;
-const POINTER_EDGE = 24;
-const EDGE_PUSH = 24;
-const DRAG_THRESHOLD = 4;
-const SHEET_DISMISS_SHARE = 0.25;
-const SHEET_DISMISS_VELOCITY = 0.5;
-const EASE_OUT = [0.22, 1, 0.36, 1] as const;
-const CUE_MOTION = { duration: 0.12, ease: EASE_OUT };
-const SETTLE = { type: 'spring', bounce: 0, visualDuration: 0.25 } as const;
-const CARD_ID = 'dashboard-content-container';
-const COMPOSER_CLEARANCE = 144;
-const OPEN_LAYER_SELECTOR =
-  '[role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper]';
-const GUTTER_RIGHT = 8;
-const EMPHASIZED = 'cubic-bezier(0.05, 0.7, 0.1, 1)';
-const STANDARD = 'cubic-bezier(0.2, 0, 0, 1)';
-const EDGE_DELAY_MS = 120;
-const DIP_MS = 120;
-const ENTER_TIMEOUT_MS = 600;
-const EXIT_TIMEOUT_MS = 420;
-const PINNED_GAP = 24;
-const ANCHOR_DEPTH = 6;
-const ANCHOR_STRADDLE = 8;
 
 export function useChatWidth(): ChatWidth {
   const fullPage = useShellHandle().chat === 'full';
   const open = useChatPanel((s) => s.open);
   const mode = useChatPanel((s) => s.mode);
   const split = useChatPanel((s) => s.split);
-  return useSyncExternalStore(subscribeToResize, () =>
-    chatWidthFor({
+  return useSyncExternalStore(windowSizeHooks.subscribe, () =>
+    chatLayoutUtils.widthFor({
       fullPage,
       open,
       mode,
@@ -107,70 +71,17 @@ export function useChatWidth(): ChatWidth {
 }
 
 export function useChatToastPlacement(): ToastPlacement {
-  const position = useSyncExternalStore(
-    subscribeToToastPosition,
-    () => toastPosition.current,
+  return useToastPlacement(
+    useShallow((state) => ({
+      position: state.position,
+      offset: state.offset,
+    })),
   );
-  const offset =
-    position === 'bottom-center' ? { bottom: COMPOSER_CLEARANCE } : undefined;
-  return { position, offset };
-}
-
-export function useWindowWidth(): number {
-  return useSyncExternalStore(subscribeToResize, () => window.innerWidth);
-}
-
-export function useWindowAtLeast(width: number): boolean {
-  return useSyncExternalStore(
-    subscribeToResize,
-    () => window.innerWidth >= width,
-  );
-}
-
-function subscribeToToastPosition(onChange: () => void) {
-  toastPosition.listeners.add(onChange);
-  return () => {
-    toastPosition.listeners.delete(onChange);
-  };
-}
-
-function publishToastPosition(position: ToastPosition) {
-  if (toastPosition.current === position) return;
-  toastPosition.current = position;
-  toastPosition.listeners.forEach((listener) => listener());
-}
-
-function toastPositionFor({
-  chatWidth,
-  floatCenterX,
-  viewportWidth,
-}: {
-  chatWidth: ChatWidth;
-  floatCenterX: number;
-  viewportWidth: number;
-}): ToastPosition {
-  switch (chatWidth) {
-    case 'full':
-      return 'bottom-center';
-    case 'sheet':
-      return 'top-center';
-    case 'right':
-      return 'bottom-left';
-    case 'float':
-      return floatCenterX > viewportWidth / 2 ? 'bottom-left' : 'bottom-right';
-    default:
-      return 'bottom-right';
-  }
-}
-
-function subscribeToResize(onChange: () => void) {
-  window.addEventListener('resize', onChange);
-  return () => window.removeEventListener('resize', onChange);
 }
 
 export function ChatDock({ side }: { side: ChatPanelSide }) {
   const chatWidth = useChatWidth();
-  const viewport = useViewport();
+  const viewport = windowSizeHooks.useSize();
   const railOpen = useRailOpen();
   const gesture = useChatPanel((s) => s.gesture);
   const savedWidth = useChatPanel((s) => s.dockWidth);
@@ -182,8 +93,11 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
   const slotOpen = full || (chatWidth === side && gesture !== 'dragging');
   const hostsChat = full || (slotOpen && gesture === 'idle');
   const host = useChatHost(hostsChat);
-  const cardWidth = cardInnerWidth(viewport.width, railOpen);
-  const width = dockWidthFor(savedWidth, cardWidth);
+  const cardWidth = chatLayoutUtils.cardInnerWidth({
+    viewportWidth: viewport.width,
+    railOpen,
+  });
+  const width = chatLayoutUtils.dockWidthFor({ savedWidth, cardWidth });
 
   useStructuralMove({
     slot,
@@ -203,7 +117,10 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
     }
     event.preventDefault();
     const startX = event.clientX;
-    const max = Math.min(DOCK_MAX_WIDTH, cardWidth - PAGE_COMFORT_WIDTH);
+    const max = Math.min(
+      chatLayoutUtils.DOCK_MAX_WIDTH,
+      cardWidth - chatLayoutUtils.PAGE_COMFORT_WIDTH,
+    );
     let next = width;
     setResizing(true);
     const unlock = lockPointer('col-resize');
@@ -211,7 +128,11 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
     const onMove = (move: PointerEvent) => {
       const delta =
         side === 'left' ? move.clientX - startX : startX - move.clientX;
-      next = clamp(width + delta, DOCK_MIN_WIDTH, max);
+      next = chatLayoutUtils.clamp({
+        value: width + delta,
+        min: chatLayoutUtils.DOCK_MIN_WIDTH,
+        max,
+      });
       slotEl.style.width = `${next}px`;
       hostEl.style.width = `${next}px`;
     };
@@ -253,7 +174,7 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
         moving && side === 'left' && 'z-[1] bg-inherit',
         !full && 'max-md:hidden',
         !resizing &&
-          'transition-[width] duration-[var(--ap-move,200ms)] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+          'transition-[width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none',
       )}
     >
       <div
@@ -268,7 +189,7 @@ export function ChatDock({ side }: { side: ChatPanelSide }) {
         <div
           aria-hidden
           onPointerDown={startResize}
-          onDoubleClick={() => setDockWidth(DOCK_DEFAULT_WIDTH)}
+          onDoubleClick={() => setDockWidth(chatLayoutUtils.DOCK_DEFAULT_WIDTH)}
           className={cn(
             'group/edge absolute inset-y-0 z-10 w-2 cursor-col-resize touch-none',
             side === 'left' ? 'right-0' : 'left-0',
@@ -339,7 +260,7 @@ function useStructuralMove({
         ? 'exit'
         : null;
 
-    if (kind && prefersReducedMotion()) {
+    if (kind && chatLayoutUtils.prefersReducedMotion()) {
       phase.current = 'idle';
       captureAnchor();
       slotEl.style.transition = 'none';
@@ -350,24 +271,23 @@ function useStructuralMove({
     } else if (kind === 'enter') {
       useChatPanel.getState().setMoving('enter');
       if (phase.current === 'exit') {
-        slotEl.style.transition = `width var(--ap-move-wide) ${EMPHASIZED}`;
+        slotEl.style.transition = `width ${MOVE_MS.wide}ms ${MOVE_EASE.emphasized}`;
       } else {
         captureAnchor();
-        rewrap(() => {
-          hostEl.style.width = hostWidth;
-        });
-        slotEl.style.transition = `width var(--ap-move-wide) ${EMPHASIZED} ${EDGE_DELAY_MS}ms`;
+        hostEl.style.width = hostWidth;
+        restoreAnchor();
+        slotEl.style.transition = `width ${MOVE_MS.wide}ms ${MOVE_EASE.emphasized} ${MOVE_MS.edgeDelay}ms`;
       }
       phase.current = 'enter';
       slotEl.style.width = slotWidth;
-      settleLater(ENTER_TIMEOUT_MS);
+      settleLater(MOVE_MS.edgeDelay + MOVE_MS.wide + MOVE_MS.settleSlack);
     } else if (kind === 'exit') {
       useChatPanel.getState().setMoving('exit');
       captureAnchor();
       phase.current = 'exit';
-      slotEl.style.transition = `width var(--ap-move-back) ${STANDARD}`;
+      slotEl.style.transition = `width ${MOVE_MS.back}ms ${MOVE_EASE.standard}`;
       slotEl.style.width = slotWidth;
-      settleLater(EXIT_TIMEOUT_MS);
+      settleLater(MOVE_MS.back + MOVE_MS.settleSlack);
     } else if (phase.current !== 'idle') {
       slotEl.style.width = slotWidth;
       if (phase.current === 'enter') hostEl.style.width = hostWidth;
@@ -406,16 +326,11 @@ export function ChatChromeHost() {
           <ChatChrome
             onDragStart={(event) => dragStartHandler.current?.(event)}
           />,
-          getChatNode(),
+          chatDom.root(),
         )}
     </>
   );
 }
-
-const toastPosition: {
-  current: ToastPosition;
-  listeners: Set<() => void>;
-} = { current: 'bottom-right', listeners: new Set() };
 
 function ChatRouterBinding() {
   const navigate = useNavigate();
@@ -428,7 +343,7 @@ function ChatRouterBinding() {
 
   useEffect(
     () =>
-      bindChatRouter({
+      chatPanelUtils.bindRouter({
         navigate: (target) => {
           if ('back' in target) {
             navigate(-1);
@@ -457,7 +372,7 @@ function ChatRouterBinding() {
       !panel.split &&
       isObject(location.state) &&
       location.state.chatSplit === true &&
-      window.innerWidth >= MOBILE_BREAKPOINT
+      window.innerWidth >= chatLayoutUtils.MOBILE_BREAKPOINT
     ) {
       panel.enterSplit();
     }
@@ -466,14 +381,10 @@ function ChatRouterBinding() {
   return null;
 }
 
-const dragStartHandler: {
-  current: ((event: React.PointerEvent<HTMLElement>) => void) | null;
-} = { current: null };
-
 export function ChatWindow() {
   const chatWidth = useChatWidth();
   const full = chatWidth === 'full';
-  const viewport = useViewport();
+  const viewport = windowSizeHooks.useSize();
   const {
     open,
     float,
@@ -495,10 +406,18 @@ export function ChatWindow() {
   );
   const [snap, setSnap] = useState<SnapCue | null>(null);
   const [gripActive, setGripActive] = useState(false);
-  const [card] = useState(() => createCardMotion(FLOAT_DEFAULT));
+  const chatEnabled =
+    platformHooks.useCurrentPlatform().platform.plan.chatEnabled;
+  const [card] = useState(() =>
+    createCardMotion(chatLayoutUtils.FLOAT_DEFAULT),
+  );
   const [sheetY] = useState(() => motionValue(0));
   const scrimOpacity = useTransform(sheetY, (y) =>
-    clamp(1 - y / window.innerHeight, 0, 1),
+    chatLayoutUtils.clamp({
+      value: 1 - y / window.innerHeight,
+      min: 0,
+      max: 1,
+    }),
   );
   const docked = chatWidth === 'left' || chatWidth === 'right';
   const floating = chatWidth === 'float' || (docked && gesture !== 'idle');
@@ -521,9 +440,14 @@ export function ChatWindow() {
     if (gesture !== 'idle') {
       return;
     }
-    const size = fitToWindow(floatSize ?? FLOAT_DEFAULT);
+    const size = chatLayoutUtils.fitToWindow(
+      floatSize ?? chatLayoutUtils.FLOAT_DEFAULT,
+    );
     card.place({
-      ...clampToWindow(float ?? defaultFloat(size), size),
+      ...chatLayoutUtils.clampToWindow({
+        position: float ?? chatLayoutUtils.defaultFloat(size),
+        size,
+      }),
       ...size,
     });
   }, [float, floatSize, gesture, viewport, card]);
@@ -531,15 +455,17 @@ export function ChatWindow() {
   useFocusHandoff(chatWidth !== 'closed');
   useSheetHistory(sheetOpen);
   const sheetPill =
-    viewport.width < MOBILE_BREAKPOINT &&
+    viewport.width < chatLayoutUtils.MOBILE_BREAKPOINT &&
     chatWidth === 'closed' &&
     hasConversation;
 
   useEffect(() => {
-    const size = fitToWindow(floatSize ?? FLOAT_DEFAULT);
-    const place = float ?? defaultFloat(size);
-    publishToastPosition(
-      toastPositionFor({
+    const size = chatLayoutUtils.fitToWindow(
+      floatSize ?? chatLayoutUtils.FLOAT_DEFAULT,
+    );
+    const place = float ?? chatLayoutUtils.defaultFloat(size);
+    useToastPlacement.setState(
+      toastPlacementFor({
         chatWidth,
         floatCenterX: place.x + size.width / 2,
         viewportWidth: viewport.width,
@@ -559,21 +485,29 @@ export function ChatWindow() {
         return;
       }
       const viewportWidth = window.innerWidth;
-      const from = chatLayoutFor(prev.mode, viewportWidth);
-      const to = chatLayoutFor(state.mode, viewportWidth);
+      const from = chatLayoutUtils.layoutFor({
+        mode: prev.mode,
+        viewportWidth,
+      });
+      const to = chatLayoutUtils.layoutFor({ mode: state.mode, viewportWidth });
       if (from === 'float' && (to === 'left' || to === 'right')) {
-        const target = dockRect(to, railOpenNow());
+        const target = dockRect({ side: to, railOpen: railOpenNow() });
         if (target) {
           state.setGesture('settling');
           card.settle(target, () => state.setGesture('idle'));
         }
       } else if ((from === 'left' || from === 'right') && to === 'float') {
-        const size = fitToWindow(state.floatSize ?? FLOAT_DEFAULT);
-        card.place(rectOf(getChatNode()));
+        const size = chatLayoutUtils.fitToWindow(
+          state.floatSize ?? chatLayoutUtils.FLOAT_DEFAULT,
+        );
+        card.place(rectOf(chatDom.root()));
         state.setGesture('settling');
         card.settle(
           {
-            ...clampToWindow(state.float ?? defaultFloat(size), size),
+            ...chatLayoutUtils.clampToWindow({
+              position: state.float ?? chatLayoutUtils.defaultFloat(size),
+              size,
+            }),
             ...size,
           },
           () => state.setGesture('idle'),
@@ -585,8 +519,9 @@ export function ChatWindow() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const mod = event.metaKey || event.ctrlKey;
-      const focusInChat = getChatNode().contains(document.activeElement);
+      const focusInChat = chatDom.root().contains(document.activeElement);
       if (
+        chatEnabled &&
         mod &&
         !event.altKey &&
         !event.shiftKey &&
@@ -595,7 +530,7 @@ export function ChatWindow() {
         event.preventDefault();
         const panelOpen = useChatPanel.getState().open;
         if (full || (panelOpen && !focusInChat)) {
-          getChatNode().querySelector('textarea')?.focus();
+          chatDom.composer()?.focus();
         } else {
           setOpen(!panelOpen);
         }
@@ -608,7 +543,7 @@ export function ChatWindow() {
         useChatPanel.getState().open &&
         focusInChat &&
         !hasText(document.activeElement) &&
-        !hasText(getChatNode().querySelector('textarea')) &&
+        !hasText(chatDom.composer()) &&
         !document.querySelector(OPEN_LAYER_SELECTOR)
       ) {
         setOpen(false);
@@ -616,14 +551,18 @@ export function ChatWindow() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [full, setOpen]);
+  }, [full, chatEnabled, setOpen]);
 
   const startDrag = useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
-      const target = event.target as HTMLElement;
+      const target = event.target;
       const state = useChatPanel.getState();
-      const layoutNow = chatLayoutFor(state.mode, window.innerWidth);
+      const layoutNow = chatLayoutUtils.layoutFor({
+        mode: state.mode,
+        viewportWidth: window.innerWidth,
+      });
       if (
+        !(target instanceof Element) ||
         event.button !== 0 ||
         !event.currentTarget.contains(target) ||
         target.closest('button, a, input, textarea, [role^="menuitem"]')
@@ -632,18 +571,20 @@ export function ChatWindow() {
       }
       event.preventDefault();
       if (layoutNow === 'sheet') {
-        swipeSheet(event, sheetY);
+        swipeSheet({ event, sheetY });
         return;
       }
       const fromDock = layoutNow !== 'float' && state.gesture === 'idle';
-      const from = fromDock ? rectOf(getChatNode()) : card.rect();
+      const from = fromDock ? rectOf(chatDom.root()) : card.rect();
       const origin = state.mode;
       const start = { x: event.clientX, y: event.clientY };
       const grab = {
         ratioX: (start.x - from.x) / from.width,
         y: start.y - from.y,
       };
-      const floatTarget = fitToWindow(state.floatSize ?? FLOAT_DEFAULT);
+      const floatTarget = chatLayoutUtils.fitToWindow(
+        state.floatSize ?? chatLayoutUtils.FLOAT_DEFAULT,
+      );
       const unlock = lockPointer('grabbing');
       let pointer = start;
       let moved = false;
@@ -653,16 +594,20 @@ export function ChatWindow() {
       let armed = false;
       let alt = event.altKey;
       const showCue = () =>
-        setSnap(armed && zone ? cueFor(zone, geometry) : null);
+        setSnap(armed && zone ? cueFor({ target: zone, geometry }) : null);
       const updateSnap = () => {
         const left = pointer.x - grab.ratioX * floatTarget.width;
         const next = alt
           ? null
-          : snapTarget(
-              { left, right: left + floatTarget.width, pointerX: pointer.x },
+          : snapTarget({
+              at: {
+                left,
+                right: left + floatTarget.width,
+                pointerX: pointer.x,
+              },
               geometry,
-              zone,
-            );
+              current: zone,
+            });
         if (next !== zone) {
           zone = next;
           armed = zone !== null;
@@ -672,13 +617,13 @@ export function ChatWindow() {
 
       const follow = () => {
         const size = { width: card.width.get(), height: card.height.get() };
-        const position = clampToWindow(
-          {
+        const position = chatLayoutUtils.clampToWindow({
+          position: {
             x: pointer.x - grab.ratioX * size.width,
             y: pointer.y - grab.y,
           },
           size,
-        );
+        });
         card.x.set(position.x);
         card.y.set(position.y);
       };
@@ -688,7 +633,7 @@ export function ChatWindow() {
         card.place(from);
         card.resize(floatTarget);
         stopFollow = card.width.on('change', follow);
-        startStructuralMove('exit');
+        chatLayoutUtils.startStructuralMove('exit');
         useChatPanel.getState().setGesture('dragging');
       };
 
@@ -704,12 +649,18 @@ export function ChatWindow() {
         setSnap(null);
       };
 
-      const settleIntoDock = (dockSide: ChatPanelSide, redock = true) => {
+      const settleIntoDock = ({
+        dockSide,
+        redock,
+      }: {
+        dockSide: ChatPanelSide;
+        redock: boolean;
+      }) => {
         const panel = useChatPanel.getState();
         if (redock) {
           panel.dock(dockSide);
         }
-        const rect = dockRect(dockSide, railOpenNow());
+        const rect = dockRect({ side: dockSide, railOpen: railOpenNow() });
         panel.setGesture('settling');
         if (!rect) {
           panel.setGesture('idle');
@@ -748,15 +699,18 @@ export function ChatWindow() {
           return;
         }
         if (side) {
-          settleIntoDock(side);
+          settleIntoDock({ dockSide: side, redock: true });
           return;
         }
         const size = floatTarget;
         settleFloating({
-          ...clampToWindow(
-            { x: pointer.x - grab.ratioX * size.width, y: pointer.y - grab.y },
+          ...chatLayoutUtils.clampToWindow({
+            position: {
+              x: pointer.x - grab.ratioX * size.width,
+              y: pointer.y - grab.y,
+            },
             size,
-          ),
+          }),
           ...size,
         });
       };
@@ -768,9 +722,12 @@ export function ChatWindow() {
         }
         if (
           origin !== 'float' &&
-          chatLayoutFor(origin, window.innerWidth) === origin
+          chatLayoutUtils.layoutFor({
+            mode: origin,
+            viewportWidth: window.innerWidth,
+          }) === origin
         ) {
-          settleIntoDock(origin, false);
+          settleIntoDock({ dockSide: origin, redock: false });
         } else {
           settleFloating(from);
         }
@@ -835,18 +792,18 @@ export function ChatWindow() {
 
       const onMove = (move: PointerEvent) => {
         card.width.set(
-          clamp(
-            from.width + move.clientX - start.x,
-            FLOAT_MIN.width,
-            window.innerWidth - from.x - EDGE,
-          ),
+          chatLayoutUtils.clamp({
+            value: from.width + move.clientX - start.x,
+            min: chatLayoutUtils.FLOAT_MIN.width,
+            max: window.innerWidth - from.x - chatLayoutUtils.EDGE,
+          }),
         );
         card.height.set(
-          clamp(
-            from.height + move.clientY - start.y,
-            FLOAT_MIN.height,
-            window.innerHeight - from.y - EDGE,
-          ),
+          chatLayoutUtils.clamp({
+            value: from.height + move.clientY - start.y,
+            min: chatLayoutUtils.FLOAT_MIN.height,
+            max: window.innerHeight - from.y - chatLayoutUtils.EDGE,
+          }),
         );
       };
       const onUp = () => {
@@ -868,7 +825,11 @@ export function ChatWindow() {
 
   return createPortal(
     <>
-      <ChatDemoCorner />
+      {ChatDemoCorner && (
+        <Suspense fallback={null}>
+          <ChatDemoCorner />
+        </Suspense>
+      )}
       <ChatAnnouncer />
       {sheetPill && <ChatSheetPill />}
       <AnimatePresence>
@@ -887,7 +848,7 @@ export function ChatWindow() {
             animate="shown"
             exit="hidden"
             className={cn(
-              'group/float fixed top-0 left-0 z-40 overflow-hidden rounded-xl border bg-gray-1 transition-shadow duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
+              'group/float fixed top-0 left-0 z-40 overflow-hidden rounded-xl border bg-gray-1 transition-shadow duration-150 ease-move',
               gesture !== 'idle' && 'will-change-transform',
               gesture === 'dragging'
                 ? 'shadow-over'
@@ -917,7 +878,7 @@ export function ChatWindow() {
             style={{ opacity: scrimOpacity }}
           >
             <motion.div
-              className="absolute inset-0 bg-black/30"
+              className="absolute inset-0 bg-scrim"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, transition: { duration: 0.2 } }}
               exit={{ opacity: 0, transition: { duration: 0.16 } }}
@@ -944,45 +905,13 @@ export function ChatWindow() {
   );
 }
 
-const floatCard = {
-  hidden: (stillOpen: boolean) =>
-    stillOpen
-      ? { opacity: 0, transition: { duration: 0 } }
-      : prefersReducedMotion()
-      ? { opacity: 0, transition: { duration: 0.1 } }
-      : {
-          opacity: 0,
-          scale: 0.98,
-          transition: { duration: 0.12, ease: EASE_OUT },
-        },
-  shown: () => ({
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: prefersReducedMotion() ? 0.1 : 0.18,
-      ease: EASE_OUT,
-    },
-  }),
-};
-
-const sheetVariants = {
-  hidden: () =>
-    prefersReducedMotion()
-      ? { opacity: 0, transition: { duration: 0.1 } }
-      : {
-          y: window.innerHeight,
-          transition: { duration: 0.2, ease: EASE_OUT },
-        },
-  shown: () =>
-    prefersReducedMotion()
-      ? { opacity: 1, y: 0, transition: { duration: 0.1 } }
-      : { y: 0, opacity: 1, transition: { duration: 0.28, ease: EASE_OUT } },
-};
-
-function swipeSheet(
-  event: React.PointerEvent<HTMLElement>,
-  sheetY: ReturnType<typeof motionValue<number>>,
-) {
+function swipeSheet({
+  event,
+  sheetY,
+}: {
+  event: React.PointerEvent<HTMLElement>;
+  sheetY: ReturnType<typeof motionValue<number>>;
+}) {
   const startY = event.clientY;
   const base = sheetY.get();
   let last = { y: startY, time: event.timeStamp };
@@ -1154,22 +1083,23 @@ function useSheetHistory(sheetOpen: boolean) {
     const opened = sheetOpen && !wasOpen.current;
     const closed = !sheetOpen && wasOpen.current;
     const hashLeft =
-      lastHash.current === MOBILE_SHEET_HASH &&
-      location.hash !== MOBILE_SHEET_HASH;
+      lastHash.current === chatPanelUtils.MOBILE_SHEET_HASH &&
+      location.hash !== chatPanelUtils.MOBILE_SHEET_HASH;
     wasOpen.current = sheetOpen;
     lastHash.current = location.hash;
     if (closed) captureAnchor();
-    if (opened && location.hash !== MOBILE_SHEET_HASH) {
-      navigate(`${location.pathname}${location.search}${MOBILE_SHEET_HASH}`, {
-        state: location.state,
-      });
+    if (opened && location.hash !== chatPanelUtils.MOBILE_SHEET_HASH) {
+      navigate(
+        `${location.pathname}${location.search}${chatPanelUtils.MOBILE_SHEET_HASH}`,
+        { state: location.state },
+      );
       return;
     }
     if (sheetOpen && hashLeft) {
       useChatPanel.getState().setOpen(false);
       return;
     }
-    if (closed && location.hash === MOBILE_SHEET_HASH) {
+    if (closed && location.hash === chatPanelUtils.MOBILE_SHEET_HASH) {
       navigate(-1);
     }
   }, [sheetOpen, location, navigate]);
@@ -1193,8 +1123,8 @@ function useFocusHandoff(open: boolean) {
       let frame = 0;
       let tries = 0;
       const focusInput = () => {
-        const input = getChatNode().querySelector<HTMLElement>('textarea');
-        if (input && getChatNode().isConnected) {
+        const input = chatDom.composer();
+        if (input && chatDom.root().isConnected) {
           input.focus({ preventScroll: true });
           return;
         }
@@ -1207,7 +1137,7 @@ function useFocusHandoff(open: boolean) {
     }
     const active = document.activeElement;
     const focusLeftWithPanel =
-      !active || active === document.body || getChatNode().contains(active);
+      !active || active === document.body || chatDom.root().contains(active);
     if (focusLeftWithPanel && returnTo.current?.isConnected) {
       returnTo.current.focus({ preventScroll: true });
     }
@@ -1231,7 +1161,8 @@ function createCardMotion(size: FloatSize) {
     unwatch = null;
     run++;
   };
-  const motionFor = () => (prefersReducedMotion() ? { duration: 0 } : SETTLE);
+  const motionFor = () =>
+    chatLayoutUtils.prefersReducedMotion() ? { duration: 0 } : SETTLE;
 
   return {
     x,
@@ -1289,21 +1220,19 @@ function createCardMotion(size: FloatSize) {
         animate(width, to.width, motionFor()),
         animate(height, to.height, motionFor()),
       ];
-      void Promise.all(
+      Promise.all(
         running.map(
           (controls) => new Promise<void>((resolve) => controls.then(resolve)),
         ),
-      ).then(finish);
+      )
+        .then(finish)
+        .catch(() => undefined);
     },
   };
 }
 
-function chatScroller(): HTMLElement | null {
-  return getChatNode().querySelector<HTMLElement>('[role="log"] > div');
-}
-
 function captureAnchor() {
-  const scroller = chatScroller();
+  const scroller = chatDom.scroller();
   if (!scroller || !scroller.isConnected) return;
   const gap =
     scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
@@ -1312,17 +1241,7 @@ function captureAnchor() {
     return;
   }
   const top = scroller.getBoundingClientRect().top;
-  let element: Element | undefined = undefined;
-  let level: Element | null = scroller.firstElementChild;
-  for (let depth = 0; level && depth < ANCHOR_DEPTH; depth++) {
-    const visible = Array.from(level.children).find(
-      (child) => child.getBoundingClientRect().bottom > top,
-    );
-    if (!visible) break;
-    element = visible;
-    if (visible.getBoundingClientRect().top >= top - ANCHOR_STRADDLE) break;
-    level = visible;
-  }
+  const element = firstElementFrom({ scroller, top });
   anchor = element
     ? {
         pinned: false,
@@ -1332,9 +1251,46 @@ function captureAnchor() {
     : null;
 }
 
+function firstElementFrom({
+  scroller,
+  top,
+}: {
+  scroller: HTMLElement;
+  top: number;
+}): Element | null {
+  const walker = document.createTreeWalker(scroller, NodeFilter.SHOW_ELEMENT, {
+    acceptNode: (node) => {
+      if (!(node instanceof Element)) return NodeFilter.FILTER_SKIP;
+      const rect = node.getBoundingClientRect();
+      if (rect.bottom <= top) return NodeFilter.FILTER_REJECT;
+      return rect.height > 0 && rect.top >= top - ANCHOR_STRADDLE
+        ? NodeFilter.FILTER_ACCEPT
+        : NodeFilter.FILTER_SKIP;
+    },
+  });
+  const first = walker.nextNode();
+  if (!(first instanceof Element)) return null;
+  let element = first;
+  const startsWith = (child: Element) =>
+    Math.abs(
+      child.getBoundingClientRect().top - element.getBoundingClientRect().top,
+    ) < 1 && child.getBoundingClientRect().height > 0;
+  let child = Array.from(element.children).find(startsWith);
+  while (child) {
+    element = child;
+    child = Array.from(element.children).find(startsWith);
+  }
+  return element;
+}
+
 function restoreAnchor() {
+  applyAnchor();
+  holdAnchor();
+}
+
+function applyAnchor() {
   const saved = anchor;
-  const scroller = chatScroller();
+  const scroller = chatDom.scroller();
   if (!saved || !scroller) return;
   if (saved.pinned) {
     scroller.scrollTop = scroller.scrollHeight;
@@ -1346,10 +1302,34 @@ function restoreAnchor() {
     saved.element.getBoundingClientRect().top - top - saved.offset;
 }
 
+function holdAnchor() {
+  releaseAnchor?.();
+  const scroller = chatDom.scroller();
+  const content = scroller?.firstElementChild;
+  if (!anchor || !scroller || !content) return;
+  const observer = new ResizeObserver(() => requestAnimationFrame(applyAnchor));
+  observer.observe(content);
+  observer.observe(scroller);
+  const release = () => {
+    observer.disconnect();
+    clearTimeout(timer);
+    USER_SCROLL_EVENTS.forEach((type) =>
+      scroller.removeEventListener(type, release),
+    );
+    if (releaseAnchor === release) releaseAnchor = null;
+  };
+  const timer = setTimeout(release, ANCHOR_HOLD_MS);
+  USER_SCROLL_EVENTS.forEach((type) =>
+    scroller.addEventListener(type, release, { passive: true }),
+  );
+  releaseAnchor = release;
+}
+
 function dipIn() {
   dip?.cancel();
   dip =
-    getChatNode()
+    chatDom
+      .root()
       .querySelector('[data-chat-box]')
       ?.animate([{ opacity: 0 }, { opacity: 1 }], {
         duration: DIP_MS,
@@ -1363,23 +1343,10 @@ function rewrap(apply: () => void) {
   dipIn();
 }
 
-let anchor: ChatAnchor | null = null;
-let dip: Animation | null = null;
-
-let chatNode: HTMLDivElement | null = null;
-function getChatNode(): HTMLDivElement {
-  if (!chatNode) {
-    chatNode = document.createElement('div');
-    chatNode.className = 'flex h-full w-full flex-col';
-    chatNode.dataset.chatRoot = '';
-  }
-  return chatNode;
-}
-
 function useChatHost(active: boolean) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
-    const node = getChatNode();
+    const node = chatDom.root();
     if (!active || !ref.current || node.parentElement === ref.current) {
       return;
     }
@@ -1388,20 +1355,6 @@ function useChatHost(active: boolean) {
     restoreAnchor();
   }, [active]);
   return ref;
-}
-
-function useViewport(): { width: number; height: number } {
-  const [viewport, setViewport] = useState(readViewport);
-  useEffect(() => {
-    const onResize = () => setViewport(readViewport());
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-  return viewport;
-}
-
-function readViewport() {
-  return { width: window.innerWidth, height: window.innerHeight };
 }
 
 function lockPointer(cursor: string): () => void {
@@ -1424,54 +1377,35 @@ function hasText(element: Element | null): boolean {
   );
 }
 
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function dockRect({
+  side,
+  railOpen,
+}: {
+  side: ChatPanelSide;
+  railOpen: boolean;
+}): Rect | null {
+  const card = chatLayoutUtils.cardRect();
+  return card ? dockRectIn({ card, side, railOpen }) : null;
 }
 
-export function fitToWindow(size: FloatSize): FloatSize {
-  return {
-    width: clamp(size.width, FLOAT_MIN.width, window.innerWidth - EDGE * 2),
-    height: clamp(size.height, FLOAT_MIN.height, window.innerHeight - EDGE * 2),
-  };
-}
-
-function clampToWindow(
-  position: FloatPosition,
-  size: FloatSize,
-): FloatPosition {
-  return {
-    x: clamp(position.x, EDGE, window.innerWidth - size.width - EDGE),
-    y: clamp(position.y, EDGE, window.innerHeight - size.height - EDGE),
-  };
-}
-
-export function defaultFloat(size: FloatSize): FloatPosition {
-  const card = cardRect();
-  return {
-    x: (card?.left ?? EDGE) + 24,
-    y: window.innerHeight - size.height - 24,
-  };
-}
-
-function dockRect(side: ChatPanelSide, railOpen: boolean): Rect | null {
-  const card = cardRect();
-  return card ? dockRectIn(card, side, railOpen) : null;
-}
-
-function dockRectIn(
-  card: CardSpan,
-  side: ChatPanelSide,
-  railOpen: boolean,
-): Rect {
+function dockRectIn({
+  card,
+  side,
+  railOpen,
+}: {
+  card: CardSpan;
+  side: ChatPanelSide;
+  railOpen: boolean;
+}): Rect {
   const viewportWidth = window.innerWidth;
-  const width = dockWidthFor(
-    useChatPanel.getState().dockWidth,
-    cardInnerWidth(viewportWidth, railOpen),
-  );
+  const width = chatLayoutUtils.dockWidthFor({
+    savedWidth: useChatPanel.getState().dockWidth,
+    cardWidth: chatLayoutUtils.cardInnerWidth({ viewportWidth, railOpen }),
+  });
   return {
     x:
       side === 'left'
-        ? sidebarWidth(railOpen) + 1
+        ? chatLayoutUtils.sidebarWidth(railOpen) + 1
         : viewportWidth - GUTTER_RIGHT - 1 - width,
     y: card.top + 1,
     width,
@@ -1481,29 +1415,33 @@ function dockRectIn(
 
 function snapGeometry(): SnapGeometry {
   const viewport = window.innerWidth;
-  const card = cardRect();
+  const card = chatLayoutUtils.cardRect();
   return {
     viewport,
-    dockable: viewport >= DOCK_BREAKPOINT,
-    leftEdge: sidebarWidth(railOpenNow()),
+    dockable: viewport >= chatLayoutUtils.DOCK_BREAKPOINT,
+    leftEdge: chatLayoutUtils.sidebarWidth(railOpenNow()),
     rightEdge: viewport - GUTTER_RIGHT,
     previews: card
       ? {
-          left: dockRectIn(card, 'left', false),
-          right: dockRectIn(card, 'right', false),
+          left: dockRectIn({ card, side: 'left', railOpen: false }),
+          right: dockRectIn({ card, side: 'right', railOpen: false }),
         }
       : null,
   };
 }
 
-function snapTarget(
-  at: { left: number; right: number; pointerX: number },
-  geometry: SnapGeometry,
-  current: SnapTarget | null,
-): SnapTarget | null {
+function snapTarget({
+  at,
+  geometry,
+  current,
+}: {
+  at: { left: number; right: number; pointerX: number };
+  geometry: SnapGeometry;
+  current: SnapTarget | null;
+}): SnapTarget | null {
   const hold = (target: SnapTarget) => (target === current ? SNAP_HOLD : 0);
   if (!geometry.dockable) {
-    if (geometry.viewport < MOBILE_BREAKPOINT) {
+    if (geometry.viewport < chatLayoutUtils.MOBILE_BREAKPOINT) {
       return null;
     }
     const reach = EDGE_PUSH + hold('narrow');
@@ -1526,7 +1464,13 @@ function snapTarget(
   return null;
 }
 
-function cueFor(target: SnapTarget, geometry: SnapGeometry): SnapCue | null {
+function cueFor({
+  target,
+  geometry,
+}: {
+  target: SnapTarget;
+  geometry: SnapGeometry;
+}): SnapCue | null {
   if (target === 'narrow') {
     return { kind: 'narrow' };
   }
@@ -1534,14 +1478,128 @@ function cueFor(target: SnapTarget, geometry: SnapGeometry): SnapCue | null {
   return rect ? { kind: 'dock', side: target, rect } : null;
 }
 
-function cardRect(): DOMRect | null {
-  return document.getElementById(CARD_ID)?.getBoundingClientRect() ?? null;
+function toastPlacementFor({
+  chatWidth,
+  floatCenterX,
+  viewportWidth,
+}: {
+  chatWidth: ChatWidth;
+  floatCenterX: number;
+  viewportWidth: number;
+}): ToastPlacement {
+  const position = toastPositionFor({ chatWidth, floatCenterX, viewportWidth });
+  return {
+    position,
+    offset:
+      position === 'bottom-center' ? { bottom: COMPOSER_CLEARANCE } : undefined,
+  };
+}
+
+function toastPositionFor({
+  chatWidth,
+  floatCenterX,
+  viewportWidth,
+}: {
+  chatWidth: ChatWidth;
+  floatCenterX: number;
+  viewportWidth: number;
+}): ToastPosition {
+  switch (chatWidth) {
+    case 'full':
+      return 'bottom-center';
+    case 'sheet':
+      return 'top-center';
+    case 'right':
+      return 'bottom-left';
+    case 'float':
+      return floatCenterX > viewportWidth / 2 ? 'bottom-left' : 'bottom-right';
+    default:
+      return 'bottom-right';
+  }
 }
 
 function rectOf(element: HTMLElement): Rect {
   const rect = element.getBoundingClientRect();
   return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
 }
+
+const SNAP_REACH = 48;
+const SNAP_HOLD = 24;
+const POINTER_EDGE = 24;
+const EDGE_PUSH = 24;
+const DRAG_THRESHOLD = 4;
+const SHEET_DISMISS_SHARE = 0.25;
+const SHEET_DISMISS_VELOCITY = 0.5;
+const EASE_OUT = chatLayoutUtils.MOVE_EASE.out;
+const CUE_MOTION = { duration: 0.12, ease: EASE_OUT };
+const SETTLE = { type: 'spring', bounce: 0, visualDuration: 0.25 } as const;
+const COMPOSER_CLEARANCE = 144;
+const OPEN_LAYER_SELECTOR =
+  '[role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper]';
+const GUTTER_RIGHT = 8;
+const DIP_MS = 120;
+const PINNED_GAP = 24;
+const ANCHOR_HOLD_MS = 700;
+const USER_SCROLL_EVENTS: Array<'wheel' | 'touchstart' | 'keydown'> = [
+  'wheel',
+  'touchstart',
+  'keydown',
+];
+const ANCHOR_STRADDLE = 8;
+
+const { MOVE_MS, MOVE_EASE } = chatLayoutUtils;
+const ChatDemoCorner = import.meta.env.DEV
+  ? lazy(() =>
+      import('./chat-demo-corner').then((module) => ({
+        default: module.ChatDemoCorner,
+      })),
+    )
+  : null;
+const useToastPlacement = create<ToastPlacement>(() => ({
+  position: 'bottom-right',
+  offset: undefined,
+}));
+const floatCard = {
+  hidden: (stillOpen: boolean) =>
+    stillOpen
+      ? { opacity: 0, transition: { duration: 0 } }
+      : chatLayoutUtils.prefersReducedMotion()
+      ? { opacity: 0, transition: { duration: 0.1 } }
+      : {
+          opacity: 0,
+          scale: 0.98,
+          transition: { duration: 0.12, ease: EASE_OUT },
+        },
+  shown: () => ({
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: chatLayoutUtils.prefersReducedMotion() ? 0.1 : 0.18,
+      ease: EASE_OUT,
+    },
+  }),
+};
+
+const sheetVariants = {
+  hidden: () =>
+    chatLayoutUtils.prefersReducedMotion()
+      ? { opacity: 0, transition: { duration: 0.1 } }
+      : {
+          y: window.innerHeight,
+          transition: { duration: 0.2, ease: EASE_OUT },
+        },
+  shown: () =>
+    chatLayoutUtils.prefersReducedMotion()
+      ? { opacity: 1, y: 0, transition: { duration: 0.1 } }
+      : { y: 0, opacity: 1, transition: { duration: 0.28, ease: EASE_OUT } },
+};
+
+const dragStartHandler: {
+  current: ((event: React.PointerEvent<HTMLElement>) => void) | null;
+} = { current: null };
+let anchor: ChatAnchor | null = null;
+let dip: Animation | null = null;
+let releaseAnchor: (() => void) | null = null;
 
 type Rect = FloatPosition & FloatSize;
 type MovePhase = 'idle' | 'enter' | 'exit';

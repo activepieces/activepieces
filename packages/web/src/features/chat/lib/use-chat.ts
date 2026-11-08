@@ -34,7 +34,7 @@ import {
 import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
 import { ChatModelPick, chatUtils } from './chat-utils';
-import { demoScenarios } from './demo/demo-scenarios';
+import { chatDemoGate } from './demo/chat-demo-gate';
 import { usePageContext } from './page-context';
 import { useStreamingReducer } from './use-streaming-reducer';
 
@@ -805,9 +805,13 @@ export function useAgentChat({
     ) => {
       const gen = sessionGenRef.current;
       const isStale = () => gen !== sessionGenRef.current;
-      const files = attachedFiles ?? demoScenarios.attachmentsFor(content);
+      const demoFiles =
+        import.meta.env.DEV && !attachedFiles
+          ? chatDemoGate.attachmentsFor(content)
+          : undefined;
       updateSendStatus({ type: 'submitting' });
       await pickSaveQueueRef.current;
+      const files = attachedFiles ?? (await demoFiles);
       if (isStale() || isSendCancelled({ statusRef: sendStatusRef })) {
         return;
       }

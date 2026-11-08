@@ -12,8 +12,9 @@ import {
   ResourceRef,
   resourceRegistry,
 } from '@/features/chat/lib/resources/registry';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import {
-  chatTransitions,
+  chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 
@@ -53,7 +54,7 @@ export function FollowAlongController() {
       const push = runId === null || !pushedRuns.current.has(runId);
       if (runId !== null) pushedRuns.current.add(runId);
       followAlong.offer(null);
-      chatTransitions.openBeside({
+      chatPanelUtils.openBeside({
         route,
         push,
         name:
@@ -105,7 +106,8 @@ export function FollowAlongController() {
       if (!(target instanceof Element) || target.closest('[data-chat-root]')) {
         return;
       }
-      if (target.closest(`#${CARD_ID}`)) followAlong.touchPage();
+      if (target.closest(`#${chatLayoutUtils.CARD_ID}`))
+        followAlong.touchPage();
     };
     window.addEventListener('pointerdown', onPage, true);
     window.addEventListener('wheel', onPage, { capture: true, passive: true });
@@ -303,4 +305,3 @@ const RECHECK_MS = 250;
 const IDLE_MS = 1500;
 const GLOW_AFTER_SETTLE_MS = 120;
 const AT_BOTTOM_GAP = 24;
-const CARD_ID = 'dashboard-content-container';

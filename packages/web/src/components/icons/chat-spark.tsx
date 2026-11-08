@@ -1,7 +1,5 @@
 import type { SVGProps } from 'react';
 
-// The chat icon: a message bubble with two lines of text, and a spark on the
-// corner where the bubble opens. 24px grid.
 export const CHAT_SPARK_PATHS = {
   bubble:
     'M14 3.5H7A4.5 4.5 0 0 0 2.5 8v7A4.5 4.5 0 0 0 7 19.5v1.8c0 .6.7.96 1.2.6l3.3-2.4H17a4.5 4.5 0 0 0 4.5-4.5v-4.5',
@@ -10,8 +8,6 @@ export const CHAT_SPARK_PATHS = {
   lines: ['M7 9.5H14.5', 'M7 13.5H17.5'],
 } as const;
 
-// One color, like the Lucide icons around it (same 2px stroke by default).
-// The colored version lives in the chat notch only.
 export function ChatSparkIcon({
   strokeWidth = 2,
   ...props

@@ -29,11 +29,6 @@ import { chatDemo } from './chat-demo';
 import { demoHistory } from './demo-history';
 import { demoScenarios, DemoScenario } from './demo-scenarios';
 
-// An in-memory stand-in for the chat API. It keeps demo conversations here,
-// plays a scenario's script when a message is sent, and publishes the same
-// websocket events the server would, so the real stream reader, reducer and
-// components render the result. Nothing reaches the server.
-
 const conversations = new Map<string, DemoConversation>();
 const expiredGateIds = new Set<string>();
 let armedScenarioId: string | null = null;
@@ -100,9 +95,6 @@ function getEntry(id: string): DemoConversation {
   return entry;
 }
 
-// ---------------------------------------------------------------------------
-// Playing a script
-
 class DemoStop extends Error {}
 
 class DemoFailure extends Error {
@@ -141,8 +133,6 @@ function startRun({
   touch(entry, { status: AgentConversationStatus.STREAMING });
 
   const convId = entry.conv.id;
-  // Scenarios that edit real resources keep real time even at "instant"
-  // speed, so the page can be watched changing.
   const speed = () =>
     scenario.realtime
       ? Math.max(1, chatDemo.speedFactor())
@@ -211,7 +201,7 @@ function startRun({
     }
   };
 
-  void (async () => {
+  (async () => {
     try {
       chunk({ type: 'start' }, { type: 'start-step' });
       if (titleOnStart) {
@@ -234,7 +224,7 @@ function startRun({
         ),
       );
     }
-  })();
+  })().catch(() => undefined);
 }
 
 function stopRun(entry: DemoConversation): void {
@@ -521,9 +511,6 @@ function createContext({
   return ctx;
 }
 
-// ---------------------------------------------------------------------------
-// History: what a finished (or in-flight) turn looks like once "saved".
-
 function toPersistedParts(run: DemoRun): PersistedAgentPart[] {
   const parts: PersistedAgentPart[] = [];
   for (const part of run.mirror.message.parts) {
@@ -600,8 +587,6 @@ function toPersistedParts(run: DemoRun): PersistedAgentPart[] {
             errorText: 'Declined',
           });
         }
-        // Pending calls are not saved, like on the server; a resumed stream
-        // re-adds a pending gate from getPendingGate.
         break;
       }
       default:
@@ -642,9 +627,6 @@ function pickScenario({
   if (ownScenario && entry.turns === 0) return ownScenario;
   return demoScenarios.fallback;
 }
-
-// ---------------------------------------------------------------------------
-// The API surface, shaped like chatApi.
 
 async function createConversation(
   request: CreateAgentConversationRequest,
@@ -691,7 +673,6 @@ async function sendMessage({
   });
   entry.turns += 1;
   touch(entry, {});
-  // Give the client a beat to subscribe, like a real round trip.
   setTimeout(
     () =>
       startRun({
@@ -800,8 +781,6 @@ function mergeIntoFirstPage(
   return { ...page, data: [...extra, ...page.data] };
 }
 
-// Starts a scenario. A live one arms the next new conversation and returns the
-// prompt to send; a seeded one is created here, already full, and opened.
 function prepare(scenarioId: string): DemoPrepared | null {
   const scenario = demoScenarios.byId(scenarioId);
   if (!scenario) return null;
@@ -830,8 +809,6 @@ function sleep(ms: number): Promise<void> {
   );
 }
 
-// Routes each call: demo conversations (and new chats while demo mode is on)
-// go to the in-memory backend; everything else goes to the real API.
 function wrap(real: ChatApi): ChatApi {
   const isDemo = chatDemo.isDemoId;
   return {
@@ -928,7 +905,6 @@ export type GateDecision = {
 };
 
 export type DemoContext = {
-  // How many times this scenario already played in this chat (0 the first time).
   attempt: number;
   userText: string;
   fileNames: string[];

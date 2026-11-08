@@ -7,8 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
-import { chatDemo } from '@/features/chat/lib/demo/chat-demo';
-import { demoCapabilities } from '@/features/chat/lib/demo/demo-capability-scenarios';
+import { chatDemoGate } from '@/features/chat/lib/demo/chat-demo-gate';
 import { piecesHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
@@ -52,7 +51,7 @@ export function SecretRequestCard({
 
   if (!request) return null;
 
-  const isDemo = chatDemo.isDemoId(toolCallId);
+  const isDemo = chatDemoGate.isDemoId(toolCallId);
   const inline =
     secretRequestUtils.canSaveInline(request) &&
     (request.target !== 'connection' ||
@@ -82,7 +81,7 @@ export function SecretRequestCard({
     setStatus('saving');
     const { data: ref, error } = await tryCatch<SecretRef>(() =>
       isDemo
-        ? demoCapabilities.saveSecret({ request, values })
+        ? chatDemoGate.saveSecret({ request, values })
         : secretRequestUtils.save({ request, values, piece: pieceModel }),
     );
     if (error || !ref) {

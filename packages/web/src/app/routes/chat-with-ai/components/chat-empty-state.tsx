@@ -30,7 +30,7 @@ import {
   UseCaseCard,
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { DOCK_BREAKPOINT } from '@/features/workspace/lib/chat-layout';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -86,7 +86,7 @@ export function SetupRequiredState() {
 
   const connect = () => {
     navigate('/platform/ai');
-    if (window.innerWidth >= DOCK_BREAKPOINT) {
+    if (window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT) {
       useChatPanel.getState().setOpen(true);
     }
   };

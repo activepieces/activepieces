@@ -30,10 +30,7 @@ import {
 } from '@/components/ui/tooltip';
 import { SidebarUsageLimits } from '@/features/billing';
 import { PlatformSwitcher } from '@/features/projects';
-import {
-  RAIL_WIDTH_REM,
-  SIDEBAR_WIDTH_REM,
-} from '@/features/workspace/lib/chat-layout';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -258,7 +255,7 @@ function HeaderActions({ children }: { children: React.ReactNode }) {
   return (
     <div
       inert={state === 'collapsed' && !isMobile}
-      className="absolute top-0 left-[calc(var(--sidebar-width)-1rem-4.125rem)] flex w-[4.125rem] items-center justify-end gap-0.5 transition-opacity duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none"
+      className="absolute top-0 left-[calc(var(--sidebar-width)-1rem-4.125rem)] flex w-[4.125rem] items-center justify-end gap-0.5 transition-opacity duration-150 ease-move group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none"
     >
       {children}
     </div>
@@ -339,9 +336,6 @@ function HeaderIconButton({
   );
 }
 
-// The sidebar re-renders whenever the rail opens or closes. These sections
-// take no props, so memo keeps that render to the frame itself; the parts that
-// read the rail state update on their own, after the move has started.
 const MemoAppHeader = memo(AppHeader);
 const MemoPlatformHeader = memo(PlatformHeader);
 const MemoAppNav = memo(AppNav);
@@ -356,8 +350,8 @@ const SIDEBAR_STYLE: React.CSSProperties & {
   '--sidebar-width': string;
   '--sidebar-width-icon': string;
 } = {
-  '--sidebar-width': `${SIDEBAR_WIDTH_REM}rem`,
-  '--sidebar-width-icon': `${RAIL_WIDTH_REM}rem`,
+  '--sidebar-width': `${chatLayoutUtils.SIDEBAR_WIDTH_REM}rem`,
+  '--sidebar-width-icon': `${chatLayoutUtils.RAIL_WIDTH_REM}rem`,
 };
 
 export type AppSidebarMode = 'app' | 'platform';

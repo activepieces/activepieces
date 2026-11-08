@@ -9,19 +9,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { isMac } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 import { useChatWidth } from './chat-window';
-
-const ICON = 24;
-const NOTCH = 48;
-const INSET_X = (NOTCH - ICON) / 2;
-const INSET_TOP = INSET_X + 1;
-const NOTCH_BOX = 100;
-const SHADOW_COVER = 4;
-const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 export function ChatNotch({ className }: { className?: string }) {
   const setOpen = useChatPanel((s) => s.setOpen);
@@ -68,6 +61,8 @@ export function ChatNotch({ className }: { className?: string }) {
               aria-label={needsYou ? t('Chat, it needs you') : t('Chat')}
               aria-keyshortcuts="Meta+J Control+J"
               onClick={() => setOpen(true)}
+              tabIndex={isHidden ? -1 : 0}
+              aria-hidden={isHidden || undefined}
               initial={false}
               whileHover="hover"
               animate={
@@ -112,12 +107,14 @@ export function ChatNotch({ className }: { className?: string }) {
   );
 }
 
-const writeLine = (order: number) => ({
-  hover: {
-    pathLength: [0, 1],
-    transition: { duration: 0.45, ease: EASE_OUT, delay: order * 0.06 },
-  },
-});
+function writeLine(order: number) {
+  return {
+    hover: {
+      pathLength: [0, 1],
+      transition: { duration: 0.45, ease: EASE_OUT, delay: order * 0.06 },
+    },
+  };
+}
 
 function NotchChatIcon({ className }: { className?: string }) {
   return (
@@ -171,3 +168,11 @@ function notchOutline(progress: number) {
   } L 0 ${b + SHADOW_COVER} Z`;
   return { edge, fill };
 }
+
+const ICON = 24;
+const NOTCH = 48;
+const INSET_X = (NOTCH - ICON) / 2;
+const INSET_TOP = INSET_X + 1;
+const NOTCH_BOX = 100;
+const SHADOW_COVER = 4;
+const EASE_OUT = chatLayoutUtils.MOVE_EASE.out;

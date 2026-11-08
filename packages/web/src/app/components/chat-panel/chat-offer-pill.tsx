@@ -10,6 +10,7 @@ import {
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
 import { resourceRegistry } from '@/features/chat/lib/resources/registry';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 
 export function ChatOfferPill() {
   const ref = useRef<HTMLDivElement>(null);
@@ -44,7 +45,7 @@ export function ChatOfferPill() {
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
-            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.16, ease: chatLayoutUtils.MOVE_EASE.out }}
             className="flex justify-center"
           >
             <div
