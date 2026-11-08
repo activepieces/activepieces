@@ -12,6 +12,7 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { RightSideBarType } from '@/app/builder/types';
+import { useFollowFlash } from '@/features/chat/lib/follow/follow-along';
 import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +53,7 @@ const ApStepCanvasNode = React.memo(
       state.canvasOrientation,
     ]);
     const isHorizontal = canvasOrientation === 'horizontal';
+    const flashing = useFollowFlash(`flow-step:${step.name}`);
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
@@ -144,6 +146,7 @@ const ApStepCanvasNode = React.memo(
             'bg-gray-4': isSkipped,
             'rounded-tl-none': isTrigger && !isHorizontal,
             'hover:border-gray-8': !isSelected,
+            'ap-follow-flash': flashing,
           },
         )}
         onClick={(e) => handleStepClick(e)}

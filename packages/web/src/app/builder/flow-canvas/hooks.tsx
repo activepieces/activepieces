@@ -2,6 +2,7 @@ import { Permission, isNil } from '@activepieces/core-utils';
 import {
   FlowDraftUpdatedEvent,
   FlowRunStatus,
+  FlowVersion,
   FlowVersionState,
   flowStructureUtil,
   WebsocketClientEvent,
@@ -19,6 +20,10 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
+import {
+  followAlong,
+  useOnFollowUpdate,
+} from '@/features/chat/lib/follow/follow-along';
 import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
@@ -162,6 +167,73 @@ const useRefreshDraftOnPush = () => {
     };
   }, [socket, flowId, refreshDraft]);
 };
+
+// While the chat edits this flow, each finished tool call refreshes the draft
+// and lights up the steps it added or changed.
+const useRefreshDraftOnFollow = () => {
+  const store = useBuilderStore();
+  const flowId = useBuilderStateContext((state) => state.flow.id);
+  const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
+  const { fitView, getViewport } = useReactFlow();
+  const seen = useRef<Map<string, string> | null>(null);
+  useEffect(() => {
+    seen.current = stepFingerprints(store.getState().flowVersion);
+  }, [flowId, store]);
+  useOnFollowUpdate({ kind: 'flow', id: flowId }, () => {
+    void refreshDraft()
+      .catch(() => false)
+      .then(() => {
+        const next = stepFingerprints(store.getState().flowVersion);
+        const before = seen.current ?? new Map<string, string>();
+        seen.current = next;
+        const changed = [...next]
+          .filter(([name, print]) => before.get(name) !== print)
+          .map(([name]) => name);
+        followAlong.flash(changed.map((name) => `flow-step:${name}`));
+        const last = changed.at(-1);
+        // Bring the change into view if it landed off screen, at the same zoom.
+        if (last) {
+          setTimeout(() => {
+            if (isStepVisible(last)) return;
+            const { zoom } = getViewport();
+            void fitView({
+              nodes: [{ id: last }],
+              duration: 450,
+              minZoom: zoom,
+              maxZoom: zoom,
+            });
+          }, 120);
+        }
+      });
+  });
+};
+
+function isStepVisible(stepName: string): boolean {
+  const node = document.querySelector(
+    `.react-flow__node[data-id="${CSS.escape(stepName)}"]`,
+  );
+  const pane = node?.closest('.react-flow');
+  if (!node || !pane) return true;
+  const rect = node.getBoundingClientRect();
+  const view = pane.getBoundingClientRect();
+  return (
+    rect.top >= view.top &&
+    rect.bottom <= view.bottom - 64 &&
+    rect.left >= view.left &&
+    rect.right <= view.right
+  );
+}
+
+function stepFingerprints(version: FlowVersion): Map<string, string> {
+  return new Map(
+    flowStructureUtil
+      .getAllSteps(version.trigger)
+      .map((step) => [
+        step.name,
+        JSON.stringify([step.type, step.displayName, step.settings]),
+      ]),
+  );
+}
 
 const useRefreshDraftOnReconnectAndReturn = () => {
   const socket = useSocket();
@@ -360,6 +432,7 @@ export const flowCanvasHooks = {
   useFlushPendingEditsOnLeave,
   useRefreshDraftAndMakeNewDraftEditable,
   useRefreshDraftOnPush,
+  useRefreshDraftOnFollow,
   useRefreshDraftOnReconnectAndReturn,
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,

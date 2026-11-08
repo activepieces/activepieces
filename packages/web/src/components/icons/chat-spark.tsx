@@ -1,0 +1,37 @@
+import type { SVGProps } from 'react';
+
+// The chat icon: a message bubble with two lines of text, and a spark on the
+// corner where the bubble opens. 24px grid.
+export const CHAT_SPARK_PATHS = {
+  bubble:
+    'M14 3.5H7A4.5 4.5 0 0 0 2.5 8v7A4.5 4.5 0 0 0 7 19.5v1.8c0 .6.7.96 1.2.6l3.3-2.4H17a4.5 4.5 0 0 0 4.5-4.5v-4.5',
+  spark:
+    'M19 2Q19.58 4.32 21.9 4.9Q19.58 5.48 19 7.8Q18.42 5.48 16.1 4.9Q18.42 4.32 19 2Z',
+  lines: ['M7 9.5H14.5', 'M7 13.5H17.5'],
+} as const;
+
+// One color, like the Lucide icons around it (same 2px stroke by default).
+// The colored version lives in the chat notch only.
+export function ChatSparkIcon({
+  strokeWidth = 2,
+  ...props
+}: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      {...props}
+    >
+      <path d={CHAT_SPARK_PATHS.bubble} />
+      <path d={CHAT_SPARK_PATHS.spark} />
+      {CHAT_SPARK_PATHS.lines.map((d) => (
+        <path key={d} d={d} />
+      ))}
+    </svg>
+  );
+}

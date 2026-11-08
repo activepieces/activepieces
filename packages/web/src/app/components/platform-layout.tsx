@@ -8,6 +8,9 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
+import { ChatContentColumn } from './chat-panel/chat-content-column';
+import { ChatNotch } from './chat-panel/chat-notch';
+import { ChatDock, ChatWindow } from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
 import { AppSidebar } from './sidebar/app-sidebar';
 
@@ -27,15 +30,21 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
               className="flex-1 min-w-0 w-auto max-md:h-auto max-md:min-h-0"
             >
               <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
-                <div className="flex-1 flex flex-col pr-2 pt-3 pb-3 overflow-hidden max-md:pl-2 max-md:pt-2">
+                <div className="relative flex-1 flex flex-col pr-2 pt-3 pb-3 overflow-hidden max-md:pl-2 max-md:pt-2">
                   <div
                     id="dashboard-content-container"
-                    className="relative flex flex-col h-full bg-(--admin-page) rounded-xl shadow-panel border overflow-clip"
+                    className="relative flex h-full bg-(--admin-page) rounded-xl shadow-panel border overflow-clip"
                   >
-                    <div className="flex flex-col flex-1 overflow-auto [scrollbar-gutter:stable]">
-                      {children}
-                    </div>
+                    <ChatDock side="left" />
+                    <ChatContentColumn>
+                      <div className="flex flex-col flex-1 overflow-auto [scrollbar-gutter:stable]">
+                        {children}
+                      </div>
+                    </ChatContentColumn>
+                    <ChatDock side="right" />
                   </div>
+                  <ChatNotch className="bottom-3" />
+                  <ChatWindow />
                 </div>
               </SidebarInset>
             </SidebarProvider>

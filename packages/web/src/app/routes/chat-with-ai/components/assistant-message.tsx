@@ -52,6 +52,7 @@ import { markdownPreviewComponents } from './previews/markdown-preview-component
 import { previewUtils } from './previews/preview-utils';
 import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
+import { ResourceChips } from './resource-chip';
 import { ShowcaseCard } from './showcase-card/showcase-card';
 import { ShowcaseTileData } from './showcase-card/showcase-tile';
 import { SubagentGroup } from './subagent-card';
@@ -359,6 +360,14 @@ function MessageBlocks({
                     />
                   )}
                 </AnimatePresence>
+                {!isAccordionOpen && (
+                  <ResourceChips
+                    parts={block.steps.flatMap((step) =>
+                      step.kind === 'tool' ? [step.part] : [],
+                    )}
+                    className="pt-2"
+                  />
+                )}
               </div>
             );
           }

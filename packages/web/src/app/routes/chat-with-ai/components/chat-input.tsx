@@ -199,8 +199,8 @@ export function ChatInput({
           />
         )}
         {showToolbar && (
-          <PromptInputActions className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
+          <PromptInputActions className="flex min-w-0 items-center justify-between gap-2">
+            <div className="flex shrink-0 items-center gap-1">
               <PromptInputAction tooltip={t('Attach files')}>
                 <FileUploadTrigger asChild>
                   <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12">
@@ -210,7 +210,7 @@ export function ChatInput({
               </PromptInputAction>
               {leftActions}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex min-w-0 items-center gap-1 [&>*:last-child]:shrink-0">
               {rightActions}
               {isStreaming && onStop ? (
                 <PromptInputAction tooltip={t('Stop')}>

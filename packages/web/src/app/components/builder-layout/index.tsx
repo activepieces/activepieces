@@ -6,6 +6,9 @@ import { ManagePlanDialog } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
+import { ChatContentColumn } from '../chat-panel/chat-content-column';
+import { ChatNotch } from '../chat-panel/chat-notch';
+import { ChatDock, ChatWindow } from '../chat-panel/chat-window';
 import {
   GlobalSearchProvider,
   useGlobalSearch,
@@ -45,20 +48,36 @@ function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
           <div
             className={cn(
-              'flex-1 flex flex-col overflow-hidden',
-              !embedState.isEmbedded && 'p-1.5',
+              'relative flex-1 flex flex-col overflow-hidden',
+              // Same side gutters as the project layout (none beside the
+              // sidebar, pr-2), so the docked chat and the notch land in the
+              // same place on every page.
+              !embedState.isEmbedded && 'py-1.5 pr-2 max-md:pl-1.5',
             )}
           >
             <div
+              id={
+                embedState.isEmbedded
+                  ? undefined
+                  : 'dashboard-content-container'
+              }
               className={cn(
-                'flex flex-col h-full bg-gray-1 overflow-hidden',
+                'relative flex h-full bg-gray-1 overflow-clip',
                 embedState.isEmbedded
                   ? 'border-l'
                   : 'rounded-xl shadow-panel border',
               )}
             >
-              {children}
+              {!embedState.isEmbedded && <ChatDock side="left" />}
+              <ChatContentColumn>{children}</ChatContentColumn>
+              {!embedState.isEmbedded && <ChatDock side="right" />}
             </div>
+            {!embedState.isEmbedded && (
+              <>
+                <ChatNotch className="bottom-1.5" />
+                <ChatWindow />
+              </>
+            )}
           </div>
           {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
         </SidebarInset>

@@ -1273,3 +1273,31 @@
     --admin-card-border: var(--gray-6);
   }
 }
+
+/* Follow along: what the chat just changed lights up softly, then fades
+   (FLASH_MS in follow-along.ts). */
+@keyframes ap-follow-flash {
+  0%,
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.ap-follow-flash:not(.rdg-cell-frozen),
+.ap-follow-flash-row > .rdg-cell:not(.rdg-cell-frozen) {
+  position: relative;
+}
+
+.ap-follow-flash::after,
+.ap-follow-flash-row > .rdg-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: color-mix(in oklab, var(--accent-9) 14%, transparent);
+  animation: ap-follow-flash 1.2s ease-out forwards;
+}

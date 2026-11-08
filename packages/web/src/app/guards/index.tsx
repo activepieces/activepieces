@@ -1,6 +1,7 @@
 import { Permission } from '@activepieces/core-utils';
 import { lazy, Suspense } from 'react';
 import {
+  Outlet,
   RouterProvider,
   createBrowserRouter,
   createMemoryRouter,
@@ -16,6 +17,7 @@ import { useEmbedding } from '@/components/providers/embed-provider';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
+import { ChatChromeHost } from '../components/chat-panel/chat-window';
 import { RouteErrorBoundary } from '../components/global-error-boundary';
 import { ProjectDashboardLayout } from '../components/project-layout';
 
@@ -127,10 +129,21 @@ const routes = [
   },
 ];
 
-const routesWithErrorBoundary = routes.map((route) => ({
-  errorElement: <RouteErrorBoundary />,
-  ...route,
-}));
+// One pathless parent keeps the chat panel mounted across every page.
+const routesWithErrorBoundary = [
+  {
+    element: (
+      <>
+        <Outlet />
+        <ChatChromeHost />
+      </>
+    ),
+    children: routes.map((route) => ({
+      errorElement: <RouteErrorBoundary />,
+      ...route,
+    })),
+  },
+];
 
 export const memoryRouter = createMemoryRouter(routesWithErrorBoundary);
 const browserRouter = createBrowserRouter(routesWithErrorBoundary);

@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSocket } from '@/components/providers/socket-provider';
 
 import { chatApi } from './chat-api';
+import { chatDemo } from './demo/chat-demo';
 
 export function useConversationIndicators({
   conversations,
@@ -100,6 +101,7 @@ export function useConversationIndicators({
     };
 
     socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
+    const offDemo = chatDemo.onEvent(handler);
     const reconnectHandler = () => {
       socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
       socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
@@ -109,6 +111,7 @@ export function useConversationIndicators({
     return () => {
       socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
       socket.off('connect', reconnectHandler);
+      offDemo();
     };
   }, [socket, queryClient]);
 

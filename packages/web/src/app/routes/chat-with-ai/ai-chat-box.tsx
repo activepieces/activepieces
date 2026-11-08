@@ -69,6 +69,7 @@ export function AIChatBox({
   conversationId,
   onTitleUpdate,
   onConversationCreated,
+  compact,
 }: AIChatBoxProps) {
   const projectId = authenticationSession.getProjectId();
   const gated =
@@ -102,6 +103,7 @@ export function AIChatBox({
           conversationId={conversationId}
           onTitleUpdate={onTitleUpdate}
           onConversationCreated={onConversationCreated}
+          compact={compact}
         />
       </TaskPanelLayout>
     </ChatStoreProvider>
@@ -120,6 +122,7 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
+  compact,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
@@ -298,10 +301,11 @@ function ChatBoxContent({
     (personalization.companyInput ?? '').trim().length > 0 &&
     currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
-    isEmpty && !incognito && (isFirstRun || promptOpen);
+    isEmpty && !incognito && !compact && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    !compact &&
     isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
@@ -624,4 +628,6 @@ type AIChatBoxProps = {
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
   onTitleUpdate?: (title: string) => void;
+  // A side panel: no onboarding card and no personalization chip.
+  compact?: boolean;
 };

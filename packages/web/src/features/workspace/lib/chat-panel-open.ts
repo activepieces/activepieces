@@ -1,0 +1,119 @@
+import { create } from 'zustand';
+
+import { startStructuralMove } from './chat-layout';
+
+const STORAGE_KEY = 'chat-panel';
+
+const DEFAULTS: SavedChatPanel = {
+  open: false,
+  mode: 'left',
+  float: null,
+  floatSize: null,
+  dockWidth: 372,
+  conversationId: null,
+};
+
+function readSaved(): SavedChatPanel {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
+  } catch {
+    return DEFAULTS;
+  }
+}
+
+function save({
+  open,
+  mode,
+  float,
+  floatSize,
+  dockWidth,
+  conversationId,
+}: SavedChatPanel) {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        open,
+        mode,
+        float,
+        floatSize,
+        dockWidth,
+        conversationId,
+      }),
+    );
+  } catch {
+    // Private mode or full storage: the panel still works, it just forgets.
+  }
+}
+
+export const useChatPanel = create<ChatPanelState>((set, get) => {
+  const update = (patch: Partial<SavedChatPanel>) => {
+    set(patch);
+    save(get());
+  };
+  return {
+    ...readSaved(),
+    gesture: 'idle',
+    docks: 0,
+    chatMounted: false,
+    mountChat: () => set({ chatMounted: true }),
+    setOpen: (open) => {
+      startStructuralMove(open ? 'enter' : 'exit');
+      update({ open });
+    },
+    toggle: () => get().setOpen(!get().open),
+    dock: (side) => {
+      startStructuralMove('enter');
+      set({ docks: get().docks + 1 });
+      update({ open: true, mode: side });
+    },
+    floatAt: (position) => {
+      startStructuralMove('exit');
+      update({ open: true, mode: 'float', float: position });
+    },
+    resizeFloat: (floatSize) => update({ floatSize }),
+    setDockWidth: (dockWidth) => update({ dockWidth }),
+    setConversationId: (conversationId) => update({ conversationId }),
+    setGesture: (gesture) => set({ gesture }),
+  };
+});
+
+// A docked panel takes room from the page, so the sidebar may fold for it.
+export function chatPanelIsDocked(state: ChatPanelState): boolean {
+  return state.open && state.mode !== 'float';
+}
+
+export type ChatPanelSide = 'left' | 'right';
+export type ChatPanelMode = ChatPanelSide | 'float';
+export type FloatPosition = { x: number; y: number };
+export type FloatSize = { width: number; height: number };
+// `dragging` follows the pointer; `settling` is the card easing to rest after
+// a drop, a cancel or a layout change, before a dock takes the chat over.
+export type ChatGesture = 'idle' | 'dragging' | 'settling';
+
+type SavedChatPanel = {
+  open: boolean;
+  mode: ChatPanelMode;
+  float: FloatPosition | null;
+  floatSize: FloatSize | null;
+  dockWidth: number;
+  conversationId: string | null;
+};
+
+type ChatPanelState = SavedChatPanel & {
+  gesture: ChatGesture;
+  // Counts explicit docks (menu, drop), so re-docking while already docked
+  // still reads as a dock. Not saved.
+  docks: number;
+  chatMounted: boolean;
+  mountChat: () => void;
+  setOpen: (open: boolean) => void;
+  toggle: () => void;
+  dock: (side: ChatPanelSide) => void;
+  floatAt: (position: FloatPosition) => void;
+  resizeFloat: (size: FloatSize) => void;
+  setDockWidth: (width: number) => void;
+  setConversationId: (conversationId: string | null) => void;
+  setGesture: (gesture: ChatGesture) => void;
+};

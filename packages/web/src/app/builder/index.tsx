@@ -75,6 +75,7 @@ const BuilderPage = () => {
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   flowCanvasHooks.useFlushPendingEditsOnLeave();
   flowCanvasHooks.useRefreshDraftOnPush();
+  flowCanvasHooks.useRefreshDraftOnFollow();
   flowCanvasHooks.useRefreshDraftOnReconnectAndReturn();
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);

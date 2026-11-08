@@ -33,6 +33,7 @@ import {
 import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
 import { ChatModelPick, chatUtils } from './chat-utils';
+import { demoScenarios } from './demo/demo-scenarios';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 function applyQuickRepliesToStore({
@@ -779,9 +780,11 @@ export function useAgentChat({
   const sendMessage = useCallback(
     async (
       content: string,
-      files?: File[],
+      attachedFiles?: File[],
       options?: { messageSource?: AgentMessageSource },
     ) => {
+      // Dev only: a demo scenario may attach sample files to its prompt.
+      const files = attachedFiles ?? demoScenarios.attachmentsFor(content);
       updateSendStatus({ type: 'submitting' });
       await pickSaveQueueRef.current;
       if (isSendCancelled({ statusRef: sendStatusRef })) {

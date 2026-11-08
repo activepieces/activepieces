@@ -32,6 +32,13 @@ const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
+// The sidebar's own width and labels are CSS on its data-state, so they read
+// the state right away and the move starts on this frame. Everything else that
+// reads the state (the nav, its tooltips) catches up a beat later in a
+// background render, so toggling never blocks a frame.
+const SidebarMotionStateContext = React.createContext<'expanded' | 'collapsed'>(
+  'expanded',
+);
 
 function useSidebar() {
   const context = React.useContext(SidebarContext);
@@ -159,12 +166,14 @@ function SidebarProvider({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleSidebar, shortcutIgnoresEditable, keyboardShortcut]);
 
-  const state = open ? 'expanded' : 'collapsed';
+  const motionState = open ? 'expanded' : 'collapsed';
+  const settledOpen = React.useDeferredValue(open);
+  const state = settledOpen ? 'expanded' : 'collapsed';
 
   const contextValue = React.useMemo<SidebarContextProps>(
     () => ({
       state,
-      open,
+      open: settledOpen,
       setOpen,
       isMobile,
       openMobile,
@@ -177,7 +186,7 @@ function SidebarProvider({
     }),
     [
       state,
-      open,
+      settledOpen,
       setOpen,
       isMobile,
       openMobile,
@@ -192,25 +201,27 @@ function SidebarProvider({
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      <TooltipProvider delayDuration={0}>
-        <div
-          data-slot="sidebar-wrapper"
-          style={
-            {
-              '--sidebar-width': SIDEBAR_WIDTH,
-              '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
-              ...style,
-            } as React.CSSProperties
-          }
-          className={cn(
-            'group/sidebar-wrapper flex h-svh w-full has-data-[variant=inset]:bg-gray-2',
-            className,
-          )}
-          {...props}
-        >
-          {children}
-        </div>
-      </TooltipProvider>
+      <SidebarMotionStateContext.Provider value={motionState}>
+        <TooltipProvider delayDuration={0}>
+          <div
+            data-slot="sidebar-wrapper"
+            style={
+              {
+                '--sidebar-width': SIDEBAR_WIDTH,
+                '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
+                ...style,
+              } as React.CSSProperties
+            }
+            className={cn(
+              'group/sidebar-wrapper flex h-svh w-full has-data-[variant=inset]:bg-gray-2',
+              className,
+            )}
+            {...props}
+          >
+            {children}
+          </div>
+        </TooltipProvider>
+      </SidebarMotionStateContext.Provider>
     </SidebarContext.Provider>
   );
 }
@@ -227,9 +238,9 @@ function Sidebar({
   variant?: 'sidebar' | 'floating' | 'inset';
   collapsible?: 'offcanvas' | 'icon' | 'none';
 }) {
+  const state = React.useContext(SidebarMotionStateContext);
   const {
     isMobile,
-    state,
     openMobile,
     setOpenMobile,
     setOpen,
@@ -294,7 +305,7 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
-          'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+          'relative w-(--sidebar-width) bg-transparent transition-[width] duration-[var(--ap-move,200ms)] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
           'group-data-[collapsible=offcanvas]:w-0',
           'group-data-[side=right]:rotate-180',
           variant === 'floating' || variant === 'inset'
@@ -309,7 +320,7 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:flex',
+          'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-[var(--ap-move,200ms)] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:flex',
           side === 'left'
             ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
             : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
