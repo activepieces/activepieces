@@ -90,10 +90,9 @@ async function exists(path: string): Promise<boolean> {
 }
 
 afterEach(async () => {
-    for (const basePath of basePaths) {
-        await rm(basePath, { recursive: true, force: true })
+    for (const basePath of basePaths.splice(0)) {
+        await rm(basePath, { recursive: true, force: true, maxRetries: 3 })
     }
-    basePaths.length = 0
 })
 
 describe('actionRunCache.namespace', () => {
