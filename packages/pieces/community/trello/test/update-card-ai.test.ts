@@ -69,14 +69,38 @@ describe('update_card_ai closed tri-state', () => {
   });
 });
 
+describe('update_card_ai labels', () => {
+  beforeEach(() => {
+    sendRequest.mockReset();
+    sendRequest.mockResolvedValue({
+      status: 200,
+      headers: {},
+      body: { id: 'c1' },
+    });
+  });
+
+  it.each([[[]], [undefined], [null]])(
+    'leaves the card labels alone for %j',
+    async (input) => {
+      expect(await runWith({ name: 'New name', labels: input })).toEqual({
+        name: 'New name',
+      });
+    }
+  );
+
+  it('replaces the label set when label ids are given', async () => {
+    expect(await runWith({ labels: ['l1', 'l2'] })).toEqual({
+      idLabels: ['l1', 'l2'],
+    });
+  });
+});
+
 describe('update_card_ai closed prop shape', () => {
   it('keeps Archived as an optional tri-state StaticDropdown', () => {
     const closed = updateCardAi.props.closed;
     expect(closed.type).toBe(PropertyType.STATIC_DROPDOWN);
     expect(closed.required).toBe(false);
-    const values = (
-      closed as { options: { options: { value: string }[] } }
-    ).options.options.map((o) => o.value);
+    const values = closed.options.options.map((o) => o.value);
     expect(values).toEqual(['yes', 'no', 'unchanged']);
   });
 });

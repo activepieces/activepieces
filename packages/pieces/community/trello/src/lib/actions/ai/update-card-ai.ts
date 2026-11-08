@@ -9,6 +9,40 @@ import { TrelloCard } from '../../common/props/card';
 import { trelloAuth } from '../../..';
 import { updateCardAiActionOutputSchema } from '../../output-schemas';
 
+function resolveTriState({
+  value,
+}: {
+  value: unknown;
+}): boolean | undefined {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  const normalized =
+    typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (normalized === 'yes' || normalized === 'true') {
+    return true;
+  }
+  if (normalized === 'no' || normalized === 'false') {
+    return false;
+  }
+  return undefined;
+}
+
+function readHttpStatus({ error }: { error: unknown }): number | undefined {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+  const response = error.response;
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    !('status' in response)
+  ) {
+    return undefined;
+  }
+  return typeof response.status === 'number' ? response.status : undefined;
+}
+
 export const updateCardAi = createAction({
   auth: trelloAuth,
   name: 'update_card_ai',
@@ -19,7 +53,7 @@ export const updateCardAi = createAction({
   outputSchema: updateCardAiActionOutputSchema,
   aiMetadata: {
     description:
-      'Updates fields on an existing Trello card identified by card_id: name, description, due date, label ids, position, archived (closed) state, and target list_id (to move it). This is the broad editor; for a single high-intent change prefer Move Card or Archive Card. Obtain card_id from Search Cards and list_id from List Lists. Only provided fields change (omit closed, or pass Leave unchanged, to keep the archived state); repeating with the same inputs converges to the same card state.',
+      'Updates fields on an existing Trello card identified by card_id: name, description, due date, label ids, position, archived (closed) state, and target list_id (to move it). This is the broad editor; for a single high-intent change prefer Move Card or Archive Card. Obtain card_id from Search Cards and list_id from List Lists. Only provided fields change: omit closed, or pass "unchanged", to keep the archived state, and omit labels to keep the current labels (an empty labels list is ignored; use Remove Label From Card to drop a label). Repeating with the same inputs converges to the same card state.',
     idempotent: true,
   },
   props: {
@@ -58,7 +92,7 @@ export const updateCardAi = createAction({
     labels: Property.Array({
       displayName: 'Label IDs',
       description:
-        'Replace the card label set with these label ids. Obtain them from List Board Labels.',
+        'Replace the card label set with these label ids. Obtain them from List Board Labels. Leave empty to keep the current labels.',
       required: false,
     }),
     closed: Property.StaticDropdown<string>({
@@ -96,10 +130,11 @@ export const updateCardAi = createAction({
     if (context.propsValue['position']) {
       body['pos'] = context.propsValue['position'];
     }
-    if (context.propsValue['labels']) {
-      body['idLabels'] = context.propsValue['labels'] as string[];
+    const labels = context.propsValue['labels'];
+    if (Array.isArray(labels) && labels.length > 0) {
+      body['idLabels'] = labels;
     }
-    const closed = resolveTriState(context.propsValue['closed']);
+    const closed = resolveTriState({ value: context.propsValue['closed'] });
     if (closed !== undefined) {
       body['closed'] = closed;
     }
@@ -125,8 +160,8 @@ export const updateCardAi = createAction({
       };
       const response = await httpClient.sendRequest<TrelloCard>(request);
       return response.body;
-    } catch (error: any) {
-      const status = error?.response?.status;
+    } catch (error: unknown) {
+      const status = readHttpStatus({ error });
       if (status === 401 || status === 403) {
         throw new Error(
           'Permission denied updating the card. Check the connection token and your write access.'
@@ -146,18 +181,3 @@ export const updateCardAi = createAction({
     }
   },
 });
-
-function resolveTriState(value: unknown): boolean | undefined {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-  const normalized =
-    typeof value === 'string' ? value.trim().toLowerCase() : '';
-  if (normalized === 'yes' || normalized === 'true') {
-    return true;
-  }
-  if (normalized === 'no' || normalized === 'false') {
-    return false;
-  }
-  return undefined;
-}
