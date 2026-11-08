@@ -47,7 +47,7 @@ export const getIdentities = createAction({
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of identities to return',
+      description: 'Maximum number of identities to return (1 to 1000, default 100).',
       required: false,
       defaultValue: 100,
     }),

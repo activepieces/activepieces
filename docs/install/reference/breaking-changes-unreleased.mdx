@@ -8,7 +8,7 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
-#### Letta 0.2.0: three actions are no longer agent tools, and New Agent returns less
+#### Letta 0.2.0: three actions are no longer agent tools, New Agent returns less, and Get Identities respects Limit
 
 **Send Message to Agent** is now shown only in the flow builder. AI agents and MCP clients get the new **Send Message** tool (`letta_send_message`) instead, which takes the agent ID as text.
 
@@ -16,11 +16,13 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 The **New Message** trigger also fires on replies from current Letta agents (`assistant_message`), not only on `send_message` tool calls, so upgraded flows may run more often.
 
-The **New Agent** trigger now returns a short agent summary (ID, name, description, model, tags, dates and similar fields) instead of the full agent record. The fields `secrets`, `tool_exec_environment_variables`, `llm_config` and `message_ids` are no longer available from the trigger, and **Get Agent** does not return them either. They were removed on purpose so that secrets do not leak into flow data.
+The **New Agent** trigger now returns a short agent summary instead of the full agent record. It keeps only these 12 fields: `id`, `name`, `agent_type`, `model`, `embedding`, `description`, `tags`, `created_at`, `updated_at`, `last_run_completion`, `last_stop_reason` and `system`. Every other field of the agent record is gone, for example `secrets`, `tool_exec_environment_variables`, `llm_config`, `message_ids`, `metadata`, `project_id`, `embedding_config`, `tool_rules` and `timezone`. **Get Agent** does not return the secret fields either. They were removed on purpose so that secrets do not leak into flow data.
+
+**Get Identities** now respects its **Limit** field (default 100, maximum 1000). Before, it fetched every page and ignored Limit, so a server with 250 identities returned all 250 and now returns 100 unless you raise Limit. A saved Limit above 1000 now fails with a validation error.
 
 #### What you need to do
 
-If a Run Agent step or MCP client uses Send Message to Agent as a tool, switch it to Send Message (`letta_send_message`). Remove Create Identity and Get Identities from agents and MCP clients, and from flows that run against Letta Cloud. If a later step reads one of the removed New Agent fields, change that step, since no Letta action returns them any more. Steps keep running on the version they were built with until you upgrade them.
+If a Run Agent step or MCP client uses Send Message to Agent as a tool, switch it to Send Message (`letta_send_message`). Remove Create Identity and Get Identities from agents and MCP clients, and from flows that run against Letta Cloud. If a later step reads a New Agent field outside the 12 listed above, change that step: use **Get Agent** for the agent's blocks, tools and identity IDs, and note that no Letta action returns the secret fields any more. If a flow relies on Get Identities returning every identity, set Limit to the number you need (up to 1000). Steps keep running on the version they were built with until you upgrade them.
 
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 

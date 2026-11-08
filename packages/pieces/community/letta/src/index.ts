@@ -40,10 +40,10 @@ export const letta = createPiece({
   displayName: "Letta",
   description: "Letta is the platform for building stateful agents: open AI with advanced memory that can learn and self-improve over time.",
   auth: lettaAuth,
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: "https://cdn.activepieces.com/pieces/letta.png",
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ["onyedikachi-david"],
+  authors: ["onyedikachi-david", "OdaiAhmed99"],
   actions: [
     createAgentFromTemplate,
     createIdentity,
