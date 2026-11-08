@@ -226,7 +226,6 @@
   --shadow-rest: var(--rest);
   --shadow-lift: var(--lift);
   --shadow-over: var(--over);
-  --shadow-glow-primary: var(--glow-primary);
   @keyframes primary-color-pulse {
     from {
       color: var(--accent-9);
@@ -668,7 +667,6 @@
     --over:
       0 0 0 1px var(--cast-10), 0 4px 8px -4px var(--cast-10),
       0 16px 32px -12px var(--cast-20);
-    --glow-primary: 0 12px 40px -12px color-mix(in oklab, var(--accent-9), transparent 78%);
   }
 
   [data-theme='dark'] {
@@ -816,7 +814,6 @@
     --cast-08: oklch(100% 0 0 / 6%);
     --cast-10: oklch(100% 0 0 / 9%);
     --cast-20: oklch(0% 0 0 / 45%);
-    --glow-primary: 0 12px 40px -12px color-mix(in oklab, var(--accent-9), transparent 65%);
     --edge: 0 0 0 1px var(--gray-4);
     --panel-shadow:
       0 0 0 1px color-mix(in oklab, var(--gray-12), transparent 92%),
@@ -1129,32 +1126,6 @@
         var(--accent-5) 100%
       )
       border-box;
-}
-
-/* Animated gradient ring for the chat question card */
-.chat-question-gradient-border {
-  position: relative;
-}
-.chat-question-gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: linear-gradient(90deg, #8142e3, #a855f7, #d946ef, #a855f7, #8142e3);
-  background-size: 300% 100%;
-  animation: auth-anim-gradient-flow 4s ease-in-out infinite;
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .chat-question-gradient-border::before {
-    animation: none;
-  }
 }
 
 /* Particle dots with percentage-based animation */
