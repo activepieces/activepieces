@@ -94,7 +94,8 @@ describe('value coercion', () => {
     expect(customFieldsHelper.coerceValue({ field: field({ id: 'string' }), value: 'ACME' })).toBe('ACME');
     expect(customFieldsHelper.coerceValue({ field: field({ id: 'integer' }), value: '5' })).toBe(5);
     expect(customFieldsHelper.coerceValue({ field: field({ id: 'float' }), value: '2.5' })).toBe(2.5);
-    expect(customFieldsHelper.coerceValue({ field: field({ id: 'date' }), value: '2026-12-01' })).toBe(Date.UTC(2026, 11, 1));
+    expect(customFieldsHelper.coerceValue({ field: field({ id: 'date' }), value: '2026-12-01' })).toBe(Date.UTC(2026, 11, 1, 12));
+    expect(customFieldsHelper.coerceValue({ field: field({ id: 'date' }), value: Date.UTC(2026, 11, 1, 12) })).toBe(Date.UTC(2026, 11, 1, 12));
     expect(customFieldsHelper.coerceValue({ field: field({ id: 'date and time' }), value: '2026-12-01T09:30:00+02:00' })).toBe(Date.UTC(2026, 11, 1, 7, 30));
   });
 
@@ -157,7 +158,7 @@ describe('resolveCustomFields', () => {
       { name: 'Assignee', $type: 'SingleUserIssueCustomField', value: { login: 'jane' } },
       { name: 'Reviewers', $type: 'MultiUserIssueCustomField', value: [{ login: 'bob' }] },
       { name: 'Estimation', $type: 'PeriodIssueCustomField', value: { presentation: '2h' } },
-      { name: 'Due Date', $type: 'DateIssueCustomField', value: Date.UTC(2026, 11, 1) },
+      { name: 'Due Date', $type: 'DateIssueCustomField', value: Date.UTC(2026, 11, 1, 12) },
       { name: 'Started', $type: 'SimpleIssueCustomField', value: Date.UTC(2026, 11, 1, 9) },
       { name: 'Story Points', $type: 'SimpleIssueCustomField', value: 3 },
       { name: 'Risk', $type: 'SimpleIssueCustomField', value: 0.5 },

@@ -4,6 +4,7 @@ import { resolveProject } from './index';
 
 const MAX_PROJECT_FIELDS = 1000;
 const MAX_ALLOWED_VALUES = 200;
+const DATE_FIELD_MIDDAY_OFFSET_MS = 12 * 60 * 60 * 1000;
 const SCHEMA_FIELDS = 'id,canBeEmpty,emptyFieldText,field(id,name,fieldType(id,isMultiValue))';
 
 const SCHEMA_FIELDS_WITH_VALUES =
@@ -257,7 +258,7 @@ function dateValue({ field, value }: { field: ProjectField; value: unknown }): n
   if (epoch === undefined) {
     throw new Error(`The field "${field.name}" needs a date in the form YYYY-MM-DD. Use null to clear it.`);
   }
-  return epoch;
+  return epoch + DATE_FIELD_MIDDAY_OFFSET_MS;
 }
 
 function dateTimeValue({ field, value }: { field: ProjectField; value: unknown }): number {
