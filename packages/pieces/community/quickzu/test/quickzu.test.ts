@@ -5,8 +5,7 @@ import { aiCreatePromoCodeAction } from '../src/lib/actions/discounts/ai-create-
 import { orderCreatedTrigger } from '../src/lib/triggers/order-created';
 import { quickzuAuth } from '../src/lib/auth';
 import { toQuickzuDate } from '../src/lib/common';
-import { QuickzuAPIClient, toQuickzuError } from '../src/lib/common/client';
-import { formatPieceError } from '@activepieces/core-utils';
+import { QuickzuAPIClient, QuickzuApiError, toQuickzuError } from '../src/lib/common/client';
 import { quickzu } from '../src';
 import { updateProductAction } from '../src/lib/actions/products/update-product';
 
@@ -287,6 +286,59 @@ describe('update product', () => {
     expect(put?.[0].body).toMatchObject({ price: 15, meta: { nonveg: true } });
   });
 
+  it('accepts true/false strings from mapped values, trimmed and in any case', async () => {
+    const send = mockSend({ _id: 'p1' });
+    await updateProductAction.run(
+      actionContext({ productId: 'p1', name: 'N', categoryId: 'c2', mrp: 5, price: 4, unit: 'piece', value_per_unit: 1, availability: ' TRUE ', exclude_tax: 'false', enable_variants: 'False', status: 'Yes', nonveg: ' no' })
+    );
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0].body).toMatchObject({
+      availability: true,
+      exclude_tax: false,
+      enable_variants: false,
+      status: true,
+      meta: { nonveg: false },
+    });
+  });
+
+  it('treats an empty or blank mapped value as keep current setting', async () => {
+    const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.method === 'GET') {
+        return {
+          status: 200,
+          headers: {},
+          body: {
+            data: [
+              { _id: 'p1', name: 'Kebab', category: { _id: 'c1', name: 'Grill' }, mrp: 20, price: 18, unit: 'piece', value_per_unit: 1, availability: true, exclude_tax: true, enable_variants: true, status: true, meta: { nonveg: true } },
+            ],
+          },
+        };
+      }
+      return { status: 200, headers: {}, body: { _id: 'p1' } };
+    });
+    await updateProductAction.run(actionContext({ productId: 'p1', price: 15, status: '  ', availability: '' }));
+    const put = send.mock.calls.find(([request]) => request.method === 'PUT');
+    expect(put?.[0].body).toMatchObject({ availability: true, status: true });
+  });
+
+  it('rejects an unrecognised flag value before sending anything', async () => {
+    const send = mockSend({ _id: 'p1' });
+    await expect(updateProductAction.run(actionContext({ productId: 'p1', price: 15, status: 'active' }))).rejects.toThrow(
+      'Status must be Yes or No (or true/false), got "active"'
+    );
+    await expect(updateProductAction.run(actionContext({ productId: 'p1', price: 15, nonveg: 1 }))).rejects.toThrow(
+      'Non-Veg must be Yes or No'
+    );
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('explains a failed lookup when the store returns only part of its products', async () => {
+    mockSend({ data: [{ _id: 'p1', name: 'Kebab' }], total: 250, success: true });
+    await expect(updateProductAction.run(actionContext({ productId: 'p300', price: 1 }))).rejects.toThrow(
+      'Quickzu returned 1 of 250 products'
+    );
+  });
+
   it('fails clearly when the product does not exist', async () => {
     mockSend({ data: [] });
     await expect(updateProductAction.run(actionContext({ productId: 'missing', price: 1 }))).rejects.toThrow(
@@ -334,14 +386,18 @@ describe('delete of a missing item', () => {
 });
 
 describe('QuickzuApiError structured details', () => {
-  it('keeps the piece message and reports the HTTP status to formatPieceError', () => {
+  it('exposes the HTTP status as a top-level status field and keeps the piece message', () => {
     const error = toQuickzuError({
       error: new HttpError({ product_id: 'x' }, { status: 404, responseBody: { message: 'Not found' } }),
     });
-    const formatted = formatPieceError(error);
-    expect(formatted.message).toBe(error.message);
-    expect(formatted.message).toContain('Quickzu says: Not found');
-    expect(formatted.status).toBe(404);
-    expect(formatted.requestBody).toBeUndefined();
+    expect(error).toBeInstanceOf(QuickzuApiError);
+    expect(error.message).toContain('The requested record was not found. Check the ID.');
+    expect(error.message).toContain('Quickzu says: Not found');
+    expect(Reflect.get(Object(error), 'status')).toBe(404);
+    expect(Reflect.get(Object(error), 'responseBody')).toEqual({ message: 'Not found' });
+    expect(Reflect.get(Object(error), 'body')).toBeUndefined();
+    expect(Reflect.get(Object(error), 'error')).toBeUndefined();
+    expect(Reflect.get(Object(error), 'response')).toBeUndefined();
+    expect(Reflect.get(Object(error), 'request')).toBeUndefined();
   });
 });

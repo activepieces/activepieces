@@ -16,22 +16,22 @@ import {
   ProductInput,
 } from './types';
 
+const MAX_VENDOR_MESSAGE_LENGTH = 300;
+
+const DELETE_HINT = 'The item may already be deleted or the ID may not exist.';
+
+const STATUS_HINTS: Record<number, string> = {
+  401: 'Check that the API token is correct and still active.',
+  403: 'The API token does not have access to this resource.',
+  404: 'The requested record was not found. Check the ID.',
+  429: 'Rate limit reached. Try again later.',
+};
+
 function isPresent(value: QueryValue): value is string | number {
   if (value === null || value === undefined) {
     return false;
   }
   return typeof value !== 'string' || value.length > 0;
-}
-
-export function prepareQuery(request?: Record<string, QueryValue>): QueryParams {
-  const params: QueryParams = {};
-  if (!request) return params;
-  for (const [key, value] of Object.entries(request)) {
-    if (isPresent(value)) {
-      params[key] = value.toString();
-    }
-  }
-  return params;
 }
 
 function extractVendorMessage(body: unknown): string | undefined {
@@ -83,6 +83,36 @@ function readHttpFailure(error: unknown): { status: number; body: unknown } | un
   return { status, body: Reflect.get(response, 'body') };
 }
 
+export function prepareQuery(request?: Record<string, QueryValue>): QueryParams {
+  const params: QueryParams = {};
+  if (!request) return params;
+  for (const [key, value] of Object.entries(request)) {
+    if (isPresent(value)) {
+      params[key] = value.toString();
+    }
+  }
+  return params;
+}
+
+export class QuickzuApiError extends Error {
+  readonly status: number;
+  readonly responseBody: unknown;
+  constructor({
+    message,
+    status,
+    responseBody,
+  }: {
+    message: string;
+    status: number;
+    responseBody: unknown;
+  }) {
+    super(message);
+    this.name = 'QuickzuApiError';
+    this.status = status;
+    this.responseBody = responseBody;
+  }
+}
+
 export function toQuickzuError({ error, hint400 }: { error: unknown; hint400?: string }): Error {
   const failure = readHttpFailure(error);
   if (!failure) {
@@ -95,32 +125,9 @@ export function toQuickzuError({ error, hint400 }: { error: unknown; hint400?: s
   if (vendorMessage) parts.push(`Quickzu says: ${vendorMessage}`);
   return new QuickzuApiError({
     message: parts.join(' '),
-    statusCode: failure.status,
+    status: failure.status,
     responseBody: failure.body,
   });
-}
-
-export class QuickzuApiError extends Error {
-  readonly statusCode: number;
-  readonly responseBody: unknown;
-  constructor({
-    message,
-    statusCode,
-    responseBody,
-  }: {
-    message: string;
-    statusCode: number;
-    responseBody: unknown;
-  }) {
-    super(message);
-    this.name = 'QuickzuApiError';
-    this.statusCode = statusCode;
-    this.responseBody = responseBody;
-  }
-
-  get response(): { status: number } {
-    return { status: this.statusCode };
-  }
 }
 
 export class QuickzuAPIClient {
@@ -218,7 +225,15 @@ export class QuickzuAPIClient {
 
   async getProduct(productId: string): Promise<Product | undefined> {
     const res = await this.listProducts();
-    return res.data.find((product) => product._id === productId);
+    const products = res.data ?? [];
+    const found = products.find((product) => product._id === productId);
+    if (found) return found;
+    if (typeof res.total === 'number' && res.total > products.length) {
+      throw new Error(
+        `Quickzu returned ${products.length} of ${res.total} products, so product ${productId} could not be looked up. Fill in Name, Category, MRP Price, Selling Price, Unit, Unit Value and all five Yes/No settings so the update does not need the lookup.`
+      );
+    }
+    return undefined;
   }
 
   async deleteProduct(productId: string) {
@@ -297,21 +312,10 @@ export class QuickzuAPIClient {
   }
 }
 
+export const QUICKZU_BASE_URL = 'https://app.quickzu.com/api';
+
 type LiveOrdersResponse = { data: Order[][]; status: boolean };
 
 type StatusMessageResponse = { status: boolean; message: string };
 
 type QueryValue = string | number | null | undefined;
-
-const MAX_VENDOR_MESSAGE_LENGTH = 300;
-
-const DELETE_HINT = 'The item may already be deleted or the ID may not exist.';
-
-const STATUS_HINTS: Record<number, string> = {
-  401: 'Check that the API token is correct and still active.',
-  403: 'The API token does not have access to this resource.',
-  404: 'The requested record was not found. Check the ID.',
-  429: 'Rate limit reached. Try again later.',
-};
-
-export const QUICKZU_BASE_URL = 'https://app.quickzu.com/api';
