@@ -185,6 +185,20 @@ describe('updated_issue', () => {
     expect(out).toEqual([expect.objectContaining({ id: 'EDIT' })]);
     expect(data.get('lastPoll')).toBe(CHECKPOINT + 700);
   });
+
+  it('does not let 600 issues only touched at creation fill the window and hide a later real edit', async () => {
+    const { store, data } = memoryStore({ lastPoll: CHECKPOINT });
+    ok({ profiles: { general: { timezone: { id: 'UTC' } } } });
+    const issues = [
+      ...Array.from({ length: 600 }, (_, i) => issue({ id: `IMPORTED${i}`, created: CHECKPOINT + 1 + i })),
+      issue({ id: 'EDIT', created: CHECKPOINT - 100000, updated: CHECKPOINT + 5000 }),
+    ];
+    for (let page = 0; page < 13; page++) ok(issues.slice(page * 50, page * 50 + 50));
+    const out = await run({ trigger: updatedIssueTrigger, ctx: context({ store }) });
+    expect(out).toEqual([expect.objectContaining({ id: 'EDIT' })]);
+    expect(data.get('lastPoll')).toBe(CHECKPOINT + 5000);
+    expect(sendRequest).toHaveBeenCalledTimes(14);
+  });
 });
 
 describe('formatYoutrackDateTimeLiteral', () => {

@@ -17,13 +17,18 @@ async function fetchIssuePage({ auth, query, skip }: { auth: unknown; query: str
   return youtrackClient.records(body);
 }
 
-async function collectNewIssues({ auth, query, after, epochOf }: CollectParams): Promise<Record<string, unknown>[]> {
+async function collectNewIssues({ auth, query, after, epochOf, isEvent = () => true }: CollectParams): Promise<Record<string, unknown>[]> {
   const fresh: Record<string, unknown>[] = [];
+  let eventCount = 0;
   for (let page = 0; page < MAX_SCANNED_PAGES; page++) {
     const batch = await fetchIssuePage({ auth, query, skip: page * PAGE_SIZE });
-    fresh.push(...batch.filter((issue) => epochOf(issue) > after));
+    for (const issue of batch) {
+      if (epochOf(issue) <= after) continue;
+      fresh.push(issue);
+      if (isEvent(issue)) eventCount++;
+    }
     if (batch.length < PAGE_SIZE) return fresh;
-    if (fresh.length >= MAX_NEW_ISSUES) break;
+    if (eventCount >= MAX_NEW_ISSUES) break;
   }
   return withoutTrailingTies({ issues: fresh, epochOf });
 }
@@ -53,4 +58,5 @@ type CollectParams = {
   query: string;
   after: number;
   epochOf: EpochOf;
+  isEvent?: (issue: Record<string, unknown>) => boolean;
 };

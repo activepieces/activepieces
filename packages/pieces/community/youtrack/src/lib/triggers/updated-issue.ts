@@ -8,6 +8,12 @@ import { updatedIssueTriggerOutputSchema } from '../output-schemas';
 
 const CREATED_VS_UPDATED_EPSILON_MS = 2000;
 
+function isRealUpdate(issue: Record<string, unknown>): boolean {
+  const created = issue['created'];
+  const updated = issue['updated'];
+  return typeof created === 'number' && typeof updated === 'number' && updated - created > CREATED_VS_UPDATED_EPSILON_MS;
+}
+
 const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
@@ -15,18 +21,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, R
     const epochOf = (issue: Record<string, unknown>) => issuePolling.epochField({ issue, key: 'updated' });
     const toEvents = (issues: Record<string, unknown>[]) =>
       issues
-        .filter((issue) => {
-          const created = issue['created'];
-          const updated = issue['updated'];
-          return typeof created === 'number' && typeof updated === 'number' && updated - created > CREATED_VS_UPDATED_EPSILON_MS;
-        })
+        .filter(isRealUpdate)
         .map((issue) => ({ epochMilliSeconds: epochOf(issue), data: flattenIssue(issue) }));
     if (lastFetchEpochMS <= 0) {
       return toEvents(await issuePolling.fetchIssuePage({ auth, query: 'sort by: updated desc', skip: 0 }));
     }
     const timeZoneId = await getYoutrackUserTimeZoneId({ auth });
     const since = formatYoutrackDateTimeLiteral({ epochMs: lastFetchEpochMS, timeZoneId });
-    const issues = await issuePolling.collectNewIssues({ auth, query: `updated: ${since} .. * sort by: updated asc`, after: lastFetchEpochMS, epochOf });
+    const issues = await issuePolling.collectNewIssues({ auth, query: `updated: ${since} .. * sort by: updated asc`, after: lastFetchEpochMS, epochOf, isEvent: isRealUpdate });
     return toEvents(issues);
   },
 };
