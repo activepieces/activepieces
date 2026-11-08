@@ -3,14 +3,13 @@ import { InvitationStatus, SELF_SERVE_TRIAL_PLANS, SelfServeTrialDates, SelfServ
 import { JobsOptions } from 'bullmq'
 import dayjs, { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In, IsNull, SelectQueryBuilder } from 'typeorm'
+import { EntityManager, In, IsNull } from 'typeorm'
 import { transaction } from '../../../core/db/transaction'
 import { getBillingEnforcedKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { mcpGrantRevocation } from '../../../mcp/oauth/token/mcp-grant-revocation'
 import { billingProvider } from '../../../platform/billing-provider'
-import { UserSchema } from '../../../user/user-entity'
 import { userRepo, userService } from '../../../user/user-service'
 import { EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER, getInvitationExpiryCutoff, userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { platformPlanTelemetry } from './platform-plan-telemetry'
@@ -79,11 +78,7 @@ async function deactivateTrialUsersAndInvitationsOverLimit({ platformId, selfSer
         }
         const revokedInvites = await userInvitationsService(log).revokeNewestInvitedBetween({ platformId, from: selfServeTrialDates.startedAt, to: selfServeTrialDates.endsAt, limit: seats.seatsOver, entityManager })
         const usersToDeactivate = seats.seatsOver - revokedInvites
-        const newestTrialUsers = usersToDeactivate <= 0 ? [] : await trialUsersQuery({ platformId, selfServeTrialDates, log, entityManager })
-            .orderBy('user.created', 'DESC')
-            .limit(usersToDeactivate)
-            .getMany()
-        const deactivatedUserIds = newestTrialUsers.map((user) => user.id)
+        const deactivatedUserIds = await getNewestTrialUserIds({ platformId, selfServeTrialDates, limit: usersToDeactivate, log, entityManager })
         if (deactivatedUserIds.length > 0) {
             await userRepo(entityManager).update({ id: In(deactivatedUserIds), platformId }, { status: UserStatus.INACTIVE })
         }
@@ -132,11 +127,19 @@ async function seatsOverLimit({ platformId, usersLimit, billingEnforced, log, en
     return seatsOver <= 0 ? null : { activeUsers, pendingInvitations: invitedSeats, usersLimit, seatsOver }
 }
 
-function trialUsersQuery({ platformId, selfServeTrialDates, log, entityManager }: TrialUsersQueryParams): SelectQueryBuilder<UserSchema> {
-    return userService(log).activeUsersQuery({ platformId, entityManager })
+async function getNewestTrialUserIds({ platformId, selfServeTrialDates, limit, log, entityManager }: GetNewestTrialUserIdsParams): Promise<string[]> {
+    if (limit <= 0) {
+        return []
+    }
+    const users = await userService(log).activeUsersQuery({ platformId, entityManager })
+        .select('user.id')
         .andWhere('user.created >= :addedSince', { addedSince: dayjs(selfServeTrialDates.startedAt).toISOString() })
         .andWhere('user.created <= :addedBefore', { addedBefore: dayjs(selfServeTrialDates.endsAt).toISOString() })
         .andWhere(USER_IS_NOT_THE_PLATFORM_OWNER)
+        .orderBy('user.created', 'DESC')
+        .limit(limit)
+        .getMany()
+    return users.map((user) => user.id)
 }
 
 function trialGracePeriodEndsAt(selfServeTrialDates: SelfServeTrialDates): Dayjs {
@@ -195,11 +198,12 @@ type SeatsOverLimitParams = {
     entityManager?: EntityManager
 }
 
-type TrialUsersQueryParams = {
+type GetNewestTrialUserIdsParams = {
     platformId: string
     selfServeTrialDates: SelfServeTrialDates
+    limit: number
     log: FastifyBaseLogger
-    entityManager?: EntityManager
+    entityManager: EntityManager
 }
 
 type SeatsOverLimit = {
