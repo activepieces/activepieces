@@ -33,6 +33,23 @@ describe('MultiQuestionForm Skip', () => {
 
     expect(onSubmit).toHaveBeenCalledWith('- **Which inbox?** Gmail');
   });
+
+  it('dismisses the whole card with Skip all', () => {
+    const { onSubmit, onDismiss } = renderForm([
+      CHOICE_QUESTION,
+      COLOR_QUESTION,
+    ]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skip all' }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides Skip all when there is one question', () => {
+    renderForm([CHOICE_QUESTION]);
+    expect(screen.queryByRole('button', { name: 'Skip all' })).toBeNull();
+  });
 });
 
 function renderForm(questions: MultiQuestion[]) {

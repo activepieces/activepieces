@@ -37,8 +37,12 @@ export function MultiQuestionForm({
   onDismiss?: () => void;
 }) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [answerValues, setAnswerValues] = useState<Record<number, unknown>>({});
+  const [answers, setAnswers] = useState<Record<number, string>>(() =>
+    seedStep({ questions, step: 0, record: {}, pick: 'display' }),
+  );
+  const [answerValues, setAnswerValues] = useState<Record<number, unknown>>(
+    () => seedStep({ questions, step: 0, record: {}, pick: 'value' }),
+  );
   const [submitted, setSubmitted] = useState(false);
 
   const isLastStep = currentStep === questions.length - 1;
@@ -55,6 +59,16 @@ export function MultiQuestionForm({
     },
     [currentStep],
   );
+
+  function enterStep(step: number) {
+    setCurrentStep(step);
+    setAnswers((prev) =>
+      seedStep({ questions, step, record: prev, pick: 'display' }),
+    );
+    setAnswerValues((prev) =>
+      seedStep({ questions, step, record: prev, pick: 'value' }),
+    );
+  }
 
   function buildRecap(finalAnswers: Record<number, string>): string[] {
     return questions
@@ -85,7 +99,7 @@ export function MultiQuestionForm({
       }
       onSubmit(lines.join('\n'));
     } else {
-      setCurrentStep((s) => s + 1);
+      enterStep(currentStep + 1);
     }
   }
 
@@ -106,7 +120,7 @@ export function MultiQuestionForm({
       setSubmitted(true);
       onSubmit(lines.join('\n'));
     } else {
-      setCurrentStep((s) => s + 1);
+      enterStep(currentStep + 1);
     }
   }
 
@@ -123,17 +137,11 @@ export function MultiQuestionForm({
   if (!q) return null;
 
   const value = answerValues[currentStep];
-  const meta = [
-    questions.length > 1
-      ? t('Question {current} of {total}', {
-          current: currentStep + 1,
-          total: questions.length,
-        })
-      : null,
-    questionMetaUtils.hint({ question: q, value }),
-  ]
-    .filter((part): part is string => !!part)
-    .join(' · ');
+  const meta = stepMeta({
+    current: currentStep + 1,
+    total: questions.length,
+    hint: questionMetaUtils.hint({ question: q, value }),
+  });
   const summary = questionMetaUtils.footerSummary({ question: q, value });
   const pickedCount =
     q.type === 'multi_choice' && Array.isArray(value) ? value.length : 0;
@@ -191,6 +199,17 @@ export function MultiQuestionForm({
         >
           {t('Skip')}
         </Button>
+        {onDismiss && questions.length > 1 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-gray-11"
+            onClick={onDismiss}
+          >
+            {t('Skip all')}
+          </Button>
+        )}
         {summary && (
           <span className="ml-auto text-xs tabular-nums text-gray-11">
             {summary}
@@ -331,6 +350,39 @@ function nextLabel({
   return t('Next');
 }
 
+function stepMeta({
+  current,
+  total,
+  hint,
+}: {
+  current: number;
+  total: number;
+  hint: string | null;
+}): string | null {
+  if (total <= 1) return hint;
+  if (hint === null) {
+    return t('Question {current} of {total}', { current, total });
+  }
+  return t('Question {current} of {total} · {hint}', { current, total, hint });
+}
+
+function seedStep<T extends 'display' | 'value'>({
+  questions,
+  step,
+  record,
+  pick,
+}: {
+  questions: MultiQuestion[];
+  step: number;
+  record: Record<number, SeedField[T]>;
+  pick: T;
+}): Record<number, SeedField[T]> {
+  const question = questions[step];
+  if (!question || record[step] !== undefined) return record;
+  const seed = questionMetaUtils.defaultAnswer(question);
+  return seed ? { ...record, [step]: seed[pick] } : record;
+}
+
 function withoutStep<T>({
   record,
   step,
@@ -345,3 +397,5 @@ function withoutStep<T>({
 
 const MAX_ICON_GRID_LABEL = 24;
 const MAX_GRID_OPTIONS = 9;
+
+type SeedField = { display: string; value: unknown };

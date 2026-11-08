@@ -160,7 +160,7 @@ function fileMeta(file: FileProducedEvent): string {
       fileName: file.fileName,
     }) ?? t('File');
   const size = formatBytes(file.byteSize);
-  return size ? `${type} · ${size}` : type;
+  return size ? t('{type} · {size}', { type, size }) : type;
 }
 
 function formatBytes(bytes: number): string {

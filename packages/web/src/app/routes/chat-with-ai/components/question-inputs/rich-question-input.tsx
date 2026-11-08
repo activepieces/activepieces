@@ -1,4 +1,4 @@
-import { addDays, format, isSameDay, nextMonday, startOfDay } from 'date-fns';
+import { addDays, isSameDay, nextMonday, startOfDay } from 'date-fns';
 import { t } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
@@ -28,24 +28,6 @@ export function RichQuestionInput({
   onChange,
   onSubmit,
 }: RichQuestionInputProps) {
-  useEffect(() => {
-    if (value !== undefined) return;
-    if (question.type === 'slider') {
-      const initial = questionMetaUtils.sliderStart(question);
-      onChange({
-        display: questionMetaUtils.sliderDisplay({
-          value: initial,
-          unit: question.unit,
-        }),
-        value: initial,
-      });
-    }
-    if (question.type === 'color') {
-      const initial = question.presets?.[0] ?? accentHex();
-      if (initial) onChange({ display: initial, value: initial });
-    }
-  }, [question, value, onChange]);
-
   switch (question.type) {
     case 'multi_choice': {
       const selected = Array.isArray(value)
@@ -68,7 +50,7 @@ export function RichQuestionInput({
           value={value instanceof Date ? value : undefined}
           onChange={(date) =>
             onChange({
-              display: date ? format(date, 'MMM d, yyyy') : '',
+              display: questionMetaUtils.dateDisplay(date),
               value: date,
             })
           }
@@ -325,17 +307,6 @@ function ColorInput({
     </div>
   );
 }
-
-function accentHex(): string | null {
-  if (typeof window === 'undefined') return null;
-  const raw = window
-    .getComputedStyle(document.documentElement)
-    .getPropertyValue('--accent-9')
-    .trim();
-  return HEX_PATTERN.test(raw) ? raw : null;
-}
-
-const HEX_PATTERN = /^#[0-9a-f]{6}$/i;
 
 type RichQuestionInputProps = {
   question: MultiQuestion;

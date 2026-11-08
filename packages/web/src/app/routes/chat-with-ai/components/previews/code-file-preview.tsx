@@ -23,16 +23,20 @@ export function CodeFilePreview({
     mimeType: 'text/plain',
     extension: previewUtils.languageToExtension(language),
   });
-  const lines = t('{count, plural, =1 {1 line} other {# lines}}', {
-    count: code.split('\n').length,
-  });
+  const count = code.split('\n').length;
   const hasLanguage = language !== '' && language !== 'plaintext';
+  const meta = hasLanguage
+    ? t('{language} · {count, plural, =1 {1 line} other {# lines}}', {
+        language,
+        count,
+      })
+    : t('{count, plural, =1 {1 line} other {# lines}}', { count });
 
   return (
     <PreviewCard
       icon={Code2}
       label={t('Code')}
-      meta={hasLanguage ? `${language} · ${lines}` : lines}
+      meta={meta}
       actions={[copyAction, downloadAction]}
     >
       <PreviewCodeBody code={code} language={language} />

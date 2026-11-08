@@ -8,7 +8,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ProducedFileCard } from '@/app/routes/chat-with-ai/components/produced-file-card';
 
-vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('i18next', () => ({
+  t: (key: string, params?: Record<string, string | number>) =>
+    key.replace(/\{(\w+)\}/g, (_, name: string) =>
+      String(params?.[name] ?? ''),
+    ),
+}));
 
 afterEach(() => {
   cleanup();
