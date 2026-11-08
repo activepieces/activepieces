@@ -38,7 +38,7 @@ export function ConnectTab({
   }
 
   if (view === 'browse') {
-    return <ClientPicker clients={clients} serverUrl={serverUrl} />;
+    return <ClientPicker clients={clients} />;
   }
 
   return <ConnectPage clients={clients} />;

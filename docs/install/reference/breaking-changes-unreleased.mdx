@@ -8,6 +8,30 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Rendex 0.2.0: Render to Image is no longer an agent tool
+
+From Rendex 0.2.0, **Render to Image** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Render Screenshot** tool instead, which takes the page as one of URL, HTML or Markdown.
+
+Render to Image steps upgraded to 0.2.0 also wait for the page's load event (instead of network idle) when the source is HTML or Markdown, because Rendex timed out on inline content with the old wait.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Render to Image at **Render Screenshot**. Flow steps keep working as before after upgrading.
+
+#### Letmepost 0.2.0: Publish a Post is no longer an agent tool, and calls to Letmepost now verify the TLS certificate
+
+From Letmepost 0.2.0, **Publish a Post** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Publish or Schedule a Post** tool instead, which takes account IDs from **List Accounts** and publishes right away when no schedule time is given.
+
+The piece also checks the certificate of the Letmepost server on the connection check, triggers, dropdowns and every dedicated action. Before, certificate checks were skipped, so a self-hosted Letmepost behind a self-signed or private-CA certificate worked. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. The hosted `api.letmepost.dev` is not affected.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Publish a Post at **Publish or Schedule a Post**. If you point the piece at a self-hosted Letmepost on a self-signed or private-CA certificate, give it a publicly trusted certificate, or set both `NODE_EXTRA_CA_CERTS=/path/to/ca.pem` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container before upgrading Letmepost steps or connections to 0.2.0.
+
+#### GoodMem 0.1.0: three actions leave the agent tool list
+
+Create Space, Create Memory and Retrieve Memories are now human-only; agents use the new AI actions instead (Create Space, Store Memory, Retrieve Memories, List Memories, List Models), which cover the same operations with agent-sized inputs. Flows are unaffected; MCP servers and agents that exposed the old three tools should switch to the AI actions.
+
 #### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
 
 The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows. In **Update Product**, Availability, Exclude Tax, Enable Variants, Status and the new Non-Veg setting are now Yes/No choices, and a setting left empty keeps the product's current value instead of being set to off.
