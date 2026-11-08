@@ -96,7 +96,7 @@ export function SetupRequiredState() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
+    <div className="flex flex-col items-center justify-center h-full text-center gap-4 px-6 py-20 flex-1 min-w-0">
       <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-gray-3">
         <Settings className="h-8 w-8 text-gray-11" />
       </div>

@@ -2,7 +2,9 @@ import { useCallback, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { create } from 'zustand';
 
-import { routesThatRequireProjectId } from '@/lib/route-utils';
+import { CHAT_ROUTE, routesThatRequireProjectId } from '@/lib/route-utils';
+
+import { chatPanelIsDocked, useChatPanel } from './chat-panel-open';
 
 const STORAGE_KEY = 'primary-rail-collapsed';
 
@@ -37,14 +39,21 @@ export function useRailOpenState() {
   const { preference, setCollapsed } = useRailCollapsed();
   const { pathname } = useLocation();
   const [openedOn, setOpenedOn] = useState<string | null>(null);
-  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
+  // A docked chat panel takes room from the page, so the rail folds for it.
+  const chatDocked =
+    useChatPanel(chatPanelIsDocked) && !pathname.includes(CHAT_ROUTE);
+  const collapsed =
+    chatDocked || railIsCollapsed({ preference, pathname, openedOn });
 
   const onOpenChange = useCallback(
     (open: boolean) => {
+      if (open && chatDocked) {
+        useChatPanel.getState().setOpen(false);
+      }
       setOpenedOn(pathname);
       setCollapsed(!open);
     },
-    [pathname, setCollapsed],
+    [pathname, setCollapsed, chatDocked],
   );
 
   return { open: !collapsed, onOpenChange };
