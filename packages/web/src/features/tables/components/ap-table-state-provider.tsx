@@ -21,6 +21,7 @@ import {
   followAlong,
   useOnFollowUpdate,
 } from '@/features/chat/lib/follow/follow-along';
+import { aiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import {
   TableState,
   ApTableStore,
@@ -118,6 +119,7 @@ export function ApTableStateProvider({
   useFollowTableUpdates({
     tableId,
     records: records?.data,
+    fields,
     rebuild: () => setRefreshKey((key) => key + 1),
   });
 
@@ -186,25 +188,29 @@ export function ApTableStateProvider({
   );
 }
 
-// While the chat edits this table: once a tool call's queries are fresh,
-// rebuild the store from them (like a take-over refresh) and light up the
-// rows and cells it added or changed. Waits while the user types in a cell.
 function useFollowTableUpdates({
   tableId,
   records,
+  fields,
   rebuild,
 }: {
   tableId: string | undefined;
   records: PopulatedRecord[] | undefined;
+  fields: Field[] | undefined;
   rebuild: () => void;
 }) {
   const queryClient = useQueryClient();
   const seen = useRef<PopulatedRecord[] | null>(null);
+  const seenFields = useRef<Field[] | null>(null);
   useEffect(() => {
     if (seen.current === null && records) seen.current = records;
   }, [records]);
   useEffect(() => {
+    if (seenFields.current === null && fields) seenFields.current = fields;
+  }, [fields]);
+  useEffect(() => {
     seen.current = null;
+    seenFields.current = null;
   }, [tableId]);
 
   useOnFollowUpdate(tableId ? { kind: 'table', id: tableId } : null, () => {
@@ -214,20 +220,31 @@ function useFollowTableUpdates({
         tableId,
       ])?.data;
       if (!fresh) return;
+      const freshFields =
+        queryClient.getQueryData<Field[]>(['fields', tableId]) ?? [];
       const before = new Map((seen.current ?? []).map((r) => [r.id, r]));
-      seen.current = fresh;
-      rebuild();
-      followAlong.flash(
-        fresh.flatMap((record) => {
-          const old = before.get(record.id);
-          if (!old) return [`table-row:${record.id}`];
-          return Object.entries(record.cells)
-            .filter(
-              ([fieldId, cell]) => old.cells[fieldId]?.value !== cell.value,
-            )
-            .map(([fieldId]) => `table-cell:${record.id}:${fieldId}`);
-        }),
+      const fieldsBefore = new Set(
+        (seenFields.current ?? freshFields).map((field) => field.id),
       );
+      const freshIds = new Set(fresh.map((record) => record.id));
+      const removed = [...before.keys()].filter((id) => !freshIds.has(id));
+      seen.current = fresh;
+      seenFields.current = freshFields;
+      const lightUp = () => {
+        rebuild();
+        followAlong.flash([
+          ...freshFields
+            .filter((field) => !fieldsBefore.has(field.id))
+            .map((field) => `table-field:${field.id}`),
+          ...changedCellKeys({ fresh, before }),
+        ]);
+      };
+      if (removed.length === 0 || aiHighlight.prefersReducedMotion()) {
+        lightUp();
+        return;
+      }
+      followAlong.flash(removed.map((id) => `table-row-deleted:${id}`));
+      setTimeout(lightUp, DELETED_ROW_FADE_MS);
     };
     if (!isEditingCell()) {
       apply();
@@ -238,6 +255,22 @@ function useFollowTableUpdates({
       clearInterval(timer);
       apply();
     }, 400);
+  });
+}
+
+function changedCellKeys({
+  fresh,
+  before,
+}: {
+  fresh: PopulatedRecord[];
+  before: Map<string, PopulatedRecord>;
+}): string[] {
+  return fresh.flatMap((record) => {
+    const old = before.get(record.id);
+    if (!old) return [`table-row:${record.id}`];
+    return Object.entries(record.cells)
+      .filter(([fieldId, cell]) => old.cells[fieldId]?.value !== cell.value)
+      .map(([fieldId]) => `table-cell:${record.id}:${fieldId}`);
   });
 }
 
@@ -310,3 +343,5 @@ function TableLockProvider({
 }
 
 type TableLockContextValue = ReturnType<typeof useResourceLock>;
+
+const DELETED_ROW_FADE_MS = 600;

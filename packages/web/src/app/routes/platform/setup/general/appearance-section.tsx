@@ -63,7 +63,7 @@ export const AppearanceSection = ({
     ApFlagId.MAX_FILE_SIZE_MB,
   );
   const upgradeClick = useUpgradeClick();
-  const nameHighlight = useAiHighlight('platform.general.name');
+  const nameHighlighted = useAiHighlight(NAME_FIELD_KEY);
   const brandingLocked = !platform.plan.customAppearanceEnabled;
   const initialColor =
     !brandingLocked && HEX_COLOR_PATTERN.test(platform.primaryColor)
@@ -277,8 +277,8 @@ export const AppearanceSection = ({
               name="name"
               render={({ field, fieldState }) => (
                 <FormItem
-                  className={cn('space-y-0', nameHighlight.className)}
-                  data-ai-field={nameHighlight['data-ai-field']}
+                  className={cn('space-y-0', nameHighlighted && 'ap-ai-glow')}
+                  data-ai-field={NAME_FIELD_KEY}
                 >
                   <SettingsRow
                     title={
@@ -546,3 +546,5 @@ type ColorRowProps = {
   onChange: (color: string | undefined) => void;
   onReset: () => void;
 };
+
+const NAME_FIELD_KEY = 'platform.general.name';

@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Brain, ChevronDown, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Markdown } from '@/components/prompt-kit/markdown';
@@ -13,13 +13,18 @@ import {
 import { Source } from '@/components/prompt-kit/source';
 import { StreamingText } from '@/components/prompt-kit/streaming-text';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { ToolCallMeta } from '@/features/chat/lib/chat-store';
+import {
+  ToolCallMeta,
+  chatStoreSelectors,
+} from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import {
   AnyToolPart,
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { changeSummaryUtils } from '@/features/chat/lib/resources/change-summary';
+import { useBackgroundTitle } from '@/features/chat/lib/use-background-title';
 import { useTts } from '@/features/chat/lib/use-tts';
 import { cn } from '@/lib/utils';
 
@@ -41,8 +46,10 @@ import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
+import { ChangesSummary, changesAnnouncer } from './changes-summary';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
+import { ExpiredGateCard, hasExpiredGate } from './expired-gate-card';
 import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
@@ -107,6 +114,22 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const changeLines = useMemo(
+    () =>
+      isStreaming
+        ? []
+        : changeSummaryUtils.summarize(
+            changeSummaryUtils.fromToolParts(message.parts),
+          ),
+    [isStreaming, message.parts],
+  );
+  const expired = useMemo(
+    () => !isStreaming && hasExpiredGate(message.parts),
+    [isStreaming, message.parts],
+  );
+  useEffect(() => {
+    if (isStreaming && isLastMessage) changesAnnouncer.markReplyStreaming();
+  });
 
   const hasRenderedContent = blocks.some((b) => b.kind !== 'thinking');
   const hasThinkingContent = blocks.some((b) => b.kind === 'thinking');
@@ -142,7 +165,21 @@ export const AssistantMessage = memo(function AssistantMessage({
             isAccordionOpen={isAccordionOpen}
             setIsAccordionOpen={setIsAccordionOpen}
             isResumed={isResumed}
+            hideChips={changeLines.length > 0}
           />
+
+          {expired && (
+            <ExpiredGateCard
+              onSendPrompt={isLastMessage ? onSendPrompt : undefined}
+            />
+          )}
+          <ChangesSummary
+            lines={changeLines}
+            announce={isLastMessage && !isStreaming}
+          />
+          {isLastMessage && (
+            <BackgroundTitle message={message} isStreaming={isStreaming} />
+          )}
 
           {!isStreaming && sources.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-2">
@@ -236,6 +273,7 @@ function MessageBlocks({
   isAccordionOpen,
   setIsAccordionOpen,
   isResumed = false,
+  hideChips = false,
 }: {
   blocks: MessageBlock[];
   isStreaming: boolean;
@@ -246,6 +284,7 @@ function MessageBlocks({
   isAccordionOpen: boolean;
   setIsAccordionOpen: (open: boolean) => void;
   isResumed?: boolean;
+  hideChips?: boolean;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const lastThinkingIdx = blocks.findLastIndex((b) => b.kind === 'thinking');
@@ -362,7 +401,7 @@ function MessageBlocks({
                     />
                   )}
                 </AnimatePresence>
-                {!isAccordionOpen && (
+                {!isAccordionOpen && !hideChips && (
                   <ResourceChips
                     parts={block.steps.flatMap((step) =>
                       step.kind === 'tool' ? [step.part] : [],
@@ -495,6 +534,7 @@ function MessageBlocks({
                         onSendPrompt={onSendPrompt}
                         isAccordionOpen={isAccordionOpen}
                         setIsAccordionOpen={setIsAccordionOpen}
+                        hideChips={hideChips}
                       />
                     ) : null
                   }
@@ -508,6 +548,23 @@ function MessageBlocks({
       })}
     </>
   );
+}
+
+function BackgroundTitle({
+  message,
+  isStreaming,
+}: {
+  message: ChatUIMessage;
+  isStreaming: boolean;
+}) {
+  const needsYou = useChatStoreContext((s) =>
+    chatStoreSelectors.hasBlockingCard({
+      state: s,
+      lastAssistantMessage: message,
+    }),
+  );
+  useBackgroundTitle({ needsYou, streaming: isStreaming });
+  return null;
 }
 
 function OutcomeCard({
@@ -609,6 +666,7 @@ function DisplayToolCard({
       : undefined;
   const toolCallId = chatPartUtils.getToolCallId(part);
   if (toolOutput?.['notShown'] === true) return null;
+  if (toolOutput?.['timedOut'] === true) return null;
 
   switch (toolName) {
     case 'ap_show_connection_required':

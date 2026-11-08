@@ -7,22 +7,19 @@ import {
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
+import { useAiFieldHighlights } from '@/features/chat/lib/follow/use-ai-highlight';
 import {
   ResourceKind,
   resourceRegistry,
 } from '@/features/chat/lib/resources/registry';
+import { cn } from '@/lib/utils';
 
 export function FollowBar() {
-  const { pathname } = useLocation();
+  useAiFieldHighlights();
   const reduceMotion = useReducedMotion();
   const target = useFollowAlong((s) => s.target);
   const phase = useFollowAlong((s) => s.phase);
-  const following = useFollowAlong((s) => s.following);
-  const visible =
-    target !== null &&
-    following &&
-    phase !== 'idle' &&
-    resourceRegistry.isOn(pathname, target);
+  const visible = useIsFollowedHere() && target !== null;
 
   return (
     <AnimatePresence initial={false}>
@@ -49,7 +46,7 @@ export function FollowBar() {
             ) : (
               <Check className="size-3.5 text-gray-11" aria-hidden />
             )}
-            <span className="text-gray-12">
+            <span className="min-w-0 truncate text-gray-12">
               {phase === 'editing'
                 ? EDITING_LABEL[target.kind]()
                 : DONE_LABEL[target.kind]()}
@@ -67,6 +64,44 @@ export function FollowBar() {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+export function FollowEmptyState({
+  kind,
+  className,
+}: {
+  kind: ResourceKind;
+  className?: string;
+}) {
+  const target = useFollowAlong((s) => s.target);
+  const phase = useFollowAlong((s) => s.phase);
+  const here = useIsFollowedHere();
+  if (!here || phase !== 'editing' || target?.kind !== kind) return null;
+  return (
+    <div
+      role="status"
+      className={cn(
+        'flex items-center justify-center gap-2 text-sm text-gray-11',
+        className,
+      )}
+    >
+      <LiveDot />
+      {FILLING_LABEL[kind]()}
+    </div>
+  );
+}
+
+function useIsFollowedHere(): boolean {
+  const { pathname } = useLocation();
+  const target = useFollowAlong((s) => s.target);
+  const phase = useFollowAlong((s) => s.phase);
+  const following = useFollowAlong((s) => s.following);
+  return (
+    target !== null &&
+    following &&
+    phase !== 'idle' &&
+    resourceRegistry.isOn(pathname, target)
   );
 }
 
@@ -99,4 +134,15 @@ const DONE_LABEL: Record<ResourceKind, () => string> = {
   folder: () => t('Chat finished editing your automations'),
   'platform-settings': () => t('Chat finished changing platform settings'),
   'project-settings': () => t('Chat finished changing project settings'),
+};
+
+const FILLING_LABEL: Record<ResourceKind, () => string> = {
+  flow: () => t('Chat is adding steps…'),
+  table: () => t('Chat is adding rows…'),
+  agent: () => t('Chat is setting up this agent…'),
+  run: () => t('Chat is starting this run…'),
+  connection: () => t('Chat is adding a connection…'),
+  folder: () => t('Chat is adding to your automations…'),
+  'platform-settings': () => t('Chat is changing platform settings…'),
+  'project-settings': () => t('Chat is changing project settings…'),
 };
