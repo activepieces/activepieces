@@ -46,9 +46,10 @@ export const aiStoreMemory = createAction({
   },
   async run(context) {
     const { spaceId, text, source, author, tags, metadata } = context.propsValue;
+    goodmemBuilders.requireText({ value: text, label: 'Text' });
     const body = goodmemBuilders.buildMemoryRequestBody({
       spaceId: goodmemBuilders.requireText({ value: spaceId, label: 'Space ID' }),
-      textContent: goodmemBuilders.requireText({ value: text, label: 'Text' }),
+      textContent: text,
       metadata: goodmemBuilders.buildMemoryMetadata({
         source: source ?? undefined,
         author: author ?? undefined,

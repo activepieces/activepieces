@@ -2,8 +2,17 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { goodmemApi, goodmemBuilders, goodmemParsers } from '../src/lib/common/client';
 import { buildGoodMemApiError, GoodMemApiError, goodmemValidationMessage } from '../src/lib/common/errors';
+import { goodmem } from '../src/index';
 
 const auth = { baseUrl: 'http://localhost:8080/', apiKey: 'secret-key' };
+const aiStoreMemory = goodmem.getAction('ai_store_memory');
+
+function storeMemoryContext({ text }: { text: string }): Parameters<NonNullable<typeof aiStoreMemory>['run']>[0] {
+  return Object.assign(Object.create(null), {
+    auth: { type: 'CUSTOM_AUTH', props: { baseUrl: auth.baseUrl, apiKey: auth.apiKey } },
+    propsValue: { spaceId: ' space-1 ', text },
+  });
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -118,5 +127,20 @@ describe('retrieve stream parsing', () => {
 
   it('throws on a malformed line instead of skipping it', () => {
     expect(() => goodmemParsers.parseRetrieveStream('{"ok":1}\nnot json')).toThrow(GoodMemApiError);
+  });
+});
+
+describe('ai store memory', () => {
+  it('stores the text exactly as given, keeping indentation and trailing newline', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({ status: 200, headers: {}, body: { memoryId: 'm1' } });
+    const text = '    return value\n';
+    await aiStoreMemory?.run(storeMemoryContext({ text }));
+    expect(spy.mock.calls[0][0].body).toMatchObject({ spaceId: 'space-1', contentType: 'text/plain', originalContent: text });
+  });
+
+  it('rejects blank text before calling the API', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest');
+    await expect(aiStoreMemory?.run(storeMemoryContext({ text: '   \n' }))).rejects.toThrow('Text is required');
+    expect(spy).not.toHaveBeenCalled();
   });
 });
