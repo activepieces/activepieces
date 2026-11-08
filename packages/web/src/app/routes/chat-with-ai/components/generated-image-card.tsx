@@ -1,45 +1,59 @@
 import { ImageGeneratedEvent } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Download } from 'lucide-react';
-import { motion } from 'motion/react';
-import { useState } from 'react';
+import { Download, ImageIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
 
-export function GeneratedImageCard({ image }: { image: ImageGeneratedEvent }) {
-  const [viewerOpen, setViewerOpen] = useState(false);
+import {
+  ChatCard,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from './chat-ui/chat-card';
+import { ChatImage } from './chat-ui/chat-image';
+
+export function GeneratedImageCard({
+  image,
+  doneTitle,
+  flat,
+}: GeneratedImageCardProps) {
   const caption = image.caption ?? image.prompt ?? t('Generated image');
+  const title = doneTitle ?? caption;
 
   return (
-    <>
-      <motion.div
-        className="max-w-md overflow-hidden rounded-xl border bg-panel"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <button
-          type="button"
-          onClick={() => setViewerOpen(true)}
-          className="block w-full cursor-pointer"
-        >
-          <img src={image.url} alt={caption} className="h-auto w-full" />
-        </button>
-        <div className="flex items-center justify-between gap-2 p-2">
-          <p className="min-w-0 truncate text-xs text-gray-11">{caption}</p>
-          <a href={image.url} download target="_blank" rel="noreferrer">
-            <Button variant="ghost" size="icon-sm">
+    <ChatCard flat={flat} className="max-w-md">
+      <ChatCardHeader
+        tile={<ChatCardTile kind="bits" icon={ImageIcon} />}
+        title={title}
+        meta={title === caption ? undefined : caption}
+        trailing={
+          <Button
+            asChild
+            variant="ghost"
+            size="icon-xs"
+            className="text-gray-11"
+          >
+            <a
+              href={image.url}
+              download
+              target="_blank"
+              rel="noreferrer"
+              aria-label={t('Download')}
+            >
               <Download className="size-4" />
-            </Button>
-          </a>
-        </div>
-      </motion.div>
-      <ImageDialog
-        open={viewerOpen}
-        onOpenChange={setViewerOpen}
-        imageUrl={image.url}
+            </a>
+          </Button>
+        }
       />
-    </>
+      <ChatCardBody>
+        <ChatImage src={image.url} alt={caption} />
+      </ChatCardBody>
+    </ChatCard>
   );
 }
+
+type GeneratedImageCardProps = {
+  image: ImageGeneratedEvent;
+  doneTitle?: string;
+  flat?: boolean;
+};

@@ -1,182 +1,126 @@
 import { BatchProgressData } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  AlertCircle,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Zap,
-} from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { Zap } from 'lucide-react';
 import { useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+
+import {
+  ChatCard,
+  ChatCardBody,
+  ChatCardFold,
+  ChatCardTile,
+} from './chat-ui/chat-card';
+import { ChatStatusText } from './chat-ui/chat-status';
+import { ChatStatus, chatStatusUtils } from './chat-ui/chat-status-utils';
 
 export function BatchProgressCard({
   progress,
 }: {
   progress: BatchProgressData;
 }) {
+  const status = chatStatusUtils.fromBatch(progress);
   const percentage =
     progress.total > 0
       ? Math.round((progress.completed / progress.total) * 100)
       : 0;
-
-  const hasFailures = progress.failed > 0;
+  const failures = progress.results.filter((result) => !result.success);
+  const meta = [
+    t('{done} of {total}', {
+      done: progress.completed,
+      total: progress.total,
+    }),
+    ...(progress.failed > 0
+      ? [
+          t('{count, plural, =1 {1 failed} other {# failed}}', {
+            count: progress.failed,
+          }),
+        ]
+      : []),
+  ].join(' · ');
 
   return (
-    <motion.div
-      className="rounded-xl border bg-gray-1 overflow-hidden my-2"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="px-3.5 pt-3 pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-medium text-xs flex items-center gap-1.5 text-gray-12">
-            <Zap className="h-3.5 w-3.5 text-gray-11" />
-            {progress.label}
-          </h3>
-          <BatchStatusBadge progress={progress} />
-        </div>
-      </div>
-
-      <div className="px-3.5 pb-3 space-y-2.5">
-        <div className="space-y-2">
+    <ChatCard>
+      <ChatCardFold
+        defaultOpen={!(progress.done && progress.failed === 0)}
+        tile={<ChatCardTile kind="bits" icon={Zap} />}
+        title={progress.label}
+        meta={meta}
+        trailing={<ChatStatusText status={status} />}
+      >
+        <ChatCardBody>
           <Progress
             value={percentage}
-            className="h-2"
+            className="h-1.5 bg-gray-4"
             indicatorClassName={cn(
               'transition-all duration-500',
-              progress.done
-                ? hasFailures
-                  ? 'bg-warning-9'
-                  : 'bg-success-9'
-                : undefined,
+              BAR_CLASS[status],
             )}
           />
-          <div className="flex items-center justify-between text-xs text-gray-11">
-            <div className="flex items-center gap-3">
-              {progress.succeeded > 0 && (
-                <span className="flex items-center gap-1 text-success-11">
-                  <Check className="h-3 w-3" />
-                  {progress.succeeded} {t('succeeded')}
-                </span>
-              )}
-              {progress.failed > 0 && (
-                <span className="flex items-center gap-1 text-warning-11">
-                  <AlertCircle className="h-3 w-3" />
-                  {progress.failed} {t('failed')}
-                </span>
-              )}
-            </div>
-            <span className="tabular-nums">
-              {progress.completed}/{progress.total}
-            </span>
-          </div>
-        </div>
-
-        {progress.done && hasFailures && (
-          <FailureDetails
-            results={progress.results.filter((r) => !r.success)}
-          />
-        )}
-      </div>
-    </motion.div>
+          {progress.done && failures.length > 0 && (
+            <FailureList failures={failures} />
+          )}
+        </ChatCardBody>
+      </ChatCardFold>
+    </ChatCard>
   );
 }
 
-function BatchStatusBadge({ progress }: { progress: BatchProgressData }) {
-  if (!progress.done) {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs text-gray-11 tabular-nums">
-        <Loader2 className="h-3 w-3 animate-spin" />
-        {progress.completed}/{progress.total}
-      </span>
-    );
-  }
-  if (progress.failed === 0) {
-    return (
-      <span className="inline-flex items-center gap-1 text-success-11 text-xs font-medium">
-        <Check className="h-3 w-3" />
-        {t('Done')}
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 text-warning-11 text-xs font-medium">
-      <AlertCircle className="h-3 w-3" />
-      {progress.failed} {t('failed')}
-    </span>
-  );
-}
-
-function FailureDetails({
-  results,
-}: {
-  results: BatchProgressData['results'];
-}) {
-  const [expanded, setExpanded] = useState(results.length <= 3);
-
-  if (results.length === 0) return null;
-
-  const visible = expanded ? results : results.slice(0, 2);
-  const remaining = results.length - 2;
+function FailureList({ failures }: { failures: BatchProgressData['results'] }) {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? failures : failures.slice(0, VISIBLE_FAILURES);
+  const hasMore = failures.length > VISIBLE_FAILURES;
 
   return (
-    <div className="rounded-xl bg-warning-3 px-3 py-2 space-y-1.5">
-      <span className="text-xs font-medium text-warning-11">
-        {t('Failed items')}
-      </span>
-      <div className="space-y-1">
-        {visible.map((r) => (
-          <div
-            key={r.index}
-            className="flex items-start gap-1.5 text-xs text-warning-11"
+    <div className="flex flex-col">
+      <ul className="flex flex-col">
+        {visible.map((failure) => (
+          <li
+            key={failure.index}
+            className="flex min-w-0 items-start gap-3 border-t border-gray-6 py-2 text-sm"
           >
-            <span className="shrink-0 tabular-nums text-warning-11">
-              #{r.index + 1}
+            <span className="shrink-0 tabular-nums text-gray-11">
+              #{failure.index + 1}
             </span>
-            <span className="break-words min-w-0">
-              {cleanErrorText(r.error ?? t('Unknown error'))}
+            <span className="min-w-0 flex-1 break-words text-right text-danger-11">
+              {cleanErrorText(failure.error ?? t('Unknown error'))}
             </span>
-          </div>
+          </li>
         ))}
-      </div>
-      <AnimatePresence>
-        {!expanded && remaining > 0 && (
-          <motion.button
-            type="button"
-            className="flex items-center gap-1 text-xs text-warning-11 hover:text-warning-12 transition-colors"
-            onClick={() => setExpanded(true)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+      </ul>
+      {hasMore && (
+        <div className="border-t border-gray-6 pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-11"
+            onClick={() => setShowAll(!showAll)}
           >
-            <ChevronDown className="h-3 w-3" />
-            {remaining} {t('more')}
-          </motion.button>
-        )}
-        {expanded && results.length > 3 && (
-          <motion.button
-            type="button"
-            className="flex items-center gap-1 text-xs text-warning-11 hover:text-warning-12 transition-colors"
-            onClick={() => setExpanded(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <ChevronUp className="h-3 w-3" />
-            {t('Show less')}
-          </motion.button>
-        )}
-      </AnimatePresence>
+            {showAll
+              ? t('Show less')
+              : t(
+                  '{count, plural, =1 {Show all 1 failed} other {Show all # failed}}',
+                  { count: failures.length },
+                )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
 function cleanErrorText(text: string): string {
-  return text.replace(/^[❌⏳✅]\s*/, '');
+  return text.replace(/^[❌⏳✅]\s*/u, '');
 }
+
+const VISIBLE_FAILURES = 3;
+
+const BAR_CLASS: Record<ChatStatus, string> = {
+  working: 'bg-accent-9',
+  'needs-you': 'bg-accent-9',
+  done: 'bg-success-9',
+  failed: 'bg-danger-9',
+  stopped: 'bg-gray-9',
+};
