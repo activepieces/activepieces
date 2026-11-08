@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { ChevronDown, LucideIcon } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -14,11 +14,13 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
 export function ChatCard({ turn, flat, className, children }: ChatCardProps) {
+  const nested = useContext(ChatCardNestedContext);
+  const isFlat = flat || nested;
   return (
     <div
       className={cn(
         'flex min-w-0 flex-col rounded-xl motion-safe:animate-chat-enter',
-        !flat && !turn && 'border border-gray-6 bg-panel',
+        !isFlat && !turn && 'border border-gray-6 bg-panel',
         turn && 'chat-turn-ring',
         className,
       )}
@@ -141,6 +143,14 @@ export function ChatCardFold({
   );
 }
 
+export function ChatCardNested({ children }: { children: ReactNode }) {
+  return (
+    <ChatCardNestedContext.Provider value={true}>
+      {children}
+    </ChatCardNestedContext.Provider>
+  );
+}
+
 function AppTile({ pieceName }: { pieceName: string }) {
   const { summary } = piecesHooks.usePieceSummary({ name: pieceName });
   return (
@@ -152,6 +162,8 @@ function AppTile({ pieceName }: { pieceName: string }) {
     />
   );
 }
+
+const ChatCardNestedContext = createContext(false);
 
 type ChatCardProps = {
   turn?: boolean;

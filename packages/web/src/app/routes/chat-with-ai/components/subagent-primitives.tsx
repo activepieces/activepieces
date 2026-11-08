@@ -1,13 +1,11 @@
 import { SubagentActivity, SubagentTimelineEntry } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, Hand, Loader2, Minus } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import { FaviconOrGlobe } from '@/components/prompt-kit/source';
-import { TextShimmer } from '@/components/ui/text-shimmer';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { cn } from '@/lib/utils';
 
 export function LiveLine({ activity }: { activity: SubagentActivity }) {
   if (activity.status === 'done') {
@@ -25,54 +23,10 @@ export function LiveLine({ activity }: { activity: SubagentActivity }) {
       <p className="text-xs leading-4 text-gray-11">{t('Stopped early')}</p>
     );
   }
-  const label = activity.statusLine ?? t('Getting started');
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={label}
-        initial={{ opacity: 0, y: 3 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -3 }}
-        transition={{ duration: 0.18 }}
-      >
-        <TextShimmer as="p" className="truncate text-xs font-normal leading-4">
-          {label}
-        </TextShimmer>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-
-export function StatusMark({ status }: { status: SubagentActivity['status'] }) {
-  if (status === 'done') {
-    return (
-      <motion.span
-        initial={{ scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success-9"
-      >
-        <Check className="size-3 text-on-success" strokeWidth={3} />
-      </motion.span>
-    );
-  }
-  if (status === 'blocked') {
-    return (
-      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-3">
-        <Hand className="size-3 text-accent-11" />
-      </span>
-    );
-  }
-  if (status === 'failed') {
-    return (
-      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-3">
-        <Minus className="size-3 text-gray-11" />
-      </span>
-    );
-  }
-  return (
-    <span className="flex size-5 shrink-0 items-center justify-center">
-      <Loader2 className="size-4 animate-spin text-accent-10 motion-reduce:animate-none" />
-    </span>
+    <p className="truncate text-xs leading-4 text-gray-11">
+      {activity.statusLine ?? t('Getting started')}
+    </p>
   );
 }
 
@@ -121,28 +75,50 @@ function LogoStack({ items }: { items: React.ReactNode[] }) {
   );
 }
 
-export function Duration({ activity }: { activity: SubagentActivity }) {
+export function Duration({
+  activity,
+  className,
+}: {
+  activity: SubagentActivity;
+  className?: string;
+}) {
   if (activity.status === 'running') {
     return activity.startedAt.length > 0 ? (
-      <Elapsed startedAt={activity.startedAt} />
+      <Elapsed startedAt={activity.startedAt} className={className} />
     ) : null;
   }
   if (activity.durationMs === undefined) return null;
   return (
-    <span className="w-12 shrink-0 text-right text-xs text-gray-11 tabular-nums">
+    <span
+      className={cn(
+        'w-12 shrink-0 text-right text-xs text-gray-11 tabular-nums',
+        className,
+      )}
+    >
       {formatDuration(activity.durationMs)}
     </span>
   );
 }
 
-function Elapsed({ startedAt }: { startedAt: string }) {
+function Elapsed({
+  startedAt,
+  className,
+}: {
+  startedAt: string;
+  className?: string;
+}) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1_000);
     return () => clearInterval(timer);
   }, []);
   return (
-    <span className="w-12 shrink-0 text-right text-xs text-gray-11 tabular-nums">
+    <span
+      className={cn(
+        'w-12 shrink-0 text-right text-xs text-gray-11 tabular-nums',
+        className,
+      )}
+    >
       {formatDuration(now - Date.parse(startedAt))}
     </span>
   );
