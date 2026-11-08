@@ -7,3 +7,19 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### RSS 0.8.0: New Item in Feed and New Items in Multiple Feeds fire on a different set of items
+
+From RSS 0.8.0, both RSS triggers keep a separate cursor for each feed URL instead of one shared marker. The output of each run is the same feed item as before, with the same keys and one value change listed below. What changes is mostly which items start a run:
+
+- Items published in the same second as the last delivered item now fire. Before, they were dropped.
+- An article that appears in two of the watched feeds (same guid, or for short ids like `42` the same guid and the same link) fires once, not once per feed.
+- Feeds that list items oldest first now fire only the new items. Before, they could fire old items again, or miss new ones.
+- A slow feed no longer holds up the other feeds: each feed gets 20 seconds. A feed that fails or times out is skipped (only the trigger log shows it) and is checked again on the next poll, without re-sending its old items. The poll fails only when every feed fails.
+- Turning a trigger off and on again starts from the feed's current items, so old items are not replayed.
+- An item whose link is relative (for example `posts/1`) in a feed that has no site link now returns a full link, resolved against the feed URL. Before, the relative path was returned.
+- A feed (or, for Find Site Feeds, a web page) larger than 20 MB now fails with a "too large" error in both triggers and in the Read Feed, Read Multiple Feeds and Find Site Feeds actions. In New Items in Multiple Feeds only that feed is skipped.
+
+#### What you need to do
+
+Nothing is required. When an existing RSS trigger is upgraded to 0.8.0, its old marker is carried over to each feed, so items published after the last delivered one fire on the next poll and older items do not fire again. If a flow relied on one article firing once per feed, or on old items replaying after a feed came back from an outage, change that flow.
