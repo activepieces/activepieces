@@ -172,7 +172,7 @@ function PageSkeleton({ fading = false }: { fading?: boolean }) {
     <div
       aria-hidden
       className={cn(
-        'pointer-events-none absolute inset-0 z-20 flex flex-col gap-4 bg-gray-1 p-6 transition-opacity duration-150 ease-out motion-reduce:transition-none',
+        'pointer-events-none absolute inset-0 z-20 flex flex-col gap-4 bg-gray-1 p-6 transition-opacity duration-150 ease-move motion-reduce:transition-none',
         fading && 'opacity-0',
       )}
     >
