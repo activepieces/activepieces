@@ -5,6 +5,7 @@ import { resolveProject } from './index';
 const MAX_PROJECT_FIELDS = 1000;
 const MAX_ALLOWED_VALUES = 200;
 const SCHEMA_FIELDS = 'id,canBeEmpty,emptyFieldText,field(id,name,fieldType(id,isMultiValue))';
+
 const SCHEMA_FIELDS_WITH_VALUES =
   'id,canBeEmpty,emptyFieldText,isPublic,field(id,name,fieldType(id,isMultiValue)),bundle(values(id,name,archived),aggregatedUsers(id,login,fullName))';
 
@@ -317,6 +318,20 @@ async function resolveCustomFields({ value, loadFields }: { value: unknown; load
 const EXAMPLE_TEXT =
   'Example: { "Priority": "Critical", "Assignee": "jane.doe", "Estimation": "2h", "Due Date": "2026-12-01" }.';
 
+export const customFieldsHelper = {
+  parseInput,
+  fetchProjectFields,
+  fieldsForProject,
+  fieldsFromIssue,
+  toIssueField,
+  toProjectField,
+  issueTypeFor,
+  describeField,
+  coerceValue,
+  resolveCustomFields,
+  MAX_ALLOWED_VALUES,
+};
+
 type FieldsSource = 'project settings' | 'sample issue';
 
 type CustomFieldsInput =
@@ -334,18 +349,4 @@ export type ProjectField = {
   required: boolean;
   emptyFieldText: string | null;
   allowedValues: string[];
-};
-
-export const customFieldsHelper = {
-  parseInput,
-  fetchProjectFields,
-  fieldsForProject,
-  fieldsFromIssue,
-  toIssueField,
-  toProjectField,
-  issueTypeFor,
-  describeField,
-  coerceValue,
-  resolveCustomFields,
-  MAX_ALLOWED_VALUES,
 };

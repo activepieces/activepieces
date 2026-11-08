@@ -5,6 +5,18 @@ import { issueDropdown, resolveIssue } from '../common';
 import { youtrackClient } from '../common/client';
 import { linkIssuesActionOutputSchema } from '../output-schemas';
 
+function hasLink({ links, linkType, targetId }: { links: Record<string, unknown>[]; linkType: string; targetId: string }): boolean {
+  const wantedType = linkType.toLowerCase();
+  return links.some((link) => {
+    const type = youtrackClient.recordOf(link['linkType']);
+    const phrases = [type['sourceToTarget'], type['targetToSource'], type['name']]
+      .filter((p): p is string => typeof p === 'string')
+      .map((p) => p.toLowerCase());
+    if (!phrases.includes(wantedType)) return false;
+    return youtrackClient.records(link['issues']).some((issue) => issue['id'] === targetId);
+  });
+}
+
 export const linkIssuesAction = createAction({
   auth: youtrackAuth,
   name: 'link_issues',
@@ -82,15 +94,3 @@ export const linkIssuesAction = createAction({
     return { success: true, link_type: context.propsValue.linkType, target_issue: context.propsValue.targetIssueId };
   },
 });
-
-function hasLink({ links, linkType, targetId }: { links: Record<string, unknown>[]; linkType: string; targetId: string }): boolean {
-  const wantedType = linkType.toLowerCase();
-  return links.some((link) => {
-    const type = youtrackClient.recordOf(link['linkType']);
-    const phrases = [type['sourceToTarget'], type['targetToSource'], type['name']]
-      .filter((p): p is string => typeof p === 'string')
-      .map((p) => p.toLowerCase());
-    if (!phrases.includes(wantedType)) return false;
-    return youtrackClient.records(link['issues']).some((issue) => issue['id'] === targetId);
-  });
-}

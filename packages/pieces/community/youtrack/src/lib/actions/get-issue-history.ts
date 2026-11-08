@@ -8,8 +8,49 @@ import { getIssueHistoryActionOutputSchema } from '../output-schemas';
 const PAGE_SIZE = 100;
 const MAX_ACTIVITIES = 2000;
 const ACTIVITY_VALUE_FIELDS = 'id,name,text,login,fullName,presentation,minutes';
+
 const ACTIVITY_FIELDS =
   `activities(id,timestamp,author(name,login),field(name),targetMember,target(id,text),added(${ACTIVITY_VALUE_FIELDS}),removed(${ACTIVITY_VALUE_FIELDS})),afterCursor,hasAfter`;
+
+function toRow(item: Record<string, unknown>): Record<string, unknown> {
+  const author = youtrackClient.recordOf(item['author']);
+  const target = youtrackClient.recordOf(item['target']);
+  const added = valuesOf(item['added']);
+  const isComment = (typeof item['$type'] === 'string' && item['$type'].includes('Comment'))
+    || youtrackClient.records(item['added']).some((entry) => entry['$type'] === 'IssueComment');
+  const comment = youtrackClient.records(item['added']).find((entry) => typeof entry['text'] === 'string');
+  return {
+    type: item['$type'] ?? null,
+    timestamp: item['timestamp'] ?? null,
+    author_name: author['name'] ?? null,
+    author_login: author['login'] ?? null,
+    field_name: youtrackClient.textOrNull(youtrackClient.recordOf(item['field'])['name']) ?? youtrackClient.textOrNull(item['targetMember']),
+    target_id: youtrackClient.textOrNull(target['id']),
+    added_values: added,
+    removed_values: valuesOf(item['removed']),
+    comment_text: isComment ? youtrackClient.textOrNull(comment?.['text']) ?? youtrackClient.textOrNull(target['text']) : null,
+  };
+}
+
+function valuesOf(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const list = Array.isArray(value) ? value : [value];
+  if (list.length === 0) return null;
+  return list.map(display).join(', ');
+}
+
+function display(value: unknown): string {
+  if (youtrackClient.isRecord(value)) {
+    for (const key of ['name', 'fullName', 'login', 'presentation', 'text']) {
+      const candidate = value[key];
+      if (typeof candidate === 'string' && candidate !== '') return candidate;
+    }
+    if (typeof value['minutes'] === 'number') return String(value['minutes']);
+    const { $type: _type, ...rest } = value;
+    return Object.keys(rest).length === 0 ? String(_type ?? '') : JSON.stringify(rest);
+  }
+  return String(value);
+}
 
 export const getIssueHistoryAction = createAction({
   auth: youtrackAuth,
@@ -70,43 +111,3 @@ export const getIssueHistoryAction = createAction({
     return activities.map(toRow);
   },
 });
-
-function toRow(item: Record<string, unknown>): Record<string, unknown> {
-  const author = youtrackClient.recordOf(item['author']);
-  const target = youtrackClient.recordOf(item['target']);
-  const added = valuesOf(item['added']);
-  const isComment = (typeof item['$type'] === 'string' && item['$type'].includes('Comment'))
-    || youtrackClient.records(item['added']).some((entry) => entry['$type'] === 'IssueComment');
-  const comment = youtrackClient.records(item['added']).find((entry) => typeof entry['text'] === 'string');
-  return {
-    type: item['$type'] ?? null,
-    timestamp: item['timestamp'] ?? null,
-    author_name: author['name'] ?? null,
-    author_login: author['login'] ?? null,
-    field_name: youtrackClient.textOrNull(youtrackClient.recordOf(item['field'])['name']) ?? youtrackClient.textOrNull(item['targetMember']),
-    target_id: youtrackClient.textOrNull(target['id']),
-    added_values: added,
-    removed_values: valuesOf(item['removed']),
-    comment_text: isComment ? youtrackClient.textOrNull(comment?.['text']) ?? youtrackClient.textOrNull(target['text']) : null,
-  };
-}
-
-function valuesOf(value: unknown): string | null {
-  if (value === null || value === undefined) return null;
-  const list = Array.isArray(value) ? value : [value];
-  if (list.length === 0) return null;
-  return list.map(display).join(', ');
-}
-
-function display(value: unknown): string {
-  if (youtrackClient.isRecord(value)) {
-    for (const key of ['name', 'fullName', 'login', 'presentation', 'text']) {
-      const candidate = value[key];
-      if (typeof candidate === 'string' && candidate !== '') return candidate;
-    }
-    if (typeof value['minutes'] === 'number') return String(value['minutes']);
-    const { $type: _type, ...rest } = value;
-    return Object.keys(rest).length === 0 ? String(_type ?? '') : JSON.stringify(rest);
-  }
-  return String(value);
-}

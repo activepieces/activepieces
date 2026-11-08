@@ -6,6 +6,24 @@ import { issueDropdown } from '../common';
 import { YoutrackApiError, youtrackClient } from '../common/client';
 import { uploadAttachmentActionOutputSchema } from '../output-schemas';
 
+function asciiFileName(name: string): string {
+  const ascii = name.replace(/[\r\n]/g, '').replace(/["\\]/g, '_').replace(/[^\x20-\x7e]/g, '_');
+  return ascii === '' ? 'file' : ascii;
+}
+
+function encodeRfc5987(name: string): string {
+  return encodeURIComponent(name.replace(/[\r\n]/g, '')).replace(/['()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+}
+
+function fileBytes(value: unknown): Buffer | undefined {
+  if (value === null || typeof value !== 'object') return undefined;
+  const data = Reflect.get(value, 'data');
+  if (Buffer.isBuffer(data)) return data;
+  const base64 = Reflect.get(value, 'base64');
+  if (typeof base64 === 'string' && base64 !== '') return Buffer.from(base64, 'base64');
+  return undefined;
+}
+
 export const uploadAttachmentAction = createAction({
   auth: youtrackAuth,
   name: 'upload_attachment',
@@ -92,21 +110,3 @@ export const uploadAttachmentAction = createAction({
     return results;
   },
 });
-
-function asciiFileName(name: string): string {
-  const ascii = name.replace(/[\r\n]/g, '').replace(/["\\]/g, '_').replace(/[^\x20-\x7e]/g, '_');
-  return ascii === '' ? 'file' : ascii;
-}
-
-function encodeRfc5987(name: string): string {
-  return encodeURIComponent(name.replace(/[\r\n]/g, '')).replace(/['()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
-}
-
-function fileBytes(value: unknown): Buffer | undefined {
-  if (value === null || typeof value !== 'object') return undefined;
-  const data = Reflect.get(value, 'data');
-  if (Buffer.isBuffer(data)) return data;
-  const base64 = Reflect.get(value, 'base64');
-  if (typeof base64 === 'string' && base64 !== '') return Buffer.from(base64, 'base64');
-  return undefined;
-}

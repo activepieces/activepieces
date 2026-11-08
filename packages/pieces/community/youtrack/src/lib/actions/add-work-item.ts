@@ -5,6 +5,11 @@ import { issueDropdown, WORK_ITEM_FIELDS, workItemRow, workItemTypeDropdown } fr
 import { youtrackClient } from '../common/client';
 import { addWorkItemActionOutputSchema } from '../output-schemas';
 
+function todayUtc(): number {
+  const now = new Date();
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+}
+
 export const addWorkItemAction = createAction({
   auth: youtrackAuth,
   name: 'add_work_item',
@@ -53,8 +58,3 @@ export const addWorkItemAction = createAction({
     return workItemRow(youtrackClient.recordOf(response));
   },
 });
-
-function todayUtc(): number {
-  const now = new Date();
-  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-}
