@@ -39,7 +39,7 @@ function openBeside({
   const carried = !fromFull && previous.chatSplitBack === true;
   const replace = !push || carried;
   const backToChat = (push && fromFull) || carried;
-  keepFocus();
+  keepFocus(navigationLanded(location.key));
   if (viewportWidth < chatLayoutUtils.MOBILE_BREAKPOINT) {
     if (panel.open) panel.setOpen(false);
     current.navigate({
@@ -77,8 +77,8 @@ function expand(): void {
   const now = Date.now();
   if (now - lastExpandAt < EXPAND_DEBOUNCE_MS) return;
   lastExpandAt = now;
-  keepFocus();
   const location = current.location();
+  keepFocus(navigationLanded(location.key));
   const panel = useChatPanel.getState();
   current.captureAnchor();
   if (
@@ -100,13 +100,20 @@ function expand(): void {
   });
 }
 
-function keepFocus(): void {
+function navigationLanded(fromKey: string): () => boolean {
+  return () =>
+    router?.location().key !== fromKey &&
+    useChatPanel.getState().moving === null;
+}
+
+function keepFocus(settled: () => boolean): void {
   releaseFocus?.();
   const kept = document.activeElement;
   if (!(kept instanceof HTMLElement) || !kept.closest(CHAT_ROOT)) {
     return;
   }
   let frame = 0;
+  let stableFrames = 0;
   let tabbing = false;
   const onKey = (event: KeyboardEvent) => {
     tabbing = tabbing || event.key === 'Tab';
@@ -129,9 +136,15 @@ function keepFocus(): void {
       return;
     }
     if (active === into) {
+      stableFrames = settled() ? stableFrames + 1 : 0;
+      if (stableFrames >= SETTLED_FRAMES) {
+        release();
+        return;
+      }
       frame = requestAnimationFrame(check);
       return;
     }
+    stableFrames = 0;
     if (
       active &&
       active !== document.body &&
@@ -145,7 +158,7 @@ function keepFocus(): void {
       return;
     }
     into.focus({ preventScroll: true });
-    release();
+    frame = requestAnimationFrame(check);
   };
   const release = () => {
     cancelAnimationFrame(frame);
@@ -256,6 +269,7 @@ let releaseFocus: (() => void) | null = null;
 const EXPAND_DEBOUNCE_MS = 220;
 const MOVING_GUARD_MS = 900;
 const FOCUS_GUARD_MS = 2000;
+const SETTLED_FRAMES = 2;
 const CHAT_ROOT = '[data-chat-root]';
 const COMPOSER = 'textarea, [contenteditable="true"]';
 const LAYERS = '[role="dialog"], [role="alertdialog"], [role="menu"]';
@@ -395,6 +409,7 @@ export type ChatMove = 'enter' | 'exit';
 export type ChatRouter = {
   navigate: (target: ChatNavTarget) => void;
   location: () => {
+    key: string;
     pathname: string;
     hash: string;
     state: unknown;

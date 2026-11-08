@@ -227,16 +227,7 @@ export function ChatChrome({
       autoFocus={!historyColumn}
     />
   );
-  const openFullPage = () => {
-    const header = headerRef.current;
-    const fromHeader = header?.contains(document.activeElement) ?? false;
-    chatPanelUtils.expand();
-    if (!fromHeader) return;
-    requestAnimationFrame(() => {
-      if (header?.contains(document.activeElement)) return;
-      chatDom.composer()?.focus({ preventScroll: true });
-    });
-  };
+  const openFullPage = () => chatPanelUtils.expand();
   const collapseToSide = lastPage
     ? () => {
         navigate(lastPage);

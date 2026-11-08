@@ -228,8 +228,19 @@ function useStructuralMove({
   const previous = useRef(chatWidth);
   const phase = useRef<MovePhase>('idle');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shownWidth = useRef(0);
   const target = useRef({ slotWidth, hostWidth });
   target.current = { slotWidth, hostWidth };
+
+  useLayoutEffect(() => {
+    const slotEl = slot.current;
+    if (!slotEl) return;
+    const observer = new ResizeObserver(() => {
+      shownWidth.current = slotEl.getBoundingClientRect().width;
+    });
+    observer.observe(slotEl);
+    return () => observer.disconnect();
+  }, [slot]);
 
   useLayoutEffect(() => {
     const slotEl = slot.current;
@@ -276,6 +287,11 @@ function useStructuralMove({
         captureAnchor();
         hostEl.style.width = hostWidth;
         restoreAnchor();
+        if (shownWidth.current > 0) {
+          slotEl.style.transition = 'none';
+          slotEl.style.width = `${shownWidth.current}px`;
+          slotEl.getBoundingClientRect();
+        }
         slotEl.style.transition = `width ${MOVE_MS.wide}ms ${MOVE_EASE.emphasized} ${MOVE_MS.edgeDelay}ms`;
       }
       phase.current = 'enter';
