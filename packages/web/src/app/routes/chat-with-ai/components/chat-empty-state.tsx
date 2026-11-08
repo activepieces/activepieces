@@ -1,6 +1,12 @@
 import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquareOff,
+  Sparkles,
+} from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -11,11 +17,12 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { resourceRegistry } from '@/features/chat/lib/resources/registry';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { DEFAULT_USE_CASES } from '@/features/chat/use-cases/default-use-cases';
 import {
@@ -23,18 +30,112 @@ import {
   UseCaseCard,
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
+import {
+  chatPanelUtils,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
-export function EmptyState({
-  onSuggestionClick,
+import { OnboardingWelcome } from './onboarding-welcome';
+
+export function ChatEmptyState({
   incognito,
   hasInput,
+  onboarding,
+  onSend,
+  onFill,
 }: {
-  onSuggestionClick: (text: string) => void;
   incognito: boolean;
-  showFlowCards: boolean;
   hasInput: boolean;
+  onboarding: boolean;
+  onSend: (text: string) => void;
+  onFill: (text: string) => void;
+}) {
+  return (
+    <div className="@container h-full">
+      <div className="hidden h-full @chat-md:block">
+        {onboarding ? (
+          <OnboardingWelcome />
+        ) : (
+          <WideEmptyState
+            incognito={incognito}
+            hasInput={hasInput}
+            onPickCard={onFill}
+          />
+        )}
+      </div>
+      <div className="h-full @chat-md:hidden">
+        <NarrowEmptyState onSend={onSend} onFill={onFill} />
+      </div>
+    </div>
+  );
+}
+
+export function SetupRequiredState() {
+  const isAdmin = useIsPlatformAdmin();
+
+  const connect = () => {
+    chatPanelUtils.openBeside({ route: '/platform/ai', push: true });
+    if (window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT) {
+      useChatPanel.getState().setOpen(true);
+    }
+  };
+
+  return (
+    <ChatNotice
+      icon={<Sparkles className="size-5 text-gray-11" />}
+      title={t('Chat needs an AI provider')}
+      body={
+        isAdmin
+          ? t('Connect an AI provider to start chatting.')
+          : t('Ask an admin to connect an AI provider.')
+      }
+      action={
+        isAdmin ? (
+          <Button size="sm" onClick={connect}>
+            {t('Connect an AI provider')}
+          </Button>
+        ) : null
+      }
+    />
+  );
+}
+
+export function ChatDisabledState() {
+  return (
+    <ChatNotice
+      icon={<MessageSquareOff className="size-5 text-gray-11" />}
+      title={t('Chat is turned off for this workspace.')}
+    />
+  );
+}
+
+export function MessageSkeletons() {
+  return (
+    <div className="space-y-8 animate-in fade-in duration-300 py-4">
+      <div className="flex justify-end">
+        <Skeleton className="h-10 w-48 rounded-xl" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+    </div>
+  );
+}
+
+function WideEmptyState({
+  incognito,
+  hasInput,
+  onPickCard,
+}: {
+  incognito: boolean;
+  hasInput: boolean;
+  onPickCard: (text: string) => void;
 }) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const firstName = currentUser?.firstName ?? '';
@@ -46,7 +147,7 @@ export function EmptyState({
 
   if (incognito) {
     return (
-      <div className="flex min-h-full flex-col justify-center px-3 pt-8 pb-6 sm:px-6">
+      <div className="flex min-h-full flex-col justify-center px-6 pt-8 pb-6">
         <div className="max-w-3xl mx-auto w-full">
           <Greeting firstName={firstName} incognito />
         </div>
@@ -55,18 +156,16 @@ export function EmptyState({
   }
 
   return (
-    <div className="flex min-h-full flex-col px-3 pt-12 pb-6 sm:px-6 sm:pt-16">
+    <div className="flex min-h-full flex-col px-6 pt-16 pb-6">
       <div className="max-w-3xl mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
-          <div className="min-w-0 sm:flex-1 sm:max-w-md">
+        <div className="flex flex-row items-center gap-10">
+          <div className="min-w-0 flex-1 max-w-md">
             <Greeting firstName={firstName} incognito={false} />
           </div>
-          <div className="hidden sm:contents">
-            <AppMarquee />
-          </div>
+          <AppMarquee />
         </div>
         <CollapseOnInput collapsed={hasInput}>
-          <ExampleCards cards={cards} onSuggestionClick={onSuggestionClick} />
+          <ExampleCards cards={cards} onSuggestionClick={onPickCard} />
         </CollapseOnInput>
       </div>
     </div>
@@ -92,42 +191,74 @@ function CollapseOnInput({
   );
 }
 
-export function SetupRequiredState() {
-  const navigate = useNavigate();
+function NarrowEmptyState({
+  onSend,
+  onFill,
+}: {
+  onSend: (text: string) => void;
+  onFill: (text: string) => void;
+}) {
+  const { data: user } = userHooks.useCurrentUser();
+  const { pathname } = useLocation();
+  const onResource = resourceRegistry.refAt(pathname) !== null;
+  const name = user?.firstName;
+  const suggestions = (
+    onResource ? [PAGE_SUGGESTION, ...SUGGESTIONS] : SUGGESTIONS
+  ).slice(0, 3);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-gray-3">
-        <Settings className="h-8 w-8 text-gray-11" />
+    <div className="flex h-full flex-col justify-end gap-3 px-4 pb-3">
+      <p className="text-base font-semibold text-gray-12">
+        {name
+          ? t('Hi {name}, what should I do?', { name })
+          : t('What should I do?')}
+      </p>
+      <div className="flex flex-col items-start gap-1.5">
+        {suggestions.map((suggestion) => {
+          const text = t(suggestion.text);
+          return (
+            <button
+              key={suggestion.text}
+              type="button"
+              title={text}
+              onClick={() =>
+                suggestion.kind === 'build' ? onFill(text) : onSend(text)
+              }
+              className="max-w-full truncate rounded-full border px-3 py-1.5 text-left text-sm text-gray-11 transition-colors duration-150 outline-none hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8 active:bg-gray-4"
+            >
+              {text}
+            </button>
+          );
+        })}
       </div>
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold">
-          {t('Set up an AI provider to get started')}
-        </h2>
-        <p className="text-gray-11 text-sm max-w-md">
-          {t(
-            'AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.',
-          )}
-        </p>
-      </div>
-      <Button onClick={() => navigate('/platform/ai')} className="gap-2">
-        <Settings className="h-4 w-4" />
-        {t('Go to AI Settings')}
-      </Button>
     </div>
   );
 }
 
-export function MessageSkeletons() {
+function ChatNotice({
+  icon,
+  title,
+  body,
+  action,
+}: {
+  icon: ReactNode;
+  title: string;
+  body?: string;
+  action?: ReactNode;
+}) {
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 py-4">
-      <div className="flex justify-end">
-        <Skeleton className="h-10 w-48 rounded-xl" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-1/2" />
+    <div className="@container flex h-full min-w-0 flex-1 flex-col">
+      <div className="flex flex-1 flex-col items-start justify-end gap-3 px-4 pb-6 @chat-md:items-center @chat-md:justify-center @chat-md:px-6 @chat-md:text-center">
+        <div className="flex size-10 items-center justify-center rounded-lg bg-gray-3 @chat-md:size-12">
+          {icon}
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold text-gray-12 @chat-md:text-xl">
+            {title}
+          </h2>
+          {body && <p className="max-w-md text-sm text-gray-11">{body}</p>}
+        </div>
+        {action}
       </div>
     </div>
   );
@@ -545,3 +676,16 @@ function resolveCards({
 }
 
 const COLLAPSED_CARD_COUNT = 4;
+
+const PAGE_SUGGESTION: Suggestion = {
+  text: 'What can I do on this page?',
+  kind: 'ask',
+};
+
+const SUGGESTIONS: Suggestion[] = [
+  { text: 'Build me a flow for new leads', kind: 'build' },
+  { text: 'What saved us the most time this month?', kind: 'ask' },
+  { text: 'Why did my last run fail?', kind: 'ask' },
+];
+
+type Suggestion = { text: string; kind: 'build' | 'ask' };

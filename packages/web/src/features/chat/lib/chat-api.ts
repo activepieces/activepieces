@@ -16,6 +16,9 @@ import {
 
 import { api } from '@/lib/api';
 
+import { chatDemoGate } from './demo/chat-demo-gate';
+import type { PageContext } from './page-context';
+
 async function createConversation(
   request: CreateAgentConversationRequest,
 ): Promise<AgentConversation> {
@@ -61,22 +64,34 @@ async function deleteConversation(id: string): Promise<void> {
   return api.delete<void>(`/v1/agents/conversations/${id}`);
 }
 
+function deleteConversationOnExit(id: string): void {
+  api
+    .any<void>(`/v1/agents/conversations/${id}`, {
+      method: 'DELETE',
+      adapter: 'fetch',
+      fetchOptions: { keepalive: true },
+    })
+    .catch(() => undefined);
+}
+
 async function sendMessage({
   conversationId,
   content,
   runId,
   files,
   messageSource,
+  pageContext,
 }: {
   conversationId: string;
   content: string;
   runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
   messageSource?: AgentMessageSource;
+  pageContext?: PageContext;
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
     `/v1/agents/conversations/${conversationId}/messages`,
-    { content, runId, files, messageSource },
+    { content, runId, files, messageSource, pageContext },
   );
 }
 
@@ -161,13 +176,14 @@ async function instructMemory(
   );
 }
 
-export const chatApi = {
+const serverChatApi = {
   createConversation,
   listConversations,
   getConversation,
   getMessages,
   updateConversation,
   deleteConversation,
+  deleteConversationOnExit,
   sendMessage,
   approveToolCall,
   cancelConversation,
@@ -179,6 +195,12 @@ export const chatApi = {
   importMemory,
   instructMemory,
 };
+
+export const chatApi: ChatApi = import.meta.env.DEV
+  ? chatDemoGate.wrapApi(serverChatApi)
+  : serverChatApi;
+
+export type ChatApi = typeof serverChatApi;
 
 export type PendingGate = {
   gateId: string;

@@ -4,8 +4,8 @@ import {
   AlertCircle,
   Check,
   Circle,
-  ExternalLink,
   Loader2,
+  PanelLeft,
   Rocket,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -15,9 +15,14 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
+import {
+  ResourceRef,
+  resourceRegistry,
+} from '@/features/chat/lib/resources/registry';
 import { authenticationSession } from '@/lib/authentication-session';
-import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
+
+import { onResourceLinkClick } from './changes-summary';
 
 const CARD_BASE =
   'bg-[color-mix(in_oklab,var(--swatch-6-mark)_5%,color-mix(in_oklab,var(--panel)_75%,var(--gray-5)))]';
@@ -56,13 +61,13 @@ export function FlowBuildCard({
     >
       <div
         className={cn(
-          'relative z-10 rounded-t-xl px-4 pb-3 pt-4 sm:px-5',
+          'relative z-10 rounded-t-xl px-4 pb-3 pt-4 @chat-sm/chat:px-5',
           !isDone && !isFailed && 'sticky top-0',
           CARD_BASE,
         )}
       >
         <BuildDoodle iconName={iconName} />
-        <h2 className="pr-28 text-2xl font-semibold leading-tight tracking-tight text-gray-12 sm:pr-40 sm:text-3xl">
+        <h2 className="pr-28 text-2xl font-semibold leading-tight tracking-tight text-gray-12 @chat-sm/chat:pr-40 @chat-sm/chat:text-3xl">
           {tagline}
         </h2>
         <Progress
@@ -76,7 +81,7 @@ export function FlowBuildCard({
         />
       </div>
 
-      <div className="px-4 pb-4 pt-1 sm:px-5">
+      <div className="px-4 pb-4 pt-1 @chat-sm/chat:px-5">
         <ul className="space-y-2.5">
           {build.steps.map((step) => (
             <BuildStepRow key={step.id} step={step} />
@@ -123,16 +128,21 @@ function OpenInBuilderButton({
   projectId: string;
   flowId: string;
 }) {
-  const openNewWindow = useNewWindow();
+  const resource: ResourceRef = { kind: 'flow', id: flowId, projectId };
   return (
     <Button
+      asChild
       size="sm"
       variant="ghost"
       className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
-      onClick={() => openNewWindow(`/projects/${projectId}/flows/${flowId}`)}
     >
-      <ExternalLink className="h-3.5 w-3.5" />
-      {t('Open in builder')}
+      <a
+        href={resourceRegistry.route(resource)}
+        onClick={(event) => onResourceLinkClick({ event, resource })}
+      >
+        <PanelLeft className="h-3.5 w-3.5" />
+        {t('Open in builder')}
+      </a>
     </Button>
   );
 }
@@ -342,7 +352,7 @@ function BuildDoodle({ iconName }: { iconName: string }) {
 
   return (
     <div
-      className="absolute right-4 top-0 z-20 size-[80px] -rotate-12 sm:right-10 sm:size-[104px]"
+      className="absolute right-4 top-0 z-20 size-[80px] -rotate-12 @chat-sm/chat:right-10 @chat-sm/chat:size-[104px]"
       aria-hidden="true"
     >
       <svg viewBox="0 0 100 100" fill="none" className="h-full w-full">

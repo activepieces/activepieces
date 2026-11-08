@@ -15,7 +15,6 @@ import {
   Lock,
   Shield,
   SlidersHorizontal,
-  SquarePen,
   Unplug,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -24,6 +23,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   DropdownMenu,
@@ -41,7 +41,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { useAgentsNavVisible } from '@/features/agents';
-import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
   getProjectName,
@@ -120,11 +119,8 @@ function DriversGroup() {
             <ApSidebarItem
               type="link"
               to="/chat"
-              icon={SquarePen}
+              icon={ChatSparkIcon}
               label={t('Chat')}
-              onClick={() =>
-                window.dispatchEvent(new Event(chatUtils.newChatEvent))
-              }
             />
           )}
           {reachesMcp && (
@@ -272,10 +268,11 @@ function ProjectsGroup() {
             sidebarStyles.fadeEdges,
           )}
         >
-          {orderProjects({ projects, sort }).map((project) => (
+          {orderProjects({ projects, sort }).map((project, index) => (
             <ProjectItem
               key={project.id}
               project={project}
+              order={index}
               active={location.pathname.includes(`/projects/${project.id}`)}
               onOpen={openProject}
             />
@@ -288,10 +285,12 @@ function ProjectsGroup() {
 
 function ProjectItem({
   project,
+  order,
   active,
   onOpen,
 }: {
   project: ProjectWithLimits;
+  order: number;
   active: boolean;
   onOpen: (params: { projectId: string; name: string }) => void;
 }) {
@@ -308,6 +307,7 @@ function ProjectItem({
       <SidebarMenuButton asChild isActive={active} tooltip={name}>
         <motion.button
           layout={prefersReducedMotion ? false : 'position'}
+          layoutDependency={order}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           type="button"
           aria-current={active ? 'page' : undefined}

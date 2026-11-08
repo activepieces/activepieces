@@ -26,7 +26,7 @@ export function BuilderStateProvider({
   const storeRef = useRef<BuilderStore>(undefined);
   const { checkAccess } = useAuthorization();
   const readonly = !checkAccess(Permission.WRITE_FLOW) || props.readonly;
-  projectHooks.useReloadPageIfProjectIdChanged(props.flow.projectId);
+  projectHooks.useKeepProjectWhenChangedElsewhere(props.flow.projectId);
   const socket = useSocket();
   const queryClient = useQueryClient();
   if (!storeRef.current) {

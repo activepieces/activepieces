@@ -310,7 +310,7 @@ function ChoiceBody({
   return (
     <div>
       {useIconGrid ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2 @xs/chat:grid-cols-3">
           {options.map((option) => {
             const selected = answer === option.label;
             return (
@@ -336,7 +336,7 @@ function ChoiceBody({
           })}
         </div>
       ) : (
-        <div role="menu" aria-label={question.question} className="gap-0">
+        <div role="radiogroup" aria-label={question.question} className="gap-0">
           {options.map((option, i) => {
             const selected = answer === option.label;
             const isFirst = i === 0;
@@ -354,7 +354,7 @@ function ChoiceBody({
                   </div>
                 )}
                 <div
-                  role="menuitemradio"
+                  role="radio"
                   tabIndex={
                     focusedRow === i || (focusedRow === null && isFirst)
                       ? 0

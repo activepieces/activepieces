@@ -17,6 +17,7 @@ import {
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';
 
@@ -125,7 +126,7 @@ export function TaskPanel({
       initial={{ opacity: 0, x: 24 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
-      className="flex h-full w-[460px] shrink-0 flex-col border-l bg-panel xl:w-[540px]"
+      className="flex h-full w-[460px] shrink-0 flex-col border-l bg-panel @min-[80rem]/chat-room:w-[540px]"
     >
       {body}
     </motion.aside>
@@ -139,10 +140,16 @@ export function TaskPanelLayout({ children }: { children: React.ReactNode }) {
   const setChatAreaWidth = useChatStoreContext(
     (state) => state.setChatAreaWidth,
   );
-  useEffect(() => setChatAreaWidth(room.width), [room.width, setChatAreaWidth]);
+  const moving = useChatPanel((state) => state.moving !== null);
+  useEffect(() => {
+    if (!moving) setChatAreaWidth(room.width);
+  }, [room.width, moving, setChatAreaWidth]);
   return (
     <TaskPanelSlotContext.Provider value={slot}>
-      <div ref={roomRef} className="flex h-full min-w-0 flex-1">
+      <div
+        ref={roomRef}
+        className="@container/chat-room flex h-full min-w-0 flex-1"
+      >
         {children}
         <div ref={setSlot} className="contents" />
       </div>
@@ -169,7 +176,7 @@ function TaskDetails({
   return (
     <ChatContainerRoot className="min-h-0 flex-1">
       <ChatContainerContent
-        className={cn('mx-auto px-5 py-5', wide && 'max-w-3xl')}
+        className={cn('@container/task mx-auto px-5 py-5', wide && 'max-w-3xl')}
       >
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
@@ -220,12 +227,7 @@ function TaskDetails({
               count: pages.length,
             })}
           >
-            <div
-              className={cn(
-                'grid grid-cols-1 gap-2',
-                wide ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
-              )}
-            >
+            <div className="grid grid-cols-1 gap-2 @sm/task:grid-cols-2 @2xl/task:grid-cols-3">
               {pages.map((page) => (
                 <SourceCard key={page.url} url={page.url} title={page.title} />
               ))}

@@ -71,6 +71,8 @@
   --color-accent-10: var(--accent-10);
   --color-accent-11: var(--accent-11);
   --color-accent-12: var(--accent-12);
+  --color-ai-mark: var(--ai-mark);
+  --color-ai-glow: var(--ai-glow);
 
   --color-success-1: var(--success-1);
   --color-success-2: var(--success-2);
@@ -191,10 +193,13 @@
 @theme {
   --ease-*: initial;
   --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
+  --ease-move: cubic-bezier(0.22, 1, 0.36, 1);
 
   --transition-duration-1500: 1500ms;
 
   --container-page-band: 1198px;
+  --container-chat-sm: 30rem;
+  --container-chat-md: 44rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -660,6 +665,9 @@
       0 0 0 1px var(--cast-10), 0 4px 8px -4px var(--cast-10),
       0 16px 32px -12px var(--cast-20);
     --glow-primary: 0 12px 40px -12px color-mix(in oklab, var(--accent-9), transparent 78%);
+    --ai-mark: var(--accent-9);
+    --ai-glow: color-mix(in oklab, var(--accent-9) 14%, transparent);
+    --ai-edge: inset 2px 0 0 0 var(--ai-mark);
   }
 
   [data-theme='dark'] {
@@ -808,6 +816,8 @@
     --cast-10: oklch(100% 0 0 / 9%);
     --cast-20: oklch(0% 0 0 / 45%);
     --glow-primary: 0 12px 40px -12px color-mix(in oklab, var(--accent-9), transparent 65%);
+    --ai-mark: var(--accent-10);
+    --ai-glow: color-mix(in oklab, var(--accent-10) 20%, transparent);
     --edge: 0 0 0 1px var(--gray-4);
     --panel-shadow:
       0 0 0 1px color-mix(in oklab, var(--gray-12), transparent 92%),
@@ -1271,5 +1281,68 @@
     --admin-page: var(--gray-1);
     --admin-surface: var(--panel);
     --admin-card-border: var(--gray-6);
+  }
+}
+
+@keyframes ap-ai-glow {
+  0%,
+  40% {
+    box-shadow: inset 0 0 0 100vmax var(--ai-glow),
+      inset 0 0 0 1px color-mix(in oklab, var(--ai-mark) 55%, transparent);
+  }
+  100% {
+    box-shadow: inset 0 0 0 100vmax transparent, inset 0 0 0 1px transparent;
+  }
+}
+
+@keyframes ap-ai-glow-fill {
+  0%,
+  40% {
+    box-shadow: inset 0 0 0 100vmax var(--ai-glow);
+  }
+  100% {
+    box-shadow: inset 0 0 0 100vmax transparent;
+  }
+}
+
+@keyframes ap-ai-fade-out {
+  0% {
+    opacity: 1;
+    box-shadow: inset 0 0 0 100vmax var(--ai-glow);
+  }
+  100% {
+    opacity: 0.15;
+    box-shadow: inset 0 0 0 100vmax var(--ai-glow);
+  }
+}
+
+.ap-ai-glow,
+[data-ai-field][data-ai-glow] {
+  animation: ap-ai-glow 2.4s ease-out forwards;
+}
+
+.ap-ai-glow-row > .rdg-cell {
+  animation: ap-ai-glow-fill 2.4s ease-out forwards;
+}
+
+.ap-ai-fade-out > .rdg-cell {
+  animation: ap-ai-fade-out 0.6s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-ai-glow,
+  .ap-ai-glow-row > .rdg-cell:first-child,
+  [data-ai-field][data-ai-glow] {
+    animation: none;
+    box-shadow: var(--ai-edge);
+  }
+
+  .ap-ai-glow-row > .rdg-cell:not(:first-child) {
+    animation: none;
+  }
+
+  .ap-ai-fade-out > .rdg-cell {
+    animation: none;
+    opacity: 0.4;
   }
 }

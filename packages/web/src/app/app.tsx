@@ -10,6 +10,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin';
 
+import { useChatToastPlacement } from './components/chat-panel/chat-window';
 import { EmbeddingAnalyticsLoader } from './components/embedding-analytics-loader';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { GlobalErrorBoundary } from './components/global-error-boundary';
@@ -19,6 +20,7 @@ import { queryClient } from './query-client';
 
 export function App() {
   const { i18n } = useTranslation();
+  const toastPlacement = useChatToastPlacement();
   return (
     <GlobalErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -32,7 +34,11 @@ export function App() {
                     <ThemeProvider storageKey="vite-ui-theme">
                       <React.Fragment key={i18n.language}>
                         <ApRouter />
-                        <Toaster position="bottom-right" />
+                        <Toaster
+                          position={toastPlacement.position}
+                          offset={toastPlacement.offset}
+                          mobileOffset={toastPlacement.offset}
+                        />
                         <ApErrorDialog />
                       </React.Fragment>
                     </ThemeProvider>

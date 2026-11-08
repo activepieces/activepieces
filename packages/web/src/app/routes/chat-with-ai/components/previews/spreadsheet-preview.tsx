@@ -25,7 +25,7 @@ function SpreadsheetTable({
 
   return (
     <div className={cn('overflow-auto', className)}>
-      <table className="w-full table-fixed text-sm">
+      <table className="w-full text-sm">
         <thead className="sticky top-0 z-10">
           <tr className="border-b border-gray-6 bg-gray-3">
             {table.headers.map((header, i) => (

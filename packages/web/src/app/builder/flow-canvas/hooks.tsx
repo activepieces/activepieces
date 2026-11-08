@@ -2,7 +2,9 @@ import { Permission, isNil } from '@activepieces/core-utils';
 import {
   FlowDraftUpdatedEvent,
   FlowRunStatus,
+  FlowVersion,
   FlowVersionState,
+  PopulatedFlow,
   flowStructureUtil,
   WebsocketClientEvent,
   RunEnvironment,
@@ -19,6 +21,11 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
+import {
+  followAlong,
+  useOnFollowUpdate,
+} from '@/features/chat/lib/follow/follow-along';
+import { aiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
@@ -28,6 +35,7 @@ import { editorSession } from '@/lib/editor-session';
 
 import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
+import { stepReloadHold } from '../step-settings/step-reload-notice';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 
@@ -162,6 +170,118 @@ const useRefreshDraftOnPush = () => {
     };
   }, [socket, flowId, refreshDraft]);
 };
+
+const useRefreshDraftOnFollow = () => {
+  const store = useBuilderStore();
+  const flowId = useBuilderStateContext((state) => state.flow.id);
+  const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
+  const { fitView, getViewport } = useReactFlow();
+  const seen = useRef<Map<string, string> | null>(null);
+  useEffect(() => {
+    seen.current = flowFingerprints(store.getState());
+  }, [flowId, store]);
+  useOnFollowUpdate({
+    resource: { kind: 'flow', id: flowId },
+    handler: () => {
+      const { selectedStep, draftRefreshCount, parkPendingEdit } =
+        store.getState();
+      const holdStep =
+        selectedStep &&
+        (isEditingStepSettings() || stepReloadHold.isDirty(selectedStep))
+          ? selectedStep
+          : null;
+      if (holdStep) {
+        parkPendingEdit(holdStep);
+        stepReloadHold.hold({ stepName: holdStep, draftRefreshCount });
+      }
+      refreshDraft()
+        .catch(() => false)
+        .then(() => {
+          const state = store.getState();
+          if (state.draftRefreshCount === draftRefreshCount) {
+            stepReloadHold.releaseIfUnchanged(draftRefreshCount);
+            if (holdStep) state.resumeParkedEdit(holdStep);
+          }
+          const next = flowFingerprints(state);
+          const before = seen.current ?? new Map<string, string>();
+          seen.current = next;
+          const changed = [...next]
+            .filter(([name, print]) => before.get(name) !== print)
+            .map(([name]) => name);
+          followAlong.flash(
+            changed.map((name) =>
+              name.startsWith(FLOW_META_PREFIX)
+                ? `${name}:${flowId}`
+                : `flow-step:${name}`,
+            ),
+          );
+          const last = changed
+            .filter((name) => !name.startsWith(FLOW_META_PREFIX))
+            .at(-1);
+          if (last && aiHighlight.mayScroll()) {
+            setTimeout(() => {
+              if (isStepVisible(last)) return;
+              const { zoom } = getViewport();
+              fitView({
+                nodes: [{ id: last }],
+                duration: aiHighlight.prefersReducedMotion() ? 0 : 450,
+                minZoom: zoom,
+                maxZoom: zoom,
+              }).catch(() => undefined);
+            }, 120);
+          }
+        })
+        .catch(() => undefined);
+    },
+  });
+};
+
+function isEditingStepSettings(): boolean {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement)) return false;
+  if (!active.closest('#right-sidebar')) return false;
+  return (
+    active.isContentEditable ||
+    active instanceof HTMLTextAreaElement ||
+    (active instanceof HTMLInputElement &&
+      !['checkbox', 'radio', 'button', 'submit'].includes(active.type))
+  );
+}
+
+function isStepVisible(stepName: string): boolean {
+  const node = document.querySelector(
+    `.react-flow__node[data-id="${CSS.escape(stepName)}"]`,
+  );
+  const pane = node?.closest('.react-flow');
+  if (!node || !pane) return true;
+  const rect = node.getBoundingClientRect();
+  const view = pane.getBoundingClientRect();
+  return (
+    rect.top >= view.top &&
+    rect.bottom <= view.bottom - 64 &&
+    rect.left >= view.left &&
+    rect.right <= view.right
+  );
+}
+
+function flowFingerprints({
+  flow,
+  flowVersion,
+}: {
+  flow: PopulatedFlow;
+  flowVersion: FlowVersion;
+}): Map<string, string> {
+  return new Map([
+    ...flowStructureUtil
+      .getAllSteps(flowVersion.trigger)
+      .map((step): [string, string] => [
+        step.name,
+        JSON.stringify([step.type, step.displayName, step.settings]),
+      ]),
+    [`${FLOW_META_PREFIX}name`, flowVersion.displayName],
+    [`${FLOW_META_PREFIX}status`, `${flow.status}:${flow.publishedVersionId}`],
+  ]);
+}
 
 const useRefreshDraftOnReconnectAndReturn = () => {
   const socket = useSocket();
@@ -360,6 +480,7 @@ export const flowCanvasHooks = {
   useFlushPendingEditsOnLeave,
   useRefreshDraftAndMakeNewDraftEditable,
   useRefreshDraftOnPush,
+  useRefreshDraftOnFollow,
   useRefreshDraftOnReconnectAndReturn,
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,
@@ -368,3 +489,5 @@ export const flowCanvasHooks = {
   useListenToExistingRun,
   useFlowConnections,
 };
+
+const FLOW_META_PREFIX = 'flow-';

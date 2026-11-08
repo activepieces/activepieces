@@ -9,6 +9,7 @@ import {
   Filter,
   FolderIcon,
   Link2,
+  ListFilter,
   Search,
   Table2,
   ToggleLeft,
@@ -33,6 +34,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { useOwnerOptions } from '@/features/automations/hooks/use-owner-options';
 import { TemplatesBrowseDialog } from '@/features/templates';
 import { formatUtils } from '@/lib/format-utils';
@@ -144,14 +150,100 @@ export const AutomationsFilters = ({
     };
   });
 
+  const activeFilterCount = [
+    typeFilter,
+    statusFilter,
+    connectionFilter,
+    embedState.isEmbedded ? [] : ownerFilter,
+    folderFilter,
+  ].filter((values) => values.length > 0).length;
+
+  const filterChips = (
+    <>
+      <MultiSelectFilter
+        label={t('Type')}
+        icon={<Filter className="h-4 w-4" />}
+        options={typeOptions}
+        selectedValues={typeFilter}
+        onChange={(values) => {
+          onTypeFilterChange(values);
+          onFilterChange?.();
+        }}
+      />
+
+      <MultiSelectFilter
+        label={t('Status')}
+        icon={<ToggleLeft className="h-4 w-4" />}
+        options={statusOptions}
+        selectedValues={statusFilter}
+        onChange={(values) => {
+          onStatusFilterChange(values);
+          onFilterChange?.();
+        }}
+      />
+
+      <MultiSelectFilter
+        label={t('Connections')}
+        icon={<Link2 className="h-4 w-4" />}
+        options={connectionOptions}
+        selectedValues={connectionFilter}
+        onChange={(values) => {
+          onConnectionFilterChange(values);
+          onFilterChange?.();
+        }}
+        searchable
+      />
+
+      {!embedState.isEmbedded && (
+        <MultiSelectFilter
+          label={t('Owner')}
+          icon={<User className="h-4 w-4" />}
+          options={ownerOptions}
+          selectedValues={ownerFilter}
+          onChange={(values) => {
+            onOwnerFilterChange(values);
+            onFilterChange?.();
+          }}
+          searchable
+        />
+      )}
+
+      {folderOptions.length > 0 && (
+        <MultiSelectFilter
+          label={t('Folder')}
+          icon={<FolderIcon className="h-4 w-4" />}
+          options={folderOptions}
+          selectedValues={folderFilter}
+          onChange={(values) => {
+            onFolderFilterChange(values);
+            onFilterChange?.();
+          }}
+          searchable
+        />
+      )}
+
+      {hasActiveFilters && (
+        <Button
+          variant="link"
+          className="gap-1 text-gray-11 hover:text-gray-12"
+          onClick={() => {
+            onClearAllFilters();
+            onFilterChange?.();
+          }}
+        >
+          <X className="h-3.5 w-3.5" />
+          {t('Clear all')}
+        </Button>
+      )}
+    </>
+  );
+
   return (
     <>
-      <div
-        className={cn('overflow-x-auto mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}
-      >
-        <div className="flex items-center justify-between gap-4 min-w-max">
-          <div className="flex items-center gap-2">
-            <div className="relative">
+      <div className={cn('@container mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-[1_1_16rem] items-center gap-2">
+            <div className="relative min-w-40 max-w-xs flex-1 @min-[66rem]:flex-none @min-[66rem]:w-xs">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-11" />
               <Input
                 placeholder={searchPlaceholder({
@@ -163,7 +255,7 @@ export const AutomationsFilters = ({
                   onSearchChange(e.target.value);
                   onFilterChange?.();
                 }}
-                className="min-w-[300px] max-w-xs pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="w-full pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               {searchTerm && (
                 <button
@@ -178,84 +270,36 @@ export const AutomationsFilters = ({
               )}
             </div>
 
-            <MultiSelectFilter
-              label={t('Type')}
-              icon={<Filter className="h-4 w-4" />}
-              options={typeOptions}
-              selectedValues={typeFilter}
-              onChange={(values) => {
-                onTypeFilterChange(values);
-                onFilterChange?.();
-              }}
-            />
+            <div className="hidden min-w-0 flex-wrap items-center gap-2 @min-[66rem]:flex">
+              {filterChips}
+            </div>
 
-            <MultiSelectFilter
-              label={t('Status')}
-              icon={<ToggleLeft className="h-4 w-4" />}
-              options={statusOptions}
-              selectedValues={statusFilter}
-              onChange={(values) => {
-                onStatusFilterChange(values);
-                onFilterChange?.();
-              }}
-            />
-
-            <MultiSelectFilter
-              label={t('Connections')}
-              icon={<Link2 className="h-4 w-4" />}
-              options={connectionOptions}
-              selectedValues={connectionFilter}
-              onChange={(values) => {
-                onConnectionFilterChange(values);
-                onFilterChange?.();
-              }}
-              searchable
-            />
-
-            {!embedState.isEmbedded && (
-              <MultiSelectFilter
-                label={t('Owner')}
-                icon={<User className="h-4 w-4" />}
-                options={ownerOptions}
-                selectedValues={ownerFilter}
-                onChange={(values) => {
-                  onOwnerFilterChange(values);
-                  onFilterChange?.();
-                }}
-                searchable
-              />
-            )}
-
-            {folderOptions.length > 0 && (
-              <MultiSelectFilter
-                label={t('Folder')}
-                icon={<FolderIcon className="h-4 w-4" />}
-                options={folderOptions}
-                selectedValues={folderFilter}
-                onChange={(values) => {
-                  onFolderFilterChange(values);
-                  onFilterChange?.();
-                }}
-                searchable
-              />
-            )}
-
-            {hasActiveFilters && (
-              <Button
-                variant="link"
-                className="gap-1 text-gray-11 hover:text-gray-12"
-                onClick={() => {
-                  onClearAllFilters();
-                  onFilterChange?.();
-                }}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-2 whitespace-nowrap border-dashed @min-[66rem]:hidden"
+                >
+                  <ListFilter className="h-4 w-4" />
+                  {t('Filters')}
+                  {activeFilterCount > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gray-12 px-1 text-[11px] leading-none font-medium text-gray-1 tabular-nums">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="flex w-auto max-w-[min(22rem,calc(100vw-2rem))] flex-wrap items-center gap-2 p-2"
               >
-                <X className="h-3.5 w-3.5" />
-                {t('Clear all')}
-              </Button>
-            )}
+                {filterChips}
+              </PopoverContent>
+            </Popover>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {!embedState.hideExportAndImportFlow && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

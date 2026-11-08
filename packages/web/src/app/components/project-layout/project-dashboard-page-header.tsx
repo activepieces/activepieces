@@ -7,8 +7,8 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { UsersRound, Lock } from 'lucide-react';
-import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PageHeader } from '@/components/custom/page-header';
@@ -46,6 +46,23 @@ export const ProjectDashboardPageHeader = ({
     'general' | 'members' | 'alerts' | 'pieces' | 'environment'
   >('general');
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('settings');
+  useEffect(() => {
+    if (!requestedTab) return;
+    if (isSettingsTab(requestedTab)) {
+      setSettingsInitialTab(requestedTab);
+      setSettingsOpen(true);
+    }
+    setSearchParams(
+      (params) => {
+        const next = new URLSearchParams(params);
+        next.delete('settings');
+        return next;
+      },
+      { replace: true, state: location.state },
+    );
+  }, [requestedTab, setSearchParams, location.state]);
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const activeProjectMembers = projectMembers?.filter(
     (member) => member.user.status === UserStatus.ACTIVE,
@@ -195,3 +212,17 @@ export const ProjectDashboardPageHeader = ({
     </>
   );
 };
+
+function isSettingsTab(value: string): value is SettingsTab {
+  return SETTINGS_TABS.some((tab) => tab === value);
+}
+
+const SETTINGS_TABS = [
+  'general',
+  'members',
+  'alerts',
+  'pieces',
+  'environment',
+] as const;
+
+type SettingsTab = (typeof SETTINGS_TABS)[number];

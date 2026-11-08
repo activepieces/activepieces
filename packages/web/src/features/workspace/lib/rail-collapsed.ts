@@ -1,14 +1,16 @@
-import { useCallback, useState } from 'react';
-import { matchPath, useLocation } from 'react-router-dom';
+import { useCallback } from 'react';
+import { matchPath, useLocation, useMatches } from 'react-router-dom';
 import { create } from 'zustand';
 
 import { routesThatRequireProjectId } from '@/lib/route-utils';
+import { safeStorage } from '@/lib/safe-storage';
 
-const STORAGE_KEY = 'primary-rail-collapsed';
+import { chatLayoutUtils } from './chat-layout';
+import { chatPanelUtils, useChatPanel } from './chat-panel-open';
 
-// Inside one agent the rail is furniture: the page has its own header, its own
-// conversation list and its own panel. The route only asks for it closed, so an
-// explicit click on that page still wins until you navigate on.
+const PREFERENCE_KEY = 'primary-rail-collapsed';
+const FOLDED_FOR_CHAT_KEY = 'primary-rail-folded-for-chat';
+
 const AGENT_ROUTES = [
   routesThatRequireProjectId.singleAgent,
   routesThatRequireProjectId.singleAgentRuns,
@@ -19,55 +21,115 @@ const ROUTES_THAT_HOLD_THE_RAIL_CLOSED = AGENT_ROUTES.flatMap((route) => [
   `/projects/:projectId${route}`,
 ]);
 
-function readInitial(): boolean {
-  return localStorage.getItem(STORAGE_KEY) === 'true';
-}
-
-function persist(value: boolean): boolean {
-  localStorage.setItem(STORAGE_KEY, String(value));
-  return value;
-}
-
-const useRailCollapsed = create<RailCollapsedState>((set) => ({
-  preference: readInitial(),
-  setCollapsed: (value) => set({ preference: persist(value) }),
+const useRail = create<RailState>(() => ({
+  preference: safeStorage.readFlag({ area: 'local', key: PREFERENCE_KEY }),
+  foldedForChat:
+    safeStorage.readFlag({ area: 'session', key: FOLDED_FOR_CHAT_KEY }) &&
+    chatPanelUtils.isDocked(useChatPanel.getState()),
+  openedOn: null,
 }));
 
-export function useRailOpenState() {
-  const { preference, setCollapsed } = useRailCollapsed();
-  const { pathname } = useLocation();
-  const [openedOn, setOpenedOn] = useState<string | null>(null);
-  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
-
-  const onOpenChange = useCallback(
-    (open: boolean) => {
-      setOpenedOn(pathname);
-      setCollapsed(!open);
-    },
-    [pathname, setCollapsed],
-  );
-
-  return { open: !collapsed, onOpenChange };
+function update(patch: Partial<RailState>) {
+  useRail.setState(patch);
+  const state = useRail.getState();
+  safeStorage.writeFlag({
+    area: 'local',
+    key: PREFERENCE_KEY,
+    value: state.preference,
+  });
+  safeStorage.writeFlag({
+    area: 'session',
+    key: FOLDED_FOR_CHAT_KEY,
+    value: state.foldedForChat,
+  });
 }
 
-function railIsCollapsed({
-  preference,
+function railIsOpen({
+  state,
   pathname,
-  openedOn,
+  chatPage,
 }: {
-  preference: boolean;
+  state: RailState;
   pathname: string;
-  openedOn: string | null;
+  chatPage: boolean;
 }): boolean {
   const routeHoldsItClosed =
-    openedOn !== pathname &&
+    state.openedOn !== pathname &&
     ROUTES_THAT_HOLD_THE_RAIL_CLOSED.some(
       (route) => matchPath(route, pathname) !== null,
     );
-  return preference || routeHoldsItClosed;
+  const chatHoldsItClosed = state.foldedForChat && !chatPage;
+  return !(state.preference || routeHoldsItClosed || chatHoldsItClosed);
 }
 
-type RailCollapsedState = {
+export function useRailOpen(): boolean {
+  const { pathname } = useLocation();
+  const chatPage = useMatches().some(({ handle }) => isChatPageHandle(handle));
+  return useRail((state) => railIsOpen({ state, pathname, chatPage }));
+}
+
+export function useRailOpenState() {
+  const open = useRailOpen();
+  const { pathname } = useLocation();
+
+  const onOpenChange = useCallback(
+    (next: boolean) => {
+      chatLayoutUtils.startStructuralMove(next ? 'enter' : 'exit');
+      update({ preference: !next, foldedForChat: false, openedOn: pathname });
+    },
+    [pathname],
+  );
+
+  return { open, onOpenChange };
+}
+
+export function railOpenNow(): boolean {
+  return railIsOpen({
+    state: useRail.getState(),
+    pathname: window.location.pathname,
+    chatPage: false,
+  });
+}
+
+function foldForDock() {
+  if (window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT && railOpenNow()) {
+    update({ foldedForChat: true });
+  }
+}
+
+useChatPanel.subscribe((chat, prev) => {
+  const docked = chatPanelUtils.isDocked(chat);
+  const wasDocked = chatPanelUtils.isDocked(prev);
+  if (
+    docked &&
+    (!wasDocked || chat.docks !== prev.docks || (chat.split && !prev.split))
+  ) {
+    foldForDock();
+  } else if (!docked && wasDocked && useRail.getState().foldedForChat) {
+    update({ foldedForChat: false });
+  }
+});
+
+let wasWide = window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT;
+window.addEventListener('resize', () => {
+  const wide = window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT;
+  if (wide && !wasWide && chatPanelUtils.isDocked(useChatPanel.getState())) {
+    foldForDock();
+  }
+  wasWide = wide;
+});
+
+function isChatPageHandle(handle: unknown): boolean {
+  return (
+    typeof handle === 'object' &&
+    handle !== null &&
+    'chat' in handle &&
+    handle.chat === 'full'
+  );
+}
+
+type RailState = {
   preference: boolean;
-  setCollapsed: (value: boolean) => void;
+  foldedForChat: boolean;
+  openedOn: string | null;
 };

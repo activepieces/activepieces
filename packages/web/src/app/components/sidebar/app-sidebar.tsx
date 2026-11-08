@@ -1,7 +1,7 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronsUpDown, PanelLeftClose, Search } from 'lucide-react';
-import React, { ComponentType, useRef } from 'react';
+import React, { ComponentType, memo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/tooltip';
 import { SidebarUsageLimits } from '@/features/billing';
 import { PlatformSwitcher } from '@/features/projects';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -58,9 +59,9 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
 
   return (
     <SidebarProvider
-      open={isPlatform || rail.open}
-      onOpenChange={isPlatform ? keepOpen : rail.onOpenChange}
-      keyboardShortcut={!isPlatform}
+      open={rail.open}
+      onOpenChange={rail.onOpenChange}
+      keyboardShortcut
       shortcutIgnoresEditable
       className="contents"
       style={SIDEBAR_STYLE}
@@ -68,7 +69,7 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
       <TooltipProvider delayDuration={300}>
         <MobileSidebarBar />
         <Sidebar collapsible="icon" className="border-r-0">
-          {mode === 'app' ? <AppHeader /> : <PlatformHeader />}
+          {mode === 'app' ? <MemoAppHeader /> : <MemoPlatformHeader />}
           <SidebarContent
             className={cn(
               sidebarStyles.scrollArea,
@@ -76,15 +77,15 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
               isPlatform && sidebarStyles.fadeBottom,
             )}
           >
-            {mode === 'app' ? <AppNav /> : <PlatformNav />}
+            {mode === 'app' ? <MemoAppNav /> : <MemoPlatformNav />}
           </SidebarContent>
           <SidebarFooter className="gap-1 overflow-hidden">
             {mode === 'app' ? (
-              <AppFooterExtras />
+              <MemoAppFooterExtras />
             ) : (
               <SidebarSeparator className="mx-2 my-1" />
             )}
-            <SidebarUser />
+            <MemoSidebarUser />
           </SidebarFooter>
         </Sidebar>
       </TooltipProvider>
@@ -208,6 +209,7 @@ function AppHeader() {
 function PlatformHeader() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
+  const { toggleSidebar } = useSidebar();
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
   const defaultRoute = determineDefaultRoute({
     checkAccess,
@@ -218,16 +220,29 @@ function PlatformHeader() {
     <SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton asChild>
+          <SidebarMenuButton
+            asChild
+            tooltip={t('Back to app')}
+            className="pr-10 group-data-[collapsible=icon]:pr-2"
+          >
             <Link
               to={defaultRoute}
               onMouseEnter={() => chevronRef.current?.startAnimation()}
               onMouseLeave={() => chevronRef.current?.stopAnimation()}
             >
               <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
-              <span>{t('Back to app')}</span>
+              <span className={sidebarStyles.labelFade}>
+                {t('Back to app')}
+              </span>
             </Link>
           </SidebarMenuButton>
+          <HeaderActions>
+            <HeaderIconButton
+              label={t('Close sidebar')}
+              icon={PanelLeftClose}
+              onClick={toggleSidebar}
+            />
+          </HeaderActions>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarHeader>
@@ -240,7 +255,7 @@ function HeaderActions({ children }: { children: React.ReactNode }) {
   return (
     <div
       inert={state === 'collapsed' && !isMobile}
-      className="absolute top-0 left-[calc(var(--sidebar-width)-1rem-4.125rem)] flex w-[4.125rem] items-center justify-end gap-0.5 transition-opacity duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none"
+      className="absolute top-0 left-[calc(var(--sidebar-width)-1rem-4.125rem)] flex w-[4.125rem] items-center justify-end gap-0.5 transition-opacity duration-150 ease-move group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none"
     >
       {children}
     </div>
@@ -321,9 +336,12 @@ function HeaderIconButton({
   );
 }
 
-function keepOpen() {
-  return undefined;
-}
+const MemoAppHeader = memo(AppHeader);
+const MemoPlatformHeader = memo(PlatformHeader);
+const MemoAppNav = memo(AppNav);
+const MemoPlatformNav = memo(PlatformNav);
+const MemoAppFooterExtras = memo(AppFooterExtras);
+const MemoSidebarUser = memo(SidebarUser);
 
 const BRAND_BUTTON =
   'px-1.5 pr-18 font-medium group-data-[collapsible=icon]:pr-1.5';
@@ -332,8 +350,8 @@ const SIDEBAR_STYLE: React.CSSProperties & {
   '--sidebar-width': string;
   '--sidebar-width-icon': string;
 } = {
-  '--sidebar-width': '15.5rem',
-  '--sidebar-width-icon': '3rem',
+  '--sidebar-width': `${chatLayoutUtils.SIDEBAR_WIDTH_REM}rem`,
+  '--sidebar-width-icon': `${chatLayoutUtils.RAIL_WIDTH_REM}rem`,
 };
 
 export type AppSidebarMode = 'app' | 'platform';
