@@ -7,3 +7,31 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### Google Calendar 0.14.0: Google Calendar triggers fire once per event and no longer miss events
+
+From Google Calendar 0.14.0, **New Event Matching Search** reads every result page and fires once for each new matching event. A new recurring series fires once, not once per occurrence. Cancelled events never fire. An event that was edited within seconds of being created still counts as new: the trigger no longer requires the created and updated times to be within 5 seconds of each other.
+
+**New Event** fires only for your own events created after the trigger was turned on. Edits, reschedules, renames, cancellations and moved occurrences of a recurring series no longer fire it, and a new series fires once.
+
+Both triggers also fire once for each new invitation from another organizer that you have not answered yet, including an invitation to a meeting created before the trigger was turned on and an invitation to a single occurrence of someone else's series. An invitation you accept or decline before the trigger sees it does not fire, and later edits, replies and republishes do not fire it again. Invitations you receive through a group address follow the own-event rule: they fire only when the meeting was created after the trigger was turned on.
+
+After upgrading, New Event Matching Search may fire once, late, for matching events that the old version skipped (it only read the first page of results).
+
+**New or Updated Event** no longer fires for deleted or cancelled events. Every saved change fires once, including a second edit of an event that already fired. After a long quiet period it keeps working instead of failing on Google's "too old" error. A flow that was off for so long that Google rejects its saved position restarts from now and logs the skipped period.
+
+**Event Cancelled** fires once when a whole recurring series is deleted, not once per occurrence. With **Cancellation Reasons**, each cancellation now belongs to exactly one reason, checked in this order: rescheduled, declined, deleted, other. "Event Deleted" now includes your own deleted meetings that kept their title, and "Other Cancellations" only matches what no other reason covers. With **Target Specific Event**, a cancellation fires even when Google leaves out the update time, and an event that no longer exists fires once as deleted. Google errors now fail the check instead of being skipped silently.
+
+**Event Start (Time Before)** no longer fires a reminder before it is due (the old version could fire up to 5 minutes early). A reminder whose check ran late or failed fires at the next check, and an event booked after its reminder time fires at the next check if it hasn't started. Time Before = 0 fires when the event starts, a rescheduled event fires again for its new start, and a negative Time Before is an error.
+
+**Event Ends** fires once for every event that ends between checks, including more than one page of events and events that end at the same moment.
+
+After upgrading, Event Start (Time Before) and Event Ends do not repeat anything the old version already fired, and they fire once for all-day ends and reminders it had not fired yet. A reminder or event end that the old version skipped in the 14 hours before the upgrade may fire once, late, at the first check after the upgrade; older ones are not sent.
+
+For **Event Start (Time Before)** and **Event Ends**, all-day events start and end at midnight in the calendar's time zone, not UTC. With **Target Specific Event**, a cancelled event no longer fires, and a read error fails the check (the reminder fires at the next check) instead of being hidden.
+
+**New Calendar** fires only for calendars added after the trigger was turned on. Calendars that already existed no longer fire when you widen the filters later, or when they are renamed or their access changes so that they start to match. If you widen the filters in the same publish as this upgrade, an existing calendar that now matches can fire once.
+
+#### What you need to do
+
+If a flow relied on New Event or New Event Matching Search firing for each occurrence of a series or for edits, use **New or Updated Event** instead. If a flow used New or Updated Event to catch deletions, use **Event Cancelled**. If a flow filters Event Cancelled by reason, check the new reason order. Other flows keep working without changes.
