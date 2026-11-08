@@ -1,206 +1,221 @@
 import { ActionPreviewEvent } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, ChevronDown, ChevronUp } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { ChevronDown, Zap } from 'lucide-react';
 import { useState } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
-import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { cn } from '@/lib/utils';
 
 import { normalizePieceName } from '../lib/message-parsers';
 
-import { InteractiveCardShell } from './interactive-card-shell';
+import {
+  ChatCard,
+  ChatCardActions,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from './chat-ui/chat-card';
+import { ChatKeyValue } from './chat-ui/chat-key-value';
 import { HtmlPreview } from './previews/html-preview';
 
 export function ActionPreviewCard({
   preview,
   onRun,
   onCancel,
-  onDismiss,
 }: {
   preview: ActionPreviewEvent;
   onRun: () => void;
   onCancel: () => void;
-  onDismiss: () => void;
 }) {
-  const pieceName = normalizePieceName(preview.pieceName);
+  const [submitted, setSubmitted] = useState(false);
+  const pieceName = preview.pieceName
+    ? normalizePieceName(preview.pieceName)
+    : null;
+  const { summary } = piecesHooks.usePieceSummary({ name: pieceName ?? '' });
   const inputParams = buildInputParams(preview.input);
 
   const batchSamples = preview.batchSamples ?? [];
   const totalBatchCount = preview.batchCount ?? batchSamples.length;
-  const hasMoreThanSamples = totalBatchCount > batchSamples.length;
+
+  const title =
+    preview.isBatch && preview.batchCount !== undefined
+      ? t('{actionDisplayName} · {count} items', {
+          actionDisplayName: preview.actionDisplayName,
+          count: preview.batchCount,
+        })
+      : preview.actionDisplayName;
+
+  const meta = [
+    pieceName ? summary?.displayName : undefined,
+    preview.connectionLabel,
+    preview.taskTitle
+      ? t('Asked by {taskTitle}', { taskTitle: preview.taskTitle })
+      : undefined,
+  ]
+    .filter((part): part is string => !!part)
+    .join(' · ');
+
+  const hasBody = preview.isBatch
+    ? batchSamples.length > 0
+    : inputParams.length > 0;
+
+  const handle = (callback: () => void) => {
+    if (submitted) return;
+    setSubmitted(true);
+    callback();
+  };
 
   return (
-    <InteractiveCardShell
-      onDismiss={onDismiss}
-      title={
-        preview.isBatch && preview.batchCount !== undefined
-          ? t('{actionDisplayName} · {count} items', {
-              actionDisplayName: preview.actionDisplayName,
-              count: preview.batchCount,
-            })
-          : preview.actionDisplayName
-      }
-    >
-      {preview.taskTitle && (
-        <p className="truncate pb-2 text-xs text-gray-11">
-          {t('Asked by {taskTitle}', { taskTitle: preview.taskTitle })}
-        </p>
-      )}
-      {preview.pieceName && (
-        <div className="flex items-center gap-2 pb-3">
-          <PieceIconWithPieceName
-            pieceName={pieceName}
-            size="sm"
-            border={false}
-            showTooltip={false}
-          />
-          {preview.connectionLabel && (
-            <span className="text-xs text-gray-11">
-              {t('Using: {connectionLabel}', {
-                connectionLabel: preview.connectionLabel,
-              })}
-            </span>
+    <ChatCard turn>
+      <ChatCardHeader
+        tile={
+          pieceName ? (
+            <ChatCardTile kind="app" pieceName={pieceName} />
+          ) : (
+            <ChatCardTile kind="bits" icon={Zap} />
+          )
+        }
+        title={title}
+        meta={meta || undefined}
+      />
+      {hasBody && (
+        <ChatCardBody>
+          {preview.isBatch ? (
+            <BatchTable samples={batchSamples} totalCount={totalBatchCount} />
+          ) : (
+            <ChatKeyValue
+              rows={inputParams.map((param) => ({
+                label: param.key,
+                value:
+                  param.kind === 'scalar' ? (
+                    param.text
+                  ) : (
+                    <ExpandableValue param={param} />
+                  ),
+              }))}
+            />
           )}
-        </div>
+        </ChatCardBody>
       )}
-
-      {preview.isBatch ? (
-        <BatchParamsSection
-          samples={batchSamples}
-          totalCount={totalBatchCount}
-          hasMore={hasMoreThanSamples}
-        />
-      ) : (
-        inputParams.length > 0 && <ParamsSection params={inputParams} />
-      )}
-
-      <div className="flex items-center gap-2 pt-3 border-t">
-        <Button size="sm" onClick={onRun} className="gap-1.5" type="button">
-          <Check className="size-3.5" />
-          {t('Run')}
+      <ChatCardActions>
+        <Button
+          size="sm"
+          type="button"
+          disabled={submitted}
+          onClick={() => handle(onRun)}
+        >
+          {preview.actionDisplayName}
         </Button>
-        <Button size="sm" variant="outline" onClick={onCancel} type="button">
+        <Button
+          size="sm"
+          variant="outline"
+          type="button"
+          disabled={submitted}
+          onClick={() => handle(onCancel)}
+        >
           {t('Cancel')}
         </Button>
-      </div>
-    </InteractiveCardShell>
+      </ChatCardActions>
+    </ChatCard>
   );
 }
 
-function ParamsSection({ params }: { params: InputParam[] }) {
-  return (
-    <div className="pb-3">
-      <div className="rounded-xl border bg-gray-3/20 divide-y overflow-hidden">
-        {params.map((param) => (
-          <ParamRow key={param.key} param={param} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ParamRow({ param }: { param: InputParam }) {
-  if (param.kind === 'scalar') {
-    return (
-      <div className="flex items-start gap-3 px-3 py-2">
-        <ParamLabel>{param.key}</ParamLabel>
-        <span className="text-xs text-gray-12 break-words min-w-0 flex-1">
-          {param.text}
-        </span>
-      </div>
-    );
-  }
-  return <ExpandableParamRow param={param} />;
-}
-
-function ExpandableParamRow({ param }: { param: RichInputParam }) {
+function ExpandableValue({ param }: { param: RichInputParam }) {
   const [open, setOpen] = useState(false);
-
   return (
-    <div className="px-3 py-2">
-      <button
-        type="button"
-        className="flex w-full items-center gap-3 text-left"
-        onClick={() => setOpen((prev) => !prev)}
-      >
-        <ParamLabel>{param.key}</ParamLabel>
-        <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors">
-          {t('Preview')}
-          {open ? (
-            <ChevronUp className="size-3" />
-          ) : (
-            <ChevronDown className="size-3" />
-          )}
-        </span>
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            {param.kind === 'html' ? (
-              <HtmlPreview html={param.value} label={param.key} />
-            ) : (
-              <pre className="mt-2 rounded-xl bg-gray-3/40 px-3 py-2 text-xs text-gray-12 overflow-auto max-h-60 whitespace-pre-wrap break-words">
-                {param.value}
-              </pre>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
+        >
+          {open ? t('Hide') : t('Preview')}
+          <ChevronDown
+            className={cn(
+              'size-3.5 transition-transform',
+              open && 'rotate-180',
             )}
-          </motion.div>
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        {param.kind === 'html' ? (
+          <div className="mt-2">
+            <HtmlPreview html={param.value} label={param.key} />
+          </div>
+        ) : (
+          <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-2 px-3 py-2 text-xs text-gray-12">
+            {param.value}
+          </pre>
         )}
-      </AnimatePresence>
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
-function BatchParamsSection({
+function BatchTable({
   samples,
   totalCount,
-  hasMore,
 }: {
   samples: Record<string, unknown>[];
   totalCount: number;
-  hasMore: boolean;
 }) {
-  if (samples.length === 0) return null;
+  const rows = samples.map((sample) => buildInputParams(sample));
+  const columns = Array.from(
+    new Set(rows.flatMap((params) => params.map((param) => param.key))),
+  );
+  const remaining = totalCount - samples.length;
 
   return (
-    <div className="pb-3 space-y-1.5">
-      <p className="text-xs text-gray-11">
-        {t('{count, plural, =1 {1 item} other {# items}}', {
-          count: totalCount,
-        })}
-      </p>
-      <div className="rounded-xl border bg-gray-3/20 divide-y overflow-hidden">
-        {samples.map((sample, i) => (
-          <div key={i} className="px-1 py-1 space-y-1">
-            {buildInputParams(sample).map((param) => (
-              <ParamRow key={param.key} param={param} />
+    <div className="min-w-0 overflow-x-auto rounded-lg border border-gray-5">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-gray-2 text-xs text-gray-11">
+          <tr>
+            {columns.map((column) => (
+              <th key={column} className="px-3 py-2 font-normal">
+                {column}
+              </th>
             ))}
-          </div>
-        ))}
-      </div>
-      {hasMore && (
-        <p className="text-xs text-gray-11">
-          {t('and {count} more', {
-            count: totalCount - samples.length,
-          })}
-        </p>
-      )}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-4 border-t border-gray-4">
+          {rows.map((params, rowIndex) => (
+            <tr key={rowIndex}>
+              {columns.map((column) => {
+                const text = cellText(params.find((p) => p.key === column));
+                return (
+                  <td key={column} className="max-w-60 px-3 py-2 text-gray-12">
+                    <TextWithTooltip tooltipMessage={text}>
+                      <p className="truncate">{text}</p>
+                    </TextWithTooltip>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+          {remaining > 0 && (
+            <tr>
+              <td colSpan={columns.length} className="px-3 py-2 text-gray-11">
+                {t('and {count} more', { count: remaining })}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function ParamLabel({ children }: { children: string }) {
-  return (
-    <span className="text-xs text-gray-11 shrink-0 min-w-[80px] pt-0.5">
-      {children}
-    </span>
-  );
+function cellText(param: InputParam | undefined): string {
+  if (!param) return '';
+  return param.kind === 'scalar' ? param.text : param.value;
 }
 
 const INLINE_VALUE_MAX_LENGTH = 120;

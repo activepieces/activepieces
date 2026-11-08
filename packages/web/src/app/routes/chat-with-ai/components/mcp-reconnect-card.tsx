@@ -1,13 +1,18 @@
 import { t } from 'i18next';
-import { Check, Plug, RotateCw } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Check, Plug } from 'lucide-react';
 import { useState } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
-import { InteractiveCardShell } from './interactive-card-shell';
+import {
+  ChatCard,
+  ChatCardActions,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from './chat-ui/chat-card';
+import { ChatLine } from './chat-ui/chat-line';
 
 export function McpReconnectCard({
   reconnect,
@@ -27,66 +32,49 @@ export function McpReconnectCard({
 
   if (!isInteractive) {
     return (
-      <div className="my-2 flex items-center gap-3 rounded-xl border bg-gray-1 p-3">
-        <ConnectorIcon logoUrl={reconnect.logoUrl} />
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold">{reconnect.displayName}</div>
-          <div className="text-xs text-gray-11">{t('Connected')}</div>
-        </div>
-      </div>
+      <ChatLine
+        icon={<Check className="size-3.5 text-success-10" />}
+        detail={reconnect.displayName}
+      >
+        {t('Connected')}
+      </ChatLine>
     );
   }
 
   return (
-    <InteractiveCardShell
-      onDismiss={() => onDismiss?.()}
-      title={t('Reconnect {name}', { name: reconnect.displayName })}
-    >
-      <motion.div
-        className="flex items-center gap-3 rounded-xl border bg-gray-1 p-3"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-      >
-        <ConnectorIcon logoUrl={reconnect.logoUrl} />
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold">{reconnect.displayName}</div>
-          <div className="text-xs text-gray-11">
-            {t('Your {name} connection needs to be reconnected', {
-              name: reconnect.displayName,
-            })}
-          </div>
-        </div>
-        {continued ? (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-            className="flex shrink-0 items-center justify-center"
-          >
-            <Check className="h-5 w-5 text-success-11" />
-          </motion.span>
-        ) : !opened ? (
+    <ChatCard turn>
+      <ChatCardHeader
+        tile={<ConnectorTile logoUrl={reconnect.logoUrl} />}
+        title={t('Reconnect {name}', { name: reconnect.displayName })}
+      />
+      <ChatCardBody>
+        <p className="text-sm text-gray-11">
+          {t('Your {name} connection needs to be reconnected', {
+            name: reconnect.displayName,
+          })}
+        </p>
+      </ChatCardBody>
+      <ChatCardActions>
+        {!opened ? (
           <Button
             size="sm"
-            variant="default"
-            className={cn('shrink-0 gap-1.5')}
+            type="button"
             disabled={!canOpen}
             onClick={() => {
               openReconnectPopup(reconnect.connectUrl);
               setOpened(true);
             }}
           >
-            <Plug className="h-3.5 w-3.5" />
             {t('Reconnect')}
           </Button>
         ) : (
           onResolve && (
             <Button
               size="sm"
-              variant="outline"
-              className="shrink-0 gap-1.5"
+              type="button"
+              disabled={continued}
               onClick={() => {
+                if (continued) return;
                 setContinued(true);
                 onResolve({
                   reconnected: true,
@@ -94,13 +82,23 @@ export function McpReconnectCard({
                 });
               }}
             >
-              <RotateCw className="h-3 w-3" />
               {t("I've reconnected")}
             </Button>
           )
         )}
-      </motion.div>
-    </InteractiveCardShell>
+        {onDismiss && (
+          <Button
+            size="sm"
+            variant="ghost"
+            type="button"
+            disabled={continued}
+            onClick={onDismiss}
+          >
+            {t('Not now')}
+          </Button>
+        )}
+      </ChatCardActions>
+    </ChatCard>
   );
 }
 
@@ -116,21 +114,17 @@ function openReconnectPopup(url: string) {
   );
 }
 
-function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {
-  if (logoUrl) {
-    return (
-      <LogoPlate
-        src={logoUrl}
-        alt=""
-        border
-        className="size-10 rounded-xl p-1.5"
-      />
-    );
+function ConnectorTile({ logoUrl }: { logoUrl?: string }) {
+  if (!logoUrl) {
+    return <ChatCardTile kind="file" icon={Plug} />;
   }
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-gray-3/40">
-      <Plug className="h-5 w-5 text-gray-11" />
-    </div>
+    <LogoPlate
+      src={logoUrl}
+      alt=""
+      className="size-8 rounded-lg border border-gray-5"
+      innerClassName="p-1.5"
+    />
   );
 }
 

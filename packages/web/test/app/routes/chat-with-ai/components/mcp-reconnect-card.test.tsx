@@ -13,7 +13,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('McpReconnectCard (characterization)', () => {
+describe('McpReconnectCard', () => {
   it('opens the connect URL, then resolves with the exact retry message', () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     const onResolve = vi.fn();
@@ -39,7 +39,7 @@ describe('McpReconnectCard (characterization)', () => {
     });
   });
 
-  it('today has an X (Dismiss) that calls onDismiss (P4c changes this)', () => {
+  it('has no X; "Not now" calls onDismiss', () => {
     const onDismiss = vi.fn();
     render(
       <McpReconnectCard
@@ -49,9 +49,30 @@ describe('McpReconnectCard (characterization)', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
 
     expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves once on a double click of "I\'ve reconnected"', () => {
+    vi.spyOn(window, 'open').mockReturnValue(null);
+    const onResolve = vi.fn();
+    render(<McpReconnectCard reconnect={RECONNECT} onResolve={onResolve} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reconnect' }));
+    const done = screen.getByRole('button', { name: "I've reconnected" });
+    fireEvent.click(done);
+    fireEvent.click(done);
+
+    expect(onResolve).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a "Connected" line in history', () => {
+    render(<McpReconnectCard reconnect={RECONNECT} isInteractive={false} />);
+
+    expect(screen.getByText('Connected')).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });
 

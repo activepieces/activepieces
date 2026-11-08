@@ -73,7 +73,6 @@ export function ChatBottomBar({
         preview={pendingActionPreview}
         onRun={() => approveGate(toolCallId)}
         onCancel={() => rejectGate(toolCallId)}
-        onDismiss={() => rejectGate(toolCallId)}
       />
     );
   } else if (activeDisplayTool) {
