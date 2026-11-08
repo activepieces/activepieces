@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 // does not depend on a system-wide install / PATH.
 process.env.AP_DENO_PATH = path.join(path.dirname(require.resolve('deno/bin.cjs')), 'deno')
 
+let flowDir: string
 let stepDir: string
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let denoModule: any
@@ -24,12 +25,14 @@ beforeAll(async () => {
     // empty permission set, so beyond the step-dir read grant every syscall
     // (fs/net/env/run) is denied.
     denoCodeSandbox = denoModule.denoCodeSandbox({ permissions: [], codeStepMemoryLimitMb: 128 })
-    stepDir = await mkdtemp(path.join(tmpdir(), 'ap-deno-test-'))
+    flowDir = await mkdtemp(path.join(tmpdir(), 'ap-deno-test-'))
+    stepDir = path.join(flowDir, 'step')
+    await mkdir(stepDir)
 })
 
 afterAll(async () => {
-    if (stepDir) {
-        await rm(stepDir, { recursive: true, force: true })
+    if (flowDir) {
+        await rm(flowDir, { recursive: true, force: true })
     }
 })
 
