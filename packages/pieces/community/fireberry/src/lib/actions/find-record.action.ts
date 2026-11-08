@@ -1,8 +1,15 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { fireberryAuth } from '../auth';
 import { objectTypeDropdown, fireberryProps } from '../common/props';
-import { FireberryClient, fireberryUtils } from '../common/client';
+import { FireberryClient, fireberryUtils, FIREBERRY_LIMITS } from '../common/client';
 import { fireberryOutputSchemas } from '../common/output-schemas';
+
+function clampPaging({ value, max }: { value: number | undefined | null; max: number }): number | undefined {
+  if (value === undefined || value === null || !Number.isFinite(value) || value === 0) {
+    return undefined;
+  }
+  return Math.min(Math.max(1, Math.floor(value)), max);
+}
 
 const fieldsToReturn = Property.DynamicProperties({
   displayName: 'Fields to Return',
@@ -64,13 +71,13 @@ export const findRecordAction = createAction({
       displayName: 'Page Size',
       required: false,
       defaultValue: 25,
-      description: 'Number of records to return (1-50)',
+      description: 'Number of records to return (1-50). Larger values use 50.',
     }),
     pageNumber: Property.Number({
       displayName: 'Page Number',
       required: false,
       defaultValue: 1,
-      description: 'Page number to retrieve (1-10)',
+      description: 'Page number to retrieve (1-10). Fireberry serves only the first 10 pages; larger values use 10.',
     }),
   },
   async run({ auth, propsValue }) {
@@ -86,8 +93,8 @@ export const findRecordAction = createAction({
       query: searchQuery,
       sortBy,
       sortType: sortOrder,
-      pageSize,
-      pageNumber,
+      pageSize: clampPaging({ value: pageSize, max: FIREBERRY_LIMITS.MAX_PAGE_SIZE }),
+      pageNumber: clampPaging({ value: pageNumber, max: FIREBERRY_LIMITS.MAX_PAGE_NUMBER }),
     });
     const result = await client.query(queryBody);
     return {

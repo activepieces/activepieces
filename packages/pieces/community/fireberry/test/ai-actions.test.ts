@@ -5,6 +5,8 @@ import { aiListObjectFieldsAction } from '../src/lib/actions/ai/list-object-fiel
 import { aiCreateRecordAction } from '../src/lib/actions/ai/create-record.action';
 import { aiSearchRecordsAction } from '../src/lib/actions/ai/search-records.action';
 import { aiUpdateRecordAction } from '../src/lib/actions/ai/update-record.action';
+import { findRecordAction } from '../src/lib/actions/find-record.action';
+import { updateRecordAction } from '../src/lib/actions/update-record.action';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -93,5 +95,36 @@ describe('ai actions', () => {
     const run = Reflect.get(aiSearchRecordsAction, 'run');
     const result = await run(ctx({ objectSystemName: 'contact', query: "(emailaddress1 = 'a@b.com')" }));
     expect(result).toEqual({ records: [{ contactid: 'c1' }], recordCount: 1, pageNumber: 1, isLastPage: true, primaryKey: 'contactid', primaryField: 'fullname' });
+  });
+});
+
+describe('builder actions keep 0.1.8 behaviour', () => {
+  function mockFireberry() {
+    return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.url.endsWith('/metadata/records')) {
+        return { status: 200, headers: {}, body: { success: true, data: [{ name: 'Account', systemName: 'Account', objectType: '1' }] } };
+      }
+      if (request.url.endsWith('/api/query')) {
+        return { status: 200, headers: {}, body: { success: true, data: { PrimaryKey: 'accountid', IsLastPage: true, Data: [] } } };
+      }
+      return { status: 200, headers: {}, body: { success: true, data: { Record: { accountid: 'g1', accountname: 'Acme' } } } };
+    });
+  }
+
+  it('Find Records clamps Page Size to 50 and Page Number to 10 instead of failing', async () => {
+    const spy = mockFireberry();
+    const run = Reflect.get(findRecordAction, 'run');
+    const result = await run(ctx({ objectType: 'Account', pageSize: 100, pageNumber: 25, fieldsToReturn: {} }));
+    expect(result.query).toMatchObject({ page_size: 50, page_number: 10 });
+    const queryCall = spy.mock.calls.find(([request]) => request.url.endsWith('/api/query'));
+    expect(queryCall?.[0].body).toMatchObject({ page_size: 50, page_number: 10 });
+  });
+
+  it('Update Record with every field empty succeeds without sending an update and returns the record', async () => {
+    const spy = mockFireberry();
+    const run = Reflect.get(updateRecordAction, 'run');
+    const result = await run(ctx({ objectType: 'Account', recordId: 'g1', fields: { accountname: '', telephone1: null } }));
+    expect(result).toEqual({ id: 'g1', objectSystemName: 'Account', record: { accountid: 'g1', accountname: 'Acme' } });
+    expect(spy.mock.calls.some(([request]) => request.method === 'PUT')).toBe(false);
   });
 });

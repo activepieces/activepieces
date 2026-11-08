@@ -107,7 +107,6 @@ async function buildRecordFieldProps({ token, objectType, forUpdate }: { token: 
   );
   const picklistEntries = await Promise.all(
     picklistFields.map(async (field) => {
-      // One failing picklist (permissions, rate limit) must not block the whole form: that field falls back to a text input.
       const values = await client.getPicklistValues({ objectSystemName, fieldName: field.fieldName }).catch(() => undefined);
       return [field.fieldName, values] satisfies [string, FireberryPicklistValue[] | undefined];
     }),

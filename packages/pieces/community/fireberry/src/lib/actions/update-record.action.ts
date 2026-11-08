@@ -40,10 +40,9 @@ export const updateRecordAction = createAction({
     const record = Object.fromEntries(
       Object.entries(fieldsObj).filter(([, value]) => value !== '' && value !== null && value !== undefined),
     );
-    if (Object.keys(record).length === 0) {
-      throw new Error('Fill in at least one field to update.');
+    if (Object.keys(record).length > 0) {
+      await client.updateRecord({ objectSystemName: objectType, recordId, record });
     }
-    await client.updateRecord({ objectSystemName: objectType, recordId, record });
     const updated = await client.getRecord({ objectSystemName: objectType, recordId }).catch(() => ({}));
     return { id: recordId, objectSystemName: objectType, record: updated };
   },

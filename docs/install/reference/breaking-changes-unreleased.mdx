@@ -16,7 +16,7 @@ After you upgrade a step:
 
 - Create Record and Update Record return `{ id, objectSystemName, record }` instead of the raw batch response.
 - Delete Records returns `{ deletedIds, deletedCount }`.
-- The **Record Created or Updated** trigger ignores its lookback setting (it is kept only so saved flows still load). It now tracks Fireberry's own timestamps, so it no longer re-sends records changed earlier the same day. A flow that was already on starts tracking on its first poll after the upgrade and sends no events for that one poll.
+- The **Record Created or Updated** trigger ignores its lookback setting (it is kept only so saved flows still load). It now tracks Fireberry's own timestamps, so it no longer re-sends records changed earlier the same day. Publishing the upgraded flow starts tracking at the newest record, so records created or updated between the last poll on 0.1.x and the publish are not sent. If more than 500 records change in the same second, Fireberry's API can return only the first 500 of them; the trigger sends those, skips the rest of that second, and the next poll fails once with an error that names the second.
 
 #### What you need to do
 
