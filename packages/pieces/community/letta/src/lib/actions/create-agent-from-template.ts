@@ -8,6 +8,26 @@ import type {
   AgentCreateResponse,
 } from '../common/types';
 
+function toInitialMessage(msg: unknown): InitialMessage {
+  if (!lettaApi.isRecord(msg)) {
+    throw new Error('Each initial message must be an object.');
+  }
+  const content = msg['content'];
+  const role = msg['role'];
+  const name = msg['name'];
+  if (typeof content !== 'string' || content.trim().length === 0) {
+    throw new Error('Each initial message needs content.');
+  }
+  if (role !== 'user' && role !== 'system' && role !== 'assistant') {
+    throw new Error('Each initial message role must be user, system or assistant.');
+  }
+  return {
+    content,
+    role,
+    name: typeof name === 'string' && name.length > 0 ? name : undefined,
+  };
+}
+
 export const createAgentFromTemplate = createAction({
   auth: lettaAuth,
   name: 'createAgentFromTemplate',
@@ -141,26 +161,5 @@ export const createAgentFromTemplate = createAction({
     };
   },
 });
-
-
-function toInitialMessage(msg: unknown): InitialMessage {
-  if (!lettaApi.isRecord(msg)) {
-    throw new Error('Each initial message must be an object.');
-  }
-  const content = msg['content'];
-  const role = msg['role'];
-  const name = msg['name'];
-  if (typeof content !== 'string' || content.trim().length === 0) {
-    throw new Error('Each initial message needs content.');
-  }
-  if (role !== 'user' && role !== 'system' && role !== 'assistant') {
-    throw new Error('Each initial message role must be user, system or assistant.');
-  }
-  return {
-    content,
-    role,
-    name: typeof name === 'string' && name.length > 0 ? name : undefined,
-  };
-}
 
 type InitialMessage = NonNullable<AgentCreateParams['initial_message_sequence']>[number];

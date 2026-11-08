@@ -5,6 +5,36 @@ import { lettaProps } from '../../common/props';
 import { lettaSchemas } from '../../common/schemas';
 import type { CreateBlock, LettaAgentCreateParams } from '../../common/types';
 
+function parseMemoryBlocks(value: unknown): CreateBlock[] | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  if (!Array.isArray(value)) {
+    throw new Error('Memory Blocks must be a JSON array of {label, value} objects.');
+  }
+  return value.map((entry) => {
+    if (!lettaApi.isRecord(entry)) {
+      throw new Error('Each memory block must be an object with label and value.');
+    }
+    const label = entry['label'];
+    const blockValue = entry['value'];
+    const limit = entry['limit'];
+    const description = entry['description'];
+    if (typeof label !== 'string' || label.trim().length === 0 || typeof blockValue !== 'string') {
+      throw new Error('Each memory block needs a text label and a text value.');
+    }
+    if (limit !== undefined && (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1)) {
+      throw new Error(`Memory block "${label}" limit must be a positive whole number.`);
+    }
+    return {
+      label: label.trim(),
+      value: blockValue,
+      limit: typeof limit === 'number' ? limit : undefined,
+      description: typeof description === 'string' ? description : undefined,
+    };
+  });
+}
+
 export const lettaCreateAgent = createAction({
   auth: lettaAuth,
   name: 'letta_create_agent',
@@ -50,33 +80,3 @@ export const lettaCreateAgent = createAction({
     return lettaApi.mapAgent(agent);
   },
 });
-
-function parseMemoryBlocks(value: unknown): CreateBlock[] | undefined {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-  if (!Array.isArray(value)) {
-    throw new Error('Memory Blocks must be a JSON array of {label, value} objects.');
-  }
-  return value.map((entry) => {
-    if (!lettaApi.isRecord(entry)) {
-      throw new Error('Each memory block must be an object with label and value.');
-    }
-    const label = entry['label'];
-    const blockValue = entry['value'];
-    const limit = entry['limit'];
-    const description = entry['description'];
-    if (typeof label !== 'string' || label.trim().length === 0 || typeof blockValue !== 'string') {
-      throw new Error('Each memory block needs a text label and a text value.');
-    }
-    if (limit !== undefined && (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1)) {
-      throw new Error(`Memory block "${label}" limit must be a positive whole number.`);
-    }
-    return {
-      label: label.trim(),
-      value: blockValue,
-      limit: typeof limit === 'number' ? limit : undefined,
-      description: typeof description === 'string' ? description : undefined,
-    };
-  });
-}

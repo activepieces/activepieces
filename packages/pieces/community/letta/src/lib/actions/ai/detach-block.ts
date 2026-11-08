@@ -4,6 +4,29 @@ import { lettaApi } from '../../common/client';
 import { lettaProps } from '../../common/props';
 import { lettaSchemas } from '../../common/schemas';
 
+function isNotAttached(error: unknown): boolean {
+  return (
+    lettaApi.isLettaApiError(error) &&
+    error.status === 404 &&
+    JSON.stringify(error.responseBody ?? '').includes('is not attached')
+  );
+}
+
+function toOutput({ agentId, blockId, blocks, alreadyDetached }: {
+  agentId: string;
+  blockId: string;
+  blocks: Array<{ id?: string | null; label?: string | null }>;
+  alreadyDetached: boolean;
+}) {
+  return {
+    agent_id: agentId,
+    block_id: blockId,
+    detached: true,
+    already_detached: alreadyDetached,
+    blocks: blocks.map((block) => ({ id: block.id ?? null, label: block.label ?? null })),
+  };
+}
+
 export const lettaDetachBlock = createAction({
   auth: lettaAuth,
   name: 'letta_detach_block',
@@ -37,26 +60,3 @@ export const lettaDetachBlock = createAction({
     }
   },
 });
-
-function isNotAttached(error: unknown): boolean {
-  return (
-    lettaApi.isLettaApiError(error) &&
-    error.status === 404 &&
-    JSON.stringify(error.responseBody ?? '').includes('is not attached')
-  );
-}
-
-function toOutput({ agentId, blockId, blocks, alreadyDetached }: {
-  agentId: string;
-  blockId: string;
-  blocks: Array<{ id?: string | null; label?: string | null }>;
-  alreadyDetached: boolean;
-}) {
-  return {
-    agent_id: agentId,
-    block_id: blockId,
-    detached: true,
-    already_detached: alreadyDetached,
-    blocks: blocks.map((block) => ({ id: block.id ?? null, label: block.label ?? null })),
-  };
-}
