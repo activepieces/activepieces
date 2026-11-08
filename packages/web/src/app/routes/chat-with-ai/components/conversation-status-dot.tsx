@@ -2,8 +2,9 @@ import { t } from 'i18next';
 
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ConversationIndicatorState } from '@/features/chat/lib/use-conversation-indicators';
-import { cn } from '@/lib/utils';
 
+import { ChatStatusIcon } from './chat-ui/chat-status';
+import { chatStatusUtils } from './chat-ui/chat-status-utils';
 import { DelayedTooltip } from './delayed-tooltip';
 
 export function ConversationStatusDot({
@@ -11,19 +12,22 @@ export function ConversationStatusDot({
 }: {
   state: ConversationIndicatorState;
 }) {
+  const status = chatStatusUtils.fromConversationIndicator(state);
+  const label = getStateLabel(state);
   return (
     <DelayedTooltip>
       <TooltipTrigger asChild>
-        <span className="relative flex h-1.5 w-1.5 items-center justify-center">
-          {state === 'working' && (
-            <span className="absolute inline-flex h-full w-full rounded-full bg-accent-10 opacity-75 animate-ping" />
+        <span
+          role="img"
+          aria-label={label}
+          data-state={state}
+          className="flex size-3.5 items-center justify-center"
+        >
+          {status === null ? (
+            <span className="size-1.5 rounded-full bg-gray-12" />
+          ) : (
+            <ChatStatusIcon status={status} />
           )}
-          <span
-            className={cn(
-              'relative inline-flex h-1.5 w-1.5 rounded-full',
-              DOT_CLASS[state],
-            )}
-          />
         </span>
       </TooltipTrigger>
       <TooltipContent
@@ -31,7 +35,7 @@ export function ConversationStatusDot({
         align="center"
         className="pointer-events-none"
       >
-        {getStateLabel(state)}
+        {label}
       </TooltipContent>
     </DelayedTooltip>
   );
@@ -47,9 +51,3 @@ function getStateLabel(state: ConversationIndicatorState): string {
       return t('New response');
   }
 }
-
-const DOT_CLASS: Record<ConversationIndicatorState, string> = {
-  working: 'bg-accent-10',
-  waiting: 'bg-warning-10',
-  unread: 'bg-gray-12',
-};
