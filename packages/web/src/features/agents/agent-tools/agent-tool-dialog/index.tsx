@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 import { agentToolsGate } from '../lib/agent-tools-gate';
 import { useAgentToolDialogStore } from '../stores/agents-tools';
@@ -48,14 +49,14 @@ function AgentToolDialogContent({
   onToolsUpdate,
   ownerExternalId,
 }: AgentAgentToolDialogProps) {
-  const { setShowAddAgentDialog } = useAgentToolDialogStore();
   const [selected, setSelected] = useState<AgentAgentTool[]>(
     tools.filter(
       (tool): tool is AgentAgentTool => tool.type === AgentToolType.AGENT,
     ),
   );
-  const { data: agents } = agentToolsGate.useCallableAgents({ enabled: true });
-  const candidates = (agents ?? []).filter(
+  const { setShowAddAgentDialog } = useAgentToolDialogStore();
+  const { agents } = agentToolsGate.useProjectAgents();
+  const candidates = agents.filter(
     (agent) => agent.isPublished && agent.externalId !== ownerExternalId,
   );
 
@@ -70,7 +71,10 @@ function AgentToolDialogContent({
             ...prev,
             {
               type: AgentToolType.AGENT,
-              toolName: mcpToolNameUtils.suggestToolName(agent.displayName),
+              toolName: mcpToolNameUtils.uniqueToolName({
+                sourceName: agent.displayName,
+                taken: [...tools, ...prev].map((tool) => tool.toolName),
+              }),
               externalAgentId: agent.externalId,
               agentDisplayName: agent.displayName,
             },
@@ -94,27 +98,27 @@ function AgentToolDialogContent({
       <ScrollArea className="grow overflow-y-auto">
         <div className="flex flex-col px-4 py-2">
           {candidates.length === 0 && (
-            <p className="text-sm text-gray-11 py-6 text-center">
+            <p className="text-sm text-gray-11 py-6">
               {t('Publish another agent in this project to use it here.')}
             </p>
           )}
           {candidates.map((agent) => {
-            const nested = agentToolsGate.callsOtherAgents(agent.toolTypes);
+            const nested = agent.toolTypes.includes(AgentToolType.AGENT);
             return (
-              <div
+              <label
                 key={agent.externalId}
-                className={`flex items-center gap-4 px-4 py-2 min-h-14 rounded-md ${
+                className={cn(
+                  'flex items-center gap-4 px-4 py-2 min-h-14 rounded-md',
                   nested
                     ? 'opacity-50 cursor-not-allowed'
-                    : 'cursor-pointer hover:bg-gray-4'
-                } ${isSelected(agent) ? 'bg-gray-4' : ''}`}
-                onClick={() => !nested && toggle(agent)}
+                    : 'cursor-pointer hover:bg-gray-4',
+                  isSelected(agent) && 'bg-gray-4',
+                )}
               >
                 <Checkbox
                   checked={isSelected(agent)}
                   disabled={nested}
-                  onCheckedChange={() => !nested && toggle(agent)}
-                  onClick={(e) => e.stopPropagation()}
+                  onCheckedChange={() => toggle(agent)}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="truncate text-sm font-medium">
@@ -126,7 +130,7 @@ function AgentToolDialogContent({
                       : agent.description ?? ''}
                   </div>
                 </div>
-              </div>
+              </label>
             );
           })}
         </div>

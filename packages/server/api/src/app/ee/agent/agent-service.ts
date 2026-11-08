@@ -42,22 +42,26 @@ const AGENT_MOVED_AWAY = 'That agent has just been moved somewhere else. Reload 
 export const agentService = (log: FastifyBaseLogger) => ({
     async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
-        await agentToolRules.validate({ projectId, tools: request.draft.tools })
         const draft = await withPinnedKey({ draft: await withDefaultModel({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }), platformId, projectId, log })
-        return agentRepo().save({
-            id: apId(),
-            projectId,
-            ownerId,
-            externalId: apId(),
-            displayName: request.displayName,
-            description: request.description ?? null,
-            folderId: await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log }),
-            icon: request.icon,
-            color: request.color,
-            visibility,
-            sharedWithUserIds: await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: [], projectId, log }),
-            draft: sanitizeObjectForPostgresql(draft),
-            published: null,
+        const sharedWithUserIds = await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: [], projectId, log })
+        const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
+        return transaction(async (entityManager) => {
+            await agentToolRules.validate({ entityManager, projectId, tools: draft.tools })
+            return entityManager.getRepository(AgentEntity).save({
+                id: apId(),
+                projectId,
+                ownerId,
+                externalId: apId(),
+                displayName: request.displayName,
+                description: request.description ?? null,
+                folderId,
+                icon: request.icon,
+                color: request.color,
+                visibility,
+                sharedWithUserIds,
+                draft: sanitizeObjectForPostgresql(draft),
+                published: null,
+            })
         })
     },
 
@@ -126,14 +130,14 @@ export const agentService = (log: FastifyBaseLogger) => ({
     async update({ id, projectId, platformId, userId, request, goLive = false }: UpdateParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayChangeWhoCanSee({ agent, request, projectId, userId, log })
-        if (!isNil(request.draft)) {
-            await agentToolRules.validate({ projectId, ownerExternalId: agent.externalId, tools: request.draft.tools })
-        }
         const requestedDraft = isNil(request.draft) ? null : sanitizeObjectForPostgresql(await withPinnedKey({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }))
         await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
         await transaction(async (entityManager) => {
             const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
             const draft = requestedDraft ?? locked.draft
+            if (!isNil(requestedDraft)) {
+                await agentToolRules.validate({ entityManager, projectId, ownerExternalId: locked.externalId, tools: requestedDraft.tools, previousTools: locked.draft.tools })
+            }
             const visibility = request.visibility ?? locked.visibility
             const sharedWithUserIds = await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: locked.sharedWithUserIds, projectId, log })
             const goingLive = goLive && agentUtils.isPublishable(draft)
@@ -234,7 +238,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
                     params: { message: `That tool change leaves the agent outside what an agent may hold: ${draft.error.issues.map((issue) => issue.message).join(', ')}` },
                 })
             }
-            await agentToolRules.validate({ projectId, ownerExternalId: agent.externalId, tools: draft.data.tools })
+            await agentToolRules.validate({ entityManager, projectId, ownerExternalId: agent.externalId, tools: draft.data.tools, previousTools: agent.draft.tools })
             await repo.save({ id, draft: sanitizeObjectForPostgresql(draft.data) })
             return this.getOneOrThrow({ id, projectId, userId })
         })

@@ -18,7 +18,6 @@ import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentHelpers } from './agent-helpers'
 import { agentService } from './agent-service'
-import { agentToolRules } from './agent-tool-rules'
 
 const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
@@ -73,11 +72,10 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 params: { message: `Two tools are both named ${duplicated.join(', ')}: each tool on a step needs its own name, or one silently replaces the other` },
             })
         }
-        if (isNil(linked)) {
-            await agentToolRules.validate({ projectId, tools: tools ?? [] })
-        }
-        const flowTools = await agentHelpers.resolveFlowTools({ projectId, tools: tools ?? [], log: request.log })
-        const agentTools = await agentHelpers.resolveAgentTools({ projectId, tools: tools ?? [], log: request.log })
+        const [flowTools, agentTools] = await Promise.all([
+            agentHelpers.resolveFlowTools({ projectId, tools: tools ?? [], log: request.log }),
+            agentHelpers.resolveAgentTools({ projectId, tools: tools ?? [], log: request.log }),
+        ])
         await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: runFields.providerConfigId, modelTierId: runFields.modelTierId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)

@@ -1,11 +1,9 @@
-import { AgentToolType, ApEnvironment, ApFlagId } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { AgentSummary, ApEnvironment, ApFlagId } from '@activepieces/shared';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { agentsApi } from '../../api/agents';
-import { useAgentsAvailable } from '../../hooks/agents-hooks';
+import { agentsQueries, useAgentsAvailable } from '../../hooks/agents-hooks';
 
 function useAgentToolsOn(): boolean {
   const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
@@ -15,24 +13,21 @@ function useAgentToolsOn(): boolean {
   return agentsAvailable && environment === ApEnvironment.DEVELOPMENT;
 }
 
-function useCallableAgents({ enabled }: { enabled: boolean }) {
-  const projectId = authenticationSession.getProjectId();
-  return useQuery({
-    queryKey: ['agents', 'callable-as-tools', projectId],
-    enabled: enabled && !!projectId,
-    queryFn: async () => {
-      const page = await agentsApi.list({ projectId: projectId!, limit: 100 });
-      return page.data;
-    },
+function useProjectAgents(): {
+  agents: AgentSummary[];
+  complete: boolean;
+} {
+  const { data, hasNextPage } = agentsQueries.useAgents({
+    projectId: authenticationSession.getProjectId() ?? undefined,
+    enabled: useAgentToolsOn(),
   });
-}
-
-function callsOtherAgents(toolTypes: AgentToolType[]): boolean {
-  return toolTypes.includes(AgentToolType.AGENT);
+  return {
+    agents: (data?.pages ?? []).flatMap((page) => page.data),
+    complete: !!data && !hasNextPage,
+  };
 }
 
 export const agentToolsGate = {
   useAgentToolsOn,
-  useCallableAgents,
-  callsOtherAgents,
+  useProjectAgents,
 };

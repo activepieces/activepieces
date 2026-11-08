@@ -6,7 +6,7 @@ import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/serve
 import { AGENT_RUN_USAGE_ORIGIN, AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentAgentTool, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { In, IsNull, Repository } from 'typeorm'
+import { IsNull, Repository } from 'typeorm'
 import { z } from 'zod'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { platformModelTierService, TierForRun } from '../../ai/platform-model-tier-service'
@@ -21,7 +21,6 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
-import { AgentEntity } from './agent-entity'
 import { agentModelResolution } from './agent-model-resolution'
 import { agentModelTier } from './agent-model-tier'
 import { agentToolRules } from './agent-tool-rules'
@@ -544,12 +543,12 @@ async function resolveAgentTools({ projectId, tools, log }: { projectId: string,
     if (agentToolRequests.length === 0 || !agentToolsRollout.isOn()) {
         return []
     }
-    const targets = await repoFactory(AgentEntity)().findBy({ projectId, externalId: In(unique(agentToolRequests.map((tool) => tool.externalAgentId))) })
-    const publishedByExternalId = new Map(targets.filter((target) => !isNil(target.published)).map((target) => [target.externalId, target]))
+    const targets = await agentToolRules.findTargets({ projectId, externalIds: agentToolRequests.map((tool) => tool.externalAgentId) })
+    const callableByExternalId = new Map(targets.filter(agentToolRules.isCallable).map((target) => [target.externalId, target]))
     return agentToolRequests.flatMap((toolRequest) => {
-        const target = publishedByExternalId.get(toolRequest.externalAgentId)
+        const target = callableByExternalId.get(toolRequest.externalAgentId)
         if (isNil(target)) {
-            log.warn({ agentTool: { name: toolRequest.toolName } }, '[agentHelpers#resolveAgentTools] Skipping an agent tool whose agent is missing or unpublished')
+            log.warn({ tool: { name: toolRequest.toolName } }, '[agentHelpers#resolveAgentTools] Skipping an agent tool whose agent is missing, private, unpublished or calls agents itself')
             return []
         }
         const description = target.description?.trim()

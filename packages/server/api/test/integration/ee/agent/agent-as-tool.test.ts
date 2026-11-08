@@ -1,8 +1,9 @@
-import { AIProviderName } from '@activepieces/core-utils'
-import { AgentIcon, AgentToolType, ColorName, WorkerJobType } from '@activepieces/shared'
+import { AIProviderName, apId } from '@activepieces/core-utils'
+import { AgentIcon, AgentToolType, AgentVisibility, ColorName, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
 import { agentToolsRollout } from '../../../../src/app/ee/agent/agent-tools-rollout'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
@@ -128,6 +129,17 @@ describe('saving an agent that calls another agent', () => {
         expect(response.json().params.message).toContain('cannot use itself')
     })
 
+    it('refuses a restricted agent, so its description never reaches someone else', async () => {
+        const ctx = await context()
+        const secret = await createPublishedAgent(ctx, { displayName: 'Secret', description: 'Knows the salaries.' })
+        await db.update('agent', secret.id, { visibility: AgentVisibility.RESTRICTED })
+
+        const response = await createAgent(ctx, { displayName: 'Lead', tools: [agentTool({ externalAgentId: secret.externalId })] })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response.json().params.message).toContain('was not found in this project')
+    })
+
     it('refuses agent tools while the rollout is off', async () => {
         vi.spyOn(agentToolsRollout, 'isOn').mockReturnValue(false)
         const ctx = await context()
@@ -169,6 +181,43 @@ describe('the agent tools a chat turn hands to the worker', () => {
         const job = await sendMessage(ctx, lead.id)
 
         expect(job.data.agentTools).toEqual([{ toolName: 'ask_researcher', agentId: researcher.id, description: 'Researches companies on the web.' }])
+    })
+
+    it('skips an agent that was made restricted after it was added', async () => {
+        const ctx = await context()
+        const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher', description: 'Knows the salaries.' })
+        const lead = await createPublishedAgent(ctx, { displayName: 'Lead', tools: [agentTool({ externalAgentId: researcher.externalId })] })
+        await db.update('agent', researcher.id, { visibility: AgentVisibility.RESTRICTED })
+
+        const job = await sendMessage(ctx, lead.id)
+
+        expect(job.data.agentTools).toEqual([])
+    })
+
+    it('keeps a flow step running when the agent behind its agent tool was deleted', async () => {
+        const ctx = await context()
+        const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher' })
+        await ctx.delete(`/v1/agents/${researcher.id}`)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({ jobId: apId(), projectId: ctx.project.id, platformId: ctx.platform.id })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: '/api/v1/agents/runs',
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: {
+                instruction: 'Find three competitors.',
+                flowRunId: apId(),
+                waitpointId: apId(),
+                modelName: CONFIGURED_MODEL,
+                provider: AIProviderName.OPENROUTER,
+                tools: [agentTool({ externalAgentId: researcher.externalId })],
+            },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const job = addSpy.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
+        expect(job.data.agentTools).toEqual([])
     })
 
     it('skips an agent tool whose agent was deleted, instead of failing the turn', async () => {

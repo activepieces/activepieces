@@ -13,6 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 import { agentToolsGate } from '../lib/agent-tools-gate';
 import { useAgentToolDialogStore } from '../stores/agents-tools';
@@ -23,10 +24,10 @@ export const AgentAgentToolComponent = ({
   removeTool,
 }: AgentAgentToolsAccordionProps) => {
   const { setShowAddAgentDialog } = useAgentToolDialogStore();
-  const { data: agents } = agentToolsGate.useCallableAgents({ enabled: true });
+  const { agents, complete } = agentToolsGate.useProjectAgents();
 
   const problemOf = (tool: AgentAgentTool): string | null => {
-    if (!agents) {
+    if (!complete) {
       return null;
     }
     const target = agents.find(
@@ -56,9 +57,11 @@ export const AgentAgentToolComponent = ({
             return (
               <div
                 key={tool.toolName}
-                className={`group flex items-center gap-2 px-3 py-1 rounded-full border bg-gray-3/50 ${
-                  disabled ? 'opacity-50 pointer-events-none' : ''
-                } ${problem ? 'border-danger-7' : ''}`}
+                className={cn(
+                  'group flex items-center gap-2 px-3 py-1 rounded-full border bg-gray-3/50',
+                  disabled && 'opacity-50 pointer-events-none',
+                  problem && 'border-danger-7',
+                )}
               >
                 <span className="text-xs font-medium max-w-40 truncate">
                   {tool.agentDisplayName ?? tool.toolName}

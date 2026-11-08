@@ -1,8 +1,7 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { aiUtils, wideEvent } from '@activepieces/server-utils'
-import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, ApEnvironment, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentAgentTool, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentAgentTool, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
-import { system, WorkerSystemProp } from '../../../../config/configs'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
@@ -250,6 +249,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 agentsAvailable: config.agentsAvailable,
+                agentToolsAvailable: config.agentToolsAvailable === true,
                 abortSignal: abortController.signal,
                 source,
                 configuredPieceTools,
@@ -640,7 +640,7 @@ function pickImageGenerator({ falApiKey, imageModelId, credentials, providerConf
     }
 }
 
-function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, runKey, knowledgeBaseKey, configuredPieceTools, configuredFlowTools, configuredAgentTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, dryRun, discoveryOnly, emailEnabled, agentsAvailable, agentToolsAvailable, abortSignal, source, runKey, knowledgeBaseKey, configuredPieceTools, configuredFlowTools, configuredAgentTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     runKey: () => RunKey
     knowledgeBaseKey: { provider?: AIProviderName, providerConfigId?: string }
@@ -661,6 +661,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     discoveryOnly: boolean
     emailEnabled: boolean
     agentsAvailable: boolean
+    agentToolsAvailable: boolean
     abortSignal: AbortSignal
     configuredPieceTools: AgentPieceTool[]
     configuredFlowTools: ResolvedAgentFlowTool[]
@@ -824,7 +825,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     })
     const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
-        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, agentToolsOn: system.get(WorkerSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT })
+        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, agentToolsOn: agentToolsAvailable })
         : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({

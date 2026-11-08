@@ -9,6 +9,7 @@ import { agentCompaction } from '.././agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, dropImagesForTextOnlyModels, persistAgentAttachments } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
 import { agentModelTier, agentTierCandidates, AgentTierRun } from '.././agent-model-tier'
+import { agentToolsRollout } from '.././agent-tools-rollout'
 import { agentMcp } from '.././mcp/agent-mcp'
 import { chatPersonalizationService } from '.././personalization/chat-personalization-service'
 import { agentPrompt } from '.././prompt/agent-prompt'
@@ -357,6 +358,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             aiTools,
             emailEnabled,
             agentsAvailable,
+            agentToolsAvailable: agentToolsRollout.isOn(),
             userEmail: runUserEmail,
             source: conversation.source,
             ...tierFieldsOf({ tierRun }),

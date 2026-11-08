@@ -22,6 +22,7 @@ import { readConversationFile } from '../agent-file-utils'
 import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
 import { agentAudit, agentService } from '../agent-service'
+import { agentToolRules } from '../agent-tool-rules'
 import { agentPrompt } from '../prompt/agent-prompt'
 import { agentSurfaceNotes } from '../prompt/agent-surface-notes'
 import { outcomeOfToolResult, recordAgentAction } from '../rpc/rpc-shared'
@@ -398,22 +399,21 @@ async function addAgentsAsToolsFromChat({ agentIds, agent, editedItself, publish
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
-    const targets = await Promise.all(agentIds.map((externalId) => agentService(log).getProjectVisibleByExternalId({ projectId, externalId })))
-    const missing = agentIds.filter((_, index) => isNil(targets[index]))
+    const targets = await agentToolRules.findTargets({ projectId, externalIds: agentIds })
+    const missing = agentIds.filter((externalId) => !targets.some((target) => target.externalId === externalId))
     if (missing.length > 0) {
         return { error: `No agent in this project has the id ${missing.join(' or ')}. Call ap_list_agents and pass one of those.` }
     }
-    const added: AgentTool[] = targets.flatMap((target) => isNil(target) ? [] : [{
-        type: AgentToolType.AGENT,
-        toolName: mcpToolNameUtils.suggestToolName(target.displayName),
-        externalAgentId: target.externalId,
-        agentDisplayName: target.displayName,
-    }])
     const { data: updated, error } = await tryCatch(() => agentService(log).editDraftTools({
         id: agent.id,
         projectId,
         userId,
-        edit: (tools) => tools.some((tool) => tool.type === AgentToolType.AGENT && agentIds.includes(tool.externalAgentId)) ? null : [...tools, ...added],
+        edit: (tools) => tools.some((tool) => agentToolRules.isAgentTool(tool) && agentIds.includes(tool.externalAgentId)) ? null : targets.reduce<AgentTool[]>((all, target) => [...all, {
+            type: AgentToolType.AGENT,
+            toolName: mcpToolNameUtils.uniqueToolName({ sourceName: target.displayName, taken: all.map((tool) => tool.toolName) }),
+            externalAgentId: target.externalId,
+            agentDisplayName: target.displayName,
+        }], tools),
     }))
     if (!isNil(error)) {
         return { error: apErrorOf(error)?.message ?? String(error) }
