@@ -123,9 +123,7 @@ export function ChatHistoryList({
       if (start > 0) {
         requestAnimationFrame(() =>
           requestAnimationFrame(() =>
-            listRef.current
-              ?.querySelector(`[data-index="${start}"]`)
-              ?.scrollIntoView({ block: 'center' }),
+            revealRow({ list: listRef.current, index: start, center: true }),
           ),
         );
       }
@@ -169,9 +167,7 @@ export function ChatHistoryList({
       flat.length - 1,
     );
     setHighlight({ index: next, by: 'keyboard' });
-    listRef.current
-      ?.querySelector(`[data-index="${next}"]`)
-      ?.scrollIntoView({ block: 'nearest' });
+    revealRow({ list: listRef.current, index: next, center: false });
   };
 
   const focusSearch = useCallback(() => inputRef.current?.focus(), []);
@@ -529,6 +525,29 @@ const HistoryRow = memo(function HistoryRow({
   );
 },
 rowPropsEqual);
+
+function revealRow({
+  list,
+  index,
+  center,
+}: {
+  list: HTMLElement | null;
+  index: number;
+  center: boolean;
+}) {
+  const row = list?.querySelector(`[data-index="${index}"]`);
+  if (!list || !row) return;
+  const box = list.getBoundingClientRect();
+  const rect = row.getBoundingClientRect();
+  const top = rect.top - box.top + list.scrollTop;
+  if (center) {
+    list.scrollTop = top - (list.clientHeight - rect.height) / 2;
+  } else if (rect.top < box.top) {
+    list.scrollTop = top;
+  } else if (rect.bottom > box.bottom) {
+    list.scrollTop = top + rect.height - list.clientHeight;
+  }
+}
 
 function rowPropsEqual(prev: HistoryRowProps, next: HistoryRowProps) {
   return (

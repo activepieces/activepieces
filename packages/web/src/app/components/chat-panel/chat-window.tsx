@@ -539,13 +539,13 @@ export function ChatWindow() {
       if (
         !full &&
         event.key === 'Escape' &&
-        !event.defaultPrevented &&
         useChatPanel.getState().open &&
         focusInChat &&
         !hasText(document.activeElement) &&
         !hasText(chatDom.composer()) &&
-        !document.querySelector(OPEN_LAYER_SELECTOR)
+        chatDom.escapeFree(event)
       ) {
+        chatDom.claimEscape(event);
         setOpen(false);
       }
     };
@@ -1122,18 +1122,36 @@ function useFocusHandoff(open: boolean) {
           : null;
       let frame = 0;
       let tries = 0;
+      const outside = (event: Event) => {
+        const target = event.target;
+        if (!(target instanceof Node) || !chatDom.root().contains(target)) {
+          stop();
+        }
+      };
+      const stop = () => {
+        cancelAnimationFrame(frame);
+        HANDOFF_STOP_EVENTS.forEach((name) =>
+          document.removeEventListener(name, outside, true),
+        );
+      };
       const focusInput = () => {
         const input = chatDom.composer();
         if (input && chatDom.root().isConnected) {
+          stop();
           input.focus({ preventScroll: true });
           return;
         }
         if (++tries < 60) {
           frame = requestAnimationFrame(focusInput);
+        } else {
+          stop();
         }
       };
+      HANDOFF_STOP_EVENTS.forEach((name) =>
+        document.addEventListener(name, outside, true),
+      );
       frame = requestAnimationFrame(focusInput);
-      return () => cancelAnimationFrame(frame);
+      return stop;
     }
     const active = document.activeElement;
     const focusLeftWithPanel =
@@ -1490,8 +1508,7 @@ function toastPlacementFor({
   const position = toastPositionFor({ chatWidth, floatCenterX, viewportWidth });
   return {
     position,
-    offset:
-      position === 'bottom-center' ? { bottom: COMPOSER_CLEARANCE } : undefined,
+    offset: chatWidth === 'full' ? { top: FULL_TOAST_TOP } : undefined,
   };
 }
 
@@ -1506,7 +1523,6 @@ function toastPositionFor({
 }): ToastPosition {
   switch (chatWidth) {
     case 'full':
-      return 'bottom-center';
     case 'sheet':
       return 'top-center';
     case 'right':
@@ -1533,9 +1549,12 @@ const SHEET_DISMISS_VELOCITY = 0.5;
 const EASE_OUT = chatLayoutUtils.MOVE_EASE.out;
 const CUE_MOTION = { duration: 0.12, ease: EASE_OUT };
 const SETTLE = { type: 'spring', bounce: 0, visualDuration: 0.25 } as const;
-const COMPOSER_CLEARANCE = 144;
-const OPEN_LAYER_SELECTOR =
-  '[role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper]';
+const FULL_TOAST_TOP = 80;
+const HANDOFF_STOP_EVENTS: Array<'focusin' | 'pointerdown' | 'keydown'> = [
+  'focusin',
+  'pointerdown',
+  'keydown',
+];
 const GUTTER_RIGHT = 8;
 const DIP_MS = 120;
 const PINNED_GAP = 24;
