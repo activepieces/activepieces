@@ -1,4 +1,5 @@
 import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { AppConnectionStatus, pickDefaultConnectionExternalId } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { GateDecision, gateNoResponseMessage, normalizePieceName, questionTextSchema, questionTitleSchema, richOptionSchema, stableStringify } from './tool-primitives'
@@ -283,24 +284,21 @@ function preselectedConnection({ stored }: { stored: unknown }): PickedConnectio
     if (!Array.isArray(stored)) {
         return null
     }
-    const healthy = stored.filter((connection): connection is PickedConnection & { updated?: unknown } => isObject(connection)
-        && connection['status'] === HEALTHY_CONNECTION_STATUS
+    const healthy = stored.filter((connection): connection is PickedConnection & { updated?: string } => isObject(connection)
+        && connection['status'] === AppConnectionStatus.ACTIVE
         && typeof connection['externalId'] === 'string'
         && typeof connection['label'] === 'string'
         && typeof connection['projectId'] === 'string')
-    const [newest] = [...healthy].sort((a, b) => updatedAt(b).localeCompare(updatedAt(a)))
-    return isNil(newest) ? null : { externalId: newest.externalId, label: newest.label, projectId: newest.projectId }
+    const externalId = pickDefaultConnectionExternalId({
+        healthy,
+        updatedByExternalId: Object.fromEntries(healthy.map((connection) => [connection.externalId, connection.updated])),
+    })
+    const picked = healthy.find((connection) => connection.externalId === externalId)
+    return isNil(picked) ? null : { externalId: picked.externalId, label: picked.label, projectId: picked.projectId }
 }
-
-function updatedAt(connection: { updated?: unknown }): string {
-    return typeof connection.updated === 'string' ? connection.updated : ''
-}
-
-const HEALTHY_CONNECTION_STATUS = 'ACTIVE'
 
 export const displayToolUtils = { preselectedConnection }
 
 type CardRefusal = { content: { type: string, text: string }[], notShown?: true }
 
 export type PickedConnection = { externalId: string, label: string, projectId: string }
-
