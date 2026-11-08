@@ -1,5 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, aiProviderCredentials } from '@activepieces/shared'
+import { generateText, jsonSchema, tool } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { aiUtils, WebSearchOptions } from '../src/ai-utils'
 
@@ -174,23 +175,54 @@ describe('aiUtils.createModel on the managed Activepieces key', () => {
 })
 
 describe('what the managed provider is asked to send back', () => {
-    function settingsFor({ provider, webSearchEnabled = false }: { provider: AIProviderName, webSearchEnabled?: boolean }): Record<string, unknown> | undefined {
+    async function settingsFor({ provider, webSearchEnabled = false }: { provider: AIProviderName, webSearchEnabled?: boolean }): Promise<Record<string, unknown>> {
         const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth: { apiKey: 'key' }, config: {} }), modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, webSearchEnabled, billing: null })
-        return (model as unknown as { settings?: Record<string, unknown> }).settings
+        return sentBody(() => generateText({ model, prompt: 'hi', maxRetries: 0 }))
     }
 
-    it('asks OpenRouter to report what a managed call cost, which is the whole basis of the bill', () => {
-        expect(settingsFor({ provider: AIProviderName.ACTIVEPIECES })).toMatchObject({ usage: { include: true } })
+    it('asks OpenRouter to report what a managed call cost, which is the whole basis of the bill', async () => {
+        expect(await settingsFor({ provider: AIProviderName.ACTIVEPIECES })).toMatchObject({ usage: { include: true } })
     })
 
-    it('keeps asking for the cost when web search is on, rather than letting the plugin setting replace it', () => {
-        expect(settingsFor({ provider: AIProviderName.ACTIVEPIECES, webSearchEnabled: true })).toMatchObject({
+    it('keeps asking for the cost when web search is on, rather than letting the plugin setting replace it', async () => {
+        expect(await settingsFor({ provider: AIProviderName.ACTIVEPIECES, webSearchEnabled: true })).toMatchObject({
             usage: { include: true },
             plugins: [{ id: 'web', max_results: 5 }],
         })
     })
 
-    it('asks a customer own OpenRouter key for its cost too, so AI usage shows what the provider charged', () => {
-        expect(settingsFor({ provider: AIProviderName.OPENROUTER })).toMatchObject({ usage: { include: true } })
+    it('asks a customer own OpenRouter key for its cost too, so AI usage shows what the provider charged', async () => {
+        expect(await settingsFor({ provider: AIProviderName.OPENROUTER })).toMatchObject({ usage: { include: true } })
     })
 })
+
+describe('aiUtils.createModel tool choice', () => {
+    it('asks the model to call a required tool instead of forcing tool_choice, which some models reject', async () => {
+        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.ANTHROPIC, auth: { apiKey: 'key' }, config: {} }), modelId: 'claude-opus-5-5', billing: null })
+        const body = await sentBody(() => generateText({
+            model,
+            prompt: 'hi',
+            maxRetries: 0,
+            tools: { extractData: tool({ inputSchema: jsonSchema({ type: 'object', properties: {} }) }) },
+            toolChoice: 'required',
+        }))
+
+        expect(body.tool_choice).toEqual({ type: 'auto' })
+    })
+})
+
+async function sentBody(send: () => Promise<unknown>): Promise<Record<string, unknown>> {
+    const original = globalThis.fetch
+    let body: Record<string, unknown> = {}
+    globalThis.fetch = (_input, init) => {
+        body = typeof init?.body === 'string' ? JSON.parse(init.body) : {}
+        return Promise.resolve(new Response('{}'))
+    }
+    try {
+        await send().catch(() => undefined)
+    }
+    finally {
+        globalThis.fetch = original
+    }
+    return body
+}
