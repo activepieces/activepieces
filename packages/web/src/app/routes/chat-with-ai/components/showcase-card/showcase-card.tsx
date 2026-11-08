@@ -1,6 +1,13 @@
-import { motion, useReducedMotion } from 'motion/react';
+import { Sparkles } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+
+import {
+  ChatCard,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from '../chat-ui/chat-card';
 
 import {
   ShowcaseLayout,
@@ -9,6 +16,7 @@ import {
 } from './showcase-tile';
 
 const MAX_TILES = 4;
+const MAX_LIST_TILES = 3;
 
 export function ShowcaseCard({
   content,
@@ -19,86 +27,50 @@ export function ShowcaseCard({
   onSendPrompt?: (text: string) => void;
   streaming?: boolean;
 }) {
-  const reducedMotion = useReducedMotion();
-  const animate = !reducedMotion;
-
   const tiles = (Array.isArray(content?.tiles) ? content.tiles : []).slice(
     0,
     MAX_TILES,
   );
-  const hasHeadline = content.headline.trim().length > 0;
   if (!streaming && tiles.length === 0) {
     return null;
   }
 
-  const isList = content.layout !== 'grid';
+  const isGrid = content.layout === 'grid' && tiles.length > MAX_LIST_TILES;
 
   return (
-    <motion.div
-      className={cn(
-        'overflow-hidden rounded-xl border bg-panel shadow-sm',
-        !isList && 'p-4 sm:p-5',
-      )}
-      initial={
-        animate && streaming ? { opacity: 0, y: 16, scale: 0.98 } : false
-      }
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-    >
-      {!isList && (
-        <>
-          <h3 className="text-base font-semibold leading-snug text-gray-12">
-            {content.headline}
-            {streaming && !hasHeadline && (
-              <span className="inline-block h-4 w-32 animate-pulse rounded-md bg-gray-3 align-middle" />
-            )}
-          </h3>
-          {content.subhead && (
-            <p className="mt-1 text-sm text-gray-11">{content.subhead}</p>
-          )}
-        </>
-      )}
-
-      <div
+    <ChatCard>
+      <ChatCardHeader
+        tile={<ChatCardTile kind="bits" icon={Sparkles} />}
+        title={content.headline}
+        meta={content.subhead}
+      />
+      <ChatCardBody
         className={cn(
-          'grid grid-cols-1',
-          isList ? 'divide-y divide-gray-6/60' : 'mt-4 gap-2.5 sm:grid-cols-2',
+          isGrid
+            ? 'grid grid-cols-2 gap-2 @max-chat-narrow/chat:grid-cols-1'
+            : 'gap-1',
         )}
       >
         {tiles.map((tile, i) => (
           <ShowcaseTile
             key={i}
             tile={tile}
-            index={i}
-            animate={animate}
-            layout={isList ? 'list' : 'grid'}
+            framed={isGrid}
             streaming={streaming}
             onSendPrompt={onSendPrompt}
           />
         ))}
         {streaming && tiles.length === 0 && (
-          <div
-            className={cn(
-              'flex w-full animate-pulse items-center',
-              isList
-                ? 'gap-4 px-4 py-4 sm:px-5'
-                : 'gap-3 rounded-xl border bg-gray-1 p-3',
-            )}
-          >
-            <div
-              className={cn(
-                'shrink-0 bg-gray-3',
-                isList ? 'size-8 rounded-md' : 'size-10 rounded-xl',
-              )}
-            />
+          <div className="flex w-full animate-pulse items-center gap-3 px-2 py-2">
+            <div className="size-8 shrink-0 rounded-md bg-gray-3" />
             <div className="min-w-0 flex-1 space-y-2">
               <div className="h-4 w-1/3 rounded-md bg-gray-3" />
               <div className="h-3 w-3/5 rounded-md bg-gray-3" />
             </div>
           </div>
         )}
-      </div>
-    </motion.div>
+      </ChatCardBody>
+    </ChatCard>
   );
 }
 

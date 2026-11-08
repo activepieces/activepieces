@@ -27,12 +27,14 @@ export function ChatCard({
   className,
   children,
 }: ChatCardProps) {
+  const nested = useContext(ChatCardNestedContext);
+  const isFlat = flat || nested;
   return (
     <FoldScope foldable={foldable} defaultOpen={defaultOpen}>
       <div
         className={cn(
           'flex min-w-0 flex-col rounded-xl motion-safe:animate-chat-enter',
-          !flat && !turn && 'border border-gray-6 bg-panel',
+          !isFlat && !turn && 'border border-gray-6 bg-panel',
           turn && 'chat-turn-ring',
           className,
         )}
@@ -255,6 +257,14 @@ function FoldTrigger({ open }: { open: boolean }) {
   );
 }
 
+export function ChatCardNested({ children }: { children: ReactNode }) {
+  return (
+    <ChatCardNestedContext.Provider value={true}>
+      {children}
+    </ChatCardNestedContext.Provider>
+  );
+}
+
 function AppTile({ pieceName }: { pieceName: string }) {
   const { summary } = piecesHooks.usePieceSummary({ name: pieceName });
   return (
@@ -273,6 +283,8 @@ const FoldContext = createContext<{ foldable: boolean; open: boolean }>({
   foldable: false,
   open: true,
 });
+
+const ChatCardNestedContext = createContext(false);
 
 type ChatCardProps = {
   turn?: boolean;

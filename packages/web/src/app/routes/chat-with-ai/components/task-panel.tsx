@@ -1,9 +1,10 @@
 import { SubagentActivity, SubagentTimelineEntry } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, Loader2, Maximize2, Minimize2, Search, X } from 'lucide-react';
+import { ChevronLeft, Maximize2, Minimize2, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { createContext, useEffect, useRef, useState } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -20,11 +21,12 @@ import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';
 
+import { ChatStatusIcon, ChatStatusText } from './chat-ui/chat-status';
+import { chatStatusUtils } from './chat-ui/chat-status-utils';
 import { PreviewIconButton } from './previews/preview-card';
 import {
   Duration,
   LiveLine,
-  StatusMark,
   subagentTimelineUtils,
 } from './subagent-primitives';
 
@@ -45,16 +47,43 @@ export function TaskPanel({
     ({ toolCallId }) => toolCallId === selectedToolCallId,
   );
   if (!selected) return null;
-  const title =
-    tasks.length > 1
-      ? t('{count} tasks', { count: tasks.length })
-      : selected.activity.title;
+  const index = tasks.indexOf(selected);
+  const previous = index > 0 ? tasks[index - 1] : undefined;
+  const title = selected.activity.title;
   const body = (
     <>
-      <div className="flex items-center gap-1 border-b px-4 py-2.5">
-        <p className="flex-1 truncate text-sm font-medium text-gray-12">
-          {title}
-        </p>
+      <div className="flex min-w-0 items-center gap-2 border-b py-2.5 pl-2 pr-3">
+        {previous ? (
+          <PreviewIconButton
+            icon={ChevronLeft}
+            label={t('Previous task')}
+            onClick={() => onSelect(previous.toolCallId)}
+          />
+        ) : (
+          <span aria-hidden className="w-2" />
+        )}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TextWithTooltip tooltipMessage={title}>
+            <p className="truncate text-sm font-medium text-gray-12">{title}</p>
+          </TextWithTooltip>
+          <div className="flex min-w-0 items-center gap-1 text-xs text-gray-11">
+            {tasks.length > 1 && (
+              <span className="truncate">
+                {t('Task {position} of {total}', {
+                  position: index + 1,
+                  total: tasks.length,
+                })}
+              </span>
+            )}
+            <Duration
+              activity={selected.activity}
+              className="w-auto text-left"
+            />
+          </div>
+        </div>
+        <ChatStatusText
+          status={chatStatusUtils.fromSubagent(selected.activity.status)}
+        />
         {docked && (
           <PreviewIconButton
             icon={fullscreen ? Minimize2 : Maximize2}
@@ -79,7 +108,9 @@ export function TaskPanel({
                   : 'text-gray-11',
               )}
             >
-              <StatusMark status={activity.status} />
+              <ChatStatusIcon
+                status={chatStatusUtils.fromSubagent(activity.status)}
+              />
               <span className="truncate">{activity.title}</span>
             </button>
           ))}
@@ -171,13 +202,7 @@ function TaskDetails({
       <ChatContainerContent
         className={cn('mx-auto px-5 py-5', wide && 'max-w-3xl')}
       >
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-lg font-medium text-gray-12">{activity.title}</p>
-            <LiveLine activity={activity} />
-          </div>
-          <Duration activity={activity} />
-        </div>
+        <LiveLine activity={activity} />
 
         {timeline.length > 0 && (
           <ol className="mt-5 flex flex-col gap-3">
@@ -220,16 +245,11 @@ function TaskDetails({
               count: pages.length,
             })}
           >
-            <div
-              className={cn(
-                'grid grid-cols-1 gap-2',
-                wide ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
-              )}
-            >
+            <ul className="flex flex-col">
               {pages.map((page) => (
-                <SourceCard key={page.url} url={page.url} title={page.title} />
+                <SourceRow key={page.url} url={page.url} title={page.title} />
               ))}
-            </div>
+            </ul>
           </Section>
         )}
       </ChatContainerContent>
@@ -280,20 +300,9 @@ function TimelineIcon({
   active: boolean;
 }) {
   if (entry.kind === 'status' && entry.failed) {
-    return <X className="size-3.5 text-danger-11" strokeWidth={2.5} />;
+    return <ChatStatusIcon status="failed" />;
   }
-  if (active) {
-    return (
-      <Loader2 className="size-3.5 animate-spin text-accent-10 motion-reduce:animate-none" />
-    );
-  }
-  if (entry.kind === 'search') {
-    return <Search className="size-3.5 text-gray-11" />;
-  }
-  if (entry.kind === 'read') {
-    return <FaviconOrGlobe url={entry.url} size="sm" />;
-  }
-  return <Check className="size-3.5 text-success-10" strokeWidth={2.5} />;
+  return <ChatStatusIcon status={active ? 'working' : 'done'} />;
 }
 
 function SearchEntry({
@@ -322,20 +331,22 @@ function SearchEntry({
   );
 }
 
-function SourceCard({ url, title }: { url: string; title?: string }) {
+function SourceRow({ url, title }: { url: string; title?: string }) {
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex flex-col gap-1.5 rounded-lg border p-3 transition-colors hover:bg-gray-3"
-    >
-      <span className="flex items-center gap-1.5 text-xs text-gray-11">
+    <li>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-gray-3"
+      >
         <FaviconOrGlobe url={url} size="sm" />
-        <span className="truncate">{getDomain(url)}</span>
-      </span>
-      <span className="line-clamp-2 text-sm text-gray-12">{title ?? url}</span>
-    </a>
+        <span className="min-w-0 flex-1 truncate text-gray-12">
+          {title ?? url}
+        </span>
+        <span className="shrink-0 text-xs text-gray-11">{getDomain(url)}</span>
+      </a>
+    </li>
   );
 }
 
@@ -348,7 +359,7 @@ function Section({
 }) {
   return (
     <section className="mt-6">
-      <p className="pb-2 text-xs font-medium text-gray-11">{title}</p>
+      <h3 className="pb-2 text-sm font-medium text-gray-12">{title}</h3>
       {children}
     </section>
   );

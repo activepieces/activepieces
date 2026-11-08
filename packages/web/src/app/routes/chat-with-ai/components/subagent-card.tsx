@@ -1,7 +1,7 @@
 import { isObject } from '@activepieces/core-utils';
 import { SubagentActivity } from '@activepieces/shared';
 import { t } from 'i18next';
-import { motion } from 'motion/react';
+import { ChevronRight, ListTodo } from 'lucide-react';
 import { useContext } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -13,11 +13,18 @@ import { cn } from '@/lib/utils';
 import { TaskRow } from '../lib/message-blocks';
 
 import {
+  ChatCard,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from './chat-ui/chat-card';
+import { ChatStatusIcon, ChatStatusText } from './chat-ui/chat-status';
+import { ChatStatus, chatStatusUtils } from './chat-ui/chat-status-utils';
+import {
   AppLogos,
   Duration,
   LiveLine,
   ReadFavicons,
-  StatusMark,
 } from './subagent-primitives';
 import { TaskPanel, TaskPanelSlotContext } from './task-panel';
 
@@ -42,32 +49,51 @@ export function SubagentGroup({
       isStreaming,
     }),
   }));
-  const working = activities.some(
-    ({ activity }) => activity.status === 'running',
+  const sorted = [...activities].sort(
+    (a, b) => needsYouRank(a.activity) - needsYouRank(b.activity),
   );
+  const statuses = activities.map(({ activity }) =>
+    chatStatusUtils.fromSubagent(activity.status),
+  );
+  const working = statuses.includes('working');
+  const doneCount = statuses.filter((status) => status === 'done').length;
+  const needsCount = statuses.filter((status) => status === 'needs-you').length;
   const panelOpenHere = activities.some(
     ({ toolCallId }) => toolCallId === panelToolCallId,
   );
 
   return (
-    <motion.div
-      className="my-2 overflow-hidden rounded-xl border bg-panel"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <div className="px-4 pt-3 pb-1 text-xs text-gray-11">
-        {working
-          ? t(
-              '{count, plural, =1 {Working on a task} other {Working on # tasks at once}}',
-              { count: tasks.length },
-            )
-          : t('{count, plural, =1 {Task finished} other {# tasks finished}}', {
-              count: tasks.length,
-            })}
-      </div>
-      <div className="pb-1.5">
-        {activities.map(({ toolCallId, activity }) => (
+    <ChatCard className="my-2">
+      <ChatCardHeader
+        tile={<ChatCardTile kind="bits" icon={ListTodo} />}
+        title={
+          working
+            ? t(
+                '{count, plural, =1 {Working on a task} other {Working on # tasks at once}}',
+                { count: tasks.length },
+              )
+            : t(
+                '{count, plural, =1 {Task finished} other {# tasks finished}}',
+                {
+                  count: tasks.length,
+                },
+              )
+        }
+        meta={
+          needsCount > 0
+            ? t(
+                '{done} done, {needs, plural, =1 {1 needs you} other {# need you}}',
+                { done: doneCount, needs: needsCount },
+              )
+            : t('{done} of {total} done', {
+                done: doneCount,
+                total: tasks.length,
+              })
+        }
+        trailing={<ChatStatusText status={worstStatus(statuses)} />}
+      />
+      <ChatCardBody className="gap-0">
+        {sorted.map(({ toolCallId, activity }) => (
           <SubagentRow
             key={toolCallId}
             activity={activity}
@@ -75,20 +101,20 @@ export function SubagentGroup({
             onOpen={() => openTaskPanel(toolCallId)}
           />
         ))}
-      </div>
+      </ChatCardBody>
       {panelOpenHere &&
         panelSlot &&
         panelToolCallId &&
         createPortal(
           <TaskPanel
-            tasks={activities}
+            tasks={sorted}
             selectedToolCallId={panelToolCallId}
             onSelect={openTaskPanel}
             onClose={closeTaskPanel}
           />,
           panelSlot,
         )}
-    </motion.div>
+    </ChatCard>
   );
 }
 
@@ -102,16 +128,18 @@ function SubagentRow({
   onOpen: () => void;
 }) {
   return (
-    <div className="px-1.5">
+    <div className="border-t border-gray-4 py-1">
       <button
         type="button"
         className={cn(
-          'flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-gray-3',
-          selected && 'bg-gray-3',
+          'flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-3',
+          selected && 'bg-accent-3 hover:bg-accent-4',
         )}
         onClick={onOpen}
       >
-        <StatusMark status={activity.status} />
+        <ChatStatusIcon
+          status={chatStatusUtils.fromSubagent(activity.status)}
+        />
         <div className="min-w-0 flex-1">
           <TextWithTooltip tooltipMessage={activity.title}>
             <p className="truncate text-sm font-medium text-gray-12">
@@ -123,9 +151,18 @@ function SubagentRow({
         <AppLogos pieces={activity.pieces ?? []} />
         <ReadFavicons timeline={activity.timeline ?? []} />
         <Duration activity={activity} />
+        <ChevronRight aria-hidden className="size-4 shrink-0 text-gray-9" />
       </button>
     </div>
   );
+}
+
+function needsYouRank(activity: SubagentActivity): number {
+  return activity.status === 'blocked' ? 0 : 1;
+}
+
+function worstStatus(statuses: ChatStatus[]): ChatStatus {
+  return STATUS_SEVERITY.find((status) => statuses.includes(status)) ?? 'done';
 }
 
 function resolveActivity({
@@ -171,3 +208,10 @@ function isSubagentActivity(value: unknown): value is SubagentActivity {
 }
 
 const STATUSES: string[] = ['running', 'done', 'blocked', 'failed'];
+const STATUS_SEVERITY: ChatStatus[] = [
+  'needs-you',
+  'failed',
+  'working',
+  'stopped',
+  'done',
+];
