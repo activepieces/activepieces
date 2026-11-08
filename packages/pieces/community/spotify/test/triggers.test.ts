@@ -149,6 +149,32 @@ describe('new_saved_track', () => {
     expect(fired).toHaveLength(51);
   });
 
+  test('throws without moving the checkpoint when more saves arrived than the page budget covers', async () => {
+    const { store, data } = memoryStore();
+    const checkpoint = { ms: Date.parse('2026-01-01T00:00:00Z'), keys: [uri(0)] };
+    await store.put('new_saved_track_checkpoint', checkpoint);
+    const seen = stubFetch((url) => {
+      const offset = Number(url.searchParams.get('offset'));
+      return { status: 200, body: { items: Array.from({ length: 50 }, (_, i) => saved({ n: 1000 + offset + i, addedAt: '2026-02-01T00:00:00Z' })), next: 'n' } };
+    });
+    await expect(hook({ trigger: newSavedTrack, name: 'run', ctx: { store } })).rejects.toThrow(/More than 500 tracks were saved/);
+    expect(seen).toHaveLength(10);
+    expect(data.get('new_saved_track_checkpoint')).toEqual(checkpoint);
+  });
+
+  test('the baseline reads every track tied at the newest timestamp, so none of them fire later', async () => {
+    const { store } = memoryStore();
+    const tied = Array.from({ length: 70 }, (_, i) => saved({ n: 200 + i, addedAt: '2026-03-01T00:00:00Z' }));
+    const all = [...tied, saved({ n: 1, addedAt: '2026-01-01T00:00:00Z' })];
+    stubFetch((url) => {
+      const offset = Number(url.searchParams.get('offset'));
+      const items = all.slice(offset, offset + 50);
+      return { status: 200, body: { items, next: offset + 50 < all.length ? 'n' : null } };
+    });
+    await hook({ trigger: newSavedTrack, name: 'onEnable', ctx: { store } });
+    expect(await hook({ trigger: newSavedTrack, name: 'run', ctx: { store } })).toEqual([]);
+  });
+
   test('a 403 is rethrown, never swallowed into an empty poll', async () => {
     const { store } = memoryStore();
     await store.put('new_saved_track_checkpoint', { ms: 1, keys: [] });
@@ -297,5 +323,16 @@ describe('qa trigger edge cases', () => {
     items = [...items, playlistEntry({ n: 1, addedAt: '2026-01-02T00:00:00Z' })];
     const fired = await hook({ trigger: newPlaylistItem, name: 'run', ctx });
     expect(fired).toMatchObject([{ playlist_id: PL, added_at: '2026-01-02T00:00:00Z' }]);
+  });
+
+  test('new_playlist_item: a second copy added in the checkpoint second still fires', async () => {
+    const { store } = memoryStore();
+    let items: unknown[] = [playlistEntry({ n: 1, addedAt: '2026-01-01T00:00:00Z' })];
+    stubFetch(() => ({ status: 200, body: { items, next: null } }));
+    const ctx = { store, propsValue: { playlist_id: PL } };
+    await hook({ trigger: newPlaylistItem, name: 'onEnable', ctx });
+    items = [...items, playlistEntry({ n: 1, addedAt: '2026-01-01T00:00:00Z' })];
+    expect(await hook({ trigger: newPlaylistItem, name: 'run', ctx })).toHaveLength(1);
+    expect(await hook({ trigger: newPlaylistItem, name: 'run', ctx })).toEqual([]);
   });
 });

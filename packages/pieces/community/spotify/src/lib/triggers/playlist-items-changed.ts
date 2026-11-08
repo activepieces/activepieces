@@ -10,6 +10,9 @@ import { SPOTIFY_PAGE_SIZE, SPOTIFY_PLAYLIST_MAX_ITEMS, SpotifyWebApi } from '..
 import { spotifyOutputSchemas } from '../output-schemas';
 import { createHash } from 'crypto';
 
+const HASH_KEY = 'playlist_changed_trigger_hash_v2';
+const LEGACY_HASH_KEY = 'playlist_changed_trigger_hash';
+
 function itemKey(entry: PlaylistItem): string {
   const media = entry.item ?? entry.track ?? null;
   return media?.uri ?? `local:${entry.added_at ?? ''}`;
@@ -128,8 +131,5 @@ export default createTrigger({
     return [{ total: items.length, items }];
   },
 });
-
-const HASH_KEY = 'playlist_changed_trigger_hash_v2';
-const LEGACY_HASH_KEY = 'playlist_changed_trigger_hash';
 
 type StoredHash = { playlistId: string; hash: string };

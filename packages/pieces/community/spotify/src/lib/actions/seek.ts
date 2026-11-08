@@ -9,8 +9,8 @@ export default createAction({
   description: 'Jumps to a position in the currently playing item',
   audience: 'both',
   aiMetadata: {
-    description: 'Moves playback of the current track or episode to the given position in milliseconds (past the end skips to the next item). Needs Spotify Premium and an active device. Idempotent: seeking to the same position again gives the same state.',
-    idempotent: true,
+    description: 'Moves playback of the current track or episode to the given position in milliseconds (past the end skips to the next item). Needs Spotify Premium and an active device. Not idempotent: repeating a position past the end can skip another item.',
+    idempotent: false,
   },
   auth: spotifyCommon.authentication,
   outputSchema: spotifyOutputSchemas['seek'],

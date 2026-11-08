@@ -109,6 +109,10 @@ function optionalText(value: unknown): string | undefined {
   return text === '' ? undefined : text;
 }
 
+function clearableText(value: unknown): string | undefined {
+  return typeof value === 'string' ? value.trim() : undefined;
+}
+
 function deviceId(value: unknown): string | undefined {
   return optionalText(value);
 }
@@ -175,6 +179,7 @@ export const spotifyValidate = {
   requiredInteger,
   market,
   optionalText,
+  clearableText,
   deviceId,
   yesNo,
   isYes,

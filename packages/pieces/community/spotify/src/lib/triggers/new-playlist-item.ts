@@ -10,12 +10,20 @@ import { PlaylistItem } from '../common/models/playlist';
 import { SPOTIFY_PAGE_SIZE, SPOTIFY_PLAYLIST_MAX_ITEMS, SpotifyWebApi } from '../common/client';
 import { spotifyOutputSchemas } from '../output-schemas';
 
+const CHECKPOINT_KEY = 'new_playlist_item_checkpoint';
+
 function toEntries({ items, playlistId }: { items: PlaylistItem[]; playlistId: string }): SpotifyPollEntry<NewPlaylistItem>[] {
+  const occurrences = new Map<string, number>();
   return items.flatMap((entry) => {
     const ms = spotifyPolling.epochOf(entry.added_at);
+    if (ms === undefined) {
+      return [];
+    }
     const media = entry.item ?? entry.track ?? null;
-    const key = media?.uri ?? `local:${entry.added_at ?? ''}`;
-    return ms === undefined ? [] : [{ key, ms, data: { playlist_id: playlistId, ...entry } }];
+    const base = `${ms}|${media?.uri ?? 'local'}`;
+    const occurrence = occurrences.get(base) ?? 0;
+    occurrences.set(base, occurrence + 1);
+    return [{ key: `${media?.uri ?? 'local'}#${occurrence}`, ms, data: { playlist_id: playlistId, ...entry } }];
   });
 }
 
@@ -115,8 +123,6 @@ export default createTrigger({
       .map((entry) => entry.data);
   },
 });
-
-const CHECKPOINT_KEY = 'new_playlist_item_checkpoint';
 
 type StoredCheckpoint = SpotifyCheckpoint & { playlistId: string };
 

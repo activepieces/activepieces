@@ -8,6 +8,9 @@ import { spotifyCommon, makeClient, spotifyPolling, SpotifyCheckpoint, SpotifyPo
 import { PlayHistory } from '../common/models/catalog';
 import { spotifyOutputSchemas } from '../output-schemas';
 
+const CHECKPOINT_KEY = 'new_recently_played_track_checkpoint';
+const PAGE_SIZE = 50;
+
 function toEntries(items: PlayHistory[]): SpotifyPollEntry<PlayHistory>[] {
   return items.flatMap((play) => {
     const ms = spotifyPolling.epochOf(play.played_at);
@@ -84,6 +87,3 @@ export default createTrigger({
     return Array.isArray(res.items) ? res.items : [];
   },
 });
-
-const CHECKPOINT_KEY = 'new_recently_played_track_checkpoint';
-const PAGE_SIZE = 50;

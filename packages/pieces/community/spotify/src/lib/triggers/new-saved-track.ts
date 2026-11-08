@@ -9,6 +9,10 @@ import { SpotifyWebApi } from '../common/client';
 import { SavedTrack } from '../common/models/library';
 import { spotifyOutputSchemas } from '../output-schemas';
 
+const CHECKPOINT_KEY = 'new_saved_track_checkpoint';
+const PAGE_SIZE = 50;
+const MAX_PAGES = 10;
+
 function toEntries(items: SavedTrack[]): SpotifyPollEntry<SavedTrack>[] {
   return items.flatMap((saved) => {
     const ms = spotifyPolling.epochOf(saved.added_at);
@@ -17,23 +21,35 @@ function toEntries(items: SavedTrack[]): SpotifyPollEntry<SavedTrack>[] {
   });
 }
 
+function olderThan({ items, ms }: { items: SavedTrack[]; ms: number }): boolean {
+  return items.some((item) => {
+    const itemMs = spotifyPolling.epochOf(item.added_at);
+    return itemMs !== undefined && itemMs < ms;
+  });
+}
+
 async function fetchSince({ client, sinceMs }: { client: SpotifyWebApi; sinceMs: number | null }): Promise<SavedTrack[]> {
   const collected: SavedTrack[] = [];
   let offset = 0;
+  let stopBeforeMs = sinceMs;
   for (let page = 0; page < MAX_PAGES; page++) {
     const res = await client.getSavedTracks({ limit: PAGE_SIZE, offset });
     const items = Array.isArray(res.items) ? res.items : [];
     items.forEach((item) => collected.push(item));
-    const reachedOld = sinceMs === null || items.some((item) => {
-      const ms = spotifyPolling.epochOf(item.added_at);
-      return ms !== undefined && ms < sinceMs;
-    });
-    if (items.length === 0 || !res.next || reachedOld) {
+    if (stopBeforeMs === null) {
+      stopBeforeMs = toEntries(items).reduce<number | null>((max, entry) => (max === null || entry.ms > max ? entry.ms : max), null);
+    }
+    if (items.length === 0 || !res.next || (stopBeforeMs !== null && olderThan({ items, ms: stopBeforeMs }))) {
       return collected;
     }
     offset += items.length;
   }
-  return collected;
+  if (sinceMs === null) {
+    return collected;
+  }
+  throw new Error(
+    `More than ${PAGE_SIZE * MAX_PAGES} tracks were saved since the last check, so the trigger cannot read them all without skipping some. Turn the trigger off and on again to start watching from now.`
+  );
 }
 
 export default createTrigger({
@@ -97,7 +113,3 @@ export default createTrigger({
     return Array.isArray(res.items) ? res.items : [];
   },
 });
-
-const CHECKPOINT_KEY = 'new_saved_track_checkpoint';
-const PAGE_SIZE = 50;
-const MAX_PAGES = 10;

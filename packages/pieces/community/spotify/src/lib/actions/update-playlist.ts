@@ -11,7 +11,7 @@ export default createAction({
   description: 'Updates details of the playlist',
   audience: 'human',
   aiMetadata: {
-    description: "Updates a playlist's metadata (name, description, public, collaborative) for the playlist identified by its id; only the fields you provide are changed. Idempotent: applying the same values repeatedly leaves the playlist in the same state. Spotify's own reads may still report public: true for a playlist that was set private, so do not use a follow-up read to confirm visibility.",
+    description: "Updates a playlist's metadata (name, description, public, collaborative) for the playlist identified by its id; only the fields you provide are changed, and an empty description clears it. Idempotent: applying the same values repeatedly leaves the playlist in the same state. Spotify's own reads may still report public: true for a playlist that was set private, so do not use a follow-up read to confirm visibility.",
     idempotent: true,
   },
   auth: spotifyCommon.authentication,
@@ -37,9 +37,11 @@ export default createAction({
   },
   async run({ auth, propsValue }) {
     const playlistId = spotifyIds.parse({ kind: 'playlist', value: propsValue.playlist_id, label: 'Playlist' });
+    const name = spotifyValidate.optionalText(propsValue.name);
+    const description = spotifyValidate.clearableText(propsValue.description);
     const request: PlaylistUpdateRequest = {
-      ...spreadText({ key: 'name', value: propsValue.name }),
-      ...spreadText({ key: 'description', value: propsValue.description }),
+      ...(name === undefined ? {} : { name }),
+      ...(description === undefined ? {} : { description }),
       ...(typeof propsValue.public === 'boolean' ? { public: propsValue.public } : {}),
       ...(typeof propsValue.collaborative === 'boolean' ? { collaborative: propsValue.collaborative } : {}),
     };
@@ -56,7 +58,3 @@ export default createAction({
   },
 });
 
-function spreadText({ key, value }: { key: 'name' | 'description'; value: unknown }): PlaylistUpdateRequest {
-  const text = spotifyValidate.optionalText(value);
-  return text === undefined ? {} : { [key]: text };
-}

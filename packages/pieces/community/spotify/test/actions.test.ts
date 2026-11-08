@@ -23,6 +23,7 @@ import getFollowedArtists from '../src/lib/actions/get-followed-artists';
 import getTrack from '../src/lib/actions/get-track';
 import getSavedItems from '../src/lib/actions/get-saved-items';
 import addToQueue from '../src/lib/actions/add-to-queue';
+import seek from '../src/lib/actions/seek';
 import { SpotifyApiError } from '../src/lib/common/errors';
 import { SpotifyWebApi } from '../src/lib/common/client';
 
@@ -495,6 +496,18 @@ describe('update playlist', () => {
     const out = await run({ action: updatePlaylist, propsValue: { playlist_id: PL, description: 'd', public: false } });
     expect(seen[0].body).toEqual({ description: 'd', public: false });
     expect(out).toEqual({ playlist_id: PL, updated: ['description', 'public'] });
+  });
+
+  test('an empty description clears it on both actions, an absent one is left out', async () => {
+    const seen = stubFetch(() => ({ status: 200, body: undefined }));
+    await run({ action: updatePlaylist, propsValue: { playlist_id: PL, description: '' } });
+    await run({ action: updatePlaylistDetails, propsValue: { playlist_id: PL, description: '  ' } });
+    await run({ action: updatePlaylistDetails, propsValue: { playlist_id: PL, name: 'N' } });
+    expect(seen.map((r) => r.body)).toEqual([{ description: '' }, { description: '' }, { name: 'N' }]);
+  });
+
+  test('seek is not marked idempotent', () => {
+    expect(seek.aiMetadata?.idempotent).toBe(false);
   });
 });
 

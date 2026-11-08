@@ -16,7 +16,7 @@ export default createAction({
   description: 'Changes the name, description, visibility or collaboration setting of a playlist',
   audience: 'ai',
   aiMetadata: {
-    description: "Changes a playlist's name, description, public or collaborative setting. Only the fields you pass are changed; leave public and collaborative out to keep their current values (pass 'yes' or 'no' to change them). A collaborative playlist must be private. Get the playlist id from Get Playlists. Idempotent: the same values leave the playlist in the same state. Spotify's own reads may still report public: true for a playlist that was set private, so do not use a follow-up read to confirm visibility.",
+    description: "Changes a playlist's name, description, public or collaborative setting. Only the fields you pass are changed (an empty description clears it); leave public and collaborative out to keep their current values (pass 'yes' or 'no' to change them). A collaborative playlist must be private. Get the playlist id from Get Playlists. Idempotent: the same values leave the playlist in the same state. Spotify's own reads may still report public: true for a playlist that was set private, so do not use a follow-up read to confirm visibility.",
     idempotent: true,
   },
   auth: spotifyCommon.authentication,
@@ -34,7 +34,7 @@ export default createAction({
     }),
     description: Property.ShortText({
       displayName: 'Description',
-      description: 'New playlist description. Omit to keep the current description.',
+      description: 'New playlist description. Omit to keep the current description, or pass an empty string to clear it.',
       required: false,
     }),
     public: Property.StaticDropdown<string>({
@@ -53,7 +53,7 @@ export default createAction({
   async run({ auth, propsValue }) {
     const playlistId = spotifyIds.parse({ kind: 'playlist', value: propsValue.playlist_id, label: 'Playlist ID' });
     const name = spotifyValidate.optionalText(propsValue.name);
-    const description = spotifyValidate.optionalText(propsValue.description);
+    const description = spotifyValidate.clearableText(propsValue.description);
     const isPublic = spotifyValidate.yesNo({ value: propsValue.public, field: 'Public' });
     const collaborative = spotifyValidate.yesNo({ value: propsValue.collaborative, field: 'Collaborative' });
     const request: PlaylistUpdateRequest = {

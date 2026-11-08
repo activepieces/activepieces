@@ -2,6 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { spotifyCommon, makeClient, spotifyValidate } from '../common';
 import { spotifyOutputSchemas } from '../output-schemas';
 
+const ALLOWED_TYPES = ['album', 'artist', 'playlist', 'track', 'show', 'episode'];
+
 function searchTypes(value: unknown): string[] {
   const raw = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [];
   const mapped = raw.map((entry) => {
@@ -100,5 +102,3 @@ export default createAction({
     };
   },
 });
-
-const ALLOWED_TYPES = ['album', 'artist', 'playlist', 'track', 'show', 'episode'];

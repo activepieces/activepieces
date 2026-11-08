@@ -3,6 +3,8 @@ import { spotifyCommon, makeClient, spotifyValidate } from '../common';
 import { spotifyIds } from '../common/ids';
 import { spotifyOutputSchemas } from '../output-schemas';
 
+const GROUPS = ['album', 'single', 'appears_on', 'compilation'];
+
 function includeGroups(value: unknown): string | undefined {
   const raw = Array.isArray(value) ? value : [];
   const groups = raw.map((entry) => {
@@ -63,5 +65,3 @@ export default createAction({
     return client.getArtistAlbums({ id, include_groups: groups, limit, offset, market });
   },
 });
-
-const GROUPS = ['album', 'single', 'appears_on', 'compilation'];

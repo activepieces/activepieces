@@ -3,6 +3,8 @@ import { spotifyCommon, makeClient, spotifyValidate } from '../common';
 import { Artist } from '../common/models/artist';
 import { spotifyOutputSchemas } from '../output-schemas';
 
+const MAX_PAGES = 100;
+
 export default createAction({
   name: 'get_followed_artists',
   classification: 'SEARCH',
@@ -52,5 +54,3 @@ export default createAction({
     };
   },
 });
-
-const MAX_PAGES = 100;
