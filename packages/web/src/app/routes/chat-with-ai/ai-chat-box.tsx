@@ -55,6 +55,7 @@ import {
 import { QuickReplies } from './components/quick-replies';
 import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
+import { composerUtils } from './lib/composer-utils';
 import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox(props: AIChatBoxProps) {
@@ -141,26 +142,28 @@ function ChatBoxContent({
     setStoreConversationId(conversationId ?? null);
   }, [conversationId, setStoreConversationId]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!isStreaming) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      const target = e.target as HTMLElement | null;
+      const target = e.target;
       if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.closest('[role="dialog"]') ||
-          target.closest('[data-radix-popper-content-wrapper]'))
+        e.key !== 'Escape' ||
+        e.defaultPrevented ||
+        !(target instanceof Element) ||
+        !(
+          target.closest('[data-chat-root]') ||
+          rootRef.current?.contains(target)
+        ) ||
+        document.querySelector(OPEN_LAYER_SELECTOR)
       ) {
         return;
       }
       e.preventDefault();
       cancelStream();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [isStreaming, cancelStream]);
 
   const chatProjectId = conversationProjectId ?? sessionProjectId;
@@ -361,7 +364,7 @@ function ChatBoxContent({
   }
 
   return (
-    <div className="flex flex-col h-full flex-1 min-w-0">
+    <div ref={rootRef} className="flex flex-col h-full flex-1 min-w-0">
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div
@@ -526,6 +529,11 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             onInputChange={setHasInput}
+            replyStopped={wasCancelled || failed}
+            draftKey={composerUtils.draftKeyFor({
+              conversationId: initialConversationId,
+              agentId,
+            })}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (
@@ -647,3 +655,6 @@ type AIChatBoxProps = {
 };
 
 type ModelGate = 'loading' | 'setup' | 'ready';
+
+const OPEN_LAYER_SELECTOR =
+  '[role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper]';

@@ -15,6 +15,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { ToasterProps } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
@@ -65,6 +66,9 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 const CUE_MOTION = { duration: 0.12, ease: EASE_OUT };
 const SETTLE = { type: 'spring', bounce: 0, visualDuration: 0.25 } as const;
 const CARD_ID = 'dashboard-content-container';
+const COMPOSER_CLEARANCE = 144;
+const OPEN_LAYER_SELECTOR =
+  '[role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper]';
 const GUTTER_RIGHT = 8;
 
 export function useChatWidth(): ChatWidth {
@@ -76,11 +80,57 @@ export function useChatWidth(): ChatWidth {
   );
 }
 
+export function useChatToastPlacement(): ToastPlacement {
+  const position = useSyncExternalStore(
+    subscribeToToastPosition,
+    () => toastPosition.current,
+  );
+  const offset =
+    position === 'bottom-center' ? { bottom: COMPOSER_CLEARANCE } : undefined;
+  return { position, offset };
+}
+
 export function useWindowAtLeast(width: number): boolean {
   return useSyncExternalStore(
     subscribeToResize,
     () => window.innerWidth >= width,
   );
+}
+
+function subscribeToToastPosition(onChange: () => void) {
+  toastPosition.listeners.add(onChange);
+  return () => {
+    toastPosition.listeners.delete(onChange);
+  };
+}
+
+function publishToastPosition(position: ToastPosition) {
+  if (toastPosition.current === position) return;
+  toastPosition.current = position;
+  toastPosition.listeners.forEach((listener) => listener());
+}
+
+function toastPositionFor({
+  chatWidth,
+  floatCenterX,
+  viewportWidth,
+}: {
+  chatWidth: ChatWidth;
+  floatCenterX: number;
+  viewportWidth: number;
+}): ToastPosition {
+  switch (chatWidth) {
+    case 'full':
+      return 'bottom-center';
+    case 'sheet':
+      return 'top-center';
+    case 'right':
+      return 'bottom-left';
+    case 'float':
+      return floatCenterX > viewportWidth / 2 ? 'bottom-left' : 'bottom-right';
+    default:
+      return 'bottom-right';
+  }
 }
 
 function subscribeToResize(onChange: () => void) {
@@ -212,6 +262,11 @@ export function ChatChromeHost() {
   );
 }
 
+const toastPosition: {
+  current: ToastPosition;
+  listeners: Set<() => void>;
+} = { current: 'bottom-right', listeners: new Set() };
+
 const dragStartHandler: {
   current: ((event: React.PointerEvent<HTMLElement>) => void) | null;
 } = { current: null };
@@ -220,18 +275,16 @@ export function ChatWindow() {
   const chatWidth = useChatWidth();
   const full = chatWidth === 'full';
   const viewport = useViewport();
-  const { open, float, floatSize, gesture, toggle, setOpen, mountChat } =
-    useChatPanel(
-      useShallow((s) => ({
-        open: s.open,
-        float: s.float,
-        floatSize: s.floatSize,
-        gesture: s.gesture,
-        toggle: s.toggle,
-        setOpen: s.setOpen,
-        mountChat: s.mountChat,
-      })),
-    );
+  const { open, float, floatSize, gesture, setOpen, mountChat } = useChatPanel(
+    useShallow((s) => ({
+      open: s.open,
+      float: s.float,
+      floatSize: s.floatSize,
+      gesture: s.gesture,
+      setOpen: s.setOpen,
+      mountChat: s.mountChat,
+    })),
+  );
   const [snap, setSnap] = useState<SnapCue | null>(null);
   const [gripActive, setGripActive] = useState(false);
   const [card] = useState(() => createCardMotion(FLOAT_DEFAULT));
@@ -268,6 +321,18 @@ export function ChatWindow() {
   }, [float, floatSize, gesture, viewport, card]);
 
   useFocusHandoff(chatWidth !== 'closed');
+
+  useEffect(() => {
+    const size = fitToWindow(floatSize ?? FLOAT_DEFAULT);
+    const place = float ?? defaultFloat(size);
+    publishToastPosition(
+      toastPositionFor({
+        chatWidth,
+        floatCenterX: place.x + size.width / 2,
+        viewportWidth: viewport.width,
+      }),
+    );
+  }, [chatWidth, float, floatSize, viewport]);
 
   useEffect(() => {
     return useChatPanel.subscribe((state, prev) => {
@@ -307,6 +372,7 @@ export function ChatWindow() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const mod = event.metaKey || event.ctrlKey;
+      const focusInChat = getChatNode().contains(document.activeElement);
       if (
         mod &&
         !event.altKey &&
@@ -314,10 +380,11 @@ export function ChatWindow() {
         event.key.toLowerCase() === 'j'
       ) {
         event.preventDefault();
-        if (full) {
+        const panelOpen = useChatPanel.getState().open;
+        if (full || (panelOpen && !focusInChat)) {
           getChatNode().querySelector('textarea')?.focus();
         } else {
-          toggle();
+          setOpen(!panelOpen);
         }
         return;
       }
@@ -326,15 +393,17 @@ export function ChatWindow() {
         event.key === 'Escape' &&
         !event.defaultPrevented &&
         useChatPanel.getState().open &&
-        getChatNode().contains(document.activeElement) &&
-        !document.querySelector('[role="dialog"], [role="menu"]')
+        focusInChat &&
+        !hasText(document.activeElement) &&
+        !hasText(getChatNode().querySelector('textarea')) &&
+        !document.querySelector(OPEN_LAYER_SELECTOR)
       ) {
         setOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [full, toggle, setOpen]);
+  }, [full, setOpen]);
 
   const startDrag = useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
@@ -983,6 +1052,14 @@ function lockPointer(cursor: string): () => void {
   };
 }
 
+function hasText(element: Element | null): boolean {
+  return (
+    (element instanceof HTMLTextAreaElement ||
+      element instanceof HTMLInputElement) &&
+    element.value.trim().length > 0
+  );
+}
+
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -1114,4 +1191,9 @@ type SnapGeometry = {
   leftEdge: number;
   rightEdge: number;
   previews: Record<ChatPanelSide, Rect> | null;
+};
+type ToastPosition = NonNullable<ToasterProps['position']>;
+type ToastPlacement = {
+  position: ToastPosition;
+  offset: ToasterProps['offset'];
 };

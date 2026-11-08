@@ -1,5 +1,7 @@
 import { t } from 'i18next';
-import { ReactNode, useState } from 'react';
+import { CircleSlash } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { ReactNode, useEffect, useState } from 'react';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -36,8 +38,16 @@ export function ChatBottomBar({
   placeholder,
   banner,
   recede,
+  replyStopped,
+  draftKey,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
+  const [skipped, setSkipped] = useState(false);
+  useEffect(() => {
+    if (!skipped) return;
+    const timer = setTimeout(() => setSkipped(false), SKIPPED_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [skipped]);
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
       state: s,
@@ -108,12 +118,12 @@ export function ChatBottomBar({
     );
   }
 
-  // Typing a free-text reply abandons the active card. onSend resets interaction
-  // state (clearing dismissals); dismissing afterwards re-marks the gate as
-  // dismissed/rejected so the card doesn't flash back before the worker unblocks.
   const handleSend = (text: string, files?: File[]) => {
-    void onSend(text, files);
-    dismissActiveCard?.();
+    onSend(text, files);
+    if (dismissActiveCard) {
+      dismissActiveCard();
+      setSkipped(true);
+    }
   };
 
   const minimal = recede === true && !activeCard && !composerEngaged;
@@ -121,31 +131,47 @@ export function ChatBottomBar({
   return (
     <div className="flex flex-col gap-2">
       {activeCard}
-      <div
-        className={cn(
+      <AnimatePresence initial={false}>
+        {skipped && !activeCard && (
+          <motion.div
+            key="skipped"
+            role="status"
+            className="flex items-center gap-1.5 px-1 text-xs text-gray-11"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <CircleSlash className="size-3" />
+            {t('Skipped')}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <ChatInput
+        isStreaming={activeCard ? false : isStreaming}
+        replying={isStreaming}
+        replyStopped={replyStopped}
+        onSend={handleSend}
+        onStop={onStop}
+        onInputChange={onInputChange}
+        minimalUntilFocus={recede === true && !activeCard}
+        onFocusChange={setComposerEngaged}
+        placeholder={
+          activeCard
+            ? t('Answer the card above, or reply to change the plan')
+            : placeholder ?? t('Reply...')
+        }
+        rightActions={modelPicker}
+        sendBlockedReason={sendBlockedReason}
+        draftKey={draftKey}
+        banner={banner}
+        frameClassName={cn(
           'overflow-hidden rounded-xl border transition-colors',
           minimal
             ? 'border-transparent bg-transparent hover:bg-gray-3/30'
             : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
         )}
-      >
-        {banner}
-        <ChatInput
-          isStreaming={activeCard ? false : isStreaming}
-          onSend={handleSend}
-          onStop={onStop}
-          onInputChange={onInputChange}
-          minimalUntilFocus={recede === true && !activeCard}
-          onFocusChange={setComposerEngaged}
-          placeholder={
-            activeCard
-              ? t('Or reply in your own words')
-              : placeholder ?? t('Reply...')
-          }
-          rightActions={modelPicker}
-          sendBlockedReason={sendBlockedReason}
-        />
-      </div>
+      />
     </div>
   );
 }
@@ -223,4 +249,8 @@ type ChatBottomBarProps = {
   placeholder?: string;
   banner?: ReactNode;
   recede?: boolean;
+  replyStopped?: boolean;
+  draftKey?: string;
 };
+
+const SKIPPED_VISIBLE_MS = 2500;
