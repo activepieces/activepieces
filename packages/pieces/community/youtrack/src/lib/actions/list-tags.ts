@@ -39,8 +39,8 @@ export const listTagsAction = createAction({
         name: tag['name'],
         owner_name: owner['name'] ?? null,
         owner_id: owner['id'] ?? null,
-        visible_for_name: youtrackClient.recordOf(tag['visibleFor'])['name'] ?? null,
-        updateable_by_name: youtrackClient.recordOf(tag['updateableBy'])['name'] ?? null,
+        visible_for_name: youtrackClient.recordOf(tag['visibleFor'])['name'] ?? 'Only me',
+        updateable_by_name: youtrackClient.recordOf(tag['updateableBy'])['name'] ?? 'Only me',
         untag_on_resolve: tag['untagOnResolve'] ?? false,
       };
     });

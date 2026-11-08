@@ -308,6 +308,20 @@ describe('download redirects', () => {
   });
 });
 
+describe('list_tags', () => {
+  it('keeps "Only me" for visibility and edit rights when YouTrack sends no group', async () => {
+    ok([
+      { id: '6-1', name: 'private', visibleFor: null, updateableBy: null },
+      { id: '6-2', name: 'shared', visibleFor: { id: '3-1', name: 'All Users' }, updateableBy: { id: '3-2', name: 'Developers' } },
+    ]);
+    const out = await call({ fn: listTagsAction.run, propsValue: {} });
+    expect(out).toEqual([
+      expect.objectContaining({ id: '6-1', visible_for_name: 'Only me', updateable_by_name: 'Only me' }),
+      expect.objectContaining({ id: '6-2', visible_for_name: 'All Users', updateable_by_name: 'Developers' }),
+    ]);
+  });
+});
+
 describe('existing list limits stay lenient (ISSUE-187)', () => {
   const page = ({ count, offset = 0 }: { count: number; offset?: number }) => Array.from({ length: count }, (_, i) => ({ id: `6-${offset + i}`, name: `t${offset + i}` }));
 
@@ -522,10 +536,10 @@ describe('existing actions', () => {
     expect(out).toEqual([expect.objectContaining({ field_name: 'Notes', added_values: 'new notes', comment_text: null })]);
   });
 
-  it('list_tags returns null instead of a fabricated "Only me"', async () => {
+  it('list_tags maps owner and paging, with "Only me" when the tag has no group', async () => {
     ok([{ id: '6-1', name: 't', owner: { id: '1-1', name: 'A' }, untagOnResolve: false }]);
     const out = await call({ fn: listTagsAction.run, propsValue: { limit: 10 } });
-    expect(out).toEqual([{ id: '6-1', name: 't', owner_name: 'A', owner_id: '1-1', visible_for_name: null, updateable_by_name: null, untag_on_resolve: false }]);
+    expect(out).toEqual([{ id: '6-1', name: 't', owner_name: 'A', owner_id: '1-1', visible_for_name: 'Only me', updateable_by_name: 'Only me', untag_on_resolve: false }]);
     expect(req(0).queryParams).toMatchObject({ $top: '11', $skip: '0' });
   });
 
