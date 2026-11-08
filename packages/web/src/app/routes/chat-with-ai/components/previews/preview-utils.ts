@@ -174,6 +174,98 @@ function baseFileName(fileName: string): string {
   return fileName.slice(0, fileName.length - ext.length - 1);
 }
 
+function isNumericCell(cell: string): boolean {
+  return NUMERIC_CELL.test(cell.trim());
+}
+
+function numericColumns(table: TableData): boolean[] {
+  return table.headers.map((_, column) => {
+    const cells = table.rows
+      .map((row) => row[column] ?? '')
+      .filter((cell) => cell.trim() !== '');
+    return cells.length > 0 && cells.every(isNumericCell);
+  });
+}
+
+function filterRows({
+  rows,
+  query,
+}: {
+  rows: string[][];
+  query: string;
+}): string[][] {
+  const needle = query.trim().toLowerCase();
+  if (needle === '') return rows;
+  return rows.filter((row) =>
+    row.some((cell) => cell.toLowerCase().includes(needle)),
+  );
+}
+
+function sortRows({
+  rows,
+  column,
+  direction,
+  numeric,
+}: {
+  rows: string[][];
+  column: number;
+  direction: SortDirection;
+  numeric: boolean;
+}): string[][] {
+  const factor = direction === 'asc' ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    const left = a[column] ?? '';
+    const right = b[column] ?? '';
+    if (left === '' || right === '') {
+      return left === right ? 0 : left === '' ? 1 : -1;
+    }
+    const order = numeric
+      ? toNumber(left) - toNumber(right)
+      : left.localeCompare(right, undefined, { numeric: true });
+    return order * factor;
+  });
+}
+
+function toNumber(cell: string): number {
+  return Number(cell.replace(/[^\d.-]/g, ''));
+}
+
+function readableFileType({
+  mediaType,
+  fileName,
+}: {
+  mediaType: string;
+  fileName: string;
+}): string | null {
+  const ext = fileExtension(fileName);
+  if (/^[a-z0-9]{1,5}$/.test(ext)) return ext.toUpperCase();
+  const subtype = mediaType.toLowerCase().split(';')[0].split('/')[1] ?? '';
+  return MEDIA_SUBTYPE_LABELS[subtype.trim()] ?? null;
+}
+
+const NUMERIC_CELL = /^[-+]?[$€£¥]?\s?[-+]?\d[\d,]*(\.\d+)?\s?[%kKmMbB]?$/;
+
+const MEDIA_SUBTYPE_LABELS: Record<string, string> = {
+  pdf: 'PDF',
+  zip: 'ZIP',
+  csv: 'CSV',
+  json: 'JSON',
+  html: 'HTML',
+  plain: 'TXT',
+  markdown: 'MD',
+  png: 'PNG',
+  jpeg: 'JPEG',
+  gif: 'GIF',
+  webp: 'WEBP',
+  'svg+xml': 'SVG',
+  xml: 'XML',
+  'vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+  'vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+  'vnd.openxmlformats-officedocument.presentationml.presentation': 'PPTX',
+  'vnd.ms-excel': 'XLS',
+  msword: 'DOC',
+};
+
 export const previewUtils = {
   detectPreviewKind,
   extractTableFromNode,
@@ -185,6 +277,10 @@ export const previewUtils = {
   detectFileKind,
   baseFileName,
   isLikelyDocument,
+  numericColumns,
+  filterRows,
+  sortRows,
+  readableFileType,
 };
 
 export type PreviewKind =
@@ -196,6 +292,8 @@ export type PreviewKind =
   | 'markdown'
   | 'mermaid'
   | 'code';
+
+export type SortDirection = 'asc' | 'desc';
 
 export type TableData = {
   headers: string[];

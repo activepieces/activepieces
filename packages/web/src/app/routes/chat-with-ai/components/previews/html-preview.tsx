@@ -1,33 +1,30 @@
 import { t } from 'i18next';
-import { Code2, ExternalLink, FileCode2, Eye } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { AppWindow } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { DownloadButton } from '@/components/custom/download-button';
-import { CodeBlockCode } from '@/components/prompt-kit/code-block';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
-import { PreviewCard, PreviewIconButton } from './preview-card';
+import {
+  buildDownloadAction,
+  PreviewCard,
+  useCopyAction,
+  useOpenInNewTabAction,
+} from './preview-card';
+import {
+  PreviewCodeBody,
+  PreviewCodeTab,
+  PreviewCodeTabs,
+  PreviewWell,
+} from './preview-code-tabs';
 
-function useDebouncedValue<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-
-  return debounced;
-}
-
-function HtmlFrame({ html, className }: { html: string; className?: string }) {
-  const stableHtml = useDebouncedValue(html, 250);
+export function HtmlFrame({ html, className }: HtmlFrameProps) {
+  const stableHtml = useDebouncedValue({ value: html, delayMs: 250 });
   return (
     <iframe
       title={t('HTML preview')}
       sandbox=""
       srcDoc={stableHtml}
-      className={className ?? 'h-[360px] w-full border-0 bg-white'}
+      className={cn('h-[360px] w-full border-0 bg-white', className)}
     />
   );
 }
@@ -41,74 +38,57 @@ export function HtmlPreview({
   label?: string;
   fileName?: string;
 }) {
-  const [tab, setTab] = useState<'preview' | 'code'>('preview');
-  const blobUrlRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-    };
-  }, []);
-
-  const openInNewTab = () => {
-    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-    const blob = new Blob([html], { type: 'text/html' });
-    blobUrlRef.current = URL.createObjectURL(blob);
-    window.open(blobUrlRef.current, '_blank', 'noopener,noreferrer');
-  };
-
-  const actions = (
-    <>
-      <PreviewIconButton
-        icon={ExternalLink}
-        label={t('Open in new tab')}
-        onClick={openInNewTab}
-      />
-      <CopyButton textToCopy={html} variant="ghost" size="icon-sm" />
-      <DownloadButton
-        fileName={fileName}
-        textToDownload={html}
-        mimeType="text/html"
-        extension="html"
-        variant="ghost"
-        size="icon-sm"
-      />
-    </>
-  );
+  const [tab, setTab] = useState<PreviewCodeTab>('preview');
+  const openAction = useOpenInNewTabAction({
+    content: html,
+    mimeType: 'text/html',
+  });
+  const copyAction = useCopyAction(html);
+  const downloadAction = buildDownloadAction({
+    fileName,
+    content: html,
+    mimeType: 'text/html',
+    extension: 'html',
+  });
 
   return (
     <PreviewCard
-      icon={FileCode2}
-      label={label ?? t('HTML template')}
-      actions={actions}
-      toolbar={
-        <div className="border-b border-gray-6 px-3 py-2">
-          <Tabs
-            value={tab}
-            onValueChange={(v) => setTab(v as 'preview' | 'code')}
-          >
-            <TabsList size="sm">
-              <TabsTrigger value="preview" size="sm" className="gap-1.5">
-                <Eye className="size-3.5" />
-                {t('Preview')}
-              </TabsTrigger>
-              <TabsTrigger value="code" size="sm" className="gap-1.5">
-                <Code2 className="size-3.5" />
-                {t('Code')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-      }
-      renderExpanded={() => (
-        <HtmlFrame html={html} className="h-full w-full border-0 bg-white" />
-      )}
+      icon={AppWindow}
+      label={label ?? t('HTML page')}
+      meta={label ? t('HTML page') : undefined}
+      actions={[openAction, copyAction, downloadAction]}
+      switcher={<PreviewCodeTabs value={tab} onValueChange={setTab} />}
+      renderExpanded={() => <HtmlFrame html={html} className="h-full" />}
     >
       {tab === 'preview' ? (
-        <HtmlFrame html={html} />
+        <PreviewWell>
+          <HtmlFrame html={html} className="rounded-lg border border-gray-5" />
+        </PreviewWell>
       ) : (
-        <CodeBlockCode code={html} language="html" className="max-h-[360px]" />
+        <PreviewCodeBody code={html} language="html" />
       )}
     </PreviewCard>
   );
 }
+
+function useDebouncedValue<T>({
+  value,
+  delayMs,
+}: {
+  value: T;
+  delayMs: number;
+}): T {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+
+  return debounced;
+}
+
+type HtmlFrameProps = {
+  html: string;
+  className?: string;
+};

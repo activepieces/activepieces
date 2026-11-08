@@ -2,12 +2,64 @@ import { t } from 'i18next';
 import { Mail } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { DownloadButton } from '@/components/custom/download-button';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import { cn } from '@/lib/utils';
 
-import { PreviewCard } from './preview-card';
+import {
+  buildDownloadAction,
+  PreviewCard,
+  useCopyAction,
+} from './preview-card';
+
+export function EmailPreview({
+  content,
+  label,
+  fileName = 'email',
+  streaming = false,
+}: {
+  content: string;
+  label?: string;
+  fileName?: string;
+  streaming?: boolean;
+}) {
+  const { subject, body } = useMemo(() => parseEmail(content), [content]);
+  const copyAction = useCopyAction(content);
+  const downloadAction = buildDownloadAction({
+    fileName,
+    content,
+    mimeType: 'text/plain',
+    extension: 'txt',
+  });
+
+  const emailBody = (
+    <div className="text-sm">
+      <Markdown isAnimating={streaming}>{body}</Markdown>
+    </div>
+  );
+
+  return (
+    <PreviewCard
+      icon={Mail}
+      label={subject || label || t('Email')}
+      meta={t('Email draft')}
+      actions={[copyAction, downloadAction]}
+      renderExpanded={
+        streaming
+          ? undefined
+          : () => <div className="px-6 py-4">{emailBody}</div>
+      }
+    >
+      <div
+        className={cn(
+          'py-3 pl-14 pr-4 @max-chat-narrow/chat:pl-3',
+          !streaming && 'max-h-[420px] overflow-auto',
+        )}
+      >
+        {emailBody}
+      </div>
+    </PreviewCard>
+  );
+}
 
 function parseEmail(content: string): { subject: string; body: string } {
   const lines = content.split('\n');
@@ -25,61 +77,4 @@ function parseEmail(content: string): { subject: string; body: string } {
     }
   }
   return { subject: '', body: content.trim() };
-}
-
-export function EmailPreview({
-  content,
-  label,
-  fileName = 'email',
-  streaming = false,
-}: {
-  content: string;
-  label?: string;
-  fileName?: string;
-  streaming?: boolean;
-}) {
-  const { subject, body } = useMemo(() => parseEmail(content), [content]);
-
-  const actions = (
-    <>
-      <CopyButton textToCopy={content} variant="ghost" size="icon-sm" />
-      <DownloadButton
-        fileName={fileName}
-        textToDownload={content}
-        mimeType="text/plain"
-        extension="txt"
-        variant="ghost"
-        size="icon-sm"
-      />
-    </>
-  );
-
-  const emailBody = (
-    <div className="px-4 py-3">
-      {subject && (
-        <div className="mb-3 border-b border-gray-6 pb-3">
-          <span className="text-xs font-medium text-gray-11">
-            {t('Subject')}
-          </span>
-          <p className="mt-0.5 text-sm font-semibold">{subject}</p>
-        </div>
-      )}
-      <div className="text-sm">
-        <Markdown isAnimating={streaming}>{body}</Markdown>
-      </div>
-    </div>
-  );
-
-  return (
-    <PreviewCard
-      icon={Mail}
-      label={label ?? t('Email')}
-      actions={actions}
-      renderExpanded={streaming ? undefined : () => emailBody}
-    >
-      <div className={cn(!streaming && 'max-h-[420px] overflow-auto')}>
-        {emailBody}
-      </div>
-    </PreviewCard>
-  );
 }
