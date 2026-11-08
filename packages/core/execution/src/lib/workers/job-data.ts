@@ -320,6 +320,13 @@ export const ResolvedAgentFlowTool = z.object({
 })
 export type ResolvedAgentFlowTool = z.infer<typeof ResolvedAgentFlowTool>
 
+export const ResolvedAgentAgentTool = z.object({
+    toolName: z.string(),
+    agentId: z.string(),
+    description: z.string(),
+})
+export type ResolvedAgentAgentTool = z.infer<typeof ResolvedAgentAgentTool>
+
 export const ExecuteAgentRunJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_AGENT_RUN),
@@ -338,6 +345,7 @@ export const ExecuteAgentRunJobData = z.object({
     waitpointId: z.string().optional(),
     tools: z.array(AgentTool).optional(),
     flowTools: z.array(ResolvedAgentFlowTool).optional(),
+    agentTools: z.array(ResolvedAgentAgentTool).optional(),
     structuredOutput: z.array(AgentOutputField).optional(),
     maxSteps: z.number().int().positive().optional(),
     provider: z.enum(AIProviderName).optional(),

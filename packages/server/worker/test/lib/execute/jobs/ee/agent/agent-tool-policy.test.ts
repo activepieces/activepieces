@@ -19,6 +19,7 @@ const GROUPS: AgentToolGroups = {
     mcp: toolSet('ap_create_flow', 'ap_test_flow', 'ap_research_pieces', 'ap_list_connections'),
     configuredPiece: toolSet('gmail_find_email'),
     configuredFlow: toolSet('run_my_flow'),
+    configuredAgent: toolSet('ask_research_agent'),
     knowledgeBase: toolSet('search_handbook'),
     completion: toolSet('ap_return_output'),
 }
@@ -96,6 +97,7 @@ describe('what the agent builder may reach', () => {
 
         expect(names).not.toContain('gmail_find_email')
         expect(names).not.toContain('run_my_flow')
+        expect(names).not.toContain('ask_research_agent')
         expect(names).not.toContain('search_handbook')
         expect(names).not.toContain('ap_return_output')
     })
@@ -107,6 +109,7 @@ describe('what an agent conversation may reach', () => {
 
         expect(names).toContain('gmail_find_email')
         expect(names).toContain('run_my_flow')
+        expect(names).toContain('ask_research_agent')
         expect(names).toContain('search_handbook')
         expect(names).toContain('ap_return_output')
     })

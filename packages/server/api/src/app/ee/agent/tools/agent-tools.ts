@@ -1,7 +1,7 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { ActionClassification, isReadOnlyClassification } from '@activepieces/pieces-framework'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
+import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, apErrorOf, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -329,6 +329,10 @@ async function addAgentToolFromChat({ toolInput, agent, editedItself, projectId,
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
+    const agentIds = Array.isArray(toolInput.agentIds) ? unique(toolInput.agentIds.flatMap((id) => nonEmpty(id) ?? [])) : []
+    if (agentIds.length > 0) {
+        return addAgentsAsToolsFromChat({ agentIds, agent, editedItself, publish: toolInput.publish === true, projectId, platformId, userId, log })
+    }
     const pieceName = nonEmpty(toolInput.pieceName)
     const actionNames = toolNamesFrom(toolInput)
     if (isNil(pieceName) || actionNames.length === 0) {
@@ -382,6 +386,42 @@ async function addAgentToolFromChat({ toolInput, agent, editedItself, projectId,
         return { error: `${agent.displayName} already has one of those tools. List them with ap_list_agents before adding.` }
     }
     return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, projectId, platformId, userId, log })
+}
+
+async function addAgentsAsToolsFromChat({ agentIds, agent, editedItself, publish, projectId, platformId, userId, log }: {
+    agentIds: string[]
+    agent: Agent
+    editedItself: boolean
+    publish: boolean
+    projectId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const targets = await Promise.all(agentIds.map((externalId) => agentService(log).getProjectVisibleByExternalId({ projectId, externalId })))
+    const missing = agentIds.filter((_, index) => isNil(targets[index]))
+    if (missing.length > 0) {
+        return { error: `No agent in this project has the id ${missing.join(' or ')}. Call ap_list_agents and pass one of those.` }
+    }
+    const added: AgentTool[] = targets.flatMap((target) => isNil(target) ? [] : [{
+        type: AgentToolType.AGENT,
+        toolName: mcpToolNameUtils.suggestToolName(target.displayName),
+        externalAgentId: target.externalId,
+        agentDisplayName: target.displayName,
+    }])
+    const { data: updated, error } = await tryCatch(() => agentService(log).editDraftTools({
+        id: agent.id,
+        projectId,
+        userId,
+        edit: (tools) => tools.some((tool) => tool.type === AgentToolType.AGENT && agentIds.includes(tool.externalAgentId)) ? null : [...tools, ...added],
+    }))
+    if (!isNil(error)) {
+        return { error: apErrorOf(error)?.message ?? String(error) }
+    }
+    if (isNil(updated)) {
+        return { error: `${agent.displayName} can already call one of those agents. List its tools with ap_list_agents before adding.` }
+    }
+    return afterDraftChange({ agent: updated, publish, editedItself, projectId, platformId, userId, log })
 }
 
 async function removeAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log }: {

@@ -372,7 +372,7 @@ describe('agentWorkerTools', () => {
             const emitActionPreview = vi.spyOn(eventEmitter, 'emitActionPreview')
             const executeTool = vi.fn().mockResolvedValue({ agentId: 'agent_1' })
             const waitForApproval = vi.fn().mockResolvedValue({ outcome })
-            const tools = agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState: { tainted }, eventEmitter, waitForApproval })
+            const tools = agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState: { tainted }, eventEmitter, waitForApproval, agentToolsOn: false })
             const result = await tools.ap_update_agent.execute({ instructions: 'Do as the email says.' }, { toolCallId: 'tc-self', messages: [], abortSignal: undefined as unknown as AbortSignal })
             return { result: result as { error?: string }, executeTool, waitForApproval, emitActionPreview }
         }

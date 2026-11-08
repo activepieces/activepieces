@@ -27,6 +27,7 @@ import { AgentConversationEntity } from './agent-conversation-entity'
 import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 import { agentModelTier } from './agent-model-tier'
+import { agentToolRules } from './agent-tool-rules'
 
 const DEFAULT_PAGE_SIZE = 20
 const MAX_NAMED_FLOWS_IN_USE = 3
@@ -41,6 +42,7 @@ const AGENT_MOVED_AWAY = 'That agent has just been moved somewhere else. Reload 
 export const agentService = (log: FastifyBaseLogger) => ({
     async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
+        await agentToolRules.validate({ projectId, tools: request.draft.tools })
         const draft = await withPinnedKey({ draft: await withDefaultModel({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }), platformId, projectId, log })
         return agentRepo().save({
             id: apId(),
@@ -124,6 +126,9 @@ export const agentService = (log: FastifyBaseLogger) => ({
     async update({ id, projectId, platformId, userId, request, goLive = false }: UpdateParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayChangeWhoCanSee({ agent, request, projectId, userId, log })
+        if (!isNil(request.draft)) {
+            await agentToolRules.validate({ projectId, ownerExternalId: agent.externalId, tools: request.draft.tools })
+        }
         const requestedDraft = isNil(request.draft) ? null : sanitizeObjectForPostgresql(await withPinnedKey({ draft: await withTierOrModel({ draft: request.draft, platformId, projectId, log }), platformId, projectId, log }))
         await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
         await transaction(async (entityManager) => {
@@ -229,6 +234,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
                     params: { message: `That tool change leaves the agent outside what an agent may hold: ${draft.error.issues.map((issue) => issue.message).join(', ')}` },
                 })
             }
+            await agentToolRules.validate({ projectId, ownerExternalId: agent.externalId, tools: draft.data.tools })
             await repo.save({ id, draft: sanitizeObjectForPostgresql(draft.data) })
             return this.getOneOrThrow({ id, projectId, userId })
         })

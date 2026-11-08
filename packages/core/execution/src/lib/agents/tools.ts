@@ -1,4 +1,5 @@
 export {
+    AgentAgentTool,
     AgentFlowTool,
     AgentKnowledgeBaseTool,
     AgentMcpTool,

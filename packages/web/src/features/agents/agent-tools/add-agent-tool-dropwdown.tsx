@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Hammer, Workflow } from 'lucide-react';
+import { Bot, Hammer, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { agentToolsGate } from './lib/agent-tools-gate';
+import { useAgentToolDialogStore } from './stores/agents-tools';
 import { useFlowToolDialogStore } from './stores/flows-tools';
 import { useMcpToolDialogStore } from './stores/mcp-tools';
 import { usePieceToolsDialogStore } from './stores/pieces-tools';
@@ -30,6 +32,8 @@ export const AddToolDropdown = ({
   const { setShowAddFlowDialog } = useFlowToolDialogStore();
   const { openAddPieceToolDialog } = usePieceToolsDialogStore();
   const { setShowAddMcpDialog } = useMcpToolDialogStore();
+  const { setShowAddAgentDialog } = useAgentToolDialogStore();
+  const agentToolsOn = agentToolsGate.useAgentToolsOn();
 
   return (
     <DropdownMenu
@@ -58,6 +62,13 @@ export const AddToolDropdown = ({
           <McpSvg className="size-3.5 me-2" />
           <span>{t('Mcp server')}</span>
         </DropdownMenuItem>
+
+        {agentToolsOn && (
+          <DropdownMenuItem onSelect={() => setShowAddAgentDialog(true)}>
+            <Bot className="size-3.5 me-2" />
+            <span>{t('Agent')}</span>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
