@@ -8,6 +8,17 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### ActiveCampaign 0.2.0: the existing actions are no longer AI agent tools, and webhook triggers skip duplicate deliveries
+
+The 7 existing ActiveCampaign actions are now shown only in the flow builder: Create Contact, Update Contact, Add Tag to Contact, Add Contact to Account, Create Account, Update Account and Subscribe or Unsubscribe Contact From List. AI agents and MCP clients get new tools instead: **Create or Update Contact (AI)** (replaces Create Contact and Update Contact), **Add Tag to Contact (AI)**, **Associate Contact with Account (AI)**, **Create Account (AI)**, **Update Account (AI)**, and **Subscribe Contact to List** plus **Unsubscribe Contact from List** (together they replace Subscribe or Unsubscribe Contact From List). The new tools take IDs as text and accept a contact's email in place of its ID.
+
+The ActiveCampaign webhook triggers now ignore a delivery whose content matches one received in the previous 15 minutes (same event type, event time, records and changed fields). ActiveCampaign sends no delivery ID, so two genuinely separate events with identical content in the same second now run the flow once.
+
+#### What you need to do
+
+- If an agent or MCP client used one of the 7 actions as a tool, switch it to the matching new tool listed above.
+- Flow steps that use these actions keep working unchanged. Steps keep running on the version they were built with until you upgrade them.
+
 #### Rendex 0.2.0: Render to Image is no longer an agent tool
 
 From Rendex 0.2.0, **Render to Image** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Render Screenshot** tool instead, which takes the page as one of URL, HTML or Markdown.
