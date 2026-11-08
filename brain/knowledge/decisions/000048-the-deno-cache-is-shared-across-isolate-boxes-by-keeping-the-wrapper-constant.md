@@ -20,7 +20,7 @@ The wrapper source used to embed a `nanoid()` marker and `JSON.stringify(inputs)
 
 A constant wrapper removes the write instead of permitting it. After the first fill, no run has anything new to emit, so `644` files and `755` directories serve every UID, and a changed step costs one normal run rather than a cold start. The marker is still unguessable by user code because it is created after `console.log` has been captured, and user code cannot forge the result line.
 
-The rejected option was to open the whole cache tree with a recursive `chmod a+rwX` from the worker. It worked on the preview, but a legacy code step (`useDeno: false`) runs in-process with raw filesystem access and could replace a cache entry with a symlink between the worker's `readdir` and its `chmod`; the root worker would then follow the link and change the mode of an arbitrary host file. A per-box cache subdirectory was also rejected: it multiplies the cold fills by the pool size and the cache is already per flow version.
+The rejected option was to open the whole cache tree with a recursive `chmod a+rwX` from the worker. It worked on the preview, but a legacy code step (`useDeno: false`) runs as a plain node child with the engine's own filesystem access and could replace a cache entry with a symlink between the worker's `readdir` and its `chmod`; the root worker would then follow the link and change the mode of an arbitrary host file. A per-box cache subdirectory was also rejected: it multiplies the cold fills by the pool size and the cache is already per flow version.
 
 ## Consequences
 
