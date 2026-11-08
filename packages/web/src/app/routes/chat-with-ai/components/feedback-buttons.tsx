@@ -13,8 +13,8 @@ import { FeedbackDialog } from './feedback-dialog';
 type Rating = 'up' | 'down';
 
 const BUTTON_CLASS =
-  'flex h-6 w-6 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8';
-const ACTIVE_CLASS = 'text-gray-12/80 hover:text-gray-12/80';
+  'flex size-7 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8';
+const ACTIVE_CLASS = 'text-gray-12 hover:text-gray-12';
 
 export function FeedbackButtons({
   conversationId,

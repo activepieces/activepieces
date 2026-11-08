@@ -8,7 +8,6 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -47,6 +46,8 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { ChatLine } from './components/chat-ui/chat-line';
+import { ChatStatusIcon } from './components/chat-ui/chat-status';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import { OnboardingWelcome } from './components/onboarding-welcome';
@@ -466,38 +467,34 @@ function ChatBoxContent({
                 )}
 
                 {wasCancelled && (
-                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
-                    <Square className="h-3 w-3 fill-current" />
-                    <span>{t('Response stopped')}</span>
-                  </div>
+                  <ChatLine
+                    icon={<ChatStatusIcon status="stopped" />}
+                    className="py-2 animate-in fade-in duration-200"
+                  >
+                    {t('You stopped this reply')}
+                  </ChatLine>
                 )}
 
                 {failed && (
                   <motion.div
-                    className={cn(
-                      'flex items-center gap-2 text-danger-11 text-sm',
-                      error &&
-                        'rounded-xl border border-danger-6 bg-danger-3 px-3 py-2',
-                    )}
+                    className="py-2"
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                   >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <ChatLine icon={<ChatStatusIcon status="failed" />}>
+                        {t("The last reply didn't finish")}
+                      </ChatLine>
+                      <Button variant="outline" size="xs" onClick={handleRetry}>
+                        {t('Try again')}
+                      </Button>
+                    </div>
                     {error && (
-                      <>
-                        <AlertTriangle className="h-4 w-4 shrink-0" />
-                        <span className="flex-1">{error}</span>
-                      </>
+                      <p className="ml-5.5 text-sm text-danger-11 break-words">
+                        {error}
+                      </p>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      className="text-danger-11 hover:text-danger-11 gap-1.5"
-                      onClick={handleRetry}
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      {t('Retry')}
-                    </Button>
                   </motion.div>
                 )}
 

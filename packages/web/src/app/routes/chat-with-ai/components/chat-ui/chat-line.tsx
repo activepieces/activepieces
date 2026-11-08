@@ -10,11 +10,14 @@ export function ChatLine({
   detail,
   logos,
   live,
-  tone = 'default',
   open,
   onToggle,
+  onClick,
+  tone = 'muted',
+  title,
   className,
 }: ChatLineProps) {
+  const interactive = Boolean(onToggle ?? onClick);
   const content = (
     <>
       {icon && (
@@ -29,8 +32,9 @@ export function ChatLine({
       ) : (
         <span
           className={cn(
-            'min-w-0 truncate text-sm',
-            tone === 'danger' ? 'text-danger-11' : 'text-gray-11',
+            'min-w-0 truncate text-sm transition-colors',
+            TONE_CLASS[tone],
+            interactive && tone === 'muted' && 'group-hover/line:text-gray-12',
           )}
         >
           {children}
@@ -38,7 +42,9 @@ export function ChatLine({
       )}
       {logos && <span className="flex shrink-0 items-center">{logos}</span>}
       {detail && (
-        <span className="shrink-0 text-sm text-gray-11">· {detail}</span>
+        <span className="min-w-0 shrink truncate text-sm text-gray-11">
+          · {detail}
+        </span>
       )}
       {onToggle && (
         <ChevronRight
@@ -53,17 +59,22 @@ export function ChatLine({
   );
   const lineClass = cn('flex min-w-0 items-center gap-2 py-1', className);
 
-  if (!onToggle) {
-    return <div className={lineClass}>{content}</div>;
+  if (!interactive) {
+    return (
+      <div title={title} className={lineClass}>
+        {content}
+      </div>
+    );
   }
   return (
     <button
       type="button"
-      aria-expanded={open}
-      onClick={onToggle}
+      title={title}
+      aria-expanded={onToggle ? open : undefined}
+      onClick={onToggle ?? onClick}
       className={cn(
         lineClass,
-        'w-fit max-w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
+        'group/line w-fit max-w-full cursor-pointer rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
       {content}
@@ -71,14 +82,24 @@ export function ChatLine({
   );
 }
 
+const TONE_CLASS: Record<ChatLineTone, string> = {
+  muted: 'text-gray-11',
+  danger: 'text-danger-11',
+  accent: 'text-accent-11',
+};
+
+type ChatLineTone = 'muted' | 'danger' | 'accent';
+
 type ChatLineProps = {
   icon?: ReactNode;
   children: ReactNode;
   detail?: ReactNode;
   logos?: ReactNode;
   live?: boolean;
-  tone?: 'default' | 'danger';
   open?: boolean;
   onToggle?: () => void;
+  onClick?: () => void;
+  tone?: ChatLineTone;
+  title?: string;
   className?: string;
 };

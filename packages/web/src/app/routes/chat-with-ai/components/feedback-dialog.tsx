@@ -2,6 +2,7 @@ import { AgentFeedbackReason } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -47,7 +48,10 @@ export function FeedbackDialog({
         reasons: [...reasons],
         comment: comment.trim() || undefined,
       }),
-    onSuccess: () => onOpenChange(false),
+    onSuccess: () => {
+      onOpenChange(false);
+      toast.success(t('Thanks for your feedback'));
+    },
   });
 
   const toggleReason = (reason: AgentFeedbackReason) => {
@@ -64,9 +68,9 @@ export function FeedbackDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-5 p-6 sm:max-w-xl">
+      <DialogContent className="gap-4 sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t('Share feedback')}</DialogTitle>
+          <DialogTitle>{t('What went wrong?')}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-wrap gap-2">
           {AgentFeedbackReason.options.map((reason) => {
@@ -76,10 +80,14 @@ export function FeedbackDialog({
                 key={reason}
                 type="button"
                 size="sm"
-                variant={selected ? 'secondary' : 'outline'}
+                variant="outline"
                 aria-pressed={selected}
                 onClick={() => toggleReason(reason)}
-                className={cn('rounded-full', selected && 'border-gray-12')}
+                className={cn(
+                  'font-normal',
+                  selected &&
+                    'border-accent-7 bg-accent-3 text-accent-11 hover:bg-accent-3 hover:text-accent-11',
+                )}
               >
                 {t(REASON_LABELS[reason])}
               </Button>
@@ -89,24 +97,29 @@ export function FeedbackDialog({
         <Textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder={t('Share details (optional)')}
+          placeholder={t('Tell us more (optional)')}
           maxLength={2000}
-          className="min-h-[96px] resize-y"
+          className="min-h-24 resize-y"
         />
-        <DialogFooter className="items-center gap-2 sm:justify-between">
-          {mutation.isError ? (
-            <span className="text-sm text-danger-11">
+        <DialogFooter className="items-center gap-2">
+          {mutation.isError && (
+            <span className="mr-auto text-sm text-danger-11">
               {t("Couldn't submit feedback. Please try again.")}
             </span>
-          ) : (
-            <span />
           )}
           <Button
             type="button"
-            onClick={() => mutation.mutate()}
-            disabled={mutation.isPending}
+            variant="outline"
+            onClick={() => onOpenChange(false)}
           >
-            {t('Submit')}
+            {t('Cancel')}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => mutation.mutate()}
+            loading={mutation.isPending}
+          >
+            {t('Send feedback')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,16 +1,14 @@
 import { t } from 'i18next';
 import { Brain, Layers, Volume2, VolumeOff } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
   Message,
   MessageAction,
   MessageActions,
 } from '@/components/prompt-kit/message';
-import { Source } from '@/components/prompt-kit/source';
 import { StreamingText } from '@/components/prompt-kit/streaming-text';
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -25,7 +23,6 @@ import { cn } from '@/lib/utils';
 
 import {
   buildMessageBlocks,
-  getLastThinkingSegment,
   MessageBlock,
   OutcomeCardBlock,
 } from '../lib/message-blocks';
@@ -43,6 +40,7 @@ import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ChatCard, ChatCardFold, ChatCardTile } from './chat-ui/chat-card';
 import { ChatStatusText } from './chat-ui/chat-status';
+import { ChatLine } from './chat-ui/chat-line';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
 import { FeedbackButtons } from './feedback-buttons';
@@ -50,6 +48,7 @@ import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
 import { LiveReasoning } from './live-reasoning';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
+import { MessageSources } from './message-sources';
 import { DocumentPreview } from './previews/document-preview';
 import { markdownPreviewComponents } from './previews/markdown-preview-components';
 import { previewUtils } from './previews/preview-utils';
@@ -58,19 +57,17 @@ import { ProjectPickerCard } from './project-picker-card';
 import { ShowcaseCard } from './showcase-card/showcase-card';
 import { ShowcaseTileData } from './showcase-card/showcase-tile';
 import { SubagentGroup } from './subagent-card';
-import { ToolShimmerPills } from './tool-shimmer-pills';
 
-const PROSE_CLASSES = 'max-w-none break-words';
+const PROSE_CLASSES = 'max-w-none break-words text-base';
 
 const ACTION_BUTTON_CLASS =
-  'flex h-6 w-6 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8';
+  'flex size-7 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8';
 
 const EMPTY_BUILD_IDS: ReadonlySet<string> = new Set();
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
   isStreaming,
-  isLastMessage = false,
   onSendPrompt,
   claimedBuildIds = EMPTY_BUILD_IDS,
   isResumed = false,
@@ -145,50 +142,14 @@ export const AssistantMessage = memo(function AssistantMessage({
           />
 
           {!isStreaming && sources.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 pt-2">
-              <motion.span
-                className="text-xs text-gray-11"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                {t('Sources')}
-              </motion.span>
-              {sources.map((source, i) => {
-                if (!source.href && !source.title) return null;
-                return (
-                  <motion.span
-                    key={source.key}
-                    className="inline-flex"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, delay: 0.1 + i * 0.06 }}
-                  >
-                    {source.href ? (
-                      <Source href={source.href} title={source.title} />
-                    ) : (
-                      <span className="inline-flex items-center rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs text-gray-12/80">
-                        {source.title}
-                      </span>
-                    )}
-                  </motion.span>
-                );
-              })}
-            </div>
+            <MessageSources sources={sources} />
           )}
 
-          <MessageActions
-            className={cn(
-              'gap-1 transition-opacity',
-              isLastMessage
-                ? 'opacity-100'
-                : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',
-            )}
-          >
+          <MessageActions className="-ml-1.5 gap-0.5 pt-1">
             {hasContent && !isStreaming && (
               <>
                 <MessageAction tooltip={t('Copy')}>
-                  <CopyIconButton textToCopy={fullText} className="h-6 w-6" />
+                  <CopyIconButton textToCopy={fullText} className="size-7" />
                 </MessageAction>
                 {isTtsSupported && (
                   <MessageAction
@@ -196,6 +157,9 @@ export const AssistantMessage = memo(function AssistantMessage({
                   >
                     <button
                       type="button"
+                      aria-label={
+                        isSpeaking ? t('Stop reading') : t('Read aloud')
+                      }
                       onClick={() => (isSpeaking ? stop() : speak(fullText))}
                       className={cn(
                         ACTION_BUTTON_CLASS,
@@ -247,7 +211,6 @@ function MessageBlocks({
   setIsAccordionOpen: (open: boolean) => void;
   isResumed?: boolean;
 }) {
-  const prefersReducedMotion = useReducedMotion();
   const doneTitles = useMemo(
     () => buildDoneTitles(message.parts),
     [message.parts],
@@ -287,31 +250,9 @@ function MessageBlocks({
               !hasTextAfter &&
               !hasSkeletonAfter &&
               !hasBuildAfter;
-            const lastStep =
-              block.steps.findLast((step) => step.kind !== 'reasoning') ?? null;
-            // Collapsed view = ONLY the last segment: the last thought and the
-            // tools after it. Earlier segments live in the expanded accordion.
-            // The thought lives in the first tool's `description`, so derive the
-            // segment from that — not from `thinking-status` steps (which only
-            // exist for a dangling thought).
-            // The thought MUST come from this round's own block — never borrow
-            // a previous round's thought (the segments are isolated by text).
-            const lastSegment = getLastThinkingSegment(block.steps);
-            const lastSegmentToolSteps = lastSegment.toolSteps;
-            const lastThinkingStatus = lastSegment.thought;
-            // One stable identity per thought group: constant while a segment
-            // streams in more tools, changes on a new thought. When it changes
-            // (or the live phase ends) AnimatePresence swings the OLD group up
-            // into the title to hide it; the new group quietly fades in.
-            const segmentKey =
-              lastThinkingStatus ??
-              lastSegmentToolSteps[0]?.part.toolCallId ??
-              'segment';
             const isLive = isMessageStreaming && !isAccordionOpen;
             const showLiveReasoning =
               isLive && block.trailingReasoningText.length > 0;
-            const showLiveGroup =
-              isLive && Boolean(lastStep) && !showLiveReasoning;
             return (
               <div
                 key={`thinking-${i}`}
@@ -331,33 +272,6 @@ function MessageBlocks({
                   }
                   onOpenChange={setIsAccordionOpen}
                 />
-                <AnimatePresence initial={false}>
-                  {showLiveGroup && (
-                    <motion.div
-                      key={segmentKey}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={
-                        prefersReducedMotion
-                          ? { duration: 0.12 }
-                          : {
-                              height: {
-                                duration: 0.3,
-                                ease: [0.32, 0.72, 0, 1],
-                              },
-                              opacity: { duration: 0.2, ease: 'easeOut' },
-                            }
-                      }
-                      style={{ overflow: 'hidden' }}
-                    >
-                      <ToolShimmerPills
-                        toolSteps={lastSegmentToolSteps}
-                        lastThinkingStatus={lastThinkingStatus}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
                 <AnimatePresence initial={false}>
                   {showLiveReasoning && (
                     <LiveReasoning
@@ -431,17 +345,13 @@ function MessageBlocks({
             );
           case 'memory-saved':
             return (
-              <div
+              <ChatLine
                 key={`memory-${i}`}
-                className="flex items-center gap-1.5 py-1 text-xs text-gray-11"
+                icon={<Brain className="size-3.5 text-gray-11" />}
+                title={block.memory}
               >
-                <Brain className="h-3.5 w-3.5 shrink-0" />
-                <span className="shrink-0">{t('Memory updated')}</span>
-                <span className="shrink-0 opacity-50">·</span>
-                <TextWithTooltip tooltipMessage={block.memory}>
-                  <span className="min-w-0 flex-1">{block.memory}</span>
-                </TextWithTooltip>
-              </div>
+                {t('Memory updated')}: <span>{block.memory}</span>
+              </ChatLine>
             );
           case 'action-receipt':
           case 'image':

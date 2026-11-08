@@ -28,13 +28,14 @@ export const CopyIconButton = forwardRef<
     <button
       ref={ref}
       type="button"
+      aria-label={copied ? t('Copied') : t('Copy')}
       {...rest}
       onClick={(event) => {
         rest.onClick?.(event);
         if (!event.defaultPrevented) handleCopy();
       }}
       className={cn(
-        'flex items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12',
+        'flex items-center justify-center rounded-md text-gray-11 transition-colors outline-none hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8',
         className,
       )}
     >
