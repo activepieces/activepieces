@@ -171,6 +171,15 @@ describe('client', () => {
     await expect(call({ fn: getIssueAction.run, propsValue: { issue: '2-1' } })).rejects.toThrow('could not reach https://example.youtrack.cloud');
   });
 
+  it('listAll returns a result of exactly maxItems after probing for one more entry', async () => {
+    ok(Array.from({ length: 100 }, (_, i) => ({ id: `t${i}` })));
+    ok(Array.from({ length: 100 }, (_, i) => ({ id: `u${i}` })));
+    ok([]);
+    const out = await youtrackClient.listAll({ auth: AUTH, path: '/tags', query: { fields: 'id' }, maxItems: 200, operation: 'list tags' });
+    expect(out).toHaveLength(200);
+    expect(req(2).queryParams).toMatchObject({ $top: '1', $skip: '200' });
+  });
+
   it('listAll throws at the cap instead of truncating', async () => {
     sendRequest.mockResolvedValue({ status: 200, headers: {}, body: Array.from({ length: 100 }, (_, i) => ({ id: `t${i}` })) });
     await expect(
@@ -548,6 +557,16 @@ describe('existing actions', () => {
     expect(req(1).redactBodyInErrors).toBe(true);
     expect(error).toBeInstanceOf(YoutrackApiError);
     expect(error).toMatchObject({ status: 413, responseBody: { error_description: 'Too large' } });
+  });
+});
+
+describe('list_projects paging', () => {
+  it('without a filter reads only the requested page from the server', async () => {
+    ok([{ id: '0-5', name: 'AP', shortName: 'AP' }, { id: '0-6', name: 'B', shortName: 'B' }, { id: '0-7', name: 'C', shortName: 'C' }]);
+    const out = await call({ fn: listProjectsAction.run, propsValue: { limit: 2, skip: 40 } });
+    expect(sendRequest).toHaveBeenCalledTimes(1);
+    expect(req(0).queryParams).toMatchObject({ $top: '3', $skip: '40' });
+    expect(out).toEqual({ items: [expect.objectContaining({ id: '0-5' }), expect.objectContaining({ id: '0-6' })], hasMore: true });
   });
 });
 

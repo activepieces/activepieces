@@ -5,6 +5,32 @@ import { youtrackClient } from '../common/client';
 import { listProjectsActionOutputSchema } from '../output-schemas';
 
 const MAX_PROJECTS = 2000;
+const PROJECT_FIELDS = 'id,name,shortName,description,archived,leader(id,login,name)';
+
+async function filteredPage({ auth, filter, limit, skip }: { auth: unknown; filter: string; limit: number; skip: number }): Promise<{ items: Record<string, unknown>[]; hasMore: boolean }> {
+  const projects = await youtrackClient.listAll({
+    auth,
+    path: '/admin/projects',
+    query: { fields: PROJECT_FIELDS },
+    maxItems: MAX_PROJECTS,
+    operation: 'list projects',
+  });
+  const matching = projects.filter((p) => [p['name'], p['shortName']].some((v) => typeof v === 'string' && v.toLowerCase().includes(filter)));
+  return { items: matching.slice(skip, skip + limit), hasMore: matching.length > skip + limit };
+}
+
+function projectRow(p: Record<string, unknown>): Record<string, unknown> {
+  const leader = userSummary(p['leader']);
+  return {
+    id: p['id'] ?? null,
+    name: p['name'] ?? null,
+    shortName: p['shortName'] ?? null,
+    description: p['description'] ?? null,
+    archived: p['archived'] ?? null,
+    leader_login: leader.login,
+    leader_name: leader.name,
+  };
+}
 
 export const listProjectsAction = createAction({
   auth: youtrackAuth,
@@ -34,30 +60,9 @@ export const listProjectsAction = createAction({
       ? 0
       : youtrackClient.nonNegativeInteger({ value: context.propsValue.skip, label: 'Skip' });
     const filter = youtrackClient.optionalText(context.propsValue.query)?.toLowerCase();
-    const projects = await youtrackClient.listAll({
-      auth: context.auth,
-      path: '/admin/projects',
-      query: { fields: 'id,name,shortName,description,archived,leader(id,login,name)' },
-      maxItems: MAX_PROJECTS,
-      operation: 'list projects',
-    });
-    const matching = filter === undefined
-      ? projects
-      : projects.filter((p) => [p['name'], p['shortName']].some((v) => typeof v === 'string' && v.toLowerCase().includes(filter)));
-    return {
-      items: matching.slice(skip, skip + limit).map((p) => {
-        const leader = userSummary(p['leader']);
-        return {
-          id: p['id'] ?? null,
-          name: p['name'] ?? null,
-          shortName: p['shortName'] ?? null,
-          description: p['description'] ?? null,
-          archived: p['archived'] ?? null,
-          leader_login: leader.login,
-          leader_name: leader.name,
-        };
-      }),
-      hasMore: matching.length > skip + limit,
-    };
+    const { items, hasMore } = filter === undefined
+      ? await youtrackClient.listPage({ auth: context.auth, path: '/admin/projects', query: { fields: PROJECT_FIELDS }, limit, skip, operation: 'list projects' })
+      : await filteredPage({ auth: context.auth, filter, limit, skip });
+    return { items: items.map(projectRow), hasMore };
   },
 });

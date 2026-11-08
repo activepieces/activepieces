@@ -376,9 +376,22 @@ async function listAll({ auth, path, query, maxItems, operation, pageSize, skip 
     collected.push(...batch);
     if (batch.length < size) return collected;
     if (collected.length >= maxItems) {
+      const hasMore = collected.length > maxItems || await hasEntryAt({ auth, path, query, skip: start + collected.length, operation });
+      if (!hasMore) return collected;
       throw new YoutrackCapError({ message: `YouTrack returned more than ${maxItems} entries while trying to ${operation}. Narrow the request.`, maxItems });
     }
   }
+}
+
+async function hasEntryAt({ auth, path, query, skip, operation }: { auth: unknown; path: string; query?: Record<string, QueryValue>; skip: number; operation: string }): Promise<boolean> {
+  const page = await request<unknown>({
+    auth,
+    method: HttpMethod.GET,
+    path,
+    query: { ...query, $top: 1, $skip: skip },
+    operation,
+  });
+  return records(page).length > 0;
 }
 
 class YoutrackCapError extends Error {
@@ -573,6 +586,40 @@ function parseDateOrDateTime({ value, label }: { value: unknown; label: string }
   return epoch;
 }
 
+export { YoutrackApiError, YoutrackCapError };
+
+export const youtrackClient = {
+  request,
+  send,
+  listPage,
+  listAll,
+  listUpTo,
+  lenientLimit,
+  download,
+  resolveDownloadUrl,
+  checkBaseUrl,
+  normalizeBaseUrl,
+  baseUrlOf,
+  connectionOf,
+  segment,
+  isDatabaseId,
+  isRecord,
+  records,
+  recordOf,
+  optionalText,
+  textOrNull,
+  numberOrNull,
+  booleanOrNull,
+  positiveInteger,
+  nonNegativeInteger,
+  boundedLimit,
+  parseDate,
+  parseDateOrDateTime,
+  vendorMessage,
+  verifiedTls,
+  TRANSFER_TIMEOUT_MS,
+};
+
 type QueryValue = string | number | boolean | undefined | null;
 
 type SendParams = {
@@ -619,38 +666,4 @@ type ListAllParams = {
   pageSize?: number;
   skip?: number;
   operation: string;
-};
-
-export { YoutrackApiError, YoutrackCapError };
-
-export const youtrackClient = {
-  request,
-  send,
-  listPage,
-  listAll,
-  listUpTo,
-  lenientLimit,
-  download,
-  resolveDownloadUrl,
-  checkBaseUrl,
-  normalizeBaseUrl,
-  baseUrlOf,
-  connectionOf,
-  segment,
-  isDatabaseId,
-  isRecord,
-  records,
-  recordOf,
-  optionalText,
-  textOrNull,
-  numberOrNull,
-  booleanOrNull,
-  positiveInteger,
-  nonNegativeInteger,
-  boundedLimit,
-  parseDate,
-  parseDateOrDateTime,
-  vendorMessage,
-  verifiedTls,
-  TRANSFER_TIMEOUT_MS,
 };

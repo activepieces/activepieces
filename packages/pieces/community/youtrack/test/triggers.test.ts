@@ -118,6 +118,31 @@ describe('new_issue', () => {
     expect(data.get('lastPoll')).toBe(CHECKPOINT + 498);
   });
 
+  it('pages past already-seen issues at the checkpoint so one newer issue after them is not held back forever', async () => {
+    const { store, data } = memoryStore({ lastPoll: CHECKPOINT });
+    ok({ profiles: { general: { timezone: { id: 'UTC' } } } });
+    const issues = [...Array.from({ length: 499 }, (_, i) => issue({ id: `OLD${i}`, created: CHECKPOINT })), issue({ id: 'NEW', created: CHECKPOINT + 500 })];
+    for (let page = 0; page < 10; page++) ok(issues.slice(page * 50, page * 50 + 50));
+    ok([]);
+    const out = await run({ trigger: newIssueTrigger, ctx: context({ store }) });
+    expect(out).toEqual([expect.objectContaining({ id: 'NEW' })]);
+    expect(data.get('lastPoll')).toBe(CHECKPOINT + 500);
+    expect(sendRequest.mock.calls[11][0].queryParams).toMatchObject({ $skip: '500' });
+  });
+
+  it('holds back trailing ties only among new issues once 500 new issues are collected', async () => {
+    const { store, data } = memoryStore({ lastPoll: CHECKPOINT });
+    ok({ profiles: { general: { timezone: { id: 'UTC' } } } });
+    const seen = Array.from({ length: 50 }, (_, i) => issue({ id: `OLD${i}`, created: CHECKPOINT }));
+    const fresh = Array.from({ length: 500 }, (_, i) => issue({ id: `N${i}`, created: i < 499 ? CHECKPOINT + 1 + i : CHECKPOINT + 2000 }));
+    const all = [...seen, ...fresh];
+    for (let page = 0; page < 11; page++) ok(all.slice(page * 50, page * 50 + 50));
+    const out = await run({ trigger: newIssueTrigger, ctx: context({ store }) });
+    expect(Array.isArray(out) ? out.length : 0).toBe(499);
+    expect(data.get('lastPoll')).toBe(CHECKPOINT + 499);
+    expect(sendRequest).toHaveBeenCalledTimes(12);
+  });
+
   it('test mode reads the newest page without a checkpoint', async () => {
     const { store } = memoryStore({});
     ok([issue({ id: 'N', created: 2 })]);
@@ -146,6 +171,19 @@ describe('updated_issue', () => {
     expect(sendRequest.mock.calls[1][0].queryParams.query).toBe('updated: 2026-11-05T10:00:00 .. * sort by: updated asc');
     expect(out).toEqual([expect.objectContaining({ id: 'EDIT' })]);
     expect(data.get('lastPoll')).toBe(CHECKPOINT + 9000);
+  });
+  it('does not stall when one real update follows a full page of issues already seen at the checkpoint', async () => {
+    const { store, data } = memoryStore({ lastPoll: CHECKPOINT });
+    ok({ profiles: { general: { timezone: { id: 'UTC' } } } });
+    const issues = [
+      ...Array.from({ length: 499 }, (_, i) => issue({ id: `OLD${i}`, created: CHECKPOINT - 100000, updated: CHECKPOINT })),
+      issue({ id: 'EDIT', created: CHECKPOINT - 100000, updated: CHECKPOINT + 700 }),
+    ];
+    for (let page = 0; page < 10; page++) ok(issues.slice(page * 50, page * 50 + 50));
+    ok([]);
+    const out = await run({ trigger: updatedIssueTrigger, ctx: context({ store }) });
+    expect(out).toEqual([expect.objectContaining({ id: 'EDIT' })]);
+    expect(data.get('lastPoll')).toBe(CHECKPOINT + 700);
   });
 });
 
