@@ -8,6 +8,23 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Fireberry 0.2.0: record actions are no longer AI agent tools, and their output changes
+
+**Create Record**, **Update Record**, **Delete Records** and **Find Records** are now shown only in the flow builder. AI agents and MCP clients get a separate set of agent actions instead: List Object Types, List Object Fields, List Picklist Values, Search Records, Get Record, Create Record, Update Record and Delete Record.
+
+After you upgrade a step:
+
+- Create Record and Update Record return `{ id, objectSystemName, record }` instead of the raw batch response.
+- Delete Records returns `{ deletedIds, deletedCount }`.
+- The **Record Created or Updated** trigger ignores its lookback setting (it is kept only so saved flows still load). It now tracks Fireberry's own timestamps, so it no longer re-sends records changed earlier the same day. Publishing the upgraded flow starts tracking at the newest record, so records created or updated between the last poll on 0.1.x and the publish are not sent. If more than 500 records change in the same second, Fireberry's API can return only the first 500 of them; the trigger sends those, skips the rest of that second, and the next poll fails once with an error that names the second.
+
+#### What you need to do
+
+- Agents that used the old Fireberry actions as tools: switch to the new agent actions.
+- If a later step read fields from the old Create or Update output, map `id` or `record` instead.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
 
 The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows. In **Update Product**, Availability, Exclude Tax, Enable Variants, Status and the new Non-Veg setting are now Yes/No choices, and a setting left empty keeps the product's current value instead of being set to off.
