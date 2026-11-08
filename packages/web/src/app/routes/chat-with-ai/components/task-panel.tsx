@@ -4,11 +4,11 @@ import { ChevronLeft, Maximize2, Minimize2, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { createContext, useEffect, useRef, useState } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import {
   ChatContainerContent,
   ChatContainerRoot,
 } from '@/components/prompt-kit/chat-container';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
   FaviconOrGlobe,
@@ -64,9 +64,7 @@ export function TaskPanel({
         )}
         <div className="flex min-w-0 flex-1 flex-col">
           <TextWithTooltip tooltipMessage={title}>
-            <p className="truncate text-sm font-medium text-gray-12">
-              {title}
-            </p>
+            <p className="truncate text-sm font-medium text-gray-12">{title}</p>
           </TextWithTooltip>
           <div className="flex min-w-0 items-center gap-1 text-xs text-gray-11">
             {tasks.length > 1 && (

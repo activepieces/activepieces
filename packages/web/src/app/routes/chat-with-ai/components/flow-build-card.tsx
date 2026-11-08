@@ -4,10 +4,7 @@ import { Workflow } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import {
-  BuildState,
-  chatStoreSelectors,
-} from '@/features/chat/lib/chat-store';
+import { BuildState, chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';

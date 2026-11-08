@@ -72,9 +72,12 @@ export function SubagentGroup({
                 '{count, plural, =1 {Working on a task} other {Working on # tasks at once}}',
                 { count: tasks.length },
               )
-            : t('{count, plural, =1 {Task finished} other {# tasks finished}}', {
-                count: tasks.length,
-              })
+            : t(
+                '{count, plural, =1 {Task finished} other {# tasks finished}}',
+                {
+                  count: tasks.length,
+                },
+              )
         }
         meta={
           needsCount > 0
@@ -134,7 +137,9 @@ function SubagentRow({
         )}
         onClick={onOpen}
       >
-        <ChatStatusIcon status={chatStatusUtils.fromSubagent(activity.status)} />
+        <ChatStatusIcon
+          status={chatStatusUtils.fromSubagent(activity.status)}
+        />
         <div className="min-w-0 flex-1">
           <TextWithTooltip tooltipMessage={activity.title}>
             <p className="truncate text-sm font-medium text-gray-12">
@@ -157,9 +162,7 @@ function needsYouRank(activity: SubagentActivity): number {
 }
 
 function worstStatus(statuses: ChatStatus[]): ChatStatus {
-  return (
-    STATUS_SEVERITY.find((status) => statuses.includes(status)) ?? 'done'
-  );
+  return STATUS_SEVERITY.find((status) => statuses.includes(status)) ?? 'done';
 }
 
 function resolveActivity({
