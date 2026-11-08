@@ -35,6 +35,7 @@ import {
   parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
+import { secretRequestUtils } from '../lib/secret-request';
 
 import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
@@ -53,6 +54,7 @@ import { previewUtils } from './previews/preview-utils';
 import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
 import { ResourceChips } from './resource-chip';
+import { SecretSavedLine } from './secret-request-card';
 import { ShowcaseCard } from './showcase-card/showcase-card';
 import { ShowcaseTileData } from './showcase-card/showcase-tile';
 import { SubagentGroup } from './subagent-card';
@@ -669,6 +671,11 @@ function DisplayToolCard({
           {...(onSendPrompt ? { onSendPrompt } : {})}
         />
       );
+    }
+    case 'ap_request_secret': {
+      const request = secretRequestUtils.parse(data);
+      if (!request || !secretRequestUtils.savedOutput(toolOutput)) return null;
+      return <SecretSavedLine request={request} />;
     }
     case 'ap_show_questions': {
       const answersText =

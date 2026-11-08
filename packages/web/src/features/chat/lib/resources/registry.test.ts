@@ -255,3 +255,48 @@ describe('resourceRegistry routes', () => {
     );
   });
 });
+
+describe('resourceRegistry settings and page refs', () => {
+  it('routes settings kinds without forcing a project for the platform', () => {
+    expect(
+      resourceRegistry.route({ kind: 'platform-settings', id: 'general' }),
+    ).toBe('/platform/general');
+    expect(
+      resourceRegistry.route({ kind: 'platform-settings', id: 'ai_providers' }),
+    ).toBe('/platform/ai');
+    expect(
+      resourceRegistry.route({ kind: 'project-settings', id: 'members' }),
+    ).toBe('/projects/current-project/automations?settings=members');
+  });
+
+  it('reads the resource on screen from the path', () => {
+    expect(resourceRegistry.refAt('/projects/p1/tables/t1')).toEqual({
+      kind: 'table',
+      id: 't1',
+      projectId: 'p1',
+    });
+    expect(resourceRegistry.refAt('/projects/p1/flows/f1/runs')).toEqual({
+      kind: 'flow',
+      id: 'f1',
+      projectId: 'p1',
+    });
+    expect(resourceRegistry.refAt('/platform/users')).toEqual({
+      kind: 'platform-settings',
+      id: 'members',
+    });
+    expect(resourceRegistry.refAt('/projects/p1/automations')).toBeNull();
+    expect(resourceRegistry.refAt('/platform/sso')).toBeNull();
+  });
+
+  it('resolves settings tools without auto-opening them', () => {
+    const resolved = resourceRegistry.resolve({
+      toolName: 'ap_update_settings',
+      input: { scope: 'platform', section: 'general', patch: { name: 'Acme' } },
+      output: { content: [{ type: 'text', text: '✅ Renamed' }] },
+    });
+    expect(resolved?.ref).toEqual({ kind: 'platform-settings', id: 'general' });
+    expect(resolved?.highlights).toEqual(['platform.general.name']);
+    expect(resourceRegistry.autoOpensTool('ap_update_settings')).toBe(false);
+    expect(resourceRegistry.autoOpens('table')).toBe(true);
+  });
+});

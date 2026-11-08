@@ -54,6 +54,7 @@ const DISPLAY_TOOL_NAMES = new Set([
   'ap_show_questions',
   'ap_show_quick_replies',
   'ap_show_showcase',
+  'ap_request_secret',
 ]);
 
 function isDisplayTool(name: string): boolean {

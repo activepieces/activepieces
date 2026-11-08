@@ -86,11 +86,13 @@ function ChatBoxContent({
   const queryClient = useQueryClient();
   const credits = useCreditsState();
   const sessionProjectId = authenticationSession.getProjectId();
+  const { data: gateUser } = userHooks.useCurrentUser();
   const gate = useModelGate({
     gated:
       agentId === undefined &&
       isNil(initialConversationId) &&
-      !isNil(sessionProjectId),
+      (!isNil(sessionProjectId) ||
+        gateUser?.platformRole === PlatformRole.ADMIN),
     projectId: sessionProjectId,
   });
 
@@ -612,7 +614,7 @@ function useModelGate({
   projectId: string | null;
 }): ModelGate {
   const { data: options, isLoading } = aiModelHooks.useModelOptions({
-    projectId: projectId ?? '',
+    projectId: projectId ?? undefined,
     surface: 'chat',
     enabled: gated,
   });

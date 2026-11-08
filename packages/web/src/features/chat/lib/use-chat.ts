@@ -35,6 +35,7 @@ import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
 import { ChatModelPick, chatUtils } from './chat-utils';
 import { demoScenarios } from './demo/demo-scenarios';
+import { usePageContext } from './page-context';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 function applyQuickRepliesToStore({
@@ -104,6 +105,8 @@ const TOOL_GATES_WITHOUT_A_PIECE = new Set([
   'ap_update_agent',
   'ap_add_agent_tool',
   'ap_remove_agent_tool',
+  'ap_update_settings',
+  'ap_invite_member',
 ]);
 
 function buildToolCallMetaFromGate(
@@ -355,6 +358,9 @@ export function useAgentChat({
   const store = useChatStoreApi();
   const queryClient = useQueryClient();
   const toolCallMeta = useChatStoreContext((state) => state.toolCallMeta);
+  const pageContext = usePageContext();
+  const pageContextRef = useRef(pageContext);
+  pageContextRef.current = pageContext;
 
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
@@ -873,6 +879,9 @@ export function useAgentChat({
                 ...(options?.messageSource
                   ? { messageSource: options.messageSource }
                   : {}),
+                ...(pageContextRef.current
+                  ? { pageContext: pageContextRef.current }
+                  : {}),
               }),
             );
             queryClient
@@ -922,6 +931,9 @@ export function useAgentChat({
           files: encodedFiles,
           ...(options?.messageSource
             ? { messageSource: options.messageSource }
+            : {}),
+          ...(pageContextRef.current
+            ? { pageContext: pageContextRef.current }
             : {}),
         }),
       );

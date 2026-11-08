@@ -38,7 +38,9 @@ function onChunks(chunks: readonly unknown[], ctx: RunContext): void {
         input: chunk.input,
         runId: ctx.runId,
       });
-      if (mayNavigate(ctx)) begin();
+      if (mayNavigate(ctx) && resourceRegistry.autoOpensTool(toolName)) {
+        begin();
+      }
     } else if (chunk.type === 'tool-output-available') {
       const call = calls.get(chunk.toolCallId);
       if (!call) continue;
@@ -80,7 +82,10 @@ function onToolOutput({
   if (!resourceRegistry.isChange(change.outcome)) return;
   if (change.op === 'delete') {
     clearTargetIf(change.resource);
-  } else if (change.navigable) {
+  } else if (
+    change.navigable &&
+    resourceRegistry.autoOpens(change.resource.kind)
+  ) {
     setTarget(change.resource);
   }
   toolDoneListeners.forEach((listener) => listener(change));

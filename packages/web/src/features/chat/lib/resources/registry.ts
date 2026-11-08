@@ -3,10 +3,12 @@ import { QueryKey } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Bot,
+  Building2,
   Folder,
   KeyRound,
   LucideIcon,
   PlayCircle,
+  Settings,
   Table2,
   Workflow,
 } from 'lucide-react';
@@ -35,7 +37,7 @@ function resolve({
   const highlights = spec.highlights?.(args) ?? [];
   return {
     ref: {
-      kind: spec.kind,
+      kind: spec.kindOf?.(args) ?? spec.kind,
       id,
       ...(projectId ? { projectId } : {}),
       ...(name ? { name } : {}),
@@ -77,12 +79,14 @@ function isChange(value: ResourceOutcome): boolean {
 
 function route(ref: ResourceRef): string {
   const path = KINDS[ref.kind].path(ref.id);
+  if (KINDS[ref.kind].scope === 'platform') return path;
   const projectId = ref.projectId ?? authenticationSession.getProjectId();
   return projectId ? `/projects/${projectId}${path}` : path;
 }
 
 function parentRoute(ref: ResourceRef): string {
   const path = KINDS[ref.kind].parentPath;
+  if (KINDS[ref.kind].scope === 'platform') return path;
   const projectId = ref.projectId ?? authenticationSession.getProjectId();
   return projectId ? `/projects/${projectId}${path}` : path;
 }
@@ -96,6 +100,28 @@ function isOn(pathname: string, ref: ResourceRef): boolean {
   if (at === -1) return false;
   const next = pathname.charAt(at + marker.length);
   return next === '' || next === '/';
+}
+
+function refAt(pathname: string): ResourceRef | null {
+  const inProject = /^\/projects\/([^/]+)(\/.*)?$/.exec(pathname);
+  const projectId = inProject?.[1];
+  const rest = inProject ? inProject[2] ?? '' : pathname;
+  for (const kind of KIND_NAMES) {
+    const spec = KINDS[kind];
+    if ((spec.scope === 'platform') === Boolean(inProject)) continue;
+    const id = spec.idAt?.(rest) ?? null;
+    if (id) return { kind, id, ...(projectId ? { projectId } : {}) };
+  }
+  return null;
+}
+
+function autoOpens(kind: ResourceKind): boolean {
+  return KINDS[kind].autoOpen !== false;
+}
+
+function autoOpensTool(toolName: string): boolean {
+  const spec = TOOLS[toolName];
+  return spec ? autoOpens(spec.kind) : true;
 }
 
 function isInCurrentProject(ref: ResourceRef): boolean {
@@ -225,6 +251,11 @@ function projectIdInOutput(output: unknown): string | null {
   return null;
 }
 
+function segmentAfter(path: string, segment: string): string | null {
+  const match = new RegExp(`^/${segment}/([^/?#]+)`).exec(path);
+  return match ? match[1] : null;
+}
+
 function isKind(value: unknown): value is ResourceKind {
   return typeof value === 'string' && value in KINDS;
 }
@@ -270,6 +301,7 @@ const AUTOMATIONS_LIST_KEYS: QueryKey[] = [
 const KINDS: Record<ResourceKind, KindSpec> = {
   flow: {
     path: (id) => `/flows/${id}`,
+    idAt: (path) => segmentAfter(path, 'flows'),
     parentPath: '/automations',
     queryKeys: () => [['flows'], ...AUTOMATIONS_LIST_KEYS],
     icon: Workflow,
@@ -278,6 +310,7 @@ const KINDS: Record<ResourceKind, KindSpec> = {
   },
   table: {
     path: (id) => `/tables/${id}`,
+    idAt: (path) => segmentAfter(path, 'tables'),
     parentPath: '/automations',
     queryKeys: (id) => [
       ['table', id],
@@ -292,6 +325,7 @@ const KINDS: Record<ResourceKind, KindSpec> = {
   },
   agent: {
     path: (id) => `/agents/${id}`,
+    idAt: (path) => segmentAfter(path, 'agents'),
     parentPath: '/automations',
     queryKeys: () => [['agents'], ['all-folder-contents']],
     icon: Bot,
@@ -300,6 +334,7 @@ const KINDS: Record<ResourceKind, KindSpec> = {
   },
   run: {
     path: (id) => `/runs/${id}`,
+    idAt: (path) => segmentAfter(path, 'runs'),
     parentPath: '/runs',
     queryKeys: (id) => [
       ['run', id],
@@ -327,7 +362,56 @@ const KINDS: Record<ResourceKind, KindSpec> = {
     label: () => t('Folder'),
     noun: () => t('folder'),
   },
+  'platform-settings': {
+    scope: 'platform',
+    autoOpen: false,
+    path: (id) => `/platform/${PLATFORM_SECTION_ROUTES[id] ?? id}`,
+    idAt: (path) => {
+      const segment = segmentAfter(path, 'platform');
+      const section = Object.entries(PLATFORM_SECTION_ROUTES).find(
+        ([, route]) => route === segment,
+      );
+      return section ? section[0] : null;
+    },
+    parentPath: '/platform/general',
+    queryKeys: () => [['platform']],
+    icon: Building2,
+    label: () => t('Platform settings'),
+    noun: () => t('settings'),
+  },
+  'project-settings': {
+    autoOpen: false,
+    path: (id) => `/automations?settings=${id}`,
+    parentPath: '/automations',
+    queryKeys: () => [['project-members']],
+    icon: Settings,
+    label: () => t('Project settings'),
+    noun: () => t('settings'),
+  },
 };
+
+const KIND_NAMES: ResourceKind[] = [
+  'flow',
+  'table',
+  'agent',
+  'run',
+  'connection',
+  'folder',
+  'platform-settings',
+  'project-settings',
+];
+
+const PLATFORM_SECTION_ROUTES: Record<string, string> = {
+  general: 'general',
+  ai_providers: 'ai',
+  members: 'users',
+  api_keys: 'api-keys',
+};
+
+const settingsKind: NonNullable<ToolSpec['kindOf']> = ({ input }) =>
+  input.scope === 'project' || str(input.projectId)
+    ? 'project-settings'
+    : 'platform-settings';
 
 const flowInput: ToolSpec['id'] = ({ input }) => str(input.flowId);
 const tableInput: ToolSpec['id'] = ({ input }) => str(input.tableId);
@@ -444,10 +528,37 @@ const TOOLS: Record<string, ToolSpec> = {
     op: 'update',
     id: agentInputOrOutput,
   },
+  ap_update_settings: {
+    kind: 'platform-settings',
+    kindOf: settingsKind,
+    op: 'update',
+    id: ({ input }) => str(input.section),
+    highlights: ({ input }) => {
+      const section = str(input.section);
+      if (!section || !isObject(input.patch)) return [];
+      const scope =
+        settingsKind({ input, output: null }) === 'project-settings'
+          ? 'project'
+          : 'platform';
+      return Object.keys(input.patch).map(
+        (field) => `${scope}.${section}.${field}`,
+      );
+    },
+  },
+  ap_invite_member: {
+    kind: 'platform-settings',
+    kindOf: settingsKind,
+    op: 'update',
+    id: () => 'members',
+  },
 };
 
 export const resourceRegistry = {
   resolve,
+  refAt,
+  autoOpens,
+  autoOpensTool,
+  isKind,
   isKnownTool,
   outcome,
   isChange,
@@ -466,7 +577,9 @@ export type ResourceKind =
   | 'agent'
   | 'run'
   | 'connection'
-  | 'folder';
+  | 'folder'
+  | 'platform-settings'
+  | 'project-settings';
 
 export type ResourceOp = 'create' | 'update' | 'delete' | 'run' | 'view';
 
@@ -499,6 +612,7 @@ type ToolArgs = { input: Record<string, unknown>; output: unknown };
 
 type ToolSpec = {
   kind: ResourceKind;
+  kindOf?: (args: ToolArgs) => ResourceKind;
   op: ResourceOp;
   id: (args: ToolArgs) => string | null;
   name?: (args: ToolArgs) => string | null;
@@ -506,7 +620,10 @@ type ToolSpec = {
 };
 
 type KindSpec = {
+  scope?: 'platform';
+  autoOpen?: false;
   path: (id: string) => string;
+  idAt?: (path: string) => string | null;
   parentPath: string;
   queryKeys: (id: string) => QueryKey[];
   icon: LucideIcon;
