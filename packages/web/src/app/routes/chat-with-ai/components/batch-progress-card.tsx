@@ -21,7 +21,7 @@ export function BatchProgressCard({
 }: {
   progress: BatchProgressData;
 }) {
-  const status = chatStatusUtils.fromBatch(progress);
+  const status = chatStatusUtils.fromBatch({ progress });
   const percentage =
     progress.total > 0
       ? Math.round((progress.completed / progress.total) * 100)
