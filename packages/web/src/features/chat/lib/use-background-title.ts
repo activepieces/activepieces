@@ -43,7 +43,7 @@ function show(signal: Signal): void {
   baseTitle = base;
   written =
     signal === 'needs-you'
-      ? t('Needs you · {title}', { title: base })
+      ? t('Needs you: {title}', { title: base })
       : t('✓ {title}', { title: base });
   shown = signal;
   document.title = written;

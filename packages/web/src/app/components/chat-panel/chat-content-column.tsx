@@ -7,6 +7,7 @@ import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { useRailOpen } from '@/features/workspace/lib/rail-collapsed';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
+import { pageColumnUtils } from '@/lib/page-column-utils';
 import { cn } from '@/lib/utils';
 
 import { useChatWidth } from './chat-window';
@@ -32,6 +33,7 @@ export function ChatContentColumn({ children }: { children: React.ReactNode }) {
       : null;
   return (
     <div
+      id={pageColumnUtils.ID}
       inert={full}
       className={cn(
         'min-w-0 overflow-hidden',
