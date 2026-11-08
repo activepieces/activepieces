@@ -418,7 +418,7 @@ export const httpSendRequestAction = createAction({
       }
     }
 
-    throw new Error('Unexpected error occured');
+    throw new Error('Unexpected error occurred');
   },
 });
 
