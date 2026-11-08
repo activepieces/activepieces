@@ -23,24 +23,27 @@ export const findUsersAction = createAction({
     skip: Property.Number({ displayName: 'Skip', description: 'Number of users to skip. Default 0.', required: false }),
   },
   async run(context) {
+    const search = youtrackClient.optionalText(context.propsValue.query);
     const { items, hasMore } = await youtrackClient.listPage({
       auth: context.auth,
       path: '/users',
-      query: { fields: 'id,login,fullName,email,banned,guest,online', query: youtrackClient.optionalText(context.propsValue.query) },
+      query: { fields: 'id,login,fullName,email,banned,guest,online', query: search },
       limit: youtrackClient.boundedLimit({ value: context.propsValue.limit, fallback: LIST_LIMIT_DEFAULT, max: LIST_LIMIT_MAX }),
       skip: context.propsValue.skip,
       operation: 'find users',
     });
     return {
-      items: items.map((u) => ({
-        id: u['id'] ?? null,
-        login: u['login'] ?? null,
-        fullName: u['fullName'] ?? null,
-        email: u['email'] ?? null,
-        banned: u['banned'] ?? null,
-        guest: u['guest'] ?? null,
-        online: u['online'] ?? null,
-      })),
+      items: items
+        .filter((row) => youtrackClient.matchesSearchText({ row, text: search, keys: ['login', 'fullName', 'email'] }))
+        .map((u) => ({
+          id: u['id'] ?? null,
+          login: u['login'] ?? null,
+          fullName: u['fullName'] ?? null,
+          email: u['email'] ?? null,
+          banned: u['banned'] ?? null,
+          guest: u['guest'] ?? null,
+          online: u['online'] ?? null,
+        })),
       hasMore,
     };
   },

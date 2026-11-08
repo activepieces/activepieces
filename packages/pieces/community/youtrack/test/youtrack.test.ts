@@ -322,6 +322,45 @@ describe('list_tags', () => {
   });
 });
 
+describe('search text is also applied locally', () => {
+  it('search_articles drops rows that do not contain the search text even if YouTrack ignored the query', async () => {
+    ok([
+      { id: '167-1', idReadable: 'APT-A-1', summary: 'Release notes', content: 'How to SETUP the runner' },
+      { id: '167-2', idReadable: 'APT-A-2', summary: 'Onboarding', content: 'Welcome' },
+      { id: '167-3', idReadable: 'SETUP-A-3', summary: 'Other', content: null },
+    ]);
+    const out = await call({ fn: searchArticlesAction.run, propsValue: { query: 'setup', limit: 10 } });
+    expect(out).toEqual({ items: [expect.objectContaining({ id: '167-1' }), expect.objectContaining({ id: '167-3' })], hasMore: false });
+    expect(out.items[0]).not.toHaveProperty('content');
+    expect(req(0).queryParams).toMatchObject({ query: 'setup' });
+    expect(req(0).queryParams.fields).toContain(',content');
+  });
+
+  it('search_articles returns an empty list for a word that matches nothing', async () => {
+    ok([{ id: '167-1', idReadable: 'APT-A-1', summary: 'Release notes', content: 'Welcome' }]);
+    const out = await call({ fn: searchArticlesAction.run, propsValue: { query: 'zzqxnomatch' } });
+    expect(out).toEqual({ items: [], hasMore: false });
+  });
+
+  it('search_articles without search text keeps every row and does not fetch content', async () => {
+    ok([{ id: '167-1', summary: 'A' }, { id: '167-2', summary: 'B' }]);
+    const out = await call({ fn: searchArticlesAction.run, propsValue: {} });
+    expect(out.items).toHaveLength(2);
+    expect(req(0).queryParams.fields).not.toContain('content');
+  });
+
+  it('find_users keeps only users whose login, name or email contains the search text', async () => {
+    ok([
+      { id: '1-1', login: 'jdoe', fullName: 'Jane Doe', email: 'jane@acme.io' },
+      { id: '1-2', login: 'bob', fullName: 'Bob Smith', email: 'bob@acme.io' },
+      { id: '1-3', login: 'admin', fullName: 'Admin', email: 'JANE.ops@acme.io' },
+    ]);
+    const out = await call({ fn: findUsersAction.run, propsValue: { query: 'Jane' } });
+    expect(out.items.map((u) => u.id)).toEqual(['1-1', '1-3']);
+    expect(req(0).queryParams).toMatchObject({ query: 'Jane' });
+  });
+});
+
 describe('existing list limits stay lenient (ISSUE-187)', () => {
   const page = ({ count, offset = 0 }: { count: number; offset?: number }) => Array.from({ length: count }, (_, i) => ({ id: `6-${offset + i}`, name: `t${offset + i}` }));
 

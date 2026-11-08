@@ -586,6 +586,13 @@ function parseDateOrDateTime({ value, label }: { value: unknown; label: string }
   return epoch;
 }
 
+function matchesSearchText({ row, text, keys }: { row: Record<string, unknown>; text: string | undefined; keys: string[] }): boolean {
+  const terms = (text ?? '').toLowerCase().split(/\s+/).filter((term) => term.length > 0);
+  if (terms.length === 0) return true;
+  const haystacks = keys.map((key) => row[key]).filter((value): value is string => typeof value === 'string').map((value) => value.toLowerCase());
+  return terms.some((term) => haystacks.some((haystack) => haystack.includes(term)));
+}
+
 export { YoutrackApiError, YoutrackCapError };
 
 export const youtrackClient = {
@@ -615,6 +622,7 @@ export const youtrackClient = {
   boundedLimit,
   parseDate,
   parseDateOrDateTime,
+  matchesSearchText,
   vendorMessage,
   verifiedTls,
   TRANSFER_TIMEOUT_MS,

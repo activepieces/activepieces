@@ -23,14 +23,16 @@ export const searchArticlesAction = createAction({
     skip: Property.Number({ displayName: 'Skip', description: 'Number of articles to skip. Default 0.', required: false }),
   },
   async run(context) {
+    const search = youtrackClient.optionalText(context.propsValue.query);
     const { items, hasMore } = await youtrackClient.listPage({
       auth: context.auth,
       path: '/articles',
-      query: { fields: ARTICLE_FIELDS, query: youtrackClient.optionalText(context.propsValue.query) },
+      query: { fields: search === undefined ? ARTICLE_FIELDS : `${ARTICLE_FIELDS},content`, query: search },
       limit: youtrackClient.boundedLimit({ value: context.propsValue.limit, fallback: LIST_LIMIT_DEFAULT, max: LIST_LIMIT_MAX }),
       skip: context.propsValue.skip,
       operation: 'search articles',
     });
-    return { items: items.map(articleRow), hasMore };
+    const matching = items.filter((row) => youtrackClient.matchesSearchText({ row, text: search, keys: ['summary', 'content', 'idReadable'] }));
+    return { items: matching.map(articleRow), hasMore };
   },
 });
