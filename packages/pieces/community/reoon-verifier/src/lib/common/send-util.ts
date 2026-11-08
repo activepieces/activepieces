@@ -9,8 +9,16 @@ export const verifySingleEmail = (
 ) => {
   return httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: `https://emailverifier.reoon.com/api/v1/verify?email=${email}&key=${apiKey}&mode=${mode}`,
+    url: 'https://emailverifier.reoon.com/api/v1/verify',
+    queryParams: { email, key: apiKey, mode },
   });
+};
+
+export const splitEmails = (emails: unknown[]): string[] => {
+  return emails
+    .flatMap((item) => String(item).split(','))
+    .map((email) => email.trim())
+    .filter((email) => email.length > 0);
 };
 
 export const verifyEmails = (
