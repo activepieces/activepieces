@@ -1116,7 +1116,7 @@
     },
     "packages/pieces/community/base44": {
       "name": "@activepieces/piece-base44",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2277,7 +2277,7 @@
     },
     "packages/pieces/community/contextual-ai": {
       "name": "@activepieces/piece-contextual-ai",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2370,7 +2370,7 @@
     },
     "packages/pieces/community/couchbase": {
       "name": "@activepieces/piece-couchbase",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4565,7 +4565,7 @@
     },
     "packages/pieces/community/hume-ai": {
       "name": "@activepieces/piece-hume-ai",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4984,7 +4984,7 @@
     },
     "packages/pieces/community/kapso": {
       "name": "@activepieces/piece-kapso",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5288,7 +5288,7 @@
     },
     "packages/pieces/community/letta": {
       "name": "@activepieces/piece-letta",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
