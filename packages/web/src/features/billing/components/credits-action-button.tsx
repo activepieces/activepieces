@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { billingQueries } from '../hooks/billing-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { billingUtils } from '../utils/billing-utils';
 
 import { AutoRechargeConfigDialog } from './feature-usage/auto-recharge-config-dialog';
@@ -23,7 +23,8 @@ export function CreditsActionButton({
     useCreditsUsage();
   const { embedState } = useEmbedding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const { openDialog: openManagePlanDialog } =
+    billingDialogHooks.useManagePlanDialogStore();
   const [autoRechargeOpen, setAutoRechargeOpen] = useState(false);
 
   const canManageBilling =
@@ -90,4 +91,4 @@ type CreditsActionButtonProps = {
   variant?: CreditsActionButtonVariant;
 };
 
-type CreditsActionButtonVariant = 'basic' | 'accent' | 'default';
+type CreditsActionButtonVariant = 'basic' | 'secondary' | 'default';

@@ -139,7 +139,7 @@ export function McpToolTierList({
           {t('You can see these tools, but your role cannot change them.')}
         </p>
       )}
-      <ItemGroup className="rounded-lg border bg-gray-1">
+      <ItemGroup className="rounded-xl border bg-gray-1">
         {tiers.map((tier, index) => (
           <Fragment key={tier.id}>
             {index > 0 && <ItemSeparator />}
@@ -231,7 +231,7 @@ function TierRow({
       <ItemMedia variant="icon">
         <Icon className="size-4 text-gray-11" />
       </ItemMedia>
-      <ItemContent>
+      <ItemContent className="max-sm:basis-[calc(100%-3.5rem)]">
         <ItemTitle>
           {copy.label}
           {tier.locked && (
@@ -249,9 +249,11 @@ function TierRow({
             />
           )}
         </ItemTitle>
-        <ItemDescription>{copy.description}</ItemDescription>
+        <ItemDescription className="max-sm:line-clamp-none">
+          {copy.description}
+        </ItemDescription>
       </ItemContent>
-      <ItemActions className="gap-4">
+      <ItemActions className="gap-4 max-sm:w-full max-sm:justify-between max-sm:pl-12">
         <Button
           variant="ghost"
           size="sm"
@@ -294,7 +296,7 @@ function TitleBadge({ label, tooltip }: { label: string; tooltip: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="neutral" className="font-normal" tabIndex={0}>
+        <Badge variant="secondary" className="font-normal" tabIndex={0}>
           {label}
         </Badge>
       </TooltipTrigger>

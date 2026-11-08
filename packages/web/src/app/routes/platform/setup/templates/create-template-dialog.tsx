@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -123,7 +124,7 @@ export const CreateTemplateDialog = ({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>{t('Create New Template')}</DialogTitle>
         </DialogHeader>
@@ -141,7 +142,6 @@ export const CreateTemplateDialog = ({
                     required
                     id="name"
                     placeholder={t('Template Name')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -156,7 +156,6 @@ export const CreateTemplateDialog = ({
                     {...field}
                     id="summary"
                     placeholder={t('Template Summary')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -172,7 +171,6 @@ export const CreateTemplateDialog = ({
                     {...field}
                     required
                     id="description"
-                    className="rounded-sm"
                     placeholder={t('Template Description')}
                   />
 
@@ -190,7 +188,6 @@ export const CreateTemplateDialog = ({
                     required
                     id="blogUrl"
                     placeholder={t('Template Blog URL')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -222,7 +219,6 @@ export const CreateTemplateDialog = ({
                     required
                     id="template"
                     placeholder={t('Template')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>

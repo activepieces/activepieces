@@ -1,5 +1,7 @@
 import {
   DynamicPropsValue,
+  MarkdownVariant,
+  Property,
   createAction,
 } from '@activepieces/pieces-framework';
 import { APITableCommon, createNewFields, makeClient } from '../common';
@@ -18,9 +20,30 @@ export const createRecordAction = createAction({
       'Creates a new row in an AITable datasheet from a set of field values. Use when an agent needs to add data to a datasheet; requires the target space and datasheet IDs. Not idempotent: each call appends a new record, so repeating it creates duplicates.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['space_id', 'datasheet_id'],
+    },
+    {
+      key: 'values',
+      display: 'section',
+      label: 'Record Values',
+      icon: 'text',
+      props: ['info', 'fields'],
+    },
+  ],
   props: {
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,
+    info: Property.MarkDown({
+      value:
+        'Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.',
+      variant: MarkdownVariant.INFO,
+    }),
     fields: APITableCommon.fields({
       description: 'Values for the new record. Blank fields are left empty.',
     }),

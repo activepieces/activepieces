@@ -1,15 +1,16 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
-import { clockifyApiCall } from '../common/client';
-import { projectId, workspaceId } from '../common/props';
+import { clockifyApi } from '../common/api';
+import { clockifyProps } from '../common/props';
+import { newTaskOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'new-task-trigger';
 
 export const newTaskTrigger = createTrigger({
 	auth: clockifyAuth,
 	name: 'new-task',
+	outputSchema: newTaskOutputSchema,
 	classification: 'READ',
 	displayName: 'New Task',
 	description: 'Triggers when a new task is created in specified project.',
@@ -19,28 +20,19 @@ export const newTaskTrigger = createTrigger({
 	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
-		workspaceId: workspaceId({
-			displayName: 'Workspace',
-			required: true,
-		}),
-		projectId: projectId({
-			displayName: 'Project',
-			required: true,
-		}),
+		workspaceId: clockifyProps.workspaceId({ required: true }),
+		projectId: clockifyProps.projectId({ required: true }),
 	},
 	async onEnable(context) {
 		const { workspaceId, projectId } = context.propsValue;
 
-		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.POST,
-			resourceUri: `/workspaces/${workspaceId}/webhooks`,
-			body: {
-				url: context.webhookUrl,
-				webhookEvent: 'NEW_TASK',
-				triggerSourceType: 'PROJECT_ID',
-				triggerSource: [projectId],
-			},
+		const response = await clockifyApi.createWebhook({
+			auth: context.auth,
+			workspaceId,
+			url: context.webhookUrl,
+			webhookEvent: 'NEW_TASK',
+			triggerSourceType: 'PROJECT_ID',
+			triggerSource: [projectId],
 		});
 
 		await context.store.put<string>(TRIGGER_KEY, response.id);
@@ -51,27 +43,21 @@ export const newTaskTrigger = createTrigger({
 		const webhookId = await context.store.get<string>(TRIGGER_KEY);
 
 		if (!isNil(webhookId)) {
-			await clockifyApiCall({
-				apiKey: context.auth.secret_text,
-				method: HttpMethod.DELETE,
-				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
-			});
+			await clockifyApi.deleteWebhook({ auth: context.auth, workspaceId, webhookId });
 		}
 	},
 	async test(context) {
 		const { workspaceId, projectId } = context.propsValue;
 
-		const response = await clockifyApiCall<{ id: string }[]>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+		return await clockifyApi.listTasks({
+			auth: context.auth,
+			workspaceId,
+			projectId,
 			query: {
 				page: '1',
-				'page-size': 5,
+				'page-size': '5',
 			},
 		});
-
-		return response;
 	},
 	async run(context) {
 		return [context.payload.body];

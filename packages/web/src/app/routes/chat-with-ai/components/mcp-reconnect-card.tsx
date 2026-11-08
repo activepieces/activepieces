@@ -109,14 +109,11 @@ function openReconnectPopup(url: string) {
   const height = 640;
   const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
   const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
-  const popup = window.open(
+  window.open(
     url,
     'ap-mcp-reconnect',
     `popup=yes,width=${width},height=${height},left=${left},top=${top},noopener,noreferrer`,
   );
-  if (!popup) {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
 }
 
 function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {
@@ -126,12 +123,12 @@ function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {
         src={logoUrl}
         alt=""
         border
-        className="size-10 rounded-lg p-1.5"
+        className="size-10 rounded-xl p-1.5"
       />
     );
   }
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-gray-3/40">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-gray-3/40">
       <Plug className="h-5 w-5 text-gray-11" />
     </div>
   );

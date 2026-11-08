@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, isNil, Property } from '@activepieces/pieces-framework';
 import { projectId } from '../common/props';
 import { BASE_URL } from '../common/client';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -60,41 +60,23 @@ export const updateAgent = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const body: any = {};
+    const { project_id, file, ...fields } = propsValue;
+    const formData = new FormData();
 
-    if (propsValue.project_name !== undefined) {
-      body.project_name = propsValue.project_name;
-    }
-    if (propsValue.is_shared !== undefined) {
-      body.is_shared = propsValue.is_shared;
-    }
-    if (propsValue.sitemap_path !== undefined) {
-      body.sitemap_path = propsValue.sitemap_path;
-    }
-    if (propsValue.file_data_retension !== undefined) {
-      body.file_data_retension = propsValue.file_data_retension;
-    }
-    if (propsValue.is_ocr_enabled !== undefined) {
-      body.is_ocr_enabled = propsValue.is_ocr_enabled;
-    }
-    if (propsValue.is_anonymized !== undefined) {
-      body.is_anonymized = propsValue.is_anonymized;
-    }
-    if (propsValue.file !== undefined) {
-      body.file = propsValue.file;
-    }
-    if (propsValue.are_licenses_allowed !== undefined) {
-      body.are_licenses_allowed = propsValue.are_licenses_allowed;
+    Object.entries(fields)
+      .filter(([, value]) => !isNil(value))
+      .forEach(([key, value]) => formData.append(key, String(value)));
+    if (!isNil(file)) {
+      formData.append('file', new Blob([new Uint8Array(file.data)]), file.filename);
     }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${BASE_URL}/projects/${propsValue.project_id}`,
+      url: `${BASE_URL}/projects/${project_id}`,
       headers: {
         Authorization: `Bearer ${auth.secret_text}`,
-        'content-type': 'multipart/form-data',
       },
-      body,
+      body: formData,
     });
 
     return response.body;

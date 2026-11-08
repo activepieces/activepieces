@@ -191,6 +191,13 @@ export const wordpress = createPiece({
           }`
         ).toString('base64')}`,
       }),
+      props: {
+        url: {
+          description:
+            'Full URL, or a path relative to /wp-json/wp/v2 on your site.',
+          placeholder: '/posts',
+        },
+      },
     }),
   ],
   triggers: [wordpressNewPost],

@@ -37,6 +37,15 @@ export const delayForAction = createAction({
       hide: true,
     },
   },
+  propertyGroups: [
+    {
+      key: 'duration',
+      display: 'section',
+      label: 'Wait time',
+      icon: 'calendar',
+      props: ['delayFor', 'unit', 'markdown'],
+    },
+  ],
   props: {
     delayFor: Property.Number({
       displayName: 'Amount',
@@ -46,12 +55,13 @@ export const delayForAction = createAction({
     unit: Property.StaticDropdown({
       displayName: 'Unit',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { value: TimeUnit.SECONDS, label: 'Seconds' },
-          { value: TimeUnit.MINUTES, label: 'Minutes' },
-          { value: TimeUnit.HOURS, label: 'Hours' },
-          { value: TimeUnit.DAYS, label: 'Days' },
+          { value: TimeUnit.SECONDS, label: 'Seconds', description: 'Brief pause', icon: 'calendar' },
+          { value: TimeUnit.MINUTES, label: 'Minutes', description: 'Short wait', icon: 'calendar' },
+          { value: TimeUnit.HOURS, label: 'Hours', description: 'Long wait', icon: 'calendar' },
+          { value: TimeUnit.DAYS, label: 'Days', description: 'Longest wait', icon: 'calendar' },
         ],
       },
       defaultValue: TimeUnit.SECONDS,

@@ -28,6 +28,15 @@ export const stripeNewDispute = createTrigger({
     description:
       'Fires when a customer disputes a charge in Stripe (the charge.dispute.created event), emitting the dispute including its reason and evidence due date. Optional filters narrow firing to a specific charge ID or payment intent ID. Use to react to chargebacks, such as alerting a team or gathering evidence.',
   },
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['charge', 'payment_intent'],
+    },
+  ],
   props: {
     charge: Property.ShortText({
       displayName: 'Charge ID',

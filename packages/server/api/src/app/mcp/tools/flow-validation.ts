@@ -1,3 +1,4 @@
+import { AP_FUNCTIONS } from '@activepieces/core-formula'
 import { isNil } from '@activepieces/core-utils'
 import { BranchExecutionType, flowStructureUtil, FlowTrigger, FlowTriggerType, Step } from '@activepieces/shared'
 
@@ -33,6 +34,10 @@ function validateFlow({ trigger }: { trigger: FlowTrigger }): ValidationResult {
         }
 
         const strings = collectStringValues({ step })
+        const bareFunctions = [...new Set(strings.flatMap((value) => findBareFormulaFunctions({ value })))]
+        for (const fn of bareFunctions) {
+            issues.push({ category: 'template_reference', severity: 'error', stepName: step.name, message: `"${step.displayName}" uses the formula function ${fn}() inside {{ }}, which only holds step references. Write it as ap-formula-v1::{${fn}({{step_1['output'].field}})}::ap-formula-v1, with single braces around the formula.` })
+        }
         const seenRefs = new Set<string>()
         for (const str of strings) {
             const refs = extractReferencedStepNames({ value: str })
@@ -121,18 +126,32 @@ function walkValues(obj: unknown, fn: (val: unknown) => void): void {
 }
 
 function extractReferencedStepNames({ value }: { value: string }): string[] {
-    const regex = /\{\{(\w+)/g
+    const regex = /\{\{\s*(\w+)\s*(\()?/g
     const names = new Set<string>()
     let match
     while ((match = regex.exec(value)) !== null) {
         const name = match[1]
-        if (name !== 'connections') {
+        const isFunctionCall = match[2] !== undefined
+        if (name !== 'connections' && !isFunctionCall) {
             names.add(name)
         }
     }
     return [...names]
 }
 
+function findBareFormulaFunctions({ value }: { value: string }): string[] {
+    const outsideFormulas = value.replace(WRAPPED_FORMULA, '')
+    const called = [...outsideFormulas.matchAll(BARE_FUNCTION_CALL)].map((match) => match[1])
+    return [...new Set(called.filter((name) => FORMULA_FUNCTION_NAMES.has(comparableFunctionName(name))))]
+}
+
+function comparableFunctionName(name: string): string {
+    return name.toLowerCase().replace(/_/g, '')
+}
+
+const WRAPPED_FORMULA = /ap-formula-v(\d+)::\{[\s\S]*?\}::ap-formula-v\1/g
+const BARE_FUNCTION_CALL = /\{\{\s*([A-Za-z_]\w*)\s*\(/g
+const FORMULA_FUNCTION_NAMES = new Set(AP_FUNCTIONS.map((fn) => comparableFunctionName(fn.name)))
 const CATEGORY_ORDER: ValidationIssue['category'][] = ['step_validity', 'template_reference', 'empty_branch']
 const CATEGORY_LABELS: Record<ValidationIssue['category'], string> = {
     step_validity: 'Step Validity',

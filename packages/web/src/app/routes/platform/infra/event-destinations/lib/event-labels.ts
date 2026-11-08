@@ -33,9 +33,45 @@ export const buildEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.USER_PASSWORD_RESET]: t('User password reset'),
     [ApplicationEventName.USER_EMAIL_VERIFIED]: t('User email verified'),
     [ApplicationEventName.SIGNING_KEY_CREATED]: t('Signing key created'),
+    [ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED]: t(
+      'Audit log retention updated',
+    ),
+    [ApplicationEventName.EMAIL_SIGN_IN_ENABLED]: t('Email sign-in turned on'),
+    [ApplicationEventName.EMAIL_SIGN_IN_DISABLED]: t(
+      'Email sign-in turned off',
+    ),
+    [ApplicationEventName.GOOGLE_SIGN_IN_ENABLED]: t(
+      'Google sign-in turned on',
+    ),
+    [ApplicationEventName.GOOGLE_SIGN_IN_DISABLED]: t(
+      'Google sign-in turned off',
+    ),
+    [ApplicationEventName.ALLOWED_DOMAIN_ADDED]: t('Allowed domain added'),
+    [ApplicationEventName.ALLOWED_DOMAIN_REMOVED]: t('Allowed domain removed'),
+    [ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED]: t(
+      'Allowed domain enforcement turned on',
+    ),
+    [ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED]: t(
+      'Allowed domain enforcement turned off',
+    ),
+    [ApplicationEventName.SSO_DOMAIN_ADDED]: t('SSO domain added'),
+    [ApplicationEventName.SSO_DOMAIN_VERIFIED]: t('SSO domain verified'),
+    [ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED]: t(
+      'SSO domain verification cancelled',
+    ),
+    [ApplicationEventName.SSO_DOMAIN_REMOVED]: t('SSO domain removed'),
+    [ApplicationEventName.SSO_DOMAIN_EXPIRED]: t('SSO domain expired'),
+    [ApplicationEventName.SAML_CONNECTED]: t('SAML connected'),
+    [ApplicationEventName.SAML_CONNECTION_REPLACED]: t(
+      'SAML connection replaced',
+    ),
+    [ApplicationEventName.SSO_DISABLED]: t('Single sign-on disabled'),
     [ApplicationEventName.PROJECT_ROLE_CREATED]: t('Project role created'),
     [ApplicationEventName.PROJECT_ROLE_UPDATED]: t('Project role updated'),
     [ApplicationEventName.PROJECT_ROLE_DELETED]: t('Project role deleted'),
+    [ApplicationEventName.USER_INVITATION_SENT]: t('Invitation sent'),
+    [ApplicationEventName.USER_INVITATION_ACCEPTED]: t('Invitation accepted'),
+    [ApplicationEventName.USER_INVITATION_DELETED]: t('Invitation deleted'),
     [ApplicationEventName.PROJECT_RELEASE_CREATED]: t(
       'Project release created',
     ),

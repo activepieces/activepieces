@@ -1,5 +1,6 @@
 import {
   McpOAuthClientKey,
+  McpOAuthGrant,
   PLATFORM_WIDE_PROJECT_FILTER_VALUE,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -54,10 +55,12 @@ export function GrantsTab() {
     }),
     [searchParams],
   );
-  const hasActiveFilters =
+  const isLaterPage = request.cursor !== undefined;
+  const isFiltered =
     request.projectIds !== undefined ||
     request.memberIds !== undefined ||
     request.clientKeys !== undefined;
+  const hasActiveFilters = isLaterPage || isFiltered;
 
   const { data, isLoading, isError, refetch } = mcpGrantsQueries.useGrants({
     request,
@@ -111,11 +114,7 @@ export function GrantsTab() {
         filters={buildFilters({ projects, members: users?.data ?? [] })}
         selectColumn={true}
         bordered={true}
-        toolbarButtons={[
-          <span key="expiry" className="text-sm text-gray-11">
-            {t('each expires 30 days after sign-in')}
-          </span>,
-        ]}
+        frameClassName="[&_table]:min-w-[720px]"
         bulkActions={[
           {
             render: (rows, resetSelection) => (
@@ -141,15 +140,29 @@ export function GrantsTab() {
             ),
           },
         ]}
-        emptyStateTextTitle={t('No connections match these filters')}
-        emptyStateTextDescription={t('Clear a filter to see more.')}
+        emptyStateTextTitle={
+          isFiltered
+            ? t('No connections match these filters')
+            : t('No more connections')
+        }
+        emptyStateTextDescription={
+          isFiltered
+            ? t('Clear a filter to see more.')
+            : t('This page is past the last connection. Go back to see them.')
+        }
         emptyStateIcon={<Plug className="size-10" />}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-4 text-[13px] text-gray-11">
-        <span>
-          {t(
-            'Two rows for one client is normal — signing in again creates a second connection. Revoking one leaves the other alive.',
+      <div className="flex flex-col gap-x-4 gap-y-2 text-sm text-gray-11 sm:flex-row sm:items-start sm:justify-between">
+        <span className="max-w-prose">
+          {t('Connections expire 30 days after sign-in.')}
+          {hasRepeatedClient(data?.data ?? []) && (
+            <>
+              {' '}
+              {t(
+                'Two rows for one client is normal: signing in again creates a second connection, and revoking one leaves the other working.',
+              )}
+            </>
           )}
         </span>
         <a
@@ -163,6 +176,19 @@ export function GrantsTab() {
       </div>
     </PageBand>
   );
+}
+
+function hasRepeatedClient(grants: McpOAuthGrant[]): boolean {
+  const keys = grants.map(
+    (grant) => `${repeatKey(grant)}:${grant.member?.id ?? ''}`,
+  );
+  return new Set(keys).size < keys.length;
+}
+
+function repeatKey(grant: McpOAuthGrant): string {
+  return grant.clientKey === 'unknown'
+    ? `unknown:${grant.clientName ?? ''}`
+    : grant.clientKey;
 }
 
 function undefinedIfEmpty<T>(values: T[]): T[] | undefined {

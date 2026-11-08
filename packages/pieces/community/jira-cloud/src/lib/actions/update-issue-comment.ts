@@ -3,6 +3,7 @@ import { jiraCloudAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { sendJiraRequest } from '../common';
 import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
+import { jiraCommentProps } from '../common/comment-props';
 
 import { commentOutputSchema } from '../output-schemas';
 export const updateIssueCommentAction = createAction({
@@ -10,7 +11,7 @@ export const updateIssueCommentAction = createAction({
 	name: 'update_issue_comment',
 	classification: 'WRITE',
 	displayName: 'Update Issue Comment',
-	description: 'Updates a comment to a specific issue.',
+	description: 'Updates a comment on an issue.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -21,51 +22,34 @@ export const updateIssueCommentAction = createAction({
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
-		commentId: Property.Dropdown({
-			auth: jiraCloudAuth,
-			displayName: 'Comment ID',
-			refreshers: ['issueId'],
-			required: true,
-			options: async ({ auth, issueId }) => {
-				if (!auth || !issueId) {
-					return {
-						disabled: true,
-						placeholder: 'Please connect your account and select issue.',
-						options: [],
-					};
-				}
-				const response = await sendJiraRequest({
-					method: HttpMethod.GET,
-					url: `issue/${issueId}/comment`,
-					auth: auth,
-					queryParams: {
-						orderBy: '-created',
-						expand: 'renderedBody',
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.comments.map((comment: { id: string; renderedBody: string }) => {
-						return {
-							label: comment.renderedBody,
-							value: comment.id,
-						};
-					}),
-				};
-			},
-		}),
+		commentId: jiraCommentProps.commentId(),
 		comment: Property.LongText({
 			displayName: 'Comment Body',
 			required: true,
 		}),
 		isADF: Property.Checkbox({
-      displayName: 'Comment is in JSON Atlassian Document Format',
-			description: 'https://developer.atlassian.com/cloud/jira/platform/apis/document/structure',
-      required: false,
-      defaultValue: false,
-    }),
+			displayName: 'Body Is ADF JSON',
+			description: 'Turn on if the body is Atlassian Document Format JSON.',
+			required: false,
+			defaultValue: false,
+		}),
 	},
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Comment to Edit',
+			icon: 'inbox',
+			props: ['projectId', 'issueId', 'commentId'],
+		},
+		{
+			key: 'content',
+			display: 'section',
+			label: 'New Text',
+			icon: 'text',
+			props: ['comment', 'isADF'],
+		},
+	],
 	async run(context) {
 		const { issueId, comment, commentId, isADF } = context.propsValue;
 

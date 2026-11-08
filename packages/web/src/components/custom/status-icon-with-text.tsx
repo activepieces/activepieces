@@ -10,8 +10,8 @@ const variantBadgeMap: Record<
   warning: 'warning',
   error: 'destructive',
   primary: 'info',
-  neutral: 'neutral',
-  default: 'accent',
+  neutral: 'secondary',
+  default: 'secondary',
   secondary: 'secondary',
 };
 

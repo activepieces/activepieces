@@ -73,7 +73,7 @@ export const ChatDrawer = () => {
           <div className="p-4">
             <div className="flex items-center gap-1">
               <Button
-                variant="basic"
+                variant="ghost"
                 size={'icon'}
                 className="text-gray-12"
                 onClick={() => setChatDrawerOpenSource(null)}

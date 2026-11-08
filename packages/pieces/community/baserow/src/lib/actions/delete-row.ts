@@ -16,14 +16,23 @@ export const deleteRowAction = createAction({
     idempotent: false,
   },
   auth: baserowAuth,
+  propertyGroups: [
+    {
+      key: 'row',
+      display: 'section',
+      label: 'Row to Delete',
+      icon: 'trash',
+      props: ['table_id', 'row_id'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
     row_id: baserowCommon.rowId(),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue as { table_id: number; row_id: number };
+    const { table_id, row_id } = context.propsValue;
     const client = await makeClient(context.auth);
-    await client.deleteRow(table_id, row_id);
+    await client.deleteRow(table_id!, row_id!);
     return { success: true };
   },
 });

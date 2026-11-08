@@ -1,6 +1,7 @@
 import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
+import { noteOutputSchema } from '../output-schemas';
 
 export const addNoteToUserAction = createAction({
 	auth: intercomAuth,
@@ -8,8 +9,8 @@ export const addNoteToUserAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Add Note',
 	description: 'Add a note to a user',
-	audience: 'both',
-	aiMetadata: { description: 'Add an internal note to a contact resolved by email address; errors if no contact matches that email. Each call appends a new note, so it is not idempotent. This attaches a note to a contact, distinct from Add note to conversation which annotates a conversation thread.', idempotent: false },
+	audience: 'human',
+	aiMetadata: { description: 'Add an internal note to a contact resolved by email address; errors if no contact matches, and when several contacts (users or leads) share the email it uses the first match, so prefer a unique email. Each call appends a new note, so it is not idempotent. This attaches a note to a contact, distinct from Add note to conversation which annotates a conversation thread.', idempotent: false },
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',
@@ -20,8 +21,9 @@ export const addNoteToUserAction = createAction({
 			required: true,
 		}),
 	},
+	outputSchema: noteOutputSchema,
 	async run(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const contactResponse = await client.contacts.search({
 			query: {

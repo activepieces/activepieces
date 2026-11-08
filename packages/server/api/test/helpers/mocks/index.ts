@@ -132,6 +132,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
         sensitive: project?.sensitive ?? false,
+        isDefault: project?.isDefault ?? false,
         notifyFlowOwnerOnFailure: project?.notifyFlowOwnerOnFailure ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
@@ -216,6 +217,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         googleAuthEnabled: platform?.googleAuthEnabled ?? true,
         ssoDomain: platform?.ssoDomain ?? null,
         ssoDomainVerification: platform?.ssoDomainVerification ?? null,
+        auditLogRetentionDays: platform?.auditLogRetentionDays ?? null,
     }
 }
 
@@ -395,6 +397,7 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         steps: {},
         failParentOnFailure: flowRun?.failParentOnFailure ?? false,
         parentRunId: flowRun?.parentRunId ?? undefined,
+        parentWaitpointId: flowRun?.parentWaitpointId ?? undefined,
         flowVersionId: flowRun?.flowVersionId ?? apId(),
         flowVersion: flowRun?.flowVersion,
         logsFileId: flowRun?.logsFileId ?? null,

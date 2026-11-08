@@ -80,7 +80,6 @@ export const SamlLoginForm = ({
                 {...field}
                 type="text"
                 placeholder="jdoe@acme.com"
-                className="rounded-sm"
                 autoFocus
               />
               <FormMessage />

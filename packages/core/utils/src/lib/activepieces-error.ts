@@ -25,6 +25,7 @@ export type ApErrorParams =
     | ExistingUserErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
+    | FlowRunNotRetryableErrorParams
     | FlowRunRetryOutsideRetentionErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -44,6 +45,7 @@ export type ApErrorParams =
     | QuotaExceededParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
+    | LastProjectParams
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
@@ -51,6 +53,7 @@ export type ApErrorParams =
     | TriggerFailedErrorParams
     | ValidationErrorParams
     | AgentRunSupersededErrorParams
+    | AgentRunBusyErrorParams
     | RequiredActionsMissingErrorParams
     | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
@@ -58,6 +61,7 @@ export type ApErrorParams =
     | UserNotFoundOnPlatformErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
+    | SignInMethodNotAllowedParams
     | ExistingAlertChannelErrorParams
     | EmailAlreadyHasActivationKey
     | AIProviderModelNotSupportedParams
@@ -160,6 +164,13 @@ export type ChatContextLimitExceededParams = BaseErrorParams<ErrorCode.CHAT_CONT
 
 export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
 
+export type SignInMethodNotAllowedParams = BaseErrorParams<ErrorCode.SIGN_IN_METHOD_NOT_ALLOWED, {
+    platformName: string
+    allowedMethods: SignInMethod[]
+} | Record<string, never>>
+
+export type SignInMethod = 'EMAIL' | 'GOOGLE' | 'SAML'
+
 export type AuthorizationErrorParams = BaseErrorParams<
 ErrorCode.AUTHORIZATION,
 Record<string, string> &
@@ -192,6 +203,14 @@ export type SystemInvalidErrorParams = BaseErrorParams<
 ErrorCode.SYSTEM_PROP_INVALID,
 {
     prop: string
+}
+>
+
+export type FlowRunNotRetryableErrorParams = BaseErrorParams<
+ErrorCode.FLOW_RUN_NOT_RETRYABLE,
+{
+    flowRunId: FlowRunId
+    status: string
 }
 >
 
@@ -336,6 +355,13 @@ ErrorCode.AGENT_RUN_SUPERSEDED,
 }
 >
 
+export type AgentRunBusyErrorParams = BaseErrorParams<
+ErrorCode.AGENT_RUN_BUSY,
+{
+    message: string
+}
+>
+
 export type RequiredActionsMissingErrorParams = BaseErrorParams<
 ErrorCode.REQUIRED_ACTIONS_MISSING,
 {
@@ -433,6 +459,11 @@ ErrorCode.FEATURE_DISABLED,
 
 export type SignUpDisabledParams = BaseErrorParams<
 ErrorCode.SIGN_UP_DISABLED,
+Record<string, never>
+>
+
+export type LastProjectParams = BaseErrorParams<
+ErrorCode.LAST_PROJECT,
 Record<string, never>
 >
 
@@ -587,12 +618,14 @@ export enum ErrorCode {
     SANDBOX_CAPACITY_EXCEEDED = 'SANDBOX_CAPACITY_EXCEEDED',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
+    SIGN_IN_METHOD_NOT_ALLOWED = 'SIGN_IN_METHOD_NOT_ALLOWED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_EXTERNAL_ID_ALREADY_EXISTS = 'FLOW_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
+    FLOW_RUN_NOT_RETRYABLE = 'FLOW_RUN_NOT_RETRYABLE',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
@@ -614,6 +647,7 @@ export enum ErrorCode {
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
+    LAST_PROJECT = 'LAST_PROJECT',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
     TEST_TRIGGER_FAILED = 'TEST_TRIGGER_FAILED',
@@ -623,6 +657,7 @@ export enum ErrorCode {
     USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
     AGENT_RUN_SUPERSEDED = 'AGENT_RUN_SUPERSEDED',
+    AGENT_RUN_BUSY = 'AGENT_RUN_BUSY',
     REQUIRED_ACTIONS_MISSING = 'REQUIRED_ACTIONS_MISSING',
     FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',

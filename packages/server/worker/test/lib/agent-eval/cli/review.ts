@@ -2,6 +2,8 @@ import chalk from 'chalk'
 import Table from 'cli-table3'
 import inquirer from 'inquirer'
 import { evalFormat } from '../core/eval-format'
+import { FAILURE_TYPES } from '../core/llm-judge'
+import { EvalReportEntry } from '../core/report'
 import { evalStore, FixtureComparison, RunResult } from './store'
 
 async function review({ run }: { run: RunResult }): Promise<ReviewOutcome> {
@@ -53,7 +55,7 @@ async function browse(run: RunResult): Promise<void> {
             message: 'Pick a fixture to inspect',
             pageSize: 15,
             choices: [
-                ...run.comparisons.map((comparison) => ({ name: `${deltaBadge(comparison.delta)}  ${comparison.id}`, value: comparison.id })),
+                ...run.comparisons.map((comparison) => ({ name: `${evalFormat.deltaBadge({ delta: comparison.delta })}  ${comparison.id}`, value: comparison.id })),
                 new inquirer.Separator(),
                 { name: 'Back', value: '__back' },
             ],
@@ -80,6 +82,7 @@ async function decide({ run, verdict }: { run: RunResult, verdict: 'proceed' | '
         return null
     }
     const { note } = await inquirer.prompt<{ note: string }>([{ type: 'input', name: 'note', message: 'Note (optional)' }])
+    const totals = runTotals(run)
 
     const improvements = run.comparisons.filter((comparison) => comparison.delta === 'improved').map((comparison) => comparison.id)
     const regressions = run.comparisons.filter((comparison) => comparison.delta === 'regressed').map((comparison) => comparison.id)
@@ -87,8 +90,12 @@ async function decide({ run, verdict }: { run: RunResult, verdict: 'proceed' | '
         at: new Date().toISOString(),
         verdict,
         candidateLabel: run.candidateLabel,
-        baselinePassed: run.comparisons.filter((comparison) => comparison.baseline.passed).length,
-        candidatePassed: run.comparisons.filter((comparison) => comparison.candidate.passed).length,
+        baselineModelId: run.baselineModelId,
+        candidateModelId: run.candidateModelId,
+        baselineCostUsd: totals.baseline.costUsd,
+        candidateCostUsd: totals.candidate.costUsd,
+        baselinePassed: totals.baseline.passed,
+        candidatePassed: totals.candidate.passed,
         total: run.comparisons.length,
         regressions,
         improvements,
@@ -99,9 +106,10 @@ async function decide({ run, verdict }: { run: RunResult, verdict: 'proceed' | '
 }
 
 function printDashboard(run: RunResult): void {
-    const table = new Table({ head: ['fixture', 'baseline', 'candidate', 'Δ'].map((header) => chalk.bold(header)), style: { head: [], border: [] } })
+    const names = armNames(run)
+    const table = new Table({ head: ['fixture', names.baseline, names.candidate, 'Δ', `${names.baseline} $`, `${names.candidate} $`].map((header) => chalk.bold(header)), style: { head: [], border: [] } })
     for (const comparison of run.comparisons) {
-        table.push([comparison.id, verdictCell(comparison.baseline.passed), verdictCell(comparison.candidate.passed), deltaBadge(comparison.delta)])
+        table.push([comparison.id, verdictCell(comparison.baseline.passed), verdictCell(comparison.candidate.passed), evalFormat.deltaBadge({ delta: comparison.delta }), evalFormat.formatUsd(comparison.baseline.costUsd), evalFormat.formatUsd(comparison.candidate.costUsd)])
     }
 
     const improved = run.comparisons.filter((comparison) => comparison.delta === 'improved').length
@@ -111,25 +119,70 @@ function printDashboard(run: RunResult): void {
 
     console.log('')
     console.log(chalk.bold.cyan('  Activepieces · Chat Prompt Eval — Review'))
-    console.log(`  ${chalk.dim('baseline')}  ${run.baselineLabel}`)
-    console.log(`  ${chalk.dim('candidate')} ${run.candidateLabel}`)
-    console.log(`  ${chalk.dim('model')}     ${run.provider} · ${run.modelId}   ${chalk.dim('ran')} ${run.at}`)
-    if (!run.changed) {
-        console.log(chalk.yellow('  ⚠ no prompt changes detected — baseline and candidate are identical'))
+    console.log(`  ${chalk.dim('baseline')}  ${run.baselineLabel} · ${run.provider} · ${run.baselineModelId}`)
+    console.log(`  ${chalk.dim('candidate')} ${run.candidateLabel} · ${run.provider} · ${run.candidateModelId}   ${chalk.dim('ran')} ${run.at}`)
+    if (!isChanged(run)) {
+        console.log(chalk.yellow('  ⚠ no prompt or model changes detected — baseline and candidate are identical'))
+    }
+    if (run.promptChanged && run.baselineModelId !== run.candidateModelId) {
+        console.log(chalk.yellow('  ⚠ both the prompt and the model differ — the comparison mixes two variables'))
     }
     console.log(table.toString())
-    console.log(`  ${chalk.dim('expected-label match')}  baseline TPR ${baselineCalibration.tpr.toFixed(2)}/TNR ${baselineCalibration.tnr.toFixed(2)}   candidate TPR ${candidateCalibration.tpr.toFixed(2)}/TNR ${candidateCalibration.tnr.toFixed(2)}`)
-    console.log(`  ${headline({ improved, regressed })}`)
+    console.log(`  ${chalk.dim('expected-label match')}  ${names.baseline} TPR ${baselineCalibration.tpr.toFixed(2)}/TNR ${baselineCalibration.tnr.toFixed(2)}   ${names.candidate} TPR ${candidateCalibration.tpr.toFixed(2)}/TNR ${candidateCalibration.tnr.toFixed(2)}`)
+    const totals = runTotals(run)
+    console.log(`  ${chalk.dim('score · cost')}  ${names.baseline} ${armSummary(totals.baseline)}   ${names.candidate} ${armSummary(totals.candidate)}${costDeltaSuffix({ run, totals })}`)
+    console.log(`  ${chalk.dim('judge cost')}    ${names.baseline} ${evalFormat.formatUsd(totals.baseline.judgeCostUsd)}   ${names.candidate} ${evalFormat.formatUsd(totals.candidate.judgeCostUsd)} ${chalk.dim('(not counted above)')}`)
+    console.log(`  ${chalk.dim('why it failed')} ${names.baseline}: ${evalFormat.failureSummary(run.comparisons.map((comparison) => comparison.baseline))}   ${names.candidate}: ${evalFormat.failureSummary(run.comparisons.map((comparison) => comparison.candidate))}`)
+    console.log(`  ${headline({ improved, regressed, names })}`)
     console.log('')
+}
+
+function armNames(run: RunResult): ArmNames {
+    if (run.baselineModelId === run.candidateModelId) {
+        return { baseline: 'baseline', candidate: 'candidate' }
+    }
+    const baseline = evalFormat.shortModelName(run.baselineModelId)
+    const candidate = evalFormat.shortModelName(run.candidateModelId)
+    return baseline === candidate ? { baseline: run.baselineModelId, candidate: run.candidateModelId } : { baseline, candidate }
+}
+
+function armSummary(totals: ArmTotals): string {
+    return `${totals.passed}/${totals.total} · ${evalFormat.formatUsd(totals.costUsd)}`
+}
+
+function costDeltaSuffix({ run, totals }: { run: RunResult, totals: RunTotals }): string {
+    const delta = evalFormat.costDelta({ baseline: totals.baseline.costUsd, candidate: totals.candidate.costUsd })
+    return delta === null || !isChanged(run) ? '' : ` ${chalk.bold(`(${delta} cost)`)}`
+}
+
+function isChanged(run: RunResult): boolean {
+    return run.promptChanged || run.baselineModelId !== run.candidateModelId
+}
+
+function runTotals(run: RunResult): RunTotals {
+    return {
+        baseline: armTotals(run.comparisons.map((comparison) => comparison.baseline)),
+        candidate: armTotals(run.comparisons.map((comparison) => comparison.candidate)),
+    }
+}
+
+function armTotals(entries: EvalReportEntry[]): ArmTotals {
+    return {
+        passed: entries.filter((entry) => entry.passed).length,
+        total: entries.length,
+        costUsd: evalFormat.sumCost({ costs: entries.map((entry) => entry.costUsd) }),
+        judgeCostUsd: evalFormat.sumCost({ costs: entries.map((entry) => entry.judgeCostUsd) }),
+    }
 }
 
 function printFixtureDetail({ run, comparison }: { run: RunResult, comparison: FixtureComparison }): void {
     const { baseline, candidate } = comparison
+    const names = armNames(run)
     console.log('')
-    console.log(`  ${chalk.bold(comparison.id)}  ${deltaBadge(comparison.delta)}`)
+    console.log(`  ${chalk.bold(comparison.id)}  ${evalFormat.deltaBadge({ delta: comparison.delta })}`)
     console.log(`  ${chalk.dim(evalFormat.truncate({ text: candidate.description, max: 108 }))}`)
 
-    const table = new Table({ head: ['check', 'baseline', 'candidate'].map((header) => chalk.bold(header)), style: { head: [], border: [] } })
+    const table = new Table({ head: ['check', names.baseline, names.candidate].map((header) => chalk.bold(header)), style: { head: [], border: [] } })
     baseline.assertions.forEach((assertion, index) => {
         table.push([`assert · ${assertion.label}`, flipCell(assertion.pass, candidate.assertions[index]?.pass ?? assertion.pass, true), flipCell(candidate.assertions[index]?.pass ?? assertion.pass, assertion.pass, false)])
     })
@@ -140,15 +193,16 @@ function printFixtureDetail({ run, comparison }: { run: RunResult, comparison: F
 
     const failedJudge = candidate.judge.filter((verdict) => !verdict.pass)
     if (failedJudge.length > 0) {
-        console.log(`  ${chalk.dim('candidate judge notes')}`)
+        console.log(`  ${chalk.dim(`${names.candidate} judge notes`)}`)
         for (const verdict of failedJudge) {
-            console.log(`    ${chalk.red('✗')} ${verdict.dimension}: ${chalk.dim(evalFormat.truncate({ text: verdict.reason, max: 96 }))}`)
+            const failure = verdict.failure === undefined ? '' : ` ${chalk.yellow(`[${FAILURE_TYPES[verdict.failure].label}]`)}`
+            console.log(`    ${chalk.red('✗')} ${verdict.dimension}${failure}: ${chalk.dim(evalFormat.truncate({ text: verdict.reason, max: 96 }))}`)
         }
     }
 
-    printTranscript('baseline transcript', baseline.transcript)
-    if (run.changed) {
-        printTranscript('candidate transcript', candidate.transcript)
+    printTranscript(`${names.baseline} transcript`, baseline.transcript)
+    if (isChanged(run)) {
+        printTranscript(`${names.candidate} transcript`, candidate.transcript)
     }
 }
 
@@ -173,24 +227,14 @@ function flipCell(pass: boolean, other: boolean, isBaseline: boolean): string {
     return isRegression ? chalk.red.bold(mark) : chalk.green.bold(mark)
 }
 
-function deltaBadge(delta: FixtureComparison['delta']): string {
-    if (delta === 'improved') {
-        return chalk.green('▲ improved')
-    }
-    if (delta === 'regressed') {
-        return chalk.red('▼ regressed')
-    }
-    return chalk.dim('= same')
-}
-
-function headline({ improved, regressed }: { improved: number, regressed: number }): string {
+function headline({ improved, regressed, names }: { improved: number, regressed: number, names: ArmNames }): string {
     if (regressed > 0) {
-        return chalk.red.bold(`candidate regressed ${regressed} fixture(s)${improved > 0 ? `, improved ${improved}` : ''}`)
+        return chalk.red.bold(`${names.candidate} regressed ${regressed} fixture(s)${improved > 0 ? `, improved ${improved}` : ''}`)
     }
     if (improved > 0) {
-        return chalk.green.bold(`candidate improved ${improved} fixture(s), no regressions`)
+        return chalk.green.bold(`${names.candidate} improved ${improved} fixture(s), no regressions`)
     }
-    return chalk.dim('no change between baseline and candidate')
+    return chalk.dim(`no change between ${names.baseline} and ${names.candidate}`)
 }
 
 export const evalReview = {
@@ -200,3 +244,14 @@ export const evalReview = {
 export type ReviewOutcome =
     | { kind: 'exit', code: number }
     | { kind: 'rerun' }
+
+type ArmTotals = {
+    passed: number
+    total: number
+    costUsd: number | null
+    judgeCostUsd: number | null
+}
+
+type RunTotals = { baseline: ArmTotals, candidate: ArmTotals }
+
+type ArmNames = { baseline: string, candidate: string }

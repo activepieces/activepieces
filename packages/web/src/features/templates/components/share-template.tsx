@@ -61,8 +61,10 @@ const TemplateViewer = ({ template }: { template: Template }) => {
   return (
     <Card className="min-w-[500px] shadow-lg border-2">
       <>
-        <CardHeader className="space-y-3 pb-4">
-          <h2 className="text-2xl font-bold tracking-tight">{template.name}</h2>
+        <CardHeader className="gap-3 pb-4">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {template.name}
+          </h2>
           <Separator />
         </CardHeader>
         <CardContent className="space-y-6">

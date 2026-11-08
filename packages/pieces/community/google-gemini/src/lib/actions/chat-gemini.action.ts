@@ -1,5 +1,6 @@
 import { Content, GoogleGenerativeAI } from '@google/generative-ai';
 import {
+  MarkdownVariant,
   Property,
   StoreScope,
   createAction,
@@ -19,6 +20,11 @@ export const chatGemini = createAction({
   displayName: 'Chat with Gemini',
   description: 'Chat with Gemini, optionally remembering earlier messages.',
   aiMetadata: { description: 'Sends a prompt as one turn of a Gemini chat and returns the reply, with two modes: supply a memory key (max 128 characters) to load and persist the conversation history in project storage so later runs remember earlier turns, or leave it empty for a stateless single turn. Pick it over generate_content when the exchange spans multiple runs and must retain context; generate_content is the better choice for one-shot generation or when a built-in tool such as Google Search or File Search is needed. Not idempotent: each call produces a new reply and, when a memory key is set, rewrites the stored history.', idempotent: false },
+  propertyGroups: [
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt'] },
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model'] },
+    { key: 'history', display: 'section', label: 'History', icon: 'inbox', props: ['memoryKey', 'memoryInfo'] },
+  ],
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',
@@ -40,6 +46,7 @@ export const chatGemini = createAction({
         'Reuse a key to continue its conversation. Empty: no memory.',
       required: false,
     }),
+    memoryInfo: Property.MarkDown({ value: 'Saved for the whole project, so other flows that use this key join the same conversation.', variant: MarkdownVariant.INFO }),
   },
   outputSchema: chatGeminiActionOutputSchema,
   async run({ auth, propsValue, store }) {

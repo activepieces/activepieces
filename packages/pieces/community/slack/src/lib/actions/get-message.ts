@@ -15,6 +15,22 @@ export const getMessageAction = createAction({
 	aiMetadata: { description: "Fetch a single message from a channel by its exact timestamp; read-only and repeatable. Use this when you already have the message ts and channel; use Get channel history to read a range of messages or Search messages to find one by content.", idempotent: true },
 	auth: slackAuth,
 	outputSchema: getMessageActionOutputSchema,
+	propertyGroups: [
+		{
+			key: 'channel_picker',
+			display: 'section',
+			label: 'Channel',
+			icon: 'markdown',
+			props: ['info', 'onlyBotChannels', 'channel'],
+		},
+		{
+			key: 'message',
+			display: 'section',
+			label: 'Message',
+			icon: 'text',
+			props: ['ts'],
+		},
+	],
 	props: {
 		info: singleSelectChannelInfo,
 		onlyBotChannels,

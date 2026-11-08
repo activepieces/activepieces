@@ -30,7 +30,8 @@ export class FetchHttpClient extends BaseHttpClient {
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
     const { urlWithoutQueryParams, queryParams: urlQueryParams } = this.getUrl(request);
-    const headers = this.getHeaders(request);
+    const requestHeaders = this.getHeaders(request);
+    const headers = isNativeFormData(request.body) ? withoutContentType(requestHeaders) : requestHeaders;
     const queryParams = request.queryParams ?? {};
     for (const [key, value] of Object.entries(queryParams)) {
       urlQueryParams.append(key, value);
@@ -79,7 +80,7 @@ export class FetchHttpClient extends BaseHttpClient {
     if (response.status < 200 || response.status >= successCeiling) {
       // A stream response can't carry an error message usefully; read the error body as text.
       const errorBody = await parseResponseBody(response, responseType === 'stream' ? 'text' : responseType);
-      const httpError = new HttpError(request.body, { status: response.status, responseBody: errorBody });
+      const httpError = new HttpError(request.redactBodyInErrors === true ? REDACTED_BODY : request.body, { status: response.status, responseBody: errorBody });
       console.error('[HttpClient#(sanitized error message)] Request failed:', httpError);
       throw httpError;
     }
@@ -92,6 +93,8 @@ export class FetchHttpClient extends BaseHttpClient {
     };
   }
 }
+
+const REDACTED_BODY = '[redacted]';
 
 export function acceptsRequestBody(method: HttpMethod): boolean {
   return method !== HttpMethod.GET && method !== HttpMethod.HEAD;
@@ -127,7 +130,7 @@ function serializeBody(
     Buffer.isBuffer(body) ||
     body instanceof URLSearchParams ||
     body instanceof ArrayBuffer ||
-    (typeof FormData !== 'undefined' && body instanceof FormData) ||
+    isNativeFormData(body) ||
     (typeof Blob !== 'undefined' && body instanceof Blob)
   ) {
     return { body: body as BodyInit, extraHeaders: {}, isStream: false };
@@ -228,6 +231,14 @@ function isNodeFormData(body: unknown): body is NodeFormData {
     typeof (body as NodeFormData).pipe === 'function' &&
     typeof (body as NodeFormData).on === 'function'
   );
+}
+
+function isNativeFormData(body: unknown): body is FormData {
+  return typeof FormData !== 'undefined' && body instanceof FormData;
+}
+
+function withoutContentType(headers: HttpHeaders): HttpHeaders {
+  return Object.fromEntries(Object.entries(headers).filter(([key]) => key.toLowerCase() !== 'content-type'));
 }
 
 function isNil(value: unknown): value is null | undefined {

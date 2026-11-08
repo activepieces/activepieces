@@ -20,7 +20,7 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
   const floor = floorExplanation({ input, ranked });
 
   return (
-    <div className="flex flex-col gap-2 p-3 rounded-lg border">
+    <div className="flex flex-col gap-2 p-3 rounded-xl border">
       <span className="text-xs font-medium text-gray-11">
         {t('How sure the model was')}
       </span>

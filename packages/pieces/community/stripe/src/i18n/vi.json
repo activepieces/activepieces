@@ -177,5 +177,6 @@
   "Only disputes for this charge. Empty: all.": "Chỉ tranh chấp cho khoản phí này. Để trống: tất cả.",
   "Only disputes for this payment. Empty: all.": "Chỉ tranh chấp cho khoản thanh toán này. Để trống: tất cả.",
   "Only updates where the subscription's status is this.": "Chỉ cập nhật khi trạng thái gói đăng ký là giá trị này.",
-  "Only sessions for this customer. Empty: all.": "Chỉ phiên của khách hàng này. Để trống: tất cả."
+  "Only sessions for this customer. Empty: all.": "Chỉ phiên của khách hàng này. Để trống: tất cả.",
+  "Empty fields keep their current value.": "Các trường để trống sẽ giữ nguyên giá trị hiện tại."
 }

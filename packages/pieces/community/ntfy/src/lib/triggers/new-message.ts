@@ -54,6 +54,9 @@ export const newMessage = createTrigger({
     await context.store.put(CURSOR_KEY, cursor);
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete(CURSOR_KEY);
   },
   async test(context) {

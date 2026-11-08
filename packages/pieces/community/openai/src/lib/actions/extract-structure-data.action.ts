@@ -11,6 +11,10 @@ export const extractStructuredDataAction = createAction({
 	displayName: 'Extract Structured Data',
 	description: 'Pull the fields you define out of a block of text.',
 	aiMetadata: { description: 'Pulls a caller-defined set of named fields out of one block of unstructured text and returns them as a flat object, with each field declared as text, number, or boolean and optionally marked to fail the step when it is absent. Use it to turn prose, emails, or documents into machine-readable values; prefer analyze_sentiment or classify_text for a judgement about the text and ask_chatgpt for free-form output. Requires the text plus at least one field definition, and the step errors when the model returns no extraction at all. Not idempotent: each call is a fresh model completion and the extracted values can vary between runs.', idempotent: false },
+	propertyGroups: [
+		{ key: 'source', display: 'section', label: 'Source', icon: 'text', props: ['model', 'text'] },
+		{ key: 'output', display: 'section', label: 'Output', icon: 'tag', props: ['params'] },
+	],
 	props: {
 		model: Property.Dropdown({
   auth: openaiAuth,

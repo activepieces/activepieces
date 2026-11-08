@@ -66,7 +66,8 @@ const ColorPicker = forwardRef<
             onChange={onChange}
           />
           <Input
-            className="h-8 font-mono"
+            size="sm"
+            className="font-mono"
             maxLength={7}
             onChange={(e) => {
               onChange(e?.currentTarget?.value);

@@ -198,6 +198,7 @@ type StoredConnection = {
     project: string
     status: string
     grantedScopes: string[]
+    updated?: string
 }
 
 type SelectedConnection = Pick<StoredConnection, 'externalId' | 'label' | 'projectId'>
@@ -208,4 +209,5 @@ type PendingGate = {
     displayName: string
     toolInput: Record<string, unknown>
     runId?: string
+    taskTitle?: string
 }

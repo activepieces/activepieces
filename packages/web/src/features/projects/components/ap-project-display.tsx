@@ -50,7 +50,7 @@ export const ApProjectDisplay = ({
     ProjectType.TEAM ? (
     <Avatar
       className={cn(
-        'size-6 flex items-center justify-center rounded-sm',
+        'size-6 flex items-center justify-center rounded-md',
         iconClassName,
       )}
       style={{
@@ -63,7 +63,7 @@ export const ApProjectDisplay = ({
   ) : framePersonalIcon ? (
     <span
       className={cn(
-        'flex size-6 shrink-0 items-center justify-center rounded-sm border border-gray-6 bg-gray-3 text-gray-11',
+        'flex size-6 shrink-0 items-center justify-center rounded-md border border-gray-6 bg-gray-3 text-gray-11',
         iconClassName,
       )}
     >

@@ -71,7 +71,7 @@ async function enrichAuditEventParam(requestOrMeta: ApplicationEventSource, para
         return undefined
     }
     const project = isNil(meta.projectId) ? undefined : await projectService(log).getOne(meta.projectId)
-    const userId = meta.userId ?? project?.ownerId
+    const userId = meta.userId ?? (meta.fallBackToProjectOwner === false ? undefined : project?.ownerId)
     const { data: user } = await tryCatch(async () => isNil(userId) ? undefined : userService(log).getOneOrFail({ id: userId }))
     const identity = isNil(user?.identityId) ? undefined : await userIdentityService(log).getOneOrFail({ id: user.identityId })
     const eventToSave: unknown = {
@@ -126,6 +126,7 @@ export type MetaInformation = {
     userId?: UserId | null
     projectId?: ProjectId
     ip?: string
+    fallBackToProjectOwner?: boolean
 }
 
 type ApplicationEventSource = FastifyRequest | MetaInformation

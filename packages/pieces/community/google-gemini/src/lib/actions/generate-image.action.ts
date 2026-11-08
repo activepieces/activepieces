@@ -17,6 +17,10 @@ export const generateImageAction = createAction({
       'Generates an image from a text prompt using a Gemini image-generation model (e.g. Nano Banana) and returns it as a downloadable file. Use this for text-to-image; generate_content_from_image goes the other direction (image in, text out), and create_video is for motion output. Not idempotent: each call renders a new image.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'image', display: 'section', label: 'Image', icon: 'text', props: ['prompt', 'model'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['aspectRatio', 'imageSize'] },
+  ],
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',

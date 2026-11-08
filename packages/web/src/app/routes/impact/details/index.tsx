@@ -214,7 +214,7 @@ export function FlowsDetails({
           const projectAvatar =
             project?.type === ProjectType.TEAM ? (
               <Avatar
-                className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold leading-none"
+                className="size-5 shrink-0 flex items-center justify-center rounded-sm text-xs font-semibold leading-none"
                 style={{
                   backgroundColor:
                     PROJECT_COLOR_PALETTE[project.icon.color].color,
@@ -297,7 +297,7 @@ export function FlowsDetails({
       </div>
 
       {flowsMissingTimeSaved > 0 && (
-        <div className="flex mx-3 items-start justify-between gap-3 p-4 rounded-lg border border-warning-7 bg-warning-3">
+        <div className="flex mx-3 items-start justify-between gap-3 p-4 rounded-xl border border-warning-7 bg-warning-3">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-warning-11 shrink-0 mt-0.5" />
             <div className="flex flex-col gap-1">
@@ -352,7 +352,7 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
           <Clock className="h-4 w-4" />
           <span>{t('Total Time Saved')}</span>
           {filters.timeSavedLabel && (
-            <span className="rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
+            <span className="rounded-md bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
               {filters.timeSavedLabel}
             </span>
           )}
@@ -391,14 +391,14 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
               {filters.selectedOwners.slice(0, 2).map((owner) => (
                 <span
                   key={owner.id}
-                  className="flex items-center gap-1 rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium"
+                  className="flex items-center gap-1 rounded-md bg-gray-5 px-1.5 py-0.5 text-xs font-medium"
                 >
                   <ApAvatar id={owner.id} size="xsmall" hideHover={true} />
                   <OwnerFullName id={owner.id} maxWidth="max-w-[80px]" />
                 </span>
               ))}
               {filters.selectedOwners.length > 2 && (
-                <span className="rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
+                <span className="rounded-md bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
                   +{filters.selectedOwners.length - 2}
                 </span>
               )}
@@ -417,7 +417,8 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
               onChange={(e) =>
                 filters.updateOwnerFilter({ searchQuery: e.target.value })
               }
-              className="pl-8 h-8"
+              size="sm"
+              className="pl-8"
             />
           </div>
         </div>

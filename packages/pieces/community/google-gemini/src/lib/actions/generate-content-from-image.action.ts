@@ -17,6 +17,10 @@ export const generateContentFromImageAction = createAction({
   name: 'generate_content_from_image',
   classification: 'READ',
   auth: googleGeminiAuth,
+  propertyGroups: [
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['image', 'prompt'] },
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model'] },
+  ],
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',

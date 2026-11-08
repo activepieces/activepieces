@@ -1,82 +1,57 @@
-import { workableAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccountSubdomain } from '../common/get-subdomain';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { workableAuth } from '../auth';
+import { workableOps } from '../common/operations';
+import { accountSubdomainProp } from '../common/props';
+import { workableSchemas } from '../common/schemas';
+import { workableValues } from '../common/values';
 
 export const getMembers = createAction({
   auth: workableAuth,
   name: 'getMembers',
   classification: 'SEARCH',
   displayName: 'Get Members',
-  description: 'Gets members of hiring team.',
+  description: 'Lists members of the hiring team, one page at a time.',
   audience: 'both',
-  aiMetadata: { description: "Lists Workable account members (hiring team users). With no filters it returns all members; supply role, job shortcode, email, or exact name to narrow results. Use to resolve a member ID needed by actions like rating or moving a candidate. Read-only and idempotent.", idempotent: true },
+  aiMetadata: {
+    description:
+      'List Workable account members (hiring team users) with ID, name, email and role. Filter by role, job shortcode, email or exact name. Returns one page; when hasMore is true pass nextCursor as Cursor. Use to find the acting member ID that moving, rating, commenting and disqualifying need. Read-only.',
+    idempotent: true,
+  },
+  outputSchema: workableSchemas.members,
   props: {
-    limit: Property.Number({
-      displayName: "Limit",
-      description: "Default is 50",
-      required: false
+    account_subdomain: accountSubdomainProp,
+    role: Property.StaticDropdown({
+      displayName: 'Role',
+      required: false,
+      options: {
+        options: [
+          { label: 'Admin', value: 'admin' },
+          { label: 'Simple', value: 'simple' },
+          { label: 'Reviewer', value: 'reviewer' },
+        ],
+      },
     }),
-    role: Property.ShortText({
-      displayName: "Role",
-      description: "Filter for member of specified role",
-      required: false
-    }),
-    shortcode: Property.ShortText({
-      displayName: "Shortcode",
-      description: "Shortcode of specific job",
-      required: false
-    }),
-    email: Property.ShortText({
-      displayName: "Member's email",
-      description: "Filter for specific member by email",
-      required: false
-    }),
-    name: Property.ShortText({
-      displayName: "Member's name",
-      description: "Filter for members of specified name (Exact Match)",
-      required: false
-    }),
+    shortcode: Property.ShortText({ displayName: 'Job Shortcode', description: 'Only members of this job.', required: false }),
+    email: Property.ShortText({ displayName: 'Email', description: 'Only the member with this email.', required: false }),
+    name: Property.ShortText({ displayName: 'Name', description: 'Only members with this exact name.', required: false }),
+    limit: Property.Number({ displayName: 'Limit', description: 'Members per page, 1 to 100. Default 50.', required: false }),
+    cursor: Property.ShortText({ displayName: 'Cursor', description: 'nextCursor from a previous run, to get the next page.', required: false }),
   },
   async run(context) {
-    // Action logic here
-    const limit = context.propsValue['limit'];
-    const role = context.propsValue['role'];
-    const shortcode = context.propsValue['shortcode'];
-    const email = context.propsValue['email'];
-    const name = context.propsValue['name'];
-
-    const accessToken = context.auth.secret_text;
-
-    const queryParams: Record<string, any> = {};
-
-    if(limit !== undefined && limit !== null) {
-      queryParams["limit"] = limit;
-    }
-    if(role && role.trim() !== ''){
-      queryParams["role"] = role;
-    }
-    if(shortcode && shortcode.trim() !== ""){
-      queryParams["shortcode"] = shortcode;
-    }
-    if(email && email.trim() !== ""){
-      queryParams["email"] = email;
-    }
-    if(name && name.trim() !== ''){
-      queryParams["name"] = name;
-    }
-
-    const subdomain = await getAccountSubdomain(accessToken);
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://${subdomain}.workable.com/spi/v3/members`,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json"
+    const p = context.propsValue;
+    const client = workableOps.client({ auth: context.auth, subdomain: p.account_subdomain });
+    return workableOps.listPage({
+      client,
+      path: '/members',
+      key: 'members',
+      query: {
+        role: workableValues.optionalText(p.role),
+        shortcode: workableValues.optionalText(p.shortcode),
+        email: workableValues.optionalText(p.email),
+        name: workableValues.optionalText(p.name),
       },
-      queryParams
-    })
-
-    return response.body;
+      limit: p.limit,
+      cursor: p.cursor,
+    });
   },
 });

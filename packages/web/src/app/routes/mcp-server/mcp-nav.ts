@@ -10,16 +10,19 @@ export function useMcpNav(): McpNav {
   const clientKey = params.get('client');
   const projectParam = toProjectId(params.get('project'));
   const segment = toSegment(params.get('segment'));
+  const isFromBrowse = params.has('browse');
 
   return {
     clientKey,
     segment,
     tab: toTab(tab),
-    view: clientKey ? 'client' : params.has('browse') ? 'browse' : 'landing',
+    view: clientKey ? 'client' : isFromBrowse ? 'browse' : 'landing',
     projectId: projectParam ?? authenticationSession.getProjectId(),
     showLanding: () => setParams({}),
     showBrowse: () => setParams({ browse: '1' }),
-    showClient: (key: string) => setParams({ client: key }),
+    showClient: (key: string) =>
+      setParams(isFromBrowse ? { client: key, browse: '1' } : { client: key }),
+    showPrevious: () => setParams(isFromBrowse ? { browse: '1' } : {}),
     showTab: (value: string) => navigate(`/mcp-server/${toTab(value)}`),
     selectSegment: (value: string) =>
       setParams(
@@ -47,9 +50,7 @@ export function buildToolsParams({
 }
 
 function toTab(value: string | undefined): McpTab {
-  return value === 'connections' || value === 'tools' || value === 'activity'
-    ? value
-    : 'connect';
+  return value === 'connections' || value === 'tools' ? value : 'connect';
 }
 
 function toSegment(value: string | null): McpToolSegment {
@@ -62,7 +63,7 @@ function toProjectId(value: string | null): string | null {
 
 const DEFAULT_SEGMENT: McpToolSegment = 'built-in';
 
-export type McpTab = 'connect' | 'tools' | 'connections' | 'activity';
+export type McpTab = 'connect' | 'tools' | 'connections';
 
 export type McpToolSegment = 'built-in' | 'pieces';
 
@@ -77,6 +78,7 @@ export type McpNav = {
   showLanding: () => void;
   showBrowse: () => void;
   showClient: (key: string) => void;
+  showPrevious: () => void;
   showTab: (value: string) => void;
   selectSegment: (value: string) => void;
   selectProject: (projectId: string) => void;

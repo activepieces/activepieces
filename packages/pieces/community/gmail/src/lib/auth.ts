@@ -98,7 +98,7 @@ export async function createGoogleClient(
     });
   }
   const authClient = new OAuth2Client();
-  authClient.setCredentials(auth);
+  authClient.setCredentials({ access_token: auth.access_token });
   return authClient;
 }
 

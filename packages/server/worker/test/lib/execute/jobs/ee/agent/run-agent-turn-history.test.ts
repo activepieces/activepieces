@@ -1,7 +1,7 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { ModelMessage, tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { runAgentTurn } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
@@ -10,8 +10,7 @@ describe('the history a turn leaves behind', () => {
         const progress: ModelMessage[][] = []
 
         const turn = await runAgentTurn({
-            model: updateThenConfirm(),
-            provider: AIProviderName.ANTHROPIC,
+            models: [{ model: updateThenConfirm(), provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
             systemPrompt: 'You are a test agent.',
             messages: [{ role: 'user', content: 'Change the instructions of New agent to: Reply in Arabic.' }],
             tools: {
@@ -19,13 +18,12 @@ describe('the history a turn leaves behind', () => {
             },
             allToolNames: ['ap_update_agent'],
             tier: TIER,
-            modelId: TIER.modelId,
             phaseState: { phase: 'build' },
             abortSignal: new AbortController().signal,
             log: SILENT_LOG,
             creditsLeft: async () => 100,
             sinks: {
-                drainStream: (result) => result.consumeStream(),
+                drainStream: async (result) => { await result.consumeStream(); return undefined },
                 onProgress: ({ responseMessages }) => progress.push(responseMessages),
             },
         })
@@ -34,13 +32,35 @@ describe('the history a turn leaves behind', () => {
         expect(rolesAndParts(progress[progress.length - 1])).toEqual(['assistant:tool-call', 'tool:tool-result', 'assistant:text'])
     })
 
+    it('counts paid calls from before a cut-off when it checks credits', async () => {
+        const creditsLeft = vi.fn().mockResolvedValue(100)
+
+        await runAgentTurn({
+            models: [{ model: updateThenConfirm(), provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
+            systemPrompt: 'You are a test agent.',
+            messages: [{ role: 'user', content: 'Change the instructions of New agent to: Reply in Arabic.' }],
+            tools: {
+                ap_update_agent: tool({ description: 'change an agent', inputSchema: z.object({ instructions: z.string() }), execute: async () => ({ saved: true }) }),
+            },
+            allToolNames: ['ap_update_agent'],
+            tier: TIER,
+            phaseState: { phase: 'build' },
+            abortSignal: new AbortController().signal,
+            log: SILENT_LOG,
+            creditsLeft,
+            priorToolCalls: [{ toolName: 'ap_web_search', output: {} }],
+            sinks: { drainStream: (result) => result.consumeStream() },
+        })
+
+        expect(creditsLeft).toHaveBeenCalledWith(2)
+    })
+
     it('keeps every finished step when the turn is cancelled partway, not just the last one', async () => {
         const controller = new AbortController()
         let saves = 0
 
         const turn = await runAgentTurn({
-            model: keepsUpdating(),
-            provider: AIProviderName.ANTHROPIC,
+            models: [{ model: keepsUpdating(), provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
             systemPrompt: 'You are a test agent.',
             messages: [{ role: 'user', content: 'Update New agent three times.' }],
             tools: {
@@ -58,18 +78,40 @@ describe('the history a turn leaves behind', () => {
             },
             allToolNames: ['ap_update_agent'],
             tier: TIER,
-            modelId: TIER.modelId,
             phaseState: { phase: 'build' },
             abortSignal: controller.signal,
             log: SILENT_LOG,
             creditsLeft: async () => 100,
-            sinks: { drainStream: (result) => result.consumeStream() },
+            sinks: { drainStream: async (result) => { await result.consumeStream(); return undefined } },
         })
 
         const toolCalls = turn.accumulatedResponseMessages.flatMap((message) => typeof message.content === 'string'
             ? []
             : message.content.flatMap((part) => part.type === 'tool-call' ? [part.toolCallId] : []))
         expect(toolCalls).toEqual(['update-1', 'update-2'])
+    })
+    it('nudges a turn whose last step is only thinking after a tool call, so it still ends with a reply', async () => {
+        let saves = 0
+
+        const turn = await runAgentTurn({
+            models: [{ model: updateThenThinkThenConfirm(), provider: AIProviderName.ANTHROPIC, modelId: TIER.modelId, thinkingBudget: TIER.thinkingBudget }],
+            systemPrompt: 'You are a test agent.',
+            messages: [{ role: 'user', content: 'Change the instructions of New agent to: Reply in Arabic.' }],
+            tools: {
+                ap_update_agent: tool({ description: 'change an agent', inputSchema: z.object({ instructions: z.string() }), execute: async () => { saves++; return { saved: true } } }),
+            },
+            allToolNames: ['ap_update_agent'],
+            tier: TIER,
+            phaseState: { phase: 'build' },
+            abortSignal: new AbortController().signal,
+            log: SILENT_LOG,
+            creditsLeft: async () => 100,
+            sinks: { drainStream: async (result) => { await result.consumeStream(); return undefined } },
+        })
+
+        expect(saves).toBe(1)
+        expect(rolesAndParts(turn.accumulatedResponseMessages).at(-1)).toBe('assistant:text')
+        expect(JSON.stringify(turn.accumulatedResponseMessages)).toContain('Done, New agent now replies in Arabic.')
     })
 })
 
@@ -119,6 +161,39 @@ function keepsUpdating(): MockLanguageModelV3 {
                     { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                 ]),
             }
+        },
+    })
+}
+
+function updateThenThinkThenConfirm(): MockLanguageModelV3 {
+    let calls = 0
+    return new MockLanguageModelV3({
+        doStream: async () => {
+            calls++
+            const finish = { type: 'finish' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } }
+            if (calls === 1) {
+                return { stream: convertArrayToReadableStream([
+                    { type: 'stream-start' as const, warnings: [] },
+                    { type: 'tool-call' as const, toolCallId: 'update-1', toolName: 'ap_update_agent', input: '{"instructions":"Reply in Arabic."}' },
+                    { ...finish, finishReason: 'tool-calls' as const },
+                ]) }
+            }
+            if (calls === 2) {
+                return { stream: convertArrayToReadableStream([
+                    { type: 'stream-start' as const, warnings: [] },
+                    { type: 'reasoning-start' as const, id: 'think' },
+                    { type: 'reasoning-delta' as const, id: 'think', delta: 'The update worked.' },
+                    { type: 'reasoning-end' as const, id: 'think' },
+                    { ...finish, finishReason: 'stop' as const },
+                ]) }
+            }
+            return { stream: convertArrayToReadableStream([
+                { type: 'stream-start' as const, warnings: [] },
+                { type: 'text-start' as const, id: 'done' },
+                { type: 'text-delta' as const, id: 'done', delta: 'Done, New agent now replies in Arabic.' },
+                { type: 'text-end' as const, id: 'done' },
+                { ...finish, finishReason: 'stop' as const },
+            ]) }
         },
     })
 }

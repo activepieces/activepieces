@@ -22,15 +22,6 @@ export function internalErrorToast() {
   });
 }
 
-export const UNSAVED_CHANGES_TOAST = {
-  id: 'unsaved-changes',
-  title: 'Unsaved Changes',
-  description:
-    'Something went wrong and there are unsaved changes, please refresh and contact support if the problem persists.',
-  variant: 'destructive',
-  duration: Infinity,
-};
-
 function Toaster({ ...props }: ToasterProps) {
   const { resolvedTheme } = useTheme();
 
@@ -66,7 +57,7 @@ function Toaster({ ...props }: ToasterProps) {
           '--normal-text': 'var(--gray-12)',
           '--normal-bg': 'var(--panel)',
           '--normal-border': 'var(--gray-6)',
-          '--border-radius': 'var(--radius)',
+          '--border-radius': 'var(--radius-xl)',
         } as React.CSSProperties
       }
       {...props}

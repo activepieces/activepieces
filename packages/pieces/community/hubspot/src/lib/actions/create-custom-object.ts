@@ -19,6 +19,22 @@ export const createCustomObjectAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Create a new record of a selected HubSpot custom object type from the supplied properties. Each call inserts a new record, so it is not idempotent. Requires choosing the custom object type; use Find Custom Object to locate an existing record.', idempotent: false },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'object',
+			display: 'section',
+			label: 'Object Type',
+			icon: 'tag',
+			props: ['customObjectType'],
+		},
+		{
+			key: 'details',
+			display: 'section',
+			label: 'Details',
+			icon: 'text',
+			props: ['objectProperties'],
+		},
+	],
 	props: {
 		customObjectType: customObjectDropdown,
 		objectProperties: customObjectDynamicProperties,

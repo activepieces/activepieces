@@ -13,7 +13,7 @@ export function ModeRadioCards<TValue extends string>({
   onChange: (value: TValue) => void;
 }) {
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="@container flex flex-col gap-2.5">
       <span className="text-sm font-semibold">{title}</span>
       <RadioGroup
         value={value}
@@ -23,13 +23,13 @@ export function ModeRadioCards<TValue extends string>({
             onChange(option.value);
           }
         }}
-        className="grid grid-cols-2 gap-3"
+        className="grid grid-cols-1 @md:grid-cols-2 gap-3"
       >
         {options.map((option) => (
           <label
             key={option.value}
             className={cn(
-              'flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 transition-colors',
+              'flex cursor-pointer flex-col gap-1.5 rounded-xl border p-3 transition-colors',
               option.value === value
                 ? 'border-accent-9 bg-accent-3'
                 : 'hover:bg-gray-3/50',

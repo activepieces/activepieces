@@ -77,7 +77,7 @@ export const newSalesOrderTrigger = createTrigger({
     });
   },
   async onDisable(context) {
-    await odooPolling.onDisable({ store: context.store });
+    await odooPolling.onDisable({ store: context.store, isRepublish: context.isRepublish });
   },
   async run(context) {
     const enabledAt = await odooPolling.enabledAt({ store: context.store });

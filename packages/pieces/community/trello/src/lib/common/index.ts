@@ -1,4 +1,4 @@
-import { BasicAuthPropertyValue, Property } from '@activepieces/pieces-framework';
+import { BasicAuthPropertyValue, DropdownState, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 import { trelloAuth } from '../..';
 
@@ -17,157 +17,61 @@ export const trelloCommon = {
 	board_id:  Property.Dropdown({
 		auth: trelloAuth,
 
-		displayName: 'Boards',
-		description: 'List of boards',
+		displayName: 'Board',
+		description: 'Pick a board to load its lists.',
 		required: true,
 		refreshers: [],
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					placeholder: 'connect your account first',
-					options: [],
-				};
-			}
-
-			const basicAuthProperty = auth as BasicAuthPropertyValue;
-			const user = await getAuthorisedUser(basicAuthProperty.username, basicAuthProperty.password);
-			const boards = await listBoards(
-				basicAuthProperty.username,
-				basicAuthProperty.password,
-				user['id'],
-			);
-
-			return {
-				options: boards.map((board: { id: string; name: string }) => ({
-					value: board.id,
-					label: board.name,
-				})),
-			};
-		},
+		options: async ({ auth }) => loadBoardOptions({ auth }),
 	}),
 	list_id:  Property.Dropdown({
 		auth: trelloAuth,
 
-		displayName: 'Lists',
-		description: 'Get lists from a board',
+		displayName: 'List',
 		required: true,
 		refreshers: ['board_id'],
-		options: async ({ auth, board_id }) => {
-			if (!auth || !board_id) {
-				return {
-					disabled: true,
-					placeholder: 'connect your account first and select a board',
-					options: [],
-				};
-			}
-
-			const basicAuthProperty = auth as BasicAuthPropertyValue;
-			const lists = await listBoardLists(
-				basicAuthProperty.username,
-				basicAuthProperty.password,
-				board_id as string,
-			);
-
-			return {
-				options: lists.map((list: { id: string; name: string }) => ({
-					value: list.id,
-					label: list.name,
-				})),
-			};
-		},
+		options: async ({ auth, board_id }) => loadListOptions({ auth, boardId: board_id }),
 	}),
 	list_id_opt:  Property.Dropdown({
 		auth: trelloAuth,
 
-		displayName: 'Lists',
-		description: 'Get lists from a board',
+		displayName: 'List',
+		description: 'Leave empty to use every list on the board.',
 		required: false,
 		refreshers: ['board_id'],
-		options: async ({ auth, board_id }) => {
-			if (!auth || !board_id) {
-				return {
-					disabled: true,
-					placeholder: 'connect your account first and select a board',
-					options: [],
-				};
-			}
-			const basicAuthProperty = auth as BasicAuthPropertyValue;
-			const lists = await listBoardLists(
-				basicAuthProperty.username,
-				basicAuthProperty.password,
-				board_id as string,
-			);
+		options: async ({ auth, board_id }) => loadListOptions({ auth, boardId: board_id }),
+	}),
+	move_to_list:  Property.Dropdown({
+		auth: trelloAuth,
 
-			return {
-				options: lists.map((list: { id: string; name: string }) => ({
-					value: list.id,
-					label: list.name,
-				})),
-			};
-		},
+		displayName: 'Move to List',
+		description: 'Leave empty to keep the card in its current list.',
+		required: false,
+		refreshers: ['board_id'],
+		options: async ({ auth, board_id }) => loadListOptions({ auth, boardId: board_id }),
 	}),
 	board_id_opt:  Property.Dropdown({
 		auth: trelloAuth,
 
-		displayName: 'Boards',
-		description: 'List of boards',
+		displayName: 'Board',
+		description: "Loads the board's labels and lists below.",
 		required: false,
 		refreshers: [],
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					placeholder: 'connect your account first',
-					options: [],
-				};
-			}
-
-			const basicAuthProperty = auth as BasicAuthPropertyValue;
-			const user = await getAuthorisedUser(basicAuthProperty.username, basicAuthProperty.password);
-			const boards = await listBoards(
-				basicAuthProperty.username,
-				basicAuthProperty.password,
-				user['id'],
-			);
-
-			return {
-				options: boards.map((board: { id: string; name: string }) => ({
-					value: board.id,
-					label: board.name,
-				})),
-			};
-		},
+		options: async ({ auth }) => loadBoardOptions({ auth }),
 	}),
 	board_labels: Property.MultiSelectDropdown({
 		auth: trelloAuth,
 		displayName: 'Labels',
-		description: 'Assign labels to the card',
 		required: false,
 		refreshers: ['board_id'],
-		options: async ({ auth, board_id }) => {
-			if (!auth || !board_id) {
-				return {
-					disabled: true,
-					placeholder: 'connect your account first and select a board',
-					options: [],
-				};
-			}
-
-			const basicAuthProperty = auth as BasicAuthPropertyValue;
-			const labels = await listBoardLabels(
-				basicAuthProperty.username,
-				basicAuthProperty.password,
-				board_id as string,
-			);
-
-			return {
-				options: labels.map((label: { id: string; name: string; color: string }) => ({
-					label: label.name || label.color,
-					value: label.id,
-				})),
-			};
-		},
+		options: async ({ auth, board_id }) => loadLabelOptions({ auth, boardId: board_id }),
+	}),
+	board_labels_replace: Property.MultiSelectDropdown({
+		auth: trelloAuth,
+		displayName: 'Labels',
+		description: "Replaces the card's labels. Leave empty to keep them.",
+		required: false,
+		refreshers: ['board_id'],
+		options: async ({ auth, board_id }) => loadLabelOptions({ auth, boardId: board_id }),
 	}),
 	create_webhook: async (auth: BasicAuthPropertyValue, list_id: string, webhookUrl: string) => {
 		const request: HttpRequest = {
@@ -211,6 +115,139 @@ export const trelloCommon = {
 		return response.body;
 	},
 };
+
+async function loadBoardOptions({
+	auth,
+}: {
+	auth: BasicAuthPropertyValue | undefined;
+}): Promise<DropdownState<string>> {
+	if (!auth) {
+		return {
+			disabled: true,
+			placeholder: 'Connect your Trello account first.',
+			options: [],
+		};
+	}
+
+	try {
+		const user = await getAuthorisedUser(auth.username, auth.password);
+		const boards = await listBoards(auth.username, auth.password, user['id']);
+		if (boards.length === 0) {
+			return {
+				disabled: false,
+				options: [],
+				placeholder: 'No boards found. Create one in Trello first.',
+			};
+		}
+
+		return {
+			options: boards.map((board) => ({
+				value: board.id,
+				label: board.name,
+			})),
+		};
+	} catch {
+		return {
+			disabled: true,
+			options: [],
+			placeholder: "Couldn't load boards. Check your connection.",
+		};
+	}
+}
+
+async function loadListOptions({
+	auth,
+	boardId,
+}: {
+	auth: BasicAuthPropertyValue | undefined;
+	boardId: unknown;
+}): Promise<DropdownState<string>> {
+	if (!auth) {
+		return {
+			disabled: true,
+			placeholder: 'Connect your Trello account first.',
+			options: [],
+		};
+	}
+	if (typeof boardId !== 'string' || boardId === '') {
+		return {
+			disabled: true,
+			placeholder: 'Select a board first.',
+			options: [],
+		};
+	}
+
+	try {
+		const lists = await listBoardLists(auth.username, auth.password, boardId);
+		if (lists.length === 0) {
+			return {
+				disabled: false,
+				options: [],
+				placeholder: 'No lists on this board.',
+			};
+		}
+
+		return {
+			options: lists.map((list) => ({
+				value: list.id,
+				label: list.name,
+			})),
+		};
+	} catch {
+		return {
+			disabled: true,
+			options: [],
+			placeholder: "Couldn't load lists. Check your connection.",
+		};
+	}
+}
+
+async function loadLabelOptions({
+	auth,
+	boardId,
+}: {
+	auth: BasicAuthPropertyValue | undefined;
+	boardId: unknown;
+}): Promise<DropdownState<string>> {
+	if (!auth) {
+		return {
+			disabled: true,
+			placeholder: 'Connect your Trello account first.',
+			options: [],
+		};
+	}
+	if (typeof boardId !== 'string' || boardId === '') {
+		return {
+			disabled: true,
+			placeholder: 'Select a board first.',
+			options: [],
+		};
+	}
+
+	try {
+		const labels = await listBoardLabels(auth.username, auth.password, boardId);
+		if (labels.length === 0) {
+			return {
+				disabled: false,
+				options: [],
+				placeholder: 'No labels on this board.',
+			};
+		}
+
+		return {
+			options: labels.map((label) => ({
+				label: label.name || label.color,
+				value: label.id,
+			})),
+		};
+	} catch {
+		return {
+			disabled: true,
+			options: [],
+			placeholder: "Couldn't load labels. Check your connection.",
+		};
+	}
+}
 
 /**
  * Gets the authenticated user via API and token
@@ -281,7 +318,13 @@ async function listBoardLists(apikey: string, token: string, board_id: string) {
 async function listBoardLabels(apikey: string, token: string, board_id: string) {
 	const request: HttpRequest = {
 		method: HttpMethod.GET,
-		url: `${trelloCommon.baseUrl}boards/${board_id}/labels` + `?key=` + apikey + `&token=` + token,
+		url:
+			`${trelloCommon.baseUrl}boards/${board_id}/labels` +
+			`?key=` +
+			apikey +
+			`&token=` +
+			token +
+			`&limit=1000`,
 		headers: {
 			Accept: 'application/json',
 		},

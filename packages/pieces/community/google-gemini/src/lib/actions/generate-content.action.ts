@@ -15,6 +15,10 @@ export const generateContentAction = createAction({
 	name: 'generate_content',
 	classification: 'WRITE',
 	auth: googleGeminiAuth,
+	propertyGroups: [
+		{ key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt'] },
+		{ key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'toolType', 'toolProperties'] },
+	],
 	props: {
 		prompt: Property.LongText({
 			displayName: 'Prompt',

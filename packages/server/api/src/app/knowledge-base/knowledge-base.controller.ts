@@ -1,6 +1,6 @@
 import { ActivepiecesError, ApMultipartFile, ErrorCode, isMultipartFile, Permission } from '@activepieces/core-utils'
 import { EMBEDDING_DIMENSIONS } from '@activepieces/server-utils'
-import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { KnowledgeBaseEmbeddingSource, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -52,6 +52,13 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
     fastify.get('/', ListKnowledgeBaseFilesRequest, async (request) => {
         return knowledgeBaseService(request.log).listFiles({
             projectId: request.projectId,
+        })
+    })
+
+    fastify.get('/embedding-source', GetEmbeddingSourceRequest, async (request) => {
+        return knowledgeBaseService(request.log).getEmbeddingSource({
+            projectId: request.projectId,
+            platformId: request.principal.platform.id,
         })
     })
 
@@ -167,6 +174,25 @@ const ListKnowledgeBaseFilesRequest = {
         querystring: z.object({
             projectId: z.string(),
         }),
+    },
+}
+
+const GetEmbeddingSourceRequest = {
+    config: {
+        security: securityAccess.project(KB_PRINCIPALS, Permission.READ_KNOWLEDGE_BASE, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['knowledge-base'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'The AI provider and model that embed this project\'s knowledge base files, or null when none can',
+        querystring: z.object({
+            projectId: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: KnowledgeBaseEmbeddingSource,
+        },
     },
 }
 

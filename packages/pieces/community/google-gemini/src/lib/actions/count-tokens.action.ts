@@ -16,6 +16,10 @@ export const countTokensAction = createAction({
       'Counts the tokens a piece of text will consume for a given Gemini model, without generating any content. Use it before generate_content or chat_gemini to check a prompt fits the model\'s input limit or to estimate cost. Idempotent: same text and model always return the same count.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['text'] },
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model'] },
+  ],
   props: {
     text: Property.LongText({
       displayName: 'Text',

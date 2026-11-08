@@ -605,6 +605,12 @@ export const shopify = createPiece({
       },
       auth: shopifyAuth,
       authMapping: async (auth) => shopifyAuthHelpers.getAuthHeaders(auth),
+      props: {
+        url: {
+          description: "Full URL, or a path relative to your store's Admin API.",
+          placeholder: '/orders.json',
+        },
+      },
     }),
   ],
   triggers: [

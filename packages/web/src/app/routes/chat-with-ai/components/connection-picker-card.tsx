@@ -2,6 +2,7 @@ import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
+  pickDefaultConnectionExternalId,
 } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -23,7 +24,6 @@ import {
   ConnectionPickerData,
   isConnectionHealthy,
   normalizePieceName,
-  pickDefaultConnectionExternalId,
   resolveConnectionCardState,
 } from '../lib/message-parsers';
 import { useConversationId } from '../lib/use-conversation-id';
@@ -425,7 +425,7 @@ export function ConnectionPickerCard({
                 key={conn.externalId}
                 htmlFor={`conn-${conn.externalId}`}
                 className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-3 transition-colors hover:bg-gray-3/40',
+                  'flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-2 py-3 transition-colors hover:bg-gray-3/40',
                   isSelected && 'border-accent-7 bg-accent-3',
                 )}
               >

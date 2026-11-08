@@ -1,111 +1,43 @@
-import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { netlifyAuth } from "../common/auth";
+import { createAction } from '@activepieces/pieces-framework';
+import { netlifyAuth } from '../common/auth';
+import { netlifyOperations } from '../common/operations';
+import { netlifySchemas } from '../common/output-schemas';
+import { netlifyProps } from '../common/props';
 
 export const getSite = createAction({
-  name: "get_site",
+  auth: netlifyAuth,
+  name: 'get_site',
   classification: 'READ',
-  displayName: "Get Site",
-  description: "Get a specified site. Note: Environment variable keys and values have moved from build_settings.env and repo.env to a new endpoint. Please use getEnvVars to retrieve site environment variables.",
-  audience: 'both',
-  aiMetadata: { description: 'Retrieves the configuration and metadata for a single Netlify site by its site ID. Use it to look up details such as the site URL, build settings, or deploy info. Read-only and idempotent. Note: site environment variables are no longer included here and must be fetched from the dedicated env-vars endpoint.', idempotent: true },
-  props: {
-    siteId: Property.Dropdown({
-      auth: netlifyAuth,      displayName: "Site",
-      description: "Select the site to retrieve information for",
-      required: true,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: "Connect your account first",
-            options: [],
-          };
-        }
-
-        const authentication = auth as OAuth2PropertyValue;
-        if (!authentication.access_token) {
-          return {
-            disabled: true,
-            placeholder: "Access token is required",
-            options: [],
-          };
-        }
-
-        try {
-          const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: "https://api.netlify.com/api/v1/sites?per_page=50",
-            headers: {
-              "Authorization": `Bearer ${authentication.access_token}`,
-              "Content-Type": "application/json",
-            },
-          });
-
-          if (response.status === 200) {
-            const sites = response.body as any[];
-            return {
-              disabled: false,
-              options: sites.map((site) => ({
-                label: `${site.name} (${site.url})`,
-                value: site.id,
-              })),
-            };
-          } else {
-            return {
-              disabled: true,
-              placeholder: `Failed to fetch sites: ${response.status}`,
-              options: [],
-            };
-          }
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: "Failed to fetch sites",
-            options: [],
-          };
-        }
-      },
-    }),
+  displayName: 'Get Site',
+  description: 'Get the details of a site, including its URLs, build settings and published deploy.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Gets one Netlify site with its URLs, custom domain, team, build settings and currently published deploy. Use it to read a site\'s configuration or find which deploy is live; use List Site Deploys for history. Environment variables are not included (use List Environment Variables). Read-only.',
+    idempotent: true,
   },
-  async run(context) {
-    const { siteId } = context.propsValue;
+  outputSchema: netlifySchemas.site,
+  props: { siteId: netlifyProps.siteDropdown({ description: 'The site to get.' }) },
+  async run({ auth, propsValue }) {
+    return netlifyOperations.getSite({ auth, siteId: propsValue.siteId });
+  },
+});
 
-    if (!context.auth) {
-      throw new Error("Authentication is required");
-    }
-
-    const auth = context.auth as OAuth2PropertyValue;
-    if (!auth.access_token) {
-      throw new Error("Access token is required");
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.netlify.com/api/v1/sites/${siteId}`,
-      headers: {
-        "Authorization": `Bearer ${auth.access_token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (response.status === 200) {
-      return response.body;
-    }
-
-    if (response.status === 404) {
-      throw new Error(`Site not found: ${siteId}. Please check the site ID or domain.`);
-    }
-
-    if (response.status === 401) {
-      throw new Error("Unauthorized. Please check your access token.");
-    }
-
-    if (response.status === 403) {
-      throw new Error("Forbidden. You don't have permission to access this site.");
-    }
-
-    throw new Error(`Failed to get site: ${response.status}`);
+export const getSiteById = createAction({
+  auth: netlifyAuth,
+  name: 'get_site_by_id',
+  classification: 'READ',
+  displayName: 'Get Site by ID',
+  description: 'Get the details of a site given its ID or domain.',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Gets one Netlify site with its URLs, custom domain, team, build settings and currently published deploy. Use it to read a site\'s configuration or find which deploy is live; use List Site Deploys for history. Environment variables are not included (use List Environment Variables). Read-only. Get the site ID from List Sites.',
+    idempotent: true,
+  },
+  outputSchema: netlifySchemas.site,
+  props: { siteId: netlifyProps.siteId() },
+  async run({ auth, propsValue }) {
+    return netlifyOperations.getSite({ auth, siteId: propsValue.siteId });
   },
 });

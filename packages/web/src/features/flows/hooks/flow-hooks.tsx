@@ -11,6 +11,7 @@ import {
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
+  FlowVersionState,
   FlowVersionTemplate,
   ListFlowsRequest,
   PopulatedFlow,
@@ -49,7 +50,10 @@ import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 import { flowsApi } from '../api/flows-api';
 import { flowsUtils } from '../utils/flows-utils';
 
+import { sampleDataHooks } from './sample-data-hooks';
+
 const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
+const createFlowQueryKeyPrefix = (flowId: string) => ['flow', flowId];
 export const flowHooks = {
   invalidateFlowsQuery: (queryClient: QueryClient) => {
     queryClient.invalidateQueries({
@@ -592,14 +596,87 @@ export const flowHooks = {
       onError,
     });
   },
+  useListFlowsUsingConnection: ({
+    projectId,
+    onSuccess,
+  }: {
+    projectId: string;
+    onSuccess: () => void;
+  }) => {
+    return useMutation({
+      mutationFn: async (externalId: string) => {
+        const request = {
+          projectId,
+          connectionExternalIds: [externalId],
+          cursor: undefined,
+          limit: FLOWS_PAGE_SIZE,
+        };
+        const [draftFlows, publishedFlows] = await Promise.all([
+          listAllFlows(request),
+          listAllFlows({ ...request, versionState: FlowVersionState.LOCKED }),
+        ]);
+        const draftFlowIds = new Set(draftFlows.map((flow) => flow.id));
+        return {
+          draftFlows,
+          publishedOnlyFlows: publishedFlows.filter(
+            (flow) => !draftFlowIds.has(flow.id),
+          ),
+          draftFlowIds,
+          publishedFlowIds: new Set(publishedFlows.map((flow) => flow.id)),
+        };
+      },
+      onSuccess,
+      onError: () => {
+        toast.error(t('Error'), {
+          description: t('Failed to get affected flows'),
+        });
+      },
+    });
+  },
   createFlowQueryKeys: ({
     flowId,
     versionId,
   }: {
     flowId: string;
     versionId: string | undefined;
-  }) => ['flow', flowId, versionId],
+  }) => [...createFlowQueryKeyPrefix(flowId), versionId],
+  removeFlowFromCache: ({
+    flowId,
+    queryClient,
+  }: {
+    flowId: string;
+    queryClient: QueryClient;
+  }) => {
+    const flowQueryKeyPrefix = createFlowQueryKeyPrefix(flowId);
+    queryClient
+      .getQueriesData<PopulatedFlow | null>({ queryKey: flowQueryKeyPrefix })
+      .forEach(([, flow]) => {
+        if (!isNil(flow)) {
+          sampleDataHooks.removeSampleData({
+            flowVersionId: flow.version.id,
+            queryClient,
+          });
+        }
+      });
+    queryClient.removeQueries({ queryKey: flowQueryKeyPrefix });
+  },
 };
+
+async function listAllFlows(
+  request: ListFlowsRequest,
+): Promise<PopulatedFlow[]> {
+  const flows: PopulatedFlow[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const page: SeekPage<PopulatedFlow> = await flowsApi.list({
+      ...request,
+      cursor,
+    });
+    flows.push(...page.data);
+    cursor = page.next ?? undefined;
+  } while (cursor);
+  return flows;
+}
 
 type UseChangeFlowStatusParams = {
   flowId: string;
@@ -610,3 +687,5 @@ type UseChangeFlowStatusParams = {
     params: RequiredActionsMissingErrorParams['params'],
   ) => void;
 };
+
+const FLOWS_PAGE_SIZE = 1000;

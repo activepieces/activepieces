@@ -144,7 +144,7 @@ export function buildWebSearchOptionsProperty(
       }
       const { provider, model } = getProviderAndModel(propsValue);
       if (!provider) {
-        return {};
+        return buildWebSearchOptionsProps('', params);
       }
       const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model });
       return buildWebSearchOptionsProps(effectiveProvider ?? provider, params);

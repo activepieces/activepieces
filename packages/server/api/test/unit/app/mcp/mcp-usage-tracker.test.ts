@@ -13,7 +13,7 @@ const { mockTrackBillingAndSendTelemetry, mockGetOrCreateForPlatform, mockGetPro
 
 vi.mock('../../../../src/app/platform/billing-provider', () => ({
     CreditUsageSource: { MCP: 'mcp' },
-    assertCreditsAndAppSumoNotExceeded: mockAssertCredits,
+    assertCreditsNotExceeded: mockAssertCredits,
 }))
 
 vi.mock('../../../../src/app/platform/billing-and-telemetry', () => ({

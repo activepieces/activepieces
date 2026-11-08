@@ -14,7 +14,7 @@ export const newReleaseTrigger = createTrigger({
   name: 'new_release',
   classification: 'READ',
   displayName: 'New Release',
-  description: 'Triggers when a new release is added.',
+  description: 'Triggers when a release or draft release is created.',
   aiMetadata: {
     description:
       'Fires when a release is created in the chosen repository (release event filtered to the created action). Represents a newly created release.',

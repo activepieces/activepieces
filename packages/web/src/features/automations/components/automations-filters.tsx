@@ -139,7 +139,7 @@ export const AutomationsFilters = ({
       value: connection.externalId,
       label: connection.displayName,
       icon: pieceIcon ? (
-        <LogoPlate src={pieceIcon} alt="" className="size-4 rounded-sm p-px" />
+        <LogoPlate src={pieceIcon} alt="" className="size-4 rounded-md p-px" />
       ) : undefined,
     };
   });
@@ -243,8 +243,7 @@ export const AutomationsFilters = ({
             {hasActiveFilters && (
               <Button
                 variant="link"
-                size="sm"
-                className="h-9 text-sm gap-1 text-gray-11 hover:text-gray-12"
+                className="gap-1 text-gray-11 hover:text-gray-12"
                 onClick={() => {
                   onClearAllFilters();
                   onFilterChange?.();
@@ -264,8 +263,6 @@ export const AutomationsFilters = ({
                     icon={DownloadIcon}
                     iconSize={16}
                     variant="outline"
-                    size="sm"
-                    className="h-9"
                   >
                     {t('Import')}
                   </AnimatedIconButton>
@@ -325,12 +322,7 @@ export const AutomationsFilters = ({
                 }
               }}
             >
-              <AnimatedIconButton
-                icon={PlusIcon}
-                iconSize={16}
-                size="sm"
-                className="h-9"
-              >
+              <AnimatedIconButton icon={PlusIcon} iconSize={16}>
                 {t('Create New')}
               </AnimatedIconButton>
             </CreateNewMenu>

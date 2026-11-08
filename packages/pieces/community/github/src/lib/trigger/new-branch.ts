@@ -14,7 +14,7 @@ export const newBranchTrigger = createTrigger({
   name: 'new_branch',
   classification: 'READ',
   displayName: 'New Branch',
-  description: 'Triggers when a new branch is created.',
+  description: 'Triggers when a branch is created.',
   aiMetadata: {
     description:
       'Fires when a new branch is created in the chosen repository (GitHub create events of ref type branch; tag creations are ignored). Represents the appearance of a new branch.',

@@ -26,12 +26,13 @@ export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: Fastif
             pieceName: z.string().describe('The piece name for the trigger (e.g. "@activepieces/piece-gmail"). Use ap_research_pieces to get valid values.'),
             triggerName: z.string().describe('The trigger name within the piece (e.g. "new_email"). Use ap_research_pieces with includeTriggers=true to get valid values.'),
             input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the trigger (key-value pairs). ${mcpUtils.STEP_REFERENCE_HINT}`),
-            auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
+            auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. Pass the plain id, not a template.'),
             displayName: z.string().optional().describe('Display name for the trigger step'),
         },
         annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, pieceName, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
+            const { flowId, pieceName, triggerName, input: rawInput, auth: rawAuth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
+            const auth = mcpUtils.normalizeAuth(rawAuth)
 
             const authError = mcpUtils.validateAuth(auth)
             if (authError) {

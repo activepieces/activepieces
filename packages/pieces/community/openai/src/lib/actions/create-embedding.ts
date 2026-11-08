@@ -12,6 +12,10 @@ export const createEmbedding = createAction({
   description:
     'Turn text into a vector for semantic search or clustering.',
   aiMetadata: { description: 'Converts one block of text into a numeric embedding vector for storage in a vector database or for semantic search, clustering, and RAG pipelines. It handles a single input per call, so batch by looping or by using the custom API call action, and the dimensions option only takes effect on the text-embedding-3 models. Pick search_embeddings instead when the goal is simply ranking a list of candidate strings against a query in one step with no vector persisted. Deterministic stateless inference, so repeat calls with the same model and text return the same vector and are idempotent.', idempotent: true },
+  propertyGroups: [
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model'] },
+    { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['input'] },
+  ],
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',

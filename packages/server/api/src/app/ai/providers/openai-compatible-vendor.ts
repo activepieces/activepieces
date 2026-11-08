@@ -4,6 +4,18 @@ import { safeHttp } from '@activepieces/server-utils'
 import { AIProviderModel, AIProviderModelType, aiProviderUtils, BaseAIProviderAuthConfig, isNil, OpenAiCompatibleVendorConfig, tryCatch } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
+export async function fetchOpenAiModelIds({ url, headers }: { url: string, headers: Record<string, string> }): Promise<string[]> {
+    const response = await safeHttp.axios.request<OpenAiCompatibleModelsResponse>({
+        method: 'GET',
+        url,
+        timeout: REQUEST_TIMEOUT_MS,
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        maxContentLength: MAX_MODELS_RESPONSE_BYTES,
+        headers,
+    })
+    return (response.data.data ?? []).map((model) => model.id)
+}
+
 export function openAiCompatibleVendor({ name, provider }: {
     name: string
     provider: OpenAiCompatibleVendor
@@ -31,20 +43,18 @@ async function listVendorModels({ authConfig, provider, name }: {
         return declaredModels
     }
 
-    const { data: response, error } = await tryCatch(() => safeHttp.axios.request<OpenAiCompatibleModelsResponse>({
-        method: 'GET',
+    const { data: modelIds, error } = await tryCatch(() => fetchOpenAiModelIds({
         url: vendorEndpoint({ provider, path: 'models' }),
-        timeout: REQUEST_TIMEOUT_MS,
         headers: vendorHeaders({ authConfig }),
     }))
 
-    if (!isNil(error) || isNil(response)) {
+    if (!isNil(error) || isNil(modelIds)) {
         throw new Error(`[${name}] failed to list models: ${error instanceof Error ? error.message : String(error)}`)
     }
 
-    return (response.data.data ?? []).map((model) => ({
-        id: model.id,
-        name: model.id,
+    return modelIds.map((id) => ({
+        id,
+        name: id,
         type: AIProviderModelType.TEXT,
     }))
 }
@@ -92,6 +102,8 @@ function vendorHeaders({ authConfig }: { authConfig: BaseAIProviderAuthConfig })
 }
 
 const REQUEST_TIMEOUT_MS = 15_000
+
+const MAX_MODELS_RESPONSE_BYTES = 5 * 1024 * 1024
 
 const TEXT_OUTPUT_MODALITY = 'text'
 

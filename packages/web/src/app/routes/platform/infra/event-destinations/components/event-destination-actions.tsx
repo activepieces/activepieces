@@ -35,11 +35,7 @@ const EventDestinationActions = ({
         onOpenChange={setDropdownOpen}
       >
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            aria-label={t('Open menu')}
-          >
+          <Button variant="ghost" size="icon-sm" aria-label={t('Open menu')}>
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

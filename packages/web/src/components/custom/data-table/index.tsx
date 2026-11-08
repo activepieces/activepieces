@@ -100,6 +100,8 @@ interface DataTableProps<
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
   virtualizeRows?: boolean;
   bordered?: boolean;
+  frameClassName?: string;
+  toolbarClassName?: string;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -142,6 +144,8 @@ export function DataTable<
   clientPagination = false,
   clientFiltering = false,
   bordered = false,
+  frameClassName,
+  toolbarClassName,
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
@@ -360,7 +364,9 @@ export function DataTable<
       {((filters && filters.length > 0) ||
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
-        <DataTableToolbar className={bordered ? 'px-0' : undefined}>
+        <DataTableToolbar
+          className={toolbarClassName ?? (bordered ? 'px-0' : undefined)}
+        >
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {filters &&
@@ -396,7 +402,10 @@ export function DataTable<
             'flex-1 min-h-0 overflow-auto': virtualizeRows,
           },
           bordered &&
-            'rounded-lg border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+            cn(
+              'rounded-xl border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+              frameClassName,
+            ),
         )}
       >
         <Table
@@ -667,9 +676,11 @@ export function DataTable<
         </Table>
       </div>
       {!hidePagination && !virtualizeRows && (
-        <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 px-2 py-4 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-gray-11">{t('Rows per page')}</span>
+            <span className="text-gray-11 whitespace-nowrap">
+              {t('Rows per page')}
+            </span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
@@ -679,7 +690,7 @@ export function DataTable<
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger size="sm" className="w-[70px]">
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />
@@ -693,44 +704,46 @@ export function DataTable<
               </SelectContent>
             </Select>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1"
-            onClick={() => {
-              if (clientPagination) {
-                table.previousPage();
-              } else {
-                setCurrentCursor(previousPageCursor);
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={() => {
+                if (clientPagination) {
+                  table.previousPage();
+                } else {
+                  setCurrentCursor(previousPageCursor);
+                }
+              }}
+              disabled={
+                clientPagination
+                  ? !table.getCanPreviousPage()
+                  : !previousPageCursor
               }
-            }}
-            disabled={
-              clientPagination
-                ? !table.getCanPreviousPage()
-                : !previousPageCursor
-            }
-          >
-            <ChevronLeft className="h-4 w-4" />
-            {t('Previous')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1"
-            onClick={() => {
-              if (clientPagination) {
-                table.nextPage();
-              } else {
-                setCurrentCursor(nextPageCursor);
+            >
+              <ChevronLeft className="h-4 w-4" />
+              {t('Previous')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={() => {
+                if (clientPagination) {
+                  table.nextPage();
+                } else {
+                  setCurrentCursor(nextPageCursor);
+                }
+              }}
+              disabled={
+                clientPagination ? !table.getCanNextPage() : !nextPageCursor
               }
-            }}
-            disabled={
-              clientPagination ? !table.getCanNextPage() : !nextPageCursor
-            }
-          >
-            {t('Next')}
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+            >
+              {t('Next')}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
       {bulkActions.length > 0 && (
@@ -746,3 +759,5 @@ export function DataTable<
 
 const STICKY_HEADER_CLASS_NAME =
   'sticky top-0 z-10 border-t-0 bg-[color-mix(in_srgb,var(--gray-3)_70%,var(--gray-1))] shadow-[inset_0_1px_0_var(--gray-6),inset_0_-1px_0_var(--gray-6)] [&>tr]:border-b-0';
+
+export type { DataTableProps };

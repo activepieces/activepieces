@@ -21,5 +21,8 @@
   "Up to 280 characters, or more with X Premium.": "Up to 280 characters, or more with X Premium.",
   "An image, GIF or video. Add more images under Advanced.": "An image, GIF or video. Add more images under Advanced.",
   "Another image. GIFs and videos must be posted alone.": "Another image. GIFs and videos must be posted alone.",
-  "The number at the end of the tweet's link, after /status/.": "The number at the end of the tweet's link, after /status/."
+  "The number at the end of the tweet's link, after /status/.": "The number at the end of the tweet's link, after /status/.",
+  "Tweet": "Tweet",
+  "Reply to": "Reply to",
+  "Message": "Message"
 }

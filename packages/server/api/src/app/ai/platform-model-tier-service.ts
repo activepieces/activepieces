@@ -1,30 +1,60 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, partition, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique } from '@activepieces/core-utils'
 import { AiProviderModelScope, CreatePlatformModelTierRequest, PlatformModelTier, PlatformModelTierEntry, PlatformModelTierSummary, UpdatePlatformModelTierRequest } from '@activepieces/shared'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { isUniqueViolation } from '../core/db/unique-violation'
+import { PlatformConfigurationEntity } from '../platform/platform-configuration.entity'
+import { aiKeyScope, ProviderScope } from './ai-key-scope'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { PlatformModelTierEntity, PlatformModelTierSchema } from './platform-model-tier-entity'
 
 const tierRepo = repoFactory<PlatformModelTierSchema>(PlatformModelTierEntity)
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
+const platformConfigurationRepo = repoFactory(PlatformConfigurationEntity)
 
 const MAX_LIVE_TIERS = 50
 const MAX_REPLACEMENT_HOPS = 3
 const TIER_REMOVED_MESSAGE = 'This tier was removed. Pick a new model for this step.'
+const TIER_NOT_AVAILABLE_MESSAGE = 'This tier isn\'t available in this project. Pick another model.'
+const PLATFORM_SCOPE: ProviderScope = { type: 'platform' }
 
 export const platformModelTierService = {
-    async listSummaries({ platformId }: { platformId: PlatformId }): Promise<PlatformModelTierSummary[]> {
+    async listSummaries({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<PlatformModelTierSummary[]> {
         const tiers = await listLive({ platformId })
         const mainConfigIds = unique(tiers.flatMap((tier) => tier.entries.slice(0, 1).map((entry) => entry.configId)))
         const keys = mainConfigIds.length === 0 ? [] : await aiProviderRepo().findBy({ platformId, id: In(mainConfigIds) })
+        const keyById = new Map(keys.map((key) => [key.id, key]))
         const providerByConfigId = new Map(keys.map((key) => [key.id, key.provider]))
-        return tiers.map((tier) => toSummary({ tier, providerByConfigId }))
+        return tiers
+            .filter((tier) => mainRunsIn({ tier, keyById, scope }))
+            .map((tier) => toSummary({ tier, providerByConfigId }))
     },
 
     async list({ platformId }: { platformId: PlatformId }): Promise<PlatformModelTier[]> {
         return listLive({ platformId })
+    },
+
+    async listForPicker({ platformId, scope, anyProject = false }: { platformId: PlatformId, scope: ProviderScope, anyProject?: boolean }): Promise<TierForRun[]> {
+        const tiers = await listLive({ platformId })
+        const configIds = unique(tiers.flatMap((tier) => tier.entries.map((entry) => entry.configId)))
+        const keys = configIds.length === 0 ? [] : await aiProviderRepo().findBy({ platformId, id: In(configIds) })
+        const keyById = new Map(keys.map((key) => [key.id, key]))
+        return tiers
+            .filter((tier) => mainRunsIn({ tier, keyById, scope, anyProject }))
+            .map((tier) => ({ tier, entries: entriesThatRun({ tier, keyById, scope, anyProject }) }))
+    },
+
+    async movedTiers({ platformId, tierIds }: { platformId: PlatformId, tierIds: (string | undefined)[] }): Promise<Record<string, string>> {
+        const ids = tierIds.filter((id): id is string => !isNil(id))
+        if (ids.length === 0) {
+            return {}
+        }
+        const live = await followReplacementsInBulk({ platformId, ids })
+        return Object.fromEntries(ids.flatMap((id) => {
+            const replacement = live.get(id)
+            return isNil(replacement) || replacement.id === id ? [] : [[id, replacement.id]]
+        }))
     },
 
     async create({ platformId, request }: { platformId: PlatformId, request: CreatePlatformModelTierRequest }): Promise<PlatformModelTier> {
@@ -48,6 +78,7 @@ export const platformModelTierService = {
                 entries: request.entries,
                 thinkingBudget: request.thinkingBudget ?? null,
                 isDefault: isFirstTier,
+                isFast: isFirstTier,
                 deleted: null,
                 replacedBy: null,
             })
@@ -67,6 +98,9 @@ export const platformModelTierService = {
             if (request.isDefault === true && !tier.isDefault) {
                 await tierRepo(manager).update({ platformId, isDefault: true }, { isDefault: false })
             }
+            if (request.isFast === true && !tier.isFast) {
+                await tierRepo(manager).update({ platformId, isFast: true }, { isFast: false })
+            }
             await tierRepo(manager).update({ platformId, id }, {
                 ...spreadIfDefined('name', request.name),
                 ...spreadIfDefined('emoji', request.emoji),
@@ -74,7 +108,9 @@ export const platformModelTierService = {
                 ...spreadIfDefined('entries', request.entries),
                 ...spreadIfNotUndefined('thinkingBudget', request.thinkingBudget),
                 ...spreadIfDefined('isDefault', request.isDefault),
+                ...spreadIfDefined('isFast', request.isFast),
             })
+            await syncDefaultChatKey({ manager, platformId })
             return getLiveOrThrow({ manager, platformId, id })
         }))
     },
@@ -113,8 +149,10 @@ export const platformModelTierService = {
             const tier = await getLiveOrThrow({ manager, platformId, id })
             if (isNil(replacedBy)) {
                 await assertLastTierCanGo({ manager, platformId })
-                await tierRepo(manager).update({ platformId, id }, { isDefault: false })
+                await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
                 await tierRepo(manager).softDelete({ platformId, id })
+                await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: true })
+                await clearDefaultChatTier({ manager, platformId, tierIds: [id] })
                 return
             }
             await getLiveOrThrow({ manager, platformId, id: replacedBy })
@@ -122,45 +160,123 @@ export const platformModelTierService = {
                 'UPDATE "platform_model_tier" SET "replacedBy" = $1 WHERE "platformId" = $2 AND ("id" = $3 OR "replacedBy" = $3)',
                 [replacedBy, platformId, id],
             )
-            await tierRepo(manager).update({ platformId, id }, { isDefault: false })
+            await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
             await tierRepo(manager).softDelete({ platformId, id })
-            if (tier.isDefault) {
-                await tierRepo(manager).update({ platformId, id: replacedBy }, { isDefault: true })
+            if (tier.isDefault || tier.isFast) {
+                await tierRepo(manager).update({ platformId, id: replacedBy }, {
+                    ...(tier.isDefault ? { isDefault: true } : {}),
+                    ...(tier.isFast ? { isFast: true } : {}),
+                })
             }
+            await syncDefaultChatKey({ manager, platformId, replaced: { from: [id], to: replacedBy } })
         })
     },
 
-    async assertKeyCanBeDeleted({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
+    async assertSpecificModelsVisibilityAllowed({ manager, platformId, visible }: { manager: EntityManager, platformId: PlatformId, visible: boolean }): Promise<void> {
         await lockPlatform({ manager, platformId })
-        const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
-        if (tiers.length > 0) {
-            throw keyInUseError({ tierNames: tiers.map((tier) => tier.name) })
+        if (!visible && (await listLive({ platformId, manager })).length === 0) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Add a tier before hiding specific models from builders' } })
         }
     },
 
-    async getForRun({ platformId, id }: { platformId: PlatformId, id: string }): Promise<TierForRun> {
+    async removeKeyFromTiers({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
+        await lockPlatform({ manager, platformId })
+        const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
+        const trimmed = tiers.map((tier) => ({ ...tier, entries: tier.entries.filter((entry) => entry.configId !== configId) }))
+        const [emptied, kept] = partition(trimmed, (tier) => tier.entries.length === 0)
+        if (kept.length > 0) {
+            await manager.query(
+                `
+                UPDATE "platform_model_tier"
+                SET "entries" = (
+                    SELECT jsonb_agg(entry ORDER BY position)
+                    FROM jsonb_array_elements("entries") WITH ORDINALITY AS kept_entries(entry, position)
+                    WHERE entry->>'configId' <> $3
+                )
+                WHERE "platformId" = $1 AND "id" = ANY($2)
+                `,
+                [platformId, kept.map((tier) => tier.id), configId],
+            )
+        }
+        if (emptied.length === 0) {
+            await syncDefaultChatKey({ manager, platformId })
+            return
+        }
+        const emptiedIds = emptied.map((tier) => tier.id)
+        await tierRepo(manager).update({ platformId, id: In(emptiedIds) }, { isDefault: false, isFast: false })
+        await tierRepo(manager).softDelete({ platformId, id: In(emptiedIds) })
+        const replacement = (await listLive({ platformId, manager }))[0]
+        if (isNil(replacement)) {
+            await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: true })
+            await clearDefaultChatTier({ manager, platformId, tierIds: emptiedIds })
+            return
+        }
+        await manager.query(
+            'UPDATE "platform_model_tier" SET "replacedBy" = $1 WHERE "platformId" = $2 AND ("id" = ANY($3) OR "replacedBy" = ANY($3))',
+            [replacement.id, platformId, emptiedIds],
+        )
+        await tierRepo(manager).update({ platformId, id: replacement.id }, {
+            ...(emptied.some((tier) => tier.isDefault) ? { isDefault: true } : {}),
+            ...(emptied.some((tier) => tier.isFast) ? { isFast: true } : {}),
+        })
+        await syncDefaultChatKey({ manager, platformId, replaced: { from: emptiedIds, to: replacement.id } })
+    },
+
+    async getDefaultForRun({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun | null> {
+        const defaultTier = await tierRepo().findOneBy({ platformId, isDefault: true })
+        if (isNil(defaultTier)) {
+            return null
+        }
+        const { data } = await tryCatch(() => platformModelTierService.getForRun({ platformId, id: defaultTier.id, scope }))
+        return data ?? null
+    },
+
+    async getFastForRun({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun | null> {
+        const fastTier = await tierRepo().findOneBy({ platformId, isFast: true })
+        if (isNil(fastTier)) {
+            return null
+        }
+        const { data } = await tryCatch(() => platformModelTierService.getForRun({ platformId, id: fastTier.id, scope }))
+        return data ?? null
+    },
+
+    async getForRun({ platformId, id, scope }: { platformId: PlatformId, id: string, scope: ProviderScope }): Promise<TierForRun> {
         const tier = await followReplacements({ platformId, id })
         const configIds = unique(tier.entries.map((entry) => entry.configId))
         const keys = await aiProviderRepo().findBy({ platformId, id: In(configIds) })
         const keyById = new Map(keys.map((key) => [key.id, key]))
-        const runnable = tier.entries.flatMap((entry) => {
-            const key = keyById.get(entry.configId)
-            if (isNil(key) || key.provider === AIProviderName.ACTIVEPIECES || !scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })) {
-                return []
-            }
-            return [{ modelId: entry.modelId, key }]
-        })
-        if (runnable.length === 0) {
+        if (!mainRunsIn({ tier, keyById, scope })) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: TIER_NOT_AVAILABLE_MESSAGE } })
+        }
+        const entries = runnableEntries({ tier, keyById, scope })
+        if (entries.length === 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `No model in tier "${tier.name}" can run` } })
         }
-        const healthyFirst = [
-            ...runnable.filter((entry) => entry.key.status === 'active'),
-            ...runnable.filter((entry) => entry.key.status !== 'active'),
-        ]
-        return { tier, entries: healthyFirst }
+        return { tier, entries }
     },
 
-    async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds }: AssertKeyScopeParams): Promise<void> {
+    async getManyForRun({ platformId, ids }: { platformId: PlatformId, ids: string[] }): Promise<Map<string, TierForRun | null>> {
+        const liveByRequestedId = await followReplacementsInBulk({ platformId, ids: unique(ids) })
+        const liveTiers = unique([...liveByRequestedId.values()].filter((tier): tier is PlatformModelTier => !isNil(tier)))
+        const configIds = unique(liveTiers.flatMap((tier) => tier.entries.map((entry) => entry.configId)))
+        const keys = configIds.length === 0 ? [] : await aiProviderRepo().findBy({ platformId, id: In(configIds) })
+        const keyById = new Map(keys.map((key) => [key.id, key]))
+        return new Map([...liveByRequestedId].map(([requestedId, tier]) => {
+            const entries = isNil(tier) ? [] : runnableEntries({ tier, keyById, scope: PLATFORM_SCOPE })
+            return [requestedId, isNil(tier) || entries.length === 0 ? null : { tier, entries }]
+        }))
+    },
+
+    async mainKeyIdOf({ manager, platformId, tierId }: { manager: EntityManager, platformId: PlatformId, tierId: string }): Promise<string | null> {
+        const tier = await tierRepo(manager).findOneBy({ platformId, id: tierId })
+        return tier?.entries[0]?.configId ?? null
+    },
+
+    async lockPlatform({ manager, platformId }: { manager: EntityManager, platformId: PlatformId }): Promise<void> {
+        await lockPlatform({ manager, platformId })
+    },
+
+    async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds, config }: AssertKeyScopeParams): Promise<void> {
         await lockPlatform({ manager, platformId })
         const key = await aiProviderRepo(manager).findOneBy({ platformId, id: configId })
         if (isNil(key)) {
@@ -168,7 +284,8 @@ export const platformModelTierService = {
         }
         const nextScope = { modelScope: modelScope ?? key.modelScope, modelIds: modelIds ?? key.modelIds }
         const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
-        const broken = tiers.filter((tier) => tier.entries.some((entry) => entry.configId === configId && !scopeAllows({ ...nextScope, modelId: entry.modelId })))
+        const keyKeeps = (modelId: string): boolean => aiKeyScope.keyOffersModel({ key: { ...nextScope, config }, modelId })
+        const broken = tiers.filter((tier) => tier.entries.some((entry) => entry.configId === configId && !keyKeeps(entry.modelId)))
         if (broken.length > 0) {
             throw keyInUseError({ tierNames: broken.map((tier) => tier.name) })
         }
@@ -183,6 +300,79 @@ async function lockPlatform({ manager, platformId }: { manager: EntityManager, p
     if (rows.length === 0) {
         throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: platformId, entityType: 'platform' } })
     }
+}
+
+async function clearDefaultChatTier({ manager, platformId, tierIds }: { manager: EntityManager, platformId: PlatformId, tierIds: string[] }): Promise<void> {
+    await manager.query(
+        'UPDATE "platform_configuration" SET "defaultChatModel" = NULL WHERE "platformId" = $1 AND "defaultChatModel"->>\'tierId\' = ANY($2)',
+        [platformId, tierIds],
+    )
+}
+
+async function syncDefaultChatKey({ manager, platformId, replaced }: { manager: EntityManager, platformId: PlatformId, replaced?: { from: string[], to: string } }): Promise<void> {
+    const configuration = await platformConfigurationRepo(manager).findOneBy({ platformId })
+    const choice = configuration?.defaultChatModel
+    if (isNil(choice) || choice.type !== 'tier') {
+        return
+    }
+    const tierId = !isNil(replaced) && replaced.from.includes(choice.tierId) ? replaced.to : choice.tierId
+    if (tierId !== choice.tierId) {
+        await platformConfigurationRepo(manager).update({ platformId }, { defaultChatModel: { type: 'tier', tierId } })
+    }
+    const mainKeyId = (await tierRepo(manager).findOneBy({ platformId, id: tierId }))?.entries[0]?.configId
+    if (isNil(mainKeyId)) {
+        return
+    }
+    await aiProviderRepo(manager).update({ platformId }, { enabledForChat: false })
+    await aiProviderRepo(manager).update({ platformId, id: mainKeyId }, { enabledForChat: true })
+}
+
+function mainRunsIn({ tier, keyById, scope, anyProject = false }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope, anyProject?: boolean }): boolean {
+    const main = tier.entries[0]
+    return !isNil(main) && entryRunsIn({ entry: main, key: keyById.get(main.configId), scope, anyProject })
+}
+
+function entryRunsIn({ entry, key, scope, anyProject = false }: { entry: PlatformModelTierEntry, key: AIProviderSchema | undefined, scope: ProviderScope, anyProject?: boolean }): boolean {
+    return !isNil(key)
+        && key.provider !== AIProviderName.ACTIVEPIECES
+        && aiKeyScope.scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })
+        && (anyProject || aiKeyScope.rowAllowsScope({ row: key, scope }))
+}
+
+function entriesThatRun({ tier, keyById, scope, anyProject = false }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope, anyProject?: boolean }): TierForRun['entries'] {
+    return tier.entries.flatMap((entry) => {
+        const key = keyById.get(entry.configId)
+        return isNil(key) || !entryRunsIn({ entry, key, scope, anyProject }) ? [] : [{ modelId: entry.modelId, key }]
+    })
+}
+
+function runnableEntries({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): TierForRun['entries'] {
+    const runnable = entriesThatRun({ tier, keyById, scope })
+    return [
+        ...runnable.filter((entry) => entry.key.status === 'active'),
+        ...runnable.filter((entry) => entry.key.status !== 'active'),
+    ]
+}
+
+async function followReplacementsInBulk({ platformId, ids }: { platformId: PlatformId, ids: string[] }): Promise<Map<string, PlatformModelTier | null>> {
+    const loaded = new Map<string, PlatformModelTier>()
+    let missing = ids
+    for (let hop = 0; hop <= MAX_REPLACEMENT_HOPS && missing.length > 0; hop++) {
+        const tiers = await tierRepo().find({ where: { platformId, id: In(missing) }, withDeleted: true })
+        tiers.forEach((tier) => loaded.set(tier.id, tier))
+        missing = unique(tiers.flatMap((tier) => isNil(tier.deleted) || isNil(tier.replacedBy) || loaded.has(tier.replacedBy) ? [] : [tier.replacedBy]))
+    }
+    const liveFor = (id: string): PlatformModelTier | null => {
+        let current = loaded.get(id)
+        for (let hop = 0; hop <= MAX_REPLACEMENT_HOPS && !isNil(current); hop++) {
+            if (isNil(current.deleted)) {
+                return current
+            }
+            current = isNil(current.replacedBy) ? undefined : loaded.get(current.replacedBy)
+        }
+        return null
+    }
+    return new Map(ids.map((id) => [id, liveFor(id)]))
 }
 
 async function followReplacements({ platformId, id }: { platformId: PlatformId, id: string }): Promise<PlatformModelTier> {
@@ -241,7 +431,7 @@ async function assertEntriesValid({ manager, platformId, entries }: { manager: E
         if (key.provider === AIProviderName.ACTIVEPIECES) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Tiers cannot use the Activepieces credits key' } })
         }
-        if (!scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })) {
+        if (!aiKeyScope.scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `Key "${key.displayName}" does not allow model ${entry.modelId}` } })
         }
     }
@@ -267,10 +457,6 @@ async function withNameConflictAsValidation<T>(operation: () => Promise<T>): Pro
     }
 }
 
-function scopeAllows({ modelScope, modelIds, modelId }: { modelScope: AiProviderModelScope, modelIds: string[], modelId: string }): boolean {
-    return modelScope !== 'selected' || modelIds.includes(modelId)
-}
-
 function keyInUseError({ tierNames }: { tierNames: string[] }): ActivepiecesError {
     return new ActivepiecesError({
         code: ErrorCode.VALIDATION,
@@ -288,6 +474,7 @@ function toSummary({ tier, providerByConfigId }: { tier: PlatformModelTier, prov
         description: tier.description ?? null,
         position: tier.position,
         isDefault: tier.isDefault,
+        isFast: tier.isFast,
         mainModel: isNil(main) || isNil(provider) ? null : { provider, modelId: main.modelId },
         fallbackCount: Math.max(tier.entries.length - 1, 0),
     }
@@ -304,4 +491,5 @@ type AssertKeyScopeParams = {
     configId: string
     modelScope: AiProviderModelScope | undefined
     modelIds: string[] | undefined
+    config: unknown
 }

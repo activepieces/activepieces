@@ -42,9 +42,12 @@ describe('looksEmptyResultText', () => {
 })
 
 describe('firstStepUsesFastModel', () => {
-    it('buys time to first token on the surfaces someone is watching', () => {
-        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, runsASavedAgent: false })).toBe(true)
+    it('buys time to first token for a saved agent someone is watching', () => {
         expect(firstStepUsesFastModel({ source: AgentRunSource.AGENT, runsASavedAgent: false })).toBe(true)
+    })
+
+    it('writes chat replies with the main model, which follows the writing rules the fast one ignores', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, runsASavedAgent: false })).toBe(false)
     })
 
     it('leaves a step that runs a saved agent on the model that agent names', () => {
@@ -86,6 +89,10 @@ describe('classifyAgentRunError', () => {
     it('never blames the user for a retired model on the managed key, which we chose for them', () => {
         expect(classify(apiError({ statusCode: 400, message: 'Grok 4.1 Fast is deprecated' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
         expect(classify(apiError({ statusCode: 400, message: 'Grok 4.1 Fast is deprecated' }), AIProviderName.OPENROUTER)).toBe('user')
+    })
+
+    it('blames the user for a 400 from their own custom endpoint, whose request rules we cannot meet', () => {
+        expect(classify(apiError({ statusCode: 400, message: 'Request is missing x-opencode-session and cannot be routed efficiently.' }), AIProviderName.CUSTOM)).toBe('user')
     })
 
     it('keeps a 400 we caused internal, so an illegal tool name is not laundered as user config', () => {
@@ -165,7 +172,12 @@ describe('classifyAgentRunError', () => {
     })
 
     it('keeps a conversation stuck mid-stream visible instead of completing quietly', () => {
-        expect(classify(new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'An agent is already running for this conversation' } }))).toBe('internal')
+        expect(classify(new ActivepiecesError({ code: ErrorCode.AGENT_RUN_BUSY, params: { message: 'An agent is already running for this conversation' } }))).toBe('internal')
+    })
+
+    it('treats a rejection the server explains to the user as theirs, not ours', () => {
+        expect(classify(new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'No model in tier "Smart" can run' } }))).toBe('user')
+        expect(classify(new ActivepiecesError({ code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED, params: {} }))).toBe('user')
     })
 
     it('reads the error code an RPC failure now carries across the boundary', () => {

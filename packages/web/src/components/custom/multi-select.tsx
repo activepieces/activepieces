@@ -216,16 +216,16 @@ const MultiSelectTrigger = React.forwardRef<
     return (
       <PopoverPrimitive.Trigger ref={forwardedRef as any} asChild>
         <Button
-          variant="outline"
+          variant="field"
           aria-disabled={disabled}
           disabled={disabled}
           role="combobox"
           type="button"
           loading={loading}
           className={cn(
-            'flex min-h-9 h-auto w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-gray-8 bg-transparent px-4 py-1 text-sm ring-offset-gray-1 focus:outline-hidden focus:ring-1 focus:ring-gray-8 [&>span]:line-clamp-1',
+            'flex min-h-9 h-auto w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap px-4 py-1 ring-offset-gray-1 focus:outline-hidden focus:ring-1 focus:ring-gray-8 [&>span]:line-clamp-1',
             {
-              'cursor-not-allowed opacity-80': disabled,
+              'cursor-not-allowed': disabled,
               'cursor-pointer': !disabled,
             },
             className,
@@ -321,7 +321,7 @@ const MultiSelectValue = React.forwardRef<
                 variant="outline"
                 key={value}
                 className={cn(
-                  'pr-1.5 items-center justify-center group/multi-select-badge rounded-full',
+                  'pr-1.5 items-center justify-center group/multi-select-badge',
                   {
                     'cursor-pointer': !disabled,
                     'cursor-not-allowed opacity-80': disabled,

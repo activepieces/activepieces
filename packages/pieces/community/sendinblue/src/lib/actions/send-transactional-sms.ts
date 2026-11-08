@@ -17,27 +17,32 @@ export const sendTransactionalSms = createAction({
 			'Sends a one-off transactional SMS through Brevo to a single mobile number. The recipient must include the country code without a leading plus or zeros, and the sender is limited to 11 alphanumeric or 15 numeric characters. Content longer than 160 characters is split into multiple messages and billed accordingly. Not idempotent — each call sends a new message.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{ key: 'message', display: 'section', label: 'Message', icon: 'send', props: ['sender', 'recipient', 'content', 'type'] },
+	],
 	props: {
 		sender: Property.ShortText({
 			displayName: 'Sender',
-			description:
-				'Name or number shown as the sender. Limited to 11 alphanumeric characters or 15 numeric characters.',
+			description: 'Up to 11 letters and digits, or 15 digits only.',
+			placeholder: 'MyShop',
 			required: true,
+			width: 'half',
 		}),
 		recipient: Property.ShortText({
 			displayName: 'Recipient',
-			description:
-				'Mobile number with the country code and no leading plus or zeros, for example 33680005003.',
+			description: 'Country code first, no + or leading zeros.',
+			placeholder: '33680005003',
 			required: true,
+			width: 'half',
 		}),
 		content: Property.LongText({
 			displayName: 'Content',
-			description:
-				'Message body. Longer than 160 characters is sent as multiple messages.',
+			description: 'Over 160 characters is sent as several messages.',
 			required: true,
 		}),
 		type: Property.StaticDropdown({
-			displayName: 'Type',
+			displayName: 'Message Type',
+			description: 'Transactional for order and account notices, Marketing for promotions.',
 			required: false,
 			defaultValue: 'transactional',
 			options: {
@@ -51,22 +56,26 @@ export const sendTransactionalSms = createAction({
 			displayName: 'Tag',
 			description: 'Label used to filter this message in Brevo reporting.',
 			required: false,
+			advanced: true,
 		}),
 		web_url: Property.ShortText({
 			displayName: 'Webhook URL',
-			description: 'URL Brevo posts delivery reports for this message to.',
+			description: 'Brevo posts delivery reports for this message here.',
+			placeholder: 'https://example.com/sms-status',
 			required: false,
+			advanced: true,
 		}),
 		unicode_enabled: Property.Checkbox({
-			displayName: 'Unicode Enabled',
-			description:
-				'Send the content as unicode. Unicode messages are limited to 70 characters per part.',
+			displayName: 'Send as Unicode',
+			description: 'Needed for emoji and non-Latin text; 70 characters per part.',
 			required: false,
+			advanced: true,
 		}),
 		organisation_prefix: Property.ShortText({
-			displayName: 'Organisation Prefix',
-			description: 'Brand name prepended to the message content.',
+			displayName: 'Brand Name',
+			description: 'Shown before the message so people know who sent it.',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

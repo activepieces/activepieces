@@ -14,7 +14,7 @@ const { mockAssertCredits } = vi.hoisted(() => ({
 
 vi.mock('../../../../src/app/platform/billing-provider', async (importOriginal) => {
     const original = await importOriginal<typeof import('../../../../src/app/platform/billing-provider')>()
-    return { ...original, assertCreditsAndAppSumoNotExceeded: mockAssertCredits }
+    return { ...original, assertCreditsNotExceeded: mockAssertCredits }
 })
 
 let app: FastifyInstance

@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: superseded by 000048-platform-tiers-follow-key-project-scope
 ---
 
 # Platform tiers are platform-owned and grant key access
@@ -17,4 +17,5 @@ If a tier were limited by each key's project scope, the same tier would run diff
 - The grant is security-sensitive. The runtime must only honour a `configId` that a live tier on the same platform contains, and never a client-sent `configId`.
 - A key a live tier uses cannot be deleted, and its `modelScope` cannot drop a tier's model. `aiProviderService` refuses both.
 - A deleted tier stays as a soft-deleted row with a `replacedBy` pointer, so stored refs keep resolving without rewriting any flow.
+- On agent and chat runs the grant also covers the platform's **Fast** tier, because the first step runs on it. Fallback there is per step: a step that fails before sending content continues on the next candidate.
 - Platform tiers are unrelated to the console **credits tiers** (`ModelTier`, `pricing.json`). They share only the word "tier".

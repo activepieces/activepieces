@@ -1,26 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common';
 import * as z from 'zod/mini'
 import { confluenceAuth } from '../auth';
-import { confluenceApiCall } from '../common';
-
-type CqlSearchResponse = {
-	results: unknown[];
-	size: number;
-	start: number;
-	limit: number;
-	totalSize?: number;
-	_links?: { next?: string };
-};
+import { confluenceApi } from '../common/api';
+import { searchPagesOutputSchema } from '../output-schemas';
 
 export const searchPagesAction = createAction({
 	auth: confluenceAuth,
 	name: 'search-pages',
+	outputSchema: searchPagesOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Search Content (CQL)',
 	description:
 		'Search Confluence content with CQL (Confluence Query Language). Example: `type = "page" AND space = "DOCS" AND title ~ "release"`.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Searches Confluence content using a CQL (Confluence Query Language) expression, paginating until the max-results cap is reached. Use for flexible, multi-criteria or keyword search across pages/blogposts/comments (by type, space, title, label, date, text); use Find Page by Title for exact-title lookups instead. Requires a valid CQL string. Read-only and idempotent.', idempotent: true },
 	props: {
 		cql: Property.LongText({
@@ -49,31 +42,7 @@ export const searchPagesAction = createAction({
 			maxResults: z.number().check(z.minimum(1), z.maximum(1000)),
 		});
 
-		const all: unknown[] = [];
-		let start = 0;
-		const pageSize = 50;
-
-		while (all.length < maxResults) {
-			const limit = Math.min(pageSize, maxResults - all.length);
-			const response = await confluenceApiCall<CqlSearchResponse>({
-				domain: context.auth.props.confluenceDomain,
-				username: context.auth.props.username,
-				password: context.auth.props.password,
-				method: HttpMethod.GET,
-				version: 'v1',
-				resourceUri: '/content/search',
-				query: {
-					cql,
-					start: String(start),
-					limit: String(limit),
-					...(expand ? { expand } : {}),
-				},
-			});
-
-			all.push(...response.results);
-			if (response.results.length < limit || !response._links?.next) break;
-			start += response.results.length;
-		}
+		const all = await confluenceApi.searchContent({ auth: context.auth, cql, maxResults, expand });
 
 		return { results: all, count: all.length };
 	},

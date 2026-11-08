@@ -29,7 +29,7 @@ name is fixed:
 
 Flow runs are safe by construction — a real `flowVersion.id`. The trap is any flowless execution path
 (agent tools, MCP `ap_run_code`, chat code execution). **Do not hand-roll an id there** — call
-`actionRunCache.namespace({ platformId, sourceHash })` from `sandbox/cache/action-run-cache.ts` and set the
+`actionRunCache.namespace({ platformId, sourceHash })` from `sandbox/cache/code-cache-eviction.ts` and set the
 result on `provision.flowVersionId` (so the mount is built) *and* on the `CodeArtifact` *and* on
 `EngineConstants.flowVersionId` (what the engine reads). All three must be the same string. It yields
 `ar_<platformId>_<sha256(sourceCode)>`: the hash keeps the build deterministic and cacheable, the
@@ -37,7 +37,7 @@ result on `provision.flowVersionId` (so the mount is built) *and* on the `CodeAr
 how the sweeper tells action-run builds from flow-version builds — length cannot, since `platformId` and
 `flowVersionId` are both 21-char `apId`s.
 
-Do **not** clean the directory up at the end of a run. Reclamation is `actionRunCache.sweep`, a worker-local
+Do **not** clean the directory up at the end of a run. Reclamation is `codeCacheEviction.sweep`, a worker-local
 30-minute pass over `ar_*` (2h TTL, then oldest-first eviction past `AR_CACHE_MAX_DIRS`) driven from
 `worker.ts`. It is safe because `localExecutionCache.provision` touches each dir's mtime immediately before
 `sandbox.start()` and **eviction skips anything touched inside `AR_CACHE_ACTIVE_WINDOW_MS`** (15 min). The

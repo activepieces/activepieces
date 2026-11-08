@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 function getDomain(url: string): string {
   try {
-    return new URL(url).hostname.replace('www.', '');
+    return new URL(url).hostname.replace(/^www\./, '');
   } catch {
     return url;
   }
@@ -39,7 +39,7 @@ function FaviconOrGlobe({ url, size }: { url: string; size: 'sm' | 'md' }) {
     <LogoPlate
       src={favicon}
       alt=""
-      className={cn(imgSize, 'rounded-sm')}
+      className={cn(imgSize, 'rounded-md')}
       fallback={<Globe className={globeSize} />}
     />
   );
@@ -84,7 +84,7 @@ function Source({ href, title, className }: SourceProps) {
   );
 }
 
-export { Source };
+export { FaviconOrGlobe, getDomain, Source };
 
 export type SourceProps = {
   href: string;
