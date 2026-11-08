@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { Paperclip } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo } from 'react';
 
@@ -14,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
 
+import { ChatFileChip } from './chat-ui/chat-file-chip';
 import { CopyIconButton } from './copy-icon-button';
 
 export const UserMessage = memo(function UserMessage({
@@ -24,19 +24,11 @@ export const UserMessage = memo(function UserMessage({
   isLastMessage?: boolean;
 }) {
   const content = getTextFromParts(message.parts);
-  const fileNames = message.parts
-    .filter(
-      (
-        p,
-      ): p is {
-        type: 'file';
-        filename: string;
-        mediaType: string;
-        url: string;
-      } =>
-        p.type === 'file' && 'filename' in p && typeof p.filename === 'string',
-    )
-    .map((p) => p.filename);
+  const files = message.parts.flatMap((p) =>
+    p.type === 'file' && typeof p.filename === 'string'
+      ? [{ name: p.filename, mediaType: p.mediaType, url: p.url }]
+      : [],
+  );
 
   const isFromHistory = message.id.startsWith('hist-');
 
@@ -47,22 +39,24 @@ export const UserMessage = memo(function UserMessage({
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%]">
+      <div className="flex max-w-[85%] flex-col items-end">
+        {files.length > 0 && (
+          <div className="mb-1.5 flex flex-wrap justify-end gap-1.5">
+            {files.map((file, i) => (
+              <ChatFileChip
+                key={`${i}-${file.name}`}
+                name={file.name}
+                type={fileTypeLabel(file)}
+                thumbnailUrl={
+                  file.mediaType.startsWith('image/') ? file.url : undefined
+                }
+                onOpen={() => window.open(file.url, '_blank', 'noopener')}
+              />
+            ))}
+          </div>
+        )}
         <Message className="flex-row-reverse">
-          <div className="bg-gray-3 rounded-xl rounded-br-md px-2.5 py-1 text-sm">
-            {fileNames.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-1.5">
-                {fileNames.map((name, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 rounded-md bg-gray-1/60 px-2 py-0.5 text-xs text-gray-11"
-                  >
-                    <Paperclip className="size-3" />
-                    <span className="max-w-[150px] truncate">{name}</span>
-                  </span>
-                ))}
-              </div>
-            )}
+          <div className="rounded-xl rounded-br-md bg-gray-3 px-3 py-1.5 text-sm font-medium [&_*]:text-sm">
             <PromptKitMessageContent markdown>
               {content}
             </PromptKitMessageContent>
@@ -84,3 +78,17 @@ export const UserMessage = memo(function UserMessage({
     </motion.div>
   );
 });
+
+function fileTypeLabel({
+  name,
+  mediaType,
+}: {
+  name: string;
+  mediaType: string;
+}): string {
+  const dot = name.lastIndexOf('.');
+  if (dot > 0 && dot < name.length - 1) {
+    return name.slice(dot + 1).toUpperCase();
+  }
+  return mediaType.split('/').pop()?.toUpperCase() ?? '';
+}

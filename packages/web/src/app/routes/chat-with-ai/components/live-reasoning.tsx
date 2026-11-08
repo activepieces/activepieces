@@ -1,13 +1,15 @@
 import { motion, useReducedMotion, useSpring } from 'motion/react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { StreamingText } from '@/components/prompt-kit/streaming-text';
+import { cn } from '@/lib/utils';
 
 export function LiveReasoning({ text }: { text: string }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
   const rollY = useSpring(0, ROLL_SPRING);
+  const [overflowing, setOverflowing] = useState(false);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -15,6 +17,7 @@ export function LiveReasoning({ text }: { text: string }) {
     if (!viewport || !content) return;
     const observer = new ResizeObserver(() => {
       const target = Math.min(0, viewport.clientHeight - content.offsetHeight);
+      setOverflowing(target < 0);
       if (prefersReducedMotion) {
         rollY.jump(target);
       } else {
@@ -42,13 +45,15 @@ export function LiveReasoning({ text }: { text: string }) {
     >
       <div
         ref={viewportRef}
-        className="relative mt-1.5 max-h-20 overflow-hidden text-sm leading-5 text-gray-11 break-words [mask-image:linear-gradient(to_bottom,transparent,black_30%,black_85%,transparent)]"
+        className={cn(
+          'ml-5.5 max-h-10 overflow-hidden text-sm leading-5 text-gray-11 break-words',
+          overflowing &&
+            '[mask-image:linear-gradient(to_bottom,transparent,black_45%)]',
+        )}
       >
-        <motion.div ref={contentRef} style={{ y: rollY }} className="py-2">
+        <motion.div ref={contentRef} style={{ y: rollY }}>
           <StreamingText text={text} className="[&_p]:my-0" />
         </motion.div>
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-6 backdrop-blur-xs [mask-image:linear-gradient(to_bottom,black,transparent)]" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-4 backdrop-blur-xs [mask-image:linear-gradient(to_top,black,transparent)]" />
       </div>
     </motion.div>
   );

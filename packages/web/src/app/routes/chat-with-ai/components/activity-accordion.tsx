@@ -1,22 +1,27 @@
 import { isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ChevronDown, Code } from 'lucide-react';
+import { Code } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { TextShimmer } from '@/components/ui/text-shimmer';
 import {
   AnyToolPart,
   ThinkingStep,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
-import { toolIconUtils } from '@/features/chat/lib/tool-icons';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { cn } from '@/lib/utils';
+
+import { ChatLine } from './chat-ui/chat-line';
+import { ChatStatusIcon } from './chat-ui/chat-status';
+import { chatStatusUtils } from './chat-ui/chat-status-utils';
+import {
+  CodeRecipeList,
+  LiveThinkingLine,
+  StepLogos,
+  getRecipeLines,
+} from './tool-shimmer-pills';
 
 export function ThinkingBlock({
   thinkingSteps,
@@ -39,13 +44,18 @@ export function ThinkingBlock({
     [onOpenChange],
   );
 
-  const hasSteps = thinkingSteps.length > 0;
+  const toolSteps = useMemo(
+    () => thinkingSteps.flatMap((step) => (step.kind === 'tool' ? [step] : [])),
+    [thinkingSteps],
+  );
+  const failedSteps = toolSteps.filter(
+    (step) => chatPartUtils.deriveToolStatus(step.part) === 'failed',
+  );
 
+  const hasSteps = thinkingSteps.length > 0;
   if (!hasSteps && !isStreaming) return null;
 
-  const isExpandable = hasSteps;
-
-  const doneLabel = formatThinkingDuration(thinkingDurationMs);
+  const toggle = hasSteps ? () => handleOpenChange(!isOpen) : undefined;
 
   return (
     <motion.div
@@ -54,34 +64,35 @@ export function ThinkingBlock({
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       <Collapsible open={isOpen} onOpenChange={handleOpenChange}>
-        <button
-          type="button"
-          disabled={!isExpandable}
-          onClick={() => handleOpenChange(!isOpen)}
-          className={cn(
-            'flex items-center gap-1.5 text-sm text-gray-11 text-left w-full',
-            isExpandable &&
-              'hover:text-gray-12 transition-colors cursor-pointer',
-          )}
-        >
-          {isStreaming ? (
-            <TextShimmer className="text-sm" duration={2}>
-              {t('Thinking...')}
-            </TextShimmer>
-          ) : (
-            <span>{doneLabel}</span>
-          )}
-          <ChevronDown
-            className={cn(
-              'size-3.5 shrink-0 transition-all duration-300',
-              isOpen && 'rotate-180',
-              isExpandable ? 'opacity-50 text-gray-11' : 'opacity-0',
-            )}
+        {isStreaming ? (
+          <LiveThinkingLine
+            steps={thinkingSteps}
+            open={isOpen}
+            onToggle={toggle}
           />
-        </button>
+        ) : (
+          <ChatLine open={isOpen} onToggle={toggle}>
+            {formatSummary({
+              stepCount: toolSteps.length,
+              durationMs: thinkingDurationMs,
+            })}
+          </ChatLine>
+        )}
+
+        {!isOpen && !isStreaming && failedSteps.length > 0 && (
+          <div className="ml-1.5 border-l border-gray-6 pl-3">
+            {failedSteps.map((step) => (
+              <ToolStepLine
+                key={step.part.toolCallId}
+                part={step.part}
+                description={null}
+              />
+            ))}
+          </div>
+        )}
 
         <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-          <div className="mt-2 space-y-0.5">
+          <div className="ml-1.5 mt-1 space-y-0.5 border-l border-gray-6 pl-3">
             {thinkingSteps.map((step, idx) => (
               <StepRenderer
                 key={
@@ -103,40 +114,31 @@ function StepRenderer({ step }: { step: ThinkingStep }) {
   switch (step.kind) {
     case 'reasoning':
       return (
-        <p className="max-h-64 overflow-y-auto py-0.5 text-sm text-gray-11 whitespace-pre-wrap break-words">
+        <p className="max-h-64 overflow-y-auto py-1 text-sm text-gray-11 whitespace-pre-wrap break-words">
           {step.text}
         </p>
       );
     case 'thinking-status':
-      return (
-        <div className="py-0.5">
-          <p className="text-sm text-gray-11">{step.text}</p>
-        </div>
-      );
+      return <p className="py-1 text-sm text-gray-11">{step.text}</p>;
     case 'tool':
-      return <ToolStepRow part={step.part} description={step.description} />;
+      return <ToolStepLine part={step.part} description={step.description} />;
   }
 }
 
-function ToolStepRow({
+function ToolStepLine({
   part,
   description,
 }: {
   part: AnyToolPart;
   description: string | null;
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false);
   const status = chatPartUtils.deriveToolStatus(part);
   const { activeTitle, doneTitle } = chatPartUtils.extractToolTitles(part);
-  const activeFallback = chatUtils.formatToolActionName({ part });
-  const doneFallback = chatUtils.formatToolDoneTitle({ part });
   const rawInput = isObject(part.input) ? part.input : undefined;
   const isRunCode = chatPartUtils.getToolPartName(part) === 'ap_run_code';
-  const recipeLines = useMemo(() => {
-    if (!isRunCode || !Array.isArray(rawInput?.recipe)) return [];
-    return rawInput.recipe.filter(
-      (line): line is string => typeof line === 'string',
-    );
-  }, [isRunCode, rawInput]);
+  const recipeLines = useMemo(() => getRecipeLines(part), [part]);
   const codeSource = useMemo(() => {
     if (!isRunCode || !rawInput) return null;
     const code = typeof rawInput.code === 'string' ? rawInput.code : '';
@@ -152,8 +154,6 @@ function ToolStepRow({
     rawInput.description
       ? rawInput.description
       : null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [codeOpen, setCodeOpen] = useState(false);
   const input = useMemo(() => {
     if (!rawInput) return undefined;
     const {
@@ -173,157 +173,87 @@ function ToolStepRow({
     return Object.keys(rest).length > 0 ? rest : undefined;
   }, [rawInput, isRunCode]);
   const output = chatPartUtils.extractToolOutputText(part);
-  const hasInput = input && Object.keys(input).length > 0;
-  const hasOutput = Boolean(output);
-  const hasDetails = hasInput || hasOutput;
+  const hasDetails = Boolean(input) || Boolean(output);
   const parsedOutput = useMemo(
     () => (detailsOpen && output ? tryParseJson(output) : undefined),
     [detailsOpen, output],
   );
-  const pieceNames = useMemo(
-    () => chatPartUtils.extractPieceNames(rawInput),
-    [rawInput],
-  );
-  const { summaries: pieceSummaries } = piecesHooks.usePieceSummariesByNames({
-    names: pieceNames,
-  });
-  const matchedPieces = pieceSummaries.filter((p) => p.logoUrl);
-
-  const ToolIcon = toolIconUtils.getToolIcon(
-    chatPartUtils.getToolPartName(part),
-  );
 
   const label =
     status === 'running'
-      ? activeTitle ?? activeFallback
+      ? activeTitle ?? chatUtils.formatToolActionName({ part })
       : status === 'completed'
-      ? doneTitle ?? doneFallback
-      : doneFallback;
+      ? doneTitle ?? chatUtils.formatToolDoneTitle({ part })
+      : chatUtils.formatToolDoneTitle({ part });
+  const failureReason =
+    part.state === 'output-error' && part.errorText ? part.errorText : null;
 
   return (
-    <div className="py-1">
-      {recipeLines.length > 0 ? (
-        <div className="mb-1.5 overflow-hidden rounded-xl border border-gray-6 bg-gray-3/20">
-          <div className="flex items-center gap-2 border-b border-gray-6/60 px-3 py-1">
-            <Code className="size-3 shrink-0 text-accent-11/80" />
-            <span className="text-xs font-medium text-gray-11">
-              {t('What this code does')}
-            </span>
-          </div>
-          <div className="space-y-0.5 px-3 py-2 font-mono text-xs leading-relaxed">
-            {recipeLines.map((line, idx) => (
-              <div
-                key={`${idx}-${line}`}
-                className="flex items-start gap-2 text-gray-12/75"
-              >
-                <span className="select-none pt-px text-accent-11/70">›</span>
-                <span>{line}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        resolvedDescription && (
-          <p className="text-sm text-gray-11 mb-1.5">{resolvedDescription}</p>
-        )
+    <div className="py-0.5">
+      {recipeLines.length === 0 && resolvedDescription && (
+        <p className="py-1 text-sm text-gray-11">{resolvedDescription}</p>
       )}
       <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
-        {status === 'running' ? (
-          <TextShimmer
-            as="div"
-            className={cn(
-              'inline-flex items-center gap-2 rounded-xl border px-4 py-1.5 text-sm border-gray-6',
-              hasDetails && 'cursor-pointer',
-            )}
-            duration={2}
-            onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
-          >
-            <ToolIcon className="size-4 shrink-0 text-gray-11 animate-pulse motion-reduce:animate-none" />
-            {label}
-            {matchedPieces.map((piece) => (
-              <PieceIcon
-                key={piece.name}
-                displayName={piece.displayName}
-                logoUrl={piece.logoUrl!}
-                size="xxs"
-                border={false}
-                showTooltip={false}
-              />
-            ))}
-          </TextShimmer>
-        ) : (
-          <div>
-            <div
-              className={cn(
-                'inline-flex items-center gap-2 rounded-xl border px-4 py-1.5 text-sm border-gray-6',
-                hasDetails && 'cursor-pointer',
-              )}
-              onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
-            >
-              <ToolIcon className="size-4 shrink-0 text-gray-11" />
-              <span className="text-sm text-gray-11">{label}</span>
-              {matchedPieces.map((piece) => (
-                <PieceIcon
-                  key={piece.name}
-                  displayName={piece.displayName}
-                  logoUrl={piece.logoUrl!}
-                  size="xxs"
-                  border={false}
-                  showTooltip={false}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        <ChatLine
+          icon={
+            <ChatStatusIcon status={chatStatusUtils.fromToolStatus(status)} />
+          }
+          logos={<StepLogos parts={[part]} />}
+          detail={failureReason}
+          tone={status === 'failed' ? 'danger' : 'muted'}
+          open={detailsOpen}
+          onToggle={hasDetails ? () => setDetailsOpen(!detailsOpen) : undefined}
+        >
+          {label}
+        </ChatLine>
         {hasDetails && (
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-            <div className="mt-1 rounded-xl bg-gray-3/30 px-3 py-2 space-y-2 text-xs">
-              {hasInput && input && (
-                <div>
-                  <p className="text-gray-11 font-medium mb-0.5">
-                    {t('Input')}
-                  </p>
-                  <SimpleJsonViewer
-                    data={input}
-                    hideCopyButton={true}
-                    maxHeight={100}
-                    fontSize="11px"
-                  />
-                </div>
+            <dl className="ml-5.5 mt-1 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-md border border-gray-6 bg-gray-2 px-3 py-2 text-xs">
+              {input && (
+                <>
+                  <dt className="pt-2 text-gray-11">{t('Sent')}</dt>
+                  <dd className="min-w-0">
+                    <SimpleJsonViewer
+                      data={input}
+                      hideCopyButton={true}
+                      maxHeight={100}
+                      fontSize="11px"
+                    />
+                  </dd>
+                </>
               )}
-              {hasOutput && parsedOutput !== undefined && (
-                <div>
-                  <p className="text-gray-11 font-medium mb-0.5">
-                    {t('Output')}
-                  </p>
-                  <SimpleJsonViewer
-                    data={parsedOutput}
-                    hideCopyButton={true}
-                    maxHeight={120}
-                    fontSize="11px"
-                  />
-                </div>
+              {output && parsedOutput !== undefined && (
+                <>
+                  <dt className="pt-2 text-gray-11">{t('Got back')}</dt>
+                  <dd className="min-w-0">
+                    <SimpleJsonViewer
+                      data={parsedOutput}
+                      hideCopyButton={true}
+                      maxHeight={120}
+                      fontSize="11px"
+                    />
+                  </dd>
+                </>
               )}
-            </div>
+            </dl>
           </CollapsibleContent>
         )}
       </Collapsible>
+      {recipeLines.length > 0 && (
+        <CodeRecipeList lines={recipeLines} className="ml-1.5" />
+      )}
       {codeSource && (
-        <Collapsible
-          open={codeOpen}
-          onOpenChange={setCodeOpen}
-          className="mt-1.5"
-        >
+        <Collapsible open={codeOpen} onOpenChange={setCodeOpen}>
           <button
             type="button"
             onClick={() => setCodeOpen(!codeOpen)}
-            className="flex items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors"
+            className="ml-5.5 flex items-center gap-1 rounded-md py-1 text-xs text-accent-11 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-gray-8"
           >
             <Code className="size-3 shrink-0" />
             {codeOpen ? t('Hide code') : t('View code')}
           </button>
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-            <pre className="mt-1 max-h-64 overflow-auto rounded-xl bg-gray-3/40 px-3 py-2 text-xs font-mono whitespace-pre-wrap break-words text-gray-11">
+            <pre className="ml-5.5 mt-1 max-h-64 overflow-auto rounded-md border border-gray-6 bg-gray-2 px-3 py-2 font-mono text-xs whitespace-pre-wrap break-words text-gray-12">
               {codeSource}
             </pre>
           </CollapsibleContent>
@@ -331,6 +261,37 @@ function ToolStepRow({
       )}
     </div>
   );
+}
+
+function formatSummary({
+  stepCount,
+  durationMs,
+}: {
+  stepCount: number;
+  durationMs: number | undefined;
+}): string {
+  if (stepCount === 0) return formatThinkingDuration(durationMs);
+  const duration = formatShortDuration(durationMs);
+  if (duration === null) {
+    return t('Checked {count} {count, plural, =1 {thing} other {things}}', {
+      count: stepCount,
+    });
+  }
+  return t(
+    'Checked {count} {count, plural, =1 {thing} other {things}} in {duration}',
+    { count: stepCount, duration },
+  );
+}
+
+function formatShortDuration(ms: number | undefined): string | null {
+  if (ms === undefined) return null;
+  const totalSeconds = Math.round(ms / 1000);
+  if (totalSeconds <= 0) return null;
+  if (totalSeconds < 60) return t('{seconds}s', { seconds: totalSeconds });
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (seconds === 0) return t('{minutes}m', { minutes });
+  return t('{minutes}m {seconds}s', { minutes, seconds });
 }
 
 function formatThinkingDuration(ms: number | undefined): string {
