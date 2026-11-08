@@ -38,9 +38,7 @@ after the mount was in place the preview still showed no difference between cold
 
 that was fine for the sqlite caches ( tested: pre-seeding them as 666 changed nothing ) . the real problem was the stdin program we feed to deno . it had a random nanoid marker + the inlined inputs in it , so every run was a brand new module and deno tried to write a new transpiled copy of it in gen/ . the write failed for every non-owner uid and the run ended up slower than cold ( ~240ms vs ~150ms cold vs ~85ms warm ) .
 
-first fix was a chmod -R a+rwX on the whole cache tree from the worker . it worked on the preview but greptile caught a symlink race: a legacy ( useDeno: false ) step is a plain node child with the engine's fs access , it could swap a cache entry for a symlink between the worker's readdir and chmod , and the root worker would follow it on the host . reverted . per-box cache subdirs were the other option but that multiplies the cold fills by the pool size .
-
-the fix that stayed: make the program byte-identical per step so there is nothing new to write after the first fill .
+the fix: make the program byte-identical per step so there is nothing new to write after the first fill .
 - the marker is generated inside the wrapper ( crypto.randomUUID() ) and printed as the first stdout line ( __AP_DENO_MARKER__<marker> ) , the parent reads it back from there
 - the inputs go to a temp json file ( os.tmpdir()/ap-deno-data-*/data.json ) passed as Deno.args[0] with its own --allow-read , deleted when the process exits
 - deno.run takes a `data` param instead of the caller inlining it , and the engine body calls mod.code(data)
