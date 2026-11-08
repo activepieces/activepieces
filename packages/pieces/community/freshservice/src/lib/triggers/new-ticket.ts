@@ -9,24 +9,8 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
-import { freshserviceListPages } from '../common/client';
+import { freshserviceListPages, reachedCreatedBefore } from '../common/client';
 import { freshserviceSchemas } from '../common/schemas';
-
-interface FreshserviceTicket {
-  id: number;
-  subject: string;
-  description: string;
-  status: number;
-  priority: number;
-  requester_id: number;
-  responder_id: number | null;
-  department_id: number | null;
-  group_id: number | null;
-  type: string;
-  source: number;
-  created_at: string;
-  updated_at: string;
-}
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof freshserviceAuth>,
@@ -49,7 +33,8 @@ const polling: Polling<
             auth,
             endpoint: 'tickets',
             key: 'tickets',
-            queryParams: { updated_since: new Date(lastFetchEpochMS).toISOString(), order_type: 'asc' },
+            queryParams: { updated_since: new Date(lastFetchEpochMS).toISOString(), order_type: 'desc' },
+            stopWhen: (pageItems) => reachedCreatedBefore({ pageItems, epochMs: lastFetchEpochMS }),
           });
     return records.map((record) => ({
       epochMilliSeconds: new Date(record.created_at).getTime(),
@@ -102,3 +87,19 @@ export const newTicket = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
+
+interface FreshserviceTicket {
+  id: number;
+  subject: string;
+  description: string;
+  status: number;
+  priority: number;
+  requester_id: number;
+  responder_id: number | null;
+  department_id: number | null;
+  group_id: number | null;
+  type: string;
+  source: number;
+  created_at: string;
+  updated_at: string;
+}

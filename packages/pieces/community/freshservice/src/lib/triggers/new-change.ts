@@ -9,7 +9,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
-import { freshserviceListPages } from '../common/client';
+import { freshserviceListPages, reachedCreatedBefore } from '../common/client';
 import { freshserviceSchemas } from '../common/schemas';
 import { FreshserviceChange } from '../common/props';
 
@@ -34,7 +34,12 @@ const polling: Polling<
             auth,
             endpoint: 'changes',
             key: 'changes',
-            queryParams: { updated_since: new Date(lastFetchEpochMS).toISOString() },
+            queryParams: {
+              updated_since: new Date(lastFetchEpochMS).toISOString(),
+              order_by: 'created_at',
+              order_type: 'desc',
+            },
+            stopWhen: (pageItems) => reachedCreatedBefore({ pageItems, epochMs: lastFetchEpochMS }),
           });
     return records.map((record) => ({
       epochMilliSeconds: new Date(record.created_at).getTime(),

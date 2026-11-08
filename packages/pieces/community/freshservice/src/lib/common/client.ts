@@ -209,6 +209,7 @@ async function freshserviceListPages<T>({
   perPage = 100,
   maxPages = MAX_POLL_PAGES,
   allowTruncation = false,
+  stopWhen,
 }: {
   auth: FreshserviceAuth;
   endpoint: string;
@@ -216,9 +217,8 @@ async function freshserviceListPages<T>({
   queryParams?: QueryParams;
   perPage?: number;
   maxPages?: number;
-  // Only for sample/first-run fetches. Polls must see every record, otherwise
-  // pollingHelper advances lastPoll past records that were never read.
   allowTruncation?: boolean;
+  stopWhen?: (pageItems: T[]) => boolean;
 }): Promise<T[]> {
   const results: T[] = [];
   for (let page = 1; page <= maxPages; page++) {
@@ -234,7 +234,7 @@ async function freshserviceListPages<T>({
     });
     const items = response.body[key] ?? [];
     results.push(...items);
-    if (items.length < perPage) {
+    if (items.length < perPage || (stopWhen !== undefined && stopWhen(items))) {
       return results;
     }
   }
@@ -322,9 +322,21 @@ function clampPage(value: number | null | undefined): number {
   return Math.max(Math.floor(value), 1);
 }
 
-const MAX_POLL_PAGES = 200;
+function reachedCreatedBefore<T extends { created_at: string }>({
+  pageItems,
+  epochMs,
+}: {
+  pageItems: T[];
+  epochMs: number;
+}): boolean {
+  const times = pageItems.map((item) => new Date(item.created_at).getTime());
+  const newestFirst = times.every((time, index) => index === 0 || time <= times[index - 1]);
+  return newestFirst && times.length > 0 && times[times.length - 1] <= epochMs;
+}
 
-type FreshserviceAuth = AppConnectionValueForAuthProperty<typeof freshserviceAuth>;
+const MAX_POLL_PAGES = 200;
+const REQUESTER_FILTER_PAGE_SIZE = 30;
+const REQUESTER_FILTER_MAX_PAGES = 40;
 
 export {
   buildBaseUrl,
@@ -343,5 +355,11 @@ export {
   clampPerPage,
   clampPage,
   MAX_POLL_PAGES,
+  REQUESTER_FILTER_PAGE_SIZE,
+  REQUESTER_FILTER_MAX_PAGES,
+  reachedCreatedBefore,
 };
+
+type FreshserviceAuth = AppConnectionValueForAuthProperty<typeof freshserviceAuth>;
+
 export type { FreshserviceAuth };

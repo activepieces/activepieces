@@ -39,12 +39,12 @@ export const createChange = createAction({
     change_type: freshserviceCommon.changeType,
     planned_start_date: Property.ShortText({
       displayName: 'Planned Start Date',
-      description: 'Planned start date and time (ISO 8601, e.g. 2025-01-15T09:00:00Z). Required by Freshservice.',
+      description: 'Planned start date and time (ISO 8601, e.g. 2025-01-15T09:00:00Z). Most Freshservice accounts require it.',
       required: false,
     }),
     planned_end_date: Property.ShortText({
       displayName: 'Planned End Date',
-      description: 'Planned end date and time (ISO 8601, e.g. 2025-01-15T17:00:00Z). Required by Freshservice.',
+      description: 'Planned end date and time (ISO 8601, e.g. 2025-01-15T17:00:00Z). Most Freshservice accounts require it.',
       required: false,
     }),
     category: Property.ShortText({
@@ -70,10 +70,6 @@ export const createChange = createAction({
   },
   async run(context) {
     const props = context.propsValue;
-    if (!props.planned_start_date || !props.planned_end_date) {
-      throw new Error('Freshservice requires both Planned Start Date and Planned End Date to create a change. Fill in both fields.');
-    }
-
     const body: Record<string, unknown> = {
       subject: props.subject,
       requester_id: props.requester_id,

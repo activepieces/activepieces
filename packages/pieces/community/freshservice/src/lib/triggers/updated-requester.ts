@@ -9,23 +9,15 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
-import { freshserviceListPages } from '../common/client';
+import {
+  freshserviceListPages,
+  REQUESTER_FILTER_MAX_PAGES,
+  REQUESTER_FILTER_PAGE_SIZE,
+} from '../common/client';
 import { freshserviceSchemas } from '../common/schemas';
 
-interface FreshserviceRequester {
-  id: number;
-  first_name: string;
-  last_name: string;
-  primary_email: string;
-  job_title: string | null;
-  phone: string | null;
-  mobile_phone_number: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-function dayBefore(epochMs: number): string {
-  return new Date(epochMs - 86400000).toISOString().slice(0, 10);
+function utcDate(epochMs: number): string {
+  return new Date(epochMs).toISOString().slice(0, 10);
 }
 
 const polling: Polling<
@@ -49,7 +41,9 @@ const polling: Polling<
             auth,
             endpoint: 'requesters',
             key: 'requesters',
-            queryParams: { query: `"updated_at:>'${dayBefore(lastFetchEpochMS)}'"` },
+            perPage: REQUESTER_FILTER_PAGE_SIZE,
+            maxPages: REQUESTER_FILTER_MAX_PAGES,
+            queryParams: { query: `"updated_at:>'${utcDate(lastFetchEpochMS)}'"` },
           });
     return records.map((record) => ({
       epochMilliSeconds: new Date(record.updated_at).getTime(),
@@ -98,3 +92,15 @@ export const updatedRequester = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
+
+interface FreshserviceRequester {
+  id: number;
+  first_name: string;
+  last_name: string;
+  primary_email: string;
+  job_title: string | null;
+  phone: string | null;
+  mobile_phone_number: string | null;
+  created_at: string;
+  updated_at: string;
+}

@@ -4,6 +4,10 @@ import { freshservice, freshserviceAuth } from '../src';
 import { freshserviceApiCall, MAX_POLL_PAGES, normalizeDomain } from '../src/lib/common/client';
 import { updatedTicket } from '../src/lib/triggers/updated-ticket';
 import { newTicket } from '../src/lib/triggers/new-ticket';
+import { newChange } from '../src/lib/triggers/new-change';
+import { newRequester } from '../src/lib/triggers/new-requester';
+import { updatedRequester } from '../src/lib/triggers/updated-requester';
+import { aiFindRequester } from '../src/lib/actions/ai/ai-find-requester';
 import { updatedChange } from '../src/lib/triggers/updated-change';
 import { aiSearchTickets } from '../src/lib/actions/ai/ai-search-tickets';
 import { aiCreateTicket } from '../src/lib/actions/ai/ai-create-ticket';
@@ -91,29 +95,82 @@ describe('auth validate', () => {
 });
 
 describe('triggers', () => {
-  it('new ticket pages with updated_since and no order_by until a short page', async () => {
+  it('new ticket reads newest first and stops at the first page that reaches lastPoll', async () => {
     const lastPoll = Date.parse('2026-10-01T00:00:00Z');
-    const page = ({ count, offset }: { count: number; offset: number }) =>
+    const rows = ({ count, newestOffset }: { count: number; newestOffset: number }) =>
       Array.from({ length: count }, (_, i) => ({
-        id: offset + i,
-        created_at: new Date(lastPoll + (offset + i + 1) * 1000).toISOString(),
-        updated_at: new Date(lastPoll + (offset + i + 1) * 1000).toISOString(),
+        id: newestOffset - i,
+        created_at: new Date(lastPoll + (newestOffset - i) * 1000).toISOString(),
+        updated_at: new Date(lastPoll + 500000).toISOString(),
       }));
     const spy = vi
       .spyOn(httpClient, 'sendRequest')
-      .mockResolvedValueOnce(okResponse({ tickets: page({ count: 100, offset: 0 }) }))
-      .mockResolvedValueOnce(okResponse({ tickets: page({ count: 3, offset: 100 }) }));
-    const result = await newTicket.run({
-      auth,
-      propsValue: {},
-      store: makeStore({ lastPoll }),
-      files: {},
-    });
-    expect(result).toHaveLength(103);
+      .mockResolvedValueOnce(okResponse({ tickets: rows({ count: 100, newestOffset: 150 }) }))
+      .mockResolvedValueOnce(okResponse({ tickets: rows({ count: 100, newestOffset: 50 }) }))
+      .mockResolvedValueOnce(okResponse({ tickets: rows({ count: 100, newestOffset: -50 }) }));
+    const result = await newTicket.run({ auth, propsValue: {}, store: makeStore({ lastPoll }), files: {} });
     expect(spy).toHaveBeenCalledTimes(2);
-    const firstQuery = spy.mock.calls[0][0].queryParams;
-    expect(firstQuery).toMatchObject({ updated_since: '2026-10-01T00:00:00.000Z', page: '1', per_page: '100' });
-    expect(firstQuery).not.toHaveProperty('order_by');
+    expect(result).toHaveLength(150);
+    expect(spy.mock.calls[0][0].queryParams).toMatchObject({
+      updated_since: '2026-10-01T00:00:00.000Z',
+      order_type: 'desc',
+      page: '1',
+      per_page: '100',
+    });
+    expect(spy.mock.calls[1][0].queryParams).toMatchObject({ page: '2' });
+  });
+
+  it('new ticket keeps reading when a full page is not sorted newest first', async () => {
+    const lastPoll = Date.parse('2026-10-01T00:00:00Z');
+    const oldestFirst = Array.from({ length: 100 }, (_, i) => ({
+      id: i,
+      created_at: new Date(lastPoll + (i - 10) * 1000).toISOString(),
+      updated_at: new Date(lastPoll + 500000).toISOString(),
+    }));
+    const spy = vi
+      .spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce(okResponse({ tickets: oldestFirst }))
+      .mockResolvedValueOnce(okResponse({ tickets: [] }));
+    await newTicket.run({ auth, propsValue: {}, store: makeStore({ lastPoll }), files: {} });
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  it('new change asks for newest first by created_at and stops once a page reaches lastPoll', async () => {
+    const lastPoll = Date.parse('2026-10-01T00:00:00Z');
+    const changes = Array.from({ length: 100 }, (_, i) => ({
+      id: 100 - i,
+      created_at: new Date(lastPoll + (5 - i) * 1000).toISOString(),
+      updated_at: new Date(lastPoll + 500000).toISOString(),
+    }));
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(okResponse({ changes }));
+    const result = await newChange.run({ auth, propsValue: {}, store: makeStore({ lastPoll }), files: {} });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(result).toHaveLength(5);
+    expect(spy.mock.calls[0][0].queryParams).toMatchObject({ order_by: 'created_at', order_type: 'desc' });
+  });
+
+  it.each([
+    ['new requester', newRequester, 'created_at'],
+    ['updated requester', updatedRequester, 'updated_at'],
+  ])('%s reads past a full filter page of 30 from the date of lastPoll', async (_name, trigger, field) => {
+    const lastPoll = Date.parse('2026-10-01T05:00:00Z');
+    const rows = ({ count, offset }: { count: number; offset: number }) =>
+      Array.from({ length: count }, (_, i) => ({
+        id: offset + i,
+        [field]: new Date(lastPoll + (offset + i + 1) * 1000).toISOString(),
+      }));
+    const spy = vi
+      .spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce(okResponse({ requesters: rows({ count: 30, offset: 0 }) }))
+      .mockResolvedValueOnce(okResponse({ requesters: rows({ count: 4, offset: 30 }) }));
+    const result = await trigger.run({ auth, propsValue: {}, store: makeStore({ lastPoll }), files: {} });
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(result).toHaveLength(34);
+    expect(spy.mock.calls[0][0].queryParams).toMatchObject({
+      query: `"${field}:>'2026-10-01'"`,
+      per_page: '30',
+      page: '1',
+    });
     expect(spy.mock.calls[1][0].queryParams).toMatchObject({ page: '2' });
   });
 
@@ -187,6 +244,22 @@ describe('ai actions', () => {
     expect(result).toMatchObject({ page: 1, has_more: true, total: 45 });
   });
 
+  it('find requester ignores per_page with a filter query and reports has_more from the fixed page of 30', async () => {
+    const spy = vi
+      .spyOn(httpClient, 'sendRequest')
+      .mockResolvedValue(okResponse({ requesters: Array.from({ length: 30 }, (_, i) => ({ id: i })) }));
+    const result = await aiFindRequester.run({ auth, propsValue: { query: "job_title:'Engineer'", per_page: 50 } });
+    expect(spy.mock.calls[0][0].queryParams).toEqual({ page: '1', query: `"job_title:'Engineer'"` });
+    expect(result).toMatchObject({ page: 1, has_more: true });
+    const lastPage = await aiFindRequester.run({ auth, propsValue: { query: "job_title:'Engineer'", page: 40 } });
+    expect(lastPage).toMatchObject({ page: 40, has_more: false });
+  });
+
+  it('create ticket documents the Freshservice source codes, not the Freshdesk ones', () => {
+    expect(aiCreateTicket.props.source.description).toContain('4 Chat, 5 Feedback Widget');
+    expect(aiCreateTicket.props.source.description).not.toContain('Outbound Email');
+  });
+
   it('create ticket requires a requester and sends email when no id', async () => {
     await expect(aiCreateTicket.run({ auth, propsValue: { subject: 's', description: 'd' } })).rejects.toThrow(
       'Provide either Requester ID or Requester Email.'
@@ -215,10 +288,11 @@ describe('request bodies', () => {
     expect(body).not.toHaveProperty('task_id');
   });
 
-  it('human create change asks for planned dates before calling Freshservice', async () => {
-    const spy = vi.spyOn(httpClient, 'sendRequest');
-    await expect(createChange.run({ auth, propsValue: { subject: 's', requester_id: 1 } })).rejects.toThrow('Planned Start Date and Planned End Date');
-    expect(spy).not.toHaveBeenCalled();
+  it('human create change leaves the planned dates check to Freshservice', async () => {
+    const spy = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(okResponse({ change: { id: 3 } }));
+    const result = await createChange.run({ auth, propsValue: { subject: 's', requester_id: 1 } });
+    expect(result).toEqual({ id: 3 });
+    expect(spy.mock.calls[0][0].body).toEqual({ subject: 's', requester_id: 1 });
   });
 
   it('repeat delete maps 404 to a clear message and keeps status and responseBody', async () => {

@@ -3,35 +3,6 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from './client';
 
-interface FreshserviceRequester {
-  id: number;
-  first_name: string;
-  last_name: string;
-  primary_email: string;
-}
-
-interface FreshserviceAgent {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-}
-
-interface FreshserviceDepartment {
-  id: number;
-  name: string;
-}
-
-interface FreshserviceGroup {
-  id: number;
-  name: string;
-}
-
-interface FreshserviceTicket {
-  id: number;
-  subject: string;
-}
-
 function joinName({ first, last }: { first: string | null; last: string | null }): string {
   return [first, last].filter((part) => typeof part === 'string' && part.trim().length > 0).join(' ');
 }
@@ -327,9 +298,13 @@ export const freshserviceCommon = {
         { label: 'Email', value: 1 },
         { label: 'Portal', value: 2 },
         { label: 'Phone', value: 3 },
-        { label: 'Chat', value: 7 },
-        { label: 'Feedback Widget', value: 9 },
-        { label: 'Outbound Email', value: 10 },
+        { label: 'Chat', value: 4 },
+        { label: 'Feedback Widget', value: 5 },
+        { label: 'Yammer', value: 6 },
+        { label: 'AWS Cloudwatch', value: 7 },
+        { label: 'Pagerduty', value: 8 },
+        { label: 'Walkup', value: 9 },
+        { label: 'Slack', value: 10 },
       ],
     },
   }),
@@ -418,4 +393,33 @@ export interface FreshserviceChangeTask {
   notify_before: number;
   created_at: string;
   updated_at: string;
+}
+
+interface FreshserviceRequester {
+  id: number;
+  first_name: string;
+  last_name: string;
+  primary_email: string;
+}
+
+interface FreshserviceAgent {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+interface FreshserviceDepartment {
+  id: number;
+  name: string;
+}
+
+interface FreshserviceGroup {
+  id: number;
+  name: string;
+}
+
+interface FreshserviceTicket {
+  id: number;
+  subject: string;
 }

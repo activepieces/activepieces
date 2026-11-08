@@ -48,7 +48,7 @@ export const aiCreateTicket = createAction({
     impact: Property.Number({ displayName: 'Impact', description: '1 Low, 2 Medium, 3 High.', required: false }),
     source: Property.Number({
       displayName: 'Source',
-      description: '1 Email, 2 Portal, 3 Phone, 7 Chat, 9 Feedback Widget, 10 Outbound Email.',
+      description: '1 Email, 2 Portal, 3 Phone, 4 Chat, 5 Feedback Widget, 6 Yammer, 7 AWS Cloudwatch, 8 Pagerduty, 9 Walkup, 10 Slack.',
       required: false,
     }),
     type: Property.ShortText({ displayName: 'Type', description: 'Incident or Service Request.', required: false }),

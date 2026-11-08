@@ -108,7 +108,7 @@ export const freshservice = createPiece({
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/freshservice.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
-  authors: ['AhmadTash'],
+  authors: ['AhmadTash', 'OdaiAhmed99'],
   auth: freshserviceAuth,
   actions: [
     createTicket,
