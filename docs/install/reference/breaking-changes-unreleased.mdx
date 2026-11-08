@@ -18,6 +18,34 @@ The new piece provides a separate native action for each of the 425 public API o
 
 Flows remain on the piece version they were built with until you upgrade. Before upgrading, reconnect with a workspace key carrying the required scopes, replace numeric IDs with workspace UUIDs, reconfigure step inputs and remap downstream fields from the current response. Check polling intervals and use test data before testing billable actions. Existing assistant/channel webhook destinations remain unchanged.
 
+#### Trello 0.9.0: Update Card (Agent) no longer unarchives cards or clears their labels
+
+When an AI agent used **Update Card (Agent)** to change something else, such as the name, the agent path filled **Archived** with `false` and **Label IDs** with an empty list and sent both. Each such update could unarchive an archived card and remove all of its labels. From Trello 0.9.0 Archived is a dropdown with **Yes**, **No** and **Leave unchanged**. Archived left out, or set to Leave unchanged, is not sent, so the card stays archived or unarchived. An empty Label IDs list is not sent either, so the card keeps its labels; use **Remove Label From Card (Agent)** to drop a label.
+
+#### What you need to do
+
+- If an agent tool pins **Archived** to a fixed value, open the tool and pick Yes, No or Leave unchanged again. A value saved from the old checkbox is no longer accepted and the call fails until you do.
+- If an agent ran this action on an earlier Trello version, check that archived cards are still archived and still carry their labels.
+
+#### Bigin by Zoho CRM 0.2.0: the existing actions are no longer AI agent tools
+
+The 16 existing Bigin actions are now shown only in the flow builder: Create Company, Update Company, Create Contact, Update Contact, Create Task, Update Task, Create Event, Update Event, Create Pipeline, Update Pipeline, Create Call, Search Company Record, Search Contact Record, Search Pipeline Record, Search Product Record and Search User. AI agents and MCP clients get the new "(Agent)" actions instead: Search, Get and List Records, Create and Update Contact, Company, Deal, Task and Event, Log Call, List Users and List Pipelines, plus Add Note and Delete Record.
+
+#### What you need to do
+
+- Agents that used the old Bigin actions as tools: switch to the new "(Agent)" actions.
+- Flow steps keep working unchanged.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Gender API 0.2.0: the Country Code input is now applied
+
+Before 0.2.0, **Get Gender by First Name** and **Get Gender by Full Name** sent the Country Code under a key Gender API ignores, so it had no effect. From 0.2.0 it is sent as `country` and applied, on those two actions and on the new **Get Gender by Email**. After you upgrade one of these steps, a country code can change the result (for example Andrea with IT now returns male), and a value that is not a two-letter ISO code, such as `USA` or `Germany`, now fails the step with Gender API's `invalid-country-code` error.
+
+#### What you need to do
+
+Use two-letter country codes such as `US` or `DE` in the Country Code input, or leave it empty. Steps keep running on the version they were built with until you upgrade them.
+
 #### Anthropic Claude 0.9.0: retired models are replaced at run time, and Extended Thinking Mode uses Claude Sonnet 5.5
 
 Anthropic has retired several Claude models, so steps that still pointed at them failed. From Anthropic Claude 0.9.0, **Ask Claude**, **Extract Structured Data** and **Count Tokens** switch a retired model to the current model of the same family when the step runs:
