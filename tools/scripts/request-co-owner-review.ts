@@ -33,25 +33,32 @@ function roundRobinPicks({ events, coOwners, teamMembers }: { events: TimelineEv
     const teamRequests = requests.filter((event) => event.requested_team !== undefined)
     const coOwnerSet = new Set(coOwners.map((login) => login.toLowerCase()))
     const coOwnerInEveryTeam = teamRequests.every((event) => (teamMembers[event.requested_team?.slug ?? ''] ?? []).some((login) => coOwnerSet.has(login.toLowerCase())))
-    if (teamRequests.length === 0 || !coOwnerInEveryTeam) {
+    if (!coOwnerInEveryTeam) {
         return []
     }
-    const inWindow = requests.filter((event, index) => {
-        const login = event.requested_reviewer?.login.toLowerCase()
-        return login !== undefined && !coOwnerSet.has(login) && requests.some((teamEvent, teamIndex) =>
-            teamEvent.requested_team !== undefined
-            && teamIndex < index
+    const taken = new Set<number>()
+    const picks = requests.flatMap((teamEvent, teamIndex) => {
+        if (!teamEvent.requested_team) {
+            return []
+        }
+        const pickIndex = requests.findIndex((event, index) =>
+            index > teamIndex
+            && !taken.has(index)
+            && event.requested_reviewer !== undefined
             && Date.parse(event.created_at) - Date.parse(teamEvent.created_at) <= PICK_WINDOW_MS,
         )
+        if (pickIndex === -1) {
+            return []
+        }
+        taken.add(pickIndex)
+        return [requests[pickIndex]]
     })
-    if (inWindow.length > teamRequests.length) {
-        return []
-    }
-    const picks = inWindow.filter((pick) => {
-        const login = pick.requested_reviewer?.login.toLowerCase()
-        return requests.findLast((event) => event.requested_reviewer?.login.toLowerCase() === login) === pick
+    const removable = picks.filter((pick) => {
+        const login = pick.requested_reviewer?.login.toLowerCase() ?? ''
+        const latest = requests.findLast((event) => event.requested_reviewer?.login.toLowerCase() === login)
+        return !coOwnerSet.has(login) && latest === pick
     })
-    return [...new Set(picks.map((pick) => pick.requested_reviewer?.login ?? ''))]
+    return [...new Set(removable.map((pick) => pick.requested_reviewer?.login ?? ''))]
 }
 
 async function fetchProjectLabels({ id, apiKey }: { id: string, apiKey: string }): Promise<ProjectLabel[]> {
@@ -110,7 +117,7 @@ async function removeRoundRobinPicks({ repository, prNumber, token, coOwners }: 
     const pendingLogins = new Set(pending.users.map((user) => user.login.toLowerCase()))
     const picks = roundRobinPicks({ events, coOwners, teamMembers: TEAM_MEMBERS }).filter((login) => pendingLogins.has(login.toLowerCase()))
     if (picks.length === 0) {
-        console.log('No round-robin reviewer to remove: none is pending, the Co-Owner is not in every requested team, or the pick is unclear.')
+        console.log('No round-robin reviewer to remove: none is pending, or the Co-Owner is not in every requested team.')
         return
     }
     await github({ path: `/repos/${repository}/pulls/${prNumber}/requested_reviewers`, token, method: 'DELETE', body: { reviewers: picks } })

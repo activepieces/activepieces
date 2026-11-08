@@ -76,9 +76,14 @@ describe('roundRobinPicks', () => {
         expect(requestCoOwnerReview.roundRobinPicks({ events: coreAndPieces, coOwners: ['ziyadev'], teamMembers })).toEqual([])
     })
 
-    it('keeps every pick when more users than teams were requested in the window', () => {
-        const events = [team('core', '2026-11-05T19:26:32Z'), user('ziyadev', '2026-11-05T19:26:33Z'), user('lina-alomari', '2026-11-05T19:26:35Z'), user('othmanemad', '2026-11-05T19:26:35Z')]
+    it('keeps an author request when round-robin chose the Co-Owner', () => {
+        const events = [team('core', '2026-11-05T19:26:32Z'), user('othmanemad', '2026-11-05T19:26:33Z'), user('lina-alomari', '2026-11-05T19:26:35Z')]
         expect(requestCoOwnerReview.roundRobinPicks({ events, coOwners: ['othmanemad'], teamMembers })).toEqual([])
+    })
+
+    it('removes only the round-robin pick when the author adds a reviewer in the window', () => {
+        const events = [team('core', '2026-11-05T19:26:32Z'), user('ziyadev', '2026-11-05T19:26:33Z'), user('lina-alomari', '2026-11-05T19:26:35Z')]
+        expect(requestCoOwnerReview.roundRobinPicks({ events, coOwners: ['othmanemad'], teamMembers })).toEqual(['ziyadev'])
     })
 
     it('keeps a pick that someone requested again later', () => {
