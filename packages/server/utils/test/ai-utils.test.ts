@@ -1,7 +1,8 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCostEvent, AIProviderName } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, aiProviderCredentials } from '@activepieces/shared'
 import { generateText, jsonSchema, tool } from 'ai'
 import { describe, expect, it } from 'vitest'
+import { activepiecesAiCost } from '../src/activepieces-ai-cost'
 import { aiUtils, WebSearchOptions } from '../src/ai-utils'
 
 function anthropicSearchArgs(options: WebSearchOptions): Record<string, unknown> {
@@ -209,6 +210,33 @@ describe('aiUtils.createModel tool choice', () => {
 
         expect(body.tool_choice).toEqual({ type: 'auto' })
     })
+
+    it('bills the dollar cost of every attempt when a managed model answers a required tool in text first', async () => {
+        const reported: ActivepiecesAiCostEvent[] = []
+        activepiecesAiCost.setReporter((event) => reported.push(event))
+        const replies = [
+            { id: 'gen-text', choices: [{ index: 0, message: { role: 'assistant', content: 'The total is 1250.' }, finish_reason: 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15, cost: 0.003 } },
+            { id: 'gen-tool', choices: [{ index: 0, message: { role: 'assistant', content: null, tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'extractData', arguments: '{}' } }] }, finish_reason: 'tool_calls' }], usage: { prompt_tokens: 12, completion_tokens: 6, total_tokens: 18, cost: 0.004 } },
+        ]
+        const original = globalThis.fetch
+        globalThis.fetch = () => Promise.resolve(new Response(JSON.stringify(replies.shift()), { headers: { 'content-type': 'application/json' } }))
+        try {
+            const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'key' }, config: {} }), modelId: 'anthropic/claude-opus-5.5', billing: BILLING, usageOnly: true })
+            await generateText({
+                model,
+                prompt: 'hi',
+                maxRetries: 0,
+                tools: { extractData: tool({ inputSchema: jsonSchema({ type: 'object', properties: {} }) }) },
+                toolChoice: 'required',
+            })
+        }
+        finally {
+            globalThis.fetch = original
+            activepiecesAiCost.setReporter(() => undefined)
+        }
+
+        expect(reported.map((event) => event.call?.observedCostUsd)).toEqual([0.003, 0.004])
+    })
 })
 
 async function sentBody(send: () => Promise<unknown>): Promise<Record<string, unknown>> {
@@ -225,4 +253,11 @@ async function sentBody(send: () => Promise<unknown>): Promise<Record<string, un
         globalThis.fetch = original
     }
     return body
+}
+
+const BILLING: ActivepiecesAiBilling = {
+    source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW,
+    platformId: 'platform-1',
+    projectId: 'project-1',
+    flowRun: { flowId: 'flow-1', flowRunId: 'run-1' },
 }

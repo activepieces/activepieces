@@ -343,6 +343,31 @@ describe('createLanguageModel', () => {
     })
 
     it.each([
+        { type: 'required' as const },
+        { type: 'tool' as const, toolName: 'extractData' },
+    ])('hands the provider tool_choice auto when the caller forces $type', async (toolChoice) => {
+        const seen: unknown[] = []
+        const provider = buildFor(AIProviderName.ANTHROPIC)
+        if (typeof provider === 'string') {
+            throw new Error('expected a model object')
+        }
+        const model = withAutoToolChoice({
+            ...provider,
+            doGenerate: async (params) => {
+                seen.push(params.toolChoice)
+                return { content: [{ type: 'tool-call', toolCallId: 'call_1', toolName: 'extractData', input: '{}' }], finishReason: { unified: 'tool-calls', raw: undefined }, usage: { inputTokens: { total: 1, noCache: 1, cacheRead: undefined, cacheWrite: undefined }, outputTokens: { total: 1, text: 1, reasoning: undefined } }, warnings: [] }
+            },
+        })
+        if (typeof model === 'string') {
+            throw new Error('expected a model object')
+        }
+
+        await model.doGenerate({ ...forcedCall, toolChoice })
+
+        expect(seen).toEqual([{ type: 'auto' }])
+    })
+
+    it.each([
         { provider: AIProviderName.OPENAI, optionsKey: 'openai' },
         { provider: AIProviderName.AZURE, optionsKey: 'azure' },
     ])('replays a saved $provider tool turn in full instead of as a stored item reference', async ({ provider, optionsKey }) => {

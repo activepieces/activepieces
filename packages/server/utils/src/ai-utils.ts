@@ -178,15 +178,15 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, turnAl
     adminChosenImageModelId?: string
 }): LanguageModel {
     assertManagedModelAllowed({ provider: credentials.provider, modelId, image: imageGeneration, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
-    const model = withAutoToolChoice(buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) }))
-    return billedLanguageModel({
+    const model = buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
+    return withAutoToolChoice(billedLanguageModel({
         model,
         provider: credentials.provider,
         providerConfigId,
         modelId,
         billing,
         charge: aiChargeFor({ credentials, turnAlreadyCharged, usageOnly }),
-    })
+    }))
 }
 
 function buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome }: {
