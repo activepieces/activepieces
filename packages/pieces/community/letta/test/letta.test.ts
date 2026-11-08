@@ -221,6 +221,21 @@ describe('new message trigger', () => {
     expect(calls.messagesList).toHaveBeenCalledWith('agent-1', { limit: 100, order: 'desc' });
     expect(idsOf(result)).toEqual(['m3', 'm2']);
   });
+
+  it('emits send_message replies given only through tool_calls, as an array or a single delta', async () => {
+    calls.messagesList.mockResolvedValue([
+      { id: 'm4', message_type: 'tool_call_message', tool_calls: [{ name: 'send_message', arguments: '{}' }], date: '2026-10-29T10:00:04Z' },
+      { id: 'm3', message_type: 'tool_call_message', tool_calls: { name: 'send_message', arguments: '{}' }, date: '2026-10-29T10:00:03Z' },
+      { id: 'm2', message_type: 'tool_call_message', tool_calls: [{ name: 'core_memory_append', arguments: '{}' }], date: '2026-10-29T10:00:02Z' },
+      { id: 'm1', message_type: 'tool_call_message', date: '2026-10-29T10:00:01Z' },
+    ]);
+    const trigger = letta.getTrigger('newMessage');
+    if (!trigger) {
+      throw new Error('missing trigger');
+    }
+    const result = await trigger.test(pollingContext({ propsValue: { agentId: 'agent-1' }, lastPoll: null }));
+    expect(idsOf(result)).toEqual(['m4', 'm3']);
+  });
 });
 
 describe('polling triggers page back to the last seen record', () => {

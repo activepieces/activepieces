@@ -56,7 +56,7 @@ function isAgentReply(message: Message): boolean {
   if (message.message_type === 'assistant_message') {
     return true;
   }
-  if (message.message_type !== 'tool_call_message' || !('tool_call' in message)) {
+  if (message.message_type !== 'tool_call_message') {
     return false;
   }
   const calls = Array.isArray(message.tool_calls)
@@ -64,7 +64,10 @@ function isAgentReply(message: Message): boolean {
     : message.tool_calls
       ? [message.tool_calls]
       : [];
-  return message.tool_call.name === 'send_message' || calls.some((call) => call.name === 'send_message');
+  if (calls.some((call) => call.name === 'send_message')) {
+    return true;
+  }
+  return 'tool_call' in message && message.tool_call?.name === 'send_message';
 }
 
 export const newMessage = createTrigger({
