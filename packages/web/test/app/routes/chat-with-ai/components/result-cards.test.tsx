@@ -45,7 +45,7 @@ describe('ActionReceiptCard', () => {
     expect(screen.getByText('Send email')).toBeTruthy();
   });
 
-  it('shows the failed status in red with the reason', () => {
+  it('shows the failed status in red with the reason open in the body', () => {
     render(
       <ActionReceiptCard
         receipt={{
@@ -58,10 +58,9 @@ describe('ActionReceiptCard', () => {
     );
     const status = screen.getByText('Failed');
     expect(status.className).toContain('text-danger-11');
-    expect(screen.getByText('Gmail · Invalid address')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Show details' }));
-    const reason = screen.getAllByText('Invalid address')[0];
+    expect(screen.getByText('Gmail')).toBeTruthy();
+    expect(screen.getAllByText('Invalid address')).toHaveLength(1);
+    const reason = screen.getByText('Invalid address');
     expect(reason.className).toContain('text-danger-11');
   });
 

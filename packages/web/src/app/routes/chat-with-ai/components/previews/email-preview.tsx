@@ -41,7 +41,7 @@ export function EmailPreview({
     <PreviewCard
       icon={Mail}
       label={subject || label || t('Email')}
-      meta={t('Email draft')}
+      meta={subject && label ? label : t('Email draft')}
       actions={[copyAction, downloadAction]}
       renderExpanded={
         streaming

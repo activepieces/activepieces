@@ -32,15 +32,13 @@ export function ActionReceiptCard({
   const errorMessage = failed ? receipt.errorMessage : undefined;
   const hasOutput = receipt.output != null;
   const title = doneTitle ?? receipt.actionDisplayName;
-  const meta = joinMeta(
-    errorMessage
-      ? [summary?.displayName, errorMessage]
-      : [
-          summary?.displayName,
-          receipt.connectionLabel,
-          formatTimestamp(receipt.timestamp),
-        ],
-  );
+  const meta = errorMessage
+    ? summary?.displayName
+    : joinMeta([
+        summary?.displayName,
+        receipt.connectionLabel,
+        formatTimestamp(receipt.timestamp),
+      ]);
   const tile = <ChatCardTile kind="app" pieceName={pieceName} />;
   const trailing = <ChatStatusText status={status} />;
 
@@ -60,7 +58,7 @@ export function ActionReceiptCard({
   return (
     <ChatCard flat={flat}>
       <ChatCardFold
-        defaultOpen={false}
+        defaultOpen={failed}
         tile={tile}
         title={title}
         meta={meta}

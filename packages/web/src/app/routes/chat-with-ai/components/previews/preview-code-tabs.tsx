@@ -29,9 +29,7 @@ export function PreviewCodeTabs({
 
 export function PreviewWell({ children }: { children: ReactNode }) {
   return (
-    <div className="border-t border-gray-5 bg-gray-2 p-4 @max-chat-narrow/chat:p-3">
-      {children}
-    </div>
+    <div className="bg-gray-2 p-4 @max-chat-narrow/chat:p-3">{children}</div>
   );
 }
 
@@ -46,7 +44,7 @@ export function PreviewCodeBody({
     <CodeBlockCode
       code={code}
       language={language}
-      className="max-h-[360px] border-t border-gray-5 bg-gray-2 @max-chat-narrow/chat:[&_pre]:whitespace-pre-wrap @max-chat-narrow/chat:[&_pre]:break-words"
+      className="max-h-[360px] bg-gray-2 @max-chat-narrow/chat:[&_pre]:whitespace-pre-wrap @max-chat-narrow/chat:[&_pre]:break-words"
     />
   );
 }

@@ -33,7 +33,7 @@ export function McpReconnectCard({
   if (!isInteractive) {
     return (
       <ChatLine
-        icon={<Check className="size-3.5 text-success-10" />}
+        icon={<Check className="size-3.5 text-success-11" />}
         detail={reconnect.displayName}
       >
         {t('Connected')}
