@@ -99,7 +99,7 @@ function useVoiceInput({
 }: {
   onTranscript: (text: string) => void;
   onInterim: (text: string) => void;
-  onError: (message: string) => void;
+  onError: (error: VoiceInputError) => void;
 }) {
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -122,7 +122,7 @@ function useVoiceInput({
 
   const startRecording = useCallback(() => {
     if (!speechRecognitionConstructor) {
-      onError('Voice input is not available in this browser.');
+      onError('unsupported');
       return;
     }
 
@@ -153,17 +153,7 @@ function useVoiceInput({
         recognitionRef.current = null;
         return;
       }
-      const errorMessages: Record<string, string> = {
-        'not-allowed':
-          'Could not access microphone. Check browser permissions.',
-        'service-not-allowed':
-          'Could not access microphone. Check browser permissions.',
-        network: 'Voice input failed due to a network error.',
-        'audio-capture': 'No microphone detected. Check your audio device.',
-      };
-      onError(
-        errorMessages[event.error] ?? 'Voice input encountered an error.',
-      );
+      onError(RECOGNITION_ERRORS[event.error] ?? 'unknown');
       setIsRecording(false);
       recognitionRef.current = null;
     };
@@ -205,4 +195,18 @@ function useVoiceInput({
   };
 }
 
+const RECOGNITION_ERRORS: Record<string, VoiceInputError> = {
+  'not-allowed': 'not-allowed',
+  'service-not-allowed': 'not-allowed',
+  network: 'network',
+  'audio-capture': 'audio-capture',
+};
+
 export { useVoiceInput };
+
+export type VoiceInputError =
+  | 'unsupported'
+  | 'not-allowed'
+  | 'network'
+  | 'audio-capture'
+  | 'unknown';

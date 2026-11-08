@@ -16,15 +16,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { cn } from '@/lib/utils';
 
-const REASON_LABELS: Record<AgentFeedbackReason, string> = {
-  incorrect_or_incomplete: 'Incorrect or incomplete',
-  not_what_i_asked_for: 'Not what I asked for',
-  slow_or_buggy: 'Slow or buggy',
-  style_or_tone: 'Style or tone',
-  safety_or_security: 'Safety or security concern',
-  other: 'Other',
-};
-
 export function FeedbackDialog({
   open,
   onOpenChange,
@@ -89,7 +80,7 @@ export function FeedbackDialog({
                     'border-accent-7 bg-accent-3 text-accent-11 hover:bg-accent-3 hover:text-accent-11',
                 )}
               >
-                {t(REASON_LABELS[reason])}
+                {reasonLabel(reason)}
               </Button>
             );
           })}
@@ -125,4 +116,21 @@ export function FeedbackDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+function reasonLabel(reason: AgentFeedbackReason): string {
+  switch (reason) {
+    case 'incorrect_or_incomplete':
+      return t('Incorrect or incomplete');
+    case 'not_what_i_asked_for':
+      return t('Not what I asked for');
+    case 'slow_or_buggy':
+      return t('Slow or buggy');
+    case 'style_or_tone':
+      return t('Style or tone');
+    case 'safety_or_security':
+      return t('Safety or security concern');
+    case 'other':
+      return t('Other');
+  }
 }

@@ -18,7 +18,10 @@ import {
 } from '@/components/prompt-kit/prompt-input';
 import { Button } from '@/components/ui/button';
 import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
-import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
+import {
+  useVoiceInput,
+  VoiceInputError,
+} from '@/features/chat/lib/use-voice-input';
 import { cn } from '@/lib/utils';
 
 import { ChatFileChip } from './chat-ui/chat-file-chip';
@@ -79,8 +82,8 @@ export function ChatInput({
     setInterimText('');
   }, []);
 
-  const handleVoiceError = useCallback((messageKey: string) => {
-    toast.error(t(messageKey));
+  const handleVoiceError = useCallback((error: VoiceInputError) => {
+    toast.error(voiceErrorMessage(error));
     setInterimText('');
   }, []);
 
@@ -119,10 +122,8 @@ export function ChatInput({
   );
 
   const removeAttachment = useCallback((id: number) => {
-    setAttachments((prev) => {
-      prev.filter((a) => a.id === id).forEach(revokePreview);
-      return prev.filter((a) => a.id !== id);
-    });
+    attachmentsRef.current.filter((a) => a.id === id).forEach(revokePreview);
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
   const handleSubmit = useCallback(() => {
@@ -241,12 +242,13 @@ export function ChatInput({
             <div className="flex items-center gap-1">
               <PromptInputAction tooltip={t('Attach files')}>
                 <FileUploadTrigger asChild>
-                  <div
+                  <button
+                    type="button"
                     aria-label={t('Attach files')}
-                    className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
+                    className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 outline-none transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-gray-8"
                   >
                     <Paperclip className="size-4" />
-                  </div>
+                  </button>
                 </FileUploadTrigger>
               </PromptInputAction>
               {leftActions}
@@ -331,6 +333,21 @@ export function ChatInput({
       </FileUploadContent>
     </FileUpload>
   );
+}
+
+function voiceErrorMessage(error: VoiceInputError): string {
+  switch (error) {
+    case 'unsupported':
+      return t('Voice input is not available in this browser.');
+    case 'not-allowed':
+      return t('Could not access microphone. Check browser permissions.');
+    case 'network':
+      return t('Voice input failed due to a network error.');
+    case 'audio-capture':
+      return t('No microphone detected. Check your audio device.');
+    case 'unknown':
+      return t('Voice input encountered an error.');
+  }
 }
 
 function revokePreview(attachment: ComposerAttachment) {
