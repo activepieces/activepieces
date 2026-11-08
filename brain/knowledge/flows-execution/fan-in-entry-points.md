@@ -123,8 +123,17 @@ run id. The loop *rail* presentation reuses fine; the data path underneath it do
   answers "no" for every batch. A childless `NOT_DISPATCHED` batch then reads as *never started* instead of
   *failed to dispatch* — while the header, which is drawn from the counts and survives truncation, still folds
   it into "failed". Header contradicting the rows is how this shows up. There is no read endpoint for signals,
-  so above the bound the honest answer is the neutral `outcomeUnknown` state the browser now falls back to, not
-  a guess.
+  so above the bound `batchUtils.missingLogsReason` reads the counts instead: with `notDispatched === 0` a
+  childless batch never started, otherwise it is `didNotRun`. Both mean nothing in the batch ran.
+
+- **Only the released summary tells a batch's fate; the paused output has no `signals` and no counts.** A
+  childless batch while the barrier waits is *not started yet*, never *never started*. The released shape is
+  the one with the counts, so their presence is the release check.
+
+- **`stillRunning` counts every `PENDING` signal at release, including unclaimed ones that will never run.**
+  `closeBarrier` builds the summary, marks the barrier `COMPLETED` and deletes the signals, so the dispatcher
+  claims nothing after it. A `PENDING` signal with `runId: null` never started and is safe to retry; only one
+  with a `runId` has a live child. Above 100 batches the two are indistinguishable in the summary.
 
 - **`startTime` is reported from the trigger path only, so any run entered at a step never had one.**
   Surfaced as "every barrier child has `startTime = NULL`" (verified against a live 10-batch run: `created` and

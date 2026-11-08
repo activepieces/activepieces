@@ -3,12 +3,17 @@ import {
   FlowActionType,
   FlowRunStatus,
 } from '@activepieces/shared';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   BatchStepRunOutput,
   batchUtils,
 } from '@/app/builder/run-details/batch-utils';
+
+vi.mock('i18next', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('i18next')>()),
+  t: (key: string) => key,
+}));
 
 const pausedOutput: BatchStepRunOutput = {
   barrierId: 'barrier-id',
@@ -19,9 +24,48 @@ const pausedOutput: BatchStepRunOutput = {
 
 const releasedOutput: BatchStepRunOutput = {
   ...pausedOutput,
+  succeeded: 1,
+  failed: 0,
+  rejected: 0,
+  canceled: 0,
+  notDispatched: 1,
+  stillRunning: 1,
+  timedOut: true,
   signals: [
+    { sequence: 0, outcome: BarrierSignalStatus.SUCCEEDED, runId: 'run-0' },
+    { sequence: 1, outcome: BarrierSignalStatus.PENDING, runId: null },
     { sequence: 2, outcome: BarrierSignalStatus.NOT_DISPATCHED, runId: null },
   ],
+};
+
+const truncatedOutput: BatchStepRunOutput = {
+  barrierId: 'barrier-id',
+  totalItems: 300,
+  batchSize: 2,
+  total: 150,
+  succeeded: 149,
+  failed: 0,
+  rejected: 0,
+  canceled: 0,
+  notDispatched: 0,
+  stillRunning: 1,
+  timedOut: true,
+  signalsTruncated: true,
+};
+
+const emptyItemsOutput: BatchStepRunOutput = {
+  barrierId: null,
+  totalItems: 0,
+  batchSize: 2,
+  total: 0,
+  succeeded: 0,
+  failed: 0,
+  rejected: 0,
+  canceled: 0,
+  notDispatched: 0,
+  stillRunning: 0,
+  timedOut: false,
+  signals: [],
 };
 
 describe('batchUtils.parseStepOutput', () => {
@@ -30,9 +74,16 @@ describe('batchUtils.parseStepOutput', () => {
   });
 
   it('reads the released summary the step writes when it resumes', () => {
-    expect(batchUtils.parseStepOutput(releasedOutput)).toEqual(
-      releasedOutput,
-    );
+    expect(batchUtils.parseStepOutput(releasedOutput)).toEqual(releasedOutput);
+  });
+
+  it('keeps the counts when a signal carries an outcome it does not know', () => {
+    const parsed = batchUtils.parseStepOutput({
+      ...releasedOutput,
+      signals: [{ sequence: 0, outcome: 'SOMETHING_NEW', runId: null }],
+    });
+    expect(parsed?.succeeded).toBe(1);
+    expect(parsed?.signals).toBeUndefined();
   });
 
   it('ignores an output that is not a batch step run', () => {
@@ -42,94 +93,136 @@ describe('batchUtils.parseStepOutput', () => {
 });
 
 describe('batchUtils.batchCount', () => {
-  it('counts the trailing partial batch when the barrier has not reported yet', () => {
-    expect(
-      batchUtils.batchCount({ ...pausedOutput, total: undefined }),
-    ).toBe(3);
+  it('counts the trailing partial batch when the output has no total', () => {
+    expect(batchUtils.batchCount({ ...pausedOutput, total: undefined })).toBe(
+      3,
+    );
   });
 
   it('counts nothing when the items resolved empty', () => {
-    expect(
-      batchUtils.batchCount({
-        ...pausedOutput,
-        total: undefined,
-        totalItems: 0,
-      }),
-    ).toBe(0);
+    expect(batchUtils.batchCount(emptyItemsOutput)).toBe(0);
   });
 
-  it('trusts a released summary over the item arithmetic', () => {
+  it('trusts the reported total over the item arithmetic', () => {
     expect(batchUtils.batchCount({ ...pausedOutput, total: 0 })).toBe(0);
   });
 });
 
-describe('batchUtils.isSkippedOnEmptyItems', () => {
-  it('only calls a batch step skipped when its items resolved empty', () => {
+describe('batchUtils.isSkippedWithoutBatches', () => {
+  it('calls a batch step skipped when its items resolved empty', () => {
     expect(
-      batchUtils.isSkippedOnEmptyItems({
+      batchUtils.isSkippedWithoutBatches({
         stepType: FlowActionType.PROCESS_IN_BATCHES,
-        stepOutput: { ...pausedOutput, totalItems: 0 },
+        stepOutput: emptyItemsOutput,
       }),
     ).toBe(true);
+  });
+
+  it('calls a batch step skipped when its body has no steps', () => {
     expect(
-      batchUtils.isSkippedOnEmptyItems({
+      batchUtils.isSkippedWithoutBatches({
+        stepType: FlowActionType.PROCESS_IN_BATCHES,
+        stepOutput: { ...emptyItemsOutput, totalItems: 5 },
+      }),
+    ).toBe(true);
+  });
+
+  it('does not call a dispatched batch step or another step type skipped', () => {
+    expect(
+      batchUtils.isSkippedWithoutBatches({
         stepType: FlowActionType.PROCESS_IN_BATCHES,
         stepOutput: pausedOutput,
       }),
     ).toBe(false);
     expect(
-      batchUtils.isSkippedOnEmptyItems({
+      batchUtils.isSkippedWithoutBatches({
         stepType: FlowActionType.LOOP_ON_ITEMS,
-        stepOutput: { ...pausedOutput, totalItems: 0 },
+        stepOutput: emptyItemsOutput,
       }),
     ).toBe(false);
   });
 });
 
-describe('batchUtils.childState', () => {
-  it('separates a batch that never started from one that failed to dispatch', () => {
+describe('batchUtils.missingLogsReason', () => {
+  it('calls every batch pending while the barrier still waits', () => {
     expect(
-      batchUtils.childState({
+      batchUtils.missingLogsReason({
+        output: pausedOutput,
+        dispatchIndex: 2,
+        child: null,
+      }),
+    ).toBe('pending');
+    expect(
+      batchUtils.missingLogsReason({
+        output: pausedOutput,
+        dispatchIndex: 0,
+        child: { id: 'a', status: FlowRunStatus.QUEUED, dispatchIndex: 0 },
+      }),
+    ).toBe('pending');
+  });
+
+  it('reads a childless batch from its signal once the barrier released', () => {
+    expect(
+      batchUtils.missingLogsReason({
         output: releasedOutput,
-        batchIndex: 2,
+        dispatchIndex: 2,
         child: null,
       }),
     ).toBe('failedToDispatch');
     expect(
-      batchUtils.childState({
+      batchUtils.missingLogsReason({
         output: releasedOutput,
-        batchIndex: 1,
+        dispatchIndex: 1,
         child: null,
       }),
     ).toBe('neverStarted');
   });
 
-  it('does not claim a batch never started when the summary omitted its signals', () => {
+  it('separates a straggler from a finished run without logs', () => {
     expect(
-      batchUtils.childState({
-        output: { ...pausedOutput, signalsTruncated: true },
-        batchIndex: 2,
-        child: null,
-      }),
-    ).toBe('outcomeUnknown');
-    expect(batchUtils.missingLogsCopy('outcomeUnknown')).not.toBeNull();
-  });
-
-  it('separates a straggler from a run whose logs are gone', () => {
-    expect(
-      batchUtils.childState({
+      batchUtils.missingLogsReason({
         output: releasedOutput,
-        batchIndex: 0,
+        dispatchIndex: 0,
         child: { id: 'a', status: FlowRunStatus.RUNNING, dispatchIndex: 0 },
       }),
     ).toBe('stillRunning');
     expect(
-      batchUtils.childState({
+      batchUtils.missingLogsReason({
         output: releasedOutput,
-        batchIndex: 0,
+        dispatchIndex: 0,
         child: { id: 'a', status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 },
       }),
-    ).toBe('logsExpired');
+    ).toBe('logsUnavailable');
+  });
+
+  it('uses the counts when the summary omitted its signals', () => {
+    expect(
+      batchUtils.missingLogsReason({
+        output: truncatedOutput,
+        dispatchIndex: 149,
+        child: null,
+      }),
+    ).toBe('neverStarted');
+    expect(
+      batchUtils.missingLogsReason({
+        output: { ...truncatedOutput, notDispatched: 1, stillRunning: 0 },
+        dispatchIndex: 149,
+        child: null,
+      }),
+    ).toBe('didNotRun');
+  });
+
+  it('has copy for every reason', () => {
+    for (const reason of [
+      'pending',
+      'neverStarted',
+      'failedToDispatch',
+      'didNotRun',
+      'stillRunning',
+      'logsUnavailable',
+    ] as const) {
+      expect(batchUtils.missingLogsCopy(reason)).not.toBeNull();
+    }
   });
 });
 
@@ -142,55 +235,46 @@ describe('batchUtils.headerState', () => {
     expect(batchUtils.headerState(null)).toEqual({ kind: 'unknown' });
   });
 
-  it('folds every unfavourable outcome into one failed count', () => {
+  it('folds every unfavourable outcome into one unsuccessful count', () => {
     expect(
       batchUtils.headerState({
-        ...pausedOutput,
+        ...releasedOutput,
         total: 10,
+        totalItems: 20,
         succeeded: 5,
         failed: 2,
         rejected: 1,
         canceled: 1,
         notDispatched: 1,
         stillRunning: 0,
+        timedOut: false,
       }),
     ).toEqual({
       kind: 'finished',
       total: 10,
       succeeded: 5,
-      failed: 5,
-      running: 0,
+      unsuccessful: 5,
+      stillRunning: 0,
       timedOut: false,
     });
   });
 
   it('carries the timed-out verdict so a partial release is not shown as a clean finish', () => {
-    expect(
-      batchUtils.headerState({
-        ...pausedOutput,
-        total: 10,
-        succeeded: 5,
-        failed: 0,
-        rejected: 0,
-        canceled: 0,
-        notDispatched: 0,
-        stillRunning: 5,
-        timedOut: true,
-      }),
-    ).toEqual({
+    expect(batchUtils.headerState(releasedOutput)).toEqual({
       kind: 'finished',
-      total: 10,
-      succeeded: 5,
-      failed: 0,
-      running: 5,
+      total: 3,
+      succeeded: 1,
+      unsuccessful: 1,
+      stillRunning: 1,
       timedOut: true,
     });
   });
 });
 
 describe('batchUtils.itemRange', () => {
+  const output = { ...pausedOutput, totalItems: 25, batchSize: 10 };
+
   it('derives the range from the batch size', () => {
-    const output = { ...pausedOutput, totalItems: 25, batchSize: 10 };
     expect(batchUtils.itemRange({ output, dispatchIndex: 0 })).toEqual({
       from: 1,
       to: 10,
@@ -202,68 +286,76 @@ describe('batchUtils.itemRange', () => {
   });
 
   it('clamps the last, partially filled batch to the item count', () => {
+    expect(batchUtils.itemRange({ output, dispatchIndex: 2 })).toEqual({
+      from: 21,
+      to: 25,
+    });
+  });
+
+  it('names a single item instead of a range of one', () => {
     expect(
-      batchUtils.itemRange({
-        output: { ...pausedOutput, totalItems: 25, batchSize: 10 },
-        dispatchIndex: 2,
+      batchUtils.itemRangeLabel({
+        output: { ...output, batchSize: 1 },
+        dispatchIndex: 4,
       }),
-    ).toEqual({ from: 21, to: 25 });
+    ).toBe('item {number}');
+    expect(batchUtils.itemRangeLabel({ output, dispatchIndex: 0 })).toBe(
+      'items {from}–{to}',
+    );
   });
 });
 
 describe('batchUtils.parseJumpTarget', () => {
-  const exact = { total: 100, isTotalExact: true };
-
-  it('treats an empty or non-numeric query as no jump', () => {
-    expect(batchUtils.parseJumpTarget({ query: '  ', ...exact })).toEqual({
+  it('treats an empty query as no jump and a non-number as invalid', () => {
+    expect(batchUtils.parseJumpTarget({ query: '  ', total: 100 })).toEqual({
       kind: 'none',
     });
-    expect(batchUtils.parseJumpTarget({ query: 'abc', ...exact })).toEqual({
+    expect(batchUtils.parseJumpTarget({ query: 'abc', total: 100 })).toEqual({
       kind: 'invalid',
     });
-    expect(batchUtils.parseJumpTarget({ query: '0', ...exact })).toEqual({
+    expect(batchUtils.parseJumpTarget({ query: '0', total: 100 })).toEqual({
       kind: 'invalid',
     });
   });
 
   it('converts a batch number to a zero-based dispatch index', () => {
-    expect(batchUtils.parseJumpTarget({ query: ' 7 ', ...exact })).toEqual({
+    expect(batchUtils.parseJumpTarget({ query: ' 7 ', total: 100 })).toEqual({
       kind: 'index',
       dispatchIndex: 6,
     });
   });
 
-  it('rejects out-of-range only when the total is exact', () => {
-    expect(batchUtils.parseJumpTarget({ query: '101', ...exact })).toEqual({
+  it('rejects a batch number past the last batch', () => {
+    expect(batchUtils.parseJumpTarget({ query: '101', total: 100 })).toEqual({
       kind: 'outOfRange',
       total: 100,
     });
     expect(
       batchUtils.parseJumpTarget({
-        query: '101',
+        query: '99999999999999999999',
         total: 100,
-        isTotalExact: false,
       }),
-    ).toEqual({ kind: 'index', dispatchIndex: 100 });
+    ).toEqual({ kind: 'outOfRange', total: 100 });
   });
 });
 
 describe('batchUtils.batchStatusBadge', () => {
-  it('gives the four childless states their own colours', () => {
+  it('gives each childless state its own colour', () => {
     expect(batchUtils.batchStatusBadge('failedToDispatch').variant).toBe(
       'destructive',
     );
     expect(batchUtils.batchStatusBadge('stillRunning').variant).toBe('info');
-    expect(batchUtils.batchStatusBadge('neverStarted').variant).toBe(
-      'secondary',
-    );
-    expect(batchUtils.batchStatusBadge('logsExpired').variant).toBe('secondary');
-    expect(batchUtils.batchStatusBadge('outcomeUnknown').variant).toBe(
-      'secondary',
-    );
+    for (const state of [
+      'pending',
+      'neverStarted',
+      'didNotRun',
+      'logsUnavailable',
+    ] as const) {
+      expect(batchUtils.batchStatusBadge(state).variant).toBe('secondary');
+    }
   });
 
-  it('reuses the run status vocabulary for batches that have a run', () => {
+  it('keeps the run status colours for batches that have a run', () => {
     expect(batchUtils.batchStatusBadge(FlowRunStatus.SUCCEEDED).variant).toBe(
       'success',
     );
@@ -272,6 +364,15 @@ describe('batchUtils.batchStatusBadge', () => {
     );
     expect(batchUtils.batchStatusBadge(FlowRunStatus.RUNNING).variant).toBe(
       'info',
+    );
+    expect(batchUtils.batchStatusBadge(FlowRunStatus.CANCELED).variant).toBe(
+      'secondary',
+    );
+    expect(batchUtils.batchStatusBadge(FlowRunStatus.QUEUED).variant).toBe(
+      'secondary',
+    );
+    expect(batchUtils.batchStatusBadge(FlowRunStatus.PAUSED).variant).toBe(
+      'warning',
     );
   });
 });
@@ -300,10 +401,16 @@ describe('batchUtils.failureMessage', () => {
     expect(batchUtils.failureMessage(truncated)).toBe('Bad "input"\non line 2');
   });
 
+  it('leaves a plain message that only quotes a JSON body untouched', () => {
+    const plain = 'Request failed: {"message":"Not found","code":404}';
+    expect(batchUtils.failureMessage(plain)).toBe(plain);
+  });
+
   it('passes plain text through and treats a missing message as none', () => {
     expect(batchUtils.failureMessage('Connection refused')).toBe(
       'Connection refused',
     );
     expect(batchUtils.failureMessage(undefined)).toBeNull();
+    expect(batchUtils.failureMessage('')).toBeNull();
   });
 });

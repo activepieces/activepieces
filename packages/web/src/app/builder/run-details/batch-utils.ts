@@ -5,15 +5,25 @@ import {
 } from '@activepieces/core-utils';
 import {
   BarrierSignalStatus,
+  FAILED_STATES,
   FlowActionType,
   FlowRunStatus,
   FlowTriggerType,
   isFlowRunStateTerminal,
+  MAX_INLINE_BARRIER_SIGNALS,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Archive, CircleX, LucideIcon, Minus, Timer } from 'lucide-react';
+import {
+  Archive,
+  CircleX,
+  Clock,
+  LucideIcon,
+  Minus,
+  Timer,
+} from 'lucide-react';
 import { z } from 'zod';
 
+import { StatusVariant } from '@/components/custom/status-icon-with-text';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -26,42 +36,59 @@ function batchCount(output: BatchStepRunOutput): number {
   return output.total ?? Math.ceil(output.totalItems / output.batchSize);
 }
 
-function isSkippedOnEmptyItems({
+function isSkippedWithoutBatches({
   stepType,
   stepOutput,
 }: {
   stepType: FlowActionType | FlowTriggerType | undefined;
   stepOutput: unknown;
 }): boolean {
-  return (
-    stepType === FlowActionType.PROCESS_IN_BATCHES &&
-    parseStepOutput(stepOutput)?.totalItems === 0
-  );
+  if (stepType !== FlowActionType.PROCESS_IN_BATCHES) {
+    return false;
+  }
+  const output = parseStepOutput(stepOutput);
+  return !isNil(output) && isNil(output.barrierId) && batchCount(output) === 0;
 }
 
-function childState({
+function missingLogsReason({
   output,
-  batchIndex,
+  dispatchIndex,
   child,
 }: {
   output: BatchStepRunOutput;
-  batchIndex: number;
+  dispatchIndex: number;
   child: BatchChild | null;
 }): BatchChildState {
+  const counts = BatchSummaryCounts.safeParse(output);
   if (!isNil(child)) {
-    return isFlowRunStateTerminal({
-      status: child.status,
-      ignoreInternalError: false,
-    })
-      ? 'logsExpired'
-      : 'stillRunning';
+    if (
+      isFlowRunStateTerminal({
+        status: child.status,
+        ignoreInternalError: false,
+      })
+    ) {
+      return 'logsUnavailable';
+    }
+    return counts.success ? 'stillRunning' : 'pending';
   }
-  if (output.signalsTruncated) {
-    return 'outcomeUnknown';
+  if (!counts.success) {
+    return 'pending';
   }
-  return failedToDispatchAt({ output, batchIndex })
-    ? 'failedToDispatch'
-    : 'neverStarted';
+  if (output.signalsTruncated || isNil(output.signals)) {
+    return counts.data.notDispatched === 0 ? 'neverStarted' : 'didNotRun';
+  }
+  const signal = output.signals.find(
+    (candidate) => candidate.sequence === dispatchIndex,
+  );
+  switch (signal?.outcome) {
+    case BarrierSignalStatus.NOT_DISPATCHED:
+      return 'failedToDispatch';
+    case undefined:
+    case BarrierSignalStatus.PENDING:
+      return 'neverStarted';
+    default:
+      return 'logsUnavailable';
+  }
 }
 
 function headerState(output: BatchStepRunOutput | null): BatchHeaderState {
@@ -86,8 +113,8 @@ function headerState(output: BatchStepRunOutput | null): BatchHeaderState {
     kind: 'finished',
     total,
     succeeded,
-    failed: failed + rejected + canceled + notDispatched,
-    running: stillRunning,
+    unsuccessful: failed + rejected + canceled + notDispatched,
+    stillRunning,
     timedOut,
   };
 }
@@ -114,6 +141,9 @@ function itemRangeLabel({
   dispatchIndex: number;
 }): string {
   const { from, to } = itemRange({ output, dispatchIndex });
+  if (from === to) {
+    return t('item {number}', { number: formatUtils.formatNumber(from) });
+  }
   return t('items {from}–{to}', {
     from: formatUtils.formatNumber(from),
     to: formatUtils.formatNumber(to),
@@ -123,11 +153,9 @@ function itemRangeLabel({
 function parseJumpTarget({
   query,
   total,
-  isTotalExact,
 }: {
   query: string;
   total: number;
-  isTotalExact: boolean;
 }): BatchJumpTarget {
   const trimmed = query.trim();
   if (trimmed.length === 0) {
@@ -140,7 +168,7 @@ function parseJumpTarget({
   if (batchNumber < 1) {
     return { kind: 'invalid' };
   }
-  if (isTotalExact && batchNumber > total) {
+  if (batchNumber > total) {
     return { kind: 'outOfRange', total };
   }
   return { kind: 'index', dispatchIndex: batchNumber - 1 };
@@ -150,29 +178,26 @@ function batchStatusBadge(
   status: FlowRunStatus | BatchChildState,
 ): BatchStatusBadge {
   switch (status) {
+    case 'pending':
+      return { variant: 'secondary', Icon: Clock, label: t('Pending') };
     case 'failedToDispatch':
       return {
         variant: 'destructive',
         Icon: CircleX,
-        label: t('Failed to dispatch'),
+        label: t('Failed to start'),
       };
     case 'stillRunning':
       return { variant: 'info', Icon: Timer, label: t('Still running') };
     case 'neverStarted':
       return { variant: 'secondary', Icon: Minus, label: t('Never started') };
-    case 'outcomeUnknown':
-      return { variant: 'secondary', Icon: Minus, label: t('Unknown') };
-    case 'logsExpired':
-      return { variant: 'secondary', Icon: Archive, label: t('Logs expired') };
+    case 'didNotRun':
+      return { variant: 'secondary', Icon: Minus, label: t('Did not run') };
+    case 'logsUnavailable':
+      return { variant: 'secondary', Icon: Archive, label: t('No logs') };
     default: {
       const { variant, Icon } = flowRunUtils.getStatusIcon(status);
       return {
-        variant:
-          variant === 'success'
-            ? 'success'
-            : variant === 'error'
-            ? 'destructive'
-            : 'info',
+        variant: RUN_VARIANT_TO_BADGE[variant],
         Icon,
         label:
           flowRunUtils.getStatusLabelOverride(status) ??
@@ -183,14 +208,14 @@ function batchStatusBadge(
 }
 
 function failureMessage(message: string | undefined): string | null {
-  if (isNil(message)) {
+  if (isNil(message) || message.length === 0) {
     return null;
   }
   const parsed = tryParseFriendlyPieceError(message);
   if (!isNil(parsed)) {
     return parsed.message;
   }
-  const recovered = /"message"\s*:\s*("(?:[^"\\]|\\.)*")/.exec(message);
+  const recovered = TRUNCATED_FRIENDLY_ERROR.exec(message);
   if (isNil(recovered)) {
     return message;
   }
@@ -203,39 +228,43 @@ function missingLogsCopy(
   kind: BatchChildState | 'notInABatch' | 'loading' | 'steps',
 ): { title: string; description: string } | null {
   switch (kind) {
+    case 'pending':
+      return {
+        title: t('This batch has not finished yet'),
+        description: t('Its logs appear here when it finishes.'),
+      };
     case 'neverStarted':
       return {
         title: t('This batch never started'),
         description: t(
-          'It was never picked up by a worker, so it has no logs of its own.',
+          'The step stopped waiting before this batch was sent to run, so nothing in it ran.',
         ),
       };
     case 'failedToDispatch':
       return {
-        title: t('This batch failed to dispatch'),
+        title: t('This batch failed to start'),
+        description: t('It could not be sent to run, so nothing in it ran.'),
+      };
+    case 'didNotRun':
+      return {
+        title: t('This batch did not run'),
         description: t(
-          'It was never handed to a worker, so it has no logs of its own.',
+          'This step ran more than {limit} batches, so the summary does not say whether this batch failed to start or never started. Either way, nothing in it ran.',
+          { limit: formatUtils.formatNumber(MAX_INLINE_BARRIER_SIGNALS) },
         ),
       };
     case 'stillRunning':
       return {
         title: t('This batch is still running'),
         description: t(
-          'The parent finished without it, and its writes may still land.',
+          'The step stopped waiting for it, so its changes can still happen after the flow moved on.',
         ),
       };
-    case 'outcomeUnknown':
+    case 'logsUnavailable':
       return {
         title: t('This batch has no logs'),
         description: t(
-          'This step ran more than 100 batches, so the summary does not record what happened to each one.',
-        ),
-      };
-    case 'logsExpired':
-      return {
-        title: t('Logs no longer available'),
-        description: t(
-          'This batch ran, but its logs are past the retention window. The summary on the step above is what remains.',
+          'It finished, but its logs are not available. They may be past the retention window, or the batch stopped before it wrote any.',
         ),
       };
     default:
@@ -243,19 +272,19 @@ function missingLogsCopy(
   }
 }
 
-function failedToDispatchAt({
-  output,
-  batchIndex,
-}: {
-  output: BatchStepRunOutput;
-  batchIndex: number;
-}): boolean {
-  return (output.signals ?? []).some(
-    (signal) =>
-      signal.sequence === batchIndex &&
-      signal.outcome === BarrierSignalStatus.NOT_DISPATCHED,
-  );
-}
+const TRUNCATED_FRIENDLY_ERROR =
+  /^\{\s*"__apErrorVersion"\s*:\s*\d+\s*,\s*"message"\s*:\s*("(?:[^"\\]|\\.)*")/;
+
+const RUN_VARIANT_TO_BADGE: Record<StatusVariant, BatchStatusBadge['variant']> =
+  {
+    success: 'success',
+    error: 'destructive',
+    warning: 'warning',
+    primary: 'info',
+    default: 'info',
+    neutral: 'secondary',
+    secondary: 'secondary',
+  };
 
 const BatchSummaryCounts = z.object({
   succeeded: z.number().int().nonnegative(),
@@ -282,20 +311,21 @@ const BatchStepRunOutput = z.object({
   signals: z
     .array(
       z.object({
-        sequence: z.number().int().nonnegative().nullable(),
+        sequence: z.number().int().nullable(),
         outcome: z.enum(BarrierSignalStatus),
         runId: z.string().nullable(),
       }),
     )
-    .optional(),
+    .optional()
+    .catch(undefined),
   signalsTruncated: z.boolean().optional(),
 });
 
 export const batchUtils = {
   parseStepOutput,
   batchCount,
-  isSkippedOnEmptyItems,
-  childState,
+  isSkippedWithoutBatches,
+  missingLogsReason,
   headerState,
   itemRange,
   itemRangeLabel,
@@ -308,11 +338,7 @@ export const batchUtils = {
 export const BATCH_PAGE_SIZE = 50;
 
 export const FAILED_BATCH_STATUSES = [
-  FlowRunStatus.FAILED,
-  FlowRunStatus.INTERNAL_ERROR,
-  FlowRunStatus.TIMEOUT,
-  FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
-  FlowRunStatus.QUOTA_EXCEEDED,
+  ...FAILED_STATES,
   FlowRunStatus.LOG_SIZE_EXCEEDED,
 ];
 
@@ -325,11 +351,12 @@ export type BatchChild = {
 };
 
 export type BatchChildState =
+  | 'pending'
   | 'neverStarted'
   | 'failedToDispatch'
-  | 'outcomeUnknown'
+  | 'didNotRun'
   | 'stillRunning'
-  | 'logsExpired';
+  | 'logsUnavailable';
 
 export type BatchHeaderState =
   | { kind: 'unknown' }
@@ -338,8 +365,8 @@ export type BatchHeaderState =
       kind: 'finished';
       total: number;
       succeeded: number;
-      failed: number;
-      running: number;
+      unsuccessful: number;
+      stillRunning: number;
       timedOut: boolean;
     };
 
@@ -350,7 +377,7 @@ export type BatchJumpTarget =
   | { kind: 'index'; dispatchIndex: number };
 
 export type BatchStatusBadge = {
-  variant: 'success' | 'destructive' | 'info' | 'secondary';
+  variant: 'success' | 'destructive' | 'info' | 'secondary' | 'warning';
   Icon: LucideIcon;
   label: string;
 };
