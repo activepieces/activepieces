@@ -271,6 +271,26 @@ function isFileLike(value: unknown): value is FileLike {
   return value !== null && typeof value === 'object' && Buffer.isBuffer(Reflect.get(value, 'data'));
 }
 
+export { LetmepostApiError };
+
+export const letmepostClient = {
+  request,
+  send,
+  checkBaseUrl,
+  displayBaseUrl,
+  segment,
+  uuidOf,
+  optionalUuid,
+  isRecord,
+  optionalText,
+  isFailedBatch,
+  batchFailureError,
+  withPostIds,
+  isFileLike,
+  verifiedTls,
+  DEFAULT_BASE_URL,
+};
+
 type QueryValue = string | number | boolean | string[] | undefined | null;
 
 type FileLike = { filename?: unknown; data: Buffer; extension?: unknown };
@@ -290,24 +310,4 @@ type SendParams = {
 
 type RequestParams = Omit<SendParams, 'baseUrl' | 'apiKey'> & {
   auth: LetmepostAuth;
-};
-
-export { LetmepostApiError };
-
-export const letmepostClient = {
-  request,
-  send,
-  checkBaseUrl,
-  displayBaseUrl,
-  segment,
-  uuidOf,
-  optionalUuid,
-  isRecord,
-  optionalText,
-  isFailedBatch,
-  batchFailureError,
-  withPostIds,
-  isFileLike,
-  verifiedTls,
-  DEFAULT_BASE_URL,
 };

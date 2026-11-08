@@ -1,10 +1,11 @@
 import {
   createTrigger,
+  DEDUPE_KEY_PROPERTY,
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { letmepostAuth } from '../common/auth';
 import { LetmepostApiError, letmepostClient } from '../common/client';
 import { postEventOutputSchema } from '../common/output-schemas';
@@ -41,19 +42,24 @@ function parseBody(body: unknown): Record<string, unknown> | undefined {
   }
 }
 
+function seenSlotKey(eventId: string): string {
+  const slot = createHash('sha256').update(eventId, 'utf8').digest().readUInt32BE(0) % SEEN_EVENT_SLOTS;
+  return `${SEEN_EVENT_KEY_PREFIX}${slot}`;
+}
+
 async function alreadySeen({ store, eventId }: { store: EventStore; eventId: string }): Promise<boolean> {
-  const seen = (await store.get<string[]>(SEEN_EVENTS_STORE_KEY)) ?? [];
-  if (seen.includes(eventId)) {
+  const key = seenSlotKey(eventId);
+  if ((await store.get<string>(key)) === eventId) {
     return true;
   }
-  await store.put(SEEN_EVENTS_STORE_KEY, [...seen, eventId].slice(-MAX_SEEN_EVENTS));
+  await store.put(key, eventId);
   return false;
 }
 
 const ENDPOINT_STORE_KEY = 'letmepost_webhook_endpoint_id';
 const SECRET_STORE_KEY = 'letmepost_webhook_signing_secret';
-const SEEN_EVENTS_STORE_KEY = 'letmepost_webhook_seen_event_ids';
-const MAX_SEEN_EVENTS = 500;
+const SEEN_EVENT_KEY_PREFIX = 'letmepost_webhook_seen_event_';
+const SEEN_EVENT_SLOTS = 500;
 
 export const postEvent = createTrigger({
   auth: letmepostAuth,
@@ -205,10 +211,13 @@ export const postEvent = createTrigger({
       }
     }
     const eventId = headerOf({ headers, name: 'x-letmepost-event-id' }) ?? letmepostClient.optionalText(event['id']);
-    if (eventId !== undefined && (await alreadySeen({ store: context.store, eventId }))) {
+    if (eventId === undefined) {
+      return [event];
+    }
+    if (await alreadySeen({ store: context.store, eventId })) {
       return [];
     }
-    return [event];
+    return [{ ...event, [DEDUPE_KEY_PROPERTY]: eventId }];
   },
 });
 

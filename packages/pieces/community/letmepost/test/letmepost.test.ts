@@ -458,7 +458,7 @@ describe('post_event trigger', () => {
 
   it('accepts a valid signature and parses a string body', async () => {
     const { store } = await enabled();
-    expect(await run({ store, payload: delivery({}) })).toEqual([event]);
+    expect(await run({ store, payload: delivery({}) })).toEqual([{ ...event, _dedupe_key: 'evt_1' }]);
   });
 
   it('rejects a wrong signature, a wrong-length signature and a non-hex signature', async () => {
@@ -480,16 +480,49 @@ describe('post_event trigger', () => {
   it('does not mark filtered-out events as seen', async () => {
     const { store, data } = await enabled();
     expect(await run({ store, payload: delivery({}), events: ['post.failed'] })).toEqual([]);
-    expect(data.get('letmepost_webhook_seen_event_ids')).toBeUndefined();
+    expect([...data.keys()].some((key) => key.startsWith('letmepost_webhook_seen_event_'))).toBe(false);
   });
 
-  it('keeps the seen-id list bounded', async () => {
+  it('keeps the seen-id markers bounded', async () => {
     const { store, data } = await enabled();
-    for (let i = 0; i < 505; i++) {
+    for (let i = 0; i < 2000; i++) {
       await run({ store, payload: delivery({ eventId: `e${i}` }) });
     }
-    const seen = data.get('letmepost_webhook_seen_event_ids');
-    expect(Array.isArray(seen) ? seen.length : -1).toBe(500);
+    const markers = [...data.keys()].filter((key) => key.startsWith('letmepost_webhook_seen_event_'));
+    expect(markers.length).toBeLessThanOrEqual(500);
+    expect(markers.length).toBeGreaterThan(400);
+  });
+
+  it('does not lose either marker when two different events are processed concurrently', async () => {
+    const { store } = await enabled();
+    const pending: (() => void)[] = [];
+    const gatedStore = {
+      ...store,
+      get: async (key: string): Promise<unknown> => {
+        const value = await store.get(key);
+        if (key.startsWith('letmepost_webhook_seen_event_')) {
+          await new Promise<void>((resolve) => pending.push(resolve));
+        }
+        return value;
+      },
+    };
+    const both = Promise.all([
+      run({ store: gatedStore, payload: delivery({ eventId: 'evt_a' }) }),
+      run({ store: gatedStore, payload: delivery({ eventId: 'evt_b' }) }),
+    ]);
+    while (pending.length < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    pending.splice(0).forEach((release) => release());
+    expect((await both).map((items) => items.length)).toEqual([1, 1]);
+    expect(await run({ store, payload: delivery({ eventId: 'evt_a' }) })).toEqual([]);
+    expect(await run({ store, payload: delivery({ eventId: 'evt_b' }) })).toEqual([]);
+  });
+
+  it('tags each emitted event with its id so the platform drops overlapping deliveries atomically', async () => {
+    const { store } = await enabled();
+    const [first] = await run({ store, payload: delivery({ eventId: 'evt_9' }) });
+    expect(first).toMatchObject({ _dedupe_key: 'evt_9' });
   });
 
   it('onDisable tolerates an endpoint already deleted (404) but not other failures', async () => {
