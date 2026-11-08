@@ -24,6 +24,20 @@ A code step with `useDeno: true` runs as a one-shot `deno run` child of the engi
 
 **Inputs** — step inputs are written to `${os.tmpdir()}/ap-deno-data-*/data.json` and passed as `Deno.args[0]`, never inlined into the program. In an isolate box that temp dir is `/box`, which the box owns, so the file needs no extra mount.
 
+## What the reusable flag changes
+
+`AP_REUSE_SANDBOX` decides whether one engine process serves many jobs or each job gets a fresh one. Unset, `canReuseSandbox` in `sandbox-manager.ts` says yes in development and in the two forked modes, no in the two isolate modes. The flag changes three things for deno steps.
+
+| | reusable | not reusable |
+| --- | --- | --- |
+| Engine lifetime | kept across jobs while it stays ready | shut down after every `release` |
+| Code mount (isolate modes) | the whole `/root/codes` tree, read-only, spanning every flow version on the host | `/root/codes/<flowVersionId>` only |
+| `.deno-cache` mount | none, so `AP_DENO_CACHE_MOUNTED` is unset and every deno run is cold in an isolate | `:rw` mount of `<codes>/<fv>/.deno-cache` plus `AP_DENO_CACHE_MOUNTED=true` |
+
+In the forked modes the flag only affects engine lifetime: the warm cache is reached by host path either way. In the isolate modes a reusable engine cannot get the cache mount because its code mount is not scoped to one flow version, and a writable cache under a tree shared by every flow would let one flow's step poison another's. Running an isolate mode with `AP_REUSE_SANDBOX=true` therefore trades the per-job engine boot for a cold deno run on every step.
+
+Not reusable does not mean a new identity each time. Box ids come from a fixed pool of `AP_WORKER_CONCURRENCY` slots and box `N` always runs as UID `60000 + N`, so the same few UIDs revisit the shared cache. That is why the cache can stay warm with `AP_REUSE_SANDBOX=false`, which is what production runs.
+
 ## Gotchas
 
 - `SANDBOX_CODE_ONLY` and `SANDBOX_CODE_AND_PROCESS` run deno steps with no `env` permission, so `AP_SANDBOX_PROPAGATED_ENV_VARS` is silently ignored there; `buildPropagatedEnv` returns an empty object before reading the list.
