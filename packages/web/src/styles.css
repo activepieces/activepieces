@@ -1115,17 +1115,19 @@
   100% { background-position: 0% 50%; }
 }
 
-.chat-turn-ring {
-  border: 1.5px solid transparent;
-  background:
-    linear-gradient(var(--panel), var(--panel)) padding-box,
-    linear-gradient(
-        135deg,
-        var(--accent-9) 0%,
-        var(--accent-8) 55%,
-        var(--accent-5) 100%
-      )
-      border-box;
+@layer components {
+  .chat-turn-ring {
+    border: 1.5px solid transparent;
+    background:
+      linear-gradient(var(--panel), var(--panel)) padding-box,
+      linear-gradient(
+          135deg,
+          var(--accent-9) 0%,
+          var(--accent-8) 55%,
+          var(--accent-5) 100%
+        )
+        border-box;
+  }
 }
 
 /* Particle dots with percentage-based animation */

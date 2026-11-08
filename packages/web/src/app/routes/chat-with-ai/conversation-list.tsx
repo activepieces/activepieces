@@ -225,59 +225,53 @@ export function ConversationList({
             const indicator = getIndicator(conv);
             const isSelected = selectedId === conv.id;
             return (
-              <button
-                type="button"
-                key={conv.id}
-                aria-current={isSelected ? 'page' : undefined}
-                className={cn(
-                  'group relative flex w-full cursor-pointer items-center rounded-md border-none bg-transparent px-2 py-1.5 text-left text-sm text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12',
-                  mobile && 'px-3 py-2.5',
-                  indicator !== null && 'text-gray-12',
-                  indicator === 'unread' && 'font-medium',
-                  isSelected && 'bg-gray-3 text-gray-12',
-                )}
-                onClick={() => handleClick(conv)}
-              >
-                <span
+              <div key={conv.id} className="group relative">
+                <button
+                  type="button"
+                  aria-current={isSelected ? 'page' : undefined}
                   className={cn(
-                    'flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-6',
-                    mobile && 'pr-16',
+                    'flex w-full cursor-pointer items-center rounded-md border-none bg-transparent px-2 py-1.5 text-left text-sm text-gray-11 transition-colors group-hover:bg-gray-3 group-hover:text-gray-12',
+                    mobile && 'px-3 py-2.5',
+                    indicator !== null && 'text-gray-12',
+                    indicator === 'unread' && 'font-medium',
+                    isSelected && 'bg-gray-3 text-gray-12',
                   )}
+                  onClick={() => handleClick(conv)}
                 >
-                  {conv.title
-                    ? chatUtils.sanitizeTitle(conv.title)
-                    : t('New conversation')}
-                </span>
-                {indicator && (
                   <span
                     className={cn(
-                      'absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0',
-                      mobile && 'right-10 group-hover:opacity-100',
+                      'flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-6',
+                      mobile && 'pr-16',
                     )}
                   >
-                    <ConversationStatusDot state={indicator} />
+                    {conv.title
+                      ? chatUtils.sanitizeTitle(conv.title)
+                      : t('New conversation')}
                   </span>
-                )}
+                  {indicator && (
+                    <span
+                      className={cn(
+                        'absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0',
+                        mobile && 'right-10 group-hover:opacity-100',
+                      )}
+                    >
+                      <ConversationStatusDot state={indicator} />
+                    </span>
+                  )}
+                </button>
                 <DelayedTooltip>
                   <TooltipTrigger asChild>
-                    <span
-                      role="button"
-                      tabIndex={0}
+                    <button
+                      type="button"
                       aria-label={t('Delete')}
                       className={cn(
-                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-all',
+                        'absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer rounded-md p-1 text-gray-11 opacity-0 outline-none transition-all hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-gray-8 group-hover:opacity-100',
                         mobile && 'opacity-100 p-1.5',
                       )}
                       onClick={(e) => handleDelete(e, conv.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.stopPropagation();
-                          deleteConv(conv.id);
-                        }
-                      }}
                     >
                       <Trash2 size={12} />
-                    </span>
+                    </button>
                   </TooltipTrigger>
                   <TooltipContent
                     side="right"
@@ -287,7 +281,7 @@ export function ConversationList({
                     {t('Delete')}
                   </TooltipContent>
                 </DelayedTooltip>
-              </button>
+              </div>
             );
           })}
       </div>
