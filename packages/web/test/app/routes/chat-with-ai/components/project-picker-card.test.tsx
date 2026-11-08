@@ -37,7 +37,7 @@ describe('ProjectPickerCard (characterization)', () => {
   it('resolves with the project id and name when a suggestion is picked', () => {
     const { onResolve } = renderPicker();
 
-    fireEvent.click(screen.getByRole('radio', { name: /Sales/ }));
+    fireEvent.click(screen.getByRole('option', { name: /Sales/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(onResolve).toHaveBeenCalledTimes(1);
@@ -85,11 +85,11 @@ describe('ProjectPickerCard (characterization)', () => {
 
   it('lists the current project first, preselected and labelled', () => {
     const { onResolve } = renderPicker();
-    const radios = screen.getAllByRole('radio');
+    const radios = screen.getAllByRole('option');
 
     expect(radios[0].textContent).toContain('HR');
     expect(radios[0].textContent).toContain('Current project');
-    expect(radios[0].getAttribute('aria-checked')).toBe('true');
+    expect(radios[0].getAttribute('aria-selected')).toBe('true');
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(onResolve).toHaveBeenCalledWith({
       projectId: 'p-hr',
@@ -100,7 +100,7 @@ describe('ProjectPickerCard (characterization)', () => {
   it('shows all projects in one list without a Show all step', () => {
     renderPicker();
 
-    expect(screen.getAllByRole('radio')).toHaveLength(4);
+    expect(screen.getAllByRole('option')).toHaveLength(4);
     expect(screen.queryByText(/Show all/)).toBeNull();
   });
 

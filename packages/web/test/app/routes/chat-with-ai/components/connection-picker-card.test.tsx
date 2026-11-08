@@ -91,7 +91,7 @@ describe('ConnectionPickerCard (characterization)', () => {
   it('does not let an expired account be picked and keeps Reconnect outside the option', async () => {
     renderPicker({ picker: PICKER });
 
-    const expired = await screen.findByRole('radio', { name: /Old Slack/ });
+    const expired = await screen.findByRole('option', { name: /Old Slack/ });
     expect(expired.hasAttribute('disabled')).toBe(true);
     expect(screen.getByText('Expired')).toBeTruthy();
     const reconnect = screen.getByRole('button', { name: 'Reconnect' });
@@ -101,7 +101,7 @@ describe('ConnectionPickerCard (characterization)', () => {
   it('resolves with the account the user picks', async () => {
     const { onResolve } = renderPicker({ picker: PICKER });
 
-    fireEvent.click(await screen.findByRole('radio', { name: /Home Slack/ }));
+    fireEvent.click(await screen.findByRole('option', { name: /Home Slack/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(onResolve).toHaveBeenCalledWith({
