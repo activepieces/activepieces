@@ -43,25 +43,16 @@ export function ChatEmptyState({
   hasInput,
   onboarding,
   onSend,
+  onFill,
 }: {
   incognito: boolean;
   hasInput: boolean;
   onboarding: boolean;
   onSend: (text: string) => void;
+  onFill: (text: string) => void;
 }) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const fill = (text: string) => {
-    const box = rootRef.current?.closest('[data-chat-box]');
-    const textarea = box?.querySelector('textarea');
-    if (!textarea) {
-      onSend(text);
-      return;
-    }
-    fillComposer({ textarea, text });
-  };
-
   return (
-    <div ref={rootRef} className="@container h-full">
+    <div className="@container h-full">
       <div className="hidden h-full @chat-md:block">
         {onboarding ? (
           <OnboardingWelcome />
@@ -69,12 +60,12 @@ export function ChatEmptyState({
           <WideEmptyState
             incognito={incognito}
             hasInput={hasInput}
-            onPickCard={fill}
+            onPickCard={onFill}
           />
         )}
       </div>
       <div className="h-full @chat-md:hidden">
-        <NarrowEmptyState onSend={onSend} onFill={fill} />
+        <NarrowEmptyState onSend={onSend} onFill={onFill} />
       </div>
     </div>
   );
@@ -575,23 +566,6 @@ function CardCarousel({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
-}
-
-function fillComposer({
-  textarea,
-  text,
-}: {
-  textarea: HTMLTextAreaElement;
-  text: string;
-}) {
-  const setValue = Object.getOwnPropertyDescriptor(
-    HTMLTextAreaElement.prototype,
-    'value',
-  )?.set;
-  setValue?.call(textarea, text);
-  textarea.dispatchEvent(new Event('input', { bubbles: true }));
-  textarea.focus();
-  textarea.setSelectionRange(text.length, text.length);
 }
 
 function findScrollableAncestor(el: HTMLElement): HTMLElement | null {

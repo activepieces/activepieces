@@ -28,12 +28,14 @@ import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
 import { cn } from '@/lib/utils';
 
+import { composerStore } from '../lib/composer-store';
 import { composerUtils } from '../lib/composer-utils';
 
 export function ChatInput({
   isStreaming,
   replying = isStreaming,
   replyStopped = false,
+  holdQueued = false,
   onSend,
   onStop,
   onInputChange,
@@ -50,6 +52,7 @@ export function ChatInput({
   isStreaming: boolean;
   replying?: boolean;
   replyStopped?: boolean;
+  holdQueued?: boolean;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
   onInputChange?: (hasInput: boolean) => void;
@@ -189,12 +192,36 @@ export function ChatInput({
     const item = queuedRef.current;
     if (!ended || isNil(item)) return;
     setQueued(null);
-    if (replyStopped) {
+    if (replyStopped || holdQueued) {
       restoreToComposer(item);
       return;
     }
     onSend(item.text, item.files.length > 0 ? item.files : undefined);
-  }, [replying, replyStopped, onSend, restoreToComposer]);
+  }, [replying, replyStopped, holdQueued, onSend, restoreToComposer]);
+
+  const pendingFill = composerStore.usePendingFill(draftKey);
+  useEffect(() => {
+    if (isNil(pendingFill) || isNil(draftKey)) return;
+    const item = composerStore.take(draftKey);
+    if (isNil(item)) return;
+    const text =
+      item.mode === 'restore'
+        ? composerUtils.joinQueued({
+            queued: item.text,
+            next: valueRef.current,
+          })
+        : item.text;
+    replaceValue(text);
+    setFlaggedText(null);
+    if (item.files.length > 0) {
+      setAttachedFiles((prev) => [...item.files, ...prev]);
+    }
+    requestAnimationFrame(() => {
+      const textarea = frameRef.current?.querySelector('textarea');
+      textarea?.focus();
+      textarea?.setSelectionRange(text.length, text.length);
+    });
+  }, [pendingFill, draftKey, replaceValue]);
 
   const handleTranscript = useCallback((text: string) => {
     setValue((prev) => {

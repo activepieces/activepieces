@@ -1,4 +1,5 @@
-import { tryCatch } from '@activepieces/core-utils';
+import { isNil, tryCatch } from '@activepieces/core-utils';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Eye, EyeOff, Loader2, Lock } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
@@ -10,10 +11,13 @@ import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import { chatDemo } from '@/features/chat/lib/demo/chat-demo';
 import { demoCapabilities } from '@/features/chat/lib/demo/demo-capability-scenarios';
 import { piecesHooks } from '@/features/pieces';
+import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
+import { aiProviderKeys } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { cn } from '@/lib/utils';
 
 import { normalizePieceName } from '../lib/message-parsers';
 import {
+  SaveFailure,
   SecretField,
   SecretRef,
   SecretRequest,
@@ -38,7 +42,9 @@ export function SecretRequestCard({
   const dismissGate = useChatStoreContext((s) => s.dismissGate);
   const navigate = useNavigate();
   const [values, setValues] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState<'idle' | 'saving' | 'failed'>('idle');
+  const [status, setStatus] = useState<SaveStatus>('idle');
+  const [failure, setFailure] = useState<SaveFailure | null>(null);
+  const [confirmReplace, setConfirmReplace] = useState(false);
   const pieceName =
     request?.target === 'connection' && request.piece
       ? normalizePieceName(request.piece)
@@ -48,17 +54,31 @@ export function SecretRequestCard({
     enabled: pieceName !== '',
   });
 
+  const isDemo = chatDemo.isDemoId(toolCallId);
+  const { data: providerConfigs } = useQuery({
+    queryKey: aiProviderKeys.configs,
+    queryFn: () => aiProviderApi.listConfigs(),
+    enabled: request?.target === 'ai_provider' && !isDemo,
+    retry: false,
+  });
+
   useEffect(() => () => setValues({}), []);
 
   if (!request) return null;
 
-  const isDemo = chatDemo.isDemoId(toolCallId);
+  const existingKey = secretRequestUtils.existingProviderKey({
+    request,
+    configs: providerConfigs,
+  });
   const inline =
     secretRequestUtils.canSaveInline(request) &&
     (request.target !== 'connection' ||
       isDemo ||
       pieceLoading ||
-      secretRequestUtils.connectionAuth(pieceModel) !== null);
+      secretRequestUtils.connectionAuth({
+        piece: pieceModel,
+        fields: request.fields,
+      }) !== null);
   const filled = request.fields.every(
     (field) => (values[field.name] ?? '').trim().length > 0,
   );
@@ -79,13 +99,23 @@ export function SecretRequestCard({
 
   const handleSave = async () => {
     if (!canSave) return;
+    if (!isNil(existingKey) && !confirmReplace) {
+      setConfirmReplace(true);
+      return;
+    }
     setStatus('saving');
     const { data: ref, error } = await tryCatch<SecretRef>(() =>
       isDemo
         ? demoCapabilities.saveSecret({ request, values })
-        : secretRequestUtils.save({ request, values, piece: pieceModel }),
+        : secretRequestUtils.save({
+            request,
+            values,
+            piece: pieceModel,
+            replace: existingKey,
+          }),
     );
     if (error || !ref) {
+      setFailure(secretRequestUtils.failureOf(error));
       setStatus('failed');
       return;
     }
@@ -141,6 +171,7 @@ export function SecretRequestCard({
               invalid={status === 'failed'}
               onChange={(value) => {
                 setValues((prev) => ({ ...prev, [field.name]: value }));
+                setConfirmReplace(false);
                 if (status === 'failed') setStatus('idle');
               }}
               onEnter={() => {
@@ -150,7 +181,14 @@ export function SecretRequestCard({
           ))}
           {status === 'failed' && (
             <p role="alert" className="text-sm text-danger-11">
-              {t("That key didn't work. Check it and try again.")}
+              {failure === 'forbidden'
+                ? t("You don't have permission to save this key.")
+                : t("That key didn't work. Check it and try again.")}
+            </p>
+          )}
+          {confirmReplace && status !== 'failed' && (
+            <p role="alert" className="text-sm text-warning-11">
+              {t('Replace the existing {name} key?', { name: request.name })}
             </p>
           )}
         </div>
@@ -175,7 +213,11 @@ export function SecretRequestCard({
             ) : (
               <Check className="size-3.5" aria-hidden />
             )}
-            {status === 'saving' ? t('Saving…') : t('Save')}
+            {status === 'saving'
+              ? t('Saving…')
+              : confirmReplace
+              ? t('Replace key')
+              : t('Save')}
           </Button>
         ) : (
           <Button
@@ -190,10 +232,10 @@ export function SecretRequestCard({
           size="sm"
           variant="outline"
           type="button"
-          onClick={notNow}
+          onClick={confirmReplace ? () => setConfirmReplace(false) : notNow}
           disabled={status === 'saving'}
         >
-          {t('Not now')}
+          {confirmReplace ? t('Cancel') : t('Not now')}
         </Button>
       </div>
     </InteractiveCardShell>
@@ -288,3 +330,5 @@ function SecretInput({
     </div>
   );
 }
+
+type SaveStatus = 'idle' | 'saving' | 'failed';

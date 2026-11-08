@@ -151,11 +151,11 @@ export function ChatBottomBar({
         questions={activeQuestions}
         onSubmit={(text) => {
           if (lastMessageId) dismissForm(lastMessageId);
-          void onSend(text);
+          onSend(text);
         }}
         onDismiss={() => {
           if (lastMessageId) dismissForm(lastMessageId);
-          void onSend(t('Skip these questions'));
+          onSend(t('Skip these questions'));
         }}
       />
     );
@@ -201,6 +201,7 @@ export function ChatBottomBar({
         isStreaming={activeCard ? false : isStreaming}
         replying={isStreaming}
         replyStopped={replyStopped}
+        holdQueued={activeCard !== null}
         onSend={handleSend}
         onStop={onStop}
         onInputChange={onInputChange}
