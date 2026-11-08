@@ -34,6 +34,7 @@ function onChunks(chunks: readonly unknown[], ctx: RunContext): void {
       const toolName = typeof chunk.toolName === 'string' ? chunk.toolName : '';
       if (!resourceRegistry.isKnownTool(toolName)) continue;
       calls.set(chunk.toolCallId, {
+        toolCallId: chunk.toolCallId,
         toolName,
         input: chunk.input,
         runId: ctx.runId,
@@ -71,7 +72,9 @@ function onToolOutput({
     outcome: resolved.outcome,
     highlights: resolved.highlights,
     toolName: call.toolName,
+    toolCallId: call.toolCallId,
     input: call.input,
+    output,
     conversationId: ctx.conversationId,
     runId: ctx.runId,
     navigable: mayNavigate(ctx),
@@ -271,7 +274,7 @@ export const followAlong = {
 };
 
 const DONE_VISIBLE_MS = 2600;
-const FLASH_MS = 1200;
+const FLASH_MS = 2400;
 
 export type RunContext = {
   conversationId: string;
@@ -285,13 +288,20 @@ export type FollowChange = {
   outcome: ResourceOutcome;
   highlights: string[];
   toolName: string;
+  toolCallId: string;
   input: unknown;
+  output: unknown;
   conversationId: string;
   runId: string;
   navigable: boolean;
 };
 
-type PendingCall = { toolName: string; input: unknown; runId: string };
+type PendingCall = {
+  toolCallId: string;
+  toolName: string;
+  input: unknown;
+  runId: string;
+};
 
 type FollowRun = {
   conversationId: string;

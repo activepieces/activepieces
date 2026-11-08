@@ -61,6 +61,18 @@ export function ToolResourceChip({
   ) : null;
 }
 
+export function useResourceName(resource: ResourceRef): string | null {
+  const fetchName = FETCH_NAME[resource.kind];
+  const { data } = useQuery({
+    queryKey: ['chat-resource-name', resource.kind, resource.id],
+    queryFn: () => (fetchName ? fetchName(resource.id) : null),
+    enabled: !resource.name && fetchName !== undefined,
+    staleTime: 30_000,
+    retry: false,
+  });
+  return resource.name ?? data ?? null;
+}
+
 function ResourceChip({ resource }: { resource: ResourceRef }) {
   const { pathname } = useLocation();
   const name = useResourceName(resource);
@@ -111,18 +123,6 @@ function resourceOfPart(part: AnyToolPart): ResourceRef | null {
     return null;
   }
   return resolved.ref;
-}
-
-function useResourceName(resource: ResourceRef): string | null {
-  const fetchName = FETCH_NAME[resource.kind];
-  const { data } = useQuery({
-    queryKey: ['chat-resource-name', resource.kind, resource.id],
-    queryFn: () => (fetchName ? fetchName(resource.id) : null),
-    enabled: !resource.name && fetchName !== undefined,
-    staleTime: 30_000,
-    retry: false,
-  });
-  return resource.name ?? data ?? null;
 }
 
 function withNoun(name: string, noun: string): string {

@@ -4,6 +4,7 @@ import {
   FlowRunStatus,
   FlowVersion,
   FlowVersionState,
+  PopulatedFlow,
   flowStructureUtil,
   WebsocketClientEvent,
   RunEnvironment,
@@ -24,6 +25,7 @@ import {
   followAlong,
   useOnFollowUpdate,
 } from '@/features/chat/lib/follow/follow-along';
+import { aiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
@@ -33,6 +35,7 @@ import { editorSession } from '@/lib/editor-session';
 
 import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
+import { stepReloadHold } from '../step-settings/step-reload-notice';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 
@@ -168,8 +171,6 @@ const useRefreshDraftOnPush = () => {
   }, [socket, flowId, refreshDraft]);
 };
 
-// While the chat edits this flow, each finished tool call refreshes the draft
-// and lights up the steps it added or changed.
 const useRefreshDraftOnFollow = () => {
   const store = useBuilderStore();
   const flowId = useBuilderStateContext((state) => state.flow.id);
@@ -177,36 +178,64 @@ const useRefreshDraftOnFollow = () => {
   const { fitView, getViewport } = useReactFlow();
   const seen = useRef<Map<string, string> | null>(null);
   useEffect(() => {
-    seen.current = stepFingerprints(store.getState().flowVersion);
+    seen.current = flowFingerprints(store.getState());
   }, [flowId, store]);
   useOnFollowUpdate({ kind: 'flow', id: flowId }, () => {
-    void refreshDraft()
+    const { selectedStep, draftRefreshCount } = store.getState();
+    if (selectedStep && isEditingStepSettings()) {
+      stepReloadHold.hold({ stepName: selectedStep, draftRefreshCount });
+    }
+    refreshDraft()
       .catch(() => false)
       .then(() => {
-        const next = stepFingerprints(store.getState().flowVersion);
+        const state = store.getState();
+        if (state.draftRefreshCount === draftRefreshCount) {
+          stepReloadHold.releaseIfUnchanged(draftRefreshCount);
+        }
+        const next = flowFingerprints(state);
         const before = seen.current ?? new Map<string, string>();
         seen.current = next;
         const changed = [...next]
           .filter(([name, print]) => before.get(name) !== print)
           .map(([name]) => name);
-        followAlong.flash(changed.map((name) => `flow-step:${name}`));
-        const last = changed.at(-1);
-        // Bring the change into view if it landed off screen, at the same zoom.
-        if (last) {
+        followAlong.flash(
+          changed.map((name) =>
+            name.startsWith(FLOW_META_PREFIX)
+              ? `${name}:${flowId}`
+              : `flow-step:${name}`,
+          ),
+        );
+        const last = changed
+          .filter((name) => !name.startsWith(FLOW_META_PREFIX))
+          .at(-1);
+        if (last && aiHighlight.mayScroll()) {
           setTimeout(() => {
             if (isStepVisible(last)) return;
             const { zoom } = getViewport();
-            void fitView({
+            fitView({
               nodes: [{ id: last }],
-              duration: 450,
+              duration: aiHighlight.prefersReducedMotion() ? 0 : 450,
               minZoom: zoom,
               maxZoom: zoom,
-            });
+            }).catch(() => undefined);
           }, 120);
         }
-      });
+      })
+      .catch(() => undefined);
   });
 };
+
+function isEditingStepSettings(): boolean {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement)) return false;
+  if (!active.closest('#right-sidebar')) return false;
+  return (
+    active.isContentEditable ||
+    active instanceof HTMLTextAreaElement ||
+    (active instanceof HTMLInputElement &&
+      !['checkbox', 'radio', 'button', 'submit'].includes(active.type))
+  );
+}
 
 function isStepVisible(stepName: string): boolean {
   const node = document.querySelector(
@@ -224,15 +253,23 @@ function isStepVisible(stepName: string): boolean {
   );
 }
 
-function stepFingerprints(version: FlowVersion): Map<string, string> {
-  return new Map(
-    flowStructureUtil
-      .getAllSteps(version.trigger)
-      .map((step) => [
+function flowFingerprints({
+  flow,
+  flowVersion,
+}: {
+  flow: PopulatedFlow;
+  flowVersion: FlowVersion;
+}): Map<string, string> {
+  return new Map([
+    ...flowStructureUtil
+      .getAllSteps(flowVersion.trigger)
+      .map((step): [string, string] => [
         step.name,
         JSON.stringify([step.type, step.displayName, step.settings]),
       ]),
-  );
+    [`${FLOW_META_PREFIX}name`, flowVersion.displayName],
+    [`${FLOW_META_PREFIX}status`, `${flow.status}:${flow.publishedVersionId}`],
+  ]);
 }
 
 const useRefreshDraftOnReconnectAndReturn = () => {
@@ -441,3 +478,5 @@ export const flowCanvasHooks = {
   useListenToExistingRun,
   useFlowConnections,
 };
+
+const FLOW_META_PREFIX = 'flow-';

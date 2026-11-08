@@ -5,10 +5,16 @@ import {
   FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { useEffect } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { RightSideBarType } from '@/app/builder/types';
 
+import {
+  StepReloadNotice,
+  stepReloadHold,
+  useStepReloadHold,
+} from './step-reload-notice';
 import {
   StepSettingsProvider,
   StepSettingsProviderProps,
@@ -30,23 +36,36 @@ export const StepSettingsPanel = ({
         state.flowVersion.trigger,
       ),
     ]);
-  if (rightSidebar !== RightSideBarType.PIECE_SETTINGS || !selectedStep) {
+  const held = useStepReloadHold((state) => state.held);
+  const open = rightSidebar === RightSideBarType.PIECE_SETTINGS && selectedStep;
+  const heldHere = open && held?.stepName === selectedStep.name ? held : null;
+  useEffect(() => {
+    if (held && !heldHere) stepReloadHold.release();
+  }, [held, heldHere]);
+  if (!open) {
     return null;
   }
   return (
-    <StepSettingsProvider
-      pieceModel={pieceModel}
-      pieceModelNotFound={pieceModelNotFound}
-      selectedStep={selectedStep}
-      key={constructContainerKey({
-        flowVersionId,
-        draftRefreshCount,
-        step: selectedStep,
-        hasPieceModelLoaded: !!pieceModel,
-      })}
-    >
-      <StepSettingsContainer />
-    </StepSettingsProvider>
+    <div className="flex h-full flex-col">
+      {heldHere && heldHere.draftRefreshCount !== draftRefreshCount && (
+        <StepReloadNotice />
+      )}
+      <div className="min-h-0 flex-1">
+        <StepSettingsProvider
+          pieceModel={pieceModel}
+          pieceModelNotFound={pieceModelNotFound}
+          selectedStep={selectedStep}
+          key={constructContainerKey({
+            flowVersionId,
+            draftRefreshCount: heldHere?.draftRefreshCount ?? draftRefreshCount,
+            step: selectedStep,
+            hasPieceModelLoaded: !!pieceModel,
+          })}
+        >
+          <StepSettingsContainer />
+        </StepSettingsProvider>
+      </div>
+    </div>
   );
 };
 
