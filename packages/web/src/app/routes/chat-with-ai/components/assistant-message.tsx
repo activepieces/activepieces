@@ -339,7 +339,7 @@ function MessageBlocks({
           case 'batch-progress':
             return (
               <div key={`batch-${i}`} className="py-2">
-                <BatchProgressCard progress={block.data} />
+                <BatchProgressCard progress={block.data} ended={!isStreaming} />
               </div>
             );
           case 'memory-saved':

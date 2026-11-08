@@ -18,10 +18,12 @@ import { ChatStatus, chatStatusUtils } from './chat-ui/chat-status-utils';
 
 export function BatchProgressCard({
   progress,
+  ended = false,
 }: {
   progress: BatchProgressData;
+  ended?: boolean;
 }) {
-  const status = chatStatusUtils.fromBatch({ progress });
+  const status = chatStatusUtils.fromBatch({ progress, ended });
   const percentage =
     progress.total > 0
       ? Math.round((progress.completed / progress.total) * 100)
@@ -84,7 +86,7 @@ function FailureList({ failures }: { failures: BatchProgressData['results'] }) {
             <span className="shrink-0 tabular-nums text-gray-11">
               #{failure.index + 1}
             </span>
-            <span className="min-w-0 flex-1 break-words text-right text-danger-11">
+            <span className="min-w-0 flex-1 break-words text-danger-11">
               {cleanErrorText(failure.error ?? t('Unknown error'))}
             </span>
           </li>

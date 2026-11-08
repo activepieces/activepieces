@@ -26,7 +26,7 @@ export function ConversationStatusDot({
           {status === null ? (
             <span className="size-1.5 rounded-full bg-gray-12" />
           ) : (
-            <ChatStatusIcon status={status} />
+            <ChatStatusIcon status={status} decorative />
           )}
         </span>
       </TooltipTrigger>
