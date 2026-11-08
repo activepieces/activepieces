@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createMockActionContext } from '@activepieces/pieces-framework';
+import {
+  AppConnectionType,
+  AppConnectionValueForAuthProperty,
+  createMockActionContext,
+  createMockPollingTriggerContext,
+} from '@activepieces/pieces-framework';
 import { letta } from '../src/index';
 import { lettaApi, LettaApiError } from '../src/lib/common/client';
+import { lettaAuth } from '../src/lib/common/auth';
 
 const calls = vi.hoisted(() => ({
   agentsList: vi.fn(),
@@ -15,6 +21,7 @@ const calls = vi.hoisted(() => ({
   rawGet: vi.fn(),
   rawPost: vi.fn(),
   identitiesCreate: vi.fn(),
+  identitiesList: vi.fn(),
   runMessagesList: vi.fn(),
 }));
 
@@ -36,14 +43,17 @@ vi.mock('@letta-ai/letta-client', () => {
       },
     };
     runs = { messages: { list: async (runId: string, query: unknown) => page(await calls.runMessagesList(runId, query)) } };
-    identities = { create: calls.identitiesCreate };
+    identities = {
+      create: calls.identitiesCreate,
+      list: async (query: unknown) => page(await calls.identitiesList(query)),
+    };
     get = calls.rawGet;
     post = calls.rawPost;
   }
   return { Letta };
 });
 
-const auth = { type: 'CUSTOM_AUTH', props: { apiKey: 'key', baseUrl: '' } };
+const auth: AppConnectionValueForAuthProperty<typeof lettaAuth> = { type: AppConnectionType.CUSTOM_AUTH, props: { apiKey: 'key', baseUrl: '' } };
 
 function findAction(name: string) {
   const found = letta.getAction(name);
@@ -51,6 +61,35 @@ function findAction(name: string) {
     throw new Error(`missing action ${name}`);
   }
   return found;
+}
+
+function pollingContext({ propsValue, lastPoll }: { propsValue: Record<string, unknown>; lastPoll: number | null }) {
+  const saved = new Map<string, string>();
+  if (lastPoll !== null) {
+    saved.set('lastPoll', JSON.stringify(lastPoll));
+  }
+  return {
+    ...createMockPollingTriggerContext({ propsValue }),
+    auth,
+    files: createMockActionContext({ propsValue }).files,
+    store: {
+      put: async <T>(key: string, value: T) => {
+        saved.set(key, JSON.stringify(value));
+        return value;
+      },
+      get: async <T>(key: string): Promise<T | null> => {
+        const raw = saved.get(key);
+        return raw === undefined ? null : JSON.parse(raw);
+      },
+      delete: async (key: string) => {
+        saved.delete(key);
+      },
+    },
+  };
+}
+
+function idsOf(items: unknown[]): unknown[] {
+  return items.map((item) => (lettaApi.isRecord(item) ? item['id'] : undefined));
 }
 
 async function runAction({ name, propsValue }: { name: string; propsValue: Record<string, unknown> }) {
@@ -63,7 +102,7 @@ beforeEach(() => {
 
 describe('metadata', () => {
   it('requires a release that hides ai atomics from old engines', () => {
-    expect(letta.minimumSupportedRelease).toBe('0.86.4');
+    expect(letta.minimumSupportedRelease).toBe('0.88.2');
   });
 
   it('gives every ai atomic aiMetadata, a classification and an outputSchema', () => {
@@ -71,7 +110,7 @@ describe('metadata', () => {
     expect(atomics.length).toBe(28);
     for (const action of atomics) {
       expect(action.name.startsWith('letta_')).toBe(true);
-      expect(action.aiMetadata?.description.length).toBeGreaterThan(40);
+      expect(action.aiMetadata?.description?.length).toBeGreaterThan(40);
       expect(action.classification).toBeDefined();
       expect(action.outputSchema?.fields.length).toBeGreaterThan(0);
     }
@@ -178,20 +217,14 @@ describe('new message trigger', () => {
     if (!trigger) {
       throw new Error('missing trigger');
     }
-    const result = await trigger.test({
-      auth,
-      propsValue: { agentId: 'agent-1' },
-      store: { get: async () => null, put: async () => undefined, delete: async () => undefined },
-      files: { write: async () => '' },
-    });
+    const result = await trigger.test(pollingContext({ propsValue: { agentId: 'agent-1' }, lastPoll: null }));
     expect(calls.messagesList).toHaveBeenCalledWith('agent-1', { limit: 100, order: 'desc' });
-    expect(result.map((message: { id: string }) => message.id)).toEqual(['m3', 'm2']);
+    expect(idsOf(result)).toEqual(['m3', 'm2']);
   });
 });
 
 describe('polling triggers page back to the last seen record', () => {
   const lastPoll = Date.parse('2026-10-29T09:00:00Z');
-  const pollStore = { get: async () => lastPoll, put: async () => undefined, delete: async () => undefined } as never;
 
   function reply(index: number) {
     return {
@@ -216,17 +249,12 @@ describe('polling triggers page back to the last seen record', () => {
     calls.messagesList
       .mockResolvedValueOnce(newest.slice(0, 100))
       .mockResolvedValueOnce([...newest.slice(100), old, ...Array.from({ length: 49 }, () => old)]);
-    const result = await getTrigger('newMessage').run({
-      auth,
-      propsValue: { agentId: 'agent-1' },
-      store: pollStore,
-      files: { write: async () => '' },
-    } as never);
+    const result = await getTrigger('newMessage').run(pollingContext({ propsValue: { agentId: 'agent-1' }, lastPoll }));
     expect(calls.messagesList).toHaveBeenCalledTimes(2);
     expect(calls.messagesList).toHaveBeenNthCalledWith(1, 'agent-1', { limit: 100, order: 'desc' });
     expect(calls.messagesList).toHaveBeenNthCalledWith(2, 'agent-1', { limit: 100, order: 'desc', after: 'm50' });
-    expect((result as { id: string }[]).length).toBe(150);
-    expect((result as { id: string }[]).some((message) => message.id === 'old')).toBe(false);
+    expect(result.length).toBe(150);
+    expect(idsOf(result)).not.toContain('old');
   });
 
   it('stops after 10 pages of new agents', async () => {
@@ -237,17 +265,29 @@ describe('polling triggers page back to the last seen record', () => {
         return { id: `agent-${created}`, name: 'a', created_at: new Date(lastPoll + 10_000_000 - created * 1000).toISOString() };
       }),
     );
-    const result = await getTrigger('newAgent').run({
-      auth,
-      propsValue: {},
-      store: pollStore,
-      files: { write: async () => '' },
-    } as never);
+    const result = await getTrigger('newAgent').run(pollingContext({ propsValue: {}, lastPoll }));
     expect(calls.agentsList).toHaveBeenCalledTimes(10);
     expect(calls.agentsList).toHaveBeenLastCalledWith(
       expect.objectContaining({ limit: 100, order: 'desc', order_by: 'created_at', after: 'agent-900' }),
     );
-    expect((result as unknown[]).length).toBe(1000);
+    expect(result.length).toBe(1000);
+  });
+});
+
+describe('get identities', () => {
+  it('asks for 100 identities when Limit is empty and returns that one page', async () => {
+    calls.identitiesList.mockResolvedValue([{ id: 'identity-1', name: 'Ada' }]);
+    const result = await runAction({ name: 'getIdentities', propsValue: {} });
+    expect(calls.identitiesList).toHaveBeenCalledTimes(1);
+    expect(calls.identitiesList).toHaveBeenCalledWith({ limit: 100 });
+    expect(result).toMatchObject({ count: 1, success: true });
+  });
+
+  it('rejects a Limit above 1000 before calling Letta', async () => {
+    await expect(runAction({ name: 'getIdentities', propsValue: { limit: 1001 } })).rejects.toThrow(
+      'Limit must be a whole number between 1 and 1000.'
+    );
+    expect(calls.identitiesList).not.toHaveBeenCalled();
   });
 });
 
@@ -355,15 +395,10 @@ describe('live-test fixes', () => {
     if (!trigger) {
       throw new Error('missing trigger');
     }
-    const result = await trigger.test({
-      auth,
-      propsValue: {},
-      store: { get: async () => null, put: async () => undefined, delete: async () => undefined },
-      files: { write: async () => '' },
-    });
+    const result = await trigger.test(pollingContext({ propsValue: {}, lastPoll: null }));
     expect(calls.agentsList).toHaveBeenCalledWith(expect.objectContaining({ include: ['agent.tags'], order: 'desc' }));
     expect(JSON.stringify(result)).not.toContain('shh');
-    expect(Object.keys(result[0]).sort()).toEqual(
+    expect(Object.keys(lettaApi.isRecord(result[0]) ? result[0] : {}).sort()).toEqual(
       ['agent_type', 'created_at', 'description', 'embedding', 'id', 'last_run_completion', 'last_stop_reason', 'model', 'name', 'system', 'tags', 'updated_at'].sort()
     );
     expect(result[0]).toMatchObject({ tags: ['vip'], system: 'sys' });
