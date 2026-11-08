@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Check, Pencil } from 'lucide-react';
+import { Check } from 'lucide-react';
 import {
   KeyboardEvent,
   ReactNode,
@@ -21,6 +21,7 @@ export function ChatOption({
   description,
   leading,
   trailing,
+  action,
   shortcut,
   selected = false,
   disabled,
@@ -30,25 +31,34 @@ export function ChatOption({
   onFocus,
   optionRef,
 }: ChatOptionProps) {
-  return (
+  const rowClass = cn(
+    'flex w-full min-w-0 items-center rounded-lg border transition-colors',
+    description ? 'min-h-12' : 'min-h-11',
+    selected
+      ? 'border-accent-7 bg-accent-3 hover:bg-accent-4'
+      : 'border-transparent hover:bg-gray-4',
+  );
+  const focusBg = selected
+    ? 'focus-visible:bg-accent-4'
+    : 'focus-visible:bg-gray-4';
+  const button = (
     <button
       ref={optionRef}
       type="button"
       role={ROLE_BY_MODE[mode]}
-      aria-checked={mode === 'action' ? undefined : selected}
+      aria-checked={mode === 'check' ? selected : undefined}
+      aria-selected={mode === 'radio' ? selected : undefined}
       aria-keyshortcuts={shortcut === undefined ? undefined : String(shortcut)}
       disabled={disabled}
       tabIndex={tabIndex}
       onClick={onPick}
       onKeyDown={onKeyDown}
-      onKeyUp={preventSpaceClick}
+      onKeyUp={onKeyDown ? preventSpaceClick : undefined}
       onFocus={onFocus}
       className={cn(
-        'flex w-full min-w-0 items-center gap-3 rounded-lg px-2 text-left text-sm text-gray-12 outline-none transition-colors disabled:opacity-50',
-        description ? 'min-h-12 py-2' : 'min-h-11 py-1.5',
-        selected
-          ? 'bg-accent-3 ring-1 ring-inset ring-accent-7 hover:bg-accent-4 focus-visible:bg-accent-4'
-          : 'hover:bg-gray-4 focus-visible:bg-gray-4',
+        'flex min-w-0 flex-1 items-center gap-2.5 self-stretch rounded-lg px-2.5 text-left text-sm text-gray-12 outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50 disabled:opacity-50',
+        description ? 'py-2' : 'py-1.5',
+        action ? 'focus-visible:bg-transparent' : cn(rowClass, focusBg),
       )}
     >
       <OptionMark mode={mode} selected={selected} />
@@ -71,6 +81,20 @@ export function ChatOption({
       )}
     </button>
   );
+  if (!action) return button;
+  return (
+    <div
+      className={cn(
+        rowClass,
+        selected
+          ? 'has-[>button:focus-visible]:bg-accent-4'
+          : 'has-[>button:focus-visible]:bg-gray-4',
+      )}
+    >
+      {button}
+      <span className="flex shrink-0 items-center gap-2 pr-2.5">{action}</span>
+    </div>
+  );
 }
 
 export function ChatOptionList({
@@ -83,7 +107,7 @@ export function ChatOptionList({
   searchPlaceholder,
   noMatchText,
   writeYourOwn,
-  autoFocus = true,
+  autoFocus = false,
 }: ChatOptionListProps) {
   const [query, setQuery] = useState('');
   const showSearch = items.length > SEARCH_THRESHOLD;
@@ -97,7 +121,20 @@ export function ChatOptionList({
 
   function clearSearch() {
     setQuery('');
-    roving.focus(SEARCH_ID);
+    roving.focus({ id: SEARCH_ID });
+  }
+
+  function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'ArrowDown' && roving.currentId !== null) {
+      event.preventDefault();
+      roving.focus({ id: roving.currentId, scroll: true });
+      return;
+    }
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+    const pickable = visible.filter((item) => !item.disabled);
+    if (pickable.length !== 1 || pickable[0] === undefined) return;
+    event.preventDefault();
+    onPick(pickable[0].id);
   }
 
   return (
@@ -107,6 +144,7 @@ export function ChatOptionList({
           ref={roving.register(SEARCH_ID)}
           value={query}
           onChange={setQuery}
+          onKeyDown={handleSearchKeyDown}
           placeholder={searchPlaceholder}
           aria-label={searchPlaceholder ?? t('Search')}
         />
@@ -129,7 +167,7 @@ export function ChatOptionList({
         </div>
       ) : (
         <div
-          role={mode === 'radio' ? 'radiogroup' : 'group'}
+          role={CONTAINER_ROLE_BY_MODE[mode]}
           aria-label={ariaLabel}
           className={cn(
             'flex flex-col gap-0.5',
@@ -147,6 +185,7 @@ export function ChatOptionList({
                 description={item.description}
                 leading={item.leading}
                 trailing={item.trailing}
+                action={item.action}
                 shortcut={shortcut}
                 selected={selected.includes(item.id)}
                 disabled={item.disabled}
@@ -160,7 +199,7 @@ export function ChatOptionList({
                     id: item.id,
                     onPick,
                     numbered,
-                    grid: false,
+                    columns: 1,
                   })
                 }
               />
@@ -178,6 +217,7 @@ export function ChatOptionList({
       {writeYourOwn && (
         <ChatWriteYourOwn
           {...writeYourOwn}
+          mode={mode === 'check' ? 'check' : 'radio'}
           inputRef={roving.register(WRITE_YOUR_OWN_ID)}
         />
       )}
@@ -192,8 +232,9 @@ export function ChatOptionGrid({
   onPick,
   ariaLabel,
   writeYourOwn,
-  autoFocus = true,
+  autoFocus = false,
 }: ChatOptionGridProps) {
+  const gridRef = useRef<HTMLDivElement>(null);
   const roving = useOptionRoving({
     items,
     selected,
@@ -203,52 +244,59 @@ export function ChatOptionGrid({
 
   return (
     <div
-      role={mode === 'radio' ? 'radiogroup' : 'group'}
-      aria-label={ariaLabel}
+      ref={gridRef}
       className="grid grid-cols-3 gap-2 @max-chat-narrow/chat:grid-cols-2"
     >
-      {items.map((item) => {
-        const isSelected = selected.includes(item.id);
-        return (
-          <button
-            key={item.id}
-            ref={roving.register(item.id)}
-            type="button"
-            role={ROLE_BY_MODE[mode]}
-            aria-checked={isSelected}
-            disabled={item.disabled}
-            tabIndex={roving.tabIndexFor(item.id)}
-            onFocus={() => roving.setActive(item.id)}
-            onClick={() => onPick(item.id)}
-            onKeyUp={preventSpaceClick}
-            onKeyDown={(event) =>
-              roving.handleKeyDown({
-                event,
-                id: item.id,
-                onPick,
-                numbered: false,
-                grid: true,
-              })
-            }
-            className={cn(
-              'flex h-18 min-w-0 flex-col justify-center gap-2 rounded-lg px-3.5 text-left outline-none transition-colors disabled:opacity-50',
-              isSelected
-                ? 'bg-accent-3 ring-1 ring-inset ring-accent-7 hover:bg-accent-4 focus-visible:bg-accent-4'
-                : 'ring-1 ring-inset ring-gray-6 hover:bg-gray-4 focus-visible:bg-gray-4',
-            )}
-          >
-            <span className="flex size-5 items-center justify-center">
-              {item.leading}
-            </span>
-            <span className="truncate text-sm font-medium text-gray-12">
-              {item.label}
-            </span>
-          </button>
-        );
-      })}
+      <div
+        role={CONTAINER_ROLE_BY_MODE[mode]}
+        aria-label={ariaLabel}
+        className="contents"
+      >
+        {items.map((item) => {
+          const isSelected = selected.includes(item.id);
+          return (
+            <button
+              key={item.id}
+              ref={roving.register(item.id)}
+              type="button"
+              role={ROLE_BY_MODE[mode]}
+              aria-checked={mode === 'check' ? isSelected : undefined}
+              aria-selected={mode === 'radio' ? isSelected : undefined}
+              disabled={item.disabled}
+              tabIndex={roving.tabIndexFor(item.id)}
+              onFocus={() => roving.setActive(item.id)}
+              onClick={() => onPick(item.id)}
+              onKeyUp={preventSpaceClick}
+              onKeyDown={(event) =>
+                roving.handleKeyDown({
+                  event,
+                  id: item.id,
+                  onPick,
+                  numbered: false,
+                  columns: columnCount(gridRef.current),
+                })
+              }
+              className={cn(
+                'flex h-18 min-w-0 flex-col justify-center gap-2 rounded-lg border px-3.5 text-left outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-gray-8/50 disabled:opacity-50',
+                isSelected
+                  ? 'border-accent-7 bg-accent-3 hover:bg-accent-4 focus-visible:bg-accent-4'
+                  : 'border-gray-6 hover:bg-gray-4 focus-visible:bg-gray-4',
+              )}
+            >
+              <span className="flex size-5 items-center justify-center">
+                {item.leading}
+              </span>
+              <span className="truncate text-sm font-medium text-gray-12">
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
       {writeYourOwn && (
         <ChatWriteYourOwn
           {...writeYourOwn}
+          mode={mode === 'check' ? 'check' : 'radio'}
           shape="tile"
           inputRef={roving.register(WRITE_YOUR_OWN_ID)}
         />
@@ -262,6 +310,7 @@ export function ChatWriteYourOwn({
   onChange,
   onSubmit,
   placeholder,
+  mode = 'radio',
   shape = 'row',
   inputRef,
 }: ChatWriteYourOwnProps) {
@@ -271,17 +320,18 @@ export function ChatWriteYourOwn({
     <label
       htmlFor={fieldId}
       className={cn(
-        'flex min-w-0 cursor-text rounded-lg transition-colors',
+        'flex min-w-0 cursor-text rounded-lg border transition-colors',
         shape === 'row'
-          ? 'min-h-11 items-center gap-3 px-2 hover:bg-gray-4 focus-within:bg-gray-4'
-          : 'h-18 flex-col justify-center gap-2 border border-dashed border-gray-7 px-3.5 focus-within:border-gray-8',
+          ? 'min-h-11 items-center gap-2.5 border-transparent px-2.5 hover:bg-gray-4 focus-within:bg-gray-4'
+          : 'h-18 flex-col justify-center gap-2 border-dashed border-gray-7 px-3.5 focus-within:border-gray-8',
         active && shape === 'row' && 'bg-gray-4',
       )}
     >
-      <Pencil aria-hidden className="size-4 shrink-0 text-gray-9" />
+      <DashedMark mode={mode} />
       <Input
         ref={inputRef}
         id={fieldId}
+        aria-label={placeholder}
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
@@ -291,7 +341,7 @@ export function ChatWriteYourOwn({
           event.preventDefault();
           onSubmit();
         }}
-        className="h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
+        className="h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-gray-9 focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
       />
     </label>
   );
@@ -333,6 +383,36 @@ function OptionMark({
   );
 }
 
+function DashedMark({ mode }: { mode: 'radio' | 'check' }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 16 16"
+      className="size-4 shrink-0 fill-none stroke-gray-8"
+    >
+      {mode === 'radio' ? (
+        <circle
+          cx="8"
+          cy="8"
+          r="7.25"
+          strokeWidth="1.5"
+          strokeDasharray="2.85 2.85"
+        />
+      ) : (
+        <rect
+          x="0.75"
+          y="0.75"
+          width="14.5"
+          height="14.5"
+          rx="3.25"
+          strokeWidth="1.5"
+          strokeDasharray="2.6 2.6"
+        />
+      )}
+    </svg>
+  );
+}
+
 function useOptionRoving({
   items,
   selected,
@@ -345,7 +425,10 @@ function useOptionRoving({
   autoFocusId: string | null;
 }) {
   const nodes = useRef(new Map<string, HTMLElement>());
-  const autoFocused = useRef(false);
+  const refCallbacks = useRef(
+    new Map<string, (node: HTMLElement | null) => void>(),
+  );
+  const autoFocusDone = useRef(false);
   const [activeId, setActive] = useState<string | null>(null);
   const optionIds = items
     .filter((item) => !item.disabled)
@@ -353,36 +436,55 @@ function useOptionRoving({
   const stopIds = withWriteYourOwn
     ? [...optionIds, WRITE_YOUR_OWN_ID]
     : optionIds;
+  const layoutIds = withWriteYourOwn
+    ? [...items.map((item) => item.id), WRITE_YOUR_OWN_ID]
+    : items.map((item) => item.id);
   const fallbackId =
     optionIds.find((id) => selected.includes(id)) ?? optionIds[0] ?? null;
   const currentId =
     activeId !== null && optionIds.includes(activeId) ? activeId : fallbackId;
   const mountFocusId = autoFocusId === 'first' ? fallbackId : autoFocusId;
+  const hasItems = items.length > 0;
 
   useEffect(() => {
-    if (autoFocused.current || mountFocusId === null) return;
-    const node = nodes.current.get(mountFocusId);
-    if (!node) return;
-    autoFocused.current = true;
-    node.focus({ preventScroll: true });
-  }, [mountFocusId]);
+    if (autoFocusDone.current || mountFocusId === null || !hasItems) return;
+    autoFocusDone.current = true;
+    if (isEditable(document.activeElement)) return;
+    nodes.current.get(mountFocusId)?.focus({ preventScroll: true });
+  }, [mountFocusId, hasItems]);
 
   function register(id: string) {
-    return (node: HTMLElement | null) => {
+    const cached = refCallbacks.current.get(id);
+    if (cached) return cached;
+    const callback = (node: HTMLElement | null) => {
       if (node) nodes.current.set(id, node);
       else nodes.current.delete(id);
     };
+    refCallbacks.current.set(id, callback);
+    return callback;
   }
 
-  function focus(id: string) {
+  function focus({ id, scroll = false }: { id: string; scroll?: boolean }) {
     if (optionIds.includes(id)) setActive(id);
-    nodes.current.get(id)?.focus({ preventScroll: true });
+    const node = nodes.current.get(id);
+    if (!node) return;
+    node.focus({ preventScroll: true });
+    if (scroll && typeof node.scrollIntoView === 'function') {
+      node.scrollIntoView({ block: 'nearest' });
+    }
   }
 
-  function move({ from, delta }: { from: string; delta: number }) {
+  function moveAlong({ from, delta }: { from: string; delta: number }) {
     const index = stopIds.indexOf(from);
     const next = stopIds[(index + delta + stopIds.length) % stopIds.length];
-    if (next !== undefined) focus(next);
+    if (next !== undefined) focus({ id: next, scroll: true });
+  }
+
+  function moveRow({ from, delta }: { from: string; delta: number }) {
+    const next = layoutIds[layoutIds.indexOf(from) + delta];
+    if (next !== undefined && stopIds.includes(next)) {
+      focus({ id: next, scroll: true });
+    }
   }
 
   function handleKeyDown({
@@ -390,25 +492,27 @@ function useOptionRoving({
     id,
     onPick,
     numbered,
-    grid,
+    columns,
   }: {
     event: KeyboardEvent<HTMLElement>;
     id: string;
     onPick: (id: string) => void;
     numbered: boolean;
-    grid: boolean;
+    columns: number;
   }) {
-    const delta = keyDelta({ key: event.key, grid });
-    if (delta !== null) {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const step = arrowStep({ key: event.key, columns });
+    if (step !== null) {
       event.preventDefault();
-      move({ from: id, delta });
+      if (step.row) moveRow({ from: id, delta: step.delta });
+      else moveAlong({ from: id, delta: step.delta });
       return;
     }
     if (event.key === 'Home' || event.key === 'End') {
       event.preventDefault();
       const target =
         event.key === 'Home' ? optionIds[0] : optionIds[optionIds.length - 1];
-      if (target !== undefined) focus(target);
+      if (target !== undefined) focus({ id: target, scroll: true });
       return;
     }
     if (event.key === 'Enter' || event.key === ' ') {
@@ -421,11 +525,12 @@ function useOptionRoving({
     const target = items[digit - 1];
     if (target === undefined || target.disabled) return;
     event.preventDefault();
-    focus(target.id);
+    focus({ id: target.id, scroll: true });
     onPick(target.id);
   }
 
   return {
+    currentId,
     register,
     focus,
     setActive,
@@ -434,16 +539,38 @@ function useOptionRoving({
   };
 }
 
-function keyDelta({
+function arrowStep({
   key,
-  grid,
+  columns,
 }: {
   key: string;
-  grid: boolean;
-}): number | null {
-  if (key === 'ArrowDown' || (grid && key === 'ArrowRight')) return 1;
-  if (key === 'ArrowUp' || (grid && key === 'ArrowLeft')) return -1;
+  columns: number;
+}): { delta: number; row: boolean } | null {
+  if (columns <= 1) {
+    if (key === 'ArrowDown') return { delta: 1, row: false };
+    if (key === 'ArrowUp') return { delta: -1, row: false };
+    return null;
+  }
+  if (key === 'ArrowRight') return { delta: 1, row: false };
+  if (key === 'ArrowLeft') return { delta: -1, row: false };
+  if (key === 'ArrowDown') return { delta: columns, row: true };
+  if (key === 'ArrowUp') return { delta: -columns, row: true };
   return null;
+}
+
+function columnCount(grid: HTMLElement | null): number {
+  if (!grid) return DEFAULT_GRID_COLUMNS;
+  const template = getComputedStyle(grid).gridTemplateColumns.trim();
+  if (template.length === 0 || template === 'none') return DEFAULT_GRID_COLUMNS;
+  return template.split(/\s+/).length;
+}
+
+function isEditable(element: Element | null): boolean {
+  if (!(element instanceof HTMLElement)) return false;
+  if (element.isContentEditable) return true;
+  return element.matches(
+    'input, textarea, select, [contenteditable]:not([contenteditable="false"])',
+  );
 }
 
 function preventSpaceClick(event: KeyboardEvent<HTMLElement>) {
@@ -484,12 +611,19 @@ function highlightMatch({
 
 const SEARCH_THRESHOLD = 6;
 const MAX_SHORTCUT = 9;
+const DEFAULT_GRID_COLUMNS = 3;
 const SEARCH_ID = 'chat-option-search';
 const WRITE_YOUR_OWN_ID = 'chat-option-write-your-own';
-const ROLE_BY_MODE: Record<ChatOptionMode, 'radio' | 'checkbox' | undefined> = {
-  radio: 'radio',
-  check: 'checkbox',
-  action: undefined,
+const ROLE_BY_MODE: Record<ChatOptionMode, 'option' | 'checkbox' | undefined> =
+  {
+    radio: 'option',
+    check: 'checkbox',
+    action: undefined,
+  };
+const CONTAINER_ROLE_BY_MODE: Record<ChatOptionMode, 'listbox' | 'group'> = {
+  radio: 'listbox',
+  check: 'group',
+  action: 'group',
 };
 
 type ChatOptionMode = 'radio' | 'check' | 'action';
@@ -500,6 +634,7 @@ type ChatOptionProps = {
   description?: ReactNode;
   leading?: ReactNode;
   trailing?: ReactNode;
+  action?: ReactNode;
   shortcut?: number;
   selected?: boolean;
   disabled?: boolean;
@@ -516,6 +651,7 @@ type ChatOptionItem = {
   description?: ReactNode;
   leading?: ReactNode;
   trailing?: ReactNode;
+  action?: ReactNode;
   disabled?: boolean;
   action?: ReactNode;
 };
@@ -525,20 +661,21 @@ type ChatWriteYourOwnProps = {
   onChange: (value: string) => void;
   onSubmit: () => void;
   placeholder: string;
+  mode?: 'radio' | 'check';
   shape?: 'row' | 'tile';
   inputRef?: Ref<HTMLInputElement>;
 };
 
 type ChatOptionListProps = {
   items: ChatOptionItem[];
-  mode: 'radio' | 'check';
+  mode: ChatOptionMode;
   selected: string[];
   onPick: (id: string) => void;
   ariaLabel: string;
   numbered?: boolean;
   searchPlaceholder?: string;
   noMatchText?: (query: string) => string;
-  writeYourOwn?: Omit<ChatWriteYourOwnProps, 'shape' | 'inputRef'>;
+  writeYourOwn?: Omit<ChatWriteYourOwnProps, 'shape' | 'inputRef' | 'mode'>;
   autoFocus?: boolean;
 };
 
@@ -547,4 +684,4 @@ type ChatOptionGridProps = Omit<
   'numbered' | 'searchPlaceholder' | 'noMatchText'
 >;
 
-export type { ChatOptionItem };
+export type { ChatOptionItem, ChatOptionMode };

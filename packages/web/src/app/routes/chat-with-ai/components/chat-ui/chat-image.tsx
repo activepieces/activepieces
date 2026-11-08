@@ -11,7 +11,7 @@ export function ChatImage({ src, alt, className }: ChatImageProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={t('Open image')}
+        aria-label={alt ? t('Open {name}', { name: alt }) : t('Open image')}
         className={cn(
           'block w-full cursor-zoom-in overflow-hidden rounded-lg border border-gray-5 bg-gray-2 outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
           className,

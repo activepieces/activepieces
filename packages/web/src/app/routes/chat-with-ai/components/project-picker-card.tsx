@@ -136,6 +136,7 @@ export function ProjectPickerCard({
       <ChatCardHeader
         tile={<ChatCardTile kind="bits" icon={FolderClosed} />}
         title={title}
+        titleLines={2}
         trailing={<ChatStatusText status="needs-you" />}
       />
       <ChatCardBody>
