@@ -1,31 +1,28 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-
-// Helper function to get current date in the required format
-const getCurrentDateInISOFormat = () => {
-  return new Date().toISOString(); // Returns current date in format: YYYY-MM-DDTHH:MM:SSZ
-};
+import { chargekeepOutputSchemas } from '../common/output-schemas';
+import { CURRENCY_OPTIONS } from '../common/props';
+import { chargekeepServices } from '../common/services';
 
 export const createInvoice = createAction({
   name: 'createInvoice',
   classification: 'WRITE',
   displayName: 'Create Invoice',
   description: 'Creates a new invoice in the CRM.',
-  audience: 'both',
-  aiMetadata: { description: 'Imports an invoice into the ChargeKeep/Sperse CRM for a contact (identified by Contact ID or External Contact ID), with billing/shipping addresses, a single line item, and an optional transaction record. Use to record or bill an invoice; requires an Invoice No., status, currency, date, due date, a description, line quantity, and a transaction date. Because the import is keyed on the Invoice No., reusing the same number updates that invoice rather than creating a duplicate; set Historical Data to true when recording a past (non-live) transaction.', idempotent: true },
+  audience: 'human',
+  aiMetadata: { description: 'Imports an invoice into the ChargeKeep/Sperse CRM for a contact (identified by Contact ID or External Contact ID), with billing/shipping addresses, a single line item, and an optional transaction record. Use to record or bill an invoice; requires an Invoice No., status, currency, due date, a description and a line quantity. A payment transaction is recorded only when Amount is set. Because the import is keyed on the Invoice No., reusing the same number updates that invoice rather than creating a duplicate; set Historical Data to true when recording a past (non-live) transaction.', idempotent: false },
+  outputSchema: chargekeepOutputSchemas.invoice,
   auth: chargekeepAuth,
   props: {
     contactId: Property.Number({
       displayName: 'Contact ID',
-      description: 'Sperse Contact ID. Will be used for looking a client',
-      defaultValue: 0,
+      description: 'ChargeKeep contact ID. Required unless External Contact ID is set.',
       required: false,
     }),
     contactXref: Property.ShortText({
       displayName: 'External Contact ID',
       description:
-        'External Contact Reference (ID) . Will be used for looking a client',
+        'Your external reference (XREF) for the contact. Required unless Contact ID is set.',
       required: false,
     }),
     status: Property.StaticDropdown({
@@ -54,16 +51,15 @@ export const createInvoice = createAction({
         ],
       },
     }),
-    invoiceNo: Property.Number({
+    invoiceNo: Property.ShortText({
       displayName: 'Invoice No.',
-      defaultValue: 0,
+      description: 'Unique invoice number, e.g. INV-1001. Reusing a number updates that invoice.',
       required: true,
     }),
     date: Property.DateTime({
       displayName: 'Date of the Invoice',
-      description: 'should be like this: 2024-06-11T11:11:41Z',
-      defaultValue: getCurrentDateInISOFormat(),
-      required: true,
+      description: 'Defaults to now. Format: 2024-06-11T11:11:41Z',
+      required: false,
     }),
     dueDate: Property.DateTime({
       displayName: 'Due Date of the Invoice',
@@ -74,77 +70,25 @@ export const createInvoice = createAction({
       displayName: 'Currency Id',
       required: true,
       defaultValue: 'USD',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'USD',
-            value: 'USD',
-          },
-          {
-            label: 'JPY',
-            value: 'JPY',
-          },
-          {
-            label: 'IND',
-            value: 'IND',
-          },
-          {
-            label: 'EUR',
-            value: 'EUR',
-          },
-          {
-            label: 'GBP',
-            value: 'GBP',
-          },
-          {
-            label: 'AUD',
-            value: 'AUD',
-          },
-          {
-            label: 'CAD',
-            value: 'CAD',
-          },
-          {
-            label: 'CHF',
-            value: 'CHF',
-          },
-          {
-            label: 'CNY',
-            value: 'CNY',
-          },
-          {
-            label: 'SEK',
-            value: 'SEK',
-          },
-          {
-            label: 'NZD',
-            value: 'NZD',
-          },
-        ],
-      },
+      options: { disabled: false, options: CURRENCY_OPTIONS },
     }),
     grandTotal: Property.Number({
       displayName: 'Grand Total',
-      defaultValue: 0,
+      description: 'Defaults to the line total plus shipping and tax, minus discount.',
       required: false,
     }),
     discountTotal: Property.Number({
       displayName: 'Discount Total',
-      defaultValue: 0,
       required: false,
     }),
     shippingTotal: Property.Number({
       displayName: 'Shipping Total',
-      defaultValue: 0,
       required: false,
     }),
     taxTotal: Property.Number({
       displayName: 'Tax Total',
-      defaultValue: 0,
       required: false,
     }),
-    // billing
     bCompany: Property.ShortText({
       displayName: 'Billing Company',
       required: false,
@@ -193,7 +137,6 @@ export const createInvoice = createAction({
       displayName: 'Billing Address 2',
       required: false,
     }),
-    // shipping
     sCompany: Property.ShortText({
       displayName: 'Shipping Company',
       required: false,
@@ -242,7 +185,6 @@ export const createInvoice = createAction({
       displayName: 'Shipping Address 2',
       required: false,
     }),
-    //
     note: Property.LongText({
       displayName: 'Invoice Note',
       required: false,
@@ -251,25 +193,21 @@ export const createInvoice = createAction({
       displayName: 'Invoice Description',
       required: true,
     }),
-    // line
     quantity: Property.Number({
       displayName: 'Quantity',
-      defaultValue: 0,
+      defaultValue: 1,
       required: true,
     }),
     rate: Property.Number({
       displayName: 'Rate',
-      defaultValue: 0,
       required: false,
     }),
     itemTotal: Property.Number({
       displayName: 'Total Item Price',
-      defaultValue: 0,
       required: false,
     }),
     commissionableAmount: Property.Number({
       displayName: 'Commissionable Amount',
-      defaultValue: 0,
       required: false,
     }),
     unitId: Property.StaticDropdown({
@@ -341,15 +279,12 @@ export const createInvoice = createAction({
     }),
     sortOrder: Property.Number({
       displayName: 'Sort Order',
-      defaultValue: 0,
       required: false,
     }),
-    // transactions
     transactionDate: Property.DateTime({
       displayName: 'Transaction Date',
-      description: 'should be like this: 2024-06-11T11:11:41Z',
-      defaultValue: getCurrentDateInISOFormat(),
-      required: true,
+      description: 'Date of the payment. Defaults to now. Only used when Amount is set.',
+      required: false,
     }),
     transactionDescription: Property.ShortText({
       displayName: 'Transaction Description',
@@ -357,7 +292,7 @@ export const createInvoice = createAction({
     }),
     amount: Property.Number({
       displayName: 'Amount',
-      defaultValue: 0,
+      description: 'Payment amount. Leave empty to create the invoice without recording a payment.',
       required: false,
     }),
     gatewayName: Property.ShortText({
@@ -371,8 +306,8 @@ export const createInvoice = createAction({
     historicalData: Property.StaticDropdown({
       displayName: 'Historical Data',
       description:
-        'Pass true if this is not actual transaction. Should be False by default',
-      required: true,
+        'Pass true if the payment is not an actual transaction (historical record). Only used when Amount is set.',
+      required: false,
       defaultValue: false,
       options: {
         disabled: false,
@@ -390,88 +325,73 @@ export const createInvoice = createAction({
     }),
   },
   async run(context) {
-    // construct
-    const invoice = {
-      contactId: context.propsValue.contactId,
-      contactXref: context.propsValue.contactXref,
-      status: context.propsValue.status,
-      number: context.propsValue.invoiceNo,
-      date: context.propsValue.date,
-      dueDate: context.propsValue.dueDate,
-      currencyId: context.propsValue.currencyId,
-      grandTotal: context.propsValue.grandTotal,
-      discountTotal: context.propsValue.discountTotal,
-      shippingTotal: context.propsValue.shippingTotal,
-      taxTotal: context.propsValue.taxTotal,
-      billingAddress: {
-        countryId: context.propsValue.bCountryId,
-        stateId: context.propsValue.bStateId,
-        stateName: context.propsValue.bStateName,
-        city: context.propsValue.bCity,
-        zip: context.propsValue.bZip,
-        address1: context.propsValue.bAddress1,
-        address2: context.propsValue.bAddress2,
-        firstName: context.propsValue.bFirstName,
-        lastName: context.propsValue.bLastName,
-        company: context.propsValue.bCompany,
-        email: context.propsValue.bEmail,
-        phone: context.propsValue.bPhone,
-      },
-      shippingAddress: {
-        countryId: context.propsValue.sCountryId,
-        stateId: context.propsValue.sStateId,
-        stateName: context.propsValue.sStateName,
-        city: context.propsValue.sCity,
-        zip: context.propsValue.sZip,
-        address1: context.propsValue.sAddress1,
-        address2: context.propsValue.sAddress2,
-        firstName: context.propsValue.sFirstName,
-        lastName: context.propsValue.sLastName,
-        company: context.propsValue.sCompany,
-        email: context.propsValue.sEmail,
-        phone: context.propsValue.sPhone,
-      },
-      description: context.propsValue.invoiceDescription,
-      note: context.propsValue.note,
-      lines: [
-        {
-          quantity: context.propsValue.quantity,
-          rate: context.propsValue.rate,
-          total: context.propsValue.itemTotal,
-          commissionableAmount: context.propsValue.commissionableAmount,
-          unitId: context.propsValue.unitId,
-          productCode: context.propsValue.productCode,
-          description: context.propsValue.itemDescription,
-          sortOrder: context.propsValue.sortOrder,
+    const p = context.propsValue;
+    const { mapped } = await chargekeepServices.importInvoice({
+      auth: context.auth,
+      input: {
+        contactId: p.contactId,
+        contactXref: p.contactXref,
+        status: p.status,
+        number: p.invoiceNo,
+        date: p.date,
+        dueDate: p.dueDate,
+        currencyId: p.currencyId,
+        grandTotal: p.grandTotal,
+        discountTotal: p.discountTotal,
+        shippingTotal: p.shippingTotal,
+        taxTotal: p.taxTotal,
+        billingAddress: {
+          countryId: p.bCountryId,
+          stateId: p.bStateId,
+          stateName: p.bStateName,
+          city: p.bCity,
+          zip: p.bZip,
+          address1: p.bAddress1,
+          address2: p.bAddress2,
+          firstName: p.bFirstName,
+          lastName: p.bLastName,
+          company: p.bCompany,
+          email: p.bEmail,
+          phone: p.bPhone,
         },
-      ],
-      transactions: [
-        {
-          date: context.propsValue.transactionDate,
-          description: context.propsValue.transactionDescription,
-          amount: context.propsValue.amount,
-          gatewayName: context.propsValue.gatewayName,
-          gatewayTransactionId: context.propsValue.gatewayTransactionId,
+        shippingAddress: {
+          countryId: p.sCountryId,
+          stateId: p.sStateId,
+          stateName: p.sStateName,
+          city: p.sCity,
+          zip: p.sZip,
+          address1: p.sAddress1,
+          address2: p.sAddress2,
+          firstName: p.sFirstName,
+          lastName: p.sLastName,
+          company: p.sCompany,
+          email: p.sEmail,
+          phone: p.sPhone,
         },
-      ],
-      historicalData: context.propsValue.historicalData,
-    };
-
-    const res = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportInvoice`,
-      headers: {
-        'api-key': context.auth.props.api_key, // Pass API key in headers
-        'Content-Type': 'application/json',
-      },
-      body: {
-        ...invoice,
+        description: p.invoiceDescription,
+        note: p.note,
+        lines: [
+          {
+            quantity: p.quantity,
+            rate: p.rate,
+            total: p.itemTotal,
+            commissionableAmount: p.commissionableAmount,
+            unitId: p.unitId,
+            productCode: p.productCode,
+            description: p.itemDescription,
+            sortOrder: p.sortOrder,
+          },
+        ],
+        payment: {
+          amount: p.amount,
+          date: p.transactionDate,
+          description: p.transactionDescription,
+          gatewayName: p.gatewayName,
+          gatewayTransactionId: p.gatewayTransactionId,
+        },
+        historicalData: p.historicalData,
       },
     });
-
-    return {
-      status: res.status,
-      body: res.body,
-    };
+    return mapped();
   },
 });

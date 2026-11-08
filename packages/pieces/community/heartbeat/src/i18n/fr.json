@@ -283,6 +283,8 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer",
   "New Member Joined": "New Member Joined",
   "New Thread": "New Thread",
   "New Mention in Thread or Comment": "New Mention in Thread or Comment",

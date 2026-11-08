@@ -1,32 +1,33 @@
-import { createPiece, OAuth2PropertyValue, PieceAuth, PiecePropValueSchema, Property } from "@activepieces/pieces-framework";
-import { findInvoiceAction } from "./actions/find-invoice";
-import { findCustomerAction } from "./actions/find-customer";
-import { findPaymentAction } from "./actions/find-payment";
-import { createInvoiceAction } from "./actions/create-invoice";
-import { createExpenseAction } from "./actions/create-expense";
-import { createBillAction } from "./actions/create-bill";
-import { createVendorAction } from "./actions/create-vendor";
-import { findVendorAction } from "./actions/find-vendor";
-import { findAccountAction } from "./actions/find-account";
-import { recordPaymentAction } from "./actions/record-payment";
-import { recordBillPaymentAction } from "./actions/record-bill-payment";
-import { readAgingReportAction } from "./actions/read-aging-report";
-import { newInvoice } from "./triggers/new-invoice";
-import { newExpense } from "./triggers/new-expense";
-import { newCustomer } from "./triggers/new-customer";
-import { newDeposit } from "./triggers/new-deposit";
-import { newTransfer } from "./triggers/new-transfer";
-import { newOrUpdatedInvoice } from "./triggers/new-or-updated-invoice";
-import { paymentReceived } from "./triggers/payment-received";
-import { newBill } from "./triggers/new-bill";
+import { createPiece } from "@activepieces/pieces-framework";
+import { findInvoiceAction } from "./lib/actions/find-invoice";
+import { findCustomerAction } from "./lib/actions/find-customer";
+import { findPaymentAction } from "./lib/actions/find-payment";
+import { createInvoiceAction } from "./lib/actions/create-invoice";
+import { createExpenseAction } from "./lib/actions/create-expense";
+import { createBillAction } from "./lib/actions/create-bill";
+import { createVendorAction } from "./lib/actions/create-vendor";
+import { findVendorAction } from "./lib/actions/find-vendor";
+import { findAccountAction } from "./lib/actions/find-account";
+import { recordPaymentAction } from "./lib/actions/record-payment";
+import { recordBillPaymentAction } from "./lib/actions/record-bill-payment";
+import { readAgingReportAction } from "./lib/actions/read-aging-report";
+import { newInvoice } from "./lib/triggers/new-invoice";
+import { newExpense } from "./lib/triggers/new-expense";
+import { newCustomer } from "./lib/triggers/new-customer";
+import { newDeposit } from "./lib/triggers/new-deposit";
+import { newTransfer } from "./lib/triggers/new-transfer";
+import { newOrUpdatedInvoice } from "./lib/triggers/new-or-updated-invoice";
+import { paymentReceived } from "./lib/triggers/payment-received";
+import { newBill } from "./lib/triggers/new-bill";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
-import { quickbooksCommon } from "./lib/common";
+import { quickbooksClient } from "./lib/common/client";
 import { quickbooksAuth } from './lib/auth';
+import { quickbooksSandboxAiActions } from './lib/actions/ai';
 
 export const quickbooksSandbox = createPiece({
   displayName: "QuickBooks Online (Sandbox)",
   auth: quickbooksAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: "https://cdn.activepieces.com/pieces/quickbooks.png",
   authors: [ 'onyedikachi-david', 'sanket-a11y'],
   actions: [
@@ -42,21 +43,15 @@ export const quickbooksSandbox = createPiece({
     recordPaymentAction,
     recordBillPaymentAction,
     readAgingReportAction,
+    ...quickbooksSandboxAiActions,
     createCustomApiCallAction({
       auth:quickbooksAuth,
-      baseUrl:(auth)=>{
-        const authValue = auth as PiecePropValueSchema<typeof quickbooksAuth>;
-        const companyId = authValue.props?.['companyId'];
-        
-          const apiUrl = quickbooksCommon.getApiUrl(companyId);
-          return apiUrl
-
+      baseUrl: (auth) => (auth ? quickbooksClient.baseUrl({ auth }) : ''),
+      authMapping: async (auth) => {
+        return {
+          Authorization: `Bearer ${auth.access_token}`,
+        };
       },
-      authMapping:async (auth)=>{
-          return {
-            Authorization:`Bearer ${(auth as OAuth2PropertyValue).access_token}`
-          }
-        }
     })
   ],
   triggers: [
