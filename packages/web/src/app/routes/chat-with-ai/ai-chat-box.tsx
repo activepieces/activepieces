@@ -369,7 +369,10 @@ function ChatBoxContent({
   }
 
   return (
-    <div ref={rootRef} className="flex flex-col h-full flex-1 min-w-0">
+    <div
+      ref={rootRef}
+      className="@container/chat flex flex-col h-full flex-1 min-w-0"
+    >
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div

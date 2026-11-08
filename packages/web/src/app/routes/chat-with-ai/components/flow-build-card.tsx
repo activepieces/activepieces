@@ -56,13 +56,13 @@ export function FlowBuildCard({
     >
       <div
         className={cn(
-          'relative z-10 rounded-t-xl px-4 pb-3 pt-4 sm:px-5',
+          'relative z-10 rounded-t-xl px-4 pb-3 pt-4 @chat-sm/chat:px-5',
           !isDone && !isFailed && 'sticky top-0',
           CARD_BASE,
         )}
       >
         <BuildDoodle iconName={iconName} />
-        <h2 className="pr-28 text-2xl font-semibold leading-tight tracking-tight text-gray-12 sm:pr-40 sm:text-3xl">
+        <h2 className="pr-28 text-2xl font-semibold leading-tight tracking-tight text-gray-12 @chat-sm/chat:pr-40 @chat-sm/chat:text-3xl">
           {tagline}
         </h2>
         <Progress
@@ -76,7 +76,7 @@ export function FlowBuildCard({
         />
       </div>
 
-      <div className="px-4 pb-4 pt-1 sm:px-5">
+      <div className="px-4 pb-4 pt-1 @chat-sm/chat:px-5">
         <ul className="space-y-2.5">
           {build.steps.map((step) => (
             <BuildStepRow key={step.id} step={step} />
@@ -342,7 +342,7 @@ function BuildDoodle({ iconName }: { iconName: string }) {
 
   return (
     <div
-      className="absolute right-4 top-0 z-20 size-[80px] -rotate-12 sm:right-10 sm:size-[104px]"
+      className="absolute right-4 top-0 z-20 size-[80px] -rotate-12 @chat-sm/chat:right-10 @chat-sm/chat:size-[104px]"
       aria-hidden="true"
     >
       <svg viewBox="0 0 100 100" fill="none" className="h-full w-full">
