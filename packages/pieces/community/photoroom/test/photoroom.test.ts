@@ -96,6 +96,15 @@ describe('buildEditImageFormData', () => {
     expect(form.get('removeBackground')).toBe('true');
   });
 
+  it('skips a cleared background image that the engine resolves to null', () => {
+    const form = photoroomClient.buildEditImageFormData({
+      image: makeFile('product.png'),
+      backgroundImage: null,
+    });
+    expect(form.has('background.imageFile')).toBe(false);
+    expect(form.has('imageFile')).toBe(true);
+  });
+
   it('round-trips an explicit removeBackground=false', () => {
     const form = photoroomClient.buildEditImageFormData({
       image: makeFile('product.png'),
@@ -126,7 +135,10 @@ describe('buildEditImageFormData', () => {
     });
     const imagePart = await readFilePart({ form, name: 'imageFile' });
     expect(imagePart.fileName).toBe('product.png');
-    const backgroundPart = await readFilePart({ form, name: 'background.imageFile' });
+    const backgroundPart = await readFilePart({
+      form,
+      name: 'background.imageFile',
+    });
     expect(backgroundPart.fileName).toBe('backdrop.jpg');
     expect(form.get('background.prompt')).toBe('on a marble table');
     expect(form.get('background.color')).toBe('FF0000');

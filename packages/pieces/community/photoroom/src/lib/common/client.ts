@@ -6,16 +6,6 @@ import {
 } from '@activepieces/pieces-common';
 import { ApFile } from '@activepieces/pieces-framework';
 
-export class PhotoroomApiError extends Error {
-  readonly status?: number;
-
-  constructor({ status, message }: { status?: number; message: string }) {
-    super(message);
-    this.name = 'PhotoroomApiError';
-    this.status = status;
-  }
-}
-
 function toRecord({
   value,
 }: {
@@ -165,7 +155,7 @@ function buildEditImageFormData({
   });
   appendFormField({ form, name: 'background.prompt', value: backgroundPrompt });
   appendFormField({ form, name: 'background.color', value: backgroundColor });
-  if (backgroundImage !== undefined) {
+  if (backgroundImage !== undefined && backgroundImage !== null) {
     appendFormFile({
       form,
       name: 'background.imageFile',
@@ -315,6 +305,16 @@ async function fetchAccountDetails({
   }
 }
 
+export class PhotoroomApiError extends Error {
+  readonly status?: number;
+
+  constructor({ status, message }: { status?: number; message: string }) {
+    super(message);
+    this.name = 'PhotoroomApiError';
+    this.status = status;
+  }
+}
+
 export const photoroomClient = {
   buildRemoveBackgroundFormData,
   buildEditImageFormData,
@@ -345,7 +345,7 @@ export type EditImageFormParams = {
   removeBackground?: boolean;
   backgroundPrompt?: string;
   backgroundColor?: string;
-  backgroundImage?: ApFile;
+  backgroundImage?: ApFile | null;
   backgroundSeed?: number;
   shadowMode?: string;
   lightingMode?: string;
