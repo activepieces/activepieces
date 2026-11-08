@@ -5,9 +5,10 @@ export enum PrincipalType {
     WORKER = 'WORKER',
     UNKNOWN = 'UNKNOWN',
     ONBOARDING = 'ONBOARDING',
+    CREDENTIAL_PROXY = 'CREDENTIAL_PROXY',
 }
 
-export const ALL_PRINCIPAL_TYPES = Object.values(PrincipalType)
+export const ALL_PRINCIPAL_TYPES: PrincipalType[] = Object.values(PrincipalType).filter((type) => type !== PrincipalType.CREDENTIAL_PROXY)
 
 export const SERVICE_KEY_SECURITY_OPENAPI = {
     apiKey: [],

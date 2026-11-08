@@ -33,6 +33,7 @@ import { oidcModule } from './core/security/oidc/oidc.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
+import { credentialProxyModule } from './credential-proxy/credential-proxy.module'
 import { backgroundMigrationRunner } from './database/background-migration-runner'
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { agentConversationCreditsHooks } from './ee/agent/agent-conversation-credits'
@@ -260,6 +261,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(appConnectionModule)
     await app.register(platformAppConnectionModule)
     await app.register(variableModule)
+    await app.register(credentialProxyModule)
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)

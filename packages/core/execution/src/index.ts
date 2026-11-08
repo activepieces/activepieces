@@ -34,4 +34,6 @@ export * from './lib/workers/job-data'
 export * from './lib/workers/worker-contract'
 export * from './lib/workers'
 export * from './lib/agents'
+export * from './lib/credential-proxy/credential-placeholder'
+export * from './lib/credential-proxy/credential-proxy-dto'
 

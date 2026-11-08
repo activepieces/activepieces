@@ -23,6 +23,8 @@ export const getConcurrencyPoolParkedKey = (poolId: string): string => `parked_j
 export const getMcpOAuthRevokedGrantKey = (grantId: string): string => `mcp_oauth:revoked_grant:${grantId}`
 export const getPollingExclusivityKey = (flowVersionId: ApId): string => `polling_exclusivity:${flowVersionId}`
 export const getJobReclaimCountKey = (jobId: ApId): string => `job_reclaim_count:${jobId}`
+export const getCredentialGrantKey = (grantId: string): string => `credproxy:grant:v1:${grantId}`
+export const getCredentialGrantIndexKey = ({ jobId, subject }: { jobId: string, subject: string }): string => `credproxy:grant-index:v1:${jobId}:${subject}`
 
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60

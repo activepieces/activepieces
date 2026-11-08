@@ -187,4 +187,8 @@ export const securityAccess = {
     worker: () => {
         return securityAccess.unscoped([PrincipalType.WORKER])
     },
+
+    credentialProxy: () => {
+        return securityAccess.unscoped([PrincipalType.CREDENTIAL_PROXY])
+    },
 }

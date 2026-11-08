@@ -3,12 +3,16 @@ import { Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
+import { credentialProxyAuth } from '../../../../credential-proxy/credential-proxy-auth'
 import { apiKeyService } from '../../../../ee/api-keys/api-key-service'
 
 export const authenticateOrThrow = async (log: FastifyBaseLogger, rawToken: string | null): Promise<Principal> => {
     if (!isNil(rawToken) && rawToken.startsWith('Bearer sk-')) {
         const trimBearerPrefix = rawToken.replace('Bearer ', '')
         return createPrincipalForApiKey(trimBearerPrefix)
+    }
+    if (!isNil(rawToken) && credentialProxyAuth.isProxyToken(rawToken)) {
+        return credentialProxyAuth.verifyOrThrow(rawToken)
     }
     if (!isNil(rawToken) && rawToken.startsWith('Bearer ')) {
         const trimBearerPrefix = rawToken.replace('Bearer ', '')

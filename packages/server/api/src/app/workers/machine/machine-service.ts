@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ExecutionMode, NetworkMode, WorkerGroupScope, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
+import { CredentialProxyPolicy, ExecutionMode, NetworkMode, WorkerGroupScope, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
 
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../helper/domain-helper'
@@ -56,6 +56,8 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         NETWORK_MODE: system.getOrThrow<NetworkMode>(AppSystemProp.NETWORK_MODE),
         PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
         APP_VERSION: apVersionUtil.getCurrentRelease(),
+        CREDENTIAL_PROXY_ENABLED: !isNil(system.get(AppSystemProp.CREDENTIAL_PROXY_SECRET)),
+        CREDENTIAL_PROXY_POLICY: system.getOrThrow<CredentialProxyPolicy>(AppSystemProp.CREDENTIAL_PROXY_POLICY),
     }
     settingsCache.set(cacheKey, settings)
     return settings
