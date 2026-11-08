@@ -220,17 +220,52 @@ describe('previewUtils table helpers', () => {
   });
 });
 
+describe('previewUtils.sortRows with suffixed numbers', () => {
+  it('applies k, M and B multipliers', () => {
+    const sorted = previewUtils.sortRows({
+      rows: [
+        ['a', '$1.2M'],
+        ['b', '$900k'],
+        ['c', '2B'],
+        ['d', '50'],
+      ],
+      column: 1,
+      direction: 'asc',
+      numeric: true,
+    });
+    expect(sorted.map((row) => row[0])).toEqual(['d', 'b', 'a', 'c']);
+  });
+});
+
 describe('previewUtils.readableFileType', () => {
-  it('uses the file extension first', () => {
+  it('uses a known media type first', () => {
     expect(
       previewUtils.readableFileType({
         mediaType: 'text/csv',
-        fileName: 'leads.csv',
+        fileName: 'leads.txt',
       }),
     ).toBe('CSV');
   });
 
-  it('falls back to a known media type', () => {
+  it('falls back to a short file extension', () => {
+    expect(
+      previewUtils.readableFileType({
+        mediaType: 'application/x-unknown',
+        fileName: 'leads.tsv',
+      }),
+    ).toBe('TSV');
+  });
+
+  it('ignores a long dotted suffix', () => {
+    expect(
+      previewUtils.readableFileType({
+        mediaType: 'application/x-unknown',
+        fileName: 'Report v1.final draft',
+      }),
+    ).toBe(null);
+  });
+
+  it('reads the type from a known media type when the name has none', () => {
     expect(
       previewUtils.readableFileType({
         mediaType:

@@ -14,6 +14,7 @@ import { getTextFromParts } from '../lib/message-parsers';
 
 import { ChatFileChip } from './chat-ui/chat-file-chip';
 import { CopyIconButton } from './copy-icon-button';
+import { previewUtils } from './previews/preview-utils';
 
 export const UserMessage = memo(function UserMessage({
   message,
@@ -43,11 +44,22 @@ export const UserMessage = memo(function UserMessage({
               <ChatFileChip
                 key={`${i}-${file.name}`}
                 name={file.name}
-                type={fileTypeLabel(file)}
-                thumbnailUrl={
-                  file.mediaType.startsWith('image/') ? file.url : undefined
+                type={
+                  previewUtils.readableFileType({
+                    mediaType: file.mediaType,
+                    fileName: file.name,
+                  }) ?? t('File')
                 }
-                onOpen={() => window.open(file.url, '_blank', 'noopener')}
+                thumbnailUrl={
+                  file.url !== '' && file.mediaType.startsWith('image/')
+                    ? file.url
+                    : undefined
+                }
+                onOpen={
+                  file.url !== ''
+                    ? () => window.open(file.url, '_blank', 'noopener')
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -59,9 +71,7 @@ export const UserMessage = memo(function UserMessage({
             </PromptKitMessageContent>
           </div>
         </Message>
-        <MessageActions
-          className="justify-end mt-1"
-        >
+        <MessageActions className="justify-end mt-1">
           <MessageAction tooltip={t('Copy')}>
             <CopyIconButton textToCopy={content} className="h-6 w-6" />
           </MessageAction>
@@ -70,17 +80,3 @@ export const UserMessage = memo(function UserMessage({
     </motion.div>
   );
 });
-
-function fileTypeLabel({
-  name,
-  mediaType,
-}: {
-  name: string;
-  mediaType: string;
-}): string {
-  const dot = name.lastIndexOf('.');
-  if (dot > 0 && dot < name.length - 1) {
-    return name.slice(dot + 1).toUpperCase();
-  }
-  return mediaType.split('/').pop()?.toUpperCase() ?? '';
-}

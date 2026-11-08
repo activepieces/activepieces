@@ -227,7 +227,9 @@ function sortRows({
 }
 
 function toNumber(cell: string): number {
-  return Number(cell.replace(/[^\d.-]/g, ''));
+  const base = Number(cell.replace(/[^\d.-]/g, ''));
+  const suffix = cell.trim().slice(-1).toLowerCase();
+  return base * (NUMBER_SUFFIX_MULTIPLIERS[suffix] ?? 1);
 }
 
 function readableFileType({
@@ -237,13 +239,20 @@ function readableFileType({
   mediaType: string;
   fileName: string;
 }): string | null {
-  const ext = fileExtension(fileName);
-  if (/^[a-z0-9]{1,5}$/.test(ext)) return ext.toUpperCase();
   const subtype = mediaType.toLowerCase().split(';')[0].split('/')[1] ?? '';
-  return MEDIA_SUBTYPE_LABELS[subtype.trim()] ?? null;
+  const fromMediaType = MEDIA_SUBTYPE_LABELS[subtype.trim()];
+  if (fromMediaType) return fromMediaType;
+  const ext = fileExtension(fileName);
+  return /^[a-z0-9]{1,5}$/.test(ext) ? ext.toUpperCase() : null;
 }
 
 const NUMERIC_CELL = /^[-+]?[$€£¥]?\s?[-+]?\d[\d,]*(\.\d+)?\s?[%kKmMbB]?$/;
+
+const NUMBER_SUFFIX_MULTIPLIERS: Record<string, number> = {
+  k: 1e3,
+  m: 1e6,
+  b: 1e9,
+};
 
 const MEDIA_SUBTYPE_LABELS: Record<string, string> = {
   pdf: 'PDF',

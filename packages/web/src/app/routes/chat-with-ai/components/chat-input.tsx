@@ -22,6 +22,7 @@ import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
 import { cn } from '@/lib/utils';
 
 import { ChatFileChip } from './chat-ui/chat-file-chip';
+import { previewUtils } from './previews/preview-utils';
 
 export function ChatInput({
   isStreaming,
@@ -195,7 +196,12 @@ export function ChatInput({
                   >
                     <ChatFileChip
                       name={attachment.file.name}
-                      type={fileTypeLabel(attachment.file)}
+                      type={
+                        previewUtils.readableFileType({
+                          mediaType: attachment.file.type,
+                          fileName: attachment.file.name,
+                        }) ?? t('File')
+                      }
                       size={attachment.file.size}
                       thumbnailUrl={attachment.previewUrl}
                       onRemove={() => removeAttachment(attachment.id)}
@@ -329,13 +335,6 @@ export function ChatInput({
 
 function revokePreview(attachment: ComposerAttachment) {
   if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
-}
-
-function fileTypeLabel(file: File): string | undefined {
-  if (file.type.startsWith('image/')) return t('Image');
-  const dot = file.name.lastIndexOf('.');
-  if (dot <= 0 || dot === file.name.length - 1) return undefined;
-  return file.name.slice(dot + 1).toUpperCase();
 }
 
 type ComposerAttachment = {
