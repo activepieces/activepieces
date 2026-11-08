@@ -1,5 +1,4 @@
 import { EnginePrincipal, PrincipalType } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { jwtUtils } from '../../../../src/app/helper/jwt-utils'
@@ -7,7 +6,10 @@ import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 
 const SECRET = 'generate-engine-token-test-secret'
-const RETENTION_DAYS = 30
+const FLOW_TIMEOUT_SECONDS = 600
+const TRIGGER_TIMEOUT_SECONDS = 60
+const TRIGGER_HOOKS_TIMEOUT_SECONDS = 180
+const MARGIN_SECONDS = 60 * 60
 
 const { accessTokenManager } = await import('../../../../src/app/authentication/lib/access-token-manager')
 
@@ -24,34 +26,75 @@ const mockLog: FastifyBaseLogger = {
 } as unknown as FastifyBaseLogger
 
 const manager = accessTokenManager(mockLog)
+let configuredTtl: number | null = null
 
 beforeAll(() => {
     vi.spyOn(jwtUtils, 'getJwtSecret').mockResolvedValue(SECRET)
-    vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
-        if (prop === AppSystemProp.EXECUTION_DATA_RETENTION_DAYS) {
-            return RETENTION_DAYS
+    vi.spyOn(system, 'getNumber').mockImplementation((prop) => {
+        if (prop === AppSystemProp.ENGINE_TOKEN_TTL_SECONDS) {
+            return configuredTtl
         }
         throw new Error(`Unexpected system prop in test: ${prop}`)
     })
+    vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+        switch (prop) {
+            case AppSystemProp.FLOW_TIMEOUT_SECONDS:
+                return FLOW_TIMEOUT_SECONDS
+            case AppSystemProp.TRIGGER_TIMEOUT_SECONDS:
+                return TRIGGER_TIMEOUT_SECONDS
+            case AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS:
+                return TRIGGER_HOOKS_TIMEOUT_SECONDS
+            default:
+                throw new Error(`Unexpected system prop in test: ${prop}`)
+        }
+    })
 })
 
+async function decode(token: string): Promise<EnginePrincipal & { iat: number, exp: number }> {
+    return jwtUtils.decodeAndVerify<EnginePrincipal & { iat: number, exp: number }>({ jwt: token, key: SECRET })
+}
+
 describe('generateEngineToken', () => {
-    it('issues a JWT whose lifetime equals EXECUTION_DATA_RETENTION_DAYS, not the legacy 100-year value', async () => {
+    it('issues a JWT that outlives the longest job timeout by a fixed margin when no TTL is configured', async () => {
+        configuredTtl = null
         const token = await manager.generateEngineToken({
             jobId: 'job-1',
             projectId: 'proj-1',
             platformId: 'plat-1',
         })
 
-        const decoded = await jwtUtils.decodeAndVerify<EnginePrincipal & { iat: number, exp: number }>({
-            jwt: token,
-            key: SECRET,
-        })
+        const decoded = await decode(token)
 
-        const expectedSeconds = dayjs.duration(RETENTION_DAYS, 'day').asSeconds()
-        expect(decoded.exp - decoded.iat).toBe(expectedSeconds)
+        expect(decoded.exp - decoded.iat).toBe(FLOW_TIMEOUT_SECONDS + MARGIN_SECONDS)
+        expect(decoded.id).toBe('job-1')
         expect(decoded.type).toBe(PrincipalType.ENGINE)
         expect(decoded.projectId).toBe('proj-1')
         expect(decoded.platform.id).toBe('plat-1')
+    })
+
+    it('uses AP_ENGINE_TOKEN_TTL_SECONDS when it is longer than the job-bound default', async () => {
+        configuredTtl = 2 * (FLOW_TIMEOUT_SECONDS + MARGIN_SECONDS)
+        const token = await manager.generateEngineToken({
+            jobId: 'job-2',
+            projectId: 'proj-1',
+            platformId: 'plat-1',
+        })
+
+        const decoded = await decode(token)
+
+        expect(decoded.exp - decoded.iat).toBe(configuredTtl)
+    })
+
+    it('never issues a token shorter than the job-bound default, even when configured lower', async () => {
+        configuredTtl = 60
+        const token = await manager.generateEngineToken({
+            jobId: 'job-3',
+            projectId: 'proj-1',
+            platformId: 'plat-1',
+        })
+
+        const decoded = await decode(token)
+
+        expect(decoded.exp - decoded.iat).toBe(FLOW_TIMEOUT_SECONDS + MARGIN_SECONDS)
     })
 })

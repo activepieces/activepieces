@@ -189,20 +189,32 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         }
     },
     removeRefreshTokenAndClientSecret: (connection: AppConnection): AppConnection => {
-        if (connection.value.type === AppConnectionType.OAUTH2 && connection.value.grant_type === OAuth2GrantType.CLIENT_CREDENTIALS) {
-            connection.value.client_secret = '(REDACTED)'
+        switch (connection.value.type) {
+            case AppConnectionType.OAUTH2:
+                return {
+                    ...connection,
+                    value: {
+                        ...connection.value,
+                        client_secret: REDACTED,
+                        refresh_token: REDACTED,
+                    },
+                }
+            case AppConnectionType.CLOUD_OAUTH2:
+            case AppConnectionType.PLATFORM_OAUTH2:
+                return {
+                    ...connection,
+                    value: {
+                        ...connection.value,
+                        refresh_token: REDACTED,
+                    },
+                }
+            default:
+                return connection
         }
-        if (connection.value.type === AppConnectionType.OAUTH2
-            || connection.value.type === AppConnectionType.CLOUD_OAUTH2
-            || connection.value.type === AppConnectionType.PLATFORM_OAUTH2) {
-            connection.value = {
-                ...connection.value,
-                refresh_token: '(REDACTED)',
-            }
-        }
-        return connection
     },
 })
+
+const REDACTED = '(REDACTED)'
 
 type OAuth2TokenUrlParams = {
     platformId: PlatformId

@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, EnginePrincipal, Principal, PrincipalType, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -30,11 +30,10 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
 
         const secret = await jwtUtils.getJwtSecret()
 
-        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         return jwtUtils.sign({
             payload: enginePrincipal,
             key: secret,
-            expiresInSeconds: dayjs.duration(retentionDays, 'day').asSeconds(),
+            expiresInSeconds: engineTokenTtlSeconds(),
         })
     },
 
@@ -87,6 +86,17 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
     },
 })
 
+function engineTokenTtlSeconds(): number {
+    const longestJobTimeoutSeconds = Math.max(
+        system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
+        system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
+        system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
+    )
+    const jobBoundTtlSeconds = longestJobTimeoutSeconds + ENGINE_TOKEN_TTL_MARGIN_SECONDS
+    const configured = system.getNumber(AppSystemProp.ENGINE_TOKEN_TTL_SECONDS)
+    return isNil(configured) ? jobBoundTtlSeconds : Math.max(configured, jobBoundTtlSeconds)
+}
+
 async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Principal): Promise<void> {
     if (decoded.type !== PrincipalType.USER && decoded.type !== PrincipalType.ONBOARDING) return
 
@@ -119,6 +129,8 @@ async function assertUserSession(log: FastifyBaseLogger, decoded: Principal | Pr
         await userIdentityService(log).updateLastLoggedInPlatformId({ id: identity.id, lastLoggedInPlatformId: decoded.platform.id })
     }
 }
+
+const ENGINE_TOKEN_TTL_MARGIN_SECONDS = 60 * 60
 
 type GenerateEngineTokenParams = {
     projectId: ProjectId

@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### OAuth2 connections no longer expose `client_secret` to pieces, and engine tokens expire with the job
+
+Flow steps receive their connection through the engine. For an OAuth2 connection with an authorization-code grant, the engine used to receive the real `client_secret` alongside the access token; it now receives `(REDACTED)`, as client-credentials connections already did. No official piece reads `client_secret`; a private piece that did will now send the literal `(REDACTED)` to its provider.
+
+The token the engine uses to call the app used to live for `AP_EXECUTION_DATA_RETENTION_DAYS` (30 days by default). It now lives for the longest job timeout plus one hour, about 70 minutes with default settings, and `AP_ENGINE_TOKEN_TTL_SECONDS` can lengthen it.
+
+#### What you need to do
+
+Nothing for official pieces. If you maintain a private piece whose actions read `auth.client_secret`, move that logic out of the piece: the secret is only used by the app during token exchange and refresh. If your workers run jobs that legitimately take longer than the timeouts allow, set `AP_ENGINE_TOKEN_TTL_SECONDS` on the app container.
+
 #### Rendex 0.2.0: Render to Image is no longer an agent tool
 
 From Rendex 0.2.0, **Render to Image** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Render Screenshot** tool instead, which takes the page as one of URL, HTML or Markdown.

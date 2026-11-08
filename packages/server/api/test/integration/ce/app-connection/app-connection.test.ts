@@ -1,8 +1,10 @@
 import { apId } from '@activepieces/core-utils'
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, PackageType, PieceType, PLACEHOLDER_CONNECTION_TYPE } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, PackageType, PieceType, PLACEHOLDER_CONNECTION_TYPE, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
+import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
@@ -415,6 +417,53 @@ describe('AppConnection CE API', () => {
             const response = await ctx.get(`/v1/app-connections/${apId()}`)
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
+    describe('GET /v1/worker/app-connections/:externalId', () => {
+        it('redacts the client secret and refresh token of an OAuth2 connection before handing it to the engine', async () => {
+            const ctx = await createTestContext(app!)
+            const connection = createMockConnection({
+                platformId: ctx.platform.id,
+                projectIds: [ctx.project.id],
+                externalId: 'oauth2-for-engine',
+            }, ctx.user.id)
+            await db.save('app_connection', {
+                ...connection,
+                type: AppConnectionType.OAUTH2,
+                value: await encryptUtils.encryptObject({
+                    type: AppConnectionType.OAUTH2,
+                    client_id: 'client-id',
+                    client_secret: 'client-secret',
+                    redirect_url: 'https://example.com/redirect',
+                    token_type: 'Bearer',
+                    access_token: 'access-token',
+                    refresh_token: 'refresh-token',
+                    claimed_at: Math.round(Date.now() / 1000),
+                    expires_in: 3600,
+                    scope: '',
+                    token_url: 'https://example.com/token',
+                    data: {},
+                }),
+            })
+            const engineToken = await generateMockToken({
+                type: PrincipalType.ENGINE,
+                id: apId(),
+                projectId: ctx.project.id,
+                platform: { id: ctx.platform.id },
+            })
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/worker/app-connections/oauth2-for-engine',
+                headers: { authorization: `Bearer ${engineToken}` },
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const value = response.json().value
+            expect(value.access_token).toBe('access-token')
+            expect(value.client_secret).toBe('(REDACTED)')
+            expect(value.refresh_token).toBe('(REDACTED)')
         })
     })
 
