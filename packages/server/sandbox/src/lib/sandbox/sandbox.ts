@@ -1,6 +1,6 @@
 import { ChildProcess } from 'child_process'
 import { randomBytes, timingSafeEqual } from 'crypto'
-import { chmod, mkdir } from 'fs/promises'
+import { chmod, mkdir, readdir, stat } from 'fs/promises'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
@@ -39,6 +39,24 @@ function buildCodeMount({ flowVersionId, reusable, basePath }: { flowVersionId: 
         }
     }
     return null
+}
+
+async function openTreeForAllBoxUids(dir: string): Promise<void> {
+    await chmod(dir, 0o777)
+    const { data: entries } = await tryCatch(() => readdir(dir, { withFileTypes: true }))
+    await Promise.all((entries ?? []).map(async (entry) => {
+        const entryPath = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+            await tryCatch(() => openTreeForAllBoxUids(entryPath))
+            return
+        }
+        if (entry.isFile()) {
+            await tryCatch(async () => {
+                const { mode } = await stat(entryPath)
+                await chmod(entryPath, mode | 0o666)
+            })
+        }
+    }))
 }
 
 function buildDenoCacheMount({ flowVersionId, reusable, basePath }: { flowVersionId: string | undefined, reusable: boolean, basePath: string }): SandboxMount | null {
@@ -163,7 +181,7 @@ export function createSandbox(
             const denoCacheMount = buildDenoCacheMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
             if (denoCacheMount) {
                 await mkdir(denoCacheMount.hostPath, { recursive: true })
-                await chmod(denoCacheMount.hostPath, 0o777)
+                await openTreeForAllBoxUids(denoCacheMount.hostPath)
             }
             const customPieceMounts: SandboxMount[] = []
             if (platformId) {

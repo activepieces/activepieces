@@ -12,11 +12,13 @@ import { createSandbox } from '../../../src/lib/sandbox/sandbox'
 import { Sandbox, SandboxMount, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
 import { SandboxSettings } from '../../../src/lib/types'
 
-const { treeKillMock, isolateProcessMock, mkdirMock, chmodMock } = vi.hoisted(() => ({
+const { treeKillMock, isolateProcessMock, mkdirMock, chmodMock, readdirMock, statMock } = vi.hoisted(() => ({
     treeKillMock: vi.fn((_pid: number, _signal: string, cb: (err?: Error) => void) => cb()),
     isolateProcessMock: vi.fn(),
     mkdirMock: vi.fn(async () => undefined),
     chmodMock: vi.fn(async () => undefined),
+    readdirMock: vi.fn(async (): Promise<{ name: string, isDirectory: () => boolean, isFile: () => boolean }[]> => []),
+    statMock: vi.fn(async () => ({ mode: 0o100644 })),
 }))
 
 vi.mock('tree-kill', () => ({
@@ -26,6 +28,8 @@ vi.mock('tree-kill', () => ({
 vi.mock('fs/promises', () => ({
     mkdir: mkdirMock,
     chmod: chmodMock,
+    readdir: readdirMock,
+    stat: statMock,
 }))
 
 vi.mock('../../../src/lib/sandbox/isolate', () => ({
@@ -358,18 +362,26 @@ describe('createSandbox', () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
             sandbox = createSandbox(log, 'sb-deno-cache', { ...defaultOptions, reusable: false }, testPM.maker)
+            const cacheDir = '/tmp/test-cache/codes/fv-1/.deno-cache'
+            const entry = (name: string, isDirectory: boolean) => ({ name, isDirectory: () => isDirectory, isFile: () => !isDirectory })
+            readdirMock.mockImplementation(async (dir: string) => dir === cacheDir
+                ? [entry('gen', true), entry('v8_code_cache_v2', false)]
+                : dir === `${cacheDir}/gen` ? [entry('stdin.js', false)] : [])
 
             await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
 
             const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
             const denoCacheMount = createCall.mounts.find((m: SandboxMount) => m.sandboxPath.endsWith('.deno-cache'))
             expect(denoCacheMount).toEqual({
-                hostPath: '/tmp/test-cache/codes/fv-1/.deno-cache',
+                hostPath: cacheDir,
                 sandboxPath: '/root/codes/fv-1/.deno-cache',
                 rw: true,
             })
-            expect(mkdirMock).toHaveBeenCalledWith('/tmp/test-cache/codes/fv-1/.deno-cache', { recursive: true })
-            expect(chmodMock).toHaveBeenCalledWith('/tmp/test-cache/codes/fv-1/.deno-cache', 0o777)
+            expect(mkdirMock).toHaveBeenCalledWith(cacheDir, { recursive: true })
+            expect(chmodMock).toHaveBeenCalledWith(cacheDir, 0o777)
+            expect(chmodMock).toHaveBeenCalledWith(`${cacheDir}/gen`, 0o777)
+            expect(chmodMock).toHaveBeenCalledWith(`${cacheDir}/v8_code_cache_v2`, 0o100666)
+            expect(chmodMock).toHaveBeenCalledWith(`${cacheDir}/gen/stdin.js`, 0o100666)
             expect(createCall.env.AP_DENO_CACHE_MOUNTED).toBe('true')
         })
 
