@@ -47,6 +47,12 @@ describe('Invitation page', () => {
         expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
 
+    it('answers accepting an expired link as not found', async () => {
+        const token = await signInvitationToken({ invitationId: faker.string.alphanumeric(21), expiresInSeconds: -60 })
+        const response = await app.inject({ method: 'POST', url: '/api/v1/user-invitations/accept', body: { invitationToken: token } })
+        expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+    })
+
     it('answers a link to a deleted invitation as not found', async () => {
         const token = await signInvitationToken({ invitationId: faker.string.alphanumeric(21) })
         const response = await app.inject({ method: 'GET', url: '/api/v1/user-invitations/preview', query: { token } })

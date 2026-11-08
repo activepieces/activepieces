@@ -29,11 +29,23 @@ const projectRepo = repoFactory(ProjectEntity)
 
 export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
-        const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
+        const key = await jwtUtils.getJwtSecret()
+        const { data: decodedToken, error } = await tryCatch(() => jwtUtils.decodeAndVerify<UserInvitationToken>({
             jwt: invitationToken,
-            key: await jwtUtils.getJwtSecret(),
+            key,
             audience: JwtAudience.USER_INVITATION,
-        })
+        }))
+        if (error instanceof JsonWebTokenError) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'UserInvitation',
+                },
+            })
+        }
+        if (isNil(decodedToken)) {
+            throw error
+        }
         const invitation = await repo().findOneBy({
             id: decodedToken.id,
         })
@@ -49,18 +61,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         return invitation
     },
     async getPreviewByInvitationToken(invitationToken: string): Promise<UserInvitationPreview> {
-        const { data: invitation, error } = await tryCatch(() => this.getOneByInvitationTokenOrThrow(invitationToken))
-        if (error instanceof JsonWebTokenError) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'UserInvitation',
-                },
-            })
-        }
-        if (isNil(invitation)) {
-            throw error
-        }
+        const invitation = await this.getOneByInvitationTokenOrThrow(invitationToken)
         const platform = await platformService(log).getOneOrThrow(invitation.platformId)
         const theme = await resumePageHooks.get(log).getTheme({ platformId: invitation.platformId })
         const memberCount = await userService(log).countActiveByPlatformId({ platformId: invitation.platformId })
