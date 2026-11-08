@@ -5,6 +5,7 @@ import { startStructuralMove } from './chat-layout';
 const STORAGE_KEY = 'chat-panel';
 const TAB_CONVERSATION_KEY = 'chat:conv';
 const LAST_CONVERSATION_KEY = 'chat:last-conv';
+const TAB_LAST_PAGE_KEY = 'chat:last-page';
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -29,6 +30,7 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
   return {
     ...readSaved(),
     conversationId: readConversationId(),
+    lastPage: readLastPage(),
     newChatToken: 0,
     pendingPrompt: undefined,
     gesture: 'idle',
@@ -65,6 +67,11 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
       setConversation({ conversationId, pendingPrompt: undefined }),
     conversationMissing: () => setConversation({ conversationId: null }),
     setGesture: (gesture) => set({ gesture }),
+    setLastPage: (lastPage) => {
+      if (lastPage === get().lastPage) return;
+      set({ lastPage });
+      saveLastPage(lastPage);
+    },
   };
 });
 
@@ -130,6 +137,22 @@ function saveConversationId(conversationId: string | null) {
   }
 }
 
+function readLastPage(): string | null {
+  try {
+    return sessionStorage.getItem(TAB_LAST_PAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function saveLastPage(lastPage: string) {
+  try {
+    sessionStorage.setItem(TAB_LAST_PAGE_KEY, lastPage);
+  } catch {
+    return;
+  }
+}
+
 export type ChatPanelSide = 'left' | 'right';
 export type ChatPanelMode = ChatPanelSide | 'float';
 export type FloatPosition = { x: number; y: number };
@@ -146,6 +169,7 @@ type SavedChatPanel = {
 
 type ChatPanelState = SavedChatPanel & {
   conversationId: string | null;
+  lastPage: string | null;
   newChatToken: number;
   pendingPrompt?: string;
   gesture: ChatGesture;
@@ -163,4 +187,5 @@ type ChatPanelState = SavedChatPanel & {
   conversationCreated: (conversationId: string) => void;
   conversationMissing: () => void;
   setGesture: (gesture: ChatGesture) => void;
+  setLastPage: (lastPage: string) => void;
 };

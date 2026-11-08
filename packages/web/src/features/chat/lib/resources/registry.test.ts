@@ -255,3 +255,23 @@ describe('resourceRegistry routes', () => {
     );
   });
 });
+
+describe('resourceRegistry.refAt', () => {
+  it('finds the resource a page shows', () => {
+    expect(resourceRegistry.refAt('/projects/p1/tables/t1')).toEqual({
+      kind: 'table',
+      id: 't1',
+    });
+    expect(resourceRegistry.refAt('/projects/p1/flows/f1/runs')).toEqual({
+      kind: 'flow',
+      id: 'f1',
+    });
+  });
+
+  it('ignores list pages', () => {
+    expect(resourceRegistry.refAt('/projects/p1/automations')).toBeNull();
+    expect(resourceRegistry.refAt('/projects/p1/connections')).toBeNull();
+    expect(resourceRegistry.refAt('/projects/p1/flows')).toBeNull();
+    expect(resourceRegistry.refAt('/chat')).toBeNull();
+  });
+});

@@ -46,7 +46,7 @@ import { cn } from '@/lib/utils';
 
 import { useShellHandle } from '../app-shell';
 
-import { ChatChrome } from './chat-chrome';
+import { ChatChrome, ChatLastPageTracker } from './chat-chrome';
 import { ChatDemoCorner } from './chat-demo-corner';
 import { FollowAlongController } from './follow-along-controller';
 
@@ -201,6 +201,7 @@ export function ChatChromeHost() {
   return (
     <>
       <FollowAlongController />
+      <ChatLastPageTracker />
       {mounted &&
         createPortal(
           <ChatChrome

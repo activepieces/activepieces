@@ -1,12 +1,10 @@
-import { isNil, SeekPage } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
-  AgentConversation,
   AgentMessageSource,
   ChatPersonalizationStatus,
   ModelOptions,
   PlatformRole,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -42,12 +40,11 @@ import { cn } from '@/lib/utils';
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
-  EmptyState,
+  ChatEmptyState,
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
-import { OnboardingWelcome } from './components/onboarding-welcome';
 import {
   PersonalizationChip,
   PersonalizationChipState,
@@ -83,7 +80,6 @@ function ChatBoxContent({
   newChatToken,
   compact,
 }: AIChatBoxProps) {
-  const queryClient = useQueryClient();
   const credits = useCreditsState();
   const sessionProjectId = authenticationSession.getProjectId();
   const gate = useModelGate({
@@ -347,11 +343,6 @@ function ChatBoxContent({
     }
   };
 
-  const cachedConversations = queryClient.getQueryData<
-    SeekPage<AgentConversation>
-  >(['chat-conversations']);
-  const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
-
   if (gate === 'loading') {
     return <MessageSkeletons />;
   }
@@ -361,7 +352,7 @@ function ChatBoxContent({
   }
 
   return (
-    <div className="flex flex-col h-full flex-1 min-w-0">
+    <div data-chat-box className="flex flex-col h-full flex-1 min-w-0">
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div
@@ -371,17 +362,14 @@ function ChatBoxContent({
               showPersonalizationDonut && 'pb-14',
             )}
           >
-            {emptyState ??
-              (showOnboardingCard ? (
-                <OnboardingWelcome />
-              ) : (
-                <EmptyState
-                  onSuggestionClick={(text) => void handleSend(text)}
-                  incognito={incognito}
-                  showFlowCards={!hasConversations}
-                  hasInput={hasInput}
-                />
-              ))}
+            {emptyState ?? (
+              <ChatEmptyState
+                incognito={incognito}
+                hasInput={hasInput}
+                onboarding={showOnboardingCard}
+                onSend={(text) => handleSend(text).catch(() => undefined)}
+              />
+            )}
           </div>
         ) : (
           <motion.div

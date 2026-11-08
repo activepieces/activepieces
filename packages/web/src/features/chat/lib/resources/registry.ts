@@ -98,6 +98,18 @@ function isOn(pathname: string, ref: ResourceRef): boolean {
   return next === '' || next === '/';
 }
 
+function refAt(pathname: string): ResourceRef | null {
+  for (const kind of Object.keys(KINDS).filter(isKind)) {
+    const prefix = KINDS[kind].path('');
+    if (!prefix.endsWith('/')) continue;
+    const at = pathname.indexOf(prefix);
+    if (at === -1) continue;
+    const id = /^[A-Za-z0-9_-]+/.exec(pathname.slice(at + prefix.length))?.[0];
+    if (id) return { kind, id };
+  }
+  return null;
+}
+
 function isInCurrentProject(ref: ResourceRef): boolean {
   return (
     !ref.projectId || ref.projectId === authenticationSession.getProjectId()
@@ -454,6 +466,7 @@ export const resourceRegistry = {
   route,
   parentRoute,
   isOn,
+  refAt,
   isInCurrentProject,
   queryKeys,
   keyOf,
