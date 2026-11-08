@@ -4,13 +4,13 @@ import { t } from 'i18next';
 const LOGOS_URL = '/client-logos';
 
 function icon(key: McpOAuthClientKey | null): string {
-  return MCP_CLIENT_BRANDING[key ?? 'unknown'].icon;
+  return ((key && MCP_CLIENT_BRANDING[key]) ?? MCP_CLIENT_BRANDING.unknown)
+    .icon;
 }
 
 function label({ key, clientName }: LabelParams): string {
-  return key === null || key === 'unknown'
-    ? clientName ?? t('MCP client')
-    : MCP_CLIENT_BRANDING[key].name;
+  const known = key && key !== 'unknown' ? MCP_CLIENT_BRANDING[key] : undefined;
+  return known?.name ?? clientName ?? t('MCP client');
 }
 
 export const mcpClientDisplay = { icon, label };
@@ -52,8 +52,28 @@ export const MCP_CLIENT_BRANDING: Record<
     name: 'VS Code',
   },
   windsurf: {
-    icon: `${LOGOS_URL}/windsurf.svg`,
-    name: 'Windsurf',
+    icon: `${LOGOS_URL}/devin.svg`,
+    name: 'Devin',
+  },
+  'copilot-cli': {
+    icon: `${LOGOS_URL}/copilot-cli.svg`,
+    name: 'Copilot CLI',
+  },
+  antigravity: {
+    icon: `${LOGOS_URL}/antigravity.svg`,
+    name: 'Antigravity',
+  },
+  zed: {
+    icon: `${LOGOS_URL}/zed.svg`,
+    name: 'Zed',
+  },
+  cline: {
+    icon: `${LOGOS_URL}/cline.svg`,
+    name: 'Cline',
+  },
+  goose: {
+    icon: `${LOGOS_URL}/goose.svg`,
+    name: 'goose',
   },
   unknown: {
     icon: `${LOGOS_URL}/mcp.svg`,
