@@ -2966,6 +2966,7 @@
   "You need an invitation to sign up.": "You need an invitation to sign up.",
   "Email domain is disallowed": "Email domain is disallowed",
   "Email sign-in is disabled": "Email sign-in is disabled",
+  "Your organization doesn't allow this sign-in method": "Your organization doesn't allow this sign-in method",
   "That verification expired. Please try again.": "That verification expired. Please try again.",
   "That code is invalid or expired. Try again.": "That code is invalid or expired. Try again.",
   "Sign in or create your account": "Sign in or create your account",
