@@ -1,40 +1,133 @@
 import { FileProducedEvent } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
-import { Download, FileIcon } from 'lucide-react';
-import { motion } from 'motion/react';
-import { useState } from 'react';
+import { t } from 'i18next';
+import { Download, FileIcon, ImageIcon } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
 
+import { ChatCard, ChatCardHeader, ChatCardTile } from './chat-ui/chat-card';
+import { ChatImage } from './chat-ui/chat-image';
 import { DocumentPreview } from './previews/document-preview';
 import { HtmlPreview } from './previews/html-preview';
 import { JsonPreview } from './previews/json-preview';
-import { previewUtils } from './previews/preview-utils';
+import { PreviewCard, PreviewIconButton } from './previews/preview-card';
+import { FileKind, previewUtils } from './previews/preview-utils';
 import { SpreadsheetPreview } from './previews/spreadsheet-preview';
 
-const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;
+export function ProducedFileCard({ file }: { file: FileProducedEvent }) {
+  const kind = previewUtils.detectFileKind(file.mediaType, file.fileName);
+  const canPreview =
+    kind !== 'image' && kind !== 'binary' && file.byteSize <= MAX_PREVIEW_BYTES;
 
-function formatBytes(bytes: number): string {
-  if (bytes <= 0) return '';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const exponent = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1,
-  );
-  const value = bytes / Math.pow(1024, exponent);
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${
-    units[exponent]
-  }`;
+  const {
+    data: content,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['chat-produced-file', file.fileId],
+    queryFn: async () => {
+      const response = await fetch(file.url);
+      if (!response.ok) throw new Error('Failed to load file');
+      return response.text();
+    },
+    enabled: canPreview,
+    staleTime: Infinity,
+    retry: 1,
+  });
+
+  const label = file.title ?? file.fileName;
+  const meta = fileMeta(file);
+
+  if (kind === 'image') {
+    return (
+      <PreviewCard
+        icon={ImageIcon}
+        label={label}
+        meta={meta}
+        actions={[
+          {
+            id: 'download',
+            icon: Download,
+            label: t('Download'),
+            href: file.url,
+          },
+        ]}
+        className="max-w-md"
+      >
+        <div className="p-3">
+          <ChatImage src={file.url} alt={label} />
+        </div>
+      </PreviewCard>
+    );
+  }
+
+  if (canPreview && !isError) {
+    if (isLoading || content === undefined) {
+      return (
+        <ChatCard className="my-3 w-full overflow-hidden">
+          <ChatCardHeader
+            tile={<ChatCardTile kind="file" icon={FileIcon} />}
+            title={label}
+            meta={meta}
+          />
+          <div className="border-t border-gray-6 p-3">
+            <Skeleton className="h-40 w-full" />
+          </div>
+        </ChatCard>
+      );
+    }
+
+    const previewElement = selectTextPreview({
+      kind,
+      content,
+      label,
+      fileName: previewUtils.baseFileName(file.fileName),
+    });
+    if (previewElement) return previewElement;
+  }
+
+  return <FileCard file={file} label={label} meta={meta} />;
 }
 
-function selectTextPreview(
-  kind: ReturnType<typeof previewUtils.detectFileKind>,
-  content: string,
-  label: string,
-  fileName: string,
-) {
+function FileCard({
+  file,
+  label,
+  meta,
+}: {
+  file: FileProducedEvent;
+  label: string;
+  meta: string;
+}) {
+  return (
+    <ChatCard className="my-3 max-w-md">
+      <ChatCardHeader
+        tile={<ChatCardTile kind="file" icon={FileIcon} />}
+        title={label}
+        meta={meta}
+        trailing={
+          <PreviewIconButton
+            icon={Download}
+            label={t('Download')}
+            href={file.url}
+            size="icon-xs"
+          />
+        }
+      />
+    </ChatCard>
+  );
+}
+
+function selectTextPreview({
+  kind,
+  content,
+  label,
+  fileName,
+}: {
+  kind: FileKind;
+  content: string;
+  label: string;
+  fileName: string;
+}) {
   switch (kind) {
     case 'csv': {
       const table = previewUtils.parseCsv(content);
@@ -60,122 +153,27 @@ function selectTextPreview(
   }
 }
 
-function FileChip({ file }: { file: FileProducedEvent }) {
-  const label = file.title ?? file.fileName;
+function fileMeta(file: FileProducedEvent): string {
+  const type =
+    previewUtils.readableFileType({
+      mediaType: file.mediaType,
+      fileName: file.fileName,
+    }) ?? t('File');
   const size = formatBytes(file.byteSize);
-  return (
-    <motion.div
-      className="flex max-w-md items-center gap-3 rounded-xl border bg-panel p-3"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3">
-        <FileIcon className="size-4 text-gray-11" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{label}</p>
-        <p className="truncate text-xs text-gray-11">
-          {file.mediaType}
-          {size ? ` · ${size}` : ''}
-        </p>
-      </div>
-      <a href={file.url} download target="_blank" rel="noreferrer">
-        <Button variant="ghost" size="icon-sm">
-          <Download className="size-4" />
-        </Button>
-      </a>
-    </motion.div>
+  return size ? `${type} · ${size}` : type;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const exponent = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1,
   );
+  const value = bytes / Math.pow(1024, exponent);
+  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${
+    units[exponent]
+  }`;
 }
 
-export function ProducedFileCard({ file }: { file: FileProducedEvent }) {
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const kind = previewUtils.detectFileKind(file.mediaType, file.fileName);
-  const canPreview =
-    kind !== 'image' && kind !== 'binary' && file.byteSize <= MAX_PREVIEW_BYTES;
-
-  const {
-    data: content,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ['chat-produced-file', file.fileId],
-    queryFn: async () => {
-      const response = await fetch(file.url);
-      if (!response.ok) throw new Error('Failed to load file');
-      return response.text();
-    },
-    enabled: canPreview,
-    staleTime: Infinity,
-    retry: 1,
-  });
-
-  const label = file.title ?? file.fileName;
-
-  if (kind === 'image') {
-    const size = formatBytes(file.byteSize);
-    return (
-      <>
-        <motion.div
-          className="max-w-md overflow-hidden rounded-xl border bg-panel"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <button
-            type="button"
-            onClick={() => setViewerOpen(true)}
-            className="block w-full cursor-pointer"
-          >
-            <img src={file.url} alt={label} className="h-auto w-full" />
-          </button>
-          <div className="flex items-center justify-between gap-2 p-2">
-            <p className="min-w-0 truncate text-xs text-gray-11">
-              {label}
-              {size ? ` · ${size}` : ''}
-            </p>
-            <a href={file.url} download target="_blank" rel="noreferrer">
-              <Button variant="ghost" size="icon-sm">
-                <Download className="size-4" />
-              </Button>
-            </a>
-          </div>
-        </motion.div>
-        <ImageDialog
-          open={viewerOpen}
-          onOpenChange={setViewerOpen}
-          imageUrl={file.url}
-        />
-      </>
-    );
-  }
-
-  if (canPreview && !isError) {
-    if (isLoading || content === undefined) {
-      return (
-        <div className="w-full overflow-hidden rounded-xl border bg-panel">
-          <div className="flex items-center gap-2 border-b border-gray-6 px-3 py-2">
-            <FileIcon className="size-4 shrink-0 text-gray-11" />
-            <span className="truncate text-xs font-medium text-gray-11">
-              {label}
-            </span>
-          </div>
-          <div className="p-3">
-            <Skeleton className="h-40 w-full" />
-          </div>
-        </div>
-      );
-    }
-
-    const previewElement = selectTextPreview(
-      kind,
-      content,
-      label,
-      previewUtils.baseFileName(file.fileName),
-    );
-    if (previewElement) return previewElement;
-  }
-
-  return <FileChip file={file} />;
-}
+const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;

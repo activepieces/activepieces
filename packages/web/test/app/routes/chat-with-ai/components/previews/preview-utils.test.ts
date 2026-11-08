@@ -178,3 +178,74 @@ describe('previewUtils.baseFileName', () => {
     expect(previewUtils.baseFileName('noext')).toBe('noext');
   });
 });
+
+describe('previewUtils table helpers', () => {
+  const table = {
+    headers: ['Region', 'Deals', 'Revenue'],
+    rows: [
+      ['EMEA', '14', '$182k'],
+      ['APAC', '9', '$97k'],
+      ['LATAM', '', '$41k'],
+    ],
+  };
+
+  it('marks columns whose filled cells are all numbers', () => {
+    expect(previewUtils.numericColumns(table)).toEqual([false, true, true]);
+  });
+
+  it('filters rows by any cell, ignoring case', () => {
+    expect(
+      previewUtils.filterRows({ rows: table.rows, query: 'apac' }),
+    ).toEqual([['APAC', '9', '$97k']]);
+    expect(previewUtils.filterRows({ rows: table.rows, query: ' ' })).toEqual(
+      table.rows,
+    );
+  });
+
+  it('sorts numbers by value and keeps empty cells last', () => {
+    const sorted = previewUtils.sortRows({
+      rows: table.rows,
+      column: 1,
+      direction: 'asc',
+      numeric: true,
+    });
+    expect(sorted.map((row) => row[0])).toEqual(['APAC', 'EMEA', 'LATAM']);
+    const desc = previewUtils.sortRows({
+      rows: table.rows,
+      column: 1,
+      direction: 'desc',
+      numeric: true,
+    });
+    expect(desc.map((row) => row[0])).toEqual(['EMEA', 'APAC', 'LATAM']);
+  });
+});
+
+describe('previewUtils.readableFileType', () => {
+  it('uses the file extension first', () => {
+    expect(
+      previewUtils.readableFileType({
+        mediaType: 'text/csv',
+        fileName: 'leads.csv',
+      }),
+    ).toBe('CSV');
+  });
+
+  it('falls back to a known media type', () => {
+    expect(
+      previewUtils.readableFileType({
+        mediaType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        fileName: 'report',
+      }),
+    ).toBe('XLSX');
+  });
+
+  it('returns null for an unknown type', () => {
+    expect(
+      previewUtils.readableFileType({
+        mediaType: 'application/x-unknown',
+        fileName: 'blob',
+      }),
+    ).toBe(null);
+  });
+});

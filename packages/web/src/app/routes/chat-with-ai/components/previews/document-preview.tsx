@@ -2,11 +2,13 @@ import { t } from 'i18next';
 import { FileText } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { DownloadButton } from '@/components/custom/download-button';
 import { Markdown } from '@/components/prompt-kit/markdown';
 
-import { PreviewCard } from './preview-card';
+import {
+  buildDownloadAction,
+  PreviewCard,
+  useCopyAction,
+} from './preview-card';
 
 export function DocumentPreview({
   markdown,
@@ -27,30 +29,25 @@ export function DocumentPreview({
     }
   }, [markdown, streaming]);
 
-  const actions = (
-    <>
-      <CopyButton textToCopy={markdown} variant="ghost" size="icon-sm" />
-      <DownloadButton
-        fileName={fileName}
-        textToDownload={markdown}
-        mimeType="text/markdown"
-        extension="md"
-        variant="ghost"
-        size="icon-sm"
-      />
-    </>
-  );
+  const copyAction = useCopyAction(markdown);
+  const downloadAction = buildDownloadAction({
+    fileName,
+    content: markdown,
+    mimeType: 'text/markdown',
+    extension: 'md',
+  });
 
   return (
     <PreviewCard
       icon={FileText}
       label={label ?? t('Document')}
-      actions={actions}
+      meta={label ? t('Document') : undefined}
+      actions={[copyAction, downloadAction]}
       renderExpanded={
         streaming
           ? undefined
           : () => (
-              <div className="px-4 py-2 text-sm">
+              <div className="px-6 py-4 text-sm">
                 <Markdown>{markdown}</Markdown>
               </div>
             )
@@ -58,7 +55,7 @@ export function DocumentPreview({
     >
       <div
         ref={scrollRef}
-        className="max-h-[420px] overflow-auto px-4 py-2 text-sm"
+        className="max-h-[420px] overflow-auto py-3 pl-14 pr-4 text-sm @max-chat-narrow/chat:pl-3"
       >
         <Markdown isAnimating={streaming}>{markdown}</Markdown>
       </div>

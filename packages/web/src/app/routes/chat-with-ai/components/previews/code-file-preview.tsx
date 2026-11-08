@@ -1,11 +1,12 @@
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { DownloadButton } from '@/components/custom/download-button';
-import {
-  CodeBlock,
-  CodeBlockCode,
-  CodeBlockGroup,
-} from '@/components/prompt-kit/code-block';
+import { t } from 'i18next';
+import { Code2 } from 'lucide-react';
 
+import {
+  buildDownloadAction,
+  PreviewCard,
+  useCopyAction,
+} from './preview-card';
+import { PreviewCodeBody } from './preview-code-tabs';
 import { previewUtils } from './preview-utils';
 
 export function CodeFilePreview({
@@ -15,29 +16,26 @@ export function CodeFilePreview({
   code: string;
   language: string;
 }) {
+  const copyAction = useCopyAction(code);
+  const downloadAction = buildDownloadAction({
+    fileName: 'snippet',
+    content: code,
+    mimeType: 'text/plain',
+    extension: previewUtils.languageToExtension(language),
+  });
+  const lines = t('{count, plural, =1 {1 line} other {# lines}}', {
+    count: code.split('\n').length,
+  });
+  const hasLanguage = language !== '' && language !== 'plaintext';
+
   return (
-    <CodeBlock className="my-3">
-      <CodeBlockGroup className="border-b px-3 py-1.5">
-        <span className="font-mono text-xs text-gray-11">
-          {language !== 'plaintext' ? language : ''}
-        </span>
-        <div className="flex items-center gap-0.5">
-          <CopyButton
-            textToCopy={code}
-            withoutTooltip
-            variant="ghost"
-            size="icon-xs"
-          />
-          <DownloadButton
-            fileName="snippet"
-            textToDownload={code}
-            extension={previewUtils.languageToExtension(language)}
-            variant="ghost"
-            size="icon-xs"
-          />
-        </div>
-      </CodeBlockGroup>
-      <CodeBlockCode code={code} language={language} />
-    </CodeBlock>
+    <PreviewCard
+      icon={Code2}
+      label={t('Code')}
+      meta={hasLanguage ? `${language} · ${lines}` : lines}
+      actions={[copyAction, downloadAction]}
+    >
+      <PreviewCodeBody code={code} language={language} />
+    </PreviewCard>
   );
 }
