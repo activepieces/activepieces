@@ -20,7 +20,10 @@ import {
   ChatOptionList,
 } from './chat-ui/chat-option';
 import { ChatStatusText } from './chat-ui/chat-status';
-import { OptionIcon, QUESTION_TYPE_ICON } from './question-inputs/question-icon';
+import {
+  OptionIcon,
+  QUESTION_TYPE_ICON,
+} from './question-inputs/question-icon';
 import { questionMetaUtils } from './question-inputs/question-meta';
 import { RichQuestionInput } from './question-inputs/rich-question-input';
 

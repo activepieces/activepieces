@@ -16,8 +16,9 @@ vi.mock('i18next', () => ({
 }));
 
 beforeAll(() => {
-  if (!('ResizeObserver' in window)) {
-    window.ResizeObserver = class {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
       observe() {
         return undefined;
       }
@@ -27,8 +28,8 @@ beforeAll(() => {
       disconnect() {
         return undefined;
       }
-    };
-  }
+    },
+  );
 });
 
 afterEach(() => {
@@ -56,7 +57,9 @@ describe('MultiQuestionForm Ask card', () => {
     fireEvent.click(button('Back'));
 
     expect(screen.getByText('Which inbox?')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: /Gmail/ }).getAttribute('aria-checked')).toBe('true');
+    expect(
+      screen.getByRole('radio', { name: /Gmail/ }).getAttribute('aria-checked'),
+    ).toBe('true');
     expect(button('Next').disabled).toBe(false);
   });
 

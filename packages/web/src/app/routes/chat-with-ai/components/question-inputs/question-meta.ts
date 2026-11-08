@@ -30,7 +30,10 @@ function hint({
         min: question.min,
         max: question.max,
       });
-      return `${sliderDisplay({ value: current, unit: question.unit })} · ${range}`;
+      return `${sliderDisplay({
+        value: current,
+        unit: question.unit,
+      })} · ${range}`;
     }
     case 'color':
       return t('pick one');
@@ -67,9 +70,7 @@ function sliderDisplay({
 function sliderStart(
   question: Extract<MultiQuestion, { type: 'slider' }>,
 ): number {
-  return (
-    question.defaultValue ?? Math.round((question.min + question.max) / 2)
-  );
+  return question.defaultValue ?? Math.round((question.min + question.max) / 2);
 }
 
 function rangeDisplay(range: DateRange | undefined): string {

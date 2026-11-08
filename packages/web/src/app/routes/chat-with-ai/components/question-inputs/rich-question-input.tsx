@@ -167,7 +167,11 @@ function MultiChoiceInput({
         description: option.description,
         leading:
           option.piece || option.icon ? (
-            <OptionIcon piece={option.piece} icon={option.icon} variant="plain" />
+            <OptionIcon
+              piece={option.piece}
+              icon={option.icon}
+              variant="plain"
+            />
           ) : undefined,
       }))}
       selected={value}
@@ -208,7 +212,8 @@ function DateInput({
       />
       <div className="flex flex-wrap gap-2">
         {quickPicks.map((quickPick) => {
-          const active = value !== undefined && isSameDay(value, quickPick.date);
+          const active =
+            value !== undefined && isSameDay(value, quickPick.date);
           return (
             <button
               key={quickPick.label}

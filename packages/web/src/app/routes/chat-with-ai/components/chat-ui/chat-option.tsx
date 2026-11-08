@@ -288,7 +288,8 @@ export function ChatWriteYourOwn({
           }}
           className={cn(
             'peer h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent',
-            restingLabel && 'placeholder:text-transparent focus:placeholder:text-gray-9',
+            restingLabel &&
+              'placeholder:text-transparent focus:placeholder:text-gray-9',
           )}
         />
         {restingLabel && (

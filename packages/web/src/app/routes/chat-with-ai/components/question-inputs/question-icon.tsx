@@ -176,7 +176,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   wifi: Wifi,
 };
 
-export function DynamicLucideIcon({
+function DynamicLucideIcon({
   name,
   className,
 }: {
