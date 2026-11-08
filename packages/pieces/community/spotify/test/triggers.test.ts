@@ -278,6 +278,48 @@ describe('new_recently_played_track', () => {
   });
 });
 
+describe('new_recently_played_track paging', () => {
+  const base = Date.parse('2026-01-01T00:00:00.000Z');
+  function play(n: number) {
+    return { played_at: new Date(base + n * 1000).toISOString(), track: { uri: uri(n) }, context: null };
+  }
+
+  test('reads every page of plays since the checkpoint before saving it', async () => {
+    const { store, data } = memoryStore();
+    data.set('new_recently_played_track_checkpoint', { ms: base, keys: [`${new Date(base).toISOString()}|${uri(0)}`] });
+    const seen = stubFetch((url) => {
+      const after = Number(url.searchParams.get('after'));
+      if (after < base + 50 * 1000) {
+        const items = Array.from({ length: 50 }, (_, i) => play(50 - i));
+        return { status: 200, body: { items, next: 'more', cursors: { after: String(base + 50 * 1000), before: null } } };
+      }
+      return { status: 200, body: { items: [play(53), play(52), play(51)], next: null, cursors: { after: String(base + 53 * 1000), before: null } } };
+    });
+    const fired = await hook({ trigger: newRecentlyPlayedTrack, name: 'run', ctx: { store } });
+    expect(seen).toHaveLength(2);
+    expect(seen[1].searchParams.get('after')).toBe(String(base + 50 * 1000));
+    expect(fired).toHaveLength(53);
+    expect(data.get('new_recently_played_track_checkpoint')).toMatchObject({ ms: base + 53 * 1000 });
+  });
+
+  test('fails without moving the checkpoint when the page limit is reached', async () => {
+    const { store, data } = memoryStore();
+    const checkpoint = { ms: base, keys: ['k'] };
+    data.set('new_recently_played_track_checkpoint', checkpoint);
+    const seen = stubFetch((url) => {
+      const after = Number(url.searchParams.get('after'));
+      const start = after + 1;
+      const items = Array.from({ length: 50 }, (_, i) => ({ played_at: new Date(start + (49 - i) * 1000).toISOString(), track: { uri: uri(i) }, context: null }));
+      return { status: 200, body: { items, next: 'more', cursors: { after: String(start + 49 * 1000), before: null } } };
+    });
+    const error = await hook({ trigger: newRecentlyPlayedTrack, name: 'run', ctx: { store } }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(String(error)).toContain('Turn the trigger off and on');
+    expect(seen).toHaveLength(10);
+    expect(data.get('new_recently_played_track_checkpoint')).toEqual(checkpoint);
+  });
+});
+
 type FakeResponse = { status: number; body: unknown };
 
 describe('qa trigger edge cases', () => {

@@ -10,6 +10,25 @@ import { spotifyOutputSchemas } from '../output-schemas';
 
 const CHECKPOINT_KEY = 'new_recently_played_track_checkpoint';
 const PAGE_SIZE = 50;
+const MAX_PAGES = 10;
+
+async function readPlaysSince({ client, after }: { client: ReturnType<typeof makeClient>; after: number | undefined }): Promise<PlayHistory[]> {
+  const plays: PlayHistory[] = [];
+  let cursor = after;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const res = await client.getRecentlyPlayed({ limit: PAGE_SIZE, after: cursor });
+    const items = Array.isArray(res.items) ? res.items : [];
+    plays.push(...items);
+    const nextCursor = Number(res.cursors?.after ?? NaN);
+    if (items.length < PAGE_SIZE || !Number.isFinite(nextCursor) || (cursor !== undefined && nextCursor <= cursor)) {
+      return plays;
+    }
+    cursor = nextCursor;
+  }
+  throw new Error(
+    `More than ${MAX_PAGES * PAGE_SIZE} plays were recorded since the last check, so the trigger stopped without saving progress. Turn the trigger off and on to start again from now.`,
+  );
+}
 
 function toEntries(items: PlayHistory[]): SpotifyPollEntry<PlayHistory>[] {
   return items.flatMap((play) => {
@@ -25,7 +44,7 @@ export default createTrigger({
   displayName: 'New Recently Played Track',
   description: 'Triggers when you finish playing a track (podcast episodes are not reported by Spotify)',
   aiMetadata: {
-    description: 'Fires once for each track play Spotify records in the user\'s recently played history since the last poll, emitting {played_at, track, context}. Spotify records a play after the track has played for a while, and does not report podcast episodes. Plays from before the trigger was turned on do not fire.',
+    description: 'Fires once for each track play Spotify records in the user\'s recently played history since the last poll, emitting {played_at, track, context}. Spotify records a play after the track has played for a while, and does not report podcast episodes. Plays from before the trigger was turned on do not fire. Reads every page since the last poll (up to 500 plays); beyond that the poll fails without saving progress, and turning the trigger off and on starts again from now.',
   },
   auth: spotifyCommon.authentication,
   type: TriggerStrategy.POLLING,
@@ -70,11 +89,7 @@ export default createTrigger({
       await store.put(CHECKPOINT_KEY, spotifyPolling.baseline({ entries: toEntries(items) }), StoreScope.FLOW);
       return [];
     }
-    const res = await client.getRecentlyPlayed({
-      limit: PAGE_SIZE,
-      after: stored.ms > 0 ? stored.ms - 1 : undefined,
-    });
-    const items = Array.isArray(res.items) ? res.items : [];
+    const items = await readPlaysSince({ client, after: stored.ms > 0 ? stored.ms - 1 : undefined });
     const result = spotifyPolling.newSince({ entries: toEntries(items), checkpoint: stored });
     if (result.emitted.length > 0) {
       await store.put(CHECKPOINT_KEY, result.checkpoint, StoreScope.FLOW);
