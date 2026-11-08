@@ -65,7 +65,10 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 }));
 
 vi.mock('@/lib/authentication-session', () => ({
-  authenticationSession: { getProjectId: () => 'project-1' },
+  authenticationSession: {
+    getProjectId: () => 'project-1',
+    appendProjectRoutePrefix: (path: string) => `/projects/project-1${path}`,
+  },
 }));
 
 vi.mock('@/components/custom/searchable-select', () => ({
@@ -96,6 +99,7 @@ vi.mock('@/components/ui/form', () => ({
 }));
 
 vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
 }));
 

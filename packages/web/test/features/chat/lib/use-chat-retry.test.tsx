@@ -4,6 +4,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { chatApi } from '@/features/chat/lib/chat-api';
@@ -12,6 +13,7 @@ import { useAgentChat } from '@/features/chat/lib/use-chat';
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => ({ on: vi.fn(), off: vi.fn(), emit: vi.fn() }),
+  socketConnection: { hold: () => () => undefined },
 }));
 
 vi.mock('@/features/chat/lib/chat-api', () => ({
@@ -83,7 +85,9 @@ function sentFileNames(): string[][] {
 function wrapper({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={new QueryClient()}>
-      <ChatStoreProvider>{children}</ChatStoreProvider>
+      <MemoryRouter>
+        <ChatStoreProvider>{children}</ChatStoreProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }

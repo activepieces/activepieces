@@ -28,7 +28,8 @@ vi.mock('sonner', () => ({
   toast: { success: state.toastSuccess },
 }));
 
-vi.mock('@tanstack/react-query', () => ({
+vi.mock('@tanstack/react-query', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useQueryClient: () => ({ invalidateQueries: state.invalidate }),
   useMutation: (options: MutationOptions) => ({
     mutate: () => {
