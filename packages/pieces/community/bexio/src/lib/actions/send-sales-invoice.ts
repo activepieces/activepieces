@@ -1,6 +1,8 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
+import { bexioAi } from '../common/ai-helpers';
+import { bexioOutputSchemas } from '../common/output-schemas';
 
 export const sendSalesInvoiceAction = createAction({
   auth: bexioAuth,
@@ -8,7 +10,8 @@ export const sendSalesInvoiceAction = createAction({
   classification: 'WRITE',
   displayName: 'Send Sales Invoice',
   description: 'Send a sales invoice to an email address',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: bexioOutputSchemas.successOutputSchema,
   aiMetadata: { description: 'Emails an existing Bexio sales invoice to a recipient, with subject and message body, optionally marking the invoice as open and attaching the PDF. Use to deliver an invoice to a customer; pick Export Invoice to PDF if you only need the file. Requires the invoice id and a recipient email, and the message must contain a "[Network Link]" placeholder. Not idempotent: each call sends another email.', idempotent: false },
   props: {
     invoice_id: Property.Dropdown({
@@ -27,19 +30,19 @@ export const sendSalesInvoiceAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth);
-          const invoices = await client.get<Array<{
+          const invoices = await bexioAi.listAll<Array<{
             id: number;
             document_nr: string;
             title?: string | null;
             contact_id?: number | null;
             total?: string;
             kb_item_status_id?: number;
-          }>>('/2.0/kb_invoice');
+          }>[number]>({ auth, path: '/2.0/kb_invoice' });
 
           return {
             disabled: false,
-            options: invoices.map((invoice) => {
+            placeholder: invoices.truncated ? bexioAi.truncatedPlaceholder({ count: invoices.items.length }) : undefined,
+            options: invoices.items.map((invoice) => {
               const label = invoice.title
                 ? `${invoice.document_nr} - ${invoice.title}`
                 : invoice.document_nr;
