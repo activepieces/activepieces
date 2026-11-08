@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { httpClient, HttpError } from '@activepieces/pieces-common';
 import { getBiginConnection, biginApiService, BiginApiError, assertWriteSucceeded } from '../src/lib/common/request';
-import { escapeCriteriaValue } from '../src/lib/common/helpers';
+import { escapeCriteriaValue, formatDateOnly } from '../src/lib/common/helpers';
 import { biginRecords } from '../src/lib/common/records';
 import { usersDropdown } from '../src/lib/common/props';
 import { biginAuth } from '../src/lib/auth';
@@ -410,3 +410,24 @@ function runWith({ fn, context }: { fn: unknown; context: Record<string, unknown
   }
   return Promise.resolve(Reflect.apply(fn, undefined, [context]));
 }
+
+describe('formatDateOnly', () => {
+  it('keeps a date-only string as given, whatever the worker timezone', () => {
+    const original = process.env['TZ'];
+    process.env['TZ'] = 'America/New_York';
+    try {
+      expect(formatDateOnly('2026-11-10')).toBe('2026-11-10');
+      expect(formatDateOnly(' 2026-01-01 ')).toBe('2026-01-01');
+    } finally {
+      process.env['TZ'] = original;
+    }
+  });
+
+  it('takes the calendar date from an ISO date-time string', () => {
+    expect(formatDateOnly('2026-11-10T00:00:00.000Z')).toBe('2026-11-10');
+  });
+
+  it('still formats a Date object', () => {
+    expect(formatDateOnly(new Date(2026, 10, 10, 12))).toBe('2026-11-10');
+  });
+});

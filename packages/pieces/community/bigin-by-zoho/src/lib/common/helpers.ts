@@ -28,6 +28,12 @@ export function formatDateTime(input: string | Date): string {
 }
 
 export function formatDateOnly(input: string | Date): string {
+  if (typeof input === 'string') {
+    const datePart = /^(\d{4}-\d{2}-\d{2})/.exec(input.trim());
+    if (datePart) {
+      return datePart[1];
+    }
+  }
   const date = new Date(input);
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
