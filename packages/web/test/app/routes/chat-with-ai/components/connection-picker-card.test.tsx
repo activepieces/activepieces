@@ -74,7 +74,7 @@ describe('ConnectionPickerCard (characterization)', () => {
       selectedConnectionLabel: 'Work Slack',
     });
 
-    expect(screen.getByText('Work Slack')).toBeTruthy();
+    expect(screen.getByText('· Work Slack')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
   });
 

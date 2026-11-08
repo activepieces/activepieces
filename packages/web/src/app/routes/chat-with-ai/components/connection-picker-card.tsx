@@ -422,41 +422,41 @@ export function ConnectionPickerCard({
           )}
         </ChatCardBody>
         {(canContinue || offersOtherAccounts || onDismiss) && (
-        <ChatCardActions>
-          {canContinue && (
-            <Button
-              size="sm"
-              disabled={!selectedExternalId}
-              onClick={handleContinue}
-            >
-              {t('Continue')}
-            </Button>
-          )}
-          {offersOtherAccounts && (
-            <Button
-              size="sm"
-              variant={canContinue ? 'outline' : 'default'}
-              className="gap-1.5"
-              disabled={isPieceLoading}
-              onClick={handleNewConnection}
-            >
-              <Plus className="size-3.5" />
-              {hasConnections
-                ? t('Connect another account')
-                : t('Connect {name}', { name: filteredPicker.displayName })}
-            </Button>
-          )}
-          {onDismiss && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-gray-11"
-              onClick={onDismiss}
-            >
-              {t('Skip')}
-            </Button>
-          )}
-        </ChatCardActions>
+          <ChatCardActions>
+            {canContinue && (
+              <Button
+                size="sm"
+                disabled={!selectedExternalId}
+                onClick={handleContinue}
+              >
+                {t('Continue')}
+              </Button>
+            )}
+            {offersOtherAccounts && (
+              <Button
+                size="sm"
+                variant={canContinue ? 'outline' : 'default'}
+                className="gap-1.5"
+                disabled={isPieceLoading}
+                onClick={handleNewConnection}
+              >
+                <Plus className="size-3.5" />
+                {hasConnections
+                  ? t('Connect another account')
+                  : t('Connect {name}', { name: filteredPicker.displayName })}
+              </Button>
+            )}
+            {onDismiss && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-gray-11"
+                onClick={onDismiss}
+              >
+                {t('Skip')}
+              </Button>
+            )}
+          </ChatCardActions>
         )}
       </ChatCard>
 
