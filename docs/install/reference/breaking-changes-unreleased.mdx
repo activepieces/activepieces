@@ -8,6 +8,15 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Trello 0.9.0: Update Card (Agent) no longer unarchives cards or clears their labels
+
+When an AI agent used **Update Card (Agent)** to change something else, such as the name, the agent path filled **Archived** with `false` and **Label IDs** with an empty list and sent both. Each such update could unarchive an archived card and remove all of its labels. From Trello 0.9.0 Archived is a dropdown with **Yes**, **No** and **Leave unchanged**. Archived left out, or set to Leave unchanged, is not sent, so the card stays archived or unarchived. An empty Label IDs list is not sent either, so the card keeps its labels; use **Remove Label From Card (Agent)** to drop a label.
+
+#### What you need to do
+
+- If an agent tool pins **Archived** to a fixed value, open the tool and pick Yes, No or Leave unchanged again. A value saved from the old checkbox is no longer accepted and the call fails until you do.
+- If an agent ran this action on an earlier Trello version, check that archived cards are still archived and still carry their labels.
+
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 
 When Activepieces connects to an MCP server, it no longer follows a redirect to a different host or port. That redirect now fails the connection, so headers such as API keys are never sent to a host you did not configure.
