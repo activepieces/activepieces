@@ -1,7 +1,13 @@
 /**
  * @vitest-environment jsdom
  */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SpreadsheetPreview } from '@/app/routes/chat-with-ai/components/previews/spreadsheet-preview';
@@ -47,11 +53,9 @@ describe('SpreadsheetPreview', () => {
     openFullTable();
     const dialog = screen.getByRole('dialog');
     const scoreHeader = () =>
-      Array.from(dialog.querySelectorAll('th button')).find(
-        (button) => button.textContent === 'Score',
-      );
+      within(dialog).getByRole('button', { name: 'Score' });
 
-    fireEvent.click(scoreHeader() ?? dialog);
+    fireEvent.click(scoreHeader());
     expect(bodyColumn({ dialog, column: 1 })).toEqual([
       '7',
       '45',
@@ -61,7 +65,7 @@ describe('SpreadsheetPreview', () => {
       '110',
     ]);
 
-    fireEvent.click(scoreHeader() ?? dialog);
+    fireEvent.click(scoreHeader());
     expect(bodyColumn({ dialog, column: 1 })).toEqual([
       '110',
       '92',
