@@ -4,6 +4,8 @@ import { spotifyIds } from '../common/ids';
 import { spotifyOutputSchemas } from '../output-schemas';
 
 const GROUPS = ['album', 'single', 'appears_on', 'compilation'];
+const MAX_LIMIT = 10;
+const ALL_MAX_PAGES = 100;
 
 function includeGroups(value: unknown): string | undefined {
   const raw = Array.isArray(value) ? value : [];
@@ -24,7 +26,7 @@ export default createAction({
   description: "Lists an artist's albums, singles, compilations and appearances",
   audience: 'both',
   aiMetadata: {
-    description: "Lists the releases of one artist (ID, spotify:artist: URI or open.spotify.com link), optionally only some album types (album, single, appears_on, compilation). By default returns one page (limit up to 50, offset); enable All to page through every release. Read-only and repeatable.",
+    description: "Lists the releases of one artist (ID, spotify:artist: URI or open.spotify.com link), optionally only some album types (album, single, appears_on, compilation). By default returns one page (limit up to 10, Spotify's maximum for this endpoint, plus offset); enable All to page through up to 1,000 releases. Read-only and repeatable.",
     idempotent: true,
   },
   auth: spotifyCommon.authentication,
@@ -45,8 +47,8 @@ export default createAction({
       },
     }),
     offset: spotifyCommon.offset(),
-    limit: spotifyCommon.limit({ max: 50, defaultHint: 20 }),
-    all: spotifyCommon.all(),
+    limit: spotifyCommon.limit({ max: MAX_LIMIT, defaultHint: 5 }),
+    all: spotifyCommon.all({ maxItems: MAX_LIMIT * ALL_MAX_PAGES }),
     market: spotifyCommon.market(),
   },
   async run({ auth, propsValue }) {
@@ -56,11 +58,12 @@ export default createAction({
     const client = makeClient({ auth });
     if (spotifyValidate.isYes(propsValue.all)) {
       const res = await client.collectAll({
-        fetchPage: (offset) => client.getArtistAlbums({ id, include_groups: groups, limit: 50, offset, market }),
+        fetchPage: (offset) => client.getArtistAlbums({ id, include_groups: groups, limit: MAX_LIMIT, offset, market }),
+        maxPages: ALL_MAX_PAGES,
       });
       return { total: res.items.length, items: res.items, has_more: res.hasMore };
     }
-    const limit = spotifyValidate.optionalInteger({ value: propsValue.limit, field: 'Limit', min: 1, max: 50 });
+    const limit = spotifyValidate.optionalInteger({ value: propsValue.limit, field: 'Limit', min: 1, max: MAX_LIMIT });
     const offset = spotifyValidate.optionalInteger({ value: propsValue.offset, field: 'Offset', min: 0 });
     return client.getArtistAlbums({ id, include_groups: groups, limit, offset, market });
   },

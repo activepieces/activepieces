@@ -338,10 +338,10 @@ export const spotifyCommon = {
       description: 'How many items to skip, starting from 0.',
       required: false,
     }),
-  all: () =>
+  all: (params?: { maxItems?: number }) =>
     Property.Checkbox({
       displayName: 'All',
-      description: 'Fetches every page (up to 5,000 items) in a single request',
+      description: `Fetches every page (up to ${(params?.maxItems ?? 5000).toLocaleString('en-US')} items) in a single request`,
       required: false,
     }),
 };
