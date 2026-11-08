@@ -2,26 +2,9 @@ import { AppConnectionValueForAuthProperty, Property } from '@activepieces/piece
 import { quickzuAuth } from '../auth';
 import { QuickzuAPIClient } from './client';
 
-export function makeClient(auth: AppConnectionValueForAuthProperty<typeof quickzuAuth>) {
-  return new QuickzuAPIClient(auth.secret_text);
-}
-
-export function toQuickzuDate(value: string): string {
-  const trimmed = value.trim();
-  if (DATE_ONLY.test(trimmed)) return trimmed;
-  const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Invalid date "${value}". Use the YYYY-MM-DD format.`);
-  }
-  return parsed.toISOString().slice(0, 10);
-}
-
-export function requireValue({ value, label }: { value: string | undefined; label: string }): string {
-  if (!value) {
-    throw new Error(`${label} is required.`);
-  }
-  return value;
-}
+const ORDER_DROPDOWN_PAGE_SIZE = 100;
+const ORDER_DROPDOWN_MAX_PAGES = 10;
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 function notConnected() {
   return {
@@ -45,6 +28,27 @@ async function fetchOrderOptions(client: QuickzuAPIClient) {
     if (orders.length < ORDER_DROPDOWN_PAGE_SIZE) break;
   }
   return options;
+}
+
+export function makeClient(auth: AppConnectionValueForAuthProperty<typeof quickzuAuth>) {
+  return new QuickzuAPIClient(auth.secret_text);
+}
+
+export function toQuickzuDate(value: string): string {
+  const trimmed = value.trim();
+  if (DATE_ONLY.test(trimmed)) return trimmed;
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`Invalid date "${value}". Use the YYYY-MM-DD format.`);
+  }
+  return parsed.toISOString().slice(0, 10);
+}
+
+export function requireValue({ value, label }: { value: string | undefined; label: string }): string {
+  if (!value) {
+    throw new Error(`${label} is required.`);
+  }
+  return value;
 }
 
 export const quickzuCommon = {
@@ -99,7 +103,3 @@ export const quickzuCommon = {
       },
     }),
 };
-
-const ORDER_DROPDOWN_PAGE_SIZE = 100;
-const ORDER_DROPDOWN_MAX_PAGES = 10;
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;

@@ -1,6 +1,13 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { QuickzuAPIClient } from './common/client';
 
+function authHelpDescription() {
+  return `
+1. Login to your Quickzu Dashboard.
+2. Go to **https://app.quickzu.com/dash/settings/api-webhooks**.
+3. Copy **API Token** to the clipboard and paste it.`;
+}
+
 export const quickzuAuth = PieceAuth.SecretText({
   displayName: 'API Token',
   description: authHelpDescription(),
@@ -17,10 +24,3 @@ export const quickzuAuth = PieceAuth.SecretText({
     }
   },
 });
-
-function authHelpDescription() {
-  return `
-1. Login to your Quickzu Dashboard.
-2. Go to **https://app.quickzu.com/dash/settings/api-webhooks**.
-3. Copy **API Token** to the clipboard and paste it.`;
-}

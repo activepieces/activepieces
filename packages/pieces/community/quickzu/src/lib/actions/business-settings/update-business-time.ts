@@ -4,6 +4,20 @@ import { quickzuOutputSchemas } from '../../common/output-schemas';
 import { makeClient } from '../../common';
 import { BusinessTimingInput } from '../../common/types';
 
+function toBusinessDayHour(item: unknown): BusinessDayHour {
+  if (typeof item !== 'object' || item === null) {
+    throw new Error('Each business hours entry must have a day, start time and end time.');
+  }
+  const weekday: unknown = Reflect.get(item, 'weekday');
+  const start: unknown = Reflect.get(item, 'start');
+  const end: unknown = Reflect.get(item, 'end');
+  const status: unknown = Reflect.get(item, 'status');
+  if (typeof weekday !== 'string' || typeof start !== 'string' || typeof end !== 'string') {
+    throw new Error('Each business hours entry must have a day, start time and end time.');
+  }
+  return { weekday, start: start.trim(), end: end.trim(), status: status !== false };
+}
+
 export const updateBusinessTimeAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_update_business_time',
@@ -70,20 +84,6 @@ export const updateBusinessTimeAction = createAction({
     return await client.updateBusinessTime(input);
   },
 });
-
-function toBusinessDayHour(item: unknown): BusinessDayHour {
-  if (typeof item !== 'object' || item === null) {
-    throw new Error('Each business hours entry must have a day, start time and end time.');
-  }
-  const weekday: unknown = Reflect.get(item, 'weekday');
-  const start: unknown = Reflect.get(item, 'start');
-  const end: unknown = Reflect.get(item, 'end');
-  const status: unknown = Reflect.get(item, 'status');
-  if (typeof weekday !== 'string' || typeof start !== 'string' || typeof end !== 'string') {
-    throw new Error('Each business hours entry must have a day, start time and end time.');
-  }
-  return { weekday, start: start.trim(), end: end.trim(), status: status !== false };
-}
 
 type BusinessDayHour = {
   weekday: string;

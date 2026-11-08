@@ -9,6 +9,42 @@ import {
 } from '../../common/constants';
 import { ProductDiscountInput } from '../../common/types';
 
+function requireIds({
+  ids,
+  label,
+  filterType,
+}: {
+  ids: unknown[] | undefined;
+  label: string;
+  filterType: DiscountFilterType;
+}): string[] {
+  const cleaned = (ids ?? [])
+    .map((id) => (typeof id === 'string' || typeof id === 'number' ? String(id).trim() : ''))
+    .filter((id) => id.length > 0);
+  if (cleaned.length === 0) {
+    throw new Error(`${label} must contain at least one ID when Applies To is ${filterType}.`);
+  }
+  return cleaned;
+}
+
+export function discountTargets({
+  filterType,
+  productIds,
+  categoryIds,
+}: {
+  filterType: DiscountFilterType;
+  productIds: unknown[] | undefined;
+  categoryIds: unknown[] | undefined;
+}): Pick<ProductDiscountInput, 'selectedProducts' | 'selectedCategories'> {
+  if (filterType === DiscountFilterType.PRODUCTS) {
+    return { selectedProducts: requireIds({ ids: productIds, label: 'Product IDs', filterType }) };
+  }
+  if (filterType === DiscountFilterType.CATEGORIES) {
+    return { selectedCategories: requireIds({ ids: categoryIds, label: 'Category IDs', filterType }) };
+  }
+  return {};
+}
+
 export const aiCreateProductDiscountAction = createAction({
   auth: quickzuAuth,
   name: 'ai_create_product_discount',
@@ -103,39 +139,3 @@ export const aiCreateProductDiscountAction = createAction({
     return await makeClient(context.auth).createDiscount(input);
   },
 });
-
-export function discountTargets({
-  filterType,
-  productIds,
-  categoryIds,
-}: {
-  filterType: DiscountFilterType;
-  productIds: unknown[] | undefined;
-  categoryIds: unknown[] | undefined;
-}): Pick<ProductDiscountInput, 'selectedProducts' | 'selectedCategories'> {
-  if (filterType === DiscountFilterType.PRODUCTS) {
-    return { selectedProducts: requireIds({ ids: productIds, label: 'Product IDs', filterType }) };
-  }
-  if (filterType === DiscountFilterType.CATEGORIES) {
-    return { selectedCategories: requireIds({ ids: categoryIds, label: 'Category IDs', filterType }) };
-  }
-  return {};
-}
-
-function requireIds({
-  ids,
-  label,
-  filterType,
-}: {
-  ids: unknown[] | undefined;
-  label: string;
-  filterType: DiscountFilterType;
-}): string[] {
-  const cleaned = (ids ?? [])
-    .map((id) => (typeof id === 'string' || typeof id === 'number' ? String(id).trim() : ''))
-    .filter((id) => id.length > 0);
-  if (cleaned.length === 0) {
-    throw new Error(`${label} must contain at least one ID when Applies To is ${filterType}.`);
-  }
-  return cleaned;
-}
