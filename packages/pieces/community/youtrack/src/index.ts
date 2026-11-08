@@ -58,7 +58,7 @@ export const youtrack = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/youtrack.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: youtrackAuth,
-  authors: ['cumonvip1'],
+  authors: ['cumonvip1', 'OdaiAhmed99'],
   actions: [
     createIssueAction,
     getIssueAction,
