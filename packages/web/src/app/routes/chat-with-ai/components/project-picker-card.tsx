@@ -1,10 +1,11 @@
 import { ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { AlignJustify } from 'lucide-react';
+import { AlignJustify, ChevronLeft, FolderClosed, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useId, useMemo, useState } from 'react';
 
 import { SearchInput } from '@/components/custom/search-input';
+import { Button } from '@/components/ui/button';
 import {
   ApProjectDisplay,
   getProjectName,
@@ -17,11 +18,15 @@ import { ProjectPickerData } from '../lib/message-parsers';
 import {
   AnsweredQuestionsCard,
   ChatAnswerInputRow,
-  ChatCard,
-  ChatCardHeader,
   ChatOptionBadge,
   ChatOptionRow,
 } from './chat-card-primitives';
+import {
+  ChatCard,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from './chat-ui/chat-card';
 
 const MAX_COLLAPSED = 3;
 
@@ -104,12 +109,6 @@ export function ProjectPickerCard({
     );
   }
 
-  const titleNode = (
-    <span className="block text-base font-semibold leading-snug text-gray-12">
-      {title}
-    </span>
-  );
-
   const answerRow = (
     <div className="mt-4 border-t border-gray-6/60 pt-3">
       <ChatAnswerInputRow
@@ -126,93 +125,116 @@ export function ProjectPickerCard({
   return (
     <ChatCard>
       <ChatCardHeader
-        title={titleNode}
-        onBack={
-          showAll && accessibleSuggested.length > 0
-            ? () => setView('list')
-            : undefined
+        tile={<ChatCardTile kind="bits" icon={FolderClosed} />}
+        title={title}
+        trailing={
+          <>
+            {showAll && accessibleSuggested.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="text-gray-11"
+                onClick={() => setView('list')}
+                aria-label={t('Back')}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+            )}
+            {onDismiss && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="text-gray-11"
+                onClick={onDismiss}
+                aria-label={t('Close')}
+              >
+                <X className="size-4" />
+              </Button>
+            )}
+          </>
         }
-        onClose={onDismiss}
       />
 
-      <AnimatePresence mode="wait">
-        {showAll ? (
-          <motion.div key="all" {...VIEW_TRANSITION}>
-            <div className="mt-2.5">
-              <SearchInput
-                value={search}
-                onChange={setSearch}
-                placeholder={t('Search projects...')}
+      <ChatCardBody>
+        <AnimatePresence mode="wait">
+          {showAll ? (
+            <motion.div key="all" {...VIEW_TRANSITION}>
+              <div>
+                <SearchInput
+                  value={search}
+                  onChange={setSearch}
+                  placeholder={t('Search projects...')}
+                />
+              </div>
+
+              <ProjectGrid
+                projects={projects}
+                search={search}
+                onSelect={handleSelect}
               />
-            </div>
 
-            <ProjectGrid
-              projects={projects}
-              search={search}
-              onSelect={handleSelect}
-            />
+              {answerRow}
+            </motion.div>
+          ) : (
+            <motion.div key="list" {...VIEW_TRANSITION}>
+              <div className="space-y-0.5">
+                {collapsedSuggested.map((project) => {
+                  const name = getProjectName(project);
+                  return (
+                    <ChatOptionRow
+                      key={project.id}
+                      tabIndex={0}
+                      ariaLabel={name}
+                      onClick={() => handleSelect(project.id, name)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSelect(project.id, name);
+                        }
+                      }}
+                    >
+                      <ApProjectDisplay
+                        title={name}
+                        icon={project.icon}
+                        projectType={project.type}
+                        iconClassName="size-7 rounded-md"
+                        titleClassName="flex-1 text-sm"
+                        framePersonalIcon
+                      />
+                    </ChatOptionRow>
+                  );
+                })}
 
-            {answerRow}
-          </motion.div>
-        ) : (
-          <motion.div key="list" {...VIEW_TRANSITION}>
-            <div className="mt-2.5 space-y-0.5">
-              {collapsedSuggested.map((project) => {
-                const name = getProjectName(project);
-                return (
+                {hasMore && (
                   <ChatOptionRow
-                    key={project.id}
+                    role="button"
                     tabIndex={0}
-                    ariaLabel={name}
-                    onClick={() => handleSelect(project.id, name)}
+                    ariaLabel={t('Show all {num} projects', {
+                      num: projects.length,
+                    })}
+                    onClick={() => setView('all')}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        handleSelect(project.id, name);
+                        setView('all');
                       }
                     }}
                   >
-                    <ApProjectDisplay
-                      title={name}
-                      icon={project.icon}
-                      projectType={project.type}
-                      iconClassName="size-7 rounded-md"
-                      titleClassName="flex-1 text-sm"
-                      framePersonalIcon
-                    />
+                    <ChatOptionBadge>
+                      <AlignJustify className="size-4" />
+                    </ChatOptionBadge>
+                    <span className="flex-1 leading-snug">
+                      {t('Show all {num} projects', { num: projects.length })}
+                    </span>
                   </ChatOptionRow>
-                );
-              })}
+                )}
+              </div>
 
-              {hasMore && (
-                <ChatOptionRow
-                  role="button"
-                  tabIndex={0}
-                  ariaLabel={t('Show all {num} projects', {
-                    num: projects.length,
-                  })}
-                  onClick={() => setView('all')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setView('all');
-                    }
-                  }}
-                >
-                  <ChatOptionBadge>
-                    <AlignJustify className="size-4" />
-                  </ChatOptionBadge>
-                  <span className="flex-1 leading-snug">
-                    {t('Show all {num} projects', { num: projects.length })}
-                  </span>
-                </ChatOptionRow>
-              )}
-            </div>
-
-            {answerRow}
-          </motion.div>
-        )}
-      </AnimatePresence>
+              {answerRow}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </ChatCardBody>
     </ChatCard>
   );
 }

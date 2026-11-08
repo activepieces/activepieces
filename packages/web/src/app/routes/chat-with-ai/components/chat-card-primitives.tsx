@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ArrowRight, ChevronLeft, Pencil, X } from 'lucide-react';
+import { ArrowRight, Pencil } from 'lucide-react';
 import { motion } from 'motion/react';
 import { forwardRef, KeyboardEvent, ReactNode, Ref } from 'react';
 
@@ -69,49 +69,6 @@ export function ChatCard({ children, className }: ChatCardProps) {
     >
       {children}
     </motion.div>
-  );
-}
-
-export function ChatCardHeader({
-  title,
-  onBack,
-  onClose,
-  actions,
-}: ChatCardHeaderProps) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      {onBack ? (
-        <div className="flex flex-1 min-w-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            className="text-gray-11"
-            onClick={onBack}
-            aria-label={t('Back')}
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <div className="flex-1 min-w-0">{title}</div>
-        </div>
-      ) : (
-        <div className="flex-1 min-w-0">{title}</div>
-      )}
-
-      <div className="flex items-center gap-0.5 text-gray-11 shrink-0">
-        {actions}
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            className="ms-1"
-            onClick={onClose}
-            aria-label={t('Close')}
-          >
-            <X className="size-4" />
-          </Button>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -264,13 +221,6 @@ type ChatCardSkeletonProps = {
 type ChatCardProps = {
   children: ReactNode;
   className?: string;
-};
-
-type ChatCardHeaderProps = {
-  title: ReactNode;
-  onBack?: () => void;
-  onClose?: () => void;
-  actions?: ReactNode;
 };
 
 type ChatOptionBadgeProps = {

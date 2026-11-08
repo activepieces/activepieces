@@ -195,6 +195,7 @@
   --transition-duration-1500: 1500ms;
 
   --container-page-band: 1198px;
+  --container-chat-narrow: 520px;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -207,6 +208,7 @@
     infinite;
   --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite;
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
+  --animate-chat-enter: chat-enter 0.2s ease-out;
   --animate-collapsible-up: collapsible-up 0.2s ease-out
     alternate;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif,
@@ -397,6 +399,13 @@
   @keyframes dash {
     to {
       stroke-dashoffset: -20;
+    }
+  }
+
+  @keyframes chat-enter {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
     }
   }
 }
@@ -1107,6 +1116,22 @@
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+.chat-turn-ring {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--panel), var(--panel)) padding-box,
+    linear-gradient(
+        135deg,
+        var(--accent-9) 0%,
+        var(--accent-8) 55%,
+        var(--accent-5) 100%
+      )
+      border-box;
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--accent-9) 8%, transparent),
+    0 12px 32px -16px color-mix(in oklab, var(--accent-9) 45%, transparent);
 }
 
 /* Animated gradient ring for the chat question card */
