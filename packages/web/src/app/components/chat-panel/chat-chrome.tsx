@@ -202,15 +202,14 @@ export function ChatChrome({
       const panel = headerRef.current?.parentElement;
       if (
         event.key !== 'Escape' ||
-        event.defaultPrevented ||
         !(target instanceof Node && panel?.contains(target)) ||
         (target instanceof HTMLInputElement &&
           (target.value || target.getAttribute('role') !== 'combobox')) ||
-        document.querySelector('[role="menu"], [role="alertdialog"]')
+        !chatDom.escapeFree(event)
       ) {
         return;
       }
-      event.preventDefault();
+      chatDom.claimEscape(event);
       backToChat();
     };
     document.addEventListener('keydown', onKey, true);

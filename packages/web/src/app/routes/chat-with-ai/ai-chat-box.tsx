@@ -10,6 +10,7 @@ import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { chatDom } from '@/app/components/chat-panel/chat-dom';
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -147,17 +148,16 @@ function ChatBoxContent({
       const target = e.target;
       if (
         e.key !== 'Escape' ||
-        e.defaultPrevented ||
         !(target instanceof Element) ||
         !(
           target.closest('[data-chat-root]') ||
           rootRef.current?.contains(target)
         ) ||
-        document.querySelector(OPEN_LAYER_SELECTOR)
+        !chatDom.escapeFree(e)
       ) {
         return;
       }
-      e.preventDefault();
+      chatDom.claimEscape(e);
       cancelStream();
     };
     document.addEventListener('keydown', handler);
@@ -677,6 +677,3 @@ type AIChatBoxProps = {
 type ModelGate = 'loading' | 'setup' | 'ready';
 
 const HISTORY_SKELETON_DELAY_MS = 150;
-
-const OPEN_LAYER_SELECTOR =
-  '[role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper]';

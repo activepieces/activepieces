@@ -1,3 +1,4 @@
+import { Query, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -21,6 +22,7 @@ export function ChatContentColumn({ children }: { children: React.ReactNode }) {
   const split = useChatPanel((s) => s.split) && !full;
   const pageRef = useRef<HTMLDivElement>(null);
   const blank = useBlankPage({ pageRef, watch: split });
+  const cover = usePageCover({ pageRef, entering: moving === 'enter' });
   const cardWidth = chatLayoutUtils.cardInnerWidth({ viewportWidth, railOpen });
   const pinnedWidth =
     moving === 'enter' && chatWidth === 'left'
@@ -43,7 +45,9 @@ export function ChatContentColumn({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </div>
-      {blank && <PageSkeleton />}
+      {(blank || cover !== 'off') && (
+        <PageSkeleton fading={!blank && cover === 'fading'} />
+      )}
     </div>
   );
 }
@@ -80,6 +84,80 @@ function useBlankPage({
   return blank;
 }
 
+function usePageCover({
+  pageRef,
+  entering,
+}: {
+  pageRef: React.RefObject<HTMLDivElement | null>;
+  entering: boolean;
+}): PageCover {
+  const [cover, setCover] = useState<PageCover>('off');
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!entering) return;
+    setCover('on');
+  }, [entering]);
+  useEffect(() => {
+    if (cover === 'fading') {
+      const timer = setTimeout(() => setCover('off'), COVER_FADE_MS);
+      return () => clearTimeout(timer);
+    }
+    if (cover !== 'on') return;
+    let frame = 0;
+    let settledAt: number | null = null;
+    const loading = () =>
+      queryClient
+        .getQueryCache()
+        .findAll({ predicate: isFirstLoad })
+        .some((query) => query.state.fetchStatus === 'fetching');
+    const check = () => {
+      const now = performance.now();
+      if (useChatPanel.getState().moving !== null) {
+        settledAt = null;
+      } else {
+        settledAt = settledAt ?? now;
+        const page = pageRef.current;
+        const ready = page !== null && !loading() && fillsPage(page);
+        if (ready || now - settledAt >= COVER_MAX_MS) {
+          setCover('fading');
+          return;
+        }
+      }
+      frame = requestAnimationFrame(check);
+    };
+    frame = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(frame);
+  }, [cover, pageRef, queryClient]);
+  return cover;
+}
+
+function isFirstLoad(query: Query): boolean {
+  return query.state.data === undefined;
+}
+
+function fillsPage(page: HTMLElement): boolean {
+  const column = page.parentElement?.getBoundingClientRect();
+  if (!column || column.height === 0) return false;
+  const reach = column.top + column.height * COVER_REACH;
+  const walker = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const parent = node.parentElement;
+    if (!parent || (node.textContent ?? '').trim() === '') continue;
+    const rect = parent.getBoundingClientRect();
+    if (
+      rect.bottom >= reach &&
+      rect.top <= column.bottom &&
+      parent.checkVisibility({
+        opacityProperty: true,
+        visibilityProperty: true,
+      })
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function isBlank(page: HTMLElement): boolean {
   return (
     (page.textContent ?? '').trim() === '' &&
@@ -87,11 +165,14 @@ function isBlank(page: HTMLElement): boolean {
   );
 }
 
-function PageSkeleton() {
+function PageSkeleton({ fading = false }: { fading?: boolean }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 flex flex-col gap-4 bg-gray-1 p-6"
+      className={cn(
+        'pointer-events-none absolute inset-0 z-20 flex flex-col gap-4 bg-gray-1 p-6 transition-opacity duration-150 ease-out motion-reduce:transition-none',
+        fading && 'opacity-0',
+      )}
     >
       <Skeleton className="h-6 w-48" />
       <Skeleton className="h-8 w-full" />
@@ -102,4 +183,9 @@ function PageSkeleton() {
   );
 }
 
+type PageCover = 'off' | 'on' | 'fading';
+
 const SKELETON_ROWS = ['92%', '84%', '88%', '76%', '90%', '70%'];
+const COVER_MAX_MS = 600;
+const COVER_FADE_MS = 150;
+const COVER_REACH = 0.35;

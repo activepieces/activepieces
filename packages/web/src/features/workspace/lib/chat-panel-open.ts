@@ -36,8 +36,9 @@ function openBeside({
   const viewportWidth = window.innerWidth;
   const previous = isObject(location.state) ? location.state : {};
   const showsSplit = fromFull || panel.split;
-  const backToChat =
-    (push && fromFull) || (!push && previous.chatSplitBack === true);
+  const carried = !fromFull && previous.chatSplitBack === true;
+  const replace = !push || carried;
+  const backToChat = (push && fromFull) || carried;
   keepFocus();
   if (viewportWidth < chatLayoutUtils.MOBILE_BREAKPOINT) {
     if (panel.open) panel.setOpen(false);
@@ -59,7 +60,7 @@ function openBeside({
     }
     current.navigate({
       to: route,
-      replace: !push,
+      replace,
       state: { chatSplit: showsSplit, chatSplitBack: backToChat },
     });
   }
@@ -76,6 +77,7 @@ function expand(): void {
   const now = Date.now();
   if (now - lastExpandAt < EXPAND_DEBOUNCE_MS) return;
   lastExpandAt = now;
+  keepFocus();
   const location = current.location();
   const panel = useChatPanel.getState();
   current.captureAnchor();
@@ -101,42 +103,61 @@ function expand(): void {
 function keepFocus(): void {
   releaseFocus?.();
   const kept = document.activeElement;
-  if (!(kept instanceof HTMLElement) || !kept.closest('[data-chat-root]')) {
+  if (!(kept instanceof HTMLElement) || !kept.closest(CHAT_ROOT)) {
     return;
   }
+  let frame = 0;
   let tabbing = false;
   const onKey = (event: KeyboardEvent) => {
-    tabbing = event.key === 'Tab';
+    tabbing = tabbing || event.key === 'Tab';
   };
   const onPointer = (event: PointerEvent) => {
     const target = event.target;
-    if (!(target instanceof Element) || !target.closest('[data-chat-root]')) {
+    if (!(target instanceof Element) || !target.closest(CHAT_ROOT)) {
       release();
     }
   };
-  const onFocus = (event: FocusEvent) => {
-    const target = event.target;
-    if (
-      tabbing ||
-      !kept.isConnected ||
-      !(target instanceof Element) ||
-      target.closest('[data-chat-root], [role="dialog"], [role="menu"]')
-    ) {
+  const target = (): HTMLElement | null => {
+    if (kept.isConnected) return kept;
+    return document.querySelector<HTMLElement>(`${CHAT_ROOT} ${COMPOSER}`);
+  };
+  const check = () => {
+    const active = document.activeElement;
+    const into = target();
+    if (tabbing || !into) {
+      release();
       return;
     }
-    kept.focus({ preventScroll: true });
+    if (active === into) {
+      frame = requestAnimationFrame(check);
+      return;
+    }
+    if (
+      active &&
+      active !== document.body &&
+      active.closest(`${CHAT_ROOT}, ${LAYERS}`)
+    ) {
+      release();
+      return;
+    }
+    if (into.closest('[inert]')) {
+      frame = requestAnimationFrame(check);
+      return;
+    }
+    into.focus({ preventScroll: true });
+    release();
   };
   const release = () => {
-    document.removeEventListener('focusin', onFocus, true);
+    cancelAnimationFrame(frame);
     document.removeEventListener('pointerdown', onPointer, true);
     document.removeEventListener('keydown', onKey, true);
     clearTimeout(timer);
     if (releaseFocus === release) releaseFocus = null;
   };
   const timer = setTimeout(release, FOCUS_GUARD_MS);
-  document.addEventListener('focusin', onFocus, true);
   document.addEventListener('pointerdown', onPointer, true);
   document.addEventListener('keydown', onKey, true);
+  frame = requestAnimationFrame(check);
   releaseFocus = release;
 }
 
@@ -234,7 +255,10 @@ let movingGuard: ReturnType<typeof setTimeout> | null = null;
 let releaseFocus: (() => void) | null = null;
 const EXPAND_DEBOUNCE_MS = 220;
 const MOVING_GUARD_MS = 900;
-const FOCUS_GUARD_MS = 30_000;
+const FOCUS_GUARD_MS = 2000;
+const CHAT_ROOT = '[data-chat-root]';
+const COMPOSER = 'textarea, [contenteditable="true"]';
+const LAYERS = '[role="dialog"], [role="alertdialog"], [role="menu"]';
 
 const STORAGE_KEY = 'chat-panel';
 const TAB_VIEW_KEY = 'chat:view';
