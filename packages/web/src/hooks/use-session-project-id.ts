@@ -7,5 +7,5 @@ export function useSessionProjectId(): string | null {
 }
 
 function readProjectId(): string | null {
-  return authenticationSession.getProjectId();
+  return authenticationSession.getTabProjectId();
 }

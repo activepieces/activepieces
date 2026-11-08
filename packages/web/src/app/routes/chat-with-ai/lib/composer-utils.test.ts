@@ -36,6 +36,50 @@ describe('composerUtils.findSecrets', () => {
     ).toEqual([]);
     expect(composerUtils.findSecrets('sk-short')).toEqual([]);
   });
+
+  it('ignores long ids, hashes and base64 data', () => {
+    expect(
+      composerUtils.findSecrets(
+        'commit 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+      ),
+    ).toEqual([]);
+    expect(
+      composerUtils.findSecrets(
+        'run 9F86D081884C7D659A2FEAA0C55AD015A3BF4F1B2B0B822CD15D6C15B0F00A08',
+      ),
+    ).toEqual([]);
+    expect(
+      composerUtils.findSecrets(
+        'integrity sha384-oqVuAfXRKap7fdgcCY5uykM6Pwy1W6wMqzCO9Wm5TwM8b1DQq4',
+      ),
+    ).toEqual([]);
+    expect(
+      composerUtils.findSecrets(
+        'img data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      ),
+    ).toEqual([]);
+    expect(
+      composerUtils.findSecrets(
+        'img data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB/CAYAAAAfFcSJAAAADUlEQVR42mNkM9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      ),
+    ).toEqual([]);
+    expect(composerUtils.findSecrets(`blob ${'aB3'.repeat(60)} end`)).toEqual(
+      [],
+    );
+  });
+
+  it('still flags a mixed key at the end of a sentence', () => {
+    expect(
+      composerUtils.findSecrets(
+        'my key is AKIAabcdEFGH1234ijklMNOP5678qrstUVWX.',
+      ),
+    ).toEqual(['AKIAabcdEFGH1234ijklMNOP5678qrstUVWX']);
+    expect(
+      composerUtils.findSecrets(
+        'token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc',
+      ),
+    ).toEqual(['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9']);
+  });
 });
 
 describe('composerUtils.removeSecrets', () => {

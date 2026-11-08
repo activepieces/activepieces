@@ -345,6 +345,7 @@ export function useAgentChat({
   onCreditsExhausted,
   onTurnEnd,
   onConversationMissing,
+  onSendAbandoned,
 }: {
   agentId?: string;
   builder?: boolean;
@@ -354,6 +355,7 @@ export function useAgentChat({
   onCreditsExhausted?: () => void;
   onTurnEnd?: () => void;
   onConversationMissing?: () => void;
+  onSendAbandoned?: (message: AbandonedSend) => void;
 } = {}) {
   const store = useChatStoreApi();
   const queryClient = useQueryClient();
@@ -398,6 +400,8 @@ export function useAgentChat({
   const onConversationCreatedRef = useRef(onConversationCreated);
   onConversationCreatedRef.current = onConversationCreated;
   const onConversationMissingRef = useRef(onConversationMissing);
+  const onSendAbandonedRef = useRef(onSendAbandoned);
+  onSendAbandonedRef.current = onSendAbandoned;
   onConversationMissingRef.current = onConversationMissing;
   const sessionGenRef = useRef(0);
 
@@ -869,23 +873,20 @@ export function useAgentChat({
           }),
         );
         if (isStale()) {
+          if (
+            isNil(conversationIdRef.current) &&
+            isNil(optimisticUserMessageRef.current)
+          ) {
+            onSendAbandonedRef.current?.({ content, files: files ?? [] });
+          }
           if (conv) {
-            await tryCatch(async () =>
-              chatApi.sendMessage({
-                conversationId: conv.id,
-                content,
-                runId: apId(),
-                files: encodedFiles,
-                ...(options?.messageSource
-                  ? { messageSource: options.messageSource }
-                  : {}),
-                ...(pageContextRef.current
-                  ? { pageContext: pageContextRef.current }
-                  : {}),
-              }),
-            );
-            queryClient
-              .invalidateQueries({ queryKey: ['chat-conversations'] })
+            chatApi
+              .deleteConversation(conv.id)
+              .then(() =>
+                queryClient.invalidateQueries({
+                  queryKey: ['chat-conversations'],
+                }),
+              )
               .catch(() => undefined);
           }
           return;
@@ -1157,3 +1158,5 @@ export function useAgentChat({
     setModelPick,
   };
 }
+
+export type AbandonedSend = { content: string; files: File[] };

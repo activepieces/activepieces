@@ -15,6 +15,10 @@ import { telemetryUtils } from './telemetry-utils';
 
 const tokenKey = 'token';
 const projectIdKey = 'projectId';
+const SESSION_CHANGED_EVENT = 'ap:session-changed';
+const tabSnapshot: { projectId: string | null | undefined } = {
+  projectId: undefined,
+};
 export const authenticationSession = {
   setProjectId(projectId: string) {
     ApStorage.getInstance().setItem(projectIdKey, projectId);
@@ -22,7 +26,7 @@ export const authenticationSession = {
   },
   subscribe(listener: () => void): () => void {
     let scheduled = false;
-    const onStorage = () => {
+    const onChange = () => {
       if (scheduled) {
         return;
       }
@@ -32,8 +36,8 @@ export const authenticationSession = {
         listener();
       });
     };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener(SESSION_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(SESSION_CHANGED_EVENT, onChange);
   },
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
     if (isEmbedding) {
@@ -76,6 +80,12 @@ export const authenticationSession = {
       return decodedJwt.projectId;
     }
     return null;
+  },
+  getTabProjectId(): string | null {
+    if (tabSnapshot.projectId === undefined) {
+      tabSnapshot.projectId = authenticationSession.getProjectId();
+    }
+    return tabSnapshot.projectId;
   },
   getCurrentUserId(): string | null {
     const token = this.getToken();
@@ -153,7 +163,8 @@ export const authenticationSession = {
 };
 
 function notifySessionChanged(): void {
-  window.dispatchEvent(new Event('storage'));
+  tabSnapshot.projectId = undefined;
+  window.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
 }
 
 function getDecodedJwt(token: string): Principal {

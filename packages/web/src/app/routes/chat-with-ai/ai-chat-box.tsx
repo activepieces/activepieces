@@ -33,8 +33,8 @@ import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
@@ -52,6 +52,7 @@ import {
 import { QuickReplies } from './components/quick-replies';
 import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
+import { composerStore } from './lib/composer-store';
 import { composerUtils } from './lib/composer-utils';
 import { getTextFromParts } from './lib/message-parsers';
 
@@ -82,7 +83,15 @@ function ChatBoxContent({
   compact,
 }: AIChatBoxProps) {
   const credits = useCreditsState();
-  const sessionProjectId = authenticationSession.getProjectId();
+  const sessionProjectId = useSessionProjectId();
+  const newChatDraftKey = composerUtils.draftKeyFor({
+    conversationId: null,
+    agentId,
+  });
+  const draftKey = composerUtils.draftKeyFor({
+    conversationId: initialConversationId,
+    agentId,
+  });
   const { data: gateUser } = userHooks.useCurrentUser();
   const gate = useModelGate({
     gated:
@@ -120,6 +129,13 @@ function ChatBoxContent({
     onTurnEnd,
     onConversationMissing,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
+    onSendAbandoned: ({ content, files }) =>
+      composerStore.fill({
+        key: newChatDraftKey,
+        text: content,
+        files,
+        mode: 'restore',
+      }),
   });
 
   const setStoreConversationId = useChatStoreContext(
@@ -382,6 +398,7 @@ function ChatBoxContent({
                 hasInput={hasInput}
                 onboarding={showOnboardingCard}
                 onSend={(text) => handleSend(text).catch(() => undefined)}
+                onFill={(text) => composerStore.fill({ key: draftKey, text })}
               />
             )}
           </div>
@@ -531,10 +548,7 @@ function ChatBoxContent({
             onStop={cancelStream}
             onInputChange={setHasInput}
             replyStopped={wasCancelled || failed}
-            draftKey={composerUtils.draftKeyFor({
-              conversationId: initialConversationId,
-              agentId,
-            })}
+            draftKey={draftKey}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (

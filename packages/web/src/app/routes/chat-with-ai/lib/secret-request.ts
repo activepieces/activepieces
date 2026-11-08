@@ -1,10 +1,16 @@
-import { AIProviderName, apId, isObject } from '@activepieces/core-utils';
+import {
+  AIProviderName,
+  apId,
+  isNil,
+  isObject,
+} from '@activepieces/core-utils';
 import {
   PieceAuthProperty,
   PieceMetadataModel,
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  AIProviderWithoutSensitiveData,
   AppConnectionType,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
@@ -14,6 +20,7 @@ import { providerRequestUtils } from '@/app/routes/platform/setup/ai/providers-t
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { normalizePieceName } from './message-parsers';
@@ -67,37 +74,82 @@ function canSaveInline(request: SecretRequest): boolean {
   return request.target === 'connection' && request.piece !== null;
 }
 
-function connectionAuth(
-  piece: PieceMetadataModel | undefined,
-): PieceAuthProperty | null {
+function connectionAuth({
+  piece,
+  fields,
+}: {
+  piece: Pick<PieceMetadataModel, 'auth'> | undefined;
+  fields: SecretField[];
+}): PieceAuthProperty | null {
   if (!piece?.auth) return null;
   const options = Array.isArray(piece.auth) ? piece.auth : [piece.auth];
-  return options.find((auth) => INLINE_AUTH_TYPES.includes(auth.type)) ?? null;
+  return (
+    options.find(
+      (auth) =>
+        INLINE_AUTH_TYPES.includes(auth.type) &&
+        fieldsMatchAuth({ auth, fields }),
+    ) ?? null
+  );
+}
+
+function existingProviderKey({
+  request,
+  configs,
+}: {
+  request: SecretRequest;
+  configs: ExistingProviderKey[] | undefined;
+}): ExistingProviderKey | null {
+  if (request.target !== 'ai_provider' || isNil(configs)) return null;
+  const sameProvider = configs.filter(
+    (config) => config.provider === request.provider,
+  );
+  return (
+    sameProvider.find((config) => config.name === keyDisplayName(request)) ??
+    sameProvider[0] ??
+    null
+  );
+}
+
+function failureOf(error: unknown): SaveFailure {
+  return api.isError(error) &&
+    (error.response?.status === 403 || error.response?.status === 401)
+    ? 'forbidden'
+    : 'invalid';
 }
 
 async function save({
   request,
   values,
   piece,
+  replace,
 }: {
   request: SecretRequest;
   values: Record<string, string>;
   piece: PieceMetadataModel | undefined;
+  replace: ExistingProviderKey | null;
 }): Promise<SecretRef> {
   if (request.target === 'ai_provider') {
     const provider = request.provider;
     if (!isAiProvider(provider)) throw new Error('Unsupported provider');
-    const created = await aiProviderApi.upsert(
-      providerRequestUtils.buildCreateRequest({
-        provider,
-        displayName: t('{name} key', { name: request.name }),
-        credentials: values,
-        headers: {},
-      }),
-    );
+    const body = providerRequestUtils.buildCreateRequest({
+      provider,
+      displayName: replace?.name ?? keyDisplayName(request),
+      credentials: values,
+      headers: {},
+      existingConfig: replace?.config,
+    });
+    if (!isNil(replace)) {
+      await aiProviderApi.update(replace.id, {
+        displayName: body.displayName,
+        config: body.config,
+        auth: body.auth,
+      });
+      return { kind: 'ai_provider', id: replace.id };
+    }
+    const created = await aiProviderApi.upsert(body);
     return { kind: 'ai_provider', id: created.id };
   }
-  const auth = connectionAuth(piece);
+  const auth = connectionAuth({ piece, fields: request.fields });
   const projectId = authenticationSession.getProjectId();
   if (!piece || !auth || !projectId) {
     throw new Error('Unsupported connection');
@@ -114,7 +166,7 @@ function connectionRequest({
   projectId,
   values,
 }: {
-  piece: PieceMetadataModel;
+  piece: Pick<PieceMetadataModel, 'name' | 'displayName' | 'version'>;
   auth: PieceAuthProperty;
   projectId: string;
   values: Record<string, string>;
@@ -157,6 +209,43 @@ function settingsPath(request: SecretRequest): string {
   if (request.target === 'ai_provider') return '/platform/ai';
   if (request.target === 'secret_manager') return '/platform/secret-managers';
   return authenticationSession.appendProjectRoutePrefix('/connections');
+}
+
+function fieldsMatchAuth({
+  auth,
+  fields,
+}: {
+  auth: PieceAuthProperty;
+  fields: SecretField[];
+}): boolean {
+  const names = fields.map((field) => field.name);
+  switch (auth.type) {
+    case PropertyType.SECRET_TEXT:
+      return names.length === 1;
+    case PropertyType.BASIC_AUTH:
+      return (
+        names.length === 2 &&
+        names.includes('username') &&
+        names.includes('password')
+      );
+    case PropertyType.CUSTOM_AUTH: {
+      const props: Record<string, { type: PropertyType; required: boolean }> =
+        auth.props;
+      const known = names.every((name) =>
+        TEXT_PROP_TYPES.includes(props[name]?.type),
+      );
+      const required = Object.entries(props)
+        .filter(([, prop]) => prop.required)
+        .every(([name]) => names.includes(name));
+      return known && required;
+    }
+    default:
+      return false;
+  }
+}
+
+function keyDisplayName(request: SecretRequest): string {
+  return t('{name} key', { name: request.name });
 }
 
 function parseField(value: unknown): SecretField | null {
@@ -208,6 +297,12 @@ function str(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
+const TEXT_PROP_TYPES: (PropertyType | undefined)[] = [
+  PropertyType.SHORT_TEXT,
+  PropertyType.LONG_TEXT,
+  PropertyType.SECRET_TEXT,
+];
+
 const INLINE_AUTH_TYPES: PropertyType[] = [
   PropertyType.SECRET_TEXT,
   PropertyType.BASIC_AUTH,
@@ -220,6 +315,9 @@ export const secretRequestUtils = {
   isExpired,
   canSaveInline,
   connectionAuth,
+  connectionRequest,
+  existingProviderKey,
+  failureOf,
   save,
   settingsPath,
 };
@@ -244,5 +342,12 @@ export type SecretRequest = {
 };
 
 export type SecretRef = { kind: string; id: string };
+
+export type SaveFailure = 'forbidden' | 'invalid';
+
+export type ExistingProviderKey = Pick<
+  AIProviderWithoutSensitiveData,
+  'id' | 'name' | 'provider' | 'config'
+>;
 
 type SavedSecret = { label: string | null; ref: SecretRef | null };

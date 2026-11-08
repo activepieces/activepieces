@@ -2,8 +2,10 @@ import { isNil, isObject, tryCatchSync } from '@activepieces/core-utils';
 
 function findSecrets(text: string): string[] {
   const found = SECRET_PATTERNS.flatMap((pattern) =>
-    Array.from(text.matchAll(pattern), (match) => match[0]),
-  ).filter((candidate) => isKeyLike({ text, candidate }));
+    Array.from(text.matchAll(pattern)).filter((match) =>
+      isKeyLike({ text, candidate: match[0], start: match.index ?? 0 }),
+    ),
+  ).map((match) => match[0]);
   return Array.from(new Set(found));
 }
 
@@ -66,14 +68,21 @@ function readAll(): Record<string, string> {
 function isKeyLike({
   text,
   candidate,
+  start,
 }: {
   text: string;
   candidate: string;
+  start: number;
 }): boolean {
   if (PREFIXED.test(candidate)) return true;
-  const start = text.indexOf(candidate);
-  const before = text.slice(Math.max(0, start - 8), start);
-  if (/[/.:]$/.test(before)) return false;
+  const before = text.slice(0, start);
+  const after = text.slice(start + candidate.length);
+  if (/[/.:]$/.test(before) || after.startsWith('/')) return false;
+  if (DATA_URI_BEFORE.test(before)) return false;
+  if (HEX_OR_UUID.test(candidate) || CONTENT_HASH.test(candidate)) {
+    return false;
+  }
+  if (candidate.length > MAX_GENERIC_SECRET_LENGTH) return false;
   return (
     /[a-z]/.test(candidate) && /[A-Z]/.test(candidate) && /\d/.test(candidate)
   );
@@ -81,6 +90,10 @@ function isKeyLike({
 
 const DRAFTS_KEY = 'chat:drafts';
 const NEW_CHAT_PREFIX = 'new:';
+const MAX_GENERIC_SECRET_LENGTH = 128;
+const DATA_URI_BEFORE = /data:[\w/+.-]*;base64,[A-Za-z0-9+/=]*$/;
+const HEX_OR_UUID = /^[0-9a-fA-F-]+$/;
+const CONTENT_HASH = /^sha(1|256|384|512)-/;
 const PREFIXED = /^(sk-|gh[pousr]_|xox[bpoas]-)/;
 const SECRET_PATTERNS = [
   /\bsk-[A-Za-z0-9_-]{16,}/g,

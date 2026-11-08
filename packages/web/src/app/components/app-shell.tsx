@@ -11,6 +11,7 @@ import { SocketProvider } from '@/components/providers/socket-provider';
 import { SidebarInset } from '@/components/ui/sidebar-shadcn';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
+import { projectCollectionUtils } from '@/features/projects';
 import { templatesApi } from '@/features/templates';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -99,7 +100,9 @@ function BarePage() {
 function AppShell({ handle }: { handle: RouteHandle }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const embedded = useEmbedding().embedState.isEmbedded;
-  const projectId = useSessionProjectId();
+  const routeProjectId = useRouteProjectId();
+  const sessionProjectId = useSessionProjectId();
+  const projectId = routeProjectId ?? sessionProjectId;
   const isPlatformAdmin = useIsPlatformAdmin();
   useReloadOnProjectChangedElsewhere({ projectId, embedded });
   const isPlatform = handle.shell === 'platform';
@@ -112,79 +115,100 @@ function AppShell({ handle }: { handle: RouteHandle }) {
   }
 
   return (
-    <GlobalSearchProvider>
-      <div
-        className={cn(
-          'flex h-full w-full overflow-hidden',
-          !embedded && 'max-md:h-svh max-md:flex-col',
-        )}
-      >
-        <AppSidebar mode={isPlatform ? 'platform' : 'app'} />
-        <TooltipProvider delayDuration={0}>
-          <div
-            className={cn(
-              'flex h-svh flex-1 min-w-0',
-              !isPlatform && 'will-change-transform',
-              !embedded && 'max-md:h-auto max-md:min-h-0',
-            )}
-          >
-            <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
-              <div
-                className={cn(
-                  'relative flex-1 flex flex-col overflow-hidden',
-                  !embedded && 'pr-2 pt-3 pb-3 max-md:pl-2 max-md:pt-2',
-                )}
-              >
+    <>
+      {!isNil(routeProjectId) && (
+        <AdoptRouteProject key={routeProjectId} projectId={routeProjectId} />
+      )}
+      <GlobalSearchProvider>
+        <div
+          className={cn(
+            'flex h-full w-full overflow-hidden',
+            !embedded && 'max-md:h-svh max-md:flex-col',
+          )}
+        >
+          <AppSidebar mode={isPlatform ? 'platform' : 'app'} />
+          <TooltipProvider delayDuration={0}>
+            <div
+              className={cn(
+                'flex h-svh flex-1 min-w-0',
+                !isPlatform && 'will-change-transform',
+                !embedded && 'max-md:h-auto max-md:min-h-0',
+              )}
+            >
+              <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
                 <div
-                  id={embedded && isBuilder ? undefined : CARD_ID}
                   className={cn(
-                    'relative flex h-full overflow-clip',
-                    isPlatform ? 'bg-(--admin-page)' : 'bg-gray-1',
-                    !embedded && 'rounded-xl shadow-panel border',
-                    embedded && isBuilder && 'border-l',
+                    'relative flex-1 flex flex-col overflow-hidden',
+                    !embedded && 'pr-2 pt-3 pb-3 max-md:pl-2 max-md:pt-2',
                   )}
                 >
-                  {!embedded && <ChatDock side="left" />}
-                  <ChatContentColumn>
-                    {showHeader && (
-                      <ProjectDashboardLayoutHeader key={projectId} />
+                  <div
+                    id={embedded && isBuilder ? undefined : CARD_ID}
+                    className={cn(
+                      'relative flex h-full overflow-clip',
+                      isPlatform ? 'bg-(--admin-page)' : 'bg-gray-1',
+                      !embedded && 'rounded-xl shadow-panel border',
+                      embedded && isBuilder && 'border-l',
                     )}
-                    {handle.shell === 'project' && <CreditsUsageAlert />}
-                    <div className={PAGE_CLASS[handle.shell]}>
-                      <Suspense fallback={<RouteLoadingBar />}>
-                        <Outlet />
-                      </Suspense>
-                    </div>
-                  </ChatContentColumn>
-                  {!embedded && <ChatDock side="right" />}
+                  >
+                    {!embedded && <ChatDock side="left" />}
+                    <ChatContentColumn>
+                      {showHeader && (
+                        <ProjectDashboardLayoutHeader key={projectId} />
+                      )}
+                      {handle.shell === 'project' && <CreditsUsageAlert />}
+                      <div className={PAGE_CLASS[handle.shell]}>
+                        <Suspense fallback={<RouteLoadingBar />}>
+                          <Outlet />
+                        </Suspense>
+                      </div>
+                    </ChatContentColumn>
+                    {!embedded && <ChatDock side="right" />}
+                  </div>
+                  {!embedded && (
+                    <>
+                      <ChatNotch className="bottom-3" />
+                      <ChatWindow />
+                    </>
+                  )}
                 </div>
-                {!embedded && (
-                  <>
-                    <ChatNotch className="bottom-3" />
-                    <ChatWindow />
-                  </>
-                )}
-              </div>
-            </SidebarInset>
-          </div>
-        </TooltipProvider>
-      </div>
-      {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-      {!embedded && (
-        <ErrorBoundary
-          fallback={null}
-          onError={(error, info) =>
-            errorReporting.report({
-              error,
-              componentStack: info.componentStack,
-              source: 'react-error-boundary',
-            })
-          }
-        >
-          <ChatChromeHost />
-        </ErrorBoundary>
-      )}
-    </GlobalSearchProvider>
+              </SidebarInset>
+            </div>
+          </TooltipProvider>
+        </div>
+        {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+        {!embedded && (
+          <ErrorBoundary
+            fallback={null}
+            onError={(error, info) =>
+              errorReporting.report({
+                error,
+                componentStack: info.componentStack,
+                source: 'react-error-boundary',
+              })
+            }
+          >
+            <ChatChromeHost />
+          </ErrorBoundary>
+        )}
+      </GlobalSearchProvider>
+    </>
+  );
+}
+
+function AdoptRouteProject({ projectId }: { projectId: string }) {
+  const hasAccess = projectCollectionUtils.useHasAccessToProject(projectId);
+  if (hasAccess) {
+    authenticationSession.switchToProject(projectId);
+  }
+  return null;
+}
+
+function useRouteProjectId(): string | null {
+  const matches = useMatches();
+  return (
+    matches.findLast((m) => !isNil(m.params.projectId))?.params.projectId ??
+    null
   );
 }
 
