@@ -130,7 +130,6 @@ export function ApTableStateProvider({
     records: records?.data,
     fields,
     storeRef,
-    rebuild: () => setRefreshKey((key) => key + 1),
   });
 
   // rebuilds the table store from freshly fetched server state without
@@ -204,13 +203,11 @@ function useFollowTableUpdates({
   records,
   fields,
   storeRef,
-  rebuild,
 }: {
   tableId: string | undefined;
   records: PopulatedRecord[] | undefined;
   fields: Field[] | undefined;
   storeRef: React.RefObject<ApTableStore | null>;
-  rebuild: () => void;
 }) {
   const queryClient = useQueryClient();
   const seen = useRef<PopulatedRecord[] | null>(null);
@@ -258,8 +255,16 @@ function useFollowTableUpdates({
     const removed = [...before.keys()].filter((id) => !freshIds.has(id));
     seen.current = fresh;
     seenFields.current = freshFields;
+    const freshTable = queryClient.getQueryData<Table>(['table', tableId]);
     const lightUp = () => {
-      rebuild();
+      const store = storeRef.current;
+      if (store) {
+        store.getState().syncFromServer({
+          table: freshTable ?? store.getState().table,
+          fields: freshFields,
+          records: fresh,
+        });
+      }
       followAlong.flash([
         ...freshFields
           .filter((field) => !fieldsBefore.has(field.id))
@@ -279,7 +284,7 @@ function useFollowTableUpdates({
     const current = generation.current;
     tryCatch(() =>
       Promise.all(
-        ['records', 'fields'].map((name) =>
+        ['records', 'fields', 'table'].map((name) =>
           queryClient.refetchQueries({ queryKey: [name, tableId] }),
         ),
       ),

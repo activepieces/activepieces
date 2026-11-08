@@ -373,7 +373,7 @@ export type RunChange = {
 
 export type FollowOffer = {
   resource: ResourceRef;
-  kind: 'ready' | 'switch';
+  kind: 'ready' | 'switch' | 'project';
   runId: string | null;
 };
 

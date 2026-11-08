@@ -6,10 +6,14 @@ import { useLayoutEffect, useRef, useState } from 'react';
 
 import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import {
+  FollowOffer,
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
 import { resourceRegistry } from '@/features/chat/lib/resources/registry';
+import { getProjectName } from '@/features/projects';
+import { projectCollection } from '@/features/projects/stores/project-collection';
+import { chatTransitions } from '@/features/workspace/lib/chat-panel-open';
 
 export function ChatOfferPill() {
   const ref = useRef<HTMLDivElement>(null);
@@ -56,16 +60,28 @@ export function ChatOfferPill() {
                 strokeWidth={2}
               />
               <span className="ml-1 truncate">
-                {offer.kind === 'ready'
-                  ? t('{name} is ready', { name })
-                  : t('Now editing {name}', { name })}
+                {offerLabel({ kind: offer.kind, name })}
               </span>
               <button
                 type="button"
-                onClick={() => followAlong.view(offer.resource)}
+                onClick={() => {
+                  if (offer.kind !== 'project') {
+                    followAlong.view(offer.resource);
+                    return;
+                  }
+                  followAlong.offer(null);
+                  chatTransitions.openBeside({
+                    route: resourceRegistry.route(offer.resource),
+                    push: true,
+                    name,
+                  });
+                }}
                 className="ml-1 h-6 shrink-0 rounded-full px-2.5 text-sm font-medium text-accent-11 transition-colors hover:bg-accent-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-8"
               >
-                {offer.kind === 'ready' ? t('Open beside') : t('Switch')}
+                {actionLabel({
+                  kind: offer.kind,
+                  projectId: offer.resource.projectId,
+                })}
               </button>
               <button
                 type="button"
@@ -81,4 +97,44 @@ export function ChatOfferPill() {
       </AnimatePresence>
     </div>
   );
+}
+
+function offerLabel({
+  kind,
+  name,
+}: {
+  kind: FollowOffer['kind'];
+  name: string;
+}): string {
+  switch (kind) {
+    case 'ready':
+      return t('{name} is ready', { name });
+    case 'switch':
+      return t('Now editing {name}', { name });
+    case 'project':
+      return t('{name} is in another project', { name });
+  }
+}
+
+function actionLabel({
+  kind,
+  projectId,
+}: {
+  kind: FollowOffer['kind'];
+  projectId: string | undefined;
+}): string {
+  switch (kind) {
+    case 'ready':
+      return t('Open beside');
+    case 'switch':
+      return t('Switch');
+    case 'project': {
+      const project = projectId ? projectCollection.get(projectId) : undefined;
+      return project
+        ? t('Switch to {project} and open', {
+            project: getProjectName(project),
+          })
+        : t('Switch project and open');
+    }
+  }
 }

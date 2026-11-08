@@ -45,11 +45,13 @@ const EditorSelector = ({ fieldType }: { fieldType: FieldType }) => {
 const useSetInitialFocus = (isSelected: boolean) => {
   const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    requestAnimationFrame(() => {
-      if (isSelected) {
-        containerRef.current?.focus();
+    installGridInteractionTracking();
+    const frame = requestAnimationFrame(() => {
+      if (isSelected && userIsInGrid()) {
+        containerRef.current?.focus({ preventScroll: true });
       }
     });
+    return () => cancelAnimationFrame(frame);
   }, []);
   return containerRef;
 };
@@ -76,7 +78,11 @@ export function EditableCell({
     selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
   const containerRef = useSetInitialFocus(isSelected);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const isTypingKey = e.key.length === 1 || e.key === 'Enter';
+    const isTypingKey =
+      (e.key.length === 1 || e.key === 'Enter') &&
+      !e.metaKey &&
+      !e.ctrlKey &&
+      !e.altKey;
     if (isTypingKey && !disabled && !isEditing) {
       setIsEditing(true);
       setSelectedCell({ rowIdx, columnIdx: column.idx });
@@ -167,3 +173,27 @@ export function EditableCell({
     </div>
   );
 }
+
+function installGridInteractionTracking(): void {
+  if (gridTracking.installed) return;
+  gridTracking.installed = true;
+  const mark = (event: Event) => {
+    const target = event.target;
+    gridTracking.lastInGrid =
+      target instanceof Element && target.closest('.rdg') !== null;
+  };
+  const options = { capture: true, passive: true };
+  window.addEventListener('pointerdown', mark, options);
+  window.addEventListener('keydown', mark, options);
+  window.addEventListener('focusin', mark, options);
+}
+
+function userIsInGrid(): boolean {
+  const active = document.activeElement;
+  if (active instanceof Element && active !== document.body) {
+    return active.closest('.rdg') !== null;
+  }
+  return gridTracking.lastInGrid;
+}
+
+const gridTracking = { installed: false, lastInGrid: false };

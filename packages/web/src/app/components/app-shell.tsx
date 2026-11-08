@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId, TemplateType } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Suspense, useEffect, useRef } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Navigate, Outlet, useLocation, useMatches } from 'react-router-dom';
@@ -101,7 +101,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
   const embedded = useEmbedding().embedState.isEmbedded;
   const projectId = useSessionProjectId();
   const isPlatformAdmin = useIsPlatformAdmin();
-  useReloadOnProjectChangedElsewhere({ projectId, embedded });
+  useResyncOnProjectChangedElsewhere({ projectId, embedded });
   const isPlatform = handle.shell === 'platform';
   const isBuilder = handle.shell === 'builder';
   const showHeader =
@@ -188,7 +188,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
   );
 }
 
-function useReloadOnProjectChangedElsewhere({
+function useResyncOnProjectChangedElsewhere({
   projectId,
   embedded,
 }: {
@@ -196,6 +196,7 @@ function useReloadOnProjectChangedElsewhere({
   embedded: boolean;
 }) {
   const { pathname } = useLocation();
+  const queryClient = useQueryClient();
   const shownProjectId = useRef(projectId);
   useEffect(() => {
     if (document.visibilityState === 'visible') {
@@ -210,14 +211,23 @@ function useReloadOnProjectChangedElsewhere({
       if (document.visibilityState !== 'visible') {
         return;
       }
-      if (authenticationSession.getProjectId() !== shownProjectId.current) {
-        window.location.reload();
+      const sessionProjectId = authenticationSession.getProjectId();
+      if (sessionProjectId === shownProjectId.current) {
+        return;
       }
+      const urlProjectId = PROJECT_IN_PATH.exec(pathname)?.[1] ?? null;
+      if (urlProjectId) {
+        authenticationSession.switchToProject(urlProjectId);
+        shownProjectId.current = urlProjectId;
+      } else {
+        shownProjectId.current = sessionProjectId;
+      }
+      queryClient.invalidateQueries().catch(() => undefined);
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () =>
       document.removeEventListener('visibilitychange', onVisibilityChange);
-  }, [embedded, pathname]);
+  }, [embedded, pathname, queryClient]);
 }
 
 function isRouteHandle(value: unknown): value is RouteHandle {
@@ -225,6 +235,7 @@ function isRouteHandle(value: unknown): value is RouteHandle {
 }
 
 const CARD_ID = 'dashboard-content-container';
+const PROJECT_IN_PATH = /^\/projects\/([^/]+)/;
 
 const PAGE_CLASS: Record<RouteHandle['shell'], string> = {
   project: 'flex-1 overflow-auto',

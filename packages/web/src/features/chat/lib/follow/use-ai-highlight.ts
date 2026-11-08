@@ -77,11 +77,18 @@ function shownKey({
 
 function mayScroll(): boolean {
   installTracking();
-  return lastUserScrollAt <= runStartedAt;
+  return lastUserScrollAt <= runStartedAt && !scrolledThisRun;
+}
+
+function claimScroll(): boolean {
+  if (!mayScroll()) return false;
+  scrolledThisRun = true;
+  programmaticScrollUntil = Date.now() + PROGRAMMATIC_SCROLL_MS;
+  return true;
 }
 
 function scrollIntoView(element: Element): void {
-  if (!mayScroll()) return;
+  if (!claimScroll()) return;
   element.scrollIntoView({
     block: 'nearest',
     inline: 'nearest',
@@ -94,23 +101,44 @@ function prefersReducedMotion(): boolean {
 }
 
 function installTracking(): void {
-  if (tracking) return;
+  if (tracking || typeof window === 'undefined') return;
   tracking = true;
+  const inChat = (target: EventTarget | null) =>
+    target instanceof Element && target.closest('[data-chat-root]') !== null;
   const mark = (event: Event) => {
-    const target = event.target;
-    if (target instanceof Element && target.closest('[data-chat-root]')) {
-      return;
-    }
+    if (inChat(event.target)) return;
     if (event instanceof KeyboardEvent && !SCROLL_KEYS.has(event.key)) return;
     lastUserScrollAt = Date.now();
+  };
+  const onScroll = (event: Event) => {
+    if (inChat(event.target)) return;
+    if (pointerDown || Date.now() > programmaticScrollUntil) {
+      lastUserScrollAt = Date.now();
+    }
   };
   const options = { capture: true, passive: true };
   window.addEventListener('wheel', mark, options);
   window.addEventListener('touchmove', mark, options);
   window.addEventListener('keydown', mark, options);
+  window.addEventListener('scroll', onScroll, options);
+  window.addEventListener(
+    'pointerdown',
+    (event) => {
+      pointerDown = !inChat(event.target);
+    },
+    options,
+  );
+  window.addEventListener(
+    'pointerup',
+    () => {
+      pointerDown = false;
+    },
+    options,
+  );
   useFollowAlong.subscribe((state, previous) => {
     if (state.phase === 'editing' && previous.phase !== 'editing') {
       runStartedAt = Date.now();
+      scrolledThisRun = false;
     }
   });
 }
@@ -119,6 +147,10 @@ const shown = new Set<string>();
 let tracking = false;
 let lastUserScrollAt = 0;
 let runStartedAt = 0;
+let scrolledThisRun = false;
+let pointerDown = false;
+let programmaticScrollUntil = 0;
+const PROGRAMMATIC_SCROLL_MS = 1500;
 
 const SCROLL_KEYS = new Set([
   'ArrowUp',
@@ -132,8 +164,11 @@ const SCROLL_KEYS = new Set([
 
 export const aiHighlight = {
   mayScroll,
+  claimScroll,
   scrollIntoView,
   prefersReducedMotion,
 };
 
 type HighlightSource = Pick<RunChange, 'toolCallId' | 'highlights' | 'changed'>;
+
+installTracking();

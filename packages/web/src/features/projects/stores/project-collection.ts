@@ -327,7 +327,7 @@ export const projectHooks = {
       },
     });
   },
-  useReloadPageIfProjectIdChanged: (projectId: string) => {
+  useKeepProjectWhenChangedElsewhere: (projectId: string) => {
     const { embedState } = useEmbedding();
     useEffect(() => {
       const handleVisibilityChange = () => {
@@ -337,7 +337,7 @@ export const projectHooks = {
           document.visibilityState === 'visible' &&
           !embedState.isEmbedded
         ) {
-          window.location.reload();
+          authenticationSession.switchToProject(projectId);
         }
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);

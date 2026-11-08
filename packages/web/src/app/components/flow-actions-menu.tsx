@@ -44,10 +44,10 @@ import { projectMembersHooks } from '@/features/members';
 import { gitSyncHooks } from '@/features/project-releases';
 import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
+import { useOpenInApp } from '@/features/workspace/lib/use-open-in-app';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { useNewWindow } from '@/lib/navigation-utils';
 
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 
@@ -90,7 +90,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 }) => {
   const isRunsPage = useLocation().pathname.includes('/runs');
   const { platform } = platformHooks.useCurrentPlatform();
-  const openNewWindow = useNewWindow();
+  const { open: openInApp } = useOpenInApp();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
     platform.plan.environmentsEnabled,
@@ -167,7 +167,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       return updatedFlow;
     },
     onSuccess: (data) => {
-      openNewWindow(`/flows/${data.id}`);
+      openInApp({
+        route: authenticationSession.appendProjectRoutePrefix(
+          `/flows/${data.id}`,
+        ),
+      });
       onDuplicate();
     },
   });

@@ -26,20 +26,20 @@ export function FollowBar() {
       {visible && (
         <motion.div
           key="follow-bar"
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={
             reduceMotion
               ? { duration: 0 }
-              : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
+              : { duration: 0.18, ease: [0.22, 1, 0.36, 1] }
           }
-          className="shrink-0 overflow-hidden"
+          className="pointer-events-none absolute inset-x-0 top-2 z-20 flex justify-center px-4"
         >
           <div
             role="status"
             aria-live="polite"
-            className="flex h-8 items-center gap-2 border-b bg-gray-2 px-4 text-xs"
+            className="pointer-events-auto flex h-8 max-w-full items-center gap-2 rounded-full border bg-gray-2 px-4 text-xs shadow-sm"
           >
             {phase === 'editing' ? (
               <LiveDot />

@@ -42,10 +42,11 @@ export type ClientField = {
 const mapRecorddToClientRecordsData = (
   records: PopulatedRecord[],
   fields: Field[],
+  previous?: Map<string, Pick<ClientRecordData, 'uuid' | 'agentRunId'>>,
 ): ClientRecordData[] => {
   return records.map((record) => ({
-    uuid: nanoid(),
-    agentRunId: null,
+    uuid: previous?.get(record.id)?.uuid ?? nanoid(),
+    agentRunId: previous?.get(record.id)?.agentRunId ?? null,
     values: Object.entries(record.cells).map(([fieldId, cell]) => ({
       fieldIndex: fields.findIndex((field) => field.id === fieldId),
       value: cell.value,
@@ -81,6 +82,11 @@ export type TableState = {
   renameField: (fieldIndex: number, newName: string) => void;
   reorderField: (fieldIndex: number, targetIndex: number) => void;
   setRecords: (records: PopulatedRecord[]) => void;
+  syncFromServer: (fresh: {
+    table: Table;
+    fields: Field[];
+    records: PopulatedRecord[];
+  }) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   toggleStatus: () => void;
   lockedByOtherUser: boolean;
@@ -101,21 +107,13 @@ export const createApTableStore = (
       records,
       (isSaving: boolean) => set({ isSaving }),
     );
-    const selectedCell =
-      records.length > 0
-        ? {
-            rowIdx: 0,
-            columnIdx: 1,
-          }
-        : null;
-
     return {
       isSaving: false,
       selectedRecords: new Set(),
       table,
       setSelectedRecords: (selectedRecords: ReadonlySet<string>) =>
         set({ selectedRecords }),
-      selectedCell: selectedCell,
+      selectedCell: null,
       selectedAgentRunId: null,
       setSelectedAgentRunId: (agentRunId: string | null) =>
         set({ selectedAgentRunId: agentRunId }),
@@ -140,21 +138,7 @@ export const createApTableStore = (
             ? state
             : { selectedCell },
         ),
-      fields: fields.map((field) => {
-        if (field.type === FieldType.STATIC_DROPDOWN) {
-          return {
-            uuid: field.id,
-            name: field.name,
-            type: field.type,
-            data: field.data,
-          };
-        }
-        return {
-          uuid: field.id,
-          name: field.name,
-          type: field.type,
-        };
-      }),
+      fields: mapFieldsToClientFields(fields),
       records: mapRecorddToClientRecordsData(records, fields),
       createRecord: (recordData: ClientRecordData) => {
         serverState.createRecord(recordData);
@@ -286,6 +270,44 @@ export const createApTableStore = (
           };
         });
       },
+      syncFromServer: (fresh) => {
+        set((state) => {
+          const previous = new Map(
+            serverState.records.map((record, index) => [
+              record.id,
+              {
+                uuid: state.records[index]?.uuid ?? nanoid(),
+                agentRunId: state.records[index]?.agentRunId ?? null,
+              },
+            ]),
+          );
+          serverState.replaceAll({
+            fields: fresh.fields,
+            records: fresh.records,
+          });
+          const nextRecords = mapRecorddToClientRecordsData(
+            fresh.records,
+            fresh.fields,
+            previous,
+          );
+          const uuids = new Set(nextRecords.map((record) => record.uuid));
+          const selectedCell =
+            state.selectedCell &&
+            state.selectedCell.rowIdx < nextRecords.length &&
+            state.selectedCell.columnIdx <= fresh.fields.length
+              ? state.selectedCell
+              : null;
+          return {
+            table: { ...state.table, ...fresh.table },
+            fields: mapFieldsToClientFields(fresh.fields),
+            records: nextRecords,
+            selectedCell,
+            selectedRecords: new Set(
+              [...state.selectedRecords].filter((uuid) => uuids.has(uuid)),
+            ),
+          };
+        });
+      },
       setAgentRunId: (recordId: string, agentRunId: string | null) => {
         const recordIndex = serverState.records.findIndex(
           (record) => record.id === recordId,
@@ -321,5 +343,23 @@ export const createApTableStore = (
     };
   });
 };
+
+function mapFieldsToClientFields(fields: Field[]): ClientField[] {
+  return fields.map((field) => {
+    if (field.type === FieldType.STATIC_DROPDOWN) {
+      return {
+        uuid: field.id,
+        name: field.name,
+        type: field.type,
+        data: field.data,
+      };
+    }
+    return {
+      uuid: field.id,
+      name: field.name,
+      type: field.type,
+    };
+  });
+}
 
 export type ApTableStore = ReturnType<typeof createApTableStore>;

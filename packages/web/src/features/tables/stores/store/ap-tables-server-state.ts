@@ -26,7 +26,7 @@ export const createServerState = (
 
   const clonedTable: Table = JSON.parse(JSON.stringify(_table));
   const clonedFields: Field[] = JSON.parse(JSON.stringify(_fields));
-  let clonedRecords: PopulatedRecord[] = JSON.parse(JSON.stringify(_records));
+  const clonedRecords: PopulatedRecord[] = JSON.parse(JSON.stringify(_records));
 
   function addPromiseToQueue(promise: () => Promise<void>) {
     queue.add(async () => {
@@ -45,14 +45,16 @@ export const createServerState = (
         const fieldId = clonedFields[fieldIndex].id;
         await fieldsApi.delete(clonedFields[fieldIndex].id);
         clonedFields.splice(fieldIndex, 1);
-        clonedRecords = clonedRecords.map((record) => {
-          return {
+        clonedRecords.splice(
+          0,
+          clonedRecords.length,
+          ...clonedRecords.map((record) => ({
             ...record,
             cells: Object.fromEntries(
               Object.entries(record.cells).filter(([key]) => key !== fieldId),
             ),
-          };
-        });
+          })),
+        );
       });
     },
     createField: (field: CreateFieldRequest) => {
@@ -143,7 +145,25 @@ export const createServerState = (
       });
     },
     setRecords: (records: PopulatedRecord[]) => {
-      clonedRecords = JSON.parse(JSON.stringify(records));
+      clonedRecords.splice(
+        0,
+        clonedRecords.length,
+        ...structuredClone(records),
+      );
+    },
+    replaceAll: ({
+      fields,
+      records,
+    }: {
+      fields: Field[];
+      records: PopulatedRecord[];
+    }) => {
+      clonedFields.splice(0, clonedFields.length, ...structuredClone(fields));
+      clonedRecords.splice(
+        0,
+        clonedRecords.length,
+        ...structuredClone(records),
+      );
     },
     fields: clonedFields,
     records: clonedRecords,

@@ -183,9 +183,16 @@ const useRefreshDraftOnFollow = () => {
   useOnFollowUpdate({
     resource: { kind: 'flow', id: flowId },
     handler: () => {
-      const { selectedStep, draftRefreshCount } = store.getState();
-      if (selectedStep && isEditingStepSettings()) {
-        stepReloadHold.hold({ stepName: selectedStep, draftRefreshCount });
+      const { selectedStep, draftRefreshCount, parkPendingEdit } =
+        store.getState();
+      const holdStep =
+        selectedStep &&
+        (isEditingStepSettings() || stepReloadHold.isDirty(selectedStep))
+          ? selectedStep
+          : null;
+      if (holdStep) {
+        parkPendingEdit(holdStep);
+        stepReloadHold.hold({ stepName: holdStep, draftRefreshCount });
       }
       refreshDraft()
         .catch(() => false)
@@ -193,6 +200,7 @@ const useRefreshDraftOnFollow = () => {
           const state = store.getState();
           if (state.draftRefreshCount === draftRefreshCount) {
             stepReloadHold.releaseIfUnchanged(draftRefreshCount);
+            if (holdStep) state.resumeParkedEdit(holdStep);
           }
           const next = flowFingerprints(state);
           const before = seen.current ?? new Map<string, string>();

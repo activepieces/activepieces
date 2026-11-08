@@ -27,6 +27,17 @@ export class KeyedDebounce {
     [...this.pending.keys()].forEach((key) => this.fire(key));
   }
 
+  take(key: string): (() => void) | null {
+    const call = this.pending.get(key);
+    if (isNil(call)) {
+      return null;
+    }
+    clearTimeout(call.timer);
+    this.pending.delete(key);
+    this.notifyIfEmpty();
+    return call.run;
+  }
+
   isEmpty() {
     return this.pending.size === 0;
   }
@@ -48,6 +59,10 @@ export class KeyedDebounce {
     clearTimeout(call.timer);
     this.pending.delete(key);
     call.run();
+    this.notifyIfEmpty();
+  }
+
+  private notifyIfEmpty() {
     if (this.isEmpty()) {
       const waiters = this.emptyWaiters;
       this.emptyWaiters = [];

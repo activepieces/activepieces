@@ -246,7 +246,7 @@ function useAiTableHighlights(gridRef: React.RefObject<DataGridHandle | null>) {
 
   useEffect(() => {
     const rowIdx = lit.firstRowIdx;
-    if (rowIdx === null || !aiHighlight.mayScroll()) return;
+    if (rowIdx === null || !aiHighlight.claimScroll()) return;
     const frame = requestAnimationFrame(() =>
       gridRef.current?.scrollToCell({ rowIdx, idx: 0 }),
     );
