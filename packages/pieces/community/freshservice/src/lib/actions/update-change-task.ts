@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from '../common/client';
 import { freshserviceCommon } from '../common/props';
+import { freshserviceSchemas } from '../common/schemas';
 
 export const updateChangeTask = createAction({
   auth: freshserviceAuth,
@@ -10,7 +11,8 @@ export const updateChangeTask = createAction({
   classification: 'WRITE',
   displayName: 'Update Change Task',
   description: 'Updates an existing task on a change request in Freshservice.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: freshserviceSchemas.task,
   aiMetadata: {
     description: 'Modifies fields on an existing task within a Freshservice change request, identified by change id and task id (e.g. title, status, assignee, due date). Use to progress or revise a change task; at least one field must be supplied or the call errors. Idempotent — re-sending the same field values leaves the task in the same state.',
     idempotent: true,

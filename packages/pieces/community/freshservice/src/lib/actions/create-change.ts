@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from '../common/client';
 import { freshserviceCommon } from '../common/props';
+import { freshserviceSchemas } from '../common/schemas';
 
 export const createChange = createAction({
   auth: freshserviceAuth,
@@ -10,7 +11,8 @@ export const createChange = createAction({
   classification: 'WRITE',
   displayName: 'Create Change',
   description: 'Creates a new change request in Freshservice.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: freshserviceSchemas.change,
   aiMetadata: {
     description: 'Opens a new change request (change management record) in Freshservice. Use to propose an IT change for planning, approval, and tracking; requires a subject and the requester id, with optional risk, impact, change type, status, and planned start/end dates. Not idempotent — each call creates a separate change.',
     idempotent: false,
@@ -37,12 +39,12 @@ export const createChange = createAction({
     change_type: freshserviceCommon.changeType,
     planned_start_date: Property.ShortText({
       displayName: 'Planned Start Date',
-      description: 'Planned start date and time (ISO 8601, e.g. 2025-01-15T09:00:00Z).',
+      description: 'Planned start date and time (ISO 8601, e.g. 2025-01-15T09:00:00Z). Most Freshservice accounts require it.',
       required: false,
     }),
     planned_end_date: Property.ShortText({
       displayName: 'Planned End Date',
-      description: 'Planned end date and time (ISO 8601, e.g. 2025-01-15T17:00:00Z).',
+      description: 'Planned end date and time (ISO 8601, e.g. 2025-01-15T17:00:00Z). Most Freshservice accounts require it.',
       required: false,
     }),
     category: Property.ShortText({
@@ -68,7 +70,6 @@ export const createChange = createAction({
   },
   async run(context) {
     const props = context.propsValue;
-
     const body: Record<string, unknown> = {
       subject: props.subject,
       requester_id: props.requester_id,

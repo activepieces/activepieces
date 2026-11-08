@@ -4,16 +4,14 @@ import {
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  HttpMethod,
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
-import { freshserviceApiCall } from '../common/client';
+import { freshserviceListPages } from '../common/client';
+import { freshserviceSchemas } from '../common/schemas';
 import { freshserviceCommon, FreshserviceChangeTask } from '../common/props';
-
-type Props = { change_id: number | undefined };
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof freshserviceAuth>,
@@ -21,23 +19,29 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS, propsValue }) {
-    if (!propsValue.change_id) return [];
-    const response = await freshserviceApiCall<{
-      tasks: FreshserviceChangeTask[];
-    }>({
-      method: HttpMethod.GET,
-      endpoint: `changes/${propsValue.change_id}/tasks`,
-      auth,
-      queryParams: {
-        order_by: 'created_at',
-        order_type: 'desc',
-        per_page: lastFetchEpochMS === 0 ? '10' : '100',
-      },
-    });
-
-    return response.body.tasks.map((task) => ({
-      epochMilliSeconds: new Date(task.created_at).getTime(),
-      data: task,
+    if (propsValue.change_id === undefined || propsValue.change_id === null) {
+      throw new Error('Select a change to watch for tasks.');
+    }
+    const records =
+      lastFetchEpochMS === 0
+        ? await freshserviceListPages<FreshserviceChangeTask>({
+            auth,
+            endpoint: `changes/${propsValue.change_id}/tasks`,
+            key: 'tasks',
+            perPage: 10,
+            maxPages: 1,
+            allowTruncation: true,
+            queryParams: {},
+          })
+        : await freshserviceListPages<FreshserviceChangeTask>({
+            auth,
+            endpoint: `changes/${propsValue.change_id}/tasks`,
+            key: 'tasks',
+            queryParams: {},
+          });
+    return records.map((record) => ({
+      epochMilliSeconds: new Date(record.created_at).getTime(),
+      data: record,
     }));
   },
 };
@@ -46,10 +50,11 @@ export const newChangeTask = createTrigger({
   auth: freshserviceAuth,
   name: 'new_change_task',
   classification: 'READ',
+  outputSchema: freshserviceSchemas.task,
   displayName: 'New Change Task',
   description: 'Triggers when a new task is created on a specific change request.',
   aiMetadata: {
-    description: 'Fires when a new task is added to one specific change request in Freshservice, representing a newly created unit of work on that change. Scoped to a single change id chosen in setup; polls newest-first by creation time among that change\'s tasks.',
+    description: 'Fires when a new task is added to one specific change request in Freshservice, representing a newly created unit of work on that change. Scoped to a single change id chosen in setup; polls every page since the last check, by creation time among that change\'s tasks.',
   },
   props: {
     change_id: freshserviceCommon.change(true),
@@ -84,3 +89,5 @@ export const newChangeTask = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
+
+type Props = { change_id: number | undefined };

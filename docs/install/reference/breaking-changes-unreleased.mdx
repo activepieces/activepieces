@@ -8,6 +8,15 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Freshservice 0.3.0: the existing actions are no longer AI agent tools
+
+**Create Ticket**, **Add Note to Ticket**, **Create Requester**, **Request Ticket Approval**, **Create Change**, **Update Change**, **Delete Change**, **Add Note to Change**, **Create Change Task**, **Update Change Task** and **Delete Change Task** are now shown only in the flow builder, with their dropdowns unchanged. AI agents and MCP clients get new ID-based actions instead: Create, Update, Get and Search Tickets, Add Ticket Note, Reply to Ticket, Request Ticket Approval, Create and Find Requester, List Agents, Groups and Departments, Get, List, Create, Update and Delete Change, Add Change Note, and Create, Update and Delete Change Task.
+
+#### What you need to do
+
+- Agents that used the old Freshservice actions as tools: switch to the new agent actions.
+- Flow steps keep working unchanged.
+
 #### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
 
 The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows. In **Update Product**, Availability, Exclude Tax, Enable Variants, Status and the new Non-Veg setting are now Yes/No choices, and a setting left empty keeps the product's current value instead of being set to off.

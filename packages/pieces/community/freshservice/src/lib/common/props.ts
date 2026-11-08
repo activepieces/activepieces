@@ -3,36 +3,47 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { freshserviceAuth } from '../../';
 import { freshserviceApiCall } from './client';
 
-interface FreshserviceRequester {
-  id: number;
-  first_name: string;
-  last_name: string;
-  primary_email: string;
-}
-
-interface FreshserviceAgent {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-}
-
-interface FreshserviceDepartment {
-  id: number;
-  name: string;
-}
-
-interface FreshserviceGroup {
-  id: number;
-  name: string;
-}
-
-interface FreshserviceTicket {
-  id: number;
-  subject: string;
+function joinName({ first, last }: { first: string | null; last: string | null }): string {
+  return [first, last].filter((part) => typeof part === 'string' && part.trim().length > 0).join(' ');
 }
 
 export const freshserviceCommon = {
+  idNumber: <R extends boolean>({
+    displayName,
+    required,
+    description,
+  }: {
+    displayName: string;
+    required: R;
+    description?: string;
+  }) =>
+    Property.Number({
+      displayName,
+      description,
+      required,
+    }),
+
+  yesNo: <R extends boolean>({
+    displayName,
+    required,
+    description,
+  }: {
+    displayName: string;
+    required: R;
+    description: string;
+  }) =>
+    Property.StaticDropdown<string, R>({
+      displayName,
+      description,
+      required,
+      options: {
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+        ],
+      },
+    }),
+
   change: (required = true) =>
     Property.Dropdown({
       auth: freshserviceAuth,
@@ -126,7 +137,7 @@ export const freshserviceCommon = {
         return {
           disabled: false,
           options: response.body.requesters.map((r) => ({
-            label: `${r.first_name} ${r.last_name} (${r.primary_email})`,
+            label: `${joinName({ first: r.first_name, last: r.last_name })} (${r.primary_email})`,
             value: r.id,
           })),
         };
@@ -158,7 +169,7 @@ export const freshserviceCommon = {
         return {
           disabled: false,
           options: response.body.agents.map((a) => ({
-            label: `${a.first_name} ${a.last_name} (${a.email})`,
+            label: `${joinName({ first: a.first_name, last: a.last_name })} (${a.email})`,
             value: a.id,
           })),
         };
@@ -287,9 +298,13 @@ export const freshserviceCommon = {
         { label: 'Email', value: 1 },
         { label: 'Portal', value: 2 },
         { label: 'Phone', value: 3 },
-        { label: 'Chat', value: 7 },
-        { label: 'Feedback Widget', value: 9 },
-        { label: 'Outbound Email', value: 10 },
+        { label: 'Chat', value: 4 },
+        { label: 'Feedback Widget', value: 5 },
+        { label: 'Yammer', value: 6 },
+        { label: 'AWS Cloudwatch', value: 7 },
+        { label: 'Pagerduty', value: 8 },
+        { label: 'Walkup', value: 9 },
+        { label: 'Slack', value: 10 },
       ],
     },
   }),
@@ -378,4 +393,33 @@ export interface FreshserviceChangeTask {
   notify_before: number;
   created_at: string;
   updated_at: string;
+}
+
+interface FreshserviceRequester {
+  id: number;
+  first_name: string;
+  last_name: string;
+  primary_email: string;
+}
+
+interface FreshserviceAgent {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+interface FreshserviceDepartment {
+  id: number;
+  name: string;
+}
+
+interface FreshserviceGroup {
+  id: number;
+  name: string;
+}
+
+interface FreshserviceTicket {
+  id: number;
+  subject: string;
 }
