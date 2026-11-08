@@ -9,7 +9,7 @@ export default createAction({
   description: 'Gets the profile of the connected Spotify account',
   audience: 'both',
   aiMetadata: {
-    description: "Returns the connected Spotify account's profile (user id, display name, account id, images). Email, country and subscription are only returned for apps with extended access. Use it to learn whose library and playlists the connection acts on. Read-only and repeatable.",
+    description: "Returns the connected Spotify account's profile (user id, display name, account id, images). Email, country, subscription and follower count are not returned on this connection (it does not request the user-read-email and user-read-private scopes, and Spotify no longer returns followers). Use it to learn whose library and playlists the connection acts on. Read-only and repeatable.",
     idempotent: true,
   },
   auth: spotifyCommon.authentication,

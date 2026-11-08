@@ -18,6 +18,7 @@ export const spotify = createPiece({
     'abuaboud',
     'jerboa88',
     'Jarva',
+    'OdaiAhmed99',
   ],
   actions: [
     ...actions,

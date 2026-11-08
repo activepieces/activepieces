@@ -11,6 +11,9 @@ import addPlaylistItems from '../src/lib/actions/add-playlist-items';
 import removePlaylistItems from '../src/lib/actions/remove-playlist-items';
 import replacePlaylistItems from '../src/lib/actions/replace-playlist-items';
 import addLibraryItems from '../src/lib/actions/add-library-items';
+import removeLibraryItems from '../src/lib/actions/remove-library-items';
+import getArtistAlbums from '../src/lib/actions/get-artist-albums';
+import getCurrentUser from '../src/lib/actions/get-current-user';
 import checkLibraryItems from '../src/lib/actions/check-library-items';
 import getPlaybackState from '../src/lib/actions/get-playback-state';
 import pause from '../src/lib/actions/pause';
@@ -511,16 +514,6 @@ describe('update playlist', () => {
   });
 });
 
-type FakeResponse = { status: number; body?: unknown };
-
-type Seen = {
-  url: URL;
-  method: string;
-  body: Record<string, unknown> & { uris?: string[]; items?: unknown[] } | undefined;
-  auth: string | null;
-  dispatcher: unknown;
-};
-
 describe('qa edge cases', () => {
   test('429 rate limit keeps the status and vendor text and is not retried', async () => {
     const seen = stubFetch(() => ({ status: 429, body: { error: { status: 429, message: 'API rate limit exceeded' } } }));
@@ -599,3 +592,83 @@ describe('qa edge cases', () => {
     expect(seen[0].url.searchParams.get('uri')).toBe(`spotify:episode:${TR}`);
   });
 });
+
+describe('get_artist_albums (Spotify max limit 10)', () => {
+  const ARTIST = '0gxyHStUsqpMadRV0Di1Qt';
+
+  test('All mode pages by 10 and follows the offset', async () => {
+    const releases = Array.from({ length: 23 }, (_, i) => ({ id: `al${i}` }));
+    const seen = stubFetch(({ url }) => {
+      const offset = Number(url.searchParams.get('offset'));
+      const limit = Number(url.searchParams.get('limit'));
+      const items = releases.slice(offset, offset + limit);
+      return { status: 200, body: { items, next: offset + limit < releases.length ? 'n' : null, total: releases.length } };
+    });
+    const out = await run({ action: getArtistAlbums, propsValue: { id: ARTIST, all: true } });
+    expect(seen.map((s) => s.url.searchParams.get('limit'))).toEqual(['10', '10', '10']);
+    expect(seen.map((s) => s.url.searchParams.get('offset'))).toEqual(['0', '10', '20']);
+    expect(out).toEqual({ total: 23, items: releases, has_more: false });
+  });
+
+  test('Limit accepts 10 and rejects 11 before calling Spotify', async () => {
+    const seen = stubFetch(() => ({ status: 200, body: { items: [], next: null, total: 0 } }));
+    await run({ action: getArtistAlbums, propsValue: { id: ARTIST, limit: 10 } });
+    expect(seen[0].url.searchParams.get('limit')).toBe('10');
+    await expect(run({ action: getArtistAlbums, propsValue: { id: ARTIST, limit: 11 } })).rejects.toThrow(/Limit/);
+    expect(seen).toHaveLength(1);
+  });
+
+  test('the Limit hint shows max 10 and default 5', () => {
+    expect(getArtistAlbums.props.limit.description).toContain('1 to 10');
+    expect(getArtistAlbums.props.limit.description).toContain('default is 5');
+  });
+});
+
+describe('library write kinds', () => {
+  test('add and remove reject artist URIs without calling Spotify', async () => {
+    const seen = stubFetch(() => ({ status: 200, body: undefined }));
+    await expect(run({ action: addLibraryItems, propsValue: { items: [`spotify:artist:${TR}`] } })).rejects.toThrow();
+    await expect(run({ action: removeLibraryItems, propsValue: { items: [`https://open.spotify.com/artist/${TR}`] } })).rejects.toThrow();
+    expect(seen).toHaveLength(0);
+  });
+
+  test('add still accepts users and playlists', async () => {
+    const seen = stubFetch(() => ({ status: 200, body: undefined }));
+    await run({ action: addLibraryItems, propsValue: { items: [`spotify:playlist:${PL}`, 'spotify:user:wizzler'] } });
+    expect(seen[0].url.searchParams.get('uris')).toBe(`spotify:playlist:${PL},spotify:user:wizzler`);
+  });
+
+  test('contains check still accepts artist URIs', async () => {
+    const seen = stubFetch(() => ({ status: 200, body: [true] }));
+    const out = await run({ action: checkLibraryItems, propsValue: { items: [`spotify:artist:${TR}`] } });
+    expect(seen[0].url.searchParams.get('uris')).toBe(`spotify:artist:${TR}`);
+    expect(out).toEqual({ results: [{ uri: `spotify:artist:${TR}`, saved: true }] });
+  });
+});
+
+describe('get_current_user schema', () => {
+  test('lists no fields this connection cannot get back', () => {
+    const keys = getCurrentUser.outputSchema?.fields.map((f) => f.key) ?? [];
+    expect(keys).not.toContain('email');
+    expect(keys).not.toContain('product');
+    expect(keys).not.toContain('country');
+    expect(keys).not.toContain('followers');
+    expect(getCurrentUser.aiMetadata?.description).toContain('not returned on this connection');
+  });
+});
+
+describe('piece authors', () => {
+  test('includes OdaiAhmed99', () => {
+    expect(spotify.authors).toContain('OdaiAhmed99');
+  });
+});
+
+type FakeResponse = { status: number; body?: unknown };
+
+type Seen = {
+  url: URL;
+  method: string;
+  body: Record<string, unknown> & { uris?: string[]; items?: unknown[] } | undefined;
+  auth: string | null;
+  dispatcher: unknown;
+};

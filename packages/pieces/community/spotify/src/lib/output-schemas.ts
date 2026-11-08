@@ -381,9 +381,6 @@ export const spotifyOutputSchemas = {
     fields: [
       ...userFields,
       { key: 'account_id', label: 'Account ID' },
-      followersField,
-      { key: 'email', label: 'Email', format: 'email' },
-      { key: 'product', label: 'Subscription' },
       imagesField,
     ],
   },
