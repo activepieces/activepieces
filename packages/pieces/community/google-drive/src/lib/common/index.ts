@@ -5,11 +5,22 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { drive as googleDrive } from '@googleapis/drive';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken, createGoogleClient } from '../auth';
+import { driveDeadline } from './deadline';
 
 const FOLDER_DROPDOWN_PAGE_SIZE = 1000;
+const SHARED_DRIVES_PAGE_SIZE = 100;
+const SHARED_DRIVE_LIST_CONCURRENCY = 5;
+const LIST_CALL_TIMEOUT_MS = 10_000;
+const LISTING_BUDGET_MS = 25_000;
+const LISTING_TIMED_OUT =
+  'Google Drive took too long to list files. Nothing was skipped; the next check will try again.';
+const ACTION_LISTING_BUDGET_MS = 120_000;
+const ACTION_LISTING_TIMED_OUT =
+  'Google Drive took too long to search. Try again, or narrow the search.';
+const WATCH_FOLDER_HINT =
+  'Leave empty to watch My Drive and files shared with you. Shared drives are watched only when Include Team Drives is on. Type to search by folder name.';
 
 const escapeDriveQueryLiteral = (value: string): string =>
   value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -82,6 +93,332 @@ async function fetchFolderDropdownOptions({
   };
 }
 
+function timedOutMessage(wording: ListingWording): string {
+  return wording === 'action' ? ACTION_LISTING_TIMED_OUT : LISTING_TIMED_OUT;
+}
+
+function listCall<T>({
+  deadline,
+  wording,
+  call,
+}: {
+  deadline: number;
+  wording: ListingWording;
+  call: (signal: AbortSignal) => Promise<T>;
+}): Promise<T> {
+  return driveDeadline.runWithin({
+    ms: Math.min(LIST_CALL_TIMEOUT_MS, deadline - Date.now()),
+    message: timedOutMessage(wording),
+    call,
+  });
+}
+
+async function listPages({
+  drive,
+  params,
+  maxPages,
+  deadline,
+  wording,
+  stopAt,
+}: {
+  drive: drive_v3.Drive;
+  params: drive_v3.Params$Resource$Files$List;
+  maxPages: number | undefined;
+  deadline: number;
+  wording: ListingWording;
+  stopAt: ListingStop | undefined;
+}): Promise<PageListing> {
+  const files: drive_v3.Schema$File[] = [];
+  let pageToken: string | undefined = undefined;
+  let pagesFetched = 0;
+  do {
+    const canStop = stopAt !== undefined && pagesFetched > 0;
+    if (
+      canStop &&
+      (files.length >= stopAt.maxFiles || Date.now() >= deadline)
+    ) {
+      return { files, incomplete: false, truncated: true };
+    }
+    const request: drive_v3.Params$Resource$Files$List = pageToken
+      ? { ...params, pageToken }
+      : params;
+    const page: drive_v3.Schema$FileList | undefined = await listCall({
+      deadline,
+      wording,
+      call: (signal) => drive.files.list(request, { signal }),
+    }).then(
+      (response) => response.data,
+      (error: unknown) => {
+        if (canStop && Date.now() >= deadline) {
+          return undefined;
+        }
+        throw error;
+      }
+    );
+    if (page === undefined) {
+      return { files, incomplete: false, truncated: true };
+    }
+    if (page.incompleteSearch) {
+      return { files, incomplete: true, truncated: false };
+    }
+    files.push(...(page.files ?? []));
+    pageToken = page.nextPageToken ?? undefined;
+    pagesFetched += 1;
+    if (maxPages && pagesFetched >= maxPages) break;
+  } while (pageToken);
+  return { files, incomplete: false, truncated: false };
+}
+
+async function listSharedDriveIds({
+  drive,
+  deadline,
+  wording,
+}: {
+  drive: drive_v3.Drive;
+  deadline: number;
+  wording: ListingWording;
+}): Promise<string[]> {
+  const ids: string[] = [];
+  let pageToken: string | undefined = undefined;
+  do {
+    const request: drive_v3.Params$Resource$Drives$List = {
+      pageSize: SHARED_DRIVES_PAGE_SIZE,
+      fields: 'nextPageToken, drives(id)',
+      ...(pageToken ? { pageToken } : {}),
+    };
+    const page: drive_v3.Schema$DriveList = (
+      await listCall({
+        deadline,
+        wording,
+        call: (signal) => drive.drives.list(request, { signal }),
+      })
+    ).data;
+    for (const sharedDrive of page.drives ?? []) {
+      if (sharedDrive.id) ids.push(sharedDrive.id);
+    }
+    pageToken = page.nextPageToken ?? undefined;
+  } while (pageToken);
+  return ids;
+}
+
+function incompleteSearchError({
+  params,
+  wording,
+}: {
+  params: drive_v3.Params$Resource$Files$List;
+  wording: ListingWording;
+}): Error {
+  const scope = params.driveId ? `shared drive ${params.driveId}` : 'My Drive';
+  if (wording === 'action') {
+    return new Error(
+      `Google Drive could not search every file in ${scope}. Try again${
+        params.driveId ? ', or turn off Include Team Drives' : ''
+      }.`
+    );
+  }
+  return new Error(
+    `Google Drive could not search every file in ${scope}. The next check will try again.`
+  );
+}
+
+async function listCompleteCorpus({
+  drive,
+  params,
+  maxPages,
+  deadline,
+  wording,
+  stopAt,
+}: {
+  drive: drive_v3.Drive;
+  params: drive_v3.Params$Resource$Files$List;
+  maxPages: number | undefined;
+  deadline: number;
+  wording: ListingWording;
+  stopAt: ListingStop | undefined;
+}): Promise<PageListing> {
+  const result = await listPages({
+    drive,
+    params,
+    maxPages,
+    deadline,
+    wording,
+    stopAt,
+  });
+  if (result.incomplete) {
+    throw incompleteSearchError({ params, wording });
+  }
+  return result;
+}
+
+function timestampOf({
+  file,
+  orderBy,
+}: {
+  file: drive_v3.Schema$File;
+  orderBy: string | undefined;
+}): number {
+  const value = orderBy?.startsWith('modifiedTime')
+    ? file.modifiedTime
+    : file.createdTime;
+  const epoch = value ? Date.parse(value) : NaN;
+  return Number.isNaN(epoch) ? 0 : epoch;
+}
+
+function lastReadKey({
+  listing,
+  orderBy,
+}: {
+  listing: PageListing;
+  orderBy: string | undefined;
+}): number {
+  const last = listing.files[listing.files.length - 1];
+  return last ? timestampOf({ file: last, orderBy }) : 0;
+}
+
+async function listSharedDrivesFiles({
+  drive,
+  params,
+  maxPages,
+  deadline,
+  wording,
+  stopAt,
+  driveIds,
+}: {
+  drive: drive_v3.Drive;
+  params: drive_v3.Params$Resource$Files$List;
+  maxPages: number | undefined;
+  deadline: number;
+  wording: ListingWording;
+  stopAt: ListingStop | undefined;
+  driveIds: string[];
+}): Promise<PageListing[]> {
+  const listings: PageListing[] = [];
+  for (
+    let index = 0;
+    index < driveIds.length;
+    index += SHARED_DRIVE_LIST_CONCURRENCY
+  ) {
+    const batch = driveIds.slice(index, index + SHARED_DRIVE_LIST_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map((driveId) =>
+        listCompleteCorpus({
+          drive,
+          params: {
+            ...params,
+            corpora: 'drive',
+            driveId,
+            includeItemsFromAllDrives: true,
+            supportsAllDrives: true,
+          },
+          maxPages,
+          deadline,
+          wording,
+          stopAt,
+        })
+      )
+    );
+    listings.push(...results);
+  }
+  return listings;
+}
+
+function mergeListings({
+  listings,
+  orderBy,
+}: {
+  listings: PageListing[];
+  orderBy: string | undefined;
+}): DriveListing {
+  const truncatedKeys = listings
+    .filter((listing) => listing.truncated)
+    .map((listing) => lastReadKey({ listing, orderBy }));
+  const watermark = truncatedKeys.reduce(
+    (lowest, key) => Math.min(lowest, key),
+    Number.POSITIVE_INFINITY
+  );
+  const byId = new Map<string, drive_v3.Schema$File>();
+  for (const file of listings.flatMap((listing) => listing.files)) {
+    if (!file.id || byId.has(file.id)) continue;
+    if (timestampOf({ file, orderBy }) > watermark) continue;
+    byId.set(file.id, file);
+  }
+  const merged = [...byId.values()];
+  if (orderBy) {
+    const direction = orderBy.endsWith(' desc') ? -1 : 1;
+    merged.sort(
+      (a, b) =>
+        direction *
+        (timestampOf({ file: a, orderBy }) - timestampOf({ file: b, orderBy }))
+    );
+  }
+  return truncatedKeys.length > 0
+    ? { files: merged, truncated: true, watermark }
+    : { files: merged, truncated: false };
+}
+
+async function listFilesAcrossCorpora({
+  drive,
+  params,
+  maxPages,
+  deadline,
+  wording = 'poll',
+  stopAt,
+}: {
+  drive: drive_v3.Drive;
+  params: drive_v3.Params$Resource$Files$List;
+  maxPages: number | undefined;
+  deadline: number | undefined;
+  wording?: ListingWording;
+  stopAt?: ListingStop;
+}): Promise<DriveListing> {
+  const listingDeadline = deadline ?? Date.now() + LISTING_BUDGET_MS;
+  const primary = await listPages({
+    drive,
+    params,
+    maxPages,
+    deadline: listingDeadline,
+    wording,
+    stopAt,
+  });
+  if (!primary.incomplete) {
+    return mergeListings({ listings: [primary], orderBy: params.orderBy });
+  }
+  if (params.corpora !== 'allDrives') {
+    throw incompleteSearchError({ params, wording });
+  }
+
+  const userListing = await listCompleteCorpus({
+    drive,
+    params: { ...params, corpora: 'user' },
+    maxPages,
+    deadline: listingDeadline,
+    wording,
+    stopAt,
+  });
+  const driveIds = await listSharedDriveIds({
+    drive,
+    deadline: listingDeadline,
+    wording,
+  });
+  const sharedListings = await listSharedDrivesFiles({
+    drive,
+    params,
+    maxPages,
+    deadline: listingDeadline,
+    wording,
+    stopAt,
+    driveIds,
+  });
+  return mergeListings({
+    listings: [userListing, ...sharedListings],
+    orderBy: params.orderBy ?? 'createdTime desc',
+  });
+}
+
+function driveQueryTime(value: string | number | Date): string {
+  return new Date(value).toISOString();
+}
+
 function parentFolderDropdown({
   displayName,
   description,
@@ -120,9 +457,13 @@ export const common = {
     }),
   },
 
+  listingBudgetMs: LISTING_BUDGET_MS,
+  actionListingBudgetMs: ACTION_LISTING_BUDGET_MS,
+  watchFolderHint: WATCH_FOLDER_HINT,
   parentFolderDropdown,
   escapeDriveQueryLiteral,
   fetchFolderDropdownOptions,
+  listFilesAcrossCorpora,
 
   async getFiles(
     auth: GoogleDriveAuthValue,
@@ -131,13 +472,18 @@ export const common = {
       createdTime?: string | number | Date;
       createdTimeOp?: string;
       changedSince?: string | number | Date;
+      changedSinceOp?: string;
+      modifiedTime?: string | number | Date;
+      modifiedTimeOp?: string;
       mimeTypes?: string[];
       excludeShortcuts?: boolean;
       maxPages?: number;
       includeTeamDrive?: boolean;
+      deadline?: number;
+      stopAt?: ListingStop;
     },
     order?: string
-  ) {
+  ): Promise<DriveListing> {
     const authClient = await createGoogleClient(auth);
 
     const drive = googleDrive({ version: 'v3', auth: authClient });
@@ -147,14 +493,21 @@ export const common = {
       q.push(`'${escapeDriveQueryLiteral(search.parent)}' in parents`);
     if (search?.createdTime)
       q.push(
-        `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(
+        `createdTime ${search.createdTimeOp ?? '>'} '${driveQueryTime(
           search.createdTime
-        ).format()}'`
+        )}'`
+      );
+    if (search?.modifiedTime)
+      q.push(
+        `modifiedTime ${search.modifiedTimeOp ?? '>'} '${driveQueryTime(
+          search.modifiedTime
+        )}'`
       );
     if (search?.changedSince) {
-      const changedSince = dayjs(search.changedSince).format();
+      const changedSince = driveQueryTime(search.changedSince);
+      const op = search.changedSinceOp ?? '>';
       q.push(
-        `(modifiedTime > '${changedSince}' or createdTime > '${changedSince}')`
+        `(modifiedTime ${op} '${changedSince}' or createdTime ${op} '${changedSince}')`
       );
     }
     if (search?.mimeTypes?.length)
@@ -168,28 +521,22 @@ export const common = {
     if (search?.excludeShortcuts)
       q.push(`mimeType!='application/vnd.google-apps.shortcut'`);
     q.push(`trashed = false`);
-    const allFiles: any[] = [];
-    let pageToken: string | undefined = undefined;
-    let pagesFetched = 0;
-    do {
-      const listParams: Record<string, any> = {
+    return listFilesAcrossCorpora({
+      drive,
+      params: {
         q: q.concat("mimeType!='application/vnd.google-apps.folder'").join(' and '),
         fields:
-          'nextPageToken, files(id, name, mimeType, webViewLink, kind, createdTime, modifiedTime)',
+          'nextPageToken, incompleteSearch, files(id, name, mimeType, webViewLink, kind, createdTime, modifiedTime)',
         orderBy: order ?? 'createdTime desc',
+        pageSize: 1000,
         supportsAllDrives: true,
         includeItemsFromAllDrives: search?.includeTeamDrive,
         corpora: search?.includeTeamDrive ? 'allDrives' : 'user',
-      };
-      if (pageToken) listParams.pageToken = pageToken;
-      const response = await drive.files.list(listParams);
-      allFiles.push(...(response.data.files ?? []));
-      pageToken = response.data.nextPageToken ?? undefined;
-      pagesFetched += 1;
-      if (search?.maxPages && pagesFetched >= search.maxPages) break;
-    } while (pageToken);
-
-    return allFiles;
+      },
+      maxPages: search?.maxPages,
+      deadline: search?.deadline,
+      stopAt: search?.stopAt,
+    });
   },
 
   async getFolders(
@@ -199,9 +546,12 @@ export const common = {
       createdTime?: string | number | Date;
       createdTimeOp?: string;
       includeTeamDrive?: boolean;
+      maxPages?: number;
+      deadline?: number;
+      stopAt?: ListingStop;
     },
     order?: string
-  ) {
+  ): Promise<DriveListing> {
     const authClient = await createGoogleClient(auth);
 
     const drive = googleDrive({ version: 'v3', auth: authClient });
@@ -211,28 +561,39 @@ export const common = {
       q.push(`'${escapeDriveQueryLiteral(search.parent)}' in parents`);
     if (search?.createdTime)
       q.push(
-        `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(
+        `createdTime ${search.createdTimeOp ?? '>'} '${driveQueryTime(
           search.createdTime
-        ).format()}'`
+        )}'`
       );
     q.push(`trashed = false`);
-    const allFolders: any[] = [];
-    let pageToken: string | undefined = undefined;
-    do {
-      const listParams: Record<string, any> = {
+    return listFilesAcrossCorpora({
+      drive,
+      params: {
         q: q.join(' and '),
-        fields: 'nextPageToken, files(id, name, createdTime)',
+        fields: 'nextPageToken, incompleteSearch, files(id, name, createdTime)',
         orderBy: order ?? 'createdTime desc',
+        pageSize: 1000,
         supportsAllDrives: true,
         includeItemsFromAllDrives: search?.includeTeamDrive,
         corpora: search?.includeTeamDrive ? 'allDrives' : 'user',
-      };
-      if (pageToken) listParams.pageToken = pageToken;
-      const response = await drive.files.list(listParams);
-      allFolders.push(...(response.data.files ?? []));
-      pageToken = response.data.nextPageToken ?? undefined;
-    } while (pageToken);
-
-    return allFolders;
+      },
+      maxPages: search?.maxPages,
+      deadline: search?.deadline,
+      stopAt: search?.stopAt,
+    });
   },
 };
+
+type ListingWording = 'poll' | 'action';
+
+type PageListing = {
+  files: drive_v3.Schema$File[];
+  incomplete: boolean;
+  truncated: boolean;
+};
+
+export type ListingStop = { maxFiles: number };
+
+export type DriveListing =
+  | { files: drive_v3.Schema$File[]; truncated: false }
+  | { files: drive_v3.Schema$File[]; truncated: true; watermark: number };

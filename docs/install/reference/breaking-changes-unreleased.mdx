@@ -7,3 +7,20 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### Google Drive 0.14.0: file triggers, downloads and search across shared drives
+
+From Google Drive 0.14.0, the **New File** trigger with **Include File Content** on fires for a file whose download fails. That run has a `contentError` field with the reason instead of `content`. Before, one failed download (for example a Google Form, which Drive can't download) failed the whole poll, and every new file in that poll was lost. The trigger's output can now carry the `content` and `contentError` keys.
+
+New File downloads up to 5 files at a time and stops at a deadline, so the poll ends before the trigger timeout. A file still downloading at the deadline gets a `contentError`. All three Drive triggers now detect an incomplete search across shared drives and search each drive on its own, instead of skipping files in drives Google didn't search.
+
+- Exported Google Docs, Sheets and Slides are now saved as `.docx`, `.xlsx` and `.pptx`. Before, they were saved as `.gdoc`, `.gsheet` or `.gslides`, or with no extension when a name was given. This applies to Download File, Download File Content, List Files, List Folder Contents, Set Public Access and the trigger file content. A failed file lookup now fails with Google's own message.
+- The three Drive triggers now send a large backlog over several checks, oldest first: at most 500 files per check, or 50 with Include File Content on. They also fire for files that Google lists a few minutes late, except while a large backlog is still being sent.
+- With Include Team Drives on, Find File or Folder and the agent tool Search Files and Folders return files from every shared drive. When Google can't search a drive, they fail with a clear error instead of returning a partial list. Both search actions now stop with an error after 120 seconds, where before they had no limit. List Files and List Folder Contents now report `incompleteSearch` as `true` when Google could not search the whole folder.
+- Export Folder as Zip now fails when Google can't search the whole folder, instead of building a zip with files missing.
+
+#### What you need to do
+
+If a flow after New File reads `content`, check for `contentError` first (for example with a Branch step), because a run can now arrive without `content`.
+
+If a flow matches on the name of a downloaded Google Doc, Sheet or Slides file, update it for the new extension.
