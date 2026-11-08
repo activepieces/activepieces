@@ -376,7 +376,7 @@ function ChatBoxContent({
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
 
   return (
-    <div className="@container/chat flex flex-col h-full flex-1 min-w-0">
+    <div className="@container/chat flex flex-col h-full flex-1 min-w-0 [&_*]:[scrollbar-width:thin]">
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div
@@ -407,7 +407,7 @@ function ChatBoxContent({
             transition={{ duration: 0.25 }}
           >
             <ChatContainerRoot
-              className="flex-1 relative h-full px-3 sm:px-6"
+              className="flex-1 relative h-full"
               style={{
                 maskImage:
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
@@ -415,7 +415,10 @@ function ChatBoxContent({
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
+              <ChatContainerContent
+                scrollClassName="px-6 @max-chat-narrow/chat:px-3"
+                className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full"
+              >
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -497,7 +500,7 @@ function ChatBoxContent({
         )}
       </AnimatePresence>
 
-      <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="px-6 pb-[max(1rem,env(safe-area-inset-bottom))] @max-chat-narrow/chat:px-3">
         <div className="max-w-3xl mx-auto relative">
           {showOnboardingCard && (
             <div className="mb-3">
