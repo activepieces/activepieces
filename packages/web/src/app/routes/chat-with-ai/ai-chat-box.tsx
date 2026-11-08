@@ -420,18 +420,11 @@ function ChatBoxContent({
 
                 {messages.map((msg, idx) => {
                   if (msg.role === 'user') {
-                    return (
-                      <UserMessage
-                        key={msg.id}
-                        message={msg}
-                      />
-                    );
+                    return <UserMessage key={msg.id} message={msg} />;
                   }
 
                   const isLastStreamingAssistant =
                     isStreaming && idx === messages.length - 1;
-
-                  const isLastAssistant = idx === messages.length - 1;
 
                   return (
                     <AssistantMessage

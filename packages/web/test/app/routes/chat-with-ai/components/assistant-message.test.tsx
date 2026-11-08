@@ -21,7 +21,12 @@ const fixture = vi.hoisted(() => {
   return value;
 });
 
-vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('i18next', () => ({
+  t: (key: string, params?: Record<string, string | number>) =>
+    key.replace(/\{(\w+)\}/g, (_, name: string) =>
+      String(params?.[name] ?? ''),
+    ),
+}));
 vi.mock(
   '@/app/routes/chat-with-ai/lib/message-blocks',
   async (importOriginal) => ({
@@ -111,7 +116,9 @@ describe('AssistantMessage smoke (characterization)', () => {
     renderMessage({ isStreaming: false });
 
     expect(screen.getByText('Here is what I found.')).toBeTruthy();
-    expect(screen.getByText('Likes short replies')).toBeTruthy();
+    expect(
+      screen.getByText('Memory updated: Likes short replies'),
+    ).toBeTruthy();
     expect(screen.getByText('Sources')).toBeTruthy();
   });
 
@@ -119,7 +126,9 @@ describe('AssistantMessage smoke (characterization)', () => {
     fixture.blocks = ALL_BLOCKS;
     renderMessage({ isStreaming: true });
 
-    expect(screen.getByText('Likes short replies')).toBeTruthy();
+    expect(
+      screen.getByText('Memory updated: Likes short replies'),
+    ).toBeTruthy();
   });
 });
 

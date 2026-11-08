@@ -58,7 +58,9 @@ describe('MultiQuestionForm Ask card', () => {
 
     expect(screen.getByText('Which inbox?')).toBeTruthy();
     expect(
-      screen.getByRole('radio', { name: /Gmail/ }).getAttribute('aria-checked'),
+      screen
+        .getByRole('option', { name: /Gmail/ })
+        .getAttribute('aria-selected'),
     ).toBe('true');
     expect(button('Next').disabled).toBe(false);
   });
@@ -83,7 +85,7 @@ describe('MultiQuestionForm Ask card', () => {
   it('picks a numbered option with its digit key', () => {
     const { onSubmit } = renderForm([CHOICE_QUESTION]);
 
-    fireEvent.keyDown(screen.getByRole('radio', { name: /Gmail/ }), {
+    fireEvent.keyDown(screen.getByRole('option', { name: /Gmail/ }), {
       key: '2',
     });
 
@@ -93,7 +95,7 @@ describe('MultiQuestionForm Ask card', () => {
   it('shows a short icon question as a grid without search', () => {
     renderForm([iconQuestion(3)]);
     expect(screen.queryByPlaceholderText('Search options')).toBeNull();
-    expect(screen.getAllByRole('radio')).toHaveLength(3);
+    expect(screen.getAllByRole('option')).toHaveLength(3);
   });
 
   it('turns an icon grid of more than 9 options into a list with search', () => {
@@ -102,7 +104,7 @@ describe('MultiQuestionForm Ask card', () => {
     const search = screen.getByPlaceholderText('Search options');
     fireEvent.change(search, { target: { value: 'App 10' } });
 
-    expect(screen.getAllByRole('radio')).toHaveLength(1);
+    expect(screen.getAllByRole('option')).toHaveLength(1);
   });
 
   it('sets the date with a quick pick', () => {

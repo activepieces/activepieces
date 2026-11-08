@@ -1,11 +1,5 @@
 import { t } from 'i18next';
-import {
-  Brain,
-  CircleHelp,
-  Layers,
-  Volume2,
-  VolumeOff,
-} from 'lucide-react';
+import { Brain, CircleHelp, Layers, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
@@ -155,7 +149,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             <MessageSources sources={sources} />
           )}
 
-          <MessageActions className="-ml-1.5 gap-0.5 pt-1">
+          <MessageActions className="gap-0.5 pt-1">
             {hasContent && !isStreaming && (
               <>
                 <MessageAction tooltip={t('Copy')}>
@@ -353,7 +347,6 @@ function MessageBlocks({
               <ChatLine
                 key={`memory-${i}`}
                 icon={<Brain className="size-3.5 text-gray-11" />}
-                title={block.memory}
               >
                 {t('Memory updated: {memory}', { memory: block.memory })}
               </ChatLine>

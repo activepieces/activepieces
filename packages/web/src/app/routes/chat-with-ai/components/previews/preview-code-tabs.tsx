@@ -29,7 +29,9 @@ export function PreviewCodeTabs({
 
 export function PreviewWell({ children }: { children: ReactNode }) {
   return (
-    <div className="border-t border-gray-5 bg-gray-2 p-4 @max-chat-narrow/chat:p-3">{children}</div>
+    <div className="border-t border-gray-5 bg-gray-2 p-4 @max-chat-narrow/chat:p-3">
+      {children}
+    </div>
   );
 }
 

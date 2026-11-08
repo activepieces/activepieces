@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +15,6 @@ export function ChatLine({
   onToggle,
   onClick,
   tone = 'muted',
-  title,
   className,
 }: ChatLineProps) {
   const interactive = Boolean(onToggle ?? onClick);
@@ -30,20 +30,22 @@ export function ChatLine({
           {children}
         </TextShimmer>
       ) : (
-        <span
+        <TruncatedText
+          text={children}
           className={cn(
             'min-w-0 truncate text-sm transition-colors',
             TONE_CLASS[tone],
             interactive && tone === 'muted' && 'group-hover/line:text-gray-12',
           )}
-        >
-          {children}
-        </span>
+        />
       )}
       {logos && <span className="flex shrink-0 items-center">{logos}</span>}
       {detail && (
-        <span className="min-w-0 shrink truncate text-sm text-gray-11">
-          · {detail}
+        <span className="flex min-w-0 shrink items-center gap-1 text-sm text-gray-11">
+          <span aria-hidden className="shrink-0">
+            ·
+          </span>
+          <TruncatedText text={detail} className="min-w-0 truncate" />
         </span>
       )}
       {onToggle && (
@@ -60,16 +62,11 @@ export function ChatLine({
   const lineClass = cn('flex min-w-0 items-center gap-2 py-1', className);
 
   if (!interactive) {
-    return (
-      <div title={title} className={lineClass}>
-        {content}
-      </div>
-    );
+    return <div className={lineClass}>{content}</div>;
   }
   return (
     <button
       type="button"
-      title={title}
       aria-expanded={onToggle ? open : undefined}
       onClick={onToggle ?? onClick}
       className={cn(
@@ -79,6 +76,23 @@ export function ChatLine({
     >
       {content}
     </button>
+  );
+}
+
+function TruncatedText({
+  text,
+  className,
+}: {
+  text: ReactNode;
+  className: string;
+}) {
+  if (typeof text !== 'string') {
+    return <span className={className}>{text}</span>;
+  }
+  return (
+    <TextWithTooltip tooltipMessage={text}>
+      <span className={className}>{text}</span>
+    </TextWithTooltip>
   );
 }
 
@@ -100,6 +114,5 @@ type ChatLineProps = {
   onToggle?: () => void;
   onClick?: () => void;
   tone?: ChatLineTone;
-  title?: string;
   className?: string;
 };
