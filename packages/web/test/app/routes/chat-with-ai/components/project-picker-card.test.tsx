@@ -20,7 +20,10 @@ vi.mock('i18next', () => ({
 vi.mock('@/features/projects', () => ({
   projectCollectionUtils: { useAll: () => ({ data: projects }) },
   getProjectName: (project: { displayName: string }) => project.displayName,
-  ApProjectDisplay: ({ title }: { title: string }) => <span>{title}</span>,
+  ApProjectDisplay: () => null,
+}));
+vi.mock('@/lib/authentication-session', () => ({
+  authenticationSession: { getProjectId: () => 'p-hr' },
 }));
 vi.mock('@/hooks/user-hooks', () => ({
   userHooks: { useCurrentUser: () => ({ data: { id: 'u1' } }) },
@@ -34,7 +37,8 @@ describe('ProjectPickerCard (characterization)', () => {
   it('resolves with the project id and name when a suggestion is picked', () => {
     const { onResolve } = renderPicker();
 
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Sales' }));
+    fireEvent.click(screen.getByRole('radio', { name: /Sales/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(onResolve).toHaveBeenCalledTimes(1);
     expect(onResolve).toHaveBeenCalledWith({
@@ -63,28 +67,47 @@ describe('ProjectPickerCard (characterization)', () => {
     expect(onResolve).not.toHaveBeenCalled();
   });
 
-  it('today submits on Enter while an IME is composing (no guard yet; P4b adds one and flips this)', () => {
+  it('does not submit on Enter while an IME is composing', () => {
     const { onResolve } = renderPicker();
     const input = screen.getByPlaceholderText('Type your answer...');
 
     fireEvent.change(input, { target: { value: 'にほん' } });
     fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
 
-    expect(onResolve).toHaveBeenCalledWith({ projectName: 'にほん' });
+    expect(onResolve).not.toHaveBeenCalled();
   });
 
-  it('today has a header Close button that calls onDismiss (P4b removes the X)', () => {
-    const { onDismiss } = renderPicker();
+  it('has no header Close button', () => {
+    renderPicker();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+  });
 
-    expect(onDismiss).toHaveBeenCalledTimes(1);
+  it('lists the current project first, preselected and labelled', () => {
+    const { onResolve } = renderPicker();
+    const radios = screen.getAllByRole('radio');
+
+    expect(radios[0].textContent).toContain('HR');
+    expect(radios[0].textContent).toContain('Current project');
+    expect(radios[0].getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onResolve).toHaveBeenCalledWith({
+      projectId: 'p-hr',
+      projectName: 'HR',
+    });
+  });
+
+  it('shows all projects in one list without a Show all step', () => {
+    renderPicker();
+
+    expect(screen.getAllByRole('radio')).toHaveLength(4);
+    expect(screen.queryByText(/Show all/)).toBeNull();
   });
 
   it('shows the answered state with the project name when not interactive', () => {
     renderPicker({ isInteractive: false, selectedProjectId: 'p-ops' });
 
-    expect(screen.getByText('→ Ops')).toBeTruthy();
+    expect(screen.getByText('· Ops')).toBeTruthy();
     expect(screen.queryByPlaceholderText('Type your answer...')).toBeNull();
   });
 });

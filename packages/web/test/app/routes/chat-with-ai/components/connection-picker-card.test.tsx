@@ -78,13 +78,48 @@ describe('ConnectionPickerCard (characterization)', () => {
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
   });
 
-  it('today renders nothing while the account list loads (P4b adds a loading state)', () => {
+  it('shows a loading skeleton while the account list loads', () => {
     const { container } = renderPicker({
       picker: { piece: 'slack', displayName: 'Slack' },
     });
 
     expect(getPickerConnections).toHaveBeenCalledTimes(1);
-    expect(container.innerHTML).toBe('');
+    expect(container.innerHTML).not.toBe('');
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+  });
+
+  it('does not let an expired account be picked and keeps Reconnect outside the option', async () => {
+    renderPicker({ picker: PICKER });
+
+    const expired = await screen.findByRole('radio', { name: /Old Slack/ });
+    expect(expired.hasAttribute('disabled')).toBe(true);
+    expect(screen.getByText('Expired')).toBeTruthy();
+    const reconnect = screen.getByRole('button', { name: 'Reconnect' });
+    expect(expired.contains(reconnect)).toBe(false);
+  });
+
+  it('resolves with the account the user picks', async () => {
+    const { onResolve } = renderPicker({ picker: PICKER });
+
+    fireEvent.click(await screen.findByRole('radio', { name: /Home Slack/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(onResolve).toHaveBeenCalledWith({
+      connectionExternalId: 'conn-home',
+      projectId: 'project-1',
+      label: 'Home Slack',
+    });
+  });
+
+  it('offers Connect another account and a quiet Skip instead of a close button', async () => {
+    const { onDismiss } = renderPicker({ picker: PICKER });
+
+    expect(
+      await screen.findByRole('button', { name: 'Connect another account' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });
 
