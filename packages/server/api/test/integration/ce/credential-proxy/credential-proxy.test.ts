@@ -143,6 +143,82 @@ describe('Credential proxy', () => {
                 { index: 1, value: 'old' },
             ]))
         })
+        it('placeholders every OAuth2 token copy and redacts the refresh token copies', async () => {
+            const ctx = await createTestContext(app)
+            const connection = createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id] }, ctx.user.id)
+            await db.save('app_connection', {
+                ...connection,
+                type: AppConnectionType.CLOUD_OAUTH2,
+                value: await encryptUtils.encryptObject({
+                    type: AppConnectionType.CLOUD_OAUTH2,
+                    client_id: 'client',
+                    token_type: 'Bearer',
+                    access_token: 'live-token',
+                    refresh_token: 'live-refresh',
+                    claimed_at: 1,
+                    scope: '',
+                    token_url: 'https://auth.example.com/token',
+                    data: { access_token: 'live-token', refresh_token: 'live-refresh', instance_url: 'https://acme.example.com' },
+                }),
+            })
+
+            const response = await fetchAsEngine({ ctx, externalId: connection.externalId })
+
+            const value = response.json().value
+            expect(credentialPlaceholder.containsAny(value.access_token)).toBe(true)
+            expect(credentialPlaceholder.containsAny(value.data.access_token)).toBe(true)
+            expect(value.refresh_token).toBe('(REDACTED)')
+            expect(value.data.refresh_token).toBe('(REDACTED)')
+            expect(value.data.instance_url).toBe('https://acme.example.com')
+            expect(JSON.stringify(value)).not.toContain('live-')
+            const [ref] = credentialPlaceholder.parse(value.access_token)
+            const resolved = await resolveAsProxy({ grantId: ref.grantId })
+            expect(resolved.json().fields).toEqual(expect.arrayContaining([{ index: ref.fieldIndex, value: 'live-token' }]))
+        })
+
+        it('follows the live connection when it is reconnected under the same external id', async () => {
+            const ctx = await createTestContext(app)
+            const connection = createMockConnection({ platformId: ctx.platform.id, projectIds: [ctx.project.id] }, ctx.user.id)
+            const saveCustomAuth = async (props: Record<string, string>) => db.save('app_connection', {
+                ...connection,
+                type: AppConnectionType.CUSTOM_AUTH,
+                value: await encryptUtils.encryptObject({ type: AppConnectionType.CUSTOM_AUTH, props }),
+            })
+            await saveCustomAuth({ base_url: 'https://old.example.com', api_key: 'old-key' })
+            const response = await fetchAsEngine({ ctx, externalId: connection.externalId })
+            const [ref] = credentialPlaceholder.parse(response.json().value.props.api_key)
+
+            await saveCustomAuth({ base_url: 'https://new.example.com', api_key: 'new-key' })
+            const rehosted = await resolveAsProxy({ grantId: ref.grantId })
+            expect(rehosted.statusCode).toBe(StatusCodes.OK)
+            expect(rehosted.json()).toMatchObject({ fields: [{ index: 0, value: 'new-key' }], allowedHosts: ['new.example.com'] })
+
+            await db.save('app_connection', {
+                ...connection,
+                type: AppConnectionType.SECRET_TEXT,
+                value: await encryptUtils.encryptObject({ type: AppConnectionType.SECRET_TEXT, secret_text: 'other-shape' }),
+            })
+            const reshaped = await resolveAsProxy({ grantId: ref.grantId })
+            expect(reshaped.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('treats an empty proxy secret as not configured', async () => {
+            process.env['AP_CREDENTIAL_PROXY_SECRET'] = '  '
+            const ctx = await createTestContext(app)
+            const externalId = await saveSecretTextConnection({ ctx, secret: 'plain-secret' })
+
+            const response = await fetchAsEngine({ ctx, externalId })
+            const resolved = await app.inject({
+                method: 'POST',
+                url: '/api/v1/credential-proxy/grants/resolve',
+                headers: { authorization: 'Bearer apcp_' },
+                body: { grantId: apId() },
+            })
+
+            process.env['AP_CREDENTIAL_PROXY_SECRET'] = PROXY_SECRET
+            expect(response.json().value.secret_text).toBe('plain-secret')
+            expect(resolved.statusCode).toBe(StatusCodes.UNAUTHORIZED)
+        })
     })
 
     describe('GET /v1/worker/variables/:name', () => {

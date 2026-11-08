@@ -11,22 +11,20 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 import { variableService } from '../variable/variable.service'
-import { allowedHostsResolver } from './allowed-hosts-resolver'
+import { AllowedHosts, allowedHostsResolver } from './allowed-hosts-resolver'
 import { credentialFieldExtractor } from './credential-field-extractor'
+import { credentialProxyAuth } from './credential-proxy-auth'
 
 export const credentialProxyGrantService = (log: FastifyBaseLogger) => ({
     isEnabled(): boolean {
-        return !isNil(system.get(AppSystemProp.CREDENTIAL_PROXY_SECRET))
+        return credentialProxyAuth.isConfigured()
     },
 
     async issueForConnection({ connection, projectId, jobId }: IssueForConnectionParams): Promise<AppConnectionValue> {
-        const pieceAuth = needsPieceAuth(connection.value) ? await loadPieceAuth({ connection, log }) : undefined
-        const fields = credentialFieldExtractor.extract({ value: connection.value, pieceAuth })
+        const { fields, allowedHosts, allowAnyHost } = await describeConnection({ connection, log })
         if (fields.length === 0) {
             return connection.value
         }
-        const excludedPropKeys = new Set(fields.flatMap((field) => (field.path[0] === 'props' && !isNil(field.path[1]) ? [field.path[1]] : [])))
-        const { allowedHosts, allowAnyHost } = allowedHostsResolver.resolve({ value: connection.value, excludedPropKeys })
         const grant = await issueOrReuse({
             subject: `connection:${connection.externalId}`,
             record: {
@@ -42,7 +40,11 @@ export const credentialProxyGrantService = (log: FastifyBaseLogger) => ({
                 allowAnyHost,
             },
         })
-        return credentialFieldExtractor.applyPlaceholders({ value: connection.value, grantId: grant.grantId, fields: grant.fields })
+        return credentialFieldExtractor.applyPlaceholders({
+            value: credentialFieldExtractor.redactUnresolvable(connection.value),
+            grantId: grant.grantId,
+            fields: grant.fields,
+        })
     },
 
     async issueForVariable({ name, projectId, platformId, jobId }: IssueForVariableParams): Promise<string> {
@@ -65,29 +67,43 @@ export const credentialProxyGrantService = (log: FastifyBaseLogger) => ({
     async resolve({ grantId }: ResolveParams): Promise<ResolveCredentialGrantResponse> {
         const grant = await loadGrant(grantId)
         if (isNil(grant)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'CredentialGrant',
-                    entityId: grantId,
-                },
-            })
+            throw grantNotFound(grantId)
         }
-        const currentValue = await currentValueOf({ grant, log })
+        const live = await currentStateOf({ grant, log })
+        if (JSON.stringify(live.fields) !== JSON.stringify(grant.fields)) {
+            throw grantNotFound(grantId)
+        }
         const fields = grant.fields.flatMap((field) => {
-            const value = credentialFieldExtractor.readAtPath({ value: currentValue, path: field.path })
+            const value = credentialFieldExtractor.readAtPath({ value: live.value, path: field.path })
             return isNil(value) ? [] : [{ index: field.index, value }]
         })
         return {
             grantId: grant.grantId,
             pieceName: grant.pieceName,
             fields,
-            allowedHosts: grant.allowedHosts,
-            allowAnyHost: grant.allowAnyHost,
+            allowedHosts: live.allowedHosts,
+            allowAnyHost: live.allowAnyHost,
             expiresAt: grant.expiresAt,
         }
     },
 })
+
+function grantNotFound(grantId: string): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.ENTITY_NOT_FOUND,
+        params: {
+            entityType: 'CredentialGrant',
+            entityId: grantId,
+        },
+    })
+}
+
+async function describeConnection({ connection, log }: { connection: AppConnection, log: FastifyBaseLogger }): Promise<ConnectionDescription> {
+    const pieceAuth = needsPieceAuth(connection.value) ? await loadPieceAuth({ connection, log }) : undefined
+    const fields = credentialFieldExtractor.extract({ value: connection.value, pieceAuth })
+    const excludedPropKeys = new Set(fields.flatMap((field) => (field.path[0] === 'props' && !isNil(field.path[1]) ? [field.path[1]] : [])))
+    return { fields, ...allowedHostsResolver.resolve({ value: connection.value, excludedPropKeys }) }
+}
 
 async function issueOrReuse({ subject, record }: IssueOrReuseParams): Promise<CredentialGrantRecord> {
     const indexKey = getCredentialGrantIndexKey({ jobId: record.jobId, subject })
@@ -129,16 +145,16 @@ async function loadGrant(grantId: string): Promise<CredentialGrantRecord | null>
     return encryptUtils.decryptObject<CredentialGrantRecord>(encrypted)
 }
 
-async function currentValueOf({ grant, log }: { grant: CredentialGrantRecord, log: FastifyBaseLogger }): Promise<Record<string, unknown>> {
+async function currentStateOf({ grant, log }: { grant: CredentialGrantRecord, log: FastifyBaseLogger }): Promise<LiveGrantState> {
     if (grant.kind === CredentialGrantKind.VARIABLE) {
         if (isNil(grant.variableName)) {
-            return {}
+            return { value: {}, fields: [], allowedHosts: [], allowAnyHost: true }
         }
         const value = await variableService(log).getDecryptedValueForWorker({
             projectId: grant.projectId,
             name: grant.variableName,
         })
-        return { value }
+        return { value: { value }, fields: [VARIABLE_FIELD], allowedHosts: [], allowAnyHost: true }
     }
     const connection = isNil(grant.connectionExternalId) ? null : await appConnectionService(log).getOne({
         projectId: grant.projectId,
@@ -154,12 +170,16 @@ async function currentValueOf({ grant, log }: { grant: CredentialGrantRecord, lo
             },
         })
     }
-    return secretManagersService(log).resolveObject({
-        value: connection.value,
-        projectIds: [grant.projectId],
-        platformId: grant.platformId,
-        throwOnFailure: false,
-    })
+    const resolved: AppConnection = {
+        ...connection,
+        value: await secretManagersService(log).resolveObject({
+            value: connection.value,
+            projectIds: [grant.projectId],
+            platformId: grant.platformId,
+            throwOnFailure: false,
+        }),
+    }
+    return { value: resolved.value, ...await describeConnection({ connection: resolved, log }) }
 }
 
 async function loadPieceAuth({ connection, log }: { connection: AppConnection, log: FastifyBaseLogger }): Promise<PieceMetadataModel['auth']> {
@@ -203,4 +223,12 @@ type ResolveParams = {
 type IssueOrReuseParams = {
     subject: string
     record: Omit<CredentialGrantRecord, 'grantId' | 'expiresAt'>
+}
+
+type ConnectionDescription = AllowedHosts & {
+    fields: CredentialGrantField[]
+}
+
+type LiveGrantState = ConnectionDescription & {
+    value: Record<string, unknown>
 }

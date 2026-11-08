@@ -14,6 +14,11 @@ export const credentialFieldExtractor = {
             replacement: credentialPlaceholder.build({ grantId, fieldIndex: field.index }),
         }), value)
     },
+    redactUnresolvable(value: AppConnectionValue): AppConnectionValue {
+        return unresolvablePaths(value)
+            .filter((path) => !isNil(credentialFieldExtractor.readAtPath({ value, path })))
+            .reduce((current, path) => replaceAtPath({ target: current, path, replacement: REDACTED }), value)
+    },
     readAtPath({ value, path }: ReadAtPathParams): string | null {
         const [head, ...rest] = path
         if (isNil(head)) {
@@ -36,7 +41,10 @@ function secretPaths({ value, pieceAuth }: ExtractParams): string[][] {
         case AppConnectionType.OAUTH2:
         case AppConnectionType.CLOUD_OAUTH2:
         case AppConnectionType.PLATFORM_OAUTH2:
-            return [['access_token']]
+            return [
+                ['access_token'],
+                ...(typeof value.data['access_token'] === 'string' ? [['data', 'access_token']] : []),
+            ]
         case AppConnectionType.CUSTOM_AUTH:
             return [
                 ...secretPropPaths({ props: value.props, pieceAuth }),
@@ -44,6 +52,21 @@ function secretPaths({ value, pieceAuth }: ExtractParams): string[][] {
             ]
         case AppConnectionType.OIDC:
             return secretPropPaths({ props: value.props, pieceAuth })
+        case AppConnectionType.NO_AUTH:
+            return []
+    }
+}
+
+function unresolvablePaths(value: AppConnectionValue): string[][] {
+    switch (value.type) {
+        case AppConnectionType.OAUTH2:
+        case AppConnectionType.CLOUD_OAUTH2:
+        case AppConnectionType.PLATFORM_OAUTH2:
+            return [['refresh_token'], ['data', 'refresh_token'], ['data', 'id_token']]
+        case AppConnectionType.SECRET_TEXT:
+        case AppConnectionType.BASIC_AUTH:
+        case AppConnectionType.CUSTOM_AUTH:
+        case AppConnectionType.OIDC:
         case AppConnectionType.NO_AUTH:
             return []
     }
@@ -104,6 +127,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 const SECRET_NAME_PATTERN = /(key|secret|token|password|passwd|pwd)/i
+const REDACTED = '(REDACTED)'
 
 type ExtractParams = {
     value: AppConnectionValue

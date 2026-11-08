@@ -5,11 +5,14 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 
 export const credentialProxyAuth = {
+    isConfigured(): boolean {
+        return !isNil(configuredSecret())
+    },
     isProxyToken(authorizationHeader: string): boolean {
         return authorizationHeader.startsWith(BEARER_PREFIX)
     },
     verifyOrThrow(authorizationHeader: string): CredentialProxyPrincipal {
-        const configured = system.get(AppSystemProp.CREDENTIAL_PROXY_SECRET)
+        const configured = configuredSecret()
         const presented = authorizationHeader.slice(BEARER_PREFIX.length)
         if (isNil(configured) || !digestsMatch({ presented, configured })) {
             throw new ActivepiecesError({
@@ -24,6 +27,11 @@ export const credentialProxyAuth = {
             type: PrincipalType.CREDENTIAL_PROXY,
         }
     },
+}
+
+function configuredSecret(): string | null {
+    const configured = system.get(AppSystemProp.CREDENTIAL_PROXY_SECRET)?.trim()
+    return isNil(configured) || configured.length === 0 ? null : configured
 }
 
 function digestsMatch({ presented, configured }: { presented: string, configured: string }): boolean {

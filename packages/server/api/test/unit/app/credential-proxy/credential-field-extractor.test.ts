@@ -18,23 +18,31 @@ describe('credentialFieldExtractor', () => {
         })
     })
 
-    it('placeholders the access token of an OAuth2 connection and nothing else', () => {
-        const fields = credentialFieldExtractor.extract({
-            value: {
-                type: AppConnectionType.CLOUD_OAUTH2,
-                client_id: 'id',
-                token_type: 'Bearer',
-                access_token: 'at',
-                refresh_token: '(REDACTED)',
-                claimed_at: 1,
-                scope: '',
-                token_url: 'https://auth.example.com/token',
-                data: {},
-            },
-            pieceAuth: undefined,
-        })
+    it('placeholders the access token and its copy in data, and redacts the refresh token copies of an OAuth2 connection', () => {
+        const value = {
+            type: AppConnectionType.CLOUD_OAUTH2,
+            client_id: 'id',
+            token_type: 'Bearer',
+            access_token: 'at',
+            refresh_token: 'rt',
+            claimed_at: 1,
+            scope: '',
+            token_url: 'https://auth.example.com/token',
+            data: { access_token: 'at', refresh_token: 'rt', id_token: 'idt', instance_url: 'https://acme.my.salesforce.com' },
+        } as const
+        const fields = credentialFieldExtractor.extract({ value, pieceAuth: undefined })
 
-        expect(fields).toEqual([{ index: 0, path: ['access_token'] }])
+        expect(fields).toEqual([{ index: 0, path: ['access_token'] }, { index: 1, path: ['data', 'access_token'] }])
+        const redacted = credentialFieldExtractor.redactUnresolvable(value)
+        expect(redacted).toMatchObject({
+            refresh_token: '(REDACTED)',
+            data: { refresh_token: '(REDACTED)', id_token: '(REDACTED)', instance_url: 'https://acme.my.salesforce.com' },
+        })
+        const placeholdered = credentialFieldExtractor.applyPlaceholders({ value: redacted, grantId: GRANT_ID, fields })
+        expect(placeholdered).toMatchObject({
+            access_token: credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 0 }),
+            data: { access_token: credentialPlaceholder.build({ grantId: GRANT_ID, fieldIndex: 1 }) },
+        })
     })
 
     it('trusts the piece auth declaration for declared props and applies the name heuristic only to undeclared ones', () => {
