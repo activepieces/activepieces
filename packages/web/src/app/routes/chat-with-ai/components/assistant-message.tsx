@@ -1,5 +1,11 @@
 import { t } from 'i18next';
-import { Brain, ChevronDown, Volume2, VolumeOff } from 'lucide-react';
+import {
+  Brain,
+  ChevronDown,
+  CircleHelp,
+  Volume2,
+  VolumeOff,
+} from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
@@ -40,6 +46,13 @@ import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
+import {
+  ChatCard,
+  ChatCardBody,
+  ChatCardFold,
+  ChatCardTile,
+} from './chat-ui/chat-card';
+import { ChatStatusText } from './chat-ui/chat-status';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
 import { FeedbackButtons } from './feedback-buttons';
@@ -667,39 +680,47 @@ function DisplayToolCard({
           ? (toolOutput['answers'] as string)
           : undefined;
       if (!answersText) return null;
-      return <AnsweredQuestionsCard answersText={answersText} />;
+      return <AnsweredQuestionsFold answersText={answersText} />;
     }
     default:
       return null;
   }
 }
 
-function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
+function AnsweredQuestionsFold({ answersText }: { answersText: string }) {
   const pairs = useMemo(() => parseAnswerPairs(answersText), [answersText]);
   if (pairs.length === 0) return null;
 
   return (
-    <motion.div
-      className="flex justify-end my-2"
-      initial={{ opacity: 0, x: 16 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <div className="max-w-[80%] bg-gray-3 rounded-xl rounded-br-md px-4 py-3 space-y-3">
-        {pairs.map((pair, i) => (
-          <div key={i} className="space-y-0.5">
-            <p className="text-sm font-semibold">
-              {t('Q{number}. {question}', {
-                number: i + 1,
-                question: pair.question,
-              })}
-            </p>
-            <p className="text-sm">
-              {t('→ {answer}', { answer: pair.answer })}
-            </p>
-          </div>
-        ))}
-      </div>
-    </motion.div>
+    <ChatCard className="my-2">
+      <ChatCardFold
+        defaultOpen={false}
+        tile={<ChatCardTile kind="bits" icon={CircleHelp} />}
+        title={t(
+          'You answered {count, plural, =1 {1 question} other {# questions}}',
+          { count: pairs.length },
+        )}
+        meta={pairs.map((pair) => pair.answer).join(' · ')}
+        trailing={<ChatStatusText status="done" />}
+      >
+        <ChatCardBody>
+          <dl className="flex flex-col divide-y divide-gray-6 border-t border-gray-6">
+            {pairs.map((pair, i) => (
+              <div
+                key={i}
+                className="flex min-w-0 gap-4 py-2.5 text-sm @max-chat-narrow/chat:flex-col @max-chat-narrow/chat:gap-0.5"
+              >
+                <dt className="w-1/2 shrink-0 text-gray-11 @max-chat-narrow/chat:w-auto">
+                  {pair.question}
+                </dt>
+                <dd className="min-w-0 flex-1 break-words text-gray-12">
+                  {pair.answer}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </ChatCardBody>
+      </ChatCardFold>
+    </ChatCard>
   );
 }
