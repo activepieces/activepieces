@@ -78,6 +78,6 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
-  "Request": "Request",
-  "Data to send": "Data to send"
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar"
 }

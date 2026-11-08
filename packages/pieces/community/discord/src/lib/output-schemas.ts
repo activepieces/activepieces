@@ -203,6 +203,15 @@ export const discordFindChannelActionOutputSchema: OutputSchema = {
     { key: 'found', label: 'Found', format: 'boolean' },
     { key: 'channel_id', label: 'Channel ID' },
     { key: 'name', label: 'Name' },
+    { key: 'message', label: 'Message' },
+  ],
+};
+
+export const discordFindChannelHumanActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'channel_id', label: 'Channel ID' },
+    { key: 'message', label: 'Message' },
   ],
 };
 

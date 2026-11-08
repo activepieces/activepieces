@@ -8,6 +8,196 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
+
+The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows. In **Update Product**, Availability, Exclude Tax, Enable Variants, Status and the new Non-Veg setting are now Yes/No choices, and a setting left empty keeps the product's current value instead of being set to off.
+
+#### What you need to do
+
+If a flow maps fields from Order Created, re-map them without the `body` prefix (for example `payload.id` instead of `body.payload.id`). Agents that used the discount actions get new agent versions named **Create Product Discount** and **Create Promo Code**, which take plain IDs and values.
+
+Open existing **Update Product** steps and pick Availability, Exclude Tax, Enable Variants and Status again. Steps saved before this version still send the value they stored, but the builder now shows "Keep current setting" for those four fields.
+
+#### Letta 0.2.0: three actions are no longer agent tools, New Agent returns less, and Get Identities respects Limit
+
+**Send Message to Agent** is now shown only in the flow builder. AI agents and MCP clients get the new **Send Message** tool (`letta_send_message`) instead, which takes the agent ID as text.
+
+**Create Identity** and **Get Identities** are no longer offered as agent tools, and there is no agent-tool replacement. Letta Cloud removed the `/v1/identities` API, so these actions no longer work on Letta Cloud.
+
+The **New Message** trigger also fires on replies from current Letta agents (`assistant_message`), not only on `send_message` tool calls, so upgraded flows may run more often.
+
+The **New Agent** trigger now returns a short agent summary instead of the full agent record. It keeps only these 12 fields: `id`, `name`, `agent_type`, `model`, `embedding`, `description`, `tags`, `created_at`, `updated_at`, `last_run_completion`, `last_stop_reason` and `system`. Every other field of the agent record is gone, for example `secrets`, `tool_exec_environment_variables`, `llm_config`, `message_ids`, `metadata`, `project_id`, `embedding_config`, `tool_rules` and `timezone`. **Get Agent** does not return the secret fields either. They were removed on purpose so that secrets do not leak into flow data.
+
+**Get Identities** now respects its **Limit** field (default 100, maximum 1000). Before, it fetched every page and ignored Limit, so a server with 250 identities returned all 250 and now returns 100 unless you raise Limit. A saved Limit above 1000 now fails with a validation error.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Send Message to Agent as a tool, switch it to Send Message (`letta_send_message`). Remove Create Identity and Get Identities from agents and MCP clients, and from flows that run against Letta Cloud. If a later step reads a New Agent field outside the 12 listed above, change that step: use **Get Agent** for the agent's blocks, tools and identity IDs, and note that no Letta action returns the secret fields any more. If a flow relies on Get Identities returning every identity, set Limit to the number you need (up to 1000). Steps keep running on the version they were built with until you upgrade them.
+
+#### Trello 0.9.0: Update Card (Agent) no longer unarchives cards or clears their labels
+
+When an AI agent used **Update Card (Agent)** to change something else, such as the name, the agent path filled **Archived** with `false` and **Label IDs** with an empty list and sent both. Each such update could unarchive an archived card and remove all of its labels. From Trello 0.9.0 Archived is a dropdown with **Yes**, **No** and **Leave unchanged**. Archived left out, or set to Leave unchanged, is not sent, so the card stays archived or unarchived. An empty Label IDs list is not sent either, so the card keeps its labels; use **Remove Label From Card (Agent)** to drop a label.
+
+#### What you need to do
+
+- If an agent tool pins **Archived** to a fixed value, open the tool and pick Yes, No or Leave unchanged again. A value saved from the old checkbox is no longer accepted and the call fails until you do.
+- If an agent ran this action on an earlier Trello version, check that archived cards are still archived and still carry their labels.
+
+#### Bigin by Zoho CRM 0.2.0: the existing actions are no longer AI agent tools
+
+The 16 existing Bigin actions are now shown only in the flow builder: Create Company, Update Company, Create Contact, Update Contact, Create Task, Update Task, Create Event, Update Event, Create Pipeline, Update Pipeline, Create Call, Search Company Record, Search Contact Record, Search Pipeline Record, Search Product Record and Search User. AI agents and MCP clients get the new "(Agent)" actions instead: Search, Get and List Records, Create and Update Contact, Company, Deal, Task and Event, Log Call, List Users and List Pipelines, plus Add Note and Delete Record.
+
+#### What you need to do
+
+- Agents that used the old Bigin actions as tools: switch to the new "(Agent)" actions.
+- Flow steps keep working unchanged.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Gender API 0.2.0: the Country Code input is now applied
+
+Before 0.2.0, **Get Gender by First Name** and **Get Gender by Full Name** sent the Country Code under a key Gender API ignores, so it had no effect. From 0.2.0 it is sent as `country` and applied, on those two actions and on the new **Get Gender by Email**. After you upgrade one of these steps, a country code can change the result (for example Andrea with IT now returns male), and a value that is not a two-letter ISO code, such as `USA` or `Germany`, now fails the step with Gender API's `invalid-country-code` error.
+
+#### What you need to do
+
+Use two-letter country codes such as `US` or `DE` in the Country Code input, or leave it empty. Steps keep running on the version they were built with until you upgrade them.
+
+#### Anthropic Claude 0.9.0: retired models are replaced at run time, and Extended Thinking Mode uses Claude Sonnet 5.5
+
+Anthropic has retired several Claude models, so steps that still pointed at them failed. From Anthropic Claude 0.9.0, **Ask Claude**, **Extract Structured Data** and **Count Tokens** switch a retired model to the current model of the same family when the step runs:
+
+- Claude Sonnet 4, Sonnet 3.7, Sonnet 3.5, Sonnet 3 and Claude 2.x run on `claude-sonnet-5-5`.
+- Claude Sonnet 4.5 is deprecated, not retired yet (Anthropic retires it on 2026-11-30). It is switched to `claude-sonnet-5-5` early, so steps keep working after that date.
+- Claude Opus 4.1, Opus 4 and Opus 3 run on `claude-opus-5-5`.
+- Claude Haiku 3.5 and Haiku 3 run on `claude-haiku-5-5`.
+
+Other changes once a step is upgraded to 0.9.0:
+
+- **Extended Thinking Mode** in Ask Claude now runs on `claude-sonnet-5-5` with adaptive thinking, instead of the retired Claude Sonnet 3.7. The **Budget Tokens** field is removed, because Claude sets its own thinking budget.
+- The Claude 5.5 models think by default, and Maximum Tokens covers the thinking and the reply together. When Extended Thinking Mode is off, Ask Claude and Extract Structured Data ask these models for low thinking effort (`output_config.effort: low`), so most of Maximum Tokens stays free for the reply.
+- **Temperature** is sent only to models that accept it: Claude Sonnet 4.6, Opus 4.6, Opus 4.5, Haiku 4.5, Sonnet 4.5 and older. On newer models the field is ignored.
+- On Claude Sonnet 5.5, Opus 5.5, Fable 5.1 and Mythos 5.1, Extract Structured Data lets the model choose the extraction tool (`tool_choice: auto`) and tells it to call that tool, because these models do not accept a forced tool choice. If the model replies with text only, the step asks once more before it fails. Haiku 5.5 and older models are still forced to call the tool.
+- A **Roles** list that ends with an assistant turn (prefill) now fails with a 400 error on the Claude 5.5 models, because they do not accept prefill. End Roles with a user turn instead.
+
+#### What you need to do
+
+If you want a different model than the replacement, open the step and pick a model explicitly. Answers, extracted data and token cost can differ on the newer models, so check flows whose later steps depend on the exact output. If a long reply on a 5.5 model is cut off, raise Maximum Tokens. Steps keep running on the version they were built with until you upgrade them.
+
+#### Loops 0.2.0: Find Contact is no longer an AI agent tool
+
+**Find Contact** is now shown only in the flow builder. AI agents and MCP clients get **Find Contact by Email** and **Find Contact by User ID** instead.
+
+After you upgrade:
+
+- **Delete Contact** now fails with a clear message when both Email and User ID are filled, instead of sending both and getting a Loops error. Steps that fill only one of them keep working.
+- **Send Event** ignores `eventName`, `email`, `userId`, `eventProperties` and `mailingLists` if they appear inside Contact Properties.
+- **Create Contact**'s subscription option now reads Default / Subscribed / Unsubscribed instead of "No Change".
+
+#### What you need to do
+
+- Agents that used Find Contact as a tool: switch to Find Contact by Email or Find Contact by User ID.
+- If a Send Event step relied on Contact Properties to set one of those reserved fields, set the field directly.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Leexi 0.3.0: Get Call is no longer an AI agent tool
+
+**Get Call** is now shown only in the flow builder. AI agents and MCP clients get **Fetch Call Details** instead, which takes up to 20 call IDs at once.
+
+#### What you need to do
+
+- Agents that used Get Call as a tool: switch to Fetch Call Details.
+- Flows using the **New Call Created** trigger: after you upgrade the step and publish, the next polls emit every call created since the flow was first turned on (up to 2,000 per poll) until they catch up, because the old trigger never moved its checkpoint forward. Expect a burst of runs after the upgrade, or turn the flow off and on again to start from now.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Help Scout 0.3.0: five actions are no longer AI agent tools, and Find Conversation searches every status and applies Tags
+
+**Create Conversation**, **Send Reply**, **Add Note**, **Update Customer Properties** and **Find Conversation** are now shown only in the flow builder. AI agents and MCP clients get new ID-based actions instead, including Search Conversations, Get Conversation, Update Conversation and the list actions for mailboxes, users and tags.
+
+When Status is left empty, **Find Conversation** now searches every status. It used to fall back to Help Scout's default of active only, so closed and pending conversations were never found.
+
+**Find Conversation** now applies the Tags filter. It used to send the tags under a name Help Scout ignores, so the filter never applied. A step with Tags set now returns only conversations that carry those tags, so it can find a different conversation or none.
+
+#### What you need to do
+
+- Agents that used the old Help Scout actions as tools: switch to the new agent actions.
+- If a flow relied on Find Conversation returning only active conversations, set Status to Active.
+- If a Find Conversation step has Tags set, check that the tags match the conversations you expect, or clear Tags to keep the old results.
+
+#### Knack 0.3.0: Create, Update and Find Record are no longer AI agent tools
+
+**Create Record**, **Update Record** and **Find Record** are now shown only in the flow builder. AI agents and MCP clients get **Create Record (Agent)**, **Update Record (Agent)**, **Search Records (Agent)** and **Get Record (Agent)** instead, plus **List Objects (Agent)** and **Get Object Fields (Agent)** to discover an app's tables and field keys.
+
+After you upgrade:
+
+- **Find Record** sends its filter in the documented `{ match, rules }` format.
+- **Delete Record** keeps Knack's `delete: true` and adds `deleted` and `id`. It now fails with a not-found error when Knack does not confirm the delete.
+- Error messages now show Knack's own error text and the HTTP status.
+
+#### What you need to do
+
+- Agents that used Create, Update or Find Record as tools: switch to the (Agent) actions.
+
+#### Base44 0.2.0: Find or Create Entity is no longer an AI agent tool, and the Entity Event trigger changes
+
+**Find or Create Entity** is now shown only in the flow builder. AI agents and MCP clients find a record with **Find Entity** or **List Entity Records** and create one with **Create Entity**.
+
+- **Entity Event** in **Updated** mode no longer fires for brand-new records. On 0.1.9 a new record fired it, because its updated date was newer than the last check. From 0.2.0 it fires only once a record is edited after it was created. Use **Created** mode, or a second trigger, to catch new records.
+- Record dates (`created_date`, `updated_date`) now end in `Z`, so they read as UTC (for example `2026-11-01T12:56:20.141000Z`).
+- Search Query, Entity Data, Create Data and Update Data must be a JSON object. A list or other value now fails the step. Before, it was read as `{}`, so Find or Create Entity returned an unrelated record and Create Entity made an empty one.
+
+#### What you need to do
+
+- Agents that used Find or Create Entity as a tool: use Find Entity, then Create Entity.
+- Flows that use Entity Event in Updated mode to catch every change: add a Created-mode trigger for new records.
+- Flows that parse record dates as text: expect the trailing `Z`.
+- Other flow steps keep working unchanged.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Twitch 0.2.0: connections must be reconnected for the new actions
+
+Twitch 0.2.0 adds actions for your channel, chat, moderation, schedule, ads, clips and stream markers, and followers. Many of them, including reads such as subscriptions, followed channels and streams, polls, predictions, chatters, followers, VIPs and moderators, need Twitch scopes that the connection now asks for. Twitch connections made before 0.2.0 don't have them.
+
+The **Stream Started** trigger also changes once upgraded: it ignores blank entries and fails if no valid channel name is left, instead of watching Twitch's top live streams.
+
+#### What you need to do
+
+Reconnect your Twitch connection before you use any of the new actions, including the ones that only read data. Existing Stream Started triggers keep working on the old connection.
+
+#### Pushbullet 0.3.0: Send a Note and Send a Link are no longer agent tools
+
+**Send a Note** and **Send a Link** are now shown only in the flow builder. AI agents and MCP clients get **Send Note** and **Send Link** instead, plus new tools to list pushes, devices and chats, dismiss or delete a push, and read the current user. Both builder actions also gain an optional target (a device or an email).
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Send a Note or Send a Link as a tool, switch it to Send Note or Send Link. Flow steps keep working and stay on the version they were built with until you upgrade them.
+
+#### Streak 0.2.0: Update Box is no longer an agent tool and now saves custom fields, and triggers output an object
+
+**Update Box** is now shown only in the flow builder. AI agents and MCP clients get a separate agent version of **Update Box**, which takes the box key and a list of `{field_key, value}` updates as plain text. Update Box also now saves custom field values through Streak's field endpoint (before, they were sent in the box update and silently ignored), returns the box as it is after the update, and has a new Clear Notes option.
+
+Streak sends its webhook body as a JSON string. Up to 0.1.1, every Streak trigger passed that raw string to the flow as the trigger output. From 0.2.0, the triggers parse it and output the event as an object, so you can map its fields (for example `{{trigger.boxKey}}`) directly.
+
+#### What you need to do
+
+If a Code step after a Streak trigger runs `JSON.parse` on the trigger output, remove the parse and map the fields directly once you upgrade the trigger to 0.2.0, because the output is already an object and parsing it again fails. If a Run Agent step or MCP client uses Update Box as a tool, add the new agent version of Update Box to it. Flow steps keep working and stay on the version they were built with until you upgrade them; after upgrading, check that custom field values you set are the ones you want saved, because they now reach Streak.
+
+#### Bexio 0.3.0: the existing actions are no longer agent tools
+
+All 23 existing Bexio actions are now shown only in the flow builder. AI agents and MCP clients get new `bexio_` tools instead, which take IDs as text and cover the same jobs and more.
+
+Once a step is upgraded to Bexio 0.3.0:
+
+- **Update Product** ignores the **In Stock** field. Bexio only accepts it when a product is created and rejects it on edit, so the action no longer sends it. Set stock management in **Create Product** instead.
+- **Update Person** edits the contact with POST instead of PATCH, which Bexio treats as a restore.
+- **New Product** now reads the newest products first. The first time the flow is enabled or republished on 0.3.0, the trigger starts again from the current newest product, so it does not fire for products created before the upgrade. Without this, accounts with more than 500 products would get one run for every old product above the stored position. A product created between the last check on the old version and the upgrade does not fire.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses a Bexio action as a tool, switch it to the matching `bexio_` tool. Flow steps that use these actions keep working. Steps keep running on the version they were built with until you upgrade them.
+
 #### Folk 0.2.0: eight Folk actions are no longer agent tools, and Update Person/Company behave differently
 
 From Folk 0.2.0, **Create Person**, **Create Company**, **Get Person**, **Get Company**, **List People**, **Find Company**, **Update Person** and **Update Company** (the existing flow-builder actions) are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents get new tools instead: **Create Person**, **Create Company**, **Get Person**, **Get Company**, **Search People** (replaces List People), **Search Companies** (replaces Find Company), **Update Person** and **Update Company** (the `*_ai` actions, which take IDs and plain lists).

@@ -1,10 +1,11 @@
 import {
   AI_PROVIDER_CAPABILITIES,
   AIProviderModelMetadata,
+  AIProviderModelType,
   AIProviderName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Brain, Eye, Globe, LucideIcon, Wrench } from 'lucide-react';
+import { Brain, Eye, Globe, ImageIcon, LucideIcon, Wrench } from 'lucide-react';
 
 import {
   Tooltip,
@@ -16,9 +17,11 @@ import { cn } from '@/lib/utils';
 export function ModelCapabilityIcons({
   provider,
   metadata,
+  modelType,
 }: {
   provider: AIProviderName;
   metadata: AIProviderModelMetadata | undefined;
+  modelType?: AIProviderModelType;
 }) {
   const slots: { icon: LucideIcon; label: string; on: boolean }[] = [
     {
@@ -32,11 +35,17 @@ export function ModelCapabilityIcons({
       on: metadata?.supportsReasoning === true,
     },
     { icon: Eye, label: t('Vision'), on: metadata?.supportsVision === true },
-    {
-      icon: Globe,
-      label: t('Web search'),
-      on: AI_PROVIDER_CAPABILITIES[provider]?.webSearch !== undefined,
-    },
+    modelType === undefined
+      ? {
+          icon: Globe,
+          label: t('Web search'),
+          on: AI_PROVIDER_CAPABILITIES[provider]?.webSearch !== undefined,
+        }
+      : {
+          icon: ImageIcon,
+          label: t('Image generation'),
+          on: modelType === AIProviderModelType.IMAGE,
+        },
   ];
   return (
     <span className="flex shrink-0 items-center gap-1">
