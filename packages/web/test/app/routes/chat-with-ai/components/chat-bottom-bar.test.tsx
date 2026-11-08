@@ -43,6 +43,11 @@ vi.mock('@/features/chat/lib/chat-store', async (importOriginal) => ({
     hasActiveForm: () => store.selection.hasActiveForm,
   },
 }));
+vi.mock('@/features/pieces/hooks/pieces-hooks', () => ({
+  piecesHooks: {
+    usePieceSummary: () => ({ summary: undefined }),
+  },
+}));
 vi.mock('@/features/pieces/components/piece-icon-from-name', () => ({
   PieceIconWithPieceName: () => null,
 }));
@@ -71,7 +76,7 @@ describe('ChatBottomBar (characterization)', () => {
       setAllCards();
       renderBar();
 
-      expect(screen.getByRole('button', { name: 'Run' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Send email' })).toBeTruthy();
       expect(screen.queryByText('Reconnect Linear')).toBeNull();
       expect(screen.queryByText('Which inbox?')).toBeNull();
     });
@@ -83,7 +88,7 @@ describe('ChatBottomBar (characterization)', () => {
       renderBar();
 
       expect(screen.getByText('Reconnect Linear')).toBeTruthy();
-      expect(screen.queryByRole('button', { name: 'Run' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Send email' })).toBeNull();
       expect(screen.queryByText('Which inbox?')).toBeNull();
     });
 
@@ -162,15 +167,24 @@ describe('ChatBottomBar (characterization)', () => {
   });
 
   describe('card callbacks', () => {
-    it('approves the action preview gate on Run and rejects it on Cancel', () => {
+    it('approves the action preview gate on the action button', () => {
       store.selection.pendingActionPreview = PREVIEW;
       renderBar();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Run' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Send email' }));
 
       expect(store.state.approveGate).toHaveBeenCalledWith('tc-preview');
+      expect(store.state.rejectGate).not.toHaveBeenCalled();
+    });
+
+    it('rejects the action preview gate on Cancel', () => {
+      store.selection.pendingActionPreview = PREVIEW;
+      renderBar();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
       expect(store.state.rejectGate).toHaveBeenCalledWith('tc-preview');
+      expect(store.state.approveGate).not.toHaveBeenCalled();
     });
 
     it('sends the legacy form skip text and dismisses the form', () => {

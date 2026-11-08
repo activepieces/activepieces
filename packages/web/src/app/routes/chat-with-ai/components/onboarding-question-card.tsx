@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   KeyboardEvent,
@@ -17,7 +17,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { commonRoles } from '@/lib/common-roles';
 import { cn } from '@/lib/utils';
 
-import { InteractiveCardShell } from './interactive-card-shell';
+import { ChatCard } from './chat-ui/chat-card';
 
 export function OnboardingQuestionCard({
   initialRole = '',
@@ -93,13 +93,11 @@ export function OnboardingQuestionCard({
   };
 
   return (
-    <InteractiveCardShell
-      onDismiss={onDismiss}
-      active={active}
-      title={
+    <ChatCard turn className={cn('p-4 sm:p-5', !active && 'opacity-60')}>
+      <div className="flex items-start justify-between gap-4">
         <div
           className={cn(
-            'flex flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-lg font-semibold sm:text-xl',
+            'flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-lg font-semibold sm:text-xl',
             !companyLocked && 'sm:flex-nowrap',
           )}
         >
@@ -146,15 +144,23 @@ export function OnboardingQuestionCard({
             />
           )}
         </div>
-      }
-    >
-      <div className="flex justify-end pb-1 pt-2">
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="shrink-0 text-gray-11"
+          onClick={onDismiss}
+          aria-label={t('Dismiss')}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
+      <div className="mt-4 flex justify-end pb-1 pt-2">
         <Button size="sm" onClick={submit} disabled={!valid}>
           {submitLabel ?? t("Let's go")}
           <ArrowRight className="ml-1.5 size-3.5" />
         </Button>
       </div>
-    </InteractiveCardShell>
+    </ChatCard>
   );
 }
 
