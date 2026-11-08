@@ -29,8 +29,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "Request": "Request",
-  "Data to send": "Data to send",
+  "Request": "Verzoeke",
+  "Data to send": "Gegevens om te verzenden",
   "New Call Created": "Nieuwe oproep aangemaakt",
   "Triggers when a new call is created.": "Triggert wanneer een nieuwe oproep wordt aangemaakt."
 }
