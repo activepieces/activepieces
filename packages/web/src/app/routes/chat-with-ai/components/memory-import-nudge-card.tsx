@@ -27,6 +27,11 @@ export function MemoryImportNudgeCard({
   const [visible, setVisible] = useState(false);
   const { mutate: claim } = useMutation({
     mutationFn: chatApi.claimMemoryImportNudge,
+    onError: () =>
+      queryClient.invalidateQueries({
+        queryKey: MEMORY_IMPORT_NUDGE_QUERY_KEY,
+        refetchType: 'none',
+      }),
   });
   const eligible = data?.eligible === true;
 
