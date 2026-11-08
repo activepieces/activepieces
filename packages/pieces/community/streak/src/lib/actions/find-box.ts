@@ -1,6 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { streakAuth } from '../common/auth';
+import { boxSearchOutputSchema } from '../common/output-schemas';
 import { streakApiCall } from '../common/client';
 import { pipelineDropdown } from '../common/props';
 import { StreakSearchResponse } from '../common/types';
@@ -18,6 +19,7 @@ export const findBoxAction = createAction({
       'Search for boxes by a text query matched against box name, notes, emails, and text custom fields, returning the matching boxes; by default it spans all pipelines, or it can be restricted to a single pipeline. Use when an agent needs to look up a box by name or content rather than by a known box key. Read-only and idempotent; a search query is required.',
     idempotent: true,
   },
+  outputSchema: boxSearchOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
@@ -30,7 +32,7 @@ export const findBoxAction = createAction({
   async run(context) {
     const { query, pipelineKey } = context.propsValue;
 
-    const queryParams: any = { query };
+    const queryParams: Record<string, string> = { query };
     if (pipelineKey) {
       queryParams['pipelineKey'] = pipelineKey;
     }

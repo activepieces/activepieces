@@ -550,6 +550,8 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
+  "Request": "Demande",
+  "Data to send": "Données à envoyer",
   "New Page": "Nouvelle page",
   "Updated Page": "Page mise à jour",
   "New Comment on Page": "Nouveau commentaire sur la page",

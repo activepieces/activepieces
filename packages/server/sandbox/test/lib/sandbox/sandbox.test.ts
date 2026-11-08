@@ -11,6 +11,7 @@ import { createSandboxForJob } from '../../../src/lib/create-sandbox-for-job'
 import { createSandbox } from '../../../src/lib/sandbox/sandbox'
 import { Sandbox, SandboxMount, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
 import { SandboxSettings } from '../../../src/lib/types'
+import { testLogger } from '../../helpers/logger'
 
 const { treeKillMock, isolateProcessMock } = vi.hoisted(() => ({
     treeKillMock: vi.fn((_pid: number, _signal: string, cb: (err?: Error) => void) => cb()),
@@ -35,20 +36,7 @@ vi.mock('../../../src/lib/cache/cache-paths', () => ({
     })),
 }))
 
-function createMockLogger(): ApLogger {
-    const log: ApLogger = {
-        level: 'silent',
-        silent: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        fatal: vi.fn(),
-        debug: vi.fn(),
-        trace: vi.fn(),
-        child: () => log,
-    }
-    return log
-}
+const createMockLogger = (): ApLogger => testLogger.noop
 
 function createTestProcessMaker() {
     let client: ClientSocket | null = null

@@ -12,7 +12,7 @@ export const getModelAction = createAction({
   description: 'Reads details for a single Claude model, or resolves a model alias to its ID.',
   aiMetadata: {
     description:
-      "Reads a single Claude model by ID or alias (e.g. 'claude-3-7-sonnet-latest'), returning its resolved ID, display name, and release date. Use to confirm a model ID is valid or resolve an alias before using it elsewhere. Idempotent: it only reads data.",
+      "Reads a single Claude model by ID or alias (e.g. 'claude-sonnet-5-5'), returning its resolved ID, display name, and release date. Use to confirm a model ID is valid or resolve an alias before using it elsewhere. Idempotent: it only reads data.",
     idempotent: true,
   },
   props: {
