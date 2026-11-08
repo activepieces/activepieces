@@ -66,9 +66,15 @@ Regression cases live in `fixtures/*.json` — committed, so they're the team's 
 
 **To add or edit a fixture, see [`fixtures/README.md`](fixtures/README.md)** — schema, a copy-paste skeleton, and the full assertion/judge catalog.
 
+## Real chats as test cases
+
+The fixtures here are hand-written and public. Tests built from real customer chats are **private**: they live in PostHog Datasets, never in this repo, `calibration/` or the CDN. The repo is open source, so a committed transcript is a published one.
+
+How real chats get here, and how a PR gets scored against them, is the AI quality loop: the "AI quality loop plan" document in Linear project P-AI-339, and the brain page `brain/knowledge/ai-intelligence/quality-loop.md`. The Sun/Tue/Thu review runs through `/ai-task quality`.
+
 ## Nightly history
 
-The nightly job runs each fixture 3 times and publishes the results JSON to `https://cdn.activepieces.com/ai/evals/runs/<utc-time>-<sha>.json` (public). The Config Console reads that prefix for its trend page.
+The nightly job runs each fixture 3 times and publishes the results JSON to `https://cdn.activepieces.com/ai/evals/runs/<utc-time>-<sha>.json` (public). The Config Console reads that prefix for its trend page. Because it is public, it must only ever hold results for the hand-written fixtures, never for private cases (AI-183).
 
 ## Artifacts
 
