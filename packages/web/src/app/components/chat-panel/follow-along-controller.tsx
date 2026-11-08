@@ -47,6 +47,7 @@ export function FollowAlongController() {
   pathnameRef.current = pathname;
   const runOfTarget = useRef<string | null>(null);
   const pushedRuns = useRef(new Set<string>());
+  const waitingFor = useRef<string | null>(null);
 
   const openTarget = useRef(
     ({ resource, runId }: { resource: ResourceRef; runId: string | null }) => {
@@ -143,7 +144,11 @@ export function FollowAlongController() {
   }, [conversationId]);
 
   useEffect(() => {
-    if (phase === 'idle' && useChatPanel.getState().autoFollow) {
+    if (
+      phase === 'idle' &&
+      useChatPanel.getState().autoFollow &&
+      useFollowAlong.getState().offer?.kind !== 'ready'
+    ) {
       followAlong.offer(null);
     }
   }, [phase]);
@@ -175,6 +180,8 @@ export function FollowAlongController() {
 
   useEffect(() => {
     const state = useFollowAlong.getState();
+    const waited = waitingFor.current;
+    waitingFor.current = null;
     const pathChanged = lastPath.current !== pathname;
     lastPath.current = pathname;
     const selfNavigated = selfNavRef.current === pathname;
@@ -220,7 +227,12 @@ export function FollowAlongController() {
       openTarget.current({ resource: target, runId: offered });
       return;
     }
-    if (state.phase !== 'editing' || embedded) return;
+    if (state.phase !== 'editing' || embedded) {
+      if (!embedded && waited === resourceRegistry.keyOf(target)) {
+        followAlong.offer({ resource: target, kind: 'ready', runId });
+      }
+      return;
+    }
     if (!resourceRegistry.isInCurrentProject(target)) {
       followAlong.offer({ resource: target, kind: 'project', runId });
       return;
@@ -256,6 +268,7 @@ export function FollowAlongController() {
       return true;
     };
     if (act()) return;
+    waitingFor.current = resourceRegistry.keyOf(target);
     const timer = setInterval(() => {
       const latest = useFollowAlong.getState();
       if (
@@ -263,10 +276,14 @@ export function FollowAlongController() {
         !latest.target ||
         resourceRegistry.keyOf(latest.target) !== resourceRegistry.keyOf(target)
       ) {
+        waitingFor.current = null;
         clearInterval(timer);
         return;
       }
-      if (act()) clearInterval(timer);
+      if (act()) {
+        waitingFor.current = null;
+        clearInterval(timer);
+      }
     }, RECHECK_MS);
     return () => clearInterval(timer);
   }, [

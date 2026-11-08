@@ -97,6 +97,7 @@ const nameField: Field = {
   tableId: 't1',
   projectId: 'p1',
   externalId: 'x1',
+  position: 0,
 };
 
 const emailField: Field = { ...nameField, id: 'f2', name: 'Email' };
