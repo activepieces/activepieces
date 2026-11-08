@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
   pull-requests: write
 
 jobs:
@@ -33,7 +34,7 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: bun tools/scripts/linear-ticket-check.ts
 
-      - name: Request the Co-Owner's review
+      - name: Request the Co-Owner's review and drop the round-robin pick
         if: ${{ !github.event.pull_request.draft }}
         continue-on-error: true
         env:

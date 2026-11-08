@@ -113,6 +113,7 @@ const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
     [ErrorCode.USER_NOT_FOUND_ON_PLATFORM]: StatusCodes.FORBIDDEN,
     [ErrorCode.DOMAIN_NOT_ALLOWED]: StatusCodes.FORBIDDEN,
     [ErrorCode.EMAIL_AUTH_DISABLED]: StatusCodes.FORBIDDEN,
+    [ErrorCode.SIGN_IN_METHOD_NOT_ALLOWED]: StatusCodes.FORBIDDEN,
     [ErrorCode.INVALID_SMTP_CREDENTIALS]: StatusCodes.BAD_REQUEST,
     [ErrorCode.INVALID_GIT_CREDENTIALS]: StatusCodes.BAD_REQUEST,
     [ErrorCode.INVALID_OTP]: StatusCodes.GONE,

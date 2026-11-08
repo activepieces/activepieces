@@ -8,8 +8,9 @@ This package holds the monorepo's full-stack end-to-end tests. Under the canonic
 packages/tests-e2e/
 ├── scenarios/      # Specs (*.spec.ts) for every edition
 │   ├── ce/         # Community Edition only
-│   └── ee/         # Enterprise Edition only (skipped when AP_EDITION=ce)
-├── pages/          # Page objects (automations, builder, runs, authentication)
+│   ├── ee/         # Enterprise Edition only (skipped when AP_EDITION=ce)
+│   └── cloud/      # Cloud only (runs only when AP_EDITION=cloud)
+├── pages/          # Page objects (automations, builder, runs, authentication, platform switcher)
 ├── fixtures/       # Test fixtures, the session file and API cleanup helpers
 ├── global-setup.ts # Signs in once and saves the session to .auth/user.json
 └── playwright.config.ts
