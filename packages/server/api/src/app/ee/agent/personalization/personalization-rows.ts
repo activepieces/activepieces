@@ -36,10 +36,10 @@ export async function upsertFoundingUserRow({ platformId, userId, researchToken,
     const seeded: { id: string }[] = await personalizationRepo().query(
         `
         INSERT INTO "chat_personalization" ("id", "created", "updated", "platformId", "userId", "domain", "companyText", "role", "status", "researchToken", "profile", "useCases")
-        SELECT $1, now(), now(), $2, $3, NULL, NULL, NULL, $4, NULL, $5::jsonb, $6::jsonb
+        SELECT $1, now(), now(), $2::varchar, $3, NULL, NULL, NULL, $4, NULL, $5::jsonb, $6::jsonb
         WHERE EXISTS (
             SELECT 1 FROM "chat_personalization"
-            WHERE "platformId" = $2 AND "userId" IS NULL AND "researchToken" = $7
+            WHERE "platformId" = $2::varchar AND "userId" IS NULL AND "researchToken" = $7
         )
         ON CONFLICT ("platformId", "userId") WHERE "userId" IS NOT NULL
         DO UPDATE SET

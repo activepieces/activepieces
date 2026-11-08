@@ -79,7 +79,12 @@ vi.mock('@/features/projects', () => ({
 
 vi.mock('@/features/agents', () => ({
   SUPPORTED_AI_PROVIDERS: [
-    { provider: 'anthropic', name: 'Anthropic', markdown: '', logoUrl: '' },
+    {
+      provider: 'anthropic',
+      name: 'Anthropic',
+      markdown: () => '',
+      logoUrl: '',
+    },
   ],
 }));
 

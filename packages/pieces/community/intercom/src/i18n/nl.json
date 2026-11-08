@@ -356,6 +356,8 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Contact Replied": "Contact beantwoord",
   "Lead Added Email": "Lead toegevoegd e-mail",
   "Lead Converted To User": "Lead Omgezet naar gebruiker",
