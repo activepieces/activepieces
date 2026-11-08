@@ -3,6 +3,10 @@ const BASE62_ID = /^[A-Za-z0-9]{1,64}$/;
 const USER_ID = /^[A-Za-z0-9._~-]{1,128}$/;
 const INTL_SEGMENT = /^intl-[a-z]{2}(?:-[a-z]{2})?$/i;
 
+export const SPOTIFY_KINDS = ['track', 'album', 'artist', 'playlist', 'show', 'episode', 'audiobook', 'user'] as const;
+
+export const SPOTIFY_LIBRARY_WRITE_KINDS: readonly SpotifyKind[] = SPOTIFY_KINDS.filter((kind) => kind !== 'artist');
+
 function idPattern(kind: SpotifyKind): RegExp {
   return kind === 'user' ? USER_ID : BASE62_ID;
 }
@@ -114,9 +118,5 @@ export const spotifyIds = {
       .map((entry) => spotifyIds.parse({ kind, value: entry, label }));
   },
 };
-
-export const SPOTIFY_KINDS = ['track', 'album', 'artist', 'playlist', 'show', 'episode', 'audiobook', 'user'] as const;
-
-export const SPOTIFY_LIBRARY_WRITE_KINDS: readonly SpotifyKind[] = SPOTIFY_KINDS.filter((kind) => kind !== 'artist');
 
 export type SpotifyKind = (typeof SPOTIFY_KINDS)[number];

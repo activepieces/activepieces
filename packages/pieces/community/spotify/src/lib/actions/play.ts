@@ -32,12 +32,12 @@ export default createAction({
     context_uri: Property.ShortText({
       displayName: 'Context URI',
       description:
-        'Spotify URI or open.spotify.com link of the album, artist, playlist or show to play. Leave empty when you give Tracks.',
+        'Album, artist, playlist or show URI or link. Empty when using Tracks.',
       required: false,
     }),
     tracks: Property.Array({
       displayName: 'Tracks',
-      description: 'Spotify track or episode URIs to play. Leave empty when you give a Context URI.',
+      description: 'Track or episode URIs to play. Empty when using a Context URI.',
       required: false,
     }),
     position_ms: Property.Number({
@@ -47,12 +47,12 @@ export default createAction({
     }),
     offset_position: Property.Number({
       displayName: 'Start At Position',
-      description: 'With a Context URI: the 0-based position in the album or playlist to start from.',
+      description: 'With a Context URI: 0-based position to start from.',
       required: false,
     }),
     offset_uri: Property.ShortText({
       displayName: 'Start At Item',
-      description: 'With a Context URI: the URI of the track or episode in the context to start from.',
+      description: 'With a Context URI: URI of the track or episode to start from.',
       required: false,
     }),
   },

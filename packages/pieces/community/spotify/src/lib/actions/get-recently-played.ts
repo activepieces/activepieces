@@ -29,12 +29,12 @@ export default createAction({
     limit: spotifyCommon.limit({ max: 50, defaultHint: 20 }),
     after: Property.DateTime({
       displayName: 'Played After',
-      description: 'Only plays after this moment (exclusive). Leave empty for the latest plays.',
+      description: 'Only plays after this moment. Leave empty for the latest plays.',
       required: false,
     }),
     before: Property.DateTime({
       displayName: 'Played Before',
-      description: 'Only plays before this moment (exclusive). Cannot be combined with Played After.',
+      description: 'Only plays before this moment. Cannot be used with Played After.',
       required: false,
     }),
   },

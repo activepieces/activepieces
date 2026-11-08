@@ -24,7 +24,7 @@ export default createAction({
     }),
     snapshot_id: Property.ShortText({
       displayName: 'Snapshot ID',
-      description: 'Optional playlist snapshot ID (from Get Playlist Info or an earlier write) to make the change against that version of the playlist.',
+      description: 'Optional snapshot ID (from Get Playlist Info or an earlier write).',
       required: false,
     }),
   },

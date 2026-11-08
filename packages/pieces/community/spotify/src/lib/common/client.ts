@@ -50,6 +50,12 @@ const EMPTY_PLAYLIST_ITEM: PlaylistItem = {
   item: null,
   track: null,
 };
+
+export const SPOTIFY_PAGE_SIZE = PAGE_SIZE;
+export const SPOTIFY_PLAYLIST_MAX_ITEMS = PLAYLIST_MAX_ITEMS;
+export const SPOTIFY_LIBRARY_CHUNK = LIBRARY_CHUNK;
+export const SPOTIFY_PLAYLIST_WRITE_CHUNK = PLAYLIST_WRITE_CHUNK;
+
 let verifiedTlsAgent: Promise<unknown> | undefined;
 
 function verifiedTls(): Promise<unknown> {
@@ -924,10 +930,5 @@ export class SpotifyWebApi {
     return collectPages({ fetchPage, maxPages });
   }
 }
-
-export const SPOTIFY_PAGE_SIZE = PAGE_SIZE;
-export const SPOTIFY_PLAYLIST_MAX_ITEMS = PLAYLIST_MAX_ITEMS;
-export const SPOTIFY_LIBRARY_CHUNK = LIBRARY_CHUNK;
-export const SPOTIFY_PLAYLIST_WRITE_CHUNK = PLAYLIST_WRITE_CHUNK;
 
 export type SavedItemType = 'albums' | 'shows' | 'episodes';

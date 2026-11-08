@@ -19,12 +19,12 @@ export default createAction({
     playlist_id: spotifyCommon.playlist_id(true),
     items: Property.Array({
       displayName: 'Items',
-      description: 'Spotify URIs or open.spotify.com links of the tracks and episodes the playlist should contain, in order',
+      description: 'Track or episode URIs or links the playlist should hold, in order',
       required: false,
     }),
     clear_all: Property.Checkbox({
       displayName: 'Empty The Playlist',
-      description: 'Turn on (and leave Items empty) to remove every item from the playlist.',
+      description: 'Turn on (with Items empty) to remove every item.',
       required: false,
     }),
   },

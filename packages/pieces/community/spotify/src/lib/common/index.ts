@@ -234,7 +234,7 @@ export const spotifyCommon = {
       auth: spotifyCommon.authentication,
       displayName: 'Device',
       description:
-        'The Spotify device to control. Leave empty to use the currently active device. Open Spotify on the device first so it appears here.',
+        'Device to control. Empty uses the active device. Open Spotify on it first.',
       required,
       refreshers: [],
       options: async ({ auth }) => {
@@ -273,7 +273,7 @@ export const spotifyCommon = {
       auth: spotifyCommon.authentication,
       displayName: 'Playlist',
       description:
-        'Pick a playlist, or enter a playlist ID, spotify:playlist: URI or open.spotify.com link.',
+        'Pick a playlist, or enter its ID, URI or open.spotify.com link.',
       required,
       refreshers: [],
       options: async ({ auth }) => {
@@ -316,20 +316,20 @@ export const spotifyCommon = {
   }) =>
     Property.ShortText({
       displayName,
-      description: `The ${kind} ID, its spotify:${kind}: URI, or an open.spotify.com/${kind}/ link (use Search to find it).`,
+      description: `The ${kind} ID, spotify:${kind}: URI or open.spotify.com link.`,
       required,
     }),
   market: () =>
     Property.ShortText({
       displayName: 'Market',
       description:
-        'Optional two-letter country code (for example US or DE). Only content available in that country is returned. Leave empty to use the country of the connected account.',
+        'Two-letter country code, e.g. US. Empty uses the account country.',
       required: false,
     }),
   limit: ({ max, defaultHint }: { max: number; defaultHint: number }) =>
     Property.Number({
       displayName: 'Limit',
-      description: `How many items to return (1 to ${max}, Spotify's default is ${defaultHint}).`,
+      description: `How many to return (1 to ${max}, Spotify's default is ${defaultHint}).`,
       required: false,
     }),
   offset: () =>

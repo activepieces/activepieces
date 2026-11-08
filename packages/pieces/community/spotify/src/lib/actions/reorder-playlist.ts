@@ -19,12 +19,12 @@ export default createAction({
     playlist_id: spotifyCommon.playlist_id(true),
     from_position: Property.Number({
       displayName: 'From Position',
-      description: '0-based position of the first item to move (the first item in the playlist is 0).',
+      description: '0-based position of the first item to move.',
       required: true,
     }),
     to_position: Property.Number({
       displayName: 'To Position',
-      description: '0-based position to insert the items before. To move items to the end, use the number of items in the playlist.',
+      description: '0-based position to insert before. Use the item count for the end.',
       required: true,
     }),
     amount: Property.Number({
@@ -34,7 +34,7 @@ export default createAction({
     }),
     snapshot_id: Property.ShortText({
       displayName: 'Snapshot ID',
-      description: 'Optional playlist snapshot ID to make the change against that version of the playlist.',
+      description: 'Optional snapshot ID to apply the change to that playlist version.',
       required: false,
     }),
   },

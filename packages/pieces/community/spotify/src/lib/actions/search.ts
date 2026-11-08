@@ -69,7 +69,7 @@ export default createAction({
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Results per type, 1 to 50 (Spotify default 5). Development-mode Spotify apps get a 400 error above 10.',
+      description: 'Results per type, 1 to 50 (default 5). Dev-mode apps fail above 10.',
       required: false,
     }),
     offset: Property.Number({

@@ -24,7 +24,7 @@ export default createAction({
   props: {
     playlist_id: Property.ShortText({
       displayName: 'Playlist ID',
-      description: 'The playlist ID, spotify:playlist: URI or open.spotify.com/playlist/ link.',
+      description: 'Playlist ID, spotify:playlist: URI or open.spotify.com link.',
       required: true,
     }),
     name: Property.ShortText({
@@ -34,18 +34,18 @@ export default createAction({
     }),
     description: Property.ShortText({
       displayName: 'Description',
-      description: 'New playlist description. Omit to keep the current description, or pass an empty string to clear it.',
+      description: 'New description. Omit to keep it; an empty string clears it.',
       required: false,
     }),
     public: Property.StaticDropdown<string>({
       displayName: 'Public',
-      description: "'yes' makes the playlist public, 'no' makes it private. Omit to keep the current setting.",
+      description: "'yes' makes it public, 'no' private. Omit to keep the current setting.",
       required: false,
       options: { options: YES_NO_OPTIONS },
     }),
     collaborative: Property.StaticDropdown<string>({
       displayName: 'Collaborative',
-      description: "'yes' lets others edit the playlist (it must also be private), 'no' turns that off. Omit to keep the current setting.",
+      description: "'yes' lets others edit (playlist must be private). Omit to keep it.",
       required: false,
       options: { options: YES_NO_OPTIONS },
     }),

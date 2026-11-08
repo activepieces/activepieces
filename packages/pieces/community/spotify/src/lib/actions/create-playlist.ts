@@ -25,12 +25,12 @@ export default createAction({
     }),
     public: Property.Checkbox({
       displayName: 'Public',
-      description: 'Show the playlist on your profile. Leave unset to use Spotify\'s default.',
+      description: "Show the playlist on your profile. Leave unset for Spotify's default.",
       required: false,
     }),
     collaborative: Property.Checkbox({
       displayName: 'Collaborative',
-      description: 'Let other people edit the playlist. Only works when Public is turned off.',
+      description: 'Let others edit the playlist. Only works when Public is off.',
       required: false,
     }),
   },

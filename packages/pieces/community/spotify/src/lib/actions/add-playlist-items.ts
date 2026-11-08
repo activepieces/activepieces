@@ -19,12 +19,12 @@ export default createAction({
     playlist_id: spotifyCommon.playlist_id(true),
     items: Property.Array({
       displayName: 'Items',
-      description: 'Spotify URIs (spotify:track:… or spotify:episode:…) or open.spotify.com links of the items to add',
+      description: 'Track or episode URIs (spotify:track:…) or open.spotify.com links',
       required: true,
     }),
     position: Property.Number({
       displayName: 'Position',
-      description: '0-based position to insert the items at. Leave empty to append to the end.',
+      description: '0-based position to insert at. Leave empty to append to the end.',
       required: false,
     }),
   },

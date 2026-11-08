@@ -21,7 +21,7 @@ export default createAction({
     limit: spotifyCommon.limit({ max: 50, defaultHint: 20 }),
     after: Property.ShortText({
       displayName: 'After',
-      description: 'Cursor from a previous call (next_after): returns the artists after that one.',
+      description: 'Cursor from a previous call (next_after) to get the next page.',
       required: false,
     }),
     all: spotifyCommon.all(),

@@ -18,7 +18,7 @@ export default createAction({
   props: {
     uri: Property.ShortText({
       displayName: 'Track or Episode',
-      description: 'Spotify URI (spotify:track:… or spotify:episode:…) or open.spotify.com link',
+      description: 'Track or episode URI (spotify:track:…) or open.spotify.com link',
       required: true,
     }),
     device_id: spotifyCommon.device_id(false),
