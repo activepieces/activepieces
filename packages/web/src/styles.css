@@ -489,6 +489,13 @@
   }
 }
 
+@layer base {
+  :root {
+    --ap-move-wide: 320ms;
+    --ap-move-back: 260ms;
+  }
+}
+
 /* You can add global styles to this file, and also import other style files */
 @layer base {
   input[type='number']::-webkit-inner-spin-button,

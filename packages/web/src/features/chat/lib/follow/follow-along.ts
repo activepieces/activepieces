@@ -18,6 +18,8 @@ export const useFollowAlong = create<FollowState>(() => ({
   goRequests: 0,
   flashes: {},
   runs: {},
+  offer: null,
+  pageTouched: false,
 }));
 
 const set = useFollowAlong.setState;
@@ -128,7 +130,28 @@ function begin(): void {
     doneTimer = null;
   }
   if (get().phase !== 'editing') {
-    set({ phase: 'editing', following: true });
+    set({ phase: 'editing', following: true, pageTouched: false });
+  }
+}
+
+function offer(next: FollowOffer | null): void {
+  const current = get().offer;
+  if (
+    current === next ||
+    (current &&
+      next &&
+      current.kind === next.kind &&
+      resourceRegistry.keyOf(current.resource) ===
+        resourceRegistry.keyOf(next.resource))
+  ) {
+    return;
+  }
+  set({ offer: next });
+}
+
+function touchPage(): void {
+  if (get().phase === 'editing' && !get().pageTouched) {
+    set({ pageTouched: true });
   }
 }
 
@@ -262,6 +285,8 @@ export function useFollowFlash(key: string): boolean {
 
 export const followAlong = {
   onChunks,
+  offer,
+  touchPage,
   endRun,
   stopFollowing,
   view,
@@ -291,6 +316,12 @@ export type FollowChange = {
   navigable: boolean;
 };
 
+export type FollowOffer = {
+  resource: ResourceRef;
+  kind: 'ready' | 'switch';
+  runId: string | null;
+};
+
 type PendingCall = { toolName: string; input: unknown; runId: string };
 
 type FollowRun = {
@@ -307,4 +338,6 @@ type FollowState = {
   goRequests: number;
   flashes: Record<string, number>;
   runs: Record<string, FollowRun>;
+  offer: FollowOffer | null;
+  pageTouched: boolean;
 };

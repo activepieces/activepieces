@@ -25,6 +25,7 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 export function ChatNotch({ className }: { className?: string }) {
   const setOpen = useChatPanel((s) => s.setOpen);
+  const needsYou = useChatPanel((s) => s.gateOpen);
   const isHidden = useChatWidth() !== 'closed';
   const progress = useMotionValue(isHidden ? 0 : 1);
 
@@ -64,7 +65,7 @@ export function ChatNotch({ className }: { className?: string }) {
           <TooltipTrigger asChild>
             <motion.button
               type="button"
-              aria-label={t('Chat')}
+              aria-label={needsYou ? t('Chat, it needs you') : t('Chat')}
               aria-keyshortcuts="Meta+J Control+J"
               onClick={() => setOpen(true)}
               initial={false}
@@ -91,6 +92,12 @@ export function ChatNotch({ className }: { className?: string }) {
               }}
             >
               <NotchChatIcon className="size-6" />
+              {needsYou && (
+                <span
+                  aria-hidden
+                  className="absolute top-1 left-9 size-2.5 rounded-full border-2 border-gray-2 bg-accent-9"
+                />
+              )}
             </motion.button>
           </TooltipTrigger>
           <TooltipContent side="right" className="flex items-center gap-2">

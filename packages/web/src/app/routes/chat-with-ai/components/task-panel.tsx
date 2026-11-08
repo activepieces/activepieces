@@ -17,6 +17,7 @@ import {
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';
 
@@ -139,7 +140,10 @@ export function TaskPanelLayout({ children }: { children: React.ReactNode }) {
   const setChatAreaWidth = useChatStoreContext(
     (state) => state.setChatAreaWidth,
   );
-  useEffect(() => setChatAreaWidth(room.width), [room.width, setChatAreaWidth]);
+  const moving = useChatPanel((state) => state.moving !== null);
+  useEffect(() => {
+    if (!moving) setChatAreaWidth(room.width);
+  }, [room.width, moving, setChatAreaWidth]);
   return (
     <TaskPanelSlotContext.Provider value={slot}>
       <div ref={roomRef} className="flex h-full min-w-0 flex-1">

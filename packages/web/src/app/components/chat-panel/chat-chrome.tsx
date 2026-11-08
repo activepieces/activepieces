@@ -50,10 +50,10 @@ import {
 } from '@/features/workspace/lib/chat-layout';
 import {
   ChatPanelMode,
+  chatTransitions,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import { useShellHandle } from '../app-shell';
@@ -97,6 +97,9 @@ export function ChatChrome({
   const newChatToken = useChatPanel((s) => s.newChatToken);
   const pendingPrompt = useChatPanel((s) => s.pendingPrompt);
   const lastPage = useChatPanel((s) => s.lastPage);
+  const split = useChatPanel((s) => s.split) && layout === 'left';
+  const splitName = useChatPanel((s) => s.splitName);
+  const splitHint = useSplitHint(split);
   const chatEnabled =
     platformHooks.useCurrentPlatform().platform.plan.chatEnabled;
   const reduced = useReducedMotion();
@@ -250,8 +253,16 @@ export function ChatChrome({
       autoFocus={!historyColumn}
     />
   );
-  const openFullPage = () =>
-    navigate(conversationId ? `${CHAT_ROUTE}/${conversationId}` : CHAT_ROUTE);
+  const openFullPage = () => {
+    const header = headerRef.current;
+    const fromHeader = header?.contains(document.activeElement) ?? false;
+    chatTransitions.expand();
+    if (!fromHeader) return;
+    requestAnimationFrame(() => {
+      if (header?.contains(document.activeElement)) return;
+      getComposer()?.focus({ preventScroll: true });
+    });
+  };
   const collapseToSide = lastPage
     ? () => {
         navigate(lastPage);
@@ -391,7 +402,17 @@ export function ChatChrome({
                   <Maximize2 />
                 </HeaderButton>
               ) : (
-                <LayoutMenu layout={layout} onOpenFullPage={openFullPage} />
+                <>
+                  {split && (
+                    <HeaderButton
+                      label={t('Expand chat')}
+                      onClick={openFullPage}
+                    >
+                      <Maximize2 />
+                    </HeaderButton>
+                  )}
+                  <LayoutMenu layout={layout} onOpenFullPage={openFullPage} />
+                </>
               )}
               {chatEnabled && (
                 <MoreMenu
@@ -416,6 +437,30 @@ export function ChatChrome({
             </div>
           </div>
         </PopoverPrimitive.Anchor>
+        <AnimatePresence>
+          {splitHint && (
+            <motion.div
+              key="split-hint"
+              role="note"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
+              className="pointer-events-none absolute top-12 right-3 z-20 max-w-64 rounded-lg bg-gray-12 px-3 py-2 text-xs text-gray-1 shadow-lift"
+            >
+              {splitName
+                ? t(
+                    'The chat moved aside so you can see {name}. Expand brings it back.',
+                    {
+                      name: splitName,
+                    },
+                  )
+                : t(
+                    'The chat moved aside so you can see the page. Expand brings it back.',
+                  )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         <ChatHistoryPopover
           open={historyOpen && dropdown}
           headerRef={headerRef}
@@ -490,6 +535,44 @@ export function ChatChrome({
       <SettingsHubDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </TooltipProvider>
   );
+}
+
+function getComposer(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(
+    '[data-chat-root] textarea, [data-chat-root] [contenteditable="true"]',
+  );
+}
+
+function useSplitHint(split: boolean): boolean {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!split || readFlag(SPLIT_HINT_KEY)) return;
+    writeFlag(SPLIT_HINT_KEY);
+    const show = setTimeout(() => setVisible(true), SPLIT_HINT_DELAY_MS);
+    const hide = setTimeout(() => setVisible(false), SPLIT_HINT_MS);
+    return () => {
+      clearTimeout(show);
+      clearTimeout(hide);
+      setVisible(false);
+    };
+  }, [split]);
+  return visible;
+}
+
+function readFlag(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeFlag(key: string) {
+  try {
+    localStorage.setItem(key, 'true');
+  } catch {
+    return;
+  }
 }
 
 export function ChatLastPageTracker() {
@@ -598,6 +681,9 @@ const TOGGLE_SHORTCUT = IS_MAC ? '⌘J' : 'Ctrl J';
 const HISTORY_SHORTCUT = IS_MAC ? '⇧⌘H' : 'Ctrl Shift H';
 const NEW_CHAT_SHORTCUT = IS_MAC ? '⇧⌘O' : 'Ctrl Shift O';
 const PINNED_KEY = 'chat-sidebar-pinned';
+const SPLIT_HINT_KEY = 'chat-split-hint-seen';
+const SPLIT_HINT_DELAY_MS = 500;
+const SPLIT_HINT_MS = 6500;
 const ROOMY_WIDTH = 1024;
 const TYPE_STEP_MS = 24;
 
