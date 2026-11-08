@@ -246,7 +246,7 @@ function catalogEntries({
           text: `extensions:\n  ${slug}:\n    type: streamable_http\n    name: ${JSON.stringify(
             name,
           )}\n    uri: ${url}\n    enabled: true\n    timeout: 300`,
-          body: t('Then restart goose.'),
+          body: t('Merge this into your config, then restart goose.'),
         }),
       ],
     },

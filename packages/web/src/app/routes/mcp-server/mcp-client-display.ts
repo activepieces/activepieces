@@ -4,13 +4,13 @@ import { t } from 'i18next';
 const LOGOS_URL = '/client-logos';
 
 function icon(key: McpOAuthClientKey | null): string {
-  return MCP_CLIENT_BRANDING[key ?? 'unknown'].icon;
+  return ((key && MCP_CLIENT_BRANDING[key]) ?? MCP_CLIENT_BRANDING.unknown)
+    .icon;
 }
 
 function label({ key, clientName }: LabelParams): string {
-  return key === null || key === 'unknown'
-    ? clientName ?? t('MCP client')
-    : MCP_CLIENT_BRANDING[key].name;
+  const known = key && key !== 'unknown' ? MCP_CLIENT_BRANDING[key] : undefined;
+  return known?.name ?? clientName ?? t('MCP client');
 }
 
 export const mcpClientDisplay = { icon, label };

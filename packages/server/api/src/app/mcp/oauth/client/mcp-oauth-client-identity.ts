@@ -9,7 +9,6 @@ const CODEX_CALLBACK_PATH = /^\/callback\/[^/]+$/
 const GEMINI_CLI_CALLBACK_PATH = '/oauth/callback'
 const MCP_OAUTH_CALLBACK_PATH = '/mcp/oauth/callback'
 const GOOSE_CALLBACK_PATH = '/oauth_callback'
-const GITHUB_APP_SCHEME = 'github-app:'
 
 function parseRedirectUri(redirectUri: string): URL | null {
     try {
@@ -65,9 +64,6 @@ function clientKeyFromUrl(url: URL): McpOAuthClientKey | null {
     if (host === 'localhost' && url.pathname === '/callback') {
         return 'claude-code'
     }
-    if (host === '127.0.0.1' && url.pathname === '/') {
-        return 'copilot-cli'
-    }
     if (scheme === 'windsurf:') {
         return 'windsurf'
     }
@@ -79,13 +75,15 @@ export const mcpOAuthClientIdentity = {
         const urls = redirectUris
             .map(parseRedirectUri)
             .filter((url): url is URL => url !== null)
-        if (urls.some((url) => url.protocol.toLowerCase() === GITHUB_APP_SCHEME)) {
-            return 'unknown'
-        }
         return urls
             .map(clientKeyFromUrl)
-            .find((candidate) => candidate !== null) ?? 'unknown'
+            .find((candidate) => candidate !== null) ?? (isCopilotCli(urls) ? 'copilot-cli' : 'unknown')
     },
+}
+
+function isCopilotCli(urls: URL[]): boolean {
+    const paths = urls.filter((url) => url.hostname === '127.0.0.1').map((url) => url.pathname)
+    return ['/', '/callback'].every((path) => paths.includes(path))
 }
 
 type DetectClientKeyParams = {

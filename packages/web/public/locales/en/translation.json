@@ -1253,7 +1253,7 @@
   "One click": "One click",
   "Install in one click": "Install in one click",
   "Add to goose": "Add to goose",
-  "Then restart goose.": "Then restart goose.",
+  "Merge this into your config, then restart goose.": "Merge this into your config, then restart goose.",
   "Run this, then select Authorize in your browser.": "Run this, then select Authorize in your browser.",
   "Run /mcp in Claude Code and select Authenticate, or run this in your terminal. Then select Authorize in your browser.": "Run /mcp in Claude Code and select Authenticate, or run this in your terminal. Then select Authorize in your browser.",
   "Add to Cursor": "Add to Cursor",
