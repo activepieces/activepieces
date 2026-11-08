@@ -57,8 +57,9 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
     if (typeof mod.code !== 'function') {
         throw new Error('Code step must export a "code" function');
     }
-    const result = await mod.code(${JSON.stringify(inputs)});
+    const result = await mod.code(data);
 `,
+                data: inputs,
                 permissions,
                 cwd: stepDir,
                 allowReadPaths: [stepDir],
