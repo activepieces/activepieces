@@ -165,7 +165,8 @@ export const discord = createPiece({
     'khaledmashaly',
     'abuaboud',
     'tintinthedev',
-    'AshotZaqoyan'
+    'AshotZaqoyan',
+    'OdaiAhmed99'
   ],
   triggers: [newMessage, newMember],
 });
