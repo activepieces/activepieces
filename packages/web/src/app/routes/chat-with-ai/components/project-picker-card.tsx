@@ -127,31 +127,33 @@ export function ProjectPickerCard({
       <ChatCardHeader
         tile={<ChatCardTile kind="bits" icon={FolderClosed} />}
         title={title}
+        titleLines={2}
+        leading={
+          showAll &&
+          accessibleSuggested.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="text-gray-11"
+              onClick={() => setView('list')}
+              aria-label={t('Back')}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+          )
+        }
         trailing={
-          <>
-            {showAll && accessibleSuggested.length > 0 && (
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="text-gray-11"
-                onClick={() => setView('list')}
-                aria-label={t('Back')}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-            )}
-            {onDismiss && (
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="text-gray-11"
-                onClick={onDismiss}
-                aria-label={t('Close')}
-              >
-                <X className="size-4" />
-              </Button>
-            )}
-          </>
+          onDismiss && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="text-gray-11"
+              onClick={onDismiss}
+              aria-label={t('Close')}
+            >
+              <X className="size-4" />
+            </Button>
+          )
         }
       />
 
@@ -259,14 +261,14 @@ function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
   }
 
   return (
-    <div className="mt-4 grid max-h-72 grid-cols-1 gap-3 overflow-auto pr-1 sm:grid-cols-2">
+    <div className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-auto @max-chat-narrow/chat:grid-cols-1">
       {filtered.map(({ project, name }) => {
         return (
           <button
             key={project.id}
             type="button"
             onClick={() => onSelect(project.id, name)}
-            className="group flex items-center justify-between gap-3 rounded-xl border bg-gray-1 px-5 py-4 text-left transition-colors hover:border-gray-7"
+            className="group flex min-w-0 items-center justify-between gap-2.5 rounded-lg border border-gray-6 bg-panel px-3 py-2.5 text-left transition-colors hover:border-gray-7"
           >
             <ApProjectDisplay
               title={name}

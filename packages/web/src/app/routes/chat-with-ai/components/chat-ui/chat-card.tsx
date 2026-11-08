@@ -1,6 +1,6 @@
 import { t } from 'i18next';
-import { ChevronDown, LucideIcon } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import { ChevronDown, LucideIcon, MoreHorizontal } from 'lucide-react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -10,47 +10,142 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
-export function ChatCard({ turn, flat, className, children }: ChatCardProps) {
+export function ChatCard({
+  turn,
+  flat,
+  foldable = false,
+  defaultOpen,
+  className,
+  children,
+}: ChatCardProps) {
   return (
-    <div
-      className={cn(
-        'flex min-w-0 flex-col rounded-xl motion-safe:animate-chat-enter',
-        !flat && !turn && 'border border-gray-6 bg-panel',
-        turn && 'chat-turn-ring',
-        className,
-      )}
-    >
-      {children}
-    </div>
+    <FoldScope foldable={foldable} defaultOpen={defaultOpen}>
+      <div
+        className={cn(
+          'flex min-w-0 flex-col rounded-xl motion-safe:animate-chat-enter',
+          !flat && !turn && 'border border-gray-6 bg-panel',
+          turn && 'chat-turn-ring',
+          className,
+        )}
+      >
+        {children}
+      </div>
+    </FoldScope>
   );
 }
 
 export function ChatCardHeader({
   tile,
   title,
+  titleText,
+  titleLines = 1,
   meta,
+  metaText,
+  summary,
+  leading,
   trailing,
 }: ChatCardHeaderProps) {
+  const fold = useContext(FoldContext);
+  const titleTooltip = titleText ?? (typeof title === 'string' ? title : null);
+  const metaTooltip = metaText ?? (typeof meta === 'string' ? meta : null);
+  const titleClass = cn(
+    'text-sm font-medium text-gray-12',
+    titleLines === 2 ? 'line-clamp-2 break-words' : 'truncate',
+  );
   return (
-    <div className="flex min-w-0 items-center gap-3 py-3 pl-3 pr-4">
+    <div className="flex min-w-0 items-center gap-3 py-3 pl-3 pr-4 @max-chat-narrow/chat:pr-3">
+      {leading && <div className="flex shrink-0">{leading}</div>}
       {tile}
       <div className="flex min-w-0 flex-1 flex-col">
-        <TextWithTooltip tooltipMessage={title}>
-          <p className="truncate text-sm font-medium text-gray-12">{title}</p>
-        </TextWithTooltip>
-        {meta && (
-          <TextWithTooltip tooltipMessage={meta}>
-            <p className="truncate text-xs text-gray-11">{meta}</p>
+        {titleTooltip === null ? (
+          <div className={titleClass}>{title}</div>
+        ) : (
+          <TextWithTooltip tooltipMessage={titleTooltip}>
+            <div className={titleClass}>{title}</div>
           </TextWithTooltip>
         )}
+        {meta &&
+          (metaTooltip === null ? (
+            <div className="truncate text-xs text-gray-11">{meta}</div>
+          ) : (
+            <TextWithTooltip tooltipMessage={metaTooltip}>
+              <div className="truncate text-xs text-gray-11">{meta}</div>
+            </TextWithTooltip>
+          ))}
+        {summary && <div className="mt-1 min-w-0 text-xs">{summary}</div>}
       </div>
-      {trailing && (
-        <div className="flex shrink-0 items-center gap-1">{trailing}</div>
+      {(trailing || fold.foldable) && (
+        <div className="flex shrink-0 items-center gap-1">
+          {trailing}
+          {fold.foldable && <FoldTrigger open={fold.open} />}
+        </div>
       )}
     </div>
+  );
+}
+
+export function ChatCardHeaderActions({ actions }: ChatCardHeaderActionsProps) {
+  const collapses = actions.length > MAX_INLINE_NARROW_ACTIONS;
+  return (
+    <>
+      <div
+        className={cn(
+          'flex items-center gap-1',
+          collapses && '@max-chat-narrow/chat:hidden',
+        )}
+      >
+        {actions.map((action) => (
+          <Button
+            key={action.label}
+            variant="ghost"
+            size="icon-xs"
+            className="text-gray-11"
+            aria-label={action.label}
+            disabled={action.disabled}
+            onClick={action.onClick}
+          >
+            <action.icon className="size-4" />
+          </Button>
+        ))}
+      </div>
+      {collapses && (
+        <div className="hidden @max-chat-narrow/chat:flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="text-gray-11"
+                aria-label={t('More actions')}
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {actions.map((action) => (
+                <DropdownMenuItem
+                  key={action.label}
+                  disabled={action.disabled}
+                  onSelect={action.onClick}
+                >
+                  <action.icon className="size-4" />
+                  {action.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -77,8 +172,9 @@ export function ChatCardTile(props: ChatCardTileProps) {
 export function ChatCardBody({ className, children }: ChatCardSectionProps) {
   return (
     <div
+      data-slot="chat-card-body"
       className={cn(
-        'flex min-w-0 flex-col gap-3 pb-4 pl-14 pr-4 @max-chat-narrow/chat:pl-3',
+        'flex min-w-0 flex-col gap-3 pb-4 pl-14 pr-4 @max-chat-narrow/chat:pl-3 [&:has(+[data-slot=chat-card-actions])]:pb-3',
         className,
       )}
     >
@@ -90,8 +186,9 @@ export function ChatCardBody({ className, children }: ChatCardSectionProps) {
 export function ChatCardActions({ className, children }: ChatCardSectionProps) {
   return (
     <div
+      data-slot="chat-card-actions"
       className={cn(
-        'flex flex-wrap items-center gap-2 border-t border-gray-4 pb-3.5 pl-14 pr-4 pt-3 @max-chat-narrow/chat:pl-3',
+        'flex flex-wrap items-center gap-2 pb-4 pl-14 pr-4 pt-0 @max-chat-narrow/chat:pl-3',
         className,
       )}
     >
@@ -100,44 +197,61 @@ export function ChatCardActions({ className, children }: ChatCardSectionProps) {
   );
 }
 
+export function ChatCardFoldContent({ children }: { children: ReactNode }) {
+  const fold = useContext(FoldContext);
+  if (!fold.foldable) return <>{children}</>;
+  return <CollapsibleContent>{children}</CollapsibleContent>;
+}
+
 export function ChatCardFold({
   defaultOpen,
-  tile,
-  title,
-  meta,
-  trailing,
   children,
+  ...header
 }: ChatCardFoldProps) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <ChatCardHeader
-        tile={tile}
-        title={title}
-        meta={meta}
-        trailing={
-          <>
-            {trailing}
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="text-gray-9"
-                aria-label={open ? t('Hide details') : t('Show details')}
-              >
-                <ChevronDown
-                  className={cn(
-                    'size-4 transition-transform',
-                    open && 'rotate-180',
-                  )}
-                />
-              </Button>
-            </CollapsibleTrigger>
-          </>
-        }
-      />
-      <CollapsibleContent>{children}</CollapsibleContent>
-    </Collapsible>
+    <FoldScope foldable defaultOpen={defaultOpen}>
+      <div>
+        <ChatCardHeader {...header} />
+        <ChatCardFoldContent>{children}</ChatCardFoldContent>
+      </div>
+    </FoldScope>
+  );
+}
+
+function FoldScope({
+  foldable,
+  defaultOpen,
+  children,
+}: {
+  foldable: boolean;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(!foldable || defaultOpen === true);
+  const isOpen = !foldable || open;
+  return (
+    <FoldContext.Provider value={{ foldable, open: isOpen }}>
+      <Collapsible asChild open={isOpen} onOpenChange={setOpen}>
+        {children}
+      </Collapsible>
+    </FoldContext.Provider>
+  );
+}
+
+function FoldTrigger({ open }: { open: boolean }) {
+  return (
+    <CollapsibleTrigger asChild>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        className="text-gray-9"
+        aria-label={open ? t('Hide details') : t('Show details')}
+      >
+        <ChevronDown
+          className={cn('size-4 transition-transform', open && 'rotate-180')}
+        />
+      </Button>
+    </CollapsibleTrigger>
   );
 }
 
@@ -153,18 +267,43 @@ function AppTile({ pieceName }: { pieceName: string }) {
   );
 }
 
+const MAX_INLINE_NARROW_ACTIONS = 2;
+
+const FoldContext = createContext<{ foldable: boolean; open: boolean }>({
+  foldable: false,
+  open: true,
+});
+
 type ChatCardProps = {
   turn?: boolean;
   flat?: boolean;
+  foldable?: boolean;
+  defaultOpen?: boolean;
   className?: string;
   children: ReactNode;
 };
 
 type ChatCardHeaderProps = {
   tile: ReactNode;
-  title: string;
-  meta?: string;
+  title: ReactNode;
+  titleText?: string;
+  titleLines?: 1 | 2;
+  meta?: ReactNode;
+  metaText?: string;
+  summary?: ReactNode;
+  leading?: ReactNode;
   trailing?: ReactNode;
+};
+
+type ChatCardHeaderAction = {
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+};
+
+type ChatCardHeaderActionsProps = {
+  actions: ChatCardHeaderAction[];
 };
 
 type ChatCardTileProps =
@@ -180,3 +319,5 @@ type ChatCardFoldProps = ChatCardHeaderProps & {
   defaultOpen: boolean;
   children: ReactNode;
 };
+
+export type { ChatCardHeaderAction };

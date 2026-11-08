@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils';
 
 import { AnswerPair } from '../lib/message-parsers';
 
+import { ChatCard, ChatCardBody, ChatCardHeader } from './chat-ui/chat-card';
+
 export function AnsweredQuestionsCard({ pairs }: AnsweredQuestionsCardProps) {
   if (pairs.length === 0) return null;
 
@@ -42,33 +44,20 @@ export function AnsweredQuestionsCard({ pairs }: AnsweredQuestionsCardProps) {
 export function ChatCardSkeleton({ rows = 3 }: ChatCardSkeletonProps) {
   return (
     <ChatCard>
-      <Skeleton className="h-5 w-2/3" />
-      <div className="mt-4 space-y-0.5">
+      <ChatCardHeader
+        tile={<Skeleton className="size-8 shrink-0 rounded-lg" />}
+        title={<Skeleton className="h-4 w-2/3" />}
+        meta={<Skeleton className="mt-1.5 h-3 w-1/3" />}
+      />
+      <ChatCardBody className="gap-0.5">
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 px-3 py-2">
-            <Skeleton className="size-7 shrink-0 rounded-md" />
+          <div key={i} className="flex min-h-11 items-center gap-2.5 px-2.5">
+            <Skeleton className="size-4 shrink-0 rounded-full" />
             <Skeleton className="h-4 w-32" />
           </div>
         ))}
-      </div>
+      </ChatCardBody>
     </ChatCard>
-  );
-}
-
-export function ChatCard({ children, className }: ChatCardProps) {
-  return (
-    <motion.div
-      className={cn(
-        'rounded-xl border border-gray-6/60 bg-panel p-4 shadow-lg backdrop-blur-sm transition-colors',
-        className,
-      )}
-      initial={{ opacity: 0, y: 16, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 8, scale: 0.98 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-    >
-      {children}
-    </motion.div>
   );
 }
 
@@ -216,11 +205,6 @@ type AnsweredQuestionsCardProps = {
 
 type ChatCardSkeletonProps = {
   rows?: number;
-};
-
-type ChatCardProps = {
-  children: ReactNode;
-  className?: string;
 };
 
 type ChatOptionBadgeProps = {

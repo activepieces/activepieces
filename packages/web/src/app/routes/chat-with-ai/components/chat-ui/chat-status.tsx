@@ -5,11 +5,18 @@ import { cn } from '@/lib/utils';
 
 import { ChatStatus } from './chat-status-utils';
 
-export function ChatStatusIcon({ status, className }: ChatStatusIconProps) {
+export function ChatStatusIcon({
+  status,
+  label,
+  decorative = false,
+  className,
+}: ChatStatusIconProps) {
   return (
     <svg
       viewBox="0 0 16 16"
-      aria-hidden
+      role={decorative ? undefined : 'img'}
+      aria-label={decorative ? undefined : label ?? statusLabel(status)}
+      aria-hidden={decorative ? true : undefined}
       className={cn(
         'size-3.5 shrink-0',
         status === 'working' && 'motion-safe:animate-spin',
@@ -24,7 +31,7 @@ export function ChatStatusIcon({ status, className }: ChatStatusIconProps) {
 export function ChatStatusText({ status, children }: ChatStatusTextProps) {
   return (
     <span className="flex shrink-0 items-center gap-1.5">
-      <ChatStatusIcon status={status} />
+      <ChatStatusIcon status={status} decorative />
       <span
         className={cn(
           'text-xs font-medium @max-chat-narrow/chat:sr-only',
@@ -142,6 +149,8 @@ const TEXT_CLASS: Record<ChatStatus, string> = {
 
 type ChatStatusIconProps = {
   status: ChatStatus;
+  label?: string;
+  decorative?: boolean;
   className?: string;
 };
 

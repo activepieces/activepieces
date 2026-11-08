@@ -10,6 +10,7 @@ export function ChatLine({
   detail,
   logos,
   live,
+  tone = 'default',
   open,
   onToggle,
   className,
@@ -22,11 +23,16 @@ export function ChatLine({
         </span>
       )}
       {live ? (
-        <TextShimmer className="min-w-0 truncate text-sm">
+        <TextShimmer className="min-w-0 truncate text-sm font-normal motion-reduce:animate-none">
           {children}
         </TextShimmer>
       ) : (
-        <span className="min-w-0 truncate text-sm text-gray-11">
+        <span
+          className={cn(
+            'min-w-0 truncate text-sm',
+            tone === 'danger' ? 'text-danger-11' : 'text-gray-11',
+          )}
+        >
           {children}
         </span>
       )}
@@ -71,6 +77,7 @@ type ChatLineProps = {
   detail?: ReactNode;
   logos?: ReactNode;
   live?: boolean;
+  tone?: 'default' | 'danger';
   open?: boolean;
   onToggle?: () => void;
   className?: string;

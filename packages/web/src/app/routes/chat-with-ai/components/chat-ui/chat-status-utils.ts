@@ -61,10 +61,14 @@ function fromBuildPhase(phase: BuildPlanPhase): ChatStatus {
   }
 }
 
-function fromBatch(
-  progress: Pick<BatchProgressData, 'done' | 'failed'>,
-): ChatStatus {
-  if (!progress.done) return 'working';
+function fromBatch({
+  progress,
+  ended = false,
+}: {
+  progress: Pick<BatchProgressData, 'done' | 'failed'>;
+  ended?: boolean;
+}): ChatStatus {
+  if (!progress.done) return ended ? 'stopped' : 'working';
   return progress.failed > 0 ? 'failed' : 'done';
 }
 

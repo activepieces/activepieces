@@ -98,11 +98,11 @@ describe('ChatOptionList keyboard', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it('marks the picked option as checked', () => {
+  it('marks the picked option as selected', () => {
     renderList({ items: THREE });
     fireEvent.click(option('Outlook'));
-    expect(option('Outlook').getAttribute('aria-checked')).toBe('true');
-    expect(option('Gmail').getAttribute('aria-checked')).toBe('false');
+    expect(option('Outlook').getAttribute('aria-selected')).toBe('true');
+    expect(option('Gmail').getAttribute('aria-selected')).toBe('false');
   });
 });
 
@@ -125,7 +125,7 @@ describe('ChatOptionList search', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Search projects' }), {
       target: { value: 'project 7' },
     });
-    expect(screen.getAllByRole('radio')).toHaveLength(1);
+    expect(screen.getAllByRole('option')).toHaveLength(1);
   });
 
   it('shows a no-match line and clears the search', () => {
@@ -134,10 +134,10 @@ describe('ChatOptionList search', () => {
     fireEvent.change(search, { target: { value: 'zzq' } });
 
     expect(screen.getByText('No project matches "zzq"')).toBeTruthy();
-    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    expect(screen.queryAllByRole('option')).toHaveLength(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
-    expect(screen.getAllByRole('radio')).toHaveLength(7);
+    expect(screen.getAllByRole('option')).toHaveLength(7);
     expect(document.activeElement).toBe(search);
   });
 });
@@ -192,7 +192,7 @@ function renderList({
 }
 
 function option(name: string): HTMLElement {
-  return screen.getByRole('radio', { name });
+  return screen.getByRole('option', { name });
 }
 
 function makeItems(count: number): ChatOptionItem[] {
