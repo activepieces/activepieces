@@ -133,7 +133,7 @@ function ChatBoxContent({
 
   useEffect(() => {
     if (initialConversationId) {
-      void setConversationId(initialConversationId);
+      setConversationId(initialConversationId).catch(() => undefined);
     }
   }, [initialConversationId, setConversationId]);
 
@@ -177,7 +177,12 @@ function ChatBoxContent({
       modelOptions.defaultChoice ??
       null;
   const awaitingSavedPick =
-    !isNil(initialConversationId) && (isNil(modelPick) || isLoadingHistory);
+    !isNil(initialConversationId) &&
+    (isLoadingHistory || (initialConversationId !== conversationId && !failed));
+  const showHistorySkeleton = useDelayedFlag({
+    value: isLoadingHistory,
+    delayMs: HISTORY_SKELETON_DELAY_MS,
+  });
   const pickUnavailable =
     showsPicker &&
     !isNil(modelOptions) &&
@@ -330,14 +335,14 @@ function ChatBoxContent({
       role: answers.role,
       company: companyLocked ? '' : answers.companyDomain ?? answers.company,
     });
-    void handleSend(
+    handleSend(
       t(
         'I work at {company} and my role is: {role}. What can you take off my plate?',
         { role: answers.role, company: answers.company },
       ),
       undefined,
       { messageSource: 'onboarding' },
-    );
+    ).catch(() => undefined);
   };
 
   const handleOnboardingDismiss = () => {
@@ -376,7 +381,9 @@ function ChatBoxContent({
                 <OnboardingWelcome />
               ) : (
                 <EmptyState
-                  onSuggestionClick={(text) => void handleSend(text)}
+                  onSuggestionClick={(text) =>
+                    handleSend(text).catch(() => undefined)
+                  }
                   incognito={incognito}
                   showFlowCards={!hasConversations}
                   hasInput={hasInput}
@@ -401,7 +408,7 @@ function ChatBoxContent({
               }}
             >
               <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
-                {isLoadingHistory && <MessageSkeletons />}
+                {showHistorySkeleton && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
                   if (msg.role === 'user') {
@@ -426,7 +433,9 @@ function ChatBoxContent({
                       isStreaming={isLastStreamingAssistant}
                       isResumed={isLastStreamingAssistant && isResumedStream}
                       isLastMessage={isLastAssistant}
-                      onSendPrompt={(text) => void handleSend(text)}
+                      onSendPrompt={(text) =>
+                        handleSend(text).catch(() => undefined)
+                      }
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
                       conversationId={conversationId}
                       messageIndex={idx}
@@ -537,7 +546,9 @@ function ChatBoxContent({
                   projectId={chatProjectId}
                   value={shownChoice}
                   onChange={(choice) =>
-                    void setModelPick(chatUtils.pickOf({ choice }))
+                    setModelPick(chatUtils.pickOf({ choice })).catch(
+                      () => undefined,
+                    )
                   }
                 />
               ) : null
@@ -574,6 +585,23 @@ function ChatBoxContent({
       </div>
     </div>
   );
+}
+
+function useDelayedFlag({
+  value,
+  delayMs,
+}: {
+  value: boolean;
+  delayMs: number;
+}): boolean {
+  const [elapsed, setElapsed] = useState(false);
+  useEffect(() => {
+    setElapsed(false);
+    if (!value) return;
+    const timer = setTimeout(() => setElapsed(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return value && elapsed;
 }
 
 function useModelGate({
@@ -647,3 +675,5 @@ type AIChatBoxProps = {
 };
 
 type ModelGate = 'loading' | 'setup' | 'ready';
+
+const HISTORY_SKELETON_DELAY_MS = 150;

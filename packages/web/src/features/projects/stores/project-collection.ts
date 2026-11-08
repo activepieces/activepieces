@@ -23,7 +23,6 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { api } from '@/lib/api';
@@ -330,16 +329,13 @@ export const projectHooks = {
   },
   useReloadPageIfProjectIdChanged: (projectId: string) => {
     const { embedState } = useEmbedding();
-    const location = useLocation();
     useEffect(() => {
       const handleVisibilityChange = () => {
         const currentProjectId = authenticationSession.getProjectId();
-        const isTemplateRoute = location.pathname.startsWith('/templates');
         if (
           currentProjectId !== projectId &&
           document.visibilityState === 'visible' &&
-          !embedState.isEmbedded &&
-          !isTemplateRoute
+          !embedState.isEmbedded
         ) {
           window.location.reload();
         }
@@ -351,7 +347,7 @@ export const projectHooks = {
           handleVisibilityChange,
         );
       };
-    }, [projectId, embedState.isEmbedded, location.pathname]);
+    }, [projectId, embedState.isEmbedded]);
   },
 };
 
