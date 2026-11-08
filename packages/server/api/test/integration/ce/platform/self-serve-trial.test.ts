@@ -17,7 +17,7 @@ describe('Self-serve trial API', () => {
     it('has no trial start on Community', async () => {
         const ctx = await createTestContext(app!)
 
-        const start = await ctx.post('/v1/platform-billing/self-serve-trial/start')
+        const start = await ctx.post('/v1/platform-billing/self-serve-trial')
 
         expect(start.statusCode).toBe(StatusCodes.NOT_FOUND)
     })

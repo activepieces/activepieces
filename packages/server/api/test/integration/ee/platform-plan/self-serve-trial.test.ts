@@ -33,7 +33,7 @@ describe('Self-serve trial API', () => {
         await platformPlanRepo().update({ platformId: ctx.platform.id }, { plan: PlanName.FREE })
 
         const status = await ctx.get('/v1/platform-billing/info')
-        const start = await ctx.post('/v1/platform-billing/self-serve-trial/start')
+        const start = await ctx.post('/v1/platform-billing/self-serve-trial')
 
         expect(status.statusCode).toBe(StatusCodes.OK)
         expect(status.json().selfServeTrial).toEqual(ELIGIBLE)

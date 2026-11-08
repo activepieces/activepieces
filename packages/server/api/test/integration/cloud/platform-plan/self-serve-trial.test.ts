@@ -47,7 +47,7 @@ describe('Self-serve trial API', () => {
         const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
 
         const status = await member.get('/v1/platform-billing/info')
-        const start = await member.post('/v1/platform-billing/self-serve-trial/start')
+        const start = await member.post('/v1/platform-billing/self-serve-trial')
 
         expect(status.statusCode).toBe(StatusCodes.FORBIDDEN)
         expect(start.statusCode).toBe(StatusCodes.FORBIDDEN)
@@ -72,7 +72,7 @@ describe('Self-serve trial API', () => {
         const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
 
         const status = await ctx.get('/v1/platform-billing/info')
-        const start = await ctx.post('/v1/platform-billing/self-serve-trial/start')
+        const start = await ctx.post('/v1/platform-billing/self-serve-trial')
 
         expect(status.json().selfServeTrial).toEqual(INELIGIBLE)
         expect(start.json()).toEqual(INELIGIBLE)
@@ -84,8 +84,8 @@ describe('Self-serve trial API', () => {
         await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
         const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
 
-        const first = await ctx.post('/v1/platform-billing/self-serve-trial/start')
-        const second = await ctx.post('/v1/platform-billing/self-serve-trial/start')
+        const first = await ctx.post('/v1/platform-billing/self-serve-trial')
+        const second = await ctx.post('/v1/platform-billing/self-serve-trial')
         const status = await ctx.get('/v1/platform-billing/info')
 
         expect(first.json()).toEqual(ACTIVE)
@@ -101,8 +101,8 @@ describe('Self-serve trial API', () => {
         const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
         vi.spyOn(autumnUtils, 'refreshEntitlements').mockRejectedValue(new Error('autumn timeout'))
 
-        const start = await ctx.post('/v1/platform-billing/self-serve-trial/start')
-        const again = await ctx.post('/v1/platform-billing/self-serve-trial/start')
+        const start = await ctx.post('/v1/platform-billing/self-serve-trial')
+        const again = await ctx.post('/v1/platform-billing/self-serve-trial')
 
         expect(start.json()).toEqual(ACTIVE)
         expect(again.json()).toEqual(ACTIVE)
@@ -114,9 +114,9 @@ describe('Self-serve trial API', () => {
         await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
         const { startTrial } = stubBilling({ outcome: { result: SelfServeTrialStartResult.USED } })
 
-        const first = await ctx.post('/v1/platform-billing/self-serve-trial/start')
+        const first = await ctx.post('/v1/platform-billing/self-serve-trial')
         const status = await ctx.get('/v1/platform-billing/info')
-        const second = await ctx.post('/v1/platform-billing/self-serve-trial/start')
+        const second = await ctx.post('/v1/platform-billing/self-serve-trial')
 
         expect(first.json()).toEqual(USED)
         expect(status.json().selfServeTrial).toEqual(ELIGIBLE)
@@ -131,7 +131,7 @@ describe('Self-serve trial API', () => {
         stubBilling({ outcome: { result: SelfServeTrialStartResult.STARTED, ...STARTED } })
 
         const before = await member.get(`/v1/platforms/${ctx.platform.id}`)
-        await ctx.post('/v1/platform-billing/self-serve-trial/start')
+        await ctx.post('/v1/platform-billing/self-serve-trial')
         const after = await member.get(`/v1/platforms/${ctx.platform.id}`)
 
         expect(before.json().selfServeTrial).toBeUndefined()

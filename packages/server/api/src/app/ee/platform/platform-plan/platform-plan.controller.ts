@@ -120,7 +120,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
         return {}
     })
 
-    app.post('/self-serve-trial/start', StartSelfServeTrialRequest, async (request) => {
+    app.post('/self-serve-trial', StartSelfServeTrialRequest, async (request) => {
         return billingProvider.get(request.log).startSelfServeTrial(request.principal.platform.id)
     })
 
