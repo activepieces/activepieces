@@ -83,7 +83,8 @@ describe('playlist_items_changed (P1: null track crash, /items)', () => {
     const seen = stubFetch(() => ({ status: 200, body: { items, next: null } }));
     const ctx = { store, propsValue: { playlist_id: PL } };
     await hook({ trigger: playlistItemsChanged, name: 'onEnable', ctx });
-    expect(seen[0].pathname).toBe(`/v1/playlists/${PL}/items`);
+    expect(seen[0].pathname).toBe(`/v1/playlists/${PL}`);
+    expect(seen[1].pathname).toBe(`/v1/playlists/${PL}/items`);
     expect(await hook({ trigger: playlistItemsChanged, name: 'run', ctx })).toEqual([]);
     items = [...items, playlistEntry({ n: 2, addedAt: '2026-01-03T00:00:00Z' })];
     const fired = await hook({ trigger: playlistItemsChanged, name: 'run', ctx });
@@ -224,7 +225,7 @@ describe('playlist size limits', () => {
     const seen = stubFetch(() => ({ status: 200, body: { items: [playlistEntry({ n: 1, addedAt: '2026-01-01T00:00:00Z' })], next: 'https://api.spotify.com/v1/next', total: 1_000_000 } }));
     const ctx = { store, propsValue: { playlist_id: PL } };
     await expect(hook({ trigger: playlistItemsChanged, name: 'run', ctx })).rejects.toThrow(/more than 10,000 items/);
-    expect(seen).toHaveLength(200);
+    expect(seen).toHaveLength(201);
     await expect(hook({ trigger: playlistItemsChanged, name: 'onEnable', ctx })).rejects.toThrow(/more than 10,000 items/);
   });
 
@@ -252,7 +253,7 @@ describe('playlist size limits', () => {
     });
     const ctx = { store, propsValue: { playlist_id: PL } };
     await hook({ trigger: newPlaylistItem, name: 'onEnable', ctx });
-    expect(seen[1].searchParams.get('offset')).toBe('10000');
+    expect(seen[2].searchParams.get('offset')).toBe('10000');
     total = 20_001;
     const fired = await hook({ trigger: newPlaylistItem, name: 'run', ctx });
     expect(fired).toMatchObject([{ playlist_id: PL, item: { uri: uri(20_000) } }]);
@@ -444,6 +445,91 @@ describe('republish keeps the checkpoint (self-hosted order: onDisable without a
       await hook({ trigger: c.trigger, name: 'onDisable', ctx });
       await hook({ trigger: c.trigger, name: 'onEnable', ctx });
       expect(await hook({ trigger: c.trigger, name: 'run', ctx })).toEqual([]);
+    });
+  }
+});
+
+describe('playlist triggers read snapshot_id first', () => {
+  const triggersUnderTest = [
+    { name: 'new_playlist_item', trigger: newPlaylistItem, key: 'new_playlist_item_checkpoint' },
+    { name: 'playlist_items_changed', trigger: playlistItemsChanged, key: 'playlist_changed_trigger_hash_v2' },
+  ];
+
+  function playlistApi() {
+    const state = { snapshot: 'snap-1', items: [playlistEntry({ n: 1, addedAt: '2026-01-01T00:00:00Z' })] };
+    const seen = stubFetch((url) => {
+      if (url.pathname === `/v1/playlists/${PL}`) {
+        return { status: 200, body: { snapshot_id: state.snapshot } };
+      }
+      return { status: 200, body: { items: state.items, next: null, total: state.items.length } };
+    });
+    return { state, seen };
+  }
+
+  for (const c of triggersUnderTest) {
+    test(`${c.name}: an idle poll is one request and the snapshot is stored with the checkpoint`, async () => {
+      const { store, data } = memoryStore();
+      const { seen } = playlistApi();
+      const ctx = { store, propsValue: { playlist_id: PL } };
+      await hook({ trigger: c.trigger, name: 'onEnable', ctx });
+      expect(seen[0].searchParams.get('fields')).toBe('snapshot_id');
+      expect(data.get(c.key)).toMatchObject({ playlistId: PL, snapshotId: 'snap-1' });
+      const before = seen.length;
+      expect(await hook({ trigger: c.trigger, name: 'run', ctx })).toEqual([]);
+      expect(seen.length - before).toBe(1);
+      expect(seen[before].pathname).toBe(`/v1/playlists/${PL}`);
+    });
+
+    test(`${c.name}: a new snapshot triggers the full read and fires`, async () => {
+      const { store, data } = memoryStore();
+      const { state, seen } = playlistApi();
+      const ctx = { store, propsValue: { playlist_id: PL } };
+      await hook({ trigger: c.trigger, name: 'onEnable', ctx });
+      state.snapshot = 'snap-2';
+      state.items = [...state.items, playlistEntry({ n: 2, addedAt: '2026-01-02T00:00:00Z' })];
+      expect(await hook({ trigger: c.trigger, name: 'run', ctx })).toHaveLength(1);
+      expect(data.get(c.key)).toMatchObject({ snapshotId: 'snap-2' });
+      const before = seen.length;
+      expect(await hook({ trigger: c.trigger, name: 'run', ctx })).toEqual([]);
+      expect(seen.length - before).toBe(1);
+    });
+
+    test(`${c.name}: a snapshot change with nothing to fire still saves the snapshot`, async () => {
+      const { store, data } = memoryStore();
+      const { state, seen } = playlistApi();
+      const ctx = { store, propsValue: { playlist_id: PL } };
+      await hook({ trigger: c.trigger, name: 'onEnable', ctx });
+      state.snapshot = 'snap-2';
+      expect(await hook({ trigger: c.trigger, name: 'run', ctx })).toEqual([]);
+      expect(data.get(c.key)).toMatchObject({ snapshotId: 'snap-2' });
+      const before = seen.length;
+      await hook({ trigger: c.trigger, name: 'run', ctx });
+      expect(seen.length - before).toBe(1);
+    });
+
+    test(`${c.name}: a stored checkpoint without a snapshot does the full read`, async () => {
+      const { store, data } = memoryStore();
+      const { state, seen } = playlistApi();
+      const ctx = { store, propsValue: { playlist_id: PL } };
+      await hook({ trigger: c.trigger, name: 'onEnable', ctx });
+      const withoutSnapshot = { ...Object(data.get(c.key)) };
+      delete withoutSnapshot.snapshotId;
+      data.set(c.key, withoutSnapshot);
+      state.items = [...state.items, playlistEntry({ n: 2, addedAt: '2026-01-02T00:00:00Z' })];
+      const before = seen.length;
+      expect(await hook({ trigger: c.trigger, name: 'run', ctx })).toHaveLength(1);
+      expect(seen.length - before).toBeGreaterThan(1);
+      expect(data.get(c.key)).toMatchObject({ snapshotId: 'snap-1' });
+    });
+
+    test(`${c.name}: a response without snapshot_id never skips the read`, async () => {
+      const { store } = memoryStore();
+      let items: unknown[] = [playlistEntry({ n: 1, addedAt: '2026-01-01T00:00:00Z' })];
+      stubFetch(() => ({ status: 200, body: { items, next: null, total: items.length } }));
+      const ctx = { store, propsValue: { playlist_id: PL } };
+      await hook({ trigger: c.trigger, name: 'onEnable', ctx });
+      items = [...items, playlistEntry({ n: 2, addedAt: '2026-01-02T00:00:00Z' })];
+      expect(await hook({ trigger: c.trigger, name: 'run', ctx })).toHaveLength(1);
     });
   }
 });

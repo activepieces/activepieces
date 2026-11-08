@@ -50,6 +50,11 @@ function isStoredHash(value: unknown): value is StoredHash {
   );
 }
 
+function toStored({ playlistId, items, snapshotId }: { playlistId: string; items: PlaylistItem[]; snapshotId: string | undefined }): StoredHash {
+  const hash = hashOf(items);
+  return snapshotId === undefined ? { playlistId, hash } : { playlistId, hash, snapshotId };
+}
+
 export default createTrigger({
   name: 'playlist_items_changed',
   classification: 'READ',
@@ -98,9 +103,9 @@ export default createTrigger({
       return;
     }
     const client = makeClient({ auth });
+    const snapshotId = await client.getPlaylistSnapshotId({ playlistId });
     const items = await fetchAll({ client, playlistId });
-    const stored: StoredHash = { playlistId, hash: hashOf(items) };
-    await store.put(HASH_KEY, stored, StoreScope.FLOW);
+    await store.put(HASH_KEY, toStored({ playlistId, items, snapshotId }), StoreScope.FLOW);
     await store.delete(LEGACY_HASH_KEY, StoreScope.FLOW);
   },
   onDisable: async () => {
@@ -109,18 +114,22 @@ export default createTrigger({
   run: async ({ store, auth, propsValue }) => {
     const playlistId = playlistOf(propsValue.playlist_id);
     const old = await store.get(HASH_KEY, StoreScope.FLOW);
+    const current = isStoredHash(old) && old.playlistId === playlistId ? old : null;
     const client = makeClient({ auth });
+    const snapshotId = await client.getPlaylistSnapshotId({ playlistId });
+    if (current !== null && snapshotId !== undefined && current.snapshotId === snapshotId) {
+      return [];
+    }
     const items = await fetchAll({ client, playlistId });
-    const stored: StoredHash = { playlistId, hash: hashOf(items) };
-    if (!isStoredHash(old) || old.playlistId !== playlistId) {
+    const stored = toStored({ playlistId, items, snapshotId });
+    if (current === null) {
       await store.put(HASH_KEY, stored, StoreScope.FLOW);
       return [];
     }
-    if (old.hash !== stored.hash) {
+    if (current.hash !== stored.hash || current.snapshotId !== snapshotId) {
       await store.put(HASH_KEY, stored, StoreScope.FLOW);
-      return [{ total: items.length, items }];
     }
-    return [];
+    return current.hash === stored.hash ? [] : [{ total: items.length, items }];
   },
   test: async ({ auth, propsValue }) => {
     const client = makeClient({ auth });
@@ -129,4 +138,4 @@ export default createTrigger({
   },
 });
 
-type StoredHash = { playlistId: string; hash: string };
+type StoredHash = { playlistId: string; hash: string; snapshotId?: string };

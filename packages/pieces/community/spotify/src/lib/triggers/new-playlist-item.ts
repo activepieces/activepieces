@@ -1,6 +1,5 @@
 import {
   createTrigger,
-  isNil,
   StoreScope,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -39,6 +38,10 @@ async function fetchWindow({ client, playlistId }: { client: SpotifyWebApi; play
 
 function isStored(value: unknown): value is StoredCheckpoint {
   return spotifyPolling.isCheckpoint(value) && typeof Reflect.get(value, 'playlistId') === 'string';
+}
+
+function toStored({ checkpoint, playlistId, snapshotId }: { checkpoint: SpotifyCheckpoint; playlistId: string; snapshotId: string | undefined }): StoredCheckpoint {
+  return snapshotId === undefined ? { ...checkpoint, playlistId } : { ...checkpoint, playlistId, snapshotId };
 }
 
 export default createTrigger({
@@ -85,28 +88,32 @@ export default createTrigger({
       return;
     }
     const client = makeClient({ auth });
+    const snapshotId = await client.getPlaylistSnapshotId({ playlistId });
     const items = await fetchWindow({ client, playlistId });
-    const checkpoint: StoredCheckpoint = { ...spotifyPolling.baseline({ entries: toEntries({ items, playlistId }) }), playlistId };
-    await store.put(CHECKPOINT_KEY, checkpoint, StoreScope.FLOW);
+    const checkpoint = spotifyPolling.baseline({ entries: toEntries({ items, playlistId }) });
+    await store.put(CHECKPOINT_KEY, toStored({ checkpoint, playlistId, snapshotId }), StoreScope.FLOW);
   },
   onDisable: async () => {
     return;
   },
   run: async ({ store, auth, propsValue }) => {
     const playlistId = spotifyIds.parse({ kind: 'playlist', value: propsValue.playlist_id, label: 'Playlist' });
-    const stored = await store.get<SpotifyCheckpoint>(CHECKPOINT_KEY, StoreScope.FLOW);
+    const stored = await store.get<unknown>(CHECKPOINT_KEY, StoreScope.FLOW);
+    const current = isStored(stored) && stored.playlistId === playlistId ? stored : null;
     const client = makeClient({ auth });
-    const items = await fetchWindow({ client, playlistId });
-    const entries = toEntries({ items, playlistId });
-    if (isNil(stored) || !isStored(stored) || stored.playlistId !== playlistId) {
-      const checkpoint: StoredCheckpoint = { ...spotifyPolling.baseline({ entries }), playlistId };
-      await store.put(CHECKPOINT_KEY, checkpoint, StoreScope.FLOW);
+    const snapshotId = await client.getPlaylistSnapshotId({ playlistId });
+    if (current !== null && snapshotId !== undefined && current.snapshotId === snapshotId) {
       return [];
     }
-    const result = spotifyPolling.newSince({ entries, checkpoint: stored });
-    if (result.emitted.length > 0) {
-      const checkpoint: StoredCheckpoint = { ...result.checkpoint, playlistId };
-      await store.put(CHECKPOINT_KEY, checkpoint, StoreScope.FLOW);
+    const items = await fetchWindow({ client, playlistId });
+    const entries = toEntries({ items, playlistId });
+    if (current === null) {
+      await store.put(CHECKPOINT_KEY, toStored({ checkpoint: spotifyPolling.baseline({ entries }), playlistId, snapshotId }), StoreScope.FLOW);
+      return [];
+    }
+    const result = spotifyPolling.newSince({ entries, checkpoint: current });
+    if (result.emitted.length > 0 || current.snapshotId !== snapshotId) {
+      await store.put(CHECKPOINT_KEY, toStored({ checkpoint: result.checkpoint, playlistId, snapshotId }), StoreScope.FLOW);
     }
     return result.emitted;
   },
@@ -121,6 +128,6 @@ export default createTrigger({
   },
 });
 
-type StoredCheckpoint = SpotifyCheckpoint & { playlistId: string };
+type StoredCheckpoint = SpotifyCheckpoint & { playlistId: string; snapshotId?: string };
 
 type NewPlaylistItem = PlaylistItem & { playlist_id: string };

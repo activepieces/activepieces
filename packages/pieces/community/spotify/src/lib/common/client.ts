@@ -480,6 +480,15 @@ export class SpotifyWebApi {
     return normalizePlaylist(playlist);
   }
 
+  async getPlaylistSnapshotId({ playlistId }: { playlistId: string }): Promise<string | undefined> {
+    const res = await this.get<{ snapshot_id?: unknown }>({
+      path: `/playlists/${segment(playlistId)}`,
+      query: { fields: 'snapshot_id' },
+      operation: 'read the playlist version',
+    });
+    return typeof res.snapshot_id === 'string' && res.snapshot_id !== '' ? res.snapshot_id : undefined;
+  }
+
   async getPlaylistCoverImage({
     playlistId,
   }: {
