@@ -7,18 +7,16 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Plus, RefreshCw } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Skeleton } from '@/components/ui/skeleton';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
 
 import {
   ConnectionPickerData,
@@ -28,7 +26,16 @@ import {
 } from '../lib/message-parsers';
 import { useConversationId } from '../lib/use-conversation-id';
 
-import { InteractiveCardShell } from './interactive-card-shell';
+import {
+  ChatCard,
+  ChatCardActions,
+  ChatCardBody,
+  ChatCardHeader,
+  ChatCardTile,
+} from './chat-ui/chat-card';
+import { ChatLine } from './chat-ui/chat-line';
+import { ChatOptionItem, ChatOptionList } from './chat-ui/chat-option';
+import { ChatStatusText } from './chat-ui/chat-status';
 
 type PickerConnection = NonNullable<
   ConnectionPickerData['connections']
@@ -42,40 +49,47 @@ function connectionStatusLabel(status: AppConnectionStatus): string | null {
 
 function SelectedState({
   pieceName,
-  connection,
+  label,
   displayName,
 }: {
   pieceName: string;
-  connection: PickerConnection;
+  label: string;
   displayName: string;
 }) {
   return (
-    <motion.div
-      className="rounded-xl border bg-gray-1 overflow-hidden my-2"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
+    <ChatLine
+      icon={<Check className="size-3.5 text-success-11" />}
+      logos={
+        <PieceIconWithPieceName
+          pieceName={pieceName}
+          size="xs"
+          border={false}
+          showTooltip={false}
+        />
+      }
+      detail={label}
     >
-      <div className="p-4 flex items-center gap-3">
-        <div className="relative">
-          <PieceIconWithPieceName
-            pieceName={pieceName}
-            size="sm"
-            border={false}
-            showTooltip={false}
-          />
-          <div className="absolute -bottom-0.5 -right-0.5 bg-success-9 rounded-full p-0.5">
-            <Check className="h-2 w-2 text-on-success" />
-          </div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold">{connection.label}</div>
-          <div className="text-xs text-gray-11">
-            {t('Using this {name} account', { name: displayName })}
-          </div>
-        </div>
+      {t('Using this {name} account', { name: displayName })}
+    </ChatLine>
+  );
+}
+
+function PickerSkeleton() {
+  return (
+    <ChatCard turn>
+      <div className="flex items-center gap-3 py-3 pl-3 pr-4">
+        <Skeleton className="size-8 shrink-0 rounded-lg" />
+        <Skeleton className="h-4 w-2/3" />
       </div>
-    </motion.div>
+      <ChatCardBody>
+        {[0, 1].map((row) => (
+          <div key={row} className="flex items-center gap-3 px-2 py-2">
+            <Skeleton className="size-4 shrink-0 rounded-full" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+        ))}
+      </ChatCardBody>
+    </ChatCard>
   );
 }
 
@@ -291,28 +305,21 @@ export function ConnectionPickerCard({
     return (
       <SelectedState
         pieceName={pieceName}
-        connection={selectedConnection}
+        label={selectedConnection.label}
         displayName={filteredPicker.displayName}
       />
     );
   }
 
   if (shouldFetch && isFetchingConnections) {
-    return null;
+    return <PickerSkeleton />;
   }
 
   if (!isInteractive) {
-    const historyLabel = selectedConnectionLabel ?? filteredPicker.displayName;
     return (
       <SelectedState
         pieceName={pieceName}
-        connection={{
-          label: historyLabel,
-          project: '',
-          externalId: '',
-          projectId: '',
-          status: AppConnectionStatus.ACTIVE,
-        }}
+        label={selectedConnectionLabel ?? filteredPicker.displayName}
         displayName={filteredPicker.displayName}
       />
     );
@@ -326,161 +333,132 @@ export function ConnectionPickerCard({
       healthyCount: healthyConnections.length,
     });
 
+  const title = reconnectOnly
+    ? t('Reconnect {name}', { name: filteredPicker.displayName })
+    : hasConnections
+    ? t('Which {name} account should I use?', {
+        name: filteredPicker.displayName,
+      })
+    : t('Connect {name}', { name: filteredPicker.displayName });
+
+  const items: ChatOptionItem[] = filteredPicker.connections.map((conn) => {
+    const status = statusOf(conn);
+    const healthy = isConnectionHealthy(status);
+    const pickable = healthy && !reconnectOnly;
+    return {
+      id: conn.externalId,
+      label: conn.label,
+      disabled: !pickable,
+      description: healthy ? (
+        conn.project
+      ) : (
+        <>
+          {conn.project ? `${conn.project} · ` : ''}
+          <span className="text-danger-11">
+            {connectionStatusLabel(status)}
+          </span>
+        </>
+      ),
+      action: pickable ? undefined : status === AppConnectionStatus.MISSING &&
+        !reconnectOnly ? (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5"
+          disabled={isPieceLoading}
+          onClick={handleNewConnection}
+        >
+          <Plus className="size-3.5" />
+          {t('Connect')}
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5"
+          disabled={isPieceLoading || isLoadingStatuses}
+          onClick={() => handleReconnect(conn.externalId)}
+        >
+          <RefreshCw className="size-3.5" />
+          {t('Reconnect')}
+        </Button>
+      ),
+    };
+  });
+
   return (
     <>
-      <InteractiveCardShell
-        onDismiss={() => onDismiss?.()}
-        title={
-          reconnectOnly
-            ? t('Reconnect {name}', { name: filteredPicker.displayName })
-            : hasConnections
-            ? t('Which {name} account should I use?', {
-                name: filteredPicker.displayName,
-              })
-            : t('Connect {name}', { name: filteredPicker.displayName })
-        }
-      >
-        {!hasConnections && (
-          <div className="pb-2 text-sm text-gray-11">
-            {emptyMessage === 'loadFailed'
-              ? t('Could not load your accounts. Try again in a moment.')
-              : emptyMessage === 'pinnedAccountGone'
-              ? t(
-                  'The {name} account this agent uses is gone. Update the agent tools with a working account.',
-                  {
+      <ChatCard turn>
+        <ChatCardHeader
+          tile={<ChatCardTile kind="app" pieceName={pieceName} />}
+          title={title}
+          meta={filteredPicker.displayName}
+          trailing={<ChatStatusText status="needs-you" />}
+        />
+        <ChatCardBody>
+          {hasConnections ? (
+            <ChatOptionList
+              items={items}
+              mode="radio"
+              selected={selectedExternalId ? [selectedExternalId] : []}
+              onPick={setUserSelectedExternalId}
+              ariaLabel={title}
+            />
+          ) : (
+            <p className="text-sm text-gray-11">
+              {emptyMessage === 'loadFailed'
+                ? t('Could not load your accounts. Try again in a moment.')
+                : emptyMessage === 'pinnedAccountGone'
+                ? t(
+                    'The {name} account this agent uses is gone. Update the agent tools with a working account.',
+                    {
+                      name: filteredPicker.displayName,
+                    },
+                  )
+                : t('No {name} account connected yet', {
                     name: filteredPicker.displayName,
-                  },
-                )
-              : t('No {name} account connected yet', {
-                  name: filteredPicker.displayName,
-                })}
-          </div>
-        )}
-
-        <RadioGroup
-          value={selectedExternalId ?? ''}
-          onValueChange={setUserSelectedExternalId}
-          className="max-h-64 gap-0 overflow-auto"
-        >
-          {filteredPicker.connections.map((conn) => {
-            const status = statusOf(conn);
-            const healthy = isConnectionHealthy(status);
-            const isSelected =
-              healthy && conn.externalId === selectedExternalId;
-
-            const row = (
-              <>
-                {healthy && !reconnectOnly ? (
-                  <RadioGroupItem
-                    value={conn.externalId}
-                    id={`conn-${conn.externalId}`}
-                  />
-                ) : (
-                  <PieceIconWithPieceName
-                    pieceName={pieceName}
-                    size="sm"
-                    border={false}
-                    showTooltip={false}
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
-                    {conn.label}
-                  </div>
-                  <div className="text-xs text-gray-11">
-                    {healthy
-                      ? conn.project
-                      : `${conn.project} · ${connectionStatusLabel(status)}`}
-                  </div>
-                </div>
-                {(!healthy || reconnectOnly) &&
-                  (status === AppConnectionStatus.MISSING && !reconnectOnly ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="shrink-0 gap-1.5"
-                      disabled={isPieceLoading}
-                      onClick={handleNewConnection}
-                    >
-                      <Plus className="h-3 w-3" />
-                      {t('Connect')}
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="shrink-0 gap-1.5"
-                      disabled={isPieceLoading || isLoadingStatuses}
-                      onClick={() => handleReconnect(conn.externalId)}
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      {t('Reconnect')}
-                    </Button>
-                  ))}
-              </>
-            );
-
-            return healthy && !reconnectOnly ? (
-              <label
-                key={conn.externalId}
-                htmlFor={`conn-${conn.externalId}`}
-                className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-2 py-3 transition-colors hover:bg-gray-3/40',
-                  isSelected && 'border-accent-7 bg-accent-3',
-                )}
+                  })}
+            </p>
+          )}
+        </ChatCardBody>
+        {(canContinue || offersOtherAccounts || onDismiss) && (
+          <ChatCardActions>
+            {canContinue && (
+              <Button
+                size="sm"
+                disabled={!selectedExternalId}
+                onClick={handleContinue}
               >
-                {row}
-              </label>
-            ) : (
-              <div
-                key={conn.externalId}
-                className="flex items-center gap-3 px-2 py-3 border-t first:border-t-0"
+                {t('Continue')}
+              </Button>
+            )}
+            {offersOtherAccounts && (
+              <Button
+                size="sm"
+                variant={canContinue ? 'outline' : 'default'}
+                className="gap-1.5"
+                disabled={isPieceLoading}
+                onClick={handleNewConnection}
               >
-                {row}
-              </div>
-            );
-          })}
-        </RadioGroup>
-
-        {offersOtherAccounts && (
-          <div className="flex items-center gap-3 border-t py-3">
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium">
-                {t('Use a different account')}
-              </div>
-              <div className="text-xs text-gray-11">
-                {t('Connect a new {name} account', {
-                  name: filteredPicker.displayName,
-                })}
-              </div>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="shrink-0 gap-1.5"
-              disabled={isPieceLoading}
-              onClick={handleNewConnection}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t('Connect')}
-            </Button>
-          </div>
+                <Plus className="size-3.5" />
+                {hasConnections
+                  ? t('Connect another account')
+                  : t('Connect {name}', { name: filteredPicker.displayName })}
+              </Button>
+            )}
+            {onDismiss && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-gray-11"
+                onClick={onDismiss}
+              >
+                {t('Skip')}
+              </Button>
+            )}
+          </ChatCardActions>
         )}
-
-        {canContinue && (
-          <div className="flex justify-end pt-1">
-            <Button
-              size="sm"
-              className="gap-1.5"
-              disabled={!selectedExternalId}
-              onClick={handleContinue}
-            >
-              <Check className="h-3.5 w-3.5" />
-              {t('Continue')}
-            </Button>
-          </div>
-        )}
-      </InteractiveCardShell>
+      </ChatCard>
 
       {pieceModel && (
         <CreateOrEditConnectionDialog
