@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { SearchInput } from '@/components/custom/search-input';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,7 @@ import { cn } from '@/lib/utils';
 export function ChatOption({
   mode,
   label,
+  labelText,
   description,
   leading,
   trailing,
@@ -64,9 +66,19 @@ export function ChatOption({
       <OptionMark mode={mode} selected={selected} />
       {leading && <span className="flex shrink-0 items-center">{leading}</span>}
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate">{label}</span>
+        <TruncatedText
+          tooltip={labelText ?? (typeof label === 'string' ? label : null)}
+          className="truncate"
+        >
+          {label}
+        </TruncatedText>
         {description && (
-          <span className="truncate text-xs text-gray-11">{description}</span>
+          <TruncatedText
+            tooltip={typeof description === 'string' ? description : null}
+            className="truncate text-xs text-gray-11"
+          >
+            {description}
+          </TruncatedText>
         )}
       </span>
       {trailing && (
@@ -149,7 +161,7 @@ export function ChatOptionList({
           aria-label={searchPlaceholder ?? t('Search')}
         />
       )}
-      {visible.length === 0 ? (
+      {visible.length === 0 && showSearch && query.trim() !== '' ? (
         <div className="flex items-center gap-3 rounded-lg border border-dashed border-gray-7 px-4 py-3.5">
           <p className="min-w-0 flex-1 text-sm text-gray-11">
             {noMatchText
@@ -182,6 +194,7 @@ export function ChatOptionList({
                 key={item.id}
                 mode={mode}
                 label={highlightMatch({ label: item.label, query })}
+                labelText={item.label}
                 description={item.description}
                 leading={item.leading}
                 trailing={item.trailing}
@@ -280,9 +293,12 @@ export function ChatOptionGrid({
               <span className="flex size-5 items-center justify-center">
                 {item.leading}
               </span>
-              <span className="truncate text-sm font-medium text-gray-12">
+              <TruncatedText
+                tooltip={item.label}
+                className="truncate text-sm font-medium text-gray-12"
+              >
                 {item.label}
-              </span>
+              </TruncatedText>
             </button>
           );
         })}
@@ -353,6 +369,23 @@ export function ChatWriteYourOwn({
         )}
       </span>
     </label>
+  );
+}
+
+function TruncatedText({
+  tooltip,
+  className,
+  children,
+}: {
+  tooltip: string | null;
+  className: string;
+  children: ReactNode;
+}) {
+  if (tooltip === null) return <span className={className}>{children}</span>;
+  return (
+    <TextWithTooltip tooltipMessage={tooltip}>
+      <span className={className}>{children}</span>
+    </TextWithTooltip>
   );
 }
 
@@ -640,6 +673,7 @@ type ChatOptionMode = 'radio' | 'check' | 'action';
 type ChatOptionProps = {
   mode: ChatOptionMode;
   label: ReactNode;
+  labelText?: string;
   description?: ReactNode;
   leading?: ReactNode;
   trailing?: ReactNode;

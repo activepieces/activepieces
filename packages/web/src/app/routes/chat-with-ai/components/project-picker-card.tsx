@@ -1,8 +1,10 @@
 import { ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, FolderClosed } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import {
   ApProjectDisplay,
@@ -14,6 +16,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 import { ProjectPickerData } from '../lib/message-parsers';
 
+import { ChatCardSkeleton } from './chat-card-primitives';
 import {
   ChatCard,
   ChatCardActions,
@@ -25,7 +28,62 @@ import { ChatLine } from './chat-ui/chat-line';
 import { ChatOptionItem, ChatOptionList } from './chat-ui/chat-option';
 import { ChatStatusText } from './chat-ui/chat-status';
 
-export function ProjectPickerCard({
+export function ProjectPickerCard(props: ProjectPickerCardProps) {
+  return (
+    <ErrorBoundary
+      fallbackRender={({ resetErrorBoundary }) => (
+        <ProjectPickerError
+          title={props.picker.question ?? t('Which project should I work in?')}
+          onRetry={resetErrorBoundary}
+          onDismiss={
+            props.isInteractive === false ? undefined : props.onDismiss
+          }
+        />
+      )}
+    >
+      <Suspense fallback={<ChatCardSkeleton />}>
+        <ProjectPickerContent {...props} />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+function ProjectPickerError({
+  title,
+  onRetry,
+  onDismiss,
+}: {
+  title: string;
+  onRetry: () => void;
+  onDismiss?: () => void;
+}) {
+  return (
+    <ChatCard>
+      <ChatCardHeader
+        tile={<ChatCardTile kind="bits" icon={FolderClosed} />}
+        title={title}
+        titleLines={2}
+      />
+      <ChatCardBody>
+        <DataFetchErrorState entity={t('projects')} onRetry={onRetry} />
+      </ChatCardBody>
+      {onDismiss && (
+        <ChatCardActions>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-gray-11"
+            onClick={onDismiss}
+          >
+            {t('Skip')}
+          </Button>
+        </ChatCardActions>
+      )}
+    </ChatCard>
+  );
+}
+
+function ProjectPickerContent({
   picker,
   onResolve,
   onDismiss,
@@ -45,7 +103,7 @@ export function ProjectPickerCard({
 
   const [selected, setSelected] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState<string | null>(null);
-  const [picked, setPicked] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string | null | undefined>(undefined);
   const [answer, setAnswer] = useState('');
 
   const suggestedProjects = picker.suggestedProjects ?? [];
@@ -62,10 +120,30 @@ export function ProjectPickerCard({
     [projects, currentProjectId, picker.suggestedProjects],
   );
 
-  const pickedId =
-    picked !== null && ordered.some((p) => p.id === picked)
+  const defaultId = defaultPick({
+    ordered,
+    currentProjectId,
+    suggestedIds: suggestedProjects.map((s) => s.id),
+  });
+  const explicitPick =
+    picked !== undefined && ordered.some((p) => p.id === picked)
       ? picked
-      : ordered[0]?.id ?? null;
+      : null;
+  const pickedId = answer.trim()
+    ? null
+    : picked === undefined
+    ? defaultId
+    : explicitPick;
+
+  function handlePick(projectId: string) {
+    setPicked(projectId);
+    setAnswer('');
+  }
+
+  function handleAnswerChange(value: string) {
+    setAnswer(value);
+    if (value.trim()) setPicked(null);
+  }
 
   function handleSelect(projectId: string) {
     const project = ordered.find((p) => p.id === projectId);
@@ -144,13 +222,13 @@ export function ProjectPickerCard({
           items={items}
           mode="radio"
           selected={pickedId ? [pickedId] : []}
-          onPick={setPicked}
+          onPick={handlePick}
           ariaLabel={title}
           searchPlaceholder={t('Search projects...')}
           noMatchText={() => t('No project found.')}
           writeYourOwn={{
             value: answer,
-            onChange: setAnswer,
+            onChange: handleAnswerChange,
             onSubmit: handleTyped,
             placeholder: t('Type your answer...'),
           }}
@@ -189,11 +267,29 @@ function orderProjects({
   suggestedIds: string[];
 }): ProjectItem[] {
   const rank = (project: ProjectItem): number => {
-    if (project.id === currentProjectId) return -1;
     const index = suggestedIds.indexOf(project.id);
-    return index === -1 ? suggestedIds.length : index;
+    if (index !== -1) return index;
+    return project.id === currentProjectId
+      ? suggestedIds.length
+      : suggestedIds.length + 1;
   };
   return [...projects].sort((a, b) => rank(a) - rank(b));
+}
+
+function defaultPick({
+  ordered,
+  currentProjectId,
+  suggestedIds,
+}: {
+  ordered: ProjectItem[];
+  currentProjectId: string | null;
+  suggestedIds: string[];
+}): string | null {
+  const firstSuggested = ordered.find((p) => suggestedIds.includes(p.id));
+  if (firstSuggested) return firstSuggested.id;
+  return ordered.some((p) => p.id === currentProjectId)
+    ? currentProjectId
+    : null;
 }
 
 function resolveDisplayName({

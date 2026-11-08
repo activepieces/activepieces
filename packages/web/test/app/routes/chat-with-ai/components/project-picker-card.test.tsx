@@ -83,18 +83,48 @@ describe('ProjectPickerCard (characterization)', () => {
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
   });
 
-  it('lists the current project first, preselected and labelled', () => {
+  it('lists the suggestions first and preselects the first one', () => {
     const { onResolve } = renderPicker();
-    const radios = screen.getAllByRole('option');
+    const options = screen.getAllByRole('option');
 
-    expect(radios[0].textContent).toContain('HR');
-    expect(radios[0].textContent).toContain('Current project');
-    expect(radios[0].getAttribute('aria-selected')).toBe('true');
+    expect(options[0].textContent).toContain('Marketing');
+    expect(options[0].getAttribute('aria-selected')).toBe('true');
+    expect(options[2].textContent).toContain('HR');
+    expect(options[2].textContent).toContain('Current project');
+    expect(options[2].getAttribute('aria-selected')).toBe('false');
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(onResolve).toHaveBeenCalledWith({
-      projectId: 'p-hr',
-      projectName: 'HR',
+      projectId: 'p-marketing',
+      projectName: 'Marketing',
     });
+  });
+
+  it('preselects the current project when there are no suggestions', () => {
+    renderPicker({ suggestedProjects: [] });
+    const options = screen.getAllByRole('option');
+
+    expect(options[0].textContent).toContain('HR');
+    expect(options[0].getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('clears the selected row while the user types, and the text on a pick', () => {
+    renderPicker();
+    const input = screen.getByPlaceholderText('Type your answer...');
+
+    fireEvent.change(input, { target: { value: 'New project' } });
+    expect(
+      screen
+        .getAllByRole('option')
+        .some((option) => option.getAttribute('aria-selected') === 'true'),
+    ).toBe(false);
+
+    fireEvent.click(screen.getByRole('option', { name: /Sales/ }));
+    expect(input.getAttribute('value')).toBe('');
+    expect(
+      screen
+        .getByRole('option', { name: /Sales/ })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
   });
 
   it('shows all projects in one list without a Show all step', () => {
@@ -115,20 +145,20 @@ describe('ProjectPickerCard (characterization)', () => {
 function renderPicker({
   isInteractive,
   selectedProjectId,
+  suggestedProjects = [
+    { id: 'p-marketing', name: 'Marketing' },
+    { id: 'p-sales', name: 'Sales' },
+  ],
 }: {
   isInteractive?: boolean;
   selectedProjectId?: string;
+  suggestedProjects?: Array<{ id: string; name: string }>;
 } = {}) {
   const onResolve = vi.fn();
   const onDismiss = vi.fn();
   render(
     <ProjectPickerCard
-      picker={{
-        suggestedProjects: [
-          { id: 'p-marketing', name: 'Marketing' },
-          { id: 'p-sales', name: 'Sales' },
-        ],
-      }}
+      picker={{ suggestedProjects }}
       onResolve={onResolve}
       onDismiss={onDismiss}
       isInteractive={isInteractive}
