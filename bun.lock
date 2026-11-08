@@ -159,7 +159,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.217.1",
+      "version": "0.219.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -1116,7 +1116,7 @@
     },
     "packages/pieces/community/base44": {
       "name": "@activepieces/piece-base44",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2277,7 +2277,7 @@
     },
     "packages/pieces/community/contextual-ai": {
       "name": "@activepieces/piece-contextual-ai",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2370,13 +2370,13 @@
     },
     "packages/pieces/community/couchbase": {
       "name": "@activepieces/piece-couchbase",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "couchbase": "^4.6.0",
+        "couchbase": "4.6.0",
       },
       "devDependencies": {
         "tslib": "^2.3.0",
@@ -4565,7 +4565,7 @@
     },
     "packages/pieces/community/hume-ai": {
       "name": "@activepieces/piece-hume-ai",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4984,7 +4984,7 @@
     },
     "packages/pieces/community/kapso": {
       "name": "@activepieces/piece-kapso",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5288,7 +5288,7 @@
     },
     "packages/pieces/community/letta": {
       "name": "@activepieces/piece-letta",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -13465,19 +13465,19 @@
 
     "@contentful/rich-text-types": ["@contentful/rich-text-types@16.8.5", "", {}, "sha512-q18RJuJCOuYveGiCIjE5xLCQc5lZ3L2Qgxrlg/H2YEobDFqdtmklazRi1XwEWaK3tMg6yVXBzKKkQfLB4qW14A=="],
 
-    "@couchbase/couchbase-darwin-arm64-napi": ["@couchbase/couchbase-darwin-arm64-napi@4.7.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-GSojqk4zMc39RmrKdjM5N9ovFr8kkzhBTsf70EV+I/iSEjks4woUiKwMi9pm7rgV+nx94rb+WnPLAwwUD22hxQ=="],
+    "@couchbase/couchbase-darwin-arm64-napi": ["@couchbase/couchbase-darwin-arm64-napi@4.6.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-zSL/I4tipdgszW8Yz3P5KxVKoZruHsUdeE01CrkEPOZh23xpbFRj0RQSM3eIuxy5AsBkg1aFq5icY0Yqmt1g9g=="],
 
-    "@couchbase/couchbase-darwin-x64-napi": ["@couchbase/couchbase-darwin-x64-napi@4.7.0", "", { "os": "darwin", "cpu": "x64" }, "sha512-k2N26gl45RbaTN05pGuYCgQhcN++UMqst1JvjU360SvRy7KJeUBvm5IiPWRnASoGvwOYCifR2hR8vfpqhMwNEA=="],
+    "@couchbase/couchbase-darwin-x64-napi": ["@couchbase/couchbase-darwin-x64-napi@4.6.0", "", { "os": "darwin", "cpu": "x64" }, "sha512-rn5NaWee//FFWtslivULMHVr1yzoAxkvxmvaAhf8VTHLRQuCxzgF2c6vzHisq9ztIdNfVwCHUrr7+A5ocfKpSg=="],
 
-    "@couchbase/couchbase-linux-arm64-napi": ["@couchbase/couchbase-linux-arm64-napi@4.7.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-UA2b1ptgbDVIzWo/NIZMQcleH+NEnhlnRYg1BvpfhVB8MM5yV6qy6VxrIkw9Q88GncSBEzdu8lrQZ/sG/DP0ug=="],
+    "@couchbase/couchbase-linux-arm64-napi": ["@couchbase/couchbase-linux-arm64-napi@4.6.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-AcAxOzuMJ8cFEiCshY/GUWBiviAtx/YGzaHWGyMds0jKgfm8HD1UquLnyic1KnrjB6wXflIDDKSVQ12uBTb2eQ=="],
 
-    "@couchbase/couchbase-linux-x64-napi": ["@couchbase/couchbase-linux-x64-napi@4.7.0", "", { "os": "linux", "cpu": "x64" }, "sha512-7l/mB9DxIX+3++MJ58eIoioD+07sOYzoqjMyKt9W4PHZmWA7yfscBOIsGqArxq9OtDzKbCqiOl+njRc8Xe4KRQ=="],
+    "@couchbase/couchbase-linux-x64-napi": ["@couchbase/couchbase-linux-x64-napi@4.6.0", "", { "os": "linux", "cpu": "x64" }, "sha512-Q9fXaD/McHUDKcINYyRrsbSk5lUrWL+XkLoV69aKo3DTqwRWAw7JuDjM87hOM1mIBbT9cPYtOaHzDiwkX3SJ5w=="],
 
-    "@couchbase/couchbase-linuxmusl-arm64-napi": ["@couchbase/couchbase-linuxmusl-arm64-napi@4.7.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-HSgq5l/TxG6Q0wLGaECBZt0AUO2bJ73JYYPoTeHE+PL6j+tTU6/37czVVkppCS6EIVnU0+HMez/kqdytFD0Jyg=="],
+    "@couchbase/couchbase-linuxmusl-arm64-napi": ["@couchbase/couchbase-linuxmusl-arm64-napi@4.6.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-GzrLNC34DP3Ac4hzd5R81Xz6VWVGJHmqzHcZGchaAJblUlG1l+ni2eGU4X2KG3t9pSAmBCfu7FsELZDaoYZibQ=="],
 
-    "@couchbase/couchbase-linuxmusl-x64-napi": ["@couchbase/couchbase-linuxmusl-x64-napi@4.7.0", "", { "os": "linux", "cpu": "x64" }, "sha512-OaKwuijC/j9OXcfUdjPrH/nJ1+um4iG3921lZkgEF7G5rDryYKEtbamVM4uhqswi63W6u5bQEGNsI0xTEAE2gw=="],
+    "@couchbase/couchbase-linuxmusl-x64-napi": ["@couchbase/couchbase-linuxmusl-x64-napi@4.6.0", "", { "os": "linux", "cpu": "x64" }, "sha512-v6t93c3LJg+ZgpLc+yG7bSKYNb7QPizh5CApU5GpeurPnyK2Osp9CV5JCY3OMSbZuK9zWkRgMIzQN/AJNKNbZQ=="],
 
-    "@couchbase/couchbase-win32-x64-napi": ["@couchbase/couchbase-win32-x64-napi@4.7.0", "", { "os": "win32", "cpu": "x64" }, "sha512-gtvcCJ1mUVVJMxs7heDvS8mtGCNrRmbAJdsSTKQe6UUlEpcvbq4Tp4/z77cqqAweE9YGIGSHPCSpOtMHbtegxA=="],
+    "@couchbase/couchbase-win32-x64-napi": ["@couchbase/couchbase-win32-x64-napi@4.6.0", "", { "os": "win32", "cpu": "x64" }, "sha512-T1zLkY3EugmBhWOOhn22hfs0gD/yBpFza0ReePTwxYU93cxKofx3Sh5+QQWebsrOablYJy7lt4o3oLtGqYwu8g=="],
 
     "@crawlee/types": ["@crawlee/types@3.16.0", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-CcIM+JDVx4gzQzMPl+9RJiEeqdzTrx2RLPA7y4IMJSyfZm3J/VrEunielKA3NQrk095j9OuvS/rQL2y8mBV1qw=="],
 
@@ -15611,7 +15611,7 @@
 
     "cluster-key-slot": ["cluster-key-slot@1.1.2", "", {}, "sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA=="],
 
-    "cmake-js": ["cmake-js@8.0.0", "", { "dependencies": { "debug": "^4.4.3", "fs-extra": "^11.3.3", "node-api-headers": "^1.8.0", "rc": "1.2.8", "semver": "^7.7.3", "tar": "^7.5.6", "url-join": "^4.0.1", "which": "^6.0.0", "yargs": "^17.7.2" }, "bin": { "cmake-js": "bin/cmake-js" } }, "sha512-YbUP88RDwCvoQkZhRtGURYm9RIpWdtvZuhT87fKNoLjk8kIFIFeARpKfuZQGdwfH99GZpUmqSfcDrK62X7lTgg=="],
+    "cmake-js": ["cmake-js@7.4.0", "", { "dependencies": { "axios": "^1.6.5", "debug": "^4", "fs-extra": "^11.2.0", "memory-stream": "^1.0.0", "node-api-headers": "^1.1.0", "npmlog": "^6.0.2", "rc": "^1.2.7", "semver": "^7.5.4", "tar": "^6.2.0", "url-join": "^4.0.1", "which": "^2.0.2", "yargs": "^17.7.2" }, "bin": { "cmake-js": "bin/cmake-js" } }, "sha512-Lw0JxEHrmk+qNj1n9W9d4IvkDdYTBn7l2BW6XmtLj7WPpIo2shvxUy+YokfjMxAAOELNonQwX3stkPhM5xSC2Q=="],
 
     "cmdk": ["cmdk@1.1.1", "", { "dependencies": { "@radix-ui/react-compose-refs": "^1.1.1", "@radix-ui/react-dialog": "^1.1.6", "@radix-ui/react-id": "^1.1.0", "@radix-ui/react-primitive": "^2.0.2" }, "peerDependencies": { "react": "^18 || ^19 || ^19.0.0-rc", "react-dom": "^18 || ^19 || ^19.0.0-rc" } }, "sha512-Vsv7kFaXm+ptHDMZ7izaRsP70GgrW9NBNGswt9OZaVBLlE0SNpDq8eu/VGXyF9r7M0azK3Wy7OlYXsuyYLFzHg=="],
 
@@ -15701,7 +15701,7 @@
 
     "cosmiconfig-typescript-loader": ["cosmiconfig-typescript-loader@4.4.0", "", { "peerDependencies": { "@types/node": "*", "cosmiconfig": ">=7", "ts-node": ">=10", "typescript": ">=4" } }, "sha512-BabizFdC3wBHhbI4kJh0VkQP9GkBfoHPydD0COMce1nJ1kJAB3F2TmJ/I7diULBKtmEWSwEbuN/KDtgnmUUVmw=="],
 
-    "couchbase": ["couchbase@4.7.0", "", { "dependencies": { "cmake-js": "^8.0.0", "detect-libc": "^2.1.2", "hdr-histogram-js": "^3.0.1", "node-addon-api": "^8.3.1" }, "optionalDependencies": { "@couchbase/couchbase-darwin-arm64-napi": "4.7.0", "@couchbase/couchbase-darwin-x64-napi": "4.7.0", "@couchbase/couchbase-linux-arm64-napi": "4.7.0", "@couchbase/couchbase-linux-x64-napi": "4.7.0", "@couchbase/couchbase-linuxmusl-arm64-napi": "4.7.0", "@couchbase/couchbase-linuxmusl-x64-napi": "4.7.0", "@couchbase/couchbase-win32-x64-napi": "4.7.0" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-0qfuZVpDiP4oaSpWt/GQURlXTWKQVopqK0VxstTpjjQVFO0ZsbpFpG0ghAdJFWbeZV64B7+07fk4Xe2cWvlfLA=="],
+    "couchbase": ["couchbase@4.6.0", "", { "dependencies": { "cmake-js": "^7.3.1", "node-addon-api": "^8.3.1" }, "optionalDependencies": { "@couchbase/couchbase-darwin-arm64-napi": "4.6.0", "@couchbase/couchbase-darwin-x64-napi": "4.6.0", "@couchbase/couchbase-linux-arm64-napi": "4.6.0", "@couchbase/couchbase-linux-x64-napi": "4.6.0", "@couchbase/couchbase-linuxmusl-arm64-napi": "4.6.0", "@couchbase/couchbase-linuxmusl-x64-napi": "4.6.0", "@couchbase/couchbase-win32-x64-napi": "4.6.0" }, "hasInstallScript": true }, "sha512-2rW9a61ktoJTczjmb+TWXzqcTe0nGQWH6wjyzWrfZXZdvuNRDrnM/Sf+Ao3OAtol0jc7YJD7OPw5WoT3mv1G/Q=="],
 
     "cpu-features": ["cpu-features@0.0.10", "", { "dependencies": { "buildcheck": "~0.0.6", "nan": "^2.19.0" } }, "sha512-9IkYqtX3YHPCzoVg1Py+o9057a3i0fp7S530UWokCSaFVTc7CwXPRiOjRjBQQ18ZCNafx78YfnG+HALxtVmOGA=="],
 
@@ -17016,6 +17016,8 @@
     "memoize-one": ["memoize-one@6.0.0", "", {}, "sha512-rkpe71W0N0c0Xz6QD0eJETuWAJGnJ9afsl1srmwPrI+yBCkge5EycXXbYRyvL29zZVUWQCY7InPRCv3GDXuZNw=="],
 
     "memory-pager": ["memory-pager@1.5.0", "", {}, "sha512-ZS4Bp4r/Zoeq6+NLJpP+0Zzm0pR8whtGPf1XExKLJBAczGMnSi3It14OiNCStjQjM6NU1okjQGSxgEZN8eBYKg=="],
+
+    "memory-stream": ["memory-stream@1.0.0", "", { "dependencies": { "readable-stream": "^3.4.0" } }, "sha512-Wm13VcsPIMdG96dzILfij09PvuS3APtcKNh7M28FsCA/w6+1mjR7hhPmfFNoilX9xU7wTdhsH5lJAm6XNzdtww=="],
 
     "meow": ["meow@8.1.2", "", { "dependencies": { "@types/minimist": "^1.2.0", "camelcase-keys": "^6.2.2", "decamelize-keys": "^1.1.0", "hard-rejection": "^2.1.0", "minimist-options": "4.1.0", "normalize-package-data": "^3.0.0", "read-pkg-up": "^7.0.1", "redent": "^3.0.0", "trim-newlines": "^3.0.0", "type-fest": "^0.18.0", "yargs-parser": "^20.2.3" } }, "sha512-r85E3NdZ+mpYk1C6RjPFEMSE+s1iZMuHtsHAqY0DT3jZczl0diWUZ8g6oU7h0M9cD2EL+PzaYghhCLzR0ZNn5Q=="],
 
@@ -19603,9 +19605,11 @@
 
     "cmake-js/fs-extra": ["fs-extra@11.3.4", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^6.0.1", "universalify": "^2.0.0" } }, "sha512-CTXd6rk/M3/ULNQj8FBqBWHYBVYybQ3VPBw0xGKFe3tuH7ytT6ACnvzpIQ3UZtB8yvUKC2cXn1a+x+5EVQLovA=="],
 
-    "cmake-js/semver": ["semver@7.7.4", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA=="],
+    "cmake-js/semver": ["semver@7.8.5", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA=="],
 
-    "cmake-js/which": ["which@6.0.1", "", { "dependencies": { "isexe": "^4.0.0" }, "bin": { "node-which": "bin/which.js" } }, "sha512-oGLe46MIrCRqX7ytPUf66EAYvdeMIZYn3WaocqqKZAxrBpkqHfL/qvTyJ/bTk5+AqHCjXmrv3CEWgy368zhRUg=="],
+    "cmake-js/tar": ["tar@6.2.1", "", { "dependencies": { "chownr": "^2.0.0", "fs-minipass": "^2.0.0", "minipass": "^5.0.0", "minizlib": "^2.1.1", "mkdirp": "^1.0.3", "yallist": "^4.0.0" } }, "sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A=="],
+
+    "cmake-js/yargs": ["yargs@17.7.3", "", { "dependencies": { "cliui": "^8.0.1", "escalade": "^3.1.1", "get-caller-file": "^2.0.5", "require-directory": "^2.1.1", "string-width": "^4.2.3", "y18n": "^5.0.5", "yargs-parser": "^21.1.1" } }, "sha512-GZtjxm/J/4TSxuL3FNYjCmLktBTnIw/rVmKSIyKeYAZpmJB2ig9VauCC5xsa82GNKVKDAqpOn3KVzNt0zmrU0g=="],
 
     "cmdk/@radix-ui/react-primitive": ["@radix-ui/react-primitive@2.1.4", "", { "dependencies": { "@radix-ui/react-slot": "1.2.4" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-9hQc4+GNVtJAIEPEqlYqW5RiYdrr8ea5XQ0ZOnD6fgru+83kqT15mq2OCcbe8KnjRZl5vF3ks69AKz3kh1jrhg=="],
 
@@ -20000,6 +20004,8 @@
     "mdast-util-phrasing/unist-util-is": ["unist-util-is@6.0.1", "", { "dependencies": { "@types/unist": "^3.0.0" } }, "sha512-LsiILbtBETkDz8I9p1dQ0uyRUWuaQzd/cuEeS1hoRSyW5E5XGmTzlwY1OrNzzakGowI9Dr/I8HVaw4hTtnxy8g=="],
 
     "mdast-util-to-hast/unist-util-visit": ["unist-util-visit@5.1.0", "", { "dependencies": { "@types/unist": "^3.0.0", "unist-util-is": "^6.0.0", "unist-util-visit-parents": "^6.0.0" } }, "sha512-m+vIdyeCOpdr/QeQCu2EzxX/ohgS8KbnPDgFni4dQsfSCtpz8UqDyY5GjRru8PDKuYn7Fq19j1CQ+nJSsGKOzg=="],
+
+    "memory-stream/readable-stream": ["readable-stream@3.6.2", "", { "dependencies": { "inherits": "^2.0.3", "string_decoder": "^1.1.1", "util-deprecate": "^1.0.1" } }, "sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA=="],
 
     "meow/type-fest": ["type-fest@0.18.1", "", {}, "sha512-OIAYXk8+ISY+qTOwkHtKqzAuxchoMiD9Udx+FSGQDuiRR+PJKJHc2NJAXlbhkGwTt/4/nKZxELY1w3ReWOL8mw=="],
 
@@ -20999,7 +21005,11 @@
 
     "cloudflare/@types/node/undici-types": ["undici-types@5.26.5", "", {}, "sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA=="],
 
-    "cmake-js/which/isexe": ["isexe@4.0.0", "", {}, "sha512-FFUtZMpoZ8RqHS3XeXEmHWLA4thH+ZxCv2lOiPIn1Xc7CxrqhWzNSDzD+/chS/zbYezmiwWLdQC09JdQKmthOw=="],
+    "cmake-js/tar/chownr": ["chownr@2.0.0", "", {}, "sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ=="],
+
+    "cmake-js/tar/minipass": ["minipass@5.0.0", "", {}, "sha512-3FnjYuehv9k6ovOEbyOswadCDPX1piCfhV8ncmYtHOjuPwylVWsghTLo7rabjC3Rx5xD4HDx8Wm1xnMF7S5qFQ=="],
+
+    "cmake-js/tar/minizlib": ["minizlib@2.1.2", "", { "dependencies": { "minipass": "^3.0.0", "yallist": "^4.0.0" } }, "sha512-bAxsR8BVfj60DWXHE3u30oHzfl4G7khkSuPW+qvpd7jFRHm7dLxOjUk1EHACJ/hxLY8phGJ0YhYHZo7jil7Qdg=="],
 
     "cmdk/@radix-ui/react-primitive/@radix-ui/react-slot": ["@radix-ui/react-slot@1.2.4", "", { "dependencies": { "@radix-ui/react-compose-refs": "1.1.2" }, "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-Jl+bCv8HxKnlTLVrcDE8zTMJ09R9/ukw4qBs/oZClOfoQk/cOTbDn+NceXfV7j09YPVQUryJPHurafcSg6EVKA=="],
 
@@ -21360,6 +21370,8 @@
     "mdast-util-to-hast/unist-util-visit/unist-util-is": ["unist-util-is@6.0.1", "", { "dependencies": { "@types/unist": "^3.0.0" } }, "sha512-LsiILbtBETkDz8I9p1dQ0uyRUWuaQzd/cuEeS1hoRSyW5E5XGmTzlwY1OrNzzakGowI9Dr/I8HVaw4hTtnxy8g=="],
 
     "mdast-util-to-hast/unist-util-visit/unist-util-visit-parents": ["unist-util-visit-parents@6.0.2", "", { "dependencies": { "@types/unist": "^3.0.0", "unist-util-is": "^6.0.0" } }, "sha512-goh1s1TBrqSqukSc8wrjwWhL0hiJxgA8m4kFxGlQ+8FYQ3C/m11FcTs4YYem7V664AhHVvgoQLk890Ssdsr2IQ=="],
+
+    "memory-stream/readable-stream/string_decoder": ["string_decoder@1.3.0", "", { "dependencies": { "safe-buffer": "~5.2.0" } }, "sha512-hkRX8U1WjJFd8LsDJ2yQ/wWWxaopEsABU1XfkM8A+j0+85JAGppt16cr1Whg6KIbb4okU6Mql6BOj+uup/wKeA=="],
 
     "mqtt-packet/bl/readable-stream": ["readable-stream@4.7.0", "", { "dependencies": { "abort-controller": "^3.0.0", "buffer": "^6.0.3", "events": "^3.3.0", "process": "^0.11.10", "string_decoder": "^1.3.0" } }, "sha512-oIGGmcpTLwPga8Bn6/Z75SVaH1z5dUut2ibSyAMVhmUggWpmDn2dapB0n7f8nwaSiRtepAsfJyfXIO5DCVAODg=="],
 
@@ -21880,6 +21892,8 @@
     "checkly/glob/path-scurry/lru-cache": ["lru-cache@10.4.3", "", {}, "sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ=="],
 
     "cli-truncate/string-width/strip-ansi/ansi-regex": ["ansi-regex@6.2.2", "", {}, "sha512-Bq3SmSpyFHaWjPk8If9yc6svM8c56dB5BAtW4Qbw5jHTwwXXcTLoRMkpDJp6VL0XzlWaCHTXrkFURMYmD0sLqg=="],
+
+    "cmake-js/tar/minizlib/minipass": ["minipass@3.3.6", "", { "dependencies": { "yallist": "^4.0.0" } }, "sha512-DxiNidxSEK+tHG6zOIklvNOwm3hvCrbUrdtzY74U6HKTJxvIDfOUL5W5P2Ghd3DTkhhKPYGqeNUIh5qcM4YBfw=="],
 
     "conventional-commits-parser/split2/readable-stream/string_decoder": ["string_decoder@1.3.0", "", { "dependencies": { "safe-buffer": "~5.2.0" } }, "sha512-hkRX8U1WjJFd8LsDJ2yQ/wWWxaopEsABU1XfkM8A+j0+85JAGppt16cr1Whg6KIbb4okU6Mql6BOj+uup/wKeA=="],
 
