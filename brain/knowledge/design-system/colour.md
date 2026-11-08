@@ -148,8 +148,7 @@ the wrapper clips) and `imageClassName` the image. On failure it renders a monog
   shadow is darkness at an alpha, not a member of any scale.
 - **PNG exports** — `EXPORT_BACKGROUND` in `impact-utils.ts` and the fallback in
   `flow-screenshot-utils.ts`. A downloaded image wants a light ground whatever the theme.
-- **Illustration** — the doodle palettes in `flow-build-card.tsx`, the window-button dots in
-  `tool-shimmer-pills.tsx`, and `#fff` stops inside SVG luminance masks, which must be white to work as masks.
+- **Illustration** — `#fff` stops inside SVG luminance masks, which must be white to work as masks.
 - **Colour-picker defaults** — stored data, not UI colour.
 - **User-content previews** — `bg-white` on the SVG and HTML preview frames, which render content
   authored against a white page.
@@ -157,7 +156,7 @@ the wrapper clips) and `imageClassName` the image. On failure it renders a monog
 - **The builder minimap** — fills each block with the average colour of its step's logo, so a long flow
   stays readable at thumbnail size. It composites through `--panel` and falls back to `--gray-11`. This is
   one of two places colour is sampled from an image; the other is the piece-logo tint (`lib/logo-tint.ts`). Do not add a third.
-- **Older effects** — the `.recurring-chip`, gradient-border and note-scrollbar colours in `styles.css`, and
+- **Older effects** — the note-scrollbar colours in `styles.css`, and
   the sheen, shimmer and ripple glows in `tag-with-bright.tsx`, `automatic-trial-activation.tsx`,
   `automations-empty-state.tsx` and `theme-provider.tsx`. They predate the scales and read the same in both
   themes; move one onto steps when you next touch it.

@@ -21,7 +21,7 @@ import {
   LiveThinkingLine,
   StepLogos,
   getRecipeLines,
-} from './tool-shimmer-pills';
+} from './live-thinking-line';
 
 export function ThinkingBlock({
   thinkingSteps,
