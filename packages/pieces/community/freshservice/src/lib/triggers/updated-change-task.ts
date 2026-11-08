@@ -13,8 +13,6 @@ import { freshserviceListPages } from '../common/client';
 import { freshserviceSchemas } from '../common/schemas';
 import { freshserviceCommon, FreshserviceChangeTask } from '../common/props';
 
-type Props = { change_id: number | undefined };
-
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof freshserviceAuth>,
   Props
@@ -91,3 +89,5 @@ export const updatedChangeTask = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
+
+type Props = { change_id: number | undefined };

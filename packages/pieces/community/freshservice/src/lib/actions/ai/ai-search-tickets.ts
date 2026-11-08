@@ -4,6 +4,9 @@ import { freshserviceAuth } from '../../../';
 import { clampPage, clampPerPage, freshserviceApiCall, hasMorePages } from '../../common/client';
 import { freshserviceSchemas } from '../../common/schemas';
 
+const FILTER_PAGE_SIZE = 30;
+const FILTER_MAX_PAGES = 10;
+
 export const aiSearchTickets = createAction({
   auth: freshserviceAuth,
   name: 'ai_search_tickets',
@@ -75,6 +78,3 @@ export const aiSearchTickets = createAction({
     };
   },
 });
-
-const FILTER_PAGE_SIZE = 30;
-const FILTER_MAX_PAGES = 10;

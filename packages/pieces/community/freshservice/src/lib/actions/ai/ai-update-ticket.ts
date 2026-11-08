@@ -4,6 +4,8 @@ import { freshserviceAuth } from '../../../';
 import { freshserviceApiCall, pickFields } from '../../common/client';
 import { freshserviceSchemas } from '../../common/schemas';
 
+const TICKET_FIELDS = ['subject', 'description', 'status', 'priority', 'urgency', 'impact', 'type', 'requester_id', 'responder_id', 'group_id', 'department_id', 'category', 'sub_category', 'due_by', 'tags', 'custom_fields'];
+
 export const aiUpdateTicket = createAction({
   auth: freshserviceAuth,
   name: 'ai_update_ticket',
@@ -51,5 +53,3 @@ export const aiUpdateTicket = createAction({
     return response.body.ticket;
   },
 });
-
-const TICKET_FIELDS = ['subject', 'description', 'status', 'priority', 'urgency', 'impact', 'type', 'requester_id', 'responder_id', 'group_id', 'department_id', 'category', 'sub_category', 'due_by', 'tags', 'custom_fields'];

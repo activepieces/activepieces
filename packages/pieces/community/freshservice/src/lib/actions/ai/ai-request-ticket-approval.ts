@@ -4,6 +4,8 @@ import { freshserviceAuth } from '../../../';
 import { compactBody, freshserviceApiCall } from '../../common/client';
 import { freshserviceSchemas } from '../../common/schemas';
 
+const APPROVAL_TYPES: Record<string, number> = { all: 1, any: 2, majority: 3, first_responder: 4 };
+
 export const aiRequestTicketApproval = createAction({
   auth: freshserviceAuth,
   name: 'ai_request_ticket_approval',
@@ -45,5 +47,3 @@ export const aiRequestTicketApproval = createAction({
     return response.body.approval;
   },
 });
-
-const APPROVAL_TYPES: Record<string, number> = { all: 1, any: 2, majority: 3, first_responder: 4 };

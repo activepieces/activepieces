@@ -4,6 +4,8 @@ import { freshserviceAuth } from '../../../';
 import { compactBody, freshserviceApiCall, pickFields } from '../../common/client';
 import { freshserviceSchemas } from '../../common/schemas';
 
+const REQUESTER_FIELDS = ['first_name', 'last_name', 'primary_email', 'job_title', 'work_phone_number', 'mobile_phone_number', 'custom_fields'];
+
 export const aiCreateRequester = createAction({
   auth: freshserviceAuth,
   name: 'ai_create_requester',
@@ -41,5 +43,3 @@ export const aiCreateRequester = createAction({
     return response.body.requester;
   },
 });
-
-const REQUESTER_FIELDS = ['first_name', 'last_name', 'primary_email', 'job_title', 'work_phone_number', 'mobile_phone_number', 'custom_fields'];

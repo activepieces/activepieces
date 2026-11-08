@@ -4,6 +4,8 @@ import { freshserviceAuth } from '../../../';
 import { freshserviceApiCall, pickFields } from '../../common/client';
 import { freshserviceSchemas } from '../../common/schemas';
 
+const TASK_FIELDS = ['title', 'description', 'agent_id', 'group_id', 'status', 'due_date', 'notify_before'];
+
 export const aiCreateChangeTask = createAction({
   auth: freshserviceAuth,
   name: 'ai_create_change_task',
@@ -38,5 +40,3 @@ export const aiCreateChangeTask = createAction({
     return response.body.task;
   },
 });
-
-const TASK_FIELDS = ['title', 'description', 'agent_id', 'group_id', 'status', 'due_date', 'notify_before'];

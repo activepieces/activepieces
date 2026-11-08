@@ -4,6 +4,8 @@ import { freshserviceAuth } from '../../../';
 import { compactBody, freshserviceApiCall, pickFields } from '../../common/client';
 import { freshserviceSchemas } from '../../common/schemas';
 
+const CHANGE_FIELDS = ['subject', 'description', 'requester_id', 'agent_id', 'group_id', 'department_id', 'status', 'priority', 'impact', 'risk', 'change_type', 'planned_start_date', 'planned_end_date', 'category', 'sub_category', 'item_category', 'custom_fields'];
+
 export const aiCreateChange = createAction({
   auth: freshserviceAuth,
   name: 'ai_create_change',
@@ -57,5 +59,3 @@ export const aiCreateChange = createAction({
     return response.body.change;
   },
 });
-
-const CHANGE_FIELDS = ['subject', 'description', 'requester_id', 'agent_id', 'group_id', 'department_id', 'status', 'priority', 'impact', 'risk', 'change_type', 'planned_start_date', 'planned_end_date', 'category', 'sub_category', 'item_category', 'custom_fields'];
