@@ -13,7 +13,7 @@ jobs:
   linear-ticket-check:
     name: Linear ticket check
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     concurrency:
       group: linear-ticket-check-${{ github.event.pull_request.number }}
       cancel-in-progress: true
@@ -26,7 +26,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: package.json
 
       - name: Check the Linear ticket
         env:
