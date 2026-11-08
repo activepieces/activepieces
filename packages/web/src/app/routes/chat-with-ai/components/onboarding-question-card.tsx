@@ -77,8 +77,8 @@ export function OnboardingQuestionCard({
     initialRole.trim().length === 0
       ? 'role'
       : initialCompany.trim().length === 0
-        ? 'company'
-        : 'none';
+      ? 'company'
+      : 'none';
 
   const submit = () => {
     if (!valid || done) {
