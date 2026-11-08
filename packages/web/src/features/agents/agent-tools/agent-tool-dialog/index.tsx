@@ -3,6 +3,7 @@ import {
   AgentSummary,
   AgentTool,
   AgentToolType,
+  AgentVisibility,
   mcpToolNameUtils,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -57,7 +58,10 @@ function AgentToolDialogContent({
   const { setShowAddAgentDialog } = useAgentToolDialogStore();
   const { agents } = agentToolsGate.useProjectAgents();
   const candidates = agents.filter(
-    (agent) => agent.isPublished && agent.externalId !== ownerExternalId,
+    (agent) =>
+      agent.isPublished &&
+      agent.visibility === AgentVisibility.PROJECT &&
+      agent.externalId !== ownerExternalId,
   );
 
   const isSelected = (agent: AgentSummary) =>
