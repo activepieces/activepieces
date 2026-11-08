@@ -117,8 +117,6 @@ describe('chatUtils.extractBuildsFromHistory', () => {
     expect(Object.keys(builds)).toEqual(['build_1']);
     expect(builds['build_1'].phase).toBe('done');
     expect(builds['build_1'].flowId).toBe('flow_42');
-    expect(builds['build_1'].tagline).toBe('Say goodbye to copy-pasting leads');
-    expect(builds['build_1'].iconName).toBe('users');
     expect(builds['build_1'].steps[0].status).toBe('done');
   });
 

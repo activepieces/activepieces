@@ -557,9 +557,6 @@ function toBuildPlanEvent({
     steps,
     flowName:
       typeof data['flowName'] === 'string' ? data['flowName'] : undefined,
-    tagline: typeof data['tagline'] === 'string' ? data['tagline'] : undefined,
-    iconName:
-      typeof data['iconName'] === 'string' ? data['iconName'] : undefined,
     flowId: typeof data['flowId'] === 'string' ? data['flowId'] : undefined,
     projectId:
       typeof data['projectId'] === 'string' ? data['projectId'] : undefined,

@@ -191,14 +191,12 @@ export function OptionIcon({
   piece,
   icon,
   label,
-  selected,
   variant,
 }: {
   piece?: string;
   icon?: string;
   label?: string;
-  selected?: boolean;
-  variant: 'grid' | 'list' | 'plain';
+  variant: 'list' | 'plain';
 }) {
   if (variant === 'plain') {
     return <PlainOptionIcon piece={piece} icon={icon} label={label} />;
@@ -207,7 +205,7 @@ export function OptionIcon({
     return (
       <PieceIconWithPieceName
         pieceName={normalizePieceName(piece)}
-        size={variant === 'grid' ? 'lg' : 'sm'}
+        size="sm"
         border={false}
         showTooltip={false}
       />
@@ -216,19 +214,9 @@ export function OptionIcon({
   return (
     <span
       aria-hidden
-      className={cn(
-        'flex shrink-0 items-center justify-center bg-gray-5 text-gray-11 transition-colors',
-        variant === 'grid' ? 'size-10 rounded-xl' : 'size-8 rounded-md',
-        selected &&
-          (variant === 'grid'
-            ? 'bg-accent-5 text-accent-11'
-            : 'bg-gray-12 text-gray-1'),
-      )}
+      className="flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-gray-11"
     >
-      <DynamicLucideIcon
-        name={icon}
-        className={variant === 'grid' ? 'size-5' : 'size-4'}
-      />
+      <DynamicLucideIcon name={icon} className="size-4" />
     </span>
   );
 }

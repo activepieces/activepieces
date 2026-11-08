@@ -210,7 +210,6 @@ function isSubagentActivity(value: unknown): value is SubagentActivity {
 const STATUSES: string[] = ['running', 'done', 'blocked', 'failed'];
 const STATUS_SEVERITY: ChatStatus[] = [
   'needs-you',
-  'failed',
   'working',
   'stopped',
   'done',
