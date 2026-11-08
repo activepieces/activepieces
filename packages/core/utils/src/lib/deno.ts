@@ -1,5 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import { sandboxError, SandboxErrorPayload } from './sandbox-error'
+import { tryCatch } from './try-catch'
 
 export const deno = {
     /**
@@ -11,7 +12,14 @@ export const deno = {
         const keepDenoDir = denoDir !== undefined
         const dataDir = data === undefined ? undefined : await writeDataFile(data)
         const dataFile = dataDir === undefined ? undefined : `${dataDir}/${DATA_FILE_NAME}`
-        const { child, denoPath, denoDir: resolvedDenoDir } = await spawnDeno({ entry: '-', dataFile, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDir })
+        const { data: spawned, error: spawnError } = await tryCatch(() => spawnDeno({ entry: '-', dataFile, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDir }))
+        if (spawnError !== null) {
+            if (dataDir !== undefined) {
+                await removeDir(dataDir)
+            }
+            throw spawnError
+        }
+        const { child, denoPath, denoDir: resolvedDenoDir } = spawned
         child.stdin.end(buildRunProgram({ body }))
         const killTimer = timeoutMs === undefined ? undefined : setTimeout(() => child.kill('SIGKILL'), timeoutMs)
         const cleanup = (): void => {
@@ -120,7 +128,11 @@ async function removeDir(dir: string): Promise<void> {
 async function writeDataFile(data: unknown): Promise<string> {
     const { os, fs } = await getNodeApis()
     const dataDir = await fs.mkdtemp(`${os.tmpdir()}/ap-deno-data-`)
-    await fs.writeFile(`${dataDir}/${DATA_FILE_NAME}`, JSON.stringify(data) ?? 'null', 'utf8')
+    const { error } = await tryCatch(() => fs.writeFile(`${dataDir}/${DATA_FILE_NAME}`, JSON.stringify(data) ?? 'null', 'utf8'))
+    if (error !== null) {
+        await removeDir(dataDir)
+        throw error
+    }
     return dataDir
 }
 

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -13,10 +13,13 @@ let stepDir: string
 let denoModule: any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let denoCodeSandbox: any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let coreDeno: any
 
 beforeAll(async () => {
     // Dynamic import so AP_DENO_PATH is set before the module reads it.
     denoModule = await import('../../../src/lib/core/code/deno-code-sandbox')
+    coreDeno = (await import('@activepieces/core-utils')).deno
     // The boundary suite asserts the locked profile (the code-only modes) — an
     // empty permission set, so beyond the step-dir read grant every syscall
     // (fs/net/env/run) is denied.
@@ -211,20 +214,46 @@ describe('denoCodeSandbox permission boundary', () => {
     })
 
     describe('classifies a truncated result line', () => {
-        it('reports the exit code and signal when the process dies while writing its result', async () => {
-            await expectRejection(runModule(`
-                const encoder = new TextEncoder();
-                console.log = (line) => { Deno.stdout.writeSync(encoder.encode(String(line).slice(0, 45))); Deno.exit(7); };
+        it('cannot be truncated by a step overriding console.log, because emit is bound before the step loads', async () => {
+            const result = await runModule(`
+                console.log = () => { Deno.exit(7); };
                 export const code = async () => ({ some: 'value' })
-            `), /exited with code 7 and signal null while writing its result/)
+            `)
+            expect(result).toEqual({ some: 'value' })
+        })
+
+        it('reports the exit code and signal when the process dies while writing its result', async () => {
+            await expectRejection(coreDeno.run({
+                body: 'log(marker + \'{"success":true\'); Deno.exit(7);',
+                permissions: [],
+            }), /exited with code 7 and signal null while writing its result/)
         })
 
         it('keeps the malformed-result error for an unparseable line after a clean exit', async () => {
-            await expectRejection(runModule(`
-                const encoder = new TextEncoder();
-                console.log = (line) => { Deno.stdout.writeSync(encoder.encode(String(line).slice(0, 45) + '\\n')); };
-                export const code = async () => ({ some: 'value' })
-            `), /returned a malformed result/)
+            await expectRejection(coreDeno.run({
+                body: 'log(marker + \'{"success":true\'); Deno.exit(0);',
+                permissions: [],
+            }), /returned a malformed result/)
+        })
+    })
+
+    describe('cleans up the inputs file', () => {
+        it('removes it when deno cannot be spawned', async () => {
+            const isolatedTmp = await mkdtemp(path.join(tmpdir(), 'ap-deno-leak-'))
+            await withEnv({ TMPDIR: isolatedTmp, AP_DENO_PATH: undefined }, async () => {
+                await expectRejection(coreDeno.run({ body: 'const result = 1;', data: { a: 1 }, permissions: [] }), /AP_DENO_PATH is not set/)
+            })
+            expect(await readdir(isolatedTmp)).toEqual([])
+            await rm(isolatedTmp, { recursive: true, force: true })
+        })
+
+        it('removes it when the inputs cannot be serialized', async () => {
+            const isolatedTmp = await mkdtemp(path.join(tmpdir(), 'ap-deno-leak-'))
+            await withEnv({ TMPDIR: isolatedTmp }, async () => {
+                await expectRejection(coreDeno.run({ body: 'const result = 1;', data: { big: 1n }, permissions: [] }), /BigInt/)
+            })
+            expect(await readdir(isolatedTmp)).toEqual([])
+            await rm(isolatedTmp, { recursive: true, force: true })
         })
     })
 
