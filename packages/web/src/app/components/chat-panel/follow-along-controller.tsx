@@ -39,6 +39,7 @@ export function FollowAlongController() {
   const goRequests = useFollowAlong((s) => s.goRequests);
   const offer = useFollowAlong((s) => s.offer);
   const conversationId = useChatPanel((s) => s.conversationId);
+  const autoFollow = useChatPanel((s) => s.autoFollow);
   const lastPath = useRef(pathname);
   const seenGoRequests = useRef(goRequests);
   const selfNavRef = useRef<string | null>(null);
@@ -110,7 +111,21 @@ export function FollowAlongController() {
         resourceRegistry.autoOpens(change.resource.kind)
       ) {
         runOfTarget.current = change.runId;
-        if (change.op === 'view') followAlong.view(change.resource);
+        if (change.op === 'view') {
+          if (useChatPanel.getState().autoFollow) {
+            followAlong.view(change.resource);
+          } else if (
+            !resourceRegistry.isOn(pathnameRef.current, change.resource)
+          ) {
+            followAlong.offer({
+              resource: change.resource,
+              kind: resourceRegistry.isInCurrentProject(change.resource)
+                ? 'ready'
+                : 'project',
+              runId: change.runId,
+            });
+          }
+        }
       }
       const keys = resourceRegistry.queryKeys(change.resource);
       tryCatch(() =>
@@ -128,7 +143,9 @@ export function FollowAlongController() {
   }, [conversationId]);
 
   useEffect(() => {
-    if (phase === 'idle') followAlong.offer(null);
+    if (phase === 'idle' && useChatPanel.getState().autoFollow) {
+      followAlong.offer(null);
+    }
   }, [phase]);
 
   useEffect(() => {
@@ -208,6 +225,10 @@ export function FollowAlongController() {
       followAlong.offer({ resource: target, kind: 'project', runId });
       return;
     }
+    if (!autoFollow) {
+      followAlong.offer({ resource: target, kind: 'ready', runId });
+      return;
+    }
     if (!fullPage && state.pageTouched) {
       followAlong.offer({ resource: target, kind: 'switch', runId });
       return;
@@ -248,10 +269,19 @@ export function FollowAlongController() {
       if (act()) clearInterval(timer);
     }, RECHECK_MS);
     return () => clearInterval(timer);
-  }, [pathname, targetKey, following, phase, goRequests, embedded, fullPage]);
+  }, [
+    pathname,
+    targetKey,
+    following,
+    phase,
+    goRequests,
+    embedded,
+    fullPage,
+    autoFollow,
+  ]);
 
   useEffect(() => {
-    if (!offer || offer.kind !== 'ready') return;
+    if (!offer || offer.kind !== 'ready' || !autoFollow) return;
     let lastInput = Date.now();
     const onInput = () => {
       lastInput = Date.now();
@@ -293,7 +323,7 @@ export function FollowAlongController() {
         window.removeEventListener(name, onInput, { capture: true }),
       );
     };
-  }, [offer]);
+  }, [offer, autoFollow]);
 
   return null;
 }

@@ -45,6 +45,7 @@ const socketHarness = vi.hoisted(() => {
 const sessionHarness = vi.hoisted(() => ({
   token: 'token-1',
   projectId: 'project-1',
+  listeners: new Set<() => void>(),
 }));
 
 vi.mock('socket.io-client', () => ({ io: () => socketHarness.socket }));
@@ -55,6 +56,11 @@ vi.mock('@/lib/authentication-session', () => ({
   authenticationSession: {
     getToken: () => sessionHarness.token,
     getProjectId: () => sessionHarness.projectId,
+    getTabProjectId: () => sessionHarness.projectId,
+    subscribe: (listener: () => void) => {
+      sessionHarness.listeners.add(listener);
+      return () => sessionHarness.listeners.delete(listener);
+    },
   },
 }));
 
@@ -84,6 +90,7 @@ describe('SocketProvider', () => {
     await act(async () => root.render(<App onConnect={onConnect} />));
 
     sessionHarness.projectId = 'project-2';
+    await act(async () => sessionHarness.listeners.forEach((l) => l()));
     await act(async () => root.render(<App onConnect={onConnect} />));
     act(() => socketHarness.sendFromServer('connect'));
 

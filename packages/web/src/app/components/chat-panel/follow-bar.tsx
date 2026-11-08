@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import {
   followAlong,
@@ -12,6 +13,7 @@ import {
   ResourceKind,
   resourceRegistry,
 } from '@/features/chat/lib/resources/registry';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { cn } from '@/lib/utils';
 
 export function FollowBar() {
@@ -19,6 +21,7 @@ export function FollowBar() {
   const reduceMotion = useReducedMotion();
   const target = useFollowAlong((s) => s.target);
   const phase = useFollowAlong((s) => s.phase);
+  const autoFollow = useChatPanel((s) => s.autoFollow);
   const visible = useIsFollowedHere() && target !== null;
 
   return (
@@ -52,13 +55,16 @@ export function FollowBar() {
                 : DONE_LABEL[target.kind]()}
             </span>
             {phase === 'editing' && (
-              <button
-                type="button"
-                onClick={followAlong.stopFollowing}
-                className="ml-auto rounded-sm text-gray-11 underline-offset-2 transition-colors hover:text-gray-12 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8"
-              >
-                {t('Stop following')}
-              </button>
+              <>
+                <BarButton onClick={followAlong.stopFollowing}>
+                  {t('Stop following')}
+                </BarButton>
+                {autoFollow && (
+                  <BarButton onClick={turnOffAutoFollow}>
+                    {t("Don't follow automatically")}
+                  </BarButton>
+                )}
+              </>
             )}
           </div>
         </motion.div>
@@ -89,6 +95,34 @@ export function FollowEmptyState({
       <LiveDot />
       {FILLING_LABEL[kind]()}
     </div>
+  );
+}
+
+function BarButton({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="shrink-0 rounded-sm text-gray-11 underline-offset-2 transition-colors first-of-type:ml-auto hover:text-gray-12 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8"
+    >
+      {children}
+    </button>
+  );
+}
+
+function turnOffAutoFollow() {
+  useChatPanel.getState().setAutoFollow(false);
+  followAlong.stopFollowing();
+  toast(
+    t(
+      'Chat will ask before it opens pages. Turn on Follow along in the chat menu to change this.',
+    ),
   );
 }
 

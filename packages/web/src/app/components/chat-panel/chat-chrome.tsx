@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import {
   ArrowLeft,
   Ellipsis,
+  Eye,
   History,
   Maximize2,
   Minimize2,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
+  DropdownMenu as DropdownMenuPrimitive,
   Popover as PopoverPrimitive,
   Tooltip as TooltipPrimitive,
 } from 'radix-ui';
@@ -32,9 +34,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -356,33 +362,19 @@ export function ChatChrome({
                   </HeaderButton>
                 </>
               )}
-              {full ? (
-                collapseToSide && (
-                  <FullLayoutMenu onCollapseToSide={collapseToSide} />
-                )
-              ) : sheet ? (
-                <HeaderButton
-                  label={t('Open full page')}
-                  onClick={openFullPage}
-                >
+              {split && (
+                <HeaderButton label={t('Expand chat')} onClick={openFullPage}>
                   <Maximize2 />
                 </HeaderButton>
-              ) : (
-                <>
-                  {split && (
-                    <HeaderButton
-                      label={t('Expand chat')}
-                      onClick={openFullPage}
-                    >
-                      <Maximize2 />
-                    </HeaderButton>
-                  )}
-                  <LayoutMenu layout={layout} onOpenFullPage={openFullPage} />
-                </>
               )}
-              {chatEnabled && (
+              {(chatEnabled || !full || collapseToSide) && (
                 <MoreMenu
+                  chatEnabled={chatEnabled}
                   conversationId={conversationId}
+                  layout={layout}
+                  split={split}
+                  onOpenFullPage={openFullPage}
+                  onCollapseToSide={collapseToSide}
                   onRename={() => {
                     setHistoryIn(null);
                     setRenaming(true);
@@ -623,13 +615,90 @@ function HeaderButton({
   );
 }
 
-function LayoutMenu({
+function MoreMenu({
+  chatEnabled,
+  conversationId,
   layout,
+  split,
   onOpenFullPage,
+  onCollapseToSide,
+  onRename,
+  onDelete,
+  onSettings,
 }: {
+  chatEnabled: boolean;
+  conversationId: string | null;
   layout: ChatWidth;
+  split: boolean;
   onOpenFullPage: () => void;
+  onCollapseToSide: (() => void) | undefined;
+  onRename: () => void;
+  onDelete: () => void;
+  onSettings: () => void;
 }) {
+  const full = layout === 'full';
+  const hasConversation = chatEnabled && conversationId !== null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <HeaderButton label={t('More')}>
+          <Ellipsis />
+        </HeaderButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-72"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        {full
+          ? onCollapseToSide && (
+              <DropdownMenuItem onSelect={onCollapseToSide}>
+                <Minimize2 className="size-4" />
+                {t('Collapse to side')}
+              </DropdownMenuItem>
+            )
+          : !split && (
+              <DropdownMenuItem onSelect={onOpenFullPage}>
+                <Maximize2 className="size-4" />
+                {t('Open full page')}
+              </DropdownMenuItem>
+            )}
+        {!full && layout !== 'sheet' && <LayoutSubmenu layout={layout} />}
+        {chatEnabled && (
+          <>
+            <FollowAlongItem />
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled={!hasConversation} onSelect={onRename}>
+              <Pencil className="size-4" />
+              {t('Rename')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!hasConversation}
+              onSelect={onDelete}
+              className="text-danger-11 focus:text-danger-11"
+            >
+              <Trash2 className="size-4" />
+              {t('Delete')}
+            </DropdownMenuItem>
+            {hasConversation && (
+              <>
+                <DropdownMenuSeparator />
+                <ChangedInThisChat conversationId={conversationId} />
+              </>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onSettings}>
+              <Settings className="size-4" />
+              {t('Chat settings')}
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function LayoutSubmenu({ layout }: { layout: ChatWidth }) {
   const canDock = windowSizeHooks.useAtLeast(chatLayoutUtils.DOCK_BREAKPOINT);
   const CurrentIcon =
     layout === 'right'
@@ -651,113 +720,69 @@ function LayoutMenu({
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <HeaderButton label={t('Panel layout')}>
-          <CurrentIcon />
-        </HeaderButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuRadioGroup value={layout} onValueChange={moveTo}>
-          <DropdownMenuRadioItem value="left" disabled={!canDock}>
-            <PanelLeft className="size-4" />
-            {t('Dock left')}
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="right" disabled={!canDock}>
-            <PanelRight className="size-4" />
-            {t('Dock right')}
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="float">
-            <PictureInPicture2 className="size-4" />
-            {t('Floating')}
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        {!canDock && (
-          <DropdownMenuLabel className="pt-1 pl-8 text-xs font-normal text-gray-10">
-            {t('Needs a wider window')}
-          </DropdownMenuLabel>
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={onOpenFullPage} className="pl-8">
-          <Maximize2 className="size-4" />
-          {t('Open full page')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
+        <CurrentIcon className="size-4" />
+        {t('Layout')}
+      </DropdownMenuSubTrigger>
+      <DropdownMenuPortal>
+        <DropdownMenuSubContent className="w-52">
+          <DropdownMenuRadioGroup value={layout} onValueChange={moveTo}>
+            <DropdownMenuRadioItem value="left" disabled={!canDock}>
+              <PanelLeft className="size-4" />
+              {t('Dock left')}
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="right" disabled={!canDock}>
+              <PanelRight className="size-4" />
+              {t('Dock right')}
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="float">
+              <PictureInPicture2 className="size-4" />
+              {t('Floating')}
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+          {!canDock && (
+            <DropdownMenuLabel className="pt-1 pl-8 text-xs font-normal text-gray-10">
+              {t('Needs a wider window')}
+            </DropdownMenuLabel>
+          )}
+        </DropdownMenuSubContent>
+      </DropdownMenuPortal>
+    </DropdownMenuSub>
   );
 }
 
-function FullLayoutMenu({
-  onCollapseToSide,
-}: {
-  onCollapseToSide: () => void;
-}) {
+function FollowAlongItem() {
+  const autoFollow = useChatPanel((s) => s.autoFollow);
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <HeaderButton label={t('Panel layout')}>
-          <PanelLeft />
-        </HeaderButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuItem onSelect={onCollapseToSide}>
-          <Minimize2 className="size-4" />
-          {t('Collapse to side')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function MoreMenu({
-  conversationId,
-  onRename,
-  onDelete,
-  onSettings,
-}: {
-  conversationId: string | null;
-  onRename: () => void;
-  onDelete: () => void;
-  onSettings: () => void;
-}) {
-  const hasConversation = conversationId !== null;
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <HeaderButton label={t('More')}>
-          <Ellipsis />
-        </HeaderButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className={hasConversation ? 'w-72' : 'w-48'}
-        onCloseAutoFocus={(event) => event.preventDefault()}
+    <DropdownMenuPrimitive.CheckboxItem
+      checked={autoFollow}
+      onCheckedChange={(next) => useChatPanel.getState().setAutoFollow(next)}
+      onSelect={(event) => event.preventDefault()}
+      className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 text-sm outline-hidden transition-colors select-none focus:bg-gray-4 focus:text-gray-12"
+    >
+      <Eye className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span>{t('Follow along')}</span>
+        <span className="text-xs text-gray-10">
+          {autoFollow
+            ? t('Chat opens what it works on beside the chat.')
+            : t('Chat asks before it opens what it works on.')}
+        </span>
+      </span>
+      <span
+        aria-hidden
+        data-state={autoFollow ? 'checked' : 'unchecked'}
+        className="mt-0.5 inline-flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors data-[state=checked]:bg-accent-9 data-[state=unchecked]:bg-gray-8"
       >
-        <DropdownMenuItem disabled={!hasConversation} onSelect={onRename}>
-          <Pencil className="size-4" />
-          {t('Rename')}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          disabled={!hasConversation}
-          onSelect={onDelete}
-          className="text-danger-11 focus:text-danger-11"
-        >
-          <Trash2 className="size-4" />
-          {t('Delete')}
-        </DropdownMenuItem>
-        {hasConversation && (
-          <>
-            <DropdownMenuSeparator />
-            <ChangedInThisChat conversationId={conversationId} />
-          </>
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={onSettings}>
-          <Settings className="size-4" />
-          {t('Chat settings')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        <span
+          className={cn(
+            'size-3 rounded-full bg-gray-1 shadow-xs transition-transform motion-reduce:transition-none',
+            autoFollow && 'translate-x-3 bg-on-accent',
+          )}
+        />
+      </span>
+    </DropdownMenuPrimitive.CheckboxItem>
   );
 }
 
