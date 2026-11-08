@@ -1,3 +1,4 @@
+import { tryCatchSync } from '@activepieces/core-utils';
 import { useCallback } from 'react';
 import { matchPath, useLocation, useMatches } from 'react-router-dom';
 import { create } from 'zustand';
@@ -21,16 +22,26 @@ const ROUTES_THAT_HOLD_THE_RAIL_CLOSED = AGENT_ROUTES.flatMap((route) => [
 ]);
 
 const useRail = create<RailState>(() => ({
-  preference: readFlag(localStorage, PREFERENCE_KEY),
-  foldedForChat: readFlag(localStorage, FOLDED_FOR_CHAT_KEY),
+  preference: readFlag({ storage: localStorage, key: PREFERENCE_KEY }),
+  foldedForChat:
+    readFlag({ storage: sessionStorage, key: FOLDED_FOR_CHAT_KEY }) &&
+    chatPanelIsDocked(useChatPanel.getState()),
   openedOn: null,
 }));
 
 function update(patch: Partial<RailState>) {
   useRail.setState(patch);
   const state = useRail.getState();
-  writeFlag(localStorage, PREFERENCE_KEY, state.preference);
-  writeFlag(localStorage, FOLDED_FOR_CHAT_KEY, state.foldedForChat);
+  writeFlag({
+    storage: localStorage,
+    key: PREFERENCE_KEY,
+    value: state.preference,
+  });
+  writeFlag({
+    storage: sessionStorage,
+    key: FOLDED_FOR_CHAT_KEY,
+    value: state.foldedForChat,
+  });
 }
 
 function railIsOpen({
@@ -108,20 +119,27 @@ window.addEventListener('resize', () => {
   wasWide = wide;
 });
 
-function readFlag(storage: Storage, key: string): boolean {
-  try {
-    return storage.getItem(key) === 'true';
-  } catch {
-    return false;
-  }
+function readFlag({
+  storage,
+  key,
+}: {
+  storage: Storage;
+  key: string;
+}): boolean {
+  const { data } = tryCatchSync(() => storage.getItem(key));
+  return data === 'true';
 }
 
-function writeFlag(storage: Storage, key: string, value: boolean) {
-  try {
-    storage.setItem(key, String(value));
-  } catch {
-    return;
-  }
+function writeFlag({
+  storage,
+  key,
+  value,
+}: {
+  storage: Storage;
+  key: string;
+  value: boolean;
+}): void {
+  tryCatchSync(() => storage.setItem(key, String(value)));
 }
 
 function isChatPageHandle(handle: unknown): boolean {

@@ -48,7 +48,7 @@ export const StepSettingsPanel = ({
   return (
     <div className="flex h-full flex-col">
       {heldHere && heldHere.draftRefreshCount !== draftRefreshCount && (
-        <StepReloadNotice />
+        <StepReloadNotice stepName={heldHere.stepName} />
       )}
       <div className="min-h-0 flex-1">
         <StepSettingsProvider

@@ -14,23 +14,15 @@ export function useConversationChanges(
   conversationId: string | null,
 ): ChangeLine[] {
   const runs = useFollowAlong((state) => state.runs);
-  const liveCalls = useMemo<ToolCallRecord[]>(
+  const liveCalls = useMemo(
     () =>
       Object.values(runs)
         .filter((run) => run.conversationId === conversationId)
-        .flatMap((run) =>
-          run.changes.map((change) => ({
-            toolCallId: change.toolCallId,
-            toolName: change.toolName,
-            input: change.input,
-            output: change.output,
-            state: 'output-available' as const,
-          })),
-        ),
+        .flatMap((run) => run.changes.map(toToolCall)),
     [runs, conversationId],
   );
   const { data: savedCalls } = useQuery({
-    queryKey: ['chat-conversation-changes', conversationId, liveCalls.length],
+    queryKey: ['chat-conversation-changes', conversationId],
     queryFn: async () => {
       if (!conversationId) return [];
       const result = await chatApi.getMessages(conversationId);
@@ -50,4 +42,18 @@ export function useConversationChanges(
         .filter((line) => line.state === 'applied' || line.state === 'partial'),
     [savedCalls, liveCalls],
   );
+}
+
+function toToolCall({
+  toolCallId,
+  toolName,
+  input,
+  output,
+}: {
+  toolCallId: string;
+  toolName: string;
+  input: unknown;
+  output: unknown;
+}): ToolCallRecord {
+  return { toolCallId, toolName, input, output, state: 'output-available' };
 }

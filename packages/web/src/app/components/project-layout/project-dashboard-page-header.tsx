@@ -60,9 +60,9 @@ export const ProjectDashboardPageHeader = ({
         next.delete('settings');
         return next;
       },
-      { replace: true },
+      { replace: true, state: location.state },
     );
-  }, [requestedTab, setSearchParams]);
+  }, [requestedTab, setSearchParams, location.state]);
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const activeProjectMembers = projectMembers?.filter(
     (member) => member.user.status === UserStatus.ACTIVE,

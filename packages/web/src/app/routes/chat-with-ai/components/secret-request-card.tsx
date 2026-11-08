@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Eye, EyeOff, Loader2, Lock } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { chatApi } from '@/features/chat/lib/chat-api';
@@ -13,6 +12,7 @@ import { demoCapabilities } from '@/features/chat/lib/demo/demo-capability-scena
 import { piecesHooks } from '@/features/pieces';
 import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
 import { aiProviderKeys } from '@/features/platform-admin/hooks/ai-provider-hooks';
+import { chatTransitions } from '@/features/workspace/lib/chat-panel-open';
 import { cn } from '@/lib/utils';
 
 import { normalizePieceName } from '../lib/message-parsers';
@@ -40,7 +40,6 @@ export function SecretRequestCard({
   const request = useMemo(() => secretRequestUtils.parse(input), [input]);
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const dismissGate = useChatStoreContext((s) => s.dismissGate);
-  const navigate = useNavigate();
   const [values, setValues] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [failure, setFailure] = useState<SaveFailure | null>(null);
@@ -223,7 +222,12 @@ export function SecretRequestCard({
           <Button
             size="sm"
             type="button"
-            onClick={() => navigate(secretRequestUtils.settingsPath(request))}
+            onClick={() =>
+              chatTransitions.openBeside({
+                route: secretRequestUtils.settingsPath(request),
+                push: true,
+              })
+            }
           >
             {t('Open settings')}
           </Button>

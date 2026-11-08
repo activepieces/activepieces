@@ -1,4 +1,4 @@
-import { isNil, SeekPage } from '@activepieces/core-utils';
+import { isNil, SeekPage, tryCatch } from '@activepieces/core-utils';
 import { Field, Table, PopulatedRecord } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -43,15 +43,20 @@ export const TableStateProviderWithTable = ({
   table,
   fields,
   records,
+  onStore,
 }: {
   children: React.ReactNode;
   table: Table;
   fields: Field[];
   records: PopulatedRecord[];
+  onStore?: (store: ApTableStore) => void;
 }) => {
   const tableStoreRef = useRef<ApTableStore>(
     createApTableStore(table, fields, records),
   );
+  useEffect(() => {
+    onStore?.(tableStoreRef.current);
+  }, [onStore]);
   return (
     <TableContext.Provider value={tableStoreRef.current}>
       {children}
@@ -67,6 +72,10 @@ export function ApTableStateProvider({
   const tableId = useParams().tableId;
   const queryClient = useQueryClient();
   const [refreshKey, setRefreshKey] = useState(0);
+  const storeRef = useRef<ApTableStore | null>(null);
+  const onStore = useCallback((store: ApTableStore) => {
+    storeRef.current = store;
+  }, []);
   const {
     data: table,
     isLoading: isTableLoading,
@@ -120,7 +129,7 @@ export function ApTableStateProvider({
     tableId,
     records: records?.data,
     fields,
-    rebuild: () => setRefreshKey((key) => key + 1),
+    storeRef,
   });
 
   // rebuilds the table store from freshly fetched server state without
@@ -180,6 +189,7 @@ export function ApTableStateProvider({
           table={table}
           fields={fields}
           records={records.data}
+          onStore={onStore}
         >
           {children}
         </TableStateProviderWithTable>
@@ -192,16 +202,23 @@ function useFollowTableUpdates({
   tableId,
   records,
   fields,
-  rebuild,
+  storeRef,
 }: {
   tableId: string | undefined;
   records: PopulatedRecord[] | undefined;
   fields: Field[] | undefined;
-  rebuild: () => void;
+  storeRef: React.RefObject<ApTableStore | null>;
 }) {
   const queryClient = useQueryClient();
   const seen = useRef<PopulatedRecord[] | null>(null);
   const seenFields = useRef<Field[] | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const generation = useRef(0);
+  const cancel = useCallback(() => {
+    generation.current += 1;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  }, []);
   useEffect(() => {
     if (seen.current === null && records) seen.current = records;
   }, [records]);
@@ -211,50 +228,93 @@ function useFollowTableUpdates({
   useEffect(() => {
     seen.current = null;
     seenFields.current = null;
-  }, [tableId]);
+    return cancel;
+  }, [tableId, cancel]);
 
-  useOnFollowUpdate(tableId ? { kind: 'table', id: tableId } : null, () => {
-    const apply = () => {
-      const fresh = queryClient.getQueryData<SeekPage<PopulatedRecord>>([
-        'records',
-        tableId,
-      ])?.data;
-      if (!fresh) return;
-      const freshFields =
-        queryClient.getQueryData<Field[]>(['fields', tableId]) ?? [];
-      const before = new Map((seen.current ?? []).map((r) => [r.id, r]));
-      const fieldsBefore = new Set(
-        (seenFields.current ?? freshFields).map((field) => field.id),
-      );
-      const freshIds = new Set(fresh.map((record) => record.id));
-      const removed = [...before.keys()].filter((id) => !freshIds.has(id));
-      seen.current = fresh;
-      seenFields.current = freshFields;
-      const lightUp = () => {
-        rebuild();
-        followAlong.flash([
-          ...freshFields
-            .filter((field) => !fieldsBefore.has(field.id))
-            .map((field) => `table-field:${field.id}`),
-          ...changedCellKeys({ fresh, before }),
-        ]);
-      };
-      if (removed.length === 0 || aiHighlight.prefersReducedMotion()) {
-        lightUp();
-        return;
+  const later = ({ run, ms }: { run: () => void; ms: number }) => {
+    const current = generation.current;
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      if (generation.current === current) run();
+    }, ms);
+  };
+
+  const apply = () => {
+    const fresh = queryClient.getQueryData<SeekPage<PopulatedRecord>>([
+      'records',
+      tableId,
+    ])?.data;
+    if (!fresh) return;
+    const freshFields =
+      queryClient.getQueryData<Field[]>(['fields', tableId]) ?? [];
+    const before = new Map((seen.current ?? []).map((r) => [r.id, r]));
+    const fieldsBefore = new Set(
+      (seenFields.current ?? freshFields).map((field) => field.id),
+    );
+    const freshIds = new Set(fresh.map((record) => record.id));
+    const removed = [...before.keys()].filter((id) => !freshIds.has(id));
+    seen.current = fresh;
+    seenFields.current = freshFields;
+    const freshTable = queryClient.getQueryData<Table>(['table', tableId]);
+    const lightUp = () => {
+      const store = storeRef.current;
+      if (store) {
+        store.getState().syncFromServer({
+          table: freshTable ?? store.getState().table,
+          fields: freshFields,
+          records: fresh,
+        });
       }
-      followAlong.flash(removed.map((id) => `table-row-deleted:${id}`));
-      setTimeout(lightUp, DELETED_ROW_FADE_MS);
+      followAlong.flash([
+        ...freshFields
+          .filter((field) => !fieldsBefore.has(field.id))
+          .map((field) => `table-field:${field.id}`),
+        ...changedCellKeys({ fresh, before }),
+      ]);
     };
-    if (!isEditingCell()) {
-      apply();
+    if (removed.length === 0 || aiHighlight.prefersReducedMotion()) {
+      lightUp();
       return;
     }
-    const timer = setInterval(() => {
-      if (isEditingCell()) return;
-      clearInterval(timer);
-      apply();
-    }, 400);
+    followAlong.flash(removed.map((id) => `table-row-deleted:${id}`));
+    later({ run: lightUp, ms: DELETED_ROW_FADE_MS });
+  };
+
+  const refetchThenApply = () => {
+    const current = generation.current;
+    tryCatch(() =>
+      Promise.all(
+        ['records', 'fields', 'table'].map((name) =>
+          queryClient.refetchQueries({ queryKey: [name, tableId] }),
+        ),
+      ),
+    )
+      .then(() => {
+        if (generation.current === current) apply();
+      })
+      .catch(() => undefined);
+  };
+
+  const applyWhenIdle = ({ waited }: { waited: number }) => {
+    const saving = storeRef.current?.getState().isSaving ?? false;
+    const busy = isEditingCell() || (saving && waited < MAX_SAVE_WAIT_MS);
+    if (busy) {
+      later({
+        run: () => applyWhenIdle({ waited: waited + RECHECK_MS }),
+        ms: RECHECK_MS,
+      });
+      return;
+    }
+    if (waited > 0) refetchThenApply();
+    else apply();
+  };
+
+  useOnFollowUpdate({
+    resource: tableId ? { kind: 'table', id: tableId } : null,
+    handler: () => {
+      cancel();
+      applyWhenIdle({ waited: 0 });
+    },
   });
 }
 
@@ -344,4 +404,6 @@ function TableLockProvider({
 
 type TableLockContextValue = ReturnType<typeof useResourceLock>;
 
-const DELETED_ROW_FADE_MS = 600;
+const DELETED_ROW_FADE_MS = 1200;
+const RECHECK_MS = 400;
+const MAX_SAVE_WAIT_MS = 15_000;

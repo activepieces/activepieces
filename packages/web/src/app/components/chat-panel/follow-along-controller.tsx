@@ -1,6 +1,9 @@
+import { tryCatch } from '@activepieces/core-utils';
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
@@ -70,10 +73,31 @@ export function FollowAlongController() {
     const leaveIfDeleted = (change: FollowChange) => {
       if (change.op !== 'delete' || !change.navigable || embedded) return;
       if (!resourceRegistry.isOn(pathnameRef.current, change.resource)) return;
-      goTo({
-        route: resourceRegistry.parentRoute(change.resource),
-        replace: true,
-      });
+      const cached = queryClient.getQueryData([
+        'chat-resource-name',
+        change.resource.kind,
+        change.resource.id,
+      ]);
+      const name =
+        change.resource.name ??
+        (typeof cached === 'string' ? cached : null) ??
+        resourceRegistry.kindInfo(change.resource.kind).label;
+      toast(t('{name} was deleted by chat.', { name }));
+      const leave = () => {
+        if (!resourceRegistry.isOn(pathnameRef.current, change.resource)) {
+          return true;
+        }
+        if (isTypingInPage() || overlayIsOpen()) return false;
+        goTo({
+          route: resourceRegistry.parentRoute(change.resource),
+          replace: true,
+        });
+        return true;
+      };
+      if (leave()) return;
+      const timer = setInterval(() => {
+        if (leave()) clearInterval(timer);
+      }, RECHECK_MS);
     };
     return followAlong.onToolDone((change) => {
       leaveIfDeleted(change);
@@ -86,10 +110,11 @@ export function FollowAlongController() {
         if (change.op === 'view') followAlong.view(change.resource);
       }
       const keys = resourceRegistry.queryKeys(change.resource);
-      Promise.all(
-        keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+      tryCatch(() =>
+        Promise.all(
+          keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+        ),
       )
-        .catch(() => undefined)
         .then(() => afterSettle(() => followAlong.publishUpdated(change)))
         .catch(() => undefined);
     });
@@ -100,6 +125,10 @@ export function FollowAlongController() {
   }, [conversationId]);
 
   useEffect(() => {
+    if (phase === 'idle') followAlong.offer(null);
+  }, [phase]);
+
+  useEffect(() => {
     const onPage = (event: Event) => {
       const target = event.target;
       if (!(target instanceof Element) || target.closest('[data-chat-root]')) {
@@ -107,11 +136,19 @@ export function FollowAlongController() {
       }
       if (target.closest(`#${CARD_ID}`)) followAlong.touchPage();
     };
-    window.addEventListener('pointerdown', onPage, true);
-    window.addEventListener('wheel', onPage, { capture: true, passive: true });
+    const events: (keyof WindowEventMap)[] = [
+      'pointerdown',
+      'wheel',
+      'keydown',
+      'focusin',
+    ];
+    events.forEach((name) =>
+      window.addEventListener(name, onPage, { capture: true, passive: true }),
+    );
     return () => {
-      window.removeEventListener('pointerdown', onPage, true);
-      window.removeEventListener('wheel', onPage, true);
+      events.forEach((name) =>
+        window.removeEventListener(name, onPage, { capture: true }),
+      );
     };
   }, []);
 
@@ -123,19 +160,14 @@ export function FollowAlongController() {
     if (pathChanged) selfNavRef.current = null;
     const viewAsked = state.goRequests !== seenGoRequests.current;
     seenGoRequests.current = state.goRequests;
+    const userNavigated = pathChanged && !selfNavigated && !viewAsked;
+    if (userNavigated) followAlong.offer(null);
     const target = state.target;
     if (!target || !state.following) return;
     const onTarget = resourceRegistry.isOn(pathname, target);
 
-    if (
-      pathChanged &&
-      !selfNavigated &&
-      !onTarget &&
-      !viewAsked &&
-      state.phase === 'editing'
-    ) {
+    if (userNavigated && !onTarget && state.phase === 'editing') {
       followAlong.stopFollowing();
-      followAlong.offer(null);
       return;
     }
     if (onTarget) {
@@ -156,11 +188,22 @@ export function FollowAlongController() {
           resourceRegistry.keyOf(target)
           ? state.offer.runId
           : null;
+      if (!resourceRegistry.isInCurrentProject(target)) {
+        followAlong.offer({ resource: target, kind: 'project', runId });
+        return;
+      }
+      if (isTypingInPage() || overlayIsOpen()) {
+        followAlong.offer({ resource: target, kind: 'ready', runId });
+        return;
+      }
       openTarget.current({ resource: target, runId: offered });
       return;
     }
     if (state.phase !== 'editing' || embedded) return;
-    if (!resourceRegistry.isInCurrentProject(target)) return;
+    if (!resourceRegistry.isInCurrentProject(target)) {
+      followAlong.offer({ resource: target, kind: 'project', runId });
+      return;
+    }
     if (!fullPage && state.pageTouched) {
       followAlong.offer({ resource: target, kind: 'switch', runId });
       return;
@@ -209,11 +252,25 @@ export function FollowAlongController() {
     const onInput = () => {
       lastInput = Date.now();
     };
-    const events = ['keydown', 'pointerdown', 'wheel', 'input'] as const;
+    const events: (keyof WindowEventMap)[] = [
+      'keydown',
+      'pointerdown',
+      'wheel',
+      'input',
+    ];
     events.forEach((name) =>
       window.addEventListener(name, onInput, { capture: true, passive: true }),
     );
     const timer = setInterval(() => {
+      const latest = useFollowAlong.getState();
+      if (
+        latest.offer !== offer ||
+        !latest.following ||
+        latest.phase === 'idle'
+      ) {
+        clearInterval(timer);
+        return;
+      }
       if (
         Date.now() - lastInput < IDLE_MS ||
         !chatAtBottom() ||
@@ -266,7 +323,14 @@ function isTypingInPage(): boolean {
 }
 
 function overlayIsOpen(): boolean {
-  return document.querySelector('[role="dialog"], [role="menu"]') !== null;
+  return [...document.querySelectorAll(MODAL_LAYERS)].some(
+    (layer) =>
+      !layer.closest('[data-chat-root]') &&
+      layer.getAttribute('data-state') !== 'closed' &&
+      (layer.getAttribute('role') !== 'dialog' ||
+        layer.getAttribute('aria-modal') === 'true' ||
+        !layer.closest('[data-radix-popper-content-wrapper]')),
+  );
 }
 
 function composer(): HTMLElement | null {
@@ -304,3 +368,4 @@ const IDLE_MS = 1500;
 const GLOW_AFTER_SETTLE_MS = 120;
 const AT_BOTTOM_GAP = 24;
 const CARD_ID = 'dashboard-content-container';
+const MODAL_LAYERS = '[role="dialog"], [role="alertdialog"], [role="menu"]';

@@ -11,24 +11,37 @@ import {
   resourceRegistry,
 } from '../resources/registry';
 
-export const useFollowAlong = create<FollowState>(() => ({
-  target: null,
-  phase: 'idle',
-  following: true,
-  goRequests: 0,
-  flashes: {},
-  runs: {},
-  offer: null,
-  pageTouched: false,
-}));
+export function useOnFollowUpdate({
+  resource,
+  handler,
+}: {
+  resource: Pick<ResourceRef, 'kind' | 'id'> | null;
+  handler: (change: FollowChange) => void;
+}): void {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+  const key = resource ? resourceRegistry.keyOf(resource) : null;
+  useEffect(() => {
+    if (!key) return;
+    const listener = (change: FollowChange) => {
+      if (resourceRegistry.keyOf(change.resource) === key) {
+        handlerRef.current(change);
+      }
+    };
+    updateListeners.add(listener);
+    return () => {
+      updateListeners.delete(listener);
+    };
+  }, [key]);
+}
 
-const set = useFollowAlong.setState;
-const get = useFollowAlong.getState;
-
-const calls = new Map<string, PendingCall>();
-let doneTimer: ReturnType<typeof setTimeout> | null = null;
-
-function onChunks(chunks: readonly unknown[], ctx: RunContext): void {
+function onChunks({
+  chunks,
+  ctx,
+}: {
+  chunks: readonly unknown[];
+  ctx: RunContext;
+}): void {
   ensureRun(ctx);
   for (const chunk of chunks) {
     if (!isObject(chunk) || typeof chunk.toolCallId !== 'string') continue;
@@ -77,16 +90,24 @@ function onToolOutput({
     highlights: resolved.highlights,
     toolName: call.toolName,
     toolCallId: call.toolCallId,
-    input: call.input,
-    output,
     conversationId: ctx.conversationId,
     runId: ctx.runId,
     navigable: mayNavigate(ctx),
   };
-  recordChange(change);
+  recordChange({
+    runId: ctx.runId,
+    change: {
+      toolCallId: call.toolCallId,
+      toolName: call.toolName,
+      input: call.input,
+      output,
+      highlights: resolved.highlights,
+      changed: resourceRegistry.isChange(resolved.outcome),
+    },
+  });
   if (!resourceRegistry.isChange(change.outcome)) return;
   if (change.op === 'delete') {
-    clearTargetIf(change.resource);
+    forget(change.resource);
   } else if (
     change.navigable &&
     resourceRegistry.autoOpens(change.resource.kind)
@@ -106,30 +127,47 @@ function mayNavigate(
 }
 
 function ensureRun(ctx: RunContext): void {
-  const existing = get().runs[ctx.runId];
+  const runs = useFollowAlong.getState().runs;
+  const existing = runs[ctx.runId];
   if (existing && !existing.ended) return;
-  set({
-    runs: {
-      ...get().runs,
+  useFollowAlong.setState({
+    runs: pruneRuns({
+      ...runs,
       [ctx.runId]: {
         conversationId: ctx.conversationId,
         attach: ctx.attach,
         changes: existing?.changes ?? [],
         ended: false,
       },
-    },
+    }),
   });
 }
 
-function recordChange(change: FollowChange): void {
-  const run = get().runs[change.runId];
+function recordChange({
+  runId,
+  change,
+}: {
+  runId: string;
+  change: RunChange;
+}): void {
+  const runs = useFollowAlong.getState().runs;
+  const run = runs[runId];
   if (!run) return;
-  set({
-    runs: {
-      ...get().runs,
-      [change.runId]: { ...run, changes: [...run.changes, change] },
-    },
+  useFollowAlong.setState({
+    runs: { ...runs, [runId]: { ...run, changes: [...run.changes, change] } },
   });
+}
+
+function pruneRuns(runs: Record<string, FollowRun>): Record<string, FollowRun> {
+  const current = useChatPanel.getState().conversationId;
+  const entries = Object.entries(runs);
+  const prunable = entries.filter(
+    ([, run]) => run.ended && run.conversationId !== current,
+  );
+  const dropCount = prunable.length - KEPT_ENDED_RUNS;
+  if (dropCount <= 0) return runs;
+  const dropped = new Set(prunable.slice(0, dropCount).map(([id]) => id));
+  return Object.fromEntries(entries.filter(([id]) => !dropped.has(id)));
 }
 
 function begin(): void {
@@ -137,56 +175,57 @@ function begin(): void {
     clearTimeout(doneTimer);
     doneTimer = null;
   }
-  if (get().phase !== 'editing') {
-    set({ phase: 'editing', following: true, pageTouched: false });
+  if (useFollowAlong.getState().phase !== 'editing') {
+    useFollowAlong.setState({
+      phase: 'editing',
+      following: true,
+      pageTouched: false,
+    });
   }
 }
 
 function offer(next: FollowOffer | null): void {
-  const current = get().offer;
+  const current = useFollowAlong.getState().offer;
   if (
     current === next ||
     (current &&
       next &&
       current.kind === next.kind &&
-      resourceRegistry.keyOf(current.resource) ===
-        resourceRegistry.keyOf(next.resource))
+      sameResource({ a: current.resource, b: next.resource }))
   ) {
     return;
   }
-  set({ offer: next });
+  useFollowAlong.setState({ offer: next });
 }
 
 function touchPage(): void {
-  if (get().phase === 'editing' && !get().pageTouched) {
-    set({ pageTouched: true });
+  const state = useFollowAlong.getState();
+  if (state.phase === 'editing' && !state.pageTouched) {
+    useFollowAlong.setState({ pageTouched: true });
   }
 }
 
 function setTarget(resource: ResourceRef): void {
-  const current = get().target;
-  if (
-    current &&
-    resourceRegistry.keyOf(current) === resourceRegistry.keyOf(resource)
-  ) {
+  const current = useFollowAlong.getState().target;
+  if (current && sameResource({ a: current, b: resource })) {
     const name = resource.name ?? current.name;
     const projectId = resource.projectId ?? current.projectId;
     if (name !== current.name || projectId !== current.projectId) {
-      set({ target: { ...current, name, projectId } });
+      useFollowAlong.setState({ target: { ...current, name, projectId } });
     }
     return;
   }
-  set({ target: resource });
+  useFollowAlong.setState({ target: resource });
 }
 
-function clearTargetIf(resource: ResourceRef): void {
-  const current = get().target;
-  if (
-    current &&
-    resourceRegistry.keyOf(current) === resourceRegistry.keyOf(resource)
-  ) {
-    set({ target: null });
+function forget(resource: ResourceRef): void {
+  const { target, offer: current } = useFollowAlong.getState();
+  const patch: Partial<FollowState> = {};
+  if (target && sameResource({ a: target, b: resource })) patch.target = null;
+  if (current && sameResource({ a: current.resource, b: resource })) {
+    patch.offer = null;
   }
+  if (Object.keys(patch).length > 0) useFollowAlong.setState(patch);
 }
 
 function endRun({
@@ -199,10 +238,11 @@ function endRun({
   [...calls].forEach(([toolCallId, call]) => {
     if (call.runId === runId) calls.delete(toolCallId);
   });
-  const run = get().runs[runId];
+  const state = useFollowAlong.getState();
+  const run = state.runs[runId];
   if (!run || run.conversationId !== conversationId || run.ended) return;
-  const runs = { ...get().runs, [runId]: { ...run, ended: true } };
-  set({ runs });
+  const runs = pruneRuns({ ...state.runs, [runId]: { ...run, ended: true } });
+  useFollowAlong.setState({ runs });
   const navigableLive = Object.values(runs).some(
     (other) =>
       !other.ended &&
@@ -211,51 +251,47 @@ function endRun({
         attach: other.attach,
       }),
   );
-  if (navigableLive || get().phase !== 'editing') return;
-  set({ phase: 'done' });
+  if (navigableLive || state.phase !== 'editing') return;
+  useFollowAlong.setState({ phase: 'done' });
   doneTimer = setTimeout(() => {
     doneTimer = null;
-    if (get().phase === 'done') set({ phase: 'idle' });
+    if (useFollowAlong.getState().phase === 'done') {
+      useFollowAlong.setState({ phase: 'idle' });
+    }
   }, DONE_VISIBLE_MS);
 }
 
 function stopFollowing(): void {
-  set({ following: false });
+  useFollowAlong.setState({ following: false });
 }
 
 function view(resource: ResourceRef): void {
-  const current = get().target;
-  const same =
-    current &&
-    resourceRegistry.keyOf(current) === resourceRegistry.keyOf(resource);
-  set({
-    target: same ? current : resource,
+  const state = useFollowAlong.getState();
+  const same = state.target && sameResource({ a: state.target, b: resource });
+  useFollowAlong.setState({
+    target: same ? state.target : resource,
     following: true,
-    goRequests: get().goRequests + 1,
+    goRequests: state.goRequests + 1,
   });
 }
 
 function flash(keys: string[]): void {
   if (keys.length === 0) return;
   const token = Date.now() + Math.random();
-  const next = { ...get().flashes };
-  keys.forEach((key) => (next[key] = token));
-  set({ flashes: next });
+  const lit = Object.fromEntries(keys.map((key) => [key, token]));
+  useFollowAlong.setState({
+    flashes: { ...useFollowAlong.getState().flashes, ...lit },
+  });
   setTimeout(() => {
-    const flashes = { ...get().flashes };
-    let changed = false;
-    keys.forEach((key) => {
-      if (flashes[key] === token) {
-        delete flashes[key];
-        changed = true;
-      }
-    });
-    if (changed) set({ flashes });
+    const flashes = useFollowAlong.getState().flashes;
+    const kept = Object.entries(flashes).filter(
+      ([key, value]) => !(key in lit && value === token),
+    );
+    if (kept.length !== Object.keys(flashes).length) {
+      useFollowAlong.setState({ flashes: Object.fromEntries(kept) });
+    }
   }, FLASH_MS);
 }
-
-const toolDoneListeners = new Set<(change: FollowChange) => void>();
-const updateListeners = new Set<(change: FollowChange) => void>();
 
 function onToolDone(listener: (change: FollowChange) => void): () => void {
   toolDoneListeners.add(listener);
@@ -266,30 +302,35 @@ function publishUpdated(change: FollowChange): void {
   updateListeners.forEach((listener) => listener(change));
 }
 
-export function useOnFollowUpdate(
-  resource: Pick<ResourceRef, 'kind' | 'id'> | null,
-  handler: (change: FollowChange) => void,
-): void {
-  const handlerRef = useRef(handler);
-  handlerRef.current = handler;
-  const key = resource ? resourceRegistry.keyOf(resource) : null;
-  useEffect(() => {
-    if (!key) return;
-    const listener = (change: FollowChange) => {
-      if (resourceRegistry.keyOf(change.resource) === key) {
-        handlerRef.current(change);
-      }
-    };
-    updateListeners.add(listener);
-    return () => {
-      updateListeners.delete(listener);
-    };
-  }, [key]);
+function sameResource({
+  a,
+  b,
+}: {
+  a: Pick<ResourceRef, 'kind' | 'id'>;
+  b: Pick<ResourceRef, 'kind' | 'id'>;
+}): boolean {
+  return resourceRegistry.keyOf(a) === resourceRegistry.keyOf(b);
 }
 
-export function useFollowFlash(key: string): boolean {
-  return useFollowAlong((state) => key in state.flashes);
-}
+const calls = new Map<string, PendingCall>();
+const toolDoneListeners = new Set<(change: FollowChange) => void>();
+const updateListeners = new Set<(change: FollowChange) => void>();
+let doneTimer: ReturnType<typeof setTimeout> | null = null;
+
+const DONE_VISIBLE_MS = 2600;
+const FLASH_MS = 2400;
+const KEPT_ENDED_RUNS = 5;
+
+export const useFollowAlong = create<FollowState>(() => ({
+  target: null,
+  phase: 'idle',
+  following: true,
+  goRequests: 0,
+  flashes: {},
+  runs: {},
+  offer: null,
+  pageTouched: false,
+}));
 
 export const followAlong = {
   onChunks,
@@ -302,9 +343,6 @@ export const followAlong = {
   onToolDone,
   publishUpdated,
 };
-
-const DONE_VISIBLE_MS = 2600;
-const FLASH_MS = 2400;
 
 export type RunContext = {
   conversationId: string;
@@ -319,16 +357,23 @@ export type FollowChange = {
   highlights: string[];
   toolName: string;
   toolCallId: string;
-  input: unknown;
-  output: unknown;
   conversationId: string;
   runId: string;
   navigable: boolean;
 };
 
+export type RunChange = {
+  toolCallId: string;
+  toolName: string;
+  input: unknown;
+  output: unknown;
+  highlights: string[];
+  changed: boolean;
+};
+
 export type FollowOffer = {
   resource: ResourceRef;
-  kind: 'ready' | 'switch';
+  kind: 'ready' | 'switch' | 'project';
   runId: string | null;
 };
 
@@ -342,7 +387,7 @@ type PendingCall = {
 type FollowRun = {
   conversationId: string;
   attach: RunContext['attach'];
-  changes: FollowChange[];
+  changes: RunChange[];
   ended: boolean;
 };
 

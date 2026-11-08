@@ -280,7 +280,7 @@ export function useStreamingReducer({
               attach: sentRunId ? 'sent' : 'resumed',
             };
           }
-          followAlong.onChunks(chunks, followRunRef.current);
+          followAlong.onChunks({ chunks, ctx: followRunRef.current });
           for (const chunk of chunks) {
             chunkBufferRef.current.push(chunk as UIMessageChunk);
           }

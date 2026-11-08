@@ -17,7 +17,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,10 @@ import {
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { DOCK_BREAKPOINT } from '@/features/workspace/lib/chat-layout';
-import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
+import {
+  chatTransitions,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -72,11 +75,10 @@ export function ChatEmptyState({
 }
 
 export function SetupRequiredState() {
-  const navigate = useNavigate();
   const isAdmin = useIsPlatformAdmin();
 
   const connect = () => {
-    navigate('/platform/ai');
+    chatTransitions.openBeside({ route: '/platform/ai', push: true });
     if (window.innerWidth >= DOCK_BREAKPOINT) {
       useChatPanel.getState().setOpen(true);
     }

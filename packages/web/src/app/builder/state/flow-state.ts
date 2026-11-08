@@ -50,6 +50,11 @@ export type FlowState = {
   ) => void;
   savePendingEdits: () => Promise<void>;
   flushPendingEdits: () => void;
+  parkPendingEdit: (stepName: string) => void;
+  hasParkedEdit: (stepName: string) => boolean;
+  resumeParkedEdit: (stepName: string) => void;
+  saveParkedEdit: (stepName: string) => Promise<void>;
+  dropParkedEdit: (stepName: string) => void;
   setFlow: (flow: PopulatedFlow) => void;
   applyDraftRefresh: (flow: PopulatedFlow) => void;
   refreshDraft: () => Promise<boolean>;
@@ -123,6 +128,7 @@ export const createFlowState = (
     flowUpdatesDebounce.flush();
     addToFlowUpdatesQueue(task);
   };
+  const parkedEdits = new Map<string, () => void>();
   let failedSaves = 0;
   let failedSavesShownByRefresh = 0;
   const refreshDraft = coalesceRuns(async () => {
@@ -327,6 +333,7 @@ export const createFlowState = (
           }
           case FlowOperationType.UPDATE_TRIGGER:
           case FlowOperationType.UPDATE_ACTION: {
+            parkedEdits.delete(operation.request.name);
             flowUpdatesDebounce.schedule({
               key: operation.request.name,
               run: () => addToFlowUpdatesQueue(updateRequest),
@@ -374,6 +381,34 @@ export const createFlowState = (
     },
     flushPendingEdits: () => {
       flowUpdatesDebounce.flush();
+    },
+    parkPendingEdit: (stepName: string) => {
+      const run = flowUpdatesDebounce.take(stepName);
+      if (run) {
+        parkedEdits.set(stepName, run);
+      }
+    },
+    hasParkedEdit: (stepName: string) => parkedEdits.has(stepName),
+    resumeParkedEdit: (stepName: string) => {
+      const run = parkedEdits.get(stepName);
+      if (!run) {
+        return;
+      }
+      parkedEdits.delete(stepName);
+      flowUpdatesDebounce.schedule({ key: stepName, run });
+    },
+    saveParkedEdit: async (stepName: string) => {
+      const run = parkedEdits.get(stepName);
+      if (!run) {
+        return;
+      }
+      parkedEdits.delete(stepName);
+      run();
+      await flowUpdatesQueue.drain();
+      await refreshDraft();
+    },
+    dropParkedEdit: (stepName: string) => {
+      parkedEdits.delete(stepName);
     },
     refreshDraft,
     refreshDraftAfterFailedSave: async () => {

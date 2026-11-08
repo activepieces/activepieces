@@ -15,7 +15,7 @@ import {
   Permission,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ExternalLinkIcon, Link2OffIcon, PlusIcon } from 'lucide-react';
+import { Link2OffIcon, PlusIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Link } from 'react-router-dom';
@@ -40,6 +40,7 @@ import {
   agentsQueries,
   useAgentsAvailable,
 } from '@/features/agents/hooks/agents-hooks';
+import { useOpenInApp } from '@/features/workspace/lib/use-open-in-app';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,7 @@ export const AgentLink = ({ disabled, pieceVersion }: AgentLinkProps) => {
   const { checkAccess } = useAuthorization();
   const mayReadAgents = checkAccess(Permission.READ_AGENT);
   const mayWriteAgents = checkAccess(Permission.WRITE_AGENT);
+  const { onLinkClick } = useOpenInApp();
 
   const { data, isLoading, isError, refetch } = agentsQueries.useAgents({
     projectId,
@@ -70,6 +72,9 @@ export const AgentLink = ({ disabled, pieceVersion }: AgentLinkProps) => {
     form.watch(`settings.input.${AgentPieceProps.AGENT_ID}`),
   );
   const linked = agents.find((agent) => agent.externalId === linkedExternalId);
+  const editAgentRoute = linked
+    ? authenticationSession.appendProjectRoutePrefix(`/agents/${linked.id}`)
+    : '';
   const { data: linkedAgent } = agentsQueries.useAgent({
     id: linked?.id ?? '',
     enabled: !isNil(linked),
@@ -196,7 +201,10 @@ export const AgentLink = ({ disabled, pieceVersion }: AgentLinkProps) => {
             asChild={mayWriteAgents}
           >
             {mayWriteAgents ? (
-              <Link to="/agents" target="_blank" rel="noreferrer">
+              <Link
+                to="/agents"
+                onClick={(event) => onLinkClick({ event, route: '/agents' })}
+              >
                 <PlusIcon className="size-4" />
                 {t('Create agent')}
               </Link>
@@ -252,12 +260,12 @@ export const AgentLink = ({ disabled, pieceVersion }: AgentLinkProps) => {
             {!isNil(linked) && (
               <Button variant="outline" size="sm" asChild>
                 <Link
-                  to={`/agents/${linked.id}`}
-                  target="_blank"
-                  rel="noreferrer"
+                  to={editAgentRoute}
+                  onClick={(event) =>
+                    onLinkClick({ event, route: editAgentRoute })
+                  }
                 >
                   {t('Edit agent')}
-                  <ExternalLinkIcon className="size-3.5" />
                 </Link>
               </Button>
             )}

@@ -70,7 +70,9 @@ export function ChatInput({
     isNil(draftKey) ? '' : composerUtils.readDraft(draftKey),
   );
   const [focused, setFocused] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>(() =>
+    isNil(draftKey) ? [] : attachmentsByDraft.get(draftKey) ?? [],
+  );
   const [interimText, setInterimText] = useState('');
   const [queued, setQueued] = useState<QueuedMessage | null>(null);
   const [flaggedText, setFlaggedText] = useState<string | null>(null);
@@ -79,6 +81,8 @@ export function ChatInput({
   valueRef.current = value;
   const queuedRef = useRef(queued);
   queuedRef.current = queued;
+  const attachedFilesRef = useRef(attachedFiles);
+  attachedFilesRef.current = attachedFiles;
   const draftKeyRef = useRef(draftKey);
   const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sentFromNewChatRef = useRef(false);
@@ -152,17 +156,18 @@ export function ChatInput({
       return;
     }
     if (!isNil(previous)) {
-      composerUtils.writeDraft({
+      stashComposer({
         key: previous,
-        text: composerUtils.joinQueued({
-          queued: queuedRef.current?.text ?? '',
-          next: valueRef.current,
-        }),
+        text: valueRef.current,
+        files: attachedFilesRef.current,
+        queued: queuedRef.current,
       });
     }
     setQueued(null);
     setFlaggedText(null);
-    setAttachedFiles([]);
+    setAttachedFiles(
+      isNil(draftKey) ? [] : attachmentsByDraft.get(draftKey) ?? [],
+    );
     const next = isNil(draftKey) ? '' : composerUtils.readDraft(draftKey);
     setValue(next);
     reportInput(next);
@@ -171,6 +176,15 @@ export function ChatInput({
   useEffect(
     () => () => {
       if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+      draftTimerRef.current = null;
+      const key = draftKeyRef.current;
+      if (isNil(key)) return;
+      stashComposer({
+        key,
+        text: valueRef.current,
+        files: attachedFilesRef.current,
+        queued: queuedRef.current,
+      });
     },
     [],
   );
@@ -648,7 +662,28 @@ function SecretWarning({
   );
 }
 
+function stashComposer({
+  key,
+  text,
+  files,
+  queued,
+}: {
+  key: string;
+  text: string;
+  files: File[];
+  queued: QueuedMessage | null;
+}): void {
+  composerUtils.writeDraft({
+    key,
+    text: composerUtils.joinQueued({ queued: queued?.text ?? '', next: text }),
+  });
+  const kept = [...(queued?.files ?? []), ...files];
+  if (kept.length > 0) attachmentsByDraft.set(key, kept);
+  else attachmentsByDraft.delete(key);
+}
+
 const DRAFT_DEBOUNCE_MS = 300;
+const attachmentsByDraft = new Map<string, File[]>();
 
 type QueuedMessage = { text: string; files: File[] };
 type Notice = 'secret' | 'queued' | 'banner' | 'none';

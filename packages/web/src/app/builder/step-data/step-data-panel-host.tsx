@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
+import { t } from 'i18next';
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -81,7 +82,8 @@ const StepDataPanelHost = ({
         mode === 'drawer' && 'rounded-t-xl shadow-lg border-b-0 border-x-0',
         mode === 'split' && 'rounded-t-xl border-b-0',
       )}
-      role={mode === 'drawer' ? 'dialog' : undefined}
+      role={mode === 'drawer' ? 'region' : undefined}
+      aria-label={mode === 'drawer' ? t('Step data') : undefined}
     >
       {showGenerateSampleData && projectId && (
         <TestStepContainer

@@ -47,6 +47,7 @@ import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ChangesSummary, changesAnnouncer } from './changes-summary';
+import { ChatAppLinks } from './chat-app-links';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
 import { ExpiredGateCard, hasExpiredGate } from './expired-gate-card';
@@ -74,7 +75,17 @@ const ACTION_BUTTON_CLASS =
 
 const EMPTY_BUILD_IDS: ReadonlySet<string> = new Set();
 
-export const AssistantMessage = memo(function AssistantMessage({
+export const AssistantMessage = memo(function AssistantMessage(
+  props: AssistantMessageProps,
+) {
+  return (
+    <ChatAppLinks>
+      <AssistantMessageContent {...props} />
+    </ChatAppLinks>
+  );
+});
+
+function AssistantMessageContent({
   message,
   isStreaming,
   isLastMessage = false,
@@ -83,16 +94,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   isResumed = false,
   conversationId,
   messageIndex,
-}: {
-  message: ChatUIMessage;
-  isStreaming: boolean;
-  isLastMessage?: boolean;
-  onSendPrompt?: (text: string) => void;
-  claimedBuildIds?: ReadonlySet<string>;
-  isResumed?: boolean;
-  conversationId?: string | null;
-  messageIndex: number;
-}) {
+}: AssistantMessageProps) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
 
@@ -261,7 +263,7 @@ export const AssistantMessage = memo(function AssistantMessage({
       </Message>
     </motion.div>
   );
-});
+}
 
 function MessageBlocks({
   blocks,
@@ -777,3 +779,14 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
     </motion.div>
   );
 }
+
+type AssistantMessageProps = {
+  message: ChatUIMessage;
+  isStreaming: boolean;
+  isLastMessage?: boolean;
+  onSendPrompt?: (text: string) => void;
+  claimedBuildIds?: ReadonlySet<string>;
+  isResumed?: boolean;
+  conversationId?: string | null;
+  messageIndex: number;
+};
