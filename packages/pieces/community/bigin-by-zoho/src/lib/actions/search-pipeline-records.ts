@@ -1,3 +1,5 @@
+import { escapeCriteriaValue } from '../common/helpers';
+import { biginOutputSchemas } from '../common/output-schemas';
 import { biginAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { biginApiService } from '../common/request';
@@ -8,7 +10,8 @@ export const searchPipelineRecord = createAction({
   classification: 'SEARCH',
   displayName: 'Search Pipeline Record',
   description: 'Searches deals by name via criteria or word',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: biginOutputSchemas.legacyDealSearch,
   aiMetadata: { description: 'Searches pipeline records (deals) in Bigin CRM and returns matches. Choose between Criteria mode (matches the Deal Name with equals or starts-with) and Word mode (a free-text word search across the module). Use to find a deal by name before referencing or updating it. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     mode: Property.StaticDropdown({
@@ -34,20 +37,18 @@ export const searchPipelineRecord = createAction({
     const { access_token, data } = auth;
     const api_domain = data['api_domain'];
 
-    try {
+    
       const response = await biginApiService.searchRecords(
         access_token,
         api_domain,
         'Pipelines',
-        mode === 'word' ? { key: 'word', value: dealName } : { key: 'criteria', value: `(Deal_Name:equals:${dealName})OR(Deal_Name:starts_with:${dealName})` }
+        mode === 'word' ? { key: 'word', value: dealName } : { key: 'criteria', value: `(Deal_Name:equals:${escapeCriteriaValue(dealName)})OR(Deal_Name:starts_with:${escapeCriteriaValue(dealName)})` }
       );
 
       return {
         message: 'Pipeline record search completed successfully',
-        data: response.data,
+        data: response.data ?? [],
       };
-    } catch (error: any) {
-      throw new Error(`Error searching pipeline record: ${error.message}`);
-    }
+    
   },
 });

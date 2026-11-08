@@ -4,7 +4,8 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
-import { makeClient } from '../../common';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
+import { makeClient, toQuickzuDate } from '../../common';
 import {
   DiscountFilterType,
   DiscountMethod,
@@ -15,15 +16,11 @@ import { ProductDiscountInput } from '../../common/types';
 export const createPromoCodeAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_create_promo_code',
+  outputSchema: quickzuOutputSchemas.discount,
   classification: 'WRITE',
   displayName: 'Create Promo/Coupon Code',
   description: 'Creates a new promo code for category or product level.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Creates a customer-redeemable promo/coupon code in a Quickzu store over a date range, with a minimum cart value and a maximum usage limit. The filter type selects scope: specific categories, specific products, or all products. Use to set up a code shoppers enter at checkout (unlike Create Product Discount, which applies automatically). Not idempotent: each call creates a separate promo.',
-    idempotent: false,
-  },
+  audience: 'human',
   props: {
     title: Property.ShortText({
       displayName: 'Promotion / Discount Title',
@@ -63,11 +60,10 @@ export const createPromoCodeAction = createAction({
         if (!filter_type) return {};
 
         const fields: DynamicPropsValue = {};
-        const discountFilterType = filter_type as unknown as DiscountFilterType;
-
+        
         const client = makeClient(auth);
 
-        switch (discountFilterType) {
+        switch (filter_type) {
           case DiscountFilterType.CATEGORIES: {
             const res = await client.listCategories();
             fields['values'] = Property.StaticMultiSelectDropdown({
@@ -139,7 +135,7 @@ export const createPromoCodeAction = createAction({
           }),
       },
     }),
-    value: Property.ShortText({
+    value: Property.Number({
       displayName: 'Discount Value',
       required: true,
     }),
@@ -173,8 +169,8 @@ export const createPromoCodeAction = createAction({
     const input: ProductDiscountInput = {
       discount_method: DiscountMethod.SUB_TOTAL,
       title,
-      start_date,
-      end_date,
+      start_date: toQuickzuDate(start_date),
+      end_date: toQuickzuDate(end_date),
       filter_type,
       max_users_limit,
       minimum_cart_value,
@@ -191,6 +187,6 @@ export const createPromoCodeAction = createAction({
     }
 
     const client = makeClient(context.auth);
-    return await client.createProductDiscount(input);
+    return await client.createDiscount(input);
   },
 });
