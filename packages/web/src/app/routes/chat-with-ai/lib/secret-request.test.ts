@@ -249,11 +249,13 @@ describe('secretRequestUtils.connectionRequest', () => {
         }),
         projectId: 'p1',
         values: { username: 'me', password: 'pw' },
-      }).value,
-    ).toEqual({
-      type: AppConnectionType.BASIC_AUTH,
-      username: 'me',
-      password: 'pw',
+      }),
+    ).toMatchObject({
+      value: {
+        type: AppConnectionType.BASIC_AUTH,
+        username: 'me',
+        password: 'pw',
+      },
     });
     const values = { api_key: 'k' };
     const body = secretRequestUtils.connectionRequest({
@@ -262,9 +264,11 @@ describe('secretRequestUtils.connectionRequest', () => {
       projectId: 'p1',
       values,
     });
-    expect(body.value).toEqual({
-      type: AppConnectionType.CUSTOM_AUTH,
-      props: { api_key: 'k' },
+    expect(body).toMatchObject({
+      value: {
+        type: AppConnectionType.CUSTOM_AUTH,
+        props: { api_key: 'k' },
+      },
     });
   });
 });

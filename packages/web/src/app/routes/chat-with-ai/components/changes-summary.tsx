@@ -83,7 +83,7 @@ function ChangeRow({ line, inCard }: { line: ChangeLine; inCard: boolean }) {
       </div>
       {line.draft && line.state !== 'forbidden' && (
         <div className="flex items-center gap-2 pl-6 text-xs text-gray-11">
-          <span>{t('Draft · not published')}</span>
+          <span>{t('Not published yet')}</span>
           <ResourceLink
             resource={line.ref}
             className="font-medium text-accent-11 underline-offset-2 hover:underline"
@@ -152,13 +152,15 @@ export function describeChange({
   name: string;
 }): string {
   const { facts, state } = line;
-  if (state === 'failed') return t("{name} · didn't apply", { name });
-  if (state === 'declined') return t('{name} · you declined this', { name });
-  if (state === 'forbidden') return t('{name} · no access', { name });
-  if (facts.deleted) return t('{name} · deleted', { name });
+  if (state === 'failed') return t("Couldn't change {name}", { name });
+  if (state === 'declined')
+    return t('You declined the change to {name}', { name });
+  if (state === 'forbidden')
+    return t("You don't have access to {name}", { name });
+  if (facts.deleted) return t('Deleted {name}', { name });
   if (facts.created) return describeCreated({ line, name });
   if (facts.rowsAdded > 0 && facts.rowsAdded < facts.rowsRequested) {
-    return t('{name} · {done} of {total} rows added', {
+    return t('Added {done} of {total} rows to {name}', {
       name,
       done: facts.rowsAdded,
       total: facts.rowsRequested,
@@ -166,10 +168,10 @@ export function describeChange({
   }
   const counted = COUNTED_FACTS.find(({ count }) => count(line) > 0);
   if (counted) return counted.sentence({ name, count: counted.count(line) });
-  if (facts.published) return t('{name} · published', { name });
-  if (facts.statusChanged) return t('{name} · status changed', { name });
-  if (facts.renamed) return t('{name} · renamed', { name });
-  return t('{name} · updated', { name });
+  if (facts.published) return t('Published {name}', { name });
+  if (facts.statusChanged) return t('Changed the status of {name}', { name });
+  if (facts.renamed) return t('Renamed {name}', { name });
+  return t('Updated {name}', { name });
 }
 
 function describeCreated({
@@ -182,21 +184,21 @@ function describeCreated({
   const { facts } = line;
   if (line.ref.kind === 'table') {
     return facts.rowsAdded > 0
-      ? t(
-          '{name} · table created with {count, plural, one {# row} other {# rows}}',
-          { name, count: facts.rowsAdded },
-        )
-      : t('{name} · table created', { name });
+      ? t('Created {name} with {count, plural, one {# row} other {# rows}}', {
+          name,
+          count: facts.rowsAdded,
+        })
+      : t('Created {name}', { name });
   }
   if (line.ref.kind === 'flow') {
     return facts.stepsAdded > 0
-      ? t(
-          '{name} · flow created with {count, plural, one {# step} other {# steps}}',
-          { name, count: facts.stepsAdded },
-        )
-      : t('{name} · flow created', { name });
+      ? t('Created {name} with {count, plural, one {# step} other {# steps}}', {
+          name,
+          count: facts.stepsAdded,
+        })
+      : t('Created {name}', { name });
   }
-  return t('{name} · created', { name });
+  return t('Created {name}', { name });
 }
 
 function Announcement({
@@ -280,48 +282,39 @@ const COUNTED_FACTS: {
   {
     count: (line) => line.facts.rowsAdded,
     sentence: (args) =>
-      t(
-        '{name} · {count, plural, one {# row added} other {# rows added}}',
-        args,
-      ),
+      t('Added {count, plural, one {# row} other {# rows}} to {name}', args),
   },
   {
     count: (line) => line.facts.rowsDeleted,
     sentence: (args) =>
       t(
-        '{name} · {count, plural, one {# row deleted} other {# rows deleted}}',
+        'Deleted {count, plural, one {# row} other {# rows}} from {name}',
         args,
       ),
   },
   {
     count: (line) => line.facts.rowsUpdated,
     sentence: (args) =>
-      t(
-        '{name} · {count, plural, one {# row updated} other {# rows updated}}',
-        args,
-      ),
+      t('Updated {count, plural, one {# row} other {# rows}} in {name}', args),
   },
   {
     count: (line) => line.facts.fieldsChanged,
     sentence: (args) =>
       t(
-        '{name} · {count, plural, one {# field changed} other {# fields changed}}',
+        'Changed {count, plural, one {# field} other {# fields}} in {name}',
         args,
       ),
   },
   {
     count: (line) => line.facts.stepsAdded,
     sentence: (args) =>
-      t(
-        '{name} · {count, plural, one {# step added} other {# steps added}}',
-        args,
-      ),
+      t('Added {count, plural, one {# step} other {# steps}} to {name}', args),
   },
   {
     count: (line) => line.facts.stepsUpdated,
     sentence: (args) =>
       t(
-        '{name} · {count, plural, one {# step updated} other {# steps updated}}',
+        'Updated {count, plural, one {# step} other {# steps}} in {name}',
         args,
       ),
   },
@@ -329,7 +322,7 @@ const COUNTED_FACTS: {
     count: (line) => line.facts.stepsRemoved,
     sentence: (args) =>
       t(
-        '{name} · {count, plural, one {# step removed} other {# steps removed}}',
+        'Removed {count, plural, one {# step} other {# steps}} from {name}',
         args,
       ),
   },
