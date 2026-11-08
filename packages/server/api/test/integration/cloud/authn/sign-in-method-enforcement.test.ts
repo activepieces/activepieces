@@ -178,7 +178,40 @@ describe('Sign-in method enforcement for governed people', () => {
             trackEvents: false,
             provider: UserIdentityProvider.SAML,
             predefinedPlatformId: otherPlatform.id,
-        })).rejects.toMatchObject({ error: { code: 'SIGN_IN_METHOD_NOT_ALLOWED', params: { allowedMethods: ['EMAIL', 'GOOGLE'] } } })
+        })).rejects.toHaveProperty('error', { code: 'SIGN_IN_METHOD_NOT_ALLOWED', params: {} })
+    })
+
+    it('refuses an accepted invitee\'s first single sign-on through another platform\'s identity provider without naming the platform or its methods', async () => {
+        const { mockPlatform, domain } = await saveGoverningPlatform({ emailAuthEnabled: true, googleAuthEnabled: true })
+        const email = `priya@${domain}`
+        await saveAcceptedInvitation({ email, platformId: mockPlatform.id })
+        const { mockPlatform: otherPlatform } = await mockAndSaveBasicSetup()
+
+        await expect(authenticationService(mockLog).federatedAuthn({
+            email,
+            firstName: 'priya',
+            lastName: 'acme',
+            newsLetter: false,
+            trackEvents: false,
+            provider: UserIdentityProvider.SAML,
+            predefinedPlatformId: otherPlatform.id,
+        })).rejects.toHaveProperty('error', { code: 'SIGN_IN_METHOD_NOT_ALLOWED', params: {} })
+        expect(await storedIdentity(email)).toBeNull()
+    })
+
+    it('answers a governed member\'s single sign-on through a platform verified for another domain as a domain mismatch', async () => {
+        const { mockUserIdentity } = await saveGoverningPlatform({ emailAuthEnabled: true, googleAuthEnabled: true })
+        const { mockPlatform: otherPlatform } = await saveGoverningPlatform({ emailAuthEnabled: true, googleAuthEnabled: true })
+
+        await expect(authenticationService(mockLog).federatedAuthn({
+            email: mockUserIdentity.email,
+            firstName: 'maya',
+            lastName: 'acme',
+            newsLetter: false,
+            trackEvents: false,
+            provider: UserIdentityProvider.SAML,
+            predefinedPlatformId: otherPlatform.id,
+        })).rejects.toMatchObject({ error: { code: 'DOMAIN_NOT_ALLOWED' } })
     })
 })
 

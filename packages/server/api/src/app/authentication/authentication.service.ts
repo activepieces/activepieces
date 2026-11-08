@@ -30,7 +30,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         await authenticationService(log).assertSignInMethodIsAllowed({
             email: params.email,
             provider: params.provider,
-            emailIsProven: params.provider !== UserIdentityProvider.EMAIL,
+            emailIsProven: params.provider === UserIdentityProvider.GOOGLE,
         })
         const platformId = params.platformId
 
@@ -153,9 +153,15 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResult> {
         const platformId = isNil(params.predefinedPlatformId) ? await selectCloudSignInPlatformIdByEmail({ email: params.email, log }) : params.predefinedPlatformId
+        if (params.provider === UserIdentityProvider.SAML && !isNil(platformId)) {
+            await authenticationUtils(log).assertEmailMatchesSsoDomain({
+                email: params.email,
+                platformId,
+            })
+        }
         const userIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
         if (!isNil(userIdentity)) {
-            await authenticationService(log).assertSignInMethodIsAllowed({ email: params.email, provider: params.provider, emailIsProven: true })
+            await authenticationService(log).assertSignInMethodIsAllowed({ email: params.email, provider: params.provider, emailIsProven: params.provider === UserIdentityProvider.GOOGLE })
         }
 
         if (isNil(platformId)) { // always cloud
@@ -172,13 +178,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 platformId: null,
                 password: await cryptoUtils.generateRandomPassword(),
                 imageUrl: params.imageUrl,
-            })
-        }
-
-        if (params.provider == UserIdentityProvider.SAML) {
-            await authenticationUtils(log).assertEmailMatchesSsoDomain({
-                email: params.email,
-                platformId,
             })
         }
 
