@@ -10,11 +10,13 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 #### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
 
-The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows.
+The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows. In **Update Product**, Availability, Exclude Tax, Enable Variants, Status and the new Non-Veg setting are now Yes/No choices, and a setting left empty keeps the product's current value instead of being set to off.
 
 #### What you need to do
 
 If a flow maps fields from Order Created, re-map them without the `body` prefix (for example `payload.id` instead of `body.payload.id`). Agents that used the discount actions get new agent versions named **Create Product Discount** and **Create Promo Code**, which take plain IDs and values.
+
+Open existing **Update Product** steps and pick Availability, Exclude Tax, Enable Variants and Status again. Steps saved before this version still send the value they stored, but the builder now shows "Keep current setting" for those four fields.
 
 #### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
 
