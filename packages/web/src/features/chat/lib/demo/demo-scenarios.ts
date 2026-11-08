@@ -15,11 +15,7 @@ import { chatDemo } from './chat-demo';
 import type { DemoContext } from './demo-backend';
 import { demoCapabilities } from './demo-capability-scenarios';
 import { demoChangeScenarios } from './demo-change-scenarios';
-import { demoLiveScenarios } from './demo-live-scenarios';
-
-// Scripted replies, one per chat UI state. Each script drives the same events
-// the server streams; the real components render them. Prompts are what the
-// user "sends"; typing one in a demo chat plays it again.
+import { demoLiveBuilds, demoLiveScenarios } from './demo-live-scenarios';
 
 const SHORT_REPLY =
   "I can build automations, run actions in your apps, and answer questions about your flows and runs. Tell me the busywork you want gone and I'll take it from there.";
@@ -118,13 +114,6 @@ Third, keep a short migration log: zap name, new flow link, date switched, and w
 
 Finally, once everything is moved, export your Zapier history for your records and cancel the plan at the end of the billing cycle.`;
 
-const BUILD_STEPS = [
-  { id: 'trigger', label: 'Start when a deal is created in HubSpot' },
-  { id: 'format', label: 'Write a short summary of the deal' },
-  { id: 'slack', label: 'Post it to #sales in Slack' },
-  { id: 'test', label: 'Test with a real deal' },
-];
-
 function svgDataUrl(title: string): string {
   const bars = [62, 88, 45, 120, 96, 140]
     .map(
@@ -172,88 +161,6 @@ function quickReplies(
     name: 'ap_show_quick_replies',
     input: { replies, offerRecurringAutomation },
   });
-}
-
-async function playBuild(ctx: DemoContext, { fails }: { fails: boolean }) {
-  const buildId = `demo-build-${Date.now()}`;
-  const plan = (
-    phase: 'detecting' | 'building' | 'testing' | 'done' | 'failed',
-    statuses: Array<'pending' | 'in_progress' | 'done' | 'failed'>,
-  ) =>
-    ctx.buildPlan({
-      buildId,
-      phase,
-      flowName: 'New HubSpot deals → Slack',
-      tagline: 'Every new deal, posted to #sales',
-      iconName: 'message',
-      ...(phase === 'done' ? { flowId: 'demo-flow' } : {}),
-      steps: BUILD_STEPS.map((step, i) => ({ ...step, status: statuses[i] })),
-    });
-
-  await ctx.status('Finding the right apps');
-  await ctx.tool({
-    name: 'ap_research_pieces',
-    input: { query: 'hubspot deals slack' },
-    ms: 1200,
-  });
-  await ctx.text("Got it — I'll build this now.\n\n");
-  plan('detecting', ['pending', 'pending', 'pending', 'pending']);
-  await ctx.wait(800);
-  plan('building', ['in_progress', 'pending', 'pending', 'pending']);
-  await ctx.tool({
-    name: 'ap_create_flow',
-    input: { displayName: 'New HubSpot deals → Slack' },
-    ms: 900,
-  });
-  await ctx.tool({
-    name: 'ap_update_trigger',
-    input: {
-      pieceName: '@activepieces/piece-hubspot',
-      triggerName: 'new_deal',
-    },
-    ms: 1200,
-  });
-  plan('building', ['done', 'in_progress', 'pending', 'pending']);
-  await ctx.tool({
-    name: 'ap_add_step',
-    input: {
-      pieceName: '@activepieces/piece-text-ai',
-      actionName: 'summarize',
-    },
-    ms: 1100,
-  });
-  plan('building', ['done', 'done', 'in_progress', 'pending']);
-  await ctx.tool({
-    name: 'ap_add_step',
-    input: {
-      pieceName: '@activepieces/piece-slack',
-      actionName: 'send_channel_message',
-    },
-    ms: 1100,
-  });
-  await ctx.tool({ name: 'ap_validate_flow', input: {}, ms: 700 });
-  plan('testing', ['done', 'done', 'done', 'in_progress']);
-  if (fails) {
-    await ctx.tool({
-      name: 'ap_test_flow',
-      input: {},
-      ms: 1600,
-      error:
-        'Slack step failed: not_in_channel — the bot is not a member of #sales.',
-    });
-    plan('failed', ['done', 'done', 'done', 'failed']);
-    await ctx.text(
-      "The flow is built, but the test failed: **the Slack bot isn't in #sales**.\n\nInvite it with `/invite @Activepieces` in the channel, then tell me to test again.",
-    );
-    quickReplies(ctx, ['I invited it, test again', 'Use #general instead']);
-    return;
-  }
-  await ctx.tool({ name: 'ap_test_flow', input: {}, ms: 1600 });
-  plan('done', ['done', 'done', 'done', 'done']);
-  await ctx.text(
-    'Done! Every new HubSpot deal now posts a short summary to **#sales**. The test message went through.',
-  );
-  quickReplies(ctx, ['Turn it on', 'Also email me a daily digest'], true);
 }
 
 function seedLongConversation(): PersistedAgentMessage[] {
@@ -332,7 +239,6 @@ function seedLongConversation(): PersistedAgentMessage[] {
 }
 
 const SCENARIOS: DemoScenario[] = [
-  // ----- Replies
   {
     id: 'short',
     group: 'Replies',
@@ -428,7 +334,6 @@ const SCENARIOS: DemoScenario[] = [
     },
   },
 
-  // ----- Tools
   {
     id: 'tools',
     group: 'Tools',
@@ -682,7 +587,6 @@ const SCENARIOS: DemoScenario[] = [
     },
   },
 
-  // ----- Cards
   {
     id: 'connection-picker',
     group: 'Cards',
@@ -833,8 +737,6 @@ const SCENARIOS: DemoScenario[] = [
         name: 'ap_show_project_picker',
         input: {
           question: 'Which project should this flow live in?',
-          // The card only offers projects the user can open, so suggest the
-          // current one; the made-up ones show how unknown ids are ignored.
           suggestedProjects: [
             ...(currentProjectId
               ? [{ name: 'This project', id: currentProjectId }]
@@ -941,14 +843,14 @@ const SCENARIOS: DemoScenario[] = [
     },
   },
 
-  // ----- Builds & tasks
   {
     id: 'build',
     group: 'Builds & tasks',
     label: 'Flow build',
     prompt: 'Build me a flow that posts new HubSpot deals to Slack',
     title: 'HubSpot deals to Slack',
-    play: (ctx) => playBuild(ctx, { fails: false }),
+    realtime: true,
+    play: (ctx) => demoLiveBuilds.play({ ctx, fails: false }),
   },
   {
     id: 'build-failed',
@@ -956,7 +858,8 @@ const SCENARIOS: DemoScenario[] = [
     label: 'Flow build fails its test',
     prompt: 'Build a flow that posts new HubSpot deals to #sales',
     title: 'HubSpot deals to #sales',
-    play: (ctx) => playBuild(ctx, { fails: true }),
+    realtime: true,
+    play: (ctx) => demoLiveBuilds.play({ ctx, fails: true }),
   },
   {
     id: 'tasks',
@@ -1079,7 +982,6 @@ const SCENARIOS: DemoScenario[] = [
     },
   },
 
-  // ----- Errors
   {
     id: 'model-error',
     group: 'Errors',
@@ -1142,7 +1044,6 @@ const SCENARIOS: DemoScenario[] = [
     },
   },
 
-  // ----- Stress
   {
     id: 'slow',
     group: 'Stress',
@@ -1217,7 +1118,6 @@ function match(content: string): DemoScenario | undefined {
   return SCENARIOS.find((s) => normalize(s.prompt) === wanted);
 }
 
-// Sample files for a scenario's prompt, as if the user had attached them.
 function attachmentsFor(content: string): File[] | undefined {
   if (!chatDemo.isActive()) return undefined;
   const scenario = match(content);
@@ -1243,10 +1143,8 @@ export type DemoScenario = {
   prompt: string;
   title: string;
   attachments?: Array<{ name: string; type: string; content: string }>;
-  // A seeded scenario opens an existing chat that already has this history.
   seed?: () => PersistedAgentMessage[];
   rejectSendOnFirstTry?: boolean;
-  // Plays in real time even at instant speed (it edits real resources).
   realtime?: boolean;
   play: (ctx: DemoContext) => Promise<void>;
 };

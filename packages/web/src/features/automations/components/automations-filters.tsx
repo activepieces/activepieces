@@ -238,14 +238,9 @@ export const AutomationsFilters = ({
     </>
   );
 
-  // The toolbar answers to its own width, not the window's: a docked chat or
-  // an open sidebar narrows it. Import and Create New never shrink or move;
-  // the search gives up width first, then the filter chips fold into one
-  // Filters button.
   return (
     <>
       <div className={cn('@container mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}>
-        {/* On a phone the actions drop to their own line, right-aligned. */}
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="flex min-w-0 flex-[1_1_16rem] items-center gap-2">
             <div className="relative min-w-40 max-w-xs flex-1 @min-[66rem]:flex-none @min-[66rem]:w-xs">

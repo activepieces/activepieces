@@ -15,12 +15,15 @@ import {
   ResourceRef,
   resourceRegistry,
 } from '@/features/chat/lib/resources/registry';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import {
-  chatTransitions,
+  chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 
 import { useShellHandle } from '../app-shell';
+
+import { chatDom } from './chat-dom';
 
 export function FollowAlongController() {
   const navigate = useNavigate();
@@ -56,7 +59,7 @@ export function FollowAlongController() {
       const push = runId === null || !pushedRuns.current.has(runId);
       if (runId !== null) pushedRuns.current.add(runId);
       followAlong.offer(null);
-      chatTransitions.openBeside({
+      chatPanelUtils.openBeside({
         route,
         push,
         name:
@@ -134,7 +137,8 @@ export function FollowAlongController() {
       if (!(target instanceof Element) || target.closest('[data-chat-root]')) {
         return;
       }
-      if (target.closest(`#${CARD_ID}`)) followAlong.touchPage();
+      if (target.closest(`#${chatLayoutUtils.CARD_ID}`))
+        followAlong.touchPage();
     };
     const events: (keyof WindowEventMap)[] = [
       'pointerdown',
@@ -333,14 +337,8 @@ function overlayIsOpen(): boolean {
   );
 }
 
-function composer(): HTMLElement | null {
-  return document.querySelector<HTMLElement>(
-    '[data-chat-root] textarea, [data-chat-root] [contenteditable="true"]',
-  );
-}
-
 function composerHasDraft(): boolean {
-  const input = composer();
+  const input = chatDom.composer();
   if (!input) return false;
   const text =
     input instanceof HTMLTextAreaElement ? input.value : input.textContent;
@@ -348,14 +346,12 @@ function composerHasDraft(): boolean {
 }
 
 function composerFocused(): boolean {
-  const input = composer();
+  const input = chatDom.composer();
   return input !== null && input === document.activeElement;
 }
 
 function chatAtBottom(): boolean {
-  const scroller = document.querySelector<HTMLElement>(
-    '[data-chat-root] [role="log"] > div',
-  );
+  const scroller = chatDom.scroller();
   if (!scroller) return true;
   return (
     scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <=
@@ -367,5 +363,4 @@ const RECHECK_MS = 250;
 const IDLE_MS = 1500;
 const GLOW_AFTER_SETTLE_MS = 120;
 const AT_BOTTOM_GAP = 24;
-const CARD_ID = 'dashboard-content-container';
 const MODAL_LAYERS = '[role="dialog"], [role="alertdialog"], [role="menu"]';

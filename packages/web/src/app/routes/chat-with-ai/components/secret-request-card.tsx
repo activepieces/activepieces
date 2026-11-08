@@ -7,12 +7,11 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
-import { chatDemo } from '@/features/chat/lib/demo/chat-demo';
-import { demoCapabilities } from '@/features/chat/lib/demo/demo-capability-scenarios';
+import { chatDemoGate } from '@/features/chat/lib/demo/chat-demo-gate';
 import { piecesHooks } from '@/features/pieces';
 import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
 import { aiProviderKeys } from '@/features/platform-admin/hooks/ai-provider-hooks';
-import { chatTransitions } from '@/features/workspace/lib/chat-panel-open';
+import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 import { cn } from '@/lib/utils';
 
 import { normalizePieceName } from '../lib/message-parsers';
@@ -53,7 +52,7 @@ export function SecretRequestCard({
     enabled: pieceName !== '',
   });
 
-  const isDemo = chatDemo.isDemoId(toolCallId);
+  const isDemo = chatDemoGate.isDemoId(toolCallId);
   const { data: providerConfigs } = useQuery({
     queryKey: aiProviderKeys.configs,
     queryFn: () => aiProviderApi.listConfigs(),
@@ -105,7 +104,7 @@ export function SecretRequestCard({
     setStatus('saving');
     const { data: ref, error } = await tryCatch<SecretRef>(() =>
       isDemo
-        ? demoCapabilities.saveSecret({ request, values })
+        ? chatDemoGate.saveSecret({ request, values })
         : secretRequestUtils.save({
             request,
             values,
@@ -223,7 +222,7 @@ export function SecretRequestCard({
             size="sm"
             type="button"
             onClick={() =>
-              chatTransitions.openBeside({
+              chatPanelUtils.openBeside({
                 route: secretRequestUtils.settingsPath(request),
                 push: true,
               })

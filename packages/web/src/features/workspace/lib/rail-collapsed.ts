@@ -1,12 +1,12 @@
-import { tryCatchSync } from '@activepieces/core-utils';
 import { useCallback } from 'react';
 import { matchPath, useLocation, useMatches } from 'react-router-dom';
 import { create } from 'zustand';
 
 import { routesThatRequireProjectId } from '@/lib/route-utils';
+import { safeStorage } from '@/lib/safe-storage';
 
-import { DOCK_BREAKPOINT, startStructuralMove } from './chat-layout';
-import { chatPanelIsDocked, useChatPanel } from './chat-panel-open';
+import { chatLayoutUtils } from './chat-layout';
+import { chatPanelUtils, useChatPanel } from './chat-panel-open';
 
 const PREFERENCE_KEY = 'primary-rail-collapsed';
 const FOLDED_FOR_CHAT_KEY = 'primary-rail-folded-for-chat';
@@ -22,23 +22,23 @@ const ROUTES_THAT_HOLD_THE_RAIL_CLOSED = AGENT_ROUTES.flatMap((route) => [
 ]);
 
 const useRail = create<RailState>(() => ({
-  preference: readFlag({ storage: localStorage, key: PREFERENCE_KEY }),
+  preference: safeStorage.readFlag({ area: 'local', key: PREFERENCE_KEY }),
   foldedForChat:
-    readFlag({ storage: sessionStorage, key: FOLDED_FOR_CHAT_KEY }) &&
-    chatPanelIsDocked(useChatPanel.getState()),
+    safeStorage.readFlag({ area: 'session', key: FOLDED_FOR_CHAT_KEY }) &&
+    chatPanelUtils.isDocked(useChatPanel.getState()),
   openedOn: null,
 }));
 
 function update(patch: Partial<RailState>) {
   useRail.setState(patch);
   const state = useRail.getState();
-  writeFlag({
-    storage: localStorage,
+  safeStorage.writeFlag({
+    area: 'local',
     key: PREFERENCE_KEY,
     value: state.preference,
   });
-  writeFlag({
-    storage: sessionStorage,
+  safeStorage.writeFlag({
+    area: 'session',
     key: FOLDED_FOR_CHAT_KEY,
     value: state.foldedForChat,
   });
@@ -74,7 +74,7 @@ export function useRailOpenState() {
 
   const onOpenChange = useCallback(
     (next: boolean) => {
-      startStructuralMove(next ? 'enter' : 'exit');
+      chatLayoutUtils.startStructuralMove(next ? 'enter' : 'exit');
       update({ preference: !next, foldedForChat: false, openedOn: pathname });
     },
     [pathname],
@@ -92,14 +92,14 @@ export function railOpenNow(): boolean {
 }
 
 function foldForDock() {
-  if (window.innerWidth >= DOCK_BREAKPOINT && railOpenNow()) {
+  if (window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT && railOpenNow()) {
     update({ foldedForChat: true });
   }
 }
 
 useChatPanel.subscribe((chat, prev) => {
-  const docked = chatPanelIsDocked(chat);
-  const wasDocked = chatPanelIsDocked(prev);
+  const docked = chatPanelUtils.isDocked(chat);
+  const wasDocked = chatPanelUtils.isDocked(prev);
   if (
     docked &&
     (!wasDocked || chat.docks !== prev.docks || (chat.split && !prev.split))
@@ -110,37 +110,14 @@ useChatPanel.subscribe((chat, prev) => {
   }
 });
 
-let wasWide = window.innerWidth >= DOCK_BREAKPOINT;
+let wasWide = window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT;
 window.addEventListener('resize', () => {
-  const wide = window.innerWidth >= DOCK_BREAKPOINT;
-  if (wide && !wasWide && chatPanelIsDocked(useChatPanel.getState())) {
+  const wide = window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT;
+  if (wide && !wasWide && chatPanelUtils.isDocked(useChatPanel.getState())) {
     foldForDock();
   }
   wasWide = wide;
 });
-
-function readFlag({
-  storage,
-  key,
-}: {
-  storage: Storage;
-  key: string;
-}): boolean {
-  const { data } = tryCatchSync(() => storage.getItem(key));
-  return data === 'true';
-}
-
-function writeFlag({
-  storage,
-  key,
-  value,
-}: {
-  storage: Storage;
-  key: string;
-  value: boolean;
-}): void {
-  tryCatchSync(() => storage.setItem(key, String(value)));
-}
 
 function isChatPageHandle(handle: unknown): boolean {
   return (

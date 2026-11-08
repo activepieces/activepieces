@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { chatWidthFor } from './chat-layout';
+import { chatLayoutUtils } from './chat-layout';
+
+const chatWidthFor = chatLayoutUtils.widthFor;
 
 const base = {
   fullPage: false,

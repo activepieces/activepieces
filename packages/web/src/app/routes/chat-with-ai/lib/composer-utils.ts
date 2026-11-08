@@ -1,4 +1,6 @@
-import { isNil, isObject, tryCatchSync } from '@activepieces/core-utils';
+import { isNil, isObject } from '@activepieces/core-utils';
+
+import { safeStorage } from '@/lib/safe-storage';
 
 function findSecrets(text: string): string[] {
   const found = SECRET_PATTERNS.flatMap((pattern) =>
@@ -27,9 +29,7 @@ function writeDraft({ key, text }: { key: string; text: string }): void {
   } else {
     drafts[key] = text;
   }
-  tryCatchSync(() =>
-    sessionStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts)),
-  );
+  safeStorage.writeJson({ area: 'session', key: DRAFTS_KEY, value: drafts });
 }
 
 function joinQueued({ queued, next }: { queued: string; next: string }) {
@@ -54,9 +54,7 @@ function isNewChatKey(key: string | undefined): boolean {
 }
 
 function readAll(): Record<string, string> {
-  const { data } = tryCatchSync<unknown>(() =>
-    JSON.parse(sessionStorage.getItem(DRAFTS_KEY) ?? '{}'),
-  );
+  const data = safeStorage.readJson({ area: 'session', key: DRAFTS_KEY });
   if (!isObject(data)) return {};
   return Object.fromEntries(
     Object.entries(data).filter(

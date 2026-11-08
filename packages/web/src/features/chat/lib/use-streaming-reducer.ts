@@ -20,7 +20,7 @@ import { chatDebug } from '@/lib/chat-debug-logger';
 
 import { ChatUIMessage } from './chat-types';
 import { chunkReducer, StreamingState } from './chunk-reducer';
-import { chatDemo } from './demo/chat-demo';
+import { chatDemoGate } from './demo/chat-demo-gate';
 import { followAlong, RunContext } from './follow/follow-along';
 
 const THROTTLE_MS = 100;
@@ -327,7 +327,7 @@ export function useStreamingReducer({
 
       socket.on(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);
       const releaseSocket = socketConnection.hold();
-      const offDemo = chatDemo.onEvent(handler);
+      const offDemo = chatDemoGate.onEvent(handler);
 
       const reconnectHandler = () => {
         socket.off(WebsocketClientEvent.CHAT_MESSAGE_CHUNK, handler);

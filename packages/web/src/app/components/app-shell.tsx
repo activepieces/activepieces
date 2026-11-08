@@ -13,6 +13,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesApi } from '@/features/templates';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
@@ -143,7 +144,11 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   )}
                 >
                   <div
-                    id={embedded && isBuilder ? undefined : CARD_ID}
+                    id={
+                      embedded && isBuilder
+                        ? undefined
+                        : chatLayoutUtils.CARD_ID
+                    }
                     className={cn(
                       'relative flex h-full overflow-clip',
                       isPlatform ? 'bg-(--admin-page)' : 'bg-gray-1',
@@ -258,7 +263,6 @@ function isRouteHandle(value: unknown): value is RouteHandle {
   return typeof value === 'object' && value !== null && 'shell' in value;
 }
 
-const CARD_ID = 'dashboard-content-container';
 const PROJECT_IN_PATH = /^\/projects\/([^/]+)/;
 
 const PAGE_CLASS: Record<RouteHandle['shell'], string> = {

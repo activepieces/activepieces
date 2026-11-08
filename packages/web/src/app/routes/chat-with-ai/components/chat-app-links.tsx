@@ -1,7 +1,7 @@
 import { AppLinkProvider } from '@/components/prompt-kit/app-link';
 import { followAlong } from '@/features/chat/lib/follow/follow-along';
 import { resourceRegistry } from '@/features/chat/lib/resources/registry';
-import { chatTransitions } from '@/features/workspace/lib/chat-panel-open';
+import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 
 export function ChatAppLinks({ children }: { children: React.ReactNode }) {
   return <AppLinkProvider value={HANDLERS}>{children}</AppLinkProvider>;
@@ -17,7 +17,7 @@ function open(route: string): void {
     followAlong.view(ref);
     return;
   }
-  chatTransitions.openBeside({ route, push: true });
+  chatPanelUtils.openBeside({ route, push: true });
 }
 
 function label(route: string): string {

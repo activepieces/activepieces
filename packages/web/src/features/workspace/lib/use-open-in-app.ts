@@ -1,18 +1,14 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  chatPanelIsDocked,
-  chatTransitions,
-  useChatPanel,
-} from './chat-panel-open';
+import { chatPanelUtils, useChatPanel } from './chat-panel-open';
 
 export function useOpenInApp() {
   const navigate = useNavigate();
   const open = useCallback(
     ({ route }: { route: string }) => {
-      if (chatPanelIsDocked(useChatPanel.getState())) {
-        chatTransitions.openBeside({ route, push: true });
+      if (chatPanelUtils.isDocked(useChatPanel.getState())) {
+        chatPanelUtils.openBeside({ route, push: true });
         return;
       }
       navigate(route);

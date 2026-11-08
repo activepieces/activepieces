@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { FlaskConical, RotateCcw } from 'lucide-react';
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 
 import {
   DropdownMenu,
@@ -23,27 +23,18 @@ import {
 } from '@/features/chat/lib/demo/chat-demo';
 import { demoScenarios } from '@/features/chat/lib/demo/demo-scenarios';
 import { playDemoScenario } from '@/features/chat/lib/demo/play-scenario';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 
 import { useChatHistoryActions } from './chat-history-data';
 
-const DEMO_SPEED_LABELS: Record<DemoSpeed, string> = {
-  slow: 'Slow',
-  normal: 'Normal',
-  instant: 'Instant',
-};
-
-// Dev builds (or ?chatDemo=1) only: one quiet button in the bottom-right
-// corner. Picking a scenario plays it through the real chat, so you see what
-// a user sees: the panel opening, replies streaming, the page reacting.
 export function ChatDemoCorner() {
-  if (!chatDemo.available) return null;
-  return <DemoCornerMenu />;
-}
-
-function DemoCornerMenu() {
   const settings = useChatDemoSettings();
   const { invalidate } = useChatHistoryActions();
   const keepOpen = (event: Event) => event.preventDefault();
+
+  useEffect(() => {
+    if (chatDemo.autoplayScenarioId) placeForAutoplay();
+  }, []);
 
   return (
     <DropdownMenu modal={false}>
@@ -93,9 +84,7 @@ function DemoCornerMenu() {
         </DropdownMenuItem>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            {t('Speed: {speed}', {
-              speed: t(DEMO_SPEED_LABELS[settings.speed]),
-            })}
+            {t('Speed: {speed}', { speed: speedLabel(settings.speed) })}
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuRadioGroup
@@ -111,7 +100,7 @@ function DemoCornerMenu() {
                   value={speed}
                   onSelect={keepOpen}
                 >
-                  {t(DEMO_SPEED_LABELS[speed])}
+                  {speedLabel(speed)}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
@@ -137,4 +126,25 @@ function DemoCornerMenu() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+function speedLabel(speed: DemoSpeed): string {
+  switch (speed) {
+    case 'slow':
+      return t('Slow');
+    case 'normal':
+      return t('Normal');
+    case 'instant':
+      return t('Instant');
+  }
+}
+
+function placeForAutoplay() {
+  const where = new URLSearchParams(window.location.search).get('chatDock');
+  const panel = useChatPanel.getState();
+  if (where === 'float') {
+    panel.floatAt(panel.float ?? { x: window.innerWidth - 440, y: 96 });
+    return;
+  }
+  panel.dock(where === 'left' ? 'left' : 'right');
 }

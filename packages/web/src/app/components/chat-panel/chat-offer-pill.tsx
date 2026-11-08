@@ -13,7 +13,8 @@ import {
 import { resourceRegistry } from '@/features/chat/lib/resources/registry';
 import { getProjectName } from '@/features/projects';
 import { projectCollection } from '@/features/projects/stores/project-collection';
-import { chatTransitions } from '@/features/workspace/lib/chat-panel-open';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
+import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 
 export function ChatOfferPill() {
   const ref = useRef<HTMLDivElement>(null);
@@ -48,7 +49,7 @@ export function ChatOfferPill() {
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
-            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.16, ease: chatLayoutUtils.MOVE_EASE.out }}
             className="flex justify-center"
           >
             <div
@@ -70,7 +71,7 @@ export function ChatOfferPill() {
                     return;
                   }
                   followAlong.offer(null);
-                  chatTransitions.openBeside({
+                  chatPanelUtils.openBeside({
                     route: resourceRegistry.route(offer.resource),
                     push: true,
                     name,

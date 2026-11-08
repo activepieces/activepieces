@@ -2,12 +2,9 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Popover as PopoverPrimitive } from 'radix-ui';
 import { useLayoutEffect, useState } from 'react';
 
+import { chatDom } from './chat-dom';
 import { historyMotion } from './chat-history-motion';
 
-// The floating card's history: a dropdown hung from the header, as wide as the
-// card allows, growing out of the History button. It stops short of the chat's
-// composer, so the input you were typing in stays in view; only a card too
-// short to fit a useful list lets it overlap.
 export function ChatHistoryPopover({
   open,
   headerRef,
@@ -33,7 +30,7 @@ export function ChatHistoryPopover({
     const header = headerEl?.getBoundingClientRect();
     const trigger = triggerRef.current?.getBoundingClientRect();
     if (!open || !headerEl || !header || !trigger) return;
-    const composerTop = composerOf(headerEl)?.getBoundingClientRect().top;
+    const composerTop = composerBlock()?.getBoundingClientRect().top;
     const room =
       composerTop === undefined
         ? MAX_HEIGHT
@@ -56,11 +53,13 @@ export function ChatHistoryPopover({
             align="center"
             sideOffset={SIDE_OFFSET}
             collisionPadding={INSET}
-            // The content is a React child of the draggable header: keep a
-            // press inside it from starting a drag.
             onPointerDown={(event) => event.stopPropagation()}
             onInteractOutside={(event) => {
-              if (triggerRef.current?.contains(event.target as Node)) {
+              const target = event.target;
+              if (
+                target instanceof Node &&
+                triggerRef.current?.contains(target)
+              ) {
                 event.preventDefault();
               }
             }}
@@ -70,8 +69,6 @@ export function ChatHistoryPopover({
                 event.preventDefault();
                 return;
               }
-              // This Esc closes the dropdown and ends here: it must not also
-              // close the panel.
               event.stopPropagation();
               onEscape();
             }}
@@ -105,18 +102,9 @@ export function ChatHistoryPopover({
   );
 }
 
-const INSET = 8;
-const SIDE_OFFSET = -4;
-const MAX_HEIGHT = 480;
-const MIN_HEIGHT = 240;
-// Air between the dropdown's bottom edge and the composer's top.
-const COMPOSER_GAP = 8;
-
-// The block that holds the chat's input: the tallest short ancestor of its
-// textarea, within the panel.
-function composerOf(header: HTMLElement): HTMLElement | null {
-  const panel = header.parentElement;
-  let node: HTMLElement | null = panel?.querySelector('textarea') ?? null;
+function composerBlock(): HTMLElement | null {
+  const panel = chatDom.root();
+  let node = chatDom.composer();
   while (
     node?.parentElement &&
     node.parentElement !== panel &&
@@ -126,4 +114,10 @@ function composerOf(header: HTMLElement): HTMLElement | null {
   }
   return node;
 }
+
+const INSET = 8;
+const SIDE_OFFSET = -4;
+const MAX_HEIGHT = 480;
+const MIN_HEIGHT = 240;
+const COMPOSER_GAP = 8;
 const COMPOSER_MAX_HEIGHT = 220;

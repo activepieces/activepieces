@@ -1,24 +1,33 @@
 import type { Transition } from 'motion/react';
 
-// One motion language for the panel's header and history: quick, ease-out,
-// exits a little faster than entrances. Reduced motion keeps only the fade.
-const EASE_OUT = [0.22, 1, 0.36, 1] as const;
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 
-function enter(duration: number, reduced: boolean | null): Transition {
-  return { duration: reduced ? 0.1 : duration, ease: EASE_OUT };
+function transition({
+  duration,
+  reducedDuration,
+  reduced,
+}: {
+  duration: number;
+  reducedDuration: number;
+  reduced: boolean | null;
+}): Transition {
+  return {
+    duration: reduced ? reducedDuration : duration,
+    ease: chatLayoutUtils.MOVE_EASE.out,
+  };
 }
 
-function exit(duration: number, reduced: boolean | null): Transition {
-  return { duration: reduced ? 0.08 : duration, ease: EASE_OUT };
-}
+const ENTER_REDUCED = 0.1;
+const EXIT_REDUCED = 0.08;
 
 export const historyMotion = {
-  // The chat ↔ history swap.
-  viewIn: (reduced: boolean | null) => enter(0.22, reduced),
-  viewOut: (reduced: boolean | null) => exit(0.16, reduced),
-  // The floating card's dropdown and the header title.
-  popIn: (reduced: boolean | null) => enter(0.14, reduced),
-  popOut: (reduced: boolean | null) => exit(0.1, reduced),
-  // How far a view travels as it swaps. Small: it should read as a shift.
+  viewIn: (reduced: boolean | null) =>
+    transition({ duration: 0.22, reducedDuration: ENTER_REDUCED, reduced }),
+  viewOut: (reduced: boolean | null) =>
+    transition({ duration: 0.16, reducedDuration: EXIT_REDUCED, reduced }),
+  popIn: (reduced: boolean | null) =>
+    transition({ duration: 0.14, reducedDuration: ENTER_REDUCED, reduced }),
+  popOut: (reduced: boolean | null) =>
+    transition({ duration: 0.1, reducedDuration: EXIT_REDUCED, reduced }),
   shift: (reduced: boolean | null) => (reduced ? 0 : 10),
 };

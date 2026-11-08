@@ -4,6 +4,8 @@ import {
   FlowActionType,
   FlowOperationType,
   PopulatedFlow,
+  Project,
+  SeekPage,
   StepLocationRelativeToParent,
   Table,
 } from '@activepieces/shared';
@@ -12,17 +14,12 @@ import { flowsApi } from '@/features/flows/api/flows-api';
 import { fieldsApi } from '@/features/tables/api/fields-api';
 import { recordsApi } from '@/features/tables/api/records-api';
 import { tablesApi } from '@/features/tables/api/tables-api';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { chatDemo } from './chat-demo';
 import type { DemoContext } from './demo-backend';
 import type { DemoScenario } from './demo-scenarios';
-
-// Demo scenarios that edit REAL resources on this server, through the app's
-// own API clients, so follow-along can be watched on the real pages. Each
-// step emits the same tool-call chunks the server would (ap_insert_records,
-// ap_add_step, ...), with the resource id in the input or output, and only
-// then writes. Real writes refuse to run outside demo mode.
 
 const LEADS = [
   {
@@ -61,11 +58,28 @@ const FLOW_STEPS = [
   },
 ];
 
+const DEALS_FLOW_STEPS = [
+  {
+    displayName: 'Summarize the deal',
+    code: 'export const code = async (inputs) => {\n  return { summary: `${inputs.dealName}: ${inputs.amount}` };\n};',
+  },
+  {
+    displayName: 'Post it to #sales',
+    code: "export const code = async (inputs) => {\n  return { channel: '#sales', text: inputs.summary };\n};",
+  },
+];
+const DEALS_BUILD_STEPS = [
+  { id: 'create', label: 'Create the flow' },
+  { id: 'format', label: 'Write a short summary of the deal' },
+  { id: 'slack', label: 'Post it to #sales in Slack' },
+  { id: 'test', label: 'Test with a real deal' },
+];
+
 async function playEditTable(ctx: DemoContext): Promise<void> {
   await ctx.text(
     "I'll add this week's three new leads to your Leads table, then mark the Acme lead as qualified.",
   );
-  const projectId = requireDemoProject();
+  const projectId = await requireDemoProject();
 
   const table = await runTool(
     ctx,
@@ -186,7 +200,7 @@ async function playBuildFlow(ctx: DemoContext): Promise<void> {
   await ctx.text(
     "I'll build a **Lead routing** flow: score each new lead, pick an owner, and tell them.",
   );
-  const projectId = requireDemoProject();
+  const projectId = await requireDemoProject();
   const flow = await runTool(
     ctx,
     {
@@ -220,7 +234,6 @@ async function playBuildFlow(ctx: DemoContext): Promise<void> {
       };
     },
   );
-  // Give the builder a moment to open beside the chat.
   await ctx.wait(2200);
 
   let parent = 'trigger';
@@ -289,10 +302,182 @@ async function playBuildFlow(ctx: DemoContext): Promise<void> {
   );
 }
 
-// ---------------------------------------------------------------------------
+async function playDealsBuild({
+  ctx,
+  fails,
+}: {
+  ctx: DemoContext;
+  fails: boolean;
+}): Promise<void> {
+  const projectId = await requireDemoProject();
+  const buildId = `demo-build-${Date.now()}`;
+  const flowName = 'New HubSpot deals → Slack';
+  const plan = ({
+    phase,
+    statuses,
+    flowId,
+  }: {
+    phase: 'detecting' | 'building' | 'testing' | 'done' | 'failed';
+    statuses: Array<'pending' | 'in_progress' | 'done' | 'failed'>;
+    flowId?: string;
+  }) =>
+    ctx.buildPlan({
+      buildId,
+      phase,
+      flowName,
+      tagline: 'Every new deal, posted to #sales',
+      iconName: 'message',
+      projectId,
+      ...(flowId ? { flowId } : {}),
+      steps: DEALS_BUILD_STEPS.map((step, i) => ({
+        ...step,
+        status: statuses[i],
+      })),
+    });
 
-// Emits the tool call, does the real write, then completes the call with the
-// server-shaped output (or fails it with the error).
+  await ctx.status('Finding the right apps');
+  await ctx.tool({
+    name: 'ap_research_pieces',
+    input: { query: 'hubspot deals slack' },
+    ms: 1200,
+  });
+  await ctx.text("Got it — I'll build this now.\n\n");
+  plan({
+    phase: 'detecting',
+    statuses: ['pending', 'pending', 'pending', 'pending'],
+  });
+  await ctx.wait(800);
+  plan({
+    phase: 'building',
+    statuses: ['in_progress', 'pending', 'pending', 'pending'],
+  });
+  const flow = await runTool(
+    ctx,
+    {
+      name: 'ap_create_flow',
+      input: {
+        flowName,
+        activeTitle: 'Creating the flow',
+        doneTitle: `Created ${flowName}`,
+      },
+      ms: 600,
+    },
+    async () => {
+      const created = await flowsApi.create({
+        displayName: flowName,
+        projectId,
+      });
+      return {
+        value: created,
+        output: {
+          structuredContent: {
+            flowId: created.id,
+            displayName: created.version.displayName,
+          },
+          content: [
+            {
+              type: 'text',
+              text: `✅ Created flow "${flowName}" (id: ${created.id})`,
+            },
+          ],
+        },
+      };
+    },
+  );
+  await ctx.wait(2200);
+  let parent = 'trigger';
+  for (const [index, step] of DEALS_FLOW_STEPS.entries()) {
+    const name = `step_${index + 1}`;
+    const parentStepName = parent;
+    plan({
+      phase: 'building',
+      statuses: DEALS_BUILD_STEPS.map((_, i) =>
+        i <= index ? 'done' : i === index + 1 ? 'in_progress' : 'pending',
+      ),
+      flowId: flow.id,
+    });
+    await runTool(
+      ctx,
+      {
+        name: 'ap_add_step',
+        input: {
+          flowId: flow.id,
+          parentStepName,
+          stepLocationRelativeToParent: 'AFTER',
+          stepType: 'CODE',
+          displayName: step.displayName,
+          activeTitle: `Adding “${step.displayName}”`,
+          doneTitle: `Added “${step.displayName}”`,
+        },
+        ms: 800,
+      },
+      async () => {
+        const updated = await flowsApi.update(flow.id, {
+          type: FlowOperationType.ADD_ACTION,
+          request: {
+            parentStep: parentStepName,
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            action: codeAction({ name, ...step }),
+          },
+        });
+        return { value: updated, output: stepAddedOutput(name, step) };
+      },
+    );
+    parent = name;
+    await ctx.wait(1000);
+  }
+  plan({
+    phase: 'testing',
+    statuses: ['done', 'done', 'done', 'in_progress'],
+    flowId: flow.id,
+  });
+  if (fails) {
+    await ctx.tool({
+      name: 'ap_test_flow',
+      input: { flowId: flow.id },
+      ms: 1600,
+      error:
+        'Slack step failed: not_in_channel — the bot is not a member of #sales.',
+    });
+    plan({
+      phase: 'failed',
+      statuses: ['done', 'done', 'done', 'failed'],
+      flowId: flow.id,
+    });
+    await ctx.text(
+      "The flow is built, but the test failed: **the Slack bot isn't in #sales**.\n\nInvite it with `/invite @Activepieces` in the channel, then tell me to test again.",
+    );
+    ctx.showInline({
+      name: 'ap_show_quick_replies',
+      input: {
+        replies: ['I invited it, test again', 'Use #general instead'],
+        offerRecurringAutomation: false,
+      },
+    });
+    return;
+  }
+  await ctx.tool({
+    name: 'ap_test_flow',
+    input: { flowId: flow.id },
+    ms: 1600,
+  });
+  plan({
+    phase: 'done',
+    statuses: ['done', 'done', 'done', 'done'],
+    flowId: flow.id,
+  });
+  await ctx.text(
+    'Done! Every new HubSpot deal now posts a short summary to **#sales**. The test message went through.',
+  );
+  ctx.showInline({
+    name: 'ap_show_quick_replies',
+    input: {
+      replies: ['Turn it on', 'Also email me a daily digest'],
+      offerRecurringAutomation: true,
+    },
+  });
+}
+
 async function runTool<T>(
   ctx: DemoContext,
   {
@@ -315,12 +500,16 @@ async function runTool<T>(
   }
 }
 
-function requireDemoProject(): string {
-  const projectId = authenticationSession.getProjectId();
-  if (!chatDemo.isActive() || !projectId) {
+async function requireDemoProject(): Promise<string> {
+  if (!chatDemo.isActive()) {
     throw new Error('Live demo scenarios only run in demo mode');
   }
-  return projectId;
+  const current = authenticationSession.getProjectId();
+  if (current) return current;
+  const page = await api.get<SeekPage<Project>>('/v1/projects', { limit: 1 });
+  const first = page.data[0]?.id;
+  if (!first) throw new Error('Live demo scenarios need a project');
+  return first;
 }
 
 async function findTable(
@@ -342,33 +531,34 @@ async function ensureFields(
   const existing = await fieldsApi.list({ tableId });
   const byName = (name: string) =>
     existing.find((field) => field.name.toLowerCase() === name.toLowerCase());
-  const result = {} as Record<(typeof LEAD_FIELDS)[number], Field>;
-  for (const name of LEAD_FIELDS) {
-    const found = byName(name);
-    result[name] =
-      found ??
-      (await runTool(
-        ctx,
-        {
-          name: 'ap_manage_fields',
-          input: { tableId, operation: 'ADD', name, type: 'TEXT' },
-        },
-        async () => {
-          const field = await fieldsApi.create({
-            tableId,
-            name,
-            type: FieldType.TEXT,
-          });
-          return {
-            value: field,
-            output: {
-              content: [{ type: 'text', text: `✅ Field added: ${name}` }],
-            },
-          };
-        },
-      ));
-  }
-  return result;
+  const fieldFor = async (name: (typeof LEAD_FIELDS)[number]) =>
+    byName(name) ??
+    (await runTool(
+      ctx,
+      {
+        name: 'ap_manage_fields',
+        input: { tableId, operation: 'ADD', name, type: 'TEXT' },
+      },
+      async () => {
+        const field = await fieldsApi.create({
+          tableId,
+          name,
+          type: FieldType.TEXT,
+        });
+        return {
+          value: field,
+          output: {
+            content: [{ type: 'text', text: `✅ Field added: ${name}` }],
+          },
+        };
+      },
+    ));
+  return {
+    Name: await fieldFor('Name'),
+    Email: await fieldFor('Email'),
+    Company: await fieldFor('Company'),
+    Status: await fieldFor('Status'),
+  };
 }
 
 function codeAction({
@@ -428,3 +618,5 @@ export const demoLiveScenarios: DemoScenario[] = [
     play: playBuildFlow,
   },
 ];
+
+export const demoLiveBuilds = { play: playDealsBuild };

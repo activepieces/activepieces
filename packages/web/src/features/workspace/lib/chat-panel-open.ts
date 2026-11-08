@@ -3,134 +3,15 @@ import { t } from 'i18next';
 import { create } from 'zustand';
 
 import { CHAT_ROUTE } from '@/lib/route-utils';
+import { safeStorage } from '@/lib/safe-storage';
 
-import {
-  DOCK_BREAKPOINT,
-  MOBILE_BREAKPOINT,
-  startStructuralMove,
-} from './chat-layout';
+import { chatLayoutUtils } from './chat-layout';
 
-const STORAGE_KEY = 'chat-panel';
-const TAB_VIEW_KEY = 'chat:view';
-const TAB_CONVERSATION_KEY = 'chat:conv';
-const LAST_CONVERSATION_KEY = 'chat:last-conv';
-const TAB_LAST_PAGE_KEY = 'chat:last-page';
-
-const DEFAULTS: SavedChatPanel = {
-  open: false,
-  split: false,
-  mode: 'left',
-  float: null,
-  floatSize: null,
-  dockWidth: 372,
-};
-
-export const useChatPanel = create<ChatPanelState>((set, get) => {
-  const update = (
-    patch: Partial<SavedChatPanel & Pick<ChatPanelState, 'openBeforeSplit'>>,
-  ) => {
-    set(patch);
-    save(get());
-  };
-  const setConversation = (
-    patch: Pick<ChatPanelState, 'conversationId'> &
-      Partial<Pick<ChatPanelState, 'newChatToken' | 'pendingPrompt'>>,
-  ) => {
-    set(patch);
-    saveConversationId(patch.conversationId);
-  };
-  return {
-    ...readSaved(),
-    conversationId: readConversationId(),
-    lastPage: readLastPage(),
-    newChatToken: 0,
-    pendingPrompt: undefined,
-    gesture: 'idle',
-    docks: 0,
-    chatMounted: false,
-    moving: null,
-    gateOpen: false,
-    splitName: null,
-    openBeforeSplit: null,
-    announcement: null,
-    mountChat: () => set({ chatMounted: true }),
-    setOpen: (open) => {
-      startStructuralMove(open ? 'enter' : 'exit');
-      update({ open, split: false, openBeforeSplit: null });
-    },
-    toggle: () => get().setOpen(!get().open),
-    dock: (side) => {
-      startStructuralMove('enter');
-      set({ docks: get().docks + 1 });
-      update({ open: true, mode: side, split: false, openBeforeSplit: null });
-    },
-    floatAt: (position) => {
-      startStructuralMove('exit');
-      update({
-        open: true,
-        mode: 'float',
-        float: position,
-        split: false,
-        openBeforeSplit: null,
-      });
-    },
-    enterSplit: (name) => {
-      if (get().split) {
-        if (name !== undefined) set({ splitName: name });
-        return;
-      }
-      startStructuralMove('fold');
-      set({ openBeforeSplit: get().open, splitName: name ?? null });
-      update({ open: true, split: true });
-    },
-    leaveSplit: () => {
-      if (!get().split) return;
-      const restore = get().openBeforeSplit;
-      set({ openBeforeSplit: null });
-      update({ split: false, open: restore ?? get().open });
-    },
-    setMoving: (moving) => {
-      if (moving === get().moving) return;
-      set({ moving });
-      if (movingGuard) clearTimeout(movingGuard);
-      movingGuard = moving
-        ? setTimeout(() => set({ moving: null }), MOVING_GUARD_MS)
-        : null;
-    },
-    setGateOpen: (gateOpen) => {
-      if (gateOpen !== get().gateOpen) set({ gateOpen });
-    },
-    announce: (text) =>
-      set({ announcement: { text, id: (get().announcement?.id ?? 0) + 1 } }),
-    resizeFloat: (floatSize) => update({ floatSize }),
-    setDockWidth: (dockWidth) => update({ dockWidth }),
-    openConversation: (conversationId) => {
-      if (conversationId === get().conversationId) return;
-      setConversation({ conversationId, pendingPrompt: undefined });
-    },
-    newChat: (prompt) =>
-      setConversation({
-        conversationId: null,
-        newChatToken: get().newChatToken + 1,
-        pendingPrompt: prompt,
-      }),
-    conversationCreated: (conversationId) =>
-      setConversation({ conversationId, pendingPrompt: undefined }),
-    conversationMissing: () => setConversation({ conversationId: null }),
-    setGesture: (gesture) => set({ gesture }),
-    setLastPage: (lastPage) => {
-      if (lastPage === get().lastPage) return;
-      set({ lastPage });
-      saveLastPage(lastPage);
-    },
-  };
-});
-
-export function chatPanelIsDocked(state: ChatPanelState): boolean {
+function isDocked(state: ChatPanelState): boolean {
   return state.open && (state.split || state.mode !== 'float');
 }
 
-export function bindChatRouter(next: ChatRouter): () => void {
+function bindRouter(next: ChatRouter): () => void {
   router = next;
   return () => {
     if (router === next) router = null;
@@ -158,7 +39,7 @@ function openBeside({
   const backToChat =
     (push && fromFull) || (!push && previous.chatSplitBack === true);
   keepFocus();
-  if (viewportWidth < MOBILE_BREAKPOINT) {
+  if (viewportWidth < chatLayoutUtils.MOBILE_BREAKPOINT) {
     if (panel.open) panel.setOpen(false);
     current.navigate({
       to: route,
@@ -168,7 +49,10 @@ function openBeside({
   } else {
     if (fromFull) {
       current.captureAnchor();
-      if (viewportWidth >= DOCK_BREAKPOINT && !reducedMotion()) {
+      if (
+        viewportWidth >= chatLayoutUtils.DOCK_BREAKPOINT &&
+        !chatLayoutUtils.prefersReducedMotion()
+      ) {
         panel.setMoving('enter');
       }
       panel.enterSplit(name);
@@ -195,7 +79,11 @@ function expand(): void {
   const location = current.location();
   const panel = useChatPanel.getState();
   current.captureAnchor();
-  if (panel.split && !reducedMotion() && window.innerWidth >= DOCK_BREAKPOINT) {
+  if (
+    panel.split &&
+    !chatLayoutUtils.prefersReducedMotion() &&
+    window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT
+  ) {
     panel.setMoving('exit');
   }
   panel.leaveSplit();
@@ -252,30 +140,15 @@ function keepFocus(): void {
   releaseFocus = release;
 }
 
-function reducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
 function readSaved(): SavedChatPanel {
-  const view = readView();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const prefs: unknown = raw ? JSON.parse(raw) : null;
-    return { ...DEFAULTS, ...(isObject(prefs) ? prefs : {}), ...view };
-  } catch {
-    return { ...DEFAULTS, ...view };
-  }
+  const prefs = safeStorage.readJson({ area: 'local', key: STORAGE_KEY });
+  return { ...DEFAULTS, ...(isObject(prefs) ? prefs : {}), ...readView() };
 }
 
 function readView(): Pick<SavedChatPanel, 'open' | 'split'> {
-  try {
-    const raw = sessionStorage.getItem(TAB_VIEW_KEY);
-    const view: unknown = raw ? JSON.parse(raw) : null;
-    if (!isObject(view)) return { open: false, split: false };
-    return { open: view.open === true, split: view.split === true };
-  } catch {
-    return { open: false, split: false };
-  }
+  const view = safeStorage.readJson({ area: 'session', key: TAB_VIEW_KEY });
+  if (!isObject(view)) return { open: false, split: false };
+  return { open: view.open === true, split: view.split === true };
 }
 
 function save({
@@ -286,69 +159,73 @@ function save({
   floatSize,
   dockWidth,
 }: SavedChatPanel) {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ mode, float, floatSize, dockWidth }),
-    );
-    sessionStorage.setItem(TAB_VIEW_KEY, JSON.stringify({ open, split }));
-  } catch {
-    return;
-  }
+  safeStorage.writeJson({
+    area: 'local',
+    key: STORAGE_KEY,
+    value: { mode, float, floatSize, dockWidth },
+  });
+  safeStorage.writeJson({
+    area: 'session',
+    key: TAB_VIEW_KEY,
+    value: { open, split },
+  });
 }
 
 function readConversationId(): string | null {
-  try {
-    const tab = sessionStorage.getItem(TAB_CONVERSATION_KEY);
-    if (tab !== null) return tab || null;
-    const seeded =
-      localStorage.getItem(LAST_CONVERSATION_KEY) ?? migrateOldConversationId();
-    sessionStorage.setItem(TAB_CONVERSATION_KEY, seeded ?? '');
-    return seeded;
-  } catch {
-    return null;
-  }
+  const tab = safeStorage.read({ area: 'session', key: TAB_CONVERSATION_KEY });
+  if (tab !== null) return tab || null;
+  const seeded =
+    safeStorage.read({ area: 'local', key: LAST_CONVERSATION_KEY }) ??
+    migrateOldConversationId();
+  safeStorage.write({
+    area: 'session',
+    key: TAB_CONVERSATION_KEY,
+    value: seeded ?? '',
+  });
+  return seeded;
 }
 
 function migrateOldConversationId(): string | null {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  const parsed: unknown = raw ? JSON.parse(raw) : null;
+  const parsed = safeStorage.readJson({ area: 'local', key: STORAGE_KEY });
   const old =
-    typeof parsed === 'object' &&
-    parsed !== null &&
-    'conversationId' in parsed &&
-    typeof parsed.conversationId === 'string'
+    isObject(parsed) && typeof parsed.conversationId === 'string'
       ? parsed.conversationId
       : null;
-  if (old) localStorage.setItem(LAST_CONVERSATION_KEY, old);
+  if (old) {
+    safeStorage.write({
+      area: 'local',
+      key: LAST_CONVERSATION_KEY,
+      value: old,
+    });
+  }
   return old;
 }
 
 function saveConversationId(conversationId: string | null) {
-  try {
-    sessionStorage.setItem(TAB_CONVERSATION_KEY, conversationId ?? '');
-    if (conversationId) {
-      localStorage.setItem(LAST_CONVERSATION_KEY, conversationId);
-    }
-  } catch {
-    return;
+  safeStorage.write({
+    area: 'session',
+    key: TAB_CONVERSATION_KEY,
+    value: conversationId ?? '',
+  });
+  if (conversationId) {
+    safeStorage.write({
+      area: 'local',
+      key: LAST_CONVERSATION_KEY,
+      value: conversationId,
+    });
   }
 }
 
 function readLastPage(): string | null {
-  try {
-    return sessionStorage.getItem(TAB_LAST_PAGE_KEY);
-  } catch {
-    return null;
-  }
+  return safeStorage.read({ area: 'session', key: TAB_LAST_PAGE_KEY });
 }
 
 function saveLastPage(lastPage: string) {
-  try {
-    sessionStorage.setItem(TAB_LAST_PAGE_KEY, lastPage);
-  } catch {
-    return;
-  }
+  safeStorage.write({
+    area: 'session',
+    key: TAB_LAST_PAGE_KEY,
+    value: lastPage,
+  });
 }
 
 let router: ChatRouter | null = null;
@@ -359,9 +236,131 @@ const EXPAND_DEBOUNCE_MS = 220;
 const MOVING_GUARD_MS = 900;
 const FOCUS_GUARD_MS = 30_000;
 
-export const chatTransitions = { openBeside, expand };
+const STORAGE_KEY = 'chat-panel';
+const TAB_VIEW_KEY = 'chat:view';
+const TAB_CONVERSATION_KEY = 'chat:conv';
+const LAST_CONVERSATION_KEY = 'chat:last-conv';
+const TAB_LAST_PAGE_KEY = 'chat:last-page';
 
-export const MOBILE_SHEET_HASH = '#chat';
+const DEFAULTS: SavedChatPanel = {
+  open: false,
+  split: false,
+  mode: 'left',
+  float: null,
+  floatSize: null,
+  dockWidth: chatLayoutUtils.DOCK_DEFAULT_WIDTH,
+};
+
+const MOBILE_SHEET_HASH = '#chat';
+
+export const useChatPanel = create<ChatPanelState>((set, get) => {
+  const update = (
+    patch: Partial<SavedChatPanel & Pick<ChatPanelState, 'openBeforeSplit'>>,
+  ) => {
+    set(patch);
+    save(get());
+  };
+  const setConversation = (
+    patch: Pick<ChatPanelState, 'conversationId'> &
+      Partial<Pick<ChatPanelState, 'newChatToken' | 'pendingPrompt'>>,
+  ) => {
+    set(patch);
+    saveConversationId(patch.conversationId);
+  };
+  return {
+    ...readSaved(),
+    conversationId: readConversationId(),
+    lastPage: readLastPage(),
+    newChatToken: 0,
+    pendingPrompt: undefined,
+    gesture: 'idle',
+    docks: 0,
+    chatMounted: false,
+    moving: null,
+    gateOpen: false,
+    splitName: null,
+    openBeforeSplit: null,
+    announcement: null,
+    mountChat: () => set({ chatMounted: true }),
+    setOpen: (open) => {
+      chatLayoutUtils.startStructuralMove(open ? 'enter' : 'exit');
+      update({ open, split: false, openBeforeSplit: null });
+    },
+    toggle: () => get().setOpen(!get().open),
+    dock: (side) => {
+      chatLayoutUtils.startStructuralMove('enter');
+      set({ docks: get().docks + 1 });
+      update({ open: true, mode: side, split: false, openBeforeSplit: null });
+    },
+    floatAt: (position) => {
+      chatLayoutUtils.startStructuralMove('exit');
+      update({
+        open: true,
+        mode: 'float',
+        float: position,
+        split: false,
+        openBeforeSplit: null,
+      });
+    },
+    enterSplit: (name) => {
+      if (get().split) {
+        if (name !== undefined) set({ splitName: name });
+        return;
+      }
+      chatLayoutUtils.startStructuralMove('fold');
+      set({ openBeforeSplit: get().open, splitName: name ?? null });
+      update({ open: true, split: true });
+    },
+    leaveSplit: () => {
+      if (!get().split) return;
+      const restore = get().openBeforeSplit;
+      set({ openBeforeSplit: null });
+      update({ split: false, open: restore ?? get().open });
+    },
+    setMoving: (moving) => {
+      if (moving === get().moving) return;
+      set({ moving });
+      if (movingGuard) clearTimeout(movingGuard);
+      movingGuard = moving
+        ? setTimeout(() => set({ moving: null }), MOVING_GUARD_MS)
+        : null;
+    },
+    setGateOpen: (gateOpen) => {
+      if (gateOpen !== get().gateOpen) set({ gateOpen });
+    },
+    announce: (text) =>
+      set({ announcement: { text, id: (get().announcement?.id ?? 0) + 1 } }),
+    resizeFloat: (floatSize) => update({ floatSize }),
+    setDockWidth: (dockWidth) => update({ dockWidth }),
+    openConversation: (conversationId) => {
+      if (conversationId === get().conversationId) return;
+      setConversation({ conversationId, pendingPrompt: undefined });
+    },
+    newChat: (prompt) =>
+      setConversation({
+        conversationId: null,
+        newChatToken: get().newChatToken + 1,
+        pendingPrompt: prompt,
+      }),
+    conversationCreated: (conversationId) =>
+      setConversation({ conversationId, pendingPrompt: undefined }),
+    conversationMissing: () => setConversation({ conversationId: null }),
+    setGesture: (gesture) => set({ gesture }),
+    setLastPage: (lastPage) => {
+      if (lastPage === get().lastPage) return;
+      set({ lastPage });
+      saveLastPage(lastPage);
+    },
+  };
+});
+
+export const chatPanelUtils = {
+  isDocked,
+  bindRouter,
+  openBeside,
+  expand,
+  MOBILE_SHEET_HASH,
+};
 
 export type ChatPanelSide = 'left' | 'right';
 export type ChatPanelMode = ChatPanelSide | 'float';

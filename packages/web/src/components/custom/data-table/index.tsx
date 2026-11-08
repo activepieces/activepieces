@@ -367,8 +367,6 @@ export function DataTable<
         <DataTableToolbar
           className={toolbarClassName ?? (bordered ? 'px-0' : undefined)}
         >
-          {/* A narrow page (a docked chat, an open sidebar) wraps the
-              filters onto more lines; the buttons stay pinned right. */}
           <div className="w-full flex flex-wrap items-start justify-between gap-2">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               {filters &&

@@ -21,7 +21,6 @@ import {
 } from 'radix-ui';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { ToastT } from 'sonner';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
@@ -43,22 +42,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { chatDemo } from '@/features/chat/lib/demo/chat-demo';
-import { playDemoScenario } from '@/features/chat/lib/demo/play-scenario';
+import { chatDemoGate } from '@/features/chat/lib/demo/chat-demo-gate';
 import {
   ChatWidth,
-  DOCK_BREAKPOINT,
+  chatLayoutUtils,
 } from '@/features/workspace/lib/chat-layout';
 import {
-  ChatPanelMode,
-  chatTransitions,
+  chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { isMac } from '@/lib/dom-utils';
+import { safeStorage } from '@/lib/safe-storage';
 import { cn } from '@/lib/utils';
 
 import { useShellHandle } from '../app-shell';
 
+import { chatDom } from './chat-dom';
 import {
   useChatHistoryActions,
   useConversationTitle,
@@ -66,26 +67,7 @@ import {
 import { ChatHistoryList } from './chat-history-list';
 import { historyMotion } from './chat-history-motion';
 import { ChatHistoryPopover } from './chat-history-popover';
-import {
-  defaultFloat,
-  FLOAT_DEFAULT,
-  fitToWindow,
-  useChatWidth,
-  useWindowAtLeast,
-} from './chat-window';
-
-let autoplayed = false;
-if (chatDemo.autoplayScenarioId) {
-  const where = new URLSearchParams(window.location.search).get('chatDock');
-  setTimeout(() => {
-    const panel = useChatPanel.getState();
-    if (where === 'float') {
-      panel.floatAt(panel.float ?? { x: window.innerWidth - 440, y: 96 });
-    } else {
-      panel.dock(where === 'left' ? 'left' : 'right');
-    }
-  }, 0);
-}
+import { useChatToastPlacement, useChatWidth } from './chat-window';
 
 export function ChatChrome({
   onDragStart,
@@ -108,10 +90,12 @@ export function ChatChrome({
   const [liveTitle, setLiveTitle] = useState<LiveTitle | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [pinned, setPinned] = useState(readPinned);
+  const [pinned, setPinned] = useState(() =>
+    safeStorage.readFlag({ area: 'local', key: PINNED_KEY }),
+  );
+  const toastPosition = useChatToastPlacement().position;
   const headerRef = useRef<HTMLDivElement>(null);
   const historyButtonRef = useRef<HTMLButtonElement>(null);
-  const chatRef = useRef<HTMLDivElement>(null);
   const roomy = useRoomyContainer(headerRef);
 
   const full = layout === 'full';
@@ -145,10 +129,7 @@ export function ChatChrome({
   );
 
   const focusChat = useCallback(
-    () =>
-      requestAnimationFrame(() =>
-        chatRef.current?.querySelector('textarea')?.focus(),
-      ),
+    () => requestAnimationFrame(() => chatDom.composer()?.focus()),
     [],
   );
   const backToChat = useCallback(() => {
@@ -173,30 +154,23 @@ export function ChatChrome({
   const toggleHistory = useCallback(() => {
     if (columnMode) {
       setPinned(!pinned);
-      savePinned(!pinned);
+      safeStorage.writeFlag({ area: 'local', key: PINNED_KEY, value: !pinned });
       return;
     }
     setHistoryIn((prev) => (prev === layout ? null : layout));
   }, [columnMode, pinned, layout]);
 
-  useEffect(
-    () =>
-      chatDemo.onPlay((target) => {
-        invalidate();
-        if (target.kind === 'conversation') {
-          openConversation(target.conversationId);
-        } else {
-          startFresh(target.prompt);
-        }
-      }),
-    [invalidate, openConversation, startFresh],
-  );
   useEffect(() => {
-    const scenarioId = chatDemo.autoplayScenarioId;
-    if (!scenarioId || autoplayed) return;
-    autoplayed = true;
-    playDemoScenario(scenarioId);
-  }, []);
+    if (!import.meta.env.DEV) return;
+    return chatDemoGate.onPlay((target) => {
+      invalidate();
+      if (target.kind === 'conversation') {
+        openConversation(target.conversationId);
+      } else {
+        startFresh(target.prompt);
+      }
+    });
+  }, [invalidate, openConversation, startFresh]);
 
   useEffect(() => {
     if (layout === 'closed' || !chatEnabled) return;
@@ -250,25 +224,25 @@ export function ChatChrome({
       currentId={conversationId}
       onSelect={openConversation}
       onNewChat={startFresh}
-      toastPosition={TOAST_POSITION[layout]}
+      toastPosition={toastPosition}
       autoFocus={!historyColumn}
     />
   );
   const openFullPage = () => {
     const header = headerRef.current;
     const fromHeader = header?.contains(document.activeElement) ?? false;
-    chatTransitions.expand();
+    chatPanelUtils.expand();
     if (!fromHeader) return;
     requestAnimationFrame(() => {
       if (header?.contains(document.activeElement)) return;
-      getComposer()?.focus({ preventScroll: true });
+      chatDom.composer()?.focus({ preventScroll: true });
     });
   };
   const collapseToSide = lastPage
     ? () => {
         navigate(lastPage);
         const panel = useChatPanel.getState();
-        if (window.innerWidth >= DOCK_BREAKPOINT) {
+        if (window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT) {
           panel.dock('left');
         } else {
           panel.setOpen(true);
@@ -280,13 +254,14 @@ export function ChatChrome({
     const trimmed = next?.trim();
     if (!conversationId || !trimmed || trimmed === title) return;
     setLiveTitle({ id: conversationId, title: trimmed, fresh: false });
-    rename(conversationId, trimmed).catch(() => undefined);
+    rename({ id: conversationId, title: trimmed }).catch(() => undefined);
   };
   const deleteChat = () => {
     if (!conversationId) return;
     const id = conversationId;
-    remove(id, {
-      position: TOAST_POSITION[layout],
+    remove({
+      id,
+      position: toastPosition,
       onUndo: () => {
         if (useChatPanel.getState().conversationId) return;
         openConversation(id);
@@ -482,7 +457,6 @@ export function ChatChrome({
         )}
         <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
           <motion.div
-            ref={chatRef}
             inert={historyView}
             aria-hidden={historyView || undefined}
             initial={false}
@@ -538,44 +512,6 @@ export function ChatChrome({
   );
 }
 
-function getComposer(): HTMLElement | null {
-  return document.querySelector<HTMLElement>(
-    '[data-chat-root] textarea, [data-chat-root] [contenteditable="true"]',
-  );
-}
-
-function useSplitHint(split: boolean): boolean {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (!split || readFlag(SPLIT_HINT_KEY)) return;
-    writeFlag(SPLIT_HINT_KEY);
-    const show = setTimeout(() => setVisible(true), SPLIT_HINT_DELAY_MS);
-    const hide = setTimeout(() => setVisible(false), SPLIT_HINT_MS);
-    return () => {
-      clearTimeout(show);
-      clearTimeout(hide);
-      setVisible(false);
-    };
-  }, [split]);
-  return visible;
-}
-
-function readFlag(key: string): boolean {
-  try {
-    return localStorage.getItem(key) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-function writeFlag(key: string) {
-  try {
-    localStorage.setItem(key, 'true');
-  } catch {
-    return;
-  }
-}
-
 export function ChatLastPageTracker() {
   const { pathname, search } = useLocation();
   const onChatPage = useShellHandle().chat === 'full';
@@ -585,6 +521,27 @@ export function ChatLastPageTracker() {
     }
   }, [onChatPage, pathname, search]);
   return null;
+}
+
+function useSplitHint(split: boolean): boolean {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (
+      !split ||
+      safeStorage.readFlag({ area: 'local', key: SPLIT_HINT_KEY })
+    ) {
+      return;
+    }
+    safeStorage.writeFlag({ area: 'local', key: SPLIT_HINT_KEY, value: true });
+    const show = setTimeout(() => setVisible(true), SPLIT_HINT_DELAY_MS);
+    const hide = setTimeout(() => setVisible(false), SPLIT_HINT_MS);
+    return () => {
+      clearTimeout(show);
+      clearTimeout(hide);
+      setVisible(false);
+    };
+  }, [split]);
+  return visible;
 }
 
 const ChatBody = memo(function ChatBody({
@@ -676,28 +633,6 @@ function HeaderButton({
   );
 }
 
-const IS_MAC =
-  typeof navigator !== 'undefined' && /Mac/i.test(navigator.userAgent);
-const TOGGLE_SHORTCUT = IS_MAC ? '⌘J' : 'Ctrl J';
-const HISTORY_SHORTCUT = IS_MAC ? '⇧⌘H' : 'Ctrl Shift H';
-const NEW_CHAT_SHORTCUT = IS_MAC ? '⇧⌘O' : 'Ctrl Shift O';
-const PINNED_KEY = 'chat-sidebar-pinned';
-const SPLIT_HINT_KEY = 'chat-split-hint-seen';
-const SPLIT_HINT_DELAY_MS = 500;
-const SPLIT_HINT_MS = 6500;
-const ROOMY_WIDTH = 1024;
-const TYPE_STEP_MS = 24;
-
-const LAYOUTS: {
-  mode: ChatPanelMode;
-  label: string;
-  icon: typeof PanelLeft;
-}[] = [
-  { mode: 'left', label: 'Dock left', icon: PanelLeft },
-  { mode: 'right', label: 'Dock right', icon: PanelRight },
-  { mode: 'float', label: 'Floating', icon: PictureInPicture2 },
-];
-
 function LayoutMenu({
   layout,
   onOpenFullPage,
@@ -705,9 +640,13 @@ function LayoutMenu({
   layout: ChatWidth;
   onOpenFullPage: () => void;
 }) {
-  const canDock = useWindowAtLeast(DOCK_BREAKPOINT);
+  const canDock = windowSizeHooks.useAtLeast(chatLayoutUtils.DOCK_BREAKPOINT);
   const CurrentIcon =
-    LAYOUTS.find((option) => option.mode === layout)?.icon ?? PanelLeft;
+    layout === 'right'
+      ? PanelRight
+      : layout === 'float'
+      ? PictureInPicture2
+      : PanelLeft;
 
   const moveTo = (next: string) => {
     const panel = useChatPanel.getState();
@@ -715,8 +654,10 @@ function LayoutMenu({
       panel.dock(next);
       return;
     }
-    const size = fitToWindow(panel.floatSize ?? FLOAT_DEFAULT);
-    panel.floatAt(panel.float ?? defaultFloat(size));
+    const size = chatLayoutUtils.fitToWindow(
+      panel.floatSize ?? chatLayoutUtils.FLOAT_DEFAULT,
+    );
+    panel.floatAt(panel.float ?? chatLayoutUtils.defaultFloat(size));
   };
 
   return (
@@ -728,16 +669,18 @@ function LayoutMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuRadioGroup value={layout} onValueChange={moveTo}>
-          {LAYOUTS.map(({ mode, label, icon: Icon }) => (
-            <DropdownMenuRadioItem
-              key={mode}
-              value={mode}
-              disabled={mode !== 'float' && !canDock}
-            >
-              <Icon className="size-4" />
-              {t(label)}
-            </DropdownMenuRadioItem>
-          ))}
+          <DropdownMenuRadioItem value="left" disabled={!canDock}>
+            <PanelLeft className="size-4" />
+            {t('Dock left')}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="right" disabled={!canDock}>
+            <PanelRight className="size-4" />
+            {t('Dock right')}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="float">
+            <PictureInPicture2 className="size-4" />
+            {t('Floating')}
+          </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         {!canDock && (
           <DropdownMenuLabel className="pt-1 pl-8 text-xs font-normal text-gray-10">
@@ -917,29 +860,14 @@ function useRoomyContainer(
   return roomy;
 }
 
-function readPinned(): boolean {
-  try {
-    return localStorage.getItem(PINNED_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-function savePinned(pinned: boolean) {
-  try {
-    localStorage.setItem(PINNED_KEY, String(pinned));
-  } catch {
-    return;
-  }
-}
+const TOGGLE_SHORTCUT = isMac() ? '⌘J' : 'Ctrl J';
+const HISTORY_SHORTCUT = isMac() ? '⇧⌘H' : 'Ctrl Shift H';
+const NEW_CHAT_SHORTCUT = isMac() ? '⇧⌘O' : 'Ctrl Shift O';
+const PINNED_KEY = 'chat-sidebar-pinned';
+const SPLIT_HINT_KEY = 'chat-split-hint-seen';
+const SPLIT_HINT_DELAY_MS = 500;
+const SPLIT_HINT_MS = 6500;
+const ROOMY_WIDTH = 1024;
+const TYPE_STEP_MS = 24;
 
 type LiveTitle = { id: string; title: string; fresh: boolean };
-
-const TOAST_POSITION: Record<ChatWidth, ToastT['position'] | undefined> = {
-  full: 'bottom-center',
-  closed: undefined,
-  left: undefined,
-  right: 'bottom-center',
-  float: undefined,
-  sheet: 'top-center',
-};

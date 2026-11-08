@@ -30,9 +30,9 @@ import {
   UseCaseCard,
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { DOCK_BREAKPOINT } from '@/features/workspace/lib/chat-layout';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import {
-  chatTransitions,
+  chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
@@ -78,8 +78,8 @@ export function SetupRequiredState() {
   const isAdmin = useIsPlatformAdmin();
 
   const connect = () => {
-    chatTransitions.openBeside({ route: '/platform/ai', push: true });
-    if (window.innerWidth >= DOCK_BREAKPOINT) {
+    chatPanelUtils.openBeside({ route: '/platform/ai', push: true });
+    if (window.innerWidth >= chatLayoutUtils.DOCK_BREAKPOINT) {
       useChatPanel.getState().setOpen(true);
     }
   };
