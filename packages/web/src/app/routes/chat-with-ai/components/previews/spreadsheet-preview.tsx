@@ -163,7 +163,7 @@ function SpreadsheetTable({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="sticky top-0 z-10">
-          <tr className="bg-gray-2">
+          <tr className="border-b border-gray-5 bg-gray-2">
             {headers.map((header, column) => (
               <th
                 key={column}

@@ -135,7 +135,6 @@ function renderMessage({ isStreaming }: { isStreaming: boolean }) {
           <AssistantMessage
             message={MESSAGE}
             isStreaming={isStreaming}
-            isLastMessage
             onSendPrompt={vi.fn()}
             conversationId="conversation-1"
             messageIndex={1}

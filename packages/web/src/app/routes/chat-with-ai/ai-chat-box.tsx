@@ -424,7 +424,6 @@ function ChatBoxContent({
                       <UserMessage
                         key={msg.id}
                         message={msg}
-                        isLastMessage={idx === messages.length - 1}
                       />
                     );
                   }
@@ -440,7 +439,6 @@ function ChatBoxContent({
                       message={msg}
                       isStreaming={isLastStreamingAssistant}
                       isResumed={isLastStreamingAssistant && isResumedStream}
-                      isLastMessage={isLastAssistant}
                       onSendPrompt={(text) => void handleSend(text)}
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
                       conversationId={conversationId}

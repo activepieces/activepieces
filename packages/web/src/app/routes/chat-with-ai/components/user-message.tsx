@@ -9,7 +9,6 @@ import {
   MessageContent as PromptKitMessageContent,
 } from '@/components/prompt-kit/message';
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
-import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
 
@@ -18,10 +17,8 @@ import { CopyIconButton } from './copy-icon-button';
 
 export const UserMessage = memo(function UserMessage({
   message,
-  isLastMessage = false,
 }: {
   message: ChatUIMessage;
-  isLastMessage?: boolean;
 }) {
   const content = getTextFromParts(message.parts);
   const files = message.parts.flatMap((p) =>
@@ -63,12 +60,7 @@ export const UserMessage = memo(function UserMessage({
           </div>
         </Message>
         <MessageActions
-          className={cn(
-            'justify-end mt-1 transition-opacity',
-            isLastMessage
-              ? 'opacity-100'
-              : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100',
-          )}
+          className="justify-end mt-1"
         >
           <MessageAction tooltip={t('Copy')}>
             <CopyIconButton textToCopy={content} className="h-6 w-6" />

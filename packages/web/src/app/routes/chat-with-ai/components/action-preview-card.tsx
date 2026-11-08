@@ -23,6 +23,7 @@ import {
   ChatCardTile,
 } from './chat-ui/chat-card';
 import { ChatKeyValue } from './chat-ui/chat-key-value';
+import { ChatStatusText } from './chat-ui/chat-status';
 import { HtmlPreview } from './previews/html-preview';
 
 export function ActionPreviewCard({
@@ -84,6 +85,7 @@ export function ActionPreviewCard({
         }
         title={title}
         meta={meta || undefined}
+        trailing={<ChatStatusText status="needs-you" />}
       />
       {hasBody && (
         <ChatCardBody>
@@ -151,7 +153,7 @@ function ExpandableValue({ param }: { param: RichInputParam }) {
             <HtmlPreview html={param.value} label={param.key} />
           </div>
         ) : (
-          <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-2 px-3 py-2 text-xs text-gray-12">
+          <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-gray-5 bg-gray-2 px-3 py-2 text-xs text-gray-12">
             {param.value}
           </pre>
         )}
@@ -176,7 +178,7 @@ function BatchTable({
   return (
     <div className="min-w-0 overflow-x-auto rounded-lg border border-gray-5">
       <table className="w-full text-left text-sm">
-        <thead className="bg-gray-2 text-xs text-gray-11">
+        <thead className="border-b border-gray-5 bg-gray-2 text-xs text-gray-11">
           <tr>
             {columns.map((column) => (
               <th key={column} className="px-3 py-2 font-normal">

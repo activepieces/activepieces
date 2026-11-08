@@ -268,6 +268,7 @@ function ChoiceBody({
       onPick={onPick}
       ariaLabel={question.question}
       writeYourOwn={writeYourOwn}
+      autoFocus
     />
   ) : (
     <ChatOptionList
@@ -277,6 +278,7 @@ function ChoiceBody({
       onPick={onPick}
       ariaLabel={question.question}
       writeYourOwn={writeYourOwn}
+      autoFocus
       numbered
       searchPlaceholder={t('Search options')}
     />

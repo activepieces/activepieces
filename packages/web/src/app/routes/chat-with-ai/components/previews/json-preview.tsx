@@ -40,7 +40,7 @@ export function JsonPreview({
         </div>
       )}
     >
-      <div className="bg-gray-2 px-3 py-2">
+      <div className="border-t border-gray-5 bg-gray-2 px-3 py-2">
         <SimpleJsonViewer data={data} hideCopyButton maxHeight={360} />
       </div>
     </PreviewCard>

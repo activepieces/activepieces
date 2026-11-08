@@ -87,7 +87,6 @@ export const AssistantMessage = memo(function AssistantMessage({
 }: {
   message: ChatUIMessage;
   isStreaming: boolean;
-  isLastMessage?: boolean;
   onSendPrompt?: (text: string) => void;
   claimedBuildIds?: ReadonlySet<string>;
   isResumed?: boolean;
@@ -243,14 +242,9 @@ function MessageBlocks({
             const hasTextAfter = blocks
               .slice(i + 1)
               .some((b) => b.kind === 'text');
-            // A skeleton after this block IS the live indicator now — let the
-            // thinking accordion settle so we don't show a shimmer pill and a
-            // skeleton at once.
             const hasSkeletonAfter = blocks
               .slice(i + 1)
               .some((b) => b.kind === 'card-skeleton');
-            // A build card after this block owns the live indicator now — this
-            // is the settled discovery accordion above it, not the active one.
             const hasBuildAfter = blocks
               .slice(i + 1)
               .some((b) => b.kind === 'build-plan');
@@ -361,7 +355,7 @@ function MessageBlocks({
                 icon={<Brain className="size-3.5 text-gray-11" />}
                 title={block.memory}
               >
-                {t('Memory updated')}: <span>{block.memory}</span>
+                {t('Memory updated: {memory}', { memory: block.memory })}
               </ChatLine>
             );
           case 'action-receipt':

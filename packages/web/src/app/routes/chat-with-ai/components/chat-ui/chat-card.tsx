@@ -190,7 +190,7 @@ export function ChatCardActions({ className, children }: ChatCardSectionProps) {
     <div
       data-slot="chat-card-actions"
       className={cn(
-        'flex flex-wrap items-center gap-2 pb-4 pl-14 pr-4 pt-0 @max-chat-narrow/chat:pl-3',
+        'flex flex-wrap items-center gap-2 border-t border-gray-4 pb-4 pl-14 pr-4 pt-3 @max-chat-narrow/chat:pl-3',
         className,
       )}
     >
