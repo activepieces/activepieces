@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Plus } from 'lucide-react';
@@ -27,12 +28,16 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const isCloud = edition === ApEdition.CLOUD;
+  const canCreatePlatform =
+    isCloud &&
+    !isNil(allProjects) &&
+    !allProjects.some((platform) => platform.isOwner);
 
   const platforms = React.useMemo(() => {
     if (!allProjects) return [];
     return allProjects.map((platform) => ({
       name: platform.platformName,
-      id: platform.projects[0]?.platformId,
+      id: platform.platformId,
     }));
   }, [allProjects]);
 
@@ -42,6 +47,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
 
   const dropdownContent = (
     <DropdownMenuContent
+      data-testid="platform-switcher-menu"
       className="w-56 rounded-xl z-60"
       align="start"
       side="right"
@@ -54,6 +60,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
         {platforms.map((platform) => (
           <DropdownMenuItem
             key={platform.id}
+            data-testid="platform-switcher-item"
             onClick={() => handlePlatformSwitch(platform.id)}
             className="text-sm p-2 break-all cursor-pointer"
           >
@@ -69,10 +76,11 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
           </DropdownMenuItem>
         ))}
       </ScrollArea>
-      {isCloud && (
+      {canCreatePlatform && (
         <>
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            data-testid="platform-switcher-create"
             onClick={() => setCreateDialogOpen(true)}
             className="text-sm p-2 cursor-pointer"
           >
@@ -87,12 +95,16 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild className="w-full">
+        <DropdownMenuTrigger
+          asChild
+          className="w-full"
+          data-testid="platform-switcher-trigger"
+        >
           {children}
         </DropdownMenuTrigger>
         {dropdownContent}
       </DropdownMenu>
-      {isCloud && (
+      {canCreatePlatform && (
         <CreatePlatformDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}

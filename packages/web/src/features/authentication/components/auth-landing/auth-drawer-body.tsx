@@ -1048,6 +1048,12 @@ function codeErrorMessage(error: HttpError): string {
     if (errorCode === ErrorCode.INVITATION_ONLY_SIGN_UP) {
       return t('You need an invitation to sign up.');
     }
+    if (errorCode === ErrorCode.EMAIL_AUTH_DISABLED) {
+      return t('Email sign-in is disabled');
+    }
+    if (errorCode === ErrorCode.SIGN_IN_METHOD_NOT_ALLOWED) {
+      return t("Your organization doesn't allow this sign-in method");
+    }
   }
   return t('Something went wrong, please try again later');
 }

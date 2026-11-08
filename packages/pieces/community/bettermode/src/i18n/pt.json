@@ -260,6 +260,8 @@
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
+  "Request": "Solicitação",
+  "Data to send": "Dados a enviar",
   "New Post": "Nova Postagem",
   "New Member": "Novo Membro",
   "New Reply": "New Reply",

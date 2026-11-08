@@ -8,6 +8,352 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Rendex 0.2.0: Render to Image is no longer an agent tool
+
+From Rendex 0.2.0, **Render to Image** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Render Screenshot** tool instead, which takes the page as one of URL, HTML or Markdown.
+
+Render to Image steps upgraded to 0.2.0 also wait for the page's load event (instead of network idle) when the source is HTML or Markdown, because Rendex timed out on inline content with the old wait.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Render to Image at **Render Screenshot**. Flow steps keep working as before after upgrading.
+
+#### Letmepost 0.2.0: Publish a Post is no longer an agent tool, and calls to Letmepost now verify the TLS certificate
+
+From Letmepost 0.2.0, **Publish a Post** is no longer offered to AI agents and MCP clients. It stays available as a flow step with the same inputs and outputs. Agents use the new **Publish or Schedule a Post** tool instead, which takes account IDs from **List Accounts** and publishes right away when no schedule time is given.
+
+The piece also checks the certificate of the Letmepost server on the connection check, triggers, dropdowns and every dedicated action. Before, certificate checks were skipped, so a self-hosted Letmepost behind a self-signed or private-CA certificate worked. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. The hosted `api.letmepost.dev` is not affected.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used Publish a Post at **Publish or Schedule a Post**. If you point the piece at a self-hosted Letmepost on a self-signed or private-CA certificate, give it a publicly trusted certificate, or set both `NODE_EXTRA_CA_CERTS=/path/to/ca.pem` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container before upgrading Letmepost steps or connections to 0.2.0.
+
+#### GoodMem 0.1.0: three actions leave the agent tool list
+
+Create Space, Create Memory and Retrieve Memories are now human-only; agents use the new AI actions instead (Create Space, Store Memory, Retrieve Memories, List Memories, List Models), which cover the same operations with agent-sized inputs. Flows are unaffected; MCP servers and agents that exposed the old three tools should switch to the AI actions.
+
+#### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
+
+The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows. In **Update Product**, Availability, Exclude Tax, Enable Variants, Status and the new Non-Veg setting are now Yes/No choices, and a setting left empty keeps the product's current value instead of being set to off.
+
+#### What you need to do
+
+If a flow maps fields from Order Created, re-map them without the `body` prefix (for example `payload.id` instead of `body.payload.id`). Agents that used the discount actions get new agent versions named **Create Product Discount** and **Create Promo Code**, which take plain IDs and values.
+
+Open existing **Update Product** steps and pick Availability, Exclude Tax, Enable Variants and Status again. Steps saved before this version still send the value they stored, but the builder now shows "Keep current setting" for those four fields.
+
+#### Letta 0.2.0: three actions are no longer agent tools, New Agent returns less, and Get Identities respects Limit
+
+**Send Message to Agent** is now shown only in the flow builder. AI agents and MCP clients get the new **Send Message** tool (`letta_send_message`) instead, which takes the agent ID as text.
+
+**Create Identity** and **Get Identities** are no longer offered as agent tools, and there is no agent-tool replacement. Letta Cloud removed the `/v1/identities` API, so these actions no longer work on Letta Cloud.
+
+The **New Message** trigger also fires on replies from current Letta agents (`assistant_message`), not only on `send_message` tool calls, so upgraded flows may run more often.
+
+The **New Agent** trigger now returns a short agent summary instead of the full agent record. It keeps only these 12 fields: `id`, `name`, `agent_type`, `model`, `embedding`, `description`, `tags`, `created_at`, `updated_at`, `last_run_completion`, `last_stop_reason` and `system`. Every other field of the agent record is gone, for example `secrets`, `tool_exec_environment_variables`, `llm_config`, `message_ids`, `metadata`, `project_id`, `embedding_config`, `tool_rules` and `timezone`. **Get Agent** does not return the secret fields either. They were removed on purpose so that secrets do not leak into flow data.
+
+**Get Identities** now respects its **Limit** field (default 100, maximum 1000). Before, it fetched every page and ignored Limit, so a server with 250 identities returned all 250 and now returns 100 unless you raise Limit. A saved Limit above 1000 now fails with a validation error.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Send Message to Agent as a tool, switch it to Send Message (`letta_send_message`). Remove Create Identity and Get Identities from agents and MCP clients, and from flows that run against Letta Cloud. If a later step reads a New Agent field outside the 12 listed above, change that step: use **Get Agent** for the agent's blocks, tools and identity IDs, and note that no Letta action returns the secret fields any more. If a flow relies on Get Identities returning every identity, set Limit to the number you need (up to 1000). Steps keep running on the version they were built with until you upgrade them.
+
+#### Trello 0.9.0: Update Card (Agent) no longer unarchives cards or clears their labels
+
+When an AI agent used **Update Card (Agent)** to change something else, such as the name, the agent path filled **Archived** with `false` and **Label IDs** with an empty list and sent both. Each such update could unarchive an archived card and remove all of its labels. From Trello 0.9.0 Archived is a dropdown with **Yes**, **No** and **Leave unchanged**. Archived left out, or set to Leave unchanged, is not sent, so the card stays archived or unarchived. An empty Label IDs list is not sent either, so the card keeps its labels; use **Remove Label From Card (Agent)** to drop a label.
+
+#### What you need to do
+
+- If an agent tool pins **Archived** to a fixed value, open the tool and pick Yes, No or Leave unchanged again. A value saved from the old checkbox is no longer accepted and the call fails until you do.
+- If an agent ran this action on an earlier Trello version, check that archived cards are still archived and still carry their labels.
+
+#### Bigin by Zoho CRM 0.2.0: the existing actions are no longer AI agent tools
+
+The 16 existing Bigin actions are now shown only in the flow builder: Create Company, Update Company, Create Contact, Update Contact, Create Task, Update Task, Create Event, Update Event, Create Pipeline, Update Pipeline, Create Call, Search Company Record, Search Contact Record, Search Pipeline Record, Search Product Record and Search User. AI agents and MCP clients get the new "(Agent)" actions instead: Search, Get and List Records, Create and Update Contact, Company, Deal, Task and Event, Log Call, List Users and List Pipelines, plus Add Note and Delete Record.
+
+#### What you need to do
+
+- Agents that used the old Bigin actions as tools: switch to the new "(Agent)" actions.
+- Flow steps keep working unchanged.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Gender API 0.2.0: the Country Code input is now applied
+
+Before 0.2.0, **Get Gender by First Name** and **Get Gender by Full Name** sent the Country Code under a key Gender API ignores, so it had no effect. From 0.2.0 it is sent as `country` and applied, on those two actions and on the new **Get Gender by Email**. After you upgrade one of these steps, a country code can change the result (for example Andrea with IT now returns male), and a value that is not a two-letter ISO code, such as `USA` or `Germany`, now fails the step with Gender API's `invalid-country-code` error.
+
+#### What you need to do
+
+Use two-letter country codes such as `US` or `DE` in the Country Code input, or leave it empty. Steps keep running on the version they were built with until you upgrade them.
+
+#### Anthropic Claude 0.9.0: retired models are replaced at run time, and Extended Thinking Mode uses Claude Sonnet 5.5
+
+Anthropic has retired several Claude models, so steps that still pointed at them failed. From Anthropic Claude 0.9.0, **Ask Claude**, **Extract Structured Data** and **Count Tokens** switch a retired model to the current model of the same family when the step runs:
+
+- Claude Sonnet 4, Sonnet 3.7, Sonnet 3.5, Sonnet 3 and Claude 2.x run on `claude-sonnet-5-5`.
+- Claude Sonnet 4.5 is deprecated, not retired yet (Anthropic retires it on 2026-11-30). It is switched to `claude-sonnet-5-5` early, so steps keep working after that date.
+- Claude Opus 4.1, Opus 4 and Opus 3 run on `claude-opus-5-5`.
+- Claude Haiku 3.5 and Haiku 3 run on `claude-haiku-5-5`.
+
+Other changes once a step is upgraded to 0.9.0:
+
+- **Extended Thinking Mode** in Ask Claude now runs on `claude-sonnet-5-5` with adaptive thinking, instead of the retired Claude Sonnet 3.7. The **Budget Tokens** field is removed, because Claude sets its own thinking budget.
+- The Claude 5.5 models think by default, and Maximum Tokens covers the thinking and the reply together. When Extended Thinking Mode is off, Ask Claude and Extract Structured Data ask these models for low thinking effort (`output_config.effort: low`), so most of Maximum Tokens stays free for the reply.
+- **Temperature** is sent only to models that accept it: Claude Sonnet 4.6, Opus 4.6, Opus 4.5, Haiku 4.5, Sonnet 4.5 and older. On newer models the field is ignored.
+- On Claude Sonnet 5.5, Opus 5.5, Fable 5.1 and Mythos 5.1, Extract Structured Data lets the model choose the extraction tool (`tool_choice: auto`) and tells it to call that tool, because these models do not accept a forced tool choice. If the model replies with text only, the step asks once more before it fails. Haiku 5.5 and older models are still forced to call the tool.
+- A **Roles** list that ends with an assistant turn (prefill) now fails with a 400 error on the Claude 5.5 models, because they do not accept prefill. End Roles with a user turn instead.
+
+#### What you need to do
+
+If you want a different model than the replacement, open the step and pick a model explicitly. Answers, extracted data and token cost can differ on the newer models, so check flows whose later steps depend on the exact output. If a long reply on a 5.5 model is cut off, raise Maximum Tokens. Steps keep running on the version they were built with until you upgrade them.
+
+#### Loops 0.2.0: Find Contact is no longer an AI agent tool
+
+**Find Contact** is now shown only in the flow builder. AI agents and MCP clients get **Find Contact by Email** and **Find Contact by User ID** instead.
+
+After you upgrade:
+
+- **Delete Contact** now fails with a clear message when both Email and User ID are filled, instead of sending both and getting a Loops error. Steps that fill only one of them keep working.
+- **Send Event** ignores `eventName`, `email`, `userId`, `eventProperties` and `mailingLists` if they appear inside Contact Properties.
+- **Create Contact**'s subscription option now reads Default / Subscribed / Unsubscribed instead of "No Change".
+
+#### What you need to do
+
+- Agents that used Find Contact as a tool: switch to Find Contact by Email or Find Contact by User ID.
+- If a Send Event step relied on Contact Properties to set one of those reserved fields, set the field directly.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Leexi 0.3.0: Get Call is no longer an AI agent tool
+
+**Get Call** is now shown only in the flow builder. AI agents and MCP clients get **Fetch Call Details** instead, which takes up to 20 call IDs at once.
+
+#### What you need to do
+
+- Agents that used Get Call as a tool: switch to Fetch Call Details.
+- Flows using the **New Call Created** trigger: after you upgrade the step and publish, the next polls emit every call created since the flow was first turned on (up to 2,000 per poll) until they catch up, because the old trigger never moved its checkpoint forward. Expect a burst of runs after the upgrade, or turn the flow off and on again to start from now.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Help Scout 0.3.0: five actions are no longer AI agent tools, and Find Conversation searches every status and applies Tags
+
+**Create Conversation**, **Send Reply**, **Add Note**, **Update Customer Properties** and **Find Conversation** are now shown only in the flow builder. AI agents and MCP clients get new ID-based actions instead, including Search Conversations, Get Conversation, Update Conversation and the list actions for mailboxes, users and tags.
+
+When Status is left empty, **Find Conversation** now searches every status. It used to fall back to Help Scout's default of active only, so closed and pending conversations were never found.
+
+**Find Conversation** now applies the Tags filter. It used to send the tags under a name Help Scout ignores, so the filter never applied. A step with Tags set now returns only conversations that carry those tags, so it can find a different conversation or none.
+
+#### What you need to do
+
+- Agents that used the old Help Scout actions as tools: switch to the new agent actions.
+- If a flow relied on Find Conversation returning only active conversations, set Status to Active.
+- If a Find Conversation step has Tags set, check that the tags match the conversations you expect, or clear Tags to keep the old results.
+
+#### Knack 0.3.0: Create, Update and Find Record are no longer AI agent tools
+
+**Create Record**, **Update Record** and **Find Record** are now shown only in the flow builder. AI agents and MCP clients get **Create Record (Agent)**, **Update Record (Agent)**, **Search Records (Agent)** and **Get Record (Agent)** instead, plus **List Objects (Agent)** and **Get Object Fields (Agent)** to discover an app's tables and field keys.
+
+After you upgrade:
+
+- **Find Record** sends its filter in the documented `{ match, rules }` format.
+- **Delete Record** keeps Knack's `delete: true` and adds `deleted` and `id`. It now fails with a not-found error when Knack does not confirm the delete.
+- Error messages now show Knack's own error text and the HTTP status.
+
+#### What you need to do
+
+- Agents that used Create, Update or Find Record as tools: switch to the (Agent) actions.
+
+#### Base44 0.2.0: Find or Create Entity is no longer an AI agent tool, and the Entity Event trigger changes
+
+**Find or Create Entity** is now shown only in the flow builder. AI agents and MCP clients find a record with **Find Entity** or **List Entity Records** and create one with **Create Entity**.
+
+- **Entity Event** in **Updated** mode no longer fires for brand-new records. On 0.1.9 a new record fired it, because its updated date was newer than the last check. From 0.2.0 it fires only once a record is edited after it was created. Use **Created** mode, or a second trigger, to catch new records.
+- Record dates (`created_date`, `updated_date`) now end in `Z`, so they read as UTC (for example `2026-11-01T12:56:20.141000Z`).
+- Search Query, Entity Data, Create Data and Update Data must be a JSON object. A list or other value now fails the step. Before, it was read as `{}`, so Find or Create Entity returned an unrelated record and Create Entity made an empty one.
+
+#### What you need to do
+
+- Agents that used Find or Create Entity as a tool: use Find Entity, then Create Entity.
+- Flows that use Entity Event in Updated mode to catch every change: add a Created-mode trigger for new records.
+- Flows that parse record dates as text: expect the trailing `Z`.
+- Other flow steps keep working unchanged.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Twitch 0.2.0: connections must be reconnected for the new actions
+
+Twitch 0.2.0 adds actions for your channel, chat, moderation, schedule, ads, clips and stream markers, and followers. Many of them, including reads such as subscriptions, followed channels and streams, polls, predictions, chatters, followers, VIPs and moderators, need Twitch scopes that the connection now asks for. Twitch connections made before 0.2.0 don't have them.
+
+The **Stream Started** trigger also changes once upgraded: it ignores blank entries and fails if no valid channel name is left, instead of watching Twitch's top live streams.
+
+#### What you need to do
+
+Reconnect your Twitch connection before you use any of the new actions, including the ones that only read data. Existing Stream Started triggers keep working on the old connection.
+
+#### Pushbullet 0.3.0: Send a Note and Send a Link are no longer agent tools
+
+**Send a Note** and **Send a Link** are now shown only in the flow builder. AI agents and MCP clients get **Send Note** and **Send Link** instead, plus new tools to list pushes, devices and chats, dismiss or delete a push, and read the current user. Both builder actions also gain an optional target (a device or an email).
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Send a Note or Send a Link as a tool, switch it to Send Note or Send Link. Flow steps keep working and stay on the version they were built with until you upgrade them.
+
+#### Streak 0.2.0: Update Box is no longer an agent tool and now saves custom fields, and triggers output an object
+
+**Update Box** is now shown only in the flow builder. AI agents and MCP clients get a separate agent version of **Update Box**, which takes the box key and a list of `{field_key, value}` updates as plain text. Update Box also now saves custom field values through Streak's field endpoint (before, they were sent in the box update and silently ignored), returns the box as it is after the update, and has a new Clear Notes option.
+
+Streak sends its webhook body as a JSON string. Up to 0.1.1, every Streak trigger passed that raw string to the flow as the trigger output. From 0.2.0, the triggers parse it and output the event as an object, so you can map its fields (for example `{{trigger.boxKey}}`) directly.
+
+#### What you need to do
+
+If a Code step after a Streak trigger runs `JSON.parse` on the trigger output, remove the parse and map the fields directly once you upgrade the trigger to 0.2.0, because the output is already an object and parsing it again fails. If a Run Agent step or MCP client uses Update Box as a tool, add the new agent version of Update Box to it. Flow steps keep working and stay on the version they were built with until you upgrade them; after upgrading, check that custom field values you set are the ones you want saved, because they now reach Streak.
+
+#### Bexio 0.3.0: the existing actions are no longer agent tools
+
+All 23 existing Bexio actions are now shown only in the flow builder. AI agents and MCP clients get new `bexio_` tools instead, which take IDs as text and cover the same jobs and more.
+
+Once a step is upgraded to Bexio 0.3.0:
+
+- **Update Product** ignores the **In Stock** field. Bexio only accepts it when a product is created and rejects it on edit, so the action no longer sends it. Set stock management in **Create Product** instead.
+- **Update Person** edits the contact with POST instead of PATCH, which Bexio treats as a restore.
+- **New Product** now reads the newest products first. The first time the flow is enabled or republished on 0.3.0, the trigger starts again from the current newest product, so it does not fire for products created before the upgrade. Without this, accounts with more than 500 products would get one run for every old product above the stored position. A product created between the last check on the old version and the upgrade does not fire.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses a Bexio action as a tool, switch it to the matching `bexio_` tool. Flow steps that use these actions keep working. Steps keep running on the version they were built with until you upgrade them.
+
+#### Folk 0.2.0: eight Folk actions are no longer agent tools, and Update Person/Company behave differently
+
+From Folk 0.2.0, **Create Person**, **Create Company**, **Get Person**, **Get Company**, **List People**, **Find Company**, **Update Person** and **Update Company** (the existing flow-builder actions) are no longer offered to AI agents and MCP clients. They stay available as flow steps. Agents get new tools instead: **Create Person**, **Create Company**, **Get Person**, **Get Company**, **Search People** (replaces List People), **Search Companies** (replaces Find Company), **Update Person** and **Update Company** (the `*_ai` actions, which take IDs and plain lists).
+
+Once a step is upgraded to Folk 0.2.0:
+
+- **Update Company** no longer clears Emails, Phones, URLs or Addresses when the list is left empty; an empty list now keeps the current values.
+- **Update Person** and **Update Company** fail with "Nothing to update" when no field is filled in, instead of sending an empty update.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used these eight actions at the new agent tools listed above. Flow steps keep running on the version they were built with until you upgrade them; when you upgrade, make sure Update Person and Update Company steps always fill in at least one field, and use the Folk app (or Custom API Call) if a flow relied on an empty list to clear a Company field.
+
+#### Formbricks 0.4.0: calls to Formbricks now verify the TLS certificate
+
+From Formbricks 0.4.0, the piece checks the certificate of your Formbricks server on the connection check, triggers, dropdowns and every dedicated action. Before, certificate checks were skipped, so a self-hosted Formbricks behind a self-signed or private-CA certificate worked. With 0.4.0 these calls fail with a certificate error for such servers. The **Custom API Call** action is the exception: it still uses the shared HTTP client and does not check the certificate. Formbricks Cloud and servers with a publicly trusted certificate are not affected.
+
+#### What you need to do
+
+If you self-host Formbricks on a self-signed or private-CA certificate, give it a publicly trusted certificate (for example from Let's Encrypt), or add your CA to Activepieces before upgrading Formbricks steps or connections to 0.4.0. To add the CA, set both `NODE_EXTRA_CA_CERTS=/path/to/ca.pem` and `AP_SANDBOX_PROPAGATED_ENV_VARS=NODE_EXTRA_CA_CERTS` on the container. The engine that runs pieces only receives variables listed in `AP_SANDBOX_PROPAGATED_ENV_VARS`, so `NODE_EXTRA_CA_CERTS` alone has no effect.
+
+#### Hunter 0.2.0: four lead and campaign actions leave the agent tool list, and Verify Email waits for a result
+
+From Hunter 0.2.0, these actions are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps, with the same inputs and outputs. Agents use the replacement instead:
+- **Get Lead** → **Get Lead by ID**
+- **Update Lead** → **Update Lead by ID**
+- **Delete Lead** → **Delete Lead by ID**
+- **Add Recipients** → **Add Campaign Recipients by ID**
+
+Once a **Verify Email** step is upgraded to 0.2.0, it no longer returns right away when Hunter answers that the check is still running (HTTP 202). It waits up to 60 seconds for the result, and then fails asking you to run it again.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Get Lead, Update Lead, Delete Lead or Add Recipients as a tool, switch it to the "by ID" action listed above. Flow steps that use them keep working. If a flow relied on Verify Email returning a pending result, expect the step to take up to 60 seconds, and handle a failed step for emails Hunter cannot finish checking in time.
+
+#### ChargeKeep 0.4.0: actions return mapped records, triggers start one run per event, and some inputs changed
+
+Add or Update Contact, Add or Update Contact (Extended), Add or Update Subscription, Create Invoice, Create Product and Get Contact Details used to return the raw response as `{ status, body }`. From ChargeKeep 0.4.0 they return the record itself: `contactId` and `leadId` for contact imports, the saved invoice (`invoiceId`, `number`, `lines`, ...), the saved product (`productId`, `priceOptions`, ...), the contact for Get Contact Details, and `{ contactId, subscription }` for subscriptions. Steps also fail when ChargeKeep reports an error in a 200 response.
+
+New Lead, New Payment and New Subscription used to start one run per delivery with the whole delivery (an array of events) as the trigger output. They now start one run per event, with the event object as the output, and skip events they have already processed. Replacing a subscription sends two events, so New Subscription starts two runs.
+
+Create Invoice's **Invoice No.** is now text instead of a number, and Get Contact Details' **User Email** is now a single-line text input. Add or Update Contact (Extended) now defaults **Create User** and **Send Welcome Email** to No.
+
+**Add or Update Contact**, **Add or Update Contact (Extended)** and **Create Invoice** are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps. Agents get **Create or Update Contact** and **Create or Update Invoice** instead.
+
+#### What you need to do
+
+Update later steps that read `{{step.body.result...}}` or `{{step.status}}` to the new fields, for example `{{step.contactId}}` instead of `{{step.body.result.contactId}}`. Update steps after a ChargeKeep trigger that read `{{trigger[0]...}}` to read the event fields directly, for example `{{trigger.id}}`. Re-enter a numeric Invoice No. if the step shows it as empty, and turn Create User and Send Welcome Email on in new Extended contact steps if you want portal users and welcome emails. Create Invoice steps built before 0.4.0 saved **Quantity** as 0 and a fixed **Date** and **Transaction Date** (the old default was taken when the step was created): set a real quantity, and clear or map the dates if each run should use the current date. Remove Add or Update Contact, Add or Update Contact (Extended) and Create Invoice from any agent's tool list and give it Create or Update Contact and Create or Update Invoice. Steps keep running on the version they were built with until you upgrade them.
+
+#### Figma 0.7.0: agents use Get File Outline instead of Get File, and the connection needs new scopes
+
+**Get File** is no longer offered as a tool to AI agents, because it returns the whole document tree, which can be many megabytes. Agents now get **Get File Outline (Agent)**, which returns the pages and top-level frames with a depth limit. Get File still works as a normal flow step.
+
+The Figma connection now asks for four new scopes: `current_user:read`, `file_versions:read`, `library_content:read` and `webhooks:write`. The trigger webhooks now check Figma's passcode.
+
+#### What you need to do
+
+If you self-host with your own Figma OAuth app, add `current_user:read`, `file_versions:read`, `library_content:read` and `webhooks:write` to that app's scopes in Figma before anyone reconnects. Figma rejects a consent request that asks for scopes the app does not declare.
+
+Reconnect existing Figma connections so they get the new scopes; a step that needs a missing scope stops with a message that says to reconnect. Re-enable flows that use a Figma trigger so their webhook gets a passcode. Agents that used Get File now get Get File Outline. Steps keep running on the version they were built with until you upgrade them.
+
+#### MCP connections no longer follow redirects to another host, and the built-in MCP server limits request size
+
+When Activepieces connects to an MCP server, it no longer follows a redirect to a different host or port. That redirect now fails the connection, so headers such as API keys are never sent to a host you did not configure.
+
+This applies to MCP servers added as tools to an AI agent as soon as you upgrade. For the **MCP Client** piece it applies from version 0.0.8; steps keep running on the version they were built with until you upgrade them.
+
+The built-in MCP server (`/mcp` and `/mcp/platform`) now rejects a request body larger than 4 MiB with `413 Payload Too Large`. It also rejects a tool call whose arguments hold more than 50,000 values (array items and object keys combined) and returns a tool error instead of running the tool.
+
+#### What you need to do
+
+- Configure each MCP server with its final URL, including `https`, so that reaching it needs no redirect.
+- If an MCP client sends very large tool calls to Activepieces, split them into smaller calls.
+
+#### Webflow 0.4.0: moves to Webflow API v2, connections need reconnecting, and step outputs change
+
+Webflow switched off its v1 API, which every Webflow action and the New Submission trigger used. They now call v2, and the connection asks for the v2 permissions (CMS, sites, pages, forms, assets, custom code, comments, components and ecommerce).
+
+After you upgrade a Webflow step:
+
+- Collection item steps return `id`, `isDraft`, `isArchived` and the field values under `fieldData` (before: `_id`, `_draft`, `_archived` and the fields at the top level). Find Collection Item returns items in the same shape.
+- List Sites and List Collections return `id` and `displayName` instead of `_id` and `name`.
+- Delete Collection Item returns `success` and `collectionItemId`.
+- Update Collection Item changes only the fields you fill in, instead of replacing the whole item.
+- New Submission delivers `siteId`, `submittedAt`, `id` and `formId` (before: `site`, `d` and `_id`). The submitted values stay under `data`.
+- List Sites, List Collections and the collection item actions are now shown only in the flow builder; AI agents and MCP clients get the new Webflow AI actions instead.
+
+#### What you need to do
+
+- Reconnect each Webflow connection once, and pick the sites it may reach on the Webflow consent screen.
+- Remap later steps that read `_id`, `name`, `_draft`, `_archived`, `site`, `d` or item fields at the top level.
+- Turn flows that use New Submission off and on again so the webhook is registered through v2.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Audit logs: SAML and embedded sign-ins no longer send `user.signed.up` on every sign-in
+
+`user.signed.up` used to fire on every SAML and embedded (JWT) sign-in, even for existing members. It now fires once, when the member is created. Later SAML sign-ins, and sign-ins with email or Google, send the new `user.signed.in` event, which carries the sign-in method. Later embedded sign-ins send no event.
+
+#### What you need to do
+
+- If an Event Streaming destination used `user.signed.up` to track SAML logins, subscribe it to `user.signed.in` as well.
+- Embedded logins of existing members are no longer streamed. Track them in your own app, which issues the JWT.
+
+#### RabbitMQ 0.2.0: the Send Message actions are no longer AI agent tools, and their output changes
+
+**Send Message to Queue** and **Send Message to Exchange** (shown before as `sendMessageToQueue` and `sendMessageToExchange`) are now shown only in the flow builder. AI agents and MCP clients get **Publish to Queue** and **Publish to Exchange** instead.
+
+After you upgrade a Send Message step:
+
+- The step returns an object (`success`, `queue`, `exchange`, `routingKey`, `sizeBytes`, `persistent`, `contentType`) instead of `true`.
+- Messages are persistent by default and carry a content type (`application/json`, or `text/plain` for text).
+- The username, password and virtual host in the connection are now URL-encoded for you. If you encoded them by hand to work around the old behavior, enter them as plain text.
+
+#### What you need to do
+
+- Agents that used the Send Message actions as tools: switch to Publish to Queue or Publish to Exchange.
+- If a later step checked the old `true` output, map `success` instead.
+- If your connection holds a hand-encoded password or virtual host (for example `%2F`), edit it to the plain value.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Actual Budget 0.2.0: four actions are no longer agent tools, and imports fail when nothing is imported
+
+From Actual Budget 0.2.0, **Get Accounts**, **Get Budget**, **Get Categories** and **Import Transaction** are shown only in the flow builder. AI agents and MCP clients no longer find them by name. They get **List Accounts**, **Get Budget Month**, **List Categories** and **Add Transaction** instead.
+
+Once a step is upgraded to Actual Budget 0.2.0, **Import Transaction** and **Import Transactions** fail the step when Actual imports nothing (they used to report success), and bulk import amounts must be integer cents, as a number or an integer string such as `"-1250"`.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used the four actions at their agent versions. Flow steps keep working. Steps keep running on the version they were built with until you upgrade them; when you upgrade, check that Import Transactions sends amounts in cents (for example `-1250` for -12.50), not decimals.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
@@ -473,13 +819,13 @@ To find affected steps after upgrading, search your logs for the structured `Cod
 
 #### Each chat keeps the AI model and key it started on
 
-A chat used to run on whatever key was the **Default AI key** at the time of each message. Now a chat remembers the key and model it first ran on. Changing the Default AI key affects new chats only. An existing chat moves to the new default only when its key is deleted, or no longer covers the chat's project or model.
+A chat used to run on whatever the platform's default key was at the time of each message. Now a chat remembers the key and model it first ran on. Changing the **Default chat model** affects new chats only. An existing chat moves to the new default only when its key is deleted, or no longer covers the chat's project or model.
 
-Message credits for AI agent turns, in chat, agents and flow steps, now follow the key that actually answered the turn. A turn answered by your own key costs one message credit, and a turn answered by Activepieces AI credits costs none (its AI usage is billed as before), whatever the Default AI key is.
+Message credits for AI agent turns, in chat, agents and flow steps, now follow the key that actually answered the turn. A turn answered by your own key costs one message credit, and a turn answered by Activepieces AI credits costs none (its AI usage is billed as before), whatever the Default chat model is.
 
 #### What you need to do
 
-Nothing to configure or migrate. To move an existing chat to another model, pick it in the chat. If you switch the Default AI key to stop using a key, delete that key or narrow its projects so existing chats move too.
+Nothing to configure or migrate. To move an existing chat to another model, pick it in the chat. If you switch the Default chat model to stop using a key, delete that key or narrow its projects so existing chats move too.
 
 #### Firecrawl's Scrape Website stops reusing cached pages, and Crawl keeps its pages when a screenshot fails
 

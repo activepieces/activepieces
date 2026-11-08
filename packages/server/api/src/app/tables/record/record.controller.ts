@@ -40,12 +40,15 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.post('/:id', UpdateRequest, async (request, reply) => {
-        const record = await recordService.update({
+        const { record, changed } = await recordService.update({
             id: request.params.id,
             request: request.body,
             projectId: request.projectId,
         })
         await reply.status(StatusCodes.OK).send(record)
+        if (!changed) {
+            return
+        }
         await recordSideEffects(fastify.log).handleRecordsEvent({
             tableId: request.body.tableId,
             projectId: request.projectId,

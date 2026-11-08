@@ -45,6 +45,7 @@ export type ApErrorParams =
     | QuotaExceededParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
+    | LastProjectParams
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
@@ -60,6 +61,7 @@ export type ApErrorParams =
     | UserNotFoundOnPlatformErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
+    | SignInMethodNotAllowedParams
     | ExistingAlertChannelErrorParams
     | EmailAlreadyHasActivationKey
     | AIProviderModelNotSupportedParams
@@ -161,6 +163,13 @@ export type NoChatResponseParams = BaseErrorParams<ErrorCode.NO_CHAT_RESPONSE, R
 export type ChatContextLimitExceededParams = BaseErrorParams<ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED, Record<string, never>>
 
 export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
+
+export type SignInMethodNotAllowedParams = BaseErrorParams<ErrorCode.SIGN_IN_METHOD_NOT_ALLOWED, {
+    platformName: string
+    allowedMethods: SignInMethod[]
+} | Record<string, never>>
+
+export type SignInMethod = 'EMAIL' | 'GOOGLE' | 'SAML'
 
 export type AuthorizationErrorParams = BaseErrorParams<
 ErrorCode.AUTHORIZATION,
@@ -453,6 +462,11 @@ ErrorCode.SIGN_UP_DISABLED,
 Record<string, never>
 >
 
+export type LastProjectParams = BaseErrorParams<
+ErrorCode.LAST_PROJECT,
+Record<string, never>
+>
+
 export type AuthenticationParams = BaseErrorParams<
 ErrorCode.AUTHENTICATION,
 {
@@ -604,6 +618,7 @@ export enum ErrorCode {
     SANDBOX_CAPACITY_EXCEEDED = 'SANDBOX_CAPACITY_EXCEEDED',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
+    SIGN_IN_METHOD_NOT_ALLOWED = 'SIGN_IN_METHOD_NOT_ALLOWED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
@@ -632,6 +647,7 @@ export enum ErrorCode {
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
+    LAST_PROJECT = 'LAST_PROJECT',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
     TEST_TRIGGER_FAILED = 'TEST_TRIGGER_FAILED',

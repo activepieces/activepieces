@@ -11,13 +11,13 @@ vi.mock('../../../../src/app/helper/system/system', () => ({
     },
 }))
 
-import { billingProvider, shouldBlockRunOnCredits } from '../../../../src/app/platform/billing-provider'
+import { billingProvider, CreditCheckSpeed, shouldBlockRunOnCredits } from '../../../../src/app/platform/billing-provider'
 
 const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() } as unknown as FastifyBaseLogger
 const noopProvider = billingProvider.get(log)
 
-function gate(environment: RunEnvironment, fastCreditCheck?: boolean) {
-    return shouldBlockRunOnCredits({ platformId: 'platform-1', environment, fastCreditCheck, log })
+function gate(environment: RunEnvironment, creditCheckSpeed = CreditCheckSpeed.NORMAL) {
+    return shouldBlockRunOnCredits({ platformId: 'platform-1', environment, creditCheckSpeed, log })
 }
 
 describe('shouldBlockRunOnCredits', () => {
@@ -38,14 +38,14 @@ describe('shouldBlockRunOnCredits', () => {
         mockGetEdition.mockReturnValue(ApEdition.CLOUD)
 
         await expect(gate(RunEnvironment.PRODUCTION)).resolves.toBe(true)
-        expect(mockShouldBlockOnCredits).toHaveBeenCalledWith({ platformId: 'platform-1', fastCreditCheck: false })
+        expect(mockShouldBlockOnCredits).toHaveBeenCalledWith({ platformId: 'platform-1', creditCheckSpeed: CreditCheckSpeed.NORMAL })
     })
 
-    it('tells the provider when the check must be fast', async () => {
+    it('passes the caller\'s check speed to the provider', async () => {
         mockGetEdition.mockReturnValue(ApEdition.CLOUD)
 
-        await gate(RunEnvironment.PRODUCTION, true)
-        expect(mockShouldBlockOnCredits).toHaveBeenCalledWith({ platformId: 'platform-1', fastCreditCheck: true })
+        await gate(RunEnvironment.PRODUCTION, CreditCheckSpeed.FAST)
+        expect(mockShouldBlockOnCredits).toHaveBeenCalledWith({ platformId: 'platform-1', creditCheckSpeed: CreditCheckSpeed.FAST })
     })
 
     it('never gates a testing run', async () => {
