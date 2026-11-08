@@ -4,6 +4,11 @@ const CO_OWNER_GROUP = 'Co-Owner'
 const LOGIN_PATTERN = /\(@([\w-]+)\)\s*$/
 const PAGE_SIZE = 100
 const PICK_WINDOW_MS = 5000
+const TEAM_MEMBERS: Record<string, string[]> = {
+    core: ['abuaboud', 'othmanemad', 'hazemadelkhalel', 'Louai-Zokerburg', 'AbdulTheActivePiecer', 'ziyadev', 'AhmadTash', 'lina-alomari', 'kareem834'],
+    pieces: ['abuaboud', 'othmanemad', 'OdaiAhmed99', 'kishanprmr', 'ibrahim-abuznaid', 'AhmadTash', 'sanket-a11y', 'kareem834'],
+    platform: ['abuaboud', 'othmanemad', 'amrdb', 'MrChaker', 'kareem834'],
+}
 const PROJECT_LABELS_QUERY = `query($team: String!, $number: Float!) {
     issues(includeArchived: true, filter: { team: { key: { eq: $team } }, number: { eq: $number } }) {
         nodes { project { labels { nodes { name parent { name } } } } }
@@ -23,28 +28,30 @@ function loginsToRequest({ coOwners, author, reviewers }: { coOwners: string[], 
     return coOwners.filter((login) => !skipped.has(login.toLowerCase()))
 }
 
-function roundRobinPicks({ events, keep }: { events: TimelineEvent[], keep: string[] }): string[] {
+function roundRobinPicks({ events, coOwners, teamMembers }: { events: TimelineEvent[], coOwners: string[], teamMembers: Record<string, string[]> }): string[] {
     const requests = events.filter((event) => event.event === 'review_requested')
-    const kept = new Set(keep.map((login) => login.toLowerCase()))
-    const taken = new Set<number>()
-    const picks = requests.flatMap((teamEvent, teamIndex) => {
-        if (!teamEvent.requested_team) {
-            return []
-        }
-        const teamTime = Date.parse(teamEvent.created_at)
-        const pickIndex = requests.findIndex((event, index) =>
-            index > teamIndex
-            && !taken.has(index)
-            && event.requested_reviewer !== undefined
-            && Date.parse(event.created_at) - teamTime <= PICK_WINDOW_MS,
+    const teamRequests = requests.filter((event) => event.requested_team !== undefined)
+    const coOwnerSet = new Set(coOwners.map((login) => login.toLowerCase()))
+    const coOwnerInEveryTeam = teamRequests.every((event) => (teamMembers[event.requested_team?.slug ?? ''] ?? []).some((login) => coOwnerSet.has(login.toLowerCase())))
+    if (teamRequests.length === 0 || !coOwnerInEveryTeam) {
+        return []
+    }
+    const inWindow = requests.filter((event, index) => {
+        const login = event.requested_reviewer?.login.toLowerCase()
+        return login !== undefined && !coOwnerSet.has(login) && requests.some((teamEvent, teamIndex) =>
+            teamEvent.requested_team !== undefined
+            && teamIndex < index
+            && Date.parse(event.created_at) - Date.parse(teamEvent.created_at) <= PICK_WINDOW_MS,
         )
-        if (pickIndex === -1) {
-            return []
-        }
-        taken.add(pickIndex)
-        return [requests[pickIndex].requested_reviewer?.login ?? '']
     })
-    return [...new Set(picks)].filter((login) => login !== '' && !kept.has(login.toLowerCase()))
+    if (inWindow.length > teamRequests.length) {
+        return []
+    }
+    const picks = inWindow.filter((pick) => {
+        const login = pick.requested_reviewer?.login.toLowerCase()
+        return requests.findLast((event) => event.requested_reviewer?.login.toLowerCase() === login) === pick
+    })
+    return [...new Set(picks.map((pick) => pick.requested_reviewer?.login ?? ''))]
 }
 
 async function fetchProjectLabels({ id, apiKey }: { id: string, apiKey: string }): Promise<ProjectLabel[]> {
@@ -101,8 +108,9 @@ async function removeRoundRobinPicks({ repository, prNumber, token, coOwners }: 
         github<{ users: { login: string }[] }>({ path: `/repos/${repository}/pulls/${prNumber}/requested_reviewers`, token }),
     ])
     const pendingLogins = new Set(pending.users.map((user) => user.login.toLowerCase()))
-    const picks = roundRobinPicks({ events, keep: coOwners }).filter((login) => pendingLogins.has(login.toLowerCase()))
+    const picks = roundRobinPicks({ events, coOwners, teamMembers: TEAM_MEMBERS }).filter((login) => pendingLogins.has(login.toLowerCase()))
     if (picks.length === 0) {
+        console.log('No round-robin reviewer to remove: none is pending, the Co-Owner is not in every requested team, or the pick is unclear.')
         return
     }
     await github({ path: `/repos/${repository}/pulls/${prNumber}/requested_reviewers`, token, method: 'DELETE', body: { reviewers: picks } })
