@@ -18,6 +18,7 @@ import { api } from '@/lib/api';
 
 import { chatDemo } from './demo/chat-demo';
 import { demoBackend } from './demo/demo-backend';
+import type { PageContext } from './page-context';
 
 async function createConversation(
   request: CreateAgentConversationRequest,
@@ -70,16 +71,18 @@ async function sendMessage({
   runId,
   files,
   messageSource,
+  pageContext,
 }: {
   conversationId: string;
   content: string;
   runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
   messageSource?: AgentMessageSource;
+  pageContext?: PageContext;
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
     `/v1/agents/conversations/${conversationId}/messages`,
-    { content, runId, files, messageSource },
+    { content, runId, files, messageSource, pageContext },
   );
 }
 

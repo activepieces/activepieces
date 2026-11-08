@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useTheme } from '@/components/providers/theme-provider';
 import { useFollowAlong } from '@/features/chat/lib/follow/follow-along';
+import { useReportPageSelection } from '@/features/chat/lib/page-context';
 import {
   ApTableFooter,
   ApTableHeader,
@@ -50,6 +51,8 @@ const ApTableEditorPage = () => {
     state.setLockedByOtherUser,
     state.reorderField,
   ]);
+
+  useReportPageSelection({ recordIds: [...selectedRecords] });
 
   // the lock lives in the table state provider, above the take-over refresh
   // remount boundary, so refreshing never releases the just-acquired lock

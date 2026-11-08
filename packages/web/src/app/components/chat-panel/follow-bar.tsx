@@ -86,6 +86,8 @@ const EDITING_LABEL: Record<ResourceKind, () => string> = {
   run: () => t('Chat is working on this run'),
   connection: () => t('Chat is editing your connections'),
   folder: () => t('Chat is editing your automations'),
+  'platform-settings': () => t('Chat is changing platform settings'),
+  'project-settings': () => t('Chat is changing project settings'),
 };
 
 const DONE_LABEL: Record<ResourceKind, () => string> = {
@@ -95,4 +97,6 @@ const DONE_LABEL: Record<ResourceKind, () => string> = {
   run: () => t('Chat finished working on this run'),
   connection: () => t('Chat finished editing your connections'),
   folder: () => t('Chat finished editing your automations'),
+  'platform-settings': () => t('Chat finished changing platform settings'),
+  'project-settings': () => t('Chat finished changing project settings'),
 };

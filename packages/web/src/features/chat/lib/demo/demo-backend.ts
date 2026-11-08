@@ -35,6 +35,7 @@ import { demoScenarios, DemoScenario } from './demo-scenarios';
 // components render the result. Nothing reaches the server.
 
 const conversations = new Map<string, DemoConversation>();
+const expiredGateIds = new Set<string>();
 let armedScenarioId: string | null = null;
 let idCounter = 0;
 
@@ -308,11 +309,28 @@ function createContext({
     return toolCallId;
   }
 
-  function awaitDecision(gate: PendingGate): Promise<GateDecision> {
+  function awaitDecision(
+    gate: PendingGate,
+    timeoutMs?: number,
+  ): Promise<GateDecision> {
     return new Promise<GateDecision>((resolve, reject) => {
+      const timer =
+        timeoutMs === undefined
+          ? null
+          : setTimeout(() => {
+              if (run.gate?.pending.gateId !== gate.gateId) return;
+              run.gate = null;
+              expiredGateIds.add(gate.gateId);
+              resolve({ approved: false, timedOut: true });
+            }, timeoutMs);
+      if (timer) run.timers.add(timer);
       run.gate = {
         pending: gate,
         resolve: (decision) => {
+          if (timer) {
+            clearTimeout(timer);
+            run.timers.delete(timer);
+          }
           run.gate = null;
           resolve(decision);
         },
@@ -381,7 +399,7 @@ function createContext({
       });
       return { ...decision, toolCallId };
     },
-    display: async ({ name, input, output, ms = 500 }) => {
+    display: async ({ name, input, output, ms = 500, timeoutMs }) => {
       const toolCallId = nextId('tc');
       chunk({ type: 'tool-input-start', toolCallId, toolName: name });
       await wait(ms);
@@ -391,17 +409,22 @@ function createContext({
         toolName: name,
         input,
       });
-      const decision = await awaitDecision({
-        gateId: toolCallId,
-        toolName: name,
-        displayName: name,
-        toolInput: input,
-      });
+      const decision = await awaitDecision(
+        {
+          gateId: toolCallId,
+          toolName: name,
+          displayName: name,
+          toolInput: input,
+        },
+        timeoutMs,
+      );
       chunk({
         type: 'tool-output-available',
         toolCallId,
         output: decision.approved
           ? output?.(decision.payload ?? {}) ?? decision.payload ?? {}
+          : decision.timedOut
+          ? { timedOut: true }
           : { dismissed: true },
       });
       return { ...decision, toolCallId };
@@ -721,6 +744,9 @@ async function approveToolCall({
       return;
     }
   }
+  if (expiredGateIds.has(gateId)) {
+    throw new Error('This request expired.');
+  }
 }
 
 async function cancelConversation(id: string): Promise<void> {
@@ -898,6 +924,7 @@ type ToolCall = {
 export type GateDecision = {
   approved: boolean;
   payload?: Record<string, unknown>;
+  timedOut?: boolean;
 };
 
 export type DemoContext = {
@@ -931,6 +958,7 @@ export type DemoContext = {
     input: Record<string, unknown>;
     output?: (payload: Record<string, unknown>) => Record<string, unknown>;
     ms?: number;
+    timeoutMs?: number;
   }) => Promise<GateDecision & { toolCallId: string }>;
   showInline: (args: { name: string; input: Record<string, unknown> }) => void;
   receipt: (

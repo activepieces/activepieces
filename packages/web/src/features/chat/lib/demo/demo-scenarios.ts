@@ -13,6 +13,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 import { chatDemo } from './chat-demo';
 import type { DemoContext } from './demo-backend';
+import { demoCapabilities } from './demo-capability-scenarios';
 import { demoLiveScenarios } from './demo-live-scenarios';
 
 // Scripted replies, one per chat UI state. Each script drives the same events
@@ -1182,6 +1183,7 @@ const SCENARIOS: DemoScenario[] = [
 ];
 
 SCENARIOS.push(...demoLiveScenarios);
+SCENARIOS.push(...demoCapabilities.scenarios);
 
 const FALLBACK: DemoScenario = {
   id: 'fallback',

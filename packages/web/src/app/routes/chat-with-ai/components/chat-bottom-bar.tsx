@@ -11,12 +11,14 @@ import {
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { useOpenResourceRequests } from '@/features/chat/lib/use-open-resource';
 import { cn } from '@/lib/utils';
 
 import {
   isConnectionPickerData,
   ProjectPickerData,
 } from '../lib/message-parsers';
+import { secretRequestUtils } from '../lib/secret-request';
 
 import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
@@ -25,6 +27,7 @@ import { ConnectionPickerCard } from './connection-picker-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { ProjectPickerCard } from './project-picker-card';
+import { SecretRequestCard } from './secret-request-card';
 
 export function ChatBottomBar({
   isStreaming,
@@ -67,9 +70,33 @@ export function ChatBottomBar({
     chatStoreSelectors.hasActiveForm({ state: s, lastAssistantMessage }),
   );
 
+  const expiredSecretRequest = useChatStoreContext((s) => {
+    const part = chatPartUtils.findLastToolPart({
+      message: lastAssistantMessage,
+      predicate: (name, p) =>
+        name === SECRET_REQUEST_TOOL &&
+        p.state === 'output-available' &&
+        secretRequestUtils.isExpired(parseOutput(p)),
+    });
+    return part && !s.dismissedGateIds[chatPartUtils.getToolCallId(part)]
+      ? part
+      : null;
+  });
+
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const rejectGate = useChatStoreContext((s) => s.rejectGate);
+  const dismissGate = useChatStoreContext((s) => s.dismissGate);
   const dismissForm = useChatStoreContext((s) => s.dismissForm);
+  useOpenResourceRequests({ lastAssistantMessage, isStreaming });
+
+  const liveSecretRequest =
+    activeDisplayTool &&
+    activeDisplayTool.state === 'input-available' &&
+    chatPartUtils.getToolPartName(activeDisplayTool) === SECRET_REQUEST_TOOL
+      ? activeDisplayTool
+      : null;
+  const secretRequest =
+    liveSecretRequest ?? (activeDisplayTool ? null : expiredSecretRequest);
 
   let activeCard: ReactNode = null;
   let dismissActiveCard: (() => void) | null = null;
@@ -84,6 +111,20 @@ export function ChatBottomBar({
         onRun={() => approveGate(toolCallId)}
         onCancel={() => rejectGate(toolCallId)}
         onDismiss={() => rejectGate(toolCallId)}
+      />
+    );
+  } else if (secretRequest) {
+    const toolCallId = chatPartUtils.getToolCallId(secretRequest);
+    const expired = secretRequest !== liveSecretRequest;
+    dismissActiveCard = () =>
+      expired ? dismissGate(toolCallId) : rejectGate(toolCallId);
+    activeCard = (
+      <SecretRequestCard
+        key={toolCallId}
+        toolCallId={toolCallId}
+        input={secretRequest.input}
+        expired={expired}
+        onFollowUp={(text) => onSend(text)}
       />
     );
   } else if (activeDisplayTool) {
@@ -236,6 +277,13 @@ function BlockingDisplayCard({
       return null;
   }
 }
+
+function parseOutput(part: AnyToolPart): unknown {
+  const parsed = chatPartUtils.parseToolOutput(part);
+  return parsed.state === 'success' ? parsed.data : null;
+}
+
+const SECRET_REQUEST_TOOL = 'ap_request_secret';
 
 type ChatBottomBarProps = {
   isStreaming: boolean;
