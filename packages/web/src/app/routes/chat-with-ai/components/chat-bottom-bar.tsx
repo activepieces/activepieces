@@ -126,7 +126,7 @@ export function ChatBottomBar({
           'overflow-hidden rounded-xl border transition-colors',
           minimal
             ? 'border-transparent bg-transparent hover:bg-gray-3/30'
-            : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
+            : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8 focus-within:ring-2 focus-within:ring-gray-4',
         )}
       >
         {banner}
@@ -144,6 +144,7 @@ export function ChatBottomBar({
           }
           rightActions={modelPicker}
           sendBlockedReason={sendBlockedReason}
+          showSendWhenEmpty={activeCard !== null}
         />
       </div>
     </div>

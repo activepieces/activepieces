@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
+import { ArrowUp, Mic, Paperclip, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -21,6 +21,8 @@ import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
 import { cn } from '@/lib/utils';
 
+import { ChatFileChip } from './chat-ui/chat-file-chip';
+
 export function ChatInput({
   isStreaming,
   onSend,
@@ -32,6 +34,7 @@ export function ChatInput({
   minimalUntilFocus = false,
   onFocusChange,
   sendBlockedReason,
+  showSendWhenEmpty = false,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
@@ -43,10 +46,15 @@ export function ChatInput({
   minimalUntilFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
   sendBlockedReason?: string;
+  showSendWhenEmpty?: boolean;
 }) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  const attachmentsRef = useRef<ComposerAttachment[]>([]);
+  attachmentsRef.current = attachments;
+  const nextAttachmentIdRef = useRef(0);
+  const attachedFiles = attachments.map((attachment) => attachment.file);
   const [interimText, setInterimText] = useState('');
   const lastHasInputRef = useRef(false);
 
@@ -102,6 +110,20 @@ export function ChatInput({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRecording, cancelRecording]);
 
+  useEffect(
+    () => () => {
+      attachmentsRef.current.forEach(revokePreview);
+    },
+    [],
+  );
+
+  const removeAttachment = useCallback((id: number) => {
+    setAttachments((prev) => {
+      prev.filter((a) => a.id === id).forEach(revokePreview);
+      return prev.filter((a) => a.id !== id);
+    });
+  }, []);
+
   const handleSubmit = useCallback(() => {
     if (
       isNil(sendBlockedReason) &&
@@ -113,12 +135,30 @@ export function ChatInput({
         attachedFiles.length > 0 ? attachedFiles : undefined,
       );
       setValue('');
-      setAttachedFiles([]);
+      attachments.forEach(revokePreview);
+      setAttachments([]);
     }
-  }, [isStreaming, value, attachedFiles, onSend, sendBlockedReason]);
+  }, [
+    isStreaming,
+    value,
+    attachedFiles,
+    attachments,
+    onSend,
+    sendBlockedReason,
+  ]);
 
   const handleFilesAdded = useCallback((files: File[]) => {
-    setAttachedFiles((prev) => [...prev, ...files]);
+    const added = files.map((file) => {
+      nextAttachmentIdRef.current += 1;
+      return {
+        id: nextAttachmentIdRef.current,
+        file,
+        previewUrl: file.type.startsWith('image/')
+          ? URL.createObjectURL(file)
+          : undefined,
+      };
+    });
+    setAttachments((prev) => [...prev, ...added]);
   }, []);
 
   const canSend = value.trim().length > 0 || attachedFiles.length > 0;
@@ -135,7 +175,7 @@ export function ChatInput({
         className="border-0 rounded-none shadow-none"
       >
         <AnimatePresence>
-          {attachedFiles.length > 0 && (
+          {attachments.length > 0 && (
             <motion.div
               className="flex flex-wrap gap-2 px-3 overflow-hidden"
               initial={{ height: 0, opacity: 0 }}
@@ -144,30 +184,22 @@ export function ChatInput({
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
               <div className="flex flex-wrap gap-2 pt-2 pb-0.5">
-                {attachedFiles.map((file) => (
+                {attachments.map((attachment) => (
                   <motion.div
-                    key={file.name}
-                    className="flex items-center gap-2 rounded-xl border bg-gray-3/50 px-3 py-1.5 text-sm"
+                    key={attachment.id}
+                    className="max-w-full"
                     onClick={(e) => e.stopPropagation()}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.15 }}
                   >
-                    <Paperclip className="size-3.5 shrink-0 text-gray-11" />
-                    <span className="max-w-[150px] truncate text-gray-12/80">
-                      {file.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setAttachedFiles((prev) =>
-                          prev.filter((f) => f.name !== file.name),
-                        )
-                      }
-                      className="text-gray-11 hover:text-gray-12 rounded-full p-0.5 transition-colors"
-                    >
-                      <X className="size-3.5" />
-                    </button>
+                    <ChatFileChip
+                      name={attachment.file.name}
+                      type={fileTypeLabel(attachment.file)}
+                      size={attachment.file.size}
+                      thumbnailUrl={attachment.previewUrl}
+                      onRemove={() => removeAttachment(attachment.id)}
+                    />
                   </motion.div>
                 ))}
               </div>
@@ -203,7 +235,10 @@ export function ChatInput({
             <div className="flex items-center gap-1">
               <PromptInputAction tooltip={t('Attach files')}>
                 <FileUploadTrigger asChild>
-                  <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12">
+                  <div
+                    aria-label={t('Attach files')}
+                    className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
+                  >
                     <Paperclip className="size-4" />
                   </div>
                 </FileUploadTrigger>
@@ -215,12 +250,12 @@ export function ChatInput({
               {isStreaming && onStop ? (
                 <PromptInputAction tooltip={t('Stop')}>
                   <Button
-                    variant="default"
-                    size="icon"
-                    className="sm:h-7 sm:w-7 rounded-full"
+                    size="xs"
+                    className="h-7 gap-1.5 rounded-full bg-gray-12 px-3 text-xs font-medium text-gray-1 hover:bg-gray-12/90"
                     onClick={onStop}
                   >
-                    <Square className="size-3 fill-current" />
+                    <Square className="size-2.5 fill-current" />
+                    {t('Stop')}
                   </Button>
                 </PromptInputAction>
               ) : isRecording ? (
@@ -234,42 +269,39 @@ export function ChatInput({
                     <span className="text-xs font-medium">{t('Stop')}</span>
                   </Button>
                 </PromptInputAction>
-              ) : canSend ? (
-                <PromptInputAction
-                  tooltip={sendBlockedReason ?? t('Send message')}
-                >
-                  <Button
-                    variant="default"
-                    size="icon"
-                    className="sm:h-7 sm:w-7 rounded-full"
-                    onClick={handleSubmit}
-                    disabled={isStreaming || !isNil(sendBlockedReason)}
-                  >
-                    <ArrowUp className="size-4" />
-                  </Button>
-                </PromptInputAction>
-              ) : isVoiceSupported ? (
-                <PromptInputAction tooltip={t('Voice input')}>
-                  <button
-                    type="button"
-                    onClick={startRecording}
-                    className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
-                  >
-                    <Mic className="size-4" />
-                  </button>
-                </PromptInputAction>
               ) : (
-                <PromptInputAction tooltip={t('Send message')}>
-                  <Button
-                    variant="default"
-                    size="icon"
-                    className="sm:h-7 sm:w-7 rounded-full"
-                    onClick={handleSubmit}
-                    disabled={true}
-                  >
-                    <ArrowUp className="size-4" />
-                  </Button>
-                </PromptInputAction>
+                <>
+                  {isVoiceSupported && (
+                    <PromptInputAction tooltip={t('Voice input')}>
+                      <button
+                        type="button"
+                        aria-label={t('Voice input')}
+                        onClick={startRecording}
+                        className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
+                      >
+                        <Mic className="size-4" />
+                      </button>
+                    </PromptInputAction>
+                  )}
+                  {(canSend || showSendWhenEmpty || !isVoiceSupported) && (
+                    <PromptInputAction
+                      tooltip={sendBlockedReason ?? t('Send message')}
+                    >
+                      <Button
+                        variant="default"
+                        size="icon"
+                        aria-label={t('Send message')}
+                        className="sm:h-7 sm:w-7 rounded-full"
+                        onClick={handleSubmit}
+                        disabled={
+                          !canSend || isStreaming || !isNil(sendBlockedReason)
+                        }
+                      >
+                        <ArrowUp className="size-4" />
+                      </Button>
+                    </PromptInputAction>
+                  )}
+                </>
               )}
             </div>
           </PromptInputActions>
@@ -294,3 +326,20 @@ export function ChatInput({
     </FileUpload>
   );
 }
+
+function revokePreview(attachment: ComposerAttachment) {
+  if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+}
+
+function fileTypeLabel(file: File): string | undefined {
+  if (file.type.startsWith('image/')) return t('Image');
+  const dot = file.name.lastIndexOf('.');
+  if (dot <= 0 || dot === file.name.length - 1) return undefined;
+  return file.name.slice(dot + 1).toUpperCase();
+}
+
+type ComposerAttachment = {
+  id: number;
+  file: File;
+  previewUrl?: string;
+};

@@ -19,6 +19,7 @@ import {
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -207,7 +208,7 @@ export function ConversationList({
       <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs px-2 pt-2 pb-1 text-gray-11 transition-colors hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}
@@ -222,25 +223,38 @@ export function ConversationList({
         {!isCollapsed &&
           items.map((conv) => {
             const indicator = getIndicator(conv);
+            const isSelected = selectedId === conv.id;
             return (
               <button
                 type="button"
                 key={conv.id}
+                aria-current={isSelected ? 'page' : undefined}
                 className={cn(
-                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-gray-3 relative',
-                  mobile && 'px-3 py-2.5 text-sm',
-                  selectedId === conv.id &&
-                    'bg-gray-3 font-semibold border-l-2 border-l-accent-9',
+                  'group relative flex w-full cursor-pointer items-center rounded-md border-none bg-transparent px-2 py-1.5 text-left text-sm text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12',
+                  mobile && 'px-3 py-2.5',
+                  indicator !== null && 'text-gray-12',
+                  indicator === 'unread' && 'font-medium',
+                  isSelected && 'bg-gray-3 text-gray-12',
                 )}
                 onClick={() => handleClick(conv)}
               >
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
+                <span
+                  className={cn(
+                    'flex-1 overflow-hidden text-ellipsis whitespace-nowrap pr-6',
+                    mobile && 'pr-16',
+                  )}
+                >
                   {conv.title
                     ? chatUtils.sanitizeTitle(conv.title)
                     : t('New conversation')}
                 </span>
                 {indicator && (
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0">
+                  <span
+                    className={cn(
+                      'absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0',
+                      mobile && 'right-10 group-hover:opacity-100',
+                    )}
+                  >
                     <ConversationStatusDot state={indicator} />
                   </span>
                 )}
@@ -249,6 +263,7 @@ export function ConversationList({
                     <span
                       role="button"
                       tabIndex={0}
+                      aria-label={t('Delete')}
                       className={cn(
                         'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-all',
                         mobile && 'opacity-100 p-1.5',
@@ -281,38 +296,41 @@ export function ConversationList({
 
   return (
     <div className={cn('flex flex-col h-full shrink-0 w-[220px]', className)}>
-      <div className="px-2 pt-3 pb-2 space-y-2">
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            className={cn(
-              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
-              mobile && 'px-3 py-2.5 text-sm',
-            )}
-            onClick={() => {
-              onNewChat?.();
-            }}
-          >
-            <span className="flex items-center gap-1.5">
-              <Plus size={mobile ? 16 : 14} />
-              {t('New chat')}
-            </span>
-            {!mobile && <span className="text-xs opacity-50">⇧⌘O</span>}
-          </button>
-          {onCollapse !== undefined && (
-            <ConversationsToggle open onClick={onCollapse} />
-          )}
+      <div className="flex items-center gap-1.5 px-2 pt-3 pb-1">
+        <div className="relative min-w-0 grow">
+          <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-gray-11" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('Search chats')}
+            aria-label={t('Search chats')}
+            className={cn('h-8 pl-7 text-sm', mobile && 'h-9 pl-8 text-base')}
+          />
         </div>
-        {allConversations.length > 5 && (
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-11" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('Search...')}
-              className={cn('h-7 pl-7 text-xs', mobile && 'h-9 pl-8 text-base')}
-            />
-          </div>
+        <DelayedTooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size={mobile ? 'icon' : 'icon-sm'}
+              aria-label={t('New chat')}
+              className="shrink-0 text-gray-12"
+              onClick={() => {
+                onNewChat?.();
+              }}
+            >
+              <Plus className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="pointer-events-none">
+            <span className="flex items-center gap-2">
+              {t('New chat')}
+              <span className="opacity-60">⇧⌘O</span>
+            </span>
+          </TooltipContent>
+        </DelayedTooltip>
+        {onCollapse !== undefined && (
+          <ConversationsToggle open onClick={onCollapse} />
         )}
       </div>
       <div className="flex-1 relative min-h-0">
