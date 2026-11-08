@@ -172,7 +172,7 @@ describe('ConfigDetail save (manual models)', () => {
             info={{
               provider: AIProviderName.CLOUDFLARE_GATEWAY,
               name: 'Cloudflare AI Gateway',
-              markdown: '',
+              markdown: () => '',
               logoUrl: '',
             }}
             projects={[]}

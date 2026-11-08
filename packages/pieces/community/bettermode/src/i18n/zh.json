@@ -260,6 +260,8 @@
   "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
+  "Request": "請求",
+  "Data to send": "要傳送的資料",
   "New Post": "New Post",
   "New Member": "New Member",
   "New Reply": "New Reply",

@@ -786,6 +786,7 @@ const PROVIDERS_BY_IMPORTANCE: AIProviderName[] = [
   AIProviderName.VERTEX,
   AIProviderName.META,
   AIProviderName.MISTRAL,
+  AIProviderName.COHERE,
   AIProviderName.XAI,
   AIProviderName.DEEPSEEK,
   AIProviderName.OPENROUTER,
