@@ -15,13 +15,19 @@ export function ChatLine({
   onToggle,
   onClick,
   tone = 'muted',
+  wrap = false,
   className,
 }: ChatLineProps) {
   const interactive = Boolean(onToggle ?? onClick);
   const content = (
     <>
       {icon && (
-        <span className="flex size-3.5 shrink-0 items-center justify-center">
+        <span
+          className={cn(
+            'flex size-3.5 shrink-0 items-center justify-center',
+            wrap && 'mt-0.75',
+          )}
+        >
           {icon}
         </span>
       )}
@@ -29,6 +35,16 @@ export function ChatLine({
         <TextShimmer className="min-w-0 truncate text-sm font-normal motion-reduce:animate-none">
           {children}
         </TextShimmer>
+      ) : wrap ? (
+        <span
+          className={cn(
+            'min-w-0 text-sm break-words transition-colors',
+            TONE_CLASS[tone],
+            interactive && tone === 'muted' && 'group-hover/line:text-gray-12',
+          )}
+        >
+          {children}
+        </span>
       ) : (
         <TruncatedText
           text={children}
@@ -63,7 +79,11 @@ export function ChatLine({
       )}
     </>
   );
-  const lineClass = cn('flex min-w-0 items-center gap-2 py-1', className);
+  const lineClass = cn(
+    'flex min-w-0 gap-2 py-1',
+    wrap ? 'items-start' : 'items-center',
+    className,
+  );
 
   if (!interactive) {
     return <div className={lineClass}>{content}</div>;
@@ -118,5 +138,6 @@ type ChatLineProps = {
   onToggle?: () => void;
   onClick?: () => void;
   tone?: ChatLineTone;
+  wrap?: boolean;
   className?: string;
 };

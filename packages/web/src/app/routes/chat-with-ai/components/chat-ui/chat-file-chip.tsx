@@ -3,6 +3,12 @@ import { FileText, X } from 'lucide-react';
 import prettyBytes from 'pretty-bytes';
 
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 export function ChatFileChip({
@@ -31,9 +37,7 @@ export function ChatFileChip({
         </span>
       )}
       <span className="flex min-w-0 flex-col text-left">
-        <span className="whitespace-nowrap text-xs font-medium text-gray-12">
-          {shortenMiddle(name)}
-        </span>
+        <ChipName name={name} />
         {meta.length > 0 && (
           <span className="whitespace-nowrap text-xs text-gray-11">{meta}</span>
         )}
@@ -43,7 +47,6 @@ export function ChatFileChip({
 
   return (
     <div
-      title={name}
       className={cn(
         'flex h-10 max-w-full items-center gap-1 rounded-lg border border-gray-6 bg-panel',
         onRemove ? 'pr-1' : 'pr-3',
@@ -75,6 +78,26 @@ export function ChatFileChip({
         </Button>
       )}
     </div>
+  );
+}
+
+function ChipName({ name }: { name: string }) {
+  const shortName = shortenMiddle(name);
+  const label = (
+    <span className="whitespace-nowrap text-xs font-medium text-gray-12">
+      {shortName}
+    </span>
+  );
+  if (shortName === name) return label;
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{label}</TooltipTrigger>
+        <TooltipContent className="max-w-md wrap-break-word whitespace-normal">
+          {name}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

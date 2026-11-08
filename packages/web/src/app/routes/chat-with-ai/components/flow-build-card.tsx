@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Workflow } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { BuildState, chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -41,7 +42,7 @@ export function FlowBuildCard({
   const isDone = build.phase === 'done';
   const isFailed = build.phase === 'failed';
   const projectId = build.projectId ?? authenticationSession.getProjectId();
-  const title = build.flowName ?? t('New Flow');
+  const title = build.flowName ?? t('New flow');
   const meta = buildMeta(build);
   const tile = <ChatCardTile kind="bits" icon={Workflow} />;
   const steps = (
@@ -147,15 +148,17 @@ function BuildStepRow({ step }: { step: BuildPlanStep }) {
           className="size-3.5 shrink-0 rounded-full border-2 border-gray-6"
         />
       )}
-      <span
-        className={cn(
-          'min-w-0 flex-1 truncate',
-          step.status === 'pending' ? 'text-gray-11' : 'text-gray-12',
-          step.status === 'failed' && 'text-danger-11',
-        )}
-      >
-        {step.label}
-      </span>
+      <TextWithTooltip tooltipMessage={step.label}>
+        <span
+          className={cn(
+            'min-w-0 flex-1 truncate',
+            step.status === 'pending' ? 'text-gray-11' : 'text-gray-12',
+            step.status === 'failed' && 'text-danger-11',
+          )}
+        >
+          {step.label}
+        </span>
+      </TextWithTooltip>
     </li>
   );
 }

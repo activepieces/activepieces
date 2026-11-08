@@ -7,7 +7,7 @@ export function RecurringChip({ onSend }: { onSend: () => void }) {
     <ChatLine
       tone="accent"
       icon={<Repeat className="size-3.5 text-accent-11" />}
-      title={RECURRING_AUTOMATION_REPLY}
+      wrap
       onClick={onSend}
     >
       {RECURRING_AUTOMATION_REPLY}

@@ -30,7 +30,7 @@ export function QuickReplies({
         <ChatLine
           key={`${i}-${reply}`}
           icon={<CornerDownRight className="size-3.5 text-gray-11" />}
-          title={reply}
+          wrap
           onClick={() => onSend(reply)}
         >
           {reply}

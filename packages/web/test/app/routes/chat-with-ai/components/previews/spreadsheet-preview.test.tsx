@@ -22,11 +22,11 @@ describe('SpreadsheetPreview', () => {
   it('shows 5 rows inline, right-aligns numbers and links to the full table', () => {
     render(<SpreadsheetPreview table={table} label="Lead list" />);
     expect(screen.getAllByRole('row')).toHaveLength(6);
-    const score = screen.getByText('92');
+    const score = screen.getByRole('cell', { name: '92' });
     expect(score.className).toContain('text-right');
-    expect(screen.getByText('Dana Park').className).not.toContain(
-      'text-right',
-    );
+    expect(
+      screen.getByRole('cell', { name: 'Dana Park' }).className,
+    ).not.toContain('text-right');
     expect(
       screen.getByRole('button', {
         name: '{count, plural, =1 {Open full table · 1 row} other {Open full table · # rows}}',

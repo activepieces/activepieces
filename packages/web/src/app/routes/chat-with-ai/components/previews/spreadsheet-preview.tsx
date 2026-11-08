@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Table2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { SearchInput } from '@/components/custom/search-input';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { cn } from '@/lib/utils';
 
 import {
@@ -83,7 +84,7 @@ export function SpreadsheetPreview({
         </div>
       }
       renderExpanded={() => (
-        <>
+        <div className="flex h-full flex-col">
           <SpreadsheetTable
             headers={table.headers}
             rows={shownRows}
@@ -91,6 +92,10 @@ export function SpreadsheetPreview({
             sort={sort}
             onSort={toggleSort}
             wrapCells
+            className={cn(
+              'overflow-auto',
+              expandedRows.length > 0 && 'min-h-0 flex-1',
+            )}
           />
           {expandedRows.length === 0 && (
             <p className="px-4 py-3 text-sm text-gray-11">
@@ -105,7 +110,7 @@ export function SpreadsheetPreview({
               })}
             </p>
           )}
-        </>
+        </div>
       )}
     >
       <SpreadsheetTable
@@ -158,9 +163,10 @@ function SpreadsheetTable({
   sort,
   onSort,
   wrapCells = false,
+  className,
 }: SpreadsheetTableProps) {
   return (
-    <div className="overflow-x-auto">
+    <div className={cn('overflow-x-auto', className)}>
       <table className="w-full text-sm">
         <thead className="sticky top-0 z-10">
           <tr className="border-b border-gray-5 bg-gray-2">
@@ -203,19 +209,22 @@ function SpreadsheetTable({
               {row.map((cell, column) => (
                 <td
                   key={column}
-                  title={wrapCells ? undefined : cell}
                   className={cn(
                     'px-4 py-2 align-top text-gray-12 @max-chat-narrow/chat:px-3',
                     numeric[column] && 'text-right tabular-nums',
                     wrapCells
                       ? 'whitespace-pre-wrap break-words'
-                      : 'max-w-xs truncate whitespace-nowrap',
+                      : 'whitespace-nowrap',
                   )}
                 >
                   {cell === '' ? (
                     <span className="text-gray-9">{t('empty')}</span>
-                  ) : (
+                  ) : wrapCells ? (
                     cell
+                  ) : (
+                    <TextWithTooltip tooltipMessage={cell}>
+                      <div className="max-w-xs">{cell}</div>
+                    </TextWithTooltip>
                   )}
                 </td>
               ))}
@@ -254,4 +263,5 @@ type SpreadsheetTableProps = {
   sort?: TableSort | null;
   onSort?: (column: number) => void;
   wrapCells?: boolean;
+  className?: string;
 };
