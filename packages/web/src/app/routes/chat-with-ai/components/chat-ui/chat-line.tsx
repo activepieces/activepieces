@@ -40,14 +40,18 @@ export function ChatLine({
         />
       )}
       {logos && <span className="flex shrink-0 items-center">{logos}</span>}
-      {detail && (
-        <span className="flex min-w-0 shrink items-center gap-1 text-sm text-gray-11">
-          <span aria-hidden className="shrink-0">
-            ·
+      {detail &&
+        (typeof detail === 'string' ? (
+          <TextWithTooltip tooltipMessage={detail}>
+            <span className="min-w-0 shrink truncate text-sm text-gray-11">
+              · {detail}
+            </span>
+          </TextWithTooltip>
+        ) : (
+          <span className="min-w-0 shrink truncate text-sm text-gray-11">
+            · {detail}
           </span>
-          <TruncatedText text={detail} className="min-w-0 truncate" />
-        </span>
-      )}
+        ))}
       {onToggle && (
         <ChevronRight
           aria-hidden

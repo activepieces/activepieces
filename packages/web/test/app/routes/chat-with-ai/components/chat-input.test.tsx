@@ -44,7 +44,7 @@ describe('ChatInput', () => {
       new File(['png'], 'chart.png', { type: 'image/png' }),
     ]);
 
-    expect(screen.getByText('Image · 3 B')).toBeTruthy();
+    expect(screen.getByText('PNG · 3 B')).toBeTruthy();
     expect(container.querySelector('img')?.getAttribute('src')).toBe(
       'blob:preview',
     );
