@@ -85,9 +85,22 @@ function ResourceChip({ resource }: { resource: ResourceRef }) {
   const label = name ? withNoun(name, noun) : kindLabel;
 
   return (
-    <button
-      type="button"
-      onClick={() => followAlong.view(resource)}
+    <a
+      href={resourceRegistry.route(resource)}
+      onClick={(event) => {
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        event.preventDefault();
+        followAlong.view(resource);
+      }}
+      aria-current={here ? 'page' : undefined}
       title={here ? undefined : t('Open beside the chat')}
       className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border border-gray-6 bg-gray-1 pl-2 pr-2.5 text-xs transition-colors hover:border-gray-7 hover:bg-gray-3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8"
     >
@@ -104,7 +117,7 @@ function ResourceChip({ resource }: { resource: ResourceRef }) {
       >
         {here ? t('Viewing') : t('Open')}
       </span>
-    </button>
+    </a>
   );
 }
 

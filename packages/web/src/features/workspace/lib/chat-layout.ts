@@ -29,11 +29,13 @@ export function chatWidthFor({
   fullPage,
   open,
   mode,
+  split,
   viewportWidth,
 }: {
   fullPage: boolean;
   open: boolean;
   mode: ChatPanelMode;
+  split: boolean;
   viewportWidth: number;
 }): ChatWidth {
   if (fullPage) {
@@ -41,6 +43,9 @@ export function chatWidthFor({
   }
   if (!open) {
     return 'closed';
+  }
+  if (split && viewportWidth >= MOBILE_BREAKPOINT) {
+    return viewportWidth >= DOCK_BREAKPOINT ? 'left' : 'float';
   }
   return chatLayoutFor(mode, viewportWidth);
 }
@@ -65,7 +70,7 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), Math.max(min, max));
 }
 
-const MOVE_MS = { enter: 220, exit: 160 } as const;
+const MOVE_MS = { enter: 220, exit: 160, fold: 160 } as const;
 export function startStructuralMove(kind: keyof typeof MOVE_MS) {
   document.documentElement.style.setProperty('--ap-move', `${MOVE_MS[kind]}ms`);
 }

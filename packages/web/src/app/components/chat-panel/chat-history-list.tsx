@@ -45,32 +45,19 @@ import {
   useChatHistoryActions,
 } from './chat-history-data';
 
-// The panel's chat history: a search field over a grouped, keyboard-driven
-// list. Docked, it fills the panel; floating, it sits in the header dropdown.
-// Focus stays in the search field and the arrows move the highlight, like a
-// command palette. Tab reaches the highlighted row's actions; F2 renames it and
-// Shift+F10 (or the context-menu key, or a right-click) opens its menu.
-//
-// Three row states, the same in both places:
-// - current chat: an accent bar and medium weight, always;
-// - under the pointer: a soft fill;
-// - keyboard highlight: the same fill plus a hairline ring, so it reads as a
-//   cursor and never gets confused with where the mouse happens to rest.
-//
-// The parent sets --history-bg, so the search bar and sticky headings are
-// solid in either surface.
 export function ChatHistoryList({
   currentId,
   onSelect,
   onNewChat,
   toastPosition,
+  autoFocus = true,
   className,
 }: {
   currentId: string | null;
   onSelect: (id: string) => void;
   onNewChat: () => void;
-  // Where the undo toast goes, so it never covers the panel's composer.
   toastPosition?: ToastT['position'];
+  autoFocus?: boolean;
   className?: string;
 }) {
   const listId = useId();
@@ -115,7 +102,6 @@ export function ChatHistoryList({
   }, [conversations, query]);
   const flat = useMemo(() => groups.flatMap((g) => g.items), [groups]);
 
-  // Whether there is more above or below, for the divider and the fades.
   const measureEdges = useCallback(() => {
     const el = listRef.current;
     if (!el) return;
@@ -127,8 +113,6 @@ export function ChatHistoryList({
   }, []);
   useLayoutEffect(measureEdges, [measureEdges, flat.length, isLoading]);
 
-  // Open on the current chat, so Enter right away is a no-op, not a jump. The
-  // start isn't drawn as a highlight: the current marker already shows it.
   useEffect(() => {
     if (highlight.index === -1 && flat.length > 0) {
       const start = Math.max(
@@ -136,8 +120,6 @@ export function ChatHistoryList({
         flat.findIndex((c) => c.id === currentId),
       );
       setHighlight({ index: start, by: null });
-      // Wait for the dropdown to be placed and capped before scrolling it.
-      // Not cancelled on cleanup: setting the highlight re-runs this effect.
       if (start > 0) {
         requestAnimationFrame(() =>
           requestAnimationFrame(() =>
@@ -150,7 +132,6 @@ export function ChatHistoryList({
     }
   }, [flat, currentId, highlight.index]);
 
-  // The server has no search, so a search pulls the older pages in too.
   useEffect(() => {
     if (
       searching &&
@@ -264,7 +245,7 @@ export function ChatHistoryList({
         <Search className="pointer-events-none absolute top-[calc(50%-2px)] left-5.5 size-3.5 -translate-y-1/2 text-gray-10" />
         <input
           ref={inputRef}
-          autoFocus
+          autoFocus={autoFocus}
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -301,10 +282,6 @@ export function ChatHistoryList({
         )}
       </div>
       <div className="relative flex min-h-0 flex-auto flex-col">
-        {/* While the list is scrolled, rows slide under the stuck group
-          heading: a fade just below it, solid at first, so no line of row
-          text peeks out under the label. At rest it's off, so the first row
-          of each group stays crisp. Matches the heading's h-8. */}
         <div
           aria-hidden
           className={cn(
@@ -356,7 +333,6 @@ export function ChatHistoryList({
           ) : (
             groups.map((group) => (
               <div key={group.label} role="group" aria-label={group.label}>
-                {/* Sticky and opaque; the fade under it is the overlay below. */}
                 <div className="sticky top-0 z-[2] -mx-2 h-8 bg-(--history-bg) px-4 pt-2.5 pb-1.5 text-xs font-medium text-gray-10">
                   {group.label}
                 </div>
@@ -401,8 +377,6 @@ export function ChatHistoryList({
                         const wasOpen = conversation.id === currentId;
                         remove(conversation.id, {
                           position: toastPosition,
-                          // Undo puts the chat back where it was, unless
-                          // another one has been opened since.
                           onUndo: wasOpen
                             ? () => {
                                 if (useChatPanel.getState().conversationId) {
@@ -499,8 +473,6 @@ const HistoryRow = memo(function HistoryRow({
         >
           {relativeTime(conversation.updated)}
         </time>
-        {/* Only the row under the cursor carries its menu: mounting one per
-            row made opening history cost a long frame. */}
         {(active || tabbable) && (
           <DropdownMenu open={menuOpen} onOpenChange={onMenuOpenChange}>
             <DropdownMenuTrigger asChild>
@@ -523,8 +495,6 @@ const HistoryRow = memo(function HistoryRow({
               align="end"
               className="w-36"
               onClick={(event) => event.stopPropagation()}
-              // Back to the search, so arrows and Esc keep working; a rename
-              // takes focus itself.
               onCloseAutoFocus={(event) => {
                 event.preventDefault();
                 if (!renaming.current) onMenuClosed();
@@ -557,8 +527,6 @@ const HistoryRow = memo(function HistoryRow({
 },
 rowPropsEqual);
 
-// Row callbacks are rebuilt on every list render; the row only needs to
-// re-render when what it shows changes.
 function rowPropsEqual(prev: HistoryRowProps, next: HistoryRowProps) {
   return (
     prev.id === next.id &&
@@ -588,7 +556,6 @@ function RenameRow({
     onDone(title);
   };
 
-  // The menu hands focus back as it closes; take it after that.
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       ref.current?.focus();

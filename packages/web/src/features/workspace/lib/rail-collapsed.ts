@@ -10,9 +10,6 @@ import { chatPanelIsDocked, useChatPanel } from './chat-panel-open';
 const PREFERENCE_KEY = 'primary-rail-collapsed';
 const FOLDED_FOR_CHAT_KEY = 'primary-rail-folded-for-chat';
 
-// Inside one agent the rail is furniture: the page has its own header, its own
-// conversation list and its own panel. The route only asks for it closed, so an
-// explicit click on that page still wins until you navigate on.
 const AGENT_ROUTES = [
   routesThatRequireProjectId.singleAgent,
   routesThatRequireProjectId.singleAgentRuns,
@@ -92,7 +89,10 @@ function foldForDock() {
 useChatPanel.subscribe((chat, prev) => {
   const docked = chatPanelIsDocked(chat);
   const wasDocked = chatPanelIsDocked(prev);
-  if (docked && (!wasDocked || chat.docks !== prev.docks)) {
+  if (
+    docked &&
+    (!wasDocked || chat.docks !== prev.docks || (chat.split && !prev.split))
+  ) {
     foldForDock();
   } else if (!docked && wasDocked && useRail.getState().foldedForChat) {
     update({ foldedForChat: false });

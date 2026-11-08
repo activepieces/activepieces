@@ -288,6 +288,13 @@ describe('resourceRegistry settings and page refs', () => {
     expect(resourceRegistry.refAt('/platform/sso')).toBeNull();
   });
 
+  it('ignores list pages', () => {
+    expect(resourceRegistry.refAt('/projects/p1/automations')).toBeNull();
+    expect(resourceRegistry.refAt('/projects/p1/connections')).toBeNull();
+    expect(resourceRegistry.refAt('/projects/p1/flows')).toBeNull();
+    expect(resourceRegistry.refAt('/chat')).toBeNull();
+  });
+
   it('resolves settings tools without auto-opening them', () => {
     const resolved = resourceRegistry.resolve({
       toolName: 'ap_update_settings',
