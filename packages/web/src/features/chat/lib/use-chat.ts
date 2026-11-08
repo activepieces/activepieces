@@ -16,6 +16,7 @@ import {
   subagentProgressId,
   SubagentProgressEvent,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -33,6 +34,9 @@ import {
 import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
 import { ChatModelPick, chatUtils } from './chat-utils';
+import { chatDemoGate } from './demo/chat-demo-gate';
+import { usePageContext } from './page-context';
+import { conversationChanges } from './use-conversation-changes';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 function applyQuickRepliesToStore({
@@ -102,6 +106,8 @@ const TOOL_GATES_WITHOUT_A_PIECE = new Set([
   'ap_update_agent',
   'ap_add_agent_tool',
   'ap_remove_agent_tool',
+  'ap_update_settings',
+  'ap_invite_member',
 ]);
 
 function buildToolCallMetaFromGate(
@@ -258,9 +264,7 @@ function isAllowedMimeType(value: string): value is AgentAllowedMimeType {
   return ALLOWED_MIME_SET.has(value);
 }
 
-function fileToBase64(
-  file: File,
-): Promise<{ name: string; mimeType: AgentAllowedMimeType; data: string }> {
+function fileToBase64(file: File): Promise<EncodedFile> {
   return new Promise((resolve, reject) => {
     const mimeType = file.type || 'application/octet-stream';
     if (!isAllowedMimeType(mimeType)) {
@@ -321,6 +325,12 @@ function isSendCancelled({
   return statusRef.current.type === 'cancelled';
 }
 
+type EncodedFile = {
+  name: string;
+  mimeType: AgentAllowedMimeType;
+  data: string;
+};
+
 type SendStatus =
   | { type: 'idle' }
   | { type: 'submitting' }
@@ -335,6 +345,8 @@ export function useAgentChat({
   onConversationCreated,
   onCreditsExhausted,
   onTurnEnd,
+  onConversationMissing,
+  onSendAbandoned,
 }: {
   agentId?: string;
   builder?: boolean;
@@ -343,9 +355,15 @@ export function useAgentChat({
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
   onTurnEnd?: () => void;
+  onConversationMissing?: () => void;
+  onSendAbandoned?: (message: AbandonedSend) => void;
 } = {}) {
   const store = useChatStoreApi();
+  const queryClient = useQueryClient();
   const toolCallMeta = useChatStoreContext((state) => state.toolCallMeta);
+  const pageContext = usePageContext();
+  const pageContextRef = useRef(pageContext);
+  pageContextRef.current = pageContext;
 
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
@@ -370,9 +388,6 @@ export function useAgentChat({
   const optimisticUserMessageRef = useRef(optimisticUserMessage);
   optimisticUserMessageRef.current = optimisticUserMessage;
 
-  const pendingFilesRef = useRef<
-    { name: string; mimeType: AgentAllowedMimeType; data: string }[] | undefined
-  >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
   const lastSentRef = useRef<{ content: string; files?: File[] } | null>(null);
   const conversationIdRef = useRef<string | null>(null);
@@ -385,6 +400,11 @@ export function useAgentChat({
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
   onConversationCreatedRef.current = onConversationCreated;
+  const onConversationMissingRef = useRef(onConversationMissing);
+  const onSendAbandonedRef = useRef(onSendAbandoned);
+  onSendAbandonedRef.current = onSendAbandoned;
+  onConversationMissingRef.current = onConversationMissing;
+  const sessionGenRef = useRef(0);
 
   const handleTitleUpdate = useCallback((title: string) => {
     onTitleUpdateRef.current?.(title);
@@ -534,6 +554,11 @@ export function useAgentChat({
       if (!result) return null;
       const mapped = chatUtils.mapHistoryToUIMessages(result.data);
       setPersistedMessages(mapped);
+      conversationChanges.seed({
+        queryClient,
+        conversationId: convId,
+        messages: mapped,
+      });
       const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
       applyQuickRepliesToStore({ setState: store.setState, data: restored });
       restoreReceiptsIntoStore({
@@ -542,7 +567,7 @@ export function useAgentChat({
       });
       return mapped;
     },
-    [store],
+    [store, queryClient],
   );
 
   const settleStreamRef = useRef<
@@ -744,7 +769,12 @@ export function useAgentChat({
     async ({
       title,
       pick,
-    }: { title?: string | null; pick?: ChatModelPick | null } = {}) => {
+      gen,
+    }: {
+      title?: string | null;
+      pick?: ChatModelPick | null;
+      gen: number;
+    }) => {
       const chatProjectId = projectIdRef.current;
       const conv = await chatApi.createConversation({
         title: title ?? null,
@@ -756,6 +786,7 @@ export function useAgentChat({
           : { agentId }),
         ...(builder === undefined ? {} : { builder }),
       });
+      if (gen !== sessionGenRef.current) return conv;
       setConversationProjectId(conv.projectId ?? null);
       savedPickRef.current = pick ?? null;
       conversationIdRef.current = conv.id;
@@ -766,7 +797,7 @@ export function useAgentChat({
           const { error } = await tryCatch(() =>
             chatApi.updateConversation(conv.id, latestPick),
           );
-          if (isNil(error)) {
+          if (isNil(error) && gen === sessionGenRef.current) {
             savedPickRef.current = latestPick;
           }
         });
@@ -779,12 +810,19 @@ export function useAgentChat({
   const sendMessage = useCallback(
     async (
       content: string,
-      files?: File[],
+      attachedFiles?: File[],
       options?: { messageSource?: AgentMessageSource },
     ) => {
+      const gen = sessionGenRef.current;
+      const isStale = () => gen !== sessionGenRef.current;
+      const demoFiles =
+        import.meta.env.DEV && !attachedFiles
+          ? chatDemoGate.attachmentsFor(content)
+          : undefined;
       updateSendStatus({ type: 'submitting' });
       await pickSaveQueueRef.current;
-      if (isSendCancelled({ statusRef: sendStatusRef })) {
+      const files = attachedFiles ?? (await demoFiles);
+      if (isStale() || isSendCancelled({ statusRef: sendStatusRef })) {
         return;
       }
 
@@ -809,6 +847,7 @@ export function useAgentChat({
       setOptimisticUserMessage(optimisticUser);
       store.getState().resetInteractions();
 
+      let encodedFiles: EncodedFile[] | undefined = undefined;
       if (files && files.length > 0) {
         const oversized = files.find((f) => f.size > MAX_FILE_SIZE);
         if (oversized) {
@@ -819,9 +858,10 @@ export function useAgentChat({
           });
           return;
         }
-        const { data: encodedFiles, error: fileError } = await tryCatch(
-          async () => Promise.all(files.map(fileToBase64)),
+        const { data, error: fileError } = await tryCatch(async () =>
+          Promise.all(files.map(fileToBase64)),
         );
+        if (isStale()) return;
         if (fileError) {
           setOptimisticUserMessage(null);
           updateSendStatus({
@@ -830,19 +870,37 @@ export function useAgentChat({
           });
           return;
         }
-        pendingFilesRef.current = encodedFiles;
-      } else {
-        pendingFilesRef.current = undefined;
+        encodedFiles = data;
       }
 
-      if (!conversationIdRef.current) {
-        const { error: convError } = await tryCatch(async () => {
-          const conv = await createConversation({
+      let convId = conversationIdRef.current;
+      if (!convId) {
+        const { data: conv, error: convError } = await tryCatch(async () =>
+          createConversation({
             title: content.slice(0, 100),
             pick: modelPickRef.current,
-          });
-          onConversationCreatedRef.current?.(conv.id);
-        });
+            gen,
+          }),
+        );
+        if (isStale()) {
+          if (
+            isNil(conversationIdRef.current) &&
+            isNil(optimisticUserMessageRef.current)
+          ) {
+            onSendAbandonedRef.current?.({ content, files: files ?? [] });
+          }
+          if (conv) {
+            chatApi
+              .deleteConversation(conv.id)
+              .then(() =>
+                queryClient.invalidateQueries({
+                  queryKey: ['chat-conversations'],
+                }),
+              )
+              .catch(() => undefined);
+          }
+          return;
+        }
         if (convError) {
           setOptimisticUserMessage(null);
           updateSendStatus({
@@ -854,20 +912,12 @@ export function useAgentChat({
           });
           return;
         }
+        onConversationCreatedRef.current?.(conv.id);
         if (isSendCancelled({ statusRef: sendStatusRef })) {
           setOptimisticUserMessage(null);
           return;
         }
-      }
-
-      const convId = conversationIdRef.current;
-      if (!convId) {
-        setOptimisticUserMessage(null);
-        updateSendStatus({
-          type: 'error',
-          message: 'No conversation ID',
-        });
-        return;
+        convId = conv.id;
       }
 
       const runId = apId();
@@ -879,7 +929,7 @@ export function useAgentChat({
           conversation: { id: convId },
           run: { id: runId },
           contentLength: content.length,
-          filesCount: pendingFilesRef.current?.length ?? 0,
+          filesCount: encodedFiles?.length ?? 0,
         },
         'sending chat message',
       );
@@ -889,13 +939,16 @@ export function useAgentChat({
           conversationId: convId,
           content,
           runId,
-          files: pendingFilesRef.current,
+          files: encodedFiles,
           ...(options?.messageSource
             ? { messageSource: options.messageSource }
             : {}),
+          ...(pageContextRef.current
+            ? { pageContext: pageContextRef.current }
+            : {}),
         }),
       );
-      if (sendError) {
+      if (sendError && !isStale()) {
         chatDebug.error(
           {
             conversation: { id: convId },
@@ -928,9 +981,9 @@ export function useAgentChat({
       updateSendStatus,
       commitInFlightTurn,
       store,
+      queryClient,
     ],
   );
-
   const retryLastMessage = useCallback(
     (fallbackContent: string) => {
       const lastSent = lastSentRef.current;
@@ -941,6 +994,35 @@ export function useAgentChat({
     [sendMessage],
   );
 
+  const resetSession = useCallback(
+    (id: string | null) => {
+      sessionGenRef.current += 1;
+      stopStream();
+      updateSendStatus({ type: 'idle' });
+      conversationIdRef.current = id;
+      setConversationIdState(id);
+      setPersistedMessages([]);
+      setOptimisticUserMessage(null);
+      setIsLoadingHistory(false);
+      lastSentFileNamesRef.current = [];
+      lastSentRef.current = null;
+      pickSaveQueueRef.current = Promise.resolve();
+      modelPickRef.current = null;
+      savedPickRef.current = null;
+      setModelPickState(null);
+      setConversationProjectId(null);
+      store.getState().resetInteractions();
+      store.getState().resetBuilds();
+      store.setState({ taskPanelAutoOpen: true });
+      return sessionGenRef.current;
+    },
+    [stopStream, updateSendStatus, store],
+  );
+
+  const startNew = useCallback(() => {
+    resetSession(null);
+  }, [resetSession]);
+
   const setConversationId = useCallback(
     async (id: string) => {
       if (
@@ -950,35 +1032,37 @@ export function useAgentChat({
         })
       )
         return;
-      stopStream();
-      updateSendStatus({ type: 'idle' });
-      conversationIdRef.current = id;
-      setConversationIdState(id);
-      store.getState().resetInteractions();
-      store.getState().resetBuilds();
-
-      pendingFilesRef.current = undefined;
-      lastSentFileNamesRef.current = [];
-      lastSentRef.current = null;
-      setOptimisticUserMessage(null);
-
+      const gen = resetSession(id);
       setIsLoadingHistory(true);
       const [historyResult, convResult] = await Promise.all([
         tryCatch(async () => chatApi.getMessages(id)),
         tryCatch(async () => chatApi.getConversation(id)),
       ]);
-      if (conversationIdRef.current !== id) return;
+      if (gen !== sessionGenRef.current) return;
       if (historyResult.error || convResult.error) {
         conversationIdRef.current = null;
         setConversationIdState(null);
         setIsLoadingHistory(false);
+        const missing = [historyResult.error, convResult.error].some((e) =>
+          api.isApError(e, ErrorCode.ENTITY_NOT_FOUND),
+        );
+        const onMissing = onConversationMissingRef.current;
+        if (missing && onMissing) {
+          onMissing();
+          return;
+        }
         updateSendStatus({
           type: 'error',
-          message: 'Conversation not found',
+          message: t('Conversation not found'),
         });
         return;
       }
       const mapped = chatUtils.mapHistoryToUIMessages(historyResult.data.data);
+      conversationChanges.seed({
+        queryClient,
+        conversationId: id,
+        messages: mapped,
+      });
       const restored = chatUtils.extractQuickRepliesFromHistory(mapped);
       applyQuickRepliesToStore({ setState: store.setState, data: restored });
       restoreReceiptsIntoStore({
@@ -1007,7 +1091,7 @@ export function useAgentChat({
           setPersistedMessages(mapped);
         }
         const { data: gate } = await tryCatch(() => chatApi.getPendingGate(id));
-        if (conversationIdRef.current !== id) return;
+        if (gen !== sessionGenRef.current) return;
         const baseParts = isCurrentStreamingResponse
           ? mapped[lastAssistantIdx].parts
           : undefined;
@@ -1037,10 +1121,11 @@ export function useAgentChat({
       }
       setIsLoadingHistory(false);
     },
-    [stopStream, startStream, updateSendStatus, store, t],
+    [resetSession, startStream, updateSendStatus, store, queryClient],
   );
 
   const setModelPick = useCallback(async (newPick: ChatModelPick) => {
+    const gen = sessionGenRef.current;
     modelPickRef.current = newPick;
     setModelPickState(newPick);
     const convId = conversationIdRef.current;
@@ -1052,6 +1137,9 @@ export function useAgentChat({
     );
     pickSaveQueueRef.current = save;
     const { error } = await save;
+    if (gen !== sessionGenRef.current) {
+      return;
+    }
     if (isNil(error)) {
       savedPickRef.current = newPick;
       return;
@@ -1081,6 +1169,9 @@ export function useAgentChat({
     retryLastMessage,
     cancelStream,
     setConversationId,
+    startNew,
     setModelPick,
   };
 }
+
+export type AbandonedSend = { content: string; files: File[] };

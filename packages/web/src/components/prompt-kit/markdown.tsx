@@ -6,7 +6,9 @@ import remarkGfm from 'remark-gfm';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { cn } from '@/lib/utils';
 
+import { AppLink } from './app-link';
 import { CodeBlock, CodeBlockCode, CodeBlockGroup } from './code-block';
+import { markdownTextUtils } from './markdown-text-utils';
 import { Source } from './source';
 
 function normalizeMarkdownSpacing(markdown: string): string {
@@ -65,7 +67,9 @@ function normalizeMarkdownSpacing(markdown: string): string {
 }
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
-  const normalized = normalizeMarkdownSpacing(markdown);
+  const normalized = normalizeMarkdownSpacing(
+    markdownTextUtils.cleanChatMarkdown(markdown),
+  );
   const tokens = marked.lexer(normalized);
   return tokens
     .map((token) => token.raw)
@@ -182,7 +186,7 @@ const MemoizedMarkdownBlock = memo(
   }) {
     return (
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={REMARK_PLUGINS}
         rehypePlugins={rehypePlugins}
         components={components}
       >
@@ -202,6 +206,11 @@ MemoizedMarkdownBlock.displayName = 'MemoizedMarkdownBlock';
 
 const Markdown = memo(MarkdownComponent);
 Markdown.displayName = 'Markdown';
+
+const REMARK_PLUGINS: Options['remarkPlugins'] = [
+  remarkGfm,
+  markdownTextUtils.remarkHtmlBreaks,
+];
 
 const HEADING_CLASSES: Record<HeadingTag, string> = {
   h1: 'text-lg font-semibold tracking-tight mt-6 first:mt-0 mb-3',
@@ -269,14 +278,23 @@ const INITIAL_COMPONENTS: Partial<Components> = {
   },
   a: function LinkComponent({ href, children }) {
     if (!href) return <>{children}</>;
-    const isWebUrl = href.startsWith('http://') || href.startsWith('https://');
-    const isSafeProtocol =
-      isWebUrl || href.startsWith('mailto:') || href.startsWith('tel:');
-    if (!isSafeProtocol) {
+    const link = markdownTextUtils.classifyLink({
+      href,
+      origin: window.location.origin,
+    });
+    if (link.kind === 'unsafe') {
       return <span>{children}</span>;
     }
-
     const text = typeof children === 'string' ? children : '';
+    if (link.kind === 'app') {
+      const bare = text === '' || text === href || text.startsWith('http');
+      return (
+        <AppLink route={link.route} bare={bare}>
+          {children}
+        </AppLink>
+      );
+    }
+    const isWebUrl = link.kind === 'external';
     const isBareUrl =
       isWebUrl && (text === '' || text === href || text.startsWith('http'));
 

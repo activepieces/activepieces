@@ -1,12 +1,10 @@
-import { isNil, SeekPage } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
-  AgentConversation,
   AgentMessageSource,
   ChatPersonalizationStatus,
   ModelOptions,
   PlatformRole,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -23,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -35,19 +34,18 @@ import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
-  EmptyState,
+  ChatEmptyState,
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
-import { OnboardingWelcome } from './components/onboarding-welcome';
 import {
   PersonalizationChip,
   PersonalizationChipState,
@@ -55,54 +53,15 @@ import {
 import { QuickReplies } from './components/quick-replies';
 import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
+import { composerStore } from './lib/composer-store';
+import { composerUtils } from './lib/composer-utils';
 import { getTextFromParts } from './lib/message-parsers';
 
-export function AIChatBox({
-  incognito,
-  initialPrompt,
-  agentId,
-  builder,
-  onTurnEnd,
-  emptyState,
-  footerNote,
-  placeholder,
-  conversationId,
-  onTitleUpdate,
-  onConversationCreated,
-}: AIChatBoxProps) {
-  const projectId = authenticationSession.getProjectId();
-  const gated =
-    agentId === undefined && isNil(conversationId) && !isNil(projectId);
-  const { data: options, isLoading } = aiModelHooks.useModelOptions({
-    projectId: projectId ?? '',
-    surface: 'chat',
-    enabled: gated,
-  });
-
-  if (gated && isLoading) {
-    return <MessageSkeletons />;
-  }
-
-  if (gated && !isNil(options) && !hasAnyModel({ options })) {
-    return <SetupRequiredState />;
-  }
-
+export function AIChatBox(props: AIChatBoxProps) {
   return (
     <ChatStoreProvider>
       <TaskPanelLayout>
-        <ChatBoxContent
-          incognito={incognito}
-          initialPrompt={initialPrompt}
-          agentId={agentId}
-          builder={builder}
-          onTurnEnd={onTurnEnd}
-          emptyState={emptyState}
-          footerNote={footerNote}
-          placeholder={placeholder}
-          conversationId={conversationId}
-          onTitleUpdate={onTitleUpdate}
-          onConversationCreated={onConversationCreated}
-        />
+        <ChatBoxContent {...props} />
       </TaskPanelLayout>
     </ChatStoreProvider>
   );
@@ -120,10 +79,29 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
+  onConversationMissing,
+  newChatToken,
+  compact,
 }: AIChatBoxProps) {
-  const queryClient = useQueryClient();
   const credits = useCreditsState();
-  const sessionProjectId = authenticationSession.getProjectId();
+  const sessionProjectId = useSessionProjectId();
+  const newChatDraftKey = composerUtils.draftKeyFor({
+    conversationId: null,
+    agentId,
+  });
+  const draftKey = composerUtils.draftKeyFor({
+    conversationId: initialConversationId,
+    agentId,
+  });
+  const { data: gateUser } = userHooks.useCurrentUser();
+  const gate = useModelGate({
+    gated:
+      agentId === undefined &&
+      isNil(initialConversationId) &&
+      (!isNil(sessionProjectId) ||
+        gateUser?.platformRole === PlatformRole.ADMIN),
+    projectId: sessionProjectId,
+  });
 
   const {
     conversationId,
@@ -141,6 +119,7 @@ function ChatBoxContent({
     retryLastMessage,
     cancelStream,
     setConversationId,
+    startNew,
     setModelPick,
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
@@ -149,7 +128,15 @@ function ChatBoxContent({
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
+    onConversationMissing,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
+    onSendAbandoned: ({ content, files }) =>
+      composerStore.fill({
+        key: newChatDraftKey,
+        text: content,
+        files,
+        mode: 'restore',
+      }),
   });
 
   const setStoreConversationId = useChatStoreContext(
@@ -162,7 +149,7 @@ function ChatBoxContent({
 
   useEffect(() => {
     if (initialConversationId) {
-      void setConversationId(initialConversationId);
+      setConversationId(initialConversationId).catch(() => undefined);
     }
   }, [initialConversationId, setConversationId]);
 
@@ -170,26 +157,25 @@ function ChatBoxContent({
     setStoreConversationId(conversationId ?? null);
   }, [conversationId, setStoreConversationId]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!isStreaming) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      const target = e.target as HTMLElement | null;
+      const target = e.target;
       if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.closest('[role="dialog"]') ||
-          target.closest('[data-radix-popper-content-wrapper]'))
+        e.key !== 'Escape' ||
+        !(target instanceof Element) ||
+        !(chatDom.inChat(target) || rootRef.current?.contains(target)) ||
+        !chatDom.escapeFree(e)
       ) {
         return;
       }
-      e.preventDefault();
+      chatDom.claimEscape(e);
       cancelStream();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [isStreaming, cancelStream]);
 
   const chatProjectId = conversationProjectId ?? sessionProjectId;
@@ -206,7 +192,12 @@ function ChatBoxContent({
       modelOptions.defaultChoice ??
       null;
   const awaitingSavedPick =
-    !isNil(initialConversationId) && (isNil(modelPick) || isLoadingHistory);
+    !isNil(initialConversationId) &&
+    (isLoadingHistory || (initialConversationId !== conversationId && !failed));
+  const showHistorySkeleton = useDelayedFlag({
+    value: isLoadingHistory,
+    delayMs: HISTORY_SKELETON_DELAY_MS,
+  });
   const pickUnavailable =
     showsPicker &&
     !isNil(modelOptions) &&
@@ -241,18 +232,40 @@ function ChatBoxContent({
     ],
   );
 
-  const sentInitialPrompt = useRef(false);
+  const [hasInput, setHasInput] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [session, setSession] = useState(newChatToken ?? 0);
+  const sentInitialPrompt = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (newChatToken === undefined || newChatToken === session) return;
+    startNew();
+    setHasSentMessage(false);
+    setHasInput(false);
+    setPromptOpen(false);
+    sentInitialPrompt.current = null;
+    setSession(newChatToken);
+  }, [newChatToken, session, startNew]);
 
   useEffect(() => {
     const shouldSendInitialPrompt =
       initialPrompt !== undefined &&
       initialPrompt.trim().length > 0 &&
       !initialConversationId &&
-      !sentInitialPrompt.current;
+      gate === 'ready' &&
+      session === (newChatToken ?? 0) &&
+      sentInitialPrompt.current !== session;
     if (!shouldSendInitialPrompt) return;
-    sentInitialPrompt.current = true;
+    sentInitialPrompt.current = session;
     handleSend(initialPrompt).catch(() => undefined);
-  }, [initialPrompt, initialConversationId, handleSend]);
+  }, [
+    initialPrompt,
+    initialConversationId,
+    handleSend,
+    gate,
+    session,
+    newChatToken,
+  ]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -277,8 +290,6 @@ function ChatBoxContent({
 
   const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
-  const [hasInput, setHasInput] = useState(false);
-  const [promptOpen, setPromptOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
   const personalization = usePersonalization({ enabled: !incognito });
@@ -298,10 +309,11 @@ function ChatBoxContent({
     (personalization.companyInput ?? '').trim().length > 0 &&
     currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
-    isEmpty && !incognito && (isFirstRun || promptOpen);
+    isEmpty && !incognito && !compact && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    !compact &&
     isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
@@ -338,14 +350,14 @@ function ChatBoxContent({
       role: answers.role,
       company: companyLocked ? '' : answers.companyDomain ?? answers.company,
     });
-    void handleSend(
+    handleSend(
       t(
         'I work at {company} and my role is: {role}. What can you take off my plate?',
         { role: answers.role, company: answers.company },
       ),
       undefined,
       { messageSource: 'onboarding' },
-    );
+    ).catch(() => undefined);
   };
 
   const handleOnboardingDismiss = () => {
@@ -355,13 +367,20 @@ function ChatBoxContent({
     }
   };
 
-  const cachedConversations = queryClient.getQueryData<
-    SeekPage<AgentConversation>
-  >(['chat-conversations']);
-  const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
+  if (gate === 'loading') {
+    return <MessageSkeletons />;
+  }
+
+  if (gate === 'setup') {
+    return <SetupRequiredState />;
+  }
 
   return (
-    <div className="flex flex-col h-full flex-1 min-w-0">
+    <div
+      ref={rootRef}
+      data-chat-box
+      className="@container/chat flex flex-col h-full flex-1 min-w-0"
+    >
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div
@@ -371,22 +390,21 @@ function ChatBoxContent({
               showPersonalizationDonut && 'pb-14',
             )}
           >
-            {emptyState ??
-              (showOnboardingCard ? (
-                <OnboardingWelcome />
-              ) : (
-                <EmptyState
-                  onSuggestionClick={(text) => void handleSend(text)}
-                  incognito={incognito}
-                  showFlowCards={!hasConversations}
-                  hasInput={hasInput}
-                />
-              ))}
+            {emptyState ?? (
+              <ChatEmptyState
+                incognito={incognito}
+                hasInput={hasInput}
+                onboarding={showOnboardingCard}
+                onSend={(text) => handleSend(text).catch(() => undefined)}
+                onFill={(text) => composerStore.fill({ key: draftKey, text })}
+              />
+            )}
           </div>
         ) : (
           <motion.div
             key="chat-container"
-            className="flex-1 min-h-0"
+            ref={containerRef}
+            className="relative flex-1 min-h-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25 }}
@@ -401,7 +419,7 @@ function ChatBoxContent({
               }}
             >
               <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
-                {isLoadingHistory && <MessageSkeletons />}
+                {showHistorySkeleton && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
                   if (msg.role === 'user') {
@@ -426,7 +444,9 @@ function ChatBoxContent({
                       isStreaming={isLastStreamingAssistant}
                       isResumed={isLastStreamingAssistant && isResumedStream}
                       isLastMessage={isLastAssistant}
-                      onSendPrompt={(text) => void handleSend(text)}
+                      onSendPrompt={(text) =>
+                        handleSend(text).catch(() => undefined)
+                      }
                       claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
                       conversationId={conversationId}
                       messageIndex={idx}
@@ -487,6 +507,7 @@ function ChatBoxContent({
               </ChatContainerContent>
               <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
             </ChatContainerRoot>
+            <ScrolledEdge containerRef={containerRef} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -526,6 +547,8 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             onInputChange={setHasInput}
+            replyStopped={wasCancelled || failed}
+            draftKey={draftKey}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (
@@ -537,7 +560,9 @@ function ChatBoxContent({
                   projectId={chatProjectId}
                   value={shownChoice}
                   onChange={(choice) =>
-                    void setModelPick(chatUtils.pickOf({ choice }))
+                    setModelPick(chatUtils.pickOf({ choice })).catch(
+                      () => undefined,
+                    )
                   }
                 />
               ) : null
@@ -574,6 +599,66 @@ function ChatBoxContent({
       </div>
     </div>
   );
+}
+
+function ScrolledEdge({
+  containerRef,
+}: {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const scroller = containerRef.current?.querySelector('[role="log"] > div');
+    if (!scroller) return;
+    const update = () => setScrolled(scroller.scrollTop > 0);
+    update();
+    scroller.addEventListener('scroll', update, { passive: true });
+    return () => scroller.removeEventListener('scroll', update);
+  }, [containerRef]);
+  return (
+    <div
+      aria-hidden
+      data-scrolled={scrolled}
+      className={cn(
+        'pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gray-5 transition-opacity duration-150',
+        scrolled ? 'opacity-100' : 'opacity-0',
+      )}
+    />
+  );
+}
+
+function useDelayedFlag({
+  value,
+  delayMs,
+}: {
+  value: boolean;
+  delayMs: number;
+}): boolean {
+  const [elapsed, setElapsed] = useState(false);
+  useEffect(() => {
+    setElapsed(false);
+    if (!value) return;
+    const timer = setTimeout(() => setElapsed(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return value && elapsed;
+}
+
+function useModelGate({
+  gated,
+  projectId,
+}: {
+  gated: boolean;
+  projectId: string | null;
+}): ModelGate {
+  const { data: options, isLoading } = aiModelHooks.useModelOptions({
+    projectId: projectId ?? undefined,
+    surface: 'chat',
+    enabled: gated,
+  });
+  if (gated && isLoading) return 'loading';
+  if (gated && !isNil(options) && !hasAnyModel({ options })) return 'setup';
+  return 'ready';
 }
 
 function hasAnyModel({ options }: { options: ModelOptions }): boolean {
@@ -623,5 +708,12 @@ type AIChatBoxProps = {
   placeholder?: string;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
+  onConversationMissing?: () => void;
   onTitleUpdate?: (title: string) => void;
+  newChatToken?: number;
+  compact?: boolean;
 };
+
+type ModelGate = 'loading' | 'setup' | 'ready';
+
+const HISTORY_SKELETON_DELAY_MS = 150;

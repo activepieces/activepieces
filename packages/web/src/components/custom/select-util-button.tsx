@@ -24,6 +24,7 @@ const SelectUtilButton = ({
           className="opacity-50 size-6"
           size="icon-xs"
           type="button"
+          aria-label={tooltipText}
           onClick={onClick}
         >
           <Icon className="w-4 h-4"></Icon>

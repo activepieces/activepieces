@@ -24,10 +24,11 @@ export const aiProviderKeys = {
 };
 
 export const aiProviderQueries = {
-  useAiProviderConfigs: () =>
+  useAiProviderConfigs: ({ enabled = true }: { enabled?: boolean } = {}) =>
     useQuery({
       queryKey: aiProviderKeys.configs,
       queryFn: () => aiProviderApi.listConfigs(),
+      enabled,
     }),
   useConfigModels: (configId: string | undefined) =>
     useQuery({

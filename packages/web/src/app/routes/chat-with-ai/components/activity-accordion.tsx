@@ -18,6 +18,8 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
+import { ToolResourceChip } from './resource-chip';
+
 export function ThinkingBlock({
   thinkingSteps,
   isStreaming,
@@ -275,6 +277,7 @@ function ToolStepRow({
             </div>
           </div>
         )}
+        <ToolResourceChip part={part} className="mt-1" />
         {hasDetails && (
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
             <div className="mt-1 rounded-xl bg-gray-3/30 px-3 py-2 space-y-2 text-xs">

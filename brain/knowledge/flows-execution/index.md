@@ -91,3 +91,4 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 - **Variables** — project-scoped values referenced from steps
 - **Formulas** — the `{{ ... }}` evaluator shared by engine, api and web
 - **Chat** — the conversational surface over a flow
+- **Chat Web Surface** — the one chat window in the web app: session per tab, widths, split view, follow-along, resource registry

@@ -23,6 +23,8 @@ export const routesThatRequireProjectId = {
 
 export const CHAT_ROUTE = '/chat';
 
+export const projectPathUtils = { parse };
+
 export const determineDefaultRoute = ({
   checkAccess,
   chatEnabled,
@@ -41,6 +43,11 @@ export const determineDefaultRoute = ({
   }
   return authenticationSession.appendProjectRoutePrefix('/settings');
 };
+
+function parse(pathname: string): { projectId: string; rest: string } | null {
+  const match = /^\/projects\/([^/]+)(\/.*)?$/.exec(pathname);
+  return match ? { projectId: match[1], rest: match[2] ?? '' } : null;
+}
 
 export const TRIAL_KEY_QUERY_PARAM = 'licenseKey';
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';

@@ -19,6 +19,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
+import { useReportPageSelection } from '@/features/chat/lib/page-context';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useElementSize } from '@/hooks/use-element-size';
@@ -75,6 +76,8 @@ const BuilderPage = () => {
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   flowCanvasHooks.useFlushPendingEditsOnLeave();
   flowCanvasHooks.useRefreshDraftOnPush();
+  flowCanvasHooks.useRefreshDraftOnFollow();
+  useReportPageSelection({ stepName: selectedStepName });
   flowCanvasHooks.useRefreshDraftOnReconnectAndReturn();
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);

@@ -31,7 +31,7 @@ The **Activepieces engineering brain**: how the system works, and *why* it was b
 - **API & Endpoints** — route conventions and the security contract
 - **Server Module Anatomy** — the six files of a server module (entity → migration → repo → service → controller → module), and the manual registration steps nothing auto-discovers
 - **Web Feature Anatomy** — the frontend feature folder, its barrel, route guards, and how a failed primary query reports itself in place
-- **Web Navigation Shell** — the rail, the three sidebars and the layouts that choose between them, which primitives are shared, and why platform admin renders without the rail
+- **Web Navigation Shell** — the rail, the three sidebars and the one app shell that chooses between them, which primitives are shared, and why platform admin renders without the rail
 - **Platform Admin Structure** — the rules for what is a group, page, sub-page, section, sheet or dialog in platform admin, the six groups, flat URLs, and what is applied vs planned
 - **Cloud Deployment Paths** — the Cloud gate (candidate, checks, one approval, canary → fleet) and the breaking-migration check
 - **Helm Chart** — the Kubernetes install we ship to self-hosters, its two competing paths for an `AP_*` variable, and the secrets it never creates

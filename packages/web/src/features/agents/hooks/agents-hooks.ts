@@ -42,6 +42,11 @@ const AGENT_RUNS_PAGE_SIZE = 20;
 const AGENT_RUNS_ACTIVE_POLL_MS = 5 * 1000;
 const AGENT_RUNS_IDLE_POLL_MS = 15 * 1000;
 
+export const agentKeys = {
+  one: ({ id, includeUsage }: { id: string; includeUsage: boolean }) =>
+    [AGENTS_KEY, 'one', id, includeUsage ? 'usage' : 'plain'] as const,
+};
+
 export const agentsQueries = {
   useAgents: ({
     projectId,
@@ -97,7 +102,7 @@ export const agentsQueries = {
     includeUsage?: boolean;
   }) =>
     useQuery({
-      queryKey: [AGENTS_KEY, 'one', id, includeUsage ? 'usage' : 'plain'],
+      queryKey: agentKeys.one({ id, includeUsage }),
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
     }),

@@ -113,16 +113,16 @@ export function ApTableHeader({
 
   const titleContent = (
     <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink onClick={onBack} className="cursor-pointer">
+      <BreadcrumbList className="flex-nowrap">
+        <BreadcrumbItem className="min-w-0 @max-xl:hidden">
+          <BreadcrumbLink onClick={onBack} className="cursor-pointer truncate">
             {getProjectName(project)}
           </BreadcrumbLink>
         </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>
-            <div className="flex items-center gap-1">
+        <BreadcrumbSeparator className="@max-xl:hidden" />
+        <BreadcrumbItem className="min-w-16">
+          <BreadcrumbPage className="min-w-0">
+            <div className="flex min-w-0 items-center gap-1">
               <EditableText
                 className="hover:cursor-text"
                 value={table?.name || t('Table Editor')}
@@ -220,8 +220,13 @@ export function ApTableHeader({
     </Breadcrumb>
   );
 
+  const lockText =
+    lockedBy?.userId === authenticationSession.getCurrentUserId()
+      ? t('Open for editing in another tab or window')
+      : t('{name} is editing', { name: lockedBy?.userDisplayName ?? '' });
+
   const rightContent = (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       {isSaving && (
         <div className="flex items-center gap-2 text-gray-11 animate-in fade-in">
           <RefreshCw className="h-4 w-4 animate-spin" />
@@ -229,15 +234,17 @@ export function ApTableHeader({
         </div>
       )}
       {lockedBy && (
-        <div className="flex items-center gap-1.5 border border-warning-7 rounded-md px-2.5 py-1 text-sm text-warning-11">
+        <div
+          title={lockText}
+          className="flex min-w-0 items-center gap-1.5 whitespace-nowrap border border-warning-7 rounded-md px-2.5 py-1 text-sm text-warning-11"
+        >
           <Lock className="size-3.5 shrink-0" />
-          <span>
-            {lockedBy.userId === authenticationSession.getCurrentUserId()
-              ? t('Open for editing in another tab or window')
-              : t('{name} is editing', { name: lockedBy.userDisplayName })}
-          </span>
-          <span className="text-warning-11/40">|</span>
-          <button className="hover:underline font-medium" onClick={takeOver}>
+          <span className="min-w-0 truncate @max-2xl:sr-only">{lockText}</span>
+          <span className="shrink-0 text-warning-11/40 @max-2xl:hidden">|</span>
+          <button
+            className="shrink-0 hover:underline font-medium"
+            onClick={takeOver}
+          >
             {t('Take Over')}
           </button>
         </div>
@@ -280,16 +287,18 @@ export function ApTableHeader({
       <PageHeader
         title={titleContent}
         rightContent={rightContent}
-        className="gap-1 justify-between px-4"
+        className="min-w-0 gap-1 justify-between px-4"
       />
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <Button
           variant="ghost"
           className="flex gap-2 items-center"
           onClick={downloadCsv}
+          aria-label={t('Download Data')}
+          title={t('Download Data')}
         >
           <Download className="size-4" />
-          {t('Download Data')}
+          <span className="@max-3xl:hidden">{t('Download Data')}</span>
         </Button>
         <ImportTableDialog
           open={isImportTableDialogOpen}

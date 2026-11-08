@@ -1,8 +1,10 @@
-import { Permission, isNil } from '@activepieces/core-utils';
+import { Permission, deepEquals, isNil } from '@activepieces/core-utils';
 import {
   FlowDraftUpdatedEvent,
   FlowRunStatus,
+  FlowVersion,
   FlowVersionState,
+  PopulatedFlow,
   flowStructureUtil,
   WebsocketClientEvent,
   RunEnvironment,
@@ -19,15 +21,23 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { chatDom } from '@/features/chat/lib/chat-dom';
+import {
+  followAlong,
+  useOnFollowUpdate,
+} from '@/features/chat/lib/follow/follow-along';
+import { aiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { editorSession } from '@/lib/editor-session';
 
 import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
+import { stepReloadHold } from '../step-settings/step-reload-notice';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 
@@ -162,6 +172,127 @@ const useRefreshDraftOnPush = () => {
     };
   }, [socket, flowId, refreshDraft]);
 };
+
+const useRefreshDraftOnFollow = () => {
+  const store = useBuilderStore();
+  const flowId = useBuilderStateContext((state) => state.flow.id);
+  const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
+  const { fitView, getViewport } = useReactFlow();
+  const seen = useRef<FlowSnapshot | null>(null);
+  useEffect(() => {
+    const { flow, flowVersion } = store.getState();
+    seen.current = { flow, flowVersion };
+  }, [flowId, store]);
+  useOnFollowUpdate({
+    resource: { kind: 'flow', id: flowId },
+    handler: () => {
+      const { selectedStep, draftRefreshCount, parkPendingEdit } =
+        store.getState();
+      const holdStep =
+        selectedStep &&
+        (isEditingStepSettings() || stepReloadHold.isDirty(selectedStep))
+          ? selectedStep
+          : null;
+      if (holdStep) {
+        parkPendingEdit(holdStep);
+        stepReloadHold.hold({ stepName: holdStep, draftRefreshCount });
+      }
+      refreshDraft()
+        .catch(() => false)
+        .then(() => {
+          const state = store.getState();
+          if (state.draftRefreshCount === draftRefreshCount) {
+            stepReloadHold.releaseIfUnchanged(draftRefreshCount);
+            if (holdStep) state.resumeParkedEdit(holdStep);
+          }
+          const after = { flow: state.flow, flowVersion: state.flowVersion };
+          const changed = changedFlowParts({ before: seen.current, after });
+          seen.current = after;
+          followAlong.flash(
+            changed.map((name) =>
+              name.startsWith(FLOW_META_PREFIX)
+                ? `${name}:${flowId}`
+                : `flow-step:${name}`,
+            ),
+          );
+          const last = changed
+            .filter((name) => !name.startsWith(FLOW_META_PREFIX))
+            .at(-1);
+          if (last && aiHighlight.mayScroll()) {
+            setTimeout(() => {
+              if (isStepVisible(last)) return;
+              const { zoom } = getViewport();
+              fitView({
+                nodes: [{ id: last }],
+                duration: chatLayoutUtils.prefersReducedMotion() ? 0 : 450,
+                minZoom: zoom,
+                maxZoom: zoom,
+              }).catch(() => undefined);
+            }, 120);
+          }
+        })
+        .catch(() => undefined);
+    },
+  });
+};
+
+function isEditingStepSettings(): boolean {
+  const active = document.activeElement;
+  return (
+    active instanceof Element &&
+    active.closest('#right-sidebar') !== null &&
+    chatDom.isTypingIn(active)
+  );
+}
+
+function isStepVisible(stepName: string): boolean {
+  const node = document.querySelector(
+    `.react-flow__node[data-id="${CSS.escape(stepName)}"]`,
+  );
+  const pane = node?.closest('.react-flow');
+  if (!node || !pane) return true;
+  const rect = node.getBoundingClientRect();
+  const view = pane.getBoundingClientRect();
+  return (
+    rect.top >= view.top &&
+    rect.bottom <= view.bottom - 64 &&
+    rect.left >= view.left &&
+    rect.right <= view.right
+  );
+}
+
+function changedFlowParts({
+  before,
+  after,
+}: {
+  before: FlowSnapshot | null;
+  after: FlowSnapshot;
+}): string[] {
+  const steps = flowStructureUtil
+    .getAllSteps(after.flowVersion.trigger)
+    .filter((step) => {
+      const old = before
+        ? flowStructureUtil.getStep(step.name, before.flowVersion.trigger)
+        : undefined;
+      return (
+        !old ||
+        old.type !== step.type ||
+        old.displayName !== step.displayName ||
+        !deepEquals({ a: old.settings, b: step.settings })
+      );
+    })
+    .map((step) => step.name);
+  const renamed =
+    before?.flowVersion.displayName !== after.flowVersion.displayName;
+  const statusChanged =
+    before?.flow.status !== after.flow.status ||
+    before?.flow.publishedVersionId !== after.flow.publishedVersionId;
+  return [
+    ...steps,
+    ...(renamed ? [`${FLOW_META_PREFIX}name`] : []),
+    ...(statusChanged ? [`${FLOW_META_PREFIX}status`] : []),
+  ];
+}
 
 const useRefreshDraftOnReconnectAndReturn = () => {
   const socket = useSocket();
@@ -360,6 +491,7 @@ export const flowCanvasHooks = {
   useFlushPendingEditsOnLeave,
   useRefreshDraftAndMakeNewDraftEditable,
   useRefreshDraftOnPush,
+  useRefreshDraftOnFollow,
   useRefreshDraftOnReconnectAndReturn,
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,
@@ -368,3 +500,7 @@ export const flowCanvasHooks = {
   useListenToExistingRun,
   useFlowConnections,
 };
+
+const FLOW_META_PREFIX = 'flow-';
+
+type FlowSnapshot = { flow: PopulatedFlow; flowVersion: FlowVersion };

@@ -145,8 +145,8 @@ const FlowRunCard = React.memo(
                 onOpenChange={setIsRetryDropdownOpen}
               >
                 <Tooltip>
-                  <TooltipTrigger>
-                    <DropdownMenuTrigger>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
                         size={'icon'}

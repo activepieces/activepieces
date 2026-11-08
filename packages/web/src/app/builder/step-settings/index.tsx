@@ -44,6 +44,7 @@ import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { StepNavigationButtons } from './step-navigation-buttons';
+import { stepReloadHold } from './step-reload-notice';
 import { useStepSettingsContext } from './step-settings-context';
 import { UpdatePieceVersionDialog } from './update-piece-version-dialog/update-piece-version-dialog';
 
@@ -170,6 +171,19 @@ const StepSettingsContainer = () => {
     //RHF doesn't automatically trigger validation when the form is rendered, so we need to trigger it manually
     form.trigger();
   }, []);
+
+  const isFormDirty = form.formState.isDirty;
+  useEffect(() => {
+    stepReloadHold.markDirty({
+      stepName: selectedStep.name,
+      dirty: isFormDirty,
+    });
+  }, [isFormDirty, selectedStep.name]);
+  useEffect(
+    () => () =>
+      stepReloadHold.markDirty({ stepName: selectedStep.name, dirty: false }),
+    [selectedStep.name],
+  );
 
   const showTestPanel = showGenerateSampleData || showStepInputOutFromRun;
 

@@ -148,6 +148,34 @@ export const formatUtils = {
     if (m > 0) return `${m}m`;
     return `${s}s`;
   },
+  formatRelativeShort({
+    iso,
+    now = new Date(),
+  }: {
+    iso: string;
+    now?: Date;
+  }): string {
+    const date = new Date(iso);
+    const minutes = Math.floor((now.getTime() - date.getTime()) / 60_000);
+    const days = formatUtils.calendarDaysBetween({ date, now });
+    const format = relativeFormat();
+    if (minutes < 1) return format.auto.format(0, 'second');
+    if (minutes < 60) return format.always.format(-minutes, 'minute');
+    if (days <= 0) {
+      return format.always.format(-Math.floor(minutes / 60), 'hour');
+    }
+    if (days < 7) return format.always.format(-days, 'day');
+    return date.toLocaleDateString(i18next.language, {
+      month: 'short',
+      day: 'numeric',
+      ...(date.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+    });
+  },
+  calendarDaysBetween({ date, now }: { date: Date; now: Date }): number {
+    const startOf = (d: Date) =>
+      new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    return Math.round((startOf(now) - startOf(date)) / 86_400_000);
+  },
   formatDateToAgo(date: Date) {
     const now = dayjs();
     const inputDate = dayjs(date);
@@ -225,6 +253,29 @@ export const formatUtils = {
     }
     return !isPrivateIpv4(hostname);
   },
+};
+
+function relativeFormat(): RelativeFormat {
+  const language = i18next.language;
+  if (cachedRelativeFormat?.language !== language) {
+    cachedRelativeFormat = {
+      language,
+      auto: new Intl.RelativeTimeFormat(language, {
+        style: 'narrow',
+        numeric: 'auto',
+      }),
+      always: new Intl.RelativeTimeFormat(language, { style: 'narrow' }),
+    };
+  }
+  return cachedRelativeFormat;
+}
+
+let cachedRelativeFormat: RelativeFormat | null = null;
+
+type RelativeFormat = {
+  language: string;
+  auto: Intl.RelativeTimeFormat;
+  always: Intl.RelativeTimeFormat;
 };
 
 function isPrivateIpv4(hostname: string): boolean {

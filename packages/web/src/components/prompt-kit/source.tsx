@@ -1,4 +1,5 @@
 import { Globe } from 'lucide-react';
+import { useState } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import {
@@ -7,6 +8,9 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
+
+import { AppLink } from './app-link';
+import { markdownTextUtils } from './markdown-text-utils';
 
 function getDomain(url: string): string {
   try {
@@ -45,8 +49,47 @@ function FaviconOrGlobe({ url, size }: { url: string; size: 'sm' | 'md' }) {
   );
 }
 
+function InlineFavicon({ url }: { url: string }) {
+  const favicon = getFaviconUrl(url);
+  const [failed, setFailed] = useState(false);
+  if (!favicon || failed) {
+    return <Globe className="h-3.5 w-3.5 shrink-0 text-gray-11" aria-hidden />;
+  }
+  return (
+    <span
+      data-theme="light"
+      className="flex size-4 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-1"
+    >
+      <img
+        src={favicon}
+        alt=""
+        className="size-full object-contain p-px"
+        onError={() => setFailed(true)}
+      />
+    </span>
+  );
+}
+
 function Source({ href, title, className }: SourceProps) {
   const domain = getDomain(href);
+  const link = markdownTextUtils.classifyLink({
+    href,
+    origin: window.location.origin,
+  });
+  if (link.kind === 'app') {
+    return (
+      <AppLink
+        route={link.route}
+        bare={!title}
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs text-gray-12/80 no-underline hover:bg-gray-3',
+          className,
+        )}
+      >
+        {title}
+      </AppLink>
+    );
+  }
 
   return (
     <HoverCard openDelay={300} closeDelay={100}>
@@ -60,7 +103,7 @@ function Source({ href, title, className }: SourceProps) {
             className,
           )}
         >
-          <FaviconOrGlobe url={href} size="sm" />
+          <InlineFavicon url={href} />
           <span className="max-w-[200px] truncate text-gray-12/80">
             {domain}
           </span>

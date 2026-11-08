@@ -20,8 +20,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { templatesApi } from '@/features/templates/api/templates-api';
+import { useOpenInApp } from '@/features/workspace/lib/use-open-in-app';
 import { userHooks } from '@/hooks/user-hooks';
-import { useNewWindow } from '@/lib/navigation-utils';
 
 const ShareTemplateSchema = z.object({
   description: z.string(),
@@ -40,7 +40,7 @@ const ShareTemplateDialog: React.FC<{
   const shareTemplateForm = useForm<ShareTemplateSchema>({
     resolver: zodResolver(ShareTemplateSchema),
   });
-  const openNewIndow = useNewWindow();
+  const { open: openInApp } = useOpenInApp();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { mutate, isPending } = useMutation<
     Template,
@@ -72,8 +72,8 @@ const ShareTemplateDialog: React.FC<{
       return flowTemplate;
     },
     onSuccess: (data) => {
-      openNewIndow(`/templates/${data.id}`);
       setIsShareDialogOpen(false);
+      openInApp({ route: `/templates/${data.id}` });
     },
   });
 

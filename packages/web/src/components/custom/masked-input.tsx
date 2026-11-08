@@ -6,19 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Input, InputProps } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
-export function MaskedInput({ className, ...props }: MaskedInputProps) {
+export function MaskedInput({
+  className,
+  asPassword = false,
+  ...props
+}: MaskedInputProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
     <div className="relative">
       <Input
         {...props}
-        type="text"
+        type={asPassword && !isVisible ? 'password' : 'text'}
         autoComplete="off"
         spellCheck={false}
         className={cn(
           'pr-10',
-          !isVisible && '[-webkit-text-security:disc]',
+          !asPassword && !isVisible && '[-webkit-text-security:disc]',
           className,
         )}
       />
@@ -29,6 +33,7 @@ export function MaskedInput({ className, ...props }: MaskedInputProps) {
         className="absolute right-1 top-1/2 -translate-y-1/2"
         onClick={() => setIsVisible((visible) => !visible)}
         aria-label={isVisible ? t('Hide value') : t('Show value')}
+        aria-pressed={isVisible}
       >
         {isVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </Button>
@@ -39,4 +44,6 @@ export function MaskedInput({ className, ...props }: MaskedInputProps) {
 export type MaskedInputProps = Omit<
   InputProps,
   'type' | 'autoComplete' | 'spellCheck'
->;
+> & {
+  asPassword?: boolean;
+};

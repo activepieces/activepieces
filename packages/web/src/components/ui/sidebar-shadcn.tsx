@@ -31,7 +31,16 @@ const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
+const WRAPPER_STYLE: React.CSSProperties &
+  Record<'--sidebar-width' | '--sidebar-width-icon', string> = {
+  '--sidebar-width': SIDEBAR_WIDTH,
+  '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
+};
+
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
+const SidebarMotionStateContext = React.createContext<'expanded' | 'collapsed'>(
+  'expanded',
+);
 
 function useSidebar() {
   const context = React.useContext(SidebarContext);
@@ -159,12 +168,14 @@ function SidebarProvider({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleSidebar, shortcutIgnoresEditable, keyboardShortcut]);
 
-  const state = open ? 'expanded' : 'collapsed';
+  const motionState = open ? 'expanded' : 'collapsed';
+  const settledOpen = React.useDeferredValue(open);
+  const state = settledOpen ? 'expanded' : 'collapsed';
 
   const contextValue = React.useMemo<SidebarContextProps>(
     () => ({
       state,
-      open,
+      open: settledOpen,
       setOpen,
       isMobile,
       openMobile,
@@ -177,7 +188,7 @@ function SidebarProvider({
     }),
     [
       state,
-      open,
+      settledOpen,
       setOpen,
       isMobile,
       openMobile,
@@ -192,25 +203,21 @@ function SidebarProvider({
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      <TooltipProvider delayDuration={0}>
-        <div
-          data-slot="sidebar-wrapper"
-          style={
-            {
-              '--sidebar-width': SIDEBAR_WIDTH,
-              '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
-              ...style,
-            } as React.CSSProperties
-          }
-          className={cn(
-            'group/sidebar-wrapper flex h-svh w-full has-data-[variant=inset]:bg-gray-2',
-            className,
-          )}
-          {...props}
-        >
-          {children}
-        </div>
-      </TooltipProvider>
+      <SidebarMotionStateContext.Provider value={motionState}>
+        <TooltipProvider delayDuration={0}>
+          <div
+            data-slot="sidebar-wrapper"
+            style={{ ...WRAPPER_STYLE, ...style }}
+            className={cn(
+              'group/sidebar-wrapper flex h-svh w-full has-data-[variant=inset]:bg-gray-2',
+              className,
+            )}
+            {...props}
+          >
+            {children}
+          </div>
+        </TooltipProvider>
+      </SidebarMotionStateContext.Provider>
     </SidebarContext.Provider>
   );
 }
@@ -227,9 +234,9 @@ function Sidebar({
   variant?: 'sidebar' | 'floating' | 'inset';
   collapsible?: 'offcanvas' | 'icon' | 'none';
 }) {
+  const state = React.useContext(SidebarMotionStateContext);
   const {
     isMobile,
-    state,
     openMobile,
     setOpenMobile,
     setOpen,
@@ -294,7 +301,7 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
-          'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+          'relative w-(--sidebar-width) bg-transparent transition-[width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none',
           'group-data-[collapsible=offcanvas]:w-0',
           'group-data-[side=right]:rotate-180',
           variant === 'floating' || variant === 'inset'
@@ -309,7 +316,7 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:flex',
+          'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none md:flex',
           side === 'left'
             ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
             : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
@@ -510,7 +517,7 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        'flex h-7 shrink-0 items-center overflow-hidden rounded-md px-2 text-xs font-medium text-gray-11 ring-gray-8 outline-hidden transition-[height,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'flex h-7 shrink-0 items-center overflow-hidden rounded-md px-2 text-xs font-medium text-gray-11 ring-gray-8 outline-hidden transition-[height,opacity] duration-200 ease-move motion-reduce:transition-none focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:opacity-0',
         className,
       )}
@@ -670,7 +677,7 @@ function SidebarMenuAction({
         'peer-data-[size=sm]/menu-button:top-0.5',
         'peer-data-[size=default]/menu-button:top-1',
         'peer-data-[size=lg]/menu-button:top-2.5',
-        'transition-opacity duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none',
+        'transition-opacity duration-150 ease-move group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none',
         showOnHover &&
           'peer-data-[active=true]/menu-button:text-gray-12 group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-open:opacity-100 md:opacity-0',
         className,

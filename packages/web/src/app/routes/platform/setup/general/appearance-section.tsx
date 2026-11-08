@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { TIER_LABELS, useUpgradeClick } from '@/features/billing';
+import { useAiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -61,6 +62,7 @@ export const AppearanceSection = ({
     ApFlagId.MAX_FILE_SIZE_MB,
   );
   const upgradeClick = useUpgradeClick();
+  useAiHighlight(NAME_FIELD_KEY);
   const brandingLocked = !platform.plan.customAppearanceEnabled;
   const initialColor =
     !brandingLocked && HEX_COLOR_PATTERN.test(platform.primaryColor)
@@ -123,6 +125,10 @@ export const AppearanceSection = ({
   const imagesChanged = Object.values(images).some((file) => !isNil(file));
   const hasChanges = isDirty || imagesChanged;
   const nameDirty = dirtyFields.name === true;
+  useEffect(() => {
+    if (nameDirty) return;
+    form.resetField('name', { defaultValue: platform.name });
+  }, [platform.name, nameDirty, form]);
   const brandingDirty =
     imagesChanged ||
     dirtyFields.color === true ||
@@ -269,7 +275,7 @@ export const AppearanceSection = ({
               control={form.control}
               name="name"
               render={({ field, fieldState }) => (
-                <FormItem className="space-y-0">
+                <FormItem className="space-y-0" data-ai-field={NAME_FIELD_KEY}>
                   <SettingsRow
                     title={
                       <FormLabel htmlFor="name">{t('Platform Name')}</FormLabel>
@@ -536,3 +542,5 @@ type ColorRowProps = {
   onChange: (color: string | undefined) => void;
   onReset: () => void;
 };
+
+const NAME_FIELD_KEY = 'platform.general.name';

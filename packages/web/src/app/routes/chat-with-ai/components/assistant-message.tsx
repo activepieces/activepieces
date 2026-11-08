@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Brain, ChevronDown, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Markdown } from '@/components/prompt-kit/markdown';
@@ -13,13 +13,18 @@ import {
 import { Source } from '@/components/prompt-kit/source';
 import { StreamingText } from '@/components/prompt-kit/streaming-text';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { ToolCallMeta } from '@/features/chat/lib/chat-store';
+import {
+  ToolCallMeta,
+  chatStoreSelectors,
+} from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import {
   AnyToolPart,
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { changeSummaryUtils } from '@/features/chat/lib/resources/change-summary';
+import { useBackgroundTitle } from '@/features/chat/lib/use-background-title';
 import { useTts } from '@/features/chat/lib/use-tts';
 import { cn } from '@/lib/utils';
 
@@ -35,13 +40,17 @@ import {
   parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
+import { secretRequestUtils } from '../lib/secret-request';
 
 import { ActionReceiptCard } from './action-receipt-card';
 import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
+import { ChangesSummary, changesAnnouncer } from './changes-summary';
+import { ChatAppLinks } from './chat-app-links';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
+import { ExpiredGateCard, hasExpiredGate } from './expired-gate-card';
 import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
@@ -52,6 +61,8 @@ import { markdownPreviewComponents } from './previews/markdown-preview-component
 import { previewUtils } from './previews/preview-utils';
 import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
+import { ResourceChips } from './resource-chip';
+import { SecretSavedLine } from './secret-request-card';
 import { ShowcaseCard } from './showcase-card/showcase-card';
 import { ShowcaseTileData } from './showcase-card/showcase-tile';
 import { SubagentGroup } from './subagent-card';
@@ -64,7 +75,17 @@ const ACTION_BUTTON_CLASS =
 
 const EMPTY_BUILD_IDS: ReadonlySet<string> = new Set();
 
-export const AssistantMessage = memo(function AssistantMessage({
+export const AssistantMessage = memo(function AssistantMessage(
+  props: AssistantMessageProps,
+) {
+  return (
+    <ChatAppLinks>
+      <AssistantMessageContent {...props} />
+    </ChatAppLinks>
+  );
+});
+
+function AssistantMessageContent({
   message,
   isStreaming,
   isLastMessage = false,
@@ -73,16 +94,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   isResumed = false,
   conversationId,
   messageIndex,
-}: {
-  message: ChatUIMessage;
-  isStreaming: boolean;
-  isLastMessage?: boolean;
-  onSendPrompt?: (text: string) => void;
-  claimedBuildIds?: ReadonlySet<string>;
-  isResumed?: boolean;
-  conversationId?: string | null;
-  messageIndex: number;
-}) {
+}: AssistantMessageProps) {
   const approveGate = useChatStoreContext((s) => s.approveGate);
   const toolCallMeta = useChatStoreContext((s) => s.toolCallMeta);
 
@@ -104,6 +116,22 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const changeLines = useMemo(
+    () =>
+      isStreaming
+        ? []
+        : changeSummaryUtils.summarize(
+            changeSummaryUtils.fromToolParts(message.parts),
+          ),
+    [isStreaming, message.parts],
+  );
+  const expired = useMemo(
+    () => !isStreaming && hasExpiredGate(message.parts),
+    [isStreaming, message.parts],
+  );
+  useEffect(() => {
+    if (isStreaming && isLastMessage) changesAnnouncer.markReplyStreaming();
+  });
 
   const hasRenderedContent = blocks.some((b) => b.kind !== 'thinking');
   const hasThinkingContent = blocks.some((b) => b.kind === 'thinking');
@@ -139,7 +167,21 @@ export const AssistantMessage = memo(function AssistantMessage({
             isAccordionOpen={isAccordionOpen}
             setIsAccordionOpen={setIsAccordionOpen}
             isResumed={isResumed}
+            hideChips={changeLines.length > 0}
           />
+
+          {expired && (
+            <ExpiredGateCard
+              onSendPrompt={isLastMessage ? onSendPrompt : undefined}
+            />
+          )}
+          <ChangesSummary
+            lines={changeLines}
+            announce={isLastMessage && !isStreaming}
+          />
+          {isLastMessage && (
+            <BackgroundTitle message={message} isStreaming={isStreaming} />
+          )}
 
           {!isStreaming && sources.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-2">
@@ -221,7 +263,7 @@ export const AssistantMessage = memo(function AssistantMessage({
       </Message>
     </motion.div>
   );
-});
+}
 
 function MessageBlocks({
   blocks,
@@ -233,6 +275,7 @@ function MessageBlocks({
   isAccordionOpen,
   setIsAccordionOpen,
   isResumed = false,
+  hideChips = false,
 }: {
   blocks: MessageBlock[];
   isStreaming: boolean;
@@ -243,6 +286,7 @@ function MessageBlocks({
   isAccordionOpen: boolean;
   setIsAccordionOpen: (open: boolean) => void;
   isResumed?: boolean;
+  hideChips?: boolean;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const lastThinkingIdx = blocks.findLastIndex((b) => b.kind === 'thinking');
@@ -359,6 +403,14 @@ function MessageBlocks({
                     />
                   )}
                 </AnimatePresence>
+                {!isAccordionOpen && !hideChips && (
+                  <ResourceChips
+                    parts={block.steps.flatMap((step) =>
+                      step.kind === 'tool' ? [step.part] : [],
+                    )}
+                    className="pt-2"
+                  />
+                )}
               </div>
             );
           }
@@ -484,6 +536,7 @@ function MessageBlocks({
                         onSendPrompt={onSendPrompt}
                         isAccordionOpen={isAccordionOpen}
                         setIsAccordionOpen={setIsAccordionOpen}
+                        hideChips={hideChips}
                       />
                     ) : null
                   }
@@ -497,6 +550,23 @@ function MessageBlocks({
       })}
     </>
   );
+}
+
+function BackgroundTitle({
+  message,
+  isStreaming,
+}: {
+  message: ChatUIMessage;
+  isStreaming: boolean;
+}) {
+  const needsYou = useChatStoreContext((s) =>
+    chatStoreSelectors.hasBlockingCard({
+      state: s,
+      lastAssistantMessage: message,
+    }),
+  );
+  useBackgroundTitle({ needsYou, streaming: isStreaming });
+  return null;
 }
 
 function OutcomeCard({
@@ -598,6 +668,7 @@ function DisplayToolCard({
       : undefined;
   const toolCallId = chatPartUtils.getToolCallId(part);
   if (toolOutput?.['notShown'] === true) return null;
+  if (toolOutput?.['timedOut'] === true) return null;
 
   switch (toolName) {
     case 'ap_show_connection_required':
@@ -661,6 +732,11 @@ function DisplayToolCard({
         />
       );
     }
+    case 'ap_request_secret': {
+      const request = secretRequestUtils.parse(data);
+      if (!request || !secretRequestUtils.savedOutput(toolOutput)) return null;
+      return <SecretSavedLine request={request} />;
+    }
     case 'ap_show_questions': {
       const answersText =
         typeof toolOutput?.['answers'] === 'string'
@@ -703,3 +779,14 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
     </motion.div>
   );
 }
+
+type AssistantMessageProps = {
+  message: ChatUIMessage;
+  isStreaming: boolean;
+  isLastMessage?: boolean;
+  onSendPrompt?: (text: string) => void;
+  claimedBuildIds?: ReadonlySet<string>;
+  isResumed?: boolean;
+  conversationId?: string | null;
+  messageIndex: number;
+};

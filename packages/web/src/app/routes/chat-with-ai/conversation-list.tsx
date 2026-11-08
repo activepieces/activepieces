@@ -1,11 +1,5 @@
-import { AgentConversation, SeekPage } from '@activepieces/shared';
-import {
-  InfiniteData,
-  QueryKey,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { AgentConversation } from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowUpRight,
@@ -18,12 +12,18 @@ import {
 } from 'lucide-react';
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
+import {
+  conversationTitle,
+  groupByRecency,
+  useChatHistory,
+  useChatHistoryActions,
+} from '@/app/components/chat-panel/chat-history-data';
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
+import { KbdHint, modShortcut } from '@/components/custom/kbd-hint';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
-import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
 import { cn } from '@/lib/utils';
 
@@ -48,7 +48,6 @@ export function ConversationList({
   agentId?: string;
   onCollapse?: () => void;
 }) {
-  const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
@@ -57,30 +56,15 @@ export function ConversationList({
   const listRef = useRef<HTMLDivElement>(null);
 
   const {
-    data: conversationPages,
+    conversations: allConversations,
     isLoading: isLoadingConversations,
     isSuccess: conversationsLoaded,
     hasNextPage,
     isFetching,
     isFetchNextPageError,
     fetchNextPage,
-  } = useInfiniteQuery<
-    SeekPage<AgentConversation>,
-    Error,
-    InfiniteData<SeekPage<AgentConversation>>,
-    QueryKey,
-    string | undefined
-  >({
-    queryKey: ['chat-conversations', agentId ?? 'chat'],
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
-    queryFn: ({ pageParam }) =>
-      chatApi.listConversations({
-        limit: 100,
-        cursor: pageParam,
-        ...(agentId === undefined ? {} : { agentId }),
-      }),
-  });
+  } = useChatHistory({ agentId });
+  const { invalidate } = useChatHistoryActions();
 
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
@@ -88,19 +72,12 @@ export function ConversationList({
   const { mutate: deleteConv } = useMutation({
     mutationFn: (id: string) => chatApi.deleteConversation(id),
     onSuccess: (_data, deletedId) => {
-      void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations', agentId ?? 'chat'],
-      });
+      invalidate();
       if (selectedIdRef.current === deletedId) {
         onNewChat?.();
       }
     },
   });
-
-  const allConversations = useMemo(
-    () => conversationPages?.pages.flatMap((page) => page.data) ?? [],
-    [conversationPages],
-  );
 
   const { getIndicator, markRead } = useConversationIndicators({
     conversations: allConversations,
@@ -162,29 +139,10 @@ export function ConversationList({
     loadMoreIfNearEnd();
   }, [checkFades, loadMoreIfNearEnd]);
 
-  const { today, yesterday, older } = useMemo(() => {
-    const todayStr = new Date().toDateString();
-    const y = new Date();
-    y.setDate(y.getDate() - 1);
-    const yesterdayStr = y.toDateString();
-
-    const groups: {
-      today: AgentConversation[];
-      yesterday: AgentConversation[];
-      older: AgentConversation[];
-    } = {
-      today: [],
-      yesterday: [],
-      older: [],
-    };
-    for (const c of conversations) {
-      const dateStr = new Date(c.created).toDateString();
-      if (dateStr === todayStr) groups.today.push(c);
-      else if (dateStr === yesterdayStr) groups.yesterday.push(c);
-      else groups.older.push(c);
-    }
-    return groups;
-  }, [conversations]);
+  const groups = useMemo(
+    () => groupByRecency({ conversations }),
+    [conversations],
+  );
 
   const handleClick = (conv: AgentConversation) => {
     markRead(conv.id);
@@ -201,10 +159,9 @@ export function ConversationList({
   };
 
   const renderGroup = (label: string, items: AgentConversation[]) => {
-    if (items.length === 0) return null;
     const isCollapsed = collapsed[label];
     return (
-      <div className="mb-2 flex flex-col gap-px">
+      <div key={label} className="mb-2 flex flex-col gap-px">
         <button
           type="button"
           className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
@@ -235,9 +192,7 @@ export function ConversationList({
                 onClick={() => handleClick(conv)}
               >
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
-                  {conv.title
-                    ? chatUtils.sanitizeTitle(conv.title)
-                    : t('New conversation')}
+                  {conversationTitle(conv)}
                 </span>
                 {indicator && (
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0">
@@ -297,7 +252,9 @@ export function ConversationList({
               <Plus size={mobile ? 16 : 14} />
               {t('New chat')}
             </span>
-            {!mobile && <span className="text-xs opacity-50">⇧⌘O</span>}
+            {!mobile && (
+              <KbdHint>{modShortcut({ key: 'O', shift: true })}</KbdHint>
+            )}
           </button>
           {onCollapse !== undefined && (
             <ConversationsToggle open onClick={onCollapse} />
@@ -340,11 +297,7 @@ export function ConversationList({
               </p>
             </div>
           ) : (
-            <>
-              {renderGroup(t('Today'), today)}
-              {renderGroup(t('Yesterday'), yesterday)}
-              {renderGroup(t('Older'), older)}
-            </>
+            groups.map((group) => renderGroup(group.label, group.items))
           )}
         </div>
         {showBottomFade && (
