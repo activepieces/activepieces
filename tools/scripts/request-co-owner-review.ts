@@ -176,7 +176,7 @@ export const requestCoOwnerReview = { coOwnerLogins, loginsToRequest, roundRobin
 
 if (import.meta.main) {
     main().catch((error: unknown) => {
-        console.error(`⚠️ Could not request the Co-Owner's review: ${error instanceof Error ? error.message : String(error)}`)
+        console.error(`⚠️ The Co-Owner review step failed: ${error instanceof Error ? error.message : String(error)}`)
         process.exit(1)
     })
 }
