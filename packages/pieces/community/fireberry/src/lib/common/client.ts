@@ -1,13 +1,12 @@
 import { HttpMethod, httpClient, HttpRequest } from '@activepieces/pieces-common';
 
 const FIREBERRY_API_BASE_URL = 'https://api.fireberry.com';
-const MAX_ATTEMPTS = 3; // 1 try + one retry per RETRY_DELAYS_MS entry
-// Fixed backoff for retried reads (429/5xx): wait 2s, then 4s. The shared httpClient's HttpError
-// only carries status and body, so a Retry-After header is not readable on the error path and is not used.
+const MAX_ATTEMPTS = 3;
 const RETRY_DELAYS_MS = [2000, 4000];
 const REQUEST_TIMEOUT_MS = 30000;
 const MAX_PAGE_SIZE = 50;
 const MAX_PAGE_NUMBER = 10;
+const FIRST_CUSTOM_OBJECT_TYPE = 1000;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -208,6 +207,7 @@ function buildQueryBody({
 
 export class FireberryClient {
   private readonly token: string;
+  private objectsMetadata: Promise<FireberryObjectMetadata[]> | undefined;
 
   constructor(token: string) {
     this.token = token;
@@ -265,6 +265,16 @@ export class FireberryClient {
   }
 
   async getObjectsMetadata(): Promise<FireberryObjectMetadata[]> {
+    if (!this.objectsMetadata) {
+      this.objectsMetadata = this.fetchObjectsMetadata().catch((error: unknown) => {
+        this.objectsMetadata = undefined;
+        throw error;
+      });
+    }
+    return this.objectsMetadata;
+  }
+
+  private async fetchObjectsMetadata(): Promise<FireberryObjectMetadata[]> {
     const response = await this.request<{ data?: FireberryObjectMetadata[] }>({
       method: HttpMethod.GET,
       resourceUri: '/metadata/records',
@@ -308,6 +318,17 @@ export class FireberryClient {
     return (await this.resolveObject(objectTypeInput)).objectType;
   }
 
+  async recordPathSegment(objectSystemName: string): Promise<string> {
+    const input = objectSystemName.trim();
+    const objects = await this.getObjectsMetadata();
+    const target = objects.find((obj) => obj.systemName.toLowerCase() === input.toLowerCase() || String(obj.objectType) === input);
+    const objectType = Number(target?.objectType);
+    if (target && Number.isInteger(objectType) && objectType >= FIRST_CUSTOM_OBJECT_TYPE) {
+      return String(objectType);
+    }
+    return encodeURIComponent(target?.systemName ?? input);
+  }
+
   async query(body: FireberryQueryBody): Promise<FireberryQueryResult> {
     const response = await this.request<{ data?: Partial<FireberryQueryResult> }>({
       method: HttpMethod.POST,
@@ -334,7 +355,7 @@ export class FireberryClient {
   async listRecords({ objectSystemName, top }: { objectSystemName: string; top: number }): Promise<FireberryRecordList> {
     const response = await this.request<{ data?: Partial<FireberryRecordList> }>({
       method: HttpMethod.GET,
-      resourceUri: `/api/record/${encodeURIComponent(objectSystemName)}`,
+      resourceUri: `/api/record/${await this.recordPathSegment(objectSystemName)}`,
       queryParams: { $top: String(top) },
     });
     return {
@@ -347,7 +368,7 @@ export class FireberryClient {
   async getRecord({ objectSystemName, recordId }: { objectSystemName: string; recordId: string }): Promise<Record<string, unknown>> {
     const response = await this.request<unknown>({
       method: HttpMethod.GET,
-      resourceUri: `/api/record/${encodeURIComponent(objectSystemName)}/${encodeURIComponent(recordId)}`,
+      resourceUri: `/api/record/${await this.recordPathSegment(objectSystemName)}/${encodeURIComponent(recordId)}`,
     }).catch((error: unknown) => {
       const status = isRecord(error) ? error['status'] : undefined;
       if (status === 400) {
@@ -370,7 +391,7 @@ export class FireberryClient {
   async createRecord({ objectSystemName, record }: { objectSystemName: string; record: Record<string, unknown> }): Promise<unknown> {
     return this.request({
       method: HttpMethod.POST,
-      resourceUri: `/api/record/${encodeURIComponent(objectSystemName)}`,
+      resourceUri: `/api/record/${await this.recordPathSegment(objectSystemName)}`,
       body: record,
       retry: false,
     });
@@ -379,7 +400,7 @@ export class FireberryClient {
   async updateRecord({ objectSystemName, recordId, record }: { objectSystemName: string; recordId: string; record: Record<string, unknown> }): Promise<unknown> {
     return this.request({
       method: HttpMethod.PUT,
-      resourceUri: `/api/record/${encodeURIComponent(objectSystemName)}/${encodeURIComponent(recordId)}`,
+      resourceUri: `/api/record/${await this.recordPathSegment(objectSystemName)}/${encodeURIComponent(recordId)}`,
       body: record,
       retry: true,
     });
@@ -388,7 +409,7 @@ export class FireberryClient {
   async deleteRecord({ objectSystemName, recordId }: { objectSystemName: string; recordId: string }): Promise<unknown> {
     return this.request({
       method: HttpMethod.DELETE,
-      resourceUri: `/api/record/${encodeURIComponent(objectSystemName)}/${encodeURIComponent(recordId)}`,
+      resourceUri: `/api/record/${await this.recordPathSegment(objectSystemName)}/${encodeURIComponent(recordId)}`,
       retry: false,
     });
   }

@@ -9,6 +9,24 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const OBJECTS = [
+  { name: 'Account', systemName: 'Account', objectType: '1' },
+  { name: 'Projects', systemName: 'CustomObject1001', objectType: '1001' },
+];
+
+function mockRecordFailure(error: HttpError) {
+  return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+    if (request.url.endsWith('/metadata/records')) {
+      return { status: 200, headers: {}, body: { success: true, data: OBJECTS } };
+    }
+    throw error;
+  });
+}
+
+function recordCalls(spy: ReturnType<typeof mockRecordFailure>) {
+  return spy.mock.calls.filter(([request]) => !request.url.endsWith('/metadata/records'));
+}
+
 describe('FireberryClient errors', () => {
   it('surfaces the capital-M Message with status and responseBody', async () => {
     vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(
@@ -35,9 +53,9 @@ describe('FireberryClient errors', () => {
   });
 
   it('does not retry a single-record create on 5xx', async () => {
-    const spy = vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new HttpError({}, { status: 503, responseBody: 'down' }));
+    const spy = mockRecordFailure(new HttpError({}, { status: 503, responseBody: 'down' }));
     await expect(new FireberryClient('t').createRecord({ objectSystemName: 'Account', record: { accountname: 'A' } })).rejects.toMatchObject({ status: 503 });
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(recordCalls(spy)).toHaveLength(1);
   });
 
   it('retries idempotent GETs on 429', async () => {
@@ -56,16 +74,16 @@ describe('FireberryClient errors', () => {
 
 describe('rate limits and record lookups', () => {
   it('does not retry a 429 on create and says it is a rate limit', async () => {
-    const spy = vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new HttpError({}, { status: 429, responseBody: { Message: 'Too Many Requests' } }));
+    const spy = mockRecordFailure(new HttpError({}, { status: 429, responseBody: { Message: 'Too Many Requests' } }));
     await expect(new FireberryClient('t').createRecord({ objectSystemName: 'Account', record: { accountname: 'A' } })).rejects.toMatchObject({
       status: 429,
       message: expect.stringContaining('rate limit reached (429): Too Many Requests'),
     });
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(recordCalls(spy)).toHaveLength(1);
   });
 
   it('turns a 400 on get-record into a not-found-or-deleted message that keeps vendor text', async () => {
-    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new HttpError({}, { status: 400, responseBody: { Message: 'internal error' } }));
+    mockRecordFailure(new HttpError({}, { status: 400, responseBody: { Message: 'internal error' } }));
     await expect(new FireberryClient('t').getRecord({ objectSystemName: 'Account', recordId: 'g1' })).rejects.toMatchObject({
       status: 400,
       message: expect.stringMatching(/not found or has been deleted.*internal error/),
@@ -75,10 +93,43 @@ describe('rate limits and record lookups', () => {
 
 describe('message formatting', () => {
   it('trims trailing punctuation from the vendor message so no ".." appears', async () => {
-    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(new HttpError({}, { status: 429, responseBody: { Message: 'Too Many Requests. ' } }));
+    mockRecordFailure(new HttpError({}, { status: 429, responseBody: { Message: 'Too Many Requests. ' } }));
     const error = await new FireberryClient('t').createRecord({ objectSystemName: 'Account', record: {} }).catch((e: unknown) => e);
     expect(error).toMatchObject({ message: expect.stringContaining('(429): Too Many Requests. Fireberry limits') });
     expect(String(Reflect.get(Object(error), 'message'))).not.toContain('..');
+  });
+});
+
+describe('record endpoint path', () => {
+  function mockWrites() {
+    return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.url.endsWith('/metadata/records')) {
+        return { status: 200, headers: {}, body: { success: true, data: OBJECTS } };
+      }
+      return { status: 200, headers: {}, body: { success: true, data: { Record: {} } } };
+    });
+  }
+
+  it('uses the object number for custom objects, as Fireberry documents for /api/record/{objectcode}/{id}', async () => {
+    const spy = mockWrites();
+    const client = new FireberryClient('t');
+    await client.updateRecord({ objectSystemName: 'CustomObject1001', recordId: 'g1', record: { name: 'x' } });
+    await client.createRecord({ objectSystemName: 'customobject1001', record: { name: 'x' } });
+    await client.deleteRecord({ objectSystemName: '1001', recordId: 'g2' });
+    expect(recordCalls(spy).map(([request]) => request.url)).toEqual([
+      'https://api.fireberry.com/api/record/1001/g1',
+      'https://api.fireberry.com/api/record/1001',
+      'https://api.fireberry.com/api/record/1001/g2',
+    ]);
+  });
+
+  it('keeps the system name for standard objects and reads object metadata once per client', async () => {
+    const spy = mockWrites();
+    const client = new FireberryClient('t');
+    await client.getRecord({ objectSystemName: 'Account', recordId: 'g1' });
+    await client.updateRecord({ objectSystemName: 'Account', recordId: 'g1', record: { accountname: 'x' } });
+    expect(recordCalls(spy).map(([request]) => request.url)).toEqual(['https://api.fireberry.com/api/record/Account/g1', 'https://api.fireberry.com/api/record/Account/g1']);
+    expect(spy.mock.calls.filter(([request]) => request.url.endsWith('/metadata/records'))).toHaveLength(1);
   });
 });
 
