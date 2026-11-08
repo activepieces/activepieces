@@ -20,6 +20,10 @@ vi.mock('@/features/pieces/hooks/pieces-hooks', () => ({
   },
 }));
 
+vi.mock('@/components/providers/theme-provider', () => ({
+  useTheme: () => ({ resolvedTheme: 'light' }),
+}));
+
 afterEach(() => {
   cleanup();
 });
