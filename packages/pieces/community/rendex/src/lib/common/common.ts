@@ -1,3 +1,10 @@
+const MEGABYTE = 1024 * 1024;
+const MAX_SOURCE_BYTES = 5 * MEGABYTE;
+const MAX_ARTIFACT_BYTES = 4 * MEGABYTE;
+const MAX_TEMPLATE_DATA_BYTES = 256 * 1024;
+
+const SOURCE_LABELS: Record<SourceKey, string> = { url: 'URL', html: 'HTML', markdown: 'Markdown' };
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -138,21 +145,6 @@ function renderTimeoutMs({ timeoutSeconds, delayMs }: { timeoutSeconds: number |
   return ((timeoutSeconds ?? 60) + 30) * 1000 + (delayMs ?? 0);
 }
 
-type NumberRule = { label: string; min: number; max: number; integer: boolean };
-
-type SourceKey = 'url' | 'html' | 'markdown';
-
-type Source = { key: SourceKey; value: string };
-
-const MEGABYTE = 1024 * 1024;
-const MAX_SOURCE_BYTES = 5 * MEGABYTE;
-const MAX_ARTIFACT_BYTES = 4 * MEGABYTE;
-const MAX_TEMPLATE_DATA_BYTES = 256 * 1024;
-
-const SOURCE_LABELS: Record<SourceKey, string> = { url: 'URL', html: 'HTML', markdown: 'Markdown' };
-
-export type { Source, SourceKey, NumberRule };
-
 export const RENDEX_BASE_URL = 'https://api.rendex.dev';
 
 export const RENDEX_LIMITS = {
@@ -187,3 +179,11 @@ export const rendexInput = {
   compact,
   renderTimeoutMs,
 };
+
+type NumberRule = { label: string; min: number; max: number; integer: boolean };
+
+type SourceKey = 'url' | 'html' | 'markdown';
+
+type Source = { key: SourceKey; value: string };
+
+export type { Source, SourceKey, NumberRule };

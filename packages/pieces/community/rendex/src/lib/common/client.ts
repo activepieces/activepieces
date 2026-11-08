@@ -3,6 +3,9 @@ import { RENDEX_BASE_URL, RENDEX_LIMITS, rendexInput } from './common';
 
 let verifiedTlsAgent: Promise<unknown> | undefined;
 
+const MAX_ERROR_TEXT = 500;
+const MAX_WATCH_PAGES = 20;
+
 class RendexApiError extends Error {
   readonly status: number;
   readonly responseBody: unknown;
@@ -236,8 +239,18 @@ async function listAllWatches({ auth }: { auth: RendexAuthValue }): Promise<Reco
   throw new Error(`You have more than ${MAX_WATCH_PAGES * 100} watches, more than this list can load. Map a Watch ID from List Watches instead.`);
 }
 
-const MAX_ERROR_TEXT = 500;
-const MAX_WATCH_PAGES = 20;
+export { RendexApiError };
+
+export const rendexClient = {
+  send,
+  request,
+  requestData,
+  listPage,
+  listAllWatches,
+  segment,
+  apiKeyOf,
+  verifiedTls,
+};
 
 type QueryValue = string | number | boolean | undefined | null;
 
@@ -260,17 +273,4 @@ type SendParams = {
 
 type RequestParams = Omit<SendParams, 'apiKey'> & { auth: RendexAuthValue };
 
-export { RendexApiError };
-
 export type { RendexAuthValue, RendexResult, RendexPage, QueryValue };
-
-export const rendexClient = {
-  send,
-  request,
-  requestData,
-  listPage,
-  listAllWatches,
-  segment,
-  apiKeyOf,
-  verifiedTls,
-};

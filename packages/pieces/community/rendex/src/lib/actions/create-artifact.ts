@@ -25,6 +25,17 @@ const INPUT_FORMAT_VALUES = INPUT_FORMAT_OPTIONS.map((option) => option.value);
 const OUTPUT_FORMAT_VALUES = OUTPUT_FORMAT_OPTIONS.map((option) => option.value);
 const ORIENTATION_VALUES = ORIENTATION_OPTIONS.map((option) => option.value);
 
+function formatsOf(value: unknown): string[] | undefined {
+  const list = rendexInput.textListOf({ value, label: 'Output Formats', maxItems: 2, maxLength: 10 });
+  if (list === undefined) return undefined;
+  const formats = [...new Set(list.map((item) => item.toLowerCase()))];
+  const wrong = formats.find((item) => !OUTPUT_FORMAT_VALUES.includes(item));
+  if (wrong !== undefined) {
+    throw new Error(`Output Formats accepts pdf and png. Got "${wrong.slice(0, 20)}".`);
+  }
+  return formats;
+}
+
 export const createArtifact = createAction({
   auth: rendexAuth,
   name: 'create_artifact',
@@ -110,14 +121,3 @@ export const createArtifact = createAction({
     });
   },
 });
-
-function formatsOf(value: unknown): string[] | undefined {
-  const list = rendexInput.textListOf({ value, label: 'Output Formats', maxItems: 2, maxLength: 10 });
-  if (list === undefined) return undefined;
-  const formats = [...new Set(list.map((item) => item.toLowerCase()))];
-  const wrong = formats.find((item) => !OUTPUT_FORMAT_VALUES.includes(item));
-  if (wrong !== undefined) {
-    throw new Error(`Output Formats accepts pdf and png. Got "${wrong.slice(0, 20)}".`);
-  }
-  return formats;
-}

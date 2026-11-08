@@ -19,6 +19,7 @@ import { deleteWatch } from '../src/lib/actions/delete-watch';
 import { runWatchNow } from '../src/lib/actions/run-watch-now';
 import { listWatchRuns } from '../src/lib/actions/list-watch-runs';
 import { newWatchChange } from '../src/lib/triggers/new-watch-change';
+import { renderScreenshotOutputSchema } from '../src/lib/common/output-schemas';
 
 const sendRequest = vi.fn();
 
@@ -35,6 +36,7 @@ vi.mock('@activepieces/pieces-common', async (importOriginal) => {
 const AUTH = { type: AppConnectionType.SECRET_TEXT, secret_text: ' rdx_testkey ' };
 const IMAGE = Buffer.from('png-bytes').toString('base64');
 const SECRET_HTML = '<p>secret-customer-ssn-123</p>';
+const EXTRACTED = { format: 'markdown', content: '## Report\n\nHello **world**.', excerpt: 'Hello world.', length: 23 };
 
 function ok({ data, meta }: { data: unknown; meta?: unknown }) {
   return { status: 200, headers: {}, body: { success: true, data, meta: meta ?? { requestId: 'req_1', timestamp: '2026-11-05T00:00:00Z' } } };
@@ -297,7 +299,7 @@ describe('render_screenshot (ai)', () => {
 
   it('maps every option to the vendor body, leaves unset options out and writes the file', async () => {
     const files = filesStub();
-    sendRequest.mockResolvedValueOnce(ok({ data: { image: IMAGE, format: 'jpeg', extracted: '# Hi' }, meta: { usage: { credits: 1, remaining: 50 } } }));
+    sendRequest.mockResolvedValueOnce(ok({ data: { image: IMAGE, format: 'jpeg', extracted: EXTRACTED }, meta: { usage: { credits: 1, remaining: 50 } } }));
     const output = await call({
       fn: renderScreenshot.run,
       ctx: actionContext({
@@ -317,7 +319,9 @@ describe('render_screenshot (ai)', () => {
     });
     expect(request({ index: 0 }).timeout).toBe(50_500);
     expect(files.write).toHaveBeenCalledWith({ fileName: 'rendex-screenshot.jpeg', data: Buffer.from('png-bytes') });
-    expect(output).toEqual({ file: 'https://files.local/rendex-screenshot.jpeg', format: 'jpeg', extracted: '# Hi', usage: { credits: 1, remaining: 50 } });
+    expect(output).toEqual({ file: 'https://files.local/rendex-screenshot.jpeg', format: 'jpeg', extracted: EXTRACTED, usage: { credits: 1, remaining: 50 } });
+    const extractedField = renderScreenshotOutputSchema.fields.find((field) => field.key === 'extracted');
+    expect(Object.keys(Reflect.get(Object(output), 'extracted')).sort()).toEqual((extractedField?.children ?? []).map((child) => child.key).sort());
   });
 
   it('sends only the source when nothing else is set', async () => {
@@ -422,6 +426,18 @@ describe('watch actions', () => {
     expect(Object.keys(request({ index: 0 }).body)).not.toContain('paused');
   });
 
+  it('update_watch clears the element selector, hidden elements and ignored text, and fails when Rendex keeps them', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: 'w1', renderParams: { fullPage: true, selector: '', hideSelectors: [], ignoreText: [] } } }));
+    const output = await call({ fn: updateWatch.run, ctx: actionContext({ propsValue: { watch_id: 'w1', clear_selector: 'yes', clear_hide_selectors: 'yes', clear_ignore_text: 'yes', hide_selectors: [] } }) });
+    expect(request({ index: 0 }).body).toEqual({ renderParams: { selector: '', hideSelectors: [], ignoreText: [] } });
+    expect(output).toEqual({ id: 'w1', renderParams: { fullPage: true, selector: '', hideSelectors: [], ignoreText: [] } });
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: 'w1', renderParams: { hideSelectors: ['.ad'], ignoreText: [] } } }));
+    await expect(call({ fn: updateWatch.run, ctx: actionContext({ propsValue: { watch_id: 'w1', clear_hide_selectors: 'yes', clear_ignore_text: 'yes', clear_selector: 'no' } }) })).rejects.toThrow('Rendex saved the other changes but kept Hide Elements.');
+    await expect(call({ fn: updateWatch.run, ctx: actionContext({ propsValue: { watch_id: 'w1', selector: '#a', clear_selector: 'yes' } }) })).rejects.toThrow('Either set Element Selector or set Clear Element Selector to yes');
+    await expect(call({ fn: updateWatch.run, ctx: actionContext({ propsValue: { watch_id: 'w1', ignore_text: ['x'], clear_ignore_text: 'yes' } }) })).rejects.toThrow('Either set Ignore Text or set Clear Ignore Text to yes');
+    expect(sendRequest).toHaveBeenCalledTimes(2);
+  });
+
   it('update_watch refuses an empty patch and a value with its clear option', async () => {
     await expect(call({ fn: updateWatch.run, ctx: actionContext({ propsValue: { watch_id: 'w1', paused: 'keep', clear_name: 'no', hide_selectors: [] } }) })).rejects.toThrow('Nothing to update');
     await expect(call({ fn: updateWatch.run, ctx: actionContext({ propsValue: { watch_id: 'w1', name: 'x', clear_name: 'yes' } }) })).rejects.toThrow('Either set Name or set Clear Name to yes');
@@ -476,6 +492,18 @@ describe('new_watch_change trigger', () => {
     };
   }
 
+  const STATE = 'rendex_watch_poll_state';
+
+  function seeded({ scannedThrough, seen }: { scannedThrough?: number; seen?: string[] } = {}) {
+    const memory = memoryStore();
+    memory.data.set(STATE, { since: NOW, scannedThrough: scannedThrough ?? NOW, seen: seen ?? [] });
+    return memory;
+  }
+
+  function stateIn({ data }: { data: Map<string, unknown> }) {
+    return Object(data.get(STATE));
+  }
+
   function triggerContext({ store, fireOn }: { store: ReturnType<typeof memoryStore>['store']; fireOn?: string }) {
     return { auth: AUTH, propsValue: { watch_id: 'w1', fire_on: fireOn }, store, files: {} };
   }
@@ -483,13 +511,13 @@ describe('new_watch_change trigger', () => {
   it('onEnable stores the checkpoint only and makes no request', async () => {
     const { store, data } = memoryStore();
     await call({ fn: newWatchChange.onEnable, ctx: triggerContext({ store }) });
-    expect(typeof data.get('lastPoll')).toBe('number');
+    expect(typeof stateIn({ data }).since).toBe('number');
+    expect(stateIn({ data }).seen).toEqual([]);
     expect(sendRequest).not.toHaveBeenCalled();
   });
 
   it('pages back with the cursor to the checkpoint, emits each changed run once and never twice', async () => {
-    const { store } = memoryStore();
-    await store.put('lastPoll', NOW);
+    const { store } = seeded();
     const fresh = runAt({ id: 'r3', created: NOW + 60_000, completed: NOW + 70_000, status: 'completed', changed: true });
     const unchanged = runAt({ id: 'r2', created: NOW + 30_000, completed: NOW + 40_000, status: 'completed', changed: false });
     const queued = runAt({ id: 'r4', created: NOW + 80_000, completed: null, status: 'queued', changed: null });
@@ -513,8 +541,7 @@ describe('new_watch_change trigger', () => {
     const failed = runAt({ id: 'f1', created: NOW + 1000, completed: NOW + 2000, status: 'failed', changed: null });
     const done = runAt({ id: 'd1', created: NOW + 3000, completed: NOW + 4000, status: 'completed', changed: false });
     for (const { fireOn, expected } of [{ fireOn: 'failed', expected: ['f1'] }, { fireOn: 'completed', expected: ['d1'] }]) {
-      const { store } = memoryStore();
-      await store.put('lastPoll', NOW);
+      const { store } = seeded();
       sendRequest.mockResolvedValueOnce(ok({ data: { items: [done, failed], nextCursor: null } }));
       sendRequest.mockResolvedValueOnce(ok({ data: { id: 'w1', url: 'https://a.com', name: null } }));
       const items = await call({ fn: newWatchChange.run, ctx: triggerContext({ store, fireOn }) });
@@ -523,8 +550,7 @@ describe('new_watch_change trigger', () => {
   });
 
   it('throws when the page cap is reached with a cursor still set, instead of truncating', async () => {
-    const { store } = memoryStore();
-    await store.put('lastPoll', NOW);
+    const { store, data } = seeded();
     const recent = runAt({ id: 'r', created: NOW + 1000, completed: NOW + 2000, status: 'completed', changed: true });
     let page = 0;
     sendRequest.mockImplementation(async () => {
@@ -533,12 +559,11 @@ describe('new_watch_change trigger', () => {
     });
     await expect(call({ fn: newWatchChange.run, ctx: triggerContext({ store }) })).rejects.toThrow('More than 2000 watch runs');
     expect(sendRequest).toHaveBeenCalledTimes(20);
-    expect(await store.get('lastPoll')).toBe(NOW);
+    expect(stateIn({ data })).toEqual({ since: NOW, scannedThrough: NOW, seen: [] });
   });
 
   it('advances its scanned-through marker over many polls with only unchanged runs, then fires a change exactly once', async () => {
-    const { store, data } = memoryStore();
-    await store.put('lastPoll', NOW);
+    const { store, data } = seeded();
     const history: ReturnType<typeof runAt>[] = [];
     let clock = NOW;
     sendRequest.mockImplementation(async (req: { url: string; queryParams: Record<string, string> }) => {
@@ -559,8 +584,7 @@ describe('new_watch_change trigger', () => {
       expect(sendRequest.mock.calls.length).toBeLessThanOrEqual(1);
     }
     expect(history.length).toBe(2400);
-    expect(data.get('rendex_runs_scanned_through')).toBe(clock);
-    expect(await store.get('lastPoll')).toBe(NOW);
+    expect(stateIn({ data }).scannedThrough).toBe(clock);
 
     clock += 60_000;
     const change = runAt({ id: 'c1', created: clock, completed: clock + 5_000, status: 'completed', changed: true });
@@ -571,35 +595,28 @@ describe('new_watch_change trigger', () => {
   });
 
   it('holds the marker behind a queued run and emits it once it finishes, without re-emitting on overlap', async () => {
-    const { store } = memoryStore();
-    await store.put('lastPoll', NOW);
+    const { store, data } = seeded();
     const queued = runAt({ id: 'q1', created: NOW + 60_000, completed: null, status: 'queued', changed: null });
     const later = runAt({ id: 'u1', created: NOW + 20 * 60_000, completed: NOW + 20 * 60_000 + 5_000, status: 'completed', changed: false });
     sendRequest.mockResolvedValueOnce(ok({ data: { items: [later, queued], nextCursor: null } }));
     expect(await call({ fn: newWatchChange.run, ctx: triggerContext({ store }) })).toEqual([]);
-    expect(await store.get('rendex_runs_scanned_through')).toBe(NOW + 60_000);
+    expect(stateIn({ data }).scannedThrough).toBe(NOW + 60_000);
     const done = { ...queued, status: 'completed', changed: true, completedAt: new Date(NOW + 25 * 60_000).toISOString() };
     sendRequest.mockResolvedValueOnce(ok({ data: { items: [later, done], nextCursor: null } }));
     sendRequest.mockResolvedValueOnce(ok({ data: { id: 'w1', url: 'https://a.com', name: 'A' } }));
     const fired = await call({ fn: newWatchChange.run, ctx: triggerContext({ store }) });
     expect(fired.map((item) => Reflect.get(Object(item), 'id'))).toEqual(['q1']);
-    await store.put('lastPoll', NOW);
     sendRequest.mockResolvedValueOnce(ok({ data: { items: [later, done], nextCursor: null } }));
     expect(await call({ fn: newWatchChange.run, ctx: triggerContext({ store }) })).toEqual([]);
   });
 
   it('writes no state when the watch lookup fails, so the run is emitted on the next poll exactly once', async () => {
-    const { store, data } = memoryStore();
-    await store.put('lastPoll', NOW);
-    await store.put('rendex_runs_scanned_through', NOW);
-    await store.put('rendex_finished_run_ids', ['r0']);
+    const { store, data } = seeded({ seen: ['r0'] });
     const change = runAt({ id: 'r1', created: NOW + 60_000, completed: NOW + 70_000, status: 'completed', changed: true });
     sendRequest.mockResolvedValueOnce(ok({ data: { items: [change], nextCursor: null } }));
     sendRequest.mockRejectedValueOnce(httpError({ status: 429, body: vendorError({ code: 'RATE_LIMITED', message: 'Slow down' }) }));
     await expect(call({ fn: newWatchChange.run, ctx: triggerContext({ store }) })).rejects.toThrow('HTTP 429 RATE_LIMITED');
-    expect(data.get('rendex_runs_scanned_through')).toBe(NOW);
-    expect(data.get('rendex_finished_run_ids')).toEqual(['r0']);
-    expect(data.get('lastPoll')).toBe(NOW);
+    expect(stateIn({ data })).toEqual({ since: NOW, scannedThrough: NOW, seen: ['r0'] });
     sendRequest.mockResolvedValueOnce(ok({ data: { items: [change], nextCursor: null } }));
     sendRequest.mockResolvedValueOnce(ok({ data: { id: 'w1', url: 'https://a.com', name: 'A' } }));
     const second = await call({ fn: newWatchChange.run, ctx: triggerContext({ store }) });
@@ -609,8 +626,7 @@ describe('new_watch_change trigger', () => {
   });
 
   it('emits a run that finishes after a newer run was emitted, and a failed run without completedAt', async () => {
-    const { store } = memoryStore();
-    await store.put('lastPoll', NOW);
+    const { store } = seeded();
     const slow = runAt({ id: 's1', created: NOW + 60_000, completed: null, status: 'processing', changed: null });
     const quick = runAt({ id: 'q1', created: NOW + 90_000, completed: NOW + 200_000, status: 'completed', changed: true });
     sendRequest.mockResolvedValueOnce(ok({ data: { items: [quick, slow], nextCursor: null } }));
@@ -623,8 +639,7 @@ describe('new_watch_change trigger', () => {
     const second = await call({ fn: newWatchChange.run, ctx: triggerContext({ store }) });
     expect(second.map((item) => Reflect.get(Object(item), 'id'))).toEqual(['s1']);
 
-    const failStore = memoryStore().store;
-    await failStore.put('lastPoll', NOW);
+    const failStore = seeded().store;
     const pending = runAt({ id: 'f1', created: NOW + 10_000, completed: null, status: 'queued', changed: null });
     const other = runAt({ id: 'o1', created: NOW + 20_000, completed: NOW + 900_000, status: 'failed', changed: null });
     sendRequest.mockResolvedValueOnce(ok({ data: { items: [other, pending], nextCursor: null } }));
@@ -638,19 +653,45 @@ describe('new_watch_change trigger', () => {
   });
 
   it('onEnable forgets an old marker unless the flow is only republished', async () => {
-    const { store, data } = memoryStore();
-    data.set('rendex_runs_scanned_through', 1);
-    data.set('rendex_finished_run_ids', ['x']);
+    const { store, data } = seeded({ scannedThrough: 1, seen: ['x'] });
     await call({ fn: newWatchChange.onEnable, ctx: { ...triggerContext({ store }), isRepublish: true } });
-    expect(data.get('rendex_runs_scanned_through')).toBe(1);
+    expect(stateIn({ data })).toEqual({ since: NOW, scannedThrough: 1, seen: ['x'] });
     await call({ fn: newWatchChange.onEnable, ctx: triggerContext({ store }) });
-    expect(data.has('rendex_runs_scanned_through')).toBe(false);
-    expect(data.has('rendex_finished_run_ids')).toBe(false);
+    expect(stateIn({ data }).seen).toEqual([]);
+    expect(stateIn({ data }).since).toBeGreaterThan(NOW);
+  });
+
+  it('keeps every run for the next poll when the checkpoint write fails, then emits it exactly once', async () => {
+    const { store, data } = seeded({ seen: ['r0'] });
+    const change = runAt({ id: 'r1', created: NOW + 60_000, completed: NOW + 70_000, status: 'completed', changed: true });
+    const failingStore = { ...store, put: async () => { throw new Error('store unavailable'); } };
+    sendRequest.mockResolvedValueOnce(ok({ data: { items: [change], nextCursor: null } }));
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: 'w1', url: 'https://a.com', name: 'A' } }));
+    await expect(call({ fn: newWatchChange.run, ctx: triggerContext({ store: failingStore }) })).rejects.toThrow('store unavailable');
+    expect(stateIn({ data })).toEqual({ since: NOW, scannedThrough: NOW, seen: ['r0'] });
+    sendRequest.mockResolvedValueOnce(ok({ data: { items: [change], nextCursor: null } }));
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: 'w1', url: 'https://a.com', name: 'A' } }));
+    const retried = await call({ fn: newWatchChange.run, ctx: triggerContext({ store }) });
+    expect(retried.map((item) => Reflect.get(Object(item), 'id'))).toEqual(['r1']);
+    expect(stateIn({ data }).seen).toEqual(['r1', 'r0']);
+    sendRequest.mockResolvedValueOnce(ok({ data: { items: [change], nextCursor: null } }));
+    expect(await call({ fn: newWatchChange.run, ctx: triggerContext({ store }) })).toEqual([]);
+  });
+
+  it('skips runs that finished before the trigger was enabled and starts fresh when no checkpoint exists', async () => {
+    const { store, data } = seeded();
+    const before = runAt({ id: 'b1', created: NOW - 120_000, completed: NOW - 60_000, status: 'completed', changed: true });
+    sendRequest.mockResolvedValueOnce(ok({ data: { items: [before], nextCursor: null } }));
+    expect(await call({ fn: newWatchChange.run, ctx: triggerContext({ store }) })).toEqual([]);
+    expect(stateIn({ data }).seen).toEqual(['b1']);
+    const empty = memoryStore();
+    expect(await call({ fn: newWatchChange.run, ctx: triggerContext({ store: empty.store }) })).toEqual([]);
+    expect(stateIn({ data: empty.data }).seen).toEqual([]);
+    expect(sendRequest).toHaveBeenCalledTimes(1);
   });
 
   it('lets an API failure fail the poll instead of returning nothing', async () => {
-    const { store } = memoryStore();
-    await store.put('lastPoll', NOW);
+    const { store } = seeded();
     sendRequest.mockRejectedValueOnce(httpError({ status: 500, body: vendorError({ code: 'INTERNAL_ERROR', message: 'Boom' }) }));
     await expect(call({ fn: newWatchChange.run, ctx: triggerContext({ store }) })).rejects.toThrow('HTTP 500 INTERNAL_ERROR');
   });
