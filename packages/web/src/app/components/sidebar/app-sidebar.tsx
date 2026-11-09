@@ -227,11 +227,11 @@ function PlatformHeader() {
   return (
     <SidebarHeader>
       <SidebarMenu>
-        <SidebarMenuItem>
+        <SidebarMenuItem className="flex items-center gap-1">
           <SidebarMenuButton
             asChild
             tooltip={t('Back to app')}
-            className="pr-10 group-data-[collapsible=icon]:pr-2"
+            className="min-w-0 flex-1"
           >
             <Link
               to={defaultRoute}
@@ -244,26 +244,26 @@ function PlatformHeader() {
               </span>
             </Link>
           </SidebarMenuButton>
-          <HeaderActions>
+          <div className="shrink-0 group-data-[collapsible=icon]:hidden">
             <HeaderIconButton
               label={t('Close sidebar')}
               icon={PanelLeftClose}
               onClick={toggleSidebar}
             />
-          </HeaderActions>
+          </div>
+        </SidebarMenuItem>
+        <SidebarMenuItem className="hidden group-data-[collapsible=icon]:block">
+          <SidebarMenuButton
+            tooltip={t('Open sidebar')}
+            aria-label={t('Open sidebar')}
+            aria-expanded={false}
+            className="text-gray-11"
+            onClick={toggleSidebar}
+          >
+            <PanelLeftOpen />
+          </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
-      <CollapsedOnlyRow>
-        <SidebarMenuButton
-          tooltip={t('Open sidebar')}
-          aria-label={t('Open sidebar')}
-          aria-expanded={false}
-          className="text-gray-11"
-          onClick={toggleSidebar}
-        >
-          <PanelLeftOpen />
-        </SidebarMenuButton>
-      </CollapsedOnlyRow>
     </SidebarHeader>
   );
 }
