@@ -4,11 +4,6 @@ import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
 import { tableService } from '../../tables/table/table.service'
 
-export async function resolveInternalTableId({ projectId, tableId }: { projectId: string, tableId: string }): Promise<string | null> {
-    const table = await resolveTable({ projectId, tableId })
-    return table?.id ?? null
-}
-
 export async function resolveTable({ projectId, tableId }: { projectId: string, tableId: string }): Promise<Table | null> {
     const byId = await tryCatch(() => tableService.getOneOrThrow({ projectId, id: tableId }))
     if (!byId.error) {
