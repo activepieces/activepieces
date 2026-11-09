@@ -11,6 +11,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authenticationApi } from '@/api/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
+import { tokenFixtures } from '../helpers/user-token';
+
 vi.mock('@/api/authentication-api', () => ({
   authenticationApi: {
     switchPlatform: vi.fn(),
@@ -23,6 +25,7 @@ vi.mock('@/app/query-client', () => ({
   },
 }));
 
+const { userToken } = tokenFixtures;
 const switchPlatform = vi.mocked(authenticationApi.switchPlatform);
 
 beforeEach(() => {
@@ -263,18 +266,3 @@ function switchResponse({
   };
 }
 
-function userToken({
-  platformId,
-  userId,
-}: {
-  platformId: string;
-  userId: string;
-}): string {
-  const encode = (value: object): string =>
-    Buffer.from(JSON.stringify(value)).toString('base64url');
-  return [
-    encode({ alg: 'HS256', typ: 'JWT' }),
-    encode({ id: userId, type: 'USER', platform: { id: platformId } }),
-    'signature',
-  ].join('.');
-}
