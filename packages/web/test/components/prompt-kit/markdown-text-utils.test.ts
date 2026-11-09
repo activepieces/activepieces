@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { markdownTextUtils } from './markdown-text-utils';
+import { markdownTextUtils } from '@/components/prompt-kit/markdown-text-utils';
 
 const ORIGIN = 'https://app.example.com';
 

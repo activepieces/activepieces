@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-import { railUtils } from './rail-collapsed';
+import { railUtils } from '@/features/workspace/lib/rail-collapsed';
 
 const base = {
   preference: false,
