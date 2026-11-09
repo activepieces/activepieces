@@ -45,6 +45,7 @@ describe('chat panel conversation', () => {
   beforeEach(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
+    window.localStorage.setItem('token', userToken({ userId: 'user-a' }));
   });
 
   it('starts a new tab on the last chat', () => {
@@ -65,10 +66,26 @@ describe('chat panel conversation', () => {
     expect(store.getState().conversationId).toBeNull();
   });
 
+  it('does not open the chat of the previous user in the same tab', () => {
+    loadStore().getState().conversationCreated('chat-of-a');
+    window.localStorage.setItem('token', userToken({ userId: 'user-b' }));
+
+    const store = loadStore();
+
+    expect(store.getState().conversationId).toBeNull();
+  });
+
+  it('does not send another user back to the last page of the previous one', () => {
+    loadStore().getState().setLastPage('/projects/p1/runs');
+    window.localStorage.setItem('token', userToken({ userId: 'user-b' }));
+
+    expect(loadStore().getState().lastPage).toBeNull();
+  });
+
   it('keeps each tab on its own chat', () => {
     const store = loadStore();
     store.getState().conversationCreated('one');
-    window.sessionStorage.setItem('chat:conv', 'two');
+    window.sessionStorage.setItem('chat:conv:platform-a:user-a', 'two');
     const otherTab = loadStore();
     expect(otherTab.getState().conversationId).toBe('two');
   });

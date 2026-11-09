@@ -195,53 +195,58 @@ function save({ open, mode, dockWidth }: SavedChatPanel) {
 }
 
 function readConversationId(): string | null {
-  const tab = safeStorage.read({ area: 'session', key: TAB_CONVERSATION_KEY });
+  const owner = sessionOwner();
+  if (isNil(owner)) return null;
+  const tabKey = keyFor({ base: TAB_CONVERSATION_KEY, owner });
+  const tab = safeStorage.read({ area: 'session', key: tabKey });
   if (tab !== null) return tab || null;
-  const lastKey = lastConversationKey();
-  const seeded = isNil(lastKey)
-    ? null
-    : safeStorage.read({ area: 'local', key: lastKey });
-  safeStorage.write({
-    area: 'session',
-    key: TAB_CONVERSATION_KEY,
-    value: seeded ?? '',
+  const seeded = safeStorage.read({
+    area: 'local',
+    key: keyFor({ base: LAST_CONVERSATION_KEY, owner }),
   });
+  safeStorage.write({ area: 'session', key: tabKey, value: seeded ?? '' });
   return seeded;
 }
 
 function saveConversationId(conversationId: string | null) {
+  const owner = sessionOwner();
+  if (isNil(owner)) return;
   safeStorage.write({
     area: 'session',
-    key: TAB_CONVERSATION_KEY,
+    key: keyFor({ base: TAB_CONVERSATION_KEY, owner }),
     value: conversationId ?? '',
   });
-  const lastKey = lastConversationKey();
-  if (conversationId && !isNil(lastKey)) {
-    safeStorage.write({ area: 'local', key: lastKey, value: conversationId });
+  if (conversationId) {
+    safeStorage.write({
+      area: 'local',
+      key: keyFor({ base: LAST_CONVERSATION_KEY, owner }),
+      value: conversationId,
+    });
   }
 }
 
 function forgetConversation(conversationId: string): void {
-  if (
-    safeStorage.read({ area: 'session', key: TAB_CONVERSATION_KEY }) ===
-    conversationId
-  ) {
-    safeStorage.write({ area: 'session', key: TAB_CONVERSATION_KEY, value: '' });
+  const owner = sessionOwner();
+  if (isNil(owner)) return;
+  const tabKey = keyFor({ base: TAB_CONVERSATION_KEY, owner });
+  if (safeStorage.read({ area: 'session', key: tabKey }) === conversationId) {
+    safeStorage.write({ area: 'session', key: tabKey, value: '' });
   }
-  const lastKey = lastConversationKey();
-  if (
-    !isNil(lastKey) &&
-    safeStorage.read({ area: 'local', key: lastKey }) === conversationId
-  ) {
+  const lastKey = keyFor({ base: LAST_CONVERSATION_KEY, owner });
+  if (safeStorage.read({ area: 'local', key: lastKey }) === conversationId) {
     safeStorage.remove({ area: 'local', key: lastKey });
   }
 }
 
-function lastConversationKey(): string | null {
+function sessionOwner(): string | null {
   const userId = authenticationSession.getCurrentUserId();
   if (isNil(userId)) return null;
   const platformId = authenticationSession.getPlatformId() ?? 'none';
-  return `${LAST_CONVERSATION_KEY}:${platformId}:${userId}`;
+  return `${platformId}:${userId}`;
+}
+
+function keyFor({ base, owner }: { base: string; owner: string }): string {
+  return `${base}:${owner}`;
 }
 
 function readAutoFollow(): boolean {
@@ -249,14 +254,33 @@ function readAutoFollow(): boolean {
 }
 
 function readLastPage(): string | null {
-  return safeStorage.read({ area: 'session', key: TAB_LAST_PAGE_KEY });
+  const owner = sessionOwner();
+  if (isNil(owner)) return null;
+  return safeStorage.read({
+    area: 'session',
+    key: keyFor({ base: TAB_LAST_PAGE_KEY, owner }),
+  });
 }
 
-function forgetSignedOutUser(): void {
-  if (!isNil(authenticationSession.getToken())) return;
-  safeStorage.remove({ area: 'session', key: TAB_CONVERSATION_KEY });
-  safeStorage.remove({ area: 'session', key: TAB_LAST_PAGE_KEY });
-  useChatPanel.setState({ conversationId: null, lastPage: null });
+function syncWithSession(): void {
+  const owner = sessionOwner();
+  const previous = useChatPanel.getState().owner;
+  if (owner === previous) return;
+  if (!isNil(previous) && isNil(authenticationSession.getToken())) {
+    safeStorage.remove({
+      area: 'session',
+      key: keyFor({ base: TAB_CONVERSATION_KEY, owner: previous }),
+    });
+    safeStorage.remove({
+      area: 'session',
+      key: keyFor({ base: TAB_LAST_PAGE_KEY, owner: previous }),
+    });
+  }
+  useChatPanel.setState({
+    owner,
+    conversationId: readConversationId(),
+    lastPage: readLastPage(),
+  });
 }
 
 let router: ChatRouter | null = null;
@@ -293,6 +317,7 @@ const initChatPanel = (
   };
   return {
     ...readSaved(),
+    owner: sessionOwner(),
     conversationId: readConversationId(),
     lastPage: readLastPage(),
     autoFollow: readAutoFollow(),
@@ -352,9 +377,11 @@ const initChatPanel = (
     setLastPage: (lastPage) => {
       if (lastPage === get().lastPage) return;
       set({ lastPage });
+      const owner = sessionOwner();
+      if (isNil(owner)) return;
       safeStorage.write({
         area: 'session',
-        key: TAB_LAST_PAGE_KEY,
+        key: keyFor({ base: TAB_LAST_PAGE_KEY, owner }),
         value: lastPage,
       });
     },
@@ -363,7 +390,7 @@ const initChatPanel = (
 
 export const useChatPanel = createChatPanelStore();
 
-authenticationSession.subscribe(forgetSignedOutUser);
+authenticationSession.subscribe(syncWithSession);
 
 export const chatPanelUtils = {
   createStore: createChatPanelStore,
@@ -420,6 +447,7 @@ type SavedChatPanel = {
 };
 
 type ChatPanelState = SavedChatPanel & {
+  owner: string | null;
   conversationId: string | null;
   lastPage: string | null;
   autoFollow: boolean;

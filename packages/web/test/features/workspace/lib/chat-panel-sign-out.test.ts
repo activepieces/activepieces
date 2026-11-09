@@ -15,8 +15,14 @@ describe('chat panel on sign out', () => {
       'chat:last-conv:platform-a:user-a',
       'conv-of-user-a',
     );
-    window.sessionStorage.setItem('chat:conv', 'conv-of-user-a');
-    window.sessionStorage.setItem('chat:last-page', '/projects/p1/runs');
+    window.sessionStorage.setItem(
+      'chat:conv:platform-a:user-a',
+      'conv-of-user-a',
+    );
+    window.sessionStorage.setItem(
+      'chat:last-page:platform-a:user-a',
+      '/projects/p1/runs',
+    );
   });
 
   it('forgets the open chat and page of the signed out user', async () => {
@@ -30,8 +36,12 @@ describe('chat panel on sign out', () => {
 
     authenticationSession.clearSession();
 
-    expect(window.sessionStorage.getItem('chat:conv')).toBeNull();
-    expect(window.sessionStorage.getItem('chat:last-page')).toBeNull();
+    expect(
+      window.sessionStorage.getItem('chat:conv:platform-a:user-a'),
+    ).toBeNull();
+    expect(
+      window.sessionStorage.getItem('chat:last-page:platform-a:user-a'),
+    ).toBeNull();
     expect(useChatPanel.getState().conversationId).toBeNull();
     expect(useChatPanel.getState().lastPage).toBeNull();
   });
@@ -47,9 +57,9 @@ describe('chat panel on sign out', () => {
     expect(
       window.localStorage.getItem('chat:last-conv:platform-a:user-a'),
     ).toBe('conv-of-user-a');
-    expect(window.sessionStorage.getItem('chat:last-page')).toBe(
-      '/projects/p1/runs',
-    );
+    expect(
+      window.sessionStorage.getItem('chat:last-page:platform-a:user-a'),
+    ).toBe('/projects/p1/runs');
   });
 });
 
