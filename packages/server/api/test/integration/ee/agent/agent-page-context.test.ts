@@ -44,7 +44,7 @@ describe('page context on a chat message', () => {
         expect(foreignJob.pageContext).toBeUndefined()
         expect(ownJob.pageContext).toEqual(pageContext)
         expect(config.messages.at(-1)).toEqual({ role: 'user', content: [{ type: 'text', text: note }, { type: 'text', text: 'hello' }] })
-        expect(JSON.stringify(stored.messages)).toContain(note)
+        expect(stored.messages).toContainEqual(expect.objectContaining({ role: 'user', content: expect.arrayContaining([{ type: 'text', text: note }]) }))
         expect(JSON.stringify(stored.uiMessages)).not.toContain('[Page context]')
     })
 
