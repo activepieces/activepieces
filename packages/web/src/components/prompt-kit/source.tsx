@@ -68,12 +68,24 @@ function Source({ href, title, className }: SourceProps) {
       </AppLink>
     );
   }
+  if (link.kind !== 'external') {
+    return (
+      <span
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs text-gray-12/80',
+          className,
+        )}
+      >
+        <span className="max-w-[200px] truncate">{title ?? domain}</span>
+      </span>
+    );
+  }
 
   return (
     <HoverCard openDelay={300} closeDelay={100}>
       <HoverCardTrigger asChild>
         <a
-          href={href}
+          href={link.href}
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
