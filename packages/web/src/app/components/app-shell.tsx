@@ -35,6 +35,7 @@ import { ChatNotch } from './chat-panel/chat-notch';
 import {
   ChatPanel,
   ChatSheetLauncher,
+  useChatSheetLauncherShown,
   useChatWidth,
 } from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
@@ -102,6 +103,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
   const isPlatform = handle.shell === 'platform';
   const isBuilder = handle.shell === 'builder';
   const chatWidth = useChatWidth();
+  const launcherShown = useChatSheetLauncherShown();
   const tightInset = isBuilder && chatWidth !== 'left' && chatWidth !== 'right';
   const headerProjectId =
     handle.projectHeader === true && !isNil(projectId) && projectId !== ''
@@ -171,7 +173,14 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                     <ProjectHeader projectId={headerProjectId} />
                   )}
                   {handle.shell === 'project' && <CreditsUsageAlert />}
-                  <div className={PAGE_CLASS[handle.shell]}>
+                  <div
+                    className={cn(
+                      PAGE_CLASS[handle.shell],
+                      chatOn &&
+                        launcherShown &&
+                        'pb-[calc(env(safe-area-inset-bottom)+68px)]',
+                    )}
+                  >
                     <Suspense fallback={<PageFallback />}>
                       <Outlet />
                     </Suspense>
