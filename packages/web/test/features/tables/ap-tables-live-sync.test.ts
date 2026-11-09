@@ -245,6 +245,36 @@ describe('table live sync', () => {
     ).toEqual([{}, {}]);
   });
 
+  it('moves the selected cell into the grid when its column is deleted', async () => {
+    const store = createApTableStore(
+      table,
+      [nameField, emailField],
+      [record('r1', 'a')],
+    );
+    store.getState().setSelectedCell({ rowIdx: 0, columnIdx: 2 });
+
+    store.getState().deleteField(1);
+    await store.getState().waitForSaves();
+
+    expect(store.getState().selectedCell).toEqual({ rowIdx: 0, columnIdx: 1 });
+  });
+
+  it('moves the selected cell into the grid when the chat removes its column', () => {
+    const store = createApTableStore(
+      table,
+      [nameField, emailField],
+      [record('r1', 'a')],
+    );
+    store.getState().setSelectedCell({ rowIdx: 0, columnIdx: 2 });
+
+    store.getState().applyServerFields({
+      fields: [nameField],
+      since: tableSyncClock.tick(),
+    });
+
+    expect(store.getState().selectedCell).toEqual({ rowIdx: 0, columnIdx: 1 });
+  });
+
   it('picks up a field the chat added and keeps the rows', () => {
     const store = createApTableStore(table, [nameField], [record('r1', 'a')]);
     const row = store.getState().records[0].uuid;

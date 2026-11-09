@@ -91,11 +91,18 @@ const ApTableEditorPage = () => {
   const isAllowedToCreateRecord =
     canEdit && maxRecords && records.length < maxRecords;
 
-  const firstSheenRow = rowSheen.firstRow;
+  const firstSheenIndex = rowSheen.firstRow?.index ?? null;
+  const firstSheenToken = rowSheen.firstRow?.token ?? null;
   useEffect(() => {
-    if (firstSheenRow === null || !aiHighlight.claimScroll()) return;
-    gridRef.current?.scrollToCell({ rowIdx: firstSheenRow.index, idx: 0 });
-  }, [firstSheenRow?.token, firstSheenRow?.index]);
+    if (
+      firstSheenIndex === null ||
+      firstSheenToken === null ||
+      !aiHighlight.claimScroll()
+    ) {
+      return;
+    }
+    gridRef.current?.scrollToCell({ rowIdx: firstSheenIndex, idx: 0 });
+  }, [firstSheenIndex, firstSheenToken]);
 
   const createEmptyRecord = () => {
     createRecord({
@@ -129,7 +136,7 @@ const ApTableEditorPage = () => {
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [selectedCell]);
+  }, [selectedCell, setSelectedCell]);
 
   const columns = useTableColumns(createEmptyRecord);
   const rows = mapRecordsToRows(records, fields);

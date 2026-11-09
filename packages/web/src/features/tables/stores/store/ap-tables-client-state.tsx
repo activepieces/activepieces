@@ -344,6 +344,10 @@ export const createApTableStore = (
                 })),
             })),
             fields: state.fields.filter((_, index) => index !== fieldIndex),
+            selectedCell: clampSelectedCell({
+              selectedCell: state.selectedCell,
+              fieldsCount: state.fields.length - 1,
+            }),
           };
         });
       },
@@ -414,6 +418,10 @@ export const createApTableStore = (
         );
         set((state) => ({
           fields: fresh.map(mapFieldToClientField),
+          selectedCell: clampSelectedCell({
+            selectedCell: state.selectedCell,
+            fieldsCount: fresh.length,
+          }),
           records: state.records.map((row) => {
             const record = recordByRow.get(row.uuid);
             return record
@@ -496,6 +504,20 @@ function compareUpdated({
 }): number {
   const diff = Date.parse(incoming) - Date.parse(local);
   return Number.isNaN(diff) ? 0 : Math.sign(diff);
+}
+
+function clampSelectedCell({
+  selectedCell,
+  fieldsCount,
+}: {
+  selectedCell: TableState['selectedCell'];
+  fieldsCount: number;
+}): TableState['selectedCell'] {
+  if (selectedCell === null || fieldsCount === 0) return null;
+  const columnIdx = Math.min(selectedCell.columnIdx, fieldsCount);
+  return columnIdx === selectedCell.columnIdx
+    ? selectedCell
+    : { ...selectedCell, columnIdx };
 }
 
 function newRow(values: ClientCellData[]): ClientRecordData {
