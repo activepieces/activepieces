@@ -22,7 +22,7 @@ ALTER  ROLE ap_migrator SET  statement_timeout = 0;
 GRANT  <app_role> TO ap_migrator;
 ```
 
-`<app_role>` is the role that owns the app's tables, usually the role `AP_POSTGRES_URL` connects as. Membership gives `ap_migrator` the ownership rights needed to create and drop indexes. Then set `AP_POSTGRES_MIGRATION_URL=postgres://ap_migrator:<password>@<host>:<port>/<database>` on the API. Behind a connection pooler, give this role its own small pool (size 3) and use that pool's URL. `SET statement_timeout = 0` from the app does not work behind a transaction pooler.
+`<app_role>` is the role `AP_POSTGRES_URL` connects as. Then set `AP_POSTGRES_MIGRATION_URL=postgres://ap_migrator:<password>@<host>:<port>/<database>` on the API. Behind a connection pooler, give this role its own small pool (size 3) and use that pool's URL. `SET statement_timeout = 0` from the app does not work behind a transaction pooler.
 
 #### Code steps run on Deno by default
 
@@ -65,7 +65,7 @@ When you republish a flow and its polling trigger is unchanged (same piece, vers
 
 #### What you need to do
 
-Nothing for official pieces. If a custom polling piece creates something outside the store in `onEnable`, such as a resource in a third-party app, save its ID in the store and reuse it when `context.isRepublish` is `true`. Otherwise each upgrade creates a second one. Pass the whole `context` to `pollingHelper` (`pollingHelper.onEnable(polling, context)`), and keep existing custom checkpoints in `onEnable` when `context.isRepublish` is `true`. Otherwise an upgrade can reset the checkpoint and skip events. See [Republishing a running flow](/build-pieces/piece-reference/triggers/polling-trigger#republishing-a-running-flow). To reset a polling trigger with bad state, turn the flow off and on. Republishing no longer resets it.
+Nothing for official pieces. If a custom polling piece creates something outside the store in `onEnable`, such as a resource in a third-party app, save its ID in the store and reuse it when `context.isRepublish` is `true`. Otherwise each upgrade creates a second one. To reset a polling trigger with bad state, turn the flow off and on. Republishing no longer resets it.
 
 #### Agent MCP tools no longer follow redirects to another host, and the built-in MCP server limits request size
 
