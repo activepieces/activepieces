@@ -55,7 +55,7 @@ Every log record carries:
 | `timeUnixNano` | when the event happened (the event's `created`) |
 | `eventName` | the event name, for example `flow.run.finished` |
 | `severityText` / `severityNumber` | `INFO` / `9` |
-| `body` | the full audit event as a JSON string — the same bytes the Raw JSON format sends |
+| `body` | the full event as a JSON string — the same bytes the Raw JSON format sends |
 | `attributes` | `action`, `id`, `platformId`, `projectId`, `projectDisplayName`, `userId`, `userEmail`, `ip`, plus every field of `data` as a dotted key, for example `data.flowRun.status` |
 
 An attribute is left out when the event does not have that field. Lists inside `data` are sent as one JSON string. Because every field is an attribute, you can filter and alert on it in your backend without a parser — for example `data.flowRun.status:FAILED` in Datadog.
@@ -109,7 +109,7 @@ Where the table says Protobuf, pick **Protobuf**: the backend documents no JSON 
 
 ### Raw JSON
 
-The destination receives the audit event itself as the JSON body, with `Content-Type: application/json`. This is also what every destination created before formats existed keeps sending.
+The destination receives the event itself as the JSON body, with `Content-Type: application/json`. This is also what every destination created before formats existed keeps sending.
 
 - `action` — the event name (for example `flow.run.finished`).
 - `data` — event-specific payload, including details like the flow id, run id, status, or affected user.
@@ -135,7 +135,7 @@ Values are masked as you type; select the eye icon to show one.
 
 The API behaves the same way: `GET` returns each header key with a `null` value, and sending `null` for a key on update keeps whatever is stored.
 
-A stored value is bound to the URL it was saved against. **If you change the URL, you must re-enter every header value in the same save** — as soon as you change the URL, the form asks for a new value on each saved header you have not retyped, and the API answers `400` if an update changes the URL while keeping a stored value. This is what makes "write-only" true: without it, anyone who can edit a destination could point it at their own endpoint and have the next audit event deliver the secret for them.
+A stored value is bound to the URL it was saved against. **If you change the URL, you must re-enter every header value in the same save** — as soon as you change the URL, the form asks for a new value on each saved header you have not retyped, and the API answers `400` if an update changes the URL while keeping a stored value. This is what makes "write-only" true: without it, anyone who can edit a destination could point it at their own endpoint and have the next event deliver the secret for them.
 
 ## Test, enable, and disable
 
@@ -158,13 +158,13 @@ See [Piece catalog events](#piece-catalog-events) below for what fires them and 
 
 ### Piece catalog events
 
-Piece catalog events fire only for **official** pieces, and only for the **latest version** of each piece. Custom and private pieces never send them.
+Piece catalog events fire only for **official** pieces, and only for the **latest version** of each piece. Custom and private pieces do not send them.
 
 By default a destination receives `new`, `major`, and `minor` changes. To also receive patch releases, tick **Also send patch version updates** on the Events step; it appears once you select a piece event. Patch updates are frequent, so leave it off unless you need them.
 
 Through the API, the filter is `eventFilters: { piece: { changeTypes: [...] } }`, with values `new`, `major`, `minor`, and `patch`. Send `eventFilters: null` for the default. The form exposes only the patch toggle, so a filter set through the API with a different list, for example only `new`, is replaced when you save the destination from the UI.
 
-The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `piece.created`, and `major`, `minor`, or `patch` for `piece.version.created`. `pieceSets` lists the piece sets on your platform that include the piece.
+The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `piece.created`, and `major`, `minor`, or `patch` for `piece.version.created`. `pieceSets` lists the piece sets on your platform that include the piece. A piece set's `key` can be `null`.
 
 ```json
 {
@@ -179,7 +179,7 @@ The envelope carries `platformId` but no project or user: there is no `projectId
 ```
 
 <Note>
-Expect a burst after you upgrade Activepieces. The upgrade sends one event for each official piece that is new or has a newer version since your previous release — about 200 events when going from 0.86 to 0.93.
+Expect a burst after you upgrade Activepieces. The upgrade sends one event for each official piece that is new or has a newer version since your previous release — about 200 events when going from 0.86 to 0.93, before your change-type filter applies. With the default filter, fewer arrive.
 </Note>
 
 Delivery is at-least-once. If the background job that detects catalog changes fails partway, its next run can send the same batch again, and every send gets a new `id`, so use `data.piece.name` plus `data.piece.version` as the idempotency key. Activepieces does not replay events your endpoint missed. To catch up after an outage, compare what you have against `GET /v1/pieces`.
@@ -199,7 +199,7 @@ Delivery is at-least-once. If the background job that detects catalog changes fa
 - **`415` or a decode error from an OpenTelemetry backend**: the backend does not accept the selected encoding. Switch the encoding to **Protobuf**.
 - **Test fails**: check that your URL is valid and uses HTTPS. The test reports the status code returned by the endpoint, which usually names the problem.
 - **Missing events**: make sure the event type is selected in your destination configuration.
-- **A field is missing**: the field is not on that event. The four `flow.run.*` events carry no `userId`, `userEmail`, or `ip`, because a worker emits them rather than a user request.
+- **A field is missing**: the field is not on that event. The four `flow.run.*` events carry no `userId`, `userEmail`, or `ip`, because a worker emits them rather than a user request. Piece catalog events carry no `projectId`, `userId`, `userEmail`, or `ip`.
 
 ## See also
 
