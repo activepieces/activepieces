@@ -65,12 +65,20 @@ const AcceptInvitation = () => {
               className="text-lg font-semibold"
               data-testid="invitation-dead-link"
             >
-              {t('This link no longer works')}
+              {t('This invitation is no longer valid')}
             </h1>
             <p className="text-sm text-gray-11">
-              {t('Ask your admin for a new one.')}
+              {t('If you already joined, sign in.')}
             </p>
           </div>
+          <Button
+            size="lg"
+            className="w-full"
+            data-testid="invitation-dead-link-sign-in"
+            onClick={() => navigate('/sign-in')}
+          >
+            {t('Sign in')}
+          </Button>
         </InvitationPanel>
       </InvitationBackdrop>
     );

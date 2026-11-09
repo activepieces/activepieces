@@ -18,6 +18,7 @@ export class InvitationPage extends BasePage {
   }
 
   async expectDeadLink() {
-    await expect(this.page.getByTestId('invitation-dead-link')).toHaveText('This link no longer works');
+    await expect(this.page.getByTestId('invitation-dead-link')).toHaveText('This invitation is no longer valid');
+    await expect(this.page.getByTestId('invitation-dead-link-sign-in')).toBeVisible();
   }
 }

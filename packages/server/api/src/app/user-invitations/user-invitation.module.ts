@@ -8,6 +8,7 @@ import { userIdentityService } from '../authentication/user-identity/user-identi
 import { transaction } from '../core/db/transaction'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { authnRateLimit } from '../core/security/rate-limit'
 import { distributedLock } from '../database/redis-connections'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
@@ -352,6 +353,7 @@ const ListUserInvitationsRequestParams = {
 const PreviewUserInvitationRequestParams = {
     config: {
         security: securityAccess.public(),
+        rateLimit: authnRateLimit,
     },
     schema: {
         querystring: z.object({
@@ -366,6 +368,7 @@ const PreviewUserInvitationRequestParams = {
 const AcceptUserInvitationRequestParams = {
     config: {
         security: securityAccess.public(),
+        rateLimit: authnRateLimit,
     },
     schema: {
         body: z.object({
