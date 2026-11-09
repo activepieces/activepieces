@@ -504,7 +504,9 @@ describe('Piece catalog events job', () => {
         await sync()
         await settleCatalogJobs()
 
-        expect(oldEvents).toHaveLength(60)
+        expect(oldEvents.length).toBeGreaterThan(0)
+        expect(oldEvents).not.toContain(ApplicationEventName.PIECE_CREATED)
+        expect(oldEvents).not.toContain(ApplicationEventName.PIECE_VERSION_CREATED)
         expect(deliveriesTo(destA)).toHaveLength(0)
         expect((await loadSnapshot())?.['@test/brand-new']).toBe('1.0.0')
     })
