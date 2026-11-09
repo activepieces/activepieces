@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, mcpTransport } from '@activepieces/server-utils'
 import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
@@ -6,7 +6,7 @@ import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { agentWorkerTools } from './agent-worker-tools'
-import { cardTitleFields, plainJsonSchema, TaintState } from './tools/tool-primitives'
+import { cardTitleFields, plainJsonSchema, resultMeta, TaintState, withoutForeignApResource } from './tools/tool-primitives'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
@@ -291,7 +291,10 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     if (fileId === null) {
         return null
     }
-    return { content: [{ type: 'text', text: agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
+    return {
+        content: [{ type: 'text', text: agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }],
+        ...spreadIfDefined('_meta', resultMeta(result)),
+    }
 }
 
 function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelectedAuth, saveLargeResult }: {
@@ -343,11 +346,12 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                     }
                     return buildReconnectGuidance({ connectorUuid })
                 }
-                const offloaded = await maybeOffloadMcpResult({ result: toolResult, toolName: name, saveLargeResult })
+                const ownResult = withoutForeignApResource({ toolName: name, result: toolResult })
+                const offloaded = await maybeOffloadMcpResult({ result: ownResult, toolName: name, saveLargeResult })
                 if (offloaded !== null) {
                     return offloaded
                 }
-                return agentWorkerTools.truncateLargeResult(toolResult)
+                return agentWorkerTools.truncateLargeResult(ownResult)
             },
         })
     }

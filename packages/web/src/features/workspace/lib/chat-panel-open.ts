@@ -1,4 +1,5 @@
 import { isNil, isObject } from '@activepieces/core-utils';
+import { t } from 'i18next';
 import { create } from 'zustand';
 
 import { keepComposerFocus } from '@/features/chat/lib/keep-composer-focus';
@@ -24,6 +25,10 @@ function useChatRoute(): string {
   return routeFor(useChatPanel((s) => s.conversationId));
 }
 
+function isFullPage(): boolean {
+  return router?.isFullPage() ?? false;
+}
+
 function startMove(move: ChatMove): void {
   if (
     window.innerWidth >= MOBILE_BREAKPOINT &&
@@ -43,6 +48,30 @@ function expand(): void {
     replace: false,
     state: { [EXPANDED_STATE]: true },
   });
+}
+
+function openBeside({
+  route,
+  push,
+  name,
+}: {
+  route: string;
+  push: boolean;
+  name: string;
+}): void {
+  const current = router;
+  if (!current) return;
+  const { pathname, search } = current.location();
+  const page = route.split('#')[0];
+  if (`${pathname}${search}` === page) return;
+  const panel = useChatPanel.getState();
+  keepComposerFocus.keep();
+  if (current.isFullPage()) {
+    startMove('enter');
+    panel.dock(panel.mode);
+  }
+  current.navigate({ to: route, replace: !push });
+  panel.announce(t('Opened {name} beside the chat.', { name }));
 }
 
 function collapse(side: ChatPanelSide): void {
@@ -184,6 +213,10 @@ function lastConversationKey(): string | null {
   return `${LAST_CONVERSATION_KEY}:${platformId}:${userId}`;
 }
 
+function readAutoFollow(): boolean {
+  return safeStorage.read({ area: 'local', key: AUTO_FOLLOW_KEY }) !== 'false';
+}
+
 function readLastPage(): string | null {
   return safeStorage.read({ area: 'session', key: TAB_LAST_PAGE_KEY });
 }
@@ -204,6 +237,7 @@ const TAB_CONVERSATION_KEY = 'chat:conv';
 const LAST_CONVERSATION_KEY = 'chat:last-conv';
 const TAB_LAST_PAGE_KEY = 'chat:last-page';
 const EXPANDED_STATE = 'chatExpanded';
+const AUTO_FOLLOW_KEY = 'chat:auto-follow';
 const MOVING_GUARD_MS = 900;
 
 const DEFAULTS: SavedChatPanel = {
@@ -231,9 +265,12 @@ const initChatPanel = (
     ...readSaved(),
     conversationId: readConversationId(),
     lastPage: readLastPage(),
+    autoFollow: readAutoFollow(),
     panelMounted: false,
     docks: 0,
+    gateOpen: false,
     moving: null,
+    announcement: null,
     newChatToken: 0,
     pendingPrompt: undefined,
     setOpen: (open) => {
@@ -266,7 +303,18 @@ const initChatPanel = (
       }
       setConversation({ conversationId, pendingPrompt: undefined });
     },
+    setAutoFollow: (autoFollow) => {
+      set({ autoFollow });
+      safeStorage.write({
+        area: 'local',
+        key: AUTO_FOLLOW_KEY,
+        value: String(autoFollow),
+      });
+    },
     setPanelMounted: (panelMounted) => set({ panelMounted }),
+    setGateOpen: (gateOpen) => {
+      if (gateOpen !== get().gateOpen) set({ gateOpen });
+    },
     setMoving: (moving) => {
       if (moving === get().moving) return;
       set({ moving });
@@ -275,6 +323,8 @@ const initChatPanel = (
         ? setTimeout(() => set({ moving: null }), MOVING_GUARD_MS)
         : null;
     },
+    announce: (text) =>
+      set({ announcement: { text, id: (get().announcement?.id ?? 0) + 1 } }),
     setLastPage: (lastPage) => {
       if (lastPage === get().lastPage) return;
       set({ lastPage });
@@ -296,6 +346,8 @@ export const chatPanelUtils = {
   bindRouter,
   routeFor,
   useChatRoute,
+  openBeside,
+  isFullPage,
   expand,
   collapse,
   startNewChat,
@@ -344,9 +396,12 @@ type SavedChatPanel = {
 type ChatPanelState = SavedChatPanel & {
   conversationId: string | null;
   lastPage: string | null;
+  autoFollow: boolean;
   panelMounted: boolean;
   docks: number;
+  gateOpen: boolean;
   moving: ChatMove | null;
+  announcement: { text: string; id: number } | null;
   newChatToken: number;
   pendingPrompt?: string;
   setOpen: (open: boolean) => void;
@@ -356,7 +411,10 @@ type ChatPanelState = SavedChatPanel & {
   conversationCreated: (conversationId: string) => void;
   conversationMissing: () => void;
   showConversation: (conversationId: string | null) => void;
+  setAutoFollow: (autoFollow: boolean) => void;
   setPanelMounted: (panelMounted: boolean) => void;
+  setGateOpen: (gateOpen: boolean) => void;
   setMoving: (moving: ChatMove | null) => void;
+  announce: (text: string) => void;
   setLastPage: (lastPage: string) => void;
 };

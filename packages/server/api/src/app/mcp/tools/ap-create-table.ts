@@ -76,6 +76,7 @@ export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                         folderName: folder.folderName ?? null,
                         fields: createdFields.map(f => ({ id: f.id, externalId: f.externalId, name: f.name, type: f.type })),
                     },
+                    ...mcpUtils.apResourceMeta({ kind: 'table', id: table.id, projectId: mcp.projectId, op: 'create', label: table.name }),
                 }
             }
             catch (err) {

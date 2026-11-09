@@ -33,6 +33,7 @@ import {
 import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
 import { ChatModelPick, chatUtils } from './chat-utils';
+import { pageContextUtils } from './page-context';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 function applyQuickRepliesToStore({
@@ -907,6 +908,7 @@ export function useAgentChat({
         'sending chat message',
       );
 
+      const pageContext = pageContextUtils.current();
       const { error: sendError } = await tryCatch(async () =>
         chatApi.sendMessage({
           conversationId: convId,
@@ -916,6 +918,7 @@ export function useAgentChat({
           ...(options?.messageSource
             ? { messageSource: options.messageSource }
             : {}),
+          ...(pageContext ? { pageContext } : {}),
         }),
       );
       if (sendError && !isStale()) {

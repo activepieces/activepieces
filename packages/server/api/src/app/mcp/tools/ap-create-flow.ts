@@ -40,6 +40,7 @@ export const apCreateFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                         text: `✅ Created flow "${flow.version.displayName}" (id: ${flow.id})${mcpUtils.folderSuffix(folder.folderName)}. Another flow's Call Flow step references it by externalId ${flow.externalId}. The flow has an empty trigger. Next steps:\n1. Use ap_update_trigger to set the trigger (e.g. webhook, schedule, or a piece trigger)\n2. Use ap_add_step to add action steps after the trigger\n3. Use ap_update_step to configure each step's inputs`,
                     }],
                     structuredContent: { flowId: flow.id, externalId: flow.externalId, displayName: flow.version.displayName, folderName: folder.folderName ?? null },
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flow.id, projectId: mcp.projectId, op: 'create', label: flow.version.displayName }),
                 }
             }
             catch (err) {

@@ -65,7 +65,13 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 }));
 
 vi.mock('@/lib/authentication-session', () => ({
-  authenticationSession: { getProjectId: () => 'project-1' },
+  authenticationSession: {
+    getProjectId: () => 'project-1',
+    getCurrentUserId: () => null,
+    getPlatformId: () => null,
+    subscribe: () => () => undefined,
+    appendProjectRoutePrefix: (path: string) => `/projects/project-1${path}`,
+  },
 }));
 
 vi.mock('@/components/custom/searchable-select', () => ({
@@ -97,6 +103,7 @@ vi.mock('@/components/ui/form', () => ({
 
 vi.mock('react-router-dom', () => ({
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
+  useNavigate: () => vi.fn(),
 }));
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
