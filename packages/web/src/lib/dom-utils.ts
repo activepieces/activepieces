@@ -83,6 +83,24 @@ export const isEditableTarget = (target: EventTarget | null): boolean => {
   );
 };
 
+const isPlainLeftClick = (event: {
+  defaultPrevented: boolean;
+  button: number;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+}): boolean => {
+  return (
+    !event.defaultPrevented &&
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey
+  );
+};
+
 function getBlobType(extension: 'json' | 'txt' | 'csv') {
   switch (extension) {
     case 'csv':
@@ -107,3 +125,7 @@ type DownloadFileProps =
       fileName: string;
       extension: 'zip';
     };
+
+export const domUtils = {
+  isPlainLeftClick,
+};

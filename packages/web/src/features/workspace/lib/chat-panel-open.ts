@@ -163,6 +163,19 @@ function saveConversationId(conversationId: string | null) {
   }
 }
 
+function forgetConversation(conversationId: string): void {
+  const owner = sessionOwner();
+  if (isNil(owner)) return;
+  const tabKey = keyFor({ base: TAB_CONVERSATION_KEY, owner });
+  if (safeStorage.read({ area: 'session', key: tabKey }) === conversationId) {
+    safeStorage.write({ area: 'session', key: tabKey, value: '' });
+  }
+  const lastKey = keyFor({ base: LAST_CONVERSATION_KEY, owner });
+  if (safeStorage.read({ area: 'local', key: lastKey }) === conversationId) {
+    safeStorage.remove({ area: 'local', key: lastKey });
+  }
+}
+
 function sessionOwner(): string | null {
   const userId = authenticationSession.getCurrentUserId();
   if (isNil(userId)) return null;
@@ -299,6 +312,7 @@ export const chatPanelUtils = {
   collapse,
   startNewChat,
   showOnFullPage,
+  forgetConversation,
   followRouter,
 };
 
