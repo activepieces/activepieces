@@ -12,6 +12,7 @@ import {
   PersistedAgentMessage,
   ToolProgressEvent,
   AgentMessageSource,
+  AgentPageContext,
   SubagentActivity,
   subagentProgressId,
   SubagentProgressEvent,
@@ -33,6 +34,7 @@ import {
 import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
 import { ChatModelPick, chatUtils } from './chat-utils';
+import { pageContextUtils } from './page-context';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 function applyQuickRepliesToStore({
@@ -377,7 +379,11 @@ export function useAgentChat({
     { name: string; mimeType: AgentAllowedMimeType; data: string }[] | undefined
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
-  const lastSentRef = useRef<{ content: string; files?: File[] } | null>(null);
+  const lastSentRef = useRef<{
+    content: string;
+    files?: File[];
+    pageContext: AgentPageContext | null;
+  } | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const modelPickRef = useRef<ChatModelPick | null>(null);
   const savedPickRef = useRef<ChatModelPick | null>(null);
@@ -799,8 +805,15 @@ export function useAgentChat({
     async (
       content: string,
       files?: File[],
-      options?: { messageSource?: AgentMessageSource },
+      options?: {
+        messageSource?: AgentMessageSource;
+        pageContext?: AgentPageContext | null;
+      },
     ) => {
+      const pageContext =
+        options?.pageContext !== undefined
+          ? options.pageContext
+          : pageContextUtils.current();
       const gen = sessionGenRef.current;
       const isStale = () => gen !== sessionGenRef.current;
       updateSendStatus({ type: 'submitting' });
@@ -811,7 +824,7 @@ export function useAgentChat({
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
-      lastSentRef.current = { content, files };
+      lastSentRef.current = { content, files, pageContext };
 
       const optimisticUser: ChatUIMessage = {
         id: `optimistic-${Date.now()}`,
@@ -917,6 +930,7 @@ export function useAgentChat({
           ...(options?.messageSource
             ? { messageSource: options.messageSource }
             : {}),
+          ...(pageContext ? { pageContext } : {}),
         }),
       );
       if (sendError && !isStale()) {
@@ -960,7 +974,9 @@ export function useAgentChat({
       const lastSent = lastSentRef.current;
       return isNil(lastSent)
         ? sendMessage(fallbackContent)
-        : sendMessage(lastSent.content, lastSent.files);
+        : sendMessage(lastSent.content, lastSent.files, {
+            pageContext: lastSent.pageContext,
+          });
     },
     [sendMessage],
   );

@@ -660,6 +660,8 @@
       0 0 0 1px var(--cast-10), 0 4px 8px -4px var(--cast-10),
       0 16px 32px -12px var(--cast-20);
     --glow-primary: 0 12px 40px -12px color-mix(in oklab, var(--accent-9), transparent 78%);
+    --ai-sheen: color-mix(in oklab, var(--accent-9) 20%, transparent);
+    --ai-sheen-base: color-mix(in oklab, var(--accent-9) 6%, transparent);
   }
 
   [data-theme='dark'] {
@@ -808,6 +810,8 @@
     --cast-10: oklch(100% 0 0 / 9%);
     --cast-20: oklch(0% 0 0 / 45%);
     --glow-primary: 0 12px 40px -12px color-mix(in oklab, var(--accent-9), transparent 65%);
+    --ai-sheen: color-mix(in oklab, var(--accent-10) 32%, transparent);
+    --ai-sheen-base: color-mix(in oklab, var(--accent-10) 10%, transparent);
     --edge: 0 0 0 1px var(--gray-4);
     --panel-shadow:
       0 0 0 1px color-mix(in oklab, var(--gray-12), transparent 92%),
@@ -1361,6 +1365,35 @@
   ::view-transition-new(*) {
     animation: none !important;
   }
+}
+
+.ap-ai-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.ap-ai-sheen-base {
+  position: absolute;
+  inset: 0;
+  background: var(--ai-sheen-base);
+}
+
+.ap-ai-sheen-band {
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--ai-sheen) 50%,
+    transparent 100%
+  );
+  will-change: transform;
 }
 
 @keyframes chat-switcher-in {

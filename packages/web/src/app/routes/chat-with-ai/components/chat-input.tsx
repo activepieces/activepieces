@@ -1,4 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
+import { AgentPageContext } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -27,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
 import { chatDom } from '@/features/chat/lib/chat-dom';
 import { composerCarry } from '@/features/chat/lib/composer-carry';
+import { pageContextUtils } from '@/features/chat/lib/page-context';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
 import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
@@ -55,7 +57,7 @@ export function ChatInput({
   replyStopped?: boolean;
   holdQueued?: boolean;
   chatSession?: number;
-  onSend: (text: string, files?: File[]) => void;
+  onSend: (text: string, files?: File[], options?: SendOptions) => void;
   onStop?: () => void;
   onInputChange?: (hasInput: boolean) => void;
   placeholder?: string;
@@ -201,6 +203,7 @@ export function ChatInput({
     sendQueuedRef.current(
       activeQueued.text,
       activeQueued.files.length > 0 ? activeQueued.files : undefined,
+      { pageContext: activeQueued.pageContext },
     );
   }, [
     activeQueued,
@@ -228,7 +231,12 @@ export function ChatInput({
     }
     setNotice(null);
     if (isStreaming) {
-      setQueued({ text, files: attachedFiles, chatSession });
+      setQueued({
+        text,
+        files: attachedFiles,
+        chatSession,
+        pageContext: pageContextUtils.current(),
+      });
     } else {
       onSend(text, attachedFiles.length > 0 ? attachedFiles : undefined);
     }
@@ -471,7 +479,14 @@ export function ChatInput({
   );
 }
 
-type QueuedMessage = { text: string; files: File[]; chatSession: number };
+type QueuedMessage = {
+  text: string;
+  files: File[];
+  chatSession: number;
+  pageContext: AgentPageContext | null;
+};
+
+type SendOptions = { pageContext?: AgentPageContext | null };
 
 type ComposerNotice = 'alreadyQueued' | 'heldForCard';
 

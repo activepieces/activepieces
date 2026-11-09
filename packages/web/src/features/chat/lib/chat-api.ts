@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
   AgentMessageSource,
+  AgentPageContext,
   type AgentFeedbackReason,
   type AgentHistoryMessage,
   type PersistedAgentMessage,
@@ -87,16 +88,18 @@ async function sendMessage({
   runId,
   files,
   messageSource,
+  pageContext,
 }: {
   conversationId: string;
   content: string;
   runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
   messageSource?: AgentMessageSource;
+  pageContext?: AgentPageContext;
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
     `/v1/agents/conversations/${conversationId}/messages`,
-    { content, runId, files, messageSource },
+    { content, runId, files, messageSource, pageContext },
   );
 }
 
