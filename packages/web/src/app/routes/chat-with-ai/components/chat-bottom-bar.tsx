@@ -18,7 +18,7 @@ import {
 
 import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
-import { ChatInput } from './chat-input';
+import { ChatInput, ComposerHandle } from './chat-input';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
@@ -36,6 +36,10 @@ export function ChatBottomBar({
   placeholder,
   banner,
   recede,
+  composerRef,
+  chatSession,
+  autoFocus,
+  replyStopped,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
   const pendingActionPreview = useChatStoreContext((s) =>
@@ -123,7 +127,7 @@ export function ChatBottomBar({
       {activeCard}
       <div
         className={cn(
-          'overflow-hidden rounded-xl border transition-colors',
+          'overflow-hidden rounded-xl border transition-colors duration-(--dur-micro) ease-[ease]',
           minimal
             ? 'border-transparent bg-transparent hover:bg-gray-3/30'
             : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
@@ -132,6 +136,9 @@ export function ChatBottomBar({
         {banner}
         <ChatInput
           isStreaming={activeCard ? false : isStreaming}
+          replying={isStreaming}
+          replyStopped={replyStopped}
+          holdQueued={activeCard !== null}
           onSend={handleSend}
           onStop={onStop}
           onInputChange={onInputChange}
@@ -139,11 +146,14 @@ export function ChatBottomBar({
           onFocusChange={setComposerEngaged}
           placeholder={
             activeCard
-              ? t('Or reply in your own words')
+              ? t('Answer above, or reply')
               : placeholder ?? t('Reply...')
           }
           rightActions={modelPicker}
           sendBlockedReason={sendBlockedReason}
+          ref={composerRef}
+          chatSession={chatSession}
+          autoFocus={autoFocus}
         />
       </div>
     </div>
@@ -223,4 +233,8 @@ type ChatBottomBarProps = {
   placeholder?: string;
   banner?: ReactNode;
   recede?: boolean;
+  composerRef?: React.Ref<ComposerHandle>;
+  chatSession?: number;
+  autoFocus?: boolean;
+  replyStopped?: boolean;
 };
