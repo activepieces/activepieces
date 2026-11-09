@@ -261,6 +261,29 @@ describe('ChatChrome', () => {
     await waitFor(() => expect(mounts.chatBox).toBe(2));
   });
 
+  it('keeps each renamed title when moving between chats', async () => {
+    getConversation.mockImplementation((id: string) =>
+      Promise.resolve(conversation({ id, title: `Old ${id}` })),
+    );
+    updateConversation.mockImplementation(
+      (id: string, request: { title: string }) =>
+        Promise.resolve(conversation({ id, title: request.title })),
+    );
+    renderChrome();
+    await screen.findByText('Old c1');
+    await rename('First');
+    await screen.findByText('First');
+
+    act(() => useChatPanel.getState().showConversation('c2'));
+    await screen.findByText('Old c2');
+    await rename('Second');
+    await screen.findByText('Second');
+
+    act(() => useChatPanel.getState().showConversation('c1'));
+
+    expect(await screen.findByText('First')).toBeTruthy();
+  });
+
   it('puts focus in the new composer after New chat', async () => {
     getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
     renderChrome();
@@ -283,9 +306,9 @@ async function rename(title: string) {
   fireEvent.blur(input);
 }
 
-function conversation({ title }: { title: string }) {
+function conversation({ id = 'c1', title }: { id?: string; title: string }) {
   return {
-    id: 'c1',
+    id,
     created: '',
     updated: '',
     title,

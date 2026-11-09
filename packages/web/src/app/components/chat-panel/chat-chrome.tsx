@@ -1,5 +1,10 @@
 import { tryCatch } from '@activepieces/core-utils';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AgentConversation } from '@activepieces/shared';
+import {
+  QueryClient,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Ellipsis,
@@ -72,7 +77,7 @@ export function ChatChrome() {
   const newChatToken = useChatPanel((s) => s.newChatToken);
   const pendingPrompt = useChatPanel((s) => s.pendingPrompt);
   const queryClient = useQueryClient();
-  const [liveTitle, setLiveTitle] = useState<LiveTitle | null>(null);
+  const [typingId, setTypingId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const renameCancelled = useRef(false);
   const titleInput = useRef<HTMLInputElement>(null);
@@ -99,10 +104,8 @@ export function ChatChrome() {
   const renaming = renamingId !== null && renamingId === conversationId;
   const setRenaming = (on: boolean) =>
     setRenamingId(on ? conversationId : null);
-  const currentLiveTitle = liveTitle?.id === conversationId ? liveTitle : null;
   const { title, loading: titleLoading } = useConversationTitle({
     conversationId,
-    liveTitle: currentLiveTitle?.title ?? null,
   });
 
   const invalidateList = () =>
@@ -128,13 +131,15 @@ export function ChatChrome() {
     setRenaming(false);
     const trimmed = next.trim();
     if (!conversationId || !trimmed || trimmed === title) return;
-    const previous = liveTitle;
-    setLiveTitle({ id: conversationId, title: trimmed, fresh: false });
+    const key = conversationKey(conversationId);
+    const previous = queryClient.getQueryData<AgentConversation | null>(key);
+    setTypingId(null);
+    setCachedTitle({ queryClient, conversationId, title: trimmed });
     const { error } = await tryCatch(() =>
       chatApi.updateConversation(conversationId, { title: trimmed }),
     );
     if (error) {
-      setLiveTitle(previous);
+      queryClient.setQueryData(key, previous);
       toast.error(t('Failed to rename conversation'));
       return;
     }
@@ -218,7 +223,7 @@ export function ChatChrome() {
                 title={title ?? undefined}
                 className="truncate text-sm font-semibold text-gray-12 [grid-area:1/1]"
               >
-                {title && currentLiveTitle?.fresh ? (
+                {title && typingId === conversationId ? (
                   <TypedText text={title} />
                 ) : (
                   title ?? t('New chat')
@@ -284,7 +289,7 @@ export function ChatChrome() {
             conversationId={conversationId}
             newChatToken={newChatToken}
             prompt={pendingPrompt}
-            onLiveTitle={setLiveTitle}
+            onTitleTyped={setTypingId}
           />
         </div>
       </div>
@@ -298,13 +303,13 @@ const ChatBody = memo(function ChatBody({
   conversationId,
   newChatToken,
   prompt,
-  onLiveTitle,
+  onTitleTyped,
 }: {
   full: boolean;
   conversationId: string | null;
   newChatToken: number;
   prompt?: string;
-  onLiveTitle: (title: LiveTitle) => void;
+  onTitleTyped: (conversationId: string) => void;
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -335,7 +340,10 @@ const ChatBody = memo(function ChatBody({
         }}
         onTitleUpdate={(next) => {
           const id = useChatPanel.getState().conversationId;
-          if (id) onLiveTitle({ id, title: next, fresh: true });
+          if (id) {
+            setCachedTitle({ queryClient, conversationId: id, title: next });
+            onTitleTyped(id);
+          }
           invalidate();
         }}
       />
@@ -345,23 +353,46 @@ const ChatBody = memo(function ChatBody({
 
 function useConversationTitle({
   conversationId,
-  liveTitle,
 }: {
   conversationId: string | null;
-  liveTitle: string | null;
 }): { title: string | null; loading: boolean } {
   const { data, isLoading } = useQuery({
-    queryKey: ['chat-conversation', conversationId],
+    queryKey: conversationKey(conversationId),
     queryFn: () =>
       conversationId ? chatApi.getConversation(conversationId) : null,
-    enabled: !!conversationId && !liveTitle,
+    enabled: !!conversationId,
     staleTime: Infinity,
   });
-  const title = liveTitle ?? data?.title ?? null;
+  const title = data?.title ?? null;
   return {
     title: title ? chatUtils.sanitizeTitle(title) : null,
     loading: isLoading,
   };
+}
+
+function setCachedTitle({
+  queryClient,
+  conversationId,
+  title,
+}: {
+  queryClient: QueryClient;
+  conversationId: string;
+  title: string;
+}): void {
+  const key = conversationKey(conversationId);
+  const cached = queryClient.getQueryData<AgentConversation | null>(key);
+  if (!cached) {
+    queryClient.invalidateQueries({ queryKey: key }).catch(() => undefined);
+    return;
+  }
+  queryClient.setQueryData<AgentConversation | null>(key, {
+    ...cached,
+    title,
+  });
+}
+
+function conversationKey(conversationId: string | null) {
+  return ['chat-conversation', conversationId];
 }
 
 function LayoutMenu() {
@@ -593,4 +624,3 @@ function TypedText({ text }: { text: string }) {
 const TITLE_EASE = [0.22, 1, 0.36, 1] as const;
 const TYPE_STEP_MS = 24;
 
-type LiveTitle = { id: string; title: string; fresh: boolean };
