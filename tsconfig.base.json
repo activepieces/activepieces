@@ -325,6 +325,9 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
+      "@activepieces/piece-cloro": [
+        "packages/pieces/community/cloro/src/index.ts"
+      ],
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
