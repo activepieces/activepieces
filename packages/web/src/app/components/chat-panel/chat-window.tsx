@@ -234,7 +234,7 @@ export function ChatPanel() {
         <div
           style={phone ? undefined : { width: full ? '100%' : `${width}px` }}
           className={cn(
-            'flex flex-col',
+            '@container/chat flex flex-col',
             phone
               ? 'min-h-0 flex-1'
               : ['absolute inset-y-0', side === 'left' ? 'left-0' : 'right-0'],
@@ -300,12 +300,17 @@ export function ChatPanel() {
 }
 
 export function ChatSheetLauncher() {
+  const shown = useChatSheetLauncherShown();
+  const sheet = useChatSheet();
+  if (!shown) return null;
+  return <ChatSheetPill onOpen={sheet.show} />;
+}
+
+export function useChatSheetLauncherShown(): boolean {
   const chatWidth = useChatWidth();
   const hasConversation = useChatPanel((s) => s.conversationId !== null);
   const phone = windowSizeHooks.useIsPhone();
-  const sheet = useChatSheet();
-  if (chatWidth !== 'closed' || !phone || !hasConversation) return null;
-  return <ChatSheetPill onOpen={sheet.show} />;
+  return chatWidth === 'closed' && phone && hasConversation;
 }
 
 function ChatAnnouncer() {

@@ -259,7 +259,12 @@ export function ChatInput({
                 ? t('One message is already waiting. Cancel it to change it.')
                 : t('Sends when the reply ends.')}
             </span>
-            <Button variant="ghost" size="xs" onClick={cancelQueued}>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="text-gray-12 underline-offset-2 hover:underline"
+              onClick={cancelQueued}
+            >
               {t('Cancel')}
             </Button>
           </div>
@@ -278,7 +283,10 @@ export function ChatInput({
           value={value}
           onValueChange={handleValueChange}
           onSubmit={handleSubmit}
-          className="border-0 rounded-none shadow-none"
+          className={cn(
+            'border-0 rounded-none shadow-none',
+            !isNil(activeQueued) && 'pt-0',
+          )}
         >
           {attachedFiles.length > 0 && (
             <div className="flex flex-wrap gap-2 px-3">
@@ -354,7 +362,7 @@ export function ChatInput({
                 </PromptInputAction>
                 {leftActions}
               </div>
-              <div className="flex min-w-0 items-center justify-end gap-1">
+              <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
                 {rightActions}
                 {isStreaming && onStop ? (
                   <PromptInputAction

@@ -153,7 +153,11 @@ export function ChatSwitcher({
             autoFocus
             aria-label={t('Chat title')}
             defaultValue={title ?? ''}
-            onFocus={(event) => event.currentTarget.select()}
+            onFocus={(event) => {
+              const input = event.currentTarget;
+              input.setSelectionRange(0, input.value.length, 'backward');
+              input.scrollLeft = 0;
+            }}
             onBlur={(event) => {
               const end = renameEnd.current;
               renameEnd.current = null;
@@ -179,7 +183,7 @@ export function ChatSwitcher({
                 event.currentTarget.blur();
               }
             }}
-            className="h-8 min-w-0 px-2 text-sm font-medium"
+            className="h-8 min-w-0 max-w-md px-2 text-sm font-medium"
           />
         ) : (
           <PopoverTrigger asChild>
@@ -297,7 +301,7 @@ function SwitcherMenu({
   onDelete: () => void;
 }) {
   const [query, setQuery] = useState('');
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(conversationId ?? '');
   const {
     conversations,
     isLoading,
@@ -316,7 +320,7 @@ function SwitcherMenu({
   const [listShown, setListShown] = useState(!isLoading);
   if (!isLoading && !listShown) {
     setListShown(true);
-    setValue('');
+    setValue(conversationId ?? '');
   }
   const autoFollow = useChatPanel((s) => s.autoFollow);
   const following = useFollowAlong(
@@ -333,7 +337,11 @@ function SwitcherMenu({
     : 'none';
   const shown = searching
     ? chatHistoryUtils.filterByTitle({ conversations, query })
-    : conversations.slice(0, RECENT_COUNT);
+    : chatHistoryUtils.recentChats({
+        conversations,
+        currentId: conversationId,
+        count: RECENT_COUNT,
+      });
   const hasChat = conversationId !== null;
   const loadOlder = () => {
     fetchNextPage().catch(() => undefined);
@@ -444,7 +452,7 @@ function SwitcherMenu({
                       : t('Doesn’t open pages for you.')}
                   </span>
                 </span>
-                <span className="text-xs text-gray-11">
+                <span className="text-xs leading-5 text-gray-11">
                   {autoFollow ? t('On') : t('Off')}
                 </span>
               </CommandItem>

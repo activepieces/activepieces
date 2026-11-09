@@ -246,6 +246,35 @@ describe('ChatSwitcher', () => {
     expect(option('Chat 3').contains(marks[0])).toBe(true);
   });
 
+  it('lists and highlights the current chat even when it is older than the recent ones', async () => {
+    useChatPanel.setState({ conversationId: 'c8' });
+    renderChrome();
+    await openSwitcher({ title: 'Chat 8' });
+    await screen.findByText('Chat 5');
+
+    expect(screen.queryByText('Chat 6')).toBeNull();
+    expect(option('Chat 8').getAttribute('aria-current')).toBe('true');
+    expect(optionLabels()[0]).toContain('Chat 8');
+    await waitFor(() =>
+      expect(option('Chat 8').getAttribute('aria-selected')).toBe('true'),
+    );
+    expect(option('Chat 1').getAttribute('aria-selected')).toBe('false');
+  });
+
+  it('opens rename with the title selected from its start', async () => {
+    renderChrome();
+    await openSwitcher();
+    fireEvent.click(option(await screen.findByText('Rename')));
+    const input = await screen.findByRole<HTMLInputElement>('textbox', {
+      name: 'Chat title',
+    });
+
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(input.value.length);
+    expect(input.selectionDirection).toBe('backward');
+    expect(input.scrollLeft).toBe(0);
+  });
+
   it('filters the whole history, not just the recent chats', async () => {
     renderChrome();
     await openSwitcher();

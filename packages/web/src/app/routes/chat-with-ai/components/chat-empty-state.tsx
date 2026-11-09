@@ -98,7 +98,7 @@ function NarrowEmptyState({
   const name = user?.firstName;
   const suggestions = narrowSuggestions({ onResource });
   return (
-    <div className="flex h-full flex-col justify-end gap-3 px-4 pb-3">
+    <div className="flex h-full flex-col justify-end gap-3 px-3 pb-3 @chat-sm/chat:px-6">
       <p className="text-base font-semibold text-gray-12">
         {name
           ? t('Hi {name}, what can I help with?', { name })

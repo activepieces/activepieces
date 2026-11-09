@@ -23,6 +23,14 @@ function claimEscape(event: KeyboardEvent): void {
   event.preventDefault();
 }
 
+function composerFocused(): boolean {
+  const active = document.activeElement;
+  return (
+    active instanceof Element &&
+    active.closest(`[${COMPOSER_ATTRIBUTE}]`) !== null
+  );
+}
+
 function isCardField(target: EventTarget | null): boolean {
   return (
     isEditableTarget(target) &&
@@ -65,6 +73,7 @@ const OPEN_OVERLAYS = overlaySelector('[data-state="open"]');
 
 export const chatDom = {
   composer,
+  composerFocused,
   inChat,
   escapeFree,
   claimEscape,
