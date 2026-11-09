@@ -35,6 +35,8 @@ export enum WebsocketServerEvent {
     JOIN_PRESENCE = 'JOIN_PRESENCE',
     LEAVE_PRESENCE = 'LEAVE_PRESENCE',
     SWITCH_PROJECT = 'SWITCH_PROJECT',
+    JOIN_TABLE_ROOM = 'JOIN_TABLE_ROOM',
+    LEAVE_TABLE_ROOM = 'LEAVE_TABLE_ROOM',
 }
 
 export const LockResourceRequest = z.object({
@@ -96,14 +98,29 @@ export enum TableRecordsChangeOp {
     DELETED = 'DELETED',
     CLEARED = 'CLEARED',
     RELOAD = 'RELOAD',
+    FIELDS_CHANGED = 'FIELDS_CHANGED',
 }
 
-export const TableRecordsChangedEvent = z.object({
+const TableChangeBase = z.object({
     tableId: z.string(),
-    op: z.enum(TableRecordsChangeOp),
-    editorSessionId: z.string().optional(),
-    records: z.array(PopulatedRecord).optional(),
-    recordIds: z.array(z.string()).optional(),
+    editorSessionId: z.string().nullable(),
+})
+
+export const TableRecordsChangedEvent = z.discriminatedUnion('op', [
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.CREATED), records: z.array(PopulatedRecord) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.UPDATED), records: z.array(PopulatedRecord) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.DELETED), recordIds: z.array(z.string()) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.CLEARED) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.RELOAD) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.FIELDS_CHANGED) }),
+])
+
+export const TableRoomRequest = z.object({
+    tableId: z.string(),
+})
+
+export const JoinTableRoomResponse = z.object({
+    joined: z.boolean(),
 })
 
 export const EDITOR_SESSION_ID_HEADER = 'x-ap-editor-session-id'
@@ -121,3 +138,5 @@ export type FlowDraftUpdatedEvent = z.infer<typeof FlowDraftUpdatedEvent>
 export type SwitchProjectRequest = z.infer<typeof SwitchProjectRequest>
 export type SwitchProjectResponse = z.infer<typeof SwitchProjectResponse>
 export type TableRecordsChangedEvent = z.infer<typeof TableRecordsChangedEvent>
+export type TableRoomRequest = z.infer<typeof TableRoomRequest>
+export type JoinTableRoomResponse = z.infer<typeof JoinTableRoomResponse>

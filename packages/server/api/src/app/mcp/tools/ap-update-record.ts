@@ -1,8 +1,7 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { McpToolDefinition, ProjectScopedMcpServer, TableRecordsChangeOp } from '@activepieces/shared'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { recordSideEffects } from '../../tables/record/record-side-effects'
 import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
 import { formatPopulatedRecord, resolveFieldNamesForTable, resolveTable, tableNotFoundError } from './table-utils'
@@ -45,19 +44,12 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     value,
                 }))
 
-                const { record: updated, changed } = await recordService.update({
+                const { record: updated } = await recordService.update({
                     id: recordId,
                     projectId: mcp.projectId,
                     request: { tableId: resolvedTableId, cells },
+                    editorSessionId: null,
                 })
-                if (changed) {
-                    await recordSideEffects(log).onRecordsChanged({
-                        projectId: mcp.projectId,
-                        tableId: resolvedTableId,
-                        change: { op: TableRecordsChangeOp.UPDATED, records: [updated] },
-                        editorSessionId: null,
-                    })
-                }
 
                 return {
                     content: [{

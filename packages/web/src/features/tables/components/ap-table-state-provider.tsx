@@ -239,7 +239,7 @@ function useServerSync({
           ? event.recordIds ?? []
           : [];
       const rowIds = state.applyRecordChanges({
-        records: event.records ?? [],
+        records: 'records' in event ? event.records : [],
         removedIds,
         since,
       });

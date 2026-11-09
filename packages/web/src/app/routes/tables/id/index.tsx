@@ -25,6 +25,7 @@ import {
   ROW_HEIGHT_MAP,
   RowHeight,
 } from '@/features/tables';
+import { useTableRoom } from '@/features/tables/hooks/use-table-room';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -56,6 +57,8 @@ const ApTableEditorPage = () => {
     state.setLockedByOtherUser,
     state.reorderField,
   ]);
+  const tableId = useTableState((state) => state.table.id);
+  useTableRoom({ tableId });
   const rowSheen = useRowSheen(records);
   const renderRow = (
     key: React.Key,
