@@ -89,7 +89,7 @@ function NotchChatIcon() {
       <path d={chatSparkPaths.bubble} />
       <path
         d={chatSparkPaths.spark}
-        className="fill-accent-9 stroke-accent-9 dark:fill-accent-10 dark:stroke-accent-10"
+        className="fill-accent-9 stroke-accent-9"
       />
       {chatSparkPaths.lines.map((d) => (
         <path key={d} d={d} pathLength={1} className="ap-chat-notch-line" />
