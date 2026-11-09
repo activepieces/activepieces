@@ -246,7 +246,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const newUserMessage: ModelMessage = { role: 'user' as const, content: newUserContent }
         const allMessages = isNil(resumedHistory) ? [...previousMessages, newUserMessage] : previousMessages
         const pageNote = agentSurfaceNotes.pageContextNote({ pageContext: input.pageContext })
-        const turnMessages: ModelMessage[] = isNil(resumedHistory) && !isNil(pageNote) ? [...previousMessages, { role: 'user' as const, content: withLeadingNote({ content: newUserContent, note: pageNote }) }] : allMessages
+        const modelUserMessage: ModelMessage = isNil(pageNote) ? newUserMessage : { role: 'user' as const, content: withLeadingNote({ content: newUserContent, note: pageNote }) }
+        const turnMessages = isNil(resumedHistory) ? [...previousMessages, modelUserMessage] : previousMessages
         const fastModelSeesMessages = conversation.source !== AgentRunSource.CHAT
         const modelsSeeingMessages = isNil(tierRun)
             ? [resolvedModelId, ...(fastModelSeesMessages ? [fastModelId] : [])].map((modelId) => ({ provider: providerConfig.provider, modelId }))

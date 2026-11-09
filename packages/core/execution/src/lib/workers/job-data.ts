@@ -310,8 +310,11 @@ export const AgentPromptOverride = z.object({
 })
 export type AgentPromptOverride = z.infer<typeof AgentPromptOverride>
 
+export const ApResourceKind = z.enum(['flow', 'table'])
+export type ApResourceKind = z.infer<typeof ApResourceKind>
+
 export const AgentPageContext = z.object({
-    kind: z.enum(['flow', 'table']),
+    kind: ApResourceKind,
     id: z.string().max(64),
     projectId: z.string().max(64),
     stepName: z.string().max(128).optional(),
