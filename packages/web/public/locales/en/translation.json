@@ -1398,6 +1398,8 @@
   "Onboarding completed": "Onboarding completed",
   "Invitation sent": "Invitation sent",
   "Invitation accepted": "Invitation accepted",
+  "Clicked the invite reward offer": "Clicked the invite reward offer",
+  "Earned invite reward credits": "Earned invite reward credits",
   "Checkout started": "Checkout started",
   "Plan changed": "Plan changed",
   "Plan cancelled": "Plan cancelled",
@@ -3740,5 +3742,11 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Invite teammates, get {credits} credits each": "Invite teammates, get {credits} credits each",
+  "{claimed} of {max} rewards earned": "{claimed} of {max} rewards earned",
+  "Invite a teammate for +{credits}": "Invite a teammate for +{credits}",
+  "Each new teammate who joins earns you {credits} credits ({left} rewards left).": "Each new teammate who joins earns you {credits} credits ({left} rewards left).",
+  "Bonus credits from invites": "Bonus credits from invites",
+  "+{credits} credits: {email} joined your team": "+{credits} credits: {email} joined your team"
 }

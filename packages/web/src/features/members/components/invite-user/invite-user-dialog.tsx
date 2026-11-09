@@ -49,6 +49,7 @@ import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
+import { InviteRewardHint } from '../invite-reward/invite-reward-hint';
 
 import { DefaultProjectsNote } from './default-projects-note';
 import { InvitedProjectSelect } from './invited-project-select';
@@ -413,6 +414,7 @@ const InviteUserDialogInternal = ({
               <DialogTitle>{dialogTitle}</DialogTitle>
               <DialogDescription>{dialogDescription}</DialogDescription>
             </DialogHeader>
+            {!hasLinks && <InviteRewardHint />}
 
             {!hasLinks ? (
               <Form {...form}>

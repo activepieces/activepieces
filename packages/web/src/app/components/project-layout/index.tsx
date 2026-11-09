@@ -11,6 +11,7 @@ import { CompassIcon } from '@/components/icons/compass';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
+import { InviteRewardButton, InviteRewardNotifier } from '@/features/members';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
@@ -172,7 +173,8 @@ function ProjectDashboardLayoutInner({
               {!hideHeader && (
                 <ProjectDashboardLayoutHeader key={currentProjectId} />
               )}
-              <CreditsUsageAlert />
+              <CreditsUsageAlert extraAction={<InviteRewardButton />} />
+              <InviteRewardNotifier />
               <div className="flex-1 overflow-auto">{children}</div>
             </div>
           </div>

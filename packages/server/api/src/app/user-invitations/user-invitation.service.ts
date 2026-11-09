@@ -19,6 +19,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { ProjectEntity } from '../project/project-entity'
 import { userService } from '../user/user-service'
+import { userInvitationHooks } from './user-invitation-hooks'
 import { UserInvitationEntity } from './user-invitation.entity'
 
 export const userInvitationRepo = repoFactory(UserInvitationEntity)
@@ -63,7 +64,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         const context = await loadProvisioningContext({ invitations, log })
         for (const invitation of invitations) {
             log.info({ invitation }, '[provisionUserInvitation] provision')
-            const { user } = await userService(log).getOrCreateWithProject({
+            const { user, created } = await userService(log).getOrCreateWithProject({
                 identity,
                 platformId: invitation.platformId,
             })
@@ -86,6 +87,9 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 }
             }
             await deleteIfUnchanged({ invitation })
+            if (created) {
+                rejectedPromiseHandler(userInvitationHooks.get(log).onInvitedUserJoined({ platformId: invitation.platformId, email: identity.email }), log)
+            }
         }
     },
     async detachProjectFromPlatformInvites({ projectId, entityManager }: DetachProjectFromPlatformInvitesParams): Promise<void> {

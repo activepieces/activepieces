@@ -170,3 +170,21 @@ export const isFreeLegacyEligible = ({ plan, created }: { plan?: string | null, 
     const createdAt = Date.parse(created)
     return !Number.isNaN(createdAt) && createdAt < Date.parse(FREE_LEGACY_CUTOFF_ISO)
 }
+
+export const InviteReward = z.object({
+    id: z.string(),
+    created: z.string(),
+    email: z.string(),
+    credits: z.number(),
+})
+
+export type InviteReward = z.infer<typeof InviteReward>
+
+export const InviteRewardSummary = z.object({
+    eligible: z.boolean(),
+    creditsPerInvite: z.number(),
+    maxRewards: z.number(),
+    rewards: z.array(InviteReward),
+})
+
+export type InviteRewardSummary = z.infer<typeof InviteRewardSummary>

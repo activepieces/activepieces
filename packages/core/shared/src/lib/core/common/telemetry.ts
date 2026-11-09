@@ -66,6 +66,17 @@ type InviteAccepted = {
     type: 'platform' | 'project'
 }
 
+type InviteRewardOfferClicked = {
+    surface: InviteRewardSurface
+    rewardsEarned: number
+}
+
+type InviteRewardGranted = {
+    platformId: string
+    credits: number
+    rewardsEarned: number
+}
+
 type SalesHandoffClicked = {
     featureKey?: string
     plan?: string
@@ -226,6 +237,8 @@ export enum TelemetryEventName {
     TRIAL_STARTED = 'trial.started',
     INVITE_SENT = 'invite.sent',
     INVITE_ACCEPTED = 'invite.accepted',
+    INVITE_REWARD_OFFER_CLICKED = 'invite.reward.offer.clicked',
+    INVITE_REWARD_GRANTED = 'invite.reward.granted',
     SALES_HANDOFF_CLICKED = 'sales.handoff.clicked',
     ADMIN_NAV_LOCKED_CLICKED = 'admin.nav.locked.clicked',
     PLATFORM_ADMIN_PAGE_VIEWED = 'platform.admin.page.viewed',
@@ -240,6 +253,11 @@ export enum TelemetryEventName {
     MEMORY_IMPORT_NUDGE_SHOWN = 'chat.memory_nudge.shown',
     MEMORY_IMPORT_NUDGE_CLICKED = 'chat.memory_nudge.clicked',
     MEMORY_IMPORT_NUDGE_IMPORTED = 'chat.memory_nudge.imported',
+}
+
+export enum InviteRewardSurface {
+    SIDEBAR_CARD = 'sidebar_card',
+    CREDITS_ALERT = 'credits_alert',
 }
 
 export enum ConnectionSwitchChoice {
@@ -294,6 +312,8 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.TRIAL_STARTED, TrialStarted>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_SENT, InviteSent>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_ACCEPTED, InviteAccepted>
+    | BaseTelemetryEvent<TelemetryEventName.INVITE_REWARD_OFFER_CLICKED, InviteRewardOfferClicked>
+    | BaseTelemetryEvent<TelemetryEventName.INVITE_REWARD_GRANTED, InviteRewardGranted>
     | BaseTelemetryEvent<TelemetryEventName.SALES_HANDOFF_CLICKED, SalesHandoffClicked>
     | BaseTelemetryEvent<TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED, AdminNavLockedClicked>
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED, PlatformAdminPageViewed>
@@ -318,6 +338,8 @@ export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new 
     TelemetryEventName.TRIAL_STARTED,
     TelemetryEventName.SALES_HANDOFF_CLICKED,
     TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
+    TelemetryEventName.INVITE_REWARD_OFFER_CLICKED,
+    TelemetryEventName.INVITE_REWARD_GRANTED,
     TelemetryEventName.SIGNED_UP,
     TelemetryEventName.SIGNED_IN,
     TelemetryEventName.SIGN_UP_SUBMITTED,
