@@ -19,18 +19,12 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
     }: AdminRetryRunsRequestBody): Promise<void> => {
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
 
-        let query = flowRunRepo().createQueryBuilder('flow_run').where({
-            id: In(runIds ?? []),
-        })
-        if (!createdBefore) {
-            query = query.andWhere('flow_run.created <= :createdBefore', {
-                createdBefore,
-            })
-        }
-        if (!createdAfter) {
-            query = query.andWhere('flow_run.created >= :createdAfter', {
-                createdAfter,
-            })
+        const query = flowRunRepo().createQueryBuilder('flow_run')
+            .select(['flow_run.id', 'flow_run.projectId'])
+            .where('flow_run.created >= :createdAfter', { createdAfter })
+            .andWhere('flow_run.created <= :createdBefore', { createdBefore })
+        if (!isNil(runIds)) {
+            query.andWhere({ id: In(runIds) })
         }
 
         const flowRuns = await query.getMany()
