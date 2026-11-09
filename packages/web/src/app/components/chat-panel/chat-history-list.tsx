@@ -32,13 +32,11 @@ export function ChatHistoryList({
   onSelect,
   onCurrentDeleted,
   wide = false,
-  className,
 }: {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onCurrentDeleted: () => void;
   wide?: boolean;
-  className?: string;
 }) {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
@@ -65,11 +63,10 @@ export function ChatHistoryList({
     loaded: isSuccess,
   });
 
-  const trimmedQuery = query.trim().toLowerCase();
+  const searching = query.trim().length > 0;
   const shown = useMemo(
-    () =>
-      chatHistoryUtils.filterByTitle({ conversations: all, query: trimmedQuery }),
-    [all, trimmedQuery],
+    () => chatHistoryUtils.filterByTitle({ conversations: all, query }),
+    [all, query],
   );
   const groups = chatHistoryUtils.groupByDay({
     conversations: shown,
@@ -142,7 +139,7 @@ export function ChatHistoryList({
   return (
     <nav
       aria-label={t('Chat history')}
-      className={cn('flex h-full min-h-0 flex-col', className)}
+      className="flex h-full min-h-0 flex-col"
     >
       <div
         ref={listRef}
@@ -180,7 +177,7 @@ export function ChatHistoryList({
             <DataFetchErrorState entity={t('chats')} onRetry={refetch} />
           ) : groups.length === 0 && older !== 'loading' ? (
             <p className="px-3 py-2 text-sm text-gray-11">
-              {trimmedQuery ? t('No chats found') : t('No chats yet')}
+              {searching ? t('No chats found') : t('No chats yet')}
             </p>
           ) : (
             groups.map((group) => (
@@ -221,7 +218,7 @@ export function ChatHistoryList({
           {!isLoading && (
             <OlderChatsRow
               state={older}
-              searching={trimmedQuery.length > 0}
+              searching={searching}
               onLoad={loadOlder}
             />
           )}

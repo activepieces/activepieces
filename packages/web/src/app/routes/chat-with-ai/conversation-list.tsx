@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { chatHistoryUtils } from '@/features/chat/lib/chat-history-utils';
 import {
   chatPendingDeletes,
   usePendingDeletes,
@@ -120,13 +121,14 @@ export function ConversationList({
     loaded: conversationsLoaded,
   });
 
-  const conversations = useMemo(() => {
-    if (!searchQuery.trim()) return allConversations;
-    const query = searchQuery.toLowerCase();
-    return allConversations.filter((c) =>
-      (c.title ?? '').toLowerCase().includes(query),
-    );
-  }, [allConversations, searchQuery]);
+  const conversations = useMemo(
+    () =>
+      chatHistoryUtils.filterByTitle({
+        conversations: allConversations,
+        query: searchQuery,
+      }),
+    [allConversations, searchQuery],
+  );
 
   const checkFades = useCallback(() => {
     const el = listRef.current;
