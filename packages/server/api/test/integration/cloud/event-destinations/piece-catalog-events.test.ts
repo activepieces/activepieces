@@ -1,13 +1,16 @@
 import { apId } from '@activepieces/core-utils'
-import { ApplicationEventName, EngineResponseStatus, EventDestinationScope, PackageType, PieceChangeType, PieceScope, PieceType, WorkerJobType } from '@activepieces/shared'
+import { ApEdition, ApplicationEventName, EngineResponseStatus, EventDestinationScope, PackageType, PieceChangeType, PieceScope, PieceType, WorkerJobType } from '@activepieces/shared'
 import { UnrecoverableError } from 'bullmq'
-import { FastifyInstance } from 'fastify'
+import fastify, { FastifyInstance } from 'fastify'
+import { validatorCompiler } from 'fastify-type-provider-zod'
 import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { adminPlatformModule } from '../../../../src/app/ee/platform/admin/admin-platform.controller'
 import { eventDestinationEntitlementHooks } from '../../../../src/app/ee/platform-webhooks/event-destination-entitlement-hooks'
 import { eventDestinationHooks } from '../../../../src/app/event-destinations/event-destinations-hooks'
 import * as eventDestinationsModule from '../../../../src/app/event-destinations/event-destinations.service'
 import * as flagServiceModule from '../../../../src/app/flags/flag.service'
+import { system } from '../../../../src/app/helper/system/system'
 import { SystemJobName } from '../../../../src/app/helper/system-jobs/common'
 import { systemJobHandlers } from '../../../../src/app/helper/system-jobs/job-handlers'
 import { systemJobsQueue, systemJobsSchedule } from '../../../../src/app/helper/system-jobs/system-job'
@@ -37,6 +40,7 @@ const SNAPSHOT_FLAG_ID = 'PIECE_CATALOG_SNAP'
 const ALL_CHANGE_TYPES: PieceChangeType[] = ['new', 'major', 'minor', 'patch']
 
 let app: FastifyInstance
+let adminApp: FastifyInstance
 let entitledA: TestContext
 let entitledB: TestContext
 let unentitled: TestContext
@@ -222,7 +226,7 @@ async function installCustomPiece({ platformId, name, version }: { platformId: s
 }
 
 async function adminPublish({ name, version }: { name: string, version: string }): Promise<number> {
-    const response = await app.inject({
+    const response = await adminApp.inject({
         method: 'POST',
         url: '/api/v1/admin/pieces',
         headers: { 'api-key': process.env['AP_API_KEY'] ?? '' },
@@ -274,6 +278,14 @@ async function withSyncMode<T>(mode: string, fn: () => Promise<T>): Promise<T> {
     }
 }
 
+async function mountAdminPlatformModule(): Promise<FastifyInstance> {
+    const adminOnly = fastify({ loggerInstance: app.log })
+    adminOnly.setValidatorCompiler(validatorCompiler)
+    await adminOnly.register(adminPlatformModule, { prefix: '/api' })
+    await adminOnly.ready()
+    return adminOnly
+}
+
 async function loadSnapshot(): Promise<Record<string, string> | null> {
     return catalogSnapshotStore(app.log).load()
 }
@@ -284,11 +296,15 @@ beforeAll(async () => {
     entitledA = await createTestContext(app, { plan: { eventStreamingEnabled: true } })
     entitledB = await createTestContext(app, { plan: { eventStreamingEnabled: true } })
     unentitled = await createTestContext(app, { plan: { eventStreamingEnabled: false } })
+    adminApp = system.getEdition() === ApEdition.CLOUD ? app : await mountAdminPlatformModule()
     await systemJobsQueue.removeJobScheduler(SystemJobName.PIECE_CATALOG_RECONCILE)
 })
 
 afterAll(async () => {
     vi.unstubAllGlobals()
+    if (adminApp !== app) {
+        await adminApp.close()
+    }
     if (originalSyncMode === undefined) {
         delete process.env.AP_PIECES_SYNC_MODE
     }
