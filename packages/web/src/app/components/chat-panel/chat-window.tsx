@@ -115,7 +115,7 @@ export function ChatPanel() {
   const [dragWidth, setDragWidth] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
-  const scrimRef = useRef<HTMLDivElement>(null);
+  const scrimRef = useRef<HTMLButtonElement>(null);
   const sheet = useChatSheet();
   const viewportWidth = windowSizeHooks.useWidth();
   const full = chatWidth === 'full';
@@ -204,12 +204,15 @@ export function ChatPanel() {
   return (
     <>
       {phone && (
-        <div
+        <button
+          type="button"
           ref={scrimRef}
-          aria-hidden
+          tabIndex={-1}
+          aria-label={t('Close chat')}
+          aria-hidden={!sheetOpen || undefined}
           onClick={sheet.hide}
           className={cn(
-            'fixed inset-0 z-40 bg-scrim transition-opacity duration-150 ease-move motion-reduce:transition-none',
+            'fixed inset-0 z-40 cursor-default bg-scrim transition-opacity duration-150 ease-move motion-reduce:transition-none',
             !sheetOpen && 'pointer-events-none opacity-0',
           )}
         />
@@ -218,6 +221,8 @@ export function ChatPanel() {
         ref={panelRef}
         id={chatLayoutUtils.PANEL_ID}
         aria-label={t('Chat')}
+        role={phone && sheetOpen ? 'dialog' : undefined}
+        aria-modal={phone && sheetOpen ? true : undefined}
         inert={!visible}
         onPointerDown={phone ? swipe.onPointerDown : undefined}
         onTransitionEnd={(event) => {

@@ -59,15 +59,18 @@ function openBeside({
   name: string;
 }): void {
   const current = router;
-  if (!current || current.location().pathname === route) return;
+  if (!current) return;
+  const { pathname, search, hash } = current.location();
+  const page = route.split('#')[0];
+  if (`${pathname}${search}` === page) return;
   const panel = useChatPanel.getState();
   keepComposerFocus.keep();
   if (current.isFullPage()) {
     startMove('enter');
     panel.dock(panel.mode);
   }
-  if (current.location().hash === SHEET_HASH) {
-    current.navigate({ to: `${route}${SHEET_HASH}`, replace: !push });
+  if (hash === SHEET_HASH) {
+    current.navigate({ to: `${page}${SHEET_HASH}`, replace: !push });
     panel.announce(t('Opened {name} behind the chat.', { name }));
     return;
   }
@@ -338,7 +341,12 @@ export type ChatPanelSide = 'left' | 'right';
 export type ChatMove = 'enter' | 'exit';
 export type ChatRouter = {
   navigate: (target: ChatNavTarget) => void;
-  location: () => { pathname: string; hash: string; state: unknown };
+  location: () => {
+    pathname: string;
+    search: string;
+    hash: string;
+    state: unknown;
+  };
   isFullPage: () => boolean;
 };
 
