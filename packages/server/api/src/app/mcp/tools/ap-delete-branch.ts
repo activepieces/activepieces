@@ -78,6 +78,7 @@ export const apDeleteBranchTool = ({ mcp, userId }: McpToolContext, log: Fastify
                 })
                 return {
                     content: [{ type: 'text', text: `✅ Branch at index ${branchIndex} deleted from router "${routerStepName}".` }],
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'update', label: flow.version.displayName }),
                 }
             }
             catch (err) {

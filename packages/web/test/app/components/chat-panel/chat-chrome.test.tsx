@@ -15,6 +15,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatChrome } from '@/app/components/chat-panel/chat-chrome';
+import { useFollowAlong } from '@/features/chat/lib/follow/follow-along';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 
 const mounts = vi.hoisted(() => ({ chatBox: 0 }));
@@ -31,6 +32,10 @@ vi.mock('sonner', () => ({ toast: { error: toastError } }));
 
 vi.mock('@/app/components/app-shell', () => ({
   useShellHandle: () => ({ shell: 'project' }),
+}));
+
+vi.mock('@/app/components/chat-panel/follow-along-controller', () => ({
+  FollowAlongController: () => null,
 }));
 
 vi.mock('@/app/routes/chat-with-ai/ai-chat-box', () => ({
@@ -188,6 +193,21 @@ describe('ChatChrome', () => {
     await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
 
     expect(document.activeElement).not.toBe(layoutButton);
+  });
+
+  it('offers Stop following only while Follow along is on and following', async () => {
+    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
+    useFollowAlong.setState({ phase: 'editing', following: true });
+    act(() => useChatPanel.getState().setAutoFollow(false));
+    renderChrome();
+    await screen.findByText('Old title');
+
+    expect(screen.queryByRole('button', { name: 'Stop following' })).toBeNull();
+
+    act(() => useChatPanel.getState().setAutoFollow(true));
+
+    expect(screen.getByRole('button', { name: 'Stop following' })).toBeTruthy();
+    act(() => useFollowAlong.setState({ phase: 'idle', following: true }));
   });
 
   it('keeps one label on the history toggle and marks it pressed', () => {

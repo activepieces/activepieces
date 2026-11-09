@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Ellipsis,
+  EyeOff,
   History,
   Maximize2,
   PanelLeft,
@@ -23,10 +24,12 @@ import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -38,6 +41,10 @@ import {
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import {
+  followAlong,
+  useFollowAlong,
+} from '@/features/chat/lib/follow/follow-along';
 import {
   chatPanelUtils,
   useChatPanel,
@@ -350,7 +357,7 @@ function MoreMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-44"
+        className="w-64"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           if (!renameChosen.current) return;
@@ -358,6 +365,8 @@ function MoreMenu({
           renameInput.current?.focus();
         }}
       >
+        <FollowAlongItems />
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => {
             renameChosen.current = true;
@@ -376,6 +385,36 @@ function MoreMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function FollowAlongItems() {
+  const autoFollow = useChatPanel((s) => s.autoFollow);
+  const editing = useFollowAlong((s) => s.phase === 'editing' && s.following);
+  return (
+    <>
+      <DropdownMenuCheckboxItem
+        checked={autoFollow}
+        onCheckedChange={(next) => useChatPanel.getState().setAutoFollow(next)}
+        onSelect={(event) => event.preventDefault()}
+        className="items-start [&>span:first-child]:top-2"
+      >
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span>{t('Follow along')}</span>
+          <span className="text-xs text-gray-11">
+            {autoFollow
+              ? t('Opens what the AI edits.')
+              : t("Doesn't open pages for you.")}
+          </span>
+        </span>
+      </DropdownMenuCheckboxItem>
+      {autoFollow && editing && (
+        <DropdownMenuItem onSelect={followAlong.stopFollowing}>
+          <EyeOff className="size-4" />
+          {t('Stop following')}
+        </DropdownMenuItem>
+      )}
+    </>
   );
 }
 
