@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
+import {
+  AgentConversation,
+  AgentRunSource,
+  SeekPage,
+} from '@activepieces/shared';
+import { InfiniteData, QueryClient } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import {
   chatPendingDeletes,
   usePendingDeletes,
@@ -37,7 +44,12 @@ describe('chatPendingDeletes.removeWithUndo', () => {
     vi.mocked(chatApi.deleteConversation).mockRejectedValue(new Error('x'));
     const onFailed = vi.fn();
     const onDeleted = vi.fn();
-    chatPendingDeletes.removeWithUndo({ id: 'c1', onFailed, onDeleted });
+    chatPendingDeletes.removeWithUndo({
+      queryClient: new QueryClient(),
+      id: 'c1',
+      onFailed,
+      onDeleted,
+    });
 
     toasts.shown.at(-1)?.onAutoClose?.();
 
@@ -51,7 +63,12 @@ describe('chatPendingDeletes.removeWithUndo', () => {
     vi.mocked(chatApi.deleteConversation).mockResolvedValue(undefined);
     const onFailed = vi.fn();
     const onDeleted = vi.fn();
-    chatPendingDeletes.removeWithUndo({ id: 'c2', onFailed, onDeleted });
+    chatPendingDeletes.removeWithUndo({
+      queryClient: new QueryClient(),
+      id: 'c2',
+      onFailed,
+      onDeleted,
+    });
 
     toasts.shown.at(-1)?.onAutoClose?.();
 
@@ -59,5 +76,68 @@ describe('chatPendingDeletes.removeWithUndo', () => {
     expect(onFailed).not.toHaveBeenCalled();
   });
 });
+
+describe('chatPendingDeletes.removeWithUndo after the delete', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    toasts.shown.length = 0;
+  });
+
+  it('drops the row from the cached history before un-hiding it', async () => {
+    vi.mocked(chatApi.deleteConversation).mockResolvedValue(undefined);
+    const queryClient = new QueryClient();
+    const listKey = chatQueryKeys.conversationList();
+    queryClient.setQueryData(listKey, history(['c3', 'c4']));
+    const listedWhenShown: string[][] = [];
+    const stop = usePendingDeletes.subscribe((state, previous) => {
+      if (previous.ids.has('c3') && !state.ids.has('c3')) {
+        listedWhenShown.push(idsIn(queryClient.getQueryData(listKey)));
+      }
+    });
+    const onDeleted = vi.fn();
+    chatPendingDeletes.removeWithUndo({ queryClient, id: 'c3', onDeleted });
+
+    toasts.shown.at(-1)?.onAutoClose?.();
+
+    await vi.waitFor(() => expect(onDeleted).toHaveBeenCalled());
+    stop();
+    expect(listedWhenShown).toEqual([['c4']]);
+  });
+});
+
+function history(ids: string[]): InfiniteData<SeekPage<AgentConversation>> {
+  return {
+    pageParams: [undefined],
+    pages: [
+      {
+        next: null,
+        previous: null,
+        data: ids.map((id) => conversationWith(id)),
+      },
+    ],
+  };
+}
+
+function conversationWith(id: string): AgentConversation {
+  return AgentConversation.parse({
+    id,
+    created: '2026-11-03T10:00:00.000Z',
+    updated: '2026-11-03T10:00:00.000Z',
+    platformId: 'platform-1',
+    userId: 'user-1',
+    source: AgentRunSource.CHAT,
+  });
+}
+
+function idsIn(data: unknown): string[] {
+  if (!isHistory(data)) return [];
+  return data.pages.flatMap((page) => page.data.map((c) => c.id));
+}
+
+function isHistory(
+  data: unknown,
+): data is InfiniteData<SeekPage<AgentConversation>> {
+  return typeof data === 'object' && data !== null && 'pages' in data;
+}
 
 type ToastOptions = { onAutoClose?: () => void };
