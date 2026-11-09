@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  JoinTableRoomResponse,
   PopulatedRecord,
   TableRecordsChangedEvent,
   TableRecordsChangeOp,
@@ -27,14 +28,17 @@ export function useTableRoom({
       socket
         .timeout(JOIN_TIMEOUT_MS)
         .emit(
-          WebsocketServerEvent.JOIN_TABLE,
+          WebsocketServerEvent.JOIN_TABLE_ROOM,
           { tableId },
-          (error: Error | null) => {
+          (error: Error | null, response: unknown) => {
             if (!isNil(error)) {
               errorReporting.report({ error, source: 'table-live-updates' });
               return;
             }
-            onJoined();
+            const parsed = JoinTableRoomResponse.safeParse(response);
+            if (parsed.success && parsed.data.joined) {
+              onJoined();
+            }
           },
         );
     };
@@ -56,7 +60,7 @@ export function useTableRoom({
       socket.off(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onRecordsChanged);
       socket.off('connect', join);
       if (socket.connected) {
-        socket.emit(WebsocketServerEvent.LEAVE_TABLE, { tableId });
+        socket.emit(WebsocketServerEvent.LEAVE_TABLE_ROOM, { tableId });
       }
     };
   }, [socket, tableId, onChange, onJoined]);

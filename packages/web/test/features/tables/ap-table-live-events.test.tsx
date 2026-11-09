@@ -232,14 +232,14 @@ describe('open table live events', () => {
     socket.client.connected = true;
     const { unmount } = mount(queryClient);
 
-    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE]);
+    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE_ROOM]);
     expect(socket.sent[0].payload).toEqual({ tableId: 't1' });
 
     unmount();
 
     expect(sentNames()).toEqual([
-      WebsocketServerEvent.JOIN_TABLE,
-      WebsocketServerEvent.LEAVE_TABLE,
+      WebsocketServerEvent.JOIN_TABLE_ROOM,
+      WebsocketServerEvent.LEAVE_TABLE_ROOM,
     ]);
     expect(socket.sent[1].payload).toEqual({ tableId: 't1' });
   });
@@ -249,7 +249,7 @@ describe('open table live events', () => {
     mount(queryClient);
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
 
-    act(() => socket.sent[0].ack?.(null));
+    act(() => socket.sent[0].ack?.(null, { joined: true }));
 
     expect(invalidatedKeys(queryClient)).toEqual([
       ['table', 't1'],
@@ -258,14 +258,23 @@ describe('open table live events', () => {
     ]);
   });
 
+  it('does not refetch when the server refuses the room', () => {
+    socket.client.connected = true;
+    mount(queryClient);
+
+    act(() => socket.sent[0].ack?.(null, { joined: false }));
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+  });
+
   it('rejoins the room after a reconnect and refetches only after the join is acknowledged', () => {
     mount(queryClient);
 
     socket.serverSends('connect');
-    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE]);
+    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE_ROOM]);
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
 
-    act(() => socket.sent[0].ack?.(null));
+    act(() => socket.sent[0].ack?.(null, { joined: true }));
 
     expect(invalidatedKeys(queryClient)).toEqual([
       ['table', 't1'],
