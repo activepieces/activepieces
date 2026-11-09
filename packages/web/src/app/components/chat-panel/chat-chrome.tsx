@@ -21,7 +21,6 @@ import { toast } from 'sonner';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
 import { ChatDisabledState } from '@/app/routes/chat-with-ai/components/chat-empty-state';
-import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -56,6 +55,8 @@ import { cn } from '@/lib/utils';
 
 import { useShellHandle } from '../app-shell';
 
+import { useRenameChat } from './chat-history-data';
+import { ChatHistoryList } from './chat-history-list';
 import {
   useActiveConversationId,
   useChatSheet,
@@ -76,6 +77,7 @@ export function ChatChrome() {
   const renameCancelled = useRef(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const rename = useRenameChat();
   const full = layout === 'full';
   const sheet = layout === 'sheet';
   const phone = windowSizeHooks.useWidth() < chatLayoutUtils.MOBILE_BREAKPOINT;
@@ -108,19 +110,16 @@ export function ChatChrome() {
     bodyRef.current?.querySelector('textarea')?.focus();
   };
 
-  const finishRename = async (next: string) => {
+  const renameChat = ({ id, title: next }: { id: string; title: string }) => {
+    if (id === conversationId) setLiveTitle({ id, title: next });
+    rename({ id, title: next }).catch(() => undefined);
+  };
+
+  const finishRename = (next: string) => {
     setRenaming(false);
     const trimmed = next.trim();
     if (!conversationId || !trimmed || trimmed === title) return;
-    setLiveTitle({ id: conversationId, title: trimmed });
-    const { error } = await tryCatch(() =>
-      chatApi.updateConversation(conversationId, { title: trimmed }),
-    );
-    if (error) {
-      toast.error(t('Failed to rename conversation'));
-      return;
-    }
-    invalidateList();
+    renameChat({ id: conversationId, title: trimmed });
   };
 
   const deleteChat = async () => {
@@ -163,7 +162,7 @@ export function ChatChrome() {
                   setRenaming(false);
                   return;
                 }
-                finishRename(event.currentTarget.value).catch(() => undefined);
+                finishRename(event.currentTarget.value);
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
@@ -224,11 +223,13 @@ export function ChatChrome() {
       </div>
       <div ref={bodyRef} className="relative min-h-0 flex-1">
         {chatEnabled && historyOpen && (
-          <ConversationList
+          <ChatHistoryList
             className="absolute inset-0 z-10 w-full bg-gray-1 animate-in fade-in duration-150 ease-move motion-reduce:animate-none"
-            selectedId={conversationId}
+            currentId={conversationId}
             onSelect={openConversation}
             onNewChat={startFresh}
+            onLeaveCurrent={chatPanelUtils.startNewChat}
+            onRename={renameChat}
           />
         )}
         {chatEnabled ? (

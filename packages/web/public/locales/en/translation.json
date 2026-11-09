@@ -3763,5 +3763,18 @@
   "Doesn't open pages for you.": "Doesn't open pages for you.",
   "Chat is changing {name}": "Chat is changing {name}",
   "Chat deleted {name}.": "Chat deleted {name}.",
-  "Opened {name} beside the chat": "Opened {name} beside the chat"
+  "Opened {name} beside the chat": "Opened {name} beside the chat",
+  "Previous 7 days": "Previous 7 days",
+  "Chat deleted.": "Chat deleted.",
+  "Search chats": "Search chats",
+  "Chat history": "Chat history",
+  "Couldn't load your chats.": "Couldn't load your chats.",
+  "No chats yet.": "No chats yet.",
+  "Your conversations will show up here.": "Your conversations will show up here.",
+  "Start a chat": "Start a chat",
+  "No matches.": "No matches.",
+  "No chat title contains “{query}”.": "No chat title contains “{query}”.",
+  "Rename chat": "Rename chat",
+  "Couldn't load more chats.": "Couldn't load more chats.",
+  "Actions for {title}": "Actions for {title}"
 }
