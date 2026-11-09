@@ -5,6 +5,8 @@ import { t } from 'i18next';
 import { toast } from 'sonner';
 import { create } from 'zustand';
 
+import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
+
 import { chatApi } from './chat-api';
 import { chatQueryKeys } from './chat-query-keys';
 
@@ -38,6 +40,7 @@ function removeWithUndo({
       onFailed?.();
       return;
     }
+    chatPanelUtils.forgetConversation(id);
     dropFromLists({ queryClient, id });
     queryClient.removeQueries({ queryKey: chatQueryKeys.conversation(id) });
     show(id);
@@ -49,6 +52,7 @@ function removeWithUndo({
   const commitOnExit = () => {
     if (!settle()) return;
     chatApi.deleteConversationOnExit(id);
+    chatPanelUtils.forgetConversation(id);
   };
   window.addEventListener('pagehide', commitOnExit);
   toast(t('Chat deleted'), {

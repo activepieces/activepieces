@@ -226,6 +226,22 @@ function saveConversationId(conversationId: string | null) {
   }
 }
 
+function forgetConversation(conversationId: string): void {
+  if (
+    safeStorage.read({ area: 'session', key: TAB_CONVERSATION_KEY }) ===
+    conversationId
+  ) {
+    safeStorage.write({ area: 'session', key: TAB_CONVERSATION_KEY, value: '' });
+  }
+  const lastKey = lastConversationKey();
+  if (
+    !isNil(lastKey) &&
+    safeStorage.read({ area: 'local', key: lastKey }) === conversationId
+  ) {
+    safeStorage.remove({ area: 'local', key: lastKey });
+  }
+}
+
 function lastConversationKey(): string | null {
   const userId = authenticationSession.getCurrentUserId();
   if (isNil(userId)) return null;
@@ -365,6 +381,7 @@ export const chatPanelUtils = {
   collapse,
   startNewChat,
   showOnFullPage,
+  forgetConversation,
   followRouter,
   routeCommitted: layoutMove.routeCommitted,
   SHEET_HASH,

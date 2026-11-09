@@ -19,6 +19,12 @@ const toasts = vi.hoisted(() => {
   return { shown, error: vi.fn() };
 });
 
+const panel = vi.hoisted(() => ({ forgetConversation: vi.fn() }));
+
+vi.mock('@/features/workspace/lib/chat-panel-open', () => ({
+  chatPanelUtils: { forgetConversation: panel.forgetConversation },
+}));
+
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('sonner', () => ({
@@ -55,6 +61,7 @@ describe('chatPendingDeletes.removeWithUndo', () => {
 
     await vi.waitFor(() => expect(onFailed).toHaveBeenCalled());
     expect(onDeleted).not.toHaveBeenCalled();
+    expect(panel.forgetConversation).not.toHaveBeenCalled();
     expect(toasts.error).toHaveBeenCalledWith('Failed to delete conversation');
     expect(usePendingDeletes.getState().ids.has('c1')).toBe(false);
   });
@@ -74,6 +81,19 @@ describe('chatPendingDeletes.removeWithUndo', () => {
 
     await vi.waitFor(() => expect(onDeleted).toHaveBeenCalled());
     expect(onFailed).not.toHaveBeenCalled();
+    expect(panel.forgetConversation).toHaveBeenCalledWith('c2');
+  });
+
+  it('forgets the chat when the tab closes before the delete settles', () => {
+    chatPendingDeletes.removeWithUndo({
+      queryClient: new QueryClient(),
+      id: 'c5',
+    });
+
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(chatApi.deleteConversationOnExit).toHaveBeenCalledWith('c5');
+    expect(panel.forgetConversation).toHaveBeenCalledWith('c5');
   });
 });
 
