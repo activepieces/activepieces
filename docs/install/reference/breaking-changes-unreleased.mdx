@@ -7,3 +7,11 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### Google Tasks 0.8.0: New Task can ignore edits
+
+**New Task** has a new **Run on** setting. **New tasks only** runs the flow once per task; renaming, editing, moving or completing a task no longer runs it again. **New and edited tasks** keeps the old behaviour. Steps saved before 0.8.0 keep running on edits. Tasks found in one check are now delivered newest first, and an edit made within a minute of the previous check is no longer lost.
+
+#### What you need to do
+
+Upgrading a New Task step to 0.8.0 in the builder pre-selects **New tasks only**. To keep running the flow on edits, choose **New and edited tasks** when you upgrade the step.

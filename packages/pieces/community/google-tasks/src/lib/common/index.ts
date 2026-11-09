@@ -59,6 +59,8 @@ export type Task = {
    * RFC 3339 timestamp when the task was last updated (server-set, always present on API responses)
    */
   updated?: string;
+  deleted?: boolean;
+  hidden?: boolean;
 };
 
 /**
@@ -193,21 +195,32 @@ export async function getAllTasks({
   auth,
   taskListId,
   params,
+  deadlineMs,
+  startPageToken,
 }: {
   auth: OAuth2PropertyValue;
   taskListId: string;
   params?: Record<string, string>;
-}): Promise<Task[]> {
+  deadlineMs?: number;
+  startPageToken?: string;
+}): Promise<{ tasks: Task[]; complete: boolean; nextPageToken?: string }> {
   const tasks: Task[] = [];
-  let pageToken: string | undefined = undefined;
+  let pageToken: string | undefined = startPageToken ? startPageToken : undefined;
   do {
+    const remainingMs =
+      deadlineMs === undefined ? REQUEST_TIMEOUT_MS : deadlineMs - Date.now();
+    if (remainingMs <= 0) {
+      return { tasks, complete: false, nextPageToken: pageToken };
+    }
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${googleTasksCommon.baseUrl}/tasks/v1/lists/${taskListId}/tasks`,
+      url: `${googleTasksCommon.baseUrl}/tasks/v1/lists/${encodeURIComponent(taskListId)}/tasks`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth.access_token,
       },
+      headers: { Accept: 'application/json' },
+      timeout: Math.min(REQUEST_TIMEOUT_MS, remainingMs),
       queryParams: {
         ...params,
         maxResults: '100',
@@ -218,7 +231,7 @@ export async function getAllTasks({
     tasks.push(...(response.body.items ?? []));
     pageToken = response.body.nextPageToken;
   } while (pageToken);
-  return tasks;
+  return { tasks, complete: true };
 }
 
 export async function createTask(
@@ -238,3 +251,5 @@ export async function createTask(
 
   return httpClient.sendRequest(request);
 }
+
+const REQUEST_TIMEOUT_MS = 20_000;
