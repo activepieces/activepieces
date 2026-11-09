@@ -79,5 +79,5 @@ export type McpToolResult = {
     content: Array<{ type: 'text', text: string }>
     structuredContent?: Record<string, unknown>
     isError?: boolean
-    _meta?: { apResource?: ApResource }
+    _meta?: Record<string, unknown> & { apResource?: ApResource }
 }

@@ -57,7 +57,24 @@ describe('MCP table tools push changes to the table room', () => {
     })
 })
 
-async function setup(): Promise<{ mcp: ProjectScopedMcpServer, tableId: string }> {
+describe('MCP table tools tag their result with the table they changed', () => {
+    it('tags inserts, updates, deletes and field changes, and not failures', async () => {
+        const { mcp, tableId, projectId } = await setup()
+
+        const inserted = await apInsertRecordsTool(mcp, app.log).execute({ tableId, records: [{ Name: 'Alice' }] })
+        const recordId = z.string().parse(/IDs: (\S+)/.exec(inserted.content[0].text)?.[1])
+        const updated = await apUpdateRecordTool(mcp, app.log).execute({ tableId, recordId, fields: { Name: 'Bob' } })
+        const fieldAdded = await apManageFieldsTool(mcp, app.log).execute({ tableId, operation: 'ADD', name: 'Score', type: 'TEXT' })
+        const deleted = await apDeleteRecordsTool(mcp, app.log).execute({ tableId, recordIds: [recordId] })
+        const missing = await apInsertRecordsTool(mcp, app.log).execute({ tableId: apId(), records: [{ Name: 'Nobody' }] })
+
+        const tag = { v: 1, kind: 'table', id: tableId, projectId, op: 'update', label: 'Leads' }
+        expect([inserted, updated, fieldAdded, deleted].map((result) => result._meta?.apResource)).toEqual([tag, tag, tag, tag])
+        expect(missing._meta).toBeUndefined()
+    })
+})
+
+async function setup(): Promise<{ mcp: ProjectScopedMcpServer, tableId: string, projectId: string }> {
     const ctx = await createTestContext(app)
     const mcp: ProjectScopedMcpServer = {
         id: apId(),
@@ -71,7 +88,7 @@ async function setup(): Promise<{ mcp: ProjectScopedMcpServer, tableId: string }
     }
     const created = await apCreateTableTool(mcp, app.log).execute({ name: 'Leads', fields: [{ name: 'Name', type: 'TEXT' }] })
     const tableId = z.object({ id: z.string() }).parse(created.structuredContent).id
-    return { mcp, tableId }
+    return { mcp, tableId, projectId: ctx.project.id }
 }
 
 function onlyRecordId({ pushes }: { pushes: Push[] }): string {
