@@ -37,7 +37,7 @@ export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     socketHasPermission: ({ socket, permission }: SocketHasPermissionParams): boolean => hasPermission(projectBySocket.get(socket)?.role, permission),
     getProjectId: (socket: Socket): string | null => projectBySocket.get(socket)?.projectId ?? null,
-    setProjectLeaveHandler({ name, handler }: SetProjectLeaveHandlerParams): void {
+    onProjectLeave({ name, handler }: OnProjectLeaveParams): void {
         projectLeaveHandlers.set(name, handler)
     },
     notifyWorkers: () => createNotifyClient<ApiToWorkerContract>(app!.io.to(WORKERS_ROOM)),
@@ -96,6 +96,7 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
                 ...(isNil(joinedProjectId) ? {} : { project: { id: joinedProjectId } }),
             })
             await socket.join(principal.id)
+            socket.once('disconnect', () => runInSocketOrder({ socket, work: () => leaveCurrentProject({ socket, userId: principal.id, log }) }))
             socket.on(WebsocketServerEvent.SWITCH_PROJECT, async (data: unknown, callback?: (response: SwitchProjectResponse) => void) => {
                 const response = await runInSocketOrder({ socket, work: () => switchProject({ socket, userId: principal.id, data, log }) })
                 callback?.(response)
@@ -196,9 +197,7 @@ async function switchProject({ socket, userId, data, log }: SwitchProjectParams)
         const role = await validateProjectId({ userId, projectId, log })
         const previous = projectBySocket.get(socket)
         if (!isNil(previous) && previous.projectId !== projectId) {
-            for (const leaveHandler of projectLeaveHandlers.values()) {
-                await leaveHandler({ socket, userId, projectId: previous.projectId })
-            }
+            await runProjectLeaveHandlers({ socket, userId, projectId: previous.projectId, log })
             await socket.leave(previous.projectId)
         }
         await socket.join(projectId)
@@ -209,6 +208,23 @@ async function switchProject({ socket, userId, data, log }: SwitchProjectParams)
         return { success: false }
     }
     return { success: true }
+}
+
+async function leaveCurrentProject({ socket, userId, log }: LeaveCurrentProjectParams): Promise<void> {
+    const project = projectBySocket.get(socket)
+    if (isNil(project)) {
+        return
+    }
+    await runProjectLeaveHandlers({ socket, userId, projectId: project.projectId, log })
+}
+
+async function runProjectLeaveHandlers({ socket, userId, projectId, log }: RunProjectLeaveHandlersParams): Promise<void> {
+    for (const [name, handler] of projectLeaveHandlers) {
+        const { error } = await tryCatch(() => handler({ socket, userId, projectId }))
+        if (!isNil(error)) {
+            log.error({ error, handler: name, user: { id: userId }, project: { id: projectId } }, 'Websocket project leave handler failed')
+        }
+    }
 }
 
 function parseHandshakeProjectId(value: unknown): string | null {
@@ -253,7 +269,7 @@ type SocketProject = {
     role: ProjectRole
 }
 
-type SetProjectLeaveHandlerParams = {
+type OnProjectLeaveParams = {
     name: string
     handler: ProjectLeaveHandler
 }
@@ -262,6 +278,19 @@ type SwitchProjectParams = {
     socket: Socket
     userId: string
     data: unknown
+    log: FastifyBaseLogger
+}
+
+type LeaveCurrentProjectParams = {
+    socket: Socket
+    userId: string
+    log: FastifyBaseLogger
+}
+
+type RunProjectLeaveHandlersParams = {
+    socket: Socket
+    userId: string
+    projectId: string
     log: FastifyBaseLogger
 }
 
