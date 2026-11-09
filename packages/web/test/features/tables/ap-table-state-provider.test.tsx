@@ -88,28 +88,33 @@ describe('ApTableStateProvider', () => {
     expect(screen.queryByText('Table not available')).toBeNull();
   });
 
-  it('keeps the lock hook mounted across a refreshTableState while the table subtree remounts (GIT-1529, #13554)', async () => {
-    const probe = { mounts: 0, refresh: null as null | (() => Promise<void>) };
-    function RefreshProbe() {
-      const refresh = useRefreshTableState();
-      probe.refresh = refresh;
-      useEffect(() => {
-        probe.mounts += 1;
-      }, []);
-      return <p>ready</p>;
-    }
-    renderProvider(<RefreshProbe />);
-    expect(await screen.findByText('ready')).toBeTruthy();
+  describe('lock hoisting (GIT-1529, #13554): refreshTableState rebuilds the table in place instead of reloading the page, which breaks the embed iframe, so the lock provider must stay above the remount boundary or a refresh would release the lock for other users', () => {
+    it('keeps the lock hook mounted across a refreshTableState while the table subtree remounts', async () => {
+      const probe: {
+        mounts: number;
+        refresh: null | (() => Promise<void>);
+      } = { mounts: 0, refresh: null };
+      function RefreshProbe() {
+        const refresh = useRefreshTableState();
+        probe.refresh = refresh;
+        useEffect(() => {
+          probe.mounts += 1;
+        }, []);
+        return <p>ready</p>;
+      }
+      renderProvider(<RefreshProbe />);
+      expect(await screen.findByText('ready')).toBeTruthy();
 
-    expect(lockHarness.events).toEqual(['mount']);
-    expect(probe.mounts).toBe(1);
+      expect(lockHarness.events).toEqual(['mount']);
+      expect(probe.mounts).toBe(1);
 
-    await act(async () => {
-      await probe.refresh?.();
+      await act(async () => {
+        await probe.refresh?.();
+      });
+
+      expect(lockHarness.events).toEqual(['mount']);
+      expect(probe.mounts).toBe(2);
     });
-
-    expect(lockHarness.events).toEqual(['mount']);
-    expect(probe.mounts).toBe(2);
   });
 
   it('shows the table as not available and not editable when it was deleted', async () => {
