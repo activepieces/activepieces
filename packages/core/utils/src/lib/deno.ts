@@ -304,9 +304,9 @@ async function spawnDeno({ entry, dataFile, permissions, cwd, memoryLimitMb, all
     const readPaths = dataFile === undefined ? allowReadPaths : [...allowReadPaths, dataFile]
     const entryArg = typeof entry === 'string' ? entry : `${resolvedDenoDir}/${SESSION_PROGRAM_FILE_NAME}`
     if (typeof entry !== 'string') {
-        const stagedEntry = `${entryArg}.${process.pid}.${Date.now()}.tmp`
+        const stagedEntry = `${entryArg}.${globalThis.crypto.randomUUID()}.tmp`
         const { error } = await tryCatch(async () => {
-            await fs.writeFile(stagedEntry, entry.body)
+            await fs.writeFile(stagedEntry, entry.body, { flag: 'wx' })
             await fs.rename(stagedEntry, entryArg)
         })
         if (error !== null) {
