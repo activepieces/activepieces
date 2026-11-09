@@ -36,7 +36,7 @@ const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 // (labels, icons, tooltips) follows a deferred copy, so the labels swap after
 // the width has started to move instead of blocking it.
 const SidebarMotionStateContext = React.createContext<'expanded' | 'collapsed'>(
-  'expanded'
+  'expanded',
 );
 
 function useSidebar() {
@@ -99,14 +99,14 @@ function SidebarProvider({
       localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
-    [setOpenProp, persistedOpen]
+    [setOpenProp, persistedOpen],
   );
 
   const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null
+    null,
   );
   const zIndexTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null
+    null,
   );
 
   const setHovered = React.useCallback((hovered: boolean) => {
@@ -195,7 +195,7 @@ function SidebarProvider({
       hoverMode,
       isHoverExpanded,
       setHovered,
-    ]
+    ],
   );
 
   return (
@@ -213,7 +213,7 @@ function SidebarProvider({
             }
             className={cn(
               'group/sidebar-wrapper flex h-svh w-full has-data-[variant=inset]:bg-gray-2',
-              className
+              className,
             )}
             {...props}
           >
@@ -255,7 +255,7 @@ function Sidebar({
         data-slot="sidebar"
         className={cn(
           'flex h-full w-(--sidebar-width) flex-col bg-gray-2 text-gray-12',
-          className
+          className,
         )}
         {...props}
       >
@@ -313,7 +313,7 @@ function Sidebar({
           isHoverExpanded &&
             (variant === 'floating' || variant === 'inset'
               ? 'w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
-              : 'w-(--sidebar-width-icon)')
+              : 'w-(--sidebar-width-icon)'),
         )}
       />
       <div
@@ -335,7 +335,7 @@ function Sidebar({
             collapsible === 'icon' &&
             'cursor-ew-resize [&_a]:cursor-pointer [&_button]:cursor-pointer [&_[role=button]]:cursor-pointer',
           shouldElevateZIndex && 'z-55',
-          className
+          className,
         )}
         {...props}
       >
@@ -412,7 +412,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
         'group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full hover:group-data-[collapsible=offcanvas]:bg-gray-2',
         '[[data-side=left][data-collapsible=offcanvas]_&]:-right-2',
         '[[data-side=right][data-collapsible=offcanvas]_&]:-left-2',
-        className
+        className,
       )}
       {...props}
     />
@@ -426,7 +426,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
       className={cn(
         'relative flex w-full flex-1 flex-col bg-gray-1',
         'md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
-        className
+        className,
       )}
       {...props}
     />
@@ -490,7 +490,7 @@ function SidebarContent({ className, ...props }: React.ComponentProps<'div'>) {
       data-sidebar="content"
       className={cn(
         'flex min-h-0 flex-1 flex-col gap-0 overflow-auto group-data-[collapsible=icon]:overflow-hidden',
-        className
+        className,
       )}
       {...props}
     />
@@ -522,7 +522,7 @@ function SidebarGroupLabel({
       className={cn(
         'flex h-7 shrink-0 items-center overflow-hidden rounded-md px-2 text-xs font-medium text-gray-11 ring-gray-8 outline-hidden transition-[height,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:opacity-0',
-        className
+        className,
       )}
       {...props}
     />
@@ -544,7 +544,7 @@ function SidebarGroupAction({
         'absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-gray-12 ring-gray-8 outline-hidden transition-transform hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'after:absolute after:-inset-2 md:after:hidden',
         'group-data-[collapsible=icon]:hidden',
-        className
+        className,
       )}
       {...props}
     />
@@ -606,7 +606,7 @@ const sidebarMenuButtonVariants = cva(
       variant: 'default',
       size: 'default',
     },
-  }
+  },
 );
 
 function SidebarMenuButton({
@@ -683,7 +683,7 @@ function SidebarMenuAction({
         'transition-opacity duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none',
         showOnHover &&
           'peer-data-[active=true]/menu-button:text-gray-12 group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-open:opacity-100 md:opacity-0',
-        className
+        className,
       )}
       {...props}
     />
@@ -705,7 +705,7 @@ function SidebarMenuBadge({
         'peer-data-[size=default]/menu-button:top-1.5',
         'peer-data-[size=lg]/menu-button:top-2.5',
         'group-data-[collapsible=icon]:hidden',
-        className
+        className,
       )}
       {...props}
     />
@@ -798,7 +798,7 @@ function SidebarMenuSubButton({
         'data-[active=true]:bg-gray-5 data-[active=true]:hover:bg-gray-5 data-[active=true]:font-medium data-[active=true]:text-gray-12',
         size === 'sm' && 'text-xs',
         size === 'md' && 'text-sm',
-        className
+        className,
       )}
       {...props}
     />
@@ -809,7 +809,7 @@ function isInteractiveTarget(target: EventTarget | null) {
   return (
     target instanceof Element &&
     target.closest(
-      'a, button, input, select, textarea, [role="button"], [role^="menuitem"], [role="option"]'
+      'a, button, input, select, textarea, [role="button"], [role^="menuitem"], [role="option"]',
     ) !== null
   );
 }
