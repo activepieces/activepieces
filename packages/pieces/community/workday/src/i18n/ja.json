@@ -247,5 +247,8 @@
   "Additional Filters (JSON)": "Additional Filters (JSON)",
   "The Workday Query Language (WQL) query to execute. Must include a date/timestamp column for deduplication.": "Workday Query Language (WQL) クエリを実行します。重複排除のために日付/タイムスタンプ列を含める必要があります。",
   "The name of the date/timestamp field in your query results used for detecting new records (e.g., \"createdDate\").": "新しいレコードを検出するために使用されるクエリ結果の日付/タイムスタンプフィールドの名前 (例: \"createdDate\")。",
-  "Field used to detect new/updated records (e.g. `lastFunctionallyUpdated`).": "Field used to detect new/updated records (e.g. `lastFunctionallyUpdated`)."
+  "Field used to detect new/updated records (e.g. `lastFunctionallyUpdated`).": "Field used to detect new/updated records (e.g. `lastFunctionallyUpdated`).",
+  "Source": "ソース",
+  "Limit": "取得件数",
+  "Time Tracking": "タイムトラッキング"
 }

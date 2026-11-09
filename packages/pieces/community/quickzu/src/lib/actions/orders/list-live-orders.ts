@@ -1,10 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
 import { makeClient } from '../../common';
 
 export const listLiveOrdersAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_list_live_orders',
+  outputSchema: quickzuOutputSchemas.liveOrders,
   classification: 'SEARCH',
   displayName: 'List Live Orders',
   description: 'Retrieves live orders of store.',

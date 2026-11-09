@@ -23,25 +23,6 @@ export function isConnectionHealthy(status: string): boolean {
   return status === AppConnectionStatus.ACTIVE;
 }
 
-export function pickDefaultConnectionExternalId({
-  healthy,
-  updatedByExternalId,
-}: {
-  healthy: Array<{ externalId: string }>;
-  updatedByExternalId: Record<string, string | undefined>;
-}): string | null {
-  if (healthy.length === 0) return null;
-  const sorted = [...healthy].sort((a, b) => {
-    const aUpdated = updatedByExternalId[a.externalId];
-    const bUpdated = updatedByExternalId[b.externalId];
-    if (aUpdated && bUpdated) return bUpdated.localeCompare(aUpdated);
-    if (aUpdated) return -1;
-    if (bUpdated) return 1;
-    return 0;
-  });
-  return sorted[0].externalId;
-}
-
 export function resolveConnectionCardState({
   reconnectOnly,
   connectionsFailed,

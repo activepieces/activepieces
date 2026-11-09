@@ -142,6 +142,7 @@ const CodeEditor = ({
         )}
       </div>
       <CodeMirror
+        data-testid="code-editor"
         value={activeTab === 'code' ? code : packageJson}
         className="border-none"
         minHeight={minHeight ?? '200px'}

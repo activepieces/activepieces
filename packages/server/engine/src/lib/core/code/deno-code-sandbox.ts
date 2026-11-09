@@ -57,15 +57,16 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
     if (typeof mod.code !== 'function') {
         throw new Error('Code step must export a "code" function');
     }
-    const result = await mod.code(${JSON.stringify(inputs)});
+    const result = await mod.code(data);
 `,
+                data: inputs,
                 permissions,
                 cwd: stepDir,
                 memoryLimitMb: codeStepMemoryLimitMb,
                 allowReadPaths: [stepDir],
                 resolveNodeModules: true,
                 env: buildPropagatedEnv(permissions),
-                denoDirBase: resolveDenoDirBase(stepDir),
+                denoDir: resolveWarmDenoDir(stepDir),
             })
         },
 
@@ -160,8 +161,16 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
     return sandbox
 }
 
-function resolveDenoDirBase(stepDir: string): string | undefined {
-    return process.env['AP_EXECUTION_MODE'] === ExecutionMode.SANDBOX_CODE_ONLY ? stepDir : undefined
+function resolveWarmDenoDir(stepDir: string): string | undefined {
+    const mode = process.env['AP_EXECUTION_MODE']
+    const stepDirIsWritable = mode === ExecutionMode.SANDBOX_CODE_ONLY || mode === ExecutionMode.UNSANDBOXED
+    const cacheIsMounted = process.env['AP_DENO_CACHE_MOUNTED'] === 'true'
+    if (cacheIsMounted) {
+        // See brain/knowledge/decisions/000049-every-isolate-box-can-write-the-shared-deno-cache-because-the-engine-clears-its-umask.md
+        process.umask(0)
+    }
+    const cacheMountAvailable = stepDirIsWritable || cacheIsMounted
+    return cacheMountAvailable ? join(dirname(stepDir), DENO_CACHE_DIR_NAME) : undefined
 }
 
 function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, string> {
@@ -179,6 +188,8 @@ function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, strin
     }
     return env
 }
+
+const DENO_CACHE_DIR_NAME = '.deno-cache'
 
 type SentGlobal = {
     value: unknown

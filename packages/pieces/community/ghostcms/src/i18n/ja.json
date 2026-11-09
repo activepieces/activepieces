@@ -394,6 +394,8 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Member Added": "メンバーを追加しました",
   "Member Edited": "メンバーが編集されました",
   "Member Deleted": "メンバーが削除されました",

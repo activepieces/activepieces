@@ -17,12 +17,12 @@ export const clientId = Property.Dropdown({
       };
     }
 
-    const response = await makeRequest(
-      { apiKey: auth.secret_text },
-      HttpMethod.GET,
-      '/clients.json'
-    );
-    const clients = response.body as { ClientID: string; Name: string }[];
+    const response = await makeRequest<{ ClientID: string; Name: string }[]>({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.GET,
+      path: '/clients.json',
+    });
+    const clients = response.body;
 
     return {
       disabled: false,
@@ -50,12 +50,12 @@ export const listId = Property.Dropdown({
       };
     }
 
-    const response = await makeRequest(
-      { apiKey: auth.secret_text },
-      HttpMethod.GET,
-      `/clients/${clientId}/lists.json`
-    );
-    const lists = response.body as { ListID: string; Name: string }[];
+    const response = await makeRequest<{ ListID: string; Name: string }[]>({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.GET,
+      path: `/clients/${clientId}/lists.json`,
+    });
+    const lists = response.body;
 
     return {
       disabled: false,
@@ -79,20 +79,22 @@ export const customFields = Property.DynamicProperties({
 
     const fields: DynamicPropsValue = {};
 
-    const response = await makeRequest(
-      {
-          apiKey: auth.secret_text,
+    const response = await makeRequest<
+      Array<{
+        FieldName: string;
+        Key: string;
+        DataType: string;
+        FieldOptions: string[];
+      }>
+    >({
+      auth: {
+        apiKey: auth.secret_text,
       },
-      HttpMethod.GET,
-      `/lists/${listId}/customfields.json`
-    );
+      method: HttpMethod.GET,
+      path: `/lists/${listId}/customfields.json`,
+    });
 
-    const listFields = response.body as Array<{
-      FieldName: string;
-      Key: string;
-      DataType: string;
-      FieldOptions: string[];
-    }>;
+    const listFields = response.body;
 
     for (const field of listFields) {
       switch (field.DataType) {
@@ -143,5 +145,176 @@ export const customFields = Property.DynamicProperties({
       }
     }
     return fields;
+  },
+});
+
+export const sentCampaignId = Property.Dropdown({
+  auth: campaignMonitorAuth,
+  displayName: 'Campaign',
+  description: 'A sent campaign of the selected client, newest first.',
+  refreshers: ['clientId'],
+  required: true,
+  options: async ({ auth, clientId }) => {
+    if (!auth || !clientId) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your account and select a client.',
+        options: [],
+      };
+    }
+    const options: { label: string; value: string }[] = [];
+    let page = 1;
+    let numberOfPages = 1;
+    do {
+      const response = await makeRequest<{
+        Results: { CampaignID: string; Name: string; SentDate: string }[];
+        NumberOfPages: number;
+      }>({
+        auth: { apiKey: auth.secret_text },
+        method: HttpMethod.GET,
+        path: `/clients/${clientId}/campaigns.json?page=${page}&pagesize=1000&orderdirection=desc`,
+      });
+      const body = response.body;
+      for (const campaign of body.Results ?? []) {
+        options.push({
+          label: `${campaign.Name} (${campaign.SentDate})`,
+          value: campaign.CampaignID,
+        });
+      }
+      numberOfPages = body.NumberOfPages ?? 1;
+      page++;
+    } while (page <= numberOfPages && page <= 10);
+
+    return {
+      disabled: false,
+      placeholder:
+        options.length === 0 ? 'No sent campaigns found.' : undefined,
+      options,
+    };
+  },
+});
+
+export const smartEmailId = Property.Dropdown({
+  auth: campaignMonitorAuth,
+  displayName: 'Smart Email',
+  description: 'An active smart transactional email of the selected client.',
+  refreshers: ['clientId'],
+  required: true,
+  options: async ({ auth, clientId }) => {
+    if (!auth || !clientId) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your account and select a client.',
+        options: [],
+      };
+    }
+    const response = await makeRequest<{ ID: string; Name: string }[]>({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.GET,
+      path: `/transactional/smartEmail?status=active&clientID=${encodeURIComponent(
+        String(clientId)
+      )}`,
+    });
+    const emails = response.body;
+    return {
+      disabled: false,
+      placeholder:
+        emails.length === 0 ? 'No active smart emails found.' : undefined,
+      options: emails.map((email) => ({ label: email.Name, value: email.ID })),
+    };
+  },
+});
+
+export const draftCampaignId = Property.Dropdown({
+  auth: campaignMonitorAuth,
+  displayName: 'Draft Campaign',
+  description: 'A draft campaign of the selected client.',
+  refreshers: ['clientId'],
+  required: true,
+  options: async ({ auth, clientId }) => {
+    if (!auth || !clientId) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your account and select a client.',
+        options: [],
+      };
+    }
+    const response = await makeRequest<
+      { CampaignID: string; Name: string; Subject: string }[]
+    >({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.GET,
+      path: `/clients/${clientId}/drafts.json`,
+    });
+    const drafts = response.body;
+    return {
+      disabled: false,
+      placeholder:
+        drafts.length === 0 ? 'No draft campaigns found.' : undefined,
+      options: drafts.map((draft) => ({
+        label: `${draft.Name} (${draft.Subject})`,
+        value: draft.CampaignID,
+      })),
+    };
+  },
+});
+
+export const listIds = Property.MultiSelectDropdown({
+  auth: campaignMonitorAuth,
+  displayName: 'Lists',
+  description: 'Lists the campaign is sent to.',
+  refreshers: ['clientId'],
+  required: false,
+  options: async ({ auth, clientId }) => {
+    if (!auth || !clientId) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your account and select a client.',
+        options: [],
+      };
+    }
+    const response = await makeRequest<{ ListID: string; Name: string }[]>({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.GET,
+      path: `/clients/${clientId}/lists.json`,
+    });
+    return {
+      disabled: false,
+      options: response.body.map((list) => ({
+        label: list.Name,
+        value: list.ListID,
+      })),
+    };
+  },
+});
+
+export const segmentIds = Property.MultiSelectDropdown({
+  auth: campaignMonitorAuth,
+  displayName: 'Segments',
+  description: 'Segments the campaign is sent to.',
+  refreshers: ['clientId'],
+  required: false,
+  options: async ({ auth, clientId }) => {
+    if (!auth || !clientId) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your account and select a client.',
+        options: [],
+      };
+    }
+    const response = await makeRequest<{ SegmentID: string; Title: string }[]>({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.GET,
+      path: `/clients/${clientId}/segments.json`,
+    });
+    return {
+      disabled: false,
+      placeholder:
+        response.body.length === 0 ? 'No segments found.' : undefined,
+      options: response.body.map((segment) => ({
+        label: segment.Title,
+        value: segment.SegmentID,
+      })),
+    };
   },
 });

@@ -109,46 +109,32 @@ export const calendarEventChanged = createTrigger({
 	},
 	outputSchema: eventOutputSchema,
 	type: TriggerStrategy.POLLING,
-	async test({ store, auth, propsValue, files }) {
-		return await pollingHelper.test(polling, {
-			store,
-			auth,
-			propsValue: {
+	async test(context) {
+		const { propsValue } = context;
+		return await pollingHelper.test(polling, { ...context, propsValue: {
 				calendarId: propsValue.calendar_id,
 				expandRecurringEvent: propsValue.expandRecurringEvent,
-			},
-			files,
-		});
+			} });
 	},
-	async onEnable({ store, auth, propsValue }) {
-		await pollingHelper.onEnable(polling, {
-			store,
-			auth,
-			propsValue: {
+	async onEnable(context) {
+		const { propsValue } = context;
+		await pollingHelper.onEnable(polling, { ...context, propsValue: {
 				calendarId: propsValue.calendar_id,
 				expandRecurringEvent: propsValue.expandRecurringEvent,
-			},
-		});
+			} });
 	},
-	async onDisable({ store, auth, propsValue }) {
-		await pollingHelper.onDisable(polling, {
-			store,
-			auth,
-			propsValue: {
+	async onDisable(context) {
+		const { propsValue } = context;
+		await pollingHelper.onDisable(polling, { ...context, propsValue: {
 				calendarId: propsValue.calendar_id,
 				expandRecurringEvent: propsValue.expandRecurringEvent,
-			},
-		});
+			} });
 	},
-	async run({ store, auth, propsValue, files }) {
-		return await pollingHelper.poll(polling, {
-			store,
-			auth,
-			propsValue: {
+	async run(context) {
+		const { propsValue } = context;
+		return await pollingHelper.poll(polling, { ...context, propsValue: {
 				calendarId: propsValue.calendar_id,
 				expandRecurringEvent: propsValue.expandRecurringEvent,
-			},
-			files,
-		});
+			} });
 	},
 });

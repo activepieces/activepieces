@@ -28,10 +28,15 @@ vi.mock('../../../../../src/app/helper/system/system', async (importOriginal) =>
 
 vi.mock('../../../../../src/app/core/db/repo-factory', () => ({
     repoFactory: vi.fn(() => () => ({
+        find: vi.fn().mockResolvedValue([]),
         findOneBy: mockFindOneBy,
         softDelete: mockSoftDelete,
         save: mockSave,
     })),
+}))
+
+vi.mock('../../../../../src/app/core/db/transaction', () => ({
+    transaction: (operation: (entityManager: undefined) => Promise<unknown>) => operation(undefined),
 }))
 
 vi.mock('../../../../../src/app/project/project-service', () => ({

@@ -41,7 +41,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 import { PriceSummary } from '../price-summary';
@@ -270,15 +269,14 @@ function CreditsAmountSelect({
       }}
     >
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
-          className={cn(
-            'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-gray-6 bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-gray-8 focus-visible:ring-[3px] focus-visible:ring-gray-8/50',
-          )}
+          variant="field"
+          className="w-full justify-between has-[>svg]:px-3"
         >
           <span>{value.toLocaleString()}</span>
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent
         align="start"

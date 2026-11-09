@@ -220,6 +220,17 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Where to Read": "Où lire",
+  "How Many Items": "Nombre d'éléments",
+  "What to Run": "Quoi exécuter",
+  "What to Send": "Quoi envoyer",
+  "Results": "Résultats",
+  "Input Changes": "Changements d'entrée",
+  "Which Record": "Quel enregistrement",
+  "Page to Scrape": "Page à scraper",
+  "How to Load It": "Comment le charger",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer",
   "Watch Actor Runs": "Regarder les courses de l'acteur",
   "Watch Task Runs": "Regarder les tâches exécutées",
   "Fires when a run of the Actor ends with a chosen status.": "Fires when a run of the Actor ends with a chosen status.",
@@ -227,5 +238,7 @@
   "Markdown": "Markdown",
   "Statuses": "Statuses",
   "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.": "Turning this flow on creates a webhook in your Apify account. Turning it off removes it.",
-  "Run outcomes that start the flow.": "Run outcomes that start the flow."
+  "Run outcomes that start the flow.": "Run outcomes that start the flow.",
+  "What to Watch": "Quoi surveiller",
+  "When to Fire": "Quand déclencher"
 }

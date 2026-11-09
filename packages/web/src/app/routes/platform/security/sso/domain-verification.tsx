@@ -167,7 +167,7 @@ const PendingDomain = ({
           </h3>
           <p className="text-sm text-gray-11">
             {t(
-              'Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.',
+              'Add this TXT record at your DNS provider, then verify. Verify within 7 days or the domain is dropped.',
             )}
           </p>
         </div>

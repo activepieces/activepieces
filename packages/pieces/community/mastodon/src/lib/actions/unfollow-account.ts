@@ -20,8 +20,8 @@ export const unfollowAccount = createAction({
   props: {
     account_id: Property.ShortText({
       displayName: 'Account ID',
-      description:
-        'ID of the account to unfollow, for example 109302436954721982 (not the @handle). Map it from Lookup Account (Account ID), Search Accounts, Get Account or Search for a user@domain on another server.',
+      description: 'ID of the account, for example from Lookup Account or New Follower.',
+      placeholder: '109302436954721982',
       required: true,
     }),
   },

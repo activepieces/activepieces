@@ -19,7 +19,8 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
-const CARD_BASE = 'bg-panel';
+const CARD_BASE =
+  'bg-[color-mix(in_oklab,var(--swatch-6-mark)_5%,color-mix(in_oklab,var(--panel)_75%,var(--gray-5)))]';
 
 export function FlowBuildCard({
   buildId,
@@ -92,7 +93,7 @@ export function FlowBuildCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="gap-1.5 border border-gray-6 bg-gray-2 text-xs font-medium text-gray-12 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
+                className="gap-1.5 border border-gray-6 bg-transparent text-xs font-medium text-gray-12 shadow-none transition-colors hover:bg-gray-5 hover:text-gray-12"
                 onClick={() =>
                   onSendPrompt?.(
                     t('Publish and enable the automation so it runs live'),

@@ -12,6 +12,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         publishedFlowVersion,
         templateId,
         isRepublish,
+        isTriggerUnchanged,
     }: PreUpdateStatusParams): Promise<void> {
         switch (newStatus) {
             case FlowStatus.ENABLED: {
@@ -21,6 +22,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     simulate: false,
                     templateId,
                     isRepublish,
+                    isTriggerUnchanged,
                 })
                 break
             }
@@ -38,6 +40,12 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     },
 
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
+        await triggerSourceService(log).disable({
+            flowId: flowToDelete.id,
+            projectId: flowToDelete.projectId,
+            simulate: true,
+            ignoreError: true,
+        })
         if (isNil(flowToDelete.publishedVersionId)) {
             return
         }
@@ -70,7 +78,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         })
     },
 
-    onOperationApplied({ flow, previousVersion, previousStatus, operation, ...meta }: OnOperationAppliedParams): void {
+    onOperationApplied({ flow, previousVersion, previousStatus, operation, auditExplanation, ...meta }: OnOperationAppliedParams): void {
         applicationEvents(log).sendUserEvent(meta, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
@@ -81,6 +89,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     updated: flow.updated,
                 },
                 request: operation,
+                reason: auditExplanation,
                 flowVersion: previousVersion,
             },
         })
@@ -144,6 +153,7 @@ type PreUpdateStatusParams = {
     newStatus: FlowStatus
     templateId?: string
     isRepublish?: boolean
+    isTriggerUnchanged?: boolean
 }
 
 
@@ -159,6 +169,7 @@ type OnOperationAppliedParams = FlowEventParams & {
     previousVersion: FlowVersion
     previousStatus: FlowStatus
     operation: FlowOperationRequest
+    auditExplanation?: string
 }
 
 type OnDraftWrittenParams = {

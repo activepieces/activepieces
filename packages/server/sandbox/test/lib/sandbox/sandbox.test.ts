@@ -11,14 +11,22 @@ import { createSandboxForJob } from '../../../src/lib/create-sandbox-for-job'
 import { createSandbox } from '../../../src/lib/sandbox/sandbox'
 import { Sandbox, SandboxMount, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
 import { SandboxSettings } from '../../../src/lib/types'
+import { testLogger } from '../../helpers/logger'
 
-const { treeKillMock, isolateProcessMock } = vi.hoisted(() => ({
+const { treeKillMock, isolateProcessMock, mkdirMock, chmodMock } = vi.hoisted(() => ({
     treeKillMock: vi.fn((_pid: number, _signal: string, cb: (err?: Error) => void) => cb()),
     isolateProcessMock: vi.fn(),
+    mkdirMock: vi.fn(async () => undefined),
+    chmodMock: vi.fn(async () => undefined),
 }))
 
 vi.mock('tree-kill', () => ({
     default: treeKillMock,
+}))
+
+vi.mock('fs/promises', () => ({
+    mkdir: mkdirMock,
+    chmod: chmodMock,
 }))
 
 vi.mock('../../../src/lib/sandbox/isolate', () => ({
@@ -35,24 +43,12 @@ vi.mock('../../../src/lib/cache/cache-paths', () => ({
     })),
 }))
 
-function createMockLogger(): ApLogger {
-    const log: ApLogger = {
-        level: 'silent',
-        silent: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        fatal: vi.fn(),
-        debug: vi.fn(),
-        trace: vi.fn(),
-        child: () => log,
-    }
-    return log
-}
+const createMockLogger = (): ApLogger => testLogger.noop
 
 function createTestProcessMaker() {
     let client: ClientSocket | null = null
     let child: (ChildProcess & EventEmitter) | null = null
+    let handshake: { pingTimeout: number, pingInterval: number } | null = null
 
     const maker: SandboxProcessMaker = {
         create: vi.fn(async (params) => {
@@ -71,6 +67,9 @@ function createTestProcessMaker() {
                 reconnection: false,
                 auth: { sandboxId: params.sandboxId, connectionToken: token },
             })
+            client.io.engine.once('handshake', (data) => {
+                handshake = data
+            })
 
             return child as ChildProcess
         }),
@@ -80,6 +79,7 @@ function createTestProcessMaker() {
         maker,
         getClient: () => client!,
         getChild: () => child!,
+        getHandshake: () => handshake,
     }
 }
 
@@ -328,7 +328,7 @@ describe('createSandbox', () => {
             expect(testPM.maker.create).not.toHaveBeenCalled()
         })
 
-        it('composes mounts in order: baseMounts, codeMount, callerMounts, customPieceMounts', async () => {
+        it('composes mounts in order: baseMounts, codeMount, denoCacheMount, callerMounts, customPieceMounts', async () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
             const baseMounts: SandboxMount[] = [{ hostPath: '/host/common', sandboxPath: '/root/common' }]
@@ -341,9 +341,55 @@ describe('createSandbox', () => {
             expect(createCall.mounts).toEqual([
                 { hostPath: '/host/common', sandboxPath: '/root/common' },
                 { hostPath: '/tmp/test-cache/codes/fv-1', sandboxPath: '/root/codes/fv-1', optional: true },
+                { hostPath: '/tmp/test-cache/codes/fv-1/.deno-cache', sandboxPath: '/root/codes/fv-1/.deno-cache', rw: true },
                 { hostPath: '/host/x', sandboxPath: '/root/x' },
                 { hostPath: '/tmp/test-cache/custom_pieces/plat-1', sandboxPath: '/root/custom_pieces', optional: true },
             ])
+        })
+
+        it('mounts a writable deno-cache dir next to the code mount when non-reusable, pre-creates it, and opens its permissions for the sandbox\'s unprivileged per-box UID', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-deno-cache', { ...defaultOptions, reusable: false }, testPM.maker)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const denoCacheMount = createCall.mounts.find((m: SandboxMount) => m.sandboxPath.endsWith('.deno-cache'))
+            expect(denoCacheMount).toEqual({
+                hostPath: '/tmp/test-cache/codes/fv-1/.deno-cache',
+                sandboxPath: '/root/codes/fv-1/.deno-cache',
+                rw: true,
+            })
+            expect(mkdirMock).toHaveBeenCalledWith('/tmp/test-cache/codes/fv-1/.deno-cache', { recursive: true })
+            expect(chmodMock).toHaveBeenCalledWith('/tmp/test-cache/codes/fv-1/.deno-cache', 0o777)
+            expect(createCall.env.AP_DENO_CACHE_MOUNTED).toBe('true')
+        })
+
+        it('omits the deno-cache mount and env flag when reusable, even with a flowVersionId', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-deno-cache-reusable', { ...defaultOptions, reusable: true }, testPM.maker)
+
+            await sandbox.start({ flowVersionId: 'fv-1', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const denoCacheMount = createCall.mounts.find((m: SandboxMount) => m.sandboxPath.endsWith('.deno-cache'))
+            expect(denoCacheMount).toBeUndefined()
+            expect(createCall.env.AP_DENO_CACHE_MOUNTED).toBeUndefined()
+        })
+
+        it('omits the deno-cache mount when non-reusable without a flowVersionId', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-deno-cache-no-fv', { ...defaultOptions, reusable: false }, testPM.maker)
+
+            await sandbox.start({ flowVersionId: undefined, platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const denoCacheMount = createCall.mounts.find((m: SandboxMount) => m.sandboxPath.endsWith('.deno-cache'))
+            expect(denoCacheMount).toBeUndefined()
+            expect(createCall.env.AP_DENO_CACHE_MOUNTED).toBeUndefined()
         })
 
         it('never exposes host /etc, /root, or / as a sandbox mount', async () => {
@@ -413,6 +459,29 @@ describe('createSandbox', () => {
             finally {
                 listenSpy.mockRestore()
             }
+        })
+
+        it('keeps the heartbeat alive while the engine event loop is busy for the whole time limit', async () => {
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(createMockLogger(), 'sb-heartbeat', defaultOptions, testPM.maker)
+
+            await sandbox.start(startOptions)
+
+            const handshake = testPM.getHandshake()
+            expect(handshake).not.toBeNull()
+            expect(handshake!.pingTimeout).toBeGreaterThanOrEqual(defaultOptions.timeLimitSeconds * 1000)
+        })
+
+        it('keeps the heartbeat timer within what Node can schedule when the time limit is huge', async () => {
+            testPM = createTestProcessMaker()
+            const thirtyDaysSeconds = 30 * 24 * 60 * 60
+            sandbox = createSandbox(createMockLogger(), 'sb-heartbeat-cap', { ...defaultOptions, timeLimitSeconds: thirtyDaysSeconds }, testPM.maker)
+
+            await sandbox.start(startOptions)
+
+            const handshake = testPM.getHandshake()!
+            expect(handshake.pingInterval + handshake.pingTimeout).toBeLessThanOrEqual(2 ** 31 - 1)
+            expect(sandbox.isReady()).toBe(true)
         })
 
         it('is idempotent when already connected', async () => {

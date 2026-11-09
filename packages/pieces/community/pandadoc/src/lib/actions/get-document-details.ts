@@ -1,27 +1,29 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient, pandadocAuth } from '../common';
+import { pandadocAuth } from '../common/auth';
+import { pandadocApi } from '../common/api';
+import { pandadocInputs } from '../common/inputs';
+import { pandadocSchemas } from '../common/schemas';
 import { documentDropdown } from '../common/dynamic-dropdowns';
 
 export const getDocumentDetails = createAction({
+  auth: pandadocAuth,
   name: 'getDocumentDetails',
   classification: 'READ',
   displayName: 'Get Document',
   description: 'Retrieves comprehensive document data.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
-    description: 'Retrieve the full detail record for a single PandaDoc document by its ID, including status, recipients, fields, and metadata. Use when you already know the document ID and need its complete data. Read-only and idempotent.',
+    description: 'Get the full details of one PandaDoc document: status, recipients, fields, tokens and metadata. Read-only.',
     idempotent: true,
   },
-  auth: pandadocAuth,
   props: {
     document_id: documentDropdown,
   },
+  outputSchema: pandadocSchemas['rawDocumentDetails'],
   async run({ auth, propsValue }) {
-    return await pandadocClient.makeRequest(
-      auth.secret_text,
-      HttpMethod.GET,
-      `/documents/${propsValue.document_id}/details`
-    );
+    return pandadocApi.getDocumentDetailsRaw({
+      apiKey: auth.secret_text,
+      documentId: pandadocInputs.requiredString({ value: propsValue.document_id, label: 'Document' }),
+    });
   },
 });
