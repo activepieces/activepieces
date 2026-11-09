@@ -8,6 +8,10 @@ function write({ area, key, value }: StorageKey & { value: string }): void {
   tryCatchSync(() => storageFor(area).setItem(key, value));
 }
 
+function remove({ area, key }: StorageKey): void {
+  tryCatchSync(() => storageFor(area).removeItem(key));
+}
+
 function readJson(target: StorageKey): unknown {
   const raw = read(target);
   if (raw === null) return null;
@@ -25,6 +29,7 @@ function storageFor(area: StorageArea): Storage {
 export const safeStorage = {
   read,
   write,
+  remove,
   readJson,
   writeJson,
 };

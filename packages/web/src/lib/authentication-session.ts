@@ -91,8 +91,8 @@ export const authenticationSession = {
     const decodedJwt = getDecodedJwt(token);
     return decodedJwt.id;
   },
-  appendProjectRoutePrefix(path: string, projectIdOverride?: string): string {
-    const projectId = projectIdOverride ?? this.getProjectId();
+  appendProjectRoutePrefix(path: string): string {
+    const projectId = this.getProjectId();
 
     if (isNil(projectId)) {
       return path;
