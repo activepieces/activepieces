@@ -232,9 +232,7 @@ function HistoryRow({
   onCancelRename: () => void;
   onDelete: () => void;
 }) {
-  const title = conversation.title
-    ? chatUtils.sanitizeTitle(conversation.title)
-    : t('New conversation');
+  const title = chatUtils.displayTitle(conversation.title);
   const renameChosen = useRef(false);
   const cancelled = useRef(false);
 

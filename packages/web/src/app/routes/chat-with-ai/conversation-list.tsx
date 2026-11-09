@@ -246,9 +246,7 @@ export function ConversationList({
                 onClick={() => handleClick(conv)}
               >
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
-                  {conv.title
-                    ? chatUtils.sanitizeTitle(conv.title)
-                    : t('New conversation')}
+                  {chatUtils.displayTitle(conv.title)}
                 </span>
                 {indicator && (
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity duration-(--dur-micro) ease-[ease] group-hover:opacity-0">

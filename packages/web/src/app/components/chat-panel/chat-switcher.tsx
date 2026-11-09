@@ -133,7 +133,7 @@ export function ChatSwitcher({
     chatPanelUtils.startNewChat();
   };
 
-  const shownTitle = title ?? t('New chat');
+  const shownTitle = chatUtils.displayTitle(title);
 
   return (
     <>
@@ -487,9 +487,7 @@ function ChatRow({
   waiting: boolean;
   onPick: () => void;
 }) {
-  const title = conversation.title
-    ? chatUtils.sanitizeTitle(conversation.title)
-    : t('New conversation');
+  const title = chatUtils.displayTitle(conversation.title);
   return (
     <CommandItem
       value={conversation.id}

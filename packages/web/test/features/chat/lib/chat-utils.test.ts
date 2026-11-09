@@ -282,3 +282,11 @@ describe('chatUtils — tool pill active/done labels', () => {
     expect(chatUtils.formatToolActionName({ part })).not.toContain('mascot');
   });
 });
+
+describe('chatUtils.displayTitle', () => {
+  it('labels a chat without a usable title as New chat', () => {
+    expect(chatUtils.displayTitle(null)).toBe('New chat');
+    expect(chatUtils.displayTitle('**')).toBe('New chat');
+    expect(chatUtils.displayTitle('**Leads** sync')).toBe('Leads sync');
+  });
+});
