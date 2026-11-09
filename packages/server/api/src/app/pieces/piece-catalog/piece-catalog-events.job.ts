@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils'
 import { apDayjs, apVersionUtil } from '@activepieces/server-utils'
 import { ApEdition, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedLock } from '../../database/redis-connections'
 import { eventDestinationService } from '../../event-destinations/event-destinations.service'
@@ -8,7 +9,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { systemJobsQueue, systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { pieceRepos } from '../metadata/piece-metadata-service'
 import { isSupportedRelease, lastVersionOfEachPiece } from '../metadata/utils'
 import { CatalogEntry, diffCatalog } from './catalog-diff'
@@ -25,6 +26,9 @@ export const pieceCatalogEventsJob = (log: FastifyBaseLogger) => ({
         systemJobHandlers.registerJobHandler(SystemJobName.PIECE_CATALOG_EVENTS, async () => run(log))
         systemJobHandlers.registerJobHandler(SystemJobName.PIECE_CATALOG_RECONCILE, async () => {
             await pieceCatalogEventsJob(log).seedAtBootIfSyncOff()
+            if (!isCommunity() && system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE) === PieceSyncMode.OFFICIAL_AUTO && !await isPiecesSyncRunning()) {
+                await seedIfMissing({ allowEmptyCatalog: false, log })
+            }
             await run(log)
         })
     },
@@ -47,6 +51,9 @@ export const pieceCatalogEventsJob = (log: FastifyBaseLogger) => ({
         }
         if (fetchFailed === 0) {
             await seedIfMissing({ allowEmptyCatalog: false, log })
+        }
+        else {
+            log.warn({ fetchFailed }, '[pieceCatalogEvents] sync finished with fetch failures, baseline deferred to the hourly reconcile')
         }
         if (added > 0 || deleted > 0) {
             await pieceCatalogEventsJob(log).enqueue()
@@ -78,6 +85,10 @@ function isCommunity(): boolean {
     return system.getEdition() === ApEdition.COMMUNITY
 }
 
+async function isPiecesSyncRunning(): Promise<boolean> {
+    return (await systemJobsQueue.getActive().catch(() => [])).some((job) => job.name === SystemJobName.PIECES_SYNC)
+}
+
 async function findIdleJobId(log: FastifyBaseLogger): Promise<string | null> {
     for (const jobId of [BASE_JOB_ID, FOLLOW_UP_JOB_ID]) {
         if (await systemJobsSchedule(log).getJobState(jobId) !== 'active') {
@@ -99,7 +110,7 @@ async function run(log: FastifyBaseLogger): Promise<void> {
             const store = catalogSnapshotStore(log)
             const snapshot = await store.load()
             if (isNil(snapshot)) {
-                log.info('[pieceCatalogEvents] no snapshot yet')
+                log.warn('[pieceCatalogEvents] no snapshot yet')
                 return
             }
             const { changes, nextSnapshot } = diffCatalog({ snapshot, current: await listOfficialLatest() })
@@ -107,13 +118,13 @@ async function run(log: FastifyBaseLogger): Promise<void> {
             await store.save(nextSnapshot)
             log.info({ changes: changes.length, queued, failedPlatforms: failedPlatformIds.length, durationMs: Math.floor(performance.now() - startTime), seeded: false }, '[pieceCatalogEvents] run')
             if (failedPlatformIds.length > 0) {
-                throw new Error(`[pieceCatalogEvents] broadcast failed for ${failedPlatformIds.length} platform(s): ${failedPlatformIds.join(', ')}`)
+                throw new UnrecoverableError(`[pieceCatalogEvents] broadcast failed for ${failedPlatformIds.length} platform(s): ${failedPlatformIds.join(', ')}`)
             }
         },
     })
 }
 
-async function seedIfMissing({ allowEmptyCatalog, log }: { allowEmptyCatalog: boolean, log: FastifyBaseLogger }): Promise<void> {
+async function seedIfMissing({ allowEmptyCatalog, log }: SeedIfMissingParams): Promise<void> {
     await distributedLock(log).runExclusive({
         key: LOCK_KEY,
         timeoutInSeconds: LOCK_TIMEOUT_SECONDS,
@@ -151,4 +162,9 @@ type SyncFinishedParams = {
     added: number
     deleted: number
     fetchFailed: number
+}
+
+type SeedIfMissingParams = {
+    allowEmptyCatalog: boolean
+    log: FastifyBaseLogger
 }
