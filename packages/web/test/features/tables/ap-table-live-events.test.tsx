@@ -13,7 +13,8 @@ import {
   WebsocketServerEvent,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
+import { toast } from 'sonner';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -32,7 +33,7 @@ import { editorSession } from '@/lib/editor-session';
 const socket = vi.hoisted(() => {
   const handlers = new Map<string, (payload?: unknown) => void>();
   const sent: SentEvent[] = [];
-  const held: (() => void)[] = [];
+  const held = new Map<unknown, () => void>();
   const project = { switching: false };
   const client = {
     connected: false,
@@ -45,21 +46,27 @@ const socket = vi.hoisted(() => {
   };
   const serverSends = (name: string, payload?: unknown) =>
     handlers.get(name)?.(payload);
-  const emitInProject = (send: () => void) => {
+  const emitInProject = ({ key, send }: { key: unknown; send: () => void }) => {
     if (project.switching) {
-      held.push(send);
+      held.delete(key);
+      held.set(key, send);
       return;
     }
     send();
   };
+  const dropHeldEmits = (keys: unknown[]) => {
+    keys.forEach((key) => held.delete(key));
+  };
   const finishProjectSwitch = () => {
     project.switching = false;
-    held.splice(0).forEach((send) => send());
+    const sends = [...held.values()];
+    held.clear();
+    sends.forEach((send) => send());
   };
   const reset = () => {
     handlers.clear();
     sent.splice(0);
-    held.splice(0);
+    held.clear();
     project.switching = false;
     client.connected = false;
   };
@@ -69,6 +76,7 @@ const socket = vi.hoisted(() => {
     project,
     serverSends,
     emitInProject,
+    dropHeldEmits,
     finishProjectSwitch,
     reset,
   };
@@ -77,6 +85,7 @@ const socket = vi.hoisted(() => {
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socket.client,
   emitInProject: socket.emitInProject,
+  dropHeldEmits: socket.dropHeldEmits,
 }));
 vi.mock('@/features/chat/lib/follow/follow-along', () => ({
   followAlong: { flash: vi.fn(), isFollowing: vi.fn(() => true) },
@@ -106,6 +115,9 @@ vi.mock('@/hooks/use-resource-lock', () => ({
 vi.mock('@/lib/error-reporting', () => ({
   errorReporting: { report: vi.fn() },
 }));
+vi.mock('sonner', () => ({
+  toast: Object.assign(vi.fn(), { dismiss: vi.fn(), error: vi.fn() }),
+}));
 
 describe('open table live events', () => {
   let queryClient: QueryClient;
@@ -124,6 +136,7 @@ describe('open table live events', () => {
     vi.mocked(followAlong.flash).mockClear();
     vi.mocked(recordsApi.list).mockClear();
     vi.mocked(recordsApi.getById).mockClear();
+    vi.mocked(toast).mockClear();
   });
 
   it('applies created and updated rows from the event without any request', async () => {
@@ -360,6 +373,92 @@ describe('open table live events', () => {
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
 
+  it('stops editing and says so when the table is deleted', async () => {
+    const { rows } = await mount(queryClient);
+    expect(rows()).toEqual(['old', 'b']);
+
+    await receive({
+      tableId: 't1',
+      op: TableRecordsChangeOp.TABLE_DELETED,
+      editorSessionId: null,
+    });
+
+    expect(screen.getByText('This table was deleted')).toBeTruthy();
+    expect(screen.queryByTestId('table-probe')).toBeNull();
+  });
+
+  it('refetches the table when it is renamed', async () => {
+    await mount(queryClient);
+
+    await receive({
+      tableId: 't1',
+      op: TableRecordsChangeOp.TABLE_UPDATED,
+      editorSessionId: null,
+    });
+
+    expect(invalidatedKeys(queryClient)).toEqual([['table', 't1']]);
+  });
+
+  it('ignores a change it can not read', async () => {
+    const { rows } = await mount(queryClient);
+
+    await act(async () => {
+      socket.serverSends(WebsocketClientEvent.TABLE_RECORDS_CHANGED, {
+        tableId: 't1',
+        op: 'SOMETHING_NEW',
+        editorSessionId: null,
+      });
+      await settle();
+    });
+
+    expect(rows()).toEqual(['old', 'b']);
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('says live updates are delayed when the server refuses the room', async () => {
+    socket.client.connected = true;
+    await mount(queryClient);
+
+    act(() => socket.sent[0].ack?.(null, { joined: false }));
+
+    expect(toast).toHaveBeenCalledWith(
+      'Live updates are delayed',
+      expect.objectContaining({ id: 'table-live-updates' }),
+    );
+  });
+
+  it('says live updates are delayed when the join is not answered', async () => {
+    socket.client.connected = true;
+    await mount(queryClient);
+
+    act(() => socket.sent[0].ack?.(new Error('timeout')));
+
+    expect(toast).toHaveBeenCalledWith(
+      'Live updates are delayed',
+      expect.objectContaining({ id: 'table-live-updates' }),
+    );
+  });
+
+  it('refetches when the table fetch started before the join was sent, even if it finished after', async () => {
+    await mount(queryClient, {
+      whileLoading: () => {
+        vi.setSystemTime(MIDDLE);
+        socket.client.connected = true;
+        socket.serverSends('connect');
+        vi.setSystemTime(LATER);
+      },
+    });
+    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE_ROOM]);
+
+    act(() => socket.sent[0].ack?.(null, { joined: true }));
+
+    expect(invalidatedKeys(queryClient)).toEqual([
+      ['table', 't1'],
+      ['fields', 't1'],
+      ['records', 't1'],
+    ]);
+  });
+
   it('applies a change that arrives while the table loads', async () => {
     const { rows } = await mount(queryClient, {
       whileLoading: () =>
@@ -425,7 +524,7 @@ async function mount(
       current.records.map((row) => row.values[0]?.value),
     );
     state = useTableState((current) => current);
-    return null;
+    return <span data-testid="table-probe" />;
   }
   const { unmount } = render(
     <QueryClientProvider client={queryClient}>
@@ -493,6 +592,7 @@ const nameField: Field = {
 };
 
 const EARLIER = new Date('2026-01-01T00:00:00.000Z');
+const MIDDLE = new Date('2026-01-01T00:00:02.000Z');
 const LATER = new Date('2026-01-01T00:00:05.000Z');
 
 type Ack = (error: Error | null, response?: unknown) => void;

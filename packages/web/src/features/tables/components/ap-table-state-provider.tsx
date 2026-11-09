@@ -7,6 +7,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
 import {
@@ -15,12 +16,12 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { buttonVariants } from '@/components/ui/button';
 import { followAlong } from '@/features/chat/lib/follow/follow-along';
@@ -31,6 +32,7 @@ import {
 } from '@/features/tables/stores/store/ap-tables-client-state';
 import { tableSyncClock } from '@/features/tables/stores/store/table-sync-clock';
 import { useResourceLock } from '@/hooks/use-resource-lock';
+import { api } from '@/lib/api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import { cn } from '@/lib/utils';
 
@@ -57,12 +59,12 @@ export const TableStateProviderWithTable = ({
   records: PopulatedRecord[];
   changes: TableChangeFeed;
 }) => {
-  const tableStoreRef = useRef<ApTableStore>(
+  const [tableStore] = useState(() =>
     createApTableStore(table, fields, records),
   );
-  useServerSync({ tableId: table.id, store: tableStoreRef.current, changes });
+  useServerSync({ tableId: table.id, store: tableStore, changes });
   return (
-    <TableContext.Provider value={tableStoreRef.current}>
+    <TableContext.Provider value={tableStore}>
       {children}
     </TableContext.Provider>
   );
@@ -76,7 +78,11 @@ export function ApTableStateProvider({
   const tableId = useParams().tableId;
   const queryClient = useQueryClient();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { data: table, isLoading: isTableLoading } = useQuery({
+  const {
+    data: table,
+    isLoading: isTableLoading,
+    error: tableError,
+  } = useQuery({
     queryKey: tableQueryKeys.table(tableId),
     queryFn: () => snapshotOf(() => tablesApi.getById(tableId!)),
     refetchOnWindowFocus: true,
@@ -85,7 +91,11 @@ export function ApTableStateProvider({
     gcTime: 0,
   });
 
-  const { data: fields, isLoading: isFieldsLoading } = useQuery({
+  const {
+    data: fields,
+    isLoading: isFieldsLoading,
+    error: fieldsError,
+  } = useQuery({
     queryKey: tableQueryKeys.fields(tableId),
     queryFn: () => snapshotOf(() => fieldsApi.list({ tableId: tableId! })),
     refetchOnWindowFocus: true,
@@ -94,7 +104,11 @@ export function ApTableStateProvider({
     gcTime: 0,
   });
 
-  const { data: records, isLoading: isRecordsLoading } = useQuery({
+  const {
+    data: records,
+    isLoading: isRecordsLoading,
+    error: recordsError,
+  } = useQuery({
     queryKey: tableQueryKeys.records(tableId),
     queryFn: () =>
       snapshotOf(() =>
@@ -109,14 +123,17 @@ export function ApTableStateProvider({
   });
 
   const [changes] = useState(createChangeFeed);
+  const [deletedTableId, setDeletedTableId] = useState<string | null>(null);
   const onChange = useCallback(
     (change: TableChange) => {
+      if (change.type === 'deleted') {
+        setDeletedTableId(tableId ?? null);
+        return;
+      }
       if (change.type === 'reload') {
-        const queryKey =
-          change.scope === 'fields'
-            ? tableQueryKeys.fields(tableId)
-            : tableQueryKeys.records(tableId);
-        queryClient.invalidateQueries({ queryKey });
+        queryClient.invalidateQueries({
+          queryKey: reloadKeyOf({ scope: change.scope, tableId }),
+        });
         return;
       }
       changes.push({ change, since: tableSyncClock.tick() });
@@ -128,7 +145,8 @@ export function ApTableStateProvider({
       syncedKeys(tableId)
         .filter(
           (queryKey) =>
-            (queryClient.getQueryState(queryKey)?.dataUpdatedAt ?? 0) < sentAt,
+            (queryClient.getQueryData<Snapshot<unknown>>(queryKey)
+              ?.fetchStartedAt ?? 0) < sentAt,
         )
         .forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
     },
@@ -156,29 +174,21 @@ export function ApTableStateProvider({
     return <RouteLoadingBar />;
   }
 
+  if (!isNil(deletedTableId) && deletedTableId === tableId) {
+    return <TableUnavailable title={t('This table was deleted')} />;
+  }
+
+  if ([tableError, fieldsError, recordsError].some(isNotFoundError)) {
+    return <TableUnavailable title={t('Table not available')} />;
+  }
+
   if (isNil(table) || isNil(fields) || isNil(records)) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-        <div className="rounded-full bg-gray-3 p-4">
-          <FileX className="h-10 w-10 text-gray-11" />
-        </div>
-
-        <div>
-          <h2 className="text-lg font-semibold">{t('Table not available')}</h2>
-          <p className="text-sm text-gray-11">
-            {t(
-              'We couldn’t load this table. It may have been removed or is unavailable.',
-            )}
-          </p>
-        </div>
-
-        <Link
-          className={cn(buttonVariants({ variant: 'outline' }))}
-          to="/tables"
-        >
-          {t('Go to Tables')}
-        </Link>
-      </div>
+      <DataFetchErrorState
+        entity={t('table')}
+        onRetry={refreshTableState}
+        className="h-full"
+      />
     );
   }
 
@@ -312,7 +322,7 @@ async function applyChange({
   store,
   queryClient,
 }: {
-  change: Exclude<TableChange, { type: 'reload' }>;
+  change: LiveChange;
   since: number;
   tableId: string;
   store: ApTableStore;
@@ -345,6 +355,55 @@ async function applyChange({
   }
 }
 
+function TableUnavailable({ title }: { title: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+      <div className="rounded-full bg-gray-3 p-4">
+        <FileX className="h-10 w-10 text-gray-11" />
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <p className="text-sm text-gray-11">
+          {t(
+            'We couldn’t load this table. It may have been removed or is unavailable.',
+          )}
+        </p>
+      </div>
+
+      <Link
+        className={cn(buttonVariants({ variant: 'outline' }))}
+        to="/tables"
+      >
+        {t('Go to Tables')}
+      </Link>
+    </div>
+  );
+}
+
+function isNotFoundError(error: Error | null): boolean {
+  return (
+    api.isError(error) && error.response?.status === HttpStatusCode.NotFound
+  );
+}
+
+function reloadKeyOf({
+  scope,
+  tableId,
+}: {
+  scope: ReloadScope;
+  tableId: string | undefined;
+}): QueryKey {
+  switch (scope) {
+    case 'table':
+      return tableQueryKeys.table(tableId);
+    case 'fields':
+      return tableQueryKeys.fields(tableId);
+    case 'records':
+      return tableQueryKeys.records(tableId);
+  }
+}
+
 function syncedKeys(tableId: string | undefined): QueryKey[] {
   return [
     tableQueryKeys.table(tableId),
@@ -355,7 +414,8 @@ function syncedKeys(tableId: string | undefined): QueryKey[] {
 
 async function snapshotOf<T>(fetch: () => Promise<T>): Promise<Snapshot<T>> {
   const since = tableSyncClock.tick();
-  return { data: await fetch(), since };
+  const fetchStartedAt = Date.now();
+  return { data: await fetch(), since, fetchStartedAt };
 }
 
 export function useTableState<T>(selector: (state: TableState) => T) {
@@ -417,10 +477,17 @@ function TableLockProvider({
 
 type TableLockContextValue = ReturnType<typeof useResourceLock>;
 
-type Snapshot<T> = { data: T; since: number };
+type Snapshot<T> = { data: T; since: number; fetchStartedAt?: number };
+
+type ReloadScope = Extract<TableChange, { type: 'reload' }>['scope'];
+
+type LiveChange = Exclude<
+  TableChange,
+  { type: 'reload' } | { type: 'deleted' }
+>;
 
 type TimedChange = {
-  change: Exclude<TableChange, { type: 'reload' }>;
+  change: LiveChange;
   since: number;
 };
 
