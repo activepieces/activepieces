@@ -114,6 +114,36 @@ describe('Event Destinations API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.json().format).toBe(EventDestinationFormat.OTLP_JSON)
         })
+
+        it('POST /v1/event-destinations accepts eventFilters and returns it', async () => {
+            const ctx = await createEnabledContext()
+            const eventFilters = { piece: { changeTypes: ['new', 'major', 'minor', 'patch'] } }
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.PIECE_VERSION_CREATED],
+                eventFilters,
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().eventFilters).toEqual(eventFilters)
+            expect(listed?.json().data[0].eventFilters).toEqual(eventFilters)
+        })
+
+        it('rejects an unknown change type with 400', async () => {
+            const ctx = await createEnabledContext()
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.PIECE_VERSION_CREATED],
+                eventFilters: { piece: { changeTypes: ['prerelease'] } },
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(listed?.json().data).toHaveLength(0)
+        })
     })
 
     describe('GET /v1/event-destinations (List)', () => {
@@ -145,6 +175,25 @@ describe('Event Destinations API', () => {
     })
 
     describe('POST /v1/event-destinations/:id (Update)', () => {
+        it('keeps eventFilters when the update omits them and clears them with null', async () => {
+            const ctx = await createEnabledContext()
+            const eventFilters = { piece: { changeTypes: ['patch'] } }
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.PIECE_VERSION_CREATED],
+                eventFilters,
+            })
+            const destId = created?.json().id
+
+            const kept = await ctx.post(`/v1/event-destinations/${destId}`, { enabled: false })
+            const cleared = await ctx.post(`/v1/event-destinations/${destId}`, { eventFilters: null })
+
+            expect(kept?.statusCode).toBe(StatusCodes.OK)
+            expect(kept?.json().eventFilters).toEqual(eventFilters)
+            expect(cleared?.statusCode).toBe(StatusCodes.OK)
+            expect(cleared?.json().eventFilters).toBeNull()
+        })
+
         it('should update event destination', async () => {
             const ctx = await createEnabledContext()
 

@@ -83,6 +83,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             enabled: request.enabled ?? true,
             format,
             headers: await toStoredHeaders({ requested: request.headers, stored: null, url: request.url }),
+            eventFilters: request.eventFilters ?? null,
         }
         const saved = await eventDestinationRepo().save(entity)
         return maskHeaders({ row: saved, log })
