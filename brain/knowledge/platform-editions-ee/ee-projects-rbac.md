@@ -32,6 +32,7 @@ Note it lives under `ee/authentication/`, not `ee/projects/`, which is where mos
 - **Piece filtering** now via **piece sets** — `project.pieceSetId` (nullable FK, SET NULL). When `managePiecesEnabled`, new EE projects get the Default set on create; unassigned resolves to Default at filter time. This supersedes the legacy project-plan allow/block list.
 - **Worker routing**: `workerGroupId` (bare label, `^[a-z0-9_-]+$`) gated by `workerGroupsEnabled`. When set, the project's `EXECUTE_FLOW`/`EXECUTE_WEBHOOK` jobs route to `project-<label>-jobs`; other job types unaffected. Set via `POST /v1/projects/:id`; `GET /v1/projects/worker-groups` (platform-admin) lists online project-scope workers, 402 when flag off.
 - `platformProjectService.getForPlatform()`: admins see all, operators see all except others' personal, users see own personal + team projects they're a member of.
+- **A socket's project is per socket, and it moves with `SWITCH_PROJECT`.** The handshake project is only the first one; the web client sends `SWITCH_PROJECT` when the tab changes project, and the server re-checks the member's role then. Event permissions use the role cached at the last switch, so a member removed from a project keeps its rooms until the socket switches or reconnects.
 
 ### Key files
 Entry point: `rbacMiddleware`, registered as a `preHandler` hook in `app.ts`.
