@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { publicationId } from '../common/props';
@@ -36,15 +36,18 @@ export const listSubscriptionsAction = createAction({
 				],
 			},
 		}),
+		paging_info: Property.MarkDown({
+			value: 'Leave Limit and Cursor empty to get every subscription.',
+			variant: MarkdownVariant.INFO,
+		}),
 		limit: Property.Number({
 			displayName: 'Limit',
-			description: 'Number of subscriptions to return per page (1-100).',
+			description: 'Subscriptions per page, 1 to 100.',
 			required: false,
 		}),
 		cursor: Property.ShortText({
 			displayName: 'Cursor',
-			description:
-				'Cursor token for fetching the next page of results. Leave empty to start from the beginning.',
+			description: "The next_cursor value from the previous page's result.",
 			required: false,
 		}),
 	},
@@ -60,7 +63,7 @@ export const listSubscriptionsAction = createAction({
 			baseParams['status'] = status;
 		}
 
-		if (!isNil(cursor) || !isNil(limit)) {
+		if ((!isNil(cursor) && cursor !== '') || !isNil(limit)) {
 			return beehiivApiCall<SubscriptionListResponse>({
 				apiKey: context.auth.secret_text,
 				method: HttpMethod.GET,

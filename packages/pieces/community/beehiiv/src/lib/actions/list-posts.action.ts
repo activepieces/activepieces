@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { publicationId } from '../common/props';
@@ -16,8 +16,8 @@ export const listPostsAction = createAction({
 	props: {
 		publicationId: publicationId,
 		expand: Property.StaticMultiSelectDropdown({
-			displayName: 'Expand Results',
-			description: 'Optionally expand the results by adding additional information.',
+			displayName: 'Extra Data',
+			description: 'Extra details to return with each post.',
 			required: false,
 			options: {
 				options: [
@@ -33,6 +33,7 @@ export const listPostsAction = createAction({
 		audience: Property.StaticDropdown({
 			displayName: 'Audience',
 			required: true,
+			defaultValue: 'all',
 			options: {
 				options: [
 					{ label: 'All', value: 'all' },
@@ -40,10 +41,12 @@ export const listPostsAction = createAction({
 					{ label: 'Premium', value: 'premium' },
 				],
 			},
+			width: 'half',
 		}),
 		platform: Property.StaticDropdown({
 			displayName: 'Platform',
 			required: true,
+			defaultValue: 'all',
 			options: {
 				options: [
 					{ label: 'All', value: 'all' },
@@ -52,10 +55,12 @@ export const listPostsAction = createAction({
 					{ label: 'Both', value: 'both' },
 				],
 			},
+			width: 'half',
 		}),
 		status: Property.StaticDropdown({
 			displayName: 'Status',
 			required: true,
+			defaultValue: 'all',
 			options: {
 				options: [
 					{ label: 'All', value: 'all' },
@@ -67,20 +72,42 @@ export const listPostsAction = createAction({
 		}),
 		content_tags: Property.Array({
 			displayName: 'Content Tags',
-			description: 'Filter posts by content tags. Returns posts with ANY of the specified tags.',
+			description: 'Only return posts with any of these tags.',
 			required: false,
+		}),
+		paging_info: Property.MarkDown({
+			value: 'Leave Limit and Page empty to get every post.',
+			variant: MarkdownVariant.INFO,
 		}),
 		limit: Property.Number({
 			displayName: 'Limit',
-			description: 'Number of posts to return (1-100, default 10).',
+			description: 'Posts per page, 1 to 100.',
 			required: false,
+			width: 'half',
 		}),
 		page: Property.Number({
 			displayName: 'Page',
-			description: 'Page number for pagination (default 1).',
+			description: 'Page number, starting at 1.',
 			required: false,
+			width: 'half',
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'posts',
+			display: 'section',
+			label: 'Posts',
+			icon: 'filter',
+			props: ['publicationId', 'audience', 'platform', 'status', 'content_tags'],
+		},
+		{
+			key: 'results',
+			display: 'section',
+			label: 'Results',
+			icon: 'sliders',
+			props: ['expand', 'paging_info', 'limit', 'page'],
+		},
+	],
 	async run(context) {
 		const { publicationId, page, limit, status, platform, audience } = context.propsValue;
 		const expand = context.propsValue.expand ?? [];
@@ -93,7 +120,7 @@ export const listPostsAction = createAction({
 			order_by: 'created',
 			direction: 'desc',
 		};
-		if (expand) {
+		if (expand.length > 0) {
 			queryParams['expand'] = (expand as string[]).join(',');
 		}
 
@@ -105,7 +132,7 @@ export const listPostsAction = createAction({
 			const response = await BeehiivPaginatedApiCall({
 				apiKey: context.auth.secret_text,
 				method: HttpMethod.GET,
-				resourceUri: `/publications/${publicationId}/automations`,
+				resourceUri: `/publications/${publicationId}/posts`,
 				query: queryParams,
 			});
 
@@ -115,7 +142,7 @@ export const listPostsAction = createAction({
 		const response = await beehiivApiCall<{ data: Record<string, any>[] }>({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
-			resourceUri: `/publications/${publicationId}/automations`,
+			resourceUri: `/publications/${publicationId}/posts`,
 			query: {
 				page,
 				limit,

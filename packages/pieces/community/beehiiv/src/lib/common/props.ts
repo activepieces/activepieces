@@ -37,15 +37,23 @@ export const publicationId = Property.Dropdown({
 
 export const subscriptionId =(isRequired=false)=> Property.Dropdown({
 	auth: beehiivAuth,
-	displayName: 'Subscription ID',
+	displayName: 'Subscriber',
 	refreshers: ['publicationId'],
 	required: isRequired,
 	options: async ({ auth, publicationId }) => {
-		if (!auth || !publicationId) {
+		if (!auth) {
 			return {
 				disabled: true,
 				options: [],
 				placeholder: 'Please connect your account first.',
+			};
+		}
+
+		if (!publicationId) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Please select a publication first.',
 			};
 		}
 
@@ -81,11 +89,19 @@ export const automationId = (
 		refreshers: ['publicationId'],
 		required: isRequired,
 		options: async ({ auth, publicationId }) => {
-			if (!auth || !publicationId) {
+			if (!auth) {
 				return {
 					disabled: true,
 					options: [],
 					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			if (!publicationId) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please select a publication first.',
 				};
 			}
 
@@ -121,7 +137,7 @@ export const customFields = Property.DynamicProperties({
 		const fields: DynamicPropsValue = {};
 
 		const response = await BeehiivPaginatedApiCall<{ id: string; kind: string; display: string }>({
-			apiKey: auth as unknown as string,
+			apiKey: auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/publications/${publicationId}/custom_fields`,
 		});

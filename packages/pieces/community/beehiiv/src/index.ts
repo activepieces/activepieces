@@ -18,7 +18,7 @@ import { BEEHIIV_API_URL } from './lib/common/client';
 export const beehiiv = createPiece({
 	displayName: 'Beehiiv',
 	auth: beehiivAuth,
-	minimumSupportedRelease: '0.36.1',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/beehiiv.png',
 	authors: ['onyedikachi-david', 'kishanprmr', 'tosh2308'],
 	categories: [PieceCategory.MARKETING],
@@ -33,6 +33,12 @@ export const beehiiv = createPiece({
 		createCustomApiCallAction({
 			auth: beehiivAuth,
 			baseUrl: () => BEEHIIV_API_URL,
+			props: {
+				url: {
+					description: `Full URL, or a path relative to ${BEEHIIV_API_URL}`,
+					placeholder: '/publications',
+				},
+			},
 			authMapping: async (auth) => {
 				return {
 					Authorization: `Bearer ${auth.secret_text}`,

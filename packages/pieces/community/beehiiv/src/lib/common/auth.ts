@@ -4,7 +4,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const beehiivAuth = PieceAuth.SecretText({
 	displayName: 'API Key',
-	description: `Your can obtain API key by naviating to **Settings->Workspace Settings-> API**.`,
+	description: `In beehiiv, go to **Settings > Workspace Settings > API** and create an API key.`,
 	required: true,
 	validate: async ({ auth }) => {
 		try {
