@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { ActivepiecesError, apId, Cursor, ErrorCode, groupBy, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, spreadIfNotUndefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, groupBy, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, spreadIfNotUndefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { OtlpExportLogsRequest, otlpLogs, PostForStatusFailure, safeHttp } from '@activepieces/server-utils'
 import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, DEFAULT_PIECE_CHANGE_TYPES, EventDestination, EventDestinationFormat, EventDestinationHeaders, EventDestinationHeadersRequest, EventDestinationJobData, EventDestinationScope, EventDestinationTestError, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, PieceCreatedEvent, PieceVersionCreatedEvent, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -43,6 +43,7 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
 ])
 
 const PIECE_CATALOG_EVENTS = [ApplicationEventName.PIECE_CREATED, ApplicationEventName.PIECE_VERSION_CREATED]
+const PIECE_CATALOG_DISPATCH_CHUNK_SIZE = 25
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
 
@@ -246,20 +247,22 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 continue
             }
             queued += deliveries.filter(({ internalFlowId }) => isNil(internalFlowId)).length
-            await Promise.all(deliveries.map(({ destination, internalFlowId, body, jobId }) =>
-                dispatchEventToDestination({
-                    log,
-                    platformId,
-                    destinationId: destination.id,
-                    destinationUrl: destination.url,
-                    internalFlowId,
-                    format: destination.format,
-                    storedHeaders: destination.headers,
-                    body,
-                    jobId,
-                    lowPriority: true,
-                }),
-            ))
+            for (const batch of chunk(deliveries, PIECE_CATALOG_DISPATCH_CHUNK_SIZE)) {
+                await Promise.all(batch.map(({ destination, internalFlowId, body, jobId }) =>
+                    dispatchEventToDestination({
+                        log,
+                        platformId,
+                        destinationId: destination.id,
+                        destinationUrl: destination.url,
+                        internalFlowId,
+                        format: destination.format,
+                        storedHeaders: destination.headers,
+                        body,
+                        jobId,
+                        lowPriority: true,
+                    }),
+                ))
+            }
         }
         return { queued, failedPlatformIds }
     },

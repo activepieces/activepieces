@@ -176,6 +176,26 @@ describe('Piece catalog broadcast', () => {
         expect(ids[0]).not.toContain(':')
     })
 
+    it('dispatches a platform\'s deliveries at most 25 at a time', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        await subscribe({ platformId: ctx.platform.id, changeTypes: ['new', 'major', 'minor', 'patch'] })
+        let inFlight = 0
+        let maxInFlight = 0
+        addSpy.mockImplementation(async () => {
+            inFlight++
+            maxInFlight = Math.max(maxInFlight, inFlight)
+            await new Promise((resolve) => setTimeout(resolve, 5))
+            inFlight--
+        })
+        const changes = Array.from({ length: 60 }, (_, index) => buildChange({ name: `@test/bulk-${String(index).padStart(2, '0')}` }))
+
+        const result = await eventDestinationService(app.log).broadcast({ changes })
+
+        expect(result).toEqual({ queued: 60, failedPlatformIds: [] })
+        expect(addSpy).toHaveBeenCalledTimes(60)
+        expect(maxInFlight).toBe(25)
+    })
+
     it('S13 pieceSets payload: include_all with an exception and exclude_all', async () => {
         const ctx = await createTestContext(app, ENTITLED_PLAN)
         const platformId = ctx.platform.id
