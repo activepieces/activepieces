@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { matchPath } from 'react-router-dom';
 
 import { routeLocation } from '@/lib/route-location';
+import { routesThatRequireProjectId } from '@/lib/route-utils';
 
 export function useOpenBuilder(read: ReadOpenBuilder): void {
   useEffect(() => {
@@ -30,7 +31,7 @@ function fromPath({
   builder: OpenBuilder | null;
 }): AgentPageContext | null {
   const flow = matchPath(
-    { path: '/projects/:projectId/flows/:flowId', end: false },
+    { path: inProject(routesThatRequireProjectId.singleFlow), end: false },
     pathname,
   );
   if (flow?.params.projectId && flow.params.flowId) {
@@ -44,7 +45,7 @@ function fromPath({
     };
   }
   const table = matchPath(
-    { path: '/projects/:projectId/tables/:tableId', end: false },
+    { path: inProject(routesThatRequireProjectId.singleTable), end: false },
     pathname,
   );
   if (table?.params.projectId && table.params.tableId) {
@@ -55,6 +56,10 @@ function fromPath({
     };
   }
   return null;
+}
+
+function inProject(route: string): string {
+  return `/projects/:projectId${route}`;
 }
 
 export const pageContextUtils = { current, fromPath };
