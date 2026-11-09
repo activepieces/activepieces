@@ -19,6 +19,7 @@ import { routeLocation } from '@/lib/route-location';
 import { shellHandles } from '@/lib/shell-handle';
 
 import { AppShellRoute } from '../components/app-shell';
+import { AppToaster } from '../components/app-toaster';
 import { RouteErrorBoundary } from '../components/global-error-boundary';
 
 import { AgentsFlagGuard } from './agents-flag-guard';
@@ -45,10 +46,10 @@ function chatElement() {
 }
 
 const chatRoutes = [
-  { path: '/chat', handle: shellHandles.project, element: chatElement() },
+  { path: '/chat', handle: shellHandles.chat, element: chatElement() },
   {
     path: '/chat/:conversationId',
-    handle: shellHandles.project,
+    handle: shellHandles.chat,
     element: chatElement(),
   },
 ];
@@ -153,7 +154,12 @@ const ApRouter = () => {
 export { ApRouter };
 
 function AppRoot() {
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <AppToaster />
+    </>
+  );
 }
 
 function withErrorElement<T extends object>(route: T) {
