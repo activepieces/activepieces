@@ -2,7 +2,7 @@
 import { createMemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
-import { routeLocation } from './route-location';
+import { routeLocation } from '@/lib/route-location';
 
 describe('routeLocation', () => {
   it('uses the window URL before any router navigates', () => {
