@@ -11,6 +11,7 @@ import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
+import { pieceCatalogEventsJob } from '../../../pieces/piece-catalog/piece-catalog-events.job'
 import { isToolSearchEnabled } from '../../../tool-search/tool-search-flag'
 import { toolSearchReindexJob } from '../../../tool-search/tool-search-reindex.job'
 import { CANARY_WORKER_GROUP_ID, platformWorkerGroupService } from '../../../workers/worker-groups/platform-worker-group.service'
@@ -51,6 +52,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         if (isToolSearchEnabled()) {
             rejectedPromiseHandler(toolSearchReindexJob(req.log).enqueue({ type: 'all' }), req.log)
         }
+        rejectedPromiseHandler(pieceCatalogEventsJob(req.log).enqueue(), req.log)
         return savedPiece
     },
     )
