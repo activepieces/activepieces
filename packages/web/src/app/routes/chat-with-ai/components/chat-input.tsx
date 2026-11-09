@@ -286,18 +286,18 @@ export function ChatInput({
             />
           )}
           {showToolbar && (
-            <PromptInputActions className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
+            <PromptInputActions className="flex min-w-0 items-center justify-between">
+              <div className="flex shrink-0 items-center gap-1">
                 <PromptInputAction tooltip={t('Attach files')}>
                   <FileUploadTrigger asChild>
-                    <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12">
+                    <div className="flex h-9 w-9 shrink-0 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12">
                       <Paperclip className="size-4" />
                     </div>
                   </FileUploadTrigger>
                 </PromptInputAction>
                 {leftActions}
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex min-w-0 items-center justify-end gap-1">
                 {rightActions}
                 {isStreaming && onStop ? (
                   <PromptInputAction
@@ -311,7 +311,7 @@ export function ChatInput({
                     <Button
                       variant="default"
                       size="icon"
-                      className="sm:h-7 sm:w-7 rounded-full"
+                      className="shrink-0 sm:h-7 sm:w-7 rounded-full"
                       aria-label={t('Stop')}
                       onClick={onStop}
                     >
@@ -322,7 +322,7 @@ export function ChatInput({
                   <PromptInputAction tooltip={t('Stop recording')}>
                     <Button
                       variant="outline"
-                      className="h-7 gap-1.5 rounded-full px-3"
+                      className="h-7 shrink-0 gap-1.5 rounded-full px-3"
                       onClick={stopRecording}
                     >
                       <VoiceWaveformBars />
@@ -336,7 +336,7 @@ export function ChatInput({
                     <Button
                       variant="default"
                       size="icon"
-                      className="sm:h-7 sm:w-7 rounded-full"
+                      className="shrink-0 sm:h-7 sm:w-7 rounded-full"
                       onClick={handleSubmit}
                       disabled={!isNil(sendBlockedReason) || !isNil(queued)}
                     >
@@ -348,7 +348,7 @@ export function ChatInput({
                     <button
                       type="button"
                       onClick={startRecording}
-                      className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12"
+                      className="flex h-9 w-9 shrink-0 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12"
                     >
                       <Mic className="size-4" />
                     </button>
@@ -358,7 +358,7 @@ export function ChatInput({
                     <Button
                       variant="default"
                       size="icon"
-                      className="sm:h-7 sm:w-7 rounded-full"
+                      className="shrink-0 sm:h-7 sm:w-7 rounded-full"
                       onClick={handleSubmit}
                       disabled={true}
                     >
