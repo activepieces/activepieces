@@ -76,7 +76,6 @@ export function ChatChrome() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const renameCancelled = useRef(false);
   const titleInput = useRef<HTMLInputElement>(null);
-  const bodyRef = useRef<HTMLDivElement>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const reduced = useReducedMotion();
@@ -123,7 +122,6 @@ export function ChatChrome() {
   const startFresh = () => {
     setHistoryOpen(false);
     chatPanelUtils.startNewChat();
-    bodyRef.current?.querySelector('textarea')?.focus();
   };
 
   const finishRename = async (next: string) => {
@@ -271,7 +269,7 @@ export function ChatChrome() {
           )}
         </div>
       </div>
-      <div ref={bodyRef} className="relative min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1">
         {historyOpen && (
           <ConversationList
             className="absolute inset-0 z-10 w-full bg-gray-1 animate-in fade-in duration-150 ease-move motion-reduce:animate-none"
@@ -323,6 +321,7 @@ const ChatBody = memo(function ChatBody({
         key={newChatToken}
         incognito={false}
         compact={!full}
+        autoFocusComposer={newChatToken > 0}
         conversationId={conversationId}
         initialPrompt={prompt}
         onConversationCreated={(id) => {

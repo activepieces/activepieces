@@ -402,7 +402,6 @@ function handleChatKey({
   if (shortcut === 'newChat') {
     event.preventDefault();
     chatPanelUtils.startNewChat();
-    chatDom.composer()?.focus();
     return;
   }
   if (shortcut === 'toggle') {

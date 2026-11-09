@@ -44,6 +44,7 @@ export function ChatBottomBar({
   recede,
   fill,
   onFillApplied,
+  autoFocus,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
   const [skipped, setSkipped] = useState(false);
@@ -200,6 +201,7 @@ export function ChatBottomBar({
           sendBlockedReason={sendBlockedReason}
           fill={fill}
           onFillApplied={onFillApplied}
+          autoFocus={autoFocus}
         />
       </div>
     </div>
@@ -281,6 +283,7 @@ type ChatBottomBarProps = {
   recede?: boolean;
   fill?: ComposerFill | null;
   onFillApplied?: () => void;
+  autoFocus?: boolean;
 };
 
 const SKIPPED_VISIBLE_MS = 2500;

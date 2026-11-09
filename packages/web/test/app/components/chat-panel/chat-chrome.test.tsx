@@ -20,6 +20,7 @@ import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 
 const mounts = vi.hoisted(() => ({ chatBox: 0 }));
 const toastError = vi.hoisted(() => vi.fn());
+const removeWithUndo = vi.hoisted(() => vi.fn());
 const api = vi.hoisted(() => ({
   getConversation: vi.fn(),
   updateConversation: vi.fn(),
@@ -39,12 +40,35 @@ vi.mock('@/app/components/chat-panel/follow-along-controller', () => ({
 }));
 
 vi.mock('@/app/routes/chat-with-ai/ai-chat-box', () => ({
-  AIChatBox: () => {
+  AIChatBox: ({ autoFocusComposer }: { autoFocusComposer?: boolean }) => {
     React.useEffect(() => {
       mounts.chatBox += 1;
     }, []);
-    return null;
+    return <textarea aria-label="Message" autoFocus={autoFocusComposer} />;
   },
+}));
+
+vi.mock('@/app/components/settings-hub/settings-hub-dialog', () => ({
+  SettingsHubDialog: () => null,
+}));
+
+vi.mock('@/features/chat/lib/chat-pending-deletes', () => ({
+  chatPendingDeletes: { removeWithUndo },
+}));
+
+vi.mock('motion/react', () => ({
+  AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
+  motion: {
+    div: ({ children, className }: MotionMock) => (
+      <div className={className}>{children}</div>
+    ),
+    h2: ({ children, className, title }: MotionMock) => (
+      <h2 className={className} title={title}>
+        {children}
+      </h2>
+    ),
+  },
+  useReducedMotion: () => true,
 }));
 
 vi.mock('@/app/routes/chat-with-ai/conversation-list', () => ({
@@ -144,7 +168,13 @@ describe('ChatChrome', () => {
     toastError.mockReset();
     getConversation.mockReset();
     updateConversation.mockReset();
-    useChatPanel.setState({ open: true, mode: 'left', conversationId: 'c1' });
+    removeWithUndo.mockReset();
+    useChatPanel.setState({
+      open: true,
+      mode: 'left',
+      conversationId: 'c1',
+      newChatToken: 0,
+    });
   });
 
   afterEach(cleanup);
@@ -230,6 +260,20 @@ describe('ChatChrome', () => {
 
     await waitFor(() => expect(mounts.chatBox).toBe(2));
   });
+
+  it('puts focus in the new composer after New chat', async () => {
+    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
+    renderChrome();
+    const oldComposer = screen.getByRole('textbox', { name: 'Message' });
+    oldComposer.focus();
+
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+
+    await waitFor(() => expect(mounts.chatBox).toBe(2));
+    const composer = screen.getByRole('textbox', { name: 'Message' });
+    expect(composer).not.toBe(oldComposer);
+    expect(document.activeElement).toBe(composer);
+  });
 });
 
 async function rename(title: string) {
@@ -273,6 +317,10 @@ function renderChrome() {
 }
 
 type CloseFocus = (event: Event) => void;
+type MotionMock = React.PropsWithChildren<{
+  className?: string;
+  title?: string;
+}>;
 type MenuMock = {
   trigger: React.RefObject<HTMLSpanElement | null>;
   closeFocus: React.RefObject<CloseFocus | undefined>;

@@ -88,6 +88,7 @@ function ChatBoxContent({
   onConversationCreated,
   onConversationMissing,
   compact,
+  autoFocusComposer,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
@@ -549,6 +550,7 @@ function ChatBoxContent({
             onInputChange={setHasInput}
             fill={composerFill}
             onFillApplied={clearComposerFill}
+            autoFocus={autoFocusComposer}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (
@@ -720,6 +722,7 @@ type AIChatBoxProps = {
   onConversationMissing?: () => void;
   onTitleUpdate?: (title: string) => void;
   compact?: boolean;
+  autoFocusComposer?: boolean;
 };
 
 type ModelGate = 'loading' | 'setup' | 'ready';

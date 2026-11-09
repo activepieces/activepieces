@@ -35,6 +35,7 @@ export function ChatInput({
   sendBlockedReason,
   fill,
   onFillApplied,
+  autoFocus,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
@@ -48,6 +49,7 @@ export function ChatInput({
   sendBlockedReason?: string;
   fill?: ComposerFill | null;
   onFillApplied?: () => void;
+  autoFocus?: boolean;
 }) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
@@ -208,7 +210,7 @@ export function ChatInput({
             </div>
           ) : (
             <PromptInputTextarea
-              autoFocus={!minimalUntilFocus}
+              autoFocus={autoFocus ?? !minimalUntilFocus}
               placeholder={placeholder ?? t('Tell me what you need...')}
               className={cn(
                 'text-base sm:text-sm',
