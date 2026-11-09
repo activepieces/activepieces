@@ -244,7 +244,7 @@ export function ChatPanel() {
                 side === 'right' && 'order-last',
                 visible && !full && (side === 'left' ? 'border-r' : 'border-l'),
                 dragWidth === null &&
-                  'transition-[width] duration-150 ease-move motion-reduce:transition-none',
+                  'transition-[width] duration-[var(--ap-move,200ms)] ease-move motion-reduce:transition-none',
               ],
         )}
       >
