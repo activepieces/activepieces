@@ -351,6 +351,7 @@ export function ChatPanel() {
               if (event.button !== 0) return;
               event.preventDefault();
               event.currentTarget.setPointerCapture(event.pointerId);
+              cancelOnEscape(event);
               setDragWidth(width);
             }}
             onPointerMove={(event) => {
@@ -498,6 +499,23 @@ function handleChatKey({
     if (chatWidth === 'sheet') sheet.hide();
     else useChatPanel.getState().setOpen(false);
   }
+}
+
+function cancelOnEscape(event: React.PointerEvent<HTMLElement>): void {
+  const handle = event.currentTarget;
+  const pointerId = event.pointerId;
+  const onKey = (key: KeyboardEvent) => {
+    if (key.key !== 'Escape') return;
+    key.preventDefault();
+    key.stopImmediatePropagation();
+    handle.releasePointerCapture(pointerId);
+  };
+  window.addEventListener('keydown', onKey, true);
+  handle.addEventListener(
+    'lostpointercapture',
+    () => window.removeEventListener('keydown', onKey, true),
+    { once: true },
+  );
 }
 
 function hasText(element: Element | null): boolean {

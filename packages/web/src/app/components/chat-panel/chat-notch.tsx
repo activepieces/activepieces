@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { animate, motion, useMotionValue, useTransform } from 'motion/react';
 import { useEffect } from 'react';
 
+import { KbdHint, modShortcut } from '@/components/custom/kbd-hint';
 import { CHAT_SPARK_PATHS } from '@/components/icons/chat-spark';
 import {
   Tooltip,
@@ -95,7 +96,7 @@ export function ChatNotch({ className }: { className?: string }) {
           </TooltipTrigger>
           <TooltipContent side="right" className="flex items-center gap-2">
             {t('Chat')}
-            <span className="text-xs opacity-70">⌘J</span>
+            <KbdHint>{modShortcut({ key: 'J' })}</KbdHint>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
