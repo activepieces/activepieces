@@ -2,7 +2,13 @@
  * @vitest-environment jsdom
  */
 import { TemplateType } from '@activepieces/shared';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import * as React from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -25,7 +31,7 @@ const template = vi.hoisted(() => {
   return store;
 });
 const pageRenders = vi.hoisted(() => ({ count: 0 }));
-const chat = vi.hoisted(() => ({ on: false }));
+const chat = vi.hoisted(() => ({ on: false, crash: false }));
 const admin = vi.hoisted(() => ({ value: false }));
 const sidebarModes = vi.hoisted((): string[] => []);
 
@@ -102,7 +108,10 @@ vi.mock('@/features/workspace/lib/use-chat-on', () => ({
 }));
 
 vi.mock('@/app/components/chat-panel/chat-window', () => ({
-  ChatPanel: () => <aside aria-label="Chat" />,
+  ChatPanel: () => {
+    if (chat.crash) throw new Error('chat crashed');
+    return <aside aria-label="Chat" />;
+  },
   ChatSheetLauncher: () => null,
   useChatWidth: () => 'full',
 }));
@@ -113,6 +122,10 @@ vi.mock('@/app/components/chat-panel/chat-notch', () => ({
 
 vi.mock('@/app/components/chat-panel/chat-content-column', () => ({
   ChatContentColumn: ({ children }: React.PropsWithChildren) => <>{children}</>,
+}));
+
+vi.mock('@/lib/error-reporting', () => ({
+  errorReporting: { report: vi.fn() },
 }));
 
 vi.mock('@/hooks/use-session-project-id', () => ({
@@ -171,6 +184,20 @@ describe('AppShellRoute on the chat page', () => {
     renderAt('/chat');
 
     expect(screen.getByRole('complementary', { name: 'Chat' })).toBeTruthy();
+  });
+
+  it('offers a retry when the chat crashes', () => {
+    chat.on = true;
+    chat.crash = true;
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    renderAt('/chat');
+
+    expect(screen.getByRole('alert')).toBeTruthy();
+    chat.crash = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(screen.getByRole('complementary', { name: 'Chat' })).toBeTruthy();
+    quiet.mockRestore();
   });
 
   it('leaves the chat page when the chat is off or hidden', () => {

@@ -1,5 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId, TemplateType } from '@activepieces/shared';
+import { t } from 'i18next';
+import { RefreshCw } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Navigate, Outlet, useMatches } from 'react-router-dom';
@@ -7,6 +9,7 @@ import { Navigate, Outlet, useMatches } from 'react-router-dom';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SocketProvider } from '@/components/providers/socket-provider';
+import { Button } from '@/components/ui/button';
 import { SidebarInset } from '@/components/ui/sidebar-shadcn';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
@@ -162,7 +165,9 @@ function AppShell({ handle }: { handle: RouteHandle }) {
               >
                 {chatOn && (
                   <ErrorBoundary
-                    fallback={null}
+                    fallbackRender={({ resetErrorBoundary }) => (
+                      <ChatPanelError onRetry={resetErrorBoundary} />
+                    )}
                     onError={(error, info) =>
                       errorReporting.report({
                         error,
@@ -200,6 +205,30 @@ function AppShell({ handle }: { handle: RouteHandle }) {
       </div>
       {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
     </GlobalSearchProvider>
+  );
+}
+
+function ChatPanelError({ onRetry }: { onRetry: () => void }) {
+  const chatWidth = useChatWidth();
+  if (chatWidth === 'closed') return null;
+  return (
+    <div
+      role="alert"
+      className={cn(
+        'flex shrink-0 flex-col items-start gap-3 bg-gray-1 p-4',
+        chatWidth === 'full' ? 'flex-1' : 'w-72',
+        chatWidth === 'right' && 'order-last border-l',
+        chatWidth !== 'right' && chatWidth !== 'full' && 'border-r',
+      )}
+    >
+      <p className="text-sm text-gray-11">
+        {t("Chat couldn't load. Your chats are safe.")}
+      </p>
+      <Button variant="outline" size="sm" onClick={onRetry}>
+        <RefreshCw className="size-4" />
+        {t('Try again')}
+      </Button>
+    </div>
   );
 }
 
