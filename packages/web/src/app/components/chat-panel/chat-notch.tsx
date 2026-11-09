@@ -57,11 +57,11 @@ export function ChatNotch({ className }: { className?: string }) {
                   : 'pointer-events-auto duration-(--dur-base)',
               )}
             >
-              <NotchChatIcon />
+              <NotchChatIcon spark={!needsYou} />
               {needsYou && (
                 <span
                   aria-hidden
-                  className="absolute top-1 left-9 size-2.5 rounded-full border-2 border-gray-2 bg-accent-9"
+                  className="absolute top-3.25 left-6.5 size-2.5 rounded-full bg-accent-9"
                 />
               )}
             </button>
@@ -76,7 +76,7 @@ export function ChatNotch({ className }: { className?: string }) {
   );
 }
 
-function NotchChatIcon() {
+function NotchChatIcon({ spark }: { spark: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -89,10 +89,12 @@ function NotchChatIcon() {
       className="size-6"
     >
       <path d={chatSparkPaths.bubble} />
-      <path
-        d={chatSparkPaths.spark}
-        className="fill-accent-9 stroke-accent-9"
-      />
+      {spark && (
+        <path
+          d={chatSparkPaths.spark}
+          className="fill-accent-9 stroke-accent-9"
+        />
+      )}
       {chatSparkPaths.lines.map((d) => (
         <path key={d} d={d} />
       ))}
