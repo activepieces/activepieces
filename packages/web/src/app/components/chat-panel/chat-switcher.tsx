@@ -507,11 +507,11 @@ function ChatRow({
         </span>
       )}
       <time
-        dateTime={conversation.created}
+        dateTime={conversation.updated}
         className="shrink-0 text-xs text-gray-11 tabular-nums"
       >
         {chatHistoryUtils.shortTime({
-          date: new Date(conversation.created),
+          date: chatHistoryUtils.lastActivity(conversation),
           now: new Date(),
         })}
       </time>

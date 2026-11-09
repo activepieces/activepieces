@@ -15,7 +15,7 @@ function groupByDay({
     older: [],
   };
   for (const conversation of conversations) {
-    buckets[groupOf({ date: new Date(conversation.created), now })].push(
+    buckets[groupOf({ date: lastActivity(conversation), now })].push(
       conversation,
     );
   }
@@ -24,6 +24,18 @@ function groupByDay({
     label: groupLabel(id),
     conversations: buckets[id],
   }));
+}
+
+function byLastActivity(
+  conversations: AgentConversation[],
+): AgentConversation[] {
+  return [...conversations].sort(
+    (a, b) => lastActivity(b).getTime() - lastActivity(a).getTime(),
+  );
+}
+
+function lastActivity(conversation: AgentConversation): Date {
+  return new Date(conversation.updated);
 }
 
 function groupOf({ date, now }: { date: Date; now: Date }): ChatHistoryGroupId {
@@ -119,6 +131,8 @@ const SEARCH_THRESHOLD = 8;
 
 export const chatHistoryUtils = {
   groupByDay,
+  byLastActivity,
+  lastActivity,
   shortTime,
   showsSearch,
   filterByTitle,

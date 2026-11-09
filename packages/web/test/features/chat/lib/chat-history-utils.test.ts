@@ -52,6 +52,58 @@ describe('chatHistoryUtils.filterByTitle', () => {
   });
 });
 
+describe('chatHistoryUtils by last activity', () => {
+  it('orders and groups chats by their last activity, not when they began', () => {
+    const oldButActive = chat({
+      id: 'old',
+      created: new Date(2026, 4, 1, 9, 0, 0),
+      updated: new Date(2026, 5, 10, 14, 0, 0),
+    });
+    const newButQuiet = chat({
+      id: 'new',
+      created: new Date(2026, 5, 9, 9, 0, 0),
+      updated: new Date(2026, 5, 9, 9, 5, 0),
+    });
+
+    const ordered = chatHistoryUtils.byLastActivity([newButQuiet, oldButActive]);
+    expect(ordered.map((conversation) => conversation.id)).toEqual([
+      'old',
+      'new',
+    ]);
+    expect(
+      chatHistoryUtils
+        .groupByDay({ conversations: ordered, now: NOW })
+        .map((group) => [
+          group.id,
+          group.conversations.map((conversation) => conversation.id),
+        ]),
+    ).toEqual([
+      ['today', ['old']],
+      ['yesterday', ['new']],
+    ]);
+  });
+});
+
+function chat({
+  id,
+  created,
+  updated,
+}: {
+  id: string;
+  created: Date;
+  updated: Date;
+}): AgentConversation {
+  return AgentConversation.parse({
+    id,
+    created: created.toISOString(),
+    updated: updated.toISOString(),
+    platformId: 'platform-1',
+    userId: 'user-1',
+    source: AgentRunSource.CHAT,
+    title: id,
+  });
+}
+
 function titled(title: string | null): AgentConversation {
   return AgentConversation.parse({
     id: title ?? 'untitled',

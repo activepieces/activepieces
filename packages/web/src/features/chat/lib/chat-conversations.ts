@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { chatApi } from './chat-api';
+import { chatHistoryUtils } from './chat-history-utils';
 import { usePendingDeletes } from './chat-pending-deletes';
 import { chatQueryKeys } from './chat-query-keys';
 
@@ -31,8 +32,10 @@ export function useChatConversations() {
   const pendingDeletes = usePendingDeletes((state) => state.ids);
   const conversations = useMemo(
     () =>
-      (query.data?.pages.flatMap((page) => page.data) ?? []).filter(
-        (conversation) => !pendingDeletes.has(conversation.id),
+      chatHistoryUtils.byLastActivity(
+        (query.data?.pages.flatMap((page) => page.data) ?? []).filter(
+          (conversation) => !pendingDeletes.has(conversation.id),
+        ),
       ),
     [query.data, pendingDeletes],
   );

@@ -290,9 +290,9 @@ function HistoryRow({
               <span className="sr-only">{t('Waiting for your input')}</span>
             </span>
           )}
-          <time dateTime={conversation.created}>
+          <time dateTime={conversation.updated}>
             {chatHistoryUtils.shortTime({
-              date: new Date(conversation.created),
+              date: chatHistoryUtils.lastActivity(conversation),
               now: new Date(),
             })}
           </time>
