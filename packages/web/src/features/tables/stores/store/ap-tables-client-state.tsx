@@ -165,8 +165,8 @@ export const createApTableStore = (
         const update = incoming.get(record.id);
         const row = rowOf(record.id);
         const unchanged = unchangedLocally(record.id);
-        const gone = removed.has(record.id) || (dropMissing && !update);
-        if (unchanged && gone) return [];
+        if (removed.has(record.id)) return [];
+        if (unchanged && dropMissing && !update) return [];
         if (!update) {
           return row ? [{ record, row, applied: false }] : [];
         }
@@ -191,6 +191,7 @@ export const createApTableStore = (
           (record) =>
             !known.has(record.id) &&
             !removed.has(record.id) &&
+            !serverState.isDeleted(record.id) &&
             unchangedLocally(record.id),
         )
         .map((record) => ({
@@ -446,6 +447,7 @@ export const createApTableStore = (
           ids: [...changed.map((record) => record.id), ...removedIds],
           at: since,
         });
+        serverState.markDeleted(removedIds);
         return rowIds;
       },
       clearRecords: ({ since }) => {
@@ -458,6 +460,7 @@ export const createApTableStore = (
           keepUnlinkedRows: false,
         });
         serverState.markKnown({ ids: removedIds, at: since });
+        serverState.markDeleted(removedIds);
       },
       setAgentRunId: (recordId: string, agentRunId: string | null) => {
         const rowId = serverState.rowIdOf(recordId);
