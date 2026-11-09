@@ -30,7 +30,7 @@ export function ShowcaseTile({
   const className = cn(
     'flex w-full items-start text-left',
     isList
-      ? 'items-center gap-4 px-4 py-4 sm:px-5'
+      ? 'items-center gap-4 px-4 py-4 @chat-sm/chat:px-5'
       : 'gap-3 rounded-xl border bg-gray-1 p-3',
     clickable &&
       cn(

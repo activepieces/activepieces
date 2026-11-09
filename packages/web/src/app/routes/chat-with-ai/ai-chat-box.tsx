@@ -36,20 +36,19 @@ import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
 import {
-  EmptyState,
+  ChatEmptyState,
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
-import { OnboardingWelcome } from './components/onboarding-welcome';
 import {
   PersonalizationChip,
   PersonalizationChipState,
@@ -59,52 +58,11 @@ import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
-export function AIChatBox({
-  incognito,
-  initialPrompt,
-  agentId,
-  builder,
-  onTurnEnd,
-  emptyState,
-  footerNote,
-  placeholder,
-  conversationId,
-  onTitleUpdate,
-  onConversationCreated,
-}: AIChatBoxProps) {
-  const projectId = authenticationSession.getProjectId();
-  const gated =
-    agentId === undefined && isNil(conversationId) && !isNil(projectId);
-  const { data: options, isLoading } = aiModelHooks.useModelOptions({
-    projectId: projectId ?? '',
-    surface: 'chat',
-    enabled: gated,
-  });
-
-  if (gated && isLoading) {
-    return <MessageSkeletons />;
-  }
-
-  if (gated && !isNil(options) && !hasAnyModel({ options })) {
-    return <SetupRequiredState />;
-  }
-
+export function AIChatBox(props: AIChatBoxProps) {
   return (
     <ChatStoreProvider>
       <TaskPanelLayout>
-        <ChatBoxContent
-          incognito={incognito}
-          initialPrompt={initialPrompt}
-          agentId={agentId}
-          builder={builder}
-          onTurnEnd={onTurnEnd}
-          emptyState={emptyState}
-          footerNote={footerNote}
-          placeholder={placeholder}
-          conversationId={conversationId}
-          onTitleUpdate={onTitleUpdate}
-          onConversationCreated={onConversationCreated}
-        />
+        <ChatBoxContent {...props} />
       </TaskPanelLayout>
     </ChatStoreProvider>
   );
@@ -122,10 +80,22 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
+  onConversationMissing,
+  newChatToken,
+  compact,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
-  const sessionProjectId = authenticationSession.getProjectId();
+  const sessionProjectId = useSessionProjectId();
+  const { data: gateUser } = userHooks.useCurrentUser();
+  const gate = useModelGate({
+    gated:
+      agentId === undefined &&
+      isNil(initialConversationId) &&
+      (!isNil(sessionProjectId) ||
+        gateUser?.platformRole === PlatformRole.ADMIN),
+    projectId: sessionProjectId,
+  });
 
   const {
     conversationId,
@@ -143,6 +113,7 @@ function ChatBoxContent({
     retryLastMessage,
     cancelStream,
     setConversationId,
+    startNew,
     setModelPick,
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
@@ -151,6 +122,7 @@ function ChatBoxContent({
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
+    onConversationMissing,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
   });
 
@@ -164,7 +136,7 @@ function ChatBoxContent({
 
   useEffect(() => {
     if (initialConversationId) {
-      void setConversationId(initialConversationId);
+      setConversationId(initialConversationId).catch(() => undefined);
     }
   }, [initialConversationId, setConversationId]);
 
@@ -172,18 +144,19 @@ function ChatBoxContent({
     setStoreConversationId(conversationId ?? null);
   }, [conversationId, setStoreConversationId]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!isStreaming) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      const target = e.target as HTMLElement | null;
+      const target = e.target;
       if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.closest('[role="dialog"]') ||
-          target.closest('[data-radix-popper-content-wrapper]'))
+        !(target instanceof HTMLElement) ||
+        !(
+          rootRef.current?.contains(target) ||
+          (!compact && target === document.body)
+        ) ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
       ) {
         return;
       }
@@ -192,7 +165,7 @@ function ChatBoxContent({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [isStreaming, cancelStream]);
+  }, [isStreaming, cancelStream, compact]);
 
   const chatProjectId = conversationProjectId ?? sessionProjectId;
   const showsPicker = agentId === undefined && !isNil(chatProjectId);
@@ -208,7 +181,8 @@ function ChatBoxContent({
       modelOptions.defaultChoice ??
       null;
   const awaitingSavedPick =
-    !isNil(initialConversationId) && (isNil(modelPick) || isLoadingHistory);
+    !isNil(initialConversationId) &&
+    (isLoadingHistory || (initialConversationId !== conversationId && !failed));
   const pickUnavailable =
     showsPicker &&
     !isNil(modelOptions) &&
@@ -243,18 +217,40 @@ function ChatBoxContent({
     ],
   );
 
-  const sentInitialPrompt = useRef(false);
+  const [hasInput, setHasInput] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [session, setSession] = useState(newChatToken ?? 0);
+  const sentInitialPrompt = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (newChatToken === undefined || newChatToken === session) return;
+    startNew();
+    setHasSentMessage(false);
+    setHasInput(false);
+    setPromptOpen(false);
+    sentInitialPrompt.current = null;
+    setSession(newChatToken);
+  }, [newChatToken, session, startNew]);
 
   useEffect(() => {
     const shouldSendInitialPrompt =
       initialPrompt !== undefined &&
       initialPrompt.trim().length > 0 &&
       !initialConversationId &&
-      !sentInitialPrompt.current;
+      gate === 'ready' &&
+      session === (newChatToken ?? 0) &&
+      sentInitialPrompt.current !== session;
     if (!shouldSendInitialPrompt) return;
-    sentInitialPrompt.current = true;
+    sentInitialPrompt.current = session;
     handleSend(initialPrompt).catch(() => undefined);
-  }, [initialPrompt, initialConversationId, handleSend]);
+  }, [
+    initialPrompt,
+    initialConversationId,
+    handleSend,
+    gate,
+    session,
+    newChatToken,
+  ]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -291,8 +287,6 @@ function ChatBoxContent({
 
   const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
-  const [hasInput, setHasInput] = useState(false);
-  const [promptOpen, setPromptOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
   const personalization = usePersonalization({ enabled: !incognito });
@@ -312,10 +306,11 @@ function ChatBoxContent({
     (personalization.companyInput ?? '').trim().length > 0 &&
     currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
-    isEmpty && !incognito && (isFirstRun || promptOpen);
+    isEmpty && !incognito && !compact && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    !compact &&
     isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
@@ -374,8 +369,19 @@ function ChatBoxContent({
   >(['chat-conversations']);
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
 
+  if (gate === 'loading') {
+    return <MessageSkeletons />;
+  }
+
+  if (gate === 'setup') {
+    return <SetupRequiredState />;
+  }
+
   return (
-    <div className="flex flex-col h-full flex-1 min-w-0">
+    <div
+      ref={rootRef}
+      className="@container/chat flex flex-col h-full flex-1 min-w-0 [&_*]:[scrollbar-width:thin]"
+    >
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div
@@ -385,17 +391,15 @@ function ChatBoxContent({
               showPersonalizationDonut && 'pb-14',
             )}
           >
-            {emptyState ??
-              (showOnboardingCard ? (
-                <OnboardingWelcome />
-              ) : (
-                <EmptyState
-                  onSuggestionClick={(text) => void handleSend(text)}
-                  incognito={incognito}
-                  showFlowCards={!hasConversations}
-                  hasInput={hasInput}
-                />
-              ))}
+            {emptyState ?? (
+              <ChatEmptyState
+                incognito={incognito}
+                hasInput={hasInput}
+                onboarding={showOnboardingCard}
+                showFlowCards={!hasConversations}
+                onSend={(text) => handleSend(text).catch(() => undefined)}
+              />
+            )}
           </div>
         ) : (
           <motion.div
@@ -406,7 +410,7 @@ function ChatBoxContent({
             transition={{ duration: 0.25 }}
           >
             <ChatContainerRoot
-              className="flex-1 relative h-full px-3 sm:px-6"
+              className="flex-1 relative h-full"
               style={{
                 maskImage:
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
@@ -414,7 +418,10 @@ function ChatBoxContent({
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
+              <ChatContainerContent
+                scrollClassName="px-3 @chat-sm/chat:px-6"
+                className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full"
+              >
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -509,7 +516,7 @@ function ChatBoxContent({
         )}
       </AnimatePresence>
 
-      <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="px-3 @chat-sm/chat:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-3xl mx-auto relative">
           {showOnboardingCard && (
             <div className="mb-3">
@@ -594,6 +601,23 @@ function ChatBoxContent({
   );
 }
 
+function useModelGate({
+  gated,
+  projectId,
+}: {
+  gated: boolean;
+  projectId: string | null;
+}): ModelGate {
+  const { data: options, isLoading } = aiModelHooks.useModelOptions({
+    projectId: projectId ?? undefined,
+    surface: 'chat',
+    enabled: gated,
+  });
+  if (gated && isLoading) return 'loading';
+  if (gated && !isNil(options) && !hasAnyModel({ options })) return 'setup';
+  return 'ready';
+}
+
 function hasAnyModel({ options }: { options: ModelOptions }): boolean {
   return (
     options.tiers.length > 0 ||
@@ -641,5 +665,10 @@ type AIChatBoxProps = {
   placeholder?: string;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
+  onConversationMissing?: () => void;
   onTitleUpdate?: (title: string) => void;
+  newChatToken?: number;
+  compact?: boolean;
 };
+
+type ModelGate = 'loading' | 'setup' | 'ready';

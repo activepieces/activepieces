@@ -20,8 +20,13 @@ import { api } from '@/lib/api';
 
 async function createConversation(
   request: CreateAgentConversationRequest,
+  signal?: AbortSignal,
 ): Promise<AgentConversation> {
-  return api.post<AgentConversation>('/v1/agents/conversations', request);
+  return api.any<AgentConversation>('/v1/agents/conversations', {
+    method: 'POST',
+    data: request,
+    signal,
+  });
 }
 
 async function listConversations({

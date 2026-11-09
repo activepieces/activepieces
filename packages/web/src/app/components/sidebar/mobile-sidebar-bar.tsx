@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -12,6 +13,7 @@ export function MobileSidebarBar() {
   const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const branding = flagsHooks.useWebsiteBranding();
   const { platform } = platformHooks.useCurrentPlatform();
+  const chatRoute = chatPanelUtils.useChatRoute();
 
   if (!isMobile) {
     return null;
@@ -46,7 +48,7 @@ export function MobileSidebarBar() {
           aria-label={t('Chat')}
           asChild
         >
-          <Link to="/chat">
+          <Link to={chatRoute}>
             <ChatSparkIcon className="size-4" />
           </Link>
         </Button>

@@ -1,6 +1,12 @@
 import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquareOff,
+  Settings,
+} from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -26,7 +32,90 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
-export function EmptyState({
+import { OnboardingWelcome } from './onboarding-welcome';
+
+export function ChatEmptyState({
+  incognito,
+  hasInput,
+  onboarding,
+  showFlowCards,
+  onSend,
+}: {
+  incognito: boolean;
+  hasInput: boolean;
+  onboarding: boolean;
+  showFlowCards: boolean;
+  onSend: (text: string) => void;
+}) {
+  return (
+    <div className="@container h-full">
+      <div className="hidden h-full @chat-md:block">
+        {onboarding ? (
+          <OnboardingWelcome />
+        ) : (
+          <WideEmptyState
+            incognito={incognito}
+            hasInput={hasInput}
+            showFlowCards={showFlowCards}
+            onSuggestionClick={onSend}
+          />
+        )}
+      </div>
+      <div className="h-full @chat-md:hidden">
+        <NarrowEmptyState onSend={onSend} />
+      </div>
+    </div>
+  );
+}
+
+export function ChatDisabledState() {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
+      <div className="flex size-10 items-center justify-center rounded-lg bg-gray-3">
+        <MessageSquareOff className="size-5 text-gray-11" />
+      </div>
+      <h2 className="text-sm font-semibold text-gray-12">
+        {t('Chat is turned off for this workspace.')}
+      </h2>
+    </div>
+  );
+}
+
+function NarrowEmptyState({ onSend }: { onSend: (text: string) => void }) {
+  const { data: user } = userHooks.useCurrentUser();
+  const name = user?.firstName;
+  const suggestions = [
+    t('Build me a flow for new leads'),
+    t('What saved us the most time this month?'),
+    t('Why did my last run fail?'),
+  ];
+  return (
+    <div className="flex h-full flex-col justify-end gap-3 px-4 pb-3">
+      <p className="text-base font-semibold text-gray-12">
+        {name
+          ? t('Hi {name}, what should I do?', { name })
+          : t('What should I do?')}
+      </p>
+      <div className="flex flex-col items-start gap-1.5">
+        {suggestions.map((text) => {
+          return (
+            <Button
+              key={text}
+              variant="ghost"
+              title={text}
+              onClick={() => onSend(text)}
+              className="h-auto max-w-full justify-start rounded-full border px-3 py-1.5 text-gray-11 hover:bg-gray-3 active:bg-gray-4"
+            >
+              <span className="truncate">{text}</span>
+            </Button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function WideEmptyState({
   onSuggestionClick,
   incognito,
   hasInput,
@@ -46,7 +135,7 @@ export function EmptyState({
 
   if (incognito) {
     return (
-      <div className="flex min-h-full flex-col justify-center px-3 pt-8 pb-6 sm:px-6">
+      <div className="flex min-h-full flex-col justify-center px-6 pt-8 pb-6">
         <div className="max-w-3xl mx-auto w-full">
           <Greeting firstName={firstName} incognito />
         </div>
@@ -55,15 +144,13 @@ export function EmptyState({
   }
 
   return (
-    <div className="flex min-h-full flex-col px-3 pt-12 pb-6 sm:px-6 sm:pt-16">
+    <div className="flex min-h-full flex-col px-6 pt-16 pb-6">
       <div className="max-w-3xl mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
-          <div className="min-w-0 sm:flex-1 sm:max-w-md">
+        <div className="flex flex-row items-center gap-10">
+          <div className="min-w-0 flex-1 max-w-md">
             <Greeting firstName={firstName} incognito={false} />
           </div>
-          <div className="hidden sm:contents">
-            <AppMarquee />
-          </div>
+          <AppMarquee />
         </div>
         <CollapseOnInput collapsed={hasInput}>
           <ExampleCards cards={cards} onSuggestionClick={onSuggestionClick} />

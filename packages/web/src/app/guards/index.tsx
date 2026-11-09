@@ -41,10 +41,10 @@ const chatElement = (
 );
 
 const chatRoutes = [
-  { path: '/chat', handle: shellHandles.project, element: chatElement },
+  { path: '/chat', handle: shellHandles.chat, element: chatElement },
   {
     path: '/chat/:conversationId',
-    handle: shellHandles.project,
+    handle: shellHandles.chat,
     element: chatElement,
   },
 ];
