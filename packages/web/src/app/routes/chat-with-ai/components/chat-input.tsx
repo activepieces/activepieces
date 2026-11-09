@@ -354,7 +354,7 @@ export function ChatInput({
                 </PromptInputAction>
                 {leftActions}
               </div>
-              <div className="flex min-w-0 items-center justify-end gap-1">
+              <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
                 {rightActions}
                 {isStreaming && onStop ? (
                   <PromptInputAction
