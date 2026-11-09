@@ -9,7 +9,10 @@ vi.mock('@/lib/authentication-session', () => ({
   },
 }));
 
-import { ResourceRef, resourceRegistry } from './registry';
+import {
+  ResourceRef,
+  resourceRegistry,
+} from '@/features/chat/lib/resources/registry';
 
 const tagged = (apResource: unknown) => ({
   content: [{ type: 'text', text: 'done' }],

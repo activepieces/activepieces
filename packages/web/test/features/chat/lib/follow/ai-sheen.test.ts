@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { aiSheen } from './ai-sheen';
+import { aiSheen } from '@/features/chat/lib/follow/ai-sheen';
 
 describe('aiSheen.durationFor', () => {
   it('moves the band at 1000 px per second', () => {

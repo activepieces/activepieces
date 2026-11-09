@@ -15,7 +15,7 @@ import {
   RunContext,
   followAlong,
   useFollowAlong,
-} from './follow-along';
+} from '@/features/chat/lib/follow/follow-along';
 
 const INITIAL = useFollowAlong.getState();
 
