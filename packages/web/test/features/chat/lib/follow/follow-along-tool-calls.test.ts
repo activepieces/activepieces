@@ -15,9 +15,10 @@ import {
   RunContext,
   followAlong,
 } from '@/features/chat/lib/follow/follow-along';
+import { ResourceRef } from '@/features/chat/lib/resources/registry';
 
 const CTX: RunContext = { conversationId: 'c1', runId: 'r1', attach: 'sent' };
-const TABLE = { kind: 'table', id: 't1' };
+const TABLE: Pick<ResourceRef, 'id' | 'kind'> = { kind: 'table', id: 't1' };
 
 describe('follow-along tool calls', () => {
   beforeEach(() => followAlong.reset());
