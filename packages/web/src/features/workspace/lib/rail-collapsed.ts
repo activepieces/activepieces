@@ -7,14 +7,12 @@ import { safeStorage } from '@/lib/safe-storage';
 
 import { useChatPanel } from './chat-panel-open';
 import { layoutMove } from './layout-move';
+import { useChatOn } from './use-chat-on';
 import { windowSizeHooks } from './window-size-hooks';
 
 const PREFERENCE_KEY = 'primary-rail-collapsed';
 const FOLDED_FOR_CHAT_KEY = 'primary-rail-folded-for-chat';
 
-// Inside one agent the rail is furniture: the page has its own header, its own
-// conversation list and its own panel. The route only asks for it closed, so an
-// explicit click on that page still wins until you navigate on.
 const AGENT_ROUTES = [
   routesThatRequireProjectId.singleAgent,
   routesThatRequireProjectId.singleAgentRuns,
@@ -64,24 +62,27 @@ function railIsOpen({
   state,
   pathname,
   chatPage,
+  chatOn,
 }: {
   state: RailState;
   pathname: string;
   chatPage: boolean;
+  chatOn: boolean;
 }): boolean {
   const routeHoldsItClosed =
     state.openedOn !== pathname &&
     ROUTES_THAT_HOLD_THE_RAIL_CLOSED.some(
       (route) => matchPath(route, pathname) !== null,
     );
-  const chatHoldsItClosed = state.foldedForChat && !chatPage;
+  const chatHoldsItClosed = state.foldedForChat && chatOn && !chatPage;
   return !(state.preference || routeHoldsItClosed || chatHoldsItClosed);
 }
 
 export function useRailOpen(): boolean {
   const { pathname } = useLocation();
   const chatPage = useMatches().some(({ handle }) => isChatPageHandle(handle));
-  return useRail((state) => railIsOpen({ state, pathname, chatPage }));
+  const chatOn = useChatOn();
+  return useRail((state) => railIsOpen({ state, pathname, chatPage, chatOn }));
 }
 
 export function useRailOpenState() {
@@ -111,12 +112,10 @@ function railOpenNow(): boolean {
     state: useRail.getState(),
     pathname: window.location.pathname,
     chatPage: false,
+    chatOn: true,
   });
 }
 
-// The chat takes the room the labels had: docking it folds the rail to icons
-// at any desktop width, and the fold lasts for the tab until the chat closes
-// or the user opens the rail again.
 function foldForDock() {
   if (desktop() && railOpenNow()) {
     update({ foldedForChat: true });

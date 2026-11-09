@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
+vi.mock('@/features/workspace/lib/use-chat-on', () => ({
+  useChatOn: () => true,
+}));
+
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { railUtils } from '@/features/workspace/lib/rail-collapsed';
 
@@ -11,6 +15,7 @@ const base = {
   state: { preference: false, foldedForChat: false, openedOn: null },
   pathname,
   chatPage: false,
+  chatOn: true,
 };
 
 describe('railIsOpen', () => {
@@ -22,6 +27,18 @@ describe('railIsOpen', () => {
     const state = { ...base.state, foldedForChat: true };
     expect(railUtils.railIsOpen({ ...base, state })).toBe(false);
     expect(railUtils.railIsOpen({ ...base, state, chatPage: true })).toBe(true);
+  });
+
+  it('stays open on pages without the chat, like the platform admin', () => {
+    const state = { ...base.state, foldedForChat: true };
+    expect(
+      railUtils.railIsOpen({
+        ...base,
+        state,
+        pathname: '/platform/users',
+        chatOn: false,
+      }),
+    ).toBe(true);
   });
 
   it('stays closed when the user collapsed it', () => {
