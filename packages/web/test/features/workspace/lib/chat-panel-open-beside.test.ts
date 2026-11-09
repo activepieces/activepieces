@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ChatNavTarget,
@@ -110,6 +110,14 @@ describe('chatPanelUtils.openBeside on the same page', () => {
 });
 
 describe('chatPanelUtils.showOnFullPage', () => {
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('keeps the docked-chat mark when the full page swaps chats', () => {
     const navigations: ChatNavTarget[] = [];
     const unbind = chatPanelUtils.bindRouter({

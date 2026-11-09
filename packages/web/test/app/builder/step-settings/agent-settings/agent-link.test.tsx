@@ -65,7 +65,12 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 }));
 
 vi.mock('@/lib/authentication-session', () => ({
-  authenticationSession: { getProjectId: () => 'project-1' },
+  authenticationSession: {
+    getProjectId: () => 'project-1',
+    getCurrentUserId: () => null,
+    getPlatformId: () => null,
+    subscribe: () => () => undefined,
+  },
 }));
 
 vi.mock('@/components/custom/searchable-select', () => ({

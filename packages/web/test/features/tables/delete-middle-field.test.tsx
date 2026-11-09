@@ -32,6 +32,7 @@ vi.mock('@/features/tables/stores/store/ap-tables-server-state', () => ({
   ) => ({
     deleteField: vi.fn(),
     createField: vi.fn(),
+    link: vi.fn(),
     fields,
     records,
   }),

@@ -33,7 +33,7 @@ beforeEach(() => {
 describe('authenticationSession', () => {
   beforeEach(() => {
     window.localStorage.setItem('projectId', 'project-on-previous-platform');
-    vi.stubGlobal('location', { href: '' });
+    vi.stubGlobal('location', { href: '', pathname: '/' });
   });
 
   afterEach(() => {
