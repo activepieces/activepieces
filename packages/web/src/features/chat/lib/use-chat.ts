@@ -392,6 +392,7 @@ export function useAgentChat({
   const onConversationMissingRef = useRef(onConversationMissing);
   onConversationMissingRef.current = onConversationMissing;
   const sessionGenRef = useRef(0);
+  const [session, setSession] = useState(0);
   const createAbortRef = useRef<AbortController | null>(null);
 
   const handleTitleUpdate = useCallback((title: string) => {
@@ -970,6 +971,7 @@ export function useAgentChat({
   const resetSession = useCallback(
     (id: string | null) => {
       sessionGenRef.current += 1;
+      setSession(sessionGenRef.current);
       createAbortRef.current?.abort();
       createAbortRef.current = null;
       stopStream();
@@ -1133,6 +1135,7 @@ export function useAgentChat({
   }, []);
 
   return {
+    session,
     conversationId,
     conversationProjectId,
     modelPick,

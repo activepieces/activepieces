@@ -3797,5 +3797,8 @@
   "The AI is editing {name}.": "The AI is editing {name}.",
   "Open beside": "Open beside",
   "Stay here": "Stay here",
+  "One message is already waiting. Cancel it to change it.": "One message is already waiting. Cancel it to change it.",
+  "Moved back to the composer because the AI is waiting for your answer.": "Moved back to the composer because the AI is waiting for your answer.",
+  "Remove file": "Remove file",
   "Sends when the reply ends.": "Sends when the reply ends."
 }

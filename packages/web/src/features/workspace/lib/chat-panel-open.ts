@@ -2,6 +2,7 @@ import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { create } from 'zustand';
 
+import { composerCarry } from '@/features/chat/lib/composer-carry';
 import { keepComposerFocus } from '@/features/chat/lib/keep-composer-focus';
 import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
@@ -304,12 +305,14 @@ const initChatPanel = (
       }),
     setDockWidth: (width) =>
       update({ dockWidth: chatLayoutUtils.dockWidthFor(width) }),
-    newChat: (prompt) =>
+    newChat: (prompt) => {
+      composerCarry.carryQueued();
       setConversation({
         conversationId: null,
         newChatToken: get().newChatToken + 1,
         pendingPrompt: prompt,
-      }),
+      });
+    },
     conversationCreated: (conversationId) =>
       setConversation({ conversationId, pendingPrompt: undefined }),
     conversationMissing: () => setConversation({ conversationId: null }),

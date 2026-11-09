@@ -23,7 +23,7 @@ import {
 
 import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
-import { ChatInput, ComposerFill } from './chat-input';
+import { ChatInput, ComposerHandle } from './chat-input';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { chatNote, FollowFinishedNote } from './follow-finished-note';
 import { FollowOfferRow } from './follow-offer-row';
@@ -43,8 +43,8 @@ export function ChatBottomBar({
   placeholder,
   banner,
   recede,
-  fill,
-  onFillApplied,
+  composerRef,
+  chatSession,
   autoFocus,
   replyStopped,
 }: ChatBottomBarProps) {
@@ -146,8 +146,6 @@ export function ChatBottomBar({
     return () => useChatPanel.getState().setGateOpen(false);
   }, [needsYou]);
 
-  // Tell follow-along when the user is mid-reply, so it waits before opening
-  // a page.
   const [hasDraft, setHasDraft] = useState(false);
   const handleInputChange = (hasInput: boolean) => {
     setHasDraft(hasInput);
@@ -203,8 +201,8 @@ export function ChatBottomBar({
           }
           rightActions={modelPicker}
           sendBlockedReason={sendBlockedReason}
-          fill={fill}
-          onFillApplied={onFillApplied}
+          ref={composerRef}
+          chatSession={chatSession}
           autoFocus={autoFocus}
         />
       </div>
@@ -285,8 +283,8 @@ type ChatBottomBarProps = {
   placeholder?: string;
   banner?: ReactNode;
   recede?: boolean;
-  fill?: ComposerFill | null;
-  onFillApplied?: () => void;
+  composerRef?: React.Ref<ComposerHandle>;
+  chatSession?: number;
   autoFocus?: boolean;
   replyStopped?: boolean;
 };

@@ -60,7 +60,7 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
-import { ComposerFill } from './components/chat-input';
+import { ComposerHandle } from './components/chat-input';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import {
@@ -115,6 +115,7 @@ function ChatBoxContent({
   });
 
   const {
+    session,
     conversationId,
     conversationProjectId,
     modelPick,
@@ -242,8 +243,7 @@ function ChatBoxContent({
   );
 
   const [hasInput, setHasInput] = useState(false);
-  const [composerFill, setComposerFill] = useState<ComposerFill | null>(null);
-  const clearComposerFill = useCallback(() => setComposerFill(null), []);
+  const composerRef = useRef<ComposerHandle>(null);
   const [promptOpen, setPromptOpen] = useState(false);
   const sentInitialPrompt = useRef(false);
 
@@ -409,7 +409,7 @@ function ChatBoxContent({
                 onboarding={showOnboardingCard}
                 showFlowCards={!hasConversations}
                 onSend={(text) => handleSend(text).catch(() => undefined)}
-                onFill={(text) => setComposerFill({ text, id: Date.now() })}
+                onFill={(text) => composerRef.current?.fill(text)}
               />
             )}
           </div>
@@ -575,8 +575,8 @@ function ChatBoxContent({
             onStop={cancelStream}
             onInputChange={setHasInput}
             replyStopped={wasCancelled || failed}
-            fill={composerFill}
-            onFillApplied={clearComposerFill}
+            composerRef={composerRef}
+            chatSession={session}
             autoFocus={autoFocusComposer}
             recede={showOnboardingCard}
             modelPicker={

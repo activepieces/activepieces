@@ -2,7 +2,13 @@ import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { toast } from 'sonner';
 
 import { KbdHint } from '@/components/custom/kbd-hint';
@@ -19,15 +25,19 @@ import {
 } from '@/components/prompt-kit/prompt-input';
 import { Button } from '@/components/ui/button';
 import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
+import { chatDom } from '@/features/chat/lib/chat-dom';
+import { composerCarry } from '@/features/chat/lib/composer-carry';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
 import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 export function ChatInput({
+  ref,
   isStreaming,
   replying = isStreaming,
   replyStopped = false,
   holdQueued = false,
+  chatSession = 0,
   onSend,
   onStop,
   onInputChange,
@@ -37,14 +47,14 @@ export function ChatInput({
   minimalUntilFocus = false,
   onFocusChange,
   sendBlockedReason,
-  fill,
-  onFillApplied,
   autoFocus,
 }: {
+  ref?: React.Ref<ComposerHandle>;
   isStreaming: boolean;
   replying?: boolean;
   replyStopped?: boolean;
   holdQueued?: boolean;
+  chatSession?: number;
   onSend: (text: string, files?: File[]) => void;
   onStop?: () => void;
   onInputChange?: (hasInput: boolean) => void;
@@ -54,20 +64,20 @@ export function ChatInput({
   minimalUntilFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
   sendBlockedReason?: string;
-  fill?: ComposerFill | null;
-  onFillApplied?: () => void;
   autoFocus?: boolean;
 }) {
-  const [value, setValue] = useState('');
+  const [initialCarry] = useState(() => composerCarry.peekCarried());
+  const [value, setValue] = useState(initialCarry ?? '');
   const [focused, setFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const reduced = useReducedMotion();
   const [interimText, setInterimText] = useState('');
   const [queued, setQueued] = useState<QueuedMessage | null>(null);
-  const [wasReplying, setWasReplying] = useState(replying);
+  const [notice, setNotice] = useState<ComposerNotice | null>(null);
   const lastHasInputRef = useRef(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const caretToEndRef = useRef(false);
+  const activeQueued = queued?.chatSession === chatSession ? queued : null;
 
   const handleValueChange = useCallback(
     (v: string) => {
@@ -81,15 +91,22 @@ export function ChatInput({
     [onInputChange],
   );
 
-  // A picked suggestion lands in the composer for editing instead of sending.
-  const appliedFillRef = useRef<number | null>(null);
+  useImperativeHandle(
+    ref,
+    () => ({
+      fill: (text: string) => {
+        caretToEndRef.current = true;
+        setNotice(null);
+        handleValueChange(text);
+      },
+    }),
+    [handleValueChange],
+  );
+
   useEffect(() => {
-    if (isNil(fill) || appliedFillRef.current === fill.id) return;
-    appliedFillRef.current = fill.id;
-    caretToEndRef.current = true;
-    handleValueChange(fill.text);
-    onFillApplied?.();
-  }, [fill, handleValueChange, onFillApplied]);
+    if (initialCarry === null) return;
+    composerCarry.clearCarried();
+  }, [initialCarry]);
 
   useEffect(() => {
     if (!caretToEndRef.current) return;
@@ -126,49 +143,68 @@ export function ChatInput({
 
   useEffect(() => {
     if (!isRecording) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        cancelRecording();
-        setInterimText('');
-      }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || !chatDom.escapeFree(event)) return;
+      chatDom.claimEscape(event);
+      cancelRecording();
+      setInterimText('');
     };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [isRecording, cancelRecording]);
 
-  const restoreQueued = (item: QueuedMessage) => {
-    const joined = [item.text, value].filter((part) => part.length > 0);
-    handleValueChange(joined.join('\n'));
-    setAttachedFiles((prev) => [...item.files, ...prev]);
-  };
+  const queuedText = activeQueued?.text ?? null;
+  useEffect(() => {
+    if (queuedText === null || !chatDom.inChat(shellRef.current)) return;
+    composerCarry.reportQueued({ text: queuedText });
+    return () => composerCarry.reportQueued({ text: null });
+  }, [queuedText]);
 
-  if (wasReplying !== replying) {
-    setWasReplying(replying);
-    if (!replying && !isNil(queued) && (replyStopped || holdQueued)) {
+  const restoreQueued = useCallback(
+    (item: QueuedMessage) => {
       setQueued(null);
-      restoreQueued(queued);
-    }
-  }
+      caretToEndRef.current = true;
+      setValue((current) => {
+        const joined = [item.text, current]
+          .filter((part) => part.length > 0)
+          .join('\n');
+        const hasInput = joined.trim().length > 0;
+        if (hasInput !== lastHasInputRef.current) {
+          lastHasInputRef.current = hasInput;
+          onInputChange?.(hasInput);
+        }
+        return joined;
+      });
+      setAttachedFiles((prev) => [...item.files, ...prev]);
+    },
+    [onInputChange],
+  );
 
   const sendQueuedRef = useRef(onSend);
   sendQueuedRef.current = onSend;
-  const readyToSend = !replying && !replyStopped && !holdQueued;
   useEffect(() => {
-    if (!readyToSend || isNil(queued)) return;
+    if (isNil(activeQueued)) return;
+    if (holdQueued) {
+      restoreQueued(activeQueued);
+      setNotice('heldForCard');
+      return;
+    }
+    if (replying) return;
+    if (replyStopped) {
+      restoreQueued(activeQueued);
+      return;
+    }
     setQueued(null);
     sendQueuedRef.current(
-      queued.text,
-      queued.files.length > 0 ? queued.files : undefined,
+      activeQueued.text,
+      activeQueued.files.length > 0 ? activeQueued.files : undefined,
     );
-  }, [readyToSend, queued]);
+  }, [activeQueued, holdQueued, replying, replyStopped, restoreQueued]);
 
   const cancelQueued = () => {
-    if (isNil(queued)) return;
-    setQueued(null);
-    restoreQueued(queued);
+    if (isNil(activeQueued)) return;
+    setNotice(null);
+    restoreQueued(activeQueued);
   };
 
   const handleSubmit = useCallback(() => {
@@ -176,9 +212,13 @@ export function ChatInput({
     if (!isNil(sendBlockedReason) || (!text && attachedFiles.length === 0)) {
       return;
     }
+    if (isStreaming && !isNil(activeQueued)) {
+      setNotice('alreadyQueued');
+      return;
+    }
+    setNotice(null);
     if (isStreaming) {
-      if (!isNil(queued)) return;
-      setQueued({ text, files: attachedFiles });
+      setQueued({ text, files: attachedFiles, chatSession });
     } else {
       onSend(text, attachedFiles.length > 0 ? attachedFiles : undefined);
     }
@@ -190,7 +230,8 @@ export function ChatInput({
     attachedFiles,
     onSend,
     sendBlockedReason,
-    queued,
+    activeQueued,
+    chatSession,
     handleValueChange,
   ]);
 
@@ -204,21 +245,32 @@ export function ChatInput({
 
   return (
     <div ref={shellRef} className="contents">
-      {!isNil(queued) && (
+      {!isNil(activeQueued) && (
         <div
           role="status"
           className="flex flex-col items-end gap-0.5 px-3 pt-2"
         >
           <p className="line-clamp-3 max-w-[85%] whitespace-pre-wrap break-words rounded-xl bg-gray-3 px-2.5 py-1 text-sm text-gray-11">
-            {queued.text}
+            {activeQueued.text}
           </p>
           <div className="flex items-center gap-0.5 text-xs text-gray-11">
-            <span className="px-1">{t('Sends when the reply ends.')}</span>
+            <span className="px-1">
+              {notice === 'alreadyQueued'
+                ? t('One message is already waiting. Cancel it to change it.')
+                : t('Sends when the reply ends.')}
+            </span>
             <Button variant="ghost" size="xs" onClick={cancelQueued}>
               {t('Cancel')}
             </Button>
           </div>
         </div>
+      )}
+      {notice === 'heldForCard' && isNil(activeQueued) && (
+        <p role="status" className="px-3 pt-2 text-xs text-gray-11">
+          {t(
+            'Moved back to the composer because the AI is waiting for your answer.',
+          )}
+        </p>
       )}
       <FileUpload onFilesAdded={handleFilesAdded} multiple>
         <PromptInput
@@ -246,6 +298,7 @@ export function ChatInput({
                     </span>
                     <button
                       type="button"
+                      aria-label={t('Remove file')}
                       onClick={() =>
                         setAttachedFiles((prev) =>
                           prev.filter((f) => f.name !== file.name),
@@ -290,9 +343,13 @@ export function ChatInput({
               <div className="flex shrink-0 items-center gap-1">
                 <PromptInputAction tooltip={t('Attach files')}>
                   <FileUploadTrigger asChild>
-                    <div className="flex h-9 w-9 shrink-0 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12">
+                    <button
+                      type="button"
+                      aria-label={t('Attach files')}
+                      className="flex h-9 w-9 shrink-0 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12"
+                    >
                       <Paperclip className="size-4" />
-                    </div>
+                    </button>
                   </FileUploadTrigger>
                 </PromptInputAction>
                 {leftActions}
@@ -337,8 +394,9 @@ export function ChatInput({
                       variant="default"
                       size="icon"
                       className="shrink-0 sm:h-7 sm:w-7 rounded-full"
+                      aria-label={t('Send message')}
                       onClick={handleSubmit}
-                      disabled={!isNil(sendBlockedReason) || !isNil(queued)}
+                      disabled={!isNil(sendBlockedReason) || !isNil(activeQueued)}
                     >
                       <ArrowUp className="size-4" />
                     </Button>
@@ -347,6 +405,7 @@ export function ChatInput({
                   <PromptInputAction tooltip={t('Voice input')}>
                     <button
                       type="button"
+                      aria-label={t('Voice input')}
                       onClick={startRecording}
                       className="flex h-9 w-9 shrink-0 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 hover:text-gray-12"
                     >
@@ -359,6 +418,7 @@ export function ChatInput({
                       variant="default"
                       size="icon"
                       className="shrink-0 sm:h-7 sm:w-7 rounded-full"
+                      aria-label={t('Send message')}
                       onClick={handleSubmit}
                       disabled={true}
                     >
@@ -391,6 +451,8 @@ export function ChatInput({
   );
 }
 
-export type ComposerFill = { text: string; id: number };
+type QueuedMessage = { text: string; files: File[]; chatSession: number };
 
-type QueuedMessage = { text: string; files: File[] };
+type ComposerNotice = 'alreadyQueued' | 'heldForCard';
+
+export type ComposerHandle = { fill: (text: string) => void };
