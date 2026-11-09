@@ -1,6 +1,7 @@
 import { t } from 'i18next';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import { MultiQuestion } from '@/features/chat/lib/chat-store-types';
@@ -9,6 +10,7 @@ import {
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { cn } from '@/lib/utils';
 
 import {
@@ -117,9 +119,16 @@ export function ChatBottomBar({
   };
 
   const minimal = recede === true && !activeCard && !composerEngaged;
+  const needsYou = activeCard !== null;
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!chatDom.inChat(rootRef.current)) return;
+    useChatPanel.getState().setGateOpen(needsYou);
+    return () => useChatPanel.getState().setGateOpen(false);
+  }, [needsYou]);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div ref={rootRef} className="flex flex-col gap-2">
       {activeCard}
       <div
         className={cn(
