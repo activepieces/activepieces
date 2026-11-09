@@ -1,6 +1,6 @@
 ---
 title: "Event Streaming"
-description: "Stream audit events to Datadog, PostHog, Grafana Loki, or any OpenTelemetry backend, or to a webhook as raw JSON"
+description: "Stream audit events and piece catalog events to Datadog, PostHog, Grafana Loki, or any OpenTelemetry backend, or to a webhook as raw JSON"
 icon: "webhook"
 ---
 
@@ -11,7 +11,7 @@ icon: "webhook"
 Event Streaming sends your platform's [audit events](/admin-guide/security/audit-logs/overview) and [piece catalog events](#piece-catalog-events) to a destination of your choice, as they happen. Each destination has a **format**:
 
 - **OpenTelemetry (OTLP).** Each event is sent as an OpenTelemetry log record over OTLP/HTTP. This works with Datadog, PostHog, Grafana Loki, Grafana Cloud, New Relic, Honeycomb, Dynatrace, Elastic, SigNoz, Axiom, Better Stack, and any other backend that accepts OTLP logs. No collector or agent is needed in between.
-- **Raw JSON.** The audit event is posted as-is to any webhook URL. Point it at a flow inside Activepieces and route each event to Slack, Gmail, Microsoft Teams, custom HTTP, and so on.
+- **Raw JSON.** The event is posted as-is to any webhook URL. Point it at a flow inside Activepieces and route each event to Slack, Gmail, Microsoft Teams, custom HTTP, and so on.
 
 Use it to react to flow run failures, new sign-ins, project releases, new piece versions, or any other event with the tools you already use.
 
@@ -114,7 +114,7 @@ The destination receives the audit event itself as the JSON body, with `Content-
 - `action` — the event name (for example `flow.run.finished`).
 - `data` — event-specific payload, including details like the flow id, run id, status, or affected user.
 - `id`, `created`, `updated` — event identifiers and timestamps.
-- `platformId`, `projectId` — context fields present on every event.
+- `platformId`, `projectId` — context fields. `platformId` is on every event; `projectId` is on project-scoped audit events and absent on platform-level events, including piece catalog events.
 - `userId`, `userEmail`, `ip` — who did it and from where. These are filled in for events that come from a user request. The four `flow.run.*` events are emitted by a worker rather than a request, so they carry none of them.
 
 A handler flow on this instance gets the JSON of its destination's format: the raw event for Raw JSON, and the OTLP/JSON request for the OpenTelemetry JSON encoding. A flow webhook accepts only JSON, so a destination that points at one cannot use the Protobuf encoding: the setup page switches it to JSON (and back to Protobuf if you then enter a URL that is not a flow webhook, unless you picked JSON yourself), and the API rejects Protobuf for a flow webhook URL with a `400`.
