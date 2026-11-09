@@ -201,7 +201,11 @@ export function ChatSwitcher({
                   delayDuration={TITLE_TOOLTIP_DELAY_MS}
                 >
                   <span className="min-w-0">
-                    {title && typing ? <TypedText text={title} /> : shownTitle}
+                    {title && typing ? (
+                      <TypedText key={title} text={title} />
+                    ) : (
+                      shownTitle
+                    )}
                   </span>
                 </TextWithTooltip>
               )}
@@ -579,17 +583,14 @@ function RecentSkeleton() {
 
 function TypedText({ text }: { text: string }) {
   const reduced = useReducedMotion();
-  const [shown, setShown] = useState(reduced ? text.length : 0);
+  const [typed, setTyped] = useState(0);
+  const shown = reduced ? text.length : typed;
 
   useEffect(() => {
-    if (reduced) {
-      setShown(text.length);
-      return;
-    }
-    setShown(0);
+    if (reduced) return;
     const timer = setInterval(
       () =>
-        setShown((count) => {
+        setTyped((count) => {
           if (count >= text.length) clearInterval(timer);
           return Math.min(count + 1, text.length);
         }),
