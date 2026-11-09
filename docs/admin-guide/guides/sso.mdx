@@ -49,7 +49,7 @@ While a domain is being verified it shows as **Verifying**, with **Waiting for D
 You can also verify the domain from the first step of the SAML setup, described below.
 
 <Warning>
-  **Remove domain** also deletes your SAML connection, so single sign-on stops working. To confirm, type the domain name. You can't remove it while single sign-on is the only way to sign in: turn on email and password or Google sign-in first.
+  **Remove domain** also deletes your SAML connection, so single sign-on stops working. On Cloud, it also locks the sign-in methods until you verify a domain again. To confirm, type the domain name. You can't remove it while single sign-on is the only way to sign in: turn on email and password or Google sign-in first.
 </Warning>
 
 ## Set up SAML
@@ -77,7 +77,7 @@ On the cloud sign-in page, **Sign in with SAML** asks for the organization's dom
 
 Turn **Continue with Google** and **Email and password** on or off under **Sign-in methods**. Each change asks you to confirm. You can't turn off the last sign-in method that works: turn on another one first. On a self-hosted server, Google only counts once it's set up.
 
-On Cloud, these switches only apply to members and accepted invitees whose email is at your verified domain. Everyone else can still use every method: guests from other domains, colleagues on a domain you haven't verified, and everyone on a platform without a verified domain. [Allowed domains](#allowed-domains) can still refuse their email sign-in. On self-hosted Enterprise, these switches apply to everyone.
+On Cloud, the sign-in methods stay locked until your domain is verified, and then only apply to members and accepted invitees whose email is at your verified domain. Everyone else can still use every method: guests from other domains, colleagues on a domain you haven't verified, and everyone on a platform without a verified domain. [Allowed domains](#allowed-domains) can still refuse their email sign-in. On self-hosted Enterprise, these switches apply to everyone.
 
 On self-hosted instances, the Google button only appears once `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` are set. See [Google sign-in on self-hosted](#google).
 
