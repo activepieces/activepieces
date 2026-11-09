@@ -432,6 +432,50 @@ describe('denoCodeSandbox permission boundary', () => {
             }
         })
 
+        it('keeps the session deno cache next to the flow version steps and reuses it across sessions', async () => {
+            const sessionFlowDir = await mkdtemp(path.join(tmpdir(), 'ap-deno-session-'))
+            const sessionCacheDir = path.join(sessionFlowDir, '.deno-cache')
+            try {
+                await withEnv({ AP_EXECUTION_MODE: 'UNSANDBOXED', AP_DENO_CACHE_MOUNTED: undefined }, async () => {
+                    const first = await denoCodeSandbox.createScriptSession({ scriptContext: {}, functions: {}, flowVersionDir: sessionFlowDir })
+                    try {
+                        expect(await first.run('1 + 1')).toBe(2)
+                    }
+                    finally {
+                        first.dispose()
+                    }
+                    expect(existsSync(path.join(sessionCacheDir, 'main.mjs'))).toBe(true)
+                    expect(existsSync(path.join(sessionCacheDir, 'v8_code_cache_v2'))).toBe(true)
+
+                    const second = await denoCodeSandbox.createScriptSession({ scriptContext: { base: 40 }, functions: {}, flowVersionDir: sessionFlowDir })
+                    try {
+                        expect(await second.run('base + 2')).toBe(42)
+                    }
+                    finally {
+                        second.dispose()
+                    }
+                    await expect.poll(() => existsSync(sessionCacheDir), { timeout: 2000 }).toBe(true)
+                })
+            }
+            finally {
+                await rm(sessionFlowDir, { recursive: true, force: true })
+            }
+        })
+
+        it('keeps the session deno cache ephemeral when the flow version dir does not exist', async () => {
+            const missingFlowDir = path.join(tmpdir(), `ap-deno-missing-${Date.now()}`)
+            await withEnv({ AP_EXECUTION_MODE: 'UNSANDBOXED', AP_DENO_CACHE_MOUNTED: undefined }, async () => {
+                const session = await denoCodeSandbox.createScriptSession({ scriptContext: {}, functions: {}, flowVersionDir: missingFlowDir })
+                try {
+                    expect(await session.run('2 + 2')).toBe(4)
+                }
+                finally {
+                    session.dispose()
+                }
+            })
+            expect(existsSync(missingFlowDir)).toBe(false)
+        })
+
         it('runs every script of a session in one Deno process', async () => {
             const session = await denoCodeSandbox.createScriptSession({
                 scriptContext: {},

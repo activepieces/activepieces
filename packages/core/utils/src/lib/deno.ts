@@ -1,5 +1,4 @@
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
-import { nanoid } from 'nanoid'
 import { sandboxError, SandboxErrorPayload } from './sandbox-error'
 import { tryCatch } from './try-catch'
 
@@ -102,18 +101,20 @@ export const deno = {
         })
     },
 
-    async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {}, idleTimeoutMs = DEFAULT_SESSION_IDLE_TIMEOUT_MS }: DenoSessionParams): Promise<DenoSession> {
-        const marker = newResultMarker()
+    async createSession({ bootstrapBody, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {}, idleTimeoutMs = DEFAULT_SESSION_IDLE_TIMEOUT_MS, denoDir }: DenoSessionParams): Promise<DenoSession> {
+        const keepDenoDir = denoDir !== undefined
         const { os } = await getNodeApis()
-        const { child, denoPath, denoDir } = await spawnDeno({
-            entry: { body: buildSessionProgram({ bootstrapBody, marker, tmpDir: os.tmpdir() }) },
+        const { child, denoPath, denoDir: resolvedDenoDir } = await spawnDeno({
+            entry: { body: buildSessionProgram({ bootstrapBody, tmpDir: os.tmpdir() }) },
             permissions,
             cwd,
             memoryLimitMb,
             allowReadPaths: [],
             resolveNodeModules: false,
             env,
+            denoDir,
         })
+        let marker: string | null = null
 
         const pending = new Map<string, PendingSessionCommand>()
         let nextCommandId = 0
@@ -136,10 +137,10 @@ export const deno = {
             }, idleTimeoutMs)
         }
 
-        const settleResponse = (line: string): void => {
+        const settleResponse = (line: string, replyMarker: string): void => {
             let message: SessionReply | null = null
             try {
-                message = JSON.parse(line.slice(marker.length))
+                message = JSON.parse(line.slice(replyMarker.length))
             }
             catch {
                 return
@@ -171,8 +172,11 @@ export const deno = {
             while (newline !== -1) {
                 const line = stdoutBuffer.slice(0, newline)
                 stdoutBuffer = stdoutBuffer.slice(newline + 1)
-                if (line.startsWith(marker)) {
-                    settleResponse(line)
+                if (marker === null && line.startsWith(MARKER_HEADER_PREFIX)) {
+                    marker = line.slice(MARKER_HEADER_PREFIX.length)
+                }
+                else if (marker !== null && line.startsWith(marker)) {
+                    settleResponse(line, marker)
                 }
                 else if (line.trim()) {
                     console.log(line)
@@ -199,12 +203,16 @@ export const deno = {
         }
 
         child.on('close', (code, signal) => {
-            void removeDir(denoDir)
+            if (!keepDenoDir) {
+                void removeDir(resolvedDenoDir)
+            }
             failAllPending(sandboxError.build({ error: `Deno session exited with code ${code} and signal ${signal}`, stdout: '', stderr: capturedStderr }))
         })
 
         child.on('error', (error) => {
-            void removeDir(denoDir)
+            if (!keepDenoDir) {
+                void removeDir(resolvedDenoDir)
+            }
             failAllPending(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: '', stderr: capturedStderr }))
         })
 
@@ -275,10 +283,6 @@ async function removeDir(dir: string): Promise<void> {
     await fs.rm(dir, { recursive: true, force: true }).catch(() => undefined)
 }
 
-function newResultMarker(): string {
-    return `__AP_DENO_RESULT_${nanoid()}__`
-}
-
 async function writeDataFile(data: unknown): Promise<string> {
     const { os, fs } = await getNodeApis()
     const dataDir = await fs.mkdtemp(`${os.tmpdir()}/ap-deno-data-`)
@@ -298,10 +302,15 @@ async function spawnDeno({ entry, dataFile, permissions, cwd, memoryLimitMb, all
         await fs.mkdir(denoDir, { recursive: true })
     }
     const readPaths = dataFile === undefined ? allowReadPaths : [...allowReadPaths, dataFile]
-    const entryArg = typeof entry === 'string' ? entry : `${resolvedDenoDir}/main.mjs`
+    const entryArg = typeof entry === 'string' ? entry : `${resolvedDenoDir}/${SESSION_PROGRAM_FILE_NAME}`
     if (typeof entry !== 'string') {
-        const { error } = await tryCatch(() => fs.writeFile(entryArg, entry.body))
+        const stagedEntry = `${entryArg}.${process.pid}.${Date.now()}.tmp`
+        const { error } = await tryCatch(async () => {
+            await fs.writeFile(stagedEntry, entry.body)
+            await fs.rename(stagedEntry, entryArg)
+        })
         if (error !== null) {
+            await removeDir(stagedEntry)
             if (denoDir === undefined) {
                 await removeDir(resolvedDenoDir)
             }
@@ -406,11 +415,11 @@ catch (error) {
  * stdin:  {"kind":"run","script":"step_1.a + 1","id":"0"}
  * stdout: MARKER{"id":"0","success":true,"result":42}
  */
-function buildSessionProgram({ bootstrapBody, marker, tmpDir }: { bootstrapBody: string, marker: string, tmpDir: string }): string {
+function buildSessionProgram({ bootstrapBody, tmpDir }: { bootstrapBody: string, tmpDir: string }): string {
     return `
 ${sandboxError.payloadSourceFor({ tmpDir })}
 ${bootstrapBody}
-${SESSION_REPLY_CHANNEL(marker)}
+${SESSION_REPLY_CHANNEL()}
 ${SESSION_REJECTION_TRACKING}
 ${SESSION_SCRIPT_RUNNER}
 ${SESSION_COMMAND_LOOP}
@@ -422,10 +431,12 @@ ${SESSION_COMMAND_LOOP}
  * hello from a script's console.log            -> forwarded as user output
  * console.log is bound up front so a script overwriting it can't break this.
  */
-const SESSION_REPLY_CHANNEL = (marker: string): string => `
+const SESSION_REPLY_CHANNEL = (): string => `
 const print = console.log.bind(console);
+const marker = '__AP_DENO_RESULT_' + crypto.randomUUID() + '__';
+print(${JSON.stringify(MARKER_HEADER_PREFIX)} + marker);
 const reply = (payload) => {
-    print(${JSON.stringify(marker)} + JSON.stringify(payload));
+    print(marker + JSON.stringify(payload));
 };`
 
 /**
@@ -530,6 +541,7 @@ const DEFAULT_MEMORY_LIMIT_MB = 128
 const DEFAULT_SESSION_IDLE_TIMEOUT_MS = 30_000
 const MARKER_HEADER_PREFIX = '__AP_DENO_MARKER__'
 const DATA_FILE_NAME = 'data.json'
+const SESSION_PROGRAM_FILE_NAME = 'main.mjs'
 
 export enum DenoPermission {
     ALL = 'ALL',
@@ -563,6 +575,7 @@ export type DenoSession = {
 
 type DenoSessionParams = {
     bootstrapBody: string
+    denoDir?: string
     permissions: DenoPermission[]
     cwd?: string
     memoryLimitMb?: number
