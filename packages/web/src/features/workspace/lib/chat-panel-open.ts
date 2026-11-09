@@ -123,6 +123,30 @@ function showOnFullPage(conversationId: string | null): void {
   });
 }
 
+// The router, not a component effect, keeps the panel in step with the URL:
+// the chat page's conversation becomes the panel's, and any other app page is
+// where "On the left/right" goes back to.
+function followRouter(target: FollowableRouter): () => void {
+  syncWithRoute(target.state);
+  return target.subscribe(syncWithRoute);
+}
+
+function syncWithRoute({ location, matches }: ChatRouteState): void {
+  const handle = matches.findLast(
+    (match) => isObject(match.route.handle) && 'shell' in match.route.handle,
+  )?.route.handle;
+  if (!isObject(handle)) return;
+  const panel = useChatPanel.getState();
+  if (handle.chat !== 'full') {
+    panel.setLastPage(`${location.pathname}${location.search}`);
+    return;
+  }
+  const urlId =
+    matches.findLast((match) => match.params.conversationId !== undefined)
+      ?.params.conversationId ?? null;
+  if (urlId !== null) panel.showConversation(urlId);
+}
+
 function createChatPanelStore() {
   return create<ChatPanelState>(initChatPanel);
 }
@@ -333,6 +357,7 @@ export const chatPanelUtils = {
   collapse,
   startNewChat,
   showOnFullPage,
+  followRouter,
   SHEET_HASH,
 };
 
@@ -353,6 +378,19 @@ export type ChatRouter = {
 export type ChatNavTarget =
   | { back: true }
   | { to: string; replace: boolean; state?: Record<string, unknown> };
+
+type FollowableRouter = {
+  state: ChatRouteState;
+  subscribe: (listener: (state: ChatRouteState) => void) => () => void;
+};
+
+type ChatRouteState = {
+  location: { pathname: string; search: string };
+  matches: {
+    params: Record<string, string | undefined>;
+    route: { handle?: unknown };
+  }[];
+};
 
 type SetChatPanel = (patch: Partial<ChatPanelState>) => void;
 

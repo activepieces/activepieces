@@ -27,7 +27,6 @@ import {
 import { useRailOpen } from '@/features/workspace/lib/rail-collapsed';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import { useShellHandle } from '../app-shell';
@@ -258,8 +257,6 @@ export function ChatPanel() {
         )}
       >
         <ChatRouterBinding />
-        <ChatLastPageTracker />
-        {full && <ChatUrlSync />}
         <FollowAlongController />
         <ChatAnnouncer />
         <div
@@ -464,38 +461,6 @@ function hasText(element: Element | null): boolean {
 
 function stateObject(state: unknown): Record<string, unknown> {
   return isObject(state) ? state : {};
-}
-
-function ChatLastPageTracker() {
-  const { pathname, search } = useLocation();
-  const onChatPage = useShellHandle().chat === 'full';
-  useEffect(() => {
-    if (!onChatPage) {
-      useChatPanel.getState().setLastPage(`${pathname}${search}`);
-    }
-  }, [onChatPage, pathname, search]);
-  return null;
-}
-
-function ChatUrlSync() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const urlId = useActiveConversationId();
-  const handedOverPrompt =
-    isObject(location.state) && typeof location.state.prompt === 'string'
-      ? location.state.prompt
-      : undefined;
-
-  useEffect(() => {
-    if (handedOverPrompt === undefined) {
-      useChatPanel.getState().showConversation(urlId);
-      return;
-    }
-    useChatPanel.getState().newChat(handedOverPrompt);
-    navigate(CHAT_ROUTE, { replace: true, state: null });
-  }, [urlId, handedOverPrompt, navigate]);
-
-  return null;
 }
 
 function ChatRouterBinding() {
