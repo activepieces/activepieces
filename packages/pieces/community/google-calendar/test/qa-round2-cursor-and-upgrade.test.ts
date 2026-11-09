@@ -130,6 +130,94 @@ describe('Event Start (Time Before) and Event Ends upgrade marker', () => {
   });
 });
 
+describe('Event Start (Time Before) handled mark on an unfinished listing that fires more than the seen limit', () => {
+  it('keeps the handled mark through a check that fires nothing, so a later rejected page position fires nothing twice', async () => {
+    addReminders({ count: 1200, firstDueIso: '2026-10-01T10:05:00Z', spacingMs: 200 });
+    addReminders({ count: 1800, firstDueIso: '2026-10-01T10:30:00Z', spacingMs: 200, prefix: 'later' });
+    const fired = await checkEveryFiveMinutes({ rejectTokenAtCheck: 3 });
+    expectEachOnce({ fired });
+  });
+
+  it('does not fire again, in the next listing, reminders the seen limit removed in the last minute of a finished listing', async () => {
+    addReminders({ count: 1200, firstDueIso: '2026-10-01T10:09:00.020Z', spacingMs: 49 });
+    addReminders({ count: 600, firstDueIso: '2026-10-01T10:30:00Z', spacingMs: 1000, prefix: 'later' });
+    const fired = await checkEveryFiveMinutes({});
+    expectEachOnce({ fired });
+  });
+
+  it('fires nothing twice when the seen limit is reached inside a group of reminders with the same start', async () => {
+    addReminders({ count: 1500, firstDueIso: '2026-10-01T10:05:00Z', spacingMs: 0 });
+    const fired = await checkEveryFiveMinutes({ rejectTokenAtCheck: 2 });
+    expectEachOnce({ fired });
+  });
+
+  it('honours a floor the previous build raised in the middle of a listing when the saved page is rejected', async () => {
+    addReminders({ count: 1500, firstDueIso: '2026-10-01T10:05:00Z', spacingMs: 200 });
+    const { store, data } = memoryStore();
+    fakeCalendar.pageSize = 600;
+    fakeCalendar.listDelayMs = 8_000;
+    setNow({ iso: '2026-10-01T10:00:00Z' });
+    await eventStartTimeBefore.onEnable(reminderContext({ store, propsValue: TIME_BEFORE_PROPS }));
+    setNow({ iso: '2026-10-01T10:10:00Z' });
+    const fired = idsOf(await eventStartTimeBefore.run(reminderContext({ store, propsValue: TIME_BEFORE_PROPS })));
+    data.set('event_start_checkpoint', JSON.stringify(asPreviousBuildCheckpoint({ raw: data.get('event_start_checkpoint') })));
+    for (const [index, time] of ['10:15', '10:20', '10:25'].entries()) {
+      fakeCalendar.rejectNextPageToken = index === 0;
+      setNow({ iso: `2026-10-01T${time}:00Z` });
+      fired.push(...idsOf(await eventStartTimeBefore.run(reminderContext({ store, propsValue: TIME_BEFORE_PROPS }))));
+    }
+    expect(fired).toHaveLength(1500);
+    expect(new Set(fired).size).toBe(1500);
+  });
+});
+
+function addReminders({ count, firstDueIso, spacingMs, prefix }: { count: number; firstDueIso: string; spacingMs: number; prefix?: string }): void {
+  const firstStartMs = Date.parse(firstDueIso) + 15 * 60 * 1000;
+  for (let index = 0; index < count; index++) {
+    const startMs = firstStartMs + index * spacingMs;
+    addTimedEvent({ id: `${prefix ?? 'burst'}-${index}`, start: new Date(startMs).toISOString(), end: new Date(startMs + 30 * 60 * 1000).toISOString() });
+  }
+}
+
+async function checkEveryFiveMinutes({ rejectTokenAtCheck }: { rejectTokenAtCheck?: number }): Promise<string[]> {
+  const { store } = memoryStore();
+  fakeCalendar.pageSize = 600;
+  fakeCalendar.listDelayMs = 8_000;
+  setNow({ iso: '2026-10-01T10:00:00Z' });
+  await eventStartTimeBefore.onEnable(reminderContext({ store, propsValue: TIME_BEFORE_PROPS }));
+  const fired: string[] = [];
+  for (let check = 1; check <= 20; check++) {
+    fakeCalendar.rejectNextPageToken = check === rejectTokenAtCheck;
+    vi.setSystemTime(Date.parse('2026-10-01T10:05:00Z') + check * 5 * 60 * 1000);
+    fired.push(...idsOf(await eventStartTimeBefore.run(reminderContext({ store, propsValue: TIME_BEFORE_PROPS }))));
+  }
+  return fired;
+}
+
+function expectEachOnce({ fired }: { fired: string[] }): void {
+  const expected = fakeCalendar.events.map((event) => event.id).sort();
+  expect([...fired].sort()).toEqual(expected);
+}
+
+function asPreviousBuildCheckpoint({ raw }: { raw: string | undefined }): Record<string, unknown> {
+  const parsed: unknown = raw === undefined ? null : JSON.parse(raw);
+  if (typeof parsed !== 'object' || parsed === null || !('seen' in parsed) || !Array.isArray(parsed.seen)) {
+    throw new Error('no checkpoint');
+  }
+  const seen: { key: string; untilMs: number }[] = parsed.seen.map((entry: unknown) => ({
+    key: String(Reflect.get(Object(entry), 'key')),
+    untilMs: Number(Reflect.get(Object(entry), 'untilMs')),
+  }));
+  const newestFirst = [...seen].sort((left, right) => right.untilMs - left.untilMs);
+  const cutMs = newestFirst[Math.min(999, newestFirst.length - 1)].untilMs;
+  return {
+    ...parsed,
+    handled: undefined,
+    floorMs: cutMs,
+    seen: newestFirst.filter((entry) => entry.untilMs > cutMs),
+  };
+}
+
 function hasLegacyMarker({ data, key }: { data: Map<string, string>; key: string }): boolean {
   const raw = data.get(key);
   const parsed: unknown = raw === undefined ? null : JSON.parse(raw);

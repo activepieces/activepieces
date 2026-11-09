@@ -77,8 +77,9 @@ async function poll({
   }
   const pass =
     checkpoint.pass ?? startPass({ checkpoint, nowMs, leadMs, logPrefix });
-  const fromMs = pass.fromMs;
+  const fromMs = Math.max(pass.fromMs, checkpoint.floorMs);
   const throughMs = pass.throughMs;
+  const handled = checkpoint.handled;
   const listing = isNil(eventId)
     ? await listPass({ auth, calendarId, pass, nowMs, logPrefix })
     : await listPinnedEvent({ auth, calendarId, eventId });
@@ -95,6 +96,7 @@ async function poll({
         entry.dueMs > fromMs &&
         entry.dueMs <= throughMs &&
         !seenKeys.has(entry.key) &&
+        !isCoveredBy({ entry, handled }) &&
         (isNil(legacy) ||
           !firedByPreviousVersion({ entry, anchor, leadMs, legacy }))
     )
@@ -102,6 +104,10 @@ async function poll({
   const dueThroughMs = listing.complete
     ? Math.max(checkpoint.dueThroughMs, throughMs)
     : checkpoint.dueThroughMs;
+  const floorMs =
+    listing.complete && !isNil(handled)
+      ? Math.max(checkpoint.floorMs, handled.dueMs)
+      : checkpoint.floorMs;
   const nextPass =
     listing.complete || isNil(listing.nextPageToken)
       ? {}
@@ -112,14 +118,22 @@ async function poll({
       checkpoint: {
         watchKey,
         dueThroughMs,
-        floorMs: checkpoint.floorMs,
+        floorMs,
         ...keepLegacy({ legacy, dueThroughMs }),
         ...nextPass,
+        ...(listing.complete || isNil(handled) ? {} : { handled }),
         seen: [
           ...checkpoint.seen,
-          ...due.map((entry) => ({ key: entry.key, untilMs: entry.dueMs })),
+          ...due.map((entry) => ({
+            key: entry.key,
+            untilMs: entry.dueMs,
+            startMs: entry.startMs,
+          })),
         ],
       },
+      listedThroughStartMs: listing.complete
+        ? null
+        : lastListedStartMs({ listing }),
       logPrefix,
     })
   );
@@ -164,6 +178,13 @@ function toDueEntry({
   if (isNil(anchorMs)) {
     return null;
   }
+  const startMs =
+    anchor === 'start'
+      ? anchorMs
+      : rangeEvents.boundaryMs({ event, anchor: 'start', timeZone });
+  if (isNil(startMs)) {
+    return null;
+  }
   const scheduledMs = anchorMs - leadMs;
   const createdMs = Date.parse(event.created);
   const bookedLate =
@@ -176,6 +197,7 @@ function toDueEntry({
     key: `${event.id}@${anchorMs}`,
     dueMs: bookedLate ? createdMs : scheduledMs,
     scheduledMs,
+    startMs,
   };
 }
 
@@ -302,9 +324,11 @@ async function listPass({
 
 function limitSeen({
   checkpoint,
+  listedThroughStartMs,
   logPrefix,
 }: {
   checkpoint: DueCheckpoint;
+  listedThroughStartMs: number | null;
   logPrefix: string;
 }): DueCheckpoint {
   const keepAfterMs = Math.max(
@@ -312,22 +336,161 @@ function limitSeen({
     checkpoint.floorMs
   );
   const stillNeeded = checkpoint.seen
-    .filter((entry) => entry.untilMs > keepAfterMs)
+    .filter(
+      (entry) =>
+        entry.untilMs > keepAfterMs &&
+        !isCoveredBy({
+          entry: { dueMs: entry.untilMs, startMs: entry.startMs },
+          handled: checkpoint.handled,
+        })
+    )
     .sort((left, right) => right.untilMs - left.untilMs);
-  if (stillNeeded.length <= SEEN_LIMIT) {
+  const fitting = fittingSeenCount({
+    seen: stillNeeded,
+    maxEntries: SEEN_LIMIT,
+  });
+  if (fitting === stillNeeded.length) {
     return { ...checkpoint, seen: stillNeeded };
   }
-  const cutMs = stillNeeded[SEEN_LIMIT - 1].untilMs;
+  if (isNil(checkpoint.pass)) {
+    const cutMs = stillNeeded[Math.max(fitting, 1) - 1].untilMs;
+    console.warn(
+      `${logPrefix}: too many fired items are still inside the check window; items due at or before ${new Date(
+        cutMs
+      ).toISOString()} that were not fired yet will not fire.`
+    );
+    return {
+      ...checkpoint,
+      floorMs: Math.max(checkpoint.floorMs, cutMs),
+      seen: stillNeeded.filter((entry) => entry.untilMs > cutMs),
+    };
+  }
+  return compactUnfinishedPass({
+    checkpoint,
+    stillNeeded,
+    removeCount: stillNeeded.length - fitting,
+    listedThroughStartMs,
+    logPrefix,
+  });
+}
+
+function compactUnfinishedPass({
+  checkpoint,
+  stillNeeded,
+  removeCount,
+  listedThroughStartMs,
+  logPrefix,
+}: {
+  checkpoint: DueCheckpoint;
+  stillNeeded: SeenDue[];
+  removeCount: number;
+  listedThroughStartMs: number | null;
+  logPrefix: string;
+}): DueCheckpoint {
+  const removable = isNil(listedThroughStartMs)
+    ? []
+    : stillNeeded
+        .filter(
+          (entry) =>
+            !isNil(entry.startMs) && entry.startMs < listedThroughStartMs
+        )
+        .sort((left, right) => left.untilMs - right.untilMs)
+        .slice(0, removeCount);
+  const removedKeys = new Set(removable.map((entry) => entry.key));
+  const markStartMs =
+    listedThroughStartMs ??
+    checkpoint.handled?.startMs ??
+    Number.MIN_SAFE_INTEGER;
+  const marked: HandledMark = {
+    dueMs: maxUntilMs({
+      entries: removable,
+      startMs: checkpoint.handled?.dueMs ?? Number.MIN_SAFE_INTEGER,
+    }),
+    startMs: markStartMs,
+  };
+  const remaining = stillNeeded.filter(
+    (entry) =>
+      !removedKeys.has(entry.key) &&
+      !isCoveredBy({
+        entry: { dueMs: entry.untilMs, startMs: entry.startMs },
+        handled: marked,
+      })
+  );
+  const fitting = fittingSeenCount({
+    seen: remaining,
+    maxEntries: Number.MAX_SAFE_INTEGER,
+  });
+  if (fitting === remaining.length) {
+    return { ...checkpoint, handled: marked, seen: remaining };
+  }
+  const dropped = remaining.slice(fitting);
   console.warn(
-    `${logPrefix}: more than ${SEEN_LIMIT} fired items are still inside the check window; items due at or before ${new Date(
-      cutMs
-    ).toISOString()} that were not fired yet will not fire.`
+    `${logPrefix}: too many fired items share the last listed start time in an unfinished listing; forgetting the ${dropped.length} oldest. If Google rejects the saved page position before the listing finishes, those can fire again.`
   );
   return {
     ...checkpoint,
-    floorMs: Math.max(checkpoint.floorMs, cutMs),
-    seen: stillNeeded.filter((entry) => entry.untilMs > cutMs),
+    handled: {
+      dueMs: maxUntilMs({ entries: dropped, startMs: marked.dueMs }),
+      startMs: markStartMs,
+    },
+    seen: remaining.slice(0, fitting),
   };
+}
+
+function fittingSeenCount({
+  seen,
+  maxEntries,
+}: {
+  seen: SeenDue[];
+  maxEntries: number;
+}): number {
+  return eventScan.fittingCount({
+    entries: seen,
+    maxEntries,
+    maxChars: eventScan.seenMaxChars,
+  });
+}
+
+function maxUntilMs({
+  entries,
+  startMs,
+}: {
+  entries: SeenDue[];
+  startMs: number;
+}): number {
+  return entries.reduce((max, entry) => Math.max(max, entry.untilMs), startMs);
+}
+
+function isCoveredBy({
+  entry,
+  handled,
+}: {
+  entry: { dueMs: number; startMs: number | undefined };
+  handled: HandledMark | undefined;
+}): boolean {
+  return (
+    !isNil(handled) &&
+    !isNil(entry.startMs) &&
+    entry.dueMs <= handled.dueMs &&
+    entry.startMs < handled.startMs
+  );
+}
+
+function lastListedStartMs({
+  listing,
+}: {
+  listing: RangeListing;
+}): number | null {
+  const starts = listing.events
+    .map((event) =>
+      rangeEvents.boundaryMs({
+        event,
+        anchor: 'start',
+        timeZone: listing.timeZone,
+      })
+    )
+    .filter((startMs): startMs is number => !isNil(startMs));
+  return starts.length === 0 ? null : starts[starts.length - 1];
 }
 
 async function readCheckpoint({
@@ -354,6 +517,9 @@ async function readCheckpoint({
       seen: Array.isArray(saved.seen) ? saved.seen : [],
       ...(isLegacyMarker(saved.legacy) ? { legacy: saved.legacy } : {}),
       ...(isListingPass(saved.pass) ? { pass: saved.pass } : {}),
+      ...(isListingPass(saved.pass) && isHandledMark(saved.handled)
+        ? { handled: saved.handled }
+        : {}),
     };
   }
   const legacyLastPoll = await store.get<number>(LEGACY_LAST_POLL_STORE_KEY);
@@ -393,6 +559,17 @@ function isListingPass(value: unknown): value is ListingPass {
     typeof value.timeMaxMs === 'number' &&
     'pageToken' in value &&
     typeof value.pageToken === 'string'
+  );
+}
+
+function isHandledMark(value: unknown): value is HandledMark {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'dueMs' in value &&
+    typeof value.dueMs === 'number' &&
+    'startMs' in value &&
+    typeof value.startMs === 'number'
   );
 }
 
@@ -441,6 +618,12 @@ type DueCheckpoint = {
   seen: SeenDue[];
   legacy?: LegacyMarker;
   pass?: ListingPass;
+  handled?: HandledMark;
+};
+
+type HandledMark = {
+  dueMs: number;
+  startMs: number;
 };
 
 type ListingPass = {
@@ -460,6 +643,7 @@ type LegacyMarker = {
 type SeenDue = {
   key: string;
   untilMs: number;
+  startMs?: number;
 };
 
 type DueEntry = {
@@ -467,4 +651,5 @@ type DueEntry = {
   key: string;
   dueMs: number;
   scheduledMs: number;
+  startMs: number;
 };
