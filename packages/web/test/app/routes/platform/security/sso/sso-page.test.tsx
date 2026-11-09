@@ -609,6 +609,10 @@ describe('SSOPage', () => {
 
   it('does not mention self-hosted setup when turning Google on in Cloud', () => {
     flagState.edition = 'cloud';
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+    });
     mount();
     click(screen.getByRole('switch', { name: 'Continue with Google' }));
     expect(
@@ -695,19 +699,133 @@ describe('SSOPage', () => {
     expect(findButton('Turn off', dialog)?.disabled).toBe(false);
   });
 
-  it('does not count single sign-on as working on Cloud without a verified domain', () => {
+  it('locks every sign-in method on Cloud until a domain is verified', () => {
+    flagState.edition = 'cloud';
+    mount();
+
+    expect(screen.getByText('Verify your domain to unlock')).toBeDefined();
+    expect(
+      screen
+        .getByRole('switch', { name: 'Continue with Google' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+    expect(
+      screen
+        .getByRole('switch', { name: 'Email and password' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+    expect(findButton('Set up')?.disabled).toBe(true);
+    expect(
+      screen.getByText(
+        'Applies to people with your company email. Guests can use any method.',
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "Verify your company's email domain to control how its people sign in.",
+      ),
+    ).toBeDefined();
+  });
+
+  it('keeps the sign-in methods locked on Cloud while the domain is being verified', () => {
     flagState.edition = 'cloud';
     setPlatform({
-      emailAuthEnabled: true,
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: pendingVerification,
+    });
+    mount();
+
+    expect(screen.getByText('Verify your domain to unlock')).toBeDefined();
+    expect(
+      screen
+        .getByRole('switch', { name: 'Email and password' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it('unlocks the sign-in methods on Cloud and names the verified domain', () => {
+    flagState.edition = 'cloud';
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+    });
+    mount();
+
+    expect(screen.queryByText('Verify your domain to unlock')).toBeNull();
+    expect(
+      screen
+        .getByRole('switch', { name: 'Email and password' })
+        .hasAttribute('disabled'),
+    ).toBe(false);
+    expect(screen.getByRole('link', { name: 'Set up' })).toBeDefined();
+    expect(
+      screen.getByText(
+        'Applies to people at acme.com. Guests can use any method.',
+      ),
+    ).toBeDefined();
+  });
+
+  it('never locks the sign-in methods on self-hosted', () => {
+    mount();
+
+    expect(screen.queryByText('Verify your domain to unlock')).toBeNull();
+    expect(
+      screen
+        .getByRole('switch', { name: 'Email and password' })
+        .hasAttribute('disabled'),
+    ).toBe(false);
+    expect(screen.getByText('Applies to everyone who signs in.')).toBeDefined();
+    expect(
+      screen.getByText(
+        "Verify your company's email domain to set up single sign-on.",
+      ),
+    ).toBeDefined();
+  });
+
+  it('shows the self-hosted copy on Community', () => {
+    flagState.edition = 'ce';
+    mount();
+
+    expect(screen.queryByText('Verify your domain to unlock')).toBeNull();
+    expect(screen.getByText('Applies to everyone who signs in.')).toBeDefined();
+    expect(
+      screen.getByText(
+        "Verify your company's email domain to set up single sign-on.",
+      ),
+    ).toBeDefined();
+  });
+
+  it('says removing the domain on Cloud gives up control of how its people sign in', () => {
+    flagState.edition = 'cloud';
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+    });
+    mount();
+
+    click(menuItem('Remove domain'));
+
+    expect(
+      within(screen.getByRole('dialog')).getByText(
+        "You'll lose control of how people at acme.com sign in until you verify it again with a new DNS record.",
+      ),
+    ).toBeDefined();
+  });
+
+  it('says removing the domain on Cloud also stops single sign-on when SAML is connected', () => {
+    flagState.edition = 'cloud';
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
     });
     mount();
 
-    click(screen.getByRole('switch', { name: 'Email and password' }));
+    click(menuItem('Remove domain'));
 
     expect(
       within(screen.getByRole('dialog')).getByText(
-        "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
+        "Single sign-on will stop working, and you'll lose control of how people at acme.com sign in until you verify it again with a new DNS record.",
       ),
     ).toBeDefined();
   });
