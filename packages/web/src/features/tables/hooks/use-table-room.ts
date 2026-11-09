@@ -8,7 +8,7 @@ import {
   WebsocketServerEvent,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -27,8 +27,9 @@ export function useTableRoom({
   tableId: string | undefined;
   onChange: (change: TableChange) => void;
   onJoined: (join: { sentAt: number }) => void;
-}) {
+}): { ready: boolean } {
   const socket = useSocket();
+  const [joinSentFor, setJoinSentFor] = useState<string | null>(null);
   useEffect(() => {
     if (isNil(tableId)) {
       return;
@@ -43,6 +44,7 @@ export function useTableRoom({
             return;
           }
           const sentAt = Date.now();
+          setJoinSentFor(tableId);
           socket
             .timeout(JOIN_TIMEOUT_MS)
             .emit(
@@ -100,6 +102,10 @@ export function useTableRoom({
       }
     };
   }, [socket, tableId, onChange, onJoined]);
+  return {
+    ready:
+      !isNil(tableId) && (joinSentFor === tableId || !socket.connected),
+  };
 }
 
 function showLiveUpdatesDelayed() {

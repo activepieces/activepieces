@@ -137,6 +137,7 @@ describe('open table live events', () => {
     vi.mocked(followAlong.flash).mockClear();
     vi.mocked(recordsApi.list).mockClear();
     vi.mocked(recordsApi.getById).mockClear();
+    vi.mocked(tablesApi.getById).mockClear();
     vi.mocked(toast).mockClear();
   });
 
@@ -364,6 +365,34 @@ describe('open table live events', () => {
     ]);
   });
 
+  it('does not refetch on a normal open when time passes between the fetch and the join', async () => {
+    socket.client.connected = true;
+    await mount(queryClient, {
+      onFetchStart: () => vi.setSystemTime(LATER),
+    });
+    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE_ROOM]);
+
+    act(() => socket.sent[0].ack?.(null, { joined: true }));
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('starts loading the table only once the join is sent', async () => {
+    socket.client.connected = true;
+    socket.project.switching = true;
+    await mount(queryClient);
+
+    expect(tablesApi.getById).not.toHaveBeenCalled();
+
+    await act(async () => {
+      socket.finishProjectSwitch();
+      await settle();
+    });
+
+    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE_ROOM]);
+    expect(tablesApi.getById).toHaveBeenCalledTimes(1);
+  });
+
   it('does not refetch when the server refuses the room', async () => {
     await mount(queryClient);
     vi.setSystemTime(LATER);
@@ -499,10 +528,14 @@ function settle() {
 
 async function mount(
   queryClient: QueryClient,
-  { whileLoading = () => undefined }: { whileLoading?: () => void } = {},
+  {
+    whileLoading = () => undefined,
+    onFetchStart = () => undefined,
+  }: { whileLoading?: () => void; onFetchStart?: () => void } = {},
 ) {
   const loading = Promise.withResolvers<void>();
   vi.mocked(tablesApi.getById).mockImplementation(async () => {
+    onFetchStart();
     await loading.promise;
     return table;
   });
