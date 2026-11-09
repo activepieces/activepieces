@@ -168,7 +168,7 @@ const ImportTableForm = ({
       fieldsMapping,
       maxRecordsLimit: maxRecords - state.records.length,
     });
-    state.setRecords([...state.serverRecords, ...records]);
+    state.setRecords([...state.getServerRecords(), ...records]);
     return { tableId, importedRecordsCount: records.length };
   };
 

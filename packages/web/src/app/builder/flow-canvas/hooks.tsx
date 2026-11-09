@@ -1,7 +1,8 @@
-import { Permission, isNil } from '@activepieces/core-utils';
+import { Permission, deepEquals, isNil } from '@activepieces/core-utils';
 import {
   FlowDraftUpdatedEvent,
   FlowRunStatus,
+  FlowVersion,
   FlowVersionState,
   flowStructureUtil,
   WebsocketClientEvent,
@@ -19,6 +20,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { followAlong } from '@/features/chat/lib/follow/follow-along';
 import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
@@ -144,6 +146,7 @@ const useRefreshDraftAndMakeNewDraftEditable = () => {
 
 const useRefreshDraftOnPush = () => {
   const socket = useSocket();
+  const store = useBuilderStore();
   const flowId = useBuilderStateContext((state) => state.flow.id);
   const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
   useEffect(() => {
@@ -154,14 +157,51 @@ const useRefreshDraftOnPush = () => {
       ) {
         return;
       }
-      refreshDraft().catch(() => undefined);
+      const before = store.getState().flowVersion.trigger;
+      refreshDraft()
+        .then((applied) => {
+          if (
+            !applied ||
+            !followAlong.isFollowing({ kind: 'flow', id: flowId })
+          ) {
+            return;
+          }
+          const after = store.getState().flowVersion.trigger;
+          followAlong.flash(
+            changedStepNames({ before, after }).map(
+              (name) => `flow-step:${name}`,
+            ),
+          );
+        })
+        .catch(() => undefined);
     };
     socket.on(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
     return () => {
       socket.off(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
     };
-  }, [socket, flowId, refreshDraft]);
+  }, [socket, store, flowId, refreshDraft]);
 };
+
+function changedStepNames({
+  before,
+  after,
+}: {
+  before: FlowVersion['trigger'];
+  after: FlowVersion['trigger'];
+}): string[] {
+  return flowStructureUtil
+    .getAllSteps(after)
+    .filter((step) => {
+      const old = flowStructureUtil.getStep(step.name, before);
+      return (
+        !old ||
+        old.type !== step.type ||
+        old.displayName !== step.displayName ||
+        !deepEquals({ a: old.settings, b: step.settings })
+      );
+    })
+    .map((step) => step.name);
+}
 
 const useRefreshDraftOnReconnectAndReturn = () => {
   const socket = useSocket();

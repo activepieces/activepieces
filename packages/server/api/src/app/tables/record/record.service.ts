@@ -12,8 +12,6 @@ import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
 
-const MAX_BATCH_SIZE = 50
-
 const recordRepo = repoFactory(RecordEntity)
 const cellsRepo = repoFactory(CellEntity)
 
@@ -220,7 +218,7 @@ export const recordService = {
     }: DeleteParams): Promise<DeleteRecordsResult> {
         const uniqueIds = [...new Set(ids)]
         if (uniqueIds.length === 0) {
-            return { deletedCount: 0, records: [] }
+            return { deletedCount: 0, deletedIds: [], records: [] }
         }
         const maxRecordsPerTable = system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)
         if (uniqueIds.length > maxRecordsPerTable) {
@@ -244,6 +242,7 @@ export const recordService = {
         }
         return {
             deletedCount: deletedIds.length,
+            deletedIds,
             records,
         }
     },
@@ -522,6 +521,7 @@ type DeleteParams = {
 
 type DeleteRecordsResult = {
     deletedCount: number
+    deletedIds: string[]
     records: PopulatedRecord[]
 }
 
@@ -561,3 +561,5 @@ type OrderedFilterValidatorParams = {
     filterValue: string
     cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean
 }
+
+export const MAX_BATCH_SIZE = 50
