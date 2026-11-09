@@ -14,13 +14,14 @@ import {
   X,
 } from 'lucide-react';
 import { Tooltip as TooltipPrimitive } from 'radix-ui';
-import { memo, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
+import { KbdHint, modShortcut } from '@/components/custom/kbd-hint';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -75,6 +76,24 @@ export function ChatChrome() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const full = layout === 'full';
   const sheet = layout === 'sheet';
+  const chatShown = layout !== 'closed';
+
+  useEffect(() => {
+    if (!chatShown) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
+        !event.altKey &&
+        event.key.toLowerCase() === 'h'
+      ) {
+        event.preventDefault();
+        setHistoryOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [chatShown]);
   const phone = windowSizeHooks.useWidth() < chatLayoutUtils.MOBILE_BREAKPOINT;
   const chatSheet = useChatSheet();
   const renaming = renamingId !== null && renamingId === conversationId;
@@ -189,6 +208,7 @@ export function ChatChrome() {
         <div className="flex shrink-0 items-center gap-0.5">
           <HeaderButton
             label={historyOpen ? t('Hide history') : t('History')}
+            shortcut={HISTORY_SHORTCUT}
             aria-pressed={historyOpen}
             onClick={() => setHistoryOpen(!historyOpen)}
           >
@@ -196,7 +216,7 @@ export function ChatChrome() {
           </HeaderButton>
           <HeaderButton
             label={t('New chat')}
-            shortcut="⇧⌘O"
+            shortcut={NEW_CHAT_SHORTCUT}
             onClick={startFresh}
           >
             <Plus />
@@ -212,6 +232,7 @@ export function ChatChrome() {
           {!full && (
             <HeaderButton
               label={t('Close')}
+              shortcut={TOGGLE_SHORTCUT}
               onClick={() =>
                 sheet
                   ? chatSheet.hide()
@@ -468,10 +489,14 @@ function HeaderButton({
         className="flex items-center gap-2"
       >
         {label}
-        {shortcut && <span className="text-xs opacity-50">{shortcut}</span>}
+        {shortcut && <KbdHint>{shortcut}</KbdHint>}
       </TooltipContent>
     </TooltipPrimitive.Root>
   );
 }
+
+const TOGGLE_SHORTCUT = modShortcut({ key: 'J' });
+const HISTORY_SHORTCUT = modShortcut({ key: 'H', shift: true });
+const NEW_CHAT_SHORTCUT = modShortcut({ key: 'O', shift: true });
 
 type LiveTitle = { id: string; title: string };
