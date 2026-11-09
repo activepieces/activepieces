@@ -42,7 +42,7 @@ export function FollowAlongController() {
     const leaveIfDeleted = (change: FollowChange) => {
       if (change.op !== 'delete' || !change.navigable || embedded) return;
       if (!resourceRegistry.isOn(pathnameRef.current, change.resource)) return;
-      toast(t('Chat deleted {name}.', { name: change.resource.name }));
+      toast(t('The AI deleted {name}.', { name: change.resource.name }));
       stopLeaving();
       stopLeaving = untilPageFree((focused) => {
         if (!resourceRegistry.isOn(pathnameRef.current, change.resource)) {
@@ -74,7 +74,7 @@ export function FollowAlongController() {
     if (phase !== 'editing' || !target) return;
     useChatPanel
       .getState()
-      .announce(t('Chat is changing {name}', { name: target.name }));
+      .announce(t('The AI is changing {name}.', { name: target.name }));
   }, [phase, targetKey]);
 
   useEffect(() => {

@@ -3758,10 +3758,10 @@
   "1 hour ago": "1 hour ago",
   "{count} hours ago": "{count} hours ago",
   "Follow along": "Follow along",
-  "Opens what it edits.": "Opens what it edits.",
+  "Opens what the AI edits.": "Opens what the AI edits.",
   "Stop following": "Stop following",
   "Doesn't open pages for you.": "Doesn't open pages for you.",
-  "Chat is changing {name}": "Chat is changing {name}",
-  "Chat deleted {name}.": "Chat deleted {name}.",
+  "The AI is changing {name}.": "The AI is changing {name}.",
+  "The AI deleted {name}.": "The AI deleted {name}.",
   "Opened {name} beside the chat": "Opened {name} beside the chat"
 }

@@ -419,7 +419,7 @@ function FollowAlongItems() {
           <span>{t('Follow along')}</span>
           <span className="text-xs text-gray-10">
             {autoFollow
-              ? t('Opens what it edits.')
+              ? t('Opens what the AI edits.')
               : t("Doesn't open pages for you.")}
           </span>
         </span>
