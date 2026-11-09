@@ -205,6 +205,7 @@ const initChatPanel = (
     autoFollow: readAutoFollow(),
     panelMounted: false,
     docks: 0,
+    gateOpen: false,
     announcement: null,
     newChatToken: 0,
     pendingPrompt: undefined,
@@ -247,6 +248,9 @@ const initChatPanel = (
       });
     },
     setPanelMounted: (panelMounted) => set({ panelMounted }),
+    setGateOpen: (gateOpen) => {
+      if (gateOpen !== get().gateOpen) set({ gateOpen });
+    },
     announce: (text) =>
       set({ announcement: { text, id: (get().announcement?.id ?? 0) + 1 } }),
     setLastPage: (lastPage) => {
@@ -302,6 +306,7 @@ type ChatPanelState = SavedChatPanel & {
   autoFollow: boolean;
   panelMounted: boolean;
   docks: number;
+  gateOpen: boolean;
   announcement: { text: string; id: number } | null;
   newChatToken: number;
   pendingPrompt?: string;
@@ -314,6 +319,7 @@ type ChatPanelState = SavedChatPanel & {
   showConversation: (conversationId: string | null) => void;
   setAutoFollow: (autoFollow: boolean) => void;
   setPanelMounted: (panelMounted: boolean) => void;
+  setGateOpen: (gateOpen: boolean) => void;
   announce: (text: string) => void;
   setLastPage: (lastPage: string) => void;
 };

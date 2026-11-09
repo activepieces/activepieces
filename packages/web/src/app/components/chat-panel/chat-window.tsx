@@ -333,15 +333,24 @@ function ChatAnnouncer() {
 }
 
 function ChatSheetPill({ onOpen }: { onOpen: () => void }) {
+  const needsYou = useChatPanel((s) => s.gateOpen);
   return (
     <Button
       variant="outline"
       onClick={onOpen}
-      aria-label={t('Open chat')}
+      aria-label={needsYou ? t('Open chat, it needs you') : t('Open chat')}
       className="fixed left-1/2 z-40 h-11 -translate-x-1/2 animate-in fade-in-0 slide-in-from-bottom-2 gap-2 rounded-full bg-gray-1 pr-4 pl-3 text-gray-12 shadow-lift duration-150 motion-reduce:animate-none"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
     >
-      <ChatSparkIcon className="size-5" />
+      <span className="relative flex size-6 shrink-0 items-center justify-center">
+        <ChatSparkIcon className="size-5" />
+        {needsYou && (
+          <span
+            aria-hidden
+            className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-gray-1 bg-accent-9"
+          />
+        )}
+      </span>
       {t('Chat')}
     </Button>
   );

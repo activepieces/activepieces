@@ -16,7 +16,7 @@ import { useChatWidth } from './chat-window';
 
 export function ChatNotch({ className }: { className?: string }) {
   const setOpen = useChatPanel((s) => s.setOpen);
-  const needsYou = false;
+  const needsYou = useChatPanel((s) => s.gateOpen);
   const isHidden = useChatWidth() !== 'closed';
   const progress = useMotionValue(isHidden ? 0 : 1);
 
