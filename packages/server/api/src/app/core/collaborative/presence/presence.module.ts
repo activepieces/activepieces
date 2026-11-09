@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { PresenceRequest, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { PresenceRequest, PresenceUpdatedEvent, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { Socket } from 'socket.io'
@@ -57,7 +57,7 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                 callback?.({ users: [] })
             }
         }
-    })
+    }, { rejectResponse: NO_PRESENCE })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.LEAVE_PRESENCE, (socket) => {
         return async (data: unknown, principal, projectId) => {
             const request = PresenceRequest.safeParse(data)
@@ -85,6 +85,8 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
         }
     })
 }
+
+const NO_PRESENCE: Pick<PresenceUpdatedEvent, 'users'> = { users: [] }
 
 function registerPresenceDisconnectHandler({ socket, userId, app }: RegisterDisconnectHandlerParams): void {
     if (socket.data.presenceDisconnectRegistered) {

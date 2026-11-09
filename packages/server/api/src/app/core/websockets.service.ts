@@ -21,6 +21,10 @@ const listener = {
 
 const eventPermissions: Partial<Record<WebsocketServerEvent, Permission>> = {}
 
+const eventRejectResponses: Partial<Record<WebsocketServerEvent, unknown>> = {}
+
+const DEFAULT_REJECT_RESPONSE = { success: false }
+
 const projectBySocket = new WeakMap<Socket, SocketProject>()
 
 const projectLeaveHandlers = new Map<string, ProjectLeaveHandler>()
@@ -45,13 +49,16 @@ export const websocketService = {
     async verifyPrincipal(socket: Socket): Promise<Principal> {
         return accessTokenManager(app!.log).verifyPrincipal(socket.handshake.auth.token)
     },
-    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>, permission?: Permission): void {
+    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>, options?: ListenerOptions): void {
         switch (principalType) {
             case PrincipalType.USER: {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 listener[PrincipalType.USER][event] = handler as unknown as WebsocketListener<any, PrincipalType.USER>
-                if (!isNil(permission)) {
-                    eventPermissions[event] = permission
+                if (!isNil(options?.permission)) {
+                    eventPermissions[event] = options.permission
+                }
+                if (!isNil(options?.rejectResponse)) {
+                    eventRejectResponses[event] = options.rejectResponse
                 }
                 break
             }
@@ -134,19 +141,23 @@ function toSocketEvent(event: WebsocketServerEvent): string {
 }
 
 async function runUserEvent({ socket, event, handler, data, principal, callback, log }: RunUserEventParams): Promise<void> {
+    const reject = (): void => callback?.(eventRejectResponses[event] ?? DEFAULT_REJECT_RESPONSE)
     const project = projectBySocket.get(socket)
     if (isNil(project)) {
         log.warn({ event, user: { id: principal.id } }, 'Websocket event blocked: no project selected')
+        reject()
         return
     }
     const requiredPermission = eventPermissions[event]
     if (!isNil(requiredPermission) && !hasPermission(project.role, requiredPermission)) {
         log.warn({ event, user: { id: principal.id }, project: { id: project.projectId }, requiredPermission }, 'Websocket event blocked: missing permission')
+        reject()
         return
     }
     const { error } = await tryCatch(() => handler(socket)(data, principal, project.projectId, callback))
     if (!isNil(error)) {
         log.error({ error, event, user: { id: principal.id }, project: { id: project.projectId } }, 'Websocket event failed')
+        reject()
     }
 }
 
@@ -223,6 +234,11 @@ type ValidateProjectIdArgs = {
     userId: string
     projectId: string
     log: FastifyBaseLogger
+}
+
+type ListenerOptions = {
+    permission?: Permission
+    rejectResponse?: unknown
 }
 
 type SocketProject = {

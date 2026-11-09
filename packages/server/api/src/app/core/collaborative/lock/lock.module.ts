@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { LockResourceRequest, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { LockResourceRequest, LockResourceResponse, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { Socket } from 'socket.io'
@@ -65,7 +65,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                 callback?.({ acquired: false, lock: null })
             }
         }
-    })
+    }, { rejectResponse: LOCK_NOT_ACQUIRED })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.UNLOCK_RESOURCE, (socket) => {
         return async (data: unknown, principal, projectId) => {
             const request = LockResourceRequest.safeParse(data)
@@ -93,6 +93,8 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
         }
     })
 }
+
+const LOCK_NOT_ACQUIRED: LockResourceResponse = { acquired: false, lock: null }
 
 const lockedResourcesBySocket = new WeakMap<Socket, ReadonlyMap<string, string | null>>()
 const socketsWithLockDisconnectHandler = new WeakSet<Socket>()

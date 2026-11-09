@@ -121,6 +121,46 @@ describe('Websocket SWITCH_PROJECT', () => {
         expect(await lockService(app.log).getLock({ resourceId: s.editorFlowId, projectId: s.editorProjectId })).toBeNull()
     })
 
+    it('answers project events with a failure while the socket has no project', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: null })
+
+        const lockAck = await send({ conn, event: WebsocketServerEvent.LOCK_RESOURCE, data: { resourceId: s.editorFlowId } })
+        const presenceAck = await send({ conn, event: WebsocketServerEvent.JOIN_PRESENCE, data: { resourceId: s.editorFlowId } })
+
+        expect(lockAck).toEqual({ acquired: false, lock: null })
+        expect(presenceAck).toEqual({ users: [] })
+    })
+
+    it('runs a lock and a presence join sent while switching in the new project', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: null })
+
+        const [switched, lockAck, presenceAck] = await Promise.all([
+            switchProject({ conn, projectId: s.editorProjectId }),
+            send({ conn, event: WebsocketServerEvent.LOCK_RESOURCE, data: { resourceId: s.editorFlowId } }),
+            send({ conn, event: WebsocketServerEvent.JOIN_PRESENCE, data: { resourceId: s.editorFlowId } }),
+        ])
+
+        expect(switched).toEqual({ success: true })
+        expect(lockAck).toEqual({ acquired: true, lock: null })
+        expect(presenceAck).toEqual({ users: [expect.objectContaining({ userId: s.memberId })] })
+    })
+
+    it('denies a lock sent before the switch to the project that owns the resource', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: s.viewerProjectId })
+
+        const [early] = await Promise.all([
+            send({ conn, event: WebsocketServerEvent.LOCK_RESOURCE, data: { resourceId: s.editorFlowId } }),
+            switchProject({ conn, projectId: s.editorProjectId }),
+        ])
+        const afterSwitch = await send({ conn, event: WebsocketServerEvent.LOCK_RESOURCE, data: { resourceId: s.editorFlowId } })
+
+        expect(early).toEqual({ acquired: false, lock: null })
+        expect(afterSwitch).toEqual({ acquired: true, lock: null })
+    })
+
     it('leaves the socket in exactly one project room after two fast switches', async () => {
         const s = await setup()
         const conn = await connect({ token: s.memberToken, projectId: null })
