@@ -30,6 +30,11 @@ export const createServerState = (
   let clonedRecords: PopulatedRecord[] = JSON.parse(JSON.stringify(_records));
   const knownAt = new Map<string, number>();
   const rowIds = new Map<string, string>();
+  const deletedIds = new Set<string>();
+
+  function markDeleted(ids: string[]) {
+    ids.forEach((id) => deletedIds.add(id));
+  }
 
   function markKnown({ ids, at }: { ids: string[]; at: number }) {
     ids.forEach((id) => knownAt.set(id, Math.max(knownAt.get(id) ?? 0, at)));
@@ -121,6 +126,7 @@ export const createServerState = (
           ids: recordIds,
         });
         markSaved(recordIds);
+        markDeleted(recordIds);
 
         // Sort indices in descending order to avoid shifting issues when splicing
         const sortedIndices = recordIndices
@@ -164,6 +170,8 @@ export const createServerState = (
     changedSince: ({ id, since }: { id: string; since: number }) =>
       (knownAt.get(id) ?? 0) > since,
     markKnown,
+    markDeleted,
+    isDeleted: (recordId: string) => deletedIds.has(recordId),
     link: ({ recordId, rowId }: { recordId: string; rowId: string }) => {
       rowIds.set(recordId, rowId);
     },

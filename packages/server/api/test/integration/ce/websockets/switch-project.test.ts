@@ -29,6 +29,7 @@ afterAll(async () => {
 })
 
 afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
 })
 
@@ -172,6 +173,25 @@ describe('Websocket SWITCH_PROJECT', () => {
         const response = await switchProject({ conn, projectId: s.viewerProjectId })
 
         expect(response).toEqual({ success: true })
+        expect(conn.rooms.has(s.viewerProjectId)).toBe(true)
+    })
+
+    it('answers a switch after a time limit when a queued lock call hangs', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: s.editorProjectId })
+        const realLockService = lockServiceModule.lockService
+        vi.spyOn(lockServiceModule, 'lockService').mockImplementation((log) => ({
+            ...realLockService(log),
+            acquire: () => new Promise(() => undefined),
+        }))
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
+        Promise.resolve(conn.handlers[WebsocketServerEvent.LOCK_RESOURCE]({ resourceId: s.editorFlowId })).catch(() => undefined)
+        const switched = switchProject({ conn, projectId: s.viewerProjectId })
+        await vi.advanceTimersByTimeAsync(60_000)
+        vi.useRealTimers()
+
+        expect(await switched).toEqual({ success: true })
         expect(conn.rooms.has(s.viewerProjectId)).toBe(true)
     })
 

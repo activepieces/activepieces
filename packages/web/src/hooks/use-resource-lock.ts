@@ -9,6 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
+  dropHeldEmits,
   emitInProject,
   useSocket,
 } from '@/components/providers/socket-provider';
@@ -64,6 +65,7 @@ function useResourceLock({
     if (isNil(onLockFreed) || isNil(lockedBy)) {
       return;
     }
+    const freedLockKey = Symbol('lock-freed');
     const stopWaitingAfterLockFreed = () => {
       onLockFreed()
         .then(() =>
@@ -76,34 +78,37 @@ function useResourceLock({
         return;
       }
       const acquire = currentAcquire.current;
-      emitInProject(() =>
-        socket.emit(
-          WebsocketServerEvent.LOCK_RESOURCE,
-          { resourceId, editorSessionId: editorSession.getId() },
-          (response: LockResourceResponse) => {
-            if (isNil(acquire) || currentAcquire.current !== acquire) {
-              releaseLateAcquire({
-                acquired: response.acquired,
-                acquire,
-                resourceId,
-                socket,
-                beforeRelease: beforeReleaseRef.current,
-              });
-              return;
-            }
-            if (!isNil(response.lock)) {
-              setLockedBy(response.lock);
-              return;
-            }
-            isOwner.current = response.acquired;
-            stopWaitingAfterLockFreed();
-          },
-        ),
-      );
+      emitInProject({
+        key: freedLockKey,
+        send: () =>
+          socket.emit(
+            WebsocketServerEvent.LOCK_RESOURCE,
+            { resourceId, editorSessionId: editorSession.getId() },
+            (response: LockResourceResponse) => {
+              if (isNil(acquire) || currentAcquire.current !== acquire) {
+                releaseLateAcquire({
+                  acquired: response.acquired,
+                  acquire,
+                  resourceId,
+                  socket,
+                  beforeRelease: beforeReleaseRef.current,
+                });
+                return;
+              }
+              if (!isNil(response.lock)) {
+                setLockedBy(response.lock);
+                return;
+              }
+              isOwner.current = response.acquired;
+              stopWaitingAfterLockFreed();
+            },
+          ),
+      });
     };
     socket.on(WebsocketClientEvent.RESOURCE_UNLOCKED, acquireFreedLock);
     return () => {
       socket.off(WebsocketClientEvent.RESOURCE_UNLOCKED, acquireFreedLock);
+      dropHeldEmits([freedLockKey]);
     };
   }, [resourceId, socket, lockedBy, onLockFreed]);
 
@@ -111,53 +116,59 @@ function useResourceLock({
     const acquire = Symbol(resourceId);
     latestAcquireByResource.set(resourceId, acquire);
     currentAcquire.current = acquire;
-    emitInProject(() =>
-      socket
-        .timeout(10_000)
-        .emit(
-          WebsocketServerEvent.LOCK_RESOURCE,
-          { resourceId, editorSessionId: editorSession.getId() },
-          (error: Error | null, response: LockResourceResponse) => {
-            if (currentAcquire.current !== acquire) {
-              releaseLateAcquire({
-                acquired: isNil(error) && response.acquired,
-                acquire,
-                resourceId,
-                socket,
-                beforeRelease: beforeReleaseRef.current,
-              });
-              return;
-            }
-            if (!isNil(error)) {
-              setLockSession((session) => session + 1);
-              return;
-            }
-            setAcquiring(false);
-            if (response.acquired) {
-              isOwner.current = true;
-            } else if (response.lock) {
-              setLockedBy(response.lock);
-            }
-          },
-        ),
-    );
+    const acquireKey = Symbol('lock-acquire');
+    const heartbeatKey = Symbol('lock-heartbeat');
+    emitInProject({
+      key: acquireKey,
+      send: () =>
+        socket
+          .timeout(10_000)
+          .emit(
+            WebsocketServerEvent.LOCK_RESOURCE,
+            { resourceId, editorSessionId: editorSession.getId() },
+            (error: Error | null, response: LockResourceResponse) => {
+              if (currentAcquire.current !== acquire) {
+                releaseLateAcquire({
+                  acquired: isNil(error) && response.acquired,
+                  acquire,
+                  resourceId,
+                  socket,
+                  beforeRelease: beforeReleaseRef.current,
+                });
+                return;
+              }
+              if (!isNil(error)) {
+                setLockSession((session) => session + 1);
+                return;
+              }
+              setAcquiring(false);
+              if (response.acquired) {
+                isOwner.current = true;
+              } else if (response.lock) {
+                setLockedBy(response.lock);
+              }
+            },
+          ),
+    });
 
     const heartbeat = setInterval(() => {
       if (!isOwner.current) {
         return;
       }
-      emitInProject(() =>
-        socket.emit(
-          WebsocketServerEvent.LOCK_RESOURCE,
-          { resourceId, editorSessionId: editorSession.getId() },
-          (response: LockResourceResponse) => {
-            if (!response.acquired && response.lock) {
-              isOwner.current = false;
-              setLockedBy(response.lock);
-            }
-          },
-        ),
-      );
+      emitInProject({
+        key: heartbeatKey,
+        send: () =>
+          socket.emit(
+            WebsocketServerEvent.LOCK_RESOURCE,
+            { resourceId, editorSessionId: editorSession.getId() },
+            (response: LockResourceResponse) => {
+              if (!response.acquired && response.lock) {
+                isOwner.current = false;
+                setLockedBy(response.lock);
+              }
+            },
+          ),
+      });
     }, 30_000);
 
     let releasedOnPageHide = false;
@@ -184,6 +195,7 @@ function useResourceLock({
     return () => {
       currentAcquire.current = null;
       clearInterval(heartbeat);
+      dropHeldEmits([acquireKey, heartbeatKey]);
       window.removeEventListener('pagehide', releaseOnPageHide);
       window.removeEventListener('pageshow', acquireOnPageShow);
       if (isOwner.current) {
@@ -199,30 +211,32 @@ function useResourceLock({
 
   const takeOver = useCallback(() => {
     const acquire = currentAcquire.current;
-    emitInProject(() =>
-      socket.emit(
-        WebsocketServerEvent.LOCK_RESOURCE,
-        { resourceId, force: true, editorSessionId: editorSession.getId() },
-        (response: LockResourceResponse) => {
-          if (isNil(acquire) || currentAcquire.current !== acquire) {
-            releaseLateAcquire({
-              acquired: response.acquired,
-              acquire,
-              resourceId,
-              socket,
-              beforeRelease: beforeReleaseRef.current,
-            });
-            return;
-          }
-          if (response.acquired) {
-            isOwner.current = false;
-            setLockedBy(null);
-            setLockSession((session) => session + 1);
-            void onTakeOver?.();
-          }
-        },
-      ),
-    );
+    emitInProject({
+      key: Symbol('lock-take-over'),
+      send: () =>
+        socket.emit(
+          WebsocketServerEvent.LOCK_RESOURCE,
+          { resourceId, force: true, editorSessionId: editorSession.getId() },
+          (response: LockResourceResponse) => {
+            if (isNil(acquire) || currentAcquire.current !== acquire) {
+              releaseLateAcquire({
+                acquired: response.acquired,
+                acquire,
+                resourceId,
+                socket,
+                beforeRelease: beforeReleaseRef.current,
+              });
+              return;
+            }
+            if (response.acquired) {
+              isOwner.current = false;
+              setLockedBy(null);
+              setLockSession((session) => session + 1);
+              void onTakeOver?.();
+            }
+          },
+        ),
+    });
   }, [resourceId, socket, onTakeOver]);
 
   return { lockedBy, acquiring, takeOver };

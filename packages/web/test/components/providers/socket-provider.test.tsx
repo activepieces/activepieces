@@ -102,6 +102,7 @@ vi.mock('@/lib/authentication-session', () => ({
   authenticationSession: {
     getToken: () => sessionHarness.token,
     getProjectId: () => sessionHarness.projectId,
+    getCurrentUserId: () => 'user-1',
     subscribe: () => () => undefined,
   },
 }));
@@ -115,6 +116,7 @@ import {
   SocketProvider,
   useSocket,
 } from '@/components/providers/socket-provider';
+import { usePresence } from '@/hooks/use-presence';
 
 describe('SocketProvider', () => {
   let container: HTMLDivElement;
@@ -346,6 +348,55 @@ describe('SocketProvider', () => {
     ]);
   });
 
+  it('does not join presence after leaving it when the page closes during a project switch', async () => {
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    act(() => socketHarness.sendFromServer('connect'));
+    act(() => socketHarness.emitted[0].ack(null, { success: true }));
+
+    sessionHarness.projectId = 'project-2';
+    await act(async () =>
+      root.render(<App onConnect={vi.fn()} presenceResourceId="flow-2" />),
+    );
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    act(() => socketHarness.emitted[1].ack(null, { success: true }));
+
+    const presenceEvents = emittedEvents()
+      .map(([event]) => event)
+      .filter(
+        (event) =>
+          event === WebsocketServerEvent.JOIN_PRESENCE ||
+          event === WebsocketServerEvent.LEAVE_PRESENCE,
+      );
+    expect(presenceEvents).toEqual([WebsocketServerEvent.LEAVE_PRESENCE]);
+  });
+
+  it('holds only the latest emit of each kind during a project switch', async () => {
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    act(() => socketHarness.sendFromServer('connect'));
+    act(() => socketHarness.emitted[0].ack(null, { success: true }));
+    sessionHarness.projectId = 'project-2';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+
+    act(() => {
+      ['first', 'second', 'third'].forEach((beat) =>
+        emitInProject({
+          key: 'heartbeat',
+          send: () =>
+            socketHarness.socket.emit(
+              WebsocketServerEvent.JOIN_PRESENCE,
+              { beat },
+              () => undefined,
+            ),
+        }),
+      );
+    });
+    act(() => socketHarness.emitted[1].ack(null, { success: true }));
+
+    expect(emittedEvents().slice(2)).toEqual([
+      [WebsocketServerEvent.JOIN_PRESENCE, { beat: 'third' }],
+    ]);
+  });
+
   it('sends a lock right away when the socket is already in the project', async () => {
     await act(async () => root.render(<App onConnect={vi.fn()} />));
     act(() => socketHarness.sendFromServer('connect'));
@@ -379,28 +430,38 @@ function emittedEvents(): [string, unknown][] {
 function App({
   onConnect,
   lockResourceId,
+  presenceResourceId,
 }: {
   onConnect: () => void;
   lockResourceId?: string;
+  presenceResourceId?: string;
 }) {
   return (
     <SocketProvider>
       <ConnectListener onConnect={onConnect} />
       {lockResourceId && <Locker resourceId={lockResourceId} />}
+      {presenceResourceId && <Presence resourceId={presenceResourceId} />}
     </SocketProvider>
   );
+}
+
+function Presence({ resourceId }: { resourceId: string }) {
+  usePresence({ resourceId });
+  return null;
 }
 
 function Locker({ resourceId }: { resourceId: string }) {
   const socket = useSocket();
   useEffect(() => {
-    emitInProject(() =>
-      socket.emit(
-        WebsocketServerEvent.LOCK_RESOURCE,
-        { resourceId },
-        () => undefined,
-      ),
-    );
+    emitInProject({
+      key: `lock:${resourceId}`,
+      send: () =>
+        socket.emit(
+          WebsocketServerEvent.LOCK_RESOURCE,
+          { resourceId },
+          () => undefined,
+        ),
+    });
   }, [socket, resourceId]);
   return null;
 }

@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
 import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, Field, FileCompression, FileType, PopulatedTable, SharedTemplate, Table, TableDataState, TableImportDataType, TableTemplate, TableWebhook, TableWebhookEventType, TemplateStatus, TemplateType, UncategorizedFolderId, UpdateTableRequest, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, Field, FileCompression, FileType, PopulatedTable, SharedTemplate, Table, TableDataState, TableImportDataType, TableRecordsChangeOp, TableTemplate, TableWebhook, TableWebhookEventType, TemplateStatus, TemplateType, UncategorizedFolderId, UpdateTableRequest, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ILike, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -17,6 +17,7 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { fieldService } from '../field/field.service'
 import { CellEntity } from '../record/cell.entity'
 import { RecordEntity, RecordSchema } from '../record/record.entity'
+import { tableRoom } from '../table-room/table-room'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
 
@@ -201,12 +202,13 @@ export const tableService = {
     async delete({
         projectId,
         id,
+        editorSessionId = null,
     }: DeleteParams): Promise<void> {
-
         await tableRepo().delete({
             projectId,
             id,
         })
+        await tableRoom(system.globalLogger()).notifyChanged({ tableId: id, change: { op: TableRecordsChangeOp.TABLE_DELETED }, editorSessionId })
     },
 
     async exportTable({
@@ -339,6 +341,7 @@ export const tableService = {
         projectId,
         id,
         request,
+        editorSessionId = null,
     }: UpdateParams): Promise<Table> {
         const folderId = request.folderId === UncategorizedFolderId ? null : request.folderId
         if (!isNil(folderId)) {
@@ -352,7 +355,9 @@ export const tableService = {
         }
 
         await tableRepo().update({ id, projectId }, updateData)
-        return this.getOneOrThrow({ projectId, id })
+        const table = await this.getOneOrThrow({ projectId, id })
+        await tableRoom(system.globalLogger()).notifyChanged({ tableId: id, change: { op: TableRecordsChangeOp.TABLE_UPDATED }, editorSessionId })
+        return table
     },
     async count({ projectId, folderId }: CountParams): Promise<number> {
         const where: Record<string, unknown> = { projectId }
@@ -459,6 +464,7 @@ type GetOneByExternalIdParams = {
 type DeleteParams = {
     projectId: string
     id: string
+    editorSessionId?: string | null
 }
 
 type ExportTableParams = {
@@ -519,6 +525,7 @@ type UpdateParams = {
     projectId: string
     id: string
     request: UpdateTableRequest
+    editorSessionId?: string | null
 }
 
 type CountParams = {

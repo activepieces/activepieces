@@ -18,7 +18,7 @@ const connection: ConnectionState = {
   serverProjectId: null,
   rejectedProjectId: null,
   pendingSwitch: null,
-  heldEmits: [],
+  heldEmits: new Map<HeldEmitKey, () => void>(),
 };
 
 const socket = io(API_BASE_URL, {
@@ -100,10 +100,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useSocket = () => React.useContext(SocketContext);
 
-function emitInProject(send: () => void): void {
+function emitInProject({ key, send }: HeldEmit): void {
   setWantedProject(authenticationSession.getProjectId());
-  connection.heldEmits = [...connection.heldEmits, send];
+  connection.heldEmits = new Map<HeldEmitKey, () => void>([
+    ...withoutHeldEmit(key),
+    [key, send],
+  ]);
   syncProject();
+}
+
+function dropHeldEmits(keys: HeldEmitKey[]): void {
+  connection.heldEmits = new Map(
+    [...connection.heldEmits].filter(([heldKey]) => !keys.includes(heldKey)),
+  );
+}
+
+function withoutHeldEmit(key: HeldEmitKey): [HeldEmitKey, () => void][] {
+  return [...connection.heldEmits].filter(([heldKey]) => heldKey !== key);
 }
 
 function setWantedProject(projectId: string | null): void {
@@ -181,8 +194,8 @@ function syncProject(): void {
 }
 
 function releaseHeldEmits(): void {
-  const held = connection.heldEmits;
-  connection.heldEmits = [];
+  const held = [...connection.heldEmits.values()];
+  connection.heldEmits = new Map<HeldEmitKey, () => void>();
   held.forEach((send) => send());
 }
 
@@ -192,7 +205,7 @@ function resetConnection(): void {
   connection.serverProjectId = null;
   connection.rejectedProjectId = null;
   connection.pendingSwitch = null;
-  connection.heldEmits = [];
+  connection.heldEmits = new Map<HeldEmitKey, () => void>();
 }
 
 function readToken(): string | null {
@@ -205,7 +218,14 @@ type ConnectionState = {
   serverProjectId: string | null;
   rejectedProjectId: string | null;
   pendingSwitch: { projectId: string } | null;
-  heldEmits: (() => void)[];
+  heldEmits: ReadonlyMap<HeldEmitKey, () => void>;
+};
+
+type HeldEmitKey = string | symbol;
+
+type HeldEmit = {
+  key: HeldEmitKey;
+  send: () => void;
 };
 
 type HandshakeAuth = {
@@ -213,4 +233,4 @@ type HandshakeAuth = {
   projectId: string | null;
 };
 
-export { emitInProject };
+export { emitInProject, dropHeldEmits };

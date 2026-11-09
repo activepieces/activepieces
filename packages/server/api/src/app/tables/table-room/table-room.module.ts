@@ -1,5 +1,6 @@
 import { isNil, Permission, tryCatch } from '@activepieces/core-utils'
 import { JoinTableRoomResponse, PrincipalType, TableRoomRequest, WebsocketServerEvent } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { Socket } from 'socket.io'
 import { websocketService } from '../../core/websockets.service'
@@ -9,7 +10,7 @@ import { tableRoom } from './table-room'
 export const tableRoomModule: FastifyPluginAsyncZod = async (app) => {
     websocketService.onProjectLeave({
         name: 'table-room',
-        handler: ({ socket }) => leaveAllTableRooms({ socket }),
+        handler: ({ socket }) => leaveAllTableRooms({ socket, log: app.log }),
     })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.JOIN_TABLE_ROOM, (socket) => {
         return async (data: unknown, principal, projectId, callback) => {
@@ -25,7 +26,7 @@ export const tableRoomModule: FastifyPluginAsyncZod = async (app) => {
                 callback?.(NOT_JOINED)
                 return
             }
-            await socket.join(tableRoom.name(table.id))
+            await socket.join(tableRoom(app.log).name(table.id))
             trackTableRoom({ socket, tableId: table.id })
             callback?.({ joined: true })
         }
@@ -36,7 +37,7 @@ export const tableRoomModule: FastifyPluginAsyncZod = async (app) => {
             if (!request.success) {
                 return
             }
-            await leaveTableRoom({ socket, tableId: request.data.tableId })
+            await leaveTableRoom({ socket, tableId: request.data.tableId, log: app.log })
         }
     }, { orderedWithSwitch: true })
 }
@@ -50,19 +51,23 @@ function trackTableRoom({ socket, tableId }: TableRoomParams): void {
     tableRoomsBySocket.set(socket, new Set([...rooms, tableId]))
 }
 
-async function leaveTableRoom({ socket, tableId }: TableRoomParams): Promise<void> {
-    await socket.leave(tableRoom.name(tableId))
+async function leaveTableRoom({ socket, tableId, log }: LeaveTableRoomParams): Promise<void> {
+    await socket.leave(tableRoom(log).name(tableId))
     const rooms = tableRoomsBySocket.get(socket) ?? new Set<string>()
     tableRoomsBySocket.set(socket, new Set([...rooms].filter((id) => id !== tableId)))
 }
 
-async function leaveAllTableRooms({ socket }: { socket: Socket }): Promise<void> {
+async function leaveAllTableRooms({ socket, log }: { socket: Socket, log: FastifyBaseLogger }): Promise<void> {
     for (const tableId of tableRoomsBySocket.get(socket) ?? []) {
-        await leaveTableRoom({ socket, tableId })
+        await leaveTableRoom({ socket, tableId, log })
     }
 }
 
 type TableRoomParams = {
     socket: Socket
     tableId: string
+}
+
+type LeaveTableRoomParams = TableRoomParams & {
+    log: FastifyBaseLogger
 }

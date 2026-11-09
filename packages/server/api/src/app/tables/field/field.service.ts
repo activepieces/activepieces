@@ -1,15 +1,16 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { CreateFieldRequest, Field, FieldState, FieldType, UpdateFieldRequest } from '@activepieces/shared'
+import { CreateFieldRequest, Field, FieldState, FieldType, TableRecordsChangeOp, UpdateFieldRequest } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { tableRoom } from '../table-room/table-room'
 import { FieldEntity } from './field.entity'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
 export const fieldService = {
-    async create({ request, projectId }: CreateParams): Promise<Field> {
+    async create({ request, projectId, editorSessionId = null }: CreateParams): Promise<Field> {
         await this.validateCount({ projectId, tableId: request.tableId })
         const maxPosition = await fieldRepo().maximum('position', { projectId, tableId: request.tableId })
         const field = await fieldRepo().save({
@@ -19,6 +20,7 @@ export const fieldService = {
             id: apId(),
             externalId: request.externalId ?? apId(),
         })
+        await notifyFieldsChanged({ tableId: field.tableId, editorSessionId })
         return field
     },
 
@@ -110,26 +112,34 @@ export const fieldService = {
         return field
     },
 
-    async delete({ id, projectId }: DeleteParams): Promise<void> {
+    async delete({ id, projectId, editorSessionId = null }: DeleteParams): Promise<void> {
+        const field = await fieldRepo().findOne({ where: { id, projectId } })
+        if (isNil(field)) {
+            return
+        }
         await fieldRepo().delete({
             id,
             projectId,
         })
+        await notifyFieldsChanged({ tableId: field.tableId, editorSessionId })
     },
 
-    async update({ id, projectId, request }: UpdateParams): Promise<Field> {
-        if (!isNil(request.name)) {
-            await fieldRepo().update({
-                id,
-                projectId,
-            }, {
-                name: request.name,
-            })
+    async update({ id, projectId, request, editorSessionId = null }: UpdateParams): Promise<Field> {
+        if (isNil(request.name)) {
+            return this.getById({ id, projectId })
         }
-        return this.getById({ id, projectId })
+        await fieldRepo().update({
+            id,
+            projectId,
+        }, {
+            name: request.name,
+        })
+        const field = await this.getById({ id, projectId })
+        await notifyFieldsChanged({ tableId: field.tableId, editorSessionId })
+        return field
     },
 
-    async reorder({ projectId, tableId, fieldIds }: ReorderParams): Promise<Field[]> {
+    async reorder({ projectId, tableId, fieldIds, editorSessionId = null }: ReorderParams): Promise<Field[]> {
         await fieldRepo().query(
             `
             UPDATE "field" AS f
@@ -142,6 +152,7 @@ export const fieldService = {
             `,
             [fieldIds, projectId, tableId],
         )
+        await notifyFieldsChanged({ tableId, editorSessionId })
         return this.getAll({ projectId, tableId })
     },
 
@@ -162,9 +173,19 @@ export const fieldService = {
     },
 }
 
+async function notifyFieldsChanged({ tableId, editorSessionId }: NotifyFieldsChangedParams): Promise<void> {
+    await tableRoom(system.globalLogger()).notifyChanged({ tableId, change: { op: TableRecordsChangeOp.FIELDS_CHANGED }, editorSessionId })
+}
+
+type NotifyFieldsChangedParams = {
+    tableId: string
+    editorSessionId: string | null
+}
+
 type CreateParams = {
     projectId: string
     request: CreateFieldRequest
+    editorSessionId?: string | null
 }
 
 type CreateFromStateParams = {
@@ -192,18 +213,21 @@ type GetByIdParams = {
 type DeleteParams = {
     id: string
     projectId: string
+    editorSessionId?: string | null
 }
 
 type UpdateParams = {
     id: string
     projectId: string
     request: UpdateFieldRequest
+    editorSessionId?: string | null
 }
 
 type ReorderParams = {
     projectId: string
     tableId: string
     fieldIds: string[]
+    editorSessionId?: string | null
 }
 
 type CountParams = {

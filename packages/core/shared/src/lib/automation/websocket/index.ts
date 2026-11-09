@@ -99,6 +99,8 @@ export enum TableRecordsChangeOp {
     CLEARED = 'CLEARED',
     RELOAD = 'RELOAD',
     FIELDS_CHANGED = 'FIELDS_CHANGED',
+    TABLE_UPDATED = 'TABLE_UPDATED',
+    TABLE_DELETED = 'TABLE_DELETED',
 }
 
 const TableChangeBase = z.object({
@@ -113,6 +115,8 @@ export const TableRecordsChangedEvent = z.discriminatedUnion('op', [
     TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.CLEARED) }),
     TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.RELOAD) }),
     TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.FIELDS_CHANGED) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.TABLE_UPDATED) }),
+    TableChangeBase.extend({ op: z.literal(TableRecordsChangeOp.TABLE_DELETED) }),
 ])
 
 export const TableRoomRequest = z.object({

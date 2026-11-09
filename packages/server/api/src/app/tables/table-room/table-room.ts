@@ -1,11 +1,11 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { PopulatedRecord, TableRecordsChangedEvent, TableRecordsChangeOp, WebsocketClientEvent } from '@activepieces/shared'
-import { system } from '../../helper/system/system'
+import { FastifyBaseLogger } from 'fastify'
 
 const MAX_RECORDS_PER_PUSH = 50
 
-export const tableRoom = {
-    name: (tableId: string): string => `table:${tableId}`,
+export const tableRoom = (log: FastifyBaseLogger) => ({
+    name: tableRoomName,
     async notifyChanged({ tableId, change, editorSessionId }: NotifyChangedParams): Promise<void> {
         const event = buildChangedEvent({ tableId, change, editorSessionId })
         if (isNil(event)) {
@@ -13,12 +13,17 @@ export const tableRoom = {
         }
         const { error } = await tryCatch(async () => {
             const { websocketService } = await import('../../core/websockets.service')
-            websocketService.to(tableRoom.name(tableId)).emit(WebsocketClientEvent.TABLE_RECORDS_CHANGED, event)
+            websocketService.to(tableRoomName(tableId)).emit(WebsocketClientEvent.TABLE_RECORDS_CHANGED, event)
         })
         if (!isNil(error)) {
-            system.globalLogger().error({ error, table: { id: tableId } }, '[tableRoom#notifyChanged] Could not send the table change, the write is kept')
+            log.error({ error, table: { id: tableId } }, '[tableRoom#notifyChanged] Could not send the table change, the write is kept')
         }
     },
+})
+
+
+function tableRoomName(tableId: string): string {
+    return `table:${tableId}`
 }
 
 function buildChangedEvent({ tableId, change, editorSessionId }: NotifyChangedParams): TableRecordsChangedEvent | null {
@@ -28,6 +33,10 @@ function buildChangedEvent({ tableId, change, editorSessionId }: NotifyChangedPa
             return { ...base, op: TableRecordsChangeOp.CLEARED }
         case TableRecordsChangeOp.FIELDS_CHANGED:
             return { ...base, op: TableRecordsChangeOp.FIELDS_CHANGED }
+        case TableRecordsChangeOp.TABLE_UPDATED:
+            return { ...base, op: TableRecordsChangeOp.TABLE_UPDATED }
+        case TableRecordsChangeOp.TABLE_DELETED:
+            return { ...base, op: TableRecordsChangeOp.TABLE_DELETED }
         case TableRecordsChangeOp.DELETED:
             return withinPushCap({ tableId, editorSessionId, count: change.recordIds.length, event: { ...base, op: TableRecordsChangeOp.DELETED, recordIds: change.recordIds } })
         case TableRecordsChangeOp.CREATED:
@@ -54,7 +63,7 @@ export type TableChange = {
     op: TableRecordsChangeOp.DELETED
     recordIds: string[]
 } | {
-    op: TableRecordsChangeOp.CLEARED | TableRecordsChangeOp.FIELDS_CHANGED
+    op: TableRecordsChangeOp.CLEARED | TableRecordsChangeOp.FIELDS_CHANGED | TableRecordsChangeOp.TABLE_UPDATED | TableRecordsChangeOp.TABLE_DELETED
 }
 
 type NotifyChangedParams = {
