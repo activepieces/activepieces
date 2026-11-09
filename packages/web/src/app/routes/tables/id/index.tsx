@@ -45,6 +45,8 @@ const ApTableEditorPage = () => {
     records,
     setLockedByOtherUser,
     reorderField,
+    tableId,
+    rowIdsChangedSince,
   ] = useTableState((state) => [
     state.selectedRecords,
     state.setSelectedRecords,
@@ -55,8 +57,10 @@ const ApTableEditorPage = () => {
     state.records,
     state.setLockedByOtherUser,
     state.reorderField,
+    state.table.id,
+    state.rowIdsChangedSince,
   ]);
-  const rowSheen = useRowSheen(records);
+  const rowSheen = useRowSheen({ records, tableId, rowIdsChangedSince });
   const { pendingToken, played } = rowSheen;
   const renderRow = useCallback(
     (key: React.Key, rowProps: RenderRowProps<Row, { id: string }>) => (

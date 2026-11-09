@@ -111,6 +111,7 @@ export type TableState = {
   setLockedByOtherUser: (locked: boolean) => void;
   serverFields: Field[];
   getServerRecords: () => PopulatedRecord[];
+  rowIdsChangedSince: (since: number) => string[];
 };
 
 export const createApTableStore = (
@@ -492,6 +493,13 @@ export const createApTableStore = (
         set({ lockedByOtherUser: locked }),
       serverFields: serverState.fields,
       getServerRecords: () => serverState.records,
+      rowIdsChangedSince: (since: number) =>
+        serverState.records.flatMap((record) => {
+          const rowId = serverState.rowIdOf(record.id);
+          return rowId !== undefined && lastChangeOf(record) >= since
+            ? [rowId]
+            : [];
+        }),
     };
   });
 };
@@ -505,6 +513,16 @@ function compareUpdated({
 }): number {
   const diff = Date.parse(incoming) - Date.parse(local);
   return Number.isNaN(diff) ? 0 : Math.sign(diff);
+}
+
+function lastChangeOf(record: PopulatedRecord): number {
+  const times = [
+    record.updated,
+    ...Object.values(record.cells).map((cell) => cell.updated),
+  ]
+    .map((time) => Date.parse(time))
+    .filter((time) => !Number.isNaN(time));
+  return times.length === 0 ? Number.NEGATIVE_INFINITY : Math.max(...times);
 }
 
 function clampSelectedCell({

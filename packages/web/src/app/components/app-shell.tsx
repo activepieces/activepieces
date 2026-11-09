@@ -14,6 +14,7 @@ import { SidebarInset } from '@/components/ui/sidebar-shadcn';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesHooks } from '@/features/templates';
+import { RouteChat } from '@/features/workspace/lib/route-chat';
 import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -264,7 +265,7 @@ type ShellVariant = 'shell' | 'bare';
 
 export type RouteHandle = {
   shell: 'project' | 'builder' | 'platform';
-  chat?: 'full';
+  chat: RouteChat;
   projectHeader?: true;
   allowAnonymous?: true;
   standalone?: 'sharedTemplate';
@@ -272,17 +273,23 @@ export type RouteHandle = {
 };
 
 export const shellHandles = {
-  project: { shell: 'project' },
-  projectWithHeader: { shell: 'project', projectHeader: true },
-  publicProject: { shell: 'project', allowAnonymous: true },
-  projectRedirect: { shell: 'project', redirectOnly: true },
-  publicRedirect: { shell: 'project', allowAnonymous: true, redirectOnly: true },
+  project: { shell: 'project', chat: 'dock' },
+  projectWithHeader: { shell: 'project', chat: 'dock', projectHeader: true },
+  publicProject: { shell: 'project', chat: 'dock', allowAnonymous: true },
+  projectRedirect: { shell: 'project', chat: 'dock', redirectOnly: true },
+  publicRedirect: {
+    shell: 'project',
+    chat: 'dock',
+    allowAnonymous: true,
+    redirectOnly: true,
+  },
   templateDetails: {
     shell: 'project',
+    chat: 'dock',
     allowAnonymous: true,
     standalone: 'sharedTemplate',
   },
   chat: { shell: 'project', chat: 'full' },
-  builder: { shell: 'builder' },
-  platform: { shell: 'platform' },
+  builder: { shell: 'builder', chat: 'dock' },
+  platform: { shell: 'platform', chat: 'none' },
 } satisfies Record<string, RouteHandle>;

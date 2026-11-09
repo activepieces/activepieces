@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { useChatOn } from '@/features/workspace/lib/use-chat-on';
+import { useChatEnabled } from '@/features/workspace/lib/use-chat-on';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -32,7 +32,7 @@ export const DefaultRoute = () => {
 
 const AuthenticatedDefaultRoute = () => {
   const { checkAccess } = useAuthorization();
-  const chatOn = useChatOn();
+  const chatOn = useChatEnabled();
   const location = useLocation();
   const currentProjectId = authenticationSession.getProjectId();
   const trialKey = new URLSearchParams(location.search).get(

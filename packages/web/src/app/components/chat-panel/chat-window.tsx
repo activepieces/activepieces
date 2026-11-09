@@ -60,14 +60,15 @@ export function useDockWidth(dragWidth: number | null = null): number {
 }
 
 export function useChatWidth(): ChatWidth {
-  const fullPage = useShellHandle().chat === 'full';
+  const routeChat = useShellHandle().chat;
+  const fullPage = routeChat === 'full';
   const sheetOpen = useLocation().hash === chatPanelUtils.SHEET_HASH;
   const docked = useChatPanel((s) => s.open);
   const mode = useChatPanel((s) => s.mode);
   const phone = windowSizeHooks.useIsPhone();
   return chatLayoutUtils.widthFor({
     fullPage,
-    open: phone ? sheetOpen : docked,
+    open: routeChat !== 'none' && (phone ? sheetOpen : docked),
     mode,
     phone,
   });
