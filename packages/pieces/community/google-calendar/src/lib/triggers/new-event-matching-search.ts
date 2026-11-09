@@ -219,7 +219,11 @@ function judgeListed({
       calendarInvites.seriesOrder({ event: right.event })
   );
   for (const { event, firstSight } of mastersFirst) {
+    if (event.status === 'cancelled') {
+      invitesById.delete(event.id);
+    }
     if (calendarInvites.isInvite({ event })) {
+      const matches = matchesSearchFields({ event, searchTerm, searchFields });
       const decision = calendarInvites.judge({
         event,
         isKnown: (id) => invitesById.has(id),
@@ -230,7 +234,7 @@ function judgeListed({
       if (decision === 'answered') {
         invitesById.delete(event.id);
       }
-      if (decision === 'seen') {
+      if (decision === 'seen' && matches) {
         const upgraded = calendarInvites.asWholeSeries({
           event,
           entry: invitesById.get(event.id),
@@ -240,10 +244,10 @@ function judgeListed({
         }
       }
       if (decision === 'new') {
-        calendarInvites
-          .toSeen({ event })
-          .forEach((entry) => invitesById.set(entry.id, entry));
-        if (matchesSearchFields({ event, searchTerm, searchFields })) {
+        rememberNewInvite({ event, matches }).forEach((entry) =>
+          invitesById.set(entry.id, entry)
+        );
+        if (matches) {
           fired.push(event);
         }
       }
@@ -258,6 +262,20 @@ function judgeListed({
     }
   }
   return { fired, invites: Array.from(invitesById.values()) };
+}
+
+function rememberNewInvite({
+  event,
+  matches,
+}: {
+  event: GoogleCalendarEvent;
+  matches: boolean;
+}): SeenInvite[] {
+  const entries = calendarInvites.toSeen({ event });
+  if (matches) {
+    return entries;
+  }
+  return entries.map((entry) => ({ ...entry, viaOccurrence: true }));
 }
 
 function isNewOwnEvent({

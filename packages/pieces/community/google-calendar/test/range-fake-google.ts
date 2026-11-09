@@ -18,6 +18,8 @@ export const fakeCalendar: FakeCalendarState = {
   failNextLists: 0,
   failListPage: null,
   failNextGets: 0,
+  listDelayMs: 0,
+  rejectNextPageToken: false,
   requests: [],
 };
 
@@ -28,6 +30,8 @@ export function resetFakeCalendar(): void {
   fakeCalendar.failNextLists = 0;
   fakeCalendar.failListPage = null;
   fakeCalendar.failNextGets = 0;
+  fakeCalendar.listDelayMs = 0;
+  fakeCalendar.rejectNextPageToken = false;
   fakeCalendar.requests = [];
   vi.spyOn(httpClient, 'sendRequest').mockImplementation((request) =>
     Reflect.apply(answer, undefined, [request])
@@ -158,6 +162,13 @@ async function answer(request: HttpRequest): Promise<unknown> {
   }
   if (eventsMatch) {
     const offset = query['pageToken'] ? Number(query['pageToken']) : 0;
+    if (fakeCalendar.listDelayMs > 0) {
+      vi.setSystemTime(Date.now() + fakeCalendar.listDelayMs);
+    }
+    if (fakeCalendar.rejectNextPageToken && query['pageToken']) {
+      fakeCalendar.rejectNextPageToken = false;
+      fail({ status: 400 });
+    }
     if (fakeCalendar.failNextLists > 0) {
       fakeCalendar.failNextLists -= 1;
       fail({ status: 503 });
@@ -216,5 +227,7 @@ type FakeCalendarState = {
   failNextLists: number;
   failListPage: number | null;
   failNextGets: number;
+  listDelayMs: number;
+  rejectNextPageToken: boolean;
   requests: { url: string; query: Record<string, string> }[];
 };

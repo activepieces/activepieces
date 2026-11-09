@@ -52,6 +52,17 @@ describe('Event Cancelled behaviour: whole calendar', () => {
     expect(await poll({ store })).toEqual([]);
   });
 
+  it('does not fire again for a cancellation listed again inside the visibility margin', async () => {
+    createEvent({ id: 'quick' });
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store }));
+    deleteEvent({ id: 'quick' });
+
+    expect(await quickPoll({ store, seconds: 20 })).toEqual(['quick']);
+    expect(await quickPoll({ store, seconds: 20 })).toEqual([]);
+    expect(vendor.requests[vendor.requests.length - 1]['updatedMin'] <= eventById({ id: 'quick' }).updated).toBe(true);
+  });
+
   it('fires once for a deleted series that has a moved occurrence', async () => {
     createSeries({ id: 'weekly', occurrences: 12 });
     moveOccurrence({ seriesId: 'weekly', index: 2 });
@@ -271,6 +282,19 @@ describe('Event Cancelled behaviour: one specific event', () => {
     await expect(trigger.run(hookContext({ store, pinned: 'pinned' }))).rejects.toThrow();
     vendor.getFailure = undefined;
     expect(await poll({ store, pinned: 'pinned' })).toEqual(['pinned']);
+  });
+
+  it('fails to turn on when the event cannot be read, and fires a cancellation after a later turn-on', async () => {
+    createEvent({ id: 'pinned' });
+    const { store } = memoryStore();
+    vendor.getFailure = 503;
+    await expect(trigger.onEnable(hookContext({ store, pinned: 'pinned' }))).rejects.toThrow('Could not read the selected event');
+
+    vendor.getFailure = undefined;
+    await trigger.onEnable(hookContext({ store, pinned: 'pinned' }));
+    deleteEvent({ id: 'pinned' });
+    expect(await poll({ store, pinned: 'pinned' })).toEqual(['pinned']);
+    expect(await poll({ store, pinned: 'pinned' })).toEqual([]);
   });
 
   it('fires a cancellation that happened after the last check of the previous version', async () => {

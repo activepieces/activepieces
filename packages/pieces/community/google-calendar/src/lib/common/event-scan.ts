@@ -20,6 +20,7 @@ const LISTING_BUDGET_MS = 25_000;
 const REQUEST_TIMEOUT_MS = 10_000;
 const VISIBILITY_MARGIN_MS = 60_000;
 const SEEN_LIMIT = 500;
+const SEEN_MAX_CHARS = 150_000;
 
 async function scanUpdatedEvents({
   auth,
@@ -39,20 +40,22 @@ async function scanUpdatedEvents({
   triggerName: string;
 }): Promise<ScanResult> {
   const token = await getAccessToken(auth);
-  const scanStartedMs = Date.now();
+  const resume = validResume({ resume: checkpoint.resume });
+  const scanStartedMs = resume?.startedMs ?? Date.now();
+  const updatedMinMs = resume?.updatedMinMs ?? checkpoint.scannedThroughMs;
   const seenAtStart = new Map(checkpoint.seen.map((entry) => [entry.id, entry]));
   const seenById = new Map(seenAtStart);
   const listedById = new Map<string, ListedEvent>();
   let maxUpdatedMs = checkpoint.scannedThroughMs;
-  let pageToken: string | undefined = undefined;
+  let pageToken: string | undefined = resume?.pageToken;
   let pagesScanned = 0;
   let finishedCleanly = false;
   while (true) {
     if (deadlineMs - Date.now() < REQUEST_TIMEOUT_MS) {
       console.info(
-        `[google-calendar] ${triggerName}: listing budget reached after ${pagesScanned} page(s); continuing from ${new Date(
-          maxUpdatedMs
-        ).toISOString()} on the next check.`
+        `[google-calendar] ${triggerName}: listing budget reached after ${pagesScanned} page(s); continuing from ${
+          pageToken ? 'the next page' : new Date(maxUpdatedMs).toISOString()
+        } on the next check.`
       );
       break;
     }
@@ -63,13 +66,30 @@ async function scanUpdatedEvents({
           query,
           eventTypes,
           token,
-          updatedMinMs: checkpoint.scannedThroughMs,
+          updatedMinMs,
           pageToken,
         })
       )
     );
     if (response.error) {
-      if (pagesScanned === 0 && httpStatusOf(response.error) === 410) {
+      const status = httpStatusOf(response.error);
+      if (pagesScanned === 0 && !isNil(resume) && (status === 400 || status === 410)) {
+        console.warn(
+          `[google-calendar] ${triggerName}: Google rejected the saved page position (HTTP ${status}); listing again from ${new Date(
+            checkpoint.scannedThroughMs
+          ).toISOString()}.`
+        );
+        return scanUpdatedEvents({
+          auth,
+          calendarId,
+          query,
+          eventTypes,
+          checkpoint: withoutResume({ checkpoint }),
+          deadlineMs,
+          triggerName,
+        });
+      }
+      if (pagesScanned === 0 && status === 410) {
         return { kind: 'expired' };
       }
       if (pagesScanned === 0) {
@@ -83,7 +103,7 @@ async function scanUpdatedEvents({
     }
     for (const event of response.data.body.items ?? []) {
       const updatedMs = Date.parse(event.updated);
-      if (Number.isNaN(updatedMs) || updatedMs < checkpoint.scannedThroughMs) {
+      if (Number.isNaN(updatedMs) || updatedMs < updatedMinMs) {
         continue;
       }
       const previous = seenById.get(event.id);
@@ -112,24 +132,85 @@ async function scanUpdatedEvents({
       break;
     }
   }
+  const passedDropMs = resume?.droppedThroughMs;
   const scannedThroughMs = finishedCleanly
-    ? Math.max(checkpoint.scannedThroughMs, scanStartedMs - VISIBILITY_MARGIN_MS)
+    ? Math.max(
+        checkpoint.scannedThroughMs,
+        scanStartedMs - VISIBILITY_MARGIN_MS,
+        isNil(passedDropMs) ? Number.NEGATIVE_INFINITY : passedDropMs + 1
+      )
     : maxUpdatedMs;
   const createdFloorMs = finishedCleanly
     ? Math.max(checkpoint.createdFloorMs, scannedThroughMs)
     : checkpoint.createdFloorMs;
+  const limited = limitSeen({
+    seen: Array.from(seenById.values()),
+    scannedThroughMs,
+    createdFloorMs,
+    readThroughMs: finishedCleanly ? Number.POSITIVE_INFINITY : maxUpdatedMs,
+    triggerName,
+  });
+  const droppedThroughMs = Math.max(
+    passedDropMs ?? Number.NEGATIVE_INFINITY,
+    limited.droppedThroughMs ?? Number.NEGATIVE_INFINITY
+  );
+  const nextResume: ScanResume | undefined =
+    !finishedCleanly && pageToken
+      ? {
+          pageToken,
+          updatedMinMs,
+          startedMs: scanStartedMs,
+          ...(Number.isFinite(droppedThroughMs) ? { droppedThroughMs } : {}),
+        }
+      : undefined;
   return {
     kind: 'scanned',
     listed: Array.from(listedById.values()),
     checkpoint: {
       watchKey: checkpoint.watchKey,
-      ...limitSeen({
-        seen: Array.from(seenById.values()),
-        scannedThroughMs,
-        createdFloorMs,
-        triggerName,
-      }),
+      scannedThroughMs: limited.scannedThroughMs,
+      createdFloorMs: limited.createdFloorMs,
+      seen: limited.seen,
+      ...(isNil(nextResume) ? {} : { resume: nextResume }),
     },
+  };
+}
+
+function validResume({
+  resume,
+}: {
+  resume: ScanResume | undefined;
+}): ScanResume | undefined {
+  if (
+    !isNil(resume) &&
+    typeof resume.pageToken === 'string' &&
+    resume.pageToken.length > 0 &&
+    Number.isFinite(resume.updatedMinMs) &&
+    Number.isFinite(resume.startedMs)
+  ) {
+    return {
+      pageToken: resume.pageToken,
+      updatedMinMs: resume.updatedMinMs,
+      startedMs: resume.startedMs,
+      ...(typeof resume.droppedThroughMs === 'number' &&
+      Number.isFinite(resume.droppedThroughMs)
+        ? { droppedThroughMs: resume.droppedThroughMs }
+        : {}),
+    };
+  }
+  return undefined;
+}
+
+function withoutResume({
+  checkpoint,
+}: {
+  checkpoint: ScanCheckpoint;
+}): ScanCheckpoint {
+  return {
+    watchKey: checkpoint.watchKey,
+    scannedThroughMs: checkpoint.scannedThroughMs,
+    createdFloorMs: checkpoint.createdFloorMs,
+    seen: checkpoint.seen,
   };
 }
 
@@ -247,6 +328,7 @@ async function readCheckpoint({
     if (saved.watchKey !== watchKey) {
       return null;
     }
+    const resume = validResume({ resume: saved.resume });
     return {
       watchKey,
       scannedThroughMs: saved.scannedThroughMs,
@@ -255,6 +337,7 @@ async function readCheckpoint({
           ? saved.createdFloorMs
           : saved.scannedThroughMs,
       seen: Array.isArray(saved.seen) ? saved.seen : [],
+      ...(isNil(resume) ? {} : { resume }),
     };
   }
   const legacyLastPoll = await readLegacyLastPoll({ store });
@@ -310,33 +393,67 @@ function limitSeen({
   seen,
   scannedThroughMs,
   createdFloorMs,
+  readThroughMs,
   triggerName,
 }: {
   seen: SeenEvent[];
   scannedThroughMs: number;
   createdFloorMs: number;
+  readThroughMs: number;
   triggerName: string;
-}): Pick<ScanCheckpoint, 'scannedThroughMs' | 'createdFloorMs' | 'seen'> {
+}): LimitedSeen {
   const stillNeeded = seen
     .filter(
       (entry) =>
         entry.updatedMs >= scannedThroughMs || entry.createdMs >= createdFloorMs
     )
     .sort((left, right) => right.updatedMs - left.updatedMs);
-  if (stillNeeded.length <= SEEN_LIMIT) {
+  const fitting = fittingCount({
+    entries: stillNeeded,
+    maxEntries: SEEN_LIMIT,
+    maxChars: SEEN_MAX_CHARS,
+  });
+  if (fitting === stillNeeded.length) {
     return { scannedThroughMs, createdFloorMs, seen: stillNeeded };
   }
-  const cutMs = stillNeeded[SEEN_LIMIT - 1].updatedMs;
+  const cutMs = stillNeeded[fitting].updatedMs;
+  const groupFullyRead = readThroughMs > cutMs;
+  const passMs = groupFullyRead ? cutMs + 1 : cutMs;
+  const dropped = stillNeeded.length - fitting;
   console.warn(
-    `[google-calendar] ${triggerName}: more than ${SEEN_LIMIT} changes inside the visibility margin; checkpoint advanced past the visibility margin to ${new Date(
-      cutMs
-    ).toISOString()}. Events that become visible later than that with an older timestamp are not picked up.`
+    `[google-calendar] ${triggerName}: more changes inside the visibility margin than the saved state can hold (${stillNeeded.length} entries); checkpoint advanced past the visibility margin to ${new Date(
+      passMs
+    ).toISOString()} and ${dropped} or more older entries were dropped. Events that become visible later than that with an older timestamp are not picked up.${
+      groupFullyRead
+        ? ''
+        : ' The saved page position continues the listing; if Google rejects it, changes at that timestamp may fire again.'
+    }`
   );
   return {
-    scannedThroughMs: Math.max(scannedThroughMs, cutMs),
-    createdFloorMs: Math.max(createdFloorMs, cutMs),
-    seen: stillNeeded.filter((entry) => entry.updatedMs >= cutMs),
+    scannedThroughMs: Math.max(scannedThroughMs, passMs),
+    createdFloorMs: Math.max(createdFloorMs, passMs),
+    seen: stillNeeded.filter((entry) => entry.updatedMs > cutMs),
+    ...(groupFullyRead ? {} : { droppedThroughMs: cutMs }),
   };
+}
+
+function fittingCount<T>({
+  entries,
+  maxEntries,
+  maxChars,
+}: {
+  entries: T[];
+  maxEntries: number;
+  maxChars: number;
+}): number {
+  let usedChars = 0;
+  for (let index = 0; index < entries.length; index++) {
+    usedChars += JSON.stringify(entries[index]).length + 1;
+    if (index >= maxEntries || usedChars > maxChars) {
+      return index;
+    }
+  }
+  return entries.length;
 }
 
 function createdTimeOf({ event }: { event: GoogleCalendarEvent }): number {
@@ -411,6 +528,8 @@ export const eventScan = {
   warnExpired,
   createdTimeOf,
   httpStatusOf,
+  fittingCount,
+  seenMaxChars: SEEN_MAX_CHARS,
 };
 
 export type ScanCheckpoint = {
@@ -418,6 +537,14 @@ export type ScanCheckpoint = {
   scannedThroughMs: number;
   createdFloorMs: number;
   seen: SeenEvent[];
+  resume?: ScanResume;
+};
+
+export type ScanResume = {
+  pageToken: string;
+  updatedMinMs: number;
+  startedMs: number;
+  droppedThroughMs?: number;
 };
 
 export type SeenEvent = {
@@ -433,6 +560,11 @@ export type ListedEvent = {
   firstSight: boolean;
   previous: SeenEvent | undefined;
 };
+
+type LimitedSeen = Pick<
+  ScanCheckpoint,
+  'scannedThroughMs' | 'createdFloorMs' | 'seen'
+> & { droppedThroughMs?: number };
 
 type ScanResult =
   | { kind: 'expired' }

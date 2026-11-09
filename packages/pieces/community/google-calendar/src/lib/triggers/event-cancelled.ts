@@ -331,12 +331,13 @@ async function restoreOrBaselinePinned({
     fetchPinnedEvent({ auth, calendarId, eventId })
   );
   if (fetched.error) {
-    console.warn(
-      `[google-calendar] ${TRIGGER_NAME}: could not read event ${eventId} while turning on; its current status is recorded on the first check instead.`,
-      fetched.error
+    const status = eventScan.httpStatusOf(fetched.error);
+    throw new Error(
+      `Could not read the selected event (${eventId}) from Google Calendar${
+        isNil(status) ? '' : ` (HTTP ${status})`
+      }, so the trigger cannot record its current status. Check that the event still exists and the connection can read this calendar, then turn the flow on again.`,
+      { cause: fetched.error }
     );
-    await store.delete(PINNED_STORE_KEY);
-    return;
   }
   await store.put<PinnedState>(PINNED_STORE_KEY, {
     watchKey,

@@ -9,7 +9,11 @@ import { isNil, tryCatch } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { googleCalendarCommon, GoogleCalendarAuthValue, getAccessToken } from '.';
+import {
+  googleCalendarCommon,
+  GoogleCalendarAuthValue,
+  getAccessToken,
+} from '.';
 import { eventScan } from './event-scan';
 import { GoogleCalendarEvent } from './types';
 
@@ -26,6 +30,7 @@ async function listEventsInRange({
   timeMaxMs,
   deadlineMs,
   logPrefix,
+  startPageToken,
 }: {
   auth: GoogleCalendarAuthValue;
   calendarId: string;
@@ -33,18 +38,19 @@ async function listEventsInRange({
   timeMaxMs: number;
   deadlineMs: number;
   logPrefix: string;
+  startPageToken?: string;
 }): Promise<RangeListing> {
   const token = await getAccessToken(auth);
   const events: GoogleCalendarEvent[] = [];
   let timeZone: string | undefined = undefined;
-  let pageToken: string | undefined = undefined;
+  let pageToken: string | undefined = startPageToken;
   let pagesListed = 0;
   while (true) {
     if (pagesListed > 0 && deadlineMs - Date.now() < REQUEST_TIMEOUT_MS) {
       console.info(
         `${logPrefix}: listing budget reached after ${pagesListed} page(s); the rest is checked on the next run.`
       );
-      return { events, timeZone, complete: false };
+      return { events, timeZone, complete: false, nextPageToken: pageToken };
     }
     const response = await tryCatch(() =>
       httpClient.sendRequest<RangePage>(
@@ -62,10 +68,12 @@ async function listEventsInRange({
         throw response.error;
       }
       console.warn(
-        `${logPrefix}: page ${pagesListed + 1} failed; keeping ${pagesListed} listed page(s) and checking the rest on the next run.`,
+        `${logPrefix}: page ${
+          pagesListed + 1
+        } failed; keeping ${pagesListed} listed page(s) and checking the rest on the next run.`,
         response.error
       );
-      return { events, timeZone, complete: false };
+      return { events, timeZone, complete: false, nextPageToken: pageToken };
     }
     const page: HttpResponse<RangePage> = response.data;
     timeZone = timeZone ?? page.body.timeZone;
@@ -92,7 +100,10 @@ async function listUpcomingOrRecent({
   lookbackMs: number;
   limit: number;
   anchor: 'start' | 'end';
-}): Promise<{ upcoming: GoogleCalendarEvent[]; recent: GoogleCalendarEvent[] }> {
+}): Promise<{
+  upcoming: GoogleCalendarEvent[];
+  recent: GoogleCalendarEvent[];
+}> {
   const listing = await listEventsInRange({
     auth,
     calendarId,
@@ -141,7 +152,9 @@ async function getEventOrNull({
   const response = await tryCatch(() =>
     httpClient.sendRequest<GoogleCalendarEvent>({
       method: HttpMethod.GET,
-      url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+      url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(
+        calendarId
+      )}/events/${encodeURIComponent(eventId)}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token,
@@ -169,7 +182,9 @@ async function getCalendarTimeZone({
   const token = await getAccessToken(auth);
   const response = await httpClient.sendRequest<{ timeZone?: string }>({
     method: HttpMethod.GET,
-    url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(calendarId)}`,
+    url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(
+      calendarId
+    )}`,
     queryParams: { fields: 'timeZone' },
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
@@ -202,14 +217,14 @@ function boundaryMs({
     return null;
   }
   const day = String(boundary.date);
-  const zonedMs = isNil(timeZone)
-    ? null
-    : zonedMidnightMs({ day, timeZone });
+  const zonedMs = isNil(timeZone) ? null : zonedMidnightMs({ day, timeZone });
   if (!isNil(zonedMs)) {
     return zonedMs;
   }
   console.warn(
-    `[google-calendar] calendar time zone ${timeZone ?? 'missing'} could not be used; reading the all-day date ${day} in UTC.`
+    `[google-calendar] calendar time zone ${
+      timeZone ?? 'missing'
+    } could not be used; reading the all-day date ${day} in UTC.`
   );
   const utcMs = dayjs.utc(day).valueOf();
   return Number.isNaN(utcMs) ? null : utcMs;
@@ -245,7 +260,9 @@ function buildRangeRequest({
 }): HttpRequest {
   return {
     method: HttpMethod.GET,
-    url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(calendarId)}/events`,
+    url: `${googleCalendarCommon.baseUrl}/calendars/${encodeURIComponent(
+      calendarId
+    )}/events`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token,
@@ -275,6 +292,7 @@ export type RangeListing = {
   events: GoogleCalendarEvent[];
   timeZone: string | undefined;
   complete: boolean;
+  nextPageToken?: string;
 };
 
 type RangePage = {

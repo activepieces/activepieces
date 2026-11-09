@@ -23,6 +23,7 @@ import {
 } from '../common/helper';
 import { GoogleWatchResponse, GoogleCalendarEvent } from '../common/types';
 import { calendarInvites, SeenInvite } from '../common/invites';
+import { eventScan } from '../common/event-scan';
 import { eventOutputSchema } from '../output-schemas';
 
 const WATCH_STORE_KEY = 'google_calendar_watch';
@@ -32,6 +33,7 @@ const SEEN_EVENTS_STORE_KEY = 'google_calendar_seen_events';
 const CREATED_FLOOR_STORE_KEY = 'google_calendar_created_floor';
 const SEEN_INVITES_STORE_KEY = 'google_calendar_seen_invites';
 const INVITE_FLOOR_STORE_KEY = 'google_calendar_invite_floor';
+const STATE_STORE_KEY = 'google_calendar_new_event_state';
 const SEEN_EVENTS_LIMIT = 500;
 const SAMPLE_SIZE = 5;
 
@@ -83,9 +85,11 @@ export const newEvent = createTrigger({
   name: 'new_event',
   classification: 'READ',
   displayName: 'New Event',
-  description: 'Fires when a new event is created in a calendar, or when you are invited to one.',
+  description:
+    'Fires when a new event is created in a calendar, or when you are invited to one.',
   aiMetadata: {
-    description: 'Fires when a brand-new event is created in the selected calendar after the trigger was turned on, and when you receive a new invitation you have not answered yet (including an invitation to a single occurrence of someone else\'s recurring meeting), via Google push notifications. Edits, reschedules, renames, cancellations and moved occurrences of your own events do not fire; a new recurring series fires once. Each fired item is the new event; can be narrowed by event type, a text search across title/description/location, and an option to skip all-day events.',
+    description:
+      "Fires when a brand-new event is created in the selected calendar after the trigger was turned on, and when you receive a new invitation you have not answered yet (including an invitation to a single occurrence of someone else's recurring meeting), via Google push notifications. Edits, reschedules, renames, cancellations and moved occurrences of your own events do not fire; a new recurring series fires once. Each fired item is the new event; can be narrowed by event type, a text search across title/description/location, and an option to skip all-day events.",
   },
   propertyGroups: [
     {
@@ -178,8 +182,13 @@ export const newEvent = createTrigger({
 
     const { error } = await tryCatch(async () => {
       await context.store.put<GoogleWatchResponse>(WATCH_STORE_KEY, response);
-      await context.store.put<number>(CREATED_FLOOR_STORE_KEY, enableStartedMs);
-      await context.store.put<SeenEvent[]>(SEEN_EVENTS_STORE_KEY, []);
+      const carried = await readState({ store: context.store });
+      await context.store.put<NewEventState>(STATE_STORE_KEY, {
+        seen: [],
+        createdFloorMs: enableStartedMs,
+        invites: carried.invites,
+        inviteFloorMs: carried.inviteFloorMs,
+      });
       if (!isNil(initialSyncToken)) {
         await context.store.put<string>(SYNC_TOKEN_STORE_KEY, initialSyncToken);
       }
@@ -198,16 +207,23 @@ export const newEvent = createTrigger({
 
   async onDisable(context) {
     const auth = context.auth as GoogleCalendarAuthValue;
-    const watch = await context.store.get<GoogleWatchResponse>(
-      WATCH_STORE_KEY
-    );
+    const watch = await context.store.get<GoogleWatchResponse>(WATCH_STORE_KEY);
 
     if (watch) {
       await stopWatchEvent(watch, auth);
     }
+    const carried = await readState({ store: context.store });
+    await context.store.put<NewEventState>(STATE_STORE_KEY, {
+      seen: [],
+      createdFloorMs: null,
+      invites: carried.invites,
+      inviteFloorMs: carried.inviteFloorMs,
+    });
     await context.store.delete(SYNC_TOKEN_STORE_KEY);
     await context.store.delete(SEEN_EVENTS_STORE_KEY);
     await context.store.delete(CREATED_FLOOR_STORE_KEY);
+    await context.store.delete(SEEN_INVITES_STORE_KEY);
+    await context.store.delete(INVITE_FLOOR_STORE_KEY);
     await context.store.delete(LEGACY_SEEN_EVENT_IDS_STORE_KEY);
   },
 
@@ -233,9 +249,7 @@ export const newEvent = createTrigger({
       throw saved.error;
     }
     if (!isNil(existingWatch)) {
-      const stopped = await tryCatch(() =>
-        stopWatchEvent(existingWatch, auth)
-      );
+      const stopped = await tryCatch(() => stopWatchEvent(existingWatch, auth));
       if (stopped.error) {
         console.warn(
           `[google-calendar] new_event: could not stop the previous channel ${existingWatch.id}; it expires on its own and its notifications are ignored.`,
@@ -353,18 +367,14 @@ async function judgeEvents({
   store: Store;
   filters: EventFilters;
 }): Promise<GoogleCalendarEvent[]> {
-  const storedFloorMs = await store.get<number>(CREATED_FLOOR_STORE_KEY);
+  const state = await readState({ store });
+  const storedFloorMs = state.createdFloorMs;
   const createdFloorMs = isNil(storedFloorMs) ? Date.now() : storedFloorMs;
-  const storedSeen = await store.get<SeenEvent[]>(SEEN_EVENTS_STORE_KEY);
-  const storedInvites = await store.get<SeenInvite[]>(SEEN_INVITES_STORE_KEY);
-  const inviteFloorMs =
-    (await store.get<number>(INVITE_FLOOR_STORE_KEY)) ?? 0;
-  const seenById = new Map(
-    (storedSeen ?? []).map((entry) => [entry.id, entry])
-  );
-  const invitesById = new Map(
-    (storedInvites ?? []).map((entry) => [entry.id, entry])
-  );
+  const storedSeen = state.seen;
+  const storedInvites = state.invites;
+  const inviteFloorMs = state.inviteFloorMs;
+  const seenById = new Map(storedSeen.map((entry) => [entry.id, entry]));
+  const invitesById = new Map(storedInvites.map((entry) => [entry.id, entry]));
   const isKnown = (id: string) => seenById.has(id) || invitesById.has(id);
   const newEvents: GoogleCalendarEvent[] = [];
   const mastersFirst = [...items].sort(
@@ -374,6 +384,10 @@ async function judgeEvents({
   );
   for (const event of mastersFirst) {
     if (!event.id) {
+      continue;
+    }
+    if (event.status === 'cancelled' && invitesById.has(event.id)) {
+      invitesById.delete(event.id);
       continue;
     }
     if (calendarInvites.isInvite({ event })) {
@@ -435,22 +449,19 @@ async function judgeEvents({
     trigger: 'new_event',
   });
   if (
+    !state.fromStateKey ||
     isNil(storedFloorMs) ||
     limited.createdFloorMs !== createdFloorMs ||
-    limited.seen.length !== (storedSeen ?? []).length
-  ) {
-    await store.put<SeenEvent[]>(SEEN_EVENTS_STORE_KEY, limited.seen);
-    await store.put<number>(CREATED_FLOOR_STORE_KEY, limited.createdFloorMs);
-  }
-  if (
+    limited.seen.length !== storedSeen.length ||
     limitedInvites.inviteFloorMs !== inviteFloorMs ||
-    !sameInvites({ left: limitedInvites.invites, right: storedInvites ?? [] })
+    !sameInvites({ left: limitedInvites.invites, right: storedInvites })
   ) {
-    await store.put<SeenInvite[]>(
-      SEEN_INVITES_STORE_KEY,
-      limitedInvites.invites
-    );
-    await store.put<number>(INVITE_FLOOR_STORE_KEY, limitedInvites.inviteFloorMs);
+    await store.put<NewEventState>(STATE_STORE_KEY, {
+      seen: limited.seen,
+      createdFloorMs: limited.createdFloorMs,
+      invites: limitedInvites.invites,
+      inviteFloorMs: limitedInvites.inviteFloorMs,
+    });
   }
   return newEvents;
 }
@@ -463,15 +474,49 @@ async function listChangedSinceTurnOn({
   calendarId: string;
   auth: GoogleCalendarAuthValue;
   store: Store;
-}): Promise<{ items: GoogleCalendarEvent[]; nextSyncToken: string | undefined }> {
-  const storedFloorMs = await store.get<number>(CREATED_FLOOR_STORE_KEY);
-  const sinceMs = isNil(storedFloorMs) ? Date.now() : storedFloorMs;
+}): Promise<{
+  items: GoogleCalendarEvent[];
+  nextSyncToken: string | undefined;
+}> {
+  const { createdFloorMs } = await readState({ store });
+  const sinceMs = isNil(createdFloorMs) ? Date.now() : createdFloorMs;
   return listEventsForFullSync({
     calendarId,
     authProp: auth,
     withItems: true,
     keepItem: (event) => changedSince({ event, sinceMs }),
   });
+}
+
+async function readState({
+  store,
+}: {
+  store: Store;
+}): Promise<NewEventState & { fromStateKey: boolean }> {
+  const saved = await store.get<NewEventState>(STATE_STORE_KEY);
+  if (!isNil(saved) && Array.isArray(saved.seen)) {
+    return {
+      seen: saved.seen,
+      createdFloorMs:
+        typeof saved.createdFloorMs === 'number' ? saved.createdFloorMs : null,
+      invites: Array.isArray(saved.invites) ? saved.invites : [],
+      inviteFloorMs:
+        typeof saved.inviteFloorMs === 'number' ? saved.inviteFloorMs : 0,
+      fromStateKey: true,
+    };
+  }
+  const legacySeen = await store.get<SeenEvent[]>(SEEN_EVENTS_STORE_KEY);
+  const legacyFloorMs = await store.get<number>(CREATED_FLOOR_STORE_KEY);
+  const legacyInvites = await store.get<SeenInvite[]>(SEEN_INVITES_STORE_KEY);
+  const legacyInviteFloorMs = await store.get<number>(INVITE_FLOOR_STORE_KEY);
+  return {
+    seen: Array.isArray(legacySeen) ? legacySeen : [],
+    createdFloorMs: typeof legacyFloorMs === 'number' ? legacyFloorMs : null,
+    invites: Array.isArray(legacyInvites) ? legacyInvites : [],
+    inviteFloorMs:
+      typeof legacyInviteFloorMs === 'number' ? legacyInviteFloorMs : 0,
+    fromStateKey: false,
+  };
 }
 
 function changedSince({
@@ -510,20 +555,37 @@ function limitSeenEvents({
   seen: SeenEvent[];
   createdFloorMs: number;
 }): { seen: SeenEvent[]; createdFloorMs: number } {
-  if (seen.length <= SEEN_EVENTS_LIMIT) {
-    return { seen, createdFloorMs };
-  }
   const newestFirst = [...seen].sort(
     (left, right) => right.createdMs - left.createdMs
   );
-  const cutMs = newestFirst[SEEN_EVENTS_LIMIT - 1].createdMs;
+  const fitting = eventScan.fittingCount({
+    entries: newestFirst,
+    maxEntries: SEEN_EVENTS_LIMIT,
+    maxChars: eventScan.seenMaxChars,
+  });
+  if (fitting === newestFirst.length) {
+    return { seen, createdFloorMs };
+  }
+  const cutMs = newestFirst[fitting].createdMs;
+  console.warn(
+    `[google-calendar] new_event: more new events than the saved state can hold (${newestFirst.length}); events created at or before ${new Date(
+      cutMs
+    ).toISOString()} no longer fire.`
+  );
   return {
-    seen: newestFirst.filter((entry) => entry.createdMs >= cutMs),
-    createdFloorMs: Math.max(createdFloorMs, cutMs),
+    seen: newestFirst.filter((entry) => entry.createdMs > cutMs),
+    createdFloorMs: Math.max(createdFloorMs, cutMs + 1),
   };
 }
 
 type SeenEvent = {
   id: string;
   createdMs: number;
+};
+
+type NewEventState = {
+  seen: SeenEvent[];
+  createdFloorMs: number | null;
+  invites: SeenInvite[];
+  inviteFloorMs: number;
 };

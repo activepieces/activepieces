@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { newEvent as trigger } from '../src/lib/triggers/new-event';
 
 const SYNC_TOKEN_KEY = 'google_calendar_sync_token';
-const SEEN_EVENTS_KEY = 'google_calendar_seen_events';
+const STATE_KEY = 'google_calendar_new_event_state';
 const PAGE_SIZE = 60;
 
 const google: FakeGoogle = {
@@ -125,7 +125,7 @@ describe('New Event after Google invalidates the sync token (410)', () => {
     await trigger.onEnable(hookContext({ store }));
     const tokenBefore = stored({ data, key: SYNC_TOKEN_KEY });
     expect(tokenBefore).not.toBeNull();
-    const failing = memoryStoreView({ data, failPutOnce: SEEN_EVENTS_KEY });
+    const failing = memoryStoreView({ data, failPutOnce: STATE_KEY });
 
     seedEvents({ prefix: 'burst', count: 4 });
     google.expireNextIncremental = true;
@@ -141,7 +141,7 @@ describe('New Event after Google invalidates the sync token (410)', () => {
     const { store, data } = memoryStore();
     await trigger.onEnable(hookContext({ store }));
     const tokenBefore = stored({ data, key: SYNC_TOKEN_KEY });
-    const failing = memoryStoreView({ data, failPutOnce: SEEN_EVENTS_KEY });
+    const failing = memoryStoreView({ data, failPutOnce: STATE_KEY });
 
     seedEvents({ prefix: 'new', count: 2 });
     await expect(push({ store: failing })).rejects.toThrow('store put failed');
@@ -348,7 +348,8 @@ function stored({ data, key }: { data: Map<string, string>; key: string }): unkn
 }
 
 function seenEntries({ data }: { data: Map<string, string> }): string[] {
-  const value = stored({ data, key: SEEN_EVENTS_KEY });
+  const state = stored({ data, key: STATE_KEY });
+  const value = isRecord(state) ? state['seen'] : null;
   return Array.isArray(value) ? value.map(idOf) : [];
 }
 

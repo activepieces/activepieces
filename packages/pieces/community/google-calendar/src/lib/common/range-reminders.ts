@@ -1,5 +1,6 @@
-import { isNil, Store } from '@activepieces/pieces-framework';
+import { isNil, Store, tryCatch } from '@activepieces/pieces-framework';
 import { GoogleCalendarAuthValue } from '.';
+import { eventScan } from './event-scan';
 import { rangeEvents, RangeListing } from './range-events';
 import { GoogleCalendarEvent } from './types';
 
@@ -10,6 +11,7 @@ const ALL_DAY_SLACK_MS = 14 * 60 * 60 * 1000;
 const LOOKBACK_CAP_MS = 7 * 24 * 60 * 60 * 1000;
 const SEEN_LIMIT = 1000;
 const PREVIOUS_VERSION_WINDOW_MS = 5 * 60 * 1000;
+const REJECTED_TOKEN_STATUSES = [400, 404, 410];
 
 async function enable({
   store,
@@ -73,27 +75,12 @@ async function poll({
     await saveBaseline({ store, storeKey, watchKey });
     return [];
   }
-  const uncappedFromMs = Math.max(
-    checkpoint.dueThroughMs - VISIBILITY_MARGIN_MS,
-    checkpoint.floorMs
-  );
-  const fromMs = Math.max(uncappedFromMs, nowMs - LOOKBACK_CAP_MS);
-  if (fromMs > uncappedFromMs) {
-    console.warn(
-      `${logPrefix}: the last check was more than 7 days ago; only times after ${new Date(
-        fromMs
-      ).toISOString()} are checked, earlier ones are skipped.`
-    );
-  }
+  const pass =
+    checkpoint.pass ?? startPass({ checkpoint, nowMs, leadMs, logPrefix });
+  const fromMs = pass.fromMs;
+  const throughMs = pass.throughMs;
   const listing = isNil(eventId)
-    ? await rangeEvents.listEventsInRange({
-        auth,
-        calendarId,
-        timeMinMs: fromMs - ALL_DAY_SLACK_MS,
-        timeMaxMs: nowMs + leadMs + ALL_DAY_SLACK_MS,
-        deadlineMs: nowMs + LISTING_BUDGET_MS,
-        logPrefix,
-      })
+    ? await listPass({ auth, calendarId, pass, nowMs, logPrefix })
     : await listPinnedEvent({ auth, calendarId, eventId });
   const seenKeys = new Set(checkpoint.seen.map((entry) => entry.key));
   const legacy = checkpoint.legacy;
@@ -106,21 +93,19 @@ async function poll({
       (entry): entry is DueEntry =>
         !isNil(entry) &&
         entry.dueMs > fromMs &&
-        entry.dueMs <= nowMs &&
+        entry.dueMs <= throughMs &&
         !seenKeys.has(entry.key) &&
         (isNil(legacy) ||
           !firedByPreviousVersion({ entry, anchor, leadMs, legacy }))
     )
     .sort((left, right) => left.dueMs - right.dueMs);
   const dueThroughMs = listing.complete
-    ? Math.max(checkpoint.dueThroughMs, nowMs)
-    : Math.max(
-        checkpoint.dueThroughMs,
-        Math.min(
-          nowMs,
-          safeAdvanceMs({ listing, leadMs }) ?? checkpoint.dueThroughMs
-        )
-      );
+    ? Math.max(checkpoint.dueThroughMs, throughMs)
+    : checkpoint.dueThroughMs;
+  const nextPass =
+    listing.complete || isNil(listing.nextPageToken)
+      ? {}
+      : { pass: { ...pass, pageToken: listing.nextPageToken } };
   await store.put<DueCheckpoint>(
     storeKey,
     limitSeen({
@@ -129,6 +114,7 @@ async function poll({
         dueThroughMs,
         floorMs: checkpoint.floorMs,
         ...keepLegacy({ legacy, dueThroughMs }),
+        ...nextPass,
         seen: [
           ...checkpoint.seen,
           ...due.map((entry) => ({ key: entry.key, untilMs: entry.dueMs })),
@@ -237,26 +223,81 @@ function keepLegacy({
   return { legacy };
 }
 
-function safeAdvanceMs({
-  listing,
+function startPass({
+  checkpoint,
+  nowMs,
   leadMs,
+  logPrefix,
 }: {
-  listing: RangeListing;
+  checkpoint: DueCheckpoint;
+  nowMs: number;
   leadMs: number;
-}): number | null {
-  const last = listing.events[listing.events.length - 1];
-  if (isNil(last)) {
-    return null;
+  logPrefix: string;
+}): ListingPass {
+  const uncappedFromMs = Math.max(
+    checkpoint.dueThroughMs - VISIBILITY_MARGIN_MS,
+    checkpoint.floorMs
+  );
+  const fromMs = Math.max(uncappedFromMs, nowMs - LOOKBACK_CAP_MS);
+  if (fromMs > uncappedFromMs) {
+    console.warn(
+      `${logPrefix}: the last check was more than 7 days ago; only times after ${new Date(
+        fromMs
+      ).toISOString()} are checked, earlier ones are skipped.`
+    );
   }
-  const lastStartMs = rangeEvents.boundaryMs({
-    event: last,
-    anchor: 'start',
-    timeZone: listing.timeZone,
-  });
-  if (isNil(lastStartMs)) {
-    return null;
+  return {
+    fromMs,
+    throughMs: nowMs,
+    timeMinMs: fromMs - ALL_DAY_SLACK_MS,
+    timeMaxMs: nowMs + leadMs + ALL_DAY_SLACK_MS,
+  };
+}
+
+async function listPass({
+  auth,
+  calendarId,
+  pass,
+  nowMs,
+  logPrefix,
+}: {
+  auth: GoogleCalendarAuthValue;
+  calendarId: string;
+  pass: ListingPass;
+  nowMs: number;
+  logPrefix: string;
+}): Promise<RangeListing> {
+  const request = {
+    auth,
+    calendarId,
+    timeMinMs: pass.timeMinMs,
+    timeMaxMs: pass.timeMaxMs,
+    deadlineMs: nowMs + LISTING_BUDGET_MS,
+    logPrefix,
+  };
+  if (isNil(pass.pageToken)) {
+    return rangeEvents.listEventsInRange(request);
   }
-  return lastStartMs - leadMs - ALL_DAY_SLACK_MS;
+  const resumed = await tryCatch(() =>
+    rangeEvents.listEventsInRange({
+      ...request,
+      startPageToken: pass.pageToken,
+    })
+  );
+  if (resumed.error === null) {
+    return resumed.data;
+  }
+  if (
+    !REJECTED_TOKEN_STATUSES.includes(
+      eventScan.httpStatusOf(resumed.error) ?? 0
+    )
+  ) {
+    throw resumed.error;
+  }
+  console.warn(
+    `${logPrefix}: Google rejected the saved page position; listing the same window again from the first page. Items already fired are skipped.`
+  );
+  return rangeEvents.listEventsInRange(request);
 }
 
 function limitSeen({
@@ -302,10 +343,7 @@ async function readCheckpoint({
 }): Promise<DueCheckpoint | null> {
   const saved = await store.get<DueCheckpoint>(storeKey);
   if (!isNil(saved)) {
-    if (
-      saved.watchKey !== watchKey ||
-      typeof saved.dueThroughMs !== 'number'
-    ) {
+    if (saved.watchKey !== watchKey || typeof saved.dueThroughMs !== 'number') {
       return null;
     }
     return {
@@ -315,6 +353,7 @@ async function readCheckpoint({
         typeof saved.floorMs === 'number' ? saved.floorMs : saved.dueThroughMs,
       seen: Array.isArray(saved.seen) ? saved.seen : [],
       ...(isLegacyMarker(saved.legacy) ? { legacy: saved.legacy } : {}),
+      ...(isListingPass(saved.pass) ? { pass: saved.pass } : {}),
     };
   }
   const legacyLastPoll = await store.get<number>(LEGACY_LAST_POLL_STORE_KEY);
@@ -338,6 +377,23 @@ async function readCheckpoint({
         ALL_DAY_SLACK_MS,
     },
   };
+}
+
+function isListingPass(value: unknown): value is ListingPass {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'fromMs' in value &&
+    typeof value.fromMs === 'number' &&
+    'throughMs' in value &&
+    typeof value.throughMs === 'number' &&
+    'timeMinMs' in value &&
+    typeof value.timeMinMs === 'number' &&
+    'timeMaxMs' in value &&
+    typeof value.timeMaxMs === 'number' &&
+    'pageToken' in value &&
+    typeof value.pageToken === 'string'
+  );
 }
 
 function isLegacyMarker(value: unknown): value is LegacyMarker {
@@ -384,6 +440,15 @@ type DueCheckpoint = {
   floorMs: number;
   seen: SeenDue[];
   legacy?: LegacyMarker;
+  pass?: ListingPass;
+};
+
+type ListingPass = {
+  fromMs: number;
+  throughMs: number;
+  timeMinMs: number;
+  timeMaxMs: number;
+  pageToken?: string;
 };
 
 type LegacyMarker = {
