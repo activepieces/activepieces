@@ -37,8 +37,9 @@ async function validate({ entityManager, projectId, ownerExternalId, tools, prev
     }
 }
 
-async function findTargets({ entityManager = repoFactory(AgentEntity)().manager, projectId, externalIds }: { entityManager?: EntityManager, projectId: ProjectId, externalIds: string[] }): Promise<Agent[]> {
-    return entityManager.getRepository(AgentEntity).findBy({ projectId, externalId: In(unique(externalIds)), visibility: AgentVisibility.PROJECT })
+async function findTargets({ entityManager = repoFactory(AgentEntity)().manager, projectId, externalIds, ids }: FindTargetsParams): Promise<Agent[]> {
+    const match = isNil(ids) ? { externalId: In(unique(externalIds ?? [])) } : { id: In(unique(ids)) }
+    return entityManager.getRepository(AgentEntity).findBy({ projectId, ...match, visibility: AgentVisibility.PROJECT })
 }
 
 function isCallable(target: Agent): boolean {
@@ -76,6 +77,13 @@ export const agentToolRules = {
     findTargets,
     isCallable,
     isAgentTool,
+}
+
+type FindTargetsParams = {
+    entityManager?: EntityManager
+    projectId: ProjectId
+    externalIds?: string[]
+    ids?: string[]
 }
 
 type ValidateParams = {

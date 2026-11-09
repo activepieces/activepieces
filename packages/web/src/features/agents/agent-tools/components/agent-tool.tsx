@@ -91,6 +91,7 @@ export const AgentAgentToolComponent = ({
           variant="link"
           className="mt-4"
           size="xs"
+          disabled={disabled}
           onClick={() => setShowAddAgentDialog(true)}
         >
           <Plus className="size-3 mr-1" />

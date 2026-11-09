@@ -208,7 +208,7 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
 
 
 const ADD_AGENT_TOOL_DESCRIPTION = 'Give a saved agent piece actions it can call, so it can do the work rather than only reason about it. Look them up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection). Pass every action for one piece in a single call — one call per piece, never several at once for the same agent.'
-const ADD_AGENT_AS_TOOL_NOTE = 'To let it hand work to other agents instead, pass agentIds (published agents from ap_list_agents) and leave out pieceName and actionNames. An agent that calls other agents cannot itself be called by one.'
+const ADD_AGENT_AS_TOOL_NOTE = 'To let it hand work to other agents instead, pass agentIds (the agentId of published agents from ap_list_agents) and leave out pieceName and actionNames. An agent that calls other agents cannot itself be called by one.'
 
 const addAgentToolInput = z.object({
     agentId: z.string().optional().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent. Leave it out when you are changing the agent this conversation belongs to'),
@@ -221,7 +221,7 @@ const addAgentToolInput = z.object({
 const addAgentToolWithAgentsInput = addAgentToolInput.extend({
     pieceName: addAgentToolInput.shape.pieceName.optional(),
     actionNames: addAgentToolInput.shape.actionNames.optional(),
-    agentIds: z.array(z.string()).optional().describe('externalIds of published agents from ap_list_agents, to add as tools this agent can call'),
+    agentIds: z.array(z.string()).optional().describe('agentId values of published agents from ap_list_agents, to add as tools this agent can call'),
 })
 
 const AGENT_CHANGE_LABELS: Record<string, string> = {

@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
 import { agentToolsRollout } from '../../../../src/app/ee/agent/agent-tools-rollout'
+import { executeCrossProjectTool } from '../../../../src/app/ee/agent/tools/agent-tools'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -149,6 +150,24 @@ describe('saving an agent that calls another agent', () => {
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(response.json().params.message).toContain('not available yet')
+    })
+})
+
+describe('adding an agent as a tool from chat', () => {
+    it('takes the agentId that ap_list_agents returns', async () => {
+        const ctx = await context()
+        const researcher = await createPublishedAgent(ctx, { displayName: 'Researcher' })
+        const conversation = await ctx.post('/v1/agents/conversations', {})
+        await db.update('agent_conversation', conversation.json().id, { projectId: ctx.project.id })
+        const runTool = (toolName: string, toolInput: Record<string, unknown>) => executeCrossProjectTool({ toolName, toolInput, platformId: ctx.platform.id, userId: ctx.user.id, conversationId: conversation.json().id, log: app.log })
+        const listed = await runTool('ap_list_agents', {}) as Array<{ agentId: string, displayName: string }>
+        const { agentId: leadId } = await runTool('ap_create_agent', { displayName: 'Lead', instructions: 'Plan the work.' }) as { agentId: string }
+
+        const result = await runTool('ap_add_agent_tool', { agentId: leadId, agentIds: [listed.find((agent) => agent.displayName === 'Researcher')?.agentId] })
+
+        expect(result).not.toHaveProperty('error')
+        const lead = await db.findOneByOrFail<{ draft: { tools: unknown[] } }>('agent', { id: leadId })
+        expect(lead.draft.tools).toEqual([expect.objectContaining({ type: AgentToolType.AGENT, externalAgentId: researcher.externalId })])
     })
 })
 

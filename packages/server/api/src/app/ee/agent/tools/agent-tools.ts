@@ -399,8 +399,8 @@ async function addAgentsAsToolsFromChat({ agentIds, agent, editedItself, publish
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
-    const targets = await agentToolRules.findTargets({ projectId, externalIds: agentIds })
-    const missing = agentIds.filter((externalId) => !targets.some((target) => target.externalId === externalId))
+    const targets = await agentToolRules.findTargets({ projectId, ids: agentIds })
+    const missing = agentIds.filter((id) => !targets.some((target) => target.id === id))
     if (missing.length > 0) {
         return { error: `No agent in this project has the id ${missing.join(' or ')}. Call ap_list_agents and pass one of those.` }
     }
@@ -408,7 +408,7 @@ async function addAgentsAsToolsFromChat({ agentIds, agent, editedItself, publish
         id: agent.id,
         projectId,
         userId,
-        edit: (tools) => tools.some((tool) => agentToolRules.isAgentTool(tool) && agentIds.includes(tool.externalAgentId)) ? null : targets.reduce<AgentTool[]>((all, target) => [...all, {
+        edit: (tools) => tools.some((tool) => agentToolRules.isAgentTool(tool) && targets.some((target) => target.externalId === tool.externalAgentId)) ? null : targets.reduce<AgentTool[]>((all, target) => [...all, {
             type: AgentToolType.AGENT,
             toolName: mcpToolNameUtils.uniqueToolName({ sourceName: target.displayName, taken: all.map((tool) => tool.toolName) }),
             externalAgentId: target.externalId,
