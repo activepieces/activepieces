@@ -2791,6 +2791,8 @@
   "Type {text} to confirm": "Type {text} to confirm",
   "Connection lost": "Connection lost",
   "Trying to reconnect…": "Trying to reconnect…",
+  "Live updates are delayed": "Live updates are delayed",
+  "Changes made by others may show up late.": "Changes made by others may show up late.",
   "Live updates are paused": "Live updates are paused",
   "We could not connect live updates to this project. Reload the page to try again.": "We could not connect live updates to this project. Reload the page to try again.",
   "Select a file": "Select a file",
