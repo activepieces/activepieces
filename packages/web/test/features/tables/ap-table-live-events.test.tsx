@@ -68,11 +68,13 @@ describe('open table live events', () => {
 
     await receive({
       tableId: 't1',
+      editorSessionId: null,
       op: TableRecordsChangeOp.UPDATED,
       records: [record('r1', 'new')],
     });
     await receive({
       tableId: 't1',
+      editorSessionId: null,
       op: TableRecordsChangeOp.CREATED,
       records: [record('r3', 'c')],
     });
@@ -92,12 +94,17 @@ describe('open table live events', () => {
 
     await receive({
       tableId: 't1',
+      editorSessionId: null,
       op: TableRecordsChangeOp.DELETED,
       recordIds: ['r1'],
     });
     expect(rows()).toEqual(['b']);
 
-    await receive({ tableId: 't1', op: TableRecordsChangeOp.CLEARED });
+    await receive({
+      tableId: 't1',
+      editorSessionId: null,
+      op: TableRecordsChangeOp.CLEARED,
+    });
     expect(rows()).toEqual([]);
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
@@ -119,7 +126,11 @@ describe('open table live events', () => {
   it('refetches the records once for a reload', async () => {
     mount(queryClient);
 
-    await receive({ tableId: 't1', op: TableRecordsChangeOp.RELOAD });
+    await receive({
+      tableId: 't1',
+      editorSessionId: null,
+      op: TableRecordsChangeOp.RELOAD,
+    });
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(1);
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
