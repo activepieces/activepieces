@@ -254,7 +254,7 @@ describe('ChatChrome', () => {
   });
 
   it('offers Follow along before the first message', () => {
-    useChatPanel.setState({ conversationId: null });
+    useChatPanel.setState({ conversationId: null, autoFollow: true });
     renderChrome();
 
     expect(screen.getByText('Follow along')).toBeTruthy();
