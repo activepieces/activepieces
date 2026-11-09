@@ -478,7 +478,7 @@ describe('ChatSwitcher', () => {
 
     fireEvent.keyDown(search, { key: 'Escape' });
     expect(screen.getByRole('dialog')).toBeTruthy();
-    expect((search as HTMLInputElement).value).toBe('');
+    expect(search).toHaveProperty('value', '');
     await within(switcher()).findByText('Chat 1');
 
     fireEvent.keyDown(search, { key: 'Escape' });

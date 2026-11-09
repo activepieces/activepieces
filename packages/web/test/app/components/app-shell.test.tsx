@@ -18,8 +18,9 @@ import { shellHandles } from '@/features/workspace/lib/shell-handle';
 
 const template = vi.hoisted(() => {
   const listeners = new Set<() => void>();
+  const pending: TemplateQuery = { data: undefined, isPending: true };
   const store = {
-    query: { data: undefined, isPending: true } as TemplateQuery,
+    query: pending,
     set: (query: TemplateQuery) => {
       store.query = query;
       listeners.forEach((listener) => listener());
