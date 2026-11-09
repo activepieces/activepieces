@@ -278,9 +278,8 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     if (link.kind === 'unsafe') {
       return <span>{children}</span>;
     }
-    const text = typeof children === 'string' ? children : '';
+    const bare = isBareLink({ children, href });
     if (link.kind === 'app') {
-      const bare = text === '' || text === href || text.startsWith('http');
       return (
         <AppLink route={link.route} bare={bare}>
           {children}
@@ -289,8 +288,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     }
     const isWebUrl = link.kind === 'external';
     const target = isWebUrl ? link.href : href;
-    const isBareUrl =
-      isWebUrl && (text === '' || text === href || text.startsWith('http'));
+    const isBareUrl = isWebUrl && bare;
 
     if (isBareUrl) {
       return <Source href={target} />;
@@ -363,6 +361,18 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     return <>{children}</>;
   },
 };
+
+function isBareLink({
+  children,
+  href,
+}: {
+  children: React.ReactNode;
+  href: string;
+}): boolean {
+  if (children === null || children === undefined) return true;
+  if (typeof children !== 'string') return false;
+  return children === '' || children === href || children.startsWith('http');
+}
 
 type HeadingTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
