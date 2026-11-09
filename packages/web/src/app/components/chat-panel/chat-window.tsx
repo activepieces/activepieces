@@ -34,6 +34,7 @@ import { useShellHandle } from '../app-shell';
 
 import { ChatNotch } from './chat-notch';
 import { FollowAlongController } from './follow-along-controller';
+import { useSheetSwipe } from './use-sheet-swipe';
 
 const loadChatChrome = () =>
   import('./chat-chrome').then((m) => ({ default: m.ChatChrome }));
@@ -114,9 +115,8 @@ export function ChatPanel() {
   const moving = useChatPanel((s) => s.moving);
   const [dragWidth, setDragWidth] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [sheetDrag, setSheetDrag] = useState<SheetDrag | null>(null);
-  const swipe = useRef({ startY: 0, lastY: 0, lastTime: 0, velocity: 0 });
   const panelRef = useRef<HTMLDivElement>(null);
+  const scrimRef = useRef<HTMLDivElement>(null);
   const sheet = useChatSheet();
   const viewportWidth = windowSizeHooks.useWidth();
   const full = chatWidth === 'full';
@@ -160,9 +160,6 @@ export function ChatPanel() {
     const prewarm = setTimeout(() => setMounted(true), PREWARM_MS);
     return () => clearTimeout(prewarm);
   }, [mounted]);
-  if (!sheetOpen && sheetDrag !== null) {
-    setSheetDrag(null);
-  }
 
   useChatKeys({ chatWidth, sheet });
 
@@ -198,74 +195,23 @@ export function ChatPanel() {
     );
   };
 
-  const startSwipe = (event: React.PointerEvent<HTMLElement>) => {
-    const target = event.target;
-    if (
-      !sheetOpen ||
-      event.button !== 0 ||
-      !(target instanceof Element) ||
-      !target.closest('[data-chat-header]') ||
-      target.closest('button, a, input, textarea')
-    ) {
-      return;
-    }
-    event.currentTarget.setPointerCapture(event.pointerId);
-    swipe.current = {
-      startY: event.clientY,
-      lastY: event.clientY,
-      lastTime: event.timeStamp,
-      velocity: 0,
-    };
-    setSheetDrag({
-      offset: 0,
-      height: event.currentTarget.getBoundingClientRect().height,
-      dragging: true,
-    });
-  };
-
-  const moveSwipe = (event: React.PointerEvent<HTMLElement>) => {
-    if (!sheetDrag?.dragging) return;
-    const track = swipe.current;
-    const elapsed = event.timeStamp - track.lastTime;
-    if (elapsed > 0) {
-      track.velocity = (event.clientY - track.lastY) / elapsed;
-      track.lastY = event.clientY;
-      track.lastTime = event.timeStamp;
-    }
-    setSheetDrag({
-      ...sheetDrag,
-      offset: Math.max(0, event.clientY - track.startY),
-    });
-  };
-
-  const endSwipe = () => {
-    if (!sheetDrag?.dragging) return;
-    const dismiss =
-      sheetDrag.offset > sheetDrag.height * SHEET_DISMISS_SHARE ||
-      swipe.current.velocity > SHEET_DISMISS_VELOCITY;
-    if (!dismiss) {
-      setSheetDrag(null);
-      return;
-    }
-    setSheetDrag({ ...sheetDrag, offset: sheetDrag.height, dragging: false });
-    sheet.hide();
-  };
+  const swipe = useSheetSwipe({
+    enabled: phone && sheetOpen,
+    panelRef,
+    scrimRef,
+    onDismiss: sheet.hide,
+  });
 
   return (
     <>
       {phone && (
         <div
+          ref={scrimRef}
           aria-hidden
           onClick={sheet.hide}
-          style={
-            sheetDrag
-              ? { opacity: 1 - sheetDrag.offset / sheetDrag.height }
-              : undefined
-          }
           className={cn(
             'fixed inset-0 z-40 bg-scrim transition-opacity duration-150 ease-move motion-reduce:transition-none',
             !sheetOpen && 'pointer-events-none opacity-0',
-            sheetDrag?.dragging && 'transition-none',
           )}
         />
       )}
@@ -274,12 +220,7 @@ export function ChatPanel() {
         id={chatLayoutUtils.PANEL_ID}
         aria-label={t('Chat')}
         inert={!visible}
-        onPointerDown={phone ? startSwipe : undefined}
-        onPointerMove={phone ? moveSwipe : undefined}
-        onPointerUp={phone ? endSwipe : undefined}
-        onLostPointerCapture={
-          phone && sheetDrag?.dragging ? () => setSheetDrag(null) : undefined
-        }
+        onPointerDown={phone ? swipe.onPointerDown : undefined}
         onTransitionEnd={(event) => {
           if (
             event.target === event.currentTarget &&
@@ -290,9 +231,7 @@ export function ChatPanel() {
         }}
         style={
           phone
-            ? sheetDrag
-              ? { translate: `0 ${sheetDrag.offset}px` }
-              : undefined
+            ? undefined
             : {
                 width: full ? '100%' : visible ? width : 0,
                 transition: moving ? MOVE_TRANSITION[moving] : undefined,
@@ -303,7 +242,6 @@ export function ChatPanel() {
             ? [
                 'fixed inset-x-0 top-2 bottom-0 z-40 flex flex-col overflow-hidden rounded-t-xl border bg-gray-1 shadow-over transition-[translate,visibility] duration-150 ease-move motion-reduce:transition-none',
                 !sheetOpen && 'invisible translate-y-full',
-                sheetDrag?.dragging && 'transition-none',
               ]
             : [
                 'relative flex shrink-0 flex-col overflow-hidden bg-gray-1',
@@ -621,8 +559,6 @@ function useComposerFocus({
 }
 
 const SHEET_STATE = 'chatSheet';
-const SHEET_DISMISS_SHARE = 0.25;
-const SHEET_DISMISS_VELOCITY = 0.5;
 // Focus the composer as soon as it exists. On a cold first open the chat is
 // still loading, so wait for the textarea to appear, unless the user goes
 // somewhere else first.
@@ -668,5 +604,3 @@ const MOVE_TRANSITION: Record<'enter' | 'exit', string> = {
   exit: `width ${MOVE_MS.back}ms ${MOVE_EASE.standard}`,
 };
 let pendingCapture: string | null = null;
-
-type SheetDrag = { offset: number; height: number; dragging: boolean };
