@@ -168,7 +168,7 @@ describe('Websocket SWITCH_PROJECT', () => {
             { startManualTrigger: () => new Promise(() => undefined) } as unknown as ReturnType<typeof flowRunServiceModule.flowRunService>,
         )
 
-        void conn.handlers[WebsocketServerEvent.MANUAL_TRIGGER_RUN_STARTED]({ flowVersionId: apId() })
+        Promise.resolve(conn.handlers[WebsocketServerEvent.MANUAL_TRIGGER_RUN_STARTED]({ flowVersionId: apId() })).catch(() => undefined)
         const response = await switchProject({ conn, projectId: s.viewerProjectId })
 
         expect(response).toEqual({ success: true })
