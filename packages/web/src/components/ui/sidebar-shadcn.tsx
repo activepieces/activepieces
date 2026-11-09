@@ -32,9 +32,6 @@ const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
-// The rail's width follows `open` at once; everything that reads the context
-// (labels, icons, tooltips) follows a deferred copy, so the labels swap after
-// the width has started to move instead of blocking it.
 const SidebarMotionStateContext = React.createContext<'expanded' | 'collapsed'>(
   'expanded',
 );
@@ -52,7 +49,6 @@ function SidebarProvider({
   defaultOpen = true,
   open: openProp,
   onOpenChange: setOpenProp,
-  hoverMode = false,
   shortcutIgnoresEditable = false,
   keyboardShortcut = true,
   className,
@@ -63,14 +59,11 @@ function SidebarProvider({
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  hoverMode?: boolean;
   shortcutIgnoresEditable?: boolean;
   keyboardShortcut?: boolean;
 }) {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
-  const [isHovered, setIsHovered] = React.useState(false);
-  const [keepElevatedZIndex, setKeepElevatedZIndex] = React.useState(false);
 
   const [_open, _setOpen] = React.useState(() => {
     if (typeof window !== 'undefined') {
@@ -81,16 +74,12 @@ function SidebarProvider({
     }
     return defaultOpen;
   });
-  const persistedOpen = openProp ?? _open;
-
-  const isHoverExpanded = hoverMode && !persistedOpen && isHovered;
-  const open = persistedOpen || isHoverExpanded;
-  const shouldElevateZIndex = isHoverExpanded || keepElevatedZIndex;
+  const open = openProp ?? _open;
 
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState =
-        typeof value === 'function' ? value(persistedOpen) : value;
+        typeof value === 'function' ? value(open) : value;
       if (setOpenProp) {
         setOpenProp(openState);
         return;
@@ -99,48 +88,8 @@ function SidebarProvider({
       localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
-    [setOpenProp, persistedOpen],
+    [setOpenProp, open],
   );
-
-  const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-  const zIndexTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-
-  const setHovered = React.useCallback((hovered: boolean) => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    if (zIndexTimeoutRef.current) {
-      clearTimeout(zIndexTimeoutRef.current);
-      zIndexTimeoutRef.current = null;
-    }
-
-    if (hovered) {
-      setIsHovered(true);
-      setKeepElevatedZIndex(false);
-    } else {
-      setIsHovered(false);
-      setKeepElevatedZIndex(true);
-      zIndexTimeoutRef.current = setTimeout(() => {
-        setKeepElevatedZIndex(false);
-      }, 200);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-      if (zIndexTimeoutRef.current) {
-        clearTimeout(zIndexTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const toggleSidebar = React.useCallback(() => {
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
@@ -178,10 +127,6 @@ function SidebarProvider({
       openMobile,
       setOpenMobile,
       toggleSidebar,
-      hoverMode,
-      isHoverExpanded,
-      shouldElevateZIndex,
-      setHovered,
     }),
     [
       state,
@@ -190,11 +135,7 @@ function SidebarProvider({
       isMobile,
       openMobile,
       setOpenMobile,
-      shouldElevateZIndex,
       toggleSidebar,
-      hoverMode,
-      isHoverExpanded,
-      setHovered,
     ],
   );
 
@@ -243,10 +184,6 @@ function Sidebar({
     openMobile,
     setOpenMobile,
     setOpen,
-    hoverMode,
-    isHoverExpanded,
-    shouldElevateZIndex,
-    setHovered,
   } = useSidebar();
 
   if (collapsible === 'none') {
@@ -297,8 +234,6 @@ function Sidebar({
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
-      onMouseEnter={hoverMode ? () => setHovered(true) : undefined}
-      onMouseLeave={hoverMode ? () => setHovered(false) : undefined}
     >
       {/* This is what handles the sidebar gap on desktop */}
       <div
@@ -310,10 +245,6 @@ function Sidebar({
           variant === 'floating' || variant === 'inset'
             ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
-          isHoverExpanded &&
-            (variant === 'floating' || variant === 'inset'
-              ? 'w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
-              : 'w-(--sidebar-width-icon)'),
         )}
       />
       <div
@@ -326,15 +257,10 @@ function Sidebar({
           variant === 'floating' || variant === 'inset'
             ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]'
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
-          !hoverMode && (side === 'left' ? 'border-r' : 'border-l'),
-          hoverMode &&
-            isHoverExpanded &&
-            (side === 'left' ? 'border-r' : 'border-l'),
-          !hoverMode &&
-            state === 'collapsed' &&
+          side === 'left' ? 'border-r' : 'border-l',
+          state === 'collapsed' &&
             collapsible === 'icon' &&
             'cursor-ew-resize [&_a]:cursor-pointer [&_button]:cursor-pointer [&_[role=button]]:cursor-pointer',
-          shouldElevateZIndex && 'z-55',
           className,
         )}
         {...props}
@@ -344,7 +270,7 @@ function Sidebar({
           data-slot="sidebar-inner"
           className="flex h-full w-full flex-col bg-gray-2 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-gray-6 group-data-[variant=floating]:shadow"
           onClick={
-            !hoverMode && state === 'collapsed' && collapsible === 'icon'
+            state === 'collapsed' && collapsible === 'icon'
               ? (event) => {
                   if (
                     event.target instanceof Node &&
@@ -859,8 +785,4 @@ type SidebarContextProps = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
-  hoverMode: boolean;
-  isHoverExpanded: boolean;
-  shouldElevateZIndex: boolean;
-  setHovered: (hovered: boolean) => void;
 };
