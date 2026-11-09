@@ -1,6 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { SocketProvider } from '@/components/providers/socket-provider';
 import { AutomaticTrialActivation } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -24,13 +23,17 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   if (authenticationSession.isOnboarding()) {
     return <Navigate to="/create-platform" replace />;
   }
+  return <LoggedInSession>{children}</LoggedInSession>;
+};
+
+function LoggedInSession({ children }: { children: React.ReactNode }) {
   platformHooks.useCurrentPlatform();
   flagsHooks.useFlags();
   projectCollectionUtils.useCurrentProject();
   return (
-    <SocketProvider>
+    <>
       <AutomaticTrialActivation />
       {children}
-    </SocketProvider>
+    </>
   );
-};
+}

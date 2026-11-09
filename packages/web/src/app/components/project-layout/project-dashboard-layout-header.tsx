@@ -1,6 +1,6 @@
 import { isNil, Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { useRef } from 'react';
+import { ComponentType, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { BoxIcon } from '@/components/icons/box';
@@ -19,8 +19,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
-
-import { ProjectDashboardLayoutHeaderTab } from '.';
 
 type AnimatedIconHandle = {
   startAnimation: () => void;
@@ -180,3 +178,13 @@ export const ProjectDashboardLayoutHeader = () => {
 };
 
 ProjectDashboardLayoutHeader.displayName = 'ProjectDashboardLayoutHeader';
+
+type ProjectDashboardLayoutHeaderTab = {
+  to: string;
+  label: string;
+  icon: ComponentType<{ className?: string; size?: number }>;
+  hasPermission: boolean;
+  show: boolean;
+  beta?: boolean;
+  badgeCount?: number;
+};
