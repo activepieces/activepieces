@@ -1,10 +1,6 @@
 import { tryCatch } from '@activepieces/core-utils';
 import { AgentConversation } from '@activepieces/shared';
-import {
-  QueryClient,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Ellipsis,
@@ -632,4 +628,3 @@ function TypedText({ text }: { text: string }) {
 
 const TITLE_EASE = [0.22, 1, 0.36, 1] as const;
 const TYPE_STEP_MS = 24;
-

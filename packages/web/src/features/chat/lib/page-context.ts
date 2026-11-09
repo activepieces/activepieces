@@ -74,9 +74,9 @@ function inProject(route: string): string {
 
 export const pageContextUtils = { current, fromPath };
 
-const useOpenBuilderStore = create<{ store: OpenBuilderStore | null }>(
-  () => ({ store: null }),
-);
+const useOpenBuilderStore = create<{ store: OpenBuilderStore | null }>(() => ({
+  store: null,
+}));
 
 type OpenBuilder = {
   flowId: string;

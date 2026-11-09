@@ -161,32 +161,30 @@ export const createApTableStore = (
           return row ? [row.uuid] : [];
         }),
       );
-      const updated = serverState.records.flatMap(
-        (record): MergedRecord[] => {
-          const update = incoming.get(record.id);
-          const row = rowOf(record.id);
-          const unchanged = unchangedLocally(record.id);
-          const gone = removed.has(record.id) || (dropMissing && !update);
-          if (unchanged && gone) return [];
-          if (!update) {
-            return row ? [{ record, row, applied: false }] : [];
-          }
-          const order = compareUpdated({
-            incoming: update.updated,
-            local: record.updated,
-          });
-          const incomingWins = order > 0 || (order === 0 && unchanged);
-          const winner = incomingWins ? update : record;
-          const values = mapCellsToClientValues(winner, serverState.fields);
-          return [
-            {
-              record: winner,
-              row: row ? { ...row, values } : newRow(values),
-              applied: incomingWins,
-            },
-          ];
-        },
-      );
+      const updated = serverState.records.flatMap((record): MergedRecord[] => {
+        const update = incoming.get(record.id);
+        const row = rowOf(record.id);
+        const unchanged = unchangedLocally(record.id);
+        const gone = removed.has(record.id) || (dropMissing && !update);
+        if (unchanged && gone) return [];
+        if (!update) {
+          return row ? [{ record, row, applied: false }] : [];
+        }
+        const order = compareUpdated({
+          incoming: update.updated,
+          local: record.updated,
+        });
+        const incomingWins = order > 0 || (order === 0 && unchanged);
+        const winner = incomingWins ? update : record;
+        const values = mapCellsToClientValues(winner, serverState.fields);
+        return [
+          {
+            record: winner,
+            row: row ? { ...row, values } : newRow(values),
+            applied: incomingWins,
+          },
+        ];
+      });
       const known = new Set(serverState.records.map((record) => record.id));
       const added = changed
         .filter(

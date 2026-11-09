@@ -96,9 +96,7 @@ function finishedOutputRef(part: AnyToolPart): ResourceRef | null {
 
 function keyOf(resources: ResourceRef[]): string {
   return resources
-    .map(
-      (ref) => `${resourceRegistry.keyOf(ref)}@${ref.projectId}=${ref.name}`,
-    )
+    .map((ref) => `${resourceRegistry.keyOf(ref)}@${ref.projectId}=${ref.name}`)
     .join('|');
 }
 

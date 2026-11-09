@@ -193,9 +193,7 @@ function ChatBoxContent({
   const awaitingSavedPick =
     !isNil(initialConversationId) &&
     (isLoadingHistory ||
-      (initialConversationId !== conversationId &&
-        !failed &&
-        !historyFailed));
+      (initialConversationId !== conversationId && !failed && !historyFailed));
   const showHistorySkeleton = useDelayedFlag({
     value: isLoadingHistory,
     delayMs: HISTORY_SKELETON_DELAY_MS,

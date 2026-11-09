@@ -323,13 +323,10 @@ function wasMoved({
   return was.previous !== is.previous && was.next !== is.next;
 }
 
-function neighbours({
-  place,
-  kept,
-}: {
-  place: StepPlace;
-  kept: Set<string>;
-}): { previous: string | null; next: string | null } {
+function neighbours({ place, kept }: { place: StepPlace; kept: Set<string> }): {
+  previous: string | null;
+  next: string | null;
+} {
   return {
     previous:
       place.chain
@@ -337,8 +334,7 @@ function neighbours({
         .filter((name) => kept.has(name))
         .at(-1) ?? null,
     next:
-      place.chain.slice(place.index + 1).find((name) => kept.has(name)) ??
-      null,
+      place.chain.slice(place.index + 1).find((name) => kept.has(name)) ?? null,
   };
 }
 

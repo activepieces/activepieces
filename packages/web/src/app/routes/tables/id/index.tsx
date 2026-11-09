@@ -24,10 +24,7 @@ import {
   ROW_HEIGHT_MAP,
   RowHeight,
 } from '@/features/tables';
-import {
-  RowSheen,
-  useRowSheen,
-} from '@/features/tables/hooks/use-row-sheen';
+import { RowSheen, useRowSheen } from '@/features/tables/hooks/use-row-sheen';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
