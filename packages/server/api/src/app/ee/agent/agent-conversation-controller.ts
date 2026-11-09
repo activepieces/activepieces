@@ -194,6 +194,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 flowTools,
                 ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
+                ...spreadIfDefined('pageContext', request.body.pageContext?.projectId === (conversation.projectId ?? runProjectId) ? request.body.pageContext : undefined),
                 ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
                 ...(carriesConfiguredTools ? agentHelpers.jobFieldsFromConfig({ config: agentConfig }) : {}),
             },

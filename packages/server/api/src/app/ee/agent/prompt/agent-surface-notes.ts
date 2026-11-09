@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { AgentRunSource, agentToolSkills, SKILLS_NOTE_HEADING, SubagentTask } from '@activepieces/shared'
+import { AgentPageContext, AgentRunSource, agentToolSkills, SKILLS_NOTE_HEADING, SubagentTask } from '@activepieces/shared'
 import { agentPrompt } from './agent-prompt'
 import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
@@ -181,7 +181,15 @@ function onboardingNote({ source, messageSource }: { source: AgentRunSource, mes
     return source === AgentRunSource.CHAT && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE.trimStart() : null
 }
 
-export const agentSurfaceNotes = { buildRunNotes, onboardingNote, stripRunNotes }
+function pageContextNote({ pageContext }: { pageContext: AgentPageContext | undefined }): string | null {
+    if (isNil(pageContext)) {
+        return null
+    }
+    const step = isNil(pageContext.stepName) ? '' : `, step "${pageContext.stepName}" selected`
+    return `[Page context] The user is looking at ${pageContext.kind} ${pageContext.id} in project ${pageContext.projectId}${step}.`
+}
+
+export const agentSurfaceNotes = { buildRunNotes, onboardingNote, pageContextNote, stripRunNotes }
 
 const RECONNECT_NOTE = [
     '\n\n## When one of your tools cannot sign in',
