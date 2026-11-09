@@ -49,16 +49,18 @@ export const TableStateProviderWithTable = ({
   table,
   fields,
   records,
+  changes,
 }: {
   children: React.ReactNode;
   table: Table;
   fields: Field[];
   records: PopulatedRecord[];
+  changes: TableChangeFeed;
 }) => {
   const tableStoreRef = useRef<ApTableStore>(
     createApTableStore(table, fields, records),
   );
-  useServerSync({ tableId: table.id, store: tableStoreRef.current });
+  useServerSync({ tableId: table.id, store: tableStoreRef.current, changes });
   return (
     <TableContext.Provider value={tableStoreRef.current}>
       {children}
@@ -105,6 +107,34 @@ export function ApTableStateProvider({
     staleTime: 0,
     gcTime: 0,
   });
+
+  const [changes] = useState(createChangeFeed);
+  const onChange = useCallback(
+    (change: TableChange) => {
+      if (change.type === 'reload') {
+        const queryKey =
+          change.scope === 'fields'
+            ? tableQueryKeys.fields(tableId)
+            : tableQueryKeys.records(tableId);
+        queryClient.invalidateQueries({ queryKey });
+        return;
+      }
+      changes.push({ change, since: tableSyncClock.tick() });
+    },
+    [queryClient, tableId, changes],
+  );
+  const refetchMissed = useCallback(
+    ({ sentAt }: { sentAt: number }) => {
+      syncedKeys(tableId)
+        .filter(
+          (queryKey) =>
+            (queryClient.getQueryState(queryKey)?.dataUpdatedAt ?? 0) < sentAt,
+        )
+        .forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+    },
+    [queryClient, tableId],
+  );
+  useTableRoom({ tableId, onChange, onJoined: refetchMissed });
 
   // rebuilds the table store from freshly fetched server state without
   // reloading the document (a full reload breaks the embed SDK handshake
@@ -163,6 +193,7 @@ export function ApTableStateProvider({
           table={table.data}
           fields={fields.data}
           records={records.data}
+          changes={changes}
         >
           {children}
         </TableStateProviderWithTable>
@@ -174,9 +205,11 @@ export function ApTableStateProvider({
 function useServerSync({
   tableId,
   store,
+  changes,
 }: {
   tableId: string;
   store: ApTableStore;
+  changes: TableChangeFeed;
 }) {
   const queryClient = useQueryClient();
   const [applies] = useState(() => new PromiseQueue());
@@ -196,31 +229,41 @@ function useServerSync({
           applySnapshot({ queryHash, tableId, store, queryClient }),
         );
       });
-    return stopFollowingQueries;
-  }, [queryClient, store, tableId, applies]);
-  const refetchTable = useCallback(() => {
-    syncedKeys(tableId).forEach((queryKey) =>
-      queryClient.invalidateQueries({ queryKey }),
-    );
-  }, [queryClient, tableId]);
-  const onChange = useCallback(
-    (change: TableChange) => {
-      if (change.type === 'reload') {
-        const queryKey =
-          change.scope === 'fields'
-            ? tableQueryKeys.fields(tableId)
-            : tableQueryKeys.records(tableId);
-        queryClient.invalidateQueries({ queryKey });
-        return;
-      }
-      const since = tableSyncClock.tick();
+    const stopFollowingChanges = changes.attach(({ change, since }) =>
       applies.add(() =>
         applyChange({ change, since, tableId, store, queryClient }),
-      );
+      ),
+    );
+    return () => {
+      stopFollowingQueries();
+      stopFollowingChanges();
+    };
+  }, [queryClient, store, tableId, applies, changes]);
+}
+
+function createChangeFeed() {
+  let pending: TimedChange[] = [];
+  let consumer: ((timed: TimedChange) => void) | null = null;
+  return {
+    push: (timed: TimedChange) => {
+      if (consumer === null) {
+        pending = [...pending, timed];
+        return;
+      }
+      consumer(timed);
     },
-    [queryClient, store, tableId, applies],
-  );
-  useTableRoom({ tableId, onChange, onJoined: refetchTable });
+    attach: (next: (timed: TimedChange) => void) => {
+      consumer = next;
+      const queued = pending;
+      pending = [];
+      queued.forEach(next);
+      return () => {
+        if (consumer === next) {
+          consumer = null;
+        }
+      };
+    },
+  };
 }
 
 async function applySnapshot({
@@ -302,7 +345,7 @@ async function applyChange({
   }
 }
 
-function syncedKeys(tableId: string): QueryKey[] {
+function syncedKeys(tableId: string | undefined): QueryKey[] {
   return [
     tableQueryKeys.table(tableId),
     tableQueryKeys.fields(tableId),
@@ -375,3 +418,10 @@ function TableLockProvider({
 type TableLockContextValue = ReturnType<typeof useResourceLock>;
 
 type Snapshot<T> = { data: T; since: number };
+
+type TimedChange = {
+  change: Exclude<TableChange, { type: 'reload' }>;
+  since: number;
+};
+
+type TableChangeFeed = ReturnType<typeof createChangeFeed>;

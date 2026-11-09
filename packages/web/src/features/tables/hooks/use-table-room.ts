@@ -18,13 +18,17 @@ export function useTableRoom({
   onChange,
   onJoined,
 }: {
-  tableId: string;
+  tableId: string | undefined;
   onChange: (change: TableChange) => void;
-  onJoined: () => void;
+  onJoined: (join: { sentAt: number }) => void;
 }) {
   const socket = useSocket();
   useEffect(() => {
+    if (isNil(tableId)) {
+      return;
+    }
     const join = () => {
+      const sentAt = Date.now();
       socket
         .timeout(JOIN_TIMEOUT_MS)
         .emit(
@@ -37,7 +41,7 @@ export function useTableRoom({
             }
             const parsed = JoinTableRoomResponse.safeParse(response);
             if (parsed.success && parsed.data.joined) {
-              onJoined();
+              onJoined({ sentAt });
             }
           },
         );

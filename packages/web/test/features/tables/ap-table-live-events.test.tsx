@@ -14,12 +14,15 @@ import {
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { followAlong } from '@/features/chat/lib/follow/follow-along';
+import { fieldsApi } from '@/features/tables/api/fields-api';
 import { recordsApi } from '@/features/tables/api/records-api';
+import { tablesApi } from '@/features/tables/api/tables-api';
 import {
-  TableStateProviderWithTable,
+  ApTableStateProvider,
   useTableState,
 } from '@/features/tables/components/ap-table-state-provider';
 import { TableState } from '@/features/tables/stores/store/ap-tables-client-state';
@@ -63,8 +66,19 @@ vi.mock('@/features/tables/api/records-api', () => ({
     }),
   },
 }));
-vi.mock('@/features/tables/api/fields-api', () => ({ fieldsApi: {} }));
-vi.mock('@/features/tables/api/tables-api', () => ({ tablesApi: {} }));
+vi.mock('@/features/tables/api/fields-api', () => ({
+  fieldsApi: { list: vi.fn() },
+}));
+vi.mock('@/features/tables/api/tables-api', () => ({
+  tablesApi: { getById: vi.fn() },
+}));
+vi.mock('@/hooks/use-resource-lock', () => ({
+  useResourceLock: () => ({
+    lockedBy: null,
+    acquiring: false,
+    takeOver: vi.fn(),
+  }),
+}));
 vi.mock('@/lib/error-reporting', () => ({
   errorReporting: { report: vi.fn() },
 }));
@@ -73,6 +87,8 @@ describe('open table live events', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(EARLIER);
     socket.reset();
     queryClient = new QueryClient();
     vi.spyOn(queryClient, 'invalidateQueries');
@@ -80,13 +96,14 @@ describe('open table live events', () => {
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.mocked(followAlong.flash).mockClear();
     vi.mocked(recordsApi.list).mockClear();
     vi.mocked(recordsApi.getById).mockClear();
   });
 
   it('applies created and updated rows from the event without any request', async () => {
-    const { rows } = mount(queryClient);
+    const { rows } = await mount(queryClient);
 
     await receive({
       tableId: 't1',
@@ -103,7 +120,7 @@ describe('open table live events', () => {
 
     expect(rows()).toEqual(['new', 'b', 'c']);
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(recordsApi.list).not.toHaveBeenCalled();
+    expect(recordsApi.list).toHaveBeenCalledTimes(1);
     expect(recordsApi.getById).not.toHaveBeenCalled();
     expect(followAlong.flash).toHaveBeenCalledTimes(2);
     expect(followAlong.flash).toHaveBeenLastCalledWith([
@@ -112,7 +129,7 @@ describe('open table live events', () => {
   });
 
   it('removes deleted rows and empties a cleared table', async () => {
-    const { rows } = mount(queryClient);
+    const { rows } = await mount(queryClient);
 
     await receive({
       tableId: 't1',
@@ -132,7 +149,7 @@ describe('open table live events', () => {
   });
 
   it('empties the whole table on a clear, rows that never saved included', async () => {
-    const { rows, store } = mount(queryClient);
+    const { rows, store } = await mount(queryClient);
     await act(async () => {
       store().createRecord({
         uuid: 'unsaved',
@@ -153,7 +170,7 @@ describe('open table live events', () => {
   });
 
   it('ignores the echo of this tab’s own edits', async () => {
-    const { rows } = mount(queryClient);
+    const { rows } = await mount(queryClient);
 
     await receive({
       tableId: 't1',
@@ -167,7 +184,7 @@ describe('open table live events', () => {
   });
 
   it('refetches the records once for a reload', async () => {
-    mount(queryClient);
+    await mount(queryClient);
 
     await receive({
       tableId: 't1',
@@ -182,7 +199,7 @@ describe('open table live events', () => {
   });
 
   it('applies a reloaded snapshot and drops rows missing from it', async () => {
-    const { rows } = mount(queryClient);
+    const { rows } = await mount(queryClient);
 
     await act(async () => {
       queryClient.setQueryData(['records', 't1'], {
@@ -196,7 +213,7 @@ describe('open table live events', () => {
   });
 
   it('refetches the fields when the chat changes the columns', async () => {
-    mount(queryClient);
+    await mount(queryClient);
 
     await receive({
       tableId: 't1',
@@ -208,7 +225,7 @@ describe('open table live events', () => {
   });
 
   it('refetches the fields when a row names a column it does not know', async () => {
-    mount(queryClient);
+    await mount(queryClient);
 
     await receive({
       tableId: 't1',
@@ -228,9 +245,9 @@ describe('open table live events', () => {
     expect(invalidatedKeys(queryClient)).toEqual([['fields', 't1']]);
   });
 
-  it('joins the table room on open and leaves it on close', () => {
+  it('joins the table room on open and leaves it on close', async () => {
     socket.client.connected = true;
-    const { unmount } = mount(queryClient);
+    const { unmount } = await mount(queryClient);
 
     expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE_ROOM]);
     expect(socket.sent[0].payload).toEqual({ tableId: 't1' });
@@ -244,31 +261,21 @@ describe('open table live events', () => {
     expect(socket.sent[1].payload).toEqual({ tableId: 't1' });
   });
 
-  it('refetches the table once the room is joined, so changes made while it loaded are not lost', () => {
+  it('does not refetch when the table loaded after the join was sent', async () => {
     socket.client.connected = true;
-    mount(queryClient);
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    await mount(queryClient, {
+      whileLoading: () => vi.setSystemTime(LATER),
+    });
+    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE_ROOM]);
 
     act(() => socket.sent[0].ack?.(null, { joined: true }));
 
-    expect(invalidatedKeys(queryClient)).toEqual([
-      ['table', 't1'],
-      ['fields', 't1'],
-      ['records', 't1'],
-    ]);
-  });
-
-  it('does not refetch when the server refuses the room', () => {
-    socket.client.connected = true;
-    mount(queryClient);
-
-    act(() => socket.sent[0].ack?.(null, { joined: false }));
-
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
 
-  it('rejoins the room after a reconnect and refetches only after the join is acknowledged', () => {
-    mount(queryClient);
+  it('refetches once when the table loaded before the join was sent', async () => {
+    await mount(queryClient);
+    vi.setSystemTime(LATER);
 
     socket.serverSends('connect');
     expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE_ROOM]);
@@ -281,6 +288,31 @@ describe('open table live events', () => {
       ['fields', 't1'],
       ['records', 't1'],
     ]);
+  });
+
+  it('does not refetch when the server refuses the room', async () => {
+    await mount(queryClient);
+    vi.setSystemTime(LATER);
+
+    socket.serverSends('connect');
+    act(() => socket.sent[0].ack?.(null, { joined: false }));
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('applies a change that arrives while the table loads', async () => {
+    const { rows } = await mount(queryClient, {
+      whileLoading: () =>
+        socket.serverSends(WebsocketClientEvent.TABLE_RECORDS_CHANGED, {
+          tableId: 't1',
+          op: TableRecordsChangeOp.CREATED,
+          records: [record('r3', 'during load')],
+          editorSessionId: null,
+        }),
+    });
+    await act(settle);
+
+    expect(rows()).toEqual(['old', 'b', 'during load']);
   });
 });
 
@@ -305,7 +337,27 @@ function settle() {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-function mount(queryClient: QueryClient) {
+async function mount(
+  queryClient: QueryClient,
+  { whileLoading = () => undefined }: { whileLoading?: () => void } = {},
+) {
+  const loading = Promise.withResolvers<void>();
+  vi.mocked(tablesApi.getById).mockImplementation(async () => {
+    await loading.promise;
+    return table;
+  });
+  vi.mocked(fieldsApi.list).mockImplementation(async () => {
+    await loading.promise;
+    return [nameField];
+  });
+  vi.mocked(recordsApi.list).mockImplementation(async () => {
+    await loading.promise;
+    return {
+      data: [record('r1', 'old'), record('r2', 'b')],
+      next: null,
+      previous: null,
+    };
+  });
   let rows: unknown[] = [];
   let state: TableState | null = null;
   function Probe() {
@@ -317,15 +369,25 @@ function mount(queryClient: QueryClient) {
   }
   const { unmount } = render(
     <QueryClientProvider client={queryClient}>
-      <TableStateProviderWithTable
-        table={table}
-        fields={[nameField]}
-        records={[record('r1', 'old'), record('r2', 'b')]}
-      >
-        <Probe />
-      </TableStateProviderWithTable>
+      <MemoryRouter initialEntries={['/tables/t1']}>
+        <Routes>
+          <Route
+            path="/tables/:tableId"
+            element={
+              <ApTableStateProvider>
+                <Probe />
+              </ApTableStateProvider>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
+  whileLoading();
+  loading.resolve();
+  for (let attempt = 0; attempt < 20 && state === null; attempt += 1) {
+    await act(settle);
+  }
   return {
     unmount,
     rows: () => rows,
@@ -369,6 +431,9 @@ const nameField: Field = {
   externalId: 'x1',
   position: 0,
 };
+
+const EARLIER = new Date('2026-01-01T00:00:00.000Z');
+const LATER = new Date('2026-01-01T00:00:05.000Z');
 
 type Ack = (error: Error | null, response?: unknown) => void;
 
