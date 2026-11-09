@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp, readdir, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, realpath, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -123,6 +123,32 @@ describe('denoCodeSandbox permission boundary', () => {
                     expect(firstDir).toBe(path.join(path.dirname(await realpath(stepDir)), '.deno-cache'))
                     expect(existsSync(firstDir)).toBe(true)
                 })
+            }
+        })
+
+        it('creates the mounted cache tree world-writable so every box UID can add its own entries', async () => {
+            const previousUmask = process.umask(0o022)
+            try {
+                const freshFlowDir = await mkdtemp(path.join(tmpdir(), 'ap-deno-umask-'))
+                const freshStepDir = path.join(freshFlowDir, 'step')
+                await mkdir(freshStepDir)
+                try {
+                    await withEnv({ AP_EXECUTION_MODE: 'SANDBOX_PROCESS', AP_DENO_CACHE_MOUNTED: 'true' }, async () => {
+                        const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
+                        const codeFilePath = path.join(freshStepDir, 'index.ts')
+                        await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
+                        const denoDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+
+                        const genDir = await stat(path.join(denoDir, 'gen'))
+                        expect(genDir.mode & 0o777).toBe(0o777)
+                    })
+                }
+                finally {
+                    await rm(freshFlowDir, { recursive: true, force: true })
+                }
+            }
+            finally {
+                process.umask(previousUmask)
             }
         })
 

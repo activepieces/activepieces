@@ -164,7 +164,11 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
 function resolveWarmDenoDir(stepDir: string): string | undefined {
     const mode = process.env['AP_EXECUTION_MODE']
     const stepDirIsWritable = mode === ExecutionMode.SANDBOX_CODE_ONLY || mode === ExecutionMode.UNSANDBOXED
-    const cacheMountAvailable = stepDirIsWritable || process.env['AP_DENO_CACHE_MOUNTED'] === 'true'
+    const cacheIsMounted = process.env['AP_DENO_CACHE_MOUNTED'] === 'true'
+    if (cacheIsMounted) {
+        process.umask(0)
+    }
+    const cacheMountAvailable = stepDirIsWritable || cacheIsMounted
     return cacheMountAvailable ? join(dirname(stepDir), DENO_CACHE_DIR_NAME) : undefined
 }
 
