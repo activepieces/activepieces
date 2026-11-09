@@ -77,8 +77,7 @@ The built-in MCP server (`/mcp` and `/mcp/platform`) rejects request bodies over
 
 If an agent's MCP tool uses an `http://` URL or an old domain that redirects, replace it with the server's final `https://` URL. Split very large MCP tool calls into smaller ones.
 
-<Tabs>
-<Tab title="Pieces">
+<Accordion title="Pieces (63 changes)">
 
 #### Rendex 0.2.0: Render to Image is no longer an agent tool
 
@@ -859,8 +858,7 @@ The whole piece also moves to Graph API `v23.0`, via a single `WHATSAPP_API_BASE
 
 Update any step that reads the output of `Send Message` or `Send Media`. Drop the `body.` prefix: `{{step.body.messages[0].id}}` becomes `{{step.messages[0].id}}`. Steps that only send and ignore the output need no change, and no connection has to be re-authorised.
 
-</Tab>
-</Tabs>
+</Accordion>
 
 ## 0.92.0
 
