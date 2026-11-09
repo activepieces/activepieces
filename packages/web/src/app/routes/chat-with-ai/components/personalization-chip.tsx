@@ -23,7 +23,11 @@ export function PersonalizationChip({
     <motion.div
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 4, transition: { duration: MOTION.fast, ease: MOTION.easeOut } }}
+      exit={{
+        opacity: 0,
+        y: 4,
+        transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+      }}
       transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
       className="group inline-flex max-w-full items-center rounded-full border bg-gray-1 text-xs font-medium text-gray-12/80 shadow-sm transition-colors duration-(--dur-micro) ease-[ease] hover:border-accent-7"
     >

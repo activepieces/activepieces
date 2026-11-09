@@ -70,9 +70,7 @@ export function useAiFieldHighlights(): void {
       const elements = [
         ...document.querySelectorAll(`[data-ai-field="${CSS.escape(key)}"]`),
       ];
-      return aiSheen.play({ id: `${key}:${token}`, elements })
-        ? elements
-        : [];
+      return aiSheen.play({ id: `${key}:${token}`, elements }) ? elements : [];
     });
     const first = lit.find(
       (element) => element.getAttribute('data-ai-scroll') !== 'canvas',

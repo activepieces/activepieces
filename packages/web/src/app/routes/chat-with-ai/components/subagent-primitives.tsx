@@ -33,7 +33,11 @@ export function LiveLine({ activity }: { activity: SubagentActivity }) {
         key={label}
         initial={{ opacity: 0, y: 3 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -3, transition: { duration: MOTION.fast, ease: MOTION.easeOut } }}
+        exit={{
+          opacity: 0,
+          y: -3,
+          transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+        }}
         transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
       >
         <TextShimmer as="p" className="truncate text-xs font-normal leading-4">

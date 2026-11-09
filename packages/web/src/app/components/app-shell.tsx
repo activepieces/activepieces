@@ -282,7 +282,11 @@ export const shellHandles = {
   projectWithHeader: { shell: 'project', projectHeader: true },
   publicProject: { shell: 'project', allowAnonymous: true },
   projectRedirect: { shell: 'project', redirectOnly: true },
-  publicRedirect: { shell: 'project', allowAnonymous: true, redirectOnly: true },
+  publicRedirect: {
+    shell: 'project',
+    allowAnonymous: true,
+    redirectOnly: true,
+  },
   templateDetails: {
     shell: 'project',
     allowAnonymous: true,

@@ -169,7 +169,11 @@ export function MultiQuestionForm({
             key={`q-${currentStep}`}
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -8, transition: { duration: MOTION.fast, ease: MOTION.easeOut } }}
+            exit={{
+              opacity: 0,
+              x: -8,
+              transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+            }}
             transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
           >
             <Label
@@ -215,7 +219,11 @@ export function MultiQuestionForm({
           key={`opts-${currentStep}`}
           initial={{ opacity: 0, x: 8 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -8, transition: { duration: MOTION.fast, ease: MOTION.easeOut } }}
+          exit={{
+            opacity: 0,
+            x: -8,
+            transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+          }}
           transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
         >
           {isChoiceQuestion(q) ? (

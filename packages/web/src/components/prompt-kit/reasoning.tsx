@@ -160,10 +160,7 @@ function ReasoningContent({
   return (
     <div
       ref={contentRef}
-      className={cn(
-        'overflow-hidden',
-        className,
-      )}
+      className={cn('overflow-hidden', className)}
       style={{
         maxHeight: isOpen ? contentRef.current?.scrollHeight : '0px',
       }}

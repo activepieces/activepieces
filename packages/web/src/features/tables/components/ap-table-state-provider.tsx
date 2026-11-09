@@ -64,9 +64,7 @@ export const TableStateProviderWithTable = ({
   );
   useServerSync({ tableId: table.id, store: tableStore, changes });
   return (
-    <TableContext.Provider value={tableStore}>
-      {children}
-    </TableContext.Provider>
+    <TableContext.Provider value={tableStore}>{children}</TableContext.Provider>
   );
 };
 
@@ -371,10 +369,7 @@ function TableUnavailable({ title }: { title: string }) {
         </p>
       </div>
 
-      <Link
-        className={cn(buttonVariants({ variant: 'outline' }))}
-        to="/tables"
-      >
+      <Link className={cn(buttonVariants({ variant: 'outline' }))} to="/tables">
         {t('Go to Tables')}
       </Link>
     </div>

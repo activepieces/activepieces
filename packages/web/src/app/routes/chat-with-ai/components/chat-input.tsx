@@ -229,37 +229,37 @@ export function ChatInput({
           className="border-0 rounded-none shadow-none"
         >
           {attachedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-3">
-                <div className="flex flex-wrap gap-2 pt-2 pb-0.5">
-                  {attachedFiles.map((file) => (
-                    <motion.div
-                      key={file.name}
-                      className="flex items-center gap-2 rounded-xl border bg-gray-3/50 px-3 py-1.5 text-sm"
-                      onClick={(e) => e.stopPropagation()}
-                      initial={{ opacity: 0, scale: reduced ? 1 : 0.97 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
+            <div className="flex flex-wrap gap-2 px-3">
+              <div className="flex flex-wrap gap-2 pt-2 pb-0.5">
+                {attachedFiles.map((file) => (
+                  <motion.div
+                    key={file.name}
+                    className="flex items-center gap-2 rounded-xl border bg-gray-3/50 px-3 py-1.5 text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                    initial={{ opacity: 0, scale: reduced ? 1 : 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
+                  >
+                    <Paperclip className="size-3.5 shrink-0 text-gray-11" />
+                    <span className="max-w-[150px] truncate text-gray-12/80">
+                      {file.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAttachedFiles((prev) =>
+                          prev.filter((f) => f.name !== file.name),
+                        )
+                      }
+                      className="text-gray-11 hover:text-gray-12 rounded-full p-0.5 transition-colors duration-(--dur-micro) ease-[ease]"
                     >
-                      <Paperclip className="size-3.5 shrink-0 text-gray-11" />
-                      <span className="max-w-[150px] truncate text-gray-12/80">
-                        {file.name}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setAttachedFiles((prev) =>
-                            prev.filter((f) => f.name !== file.name),
-                          )
-                        }
-                        className="text-gray-11 hover:text-gray-12 rounded-full p-0.5 transition-colors duration-(--dur-micro) ease-[ease]"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </motion.div>
-                  ))}
-                </div>
+                      <X className="size-3.5" />
+                    </button>
+                  </motion.div>
+                ))}
               </div>
-            )}
+            </div>
+          )}
           {isRecording ? (
             <div className="min-h-[44px] px-3 py-2 text-base sm:text-sm text-gray-12 whitespace-pre-wrap break-words">
               {interimText || (

@@ -65,7 +65,12 @@ export function ChatCard({ children, className }: ChatCardProps) {
       )}
       initial={{ opacity: 0, y: 4, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 4, scale: 0.98, transition: { duration: MOTION.fast, ease: MOTION.easeOut } }}
+      exit={{
+        opacity: 0,
+        y: 4,
+        scale: 0.98,
+        transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+      }}
       transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       {children}

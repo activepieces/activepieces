@@ -40,9 +40,7 @@ export function ShowcaseCard({
         'overflow-hidden rounded-xl border bg-panel shadow-sm',
         !isList && 'p-4 @chat-sm/chat:p-5',
       )}
-      initial={
-        animate && streaming ? { opacity: 0, y: 4, scale: 0.98 } : false
-      }
+      initial={animate && streaming ? { opacity: 0, y: 4, scale: 0.98 } : false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >

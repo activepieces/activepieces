@@ -28,9 +28,7 @@ export function ChatNotch({ className }: { className?: string }) {
         aria-hidden
         className={cn(
           'absolute inset-0 size-full overflow-visible transition-opacity ease-out',
-          hidden
-            ? 'opacity-0 duration-(--dur-fast)'
-            : 'duration-(--dur-base)',
+          hidden ? 'opacity-0 duration-(--dur-fast)' : 'duration-(--dur-base)',
         )}
       >
         <path d={OUTLINE.fill} className="fill-gray-2" />

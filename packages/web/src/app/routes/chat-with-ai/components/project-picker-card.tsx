@@ -29,7 +29,11 @@ const MAX_COLLAPSED = 3;
 const VIEW_TRANSITION = {
   initial: { opacity: 0, x: 8 },
   animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -8, transition: { duration: MOTION.fast, ease: MOTION.easeOut } },
+  exit: {
+    opacity: 0,
+    x: -8,
+    transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+  },
   transition: { duration: MOTION.base, ease: MOTION.easeOut },
 };
 

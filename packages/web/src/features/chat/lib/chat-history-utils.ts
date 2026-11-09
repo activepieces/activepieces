@@ -93,7 +93,12 @@ function showsSearch({
   return total > SEARCH_THRESHOLD || query.length > 0;
 }
 
-const GROUP_ORDER: ChatHistoryGroupId[] = ['today', 'yesterday', 'week', 'older'];
+const GROUP_ORDER: ChatHistoryGroupId[] = [
+  'today',
+  'yesterday',
+  'week',
+  'older',
+];
 const MINUTE_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
 const SEARCH_THRESHOLD = 8;
