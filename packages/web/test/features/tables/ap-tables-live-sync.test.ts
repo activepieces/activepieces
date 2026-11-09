@@ -25,6 +25,26 @@ vi.mock('@/lib/error-reporting', () => ({
 describe('table live sync', () => {
   beforeEach(() => {
     vi.mocked(recordsApi.update).mockReset();
+    vi.mocked(recordsApi.delete).mockReset();
+  });
+
+  it('applies a live update to the right row after a failed delete', async () => {
+    vi.mocked(recordsApi.delete).mockRejectedValue(new Error('offline'));
+    const store = createApTableStore(
+      table,
+      [nameField],
+      [record('r1', 'a'), record('r2', 'b'), record('r3', 'c')],
+    );
+
+    store.getState().deleteRecords(['0']);
+    await store.getState().waitForSaves();
+    store.getState().applyRecordChanges({
+      records: [record('r2', 'b2')],
+      removedIds: [],
+      since: tableSyncClock.tick(),
+    });
+
+    expect(values(store.getState())).toEqual(['b2', 'c']);
   });
 
   it('updates, adds and removes rows by record id, keeping row identity and selection', () => {
