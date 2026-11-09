@@ -102,6 +102,7 @@ vi.mock('@/components/ui/form', () => ({
 
 vi.mock('react-router-dom', () => ({
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
+  useNavigate: () => vi.fn(),
 }));
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
