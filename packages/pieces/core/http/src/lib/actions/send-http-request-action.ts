@@ -19,7 +19,7 @@ import {
 import { assertNotNullOrUndefined, isEmpty } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
-import { ProxyAgent } from 'undici';
+import { Agent, ProxyAgent } from 'undici';
 
 enum AuthType {
   NONE = 'NONE',
@@ -308,14 +308,16 @@ export const httpSendRequestAction = createAction({
     assertNotNullOrUndefined(method, 'Method');
     assertNotNullOrUndefined(url, 'URL');
 
+    const timeoutMs = timeout ? timeout * 1000 : undefined;
     const request: HttpRequest = {
       method,
       url,
       headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
-      timeout: timeout ? timeout * 1000 : 0,
+      timeout: timeoutMs ?? 0,
       followRedirects,
     };
+    const directDispatcher = timeoutMs === undefined ? undefined : new Agent({ connect: { timeout: timeoutMs } });
 
     switch (authType) {
       case AuthType.BASIC:
@@ -368,10 +370,14 @@ export const httpSendRequestAction = createAction({
         }
 
         return await httpClient.sendRequest(request, {
-          dispatcher: new ProxyAgent(proxyUrl),
+          dispatcher: new ProxyAgent({
+            uri: proxyUrl,
+            proxyTls: { timeout: timeoutMs },
+            requestTls: { timeout: timeoutMs },
+          }),
         });
       }
-      return await httpClient.sendRequest(request);
+      return await httpClient.sendRequest(request, { dispatcher: directDispatcher });
     };
 
     let attempts = 0;
