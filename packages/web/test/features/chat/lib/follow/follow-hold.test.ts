@@ -31,3 +31,15 @@ describe('followHold', () => {
     expect(useFollowHold.getState().pressing).toBe(false);
   });
 });
+
+describe('followHold.report', () => {
+  it('leaves the store alone when nothing changed', () => {
+    const listener = vi.fn();
+    const unsubscribe = useFollowHold.subscribe(listener);
+
+    followHold.report({ drafting: false, scrolledUp: false });
+    unsubscribe();
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+});
