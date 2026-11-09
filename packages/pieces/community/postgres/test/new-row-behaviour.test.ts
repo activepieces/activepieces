@@ -1,0 +1,453 @@
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
+import { pgHarness, Target } from './helpers/pg-harness';
+
+vi.mock('pg', async (importOriginal) => (await import('./helpers/pg-harness')).pgHarness.mockPg({ actual: await importOriginal() }));
+
+import '../src/index';
+import { newRow } from '../src/lib/triggers/new-row';
+
+const { memoryStore, hookContext, names } = pgHarness;
+const trigger = pgHarness.asPolling(newRow);
+let db: PGlite;
+let tableCounter = 0;
+
+async function newTable({ columns }: { columns: string }): Promise<string> {
+  tableCounter += 1;
+  const name = `t${tableCounter}`;
+  await db.exec(`CREATE TABLE public.${name} (${columns})`);
+  return name;
+}
+
+async function poll(target: Target & { column?: string }): Promise<string[]> {
+  return names({ events: await trigger.run(hookContext(target)), column: target.column });
+}
+
+beforeAll(async () => {
+  db = new PGlite();
+  pgHarness.state.db = db;
+});
+
+afterAll(async () => {
+  await db.close();
+});
+
+describe('Postgres New Row behaviour', () => {
+  it('fires once per new row across polls, republish and never for rows that existed at enable', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamp not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01 10:00:00', 'old-1'), ('2026-11-01 10:01:00', 'old-2')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    expect(await poll({ store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01 10:02:00', 'new-1')`);
+    expect(await poll({ store, table })).toEqual(['new-1']);
+    expect(await poll({ store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01 10:03:00', 'between')`);
+    await trigger.onDisable(hookContext({ store, table, isRepublish: true }));
+    await trigger.onEnable(hookContext({ store, table, isRepublish: true }));
+    expect(await poll({ store, table })).toEqual(['between']);
+    expect(await poll({ store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01 10:04:00', 'new-2'), ('2026-11-01 10:05:00', 'new-3')`);
+    expect(await poll({ store, table })).toEqual(['new-3', 'new-2']);
+    expect(await poll({ store, table })).toEqual([]);
+  });
+
+  it('turning the flow off and on again re-baselines instead of replaying', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T10:00:00Z', 'a')`);
+    const { store, data } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    await trigger.onDisable(hookContext({ store, table }));
+    expect(data.size).toBe(0);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T11:00:00Z', 'while-off')`);
+    await trigger.onEnable(hookContext({ store, table }));
+    expect(await poll({ store, table })).toEqual([]);
+  });
+
+  it('does not re-fire a row when it is updated, with or without a primary key', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, status text, payload jsonb, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, status, payload, name) VALUES ('2026-11-01T10:00:00Z', 'new', '{}', 'seed')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    await db.exec(`INSERT INTO ${table} (created_at, status, payload, name) VALUES ('2026-11-01T11:00:00Z', 'new', '{}', 'row')`);
+    expect(await poll({ store, table })).toEqual(['row']);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await db.exec(`UPDATE ${table} SET status = 'processed-${attempt}', payload = '{"attempt": ${attempt}}' WHERE name = 'row'`);
+      expect(await poll({ store, table })).toEqual([]);
+    }
+    await db.exec(`UPDATE ${table} SET status = 'touched' WHERE name = 'seed'`);
+    expect(await poll({ store, table })).toEqual([]);
+
+    const plain = await newTable({ columns: 'created_at timestamptz not null, status text, name text' });
+    await db.exec(`INSERT INTO ${plain} (created_at, status, name) VALUES ('2026-11-01T10:00:00Z', 'new', 'p-old')`);
+    const second = memoryStore();
+    await trigger.onEnable(hookContext({ store: second.store, table: plain }));
+    await db.exec(`INSERT INTO ${plain} (created_at, status, name) VALUES ('2026-11-01T11:00:00Z', 'new', 'p-row'), ('2026-11-01T12:00:00Z', 'new', 'p-newest')`);
+    expect(await poll({ store: second.store, table: plain })).toEqual(['p-newest', 'p-row']);
+    await db.exec(`UPDATE ${plain} SET status = 'processed' WHERE name IN ('p-old', 'p-row')`);
+    expect(await poll({ store: second.store, table: plain })).toEqual([]);
+  });
+
+  it('fires every row that shares the order value: second-precision timestamp, date and numeric with a different scale', async () => {
+    const stamps = await newTable({ columns: 'id serial primary key, created_at timestamp(0) not null, name text' });
+    await db.exec(`INSERT INTO ${stamps} (created_at, name) VALUES ('2026-11-01 10:00:00', 'seed')`);
+    const first = memoryStore();
+    await trigger.onEnable(hookContext({ store: first.store, table: stamps }));
+    await db.exec(`INSERT INTO ${stamps} (created_at, name) VALUES ('2026-11-01 10:00:00', 'tie-a')`);
+    expect(await poll({ store: first.store, table: stamps })).toEqual(['tie-a']);
+    await db.exec(`INSERT INTO ${stamps} (created_at, name) VALUES ('2026-11-01 10:00:00', 'tie-b')`);
+    expect(await poll({ store: first.store, table: stamps })).toEqual(['tie-b']);
+    expect(await poll({ store: first.store, table: stamps })).toEqual([]);
+
+    const dates = await newTable({ columns: 'id serial primary key, issued_on date not null, name text' });
+    await db.exec(`INSERT INTO ${dates} (issued_on, name) VALUES ('2026-11-01', 'seed')`);
+    const second = memoryStore();
+    await trigger.onEnable(hookContext({ store: second.store, table: dates, orderBy: 'issued_on' }));
+    await db.exec(`INSERT INTO ${dates} (issued_on, name) VALUES ('2026-11-01', 'd-1'), ('2026-11-01', 'd-2')`);
+    expect((await poll({ store: second.store, table: dates, orderBy: 'issued_on' })).sort()).toEqual(['d-1', 'd-2']);
+    await db.exec(`INSERT INTO ${dates} (issued_on, name) VALUES ('2026-11-02', 'd-3'), ('2026-11-01', 'd-late')`);
+    expect((await poll({ store: second.store, table: dates, orderBy: 'issued_on' })).sort()).toEqual(['d-3', 'd-late']);
+    expect(await poll({ store: second.store, table: dates, orderBy: 'issued_on' })).toEqual([]);
+
+    const amounts = await newTable({ columns: 'id serial primary key, amount numeric not null, name text' });
+    await db.exec(`INSERT INTO ${amounts} (amount, name) VALUES (1.0, 'seed')`);
+    const third = memoryStore();
+    await trigger.onEnable(hookContext({ store: third.store, table: amounts, orderBy: 'amount' }));
+    await db.exec(`INSERT INTO ${amounts} (amount, name) VALUES (1.00, 'same-value')`);
+    expect(await poll({ store: third.store, table: amounts, orderBy: 'amount' })).toEqual(['same-value']);
+    expect(await poll({ store: third.store, table: amounts, orderBy: 'amount' })).toEqual([]);
+  });
+
+  it('handles timestamptz with microseconds in both directions, bigint, uuid and text order columns', async () => {
+    const micro = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, name text' });
+    await db.exec(`INSERT INTO ${micro} (created_at, name) VALUES ('2026-11-01T10:00:00.123456Z', 'seed')`);
+    const desc = memoryStore();
+    await trigger.onEnable(hookContext({ store: desc.store, table: micro }));
+    await db.exec(`INSERT INTO ${micro} (created_at, name) VALUES ('2026-11-01T10:00:00.123457Z', 'one-microsecond-later')`);
+    expect(await poll({ store: desc.store, table: micro })).toEqual(['one-microsecond-later']);
+    expect(await poll({ store: desc.store, table: micro })).toEqual([]);
+
+    const asc = memoryStore();
+    await trigger.onEnable(hookContext({ store: asc.store, table: micro, direction: 'ASC' }));
+    expect(await poll({ store: asc.store, table: micro, direction: 'ASC' })).toEqual([]);
+    await db.exec(`INSERT INTO ${micro} (created_at, name) VALUES ('2026-11-01T09:00:00.000001Z', 'smaller')`);
+    expect(await poll({ store: asc.store, table: micro, direction: 'ASC' })).toEqual(['smaller']);
+    expect(await poll({ store: asc.store, table: micro, direction: 'ASC' })).toEqual([]);
+    expect(await poll({ store: asc.store, table: micro, direction: 'ASC' })).toEqual([]);
+
+    const big = await newTable({ columns: 'seq bigint primary key, name text' });
+    await db.exec(`INSERT INTO ${big} (seq, name) VALUES (9007199254740993, 'seed')`);
+    const bigStore = memoryStore();
+    await trigger.onEnable(hookContext({ store: bigStore.store, table: big, orderBy: 'seq' }));
+    await db.exec(`INSERT INTO ${big} (seq, name) VALUES (9007199254740994, 'next')`);
+    expect(await poll({ store: bigStore.store, table: big, orderBy: 'seq' })).toEqual(['next']);
+    expect(await poll({ store: bigStore.store, table: big, orderBy: 'seq' })).toEqual([]);
+
+    const uuids = await newTable({ columns: 'ref uuid primary key, name text' });
+    await db.exec(`INSERT INTO ${uuids} (ref, name) VALUES ('00000000-0000-0000-0000-000000000001', 'seed')`);
+    const uuidStore = memoryStore();
+    await trigger.onEnable(hookContext({ store: uuidStore.store, table: uuids, orderBy: 'ref' }));
+    await db.exec(`INSERT INTO ${uuids} (ref, name) VALUES ('00000000-0000-0000-0000-000000000002', 'next')`);
+    expect(await poll({ store: uuidStore.store, table: uuids, orderBy: 'ref' })).toEqual(['next']);
+    expect(await poll({ store: uuidStore.store, table: uuids, orderBy: 'ref' })).toEqual([]);
+
+    const texts = await newTable({ columns: 'id serial primary key, code text not null, name text' });
+    await db.exec(`INSERT INTO ${texts} (code, name) VALUES ('A-001', 'seed')`);
+    const textStore = memoryStore();
+    await trigger.onEnable(hookContext({ store: textStore.store, table: texts, orderBy: 'code' }));
+    await db.exec(`INSERT INTO ${texts} (code, name) VALUES ('A-002', 'next'), ('A-001', 'same-code')`);
+    expect((await poll({ store: textStore.store, table: texts, orderBy: 'code' })).sort()).toEqual(['next', 'same-code']);
+    expect(await poll({ store: textStore.store, table: texts, orderBy: 'code' })).toEqual([]);
+  });
+
+  it('skips rows with an empty order value without failing, in polls and in the sample', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamptz, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T10:00:00Z', 'dated'), (NULL, 'empty-at-enable')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    expect(await poll({ store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (NULL, 'empty-later'), ('2026-11-01T11:00:00Z', 'dated-later')`);
+    expect(await poll({ store, table })).toEqual(['dated-later']);
+    expect(await poll({ store, table })).toEqual([]);
+    const sample = names({ events: await trigger.test(hookContext({ store, table })) });
+    expect(sample).toEqual(['dated-later', 'dated']);
+
+    const empty = await newTable({ columns: 'id serial primary key, created_at timestamptz, name text' });
+    await db.exec(`INSERT INTO ${empty} (created_at, name) VALUES (NULL, 'only-empty')`);
+    const second = memoryStore();
+    await trigger.onEnable(hookContext({ store: second.store, table: empty }));
+    expect(await poll({ store: second.store, table: empty })).toEqual([]);
+    await db.exec(`INSERT INTO ${empty} (created_at, name) VALUES ('2026-11-01T10:00:00Z', 'first-dated')`);
+    expect(await poll({ store: second.store, table: empty })).toEqual(['first-dated']);
+  });
+
+  it('keeps working when the last delivered row is deleted', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamp(0) not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01 10:00:00', 'a')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01 10:01:00', 'b'), ('2026-11-01 10:01:00', 'b-tie')`);
+    expect((await poll({ store, table })).sort()).toEqual(['b', 'b-tie']);
+    await db.exec(`DELETE FROM ${table} WHERE name = 'b'`);
+    expect(await poll({ store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01 10:02:00', 'c')`);
+    expect(await poll({ store, table })).toEqual(['c']);
+  });
+
+  it('delivers a burst bigger than the per-poll cap over several polls, oldest first, none twice and none lost', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamp not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01 00:00:00', 'seed')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    await db.exec(`INSERT INTO ${table} (created_at, name) SELECT timestamp '2026-11-01 00:00:00' + n * interval '1 second', 'burst-' || n FROM generate_series(1, 1200) AS n`);
+    const first = await poll({ store, table });
+    const second = await poll({ store, table });
+    const third = await poll({ store, table });
+    expect([first.length, second.length, third.length]).toEqual([500, 500, 200]);
+    expect(first[first.length - 1]).toBe('burst-1');
+    expect(await poll({ store, table })).toEqual([]);
+    const all = [...first, ...second, ...third];
+    expect(new Set(all).size).toBe(1200);
+
+    const ties = await newTable({ columns: 'id serial primary key, created_at date not null, name text' });
+    await db.exec(`INSERT INTO ${ties} (created_at, name) VALUES ('2026-11-01', 'seed')`);
+    const tieStore = memoryStore();
+    await trigger.onEnable(hookContext({ store: tieStore.store, table: ties }));
+    await db.exec(`INSERT INTO ${ties} (created_at, name) SELECT date '2026-11-02', 'tie-' || n FROM generate_series(1, 1200) AS n`);
+    const tieRuns = [await poll({ store: tieStore.store, table: ties }), await poll({ store: tieStore.store, table: ties }), await poll({ store: tieStore.store, table: ties })];
+    expect(tieRuns.map((run) => run.length)).toEqual([500, 500, 200]);
+    expect(new Set(tieRuns.flat()).size).toBe(1200);
+    expect(await poll({ store: tieStore.store, table: ties })).toEqual([]);
+  });
+
+  it('drains a tie group larger than the remembered keys without repeating rows', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at date not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01', 'seed')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    await db.exec(`INSERT INTO ${table} (created_at, name) SELECT date '2026-11-02', 'tie-' || n FROM generate_series(1, 2600) AS n`);
+    const fired: string[] = [];
+    for (let run = 0; run < 7; run++) {
+      fired.push(...(await poll({ store, table })));
+    }
+    expect(fired).toHaveLength(2600);
+    expect(new Set(fired).size).toBe(2600);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-02', 'late-tie-1'), ('2026-11-02', 'late-tie-2')`);
+    expect(await poll({ store, table })).toEqual(['late-tie-2', 'late-tie-1']);
+    expect(await poll({ store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-03', 'next-day')`);
+    expect(await poll({ store, table })).toEqual(['next-day']);
+
+    const capped = await newTable({ columns: 'id serial primary key, created_at date not null, name text' });
+    await db.exec(`INSERT INTO ${capped} (created_at, name) SELECT date '2026-11-01', 'old-' || n FROM generate_series(1, 1900) AS n`);
+    const cappedStore = memoryStore();
+    await trigger.onEnable(hookContext({ store: cappedStore.store, table: capped }));
+    await db.exec(`INSERT INTO ${capped} (created_at, name) SELECT date '2026-11-01', 'tie-' || n FROM generate_series(1, 600) AS n`);
+    const cappedRuns = [await poll({ store: cappedStore.store, table: capped }), await poll({ store: cappedStore.store, table: capped }), await poll({ store: cappedStore.store, table: capped })];
+    expect(cappedRuns.map((run) => run.length)).toEqual([500, 100, 0]);
+    expect(new Set(cappedRuns.flat()).size).toBe(600);
+
+    const crowded = await newTable({ columns: 'id serial primary key, created_at date not null, name text' });
+    await db.exec(`INSERT INTO ${crowded} (created_at, name) SELECT date '2026-11-01', 'old-' || n FROM generate_series(1, 2100) AS n`);
+    const second = memoryStore();
+    await trigger.onEnable(hookContext({ store: second.store, table: crowded }));
+    expect(await poll({ store: second.store, table: crowded })).toEqual([]);
+    await db.exec(`INSERT INTO ${crowded} (created_at, name) VALUES ('2026-11-01', 'late-tie')`);
+    expect(await poll({ store: second.store, table: crowded })).toEqual(['late-tie']);
+    await db.exec(`INSERT INTO ${crowded} (created_at, name) VALUES ('2026-11-02', 'next-day')`);
+    expect(await poll({ store: second.store, table: crowded })).toEqual(['next-day']);
+  });
+
+  it('never lets an infinite, NaN or future order value stall the cursor', async () => {
+    const stamps = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, name text' });
+    await db.exec(`INSERT INTO ${stamps} (created_at, name) VALUES ('2026-11-01T10:00:00Z', 'seed'), ('infinity', 'infinite-at-enable')`);
+    const first = memoryStore();
+    await trigger.onEnable(hookContext({ store: first.store, table: stamps }));
+    await db.exec(`INSERT INTO ${stamps} (created_at, name) VALUES ('infinity', 'infinite'), (now() + interval '1 hour', 'future'), ('2026-11-01T11:00:00Z', 'normal')`);
+    expect(await poll({ store: first.store, table: stamps })).toEqual(['normal']);
+    await db.exec(`INSERT INTO ${stamps} (created_at, name) VALUES ('2026-11-01T12:00:00Z', 'normal-2')`);
+    expect(await poll({ store: first.store, table: stamps })).toEqual(['normal-2']);
+    await db.exec(`UPDATE ${stamps} SET created_at = now() - interval '1 minute' WHERE name = 'future'`);
+    expect(await poll({ store: first.store, table: stamps })).toEqual(['future']);
+    const sample = names({ events: await trigger.test(hookContext({ store: first.store, table: stamps })) });
+    expect(sample).not.toContain('infinite');
+
+    const naive = await newTable({ columns: 'id serial primary key, created_at timestamp not null, day date not null, name text' });
+    await db.exec(`INSERT INTO ${naive} (created_at, day, name) VALUES ('2026-11-01 10:00:00', '2026-11-01', 'seed')`);
+    const second = memoryStore();
+    await trigger.onEnable(hookContext({ store: second.store, table: naive }));
+    const third = memoryStore();
+    await trigger.onEnable(hookContext({ store: third.store, table: naive, orderBy: 'day' }));
+    await db.exec(`INSERT INTO ${naive} (created_at, day, name) VALUES ('2099-01-01 00:00:00', '2099-01-01', 'far-future'), ('-infinity', '-infinity', 'minus-infinite'), ('2026-11-01 11:00:00', '2026-11-02', 'normal')`);
+    expect(await poll({ store: second.store, table: naive })).toEqual(['normal']);
+    expect(await poll({ store: third.store, table: naive, orderBy: 'day' })).toEqual(['normal']);
+    await db.exec(`INSERT INTO ${naive} (created_at, day, name) VALUES ('2026-11-01 12:00:00', '2026-11-03', 'normal-2')`);
+    expect(await poll({ store: second.store, table: naive })).toEqual(['normal-2']);
+    expect(await poll({ store: third.store, table: naive, orderBy: 'day' })).toEqual(['normal-2']);
+
+    const amounts = await newTable({ columns: 'id serial primary key, amount double precision not null, name text' });
+    await db.exec(`INSERT INTO ${amounts} (amount, name) VALUES (1, 'seed'), ('NaN', 'nan-at-enable')`);
+    const fourth = memoryStore();
+    await trigger.onEnable(hookContext({ store: fourth.store, table: amounts, orderBy: 'amount' }));
+    await db.exec(`INSERT INTO ${amounts} (amount, name) VALUES ('Infinity', 'infinite'), ('NaN', 'nan'), (2, 'two')`);
+    expect(await poll({ store: fourth.store, table: amounts, orderBy: 'amount' })).toEqual(['two']);
+    await db.exec(`INSERT INTO ${amounts} (amount, name) VALUES (3, 'three')`);
+    expect(await poll({ store: fourth.store, table: amounts, orderBy: 'amount' })).toEqual(['three']);
+  });
+
+  it('without a primary key: identical duplicate rows each fire, edits below the newest value never re-fire', async () => {
+    const table = await newTable({ columns: 'created_at timestamp(0) not null, status text, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, status, name) VALUES ('2026-11-01 10:00:00', 'new', 'dup')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    await db.exec(`INSERT INTO ${table} (created_at, status, name) VALUES ('2026-11-01 10:00:00', 'new', 'dup'), ('2026-11-01 10:00:00', 'new', 'dup')`);
+    expect(await poll({ store, table })).toEqual(['dup', 'dup']);
+    await db.exec(`INSERT INTO ${table} (created_at, status, name) VALUES ('2026-11-01 10:00:00', 'new', 'dup')`);
+    expect(await poll({ store, table })).toEqual(['dup']);
+    expect(await poll({ store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} (created_at, status, name) VALUES ('2026-11-01 11:00:00', 'new', 'newest')`);
+    expect(await poll({ store, table })).toEqual(['newest']);
+    await db.exec(`UPDATE ${table} SET status = 'processed' WHERE name = 'dup'`);
+    expect(await poll({ store, table })).toEqual([]);
+  });
+
+  it('without a primary key: VACUUM FULL does not re-fire the tie group, and a re-inserted identical duplicate stays silent', async () => {
+    const table = await newTable({ columns: 'created_at date not null, status text, name text' });
+    await db.exec(`INSERT INTO ${table} VALUES ('2026-11-02', 'n', 'seed-a'), ('2026-11-02', 'n', 'seed-b'), ('2026-11-02', 'n', 'twin'), ('2026-11-02', 'n', 'twin')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    await db.exec(`DELETE FROM ${table} WHERE name = 'seed-a'`);
+    await db.exec(`VACUUM FULL ${table}`);
+    expect(await poll({ store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} VALUES ('2026-11-02', 'n', 'new-tie')`);
+    expect(await poll({ store, table })).toEqual(['new-tie']);
+    await db.exec(`DELETE FROM ${table} WHERE ctid = (SELECT max(ctid) FROM ${table} WHERE name = 'twin')`);
+    await db.exec(`INSERT INTO ${table} VALUES ('2026-11-02', 'n', 'twin')`);
+    expect(await poll({ store, table })).toEqual([]);
+  });
+
+  it('keeps order values and keys that contain percent signs and placeholders intact', async () => {
+    const table = await newTable({ columns: 'code text primary key, created_at text not null, name text' });
+    await db.exec(`INSERT INTO ${table} VALUES ('50%L', '2026-%I-01 %s', 'seed')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    await db.exec(`INSERT INTO ${table} VALUES ('%I%L%s', '2026-%I-01 %s', 'tie'), ('x', '2026-%I-02', 'newer')`);
+    expect(await poll({ store, table })).toEqual(['newer', 'tie']);
+    expect(await poll({ store, table })).toEqual([]);
+  });
+
+  it('continues from an old checkpoint on a microsecond timestamptz without re-firing the last row', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T10:00:00.123456Z', 'delivered')`);
+    const { store } = memoryStore();
+    await store.put('lastItem', `${new Date('2026-11-01T10:00:00.123Z').toISOString()}|0123456789abcdef0123456789abcdef`);
+    await trigger.onEnable(hookContext({ store, table, isRepublish: true }));
+    expect(await poll({ store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T10:00:00.123457Z', 'next')`);
+    expect(await poll({ store, table })).toEqual(['next']);
+  });
+
+  it('keeps the stored checkpoint small with long text primary keys in a tie group larger than the remembered keys', async () => {
+    const table = await newTable({ columns: 'code text primary key, created_at date not null, name text' });
+    await db.exec(`INSERT INTO ${table} (code, created_at, name) VALUES (repeat('s', 300), '2026-11-01', 'seed')`);
+    const { store, data } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table }));
+    await db.exec(`INSERT INTO ${table} (code, created_at, name) SELECT repeat('k', 295) || lpad(n::text, 5, '0'), '2026-11-02', 'long-' || n FROM generate_series(1, 2300) AS n`);
+    const fired: string[] = [];
+    const sizes: number[] = [];
+    for (let run = 0; run < 6; run++) {
+      fired.push(...(await poll({ store, table })));
+      sizes.push((data.get('new_row_cursor') ?? '').length * 2);
+    }
+    expect(fired).toHaveLength(2300);
+    expect(new Set(fired).size).toBe(2300);
+    expect(Math.max(...sizes)).toBeLessThan(512 * 1024);
+    await db.exec(`INSERT INTO ${table} (code, created_at, name) VALUES (repeat('z', 300), '2026-11-02', 'late-tie')`);
+    expect(await poll({ store, table })).toEqual(['late-tie']);
+  });
+
+  it('re-baselines when the table or order column changes on republish', async () => {
+    const first = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, seq int not null, name text' });
+    const other = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, name text' });
+    await db.exec(`INSERT INTO ${first} (created_at, seq, name) VALUES ('2026-11-01T10:00:00Z', 5, 'f-1')`);
+    await db.exec(`INSERT INTO ${other} (created_at, name) VALUES ('2026-11-01T09:00:00Z', 'o-1'), ('2026-11-01T12:00:00Z', 'o-2')`);
+    const { store } = memoryStore();
+    await trigger.onEnable(hookContext({ store, table: first }));
+    await trigger.onEnable(hookContext({ store, table: other, isRepublish: true }));
+    expect(await poll({ store, table: other })).toEqual([]);
+    await db.exec(`INSERT INTO ${other} (created_at, name) VALUES ('2026-11-01T13:00:00Z', 'o-3')`);
+    expect(await poll({ store, table: other })).toEqual(['o-3']);
+    await trigger.onEnable(hookContext({ store, table: first, orderBy: 'seq', isRepublish: true }));
+    expect(await poll({ store, table: first, orderBy: 'seq' })).toEqual([]);
+    expect(await poll({ store, table: first })).toEqual([]);
+    await db.exec(`INSERT INTO ${first} (created_at, seq, name) VALUES ('2026-11-01T11:00:00Z', 6, 'f-2')`);
+    expect(await poll({ store, table: first })).toEqual(['f-2']);
+  });
+
+  it('continues from a checkpoint stored by the previous version', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamptz not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T10:00:00Z', 'delivered'), ('2026-11-01T10:00:00Z', 'delivered-tie'), ('2026-11-01T11:00:00Z', 'after-checkpoint')`);
+    const legacy = `${new Date('2026-11-01T10:00:00Z').toISOString()}|0123456789abcdef0123456789abcdef`;
+    const viaRepublish = memoryStore();
+    await viaRepublish.store.put('lastItem', legacy);
+    await trigger.onEnable(hookContext({ store: viaRepublish.store, table, isRepublish: true }));
+    expect(viaRepublish.data.has('lastItem')).toBe(false);
+    expect(await poll({ store: viaRepublish.store, table })).toEqual(['after-checkpoint']);
+    expect(await poll({ store: viaRepublish.store, table })).toEqual([]);
+
+    const viaRun = memoryStore();
+    await viaRun.store.put('lastItem', legacy);
+    expect(await poll({ store: viaRun.store, table })).toEqual(['after-checkpoint']);
+    expect(viaRun.data.has('lastItem')).toBe(false);
+    expect(await poll({ store: viaRun.store, table })).toEqual([]);
+
+    const brokenLegacy = memoryStore();
+    await brokenLegacy.store.put('lastItem', 'null|2392c4f8f80f288442364be47ee962ce');
+    await trigger.onEnable(hookContext({ store: brokenLegacy.store, table, isRepublish: true }));
+    expect(await poll({ store: brokenLegacy.store, table })).toEqual([]);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-01T12:00:00Z', 'new')`);
+    expect(await poll({ store: brokenLegacy.store, table })).toEqual(['new']);
+
+    const garbageLegacy = memoryStore();
+    await garbageLegacy.store.put('lastItem', '[object Object]|0123');
+    expect(await poll({ store: garbageLegacy.store, table })).toEqual([]);
+  });
+
+  it('round-trips the checkpoint under a non-ISO DateStyle', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamp not null, day date not null, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, day, name) VALUES ('2026-02-03 10:00:00.5', '2026-02-03', 'seed')`);
+    await db.exec(`SET DateStyle = 'SQL, DMY'`);
+    try {
+      const { store } = memoryStore();
+      await trigger.onEnable(hookContext({ store, table }));
+      const day = memoryStore();
+      await trigger.onEnable(hookContext({ store: day.store, table, orderBy: 'day' }));
+      await db.exec(`INSERT INTO ${table} (created_at, day, name) VALUES ('2026-02-03 10:00:00.5', '2026-02-03', 'tie'), ('2026-03-02 09:00:00', '2026-03-02', 'later')`);
+      expect((await poll({ store, table })).sort()).toEqual(['later', 'tie']);
+      expect(await poll({ store, table })).toEqual([]);
+      expect((await poll({ store: day.store, table, orderBy: 'day' })).sort()).toEqual(['later', 'tie']);
+      expect(await poll({ store: day.store, table, orderBy: 'day' })).toEqual([]);
+    } finally {
+      await db.exec(`SET DateStyle = 'ISO, MDY'`);
+    }
+  });
+
+  it('test() returns the newest five rows with the same keys as a run() row', async () => {
+    const table = await newTable({ columns: 'id serial primary key, created_at timestamptz, name text' });
+    await db.exec(`INSERT INTO ${table} (created_at, name) SELECT timestamptz '2026-11-01T00:00:00Z' + n * interval '1 minute', 'row-' || n FROM generate_series(1, 8) AS n`);
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES (NULL, 'empty')`);
+    const { store } = memoryStore();
+    const sample = await trigger.test(hookContext({ store, table }));
+    expect(names({ events: sample })).toEqual(['row-8', 'row-7', 'row-6', 'row-5', 'row-4']);
+    await trigger.onEnable(hookContext({ store, table }));
+    await db.exec(`INSERT INTO ${table} (created_at, name) VALUES ('2026-11-02T00:00:00Z', 'real')`);
+    const [real] = await trigger.run(hookContext({ store, table }));
+    expect(pgHarness.keysOf(real)).toEqual(pgHarness.keysOf(sample[0]));
+    expect(pgHarness.keysOf(real)).toEqual(['id', 'created_at', 'name']);
+  });
+
+  it('sends every trigger query without bind parameters', async () => {
+    expect(pgHarness.state.queries.length).toBeGreaterThan(0);
+    expect(pgHarness.state.queries.filter((sql) => /\$\d/.test(sql))).toEqual([]);
+  });
+});

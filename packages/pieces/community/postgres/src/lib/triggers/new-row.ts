@@ -1,71 +1,7 @@
-
-import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty, MarkdownVariant } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import crypto from 'crypto';
+import { createTrigger, TriggerStrategy, Property, MarkdownVariant } from '@activepieces/pieces-framework';
 import { postgresAuth } from '../auth';
 import { pgClient, postgresCommon } from '../common';
-import format from 'pg-format';
-import dayjs from 'dayjs';
-
-type OrderDirection = 'ASC' | 'DESC';
-const polling: Polling<AppConnectionValueForAuthProperty<typeof postgresAuth>, {
-    table: {
-        table_schema: string,
-        table_name: string
-    }, order_by: string, order_direction: OrderDirection | undefined
-}> = {
-    strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ auth, propsValue, lastItemId }) => {
-        const client = await pgClient(auth)
-        try {
-            const lastItem = lastItemId as string;
-            const query = constructQuery({ table: propsValue.table, order_by: propsValue.order_by, lastItem: lastItem, order_direction: propsValue.order_direction })
-            const result = await client.query(query);
-            const items = result.rows.map(function (row) {
-                const rowHash = crypto.createHash('md5').update(JSON.stringify(row)).digest('hex');
-                const value = row[propsValue.order_by];
-                const orderValue = value instanceof Date && dayjs(value).isValid() ? dayjs(value).toISOString() : value;
-                return {
-                    id: orderValue + '|' + rowHash,
-                    data: row,
-                }
-            });
-
-            return items;
-        } finally {
-            await client.end();
-        }
-    }
-};
-
-function constructQuery({ table, order_by, lastItem, order_direction }: { table: { table_name: string, table_schema: string }, order_by: string, order_direction: OrderDirection | undefined, lastItem: string }): string {
-    const lastOrderKey = (lastItem ? lastItem.split('|')[0] : null);
-    if (lastOrderKey === null) {
-        switch (order_direction) {
-            case 'ASC':
-                return format(`SELECT * FROM %I.%I ORDER BY %I ASC LIMIT 5`, table.table_schema, table.table_name, order_by);
-            case 'DESC':
-                return format(`SELECT * FROM %I.%I ORDER BY %I DESC LIMIT 5`, table.table_schema, table.table_name, order_by);
-            default:
-                throw new Error(JSON.stringify({
-                    message: 'Invalid order direction',
-                    order_direction: order_direction,
-                }));
-        }
-    } else {
-        switch (order_direction) {
-            case 'ASC':
-                return format(`SELECT * FROM %I.%I WHERE %I <= %L ORDER BY %I ASC`, table.table_schema, table.table_name, order_by, lastOrderKey, order_by);
-            case 'DESC':
-                return format(`SELECT * FROM %I.%I WHERE %I >= %L ORDER BY %I DESC`, table.table_schema, table.table_name, order_by, lastOrderKey, order_by);
-            default:
-                throw new Error(JSON.stringify({
-                    message: 'Invalid order direction',
-                    order_direction: order_direction,
-                }));
-        }
-    }
-}
+import { newRowPoller, OrderDirection } from '../new-row-poller';
 
 export const newRow = createTrigger({
     name: 'new-row',
@@ -74,17 +10,17 @@ export const newRow = createTrigger({
     displayName: 'New Row',
     description: 'Triggers when a new row is added to a table',
     aiMetadata: {
-      description: 'Fires when a new row appears in a selected PostgreSQL table, detected by polling and ordering on a chosen column (such as a created timestamp or auto-incrementing ID). Each event represents one newly inserted row and carries that row\'s data.',
+      description: "Fires once for each new row in a PostgreSQL table, found by polling on an order column (a created timestamp or auto-increment ID). Each event is one row's column values. Rows that share an order value each fire; edits do not re-fire when the table has a primary key. Rows with an empty, infinite, NaN or future order value are skipped until valid; at most 500 rows per check, oldest first.",
     },
     props: {
         description: Property.MarkDown({
-            value: 'Each check reads rows in the order below and stops at the last row it already saw.',
+            value: "**How it works**\n- Each check delivers rows whose order value is newer than the last row delivered: up to 500 per check, the oldest first; the rest follow on the next check. Within a check, flows run newest first.\n- Rows that share a value each fire once. Rows with an empty, infinite or NaN value are skipped.\n- With Descending order on a date or timestamp column, a future-dated row waits until the database's current time reaches it (for columns without a time zone, the server's clock and time zone).\n\n**Limits**\n- Edits don't fire a row again when the table has a primary key. Without one, editing a row at the newest value fires it again, and deleting one of several identical rows then re-inserting it doesn't fire.\n- When more than 2,000 rows share one value, a later row with that value fires only if it sorts after the last row delivered (by primary key, or by storage position without one, so VACUUM, VACUUM FULL or CLUSTER can hide it).\n- A row whose transaction commits after a newer row was delivered can be missed.",
             variant: MarkdownVariant.INFO,
         }),
         table: postgresCommon.table,
         order_by: postgresCommon.column({
             displayName: 'Order By Column',
-            description: 'Use a created timestamp or an auto-increment ID.',
+            description: 'Use a created timestamp or an auto-increment ID. Ordering by an updated-at column runs the flow again when a row\'s value moves past the newest one.',
         }),
         order_direction: Property.StaticDropdown<OrderDirection>({
             displayName: 'Order Direction',
@@ -113,17 +49,30 @@ export const newRow = createTrigger({
     sampleData: {},
     type: TriggerStrategy.POLLING,
     async test(context) {
-        return await pollingHelper.test(polling, context);
+        const client = await pgClient(context.auth);
+        try {
+            return await newRowPoller.sample({ client, settings: { table: context.propsValue.table, orderBy: context.propsValue.order_by, direction: context.propsValue.order_direction } });
+        } finally {
+            await client.end();
+        }
     },
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, context);
+        const client = await pgClient(context.auth);
+        try {
+            await newRowPoller.enable({ client, store: context.store, isRepublish: context.isRepublish === true, settings: { table: context.propsValue.table, orderBy: context.propsValue.order_by, direction: context.propsValue.order_direction } });
+        } finally {
+            await client.end();
+        }
     },
-
     async onDisable(context) {
-        await pollingHelper.onDisable(polling, context);
+        await newRowPoller.disable({ store: context.store, isRepublish: context.isRepublish === true });
     },
-
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        const client = await pgClient(context.auth);
+        try {
+            return await newRowPoller.poll({ client, store: context.store, settings: { table: context.propsValue.table, orderBy: context.propsValue.order_by, direction: context.propsValue.order_direction } });
+        } finally {
+            await client.end();
+        }
     },
 });

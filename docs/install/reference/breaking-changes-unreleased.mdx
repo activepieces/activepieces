@@ -7,3 +7,11 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### Postgres 0.7.0: New Row no longer runs again for updated rows
+
+**New Row** now runs once per row. Before, updating a row ran the flow again for it. Rows that share the same order value as the last one delivered now run the flow instead of being skipped, rows with an empty order value are skipped instead of stopping the trigger, and timestamp columns without a time zone are compared in the database, so workers west of UTC no longer skip rows. Each check delivers at most 500 rows; the rest follow on the next checks. With Descending order on a date or timestamp column, a row dated after the database's current time waits until that time.
+
+#### What you need to do
+
+Nothing for most flows; the trigger keeps its place when upgraded. If a flow relied on New Row running again when a row is updated, use a separate trigger or schedule for updates.
