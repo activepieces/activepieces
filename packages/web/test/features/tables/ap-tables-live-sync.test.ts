@@ -382,6 +382,31 @@ describe('table live sync', () => {
   });
 });
 
+describe('rows changed since', () => {
+  it('lists the rows whose record or any cell changed at or after the time', () => {
+    const old = { ...contact({ name: 'a', email: 'a@x', updated: T1 }), id: 'r1' };
+    const edited = {
+      ...contact({ name: 'b', email: 'b@x', updated: T1 }),
+      id: 'r2',
+      cells: {
+        f1: { fieldName: 'Name', value: 'b', updated: T3, created: T1 },
+      },
+    };
+    const added = { ...contact({ name: 'c', email: 'c@x', updated: T2 }), id: 'r3' };
+    const store = createApTableStore(table, [nameField, emailField], [
+      old,
+      edited,
+      added,
+    ]);
+    const rows = store.getState().records.map((row) => row.uuid);
+
+    expect(store.getState().rowIdsChangedSince(Date.parse(T2))).toEqual([
+      rows[1],
+      rows[2],
+    ]);
+  });
+});
+
 function values(state: {
   records: { values: { value: unknown }[] }[];
 }): unknown[] {

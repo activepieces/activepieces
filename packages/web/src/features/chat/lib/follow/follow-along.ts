@@ -35,7 +35,11 @@ function onChunks({
       useFollowMemory.setState({
         toolCalls: {
           ...toolCalls,
-          [chunk.toolCallId]: { toolName: chunk.toolName, input: chunk.input },
+          [chunk.toolCallId]: {
+            toolName: chunk.toolName,
+            input: chunk.input,
+            startedAt: Date.now(),
+          },
         },
       });
       continue;
@@ -47,6 +51,9 @@ function onChunks({
       typeof chunk.toolCallId === 'string'
         ? takeToolCall(chunk.toolCallId)
         : undefined;
+    if (call && resolved.op !== 'delete') {
+      rememberEditedSince({ resource: resolved.ref, since: call.startedAt });
+    }
     if (call) {
       rememberUnseen({
         resource: resolved.ref,
@@ -222,6 +229,39 @@ function takeUnseen({
   return true;
 }
 
+function rememberEditedSince({
+  resource,
+  since,
+}: {
+  resource: ResourceRef;
+  since: number;
+}): void {
+  if (resourceRegistry.isOn(window.location.pathname, resource)) return;
+  const scope = resourceRegistry.keyOf(resource);
+  const { editedSince } = useFollowMemory.getState();
+  const earliest = Math.min(editedSince[scope] ?? since, since);
+  if (editedSince[scope] === earliest) return;
+  useFollowMemory.setState({
+    editedSince: { ...editedSince, [scope]: earliest },
+  });
+}
+
+function peekEditedSince(
+  resource: Pick<ResourceRef, 'kind' | 'id'>,
+): number | null {
+  return (
+    useFollowMemory.getState().editedSince[resourceRegistry.keyOf(resource)] ??
+    null
+  );
+}
+
+function forgetEditedSince(resource: Pick<ResourceRef, 'kind' | 'id'>): void {
+  const scope = resourceRegistry.keyOf(resource);
+  const { [scope]: known, ...rest } = useFollowMemory.getState().editedSince;
+  if (known === undefined) return;
+  useFollowMemory.setState({ editedSince: rest });
+}
+
 function highlightKeys({
   toolName,
   input,
@@ -302,7 +342,13 @@ function initialFollowState(): FollowState {
 }
 
 function initialMemory(): FollowMemory {
-  return { toolCalls: {}, unseen: {}, pushedRuns: {}, flashCount: 0 };
+  return {
+    toolCalls: {},
+    unseen: {},
+    editedSince: {},
+    pushedRuns: {},
+    flashCount: 0,
+  };
 }
 
 function onToolDone(listener: (change: FollowChange) => void): () => void {
@@ -328,6 +374,8 @@ export const followAlong = {
   claimHistoryPush,
   onToolDone,
   takeUnseen,
+  peekEditedSince,
+  forgetEditedSince,
   reset,
 };
 
@@ -349,12 +397,13 @@ export type FollowOffer = {
   conversationId: string | null;
 };
 
-type ToolCall = { toolName: string; input: unknown };
+type ToolCall = { toolName: string; input: unknown; startedAt: number };
 
 // Bookkeeping that no component renders from.
 type FollowMemory = {
   toolCalls: Record<string, ToolCall>;
   unseen: Record<string, true>;
+  editedSince: Record<string, number>;
   pushedRuns: Record<string, true>;
   flashCount: number;
 };
