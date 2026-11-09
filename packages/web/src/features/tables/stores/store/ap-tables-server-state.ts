@@ -167,7 +167,7 @@ export const createServerState = (
       clonedFields.splice(0, clonedFields.length, ...fields);
     },
     setRecords: (records: PopulatedRecord[]) => {
-      clonedRecords = JSON.parse(JSON.stringify(records));
+      clonedRecords = [...records];
     },
     fields: clonedFields,
     get records() {

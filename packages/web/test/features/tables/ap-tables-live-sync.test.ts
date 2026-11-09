@@ -138,6 +138,23 @@ describe('table live sync', () => {
     expect(values(store.getState())).toEqual(['b2', 'c']);
   });
 
+  it('keeps the untouched records as they are when a change event arrives', () => {
+    const store = createApTableStore(
+      table,
+      [nameField],
+      [record('r1', 'a'), record('r2', 'b')],
+    );
+    const untouched = store.getState().getServerRecords()[1];
+
+    store.getState().applyRecordChanges({
+      records: [record('r1', 'a2')],
+      removedIds: [],
+      since: tableSyncClock.tick(),
+    });
+
+    expect(store.getState().getServerRecords()[1]).toBe(untouched);
+  });
+
   it('reads the current server rows after a CSV import or a field delete', async () => {
     const store = createApTableStore(table, [nameField], [record('r1', 'a')]);
 
