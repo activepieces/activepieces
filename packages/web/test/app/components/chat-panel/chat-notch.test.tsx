@@ -33,7 +33,7 @@ vi.mock('@/app/components/chat-panel/chat-chrome', () => ({
 describe('ChatNotch', () => {
   beforeEach(() => {
     window.innerWidth = 1440;
-    useChatPanel.setState({ open: false, mode: 'left' });
+    useChatPanel.setState({ open: false, mode: 'left', gateOpen: false });
   });
 
   afterEach(cleanup);
@@ -52,6 +52,15 @@ describe('ChatNotch', () => {
     act(() => useChatPanel.getState().setOpen(true));
 
     expect(screen.queryByRole('button', { name: 'Chat' })).toBeNull();
+  });
+
+  it('says the chat is waiting for an answer while a card is open', () => {
+    useChatPanel.setState({ gateOpen: true });
+    renderNotch();
+
+    expect(
+      screen.getByRole('button', { name: 'Chat is waiting for your answer' }),
+    ).toBeTruthy();
   });
 
   it('comes back when the dock closes', () => {

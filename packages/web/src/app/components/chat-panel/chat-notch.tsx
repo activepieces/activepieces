@@ -43,7 +43,9 @@ export function ChatNotch({ className }: { className?: string }) {
           <TooltipTrigger asChild>
             <button
               type="button"
-              aria-label={needsYou ? t('Chat, it needs you') : t('Chat')}
+              aria-label={
+                needsYou ? t('Chat is waiting for your answer') : t('Chat')
+              }
               aria-keyshortcuts="Meta+J Control+J"
               aria-hidden={hidden || undefined}
               tabIndex={hidden ? -1 : 0}
