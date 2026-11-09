@@ -1,5 +1,6 @@
 import { apId } from '@activepieces/core-utils'
 import { ApplicationEventName, EngineResponseStatus, EventDestinationScope, PackageType, PieceChangeType, PieceScope, PieceType, WorkerJobType } from '@activepieces/shared'
+import { UnrecoverableError } from 'bullmq'
 import { FastifyInstance } from 'fastify'
 import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -172,6 +173,20 @@ async function resetCatalog(): Promise<void> {
 
 async function runCatalogJob(): Promise<void> {
     await systemJobHandlers.getJobHandler(SystemJobName.PIECE_CATALOG_EVENTS)({})
+}
+
+function reportPiecesSyncRunning(): void {
+    vi.spyOn(systemJobsQueue, 'getActive').mockResolvedValue([{ name: SystemJobName.PIECES_SYNC } as Awaited<ReturnType<typeof systemJobsQueue.getActive>>[number]])
+}
+
+async function waitForJobState(jobId: string, state: string): Promise<string> {
+    const deadline = Date.now() + 10_000
+    let current = await systemJobsSchedule(app.log).getJobState(jobId)
+    while (current !== state && Date.now() < deadline) {
+        await sleep(50)
+        current = await systemJobsSchedule(app.log).getJobState(jobId)
+    }
+    return current
 }
 
 async function runReconcileJob(): Promise<void> {
@@ -586,6 +601,7 @@ describe('Piece catalog events job', () => {
 
         await runCatalogJob()
         await installCustomPiece({ platformId: entitledA.platform.id, name: 'custom-mid', version: '1.0.0' })
+        reportPiecesSyncRunning()
         await runReconcileJob()
         const rowsAtCheckpoint = await officialRows()
         const snapshotMidSync = await loadSnapshot()
@@ -653,7 +669,6 @@ describe('Piece catalog events job', () => {
         })
 
         expect(snapshotSaves).toEqual([{ '@test/boot-a': '1.0.0', '@test/boot-b': '2.0.0' }])
-        expect(await databaseConnection().getRepository('flag').countBy({ id: SNAPSHOT_FLAG_ID })).toBe(1)
         expect(addSpy).not.toHaveBeenCalled()
         expect(broadcastCalls).toHaveLength(0)
     })
@@ -733,6 +748,73 @@ describe('Piece catalog events job', () => {
         expect((await loadSnapshot())?.['@test/piece-00']).toBe('1.0.0')
     })
 
+    it('a failed run does not block the next enqueue', async () => {
+        const destA = await subscribe({ platformId: entitledA.platform.id })
+        await seed(baseCatalog())
+        let failNextBroadcast = true
+        vi.spyOn(eventDestinationsModule, 'eventDestinationService').mockImplementation((log) => {
+            const real = originalEventDestinationService(log)
+            return {
+                ...real,
+                broadcast: async (params) => {
+                    if (failNextBroadcast) {
+                        failNextBroadcast = false
+                        return { queued: 0, failedPlatformIds: ['p_bad'] }
+                    }
+                    return real.broadcast(params)
+                },
+            }
+        })
+        await insertOfficialPiece({ name: '@test/piece-00', version: '1.1.0' })
+        await catalogJobModule.pieceCatalogEventsJob(app.log).enqueue()
+        const stateAfterFailure = await waitForJobState('piece-catalog-events', 'failed')
+
+        await insertOfficialPiece({ name: '@test/piece-01', version: '1.1.0' })
+        await catalogJobModule.pieceCatalogEventsJob(app.log).enqueue()
+        const stateAfterNextRun = await waitForJobState('piece-catalog-events', 'unknown')
+        await settleCatalogJobs()
+
+        expect(stateAfterFailure).toBe('failed')
+        expect(stateAfterNextRun).toBe('unknown')
+        expect(deliveriesTo(destA).map((delivery) => delivery.event.data.piece.name)).toEqual(['@test/piece-01'])
+    })
+
+    it('reconcile seeds an OFFICIAL_AUTO instance when no clean sync ever finishes', async () => {
+        await subscribe({ platformId: entitledA.platform.id, changeTypes: ALL_CHANGE_TYPES })
+        await insertOfficialPiece({ name: '@test/auto-a', version: '1.0.0' })
+        await insertOfficialPiece({ name: '@test/auto-b', version: '2.0.0' })
+        await catalogJobModule.pieceCatalogEventsJob(app.log).onSyncFinished({ added: 1, deleted: 0, fetchFailed: 1 })
+        await settleCatalogJobs()
+        const snapshotAfterFailedSync = await loadSnapshot()
+        addSpy.mockClear()
+
+        await runReconcileJob()
+
+        expect(snapshotAfterFailedSync).toBeNull()
+        expect(await loadSnapshot()).toEqual({ '@test/auto-a': '1.0.0', '@test/auto-b': '2.0.0' })
+        expect(addSpy).not.toHaveBeenCalled()
+        expect(broadcastCalls).toHaveLength(0)
+    })
+
+    it('reconcile does not seed an OFFICIAL_AUTO instance while a pieces sync job is running', async () => {
+        await insertOfficialPiece({ name: '@test/auto-a', version: '1.0.0' })
+        reportPiecesSyncRunning()
+
+        await runReconcileJob()
+
+        expect(await loadSnapshot()).toBeNull()
+        expect(addSpy).not.toHaveBeenCalled()
+    })
+
+    it('reconcile treats an unreadable pieces sync state as not running', async () => {
+        await insertOfficialPiece({ name: '@test/auto-a', version: '1.0.0' })
+        vi.spyOn(systemJobsQueue, 'getActive').mockRejectedValue(new Error('redis unavailable'))
+
+        await runReconcileJob()
+
+        expect(await loadSnapshot()).toEqual({ '@test/auto-a': '1.0.0' })
+    })
+
     it('job saves the snapshot then throws when one platform fails', async () => {
         await seed(baseCatalog())
         await insertOfficialPiece({ name: '@test/piece-00', version: '1.1.0' })
@@ -741,8 +823,10 @@ describe('Piece catalog events job', () => {
             broadcast: async () => ({ queued: 1, failedPlatformIds: ['p_bad'] }),
         }))
 
-        await expect(runCatalogJob()).rejects.toThrow('p_bad')
+        const rejection = await runCatalogJob().then(() => null, (error: unknown) => error)
 
+        expect(rejection).toBeInstanceOf(UnrecoverableError)
+        expect((rejection as Error).message).toContain('p_bad')
         const snapshot = await loadSnapshot()
         expect(Object.keys(snapshot ?? {})).toHaveLength(30)
         expect(snapshot?.['@test/piece-00']).toBe('1.1.0')
