@@ -1,7 +1,7 @@
 import { Permission } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
-import { useCallback, useRef, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import DataGrid, {
   DataGridHandle,
   RenderRowProps,
@@ -12,7 +12,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { useTheme } from '@/components/providers/theme-provider';
 import { aiSheen } from '@/features/chat/lib/follow/ai-sheen';
-import { useFollowAlong } from '@/features/chat/lib/follow/follow-along';
 import { aiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import {
   ApTableFooter,
@@ -25,6 +24,10 @@ import {
   ROW_HEIGHT_MAP,
   RowHeight,
 } from '@/features/tables';
+import {
+  RowSheen,
+  useRowSheen,
+} from '@/features/tables/hooks/use-row-sheen';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -57,18 +60,20 @@ const ApTableEditorPage = () => {
     state.reorderField,
   ]);
   const rowSheen = useRowSheen(records);
-  const renderRow = (
-    key: React.Key,
-    rowProps: RenderRowProps<Row, { id: string }>,
-  ) => (
-    <SheenRow
-      key={key}
-      {...rowProps}
-      rowId={rowProps.row.id}
-      sheenToken={rowSheen.pendingToken(rowProps.row.id)}
-      onSheen={rowSheen.played}
-    />
+  const { pendingToken, played } = rowSheen;
+  const renderRow = useCallback(
+    (key: React.Key, rowProps: RenderRowProps<Row, { id: string }>) => (
+      <SheenRow
+        key={key}
+        {...rowProps}
+        rowId={rowProps.row.id}
+        sheenToken={pendingToken(rowProps.row.id)}
+        onSheen={played}
+      />
+    ),
+    [pendingToken, played],
   );
+  const renderers = useMemo(() => ({ renderRow }), [renderRow]);
 
   // the lock lives in the table state provider, above the take-over refresh
   // remount boundary, so refreshing never releases the just-acquired lock
@@ -172,7 +177,7 @@ const ApTableEditorPage = () => {
               columns={columns}
               rows={rows}
               rowKeyGetter={(row: Row) => row.id}
-              renderers={{ renderRow }}
+              renderers={renderers}
               selectedRows={selectedRecords}
               onSelectedRowsChange={setSelectedRecords}
               onColumnsReorder={handleColumnsReorder}
@@ -218,33 +223,6 @@ function SheenRow({
   return <GridRow ref={ref} {...props} />;
 }
 
-function useRowSheen(records: { uuid: string }[]) {
-  const flashes = useFollowAlong((state) => state.flashes);
-  const [shown, setShown] = useState<ReadonlyMap<string, number>>(new Map());
-  const played = useCallback(
-    ({ rowId, token }: RowSheen) =>
-      setShown((previous) => new Map(previous).set(rowId, token)),
-    [],
-  );
-  const pendingToken = (rowId: string): number | null => {
-    const token = flashes[`table-row:${rowId}`];
-    return token === undefined || shown.get(rowId) === token ? null : token;
-  };
-  const firstIndex = records.findIndex(
-    (record) => pendingToken(record.uuid) !== null,
-  );
-  const firstToken =
-    firstIndex === -1 ? null : pendingToken(records[firstIndex].uuid);
-  return {
-    firstRow:
-      firstToken === null ? null : { index: firstIndex, token: firstToken },
-    pendingToken,
-    played,
-  };
-}
-
 ApTableEditorPage.displayName = 'ApTableEditorPage';
-
-type RowSheen = { rowId: string; token: number };
 
 export { ApTableEditorPage };
