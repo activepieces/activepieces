@@ -50,8 +50,12 @@ function fromPath({
       kind: 'flow',
       id: flow.params.flowId,
       projectId: flow.params.projectId,
-      ...(openFlow?.label ? { label: openFlow.label } : {}),
-      ...(openFlow?.stepName ? { stepName: openFlow.stepName } : {}),
+      ...(openFlow?.label
+        ? { label: openFlow.label.slice(0, MAX_LABEL_LENGTH) }
+        : {}),
+      ...(openFlow?.stepName
+        ? { stepName: openFlow.stepName.slice(0, MAX_STEP_NAME_LENGTH) }
+        : {}),
     };
   }
   const table = matchPath(
@@ -71,6 +75,9 @@ function fromPath({
 function inProject(route: string): string {
   return `/projects/:projectId${route}`;
 }
+
+const MAX_LABEL_LENGTH = 200;
+const MAX_STEP_NAME_LENGTH = 128;
 
 export const pageContextUtils = { current, fromPath };
 
