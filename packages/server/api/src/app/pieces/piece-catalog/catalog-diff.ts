@@ -5,7 +5,7 @@ export function diffCatalog({ snapshot, current }: { snapshot: CatalogSnapshot, 
     const nextSnapshot: CatalogSnapshot = { ...snapshot }
     const changes: CatalogChange[] = []
     for (const entry of current) {
-        const previousVersion = snapshot[entry.name] ?? null
+        const previousVersion = nextSnapshot[entry.name] ?? null
         const changeType = previousVersion === null ? 'new' : compareVersions(previousVersion, entry.version)
         if (changeType === null) {
             continue

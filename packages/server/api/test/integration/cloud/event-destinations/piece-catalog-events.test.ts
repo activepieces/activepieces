@@ -5,6 +5,7 @@ import fastify, { FastifyInstance } from 'fastify'
 import { validatorCompiler } from 'fastify-type-provider-zod'
 import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import * as redisConnectionsModule from '../../../../src/app/database/redis-connections'
 import { adminPlatformModule } from '../../../../src/app/ee/platform/admin/admin-platform.controller'
 import { eventDestinationEntitlementHooks } from '../../../../src/app/ee/platform-webhooks/event-destination-entitlement-hooks'
 import { eventDestinationHooks } from '../../../../src/app/event-destinations/event-destinations-hooks'
@@ -247,8 +248,9 @@ async function adminPublish({ name, version }: { name: string, version: string }
     return response.statusCode
 }
 
-async function insertOfficialPiece({ name, version }: { name: string, version: string }): Promise<void> {
+async function insertOfficialPiece({ name, version, platformId }: { name: string, version: string, platformId?: string }): Promise<void> {
     await pieceMetadataService(app.log).create({
+        platformId,
         pieceMetadata: {
             name,
             displayName: name.replace('@test/', ''),
@@ -822,13 +824,51 @@ describe('Piece catalog events job', () => {
         expect(addSpy).not.toHaveBeenCalled()
     })
 
-    it('reconcile treats an unreadable pieces sync state as not running', async () => {
+    it('reconcile treats an unreadable pieces sync state as running and skips the auto seed', async () => {
         await insertOfficialPiece({ name: '@test/auto-a', version: '1.0.0' })
         vi.spyOn(systemJobsQueue, 'getActive').mockRejectedValue(new Error('redis unavailable'))
 
         await runReconcileJob()
 
-        expect(await loadSnapshot()).toEqual({ '@test/auto-a': '1.0.0' })
+        expect(await loadSnapshot()).toBeNull()
+        expect(addSpy).not.toHaveBeenCalled()
+    })
+
+    it('an OFFICIAL row scoped to a platform is never announced and never enters the snapshot', async () => {
+        const destA = await subscribe({ platformId: entitledA.platform.id, changeTypes: ALL_CHANGE_TYPES })
+        await seed(baseCatalog())
+        const snapshotBefore = await loadSnapshot()
+        await insertOfficialPiece({ name: '@test/piece-00', version: '9.0.0', platformId: entitledA.platform.id })
+        await insertOfficialPiece({ name: '@test/platform-scoped', version: '1.0.0', platformId: entitledA.platform.id })
+
+        await runCatalogJob()
+
+        expect(broadcastCalls).toHaveLength(0)
+        expect(deliveriesTo(destA)).toHaveLength(0)
+        expect(await loadSnapshot()).toEqual(snapshotBefore)
+    })
+
+    it('seeding skips the catalog lock once a snapshot exists', async () => {
+        await seed(baseCatalog())
+        const snapshotBefore = await loadSnapshot()
+        const lockKeys: string[] = []
+        const originalDistributedLock = redisConnectionsModule.distributedLock
+        vi.spyOn(redisConnectionsModule, 'distributedLock').mockImplementation((log) => {
+            const real = originalDistributedLock(log)
+            return {
+                ...real,
+                runExclusive: (params) => {
+                    lockKeys.push(params.key)
+                    return real.runExclusive(params)
+                },
+            }
+        })
+
+        await withSyncMode('NONE', async () => catalogJobModule.pieceCatalogEventsJob(app.log).seedAtBootIfSyncOff())
+        await catalogJobModule.pieceCatalogEventsJob(app.log).onSyncFinished({ added: 0, deleted: 0, fetchFailed: 0 })
+
+        expect(lockKeys).not.toContain('piece-catalog-events')
+        expect(await loadSnapshot()).toEqual(snapshotBefore)
     })
 
     it('job saves the snapshot then throws when one platform fails', async () => {

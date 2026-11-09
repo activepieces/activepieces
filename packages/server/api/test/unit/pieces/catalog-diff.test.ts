@@ -80,6 +80,30 @@ describe('diffCatalog', () => {
         })
     })
 
+    it('a duplicate name compares against the version this run already took and never moves back', () => {
+        const snapshot = Object.freeze({ gmail: '1.0.0' })
+        const result = diffCatalog({ snapshot, current: [entry('gmail', '1.1.0'), entry('gmail', '1.0.5')] })
+        expect(result.changes).toEqual([{ ...entry('gmail', '1.1.0'), previousVersion: '1.0.0', changeType: 'minor' }])
+        expect(result.nextSnapshot).toEqual({ gmail: '1.1.0' })
+        expect(snapshot).toEqual({ gmail: '1.0.0' })
+    })
+
+    it('does not mutate the input snapshot', () => {
+        const snapshot = { gmail: '1.0.0' }
+        diffCatalog({ snapshot, current: [entry('gmail', '2.0.0'), entry('slack', '0.1.0')] })
+        expect(snapshot).toEqual({ gmail: '1.0.0' })
+    })
+
+    it('pre-release 1.0.0-rc.1 → 1.0.0 is major', () => {
+        const result = diffCatalog({ snapshot: { gmail: '1.0.0-rc.1' }, current: [entry('gmail', '1.0.0')] })
+        expect(result.changes).toEqual([{ ...entry('gmail', '1.0.0'), previousVersion: '1.0.0-rc.1', changeType: 'major' }])
+    })
+
+    it('pre-release 1.2.3-rc.1 → 1.2.3 is patch', () => {
+        const result = diffCatalog({ snapshot: { gmail: '1.2.3-rc.1' }, current: [entry('gmail', '1.2.3')] })
+        expect(result.changes).toEqual([{ ...entry('gmail', '1.2.3'), previousVersion: '1.2.3-rc.1', changeType: 'patch' }])
+    })
+
     it('output order is by piece name', () => {
         const result = diffCatalog({ snapshot: {}, current: [entry('slack', '0.2.0'), entry('gmail', '0.1.0')] })
         expect(result.changes.map((change) => change.name)).toEqual(['gmail', 'slack'])
