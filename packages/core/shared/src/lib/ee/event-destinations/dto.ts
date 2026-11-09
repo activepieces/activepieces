@@ -63,7 +63,7 @@ export const EventDestinationFilters = z.object({
 
 export type EventDestinationFilters = z.infer<typeof EventDestinationFilters>
 
-export const DEFAULT_PIECE_CHANGE_TYPES: PieceChangeType[] = ['new', 'major', 'minor']
+export const DEFAULT_PIECE_CHANGE_TYPES: readonly PieceChangeType[] = ['new', 'major', 'minor']
 
 export const ListPlatformEventDestinationsRequestBody = z.object({
     cursor: z.string().optional(),
