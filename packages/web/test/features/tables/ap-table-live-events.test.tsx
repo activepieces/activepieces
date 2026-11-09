@@ -10,9 +10,10 @@ import {
   TableRecordsChangedEvent,
   TableRecordsChangeOp,
   WebsocketClientEvent,
+  WebsocketServerEvent,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { followAlong } from '@/features/chat/lib/follow/follow-along';
@@ -27,17 +28,28 @@ import { editorSession } from '@/lib/editor-session';
 
 const socket = vi.hoisted(() => {
   const handlers = new Map<string, (payload?: unknown) => void>();
-  return {
-    handlers,
+  const sent: SentEvent[] = [];
+  const client = {
+    connected: false,
     on: (name: string, handler: (payload?: unknown) => void) =>
       handlers.set(name, handler),
     off: (name: string) => handlers.delete(name),
-    emit: (name: string, payload?: unknown) => handlers.get(name)?.(payload),
+    emit: (name: string, payload: unknown, ack?: Ack) =>
+      sent.push({ name, payload, ack }),
+    timeout: () => client,
   };
+  const serverSends = (name: string, payload?: unknown) =>
+    handlers.get(name)?.(payload);
+  const reset = () => {
+    handlers.clear();
+    sent.splice(0);
+    client.connected = false;
+  };
+  return { client, sent, serverSends, reset };
 });
 
 vi.mock('@/components/providers/socket-provider', () => ({
-  useSocket: () => socket,
+  useSocket: () => socket.client,
 }));
 vi.mock('@/features/chat/lib/follow/follow-along', () => ({
   followAlong: { flash: vi.fn(), isFollowing: vi.fn(() => true) },
@@ -61,11 +73,13 @@ describe('open table live events', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
+    socket.reset();
     queryClient = new QueryClient();
     vi.spyOn(queryClient, 'invalidateQueries');
   });
 
   afterEach(() => {
+    cleanup();
     vi.mocked(followAlong.flash).mockClear();
     vi.mocked(recordsApi.list).mockClear();
     vi.mocked(recordsApi.getById).mockClear();
@@ -78,11 +92,13 @@ describe('open table live events', () => {
       tableId: 't1',
       op: TableRecordsChangeOp.UPDATED,
       records: [record('r1', 'new')],
+      editorSessionId: null,
     });
     await receive({
       tableId: 't1',
       op: TableRecordsChangeOp.CREATED,
       records: [record('r3', 'c')],
+      editorSessionId: null,
     });
 
     expect(rows()).toEqual(['new', 'b', 'c']);
@@ -102,10 +118,15 @@ describe('open table live events', () => {
       tableId: 't1',
       op: TableRecordsChangeOp.DELETED,
       recordIds: ['r1'],
+      editorSessionId: null,
     });
     expect(rows()).toEqual(['b']);
 
-    await receive({ tableId: 't1', op: TableRecordsChangeOp.CLEARED });
+    await receive({
+      tableId: 't1',
+      op: TableRecordsChangeOp.CLEARED,
+      editorSessionId: null,
+    });
     expect(rows()).toEqual([]);
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
@@ -122,7 +143,11 @@ describe('open table live events', () => {
     });
     expect(rows()).toEqual(['old', 'b', 'draft']);
 
-    await receive({ tableId: 't1', op: TableRecordsChangeOp.CLEARED });
+    await receive({
+      tableId: 't1',
+      op: TableRecordsChangeOp.CLEARED,
+      editorSessionId: null,
+    });
 
     expect(rows()).toEqual([]);
   });
@@ -144,7 +169,11 @@ describe('open table live events', () => {
   it('refetches the records once for a reload', async () => {
     mount(queryClient);
 
-    await receive({ tableId: 't1', op: TableRecordsChangeOp.RELOAD });
+    await receive({
+      tableId: 't1',
+      op: TableRecordsChangeOp.RELOAD,
+      editorSessionId: null,
+    });
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(1);
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
@@ -166,14 +195,79 @@ describe('open table live events', () => {
     expect(rows()).toEqual(['reloaded']);
   });
 
-  it('refreshes the open table once after the socket reconnects', () => {
+  it('refetches the fields when the chat changes the columns', async () => {
     mount(queryClient);
-    socket.emit('connect');
-    expect(
-      vi
-        .mocked(queryClient.invalidateQueries)
-        .mock.calls.map(([filters]) => filters?.queryKey),
-    ).toEqual([
+
+    await receive({
+      tableId: 't1',
+      op: TableRecordsChangeOp.FIELDS_CHANGED,
+      editorSessionId: null,
+    });
+
+    expect(invalidatedKeys(queryClient)).toEqual([['fields', 't1']]);
+  });
+
+  it('refetches the fields when a row names a column it does not know', async () => {
+    mount(queryClient);
+
+    await receive({
+      tableId: 't1',
+      op: TableRecordsChangeOp.UPDATED,
+      records: [
+        {
+          ...record('r1', 'new'),
+          cells: {
+            ...record('r1', 'new').cells,
+            f2: { fieldName: 'Email', value: 'a@b.c', updated: '', created: '' },
+          },
+        },
+      ],
+      editorSessionId: null,
+    });
+
+    expect(invalidatedKeys(queryClient)).toEqual([['fields', 't1']]);
+  });
+
+  it('joins the table room on open and leaves it on close', () => {
+    socket.client.connected = true;
+    const { unmount } = mount(queryClient);
+
+    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE]);
+    expect(socket.sent[0].payload).toEqual({ tableId: 't1' });
+
+    unmount();
+
+    expect(sentNames()).toEqual([
+      WebsocketServerEvent.JOIN_TABLE,
+      WebsocketServerEvent.LEAVE_TABLE,
+    ]);
+    expect(socket.sent[1].payload).toEqual({ tableId: 't1' });
+  });
+
+  it('refetches the table once the room is joined, so changes made while it loaded are not lost', () => {
+    socket.client.connected = true;
+    mount(queryClient);
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+
+    act(() => socket.sent[0].ack?.(null));
+
+    expect(invalidatedKeys(queryClient)).toEqual([
+      ['table', 't1'],
+      ['fields', 't1'],
+      ['records', 't1'],
+    ]);
+  });
+
+  it('rejoins the room after a reconnect and refetches only after the join is acknowledged', () => {
+    mount(queryClient);
+
+    socket.serverSends('connect');
+    expect(sentNames()).toEqual([WebsocketServerEvent.JOIN_TABLE]);
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+
+    act(() => socket.sent[0].ack?.(null));
+
+    expect(invalidatedKeys(queryClient)).toEqual([
       ['table', 't1'],
       ['fields', 't1'],
       ['records', 't1'],
@@ -181,9 +275,19 @@ describe('open table live events', () => {
   });
 });
 
+function sentNames(): string[] {
+  return socket.sent.map(({ name }) => name);
+}
+
+function invalidatedKeys(queryClient: QueryClient): unknown[] {
+  return vi
+    .mocked(queryClient.invalidateQueries)
+    .mock.calls.map(([filters]) => filters?.queryKey);
+}
+
 async function receive(event: TableRecordsChangedEvent) {
   await act(async () => {
-    socket.emit(WebsocketClientEvent.TABLE_RECORDS_CHANGED, event);
+    socket.serverSends(WebsocketClientEvent.TABLE_RECORDS_CHANGED, event);
     await settle();
   });
 }
@@ -202,7 +306,7 @@ function mount(queryClient: QueryClient) {
     state = useTableState((current) => current);
     return null;
   }
-  render(
+  const { unmount } = render(
     <QueryClientProvider client={queryClient}>
       <TableStateProviderWithTable
         table={table}
@@ -214,6 +318,7 @@ function mount(queryClient: QueryClient) {
     </QueryClientProvider>,
   );
   return {
+    unmount,
     rows: () => rows,
     store: () => {
       if (state === null) throw new Error('table not mounted');
@@ -255,3 +360,7 @@ const nameField: Field = {
   externalId: 'x1',
   position: 0,
 };
+
+type Ack = (error: Error | null, response?: unknown) => void;
+
+type SentEvent = { name: string; payload: unknown; ack?: Ack };
