@@ -3,6 +3,7 @@ import { PieceMetadata } from '../../../packages/pieces/framework/src';
 import { StatusCodes } from 'http-status-codes';
 import { HttpHeader } from '../../../packages/pieces/common/src';
 import { AP_CLOUD_API_BASE, findNewPieces, pieceMetadataExists } from '../utils/piece-script-utils';
+import { npmTarball } from '../utils/npm-tarball';
 import { chunk } from '@activepieces/core-utils';
 assert(process.env['AP_CLOUD_API_KEY'], 'API Key is not defined');
 
@@ -31,7 +32,7 @@ const insertPieceMetadata = async (
 
 
 
-const insertMetadataIfNotExist = async (pieceMetadata: PieceMetadata) => {
+const insertMetadataIfNotExist = async (pieceMetadata: PieceMetadata): Promise<boolean> => {
   console.info(
     `insertMetadataIfNotExist, name: ${pieceMetadata.name}, version: ${pieceMetadata.version}`
   );
@@ -43,18 +44,26 @@ const insertMetadataIfNotExist = async (pieceMetadata: PieceMetadata) => {
 
   if (metadataAlreadyExist) {
     console.info(`insertMetadataIfNotExist, piece metadata already inserted`);
-    return;
+    return true;
+  }
+
+  if (!await npmTarball.waitUntilDownloadable(pieceMetadata)) {
+    return false;
   }
 
   await insertPieceMetadata(pieceMetadata);
+  return true;
 };
 
-const insertMetadata = async (piecesMetadata: PieceMetadata[]) => {
+const insertMetadata = async (piecesMetadata: PieceMetadata[]): Promise<PieceMetadata[]> => {
+  const notDownloadable: PieceMetadata[] = []
   const batches = chunk(piecesMetadata, 30)
   for (const batch of batches) {
-    await Promise.all(batch.map(insertMetadataIfNotExist))
+    const ready = await Promise.all(batch.map(insertMetadataIfNotExist))
+    notDownloadable.push(...batch.filter((_, index) => !ready[index]))
     await new Promise(resolve => setTimeout(resolve, 5000))
   }
+  return notDownloadable
 };
 
 const main = async () => {
@@ -69,9 +78,16 @@ const main = async () => {
     }
   }
 
-  await insertMetadata(pieces)
+  const notDownloadable = await insertMetadata(pieces)
 
-  if (failures.length > 0) {
+  if (notDownloadable.length > 0) {
+    console.error(`update pieces metadata: ${notDownloadable.length} piece(s) skipped, npm tarball never became downloadable:`)
+    for (const piece of notDownloadable) {
+      console.error(`  - ${piece.name}@${piece.version}`)
+    }
+  }
+
+  if (failures.length > 0 || notDownloadable.length > 0) {
     process.exit(1)
   }
 
