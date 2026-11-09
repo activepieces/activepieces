@@ -30,7 +30,11 @@ describe('pageContextUtils.fromPath', () => {
   it('cuts a long flow name and step name to what the server accepts', () => {
     const context = pageContextUtils.fromPath({
       pathname: '/projects/p1/flows/f1',
-      builder: { flowId: 'f1', label: 'L'.repeat(250), stepName: 's'.repeat(150) },
+      builder: {
+        flowId: 'f1',
+        label: 'L'.repeat(250),
+        stepName: 's'.repeat(150),
+      },
     });
 
     expect(context?.label).toHaveLength(200);
