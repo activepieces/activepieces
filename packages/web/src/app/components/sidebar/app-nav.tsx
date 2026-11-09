@@ -15,7 +15,6 @@ import {
   Lock,
   Shield,
   SlidersHorizontal,
-  SquarePen,
   Unplug,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -24,6 +23,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   DropdownMenu,
@@ -120,7 +120,7 @@ function DriversGroup() {
             <ApSidebarItem
               type="link"
               to="/chat"
-              icon={SquarePen}
+              icon={ChatSparkIcon}
               label={t('Chat')}
               onClick={() =>
                 window.dispatchEvent(new Event(chatUtils.newChatEvent))

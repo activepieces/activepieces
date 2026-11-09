@@ -23,9 +23,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/providers/embed-provider';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -301,14 +299,25 @@ export const projectCollectionUtils = {
     );
   },
   useHasAccessToProject: (projectId: string) => {
-    const { data } = useLiveSuspenseQuery((q) =>
-      q
-        .from({ project: projectCollection })
-        .where(({ project }) => eq(project.id, projectId))
-        .select(({ project }) => ({ ...project }))
-        .findOne(),
+    const { data } = useLiveSuspenseQuery(
+      (q) =>
+        q
+          .from({ project: projectCollection })
+          .where(({ project }) => eq(project.id, projectId))
+          .select(({ project }) => ({ ...project }))
+          .findOne(),
+      [projectId],
     );
     return !isNil(data);
+  },
+  useAdoptProject: (projectId: string): boolean => {
+    const hasAccess = projectCollectionUtils.useHasAccessToProject(projectId);
+    useEffect(() => {
+      if (hasAccess) {
+        authenticationSession.switchToProject(projectId);
+      }
+    }, [hasAccess, projectId]);
+    return hasAccess;
   },
 };
 
@@ -327,31 +336,6 @@ export const projectHooks = {
         return api.get<ProjectWithLimitsWithPlatform[]>('/v1/platforms');
       },
     });
-  },
-  useReloadPageIfProjectIdChanged: (projectId: string) => {
-    const { embedState } = useEmbedding();
-    const location = useLocation();
-    useEffect(() => {
-      const handleVisibilityChange = () => {
-        const currentProjectId = authenticationSession.getProjectId();
-        const isTemplateRoute = location.pathname.startsWith('/templates');
-        if (
-          currentProjectId !== projectId &&
-          document.visibilityState === 'visible' &&
-          !embedState.isEmbedded &&
-          !isTemplateRoute
-        ) {
-          window.location.reload();
-        }
-      };
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      return () => {
-        document.removeEventListener(
-          'visibilitychange',
-          handleVisibilityChange,
-        );
-      };
-    }, [projectId, embedState.isEmbedded, location.pathname]);
   },
 };
 

@@ -30,8 +30,8 @@ vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
     useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
   },
 }));
-vi.mock('@/app/components/platform-layout', () => ({
-  PlatformLayout: ({ children }: React.PropsWithChildren) => <>{children}</>,
+vi.mock('@/app/guards/platform-admin-guard', () => ({
+  PlatformAdminGuard: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));
 vi.mock('@/app/components/page-title', () => ({
   PageTitle: ({ children }: React.PropsWithChildren) => <>{children}</>,

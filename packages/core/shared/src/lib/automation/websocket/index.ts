@@ -32,6 +32,7 @@ export enum WebsocketServerEvent {
     UNLOCK_RESOURCE = 'UNLOCK_RESOURCE',
     JOIN_PRESENCE = 'JOIN_PRESENCE',
     LEAVE_PRESENCE = 'LEAVE_PRESENCE',
+    SWITCH_PROJECT = 'SWITCH_PROJECT',
 }
 
 export const LockResourceRequest = z.object({
@@ -79,6 +80,14 @@ export const FlowDraftUpdatedEvent = z.object({
     editorSessionId: z.string().nullable(),
 })
 
+export const SwitchProjectRequest = z.object({
+    projectId: z.string(),
+})
+
+export const SwitchProjectResponse = z.object({
+    success: z.boolean(),
+})
+
 export const EDITOR_SESSION_ID_HEADER = 'x-ap-editor-session-id'
 
 export type LockResourceRequest = z.infer<typeof LockResourceRequest>
@@ -91,3 +100,5 @@ export type PresenceRequest = z.infer<typeof PresenceRequest>
 export type PresenceUser = z.infer<typeof PresenceUser>
 export type PresenceUpdatedEvent = z.infer<typeof PresenceUpdatedEvent>
 export type FlowDraftUpdatedEvent = z.infer<typeof FlowDraftUpdatedEvent>
+export type SwitchProjectRequest = z.infer<typeof SwitchProjectRequest>
+export type SwitchProjectResponse = z.infer<typeof SwitchProjectResponse>

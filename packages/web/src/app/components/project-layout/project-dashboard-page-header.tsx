@@ -40,8 +40,14 @@ export const ProjectDashboardPageHeader = ({
 }) => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [inviteOpenFor, setInviteOpenFor] = useState<string | null>(null);
+  const [settingsOpenFor, setSettingsOpenFor] = useState<string | null>(null);
+  const inviteOpen = inviteOpenFor === project.id;
+  const settingsOpen = settingsOpenFor === project.id;
+  const setInviteOpen = (open: boolean) =>
+    setInviteOpenFor(open ? project.id : null);
+  const setSettingsOpen = (open: boolean) =>
+    setSettingsOpenFor(open ? project.id : null);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
     'general' | 'members' | 'alerts' | 'pieces' | 'environment'
   >('general');
