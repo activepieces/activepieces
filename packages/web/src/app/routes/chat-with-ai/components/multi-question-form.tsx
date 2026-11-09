@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
@@ -64,7 +65,11 @@ export function MultiQuestionForm({
 
   useEffect(() => {
     const target = firstOptionRef.current;
-    if (target && lastFocusedElRef.current !== target) {
+    if (
+      target &&
+      lastFocusedElRef.current !== target &&
+      !chatDom.composerFocused()
+    ) {
       target.focus({ preventScroll: true });
       lastFocusedElRef.current = target;
     }
@@ -84,7 +89,7 @@ export function MultiQuestionForm({
 
   function setFirstOptionEl(el: HTMLDivElement | null) {
     firstOptionRef.current = el;
-    if (el && lastFocusedElRef.current !== el) {
+    if (el && lastFocusedElRef.current !== el && !chatDom.composerFocused()) {
       el.focus({ preventScroll: true });
       lastFocusedElRef.current = el;
     }
@@ -416,10 +421,7 @@ function ChoiceBody({
                     }
                   }}
                   className={cn(
-                    'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 outline-none',
-                    focusedRow === i &&
-                      !selected &&
-                      'bg-gray-3 hover:bg-gray-4',
+                    'group flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-normal cursor-pointer transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-8',
                     selected && 'bg-gray-4 hover:bg-gray-5',
                   )}
                 >
@@ -427,7 +429,7 @@ function ChoiceBody({
                     <OptionIcon
                       piece={option.piece}
                       icon={option.icon}
-                      selected={selected || focusedRow === i}
+                      selected={selected}
                       variant="list"
                     />
                   ) : (
@@ -435,7 +437,6 @@ function ChoiceBody({
                       aria-hidden
                       className={cn(
                         'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors duration-(--dur-micro) ease-[ease]',
-                        focusedRow === i && 'bg-gray-12 text-gray-1',
                         selected && 'bg-gray-12 text-gray-1',
                       )}
                     >
