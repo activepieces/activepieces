@@ -256,7 +256,12 @@ export function FlowsDetails({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div
+        className={cn(
+          'flex items-center gap-3 flex-wrap',
+          DASHBOARD_CONTENT_PADDING_X,
+        )}
+      >
         <div className="relative w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11" />
           <Input
@@ -284,11 +289,10 @@ export function FlowsDetails({
           <TooltipTrigger asChild>
             <Button
               variant="outline"
-              size="sm"
               onClick={() => exportFlowDetailsCsv([...filters.filteredData])}
               disabled={filters.filteredData.length === 0}
             >
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="h-4 w-4" />
               {t('Download')}
             </Button>
           </TooltipTrigger>
@@ -297,7 +301,7 @@ export function FlowsDetails({
       </div>
 
       {flowsMissingTimeSaved > 0 && (
-        <div className="flex mx-3 items-start justify-between gap-3 p-4 rounded-xl border border-warning-7 bg-warning-3">
+        <div className="flex mx-4 items-start justify-between gap-3 p-4 rounded-xl border border-warning-7 bg-warning-3">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-warning-11 shrink-0 mt-0.5" />
             <div className="flex flex-col gap-1">
