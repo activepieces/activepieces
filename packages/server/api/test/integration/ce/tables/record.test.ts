@@ -303,7 +303,7 @@ describe('Record API', () => {
 
         it('should add new cell to existing record (upsert)', async () => {
             const ctx = await setup()
-            const { table } = await createTableWithField(ctx)
+            const { table, field } = await createTableWithField(ctx)
             const field2 = createMockField({ tableId: table.id, projectId: ctx.project.id })
             field2.type = FieldType.TEXT
             await db.save('field', field2)
