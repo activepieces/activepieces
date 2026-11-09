@@ -244,7 +244,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const previousMessages = history.messages as ModelMessage[]
         const leadingNotes = [
             agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) }),
-            agentPageContextNote.build({ pageContext: input.pageContext }),
+            await agentPageContextNote.build({ pageContext: input.pageContext, log }),
         ].filter((note): note is string => !isNil(note))
         const newUserContent = leadingNotes.reduceRight<UserContent>((content, note) => withLeadingNote({ content, note }), userContent)
         const newUserMessage: ModelMessage = { role: 'user' as const, content: newUserContent }

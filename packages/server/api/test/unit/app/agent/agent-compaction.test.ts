@@ -333,7 +333,7 @@ describe('agentCompaction with reserved tokens', () => {
 
     it('leaves the page context note of a user message out of the summary request', async () => {
         const messages: ModelMessage[] = [
-            { role: 'user', content: [{ type: 'text', text: '[Page context] The user is looking at flow "Leads" (id f1) in project p1.' }, { type: 'text', text: 'RENAME-THE-FLOW' }] },
+            { role: 'user', content: [{ type: 'text', text: '[Page context] When the user sent this message, they were looking at flow "Leads" (id f1) in project p1. They may be on another page now.' }, { type: 'text', text: 'RENAME-THE-FLOW' }] },
             ...Array.from({ length: 19 }, (_, i) => ({
                 role: i % 2 === 0 ? 'assistant' as const : 'user' as const,
                 content: i % 2 === 0 ? 'Noted.' : 'x'.repeat(29_000),
