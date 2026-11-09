@@ -115,6 +115,19 @@ describe('follow-along offer row', () => {
     expect(openBeside).not.toHaveBeenCalled();
   });
 
+  it('keeps the page in place while focus moves to the offer to answer it', () => {
+    renderChat();
+    screen.getByLabelText('Page field').focus();
+    aiEditsTable();
+    const stay = screen.getByRole('button', { name: 'Stay here' });
+
+    act(() => stay.focus());
+    fireEvent.click(stay);
+
+    expect(openBeside).not.toHaveBeenCalled();
+    expect(useFollowAlong.getState().following).toBe(false);
+  });
+
   it('waits for a quick press on the page without showing the offer', () => {
     renderChat();
     const page = screen.getByText('Page');

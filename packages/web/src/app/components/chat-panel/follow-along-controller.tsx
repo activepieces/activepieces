@@ -145,6 +145,7 @@ export function FollowAlongController() {
         followAlong.dismissOffer();
         return true;
       }
+      if (latest.offer !== null && chatDom.inChat(focused)) return false;
       if (
         pageFocus.isBusyIn(focused) ||
         followHold.holds({ fullPage: chatPanelUtils.isFullPage() })
