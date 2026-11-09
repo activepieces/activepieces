@@ -7,7 +7,7 @@ import {
   UserInvitationWithLink,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, DownloadIcon } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
@@ -140,6 +140,7 @@ const InviteUserDialogInternal = ({
     ApFlagId.SMTP_CONFIGURED,
   );
   const { refetch } = userInvitationsHooks.useInvitations();
+  const queryClient = useQueryClient();
   const { project } = projectCollectionUtils.useCurrentProjectOrNull();
   const { checkAccess } = useAuthorization();
   const location = useLocation();
@@ -213,6 +214,7 @@ const InviteUserDialogInternal = ({
         toast.success(toastMessage, { duration: 3000 });
       }
       refetch();
+      void queryClient.invalidateQueries({ queryKey: ['platform'] });
       onInviteSuccess?.();
     },
     onError: (error) => {
