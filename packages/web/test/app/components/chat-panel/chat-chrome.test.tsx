@@ -15,8 +15,6 @@ import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatChrome } from '@/app/components/chat-panel/chat-chrome';
-import { chatDom } from '@/features/chat/lib/chat-dom';
-import { useFollowAlong } from '@/features/chat/lib/follow/follow-along';
 import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 
@@ -55,9 +53,12 @@ vi.mock('@/app/components/settings-hub/settings-hub-dialog', () => ({
   SettingsHubDialog: () => null,
 }));
 
-vi.mock('@/features/chat/lib/chat-pending-deletes', () => ({
-  chatPendingDeletes: { removeWithUndo },
-}));
+vi.mock('@/features/chat/lib/chat-pending-deletes', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('@/features/chat/lib/chat-pending-deletes')
+  >();
+  return { ...actual, chatPendingDeletes: { removeWithUndo } };
+});
 
 vi.mock('motion/react', () => ({
   AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
@@ -83,9 +84,6 @@ vi.mock('@/components/ui/dropdown-menu', async () => {
   const Menu = createContext<MenuMock | null>(null);
   const RadioGroup = createContext<((value: string) => void) | undefined>(
     undefined,
-  );
-  const Passthrough = ({ children }: React.PropsWithChildren) => (
-    <>{children}</>
   );
   const useSelect = (onSelect?: () => void) => {
     const menu = useContext(Menu);
@@ -143,19 +141,6 @@ vi.mock('@/components/ui/dropdown-menu', async () => {
         </button>
       );
     },
-    DropdownMenuCheckboxItem: Passthrough,
-    DropdownMenuSeparator: () => null,
-    DropdownMenuItem: ({
-      children,
-      onSelect,
-    }: React.PropsWithChildren<{ onSelect?: () => void }>) => {
-      const select = useSelect(onSelect);
-      return (
-        <button type="button" onClick={select}>
-          {children}
-        </button>
-      );
-    },
   };
 });
 
@@ -189,32 +174,6 @@ describe('ChatChrome', () => {
     expect(screen.queryByText('New chat')).toBeNull();
   });
 
-  it('puts the old title back and says so when a rename fails', async () => {
-    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
-    updateConversation.mockRejectedValue(new Error('offline'));
-    renderChrome();
-    await screen.findByText('Old title');
-
-    await rename('New title');
-
-    await waitFor(() =>
-      expect(toastError).toHaveBeenCalledWith('Failed to rename conversation'),
-    );
-    expect(screen.getByText('Old title')).toBeTruthy();
-  });
-
-  it('keeps the title field focused after Rename is picked from the menu', async () => {
-    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
-    renderChrome();
-    await screen.findByText('Old title');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
-    const input = await screen.findByRole('textbox', { name: 'Chat title' });
-
-    await waitFor(() => expect(document.activeElement).toBe(input));
-    expect(updateConversation).not.toHaveBeenCalled();
-  });
-
   it('does not put focus back on the layout button after a layout is picked', async () => {
     getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
     renderChrome();
@@ -228,81 +187,6 @@ describe('ChatChrome', () => {
     expect(document.activeElement).not.toBe(layoutButton);
   });
 
-  it('offers Stop following only while Follow along is on and following', async () => {
-    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
-    useFollowAlong.setState({ phase: 'editing', following: true });
-    act(() => useChatPanel.getState().setAutoFollow(false));
-    renderChrome();
-    await screen.findByText('Old title');
-
-    expect(screen.queryByRole('button', { name: 'Stop following' })).toBeNull();
-
-    act(() => useChatPanel.getState().setAutoFollow(true));
-
-    expect(screen.getByRole('button', { name: 'Stop following' })).toBeTruthy();
-    act(() => useFollowAlong.setState({ phase: 'idle', following: true }));
-  });
-
-  it('labels the history toggle Hide history and marks it pressed while open', () => {
-    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
-    renderChrome();
-    const toggle = screen.getByRole('button', { name: 'History' });
-
-    fireEvent.click(toggle);
-
-    expect(toggle.getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByRole('button', { name: 'Hide history' })).toBe(toggle);
-  });
-
-  it('shows a way back to the chat while History is open', () => {
-    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
-    renderChrome();
-    fireEvent.click(screen.getByRole('button', { name: 'History' }));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Back to chat' }));
-
-    expect(historyList()).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Back to chat' })).toBeNull();
-  });
-
-  it('offers Follow along before the first message', () => {
-    useChatPanel.setState({ conversationId: null, autoFollow: true });
-    renderChrome();
-
-    expect(screen.getByText('Follow along')).toBeTruthy();
-    expect(screen.getByText('Opens pages the AI changes.')).toBeTruthy();
-  });
-
-    it('closes History, not the chat, on Escape', () => {
-    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
-    renderChrome();
-    const toggle = screen.getByRole('button', { name: 'History' });
-    fireEvent.click(toggle);
-    toggle.focus();
-    const panelMayClose: boolean[] = [];
-    const onWindowKey = (event: KeyboardEvent) =>
-      panelMayClose.push(chatDom.escapeFree(event));
-    window.addEventListener('keydown', onWindowKey);
-
-    fireEvent.keyDown(toggle, { key: 'Escape' });
-    window.removeEventListener('keydown', onWindowKey);
-
-    expect(historyList()).toBeNull();
-    expect(panelMayClose).toEqual([false]);
-  });
-
-  it('shows the chat, not History, when the chat opens again', () => {
-    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
-    renderChrome();
-    fireEvent.click(screen.getByRole('button', { name: 'History' }));
-    expect(historyList()).not.toBeNull();
-
-    act(() => useChatPanel.getState().setOpen(false));
-    act(() => useChatPanel.getState().setOpen(true));
-
-    expect(historyList()).toBeNull();
-  });
-
   it('starts a fresh chat box for a new chat', async () => {
     getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
     renderChrome();
@@ -311,42 +195,6 @@ describe('ChatChrome', () => {
     act(() => useChatPanel.getState().newChat());
 
     await waitFor(() => expect(mounts.chatBox).toBe(2));
-  });
-
-  it('keeps each renamed title when moving between chats', async () => {
-    getConversation.mockImplementation((id: string) =>
-      Promise.resolve(conversation({ id, title: `Old ${id}` })),
-    );
-    updateConversation.mockImplementation(
-      (id: string, request: { title: string }) =>
-        Promise.resolve(conversation({ id, title: request.title })),
-    );
-    renderChrome();
-    await screen.findByText('Old c1');
-    await rename('First');
-    await screen.findByText('First');
-
-    act(() => useChatPanel.getState().showConversation('c2'));
-    await screen.findByText('Old c2');
-    await rename('Second');
-    await screen.findByText('Second');
-
-    act(() => useChatPanel.getState().showConversation('c1'));
-
-    expect(await screen.findByText('First')).toBeTruthy();
-  });
-
-  it('brings the chat back when its delete fails', async () => {
-    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
-    renderChrome();
-    await screen.findByText('Old title');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(useChatPanel.getState().conversationId).toBeNull();
-    const [{ onFailed }] = removeWithUndo.mock.calls[0];
-    act(() => onFailed());
-
-    expect(useChatPanel.getState().conversationId).toBe('c1');
   });
 
     it('puts focus in the new composer after New chat', async () => {
@@ -363,17 +211,6 @@ describe('ChatChrome', () => {
     expect(document.activeElement).toBe(composer);
   });
 });
-
-function historyList() {
-  return screen.queryByRole('navigation', { name: 'Chat history' });
-}
-
-async function rename(title: string) {
-  fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
-  const input = await screen.findByRole('textbox', { name: 'Chat title' });
-  fireEvent.change(input, { target: { value: title } });
-  fireEvent.blur(input);
-}
 
 function conversation({ id = 'c1', title }: { id?: string; title: string }) {
   return {

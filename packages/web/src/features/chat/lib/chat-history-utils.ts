@@ -93,6 +93,20 @@ function showsSearch({
   return total > SEARCH_THRESHOLD || query.length > 0;
 }
 
+function filterByTitle({
+  conversations,
+  query,
+}: {
+  conversations: AgentConversation[];
+  query: string;
+}): AgentConversation[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return conversations;
+  return conversations.filter((conversation) =>
+    (conversation.title ?? '').toLowerCase().includes(needle),
+  );
+}
+
 const GROUP_ORDER: ChatHistoryGroupId[] = [
   'today',
   'yesterday',
@@ -107,6 +121,7 @@ export const chatHistoryUtils = {
   groupByDay,
   shortTime,
   showsSearch,
+  filterByTitle,
   SEARCH_THRESHOLD,
 };
 

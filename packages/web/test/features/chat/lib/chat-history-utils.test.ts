@@ -1,3 +1,4 @@
+import { AgentConversation, AgentRunSource } from '@activepieces/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { chatHistoryUtils } from '@/features/chat/lib/chat-history-utils';
@@ -35,6 +36,33 @@ describe('chatHistoryUtils.showsSearch', () => {
     expect(chatHistoryUtils.showsSearch({ total: 0, query: 'x' })).toBe(true);
   });
 });
+
+describe('chatHistoryUtils.filterByTitle', () => {
+  it('matches titles case-blind and keeps all chats for a blank query', () => {
+    const chats = [titled('Weekly leads'), titled('MRR report'), titled(null)];
+
+    expect(
+      chatHistoryUtils
+        .filterByTitle({ conversations: chats, query: '  LEADS ' })
+        .map((chat) => chat.title),
+    ).toEqual(['Weekly leads']);
+    expect(
+      chatHistoryUtils.filterByTitle({ conversations: chats, query: '  ' }),
+    ).toBe(chats);
+  });
+});
+
+function titled(title: string | null): AgentConversation {
+  return AgentConversation.parse({
+    id: title ?? 'untitled',
+    created: NOW.toISOString(),
+    updated: NOW.toISOString(),
+    platformId: 'platform-1',
+    userId: 'user-1',
+    source: AgentRunSource.CHAT,
+    title,
+  });
+}
 
 function at(date: Date): string {
   return chatHistoryUtils.shortTime({ date, now: NOW });
