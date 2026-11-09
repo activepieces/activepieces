@@ -151,14 +151,13 @@ export const chatHistoryUtils = {
   showsSearch,
   filterByTitle,
   olderChats,
-  SEARCH_THRESHOLD,
 };
 
 export type OlderChats = 'none' | 'available' | 'loading' | 'failed';
 
-export type ChatHistoryGroupId = 'today' | 'yesterday' | 'week' | 'older';
+type ChatHistoryGroupId = 'today' | 'yesterday' | 'week' | 'older';
 
-export type ChatHistoryGroup = {
+type ChatHistoryGroup = {
   id: ChatHistoryGroupId;
   label: string;
   conversations: AgentConversation[];

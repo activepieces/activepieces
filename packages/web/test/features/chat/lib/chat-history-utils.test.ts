@@ -26,13 +26,8 @@ describe('chatHistoryUtils.shortTime', () => {
 
 describe('chatHistoryUtils.showsSearch', () => {
   it('shows search only above the threshold or while a query is typed', () => {
-    const limit = chatHistoryUtils.SEARCH_THRESHOLD;
-    expect(chatHistoryUtils.showsSearch({ total: limit, query: '' })).toBe(
-      false,
-    );
-    expect(chatHistoryUtils.showsSearch({ total: limit + 1, query: '' })).toBe(
-      true,
-    );
+    expect(chatHistoryUtils.showsSearch({ total: 8, query: '' })).toBe(false);
+    expect(chatHistoryUtils.showsSearch({ total: 9, query: '' })).toBe(true);
     expect(chatHistoryUtils.showsSearch({ total: 0, query: 'x' })).toBe(true);
   });
 });
