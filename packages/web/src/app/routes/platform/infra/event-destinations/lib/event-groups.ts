@@ -123,6 +123,14 @@ function buildEventGroups(): EventGroup[] {
         ApplicationEventName.PROJECT_REPLACED,
       ],
     },
+    {
+      key: 'pieces',
+      title: t('Pieces'),
+      events: [
+        ApplicationEventName.PIECE_CREATED,
+        ApplicationEventName.PIECE_VERSION_CREATED,
+      ],
+    },
   ];
 }
 

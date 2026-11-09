@@ -766,6 +766,19 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       }
       return rows;
     }
+    case ApplicationEventName.PIECE_CREATED:
+    case ApplicationEventName.PIECE_VERSION_CREATED: {
+      const { piece } = event.data;
+      return [
+        { label: t('Piece'), value: piece.displayName },
+        {
+          label: t('Version'),
+          value: isNil(piece.previousVersion)
+            ? piece.version
+            : `${piece.previousVersion} → ${piece.version}`,
+        },
+      ];
+    }
   }
 }
 
