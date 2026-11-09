@@ -8,12 +8,12 @@ icon: "webhook"
 
 ## Overview
 
-Event Streaming sends every platform [audit event](/admin-guide/security/audit-logs/overview) to a destination of your choice, as it happens. Each destination has a **format**:
+Event Streaming sends your platform's [audit events](/admin-guide/security/audit-logs/overview) and [piece catalog events](#piece-catalog-events) to a destination of your choice, as they happen. Each destination has a **format**:
 
 - **OpenTelemetry (OTLP).** Each event is sent as an OpenTelemetry log record over OTLP/HTTP. This works with Datadog, PostHog, Grafana Loki, Grafana Cloud, New Relic, Honeycomb, Dynatrace, Elastic, SigNoz, Axiom, Better Stack, and any other backend that accepts OTLP logs. No collector or agent is needed in between.
 - **Raw JSON.** The audit event is posted as-is to any webhook URL. Point it at a flow inside Activepieces and route each event to Slack, Gmail, Microsoft Teams, custom HTTP, and so on.
 
-Use it to react to flow run failures, new sign-ins, project releases, or any other audit event with the tools you already use.
+Use it to react to flow run failures, new sign-ins, project releases, new piece versions, or any other event with the tools you already use.
 
 ## Quick start
 
@@ -149,9 +149,45 @@ Each destination has an **Enabled** switch on the listing page. A disabled desti
 
 You can subscribe a destination to any audit event — flow lifecycle, run status, folder/connection changes, user activity, and platform admin actions. See the [Audit Log Events catalog](/admin-guide/security/audit-logs/overview#event-catalog) for the full list and per-event payload details.
 
+You can also subscribe to two piece catalog events. They are not audit events and do not appear in the audit log:
+
+- `piece.created` — a new piece was added to the catalog.
+- `piece.version.created` — a new version of an existing piece was added.
+
+See [Piece catalog events](#piece-catalog-events) below for what fires them and what they carry.
+
+### Piece catalog events
+
+Piece catalog events fire only for **official** pieces, and only for the **latest version** of each piece. Custom and private pieces never send them.
+
+By default a destination receives `new`, `major`, and `minor` changes. To also receive patch releases, tick **Also send patch version updates** on the Events step; it appears once you select a piece event. Patch updates are frequent, so leave it off unless you need them.
+
+Through the API, the filter is `eventFilters: { piece: { changeTypes: [...] } }`, with values `new`, `major`, `minor`, and `patch`. Send `eventFilters: null` for the default. The form exposes only the patch toggle, so a filter set through the API with a different list, for example only `new`, is replaced when you save the destination from the UI.
+
+The envelope carries `platformId` but no project or user: there is no `projectId`, `userId`, `userEmail`, or `ip`. `changeType` is `new` for `piece.created`, and `major`, `minor`, or `patch` for `piece.version.created`. `pieceSets` lists the piece sets on your platform that include the piece.
+
+```json
+{
+  "id": "…", "created": "…", "updated": "…", "platformId": "…",
+  "action": "piece.version.created",
+  "data": {
+    "piece": { "name": "@activepieces/piece-gmail", "displayName": "Gmail", "version": "0.9.0", "previousVersion": "0.8.3",
+               "changeType": "minor", "pieceType": "OFFICIAL", "minimumSupportedRelease": "0.88.2", "deprecated": false },
+    "pieceSets": [{ "id": "…", "key": "default", "name": "Default", "isDefault": true }]
+  }
+}
+```
+
+<Note>
+Expect a burst after you upgrade Activepieces. The upgrade sends one event for each official piece that is new or has a newer version since your previous release — about 200 events when going from 0.86 to 0.93.
+</Note>
+
+Delivery is at-least-once. If the background job that detects catalog changes fails partway, its next run can send the same batch again, and every send gets a new `id`, so use `data.piece.name` plus `data.piece.version` as the idempotency key. Activepieces does not replay events your endpoint missed. To catch up after an outage, compare what you have against `GET /v1/pieces`.
+
 ## Requirements
 
 - **Enterprise Edition**: Event Streaming requires a plan with Event Streaming enabled. Without it, no events are delivered.
+- **Piece catalog events**: they need the same Event Streaming entitlement and run on the Enterprise and Cloud editions only.
 - **Platform admin**: only platform admins can configure destinations.
 - **HTTPS endpoint**: use HTTPS for any external endpoint. Audit events carry user emails and IP addresses, and Activepieces does not reject an `http://` URL for you.
 - **Publicly accessible**: external endpoints must be reachable from your Activepieces server. Handler flows on this same instance are delivered internally, so they work even when the instance is not publicly reachable (for example, behind an internal load balancer).
