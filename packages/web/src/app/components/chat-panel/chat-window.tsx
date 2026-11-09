@@ -37,9 +37,7 @@ const loadChatChrome = () =>
   import('./chat-chrome').then((m) => ({ default: m.ChatChrome }));
 const ChatChrome = lazyWithRetry(loadChatChrome, 'chat-chrome');
 
-// The card width the page will have once the rail has settled, so the dock
-// and the page can be sized for where they land, not where they are mid-move.
-export function useCardWidth(): number {
+function useCardWidth(): number {
   const railOpen = useRailOpen();
   const viewportWidth = windowSizeHooks.useViewportWidth();
   const builder = useShellHandle().shell === 'builder';
@@ -50,7 +48,7 @@ export function useCardWidth(): number {
   });
 }
 
-export function useDockWidth(dragWidth: number | null = null): number {
+function useDockWidth(dragWidth: number | null = null): number {
   const savedWidth = useChatPanel((s) => s.dockWidth);
   const cardWidth = useCardWidth();
   return chatLayoutUtils.shownDockWidth({

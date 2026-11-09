@@ -35,5 +35,4 @@ const SHIFT_PX = 8;
 
 export const historyMotion = {
   enter,
-  SHIFT_PX,
 };
