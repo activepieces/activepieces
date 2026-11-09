@@ -69,7 +69,9 @@ function resourceName({
   resources: ResourceRef[];
 }): string | null {
   const path = pathOf(route);
-  const match = resources.findLast((ref) => resourceRegistry.isOn(path, ref));
+  const match = resources.findLast((ref) =>
+    resourceRegistry.isOn({ pathname: path, ref }),
+  );
   return match?.name ?? null;
 }
 

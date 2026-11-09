@@ -23,7 +23,11 @@ export function FollowFinishedNote() {
         if (previous.phase !== 'editing' || state.phase !== 'idle') return;
         const { target, following } = state;
         if (!target || !following) return;
-        if (!resourceRegistry.isOn(pathnameRef.current, target)) return;
+        if (
+          !resourceRegistry.isOn({ pathname: pathnameRef.current, ref: target })
+        ) {
+          return;
+        }
         setFinished((current) => ({
           kind: target.kind,
           id: (current?.id ?? 0) + 1,

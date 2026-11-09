@@ -46,14 +46,17 @@ const mapRecorddToClientRecordsData = (
   return records.map((record) => ({
     uuid: nanoid(),
     agentRunId: null,
-    values: mapCellsToClientValues(record, fields),
+    values: mapCellsToClientValues({ record, fields }),
   }));
 };
 
-const mapCellsToClientValues = (
-  record: PopulatedRecord,
-  fields: Field[],
-): ClientCellData[] =>
+const mapCellsToClientValues = ({
+  record,
+  fields,
+}: {
+  record: PopulatedRecord;
+  fields: Field[];
+}): ClientCellData[] =>
   Object.entries(record.cells).flatMap(([fieldId, cell]) => {
     const fieldIndex = fields.findIndex((field) => field.id === fieldId);
     return fieldIndex === -1 ? [] : [{ fieldIndex, value: cell.value }];
@@ -174,7 +177,10 @@ export const createApTableStore = (
         });
         const incomingWins = order > 0 || (order === 0 && unchanged);
         const winner = incomingWins ? update : record;
-        const values = mapCellsToClientValues(winner, serverState.fields);
+        const values = mapCellsToClientValues({
+          record: winner,
+          fields: serverState.fields,
+        });
         return [
           {
             record: winner,
@@ -194,7 +200,9 @@ export const createApTableStore = (
         )
         .map((record) => ({
           record,
-          row: newRow(mapCellsToClientValues(record, serverState.fields)),
+          row: newRow(
+            mapCellsToClientValues({ record, fields: serverState.fields }),
+          ),
           applied: true,
         }));
       const updatedByRow = new Map(
@@ -422,7 +430,10 @@ export const createApTableStore = (
           records: state.records.map((row) => {
             const record = recordByRow.get(row.uuid);
             return record
-              ? { ...row, values: mapCellsToClientValues(record, fresh) }
+              ? {
+                  ...row,
+                  values: mapCellsToClientValues({ record, fields: fresh }),
+                }
               : row;
           }),
         }));

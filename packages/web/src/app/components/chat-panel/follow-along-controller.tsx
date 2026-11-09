@@ -66,11 +66,16 @@ export function FollowAlongController() {
     let stopLeaving = (): void => undefined;
     const leaveIfDeleted = (change: FollowChange) => {
       if (change.op !== 'delete' || !change.navigable || embedded) return;
-      if (!resourceRegistry.isOn(pathnameRef.current, change.resource)) return;
+      const isOnDeletedPage = () =>
+        resourceRegistry.isOn({
+          pathname: pathnameRef.current,
+          ref: change.resource,
+        });
+      if (!isOnDeletedPage()) return;
       toast(t('The AI deleted {name}.', { name: change.resource.name }));
       stopLeaving();
       stopLeaving = untilPageFree((focused) => {
-        if (!resourceRegistry.isOn(pathnameRef.current, change.resource)) {
+        if (!isOnDeletedPage()) {
           return true;
         }
         if (pageFocus.isBusyIn(focused) || followHold.pagePressed()) {
@@ -107,7 +112,7 @@ export function FollowAlongController() {
     if (pathChanged) selfNavRef.current = null;
     const target = state.target;
     if (!target || !state.following) return;
-    const onTarget = resourceRegistry.isOn(pathname, target);
+    const onTarget = resourceRegistry.isOn({ pathname, ref: target });
     if (pathChanged && !selfNavigated && !onTarget) {
       if (state.phase === 'editing') followAlong.stopFollowing();
       return;

@@ -24,7 +24,13 @@ function parentRoute(ref: ResourceRef): string {
   return `/projects/${ref.projectId}${routesThatRequireProjectId.automations}`;
 }
 
-function isOn(pathname: string, ref: ResourceRef): boolean {
+function isOn({
+  pathname,
+  ref,
+}: {
+  pathname: string;
+  ref: ResourceRef;
+}): boolean {
   if (!pathname.includes(`/projects/${ref.projectId}/`)) return false;
   const marker = KINDS[ref.kind].path(ref.id);
   const at = pathname.indexOf(marker);

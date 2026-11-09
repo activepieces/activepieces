@@ -73,13 +73,19 @@ describe('resourceRegistry routes', () => {
       projectId: 'p',
       name: 'Flow',
     };
-    expect(resourceRegistry.isOn('/projects/p/flows/f1', ref)).toBe(true);
-    expect(resourceRegistry.isOn('/projects/p/flows/f1/runs', ref)).toBe(true);
-    expect(resourceRegistry.isOn('/projects/p/flows/f12', ref)).toBe(false);
     expect(
-      resourceRegistry.isOn('/projects/p/flows/f1', {
-        ...ref,
-        projectId: 'other',
+      resourceRegistry.isOn({ pathname: '/projects/p/flows/f1', ref }),
+    ).toBe(true);
+    expect(
+      resourceRegistry.isOn({ pathname: '/projects/p/flows/f1/runs', ref }),
+    ).toBe(true);
+    expect(
+      resourceRegistry.isOn({ pathname: '/projects/p/flows/f12', ref }),
+    ).toBe(false);
+    expect(
+      resourceRegistry.isOn({
+        pathname: '/projects/p/flows/f1',
+        ref: { ...ref, projectId: 'other' },
       }),
     ).toBe(false);
   });

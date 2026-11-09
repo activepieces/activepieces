@@ -209,7 +209,8 @@ function rememberUnseen({
   keys: string[];
 }): void {
   if (keys.length === 0) return;
-  if (resourceRegistry.isOn(window.location.pathname, resource)) return;
+  const pathname = window.location.pathname;
+  if (resourceRegistry.isOn({ pathname, ref: resource })) return;
   const scope = resourceRegistry.keyOf(resource);
   const added = Object.fromEntries(
     keys.map((key): [string, true] => [`${scope}|${key}`, true]),
@@ -239,7 +240,8 @@ function rememberEditedSince({
   resource: ResourceRef;
   since: number;
 }): void {
-  if (resourceRegistry.isOn(window.location.pathname, resource)) return;
+  const pathname = window.location.pathname;
+  if (resourceRegistry.isOn({ pathname, ref: resource })) return;
   const scope = resourceRegistry.keyOf(resource);
   const { editedSince } = useFollowMemory.getState();
   const earliest = Math.min(editedSince[scope] ?? since, since);
@@ -280,7 +282,7 @@ function highlightKeys({
   const args = isObject(input) ? input : {};
   switch (tool) {
     case 'ap_add_step': {
-      const stepName = structuredField(output, 'stepName');
+      const stepName = structuredField({ output, field: 'stepName' });
       return stepName ? [`flow-step:${stepName}`] : [];
     }
     case 'ap_update_step':
@@ -299,7 +301,13 @@ function highlightKeys({
   }
 }
 
-function structuredField(output: unknown, field: string): string | null {
+function structuredField({
+  output,
+  field,
+}: {
+  output: unknown;
+  field: string;
+}): string | null {
   const parsed =
     typeof output === 'string'
       ? tryCatchSync<unknown>(() => JSON.parse(output)).data
