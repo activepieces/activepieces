@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
   AuthenticationResponse,
   Principal,
@@ -16,10 +16,11 @@ import { telemetryUtils } from './telemetry-utils';
 
 const tokenKey = 'token';
 const projectIdKey = 'projectId';
+const tabProjectKey = 'ap:tab-project';
 const SESSION_CHANGED_EVENT = 'ap:session-changed';
 export const authenticationSession = {
   setProjectId(projectId: string) {
-    ApStorage.getInstance().setItem(projectIdKey, projectId);
+    saveProjectIdOrClear(projectId);
     notifySessionChanged();
   },
   subscribe(listener: () => void): () => void {
@@ -71,15 +72,16 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
-    const projectId = ApStorage.getInstance().getItem(projectIdKey);
-    if (!isNil(projectId)) {
-      return projectId;
+    const userId = readUserId(token);
+    const tabProject = readTabProject();
+    if (!isNil(tabProject) && tabProject.userId === userId) {
+      return tabProject.projectId;
     }
-    const decodedJwt = getDecodedJwt(token);
-    if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
-      return decodedJwt.projectId;
+    const sharedProjectId = readSharedProjectId(token);
+    if (!isNil(sharedProjectId)) {
+      writeTabProject({ userId, projectId: sharedProjectId });
     }
-    return null;
+    return sharedProjectId;
   },
   getCurrentUserId(): string | null {
     const token = this.getToken();
@@ -131,7 +133,7 @@ export const authenticationSession = {
     if (authenticationSession.getStoredProjectId() === projectId) {
       return;
     }
-    ApStorage.getInstance().setItem(projectIdKey, projectId);
+    saveProjectIdOrClear(projectId);
     notifySessionChanged();
   },
   isLoggedIn(): boolean {
@@ -142,7 +144,7 @@ export const authenticationSession = {
     return !this.isJwtExpired(token);
   },
   clearSession() {
-    ApStorage.getInstance().removeItem(projectIdKey);
+    saveProjectIdOrClear(null);
     ApStorage.getInstance().removeItem(tokenKey);
     notifySessionChanged();
   },
@@ -164,10 +166,61 @@ function getDecodedJwt(token: string): Principal {
   return jwtDecode<Principal>(token);
 }
 
+function readUserId(token: string): string | null {
+  return tryCatchSync(() => getDecodedJwt(token).id).data ?? null;
+}
+
+function readSharedProjectId(token: string): string | null {
+  const projectId = ApStorage.getInstance().getItem(projectIdKey);
+  if (!isNil(projectId)) {
+    return projectId;
+  }
+  const decodedJwt = getDecodedJwt(token);
+  if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
+    return decodedJwt.projectId;
+  }
+  return null;
+}
+
+function readTabProject(): TabProject | null {
+  const raw = tryCatchSync(() =>
+    window.sessionStorage.getItem(tabProjectKey),
+  ).data;
+  if (isNil(raw)) {
+    return null;
+  }
+  const parsed = tryCatchSync<unknown>(() => JSON.parse(raw)).data;
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !('projectId' in parsed) ||
+    typeof parsed.projectId !== 'string' ||
+    !('userId' in parsed) ||
+    (typeof parsed.userId !== 'string' && parsed.userId !== null)
+  ) {
+    return null;
+  }
+  return { projectId: parsed.projectId, userId: parsed.userId };
+}
+
+function writeTabProject(tabProject: TabProject): void {
+  tryCatchSync(() =>
+    window.sessionStorage.setItem(tabProjectKey, JSON.stringify(tabProject)),
+  );
+}
+
 function saveProjectIdOrClear(projectId: string | null | undefined): void {
   if (isNil(projectId)) {
     ApStorage.getInstance().removeItem(projectIdKey);
+    tryCatchSync(() => window.sessionStorage.removeItem(tabProjectKey));
     return;
   }
   ApStorage.getInstance().setItem(projectIdKey, projectId);
+  const token = authenticationSession.getToken();
+  writeTabProject({
+    userId: isNil(token) ? null : readUserId(token),
+    projectId,
+  });
 }
+
+type TabProject = { userId: string | null; projectId: string };

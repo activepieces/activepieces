@@ -9,7 +9,7 @@ export const PlatformAdminGuard = ({
 }) => {
   const isPlatformAdmin = useIsPlatformAdmin();
   if (!isPlatformAdmin) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
   return children;
 };

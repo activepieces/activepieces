@@ -1,6 +1,11 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronsUpDown, PanelLeftClose, Search } from 'lucide-react';
+import {
+  ChevronsUpDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+} from 'lucide-react';
 import React, { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -244,6 +249,17 @@ function PlatformHeader() {
           </HeaderActions>
         </SidebarMenuItem>
       </SidebarMenu>
+      <CollapsedOnlyRow>
+        <SidebarMenuButton
+          tooltip={t('Open sidebar')}
+          aria-label={t('Open sidebar')}
+          aria-expanded={false}
+          className="text-gray-11"
+          onClick={toggleSidebar}
+        >
+          <PanelLeftOpen />
+        </SidebarMenuButton>
+      </CollapsedOnlyRow>
     </SidebarHeader>
   );
 }

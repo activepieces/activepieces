@@ -47,9 +47,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const onDisconnect = (reason: string) => {
       connection.pendingSwitch = null;
       if (reason !== 'io client disconnect') {
-        toast(t('Connection Lost'), {
+        toast(t('Connection lost'), {
           id: CONNECTION_LOST_TOAST_ID,
-          description: t('We are trying to reconnect...'),
+          description: t('Trying to reconnect…'),
           duration: Infinity,
         });
       }
