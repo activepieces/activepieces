@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 declare global {
@@ -91,13 +92,34 @@ describe('SocketProvider', () => {
     expect(socketHarness.listenerCount('connect')).toBe(2);
     expect(socketHarness.listenerCount('disconnect')).toBe(1);
   });
+
+  it('joins the project in the URL before the session switches to it', async () => {
+    await act(async () =>
+      root.render(
+        <App onConnect={vi.fn()} path="/projects/project-2/automations" />,
+      ),
+    );
+
+    expect(socketHarness.socket.auth).toEqual({
+      token: 'token-1',
+      projectId: 'project-2',
+    });
+  });
 });
 
-function App({ onConnect }: { onConnect: () => void }) {
+function App({
+  onConnect,
+  path = '/automations',
+}: {
+  onConnect: () => void;
+  path?: string;
+}) {
   return (
-    <SocketProvider>
-      <ConnectListener onConnect={onConnect} />
-    </SocketProvider>
+    <MemoryRouter initialEntries={[path]}>
+      <SocketProvider>
+        <ConnectListener onConnect={onConnect} />
+      </SocketProvider>
+    </MemoryRouter>
   );
 }
 
