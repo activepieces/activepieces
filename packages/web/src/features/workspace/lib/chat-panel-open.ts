@@ -204,11 +204,21 @@ const initChatPanel = (
     lastPage: readLastPage(),
     autoFollow: readAutoFollow(),
     panelMounted: false,
+    docks: 0,
     announcement: null,
     newChatToken: 0,
     pendingPrompt: undefined,
-    setOpen: (open) => update({ open }),
-    dock: (side) => update({ open: true, mode: side }),
+    setOpen: (open) => {
+      if (open !== get().open) {
+        chatLayoutUtils.startStructuralMove(open ? 'enter' : 'exit');
+      }
+      update({ open });
+    },
+    dock: (side) => {
+      chatLayoutUtils.startStructuralMove('enter');
+      set({ docks: get().docks + 1 });
+      update({ open: true, mode: side });
+    },
     setDockWidth: (width) =>
       update({ dockWidth: chatLayoutUtils.dockWidthFor(width) }),
     newChat: (prompt) =>
@@ -291,6 +301,7 @@ type ChatPanelState = SavedChatPanel & {
   lastPage: string | null;
   autoFollow: boolean;
   panelMounted: boolean;
+  docks: number;
   announcement: { text: string; id: number } | null;
   newChatToken: number;
   pendingPrompt?: string;
