@@ -7,9 +7,12 @@ import {
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 import {
+  dropHeldEmits,
   emitInProject,
   useSocket,
 } from '@/components/providers/socket-provider';
@@ -31,33 +34,49 @@ export function useTableRoom({
       return;
     }
     let active = true;
+    const joinKey = Symbol('table-room-join');
     const join = () =>
-      emitInProject(() => {
-        if (!active) {
-          return;
-        }
-        const sentAt = Date.now();
-        socket
-          .timeout(JOIN_TIMEOUT_MS)
-          .emit(
-            WebsocketServerEvent.JOIN_TABLE_ROOM,
-            { tableId },
-            (error: Error | null, response: unknown) => {
-              if (!active) {
-                return;
-              }
-              if (!isNil(error)) {
-                errorReporting.report({ error, source: 'table-live-updates' });
-                return;
-              }
-              const parsed = JoinTableRoomResponse.safeParse(response);
-              if (parsed.success && parsed.data.joined) {
-                onJoined({ sentAt });
-              }
-            },
-          );
+      emitInProject({
+        key: joinKey,
+        send: () => {
+          if (!active) {
+            return;
+          }
+          const sentAt = Date.now();
+          socket
+            .timeout(JOIN_TIMEOUT_MS)
+            .emit(
+              WebsocketServerEvent.JOIN_TABLE_ROOM,
+              { tableId },
+              (error: Error | null, response: unknown) => {
+                if (!active) {
+                  return;
+                }
+                if (!isNil(error)) {
+                  errorReporting.report({
+                    error,
+                    source: 'table-live-updates',
+                  });
+                  showLiveUpdatesDelayed();
+                  return;
+                }
+                const parsed = JoinTableRoomResponse.safeParse(response);
+                if (parsed.success && parsed.data.joined) {
+                  toast.dismiss(TABLE_LIVE_UPDATES_TOAST_ID);
+                  onJoined({ sentAt });
+                  return;
+                }
+                showLiveUpdatesDelayed();
+              },
+            );
+        },
       });
-    const onRecordsChanged = (event: TableRecordsChangedEvent) => {
+    const onRecordsChanged = (payload: unknown) => {
+      const parsed = TableRecordsChangedEvent.safeParse(payload);
+      if (!parsed.success) {
+        return;
+      }
+      const event = parsed.data;
       if (
         event.tableId !== tableId ||
         event.editorSessionId === editorSession.getId()
@@ -73,6 +92,7 @@ export function useTableRoom({
     }
     return () => {
       active = false;
+      dropHeldEmits([joinKey]);
       socket.off(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onRecordsChanged);
       socket.off('connect', join);
       if (socket.connected) {
@@ -80,6 +100,13 @@ export function useTableRoom({
       }
     };
   }, [socket, tableId, onChange, onJoined]);
+}
+
+function showLiveUpdatesDelayed() {
+  toast(t('Live updates are delayed'), {
+    id: TABLE_LIVE_UPDATES_TOAST_ID,
+    description: t('Changes made by others may show up late.'),
+  });
 }
 
 function changeOf(event: TableRecordsChangedEvent): TableChange {
@@ -95,12 +122,19 @@ function changeOf(event: TableRecordsChangedEvent): TableChange {
       return { type: 'reload', scope: 'records' };
     case TableRecordsChangeOp.FIELDS_CHANGED:
       return { type: 'reload', scope: 'fields' };
+    case TableRecordsChangeOp.TABLE_UPDATED:
+      return { type: 'reload', scope: 'table' };
+    case TableRecordsChangeOp.TABLE_DELETED:
+      return { type: 'deleted' };
   }
 }
 
 const JOIN_TIMEOUT_MS = 10_000;
 
+const TABLE_LIVE_UPDATES_TOAST_ID = 'table-live-updates';
+
 export type TableChange =
   | { type: 'rows'; records: PopulatedRecord[]; removedIds: string[] }
   | { type: 'cleared' }
-  | { type: 'reload'; scope: 'records' | 'fields' };
+  | { type: 'deleted' }
+  | { type: 'reload'; scope: 'table' | 'records' | 'fields' };

@@ -118,7 +118,8 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socketHarness.socket,
-  emitInProject: (send: () => void) => send(),
+  emitInProject: ({ send }: { send: () => void }) => send(),
+  dropHeldEmits: () => undefined,
 }));
 
 vi.mock('@/features/flows/api/flows-api', () => ({
