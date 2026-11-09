@@ -51,15 +51,16 @@ function parseBody(body: unknown): unknown {
 	}
 }
 
-function idOf({ body, key }: { body: Record<string, unknown>; key: string }): string {
-	const inner = body[key];
-	if (acData.isRecord(inner)) {
-		return acData.textAt({ value: inner, key: 'id' }) ?? acData.textAt({ value: inner, key: 'url' }) ?? '';
+function canonical(value: unknown): unknown {
+	if (Array.isArray(value)) {
+		return value.map((item) => canonical(item));
 	}
-	if (Array.isArray(inner)) {
-		return JSON.stringify(inner);
+	if (acData.isRecord(value)) {
+		return Object.keys(value)
+			.sort()
+			.map((key) => [key, canonical(value[key])]);
 	}
-	return typeof inner === 'string' || typeof inner === 'number' ? String(inner) : '';
+	return value;
 }
 
 function dedupeKey(body: unknown): string | undefined {
@@ -71,13 +72,7 @@ function dedupeKey(body: unknown): string | undefined {
 	if (type === undefined || dateTime === undefined) {
 		return undefined;
 	}
-	const parts = [
-		type,
-		dateTime,
-		...['contact', 'deal', 'account', 'task', 'note', 'campaign', 'link', 'list', 'tag'].map((key) => idOf({ body, key })),
-		JSON.stringify(body['updated_fields'] ?? null),
-	];
-	return createHash('sha256').update(parts.join('|')).digest('hex').slice(0, 32);
+	return createHash('sha256').update(JSON.stringify(canonical(body))).digest('hex').slice(0, 32);
 }
 
 async function run({ store, storeKey, body, now = Date.now() }: RunParams): Promise<unknown[]> {

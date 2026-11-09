@@ -76,6 +76,42 @@ describe('AI outputSchemas scored both ways against the live outputs', () => {
   });
 });
 
+describe('pipeline and stage outputSchemas scored against non-empty vendor records', () => {
+  const PIPELINE = {
+    id: '1', title: 'Sales Pipeline', currency: 'usd', allgroups: '0', allusers: '0', autoassign: '0',
+    cdate: '2026-11-08T05:10:02-06:00', udate: '2026-11-08T05:10:02-06:00', stages: ['1', '2', '3'], users: ['1'], groups: ['3'], links: {},
+  };
+  const STAGE = {
+    id: '2', title: 'Qualified', group: '1', order: '2', color: '32B0FC', width: '280', dealOrder: 'next-action DESC',
+    cardRegion1: 'title', cardRegion2: 'next-action', cardRegion3: 'show-avatar', cardRegion4: 'contact-fullname-orgname', cardRegion5: 'value',
+    cdate: '2026-11-08T05:10:02-06:00', udate: '2026-11-08T05:10:02-06:00', links: {},
+  };
+
+  test.each([
+    { action: listPipelinesAction, path: '/api/3/dealGroups', key: 'dealGroups', record: PIPELINE },
+    { action: listDealStagesAction, path: '/api/3/dealStages', key: 'dealStages', record: STAGE },
+  ])('$key', async ({ action, path, key, record }) => {
+    route({ [`GET ${path}`]: { status: 200, body: { [key]: [record, { ...record, id: '9' }], meta: { total: '2' } } } });
+    const output = await action.run(ctx({}));
+    const items = typeof output === 'object' && output !== null && 'items' in output && Array.isArray(output.items) ? output.items : [];
+    expect(items).toHaveLength(2);
+    const result = scoreSchema({ fields: action.outputSchema?.fields ?? [], value: output, path: '' });
+    expect(result.dead).toEqual([]);
+    expect(result.unmodelled).toEqual([]);
+  });
+
+  test('every other live list capture contains records, so its item fields are scored', () => {
+    const scoredAbove = ['list_deal_stages', 'list_pipelines'];
+    const emptyLists = Object.entries(CAPTURED_AI_OUTPUTS)
+      .filter(([, capture]) => {
+        const output = capture.output;
+        return typeof output === 'object' && output !== null && 'items' in output && Array.isArray(output.items) && output.items.length === 0;
+      })
+      .map(([name]) => name);
+    expect(emptyLists).toEqual(scoredAbove);
+  });
+});
+
 describe('aiInput rules', () => {
   test.each([
     ['0.29', 29],

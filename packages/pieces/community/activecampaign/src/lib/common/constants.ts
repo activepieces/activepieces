@@ -35,4 +35,4 @@ export const NOTE_RELTYPES = ['Subscriber', 'Deal', 'CustomerAccount'];
 
 export const DEDUPE_WINDOW_MS = 15 * 60 * 1000;
 
-export const DEDUPE_MAX_ENTRIES = 200;
+export const DEDUPE_MAX_ENTRIES = 5000;

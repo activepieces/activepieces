@@ -12,7 +12,7 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 The 7 existing ActiveCampaign actions are now shown only in the flow builder: Create Contact, Update Contact, Add Tag to Contact, Add Contact to Account, Create Account, Update Account and Subscribe or Unsubscribe Contact From List. AI agents and MCP clients get new tools instead: **Create or Update Contact (AI)** (replaces Create Contact and Update Contact), **Add Tag to Contact (AI)**, **Associate Contact with Account (AI)**, **Create Account (AI)**, **Update Account (AI)**, and **Subscribe Contact to List** plus **Unsubscribe Contact from List** (together they replace Subscribe or Unsubscribe Contact From List). The new tools take IDs as text and accept a contact's email in place of its ID.
 
-The ActiveCampaign webhook triggers now ignore a delivery whose content matches one received in the previous 15 minutes (same event type, event time, records and changed fields). ActiveCampaign sends no delivery ID, so two genuinely separate events with identical content in the same second now run the flow once.
+The ActiveCampaign webhook triggers now ignore a delivery whose content is identical to one received in the previous 15 minutes (every field, including the event time and the record's values). Each trigger remembers up to 5,000 deliveries, so a trigger that receives more than 5,000 events within 15 minutes can run a late retry again. ActiveCampaign sends no delivery ID, so two genuinely separate events with identical content in the same second now run the flow once.
 
 #### What you need to do
 

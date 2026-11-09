@@ -166,16 +166,32 @@ describe('run and dedupe', () => {
     expect(await updatedContactTrigger.run(ctx({ store, body: JSON.stringify(EVENT) }))).toEqual([EVENT]);
   });
 
-  test('the window expires after 15 minutes and the ring stays bounded', async () => {
+  test('two different changes to the same contact in the same second both fire', async () => {
+    const store = memoryStore();
+    const first = { type: 'update', date_time: EVENT.date_time, contact: { id: '3', email: 'a@b.co', first_name: 'Ann' } };
+    const second = { type: 'update', date_time: EVENT.date_time, contact: { id: '3', email: 'a@b.co', first_name: 'Anna' } };
+    expect(await updatedContactTrigger.run(ctx({ store, body: first }))).toEqual([first]);
+    expect(await updatedContactTrigger.run(ctx({ store, body: second }))).toEqual([second]);
+    expect(await updatedContactTrigger.run(ctx({ store, body: { ...second, contact: { first_name: 'Anna', email: 'a@b.co', id: '3' } } }))).toEqual([]);
+  });
+
+  test('the window expires after 15 minutes', async () => {
     const store = memoryStore();
     await activeCampaignWebhook.run({ store, storeKey: 'k', body: EVENT, now: 0 });
     expect(await activeCampaignWebhook.run({ store, storeKey: 'k', body: EVENT, now: 14 * 60_000 })).toEqual([]);
     expect(await activeCampaignWebhook.run({ store, storeKey: 'k', body: EVENT, now: 16 * 60_000 })).toEqual([EVENT]);
-    for (let index = 0; index < 250; index++) {
-      await activeCampaignWebhook.run({ store, storeKey: 'k', body: { ...EVENT, contact: { id: String(index) } }, now: 17 * 60_000 });
-    }
+  });
+
+  test('a retry is still skipped after 4,999 newer deliveries in the window, and the list stays bounded', async () => {
+    const key = activeCampaignWebhook.dedupeKey(EVENT);
+    const newer = Array.from({ length: 4999 }, (_, index) => ({ key: `newer-${index}`, at: 60_000 }));
+    const store = memoryStore({ k_recent_deliveries: [{ key, at: 0 }, ...newer] });
+    expect(await activeCampaignWebhook.run({ store, storeKey: 'k', body: EVENT, now: 2 * 60_000 })).toEqual([]);
+    const other = { ...EVENT, contact: { id: '4' } };
+    expect(await activeCampaignWebhook.run({ store, storeKey: 'k', body: other, now: 2 * 60_000 })).toEqual([other]);
     const ring = store.data.get('k_recent_deliveries');
-    expect(Array.isArray(ring) ? ring.length : -1).toBe(200);
+    expect(Array.isArray(ring) ? ring.length : -1).toBe(5000);
+    expect(JSON.stringify(ring).length).toBeLessThan(512 * 1024);
   });
 
   test('a payload without type and date_time is not deduped', async () => {
