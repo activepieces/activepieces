@@ -144,6 +144,7 @@ export function FollowAlongController() {
         followAlong.offer(target);
         return false;
       }
+      if (followHold.pagePressed()) return false;
       followAlong.dismissOffer();
       open();
       return true;
@@ -157,8 +158,6 @@ export function FollowAlongController() {
   return null;
 }
 
-// Runs `run` now, then again on every focus move or chat hold change until it
-// reports done.
 function untilPageFree(run: (focused: Element | null) => boolean): () => void {
   if (run(document.activeElement)) return () => undefined;
   const onFocusIn = (event: FocusEvent) => retry(eventElement(event.target));

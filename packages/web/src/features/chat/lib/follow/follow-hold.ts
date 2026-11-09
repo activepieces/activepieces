@@ -22,9 +22,9 @@ function report(patch: Partial<FollowHold>): void {
 }
 
 function holds({ fullPage }: { fullPage: boolean }): boolean {
-  const { drafting, scrolledUp, pressing } = useFollowHold.getState();
+  const { drafting, scrolledUp } = useFollowHold.getState();
   const { gateOpen } = useChatPanel.getState();
-  return pressing || gateOpen || (fullPage && (drafting || scrolledUp));
+  return gateOpen || (fullPage && (drafting || scrolledUp));
 }
 
 function pagePressed(): boolean {

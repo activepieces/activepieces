@@ -16,10 +16,10 @@ describe('followHold', () => {
     followHold.report({ pressing: false, drafting: false, scrolledUp: false });
   });
 
-  it('holds while a pointer is pressed on the page', () => {
+  it('tracks a pointer pressed on the page apart from the holds that show the offer', () => {
     followHold.report({ pressing: true });
 
-    expect(followHold.holds({ fullPage: false })).toBe(true);
+    expect(followHold.holds({ fullPage: false })).toBe(false);
     expect(followHold.pagePressed()).toBe(true);
   });
 
