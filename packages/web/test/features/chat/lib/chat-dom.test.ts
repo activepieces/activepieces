@@ -42,6 +42,41 @@ describe('chatDom.escapeFree', () => {
   });
 });
 
+describe('chatDom.shortcutOf', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it.each([
+    [{ key: 'j', metaKey: true }, 'toggle'],
+    [{ key: 'j', ctrlKey: true }, 'toggle'],
+    [{ key: 'O', metaKey: true, shiftKey: true }, 'newChat'],
+    [{ key: 'H', ctrlKey: true, shiftKey: true }, 'history'],
+    [{ key: 'j', metaKey: true, altKey: true }, null],
+    [{ key: 'j' }, null],
+  ])('reads %o as %s', (init, expected) => {
+    const event = new KeyboardEvent('keydown', init);
+    expect(chatDom.shortcutOf(event)).toBe(expected);
+  });
+
+  it('leaves the keys to a code editor that has focus', () => {
+    document.body.innerHTML = `
+      <div class="cm-editor"><div contenteditable="true"></div></div>`;
+    const editor = document.querySelector('[contenteditable]');
+    const event = new KeyboardEvent('keydown', {
+      key: 'j',
+      metaKey: true,
+      bubbles: true,
+    });
+    const seen: Array<string | null> = [];
+    editor?.addEventListener('keydown', (e) => {
+      if (e instanceof KeyboardEvent) seen.push(chatDom.shortcutOf(e));
+    });
+    editor?.dispatchEvent(event);
+    expect(seen).toEqual([null]);
+  });
+});
+
 function escape(): KeyboardEvent {
   return new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
 }

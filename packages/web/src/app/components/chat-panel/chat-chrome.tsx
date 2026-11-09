@@ -44,6 +44,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatPendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
@@ -86,12 +87,7 @@ export function ChatChrome() {
   useEffect(() => {
     if (!chatShown) return;
     const onKey = (event: KeyboardEvent) => {
-      if (
-        (event.metaKey || event.ctrlKey) &&
-        event.shiftKey &&
-        !event.altKey &&
-        event.key.toLowerCase() === 'h'
-      ) {
+      if (chatDom.shortcutOf(event) === 'history') {
         event.preventDefault();
         setHistoryOpen((open) => !open);
       }

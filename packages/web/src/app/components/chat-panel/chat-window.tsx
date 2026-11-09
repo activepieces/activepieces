@@ -398,15 +398,14 @@ function handleChatKey({
 }): void {
   const full = chatWidth === 'full';
   const focusInChat = pageFocus.inChat(document.activeElement);
-  const mod = (event.metaKey || event.ctrlKey) && !event.altKey;
-  const key = event.key.toLowerCase();
-  if (mod && event.shiftKey && key === 'o') {
+  const shortcut = chatDom.shortcutOf(event);
+  if (shortcut === 'newChat') {
     event.preventDefault();
     chatPanelUtils.startNewChat();
     chatDom.composer()?.focus();
     return;
   }
-  if (mod && !event.shiftKey && key === 'j') {
+  if (shortcut === 'toggle') {
     event.preventDefault();
     if (chatWidth === 'sheet') {
       sheet.hide();

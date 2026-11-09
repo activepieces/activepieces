@@ -19,6 +19,7 @@ import {
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
+import { modShortcut } from '@/components/custom/kbd-hint';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -302,7 +303,11 @@ export function ConversationList({
               <Plus size={mobile ? 16 : 14} />
               {t('New chat')}
             </span>
-            {!mobile && <span className="text-xs opacity-50">⇧⌘O</span>}
+            {!mobile && (
+              <span className="text-xs opacity-50">
+                {modShortcut({ key: 'O', shift: true })}
+              </span>
+            )}
           </button>
           {onCollapse !== undefined && (
             <ConversationsToggle open onClick={onCollapse} />
