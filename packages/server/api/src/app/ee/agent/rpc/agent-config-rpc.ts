@@ -242,15 +242,19 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const history = resumedHistory ?? conversation
         const previousMessages = history.messages as ModelMessage[]
         const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
-        const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
+        const newUserContent = isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote })
+        const newUserMessage: ModelMessage = { role: 'user' as const, content: newUserContent }
         const allMessages = isNil(resumedHistory) ? [...previousMessages, newUserMessage] : previousMessages
+        const pageNote = agentSurfaceNotes.pageContextNote({ pageContext: input.pageContext })
+        const modelUserMessage: ModelMessage = isNil(pageNote) ? newUserMessage : { role: 'user' as const, content: withLeadingNote({ content: newUserContent, note: pageNote }) }
+        const turnMessages = isNil(resumedHistory) ? [...previousMessages, modelUserMessage] : previousMessages
         const fastModelSeesMessages = conversation.source !== AgentRunSource.CHAT
         const modelsSeeingMessages = isNil(tierRun)
             ? [resolvedModelId, ...(fastModelSeesMessages ? [fastModelId] : [])].map((modelId) => ({ provider: providerConfig.provider, modelId }))
             : [...tierRun.candidates, ...(fastModelSeesMessages && !isNil(tierRun.fast) ? [tierRun.fast] : [])].map((candidate) => ({ provider: candidate.config.provider, modelId: candidate.modelId }))
         const catalog = await modelCatalog.load()
         const llmHistory = dropImagesForTextOnlyModels({
-            messages: agentAiUtils.collapseStaleToolOutputs({ messages: allMessages }),
+            messages: agentAiUtils.collapseStaleToolOutputs({ messages: turnMessages }),
             models: modelsSeeingMessages.map((model) => catalog.lookup(model)),
         })
 
