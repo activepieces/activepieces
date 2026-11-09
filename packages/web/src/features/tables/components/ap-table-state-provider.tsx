@@ -74,11 +74,7 @@ export function ApTableStateProvider({
   const tableId = useParams().tableId;
   const queryClient = useQueryClient();
   const [refreshKey, setRefreshKey] = useState(0);
-  const {
-    data: table,
-    isLoading: isTableLoading,
-    error: tableError,
-  } = useQuery({
+  const { data: table, isLoading: isTableLoading } = useQuery({
     queryKey: tableQueryKeys.table(tableId),
     queryFn: () => snapshotOf(() => tablesApi.getById(tableId!)),
     refetchOnWindowFocus: true,
@@ -87,11 +83,7 @@ export function ApTableStateProvider({
     gcTime: 0,
   });
 
-  const {
-    data: fields,
-    isLoading: isFieldsLoading,
-    error: fieldsError,
-  } = useQuery({
+  const { data: fields, isLoading: isFieldsLoading } = useQuery({
     queryKey: tableQueryKeys.fields(tableId),
     queryFn: () => snapshotOf(() => fieldsApi.list({ tableId: tableId! })),
     refetchOnWindowFocus: true,
@@ -100,11 +92,7 @@ export function ApTableStateProvider({
     gcTime: 0,
   });
 
-  const {
-    data: records,
-    isLoading: isRecordsLoading,
-    error: recordsError,
-  } = useQuery({
+  const { data: records, isLoading: isRecordsLoading } = useQuery({
     queryKey: tableQueryKeys.records(tableId),
     queryFn: () =>
       snapshotOf(() =>
@@ -138,14 +126,7 @@ export function ApTableStateProvider({
     return <RouteLoadingBar />;
   }
 
-  if (
-    tableError ||
-    fieldsError ||
-    recordsError ||
-    isNil(table) ||
-    isNil(fields) ||
-    isNil(records)
-  ) {
+  if (isNil(table) || isNil(fields) || isNil(records)) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
         <div className="rounded-full bg-gray-3 p-4">
