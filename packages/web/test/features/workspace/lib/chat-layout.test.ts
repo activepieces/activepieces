@@ -23,10 +23,13 @@ describe('chatLayoutUtils.widthFor', () => {
     ).toBe('left');
   });
 
-  it('stays closed under 768 px', () => {
+  it('uses the bottom sheet under 768 px', () => {
     expect(chatLayoutUtils.widthFor({ ...base, viewportWidth: 390 })).toBe(
-      'closed',
+      'sheet',
     );
+    expect(
+      chatLayoutUtils.widthFor({ ...base, open: false, viewportWidth: 390 }),
+    ).toBe('closed');
   });
 
   it('is closed when not open', () => {

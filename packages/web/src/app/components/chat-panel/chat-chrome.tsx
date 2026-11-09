@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
@@ -45,12 +46,19 @@ import {
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
+import { cn } from '@/lib/utils';
 
-import { useActiveConversationId, useChatWidth } from './chat-window';
+import {
+  useActiveConversationId,
+  useChatSheet,
+  useChatWidth,
+} from './chat-window';
 
 export function ChatChrome() {
   const layout = useChatWidth();
@@ -66,6 +74,9 @@ export function ChatChrome() {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const full = layout === 'full';
+  const sheet = layout === 'sheet';
+  const phone = windowSizeHooks.useWidth() < chatLayoutUtils.MOBILE_BREAKPOINT;
+  const chatSheet = useChatSheet();
   const renaming = renamingId !== null && renamingId === conversationId;
   const setRenaming = (on: boolean) =>
     setRenamingId(on ? conversationId : null);
@@ -126,7 +137,19 @@ export function ChatChrome() {
 
   return (
     <TooltipProvider delayDuration={500} skipDelayDuration={300}>
-      <div className="flex h-14 shrink-0 items-center gap-2 pr-2 pl-2.5">
+      <div
+        data-chat-header
+        className={cn(
+          'relative flex h-14 shrink-0 items-center gap-2 pr-2 pl-2.5',
+          sheet && 'touch-none select-none',
+        )}
+      >
+        {sheet && (
+          <span
+            aria-hidden
+            className="absolute top-2 left-1/2 h-1 w-9 -translate-x-1/2 rounded-full bg-gray-6"
+          />
+        )}
         <div className="flex min-w-0 flex-1 items-center">
           {renaming ? (
             <Input
@@ -178,7 +201,7 @@ export function ChatChrome() {
           >
             <Plus />
           </HeaderButton>
-          <LayoutMenu />
+          {!phone && <LayoutMenu />}
           {conversationId && (
             <MoreMenu
               onRename={() => setRenaming(true)}
@@ -189,7 +212,11 @@ export function ChatChrome() {
           {!full && (
             <HeaderButton
               label={t('Close')}
-              onClick={() => useChatPanel.getState().setOpen(false)}
+              onClick={() =>
+                sheet
+                  ? chatSheet.hide()
+                  : useChatPanel.getState().setOpen(false)
+              }
             >
               <X />
             </HeaderButton>
@@ -242,27 +269,29 @@ const ChatBody = memo(function ChatBody({
     if (full) navigate(chatPanelUtils.routeFor(id), { replace: true });
   };
   return (
-    <AIChatBox
-      key={newChatToken}
-      incognito={false}
-      compact={!full}
-      conversationId={conversationId}
-      initialPrompt={prompt}
-      onConversationCreated={(id) => {
-        useChatPanel.getState().conversationCreated(id);
-        showOnPage(id);
-        invalidate();
-      }}
-      onConversationMissing={() => {
-        useChatPanel.getState().conversationMissing();
-        showOnPage(null);
-      }}
-      onTitleUpdate={(next) => {
-        const id = useChatPanel.getState().conversationId;
-        if (id) onLiveTitle({ id, title: next });
-        invalidate();
-      }}
-    />
+    <ChatAppLinks>
+      <AIChatBox
+        key={newChatToken}
+        incognito={false}
+        compact={!full}
+        conversationId={conversationId}
+        initialPrompt={prompt}
+        onConversationCreated={(id) => {
+          useChatPanel.getState().conversationCreated(id);
+          showOnPage(id);
+          invalidate();
+        }}
+        onConversationMissing={() => {
+          useChatPanel.getState().conversationMissing();
+          showOnPage(null);
+        }}
+        onTitleUpdate={(next) => {
+          const id = useChatPanel.getState().conversationId;
+          if (id) onLiveTitle({ id, title: next });
+          invalidate();
+        }}
+      />
+    </ChatAppLinks>
   );
 });
 

@@ -18,16 +18,18 @@ function widthFor({
   if (fullPage) {
     return 'full';
   }
-  if (!open || viewportWidth < MOBILE_BREAKPOINT) {
+  if (!open) {
     return 'closed';
   }
-  return mode;
+  return viewportWidth < MOBILE_BREAKPOINT ? 'sheet' : mode;
 }
 
 function toastPlacementFor(chatWidth: ChatWidth | null): ToastPlacement {
   switch (chatWidth) {
     case 'full':
       return { position: 'top-center', offset: { top: FULL_TOAST_TOP } };
+    case 'sheet':
+      return { position: 'top-center', offset: undefined };
     case 'right':
       return { position: 'bottom-left', offset: undefined };
     default:
@@ -58,7 +60,7 @@ export const chatLayoutUtils = {
   PANEL_ID,
 };
 
-export type ChatWidth = ChatPanelSide | 'full' | 'closed';
+export type ChatWidth = ChatPanelSide | 'sheet' | 'full' | 'closed';
 export type ToastPlacement = {
   position: NonNullable<ToasterProps['position']>;
   offset: ToasterProps['offset'];

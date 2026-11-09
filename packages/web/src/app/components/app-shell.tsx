@@ -124,7 +124,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
         <div
           className={cn(
             'flex h-svh flex-1 min-w-0',
-            !isPlatform && 'will-change-transform',
+            !isPlatform && 'md:will-change-transform',
             !embedded && 'max-md:h-auto max-md:min-h-0',
           )}
         >

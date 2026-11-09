@@ -1,19 +1,20 @@
 import { t } from 'i18next';
 import { Menu } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
-import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
+
+import { useChatSheet, useChatWidth } from '../chat-panel/chat-window';
 
 export function MobileSidebarBar() {
   const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const branding = flagsHooks.useWebsiteBranding();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const chatRoute = chatPanelUtils.useChatRoute();
+  const chatOn = useChatOn();
+  const fullPage = useChatWidth() === 'full';
+  const chatSheet = useChatSheet();
 
   if (!isMobile) {
     return null;
@@ -40,17 +41,15 @@ export function MobileSidebarBar() {
       <span className="truncate text-sm font-medium text-gray-12">
         {branding.websiteName}
       </span>
-      {platform.plan.chatEnabled && (
+      {chatOn && !fullPage && (
         <Button
           variant="ghost"
           size="icon"
           className="ml-auto size-8 rounded-md"
           aria-label={t('Chat')}
-          asChild
+          onClick={chatSheet.show}
         >
-          <Link to={chatRoute}>
-            <ChatSparkIcon className="size-4" />
-          </Link>
+          <ChatSparkIcon className="size-4" />
         </Button>
       )}
     </div>

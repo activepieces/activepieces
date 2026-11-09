@@ -46,6 +46,11 @@ function openBeside({
   if (!current || current.location().pathname === route) return;
   const panel = useChatPanel.getState();
   if (current.isFullPage()) panel.dock(panel.mode);
+  if (current.location().hash === SHEET_HASH) {
+    current.navigate({ to: `${route}${SHEET_HASH}`, replace: !push });
+    panel.announce(t('Opened {name} behind the chat.', { name }));
+    return;
+  }
   current.navigate({ to: route, replace: !push });
   panel.announce(t('Opened {name} beside the chat.', { name }));
 }
@@ -170,6 +175,7 @@ const LAST_CONVERSATION_KEY = 'chat:last-conv';
 const TAB_LAST_PAGE_KEY = 'chat:last-page';
 const EXPANDED_STATE = 'chatExpanded';
 const AUTO_FOLLOW_KEY = 'chat:auto-follow';
+const SHEET_HASH = '#chat';
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -258,12 +264,13 @@ export const chatPanelUtils = {
   expand,
   collapse,
   startNewChat,
+  SHEET_HASH,
 };
 
 export type ChatPanelSide = 'left' | 'right';
 export type ChatRouter = {
   navigate: (target: ChatNavTarget) => void;
-  location: () => { pathname: string; state: unknown };
+  location: () => { pathname: string; hash: string; state: unknown };
   isFullPage: () => boolean;
 };
 
