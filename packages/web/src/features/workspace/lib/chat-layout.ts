@@ -16,10 +16,10 @@ function widthFor({
   if (fullPage) {
     return 'full';
   }
-  if (!open || viewportWidth < MOBILE_BREAKPOINT) {
+  if (!open) {
     return 'closed';
   }
-  return mode;
+  return viewportWidth < MOBILE_BREAKPOINT ? 'sheet' : mode;
 }
 
 function dockWidthFor(width: number): number {
@@ -43,4 +43,4 @@ export const chatLayoutUtils = {
   PANEL_ID,
 };
 
-export type ChatWidth = ChatPanelSide | 'full' | 'closed';
+export type ChatWidth = ChatPanelSide | 'sheet' | 'full' | 'closed';

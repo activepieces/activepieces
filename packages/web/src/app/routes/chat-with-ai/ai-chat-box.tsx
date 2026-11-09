@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -148,23 +149,23 @@ function ChatBoxContent({
   useEffect(() => {
     if (!isStreaming) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
       const target = e.target;
       if (
+        e.key !== 'Escape' ||
         !(target instanceof HTMLElement) ||
         !(
           rootRef.current?.contains(target) ||
           (!compact && target === document.body)
         ) ||
-        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+        !chatDom.escapeFree(e)
       ) {
         return;
       }
-      e.preventDefault();
+      chatDom.claimEscape(e);
       cancelStream();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [isStreaming, cancelStream, compact]);
 
   const chatProjectId = conversationProjectId ?? sessionProjectId;

@@ -158,6 +158,7 @@ const LAST_CONVERSATION_KEY = 'chat:last-conv';
 const TAB_LAST_PAGE_KEY = 'chat:last-page';
 const EXPANDED_STATE = 'chatExpanded';
 const AUTO_FOLLOW_KEY = 'chat:auto-follow';
+const SHEET_HASH = '#chat';
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -236,6 +237,7 @@ export const chatPanelUtils = {
   expand,
   collapse,
   startNewChat,
+  SHEET_HASH,
 };
 
 export type ChatPanelSide = 'left' | 'right';

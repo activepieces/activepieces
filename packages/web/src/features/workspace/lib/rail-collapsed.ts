@@ -1,10 +1,15 @@
-import { useCallback, useState } from 'react';
-import { matchPath, useLocation } from 'react-router-dom';
+import { useCallback } from 'react';
+import { matchPath, useLocation, useMatches } from 'react-router-dom';
 import { create } from 'zustand';
 
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
+import { chatLayoutUtils } from './chat-layout';
+import { useChatPanel } from './chat-panel-open';
+import { windowSizeHooks } from './window-size-hooks';
+
 const STORAGE_KEY = 'primary-rail-collapsed';
+const FOLD_BELOW = 960;
 
 // Inside one agent the rail is furniture: the page has its own header, its own
 // conversation list and its own panel. The route only asks for it closed, so an
@@ -30,44 +35,86 @@ function persist(value: boolean): boolean {
 
 const useRailCollapsed = create<RailCollapsedState>((set) => ({
   preference: readInitial(),
-  setCollapsed: (value) => set({ preference: persist(value) }),
+  openedOn: null,
+  setCollapsed: ({ collapsed, pathname }) =>
+    set({ preference: persist(collapsed), openedOn: pathname }),
 }));
 
-export function useRailOpenState() {
-  const { preference, setCollapsed } = useRailCollapsed();
-  const { pathname } = useLocation();
-  const [openedOn, setOpenedOn] = useState<string | null>(null);
-  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
+export function useRailOpen(): boolean {
+  return useRailState().open;
+}
 
+export function useRailOpenState() {
+  const { open, setCollapsed } = useRailState();
   const onOpenChange = useCallback(
-    (open: boolean) => {
-      setOpenedOn(pathname);
-      setCollapsed(!open);
-    },
+    (next: boolean) => setCollapsed(!next),
+    [setCollapsed],
+  );
+  return { open, onOpenChange };
+}
+
+function useRailState() {
+  const { preference, openedOn, setCollapsed } = useRailCollapsed();
+  const { pathname } = useLocation();
+  const chatPage = useMatches().some(({ handle }) => isChatPageHandle(handle));
+  const chatOpen = useChatPanel((s) => s.open);
+  const viewportWidth = windowSizeHooks.useWidth();
+  const open = railIsOpen({
+    preference,
+    pathname,
+    openedOn,
+    chatDocked: chatOpen && !chatPage,
+    viewportWidth,
+  });
+
+  const choose = useCallback(
+    (collapsed: boolean) => setCollapsed({ collapsed, pathname }),
     [pathname, setCollapsed],
   );
 
-  return { open: !collapsed, onOpenChange };
+  return { open, setCollapsed: choose };
 }
 
-function railIsCollapsed({
+function railIsOpen({
   preference,
   pathname,
   openedOn,
-}: {
-  preference: boolean;
-  pathname: string;
-  openedOn: string | null;
-}): boolean {
-  const routeHoldsItClosed =
-    openedOn !== pathname &&
-    ROUTES_THAT_HOLD_THE_RAIL_CLOSED.some(
-      (route) => matchPath(route, pathname) !== null,
-    );
-  return preference || routeHoldsItClosed;
+  chatDocked,
+  viewportWidth,
+}: RailInputs): boolean {
+  if (preference) return false;
+  if (openedOn === pathname) return true;
+  const routeHoldsItClosed = ROUTES_THAT_HOLD_THE_RAIL_CLOSED.some(
+    (route) => matchPath(route, pathname) !== null,
+  );
+  const chatFoldsIt =
+    chatDocked &&
+    viewportWidth >= chatLayoutUtils.MOBILE_BREAKPOINT &&
+    viewportWidth < FOLD_BELOW;
+  return !routeHoldsItClosed && !chatFoldsIt;
+}
+
+function isChatPageHandle(handle: unknown): boolean {
+  return (
+    typeof handle === 'object' &&
+    handle !== null &&
+    'chat' in handle &&
+    handle.chat === 'full'
+  );
 }
 
 type RailCollapsedState = {
   preference: boolean;
-  setCollapsed: (value: boolean) => void;
+  openedOn: string | null;
+  setCollapsed: (params: { collapsed: boolean; pathname: string }) => void;
 };
+
+type RailInputs = {
+  preference: boolean;
+  pathname: string;
+  openedOn: string | null;
+  chatDocked: boolean;
+  viewportWidth: number;
+};
+
+export const railUtils = { railIsOpen };
