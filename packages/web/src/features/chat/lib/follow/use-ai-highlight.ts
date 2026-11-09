@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 
+import { chatDom } from '@/features/chat/lib/chat-dom';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
+
 import { ResourceRef } from '../resources/registry';
 
 import { aiSheen } from './ai-sheen';
 import { followAlong, useFollowAlong } from './follow-along';
-import { pageFocus } from './page-focus';
 
 // Lights `key` when its component mounts after the AI changed it out of view.
 export function useAiHighlight({
@@ -27,7 +29,7 @@ export function useAiFieldHighlights(): void {
   const shown = useRef<Record<string, number>>({});
   useEffect(() => {
     const mark = (event: Event) => {
-      if (pageFocus.inChat(event.target)) return;
+      if (chatDom.inChat(event.target)) return;
       if (event instanceof KeyboardEvent && !SCROLL_KEYS.has(event.key)) {
         return;
       }
@@ -37,13 +39,13 @@ export function useAiFieldHighlights(): void {
     // the pointer is held down outside the chat.
     let pointerDown = false;
     const press = (event: Event) => {
-      pointerDown = !pageFocus.inChat(event.target);
+      pointerDown = !chatDom.inChat(event.target);
     };
     const release = () => {
       pointerDown = false;
     };
     const scrolled = (event: Event) => {
-      if (pointerDown && !pageFocus.inChat(event.target)) takeScroll();
+      if (pointerDown && !chatDom.inChat(event.target)) takeScroll();
     };
     const listeners: [keyof WindowEventMap, (event: Event) => void][] = [
       ['wheel', mark],
@@ -99,7 +101,7 @@ function scrollIntoView(element: Element): void {
   element.scrollIntoView({
     block: 'nearest',
     inline: 'nearest',
-    behavior: pageFocus.prefersReducedMotion() ? 'auto' : 'smooth',
+    behavior: chatLayoutUtils.prefersReducedMotion() ? 'auto' : 'smooth',
   });
 }
 

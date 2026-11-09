@@ -1,6 +1,4 @@
-import { MOTION } from '@/features/workspace/lib/chat-layout';
-
-import { pageFocus } from './page-focus';
+import { chatLayoutUtils, MOTION } from '@/features/workspace/lib/chat-layout';
 
 function play({
   id,
@@ -39,7 +37,7 @@ function flush(): void {
   frame = 0;
   const batch = pending.splice(0).map(measure);
   const delays = delaysByTop(batch.map((group) => group.top));
-  const reduced = pageFocus.prefersReducedMotion();
+  const reduced = chatLayoutUtils.prefersReducedMotion();
   batch.forEach((group, index) =>
     group.hosts.forEach(({ host, offset }) =>
       sweep({

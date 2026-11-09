@@ -1,8 +1,7 @@
 import { animate, useMotionValue } from 'motion/react';
 import { RefObject, useCallback, useEffect, useRef } from 'react';
 
-import { pageFocus } from '@/features/chat/lib/follow/page-focus';
-import { MOTION } from '@/features/workspace/lib/chat-layout';
+import { chatLayoutUtils, MOTION } from '@/features/workspace/lib/chat-layout';
 
 // Swipe the phone chat sheet down to close it. The swipe starts anywhere on
 // the sheet except on controls, or inside a list that can still scroll up.
@@ -196,7 +195,7 @@ const SHEET_DISMISS_VELOCITY = 0.11;
 const VELOCITY_WINDOW_MS = 100;
 
 function settleTransition() {
-  return pageFocus.prefersReducedMotion()
+  return chatLayoutUtils.prefersReducedMotion()
     ? { duration: 0 }
     : MOTION.gestureSpring;
 }

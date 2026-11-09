@@ -39,7 +39,6 @@ import {
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { followHold } from '@/features/chat/lib/follow/follow-hold';
-import { pageFocus } from '@/features/chat/lib/follow/page-focus';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
@@ -707,7 +706,7 @@ function ScrolledEdge() {
 function ReportScrolledUp() {
   const { isAtBottom, scrollRef } = useStickToBottomContext();
   useEffect(() => {
-    if (!pageFocus.inChat(scrollRef.current)) return;
+    if (!chatDom.inChat(scrollRef.current)) return;
     followHold.report({ scrolledUp: !isAtBottom });
     return () => followHold.report({ scrolledUp: false });
   }, [isAtBottom, scrollRef]);

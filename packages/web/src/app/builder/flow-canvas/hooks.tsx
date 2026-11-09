@@ -28,11 +28,11 @@ import {
   followAlong,
   useFollowAlong,
 } from '@/features/chat/lib/follow/follow-along';
-import { pageFocus } from '@/features/chat/lib/follow/page-focus';
 import { aiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { editorSession } from '@/lib/editor-session';
@@ -359,7 +359,7 @@ const usePanToFlashedStep = () => {
     const { zoom } = getViewport();
     fitView({
       nodes: [{ id: last }],
-      duration: pageFocus.prefersReducedMotion() ? 0 : PAN_DURATION_MS,
+      duration: chatLayoutUtils.prefersReducedMotion() ? 0 : PAN_DURATION_MS,
       minZoom: zoom,
       maxZoom: zoom,
     }).catch(() => undefined);

@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import {
   FollowChange,
   followAlong,
@@ -45,7 +46,7 @@ export function FollowAlongController() {
 
   useEffect(() => {
     const press = (event: PointerEvent) => {
-      if (!pageFocus.inChat(event.target)) {
+      if (!chatDom.inChat(event.target)) {
         followHold.report({ pressing: true });
       }
     };

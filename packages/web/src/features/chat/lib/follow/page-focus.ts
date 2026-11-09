@@ -1,21 +1,12 @@
-import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
-
-function inChat(target: EventTarget | null): boolean {
-  return (
-    target instanceof Element &&
-    target.closest(`#${chatLayoutUtils.PANEL_ID}`) !== null
-  );
-}
+import { chatDom } from '@/features/chat/lib/chat-dom';
 
 function isBusyIn(focused: Element | null): boolean {
-  return focused !== null && !inChat(focused) && focused.closest(BUSY) !== null;
-}
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return (
+    focused !== null && !chatDom.inChat(focused) && focused.closest(BUSY) !== null
+  );
 }
 
 const BUSY =
   'input, textarea, select, [contenteditable="true"], [role="dialog"], [role="alertdialog"]';
 
-export const pageFocus = { inChat, isBusyIn, prefersReducedMotion };
+export const pageFocus = { isBusyIn };

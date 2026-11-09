@@ -14,7 +14,6 @@ import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { Button } from '@/components/ui/button';
 import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatScrollAnchor } from '@/features/chat/lib/chat-scroll-anchor';
-import { pageFocus } from '@/features/chat/lib/follow/page-focus';
 import {
   ChatWidth,
   chatLayoutUtils,
@@ -372,7 +371,7 @@ function handleChatKey({
   sheet: ReturnType<typeof useChatSheet>;
 }): void {
   const full = chatWidth === 'full';
-  const focusInChat = pageFocus.inChat(document.activeElement);
+  const focusInChat = chatDom.inChat(document.activeElement);
   const shortcut = chatDom.shortcutOf(event);
   if (shortcut === 'newChat') {
     event.preventDefault();

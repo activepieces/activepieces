@@ -1,5 +1,7 @@
 import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 
+import { chatDom } from './chat-dom';
+
 // When the chat changes the page beside it, the new page may grab focus
 // (autofocus fields, focus traps, a removed element dropping focus to body).
 // If the user was typing in the chat, hand focus straight back, until the user
@@ -7,7 +9,7 @@ import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 function keep(): void {
   release?.();
   const kept = document.activeElement;
-  if (!(kept instanceof HTMLElement) || !inChat(kept)) {
+  if (!(kept instanceof HTMLElement) || !chatDom.inChat(kept)) {
     return;
   }
   const target = (): HTMLElement | null =>
@@ -22,7 +24,7 @@ function keep(): void {
   };
   const onFocusIn = (event: FocusEvent) => {
     const to = event.target;
-    if (!(to instanceof Element) || inChat(to)) return;
+    if (!(to instanceof Element) || chatDom.inChat(to)) return;
     if (to.closest(LAYERS)) {
       stop();
       return;
@@ -30,14 +32,14 @@ function keep(): void {
     giveBack();
   };
   const onFocusOut = (event: FocusEvent) => {
-    if (event.relatedTarget !== null || !inChat(event.target)) return;
+    if (event.relatedTarget !== null || !chatDom.inChat(event.target)) return;
     queueMicrotask(() => {
       const active = document.activeElement;
       if (!active || active === document.body) giveBack();
     });
   };
   const onPointer = (event: PointerEvent) => {
-    if (!inChat(event.target)) stop();
+    if (!chatDom.inChat(event.target)) stop();
   };
   const onKey = (event: KeyboardEvent) => {
     if (event.key === 'Tab') stop();
@@ -56,10 +58,6 @@ function keep(): void {
   document.addEventListener('pointerdown', onPointer, true);
   document.addEventListener('keydown', onKey, true);
   release = stop;
-}
-
-function inChat(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest(PANEL) !== null;
 }
 
 const PANEL = `#${chatLayoutUtils.PANEL_ID}`;
