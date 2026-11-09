@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { AgentConversation, AgentRunSource, SeekPage } from '@activepieces/shared';
 import { InfiniteData, QueryClient } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';

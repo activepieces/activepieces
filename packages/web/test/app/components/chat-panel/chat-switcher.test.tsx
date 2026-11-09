@@ -379,10 +379,7 @@ describe('ChatSwitcher', () => {
   });
 
   it('renames in the title: Enter saves and puts focus back on the title', async () => {
-    mocks.updateConversation.mockImplementation(
-      (id: string, request: { title: string }) =>
-        Promise.resolve(conversation({ id, title: request.title })),
-    );
+    serverKeepsRenames();
     renderChrome();
     await openSwitcher();
 
@@ -549,10 +546,7 @@ describe('ChatSwitcher', () => {
   });
 
   it('keeps each renamed title when moving between chats', async () => {
-    mocks.updateConversation.mockImplementation(
-      (id: string, request: { title: string }) =>
-        Promise.resolve(conversation({ id, title: request.title })),
-    );
+    serverKeepsRenames();
     renderChrome();
     await rename({ from: 'Chat 1', to: 'First' });
     await titleButton('First');
@@ -628,6 +622,29 @@ function typeSearch(text: string) {
 
 function pressSwitcherShortcut() {
   fireEvent.keyDown(document, { key: 'H', metaKey: true, shiftKey: true });
+}
+
+function serverKeepsRenames() {
+  const titles = new Map<string, string>();
+  const titleOf = (id: string) => titles.get(id) ?? `Chat ${id.slice(1)}`;
+  mocks.updateConversation.mockImplementation(
+    (id: string, request: { title: string }) => {
+      titles.set(id, request.title);
+      return Promise.resolve(conversation({ id, title: request.title }));
+    },
+  );
+  mocks.getConversation.mockImplementation((id: string) =>
+    Promise.resolve(conversation({ id, title: titleOf(id) })),
+  );
+  mocks.listConversations.mockImplementation(() =>
+    Promise.resolve({
+      data: manyConversations(8).map((item) =>
+        conversation({ id: item.id, title: titleOf(item.id) }),
+      ),
+      next: null,
+      previous: null,
+    }),
+  );
 }
 
 function listReturns(conversations: AgentConversation[]) {
