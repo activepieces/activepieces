@@ -127,6 +127,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
         const deletedRecords = await recordService.deleteAll({
             tableId: request.params.id,
             projectId: request.projectId,
+            log: request.log,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
         await recordSideEffects(fastify.log).handleRecordsEvent({

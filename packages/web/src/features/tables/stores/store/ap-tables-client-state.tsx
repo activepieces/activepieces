@@ -81,6 +81,11 @@ export type TableState = {
   renameField: (fieldIndex: number, newName: string) => void;
   reorderField: (fieldIndex: number, targetIndex: number) => void;
   setRecords: (records: PopulatedRecord[]) => void;
+  waitForSaves: () => Promise<void>;
+  mergeServerRecords: (change: {
+    records: PopulatedRecord[];
+    deletedIds: string[];
+  }) => void;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   toggleStatus: () => void;
   lockedByOtherUser: boolean;
@@ -283,6 +288,44 @@ export const createApTableStore = (
         return set(() => {
           return {
             records: mapRecorddToClientRecordsData(records, serverState.fields),
+          };
+        });
+      },
+      waitForSaves: () => serverState.idle(),
+      mergeServerRecords: ({ records: fresh, deletedIds }) => {
+        const { indexes, removed } = serverState.mergeRecords({
+          records: fresh,
+          deletedIds,
+        });
+        set((state) => {
+          const next = [...state.records];
+          const mapped = mapRecorddToClientRecordsData(
+            fresh,
+            serverState.fields,
+          );
+          indexes.forEach(({ index, added }, position) => {
+            next[index] = added
+              ? mapped[position]
+              : { ...next[index], values: mapped[position].values };
+          });
+          removed.forEach((index) => next.splice(index, 1));
+          const uuids = new Set(next.map((record) => record.uuid));
+          const selectedUuid =
+            state.selectedCell &&
+            state.records[state.selectedCell.rowIdx]?.uuid;
+          const selectedRowIdx = next.findIndex(
+            (record) => record.uuid === selectedUuid,
+          );
+          return {
+            records: next,
+            serverRecords: serverState.records,
+            selectedCell:
+              state.selectedCell && selectedRowIdx !== -1
+                ? { ...state.selectedCell, rowIdx: selectedRowIdx }
+                : null,
+            selectedRecords: new Set(
+              [...state.selectedRecords].filter((uuid) => uuids.has(uuid)),
+            ),
           };
         });
       },

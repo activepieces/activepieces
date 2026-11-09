@@ -36,6 +36,7 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     ids: recordIds,
                     projectId: mcp.projectId,
                     tableId: table.id,
+                    log,
                 })
 
                 return {

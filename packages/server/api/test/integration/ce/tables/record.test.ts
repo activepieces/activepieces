@@ -1,9 +1,10 @@
 import { apId } from '@activepieces/core-utils'
-import { FieldType, FilterOperator, TableWebhookEventType } from '@activepieces/shared'
+import { FieldType, FilterOperator, TableRecordsChangeOp, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import qs from 'qs'
+import { websocketService } from '../../../../src/app/core/websockets.service'
 import { webhookService } from '../../../../src/app/webhooks/webhook.service'
 import { db } from '../../../helpers/db'
 import { describeWithAuth } from '../../../helpers/describe-with-auth'
@@ -28,6 +29,37 @@ afterAll(async () => {
 })
 
 describe('Record API', () => {
+
+    describeWithAuth('records changed push', () => app!, (setup) => {
+        it('sends the changed record ids to the project room for create, update and delete', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const pushes: { room: string, payload: unknown }[] = []
+            const realTo = websocketService.to
+            vi.spyOn(websocketService, 'to').mockImplementation((room) => {
+                const operator = realTo(room)
+                vi.spyOn(operator, 'emit').mockImplementation((event, ...args) => {
+                    if (event === WebsocketClientEvent.TABLE_RECORDS_CHANGED) {
+                        pushes.push({ room, payload: args[0] })
+                    }
+                    return true
+                })
+                return operator
+            })
+
+            const created = await ctx.post('/v1/records', { tableId: table.id, records: [[{ fieldId: field.id, value: 'a' }]] })
+            const recordId = created?.json()[0].id
+            await ctx.post(`/v1/records/${recordId}`, { tableId: table.id, cells: [{ fieldId: field.id, value: 'b' }] })
+            await ctx.inject({ method: 'DELETE', url: '/api/v1/records', body: { tableId: table.id, ids: [recordId] } })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: ctx.project.id, payload: { tableId: table.id, recordIds: [recordId], op: TableRecordsChangeOp.CREATED } },
+                { room: ctx.project.id, payload: { tableId: table.id, recordIds: [recordId], op: TableRecordsChangeOp.UPDATED } },
+                { room: ctx.project.id, payload: { tableId: table.id, recordIds: [recordId], op: TableRecordsChangeOp.DELETED } },
+            ])
+        })
+    })
 
     describeWithAuth('POST /v1/records (Create)', () => app!, (setup) => {
         it('should create a single record with cells', async () => {
@@ -223,7 +255,7 @@ describe('Record API', () => {
 
         it('should add new cell to existing record (upsert)', async () => {
             const ctx = await setup()
-            const { table, field } = await createTableWithField(ctx)
+            const { table } = await createTableWithField(ctx)
             const field2 = createMockField({ tableId: table.id, projectId: ctx.project.id })
             field2.type = FieldType.TEXT
             await db.save('field', field2)

@@ -1,5 +1,12 @@
-import { isNil } from '@activepieces/core-utils';
-import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import { isNil, tryCatch } from '@activepieces/core-utils';
+import {
+  Field,
+  Table,
+  PopulatedRecord,
+  TableRecordsChangedEvent,
+  TableRecordsChangeOp,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
@@ -7,6 +14,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -15,13 +23,21 @@ import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
+import { useSocket } from '@/components/providers/socket-provider';
 import { buttonVariants } from '@/components/ui/button';
+import {
+  followAlong,
+  useFollowAlong,
+} from '@/features/chat/lib/follow/follow-along';
+import { resourceRegistry } from '@/features/chat/lib/resources/registry';
 import {
   TableState,
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/stores/store/ap-tables-client-state';
 import { useResourceLock } from '@/hooks/use-resource-lock';
+import { errorReporting } from '@/lib/error-reporting';
+import { PromiseQueue } from '@/lib/promise-queue';
 import { cn } from '@/lib/utils';
 
 import { fieldsApi } from '../api/fields-api';
@@ -46,6 +62,7 @@ export const TableStateProviderWithTable = ({
   const tableStoreRef = useRef<ApTableStore>(
     createApTableStore(table, fields, records),
   );
+  useLiveRecords({ tableId: table.id, store: tableStoreRef.current });
   return (
     <TableContext.Provider value={tableStoreRef.current}>
       {children}
@@ -172,6 +189,57 @@ export function ApTableStateProvider({
         </TableStateProviderWithTable>
       </TableLockProvider>
     </TableRefreshContext.Provider>
+  );
+}
+
+function useLiveRecords({
+  tableId,
+  store,
+}: {
+  tableId: string;
+  store: ApTableStore;
+}) {
+  const socket = useSocket();
+  useEffect(() => {
+    const updates = new PromiseQueue();
+    const apply = async (event: TableRecordsChangedEvent) => {
+      const deleted = event.op === TableRecordsChangeOp.DELETED;
+      const { data: records, error } = await tryCatch(() =>
+        deleted
+          ? Promise.resolve([])
+          : Promise.all(event.recordIds.map((id) => recordsApi.getById(id))),
+      );
+      if (error) {
+        errorReporting.report({ error, source: 'table-live-records' });
+        return;
+      }
+      await store.getState().waitForSaves();
+      store.getState().mergeServerRecords({
+        records,
+        deletedIds: deleted ? event.recordIds : [],
+      });
+      if (!deleted && isFollowed(tableId)) {
+        followAlong.flash(records.map((record) => `table-row:${record.id}`));
+      }
+    };
+    const onChange = (event: TableRecordsChangedEvent) => {
+      if (event.tableId !== tableId) return;
+      updates.add(() => apply(event));
+    };
+    socket.on(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onChange);
+    return () => {
+      socket.off(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onChange);
+    };
+  }, [socket, store, tableId]);
+}
+
+function isFollowed(tableId: string): boolean {
+  const { target, phase } = useFollowAlong.getState();
+  return (
+    phase === 'editing' &&
+    target !== null &&
+    resourceRegistry.keyOf(target) ===
+      resourceRegistry.keyOf({ kind: 'table', id: tableId })
   );
 }
 

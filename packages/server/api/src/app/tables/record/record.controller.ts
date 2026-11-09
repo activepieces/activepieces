@@ -44,6 +44,7 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             id: request.params.id,
             request: request.body,
             projectId: request.projectId,
+            log: request.log,
         })
         await reply.status(StatusCodes.OK).send(record)
         if (!changed) {
@@ -64,6 +65,7 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             ids: request.body.ids,
             projectId: request.projectId,
             tableId: request.body.tableId,
+            log: request.log,
         })
         await reply.status(StatusCodes.OK).send([])
         await recordSideEffects(fastify.log).handleRecordsEvent({

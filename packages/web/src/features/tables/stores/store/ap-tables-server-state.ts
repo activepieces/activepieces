@@ -142,6 +142,30 @@ export const createServerState = (
         clonedTable.status = updatedTable.status;
       });
     },
+    idle: () => queue.idle(),
+    mergeRecords: ({
+      records,
+      deletedIds,
+    }: {
+      records: PopulatedRecord[];
+      deletedIds: string[];
+    }) => {
+      const indexes = records.map((record) => {
+        const index = clonedRecords.findIndex((row) => row.id === record.id);
+        if (index === -1) {
+          clonedRecords.push(record);
+          return { index: clonedRecords.length - 1, added: true };
+        }
+        clonedRecords[index] = record;
+        return { index, added: false };
+      });
+      const removed = deletedIds
+        .map((id) => clonedRecords.findIndex((row) => row.id === id))
+        .filter((index) => index !== -1)
+        .sort((a, b) => b - a);
+      removed.forEach((index) => clonedRecords.splice(index, 1));
+      return { indexes, removed };
+    },
     setRecords: (records: PopulatedRecord[]) => {
       clonedRecords = JSON.parse(JSON.stringify(records));
     },

@@ -128,6 +128,8 @@ const ApStepCanvasNode = React.memo(
         {...{
           [`data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name,
         }}
+        data-ai-field={`flow-step:${step.name}`}
+        data-ai-scroll="canvas"
         style={{
           height: `${flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].height}px`,
           width: `${flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].width}px`,

@@ -48,6 +48,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     id: recordId,
                     projectId: mcp.projectId,
                     request: { tableId: resolvedTableId, cells },
+                    log,
                 })
 
                 return {
