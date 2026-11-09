@@ -7,10 +7,10 @@ import { keepComposerFocus } from '@/features/chat/lib/keep-composer-focus';
 import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { safeStorage } from '@/lib/safe-storage';
+import { parseHandle } from '@/lib/shell-handle';
 
 import { chatLayoutUtils } from './chat-layout';
 import { layoutMove } from './layout-move';
-import { parseHandle } from '@/lib/shell-handle';
 
 function bindRouter(next: ChatRouter): () => void {
   router = next;

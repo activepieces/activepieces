@@ -24,10 +24,10 @@ import {
 } from '@/features/workspace/lib/chat-panel-open';
 import { layoutMove } from '@/features/workspace/lib/layout-move';
 import { useRailOpen } from '@/features/workspace/lib/rail-collapsed';
-import { useShellHandle } from '@/lib/shell-handle';
 import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { useShellHandle } from '@/lib/shell-handle';
 import { cn } from '@/lib/utils';
 
 import { FollowAlongController } from './follow-along-controller';

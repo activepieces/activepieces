@@ -14,16 +14,13 @@ import { SidebarInset } from '@/components/ui/sidebar-shadcn';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesHooks } from '@/features/templates';
-import {
-  RouteHandle,
-  useShellMatch,
-} from '@/lib/shell-handle';
 import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { authenticationSession } from '@/lib/authentication-session';
 import { errorReporting } from '@/lib/error-reporting';
+import { RouteHandle, useShellMatch } from '@/lib/shell-handle';
 import { cn } from '@/lib/utils';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';

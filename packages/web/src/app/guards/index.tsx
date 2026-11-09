@@ -20,9 +20,9 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
-import { shellHandles } from '@/lib/shell-handle';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { routeLocation } from '@/lib/route-location';
+import { shellHandles } from '@/lib/shell-handle';
 
 import { AppShellRoute } from '../components/app-shell';
 import { AppToaster } from '../components/app-toaster';

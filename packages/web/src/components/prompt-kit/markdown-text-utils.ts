@@ -1,5 +1,5 @@
-import { parseHandle } from '@/lib/shell-handle';
 import { routeLocation } from '@/lib/route-location';
+import { parseHandle } from '@/lib/shell-handle';
 
 function classifyLink({
   href,
