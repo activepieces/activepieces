@@ -295,6 +295,7 @@ describe('Event Destination Trigger', () => {
                 }),
             }),
         )
+        expect(addSpy.mock.calls[0][0].data.lowPriority).toBeUndefined()
     })
 
     it('should NOT queue job when event action does not match', async () => {
