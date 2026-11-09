@@ -1313,6 +1313,9 @@
         "packages/pieces/community/smoove/src/index.ts"
       ],
       "@activepieces/piece-smtp": ["packages/pieces/core/smtp/src/index.ts"],
+      "@activepieces/piece-snaprender": [
+        "packages/pieces/community/snaprender/src/index.ts"
+      ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
       ],

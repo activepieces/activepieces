@@ -8801,6 +8801,20 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/snaprender": {
+      "name": "@activepieces/piece-snaprender",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "5.0.5",
+      },
+    },
     "packages/pieces/community/snowflake": {
       "name": "@activepieces/piece-snowflake",
       "version": "0.4.1",
@@ -12802,6 +12816,8 @@
     "@activepieces/piece-smsmode": ["@activepieces/piece-smsmode@workspace:packages/pieces/community/smsmode"],
 
     "@activepieces/piece-smtp": ["@activepieces/piece-smtp@workspace:packages/pieces/core/smtp"],
+
+    "@activepieces/piece-snaprender": ["@activepieces/piece-snaprender@workspace:packages/pieces/community/snaprender"],
 
     "@activepieces/piece-snowflake": ["@activepieces/piece-snowflake@workspace:packages/pieces/community/snowflake"],
 
