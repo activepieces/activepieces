@@ -93,7 +93,7 @@ function onChange(change: FollowChange): void {
       useChatPanel
         .getState()
         .announce(
-          t('The AI is changing {name}.', { name: change.resource.name }),
+          t('The AI is editing {name}.', { name: change.resource.name }),
         );
     }
   }

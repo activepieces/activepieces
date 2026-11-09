@@ -66,8 +66,8 @@ describe('follow-along session', () => {
     edit({ runId: 'r1', id: 't2', label: 'Deals' });
 
     expect(chat.announce.mock.calls).toEqual([
-      ['The AI is changing Leads.'],
-      ['The AI is changing Deals.'],
+      ['The AI is editing Leads.'],
+      ['The AI is editing Deals.'],
     ]);
   });
 

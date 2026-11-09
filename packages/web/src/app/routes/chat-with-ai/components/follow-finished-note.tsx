@@ -11,8 +11,6 @@ import {
 } from '@/features/chat/lib/resources/registry';
 import { MOTION } from '@/features/workspace/lib/chat-layout';
 
-// "Chat finished editing this …" for a moment after a followed edit ends on
-// the page the user is looking at.
 export function FollowFinishedNote() {
   const { pathname } = useLocation();
   const phase = useFollowAlong((s) => s.phase);
@@ -55,8 +53,8 @@ export function FollowFinishedNote() {
 }
 
 const DONE_LABEL: Record<ResourceKind, () => string> = {
-  flow: () => t('Chat finished editing this flow'),
-  table: () => t('Chat finished editing this table'),
+  flow: () => t('The AI finished editing this flow.'),
+  table: () => t('The AI finished editing this table.'),
 };
 
 const FINISHED_VISIBLE_MS = 2600;

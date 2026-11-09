@@ -27,8 +27,17 @@ export function FollowOfferRow() {
           <span className="min-w-0 flex-1">
             {t('The AI is editing {name}.', { name: offer.resource.name })}
           </span>
-          <Button variant="outline" size="xs" onClick={followAlong.acceptOffer}>
-            {t('Open beside')}
+          <Button
+            variant="outline"
+            size="xs"
+            className="max-w-full"
+            onClick={followAlong.acceptOffer}
+          >
+            <span className="truncate">
+              {t('Open {name} beside the chat', {
+                name: offer.resource.name,
+              })}
+            </span>
           </Button>
           <Button variant="ghost" size="xs" onClick={followAlong.stopFollowing}>
             {t('Stay here')}
