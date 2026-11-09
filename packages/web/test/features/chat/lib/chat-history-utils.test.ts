@@ -52,6 +52,56 @@ describe('chatHistoryUtils.filterByTitle', () => {
   });
 });
 
+describe('chatHistoryUtils.recentChats', () => {
+  const chats = ['a', 'b', 'c', 'd'].map((title) => titled(title));
+  const ids = (list: AgentConversation[]) => list.map((c) => c.id);
+
+  it('keeps the top chats when the current one is among them', () => {
+    expect(
+      ids(
+        chatHistoryUtils.recentChats({
+          conversations: chats,
+          currentId: 'b',
+          count: 2,
+        }),
+      ),
+    ).toEqual(['a', 'b']);
+  });
+
+  it('puts the current chat first when it sits below the top', () => {
+    expect(
+      ids(
+        chatHistoryUtils.recentChats({
+          conversations: chats,
+          currentId: 'd',
+          count: 2,
+        }),
+      ),
+    ).toEqual(['d', 'a']);
+  });
+
+  it('keeps the top chats when the current one is not loaded or there is none', () => {
+    expect(
+      ids(
+        chatHistoryUtils.recentChats({
+          conversations: chats,
+          currentId: 'zz',
+          count: 2,
+        }),
+      ),
+    ).toEqual(['a', 'b']);
+    expect(
+      ids(
+        chatHistoryUtils.recentChats({
+          conversations: chats,
+          currentId: null,
+          count: 2,
+        }),
+      ),
+    ).toEqual(['a', 'b']);
+  });
+});
+
 describe('chatHistoryUtils by last activity', () => {
   it('orders and groups chats by their last activity, not when they began', () => {
     const oldButActive = chat({

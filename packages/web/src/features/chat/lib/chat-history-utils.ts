@@ -119,6 +119,22 @@ function filterByTitle({
   );
 }
 
+function recentChats({
+  conversations,
+  currentId,
+  count,
+}: {
+  conversations: AgentConversation[];
+  currentId: string | null;
+  count: number;
+}): AgentConversation[] {
+  const top = conversations.slice(0, count);
+  if (currentId === null || top.some((c) => c.id === currentId)) return top;
+  const current = conversations.find((c) => c.id === currentId);
+  if (!current) return top;
+  return [current, ...conversations.slice(0, count - 1)];
+}
+
 function olderChats({
   hasNextPage,
   isFetchingNextPage,
@@ -150,6 +166,7 @@ export const chatHistoryUtils = {
   shortTime,
   showsSearch,
   filterByTitle,
+  recentChats,
   olderChats,
   SEARCH_THRESHOLD,
 };
