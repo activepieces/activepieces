@@ -13,30 +13,41 @@ import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 export function FollowFinishedNote() {
   const { pathname } = useLocation();
-  const phase = useFollowAlong((s) => s.phase);
-  const [finished, setFinished] = useState<ResourceKind | null>(null);
-  const wasEditing = useRef(phase === 'editing');
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+  const [finished, setFinished] = useState<FinishedEdit | null>(null);
+
+  useEffect(
+    () =>
+      useFollowAlong.subscribe((state, previous) => {
+        if (previous.phase !== 'editing' || state.phase !== 'idle') return;
+        const { target, following } = state;
+        if (!target || !following) return;
+        if (!resourceRegistry.isOn(pathnameRef.current, target)) return;
+        setFinished((current) => ({
+          kind: target.kind,
+          id: (current?.id ?? 0) + 1,
+        }));
+      }),
+    [],
+  );
+
+  if (finished === null) return null;
+  return <FinishedNote key={finished.id} kind={finished.kind} />;
+}
+
+function FinishedNote({ kind }: { kind: ResourceKind }) {
+  const [visible, setVisible] = useState(true);
   const reduced = useReducedMotion();
 
   useEffect(() => {
-    const was = wasEditing.current;
-    wasEditing.current = phase === 'editing';
-    if (!was || phase !== 'idle') return;
-    const { target, following } = useFollowAlong.getState();
-    if (target && following && resourceRegistry.isOn(pathname, target)) {
-      setFinished(target.kind);
-    }
-  }, [phase, pathname]);
-
-  useEffect(() => {
-    if (finished === null) return;
-    const timer = setTimeout(() => setFinished(null), FINISHED_VISIBLE_MS);
+    const timer = setTimeout(() => setVisible(false), FINISHED_VISIBLE_MS);
     return () => clearTimeout(timer);
-  }, [finished]);
+  }, []);
 
   return (
     <AnimatePresence initial={false}>
-      {finished !== null && (
+      {visible && (
         <motion.div
           key="follow-finished"
           role="status"
@@ -45,7 +56,7 @@ export function FollowFinishedNote() {
           {...noteMotion(reduced)}
         >
           <Check className="size-3.5" aria-hidden />
-          {DONE_LABEL[finished]()}
+          {DONE_LABEL[kind]()}
         </motion.div>
       )}
     </AnimatePresence>
@@ -79,5 +90,7 @@ function noteMotion(reduced: boolean | null) {
 const NOTE_RISE_PX = 4;
 const NOTE_CLASS =
   'pointer-events-none absolute inset-x-0 bottom-full mb-2 flex items-center gap-1.5 bg-gray-1 px-1 text-xs text-gray-11';
+
+type FinishedEdit = { kind: ResourceKind; id: number };
 
 export const chatNote = { motion: noteMotion, CLASS: NOTE_CLASS };
