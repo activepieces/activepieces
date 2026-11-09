@@ -675,6 +675,37 @@ describe('Piece catalog events job', () => {
         expect(received[0].event.data.piece).toMatchObject({ name: '@test/quiet', previousVersion: '1.0.0', version: '2.0.0', changeType: 'major' })
     })
 
+    it('boot seed failure does not reject', async () => {
+        vi.spyOn(flagServiceModule, 'flagService').mockImplementation((log) => ({
+            ...originalFlagService(log),
+            save: async () => {
+                throw new Error('snapshot write refused')
+            },
+        }))
+        await withSyncMode('NONE', async () => {
+            await insertOfficialPiece({ name: '@test/boot-fail', version: '1.0.0' })
+
+            await expect(catalogJobModule.pieceCatalogEventsJob(app.log).seedAtBootIfSyncOff()).resolves.toBeUndefined()
+        })
+        vi.mocked(flagServiceModule.flagService).mockImplementation(originalFlagService)
+
+        expect(await databaseConnection().getRepository('flag').countBy({ id: SNAPSHOT_FLAG_ID })).toBe(0)
+    })
+
+    it('reconcile seeds when the boot seed was skipped', async () => {
+        await subscribe({ platformId: entitledA.platform.id, changeTypes: ALL_CHANGE_TYPES })
+        await withSyncMode('NONE', async () => {
+            await insertOfficialPiece({ name: '@test/late-seed', version: '1.0.0' })
+            expect(await databaseConnection().getRepository('flag').countBy({ id: SNAPSHOT_FLAG_ID })).toBe(0)
+
+            await runReconcileJob()
+        })
+
+        expect(await loadSnapshot()).toEqual({ '@test/late-seed': '1.0.0' })
+        expect(addSpy).not.toHaveBeenCalled()
+        expect(broadcastCalls).toHaveLength(0)
+    })
+
     it('scheduleReconcile registers an hourly UTC scheduler at minute 45', async () => {
         await catalogJobModule.pieceCatalogEventsJob(app.log).scheduleReconcile()
         const schedulers = await systemJobsQueue.getJobSchedulers()
