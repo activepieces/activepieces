@@ -25,6 +25,8 @@ const projectBySocket = new WeakMap<Socket, SocketProject>()
 
 const projectLeaveHandlers = new Map<string, ProjectLeaveHandler>()
 
+const pendingWorkBySocket = new WeakMap<Socket, Promise<void>>()
+
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     socketHasPermission: ({ socket, permission }: SocketHasPermissionParams): boolean => hasPermission(projectBySocket.get(socket)?.role, permission),
@@ -72,25 +74,29 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
         return
     }
 
-    const castedType = type as keyof typeof listener
-    switch (type) {
+    switch (principal.type) {
         case PrincipalType.USER: {
             const handshakeProjectId = parseHandshakeProjectId(socket.handshake.auth.projectId)
-            if (!isNil(handshakeProjectId)) {
-                const role = await validateProjectId({ userId: principal.id, projectId: handshakeProjectId, log })
-                projectBySocket.set(socket, { projectId: handshakeProjectId, role })
-                await socket.join(handshakeProjectId)
-            }
+            const joinedProjectId = isNil(handshakeProjectId) ? null : await joinHandshakeProject({ socket, userId: principal.id, projectId: handshakeProjectId, log })
             log.info({
                 message: 'User connected',
                 user: { id: principal.id },
-                project: { id: handshakeProjectId },
+                ...(isNil(joinedProjectId) ? {} : { project: { id: joinedProjectId } }),
             })
             await socket.join(principal.id)
             socket.on(WebsocketServerEvent.SWITCH_PROJECT, async (data: unknown, callback?: (response: SwitchProjectResponse) => void) => {
-                const response = await switchProject({ socket, userId: principal.id, data, log })
+                const response = await runInSocketOrder({ socket, work: () => switchProject({ socket, userId: principal.id, data, log }) })
                 callback?.(response)
             })
+            for (const event of Object.values(WebsocketServerEvent)) {
+                const handler = listener[PrincipalType.USER][event]
+                if (isNil(handler)) {
+                    continue
+                }
+                socket.on(toSocketEvent(event), async (data: unknown, callback?: (data: unknown) => void) => {
+                    return runInSocketOrder({ socket, work: () => runUserEvent({ socket, event, handler, data, principal, callback, log }) })
+                })
+            }
             break
         }
         case PrincipalType.WORKER: {
@@ -101,6 +107,15 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
             })
             await socket.join(workerId)
             await socket.join(WORKERS_ROOM)
+            for (const event of Object.values(WebsocketServerEvent)) {
+                const handler = listener[PrincipalType.WORKER][event]
+                if (isNil(handler)) {
+                    continue
+                }
+                socket.on(toSocketEvent(event), async (data: unknown, callback?: (data: unknown) => void) => {
+                    return rejectedPromiseHandler(handler(socket)(data, principal, null, callback), log)
+                })
+            }
             break
         }
         default: {
@@ -112,33 +127,51 @@ async function attachListeners({ socket, log }: AttachListenersParams): Promise<
             })
         }
     }
-    for (const [event, handler] of Object.entries(listener[castedType])) {
-        // Socket.IO emits the reserved lowercase 'disconnect' per-socket; map our DISCONNECT enum
-        // onto it or the handler never fires (it never did — worker cleanup relied on the 60s sweep).
-        const socketEvent = event === WebsocketServerEvent.DISCONNECT ? 'disconnect' : event
-        socket.on(socketEvent, async (data, callback) => {
-            if (castedType !== PrincipalType.USER) {
-                return rejectedPromiseHandler(handler(socket)(data, principal, null, callback), log)
-            }
-            const project = projectBySocket.get(socket)
-            if (isNil(project)) {
-                log.warn({ event, userId: principal.id }, 'Websocket event blocked: no project selected')
-                return
-            }
-            const requiredPermission = eventPermissions[event as WebsocketServerEvent]
-            if (!isNil(requiredPermission) && !hasPermission(project.role, requiredPermission)) {
-                log.warn({ event, userId: principal.id, projectId: project.projectId, requiredPermission }, 'Websocket event blocked: missing permission')
-                return
-            }
-            return rejectedPromiseHandler(handler(socket)(data, principal, project.projectId, callback), log)
-        })
+}
+
+function toSocketEvent(event: WebsocketServerEvent): string {
+    return event === WebsocketServerEvent.DISCONNECT ? 'disconnect' : event
+}
+
+async function runUserEvent({ socket, event, handler, data, principal, callback, log }: RunUserEventParams): Promise<void> {
+    const project = projectBySocket.get(socket)
+    if (isNil(project)) {
+        log.warn({ event, user: { id: principal.id } }, 'Websocket event blocked: no project selected')
+        return
     }
+    const requiredPermission = eventPermissions[event]
+    if (!isNil(requiredPermission) && !hasPermission(project.role, requiredPermission)) {
+        log.warn({ event, user: { id: principal.id }, project: { id: project.projectId }, requiredPermission }, 'Websocket event blocked: missing permission')
+        return
+    }
+    const { error } = await tryCatch(() => handler(socket)(data, principal, project.projectId, callback))
+    if (!isNil(error)) {
+        log.error({ error, event, user: { id: principal.id }, project: { id: project.projectId } }, 'Websocket event failed')
+    }
+}
+
+function runInSocketOrder<T>({ socket, work }: RunInSocketOrderParams<T>): Promise<T> {
+    const previous = pendingWorkBySocket.get(socket) ?? Promise.resolve()
+    const next = previous.then(work)
+    pendingWorkBySocket.set(socket, next.then(() => undefined, () => undefined))
+    return next
+}
+
+async function joinHandshakeProject({ socket, userId, projectId, log }: JoinHandshakeProjectParams): Promise<string | null> {
+    const { data: role, error } = await tryCatch(() => validateProjectId({ userId, projectId, log }))
+    if (isNil(role)) {
+        log.warn({ error, user: { id: userId }, project: { id: projectId } }, 'Websocket handshake project rejected, connected without a project')
+        return null
+    }
+    projectBySocket.set(socket, { projectId, role })
+    await socket.join(projectId)
+    return projectId
 }
 
 async function switchProject({ socket, userId, data, log }: SwitchProjectParams): Promise<SwitchProjectResponse> {
     const request = SwitchProjectRequest.safeParse(data)
     if (!request.success) {
-        log.warn({ userId }, 'Websocket project switch rejected: invalid request')
+        log.warn({ user: { id: userId } }, 'Websocket project switch rejected: invalid request')
         return { success: false }
     }
     const { projectId } = request.data
@@ -155,7 +188,7 @@ async function switchProject({ socket, userId, data, log }: SwitchProjectParams)
         projectBySocket.set(socket, { projectId, role })
     })
     if (!isNil(error)) {
-        log.warn({ error, userId, projectId }, 'Websocket project switch rejected')
+        log.warn({ error, user: { id: userId }, project: { id: projectId } }, 'Websocket project switch rejected')
         return { success: false }
     }
     return { success: true }
@@ -165,15 +198,7 @@ function parseHandshakeProjectId(value: unknown): string | null {
     return typeof value === 'string' && value.length > 0 ? value : null
 }
 
-const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdArgs): Promise<ProjectRole> => {
-    if (isNil(projectId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHENTICATION,
-            params: {
-                message: 'Project ID is required',
-            },
-        })
-    }
+async function validateProjectId({ userId, projectId, log }: ValidateProjectIdArgs): Promise<ProjectRole> {
     const role = await projectMemberService(log).getRole({
         projectId,
         userId,
@@ -196,7 +221,7 @@ function hasPermission(role: ProjectRole | undefined, permission: Permission): b
 
 type ValidateProjectIdArgs = {
     userId: string
-    projectId?: string
+    projectId: string
     log: FastifyBaseLogger
 }
 
@@ -217,11 +242,34 @@ type SwitchProjectParams = {
     log: FastifyBaseLogger
 }
 
-export type ProjectLeaveHandler = (params: { socket: Socket, userId: string, projectId: string }) => Promise<void>
+type ProjectLeaveHandler = (params: { socket: Socket, userId: string, projectId: string }) => Promise<void>
 
 type SocketHasPermissionParams = {
     socket: Socket
     permission: Permission
+}
+
+type RunUserEventParams = {
+    socket: Socket
+    event: WebsocketServerEvent
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handler: WebsocketListener<any, PrincipalType.USER>
+    data: unknown
+    principal: PrincipalForType<PrincipalType.USER>
+    callback?: (data: unknown) => void
+    log: FastifyBaseLogger
+}
+
+type RunInSocketOrderParams<T> = {
+    socket: Socket
+    work: () => Promise<T>
+}
+
+type JoinHandshakeProjectParams = {
+    socket: Socket
+    userId: string
+    projectId: string
+    log: FastifyBaseLogger
 }
 
 type AttachListenersParams = {

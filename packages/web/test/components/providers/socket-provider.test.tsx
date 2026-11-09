@@ -13,14 +13,20 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const socketHarness = vi.hoisted(() => {
   type Handler = (payload?: unknown) => void;
-  type Ack = (response: unknown) => void;
+  type Ack = (error: Error | null, response?: unknown) => void;
   type AuthOption = (send: (data: object) => void) => void;
   const handlers: Record<string, Handler[]> = {};
-  const emitted: { event: string; payload: unknown; ack: Ack }[] = [];
+  const emitted: {
+    event: string;
+    payload: unknown;
+    ack: Ack;
+    timeoutMs: number | null;
+  }[] = [];
   const state: { auth: AuthOption | null; handshakes: object[] } = {
     auth: null,
     handshakes: [],
   };
+  const pendingTimeout: { ms: number | null } = { ms: null };
   const socket = {
     connected: false,
     active: false,
@@ -45,8 +51,13 @@ const socketHarness = vi.hoisted(() => {
         : [];
       return socket;
     },
+    timeout: (ms: number) => {
+      pendingTimeout.ms = ms;
+      return socket;
+    },
     emit: (event: string, payload: unknown, ack: Ack) => {
-      emitted.push({ event, payload, ack });
+      emitted.push({ event, payload, ack, timeoutMs: pendingTimeout.ms });
+      pendingTimeout.ms = null;
       return socket;
     },
   };
@@ -160,11 +171,44 @@ describe('SocketProvider', () => {
 
     sessionHarness.projectId = 'project-2';
     await act(async () => root.render(<App onConnect={vi.fn()} />));
-    act(() => socketHarness.emitted[0].ack({ success: false }));
+    act(() => socketHarness.emitted[0].ack(null, { success: false }));
     await act(async () => root.render(<App onConnect={vi.fn()} />));
 
     expect(showError).toHaveBeenCalledTimes(1);
     expect(socketHarness.emitted).toHaveLength(1);
+  });
+
+  it('treats a switch the server never answers as an error and does not retry', async () => {
+    const showError = vi.spyOn(toastHarness.toast, 'error');
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+
+    sessionHarness.projectId = 'project-2';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    expect(socketHarness.emitted[0].timeoutMs).not.toBeNull();
+    act(() =>
+      socketHarness.emitted[0].ack(new Error('operation has timed out')),
+    );
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+
+    expect(showError).toHaveBeenCalledTimes(1);
+    expect(socketHarness.emitted).toHaveLength(1);
+  });
+
+  it('switches again after an unanswered switch to another project', async () => {
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+
+    sessionHarness.projectId = 'project-2';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+    act(() =>
+      socketHarness.emitted[0].ack(new Error('operation has timed out')),
+    );
+    sessionHarness.projectId = 'project-3';
+    await act(async () => root.render(<App onConnect={vi.fn()} />));
+
+    expect(socketHarness.emitted).toHaveLength(2);
+    expect(socketHarness.emitted[1].payload).toEqual({
+      projectId: 'project-3',
+    });
   });
 
   it('connects with the token alone on pages without a project', async () => {

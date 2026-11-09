@@ -32,6 +32,8 @@ const SocketContext = React.createContext<typeof socket>(socket);
 
 const CONNECTION_LOST_TOAST_ID = 'websocket-disconnected';
 
+const SWITCH_PROJECT_TIMEOUT_MS = 10_000;
+
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const token = useSyncExternalStore(
     authenticationSession.subscribe,
@@ -117,28 +119,30 @@ function syncProject(): void {
   }
   const pending = { projectId: target };
   connection.pendingSwitch = pending;
-  socket.emit(
-    WebsocketServerEvent.SWITCH_PROJECT,
-    { projectId: target },
-    (response: unknown) => {
-      if (connection.pendingSwitch !== pending) {
-        return;
-      }
-      connection.pendingSwitch = null;
-      const parsed = SwitchProjectResponse.safeParse(response);
-      if (parsed.success && parsed.data.success) {
-        connection.serverProjectId = target;
-      } else {
-        connection.rejectedProjectId = target;
-        toast.error(t('Live updates are paused'), {
-          description: t(
-            'We could not connect live updates to this project. Reload the page to try again.',
-          ),
-        });
-      }
-      syncProject();
-    },
-  );
+  socket
+    .timeout(SWITCH_PROJECT_TIMEOUT_MS)
+    .emit(
+      WebsocketServerEvent.SWITCH_PROJECT,
+      { projectId: target },
+      (error: Error | null, response: unknown) => {
+        if (connection.pendingSwitch !== pending) {
+          return;
+        }
+        connection.pendingSwitch = null;
+        const parsed = SwitchProjectResponse.safeParse(response);
+        if (isNil(error) && parsed.success && parsed.data.success) {
+          connection.serverProjectId = target;
+        } else {
+          connection.rejectedProjectId = target;
+          toast.error(t('Live updates are paused'), {
+            description: t(
+              'We could not connect live updates to this project. Reload the page to try again.',
+            ),
+          });
+        }
+        syncProject();
+      },
+    );
 }
 
 function resetConnection(): void {

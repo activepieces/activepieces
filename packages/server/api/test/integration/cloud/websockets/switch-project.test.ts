@@ -3,11 +3,14 @@ import { apId, DefaultProjectRole, PlatformRole, PrincipalType, WebsocketServerE
 import { FastifyInstance } from 'fastify'
 import { Socket } from 'socket.io'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { lockService } from '../../../../src/app/core/collaborative/lock/lock.service'
+import { presenceService } from '../../../../src/app/core/collaborative/presence/presence.service'
 import { websocketService } from '../../../../src/app/core/websockets.service'
 import * as flowRunServiceModule from '../../../../src/app/flows/flow-run/flow-run-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import {
+    createMockFlow,
     createMockProject,
     createMockProjectMember,
     mockAndSaveBasicSetup,
@@ -76,6 +79,62 @@ describe('Websocket SWITCH_PROJECT', () => {
         expect(response).toEqual({ success: true })
         expect(await startedManualRunIn(conn)).toBe(s.editorProjectId)
     })
+
+    it('still answers switches when the handshake project is not accessible', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: s.forbiddenProjectId })
+
+        expect(conn.rooms.has(s.forbiddenProjectId)).toBe(false)
+        expect(await startedManualRunIn(conn)).toBeNull()
+
+        const response = await switchProject({ conn, projectId: s.editorProjectId })
+
+        expect(response).toEqual({ success: true })
+        expect(await startedManualRunIn(conn)).toBe(s.editorProjectId)
+    })
+
+    it('releases the lock and presence held in the old project', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: s.editorProjectId })
+        const lockAck = await send({ conn, event: WebsocketServerEvent.LOCK_RESOURCE, data: { resourceId: s.editorFlowId } })
+        await send({ conn, event: WebsocketServerEvent.JOIN_PRESENCE, data: { resourceId: s.editorFlowId } })
+
+        expect(lockAck).toEqual({ acquired: true, lock: null })
+        expect(await presentUserIds(s)).toEqual([s.memberId])
+
+        await switchProject({ conn, projectId: s.viewerProjectId })
+
+        expect(await lockService(app.log).getLock({ resourceId: s.editorFlowId, projectId: s.editorProjectId })).toBeNull()
+        expect(await presentUserIds(s)).toEqual([])
+    })
+
+    it('releases a lock that was still being taken when the switch arrived', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: s.editorProjectId })
+
+        const [lockAck] = await Promise.all([
+            send({ conn, event: WebsocketServerEvent.LOCK_RESOURCE, data: { resourceId: s.editorFlowId } }),
+            switchProject({ conn, projectId: s.viewerProjectId }),
+        ])
+
+        expect(lockAck).toEqual({ acquired: true, lock: null })
+        expect(await lockService(app.log).getLock({ resourceId: s.editorFlowId, projectId: s.editorProjectId })).toBeNull()
+    })
+
+    it('leaves the socket in exactly one project room after two fast switches', async () => {
+        const s = await setup()
+        const conn = await connect({ token: s.memberToken, projectId: null })
+
+        const responses = await Promise.all([
+            switchProject({ conn, projectId: s.viewerProjectId }),
+            switchProject({ conn, projectId: s.editorProjectId }),
+        ])
+
+        expect(responses).toEqual([{ success: true }, { success: true }])
+        expect(conn.rooms.has(s.viewerProjectId)).toBe(false)
+        expect(conn.rooms.has(s.editorProjectId)).toBe(true)
+        expect(await startedManualRunIn(conn)).toBe(s.editorProjectId)
+    })
 })
 
 async function setup(): Promise<Scenario> {
@@ -83,6 +142,8 @@ async function setup(): Promise<Scenario> {
     const viewerProject = createMockProject({ ownerId: owner.id, platformId: platform.id })
     const editorProject = createMockProject({ ownerId: owner.id, platformId: platform.id })
     await db.save('project', [viewerProject, editorProject])
+    const editorFlow = createMockFlow({ projectId: editorProject.id })
+    await db.save('flow', editorFlow)
 
     const { mockUser: member } = await mockBasicUser({
         user: { platformId: platform.id, platformRole: PlatformRole.MEMBER },
@@ -105,6 +166,7 @@ async function setup(): Promise<Scenario> {
         viewerProjectId: viewerProject.id,
         editorProjectId: editorProject.id,
         forbiddenProjectId: forbiddenProject.id,
+        editorFlowId: editorFlow.id,
     }
 }
 
@@ -127,6 +189,7 @@ async function connect({ token, projectId }: { token: string, projectId: string 
         },
         once: (): void => undefined,
         emit: (): boolean => true,
+        to: (): { emit: () => boolean } => ({ emit: () => true }),
     }
     await websocketService.init(fake as unknown as Socket, app.log)
     return { handlers, rooms }
@@ -138,6 +201,19 @@ async function switchProject({ conn, projectId }: { conn: Connection, projectId:
         responses.push(response)
     })
     return responses[0]
+}
+
+async function send({ conn, event, data }: { conn: Connection, event: WebsocketServerEvent, data: unknown }): Promise<unknown> {
+    const responses: unknown[] = []
+    await conn.handlers[event](data, (response) => {
+        responses.push(response)
+    })
+    return responses[0]
+}
+
+async function presentUserIds(s: Scenario): Promise<string[]> {
+    const users = await presenceService(app.log).getActiveUsers({ resourceId: s.editorFlowId, projectId: s.editorProjectId })
+    return users.map((user) => user.userId)
 }
 
 async function startedManualRunIn(conn: Connection): Promise<string | null> {
@@ -166,4 +242,5 @@ type Scenario = {
     viewerProjectId: string
     editorProjectId: string
     forbiddenProjectId: string
+    editorFlowId: string
 }
