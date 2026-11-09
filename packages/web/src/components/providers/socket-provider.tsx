@@ -18,6 +18,7 @@ const connection: ConnectionState = {
   serverProjectId: null,
   rejectedProjectId: null,
   pendingSwitch: null,
+  heldEmits: [],
 };
 
 const socket = io(API_BASE_URL, {
@@ -78,10 +79,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       resetConnection();
       return;
     }
-    if (connection.wantedProjectId !== projectId) {
-      connection.rejectedProjectId = null;
-    }
-    connection.wantedProjectId = projectId;
+    setWantedProject(projectId);
     if (connection.token !== token) {
       connection.token = token;
       socket.disconnect();
@@ -102,22 +100,38 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useSocket = () => React.useContext(SocketContext);
 
+function emitInProject(send: () => void): void {
+  setWantedProject(authenticationSession.getProjectId());
+  connection.heldEmits = [...connection.heldEmits, send];
+  syncProject();
+}
+
+function setWantedProject(projectId: string | null): void {
+  if (connection.wantedProjectId === projectId) {
+    return;
+  }
+  connection.rejectedProjectId = null;
+  connection.wantedProjectId = projectId;
+}
+
 function startHandshake(): HandshakeAuth {
   connection.serverProjectId = null;
   connection.rejectedProjectId = null;
   connection.pendingSwitch = null;
-  return { token: connection.token };
+  return { token: connection.token, projectId: connection.wantedProjectId };
 }
 
 function syncProject(): void {
+  if (!socket.connected || !isNil(connection.pendingSwitch)) {
+    return;
+  }
   const target = connection.wantedProjectId;
   if (
-    !socket.connected ||
-    !isNil(connection.pendingSwitch) ||
     isNil(target) ||
     target === connection.serverProjectId ||
     target === connection.rejectedProjectId
   ) {
+    releaseHeldEmits();
     return;
   }
   const pending = { projectId: target };
@@ -149,12 +163,19 @@ function syncProject(): void {
     );
 }
 
+function releaseHeldEmits(): void {
+  const held = connection.heldEmits;
+  connection.heldEmits = [];
+  held.forEach((send) => send());
+}
+
 function resetConnection(): void {
   connection.token = null;
   connection.wantedProjectId = null;
   connection.serverProjectId = null;
   connection.rejectedProjectId = null;
   connection.pendingSwitch = null;
+  connection.heldEmits = [];
 }
 
 function readToken(): string | null {
@@ -167,8 +188,12 @@ type ConnectionState = {
   serverProjectId: string | null;
   rejectedProjectId: string | null;
   pendingSwitch: { projectId: string } | null;
+  heldEmits: (() => void)[];
 };
 
 type HandshakeAuth = {
   token: string | null;
+  projectId: string | null;
 };
+
+export { emitInProject };

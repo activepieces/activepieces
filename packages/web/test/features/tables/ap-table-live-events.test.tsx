@@ -37,6 +37,7 @@ const socket = vi.hoisted(() => {
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socket,
+  emitInProject: (send: () => void) => send(),
 }));
 vi.mock('@/features/chat/lib/follow/follow-along', () => ({
   followAlong: { flash: vi.fn(), isFollowing: vi.fn(() => true) },

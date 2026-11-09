@@ -116,6 +116,7 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 
 vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socketHarness.socket,
+  emitInProject: (send: () => void) => send(),
 }));
 
 vi.mock('@/features/flows/api/flows-api', () => ({
