@@ -22,6 +22,8 @@ describe('Admin retry runs (POST /v1/admin/platforms/runs/retry)', () => {
         const { mockProject } = await mockAndSaveBasicSetup()
         const before = await createFailedRun({ projectId: mockProject.id, createdAt: center - 2 * HOUR_MS })
         const inside = await createFailedRun({ projectId: mockProject.id, createdAt: center })
+        const { mockProject: otherProject } = await mockAndSaveBasicSetup()
+        const insideOtherProject = await createFailedRun({ projectId: otherProject.id, createdAt: center })
         const after = await createFailedRun({ projectId: mockProject.id, createdAt: center + 2 * HOUR_MS })
 
         const response = await retryRuns({
@@ -31,6 +33,7 @@ describe('Admin retry runs (POST /v1/admin/platforms/runs/retry)', () => {
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(await readStatus(inside)).toBe(FlowRunStatus.QUEUED)
+        expect(await readStatus(insideOtherProject)).toBe(FlowRunStatus.QUEUED)
         expect(await readStatus(before)).toBe(FlowRunStatus.FAILED)
         expect(await readStatus(after)).toBe(FlowRunStatus.FAILED)
     })
