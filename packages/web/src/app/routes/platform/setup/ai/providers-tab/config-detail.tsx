@@ -272,7 +272,13 @@ export function ConfigDetail({
                 models={draft.models}
                 suggestedModelIds={suggestedModelIds}
                 tiersByModel={tiersByModel}
-                onChange={(models) => setDraft({ ...draft, models })}
+                onChange={(models) =>
+                  setDraft({
+                    ...draft,
+                    models,
+                    modelIds: models.map((model) => model.modelId),
+                  })
+                }
               />
             </SettingsPanel>
           ) : (

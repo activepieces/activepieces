@@ -31,6 +31,10 @@ const selectMock = vi.hoisted(() => ({
   onValueChange: undefined as undefined | ((value: string) => void),
 }));
 
+const leaveGuard = vi.hoisted(() => ({
+  hasChanges: undefined as undefined | boolean,
+}));
+
 vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
@@ -77,7 +81,10 @@ vi.mock('@/components/custom/delete-dialog', () => ({
 
 vi.mock('@/components/custom/leave-without-saving', () => ({
   LeaveWithoutSavingDialog: () => null,
-  useWarnBeforeLosingChanges: () => ({ state: 'unblocked' }),
+  useWarnBeforeLosingChanges: ({ hasChanges }: { hasChanges: boolean }) => {
+    leaveGuard.hasChanges = hasChanges;
+    return { state: 'unblocked' };
+  },
 }));
 
 vi.mock('@/app/routes/platform/setup/components/section-header', () => ({
@@ -162,13 +169,12 @@ describe('ConfigDetail save (manual models)', () => {
   let root: Root;
   let onSave: Mock<React.ComponentProps<typeof ConfigDetail>['onSave']>;
 
-  const render = () => {
-    onSave = vi.fn().mockResolvedValue({ error: null });
+  const render = (config: AIProviderWithoutSensitiveData = gatewayConfig) => {
     act(() => {
       root.render(
         <MemoryRouter>
           <ConfigDetail
-            config={gatewayConfig}
+            config={config}
             info={{
               provider: AIProviderName.CLOUDFLARE_GATEWAY,
               name: 'Cloudflare AI Gateway',
@@ -238,6 +244,35 @@ describe('ConfigDetail save (manual models)', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     selectMock.onValueChange = undefined;
+    leaveGuard.hasChanges = undefined;
+    onSave = vi.fn().mockResolvedValue({ error: null });
+  });
+
+  it('is no longer dirty once the saved models come back from the server', async () => {
+    const emptyKey: AIProviderWithoutSensitiveData = {
+      ...gatewayConfig,
+      config: { ...gatewayConfig.config, models: [] },
+      modelIds: [],
+    };
+    render(emptyKey);
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    await act(async () => {
+      clickButton('Save');
+    });
+
+    const request = savedRequest();
+    render({
+      ...emptyKey,
+      config: request.config ?? emptyKey.config,
+      modelIds: request.modelIds ?? emptyKey.modelIds,
+    });
+
+    const saveBar = Array.from(container.querySelectorAll('span')).find(
+      (span) => span.textContent === 'You have unsaved changes',
+    );
+    expect(saveBar).toBeUndefined();
+    expect(leaveGuard.hasChanges).toBe(false);
   });
 
   it('sends an added image model as an image model, keeping the existing one intact', () => {
