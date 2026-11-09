@@ -1,5 +1,7 @@
 import { t } from 'i18next';
-import { ReactNode, useState } from 'react';
+import { CircleSlash } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { ReactNode, useEffect, useState } from 'react';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -18,7 +20,7 @@ import {
 
 import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
-import { ChatInput } from './chat-input';
+import { ChatInput, ComposerFill } from './chat-input';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
@@ -36,8 +38,15 @@ export function ChatBottomBar({
   placeholder,
   banner,
   recede,
+  fill,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
+  const [skipped, setSkipped] = useState(false);
+  useEffect(() => {
+    if (!skipped) return;
+    const timer = setTimeout(() => setSkipped(false), SKIPPED_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [skipped]);
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
       state: s,
@@ -113,7 +122,10 @@ export function ChatBottomBar({
   // dismissed/rejected so the card doesn't flash back before the worker unblocks.
   const handleSend = (text: string, files?: File[]) => {
     void onSend(text, files);
-    dismissActiveCard?.();
+    if (dismissActiveCard) {
+      dismissActiveCard();
+      setSkipped(true);
+    }
   };
 
   const minimal = recede === true && !activeCard && !composerEngaged;
@@ -121,6 +133,22 @@ export function ChatBottomBar({
   return (
     <div className="flex flex-col gap-2">
       {activeCard}
+      <AnimatePresence initial={false}>
+        {skipped && !activeCard && (
+          <motion.div
+            key="skipped"
+            role="status"
+            className="flex items-center gap-1.5 px-1 text-xs text-gray-11"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <CircleSlash className="size-3" />
+            {t('Skipped')}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div
         className={cn(
           'overflow-hidden rounded-xl border transition-colors',
@@ -139,11 +167,12 @@ export function ChatBottomBar({
           onFocusChange={setComposerEngaged}
           placeholder={
             activeCard
-              ? t('Or reply in your own words')
+              ? t('Answer the card above, or reply to change the plan')
               : placeholder ?? t('Reply...')
           }
           rightActions={modelPicker}
           sendBlockedReason={sendBlockedReason}
+          fill={fill}
         />
       </div>
     </div>
@@ -223,4 +252,7 @@ type ChatBottomBarProps = {
   placeholder?: string;
   banner?: ReactNode;
   recede?: boolean;
+  fill?: ComposerFill | null;
 };
+
+const SKIPPED_VISIBLE_MS = 2500;

@@ -13,7 +13,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -27,6 +27,7 @@ import {
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { routesThatRequireProjectId } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import { OnboardingWelcome } from './onboarding-welcome';
@@ -37,19 +38,21 @@ export function ChatEmptyState({
   onboarding,
   showFlowCards,
   onSend,
+  onFill,
 }: {
   incognito: boolean;
   hasInput: boolean;
   onboarding: boolean;
   showFlowCards: boolean;
   onSend: (text: string) => void;
+  onFill: (text: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useWidthOf(containerRef);
   return (
     <div ref={containerRef} className="h-full">
       {width === null ? null : width < WIDE_EMPTY_STATE_MIN_WIDTH ? (
-        <NarrowEmptyState onSend={onSend} />
+        <NarrowEmptyState onSend={onSend} onFill={onFill} />
       ) : onboarding ? (
         <OnboardingWelcome />
       ) : (
@@ -57,7 +60,7 @@ export function ChatEmptyState({
           incognito={incognito}
           hasInput={hasInput}
           showFlowCards={showFlowCards}
-          onSuggestionClick={onSend}
+          onSuggestionClick={onFill}
         />
       )}
     </div>
@@ -78,14 +81,22 @@ function useWidthOf(ref: RefObject<HTMLElement | null>): number | null {
   return width;
 }
 
-function NarrowEmptyState({ onSend }: { onSend: (text: string) => void }) {
+function NarrowEmptyState({
+  onSend,
+  onFill,
+}: {
+  onSend: (text: string) => void;
+  onFill: (text: string) => void;
+}) {
   const { data: user } = userHooks.useCurrentUser();
+  const { pathname } = useLocation();
+  const onResource = RESOURCE_PAGES.some(
+    (pattern) => matchPath({ path: pattern, end: false }, pathname) !== null,
+  );
   const name = user?.firstName;
-  const suggestions = [
-    t('Build me a flow for new leads'),
-    t('What saved us the most time this month?'),
-    t('Why did my last run fail?'),
-  ];
+  const suggestions = (
+    onResource ? [PAGE_SUGGESTION, ...SUGGESTIONS] : SUGGESTIONS
+  ).slice(0, 3);
   return (
     <div className="flex h-full flex-col justify-end gap-3 px-4 pb-3">
       <p className="text-base font-semibold text-gray-12">
@@ -94,12 +105,15 @@ function NarrowEmptyState({ onSend }: { onSend: (text: string) => void }) {
           : t('What should I do?')}
       </p>
       <div className="flex flex-col items-start gap-1.5">
-        {suggestions.map((text) => {
+        {suggestions.map((suggestion) => {
+          const text = t(suggestion.text);
           return (
             <Button
-              key={text}
+              key={suggestion.text}
               variant="ghost"
-              onClick={() => onSend(text)}
+              onClick={() =>
+                suggestion.kind === 'build' ? onFill(text) : onSend(text)
+              }
               className="h-auto max-w-full justify-start rounded-full border px-3 py-1.5 text-gray-11 hover:bg-gray-3 active:bg-gray-4"
             >
               <TextWithTooltip tooltipMessage={text}>
@@ -631,3 +645,21 @@ function resolveCards({
 
 const COLLAPSED_CARD_COUNT = 4;
 const WIDE_EMPTY_STATE_MIN_WIDTH = 704;
+
+const RESOURCE_PAGES = [
+  `/projects/:projectId${routesThatRequireProjectId.singleFlow}`,
+  `/projects/:projectId${routesThatRequireProjectId.singleTable}`,
+];
+
+const PAGE_SUGGESTION: Suggestion = {
+  text: 'What can I do on this page?',
+  kind: 'ask',
+};
+
+const SUGGESTIONS: Suggestion[] = [
+  { text: 'Build me a flow for new leads', kind: 'build' },
+  { text: 'What saved us the most time this month?', kind: 'ask' },
+  { text: 'Why did my last run fail?', kind: 'ask' },
+];
+
+type Suggestion = { text: string; kind: 'build' | 'ask' };

@@ -241,6 +241,7 @@ export function buildMessageBlocks({
         result.push({ kind: 'display-tool', part: p });
         continue;
       }
+      docSourcesOf(p).forEach(addSource);
       const description = pushToolStep(p);
       if (toolName === 'ap_execute_action') {
         const batchPart = chatPartUtils.extractBatchProgressFromOutput(p);
@@ -309,6 +310,35 @@ function taskRows({
 // cards into one collapsed `card-group` so the timeline stays calm; a lone card
 // renders unchanged. Recurses into a build's children, which render through the
 // same block pipeline.
+// Docs the agent searched or read become source chips under the reply.
+function docSourcesOf(part: AnyToolPart): SourceItem[] {
+  const toolName = chatPartUtils.getToolPartName(part);
+  if (toolName === 'ap_read_doc') {
+    const input = isObject(part.input) ? part.input : {};
+    return typeof input.url === 'string' && input.url
+      ? [{ key: input.url, href: input.url }]
+      : [];
+  }
+  if (toolName !== 'ap_search_docs' || part.state !== 'output-available') {
+    return [];
+  }
+  const output = parseToJsonIfPossible(part.output);
+  if (!isObject(output) || !Array.isArray(output.results)) return [];
+  return output.results.flatMap((result) =>
+    isObject(result) && typeof result.url === 'string' && result.url
+      ? [
+          {
+            key: result.url,
+            href: result.url,
+            ...(typeof result.title === 'string'
+              ? { title: result.title }
+              : {}),
+          },
+        ]
+      : [],
+  );
+}
+
 function memorySaveDeclined(output: unknown): boolean {
   const parsed = parseToJsonIfPossible(output);
   return isObject(parsed) && parsed['saved'] === false;
