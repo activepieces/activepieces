@@ -101,6 +101,8 @@ function AppShell({ handle }: { handle: RouteHandle }) {
   const isPlatformAdmin = useIsPlatformAdmin();
   const isPlatform = handle.shell === 'platform';
   const isBuilder = handle.shell === 'builder';
+  const chatWidth = useChatWidth();
+  const tightInset = isBuilder && chatWidth !== 'left' && chatWidth !== 'right';
   const headerProjectId =
     handle.projectHeader === true && !isNil(projectId) && projectId !== ''
       ? projectId
@@ -135,7 +137,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
               className={cn(
                 'relative flex-1 flex flex-col overflow-hidden',
                 !embedded &&
-                  (isBuilder
+                  (tightInset
                     ? 'p-1.5'
                     : 'pr-2 pt-3 pb-3 max-md:pl-2 max-md:pt-2'),
               )}
