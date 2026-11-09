@@ -239,6 +239,12 @@ function ChatBoxContent({
     ],
   );
 
+  const handleSendRef = useRef(handleSend);
+  handleSendRef.current = handleSend;
+  const sendPrompt = useCallback((text: string) => {
+    handleSendRef.current(text).catch(() => undefined);
+  }, []);
+
   const [hasInput, setHasInput] = useState(false);
   const composerRef = useRef<ComposerHandle>(null);
   const [promptOpen, setPromptOpen] = useState(false);
@@ -461,7 +467,7 @@ function ChatBoxContent({
                         isStreaming={isLastStreamingAssistant}
                         isResumed={isLastStreamingAssistant && isResumedStream}
                         isLastMessage={isLastAssistant}
-                        onSendPrompt={(text) => void handleSend(text)}
+                        onSendPrompt={sendPrompt}
                         claimedBuildIds={claimedBuildIdsByMessage.get(msg.id)}
                         conversationId={conversationId}
                         messageIndex={idx}
@@ -675,7 +681,6 @@ function computeClaimedBuildIds(
   return claimed;
 }
 
-// A hairline under the header once the message list scrolls off the top.
 function ScrolledEdge() {
   const { scrollRef } = useStickToBottomContext();
   const [scrolled, setScrolled] = useState(false);
@@ -699,7 +704,6 @@ function ScrolledEdge() {
   );
 }
 
-// Follow-along waits while the user reads back through the chat.
 function ReportScrolledUp() {
   const { isAtBottom, scrollRef } = useStickToBottomContext();
   useEffect(() => {
