@@ -77,11 +77,9 @@ export function EditableCell({
     selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
   const containerRef = useSetInitialFocus(isSelected);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const isShortcut = (e.ctrlKey || e.metaKey) && !e.altKey;
     const isTypingKey =
-      (e.key.length === 1 || e.key === 'Enter') &&
-      !e.metaKey &&
-      !e.ctrlKey &&
-      !e.altKey;
+      (e.key.length === 1 || e.key === 'Enter') && !isShortcut;
     if (isTypingKey && !disabled && !isEditing) {
       setIsEditing(true);
       setSelectedCell({ rowIdx, columnIdx: column.idx });
@@ -173,9 +171,6 @@ export function EditableCell({
   );
 }
 
-// A live refresh remounts the selected cell. It may take focus back only
-// from the grid itself or from nowhere, never from the chat composer or any
-// other field the user moved to.
 function focusIsFree(): boolean {
   const active = document.activeElement;
   return (
