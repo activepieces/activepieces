@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStickToBottomContext } from 'use-stick-to-bottom';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -115,6 +116,8 @@ function ChatBoxContent({
     isLoadingHistory,
     error,
     failed,
+    historyFailed,
+    reloadHistory,
     sendMessage,
     retryLastMessage,
     cancelStream,
@@ -187,7 +190,10 @@ function ChatBoxContent({
       null;
   const awaitingSavedPick =
     !isNil(initialConversationId) &&
-    (isLoadingHistory || (initialConversationId !== conversationId && !failed));
+    (isLoadingHistory ||
+      (initialConversationId !== conversationId &&
+        !failed &&
+        !historyFailed));
   const showHistorySkeleton = useDelayedFlag({
     value: isLoadingHistory,
     delayMs: HISTORY_SKELETON_DELAY_MS,
@@ -284,12 +290,16 @@ function ChatBoxContent({
   const personalization = usePersonalization({ enabled: !incognito });
 
   const isAwaitingLoad =
-    !!initialConversationId && messages.length === 0 && !error;
+    !!initialConversationId &&
+    messages.length === 0 &&
+    !error &&
+    !historyFailed;
   const isEmpty =
     messages.length === 0 &&
     !isLoadingHistory &&
     !isStreaming &&
     !isAwaitingLoad &&
+    !historyFailed &&
     !hasSentMessage;
 
   const isFirstRun =
@@ -416,6 +426,13 @@ function ChatBoxContent({
                 className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full"
               >
                 {showHistorySkeleton && <MessageSkeletons />}
+
+                {historyFailed && (
+                  <DataFetchErrorState
+                    entity={t('this chat')}
+                    onRetry={reloadHistory}
+                  />
+                )}
 
                 <ChatResourceLinks messages={messages}>
                   {messages.map((msg, idx) => {

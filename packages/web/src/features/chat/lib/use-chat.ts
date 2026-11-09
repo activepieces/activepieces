@@ -358,6 +358,7 @@ export function useAgentChat({
     string | null
   >(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyFailedId, setHistoryFailedId] = useState<string | null>(null);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
   const sendStatusRef = useRef<SendStatus>({ type: 'idle' });
   const onCreditsExhaustedRef = useRef(onCreditsExhausted);
@@ -978,6 +979,7 @@ export function useAgentChat({
       setPersistedMessages([]);
       setOptimisticUserMessage(null);
       setIsLoadingHistory(false);
+      setHistoryFailedId(null);
       pendingFilesRef.current = undefined;
       lastSentFileNamesRef.current = [];
       lastSentRef.current = null;
@@ -1024,8 +1026,12 @@ export function useAgentChat({
         const missing = [historyResult.error, convResult.error].some((e) =>
           api.isApError(e, ErrorCode.ENTITY_NOT_FOUND),
         );
+        if (!missing) {
+          setHistoryFailedId(id);
+          return;
+        }
         const onMissing = onConversationMissingRef.current;
-        if (missing && onMissing) {
+        if (onMissing) {
           onMissing();
           return;
         }
@@ -1138,6 +1144,10 @@ export function useAgentChat({
     isLoadingHistory,
     error,
     failed,
+    historyFailed: historyFailedId !== null,
+    reloadHistory: async () => {
+      if (historyFailedId !== null) await setConversationId(historyFailedId);
+    },
     sendMessage,
     retryLastMessage,
     cancelStream,
