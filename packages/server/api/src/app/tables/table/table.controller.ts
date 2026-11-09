@@ -1,11 +1,12 @@
 import { ApId, Permission, SeekPage } from '@activepieces/core-utils'
-import { CountTablesRequest, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, GitPushOperationType, ListTablesRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, UpdateTableRequest } from '@activepieces/shared'
+import { CountTablesRequest, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, GitPushOperationType, ListTablesRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, TableRecordsChangeOp, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
+import { editorSession } from '../../flows/flow/editor-session'
 import { userService } from '../../user/user-service'
 import { recordSideEffects } from '../record/record-side-effects'
 import { recordService } from '../record/record.service'
@@ -127,6 +128,12 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
         const deletedRecords = await recordService.deleteAll({
             tableId: request.params.id,
             projectId: request.projectId,
+        })
+        await recordSideEffects(request.log).onRecordsChanged({
+            projectId: request.projectId,
+            tableId: request.params.id,
+            change: { op: TableRecordsChangeOp.CLEARED },
+            editorSessionId: editorSession.idFromRequest(request),
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
         await recordSideEffects(fastify.log).handleRecordsEvent({

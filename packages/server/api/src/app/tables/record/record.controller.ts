@@ -1,11 +1,12 @@
 import { Permission, SeekPage } from '@activepieces/core-utils'
-import { CreateRecordsRequest, DeleteRecordsRequest, ListRecordsRequest, PopulatedRecord, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateRecordRequest } from '@activepieces/shared'
+import { CreateRecordsRequest, DeleteRecordsRequest, ListRecordsRequest, PopulatedRecord, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, TableRecordsChangeOp, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { EntitySourceType, ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { editorSession } from '../../flows/flow/editor-session'
 import { TableEntity } from '../table/table.entity'
 import { recordSideEffects } from './record-side-effects'
 import { RecordEntity } from './record.entity'
@@ -21,6 +22,12 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             request: request.body,
             projectId: request.projectId,
             logger: request.log,
+        })
+        await recordSideEffects(request.log).onRecordsChanged({
+            projectId: request.projectId,
+            tableId: request.body.tableId,
+            change: { op: TableRecordsChangeOp.CREATED, records },
+            editorSessionId: editorSession.idFromRequest(request),
         })
         await reply.status(StatusCodes.CREATED).send(records)
         await recordSideEffects(fastify.log).handleRecordsEvent({
@@ -45,6 +52,14 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             request: request.body,
             projectId: request.projectId,
         })
+        if (changed) {
+            await recordSideEffects(request.log).onRecordsChanged({
+                projectId: request.projectId,
+                tableId: request.body.tableId,
+                change: { op: TableRecordsChangeOp.UPDATED, records: [record] },
+                editorSessionId: editorSession.idFromRequest(request),
+            })
+        }
         await reply.status(StatusCodes.OK).send(record)
         if (!changed) {
             return
@@ -60,10 +75,16 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.delete('/', DeleteRecordRequest, async (request, reply) => {
-        const { records: deletedRecords } = await recordService.delete({
+        const { deletedIds, records: deletedRecords } = await recordService.delete({
             ids: request.body.ids,
             projectId: request.projectId,
             tableId: request.body.tableId,
+        })
+        await recordSideEffects(request.log).onRecordsChanged({
+            projectId: request.projectId,
+            tableId: request.body.tableId,
+            change: { op: TableRecordsChangeOp.DELETED, recordIds: deletedIds },
+            editorSessionId: editorSession.idFromRequest(request),
         })
         await reply.status(StatusCodes.OK).send([])
         await recordSideEffects(fastify.log).handleRecordsEvent({

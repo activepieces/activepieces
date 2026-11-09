@@ -1,6 +1,7 @@
 import { StepRunResponse, UpdateStepProgressRequest } from '@activepieces/core-execution'
 import { ApId } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { PopulatedRecord } from '../tables/record'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
@@ -16,6 +17,7 @@ export enum WebsocketClientEvent {
     CHAT_MESSAGE_CHUNK = 'CHAT_MESSAGE_CHUNK',
     CHAT_PERSONALIZATION_PROGRESS = 'CHAT_PERSONALIZATION_PROGRESS',
     FLOW_DRAFT_UPDATED = 'FLOW_DRAFT_UPDATED',
+    TABLE_RECORDS_CHANGED = 'TABLE_RECORDS_CHANGED',
 }
 
 export enum WebsocketServerEvent {
@@ -88,6 +90,22 @@ export const SwitchProjectResponse = z.object({
     success: z.boolean(),
 })
 
+export enum TableRecordsChangeOp {
+    CREATED = 'CREATED',
+    UPDATED = 'UPDATED',
+    DELETED = 'DELETED',
+    CLEARED = 'CLEARED',
+    RELOAD = 'RELOAD',
+}
+
+export const TableRecordsChangedEvent = z.object({
+    tableId: z.string(),
+    op: z.enum(TableRecordsChangeOp),
+    editorSessionId: z.string().optional(),
+    records: z.array(PopulatedRecord).optional(),
+    recordIds: z.array(z.string()).optional(),
+})
+
 export const EDITOR_SESSION_ID_HEADER = 'x-ap-editor-session-id'
 
 export type LockResourceRequest = z.infer<typeof LockResourceRequest>
@@ -102,3 +120,4 @@ export type PresenceUpdatedEvent = z.infer<typeof PresenceUpdatedEvent>
 export type FlowDraftUpdatedEvent = z.infer<typeof FlowDraftUpdatedEvent>
 export type SwitchProjectRequest = z.infer<typeof SwitchProjectRequest>
 export type SwitchProjectResponse = z.infer<typeof SwitchProjectResponse>
+export type TableRecordsChangedEvent = z.infer<typeof TableRecordsChangedEvent>
