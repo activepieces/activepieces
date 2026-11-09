@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
-import { KbdHint } from '@/components/custom/kbd-hint';
+import { Shortcut } from '@/components/custom/shortcut';
 import {
   FileUpload,
   FileUploadContent,
@@ -361,7 +361,7 @@ export function ChatInput({
                     tooltip={
                       <span className="flex items-center gap-2">
                         {t('Stop')}
-                        <KbdHint>Esc</KbdHint>
+                        <Shortcut variant="compact" shortcutKey="Esc" />
                       </span>
                     }
                   >

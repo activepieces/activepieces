@@ -13,7 +13,7 @@ import { memo, useEffect, useState } from 'react';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
-import { KbdHint, modShortcut } from '@/components/custom/kbd-hint';
+import { Shortcut, ShortcutProps } from '@/components/custom/shortcut';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -324,7 +324,10 @@ function HeaderButton({
   shortcut,
   children,
   ...props
-}: React.ComponentProps<typeof Button> & { label: string; shortcut?: string }) {
+}: React.ComponentProps<typeof Button> & {
+  label: string;
+  shortcut?: ShortcutProps;
+}) {
   return (
     <Tooltip delayDuration={HEADER_TOOLTIP_DELAY_MS}>
       <TooltipTrigger asChild>
@@ -344,15 +347,19 @@ function HeaderButton({
         className="pointer-events-none flex items-center gap-2"
       >
         {label}
-        {shortcut && <KbdHint>{shortcut}</KbdHint>}
+        {shortcut && <Shortcut variant="compact" {...shortcut} />}
       </TooltipContent>
     </Tooltip>
   );
 }
 
 const HEADER_TOOLTIP_DELAY_MS = 500;
-const TOGGLE_SHORTCUT = modShortcut({ key: 'J' });
-const NEW_CHAT_SHORTCUT = modShortcut({ key: 'O', shift: true });
+const TOGGLE_SHORTCUT: ShortcutProps = { shortcutKey: 'J', withCtrl: true };
+const NEW_CHAT_SHORTCUT: ShortcutProps = {
+  shortcutKey: 'O',
+  withCtrl: true,
+  withShift: true,
+};
 const SWITCHER_CLOSED: SwitcherState = { open: false, openedBy: 'pointer' };
 
 function titleFade() {

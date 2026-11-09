@@ -18,7 +18,7 @@ import {
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
-import { modShortcut } from '@/components/custom/kbd-hint';
+import { compactShortcut } from '@/components/custom/shortcut';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -309,7 +309,11 @@ export function ConversationList({
             </span>
             {!mobile && (
               <span className="text-xs opacity-50">
-                {modShortcut({ key: 'O', shift: true })}
+                {compactShortcut({
+                  shortcutKey: 'O',
+                  withCtrl: true,
+                  withShift: true,
+                })}
               </span>
             )}
           </button>
