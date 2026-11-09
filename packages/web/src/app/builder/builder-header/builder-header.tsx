@@ -126,9 +126,13 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
             <BreadcrumbItem>
               <BreadcrumbPage>
                 <div
-                  className={cn('flex items-center gap-1 text-sm', {
-                    'max-w-[500px]': !isEditingFlowName || readonly,
-                  })}
+                  data-ai-field={`flow-name:${flow.id}`}
+                  className={cn(
+                    '-mx-1 flex items-center gap-1 rounded-md px-1 text-sm',
+                    {
+                      'max-w-[500px]': !isEditingFlowName || readonly,
+                    },
+                  )}
                 >
                   <EditableText
                     className="hover:cursor-text"
@@ -206,7 +210,9 @@ export const BuilderHeader = ({ isFlowLocked }: { isFlowLocked: boolean }) => {
         </Button>
       )}
 
-      <BuilderFlowStatusSection></BuilderFlowStatusSection>
+      <div data-ai-field={`flow-status:${flow.id}`} className="rounded-md">
+        <BuilderFlowStatusSection></BuilderFlowStatusSection>
+      </div>
       <FlowCreatedByBadge createdBy={flow.createdBy} />
     </div>
   );
