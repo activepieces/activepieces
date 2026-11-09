@@ -26,6 +26,8 @@ const template = vi.hoisted(() => {
 });
 const pageRenders = vi.hoisted(() => ({ count: 0 }));
 const chat = vi.hoisted(() => ({ on: false }));
+const admin = vi.hoisted(() => ({ value: false }));
+const sidebarModes = vi.hoisted((): string[] => []);
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -57,7 +59,14 @@ vi.mock('@/app/components/global-search/global-search-context', () => ({
 }));
 
 vi.mock('@/app/components/sidebar/app-sidebar', () => ({
-  AppSidebar: () => <nav aria-label="App sidebar" />,
+  AppSidebar: ({ mode }: { mode: string }) => {
+    sidebarModes.push(mode);
+    return <nav aria-label="App sidebar" />;
+  },
+}));
+
+vi.mock('@/hooks/authorization-hooks', () => ({
+  useIsPlatformAdmin: () => admin.value,
 }));
 
 vi.mock(
@@ -172,6 +181,31 @@ describe('AppShellRoute on the chat page', () => {
   });
 });
 
+describe('AppShellRoute on an admin page', () => {
+  beforeEach(() => {
+    sidebarModes.length = 0;
+  });
+
+  afterEach(cleanup);
+
+  it('never shows the admin shell to a member', () => {
+    admin.value = false;
+    renderAt('/platform/projects');
+
+    expect(screen.getByText('Home')).toBeTruthy();
+    expect(screen.queryByText('Admin page')).toBeNull();
+    expect(sidebarModes).not.toContain('platform');
+  });
+
+  it('shows the admin shell to an admin', () => {
+    admin.value = true;
+    renderAt('/platform/projects');
+
+    expect(screen.getByText('Admin page')).toBeTruthy();
+    expect(sidebarModes).toContain('platform');
+  });
+});
+
 function TemplatePage() {
   React.useEffect(() => {
     pageRenders.count += 1;
@@ -191,6 +225,11 @@ function renderAt(path: string) {
             element: <TemplatePage />,
           },
           { path: '/chat', handle: shellHandles.chat, element: null },
+          {
+            path: '/platform/projects',
+            handle: shellHandles.platform,
+            element: <p>Admin page</p>,
+          },
           { path: '/', handle: shellHandles.project, element: <p>Home</p> },
         ],
       },

@@ -12,6 +12,7 @@ import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesHooks } from '@/features/templates';
 import { useChatOn } from '@/features/workspace/lib/use-chat-on';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -109,6 +110,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
   const embedded = useEmbedding().embedState.isEmbedded;
   const chatOn = useChatOn();
   const projectId = useSessionProjectId();
+  const isPlatformAdmin = useIsPlatformAdmin();
   const isPlatform = handle.shell === 'platform';
   const isBuilder = handle.shell === 'builder';
   const headerProjectId =
@@ -117,6 +119,10 @@ function AppShell({ handle }: { handle: RouteHandle }) {
       : null;
 
   if (handle.chat === 'full' && !chatOn) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (isPlatform && !isPlatformAdmin) {
     return <Navigate to="/" replace />;
   }
 
