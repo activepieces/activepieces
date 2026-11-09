@@ -220,49 +220,47 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             }),
         ))
     },
-    broadcast: async ({ changes }: BroadcastParams): Promise<{ queued: number }> => {
+    broadcast: async ({ changes }: BroadcastParams): Promise<{ queued: number, failedPlatformIds: PlatformId[] }> => {
+        const failedPlatformIds: PlatformId[] = []
+        if (changes.length === 0) {
+            return { queued: 0, failedPlatformIds }
+        }
         const destinations = await eventDestinationRepo().findBy({
             scope: EventDestinationScope.PLATFORM,
             enabled: true,
             events: ArrayOverlap(PIECE_CATALOG_EVENTS),
         })
-        if (changes.length === 0 || destinations.length === 0) {
-            return { queued: 0 }
+        if (destinations.length === 0) {
+            return { queued: 0, failedPlatformIds }
         }
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
         let queued = 0
         for (const [platformId, platformDestinations] of Object.entries(groupBy(destinations, (destination) => destination.platformId))) {
-            const { data: entitled, error: entitlementError } = await tryCatch(() => eventDestinationHooks.get(log).isDeliveryEntitled({ platformId }))
-            if (!isNil(entitlementError)) {
-                log.warn({ error: entitlementError, platform: { id: platformId } }, 'Failed to resolve event streaming entitlement, skipping the platform for piece catalog events')
+            const deliveries = await planPieceCatalogDeliveries({ log, platformId, destinations: platformDestinations, changes, webhookUrlPrefix })
+                .catch((err: unknown) => {
+                    log.error({ platformId, err }, '[pieceCatalogEvents] broadcast platform failed')
+                    failedPlatformIds.push(platformId)
+                    return null
+                })
+            if (isNil(deliveries)) {
                 continue
             }
-            if (!entitled) {
-                continue
-            }
-            const pieceSets = await pieceCatalogHooks.get(log).listPieceSets({ platformId })
-            for (const change of changes) {
-                const event = toPieceCatalogEvent({ platformId, change, pieceSets })
-                const subscribed = platformDestinations
-                    .filter((destination) => acceptsPieceChange({ destination, event }))
-                    .map((destination) => classifyDestination({ destination, webhookUrlPrefix }))
-                queued += subscribed.filter(({ internalFlowId }) => isNil(internalFlowId)).length
-                await Promise.all(subscribed.map(({ destination, internalFlowId }) =>
-                    dispatchEventToDestination({
-                        log,
-                        platformId,
-                        destinationId: destination.id,
-                        destinationUrl: destination.url,
-                        internalFlowId,
-                        format: destination.format,
-                        storedHeaders: destination.headers,
-                        body: buildDeliveryBody({ format: destination.format, event }),
-                        jobId: pieceCatalogDeliveryJobId({ destinationId: destination.id, action: event.action, name: change.name, version: change.version }),
-                    }),
-                ))
-            }
+            queued += deliveries.filter(({ internalFlowId }) => isNil(internalFlowId)).length
+            await Promise.all(deliveries.map(({ destination, internalFlowId, body, jobId }) =>
+                dispatchEventToDestination({
+                    log,
+                    platformId,
+                    destinationId: destination.id,
+                    destinationUrl: destination.url,
+                    internalFlowId,
+                    format: destination.format,
+                    storedHeaders: destination.headers,
+                    body,
+                    jobId,
+                }),
+            ))
         }
-        return { queued }
+        return { queued, failedPlatformIds }
     },
     resolveDeliveryHeaders: async ({ platformId, destinationId, destinationUrl }: ResolveDeliveryHeadersParams): Promise<EventDestinationHeaders | null> => {
         const destination = await eventDestinationRepo().findOneBy({ id: destinationId, platformId, url: destinationUrl })
@@ -418,6 +416,23 @@ function deliveryJobFields({ format, hasHeaders }: DeliveryJobFieldsParams): Pic
         ...(format === EventDestinationFormat.OTLP_PROTOBUF ? { contentType: PROTOBUF_CONTENT_TYPE } : {}),
         ...(hasHeaders ? { hasHeaders } : {}),
     }
+}
+
+async function planPieceCatalogDeliveries({ log, platformId, destinations, changes, webhookUrlPrefix }: PlanPieceCatalogDeliveriesParams): Promise<PieceCatalogDelivery[]> {
+    if (!await eventDestinationHooks.get(log).isDeliveryEntitled({ platformId })) {
+        return []
+    }
+    const pieceSets = await pieceCatalogHooks.get(log).listPieceSets({ platformId })
+    return changes.flatMap((change) => {
+        const event = toPieceCatalogEvent({ platformId, change, pieceSets })
+        return destinations
+            .filter((destination) => acceptsPieceChange({ destination, event }))
+            .map((destination) => ({
+                ...classifyDestination({ destination, webhookUrlPrefix }),
+                body: buildDeliveryBody({ format: destination.format, event }),
+                jobId: pieceCatalogDeliveryJobId({ destinationId: destination.id, action: event.action, name: change.name, version: change.version }),
+            }))
+    })
 }
 
 function toPieceCatalogEvent({ platformId, change, pieceSets }: ToPieceCatalogEventParams): PieceCreatedEvent | PieceVersionCreatedEvent {
@@ -844,6 +859,19 @@ type DispatchEventParams = {
 
 type BroadcastParams = {
     changes: CatalogChange[]
+}
+
+type PlanPieceCatalogDeliveriesParams = {
+    log: FastifyBaseLogger
+    platformId: PlatformId
+    destinations: EventDestinationSchema[]
+    changes: CatalogChange[]
+    webhookUrlPrefix: string
+}
+
+type PieceCatalogDelivery = ClassifiedDestination & {
+    body: DeliveryBody
+    jobId: string
 }
 
 type ToPieceCatalogEventParams = {

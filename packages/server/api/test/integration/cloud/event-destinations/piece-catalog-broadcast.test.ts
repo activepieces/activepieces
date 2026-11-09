@@ -2,10 +2,12 @@ import { apId } from '@activepieces/core-utils'
 import { ApplicationEventName, EventDestinationScope, PieceChangeType, PieceSelectionMode } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { pieceSetCatalogHooks } from '../../../../src/app/ee/pieces/piece-set/piece-set-catalog-hooks'
 import { eventDestinationEntitlementHooks } from '../../../../src/app/ee/platform-webhooks/event-destination-entitlement-hooks'
 import { eventDestinationHooks } from '../../../../src/app/event-destinations/event-destinations-hooks'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { CatalogChange } from '../../../../src/app/pieces/piece-catalog/catalog-diff'
+import { PieceCatalogHooks, pieceCatalogHooks } from '../../../../src/app/pieces/piece-catalog/piece-catalog-hooks'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockEventDestination } from '../../../helpers/mocks'
@@ -69,6 +71,7 @@ describe('Piece catalog broadcast', () => {
     afterEach(() => {
         vi.restoreAllMocks()
         eventDestinationHooks.set(eventDestinationEntitlementHooks)
+        pieceCatalogHooks.set(pieceSetCatalogHooks)
     })
 
     it('broadcast reaches two subscribed platforms once each', async () => {
@@ -197,6 +200,26 @@ describe('Piece catalog broadcast', () => {
         const keysFor = (name: string): string[] => (queuedJobs().find((job) => job.data.payload.data.piece.name === name)?.data.payload.data.pieceSets ?? []).map((set) => set.key ?? '').sort()
         expect(keysFor('@test/piece-00')).toEqual(['default', 'exc'])
         expect(keysFor('@test/piece-01')).toEqual(['default', 'inc'])
+    })
+
+    it('one platform\'s piece-set failure does not block the others', async () => {
+        const failing = await createTestContext(app, ENTITLED_PLAN)
+        const healthy = await createTestContext(app, ENTITLED_PLAN)
+        await subscribe({ platformId: failing.platform.id })
+        const healthyDestinationId = await subscribe({ platformId: healthy.platform.id })
+        pieceCatalogHooks.set((): PieceCatalogHooks => ({
+            listPieceSets: async ({ platformId }) => {
+                if (platformId === failing.platform.id) {
+                    throw new Error('piece set read failed')
+                }
+                return []
+            },
+        }))
+
+        const result = await eventDestinationService(app.log).broadcast({ changes: [buildChange()] })
+
+        expect(result).toEqual({ queued: 1, failedPlatformIds: [failing.platform.id] })
+        expect(queuedJobs().map((job) => job.data.webhookId)).toEqual([healthyDestinationId])
     })
 })
 
