@@ -21,27 +21,33 @@ export function FollowOfferRow() {
         <motion.div
           key="follow-offer"
           role="status"
-          className="flex flex-wrap items-center gap-2 px-1 text-sm text-gray-11"
+          className="flex flex-col items-start gap-2 text-sm text-gray-11 @chat-sm/chat:flex-row @chat-sm/chat:items-center"
           {...chatNote.motion(reduced)}
         >
-          <span className="min-w-0 flex-1">
+          <span className="min-w-0 @chat-sm/chat:flex-1">
             {t('The AI is editing {name}.', { name: offer.resource.name })}
           </span>
-          <Button
-            variant="outline"
-            size="xs"
-            className="max-w-full"
-            onClick={followAlong.acceptOffer}
-          >
-            <span className="truncate">
-              {t('Open {name} beside the chat', {
-                name: offer.resource.name,
-              })}
-            </span>
-          </Button>
-          <Button variant="ghost" size="xs" onClick={followAlong.stopFollowing}>
-            {t('Stay here')}
-          </Button>
+          <div className="flex max-w-full items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-w-0 max-w-full"
+              onClick={followAlong.acceptOffer}
+            >
+              <span className="truncate">
+                {t('Open {name} beside the chat', {
+                  name: offer.resource.name,
+                })}
+              </span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={followAlong.stopFollowing}
+            >
+              {t('Stay here')}
+            </Button>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
