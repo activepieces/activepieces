@@ -21,7 +21,9 @@ import { toast } from 'sonner';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { ChatAppLinks } from '@/app/routes/chat-with-ai/components/chat-app-links';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
+import { KbdHint, modShortcut } from '@/components/custom/kbd-hint';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -41,6 +43,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatPendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
 import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
@@ -53,8 +56,13 @@ import {
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
+import { cn } from '@/lib/utils';
 
-import { useActiveConversationId, useChatWidth } from './chat-window';
+import {
+  useActiveConversationId,
+  useChatSheet,
+  useChatWidth,
+} from './chat-window';
 
 export function ChatChrome() {
   const layout = useChatWidth();
@@ -70,13 +78,36 @@ export function ChatChrome() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const reduced = useReducedMotion();
   const full = layout === 'full';
+  const sheet = layout === 'sheet';
   const chatShown = layout !== 'closed';
 
   if (!chatShown && historyOpen) {
     setHistoryOpen(false);
   }
 
+  useEffect(() => {
+    if (!chatShown) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (chatDom.shortcutOf(event) === 'history') {
+        event.preventDefault();
+        setHistoryOpen((open) => !open);
+        return;
+      }
+      if (
+        event.key === 'Escape' &&
+        historyOpen &&
+        chatDom.inChat(document.activeElement) &&
+        chatDom.escapeFree(event)
+      ) {
+        chatDom.claimEscape(event);
+        setHistoryOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [chatShown, historyOpen]);
   const phone = windowSizeHooks.useIsPhone();
+  const chatSheet = useChatSheet();
   const renaming = renamingId !== null && renamingId === conversationId;
   const setRenaming = (on: boolean) =>
     setRenamingId(on ? conversationId : null);
@@ -145,8 +176,17 @@ export function ChatChrome() {
     <>
       <div
         data-chat-header
-        className="relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-4"
+        className={cn(
+          'relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-4',
+          sheet && 'touch-none select-none',
+        )}
       >
+        {sheet && (
+          <span
+            aria-hidden
+            className="absolute top-2 left-1/2 h-1 w-9 -translate-x-1/2 rounded-full bg-gray-6"
+          />
+        )}
         <div className="grid min-w-0 flex-1 items-center">
           <AnimatePresence initial={false}>
             {renaming ? (
@@ -204,12 +244,17 @@ export function ChatChrome() {
         <div className="-mr-1 flex shrink-0 items-center gap-0.5">
           <HeaderButton
             label={historyOpen ? t('Hide history') : t('History')}
+            shortcut={HISTORY_SHORTCUT}
             aria-pressed={historyOpen}
             onClick={() => setHistoryOpen(!historyOpen)}
           >
             <History />
           </HeaderButton>
-          <HeaderButton label={t('New chat')} onClick={startFresh}>
+          <HeaderButton
+            label={t('New chat')}
+            shortcut={NEW_CHAT_SHORTCUT}
+            onClick={startFresh}
+          >
             <Plus />
           </HeaderButton>
           {!phone && <LayoutMenu />}
@@ -226,7 +271,12 @@ export function ChatChrome() {
           {!full && (
             <HeaderButton
               label={t('Close')}
-              onClick={() => useChatPanel.getState().setOpen(false)}
+              shortcut={TOGGLE_SHORTCUT}
+              onClick={() =>
+                sheet
+                  ? chatSheet.hide()
+                  : useChatPanel.getState().setOpen(false)
+              }
             >
               <X />
             </HeaderButton>
@@ -279,31 +329,33 @@ const ChatBody = memo(function ChatBody({
     if (full) chatPanelUtils.showOnFullPage(id);
   };
   return (
-    <AIChatBox
-      key={newChatToken}
-      incognito={false}
-      compact={!full}
-      autoFocusComposer={newChatToken > 0}
-      conversationId={conversationId}
-      initialPrompt={prompt}
-      onConversationCreated={(id) => {
-        useChatPanel.getState().conversationCreated(id);
-        showOnPage(id);
-        invalidate();
-      }}
-      onConversationMissing={() => {
-        useChatPanel.getState().conversationMissing();
-        showOnPage(null);
-      }}
-      onTitleUpdate={(next) => {
-        const id = useChatPanel.getState().conversationId;
-        if (id) {
-          setCachedTitle({ queryClient, conversationId: id, title: next });
-          onTitleTyped(id);
-        }
-        invalidate();
-      }}
-    />
+    <ChatAppLinks>
+      <AIChatBox
+        key={newChatToken}
+        incognito={false}
+        compact={!full}
+        autoFocusComposer={newChatToken > 0}
+        conversationId={conversationId}
+        initialPrompt={prompt}
+        onConversationCreated={(id) => {
+          useChatPanel.getState().conversationCreated(id);
+          showOnPage(id);
+          invalidate();
+        }}
+        onConversationMissing={() => {
+          useChatPanel.getState().conversationMissing();
+          showOnPage(null);
+        }}
+        onTitleUpdate={(next) => {
+          const id = useChatPanel.getState().conversationId;
+          if (id) {
+            setCachedTitle({ queryClient, conversationId: id, title: next });
+            onTitleTyped(id);
+          }
+          invalidate();
+        }}
+      />
+    </ChatAppLinks>
   );
 });
 
@@ -491,9 +543,10 @@ function FollowAlongItems() {
 
 function HeaderButton({
   label,
+  shortcut,
   children,
   ...props
-}: React.ComponentProps<typeof Button> & { label: string }) {
+}: React.ComponentProps<typeof Button> & { label: string; shortcut?: string }) {
   return (
     <Tooltip delayDuration={HEADER_TOOLTIP_DELAY_MS}>
       <TooltipTrigger asChild>
@@ -510,15 +563,19 @@ function HeaderButton({
       <TooltipContent
         side="bottom"
         sideOffset={4}
-        className="pointer-events-none"
+        className="pointer-events-none flex items-center gap-2"
       >
         {label}
+        {shortcut && <KbdHint>{shortcut}</KbdHint>}
       </TooltipContent>
     </Tooltip>
   );
 }
 
 const HEADER_TOOLTIP_DELAY_MS = 500;
+const TOGGLE_SHORTCUT = modShortcut({ key: 'J' });
+const HISTORY_SHORTCUT = modShortcut({ key: 'H', shift: true });
+const NEW_CHAT_SHORTCUT = modShortcut({ key: 'O', shift: true });
 
 function titleFade(reduced: boolean | null) {
   return {

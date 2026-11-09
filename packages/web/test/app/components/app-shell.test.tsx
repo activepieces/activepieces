@@ -113,6 +113,7 @@ vi.mock('@/app/components/chat-panel/chat-window', () => ({
     if (chat.crash) throw new Error('chat crashed');
     return <aside aria-label="Chat" />;
   },
+  ChatSheetLauncher: () => null,
   useChatWidth: () => 'full',
 }));
 

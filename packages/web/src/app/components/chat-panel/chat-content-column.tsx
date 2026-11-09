@@ -29,7 +29,7 @@ export function ChatContentColumn({ children }: { children: React.ReactNode }) {
   return (
     <div
       id={pageColumnUtils.ID}
-      inert={full}
+      inert={full || chatWidth === 'sheet'}
       className={cn(
         'flex min-w-0 flex-col overflow-hidden',
         pinnedWidth === null

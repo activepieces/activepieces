@@ -6,6 +6,7 @@ const base: Parameters<typeof chatLayoutUtils.widthFor>[0] = {
   fullPage: false,
   open: true,
   mode: 'right',
+  phone: false,
 };
 
 describe('chatLayoutUtils.widthFor', () => {
@@ -15,11 +16,18 @@ describe('chatLayoutUtils.widthFor', () => {
     ).toBe('full');
   });
 
-  it('docks on the saved side', () => {
+  it('docks on the saved side off phones', () => {
     expect(chatLayoutUtils.widthFor(base)).toBe('right');
     expect(
       chatLayoutUtils.widthFor({ ...base, mode: 'left' }),
     ).toBe('left');
+  });
+
+  it('uses the bottom sheet on phones', () => {
+    expect(chatLayoutUtils.widthFor({ ...base, phone: true })).toBe('sheet');
+    expect(
+      chatLayoutUtils.widthFor({ ...base, open: false, phone: true }),
+    ).toBe('closed');
   });
 
   it('is closed when not open', () => {

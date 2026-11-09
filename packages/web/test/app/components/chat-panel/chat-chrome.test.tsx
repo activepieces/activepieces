@@ -15,6 +15,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatChrome } from '@/app/components/chat-panel/chat-chrome';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { useFollowAlong } from '@/features/chat/lib/follow/follow-along';
 import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
@@ -258,6 +259,24 @@ describe('ChatChrome', () => {
 
     expect(screen.getByText('Follow along')).toBeTruthy();
     expect(screen.getByText('Opens pages the AI changes.')).toBeTruthy();
+  });
+
+    it('closes History, not the chat, on Escape', () => {
+    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
+    renderChrome();
+    const toggle = screen.getByRole('button', { name: 'History' });
+    fireEvent.click(toggle);
+    toggle.focus();
+    const panelMayClose: boolean[] = [];
+    const onWindowKey = (event: KeyboardEvent) =>
+      panelMayClose.push(chatDom.escapeFree(event));
+    window.addEventListener('keydown', onWindowKey);
+
+    fireEvent.keyDown(toggle, { key: 'Escape' });
+    window.removeEventListener('keydown', onWindowKey);
+
+    expect(historyList()).toBeNull();
+    expect(panelMayClose).toEqual([false]);
   });
 
   it('shows the chat, not History, when the chat opens again', () => {

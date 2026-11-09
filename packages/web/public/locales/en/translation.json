@@ -559,7 +559,11 @@
   "Chat deleted": "Chat deleted",
   "Resize chat": "Resize chat",
   "Chat couldn't load. Your chats are safe.": "Chat couldn't load. Your chats are safe.",
+  "Open chat": "Open chat",
+  "Open chat, it needs you": "Open chat, it needs you",
   "Chat, it needs you": "Chat, it needs you",
+  "Close chat": "Close chat",
+  "Open page": "Open page",
   "Read the docs": "Read the docs",
   "Upgrade plan": "Upgrade plan",
   "Upgrade to unlock": "Upgrade to unlock",
@@ -3779,5 +3783,6 @@
   "Stays on your page.": "Stays on your page.",
   "The AI is changing {name}.": "The AI is changing {name}.",
   "The AI deleted {name}.": "The AI deleted {name}.",
-  "Opened {name} beside the chat.": "Opened {name} beside the chat."
+  "Opened {name} beside the chat.": "Opened {name} beside the chat.",
+  "Opened {name} behind the chat.": "Opened {name} behind the chat."
 }

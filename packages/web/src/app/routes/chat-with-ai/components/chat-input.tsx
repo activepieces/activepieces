@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { KbdHint } from '@/components/custom/kbd-hint';
 import {
   FileUpload,
   FileUploadContent,
@@ -209,6 +210,7 @@ export function ChatInput({
             </div>
           ) : (
             <PromptInputTextarea
+              data-chat-composer=""
               autoFocus={autoFocus ?? !minimalUntilFocus}
               placeholder={placeholder ?? t('Tell me what you need...')}
               className={cn(
@@ -240,11 +242,19 @@ export function ChatInput({
               <div className="flex items-center gap-1">
                 {rightActions}
                 {isStreaming && onStop ? (
-                  <PromptInputAction tooltip={t('Stop')}>
+                  <PromptInputAction
+                    tooltip={
+                      <span className="flex items-center gap-2">
+                        {t('Stop')}
+                        <KbdHint>Esc</KbdHint>
+                      </span>
+                    }
+                  >
                     <Button
                       variant="default"
                       size="icon"
                       className="sm:h-7 sm:w-7 rounded-full"
+                      aria-label={t('Stop')}
                       onClick={onStop}
                     >
                       <Square className="size-3 fill-current" />
