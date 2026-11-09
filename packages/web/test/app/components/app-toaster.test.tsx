@@ -17,7 +17,7 @@ vi.mock('@/components/ui/sonner', () => ({
   ),
 }));
 
-vi.mock('@/features/workspace/lib/shell-handle', () => ({
+vi.mock('@/lib/shell-handle', () => ({
   useShellHandle: () => ({ shell: 'project' }),
   CHAT_ALLOWED: { project: true, builder: true, platform: false },
 }));

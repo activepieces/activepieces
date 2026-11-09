@@ -7,7 +7,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppShellRoute } from '@/app/components/app-shell';
-import { shellHandles } from '@/features/workspace/lib/shell-handle';
+import { shellHandles } from '@/lib/shell-handle';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
@@ -97,6 +97,7 @@ vi.mock('@/app/components/chat-panel/chat-window', () => ({
     );
   },
   ChatSheetLauncher: () => <button type="button">Chat sheet pill</button>,
+  useChatSheetLauncherShown: () => false,
   useChatWidth: () => 'closed',
 }));
 

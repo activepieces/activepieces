@@ -63,7 +63,7 @@ vi.mock('@/features/projects', () => ({
   PlatformSwitcher: () => null,
 }));
 
-vi.mock('@/features/workspace/lib/shell-handle', () => ({
+vi.mock('@/lib/shell-handle', () => ({
   useShellHandle: () => ({ shell: 'platform' }),
   CHAT_ALLOWED: { project: true, builder: true, platform: false },
 }));

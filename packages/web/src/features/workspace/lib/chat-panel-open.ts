@@ -10,7 +10,7 @@ import { safeStorage } from '@/lib/safe-storage';
 
 import { chatLayoutUtils } from './chat-layout';
 import { layoutMove } from './layout-move';
-import { parseHandle } from './shell-handle';
+import { parseHandle } from '@/lib/shell-handle';
 
 function bindRouter(next: ChatRouter): () => void {
   router = next;

@@ -103,8 +103,7 @@ export function useTableRoom({
     };
   }, [socket, tableId, onChange, onJoined]);
   return {
-    ready:
-      !isNil(tableId) && (joinSentFor === tableId || !socket.connected),
+    ready: !isNil(tableId) && (joinSentFor === tableId || !socket.connected),
   };
 }
 

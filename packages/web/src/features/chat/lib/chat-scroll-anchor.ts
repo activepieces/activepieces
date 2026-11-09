@@ -1,6 +1,5 @@
 import { MOTION, chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 
-
 function scroller(): HTMLElement | null {
   return document.querySelector<HTMLElement>(
     `#${chatLayoutUtils.PANEL_ID} [role="log"] > div`,

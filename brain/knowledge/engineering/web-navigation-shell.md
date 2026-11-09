@@ -7,7 +7,7 @@ icon: 🧱
 The frame the web app renders every route inside. One shell, picked per route by its `handle`.
 
 **`AppShellRoute`** (`components/app-shell.tsx`) wraps every app route. It reads the deepest route
-`handle` (a `RouteHandle` from `features/workspace/lib/shell-handle.ts`) and its `shell` field picks the
+`handle` (a `RouteHandle` from `lib/shell-handle.ts`) and its `shell` field picks the
 frame: `project`, `builder` or `platform`. Route files set the handle from `shellHandles`, never by hand.
 
 **`AppSidebar`** (`components/sidebar/app-sidebar.tsx`) is the left rail for every shell. `mode="app"`
@@ -81,7 +81,7 @@ render, not a config.
 ## Key files
 
 - `packages/web/src/app/components/app-shell.tsx`: `AppShellRoute`, the one frame for every app route, and its admin redirect
-- `packages/web/src/features/workspace/lib/shell-handle.ts`: `RouteHandle`, `shellHandles`, `parseHandle` and `CHAT_ALLOWED`
+- `packages/web/src/lib/shell-handle.ts`: `RouteHandle`, `shellHandles`, `parseHandle` and `CHAT_ALLOWED`
 - `packages/web/src/app/components/sidebar`: `AppSidebar`, `AppNav`, the `platform` nav and the `ap-sidebar-item` primitive
 - `packages/web/src/app/guards/platform-admin-guard.tsx`: `PlatformAdminGuard`, the admin-role check on each admin route
 - `packages/web/src/features/workspace/lib/layout-move.ts`: `layoutMove`, the dock ↔ full-page View Transition

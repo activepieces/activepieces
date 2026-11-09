@@ -78,8 +78,7 @@ function SidebarProvider({
 
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
-      const openState =
-        typeof value === 'function' ? value(open) : value;
+      const openState = typeof value === 'function' ? value(open) : value;
       if (setOpenProp) {
         setOpenProp(openState);
         return;
@@ -179,12 +178,7 @@ function Sidebar({
   collapsible?: 'offcanvas' | 'icon' | 'none';
 }) {
   const state = React.useContext(SidebarMotionStateContext);
-  const {
-    isMobile,
-    openMobile,
-    setOpenMobile,
-    setOpen,
-  } = useSidebar();
+  const { isMobile, openMobile, setOpenMobile, setOpen } = useSidebar();
 
   if (collapsible === 'none') {
     return (

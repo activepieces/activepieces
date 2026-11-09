@@ -323,9 +323,7 @@ function SwitcherMenu({
     setValue(conversationId ?? '');
   }
   const autoFollow = useChatPanel((s) => s.autoFollow);
-  const following = useFollowAlong(
-    (s) => s.phase === 'editing' && s.following,
-  );
+  const following = useFollowAlong((s) => s.phase === 'editing' && s.following);
 
   const searching = query.trim().length > 0;
   const older = searching

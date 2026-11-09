@@ -404,7 +404,9 @@ export function ChatInput({
                       className="shrink-0 sm:h-7 sm:w-7 rounded-full"
                       aria-label={t('Send message')}
                       onClick={handleSubmit}
-                      disabled={!isNil(sendBlockedReason) || !isNil(activeQueued)}
+                      disabled={
+                        !isNil(sendBlockedReason) || !isNil(activeQueued)
+                      }
                     >
                       <ArrowUp className="size-4" />
                     </Button>

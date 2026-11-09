@@ -31,7 +31,7 @@ vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('sonner', () => ({ toast: { error: toastError } }));
 
-vi.mock('@/features/workspace/lib/shell-handle', () => ({
+vi.mock('@/lib/shell-handle', () => ({
   useShellHandle: () => ({ shell: 'project' }),
   CHAT_ALLOWED: { project: true, builder: true, platform: false },
 }));

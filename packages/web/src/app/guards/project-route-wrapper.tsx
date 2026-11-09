@@ -5,7 +5,7 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { projectCollectionUtils } from '@/features/projects';
-import { RouteHandle } from '@/features/workspace/lib/shell-handle';
+import { RouteHandle } from '@/lib/shell-handle';
 
 import { authenticationSession } from '../../lib/authentication-session';
 import { NoProjectsState } from '../components/no-projects-state';

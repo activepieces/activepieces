@@ -20,7 +20,7 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
-import { shellHandles } from '@/features/workspace/lib/shell-handle';
+import { shellHandles } from '@/lib/shell-handle';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { routeLocation } from '@/lib/route-location';
 

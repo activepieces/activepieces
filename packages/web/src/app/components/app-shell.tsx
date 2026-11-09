@@ -17,7 +17,7 @@ import { templatesHooks } from '@/features/templates';
 import {
   RouteHandle,
   useShellMatch,
-} from '@/features/workspace/lib/shell-handle';
+} from '@/lib/shell-handle';
 import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';

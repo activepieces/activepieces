@@ -1,5 +1,4 @@
-
-import { parseHandle } from '@/features/workspace/lib/shell-handle';
+import { parseHandle } from '@/lib/shell-handle';
 import { routeLocation } from '@/lib/route-location';
 
 function classifyLink({

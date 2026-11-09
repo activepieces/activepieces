@@ -110,9 +110,7 @@ function NarrowEmptyState({
             <Button
               key={text}
               variant="ghost"
-              onClick={() =>
-                kind === 'build' ? onFill(text) : onSend(text)
-              }
+              onClick={() => (kind === 'build' ? onFill(text) : onSend(text))}
               className="h-auto max-w-full justify-start rounded-full border px-3 py-1.5 text-gray-11 hover:bg-gray-3 active:bg-gray-4"
             >
               <TextWithTooltip tooltipMessage={text}>

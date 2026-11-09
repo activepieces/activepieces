@@ -24,7 +24,7 @@ import {
 } from '@/features/workspace/lib/chat-panel-open';
 import { layoutMove } from '@/features/workspace/lib/layout-move';
 import { useRailOpen } from '@/features/workspace/lib/rail-collapsed';
-import { useShellHandle } from '@/features/workspace/lib/shell-handle';
+import { useShellHandle } from '@/lib/shell-handle';
 import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
@@ -328,7 +328,9 @@ function ChatSheetPill({ onOpen }: { onOpen: () => void }) {
     <Button
       variant="outline"
       onClick={onOpen}
-      aria-label={needsYou ? t('Chat is waiting for your answer') : t('Open chat')}
+      aria-label={
+        needsYou ? t('Chat is waiting for your answer') : t('Open chat')
+      }
       className="fixed left-1/2 z-40 h-11 -translate-x-1/2 animate-in fade-in-0 motion-safe:slide-in-from-bottom-2 gap-2 rounded-full bg-gray-1 pr-4 pl-3 text-gray-12 shadow-lift duration-(--dur-base) ease-(--ease-ap-out)"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
     >

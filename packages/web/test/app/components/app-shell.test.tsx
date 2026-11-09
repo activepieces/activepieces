@@ -14,7 +14,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppShellRoute } from '@/app/components/app-shell';
-import { shellHandles } from '@/features/workspace/lib/shell-handle';
+import { shellHandles } from '@/lib/shell-handle';
 
 const template = vi.hoisted(() => {
   const listeners = new Set<() => void>();
@@ -122,6 +122,7 @@ vi.mock('@/app/components/chat-panel/chat-window', () => ({
   },
   ChatSheetLauncher: () => null,
   useChatWidth: () => 'full',
+  useChatSheetLauncherShown: () => false,
 }));
 
 vi.mock('@/app/components/chat-panel/chat-notch', () => ({
