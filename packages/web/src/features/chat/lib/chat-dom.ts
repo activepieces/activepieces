@@ -23,8 +23,6 @@ function claimEscape(event: KeyboardEvent): void {
   event.preventDefault();
 }
 
-// A field inside a card (a question, a form) keeps Esc for itself: it must
-// not stop the reply the card belongs to.
 function isCardField(target: EventTarget | null): boolean {
   return (
     isEditableTarget(target) &&

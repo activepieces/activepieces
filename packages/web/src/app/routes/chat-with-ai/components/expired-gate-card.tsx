@@ -41,8 +41,6 @@ export function hasExpiredGate(parts: ChatUIMessage['parts']): boolean {
   );
 }
 
-// Gates that wait too long resolve with `timedOut: true` or a message that
-// starts with the hourglass (see gateNoResponseMessage in the worker).
 function isTimedOut(output: unknown): boolean {
   const parsed =
     typeof output === 'string'

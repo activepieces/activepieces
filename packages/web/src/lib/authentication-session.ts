@@ -93,8 +93,6 @@ export const authenticationSession = {
     }
     return readSharedProjectId(token);
   },
-  // Pins this tab to the project it opened on, so another tab switching
-  // projects does not move it. Runs once at start, never while reading.
   pinTabProject(): void {
     const token = authenticationSession.getToken();
     if (isNil(token) || !isNil(readTabProject())) {

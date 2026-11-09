@@ -1,9 +1,5 @@
 import { MOTION, chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 
-// Keeps the message the user was reading in place when the chat changes
-// width (full page, dock, sheet). Capture reads the layout before the change,
-// restore puts that message back at the same offset, and a short hold keeps it
-// there while the new width settles, until the user scrolls.
 
 function scroller(): HTMLElement | null {
   return document.querySelector<HTMLElement>(

@@ -84,8 +84,6 @@ function resourcesIn(messages: ChatUIMessage[]): ResourceRef[] {
   );
 }
 
-// A finished tool output never changes, so it is read once, not on every
-// streamed chunk.
 function finishedOutputRef(part: AnyToolPart): ResourceRef | null {
   const cached = finishedOutputs.get(part);
   if (cached !== undefined) return cached;
