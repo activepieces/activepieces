@@ -92,6 +92,9 @@ export const EventsStep = ({
           activeGroup?.events.filter((event) => field.value.includes(event)) ??
           [];
         const groupCheckboxId = `${checkboxIdPrefix}-group`;
+        const showPatchOption =
+          activeGroup?.key === 'pieces' &&
+          PIECE_EVENTS.some((event) => field.value.includes(event));
 
         return (
           <FormItem className="@container flex flex-col gap-4">
@@ -220,6 +223,36 @@ export const EventsStep = ({
                         </div>
                       );
                     })}
+                    {showPatchOption && (
+                      <FormField
+                        control={form.control}
+                        name="includePatchPieceUpdates"
+                        render={({ field: patchField }) => (
+                          <div className="mt-2 flex items-start gap-2.5 border-t pt-3">
+                            <Checkbox
+                              id={`${checkboxIdPrefix}-patch`}
+                              checked={patchField.value}
+                              onCheckedChange={(checked) =>
+                                patchField.onChange(checked === true)
+                              }
+                            />
+                            <div className="flex flex-col gap-1">
+                              <Label
+                                htmlFor={`${checkboxIdPrefix}-patch`}
+                                className="cursor-pointer text-sm font-normal"
+                              >
+                                {t('Also send patch version updates')}
+                              </Label>
+                              <span className="text-xs text-gray-11">
+                                {t(
+                                  'Patch updates are frequent. Translation sweeps can send hundreds in an hour.',
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      />
+                    )}
                   </>
                 )}
               </div>
@@ -231,3 +264,8 @@ export const EventsStep = ({
     />
   );
 };
+
+const PIECE_EVENTS = [
+  ApplicationEventName.PIECE_CREATED,
+  ApplicationEventName.PIECE_VERSION_CREATED,
+];

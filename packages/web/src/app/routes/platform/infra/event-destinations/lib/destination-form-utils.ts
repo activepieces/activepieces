@@ -2,6 +2,7 @@ import { ApId, isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
   ApplicationEventName,
   CreatePlatformEventDestinationRequestBody,
+  DEFAULT_PIECE_CHANGE_TYPES,
   EventDestination,
   EventDestinationFormat,
   EventDestinationHeaders,
@@ -26,6 +27,8 @@ function toDefaultValues({
     events: inCanonicalOrder(destination?.events ?? []),
     headers: toHeaderRows(destination?.headers),
     format: destination?.format ?? destinationKinds.defaultFormatOf(kind),
+    includePatchPieceUpdates:
+      destination?.eventFilters?.piece?.changeTypes.includes('patch') ?? false,
   };
 }
 
@@ -172,6 +175,7 @@ function buildFormSchema({
         .min(1, 'Select at least one event'),
       headers: z.array(z.object({ name: z.string(), value: z.string() })),
       format: z.enum(EventDestinationFormat),
+      includePatchPieceUpdates: z.boolean(),
     })
     .superRefine((values, ctx) => {
       findHeaderIssues({
@@ -196,6 +200,9 @@ function toRequest(
     events: values.events,
     headers: toHeaderRequest(values.headers),
     format: values.format,
+    eventFilters: values.includePatchPieceUpdates
+      ? { piece: { changeTypes: [...DEFAULT_PIECE_CHANGE_TYPES, 'patch'] } }
+      : null,
   };
 }
 
@@ -339,4 +346,5 @@ export type DestinationFormValues = {
   events: ApplicationEventName[];
   headers: HeaderRow[];
   format: EventDestinationFormat;
+  includePatchPieceUpdates: boolean;
 };

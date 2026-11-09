@@ -2,6 +2,7 @@ import {
   ApplicationEventName,
   EventDestinationFormat,
   formErrors,
+  PieceChangeType,
 } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
@@ -250,6 +251,7 @@ describe('destinationFormUtils.buildFormSchema', () => {
     events: [ApplicationEventName.FLOW_CREATED],
     headers: [],
     format: EventDestinationFormat.RAW,
+    includePatchPieceUpdates: false,
   };
 
   it('says the URL is required when it is empty', () => {
@@ -384,7 +386,43 @@ describe('destinationFormUtils header conversion', () => {
       events: [],
       headers: [],
       format: EventDestinationFormat.OTLP_PROTOBUF,
+      includePatchPieceUpdates: false,
     });
+  });
+});
+
+describe('destinationFormUtils patch piece updates', () => {
+  const values = destinationFormUtils.toDefaultValues({
+    destination: null,
+    kind: 'webhook',
+  });
+
+  it('patch checkbox writes eventFilters', () => {
+    expect(
+      destinationFormUtils.toRequest({
+        ...values,
+        includePatchPieceUpdates: true,
+      }).eventFilters,
+    ).toEqual({ piece: { changeTypes: ['new', 'major', 'minor', 'patch'] } });
+  });
+
+  it('clears the stored filter when the patch checkbox is off', () => {
+    expect(destinationFormUtils.toRequest(values).eventFilters).toBeNull();
+  });
+
+  it('ticks the patch checkbox only when the saved filter includes patch', () => {
+    const isTicked = (changeTypes: PieceChangeType[] | null) =>
+      destinationFormUtils.toDefaultValues({
+        destination: makeDestination({
+          eventFilters:
+            changeTypes === null ? null : { piece: { changeTypes } },
+        }),
+        kind: 'webhook',
+      }).includePatchPieceUpdates;
+
+    expect(isTicked(['new', 'major', 'minor', 'patch'])).toBe(true);
+    expect(isTicked(['new', 'major', 'minor'])).toBe(false);
+    expect(isTicked(null)).toBe(false);
   });
 });
 

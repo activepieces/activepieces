@@ -1448,6 +1448,8 @@
   "{selected}/{total}": "{selected}/{total}",
   "No events match your search": "No events match your search",
   "{selected} of {total} selected": "{selected} of {total} selected",
+  "Also send patch version updates": "Also send patch version updates",
+  "Patch updates are frequent. Translation sweeps can send hundreds in an hour.": "Patch updates are frequent. Translation sweeps can send hundreds in an hour.",
   "Destination updated successfully": "Destination updated successfully",
   "Destination created successfully": "Destination created successfully",
   "Please fix the highlighted fields before saving": "Please fix the highlighted fields before saving",
