@@ -46,12 +46,23 @@ const mapRecorddToClientRecordsData = (
   return records.map((record) => ({
     uuid: nanoid(),
     agentRunId: null,
-    values: Object.entries(record.cells).map(([fieldId, cell]) => ({
-      fieldIndex: fields.findIndex((field) => field.id === fieldId),
-      value: cell.value,
-    })),
+    values: mapCellsToClientValues(record, fields),
   }));
 };
+
+const mapCellsToClientValues = (
+  record: PopulatedRecord,
+  fields: Field[],
+): ClientCellData[] =>
+  Object.entries(record.cells).flatMap(([fieldId, cell]) => {
+    const fieldIndex = fields.findIndex((field) => field.id === fieldId);
+    return fieldIndex === -1 ? [] : [{ fieldIndex, value: cell.value }];
+  });
+
+const mapFieldToClientField = (field: Field): ClientField =>
+  field.type === FieldType.STATIC_DROPDOWN
+    ? { uuid: field.id, name: field.name, type: field.type, data: field.data }
+    : { uuid: field.id, name: field.name, type: field.type };
 
 export type TableState = {
   isSaving: boolean;
@@ -82,16 +93,23 @@ export type TableState = {
   reorderField: (fieldIndex: number, targetIndex: number) => void;
   setRecords: (records: PopulatedRecord[]) => void;
   waitForSaves: () => Promise<void>;
-  mergeServerRecords: (change: {
+  applyServerTable: (snapshot: { table: Table; since: number }) => void;
+  applyServerFields: (snapshot: { fields: Field[]; since: number }) => void;
+  applyServerRecords: (snapshot: {
     records: PopulatedRecord[];
-    deletedIds: string[];
-  }) => void;
+    since: number;
+  }) => Map<string, string>;
+  applyRecordChanges: (change: {
+    records: PopulatedRecord[];
+    removedIds: string[];
+    since: number;
+  }) => Map<string, string>;
   setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   toggleStatus: () => void;
   lockedByOtherUser: boolean;
   setLockedByOtherUser: (locked: boolean) => void;
   serverFields: Field[];
-  serverRecords: PopulatedRecord[];
+  getServerRecords: () => PopulatedRecord[];
 };
 
 export const createApTableStore = (
@@ -99,13 +117,65 @@ export const createApTableStore = (
   fields: Field[],
   records: PopulatedRecord[],
 ) => {
-  return create<TableState>((set) => {
+  return create<TableState>((set, get) => {
     const serverState = createServerState(
       table,
       fields,
       records,
       (isSaving: boolean) => set({ isSaving }),
     );
+    const mergeRecords = ({
+      changed,
+      removedIds,
+      since,
+      dropMissing,
+    }: {
+      changed: PopulatedRecord[];
+      removedIds: string[];
+      since: number;
+      dropMissing: boolean;
+    }): Map<string, string> => {
+      const state = get();
+      const local = serverState.records;
+      const removed = new Set(removedIds);
+      const isNewer = (id: string) => !serverState.changedSince({ id, since });
+      const changedById = new Map(changed.map((record) => [record.id, record]));
+      const kept = local.flatMap((record, index) => {
+        const row = state.records[index];
+        const update = changedById.get(record.id);
+        changedById.delete(record.id);
+        if (!isNewer(record.id)) return [{ record, row }];
+        if (removed.has(record.id)) return [];
+        if (!update) return dropMissing ? [] : [{ record, row }];
+        const values = mapCellsToClientValues(update, serverState.fields);
+        return [{ record: update, row: { ...row, values } }];
+      });
+      const added = [...changedById.values()].filter((record) =>
+        isNewer(record.id),
+      );
+      const addedRows = mapRecorddToClientRecordsData(
+        added,
+        serverState.fields,
+      );
+      const merged = [
+        ...kept,
+        ...added.map((record, index) => ({ record, row: addedRows[index] })),
+      ];
+      const rows = [
+        ...merged.map(({ row }) => row),
+        ...state.records.slice(local.length),
+      ];
+      serverState.setRecords(merged.map(({ record }) => record));
+      set({ records: rows, ...selectionFor({ state, rows }) });
+      const appliedIds = new Set(
+        changed.map((record) => record.id).filter(isNewer),
+      );
+      return new Map(
+        merged
+          .filter(({ record }) => appliedIds.has(record.id))
+          .map(({ record, row }) => [record.id, row.uuid]),
+      );
+    };
     const selectedCell =
       records.length > 0
         ? {
@@ -145,21 +215,7 @@ export const createApTableStore = (
             ? state
             : { selectedCell },
         ),
-      fields: fields.map((field) => {
-        if (field.type === FieldType.STATIC_DROPDOWN) {
-          return {
-            uuid: field.id,
-            name: field.name,
-            type: field.type,
-            data: field.data,
-          };
-        }
-        return {
-          uuid: field.id,
-          name: field.name,
-          type: field.type,
-        };
-      }),
+      fields: fields.map(mapFieldToClientField),
       records: mapRecorddToClientRecordsData(records, fields),
       createRecord: (recordData: ClientRecordData) => {
         serverState.createRecord(recordData);
@@ -292,42 +348,46 @@ export const createApTableStore = (
         });
       },
       waitForSaves: () => serverState.idle(),
-      mergeServerRecords: ({ records: fresh, deletedIds }) => {
-        const { indexes, removed } = serverState.mergeRecords({
-          records: fresh,
-          deletedIds,
+      applyServerTable: ({ table: fresh, since }) => {
+        if (serverState.changedSince({ id: fresh.id, since })) return;
+        serverState.replaceTable(fresh);
+        set({ table: fresh });
+      },
+      applyServerFields: ({ fields: fresh, since }) => {
+        const touched = [...serverState.fields, ...fresh].some((field) =>
+          serverState.changedSince({ id: field.id, since }),
+        );
+        if (touched) return;
+        serverState.replaceFields(fresh);
+        set((state) => ({
+          fields: fresh.map(mapFieldToClientField),
+          records: state.records.map((row, index) => {
+            const record = serverState.records[index];
+            return record
+              ? { ...row, values: mapCellsToClientValues(record, fresh) }
+              : row;
+          }),
+        }));
+      },
+      applyServerRecords: ({ records: fresh, since }) =>
+        mergeRecords({
+          changed: fresh,
+          removedIds: [],
+          since,
+          dropMissing: true,
+        }),
+      applyRecordChanges: ({ records: changed, removedIds, since }) => {
+        const rowIds = mergeRecords({
+          changed,
+          removedIds,
+          since,
+          dropMissing: false,
         });
-        set((state) => {
-          const next = [...state.records];
-          const mapped = mapRecorddToClientRecordsData(
-            fresh,
-            serverState.fields,
-          );
-          indexes.forEach(({ index, added }, position) => {
-            next[index] = added
-              ? mapped[position]
-              : { ...next[index], values: mapped[position].values };
-          });
-          removed.forEach((index) => next.splice(index, 1));
-          const uuids = new Set(next.map((record) => record.uuid));
-          const selectedUuid =
-            state.selectedCell &&
-            state.records[state.selectedCell.rowIdx]?.uuid;
-          const selectedRowIdx = next.findIndex(
-            (record) => record.uuid === selectedUuid,
-          );
-          return {
-            records: next,
-            serverRecords: serverState.records,
-            selectedCell:
-              state.selectedCell && selectedRowIdx !== -1
-                ? { ...state.selectedCell, rowIdx: selectedRowIdx }
-                : null,
-            selectedRecords: new Set(
-              [...state.selectedRecords].filter((uuid) => uuids.has(uuid)),
-            ),
-          };
+        serverState.markKnown({
+          ids: [...changed.map((record) => record.id), ...removedIds],
+          at: since,
         });
+        return rowIds;
       },
       setAgentRunId: (recordId: string, agentRunId: string | null) => {
         const recordIndex = serverState.records.findIndex(
@@ -360,9 +420,31 @@ export const createApTableStore = (
       setLockedByOtherUser: (locked: boolean) =>
         set({ lockedByOtherUser: locked }),
       serverFields: serverState.fields,
-      serverRecords: serverState.records,
+      getServerRecords: () => serverState.records,
     };
   });
 };
+
+function selectionFor({
+  state,
+  rows,
+}: {
+  state: TableState;
+  rows: ClientRecordData[];
+}): Pick<TableState, 'selectedCell' | 'selectedRecords'> {
+  const uuids = new Set(rows.map((row) => row.uuid));
+  const selectedUuid =
+    state.selectedCell && state.records[state.selectedCell.rowIdx]?.uuid;
+  const selectedRowIdx = rows.findIndex((row) => row.uuid === selectedUuid);
+  return {
+    selectedCell:
+      state.selectedCell && selectedRowIdx !== -1
+        ? { ...state.selectedCell, rowIdx: selectedRowIdx }
+        : null,
+    selectedRecords: new Set(
+      [...state.selectedRecords].filter((uuid) => uuids.has(uuid)),
+    ),
+  };
+}
 
 export type ApTableStore = ReturnType<typeof createApTableStore>;

@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
   Field,
   Table,
@@ -25,18 +25,15 @@ import { useStore } from 'zustand';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useSocket } from '@/components/providers/socket-provider';
 import { buttonVariants } from '@/components/ui/button';
-import {
-  followAlong,
-  useFollowAlong,
-} from '@/features/chat/lib/follow/follow-along';
-import { resourceRegistry } from '@/features/chat/lib/resources/registry';
+import { followAlong } from '@/features/chat/lib/follow/follow-along';
 import {
   TableState,
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/stores/store/ap-tables-client-state';
+import { tableSyncClock } from '@/features/tables/stores/store/table-sync-clock';
 import { useResourceLock } from '@/hooks/use-resource-lock';
-import { errorReporting } from '@/lib/error-reporting';
+import { editorSession } from '@/lib/editor-session';
 import { PromiseQueue } from '@/lib/promise-queue';
 import { cn } from '@/lib/utils';
 
@@ -62,7 +59,7 @@ export const TableStateProviderWithTable = ({
   const tableStoreRef = useRef<ApTableStore>(
     createApTableStore(table, fields, records),
   );
-  useLiveRecords({ tableId: table.id, store: tableStoreRef.current });
+  useServerSync({ tableId: table.id, store: tableStoreRef.current });
   return (
     <TableContext.Provider value={tableStoreRef.current}>
       {children}
@@ -84,9 +81,7 @@ export function ApTableStateProvider({
     error: tableError,
   } = useQuery({
     queryKey: ['table', tableId],
-    queryFn: () => {
-      return tablesApi.getById(tableId!);
-    },
+    queryFn: () => snapshotOf(() => tablesApi.getById(tableId!)),
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
@@ -99,10 +94,7 @@ export function ApTableStateProvider({
     error: fieldsError,
   } = useQuery({
     queryKey: ['fields', tableId],
-    queryFn: () =>
-      fieldsApi.list({
-        tableId: tableId!,
-      }),
+    queryFn: () => snapshotOf(() => fieldsApi.list({ tableId: tableId! })),
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
@@ -116,11 +108,11 @@ export function ApTableStateProvider({
   } = useQuery({
     queryKey: ['records', tableId],
     queryFn: () =>
-      recordsApi.list({
-        tableId: tableId!,
-        limit: 99999999,
-        cursor: undefined,
-      }),
+      snapshotOf(() =>
+        recordsApi
+          .list({ tableId: tableId!, limit: 99999999, cursor: undefined })
+          .then((page) => page.data),
+      ),
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
@@ -178,11 +170,14 @@ export function ApTableStateProvider({
 
   return (
     <TableRefreshContext.Provider value={refreshTableState}>
-      <TableLockProvider resourceId={table.id} onTakeOver={refreshTableState}>
+      <TableLockProvider
+        resourceId={table.data.id}
+        onTakeOver={refreshTableState}
+      >
         <TableStateProviderWithTable
           key={refreshKey}
-          table={table}
-          fields={fields}
+          table={table.data}
+          fields={fields.data}
           records={records.data}
         >
           {children}
@@ -192,7 +187,7 @@ export function ApTableStateProvider({
   );
 }
 
-function useLiveRecords({
+function useServerSync({
   tableId,
   store,
 }: {
@@ -200,47 +195,102 @@ function useLiveRecords({
   store: ApTableStore;
 }) {
   const socket = useSocket();
+  const queryClient = useQueryClient();
   useEffect(() => {
-    const updates = new PromiseQueue();
-    const apply = async (event: TableRecordsChangedEvent) => {
-      const deleted = event.op === TableRecordsChangeOp.DELETED;
-      const { data: records, error } = await tryCatch(() =>
-        deleted
-          ? Promise.resolve([])
-          : Promise.all(event.recordIds.map((id) => recordsApi.getById(id))),
-      );
-      if (error) {
-        errorReporting.report({ error, source: 'table-live-records' });
+    const applies = new PromiseQueue();
+    const snapshot = <T,>(scope: string) =>
+      queryClient.getQueryData<Snapshot<T>>([scope, tableId]);
+    const applySnapshot = async (scope: unknown) => {
+      await store.getState().waitForSaves();
+      const state = store.getState();
+      const table = scope === 'table' ? snapshot<Table>('table') : undefined;
+      if (table) {
+        state.applyServerTable({ table: table.data, since: table.since });
+      }
+      const fields =
+        scope === 'fields' ? snapshot<Field[]>('fields') : undefined;
+      if (fields) {
+        state.applyServerFields({ fields: fields.data, since: fields.since });
+      }
+      const records =
+        scope === 'records'
+          ? snapshot<PopulatedRecord[]>('records')
+          : undefined;
+      if (records) {
+        state.applyServerRecords({
+          records: records.data,
+          since: records.since,
+        });
+      }
+    };
+    const applyChange = async ({
+      event,
+      since,
+    }: {
+      event: TableRecordsChangedEvent;
+      since: number;
+    }) => {
+      await store.getState().waitForSaves();
+      const state = store.getState();
+      const removedIds =
+        event.op === TableRecordsChangeOp.CLEARED
+          ? state.getServerRecords().map((record) => record.id)
+          : event.op === TableRecordsChangeOp.DELETED
+          ? event.recordIds ?? []
+          : [];
+      const rowIds = state.applyRecordChanges({
+        records: event.records ?? [],
+        removedIds,
+        since,
+      });
+      if (followAlong.isFollowing({ kind: 'table', id: tableId })) {
+        followAlong.flash(
+          [...rowIds.values()].map((rowId) => `table-row:${rowId}`),
+        );
+      }
+    };
+    const stopFollowingQueries = queryClient
+      .getQueryCache()
+      .subscribe((event) => {
+        if (event.type !== 'updated' || event.action.type !== 'success') {
+          return;
+        }
+        const [scope, id] = event.query.queryKey;
+        if (id !== tableId) return;
+        applies.add(() => applySnapshot(scope));
+      });
+    const onRecordsChanged = (event: TableRecordsChangedEvent) => {
+      if (
+        event.tableId !== tableId ||
+        event.editorSessionId === editorSession.getId()
+      ) {
         return;
       }
-      await store.getState().waitForSaves();
-      store.getState().mergeServerRecords({
-        records,
-        deletedIds: deleted ? event.recordIds : [],
-      });
-      if (!deleted && isFollowed(tableId)) {
-        followAlong.flash(records.map((record) => `table-row:${record.id}`));
+      if (event.op === TableRecordsChangeOp.RELOAD) {
+        queryClient.invalidateQueries({ queryKey: ['records', tableId] });
+        return;
       }
+      const since = tableSyncClock.tick();
+      applies.add(() => applyChange({ event, since }));
     };
-    const onChange = (event: TableRecordsChangedEvent) => {
-      if (event.tableId !== tableId) return;
-      updates.add(() => apply(event));
+    const onReconnect = () => {
+      SYNCED_SCOPES.forEach((scope) =>
+        queryClient.invalidateQueries({ queryKey: [scope, tableId] }),
+      );
     };
-    socket.on(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onChange);
+    socket.on(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onRecordsChanged);
+    socket.on('connect', onReconnect);
     return () => {
-      socket.off(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onChange);
+      stopFollowingQueries();
+      socket.off(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onRecordsChanged);
+      socket.off('connect', onReconnect);
     };
-  }, [socket, store, tableId]);
+  }, [socket, queryClient, store, tableId]);
 }
 
-function isFollowed(tableId: string): boolean {
-  const { target, phase } = useFollowAlong.getState();
-  return (
-    phase === 'editing' &&
-    target !== null &&
-    resourceRegistry.keyOf(target) ===
-      resourceRegistry.keyOf({ kind: 'table', id: tableId })
-  );
+async function snapshotOf<T>(fetch: () => Promise<T>): Promise<Snapshot<T>> {
+  const since = tableSyncClock.tick();
+  return { data: await fetch(), since };
 }
 
 export function useTableState<T>(selector: (state: TableState) => T) {
@@ -300,4 +350,8 @@ function TableLockProvider({
   );
 }
 
+const SYNCED_SCOPES = ['table', 'fields', 'records'];
+
 type TableLockContextValue = ReturnType<typeof useResourceLock>;
+
+type Snapshot<T> = { data: T; since: number };

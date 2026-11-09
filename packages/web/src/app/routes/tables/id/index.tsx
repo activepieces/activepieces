@@ -44,7 +44,6 @@ const ApTableEditorPage = () => {
     records,
     setLockedByOtherUser,
     reorderField,
-    serverRecords,
   ] = useTableState((state) => [
     state.selectedRecords,
     state.setSelectedRecords,
@@ -55,9 +54,8 @@ const ApTableEditorPage = () => {
     state.records,
     state.setLockedByOtherUser,
     state.reorderField,
-    state.serverRecords,
   ]);
-  const rowSheen = useRowSheen({ records, serverRecords });
+  const rowSheen = useRowSheen(records);
   const renderRow = (
     key: React.Key,
     props: RenderRowProps<Row, { id: string }>,
@@ -191,19 +189,12 @@ const ApTableEditorPage = () => {
   );
 };
 
-function useRowSheen({
-  records,
-  serverRecords,
-}: {
-  records: { uuid: string }[];
-  serverRecords: { id: string }[];
-}) {
+function useRowSheen(records: { uuid: string }[]) {
   const flashes = useFollowAlong((state) => state.flashes);
   const [played, setPlayed] = useState<ReadonlySet<string>>(new Set());
   const tokens = new Map(
-    records.flatMap((record, index) => {
-      const recordId = serverRecords[index]?.id;
-      const token = recordId ? flashes[`table-row:${recordId}`] : undefined;
+    records.flatMap((record) => {
+      const token = flashes[`table-row:${record.uuid}`];
       return token === undefined
         ? []
         : [[record.uuid, `${record.uuid}:${token}`]];
@@ -224,7 +215,10 @@ function useRowSheen({
     played: (uuid: string) => {
       const token = tokens.get(uuid);
       if (token && !played.has(token)) {
-        setPlayed((previous) => new Set(previous).add(token));
+        const live = new Set(tokens.values());
+        setPlayed((previous) =>
+          new Set([...previous].filter((seen) => live.has(seen))).add(token),
+        );
       }
     },
   };

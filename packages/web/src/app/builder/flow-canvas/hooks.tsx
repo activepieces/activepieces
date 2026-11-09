@@ -160,7 +160,12 @@ const useRefreshDraftOnPush = () => {
       const before = store.getState().flowVersion.trigger;
       refreshDraft()
         .then((applied) => {
-          if (!applied) return;
+          if (
+            !applied ||
+            !followAlong.isFollowing({ kind: 'flow', id: flowId })
+          ) {
+            return;
+          }
           const after = store.getState().flowVersion.trigger;
           followAlong.flash(
             changedStepNames({ before, after }).map(

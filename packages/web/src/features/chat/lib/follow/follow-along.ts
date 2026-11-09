@@ -118,6 +118,15 @@ function flash(keys: string[]): void {
   });
 }
 
+function isFollowing(resource: Pick<ResourceRef, 'kind' | 'id'>): boolean {
+  const { target, phase } = useFollowAlong.getState();
+  return (
+    phase === 'editing' &&
+    target !== null &&
+    resourceRegistry.keyOf(target) === resourceRegistry.keyOf(resource)
+  );
+}
+
 function claimHistoryPush(runId: string | null): boolean {
   if (runId === null) return true;
   if (pushedRuns.has(runId)) return false;
@@ -148,6 +157,7 @@ export const followAlong = {
   endRun,
   stopFollowing,
   flash,
+  isFollowing,
   claimHistoryPush,
   onToolDone,
 };

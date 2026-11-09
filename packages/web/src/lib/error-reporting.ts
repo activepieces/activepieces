@@ -155,5 +155,4 @@ export type FrontendErrorSource =
   | 'unhandled-rejection'
   | 'chunk-preload'
   | 'query'
-  | 'table-save'
-  | 'table-live-records';
+  | 'table-save';

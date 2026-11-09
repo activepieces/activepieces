@@ -33,6 +33,7 @@ import {
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import { useFlowLock } from '@/app/builder/flow-canvas/widgets/use-flow-lock';
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
+import { followAlong } from '@/features/chat/lib/follow/follow-along';
 import { editorSession } from '@/lib/editor-session';
 
 declare global {
@@ -119,6 +120,10 @@ vi.mock('@/components/providers/socket-provider', () => ({
 
 vi.mock('@/features/flows/api/flows-api', () => ({
   flowsApi: flowsApiMock,
+}));
+
+vi.mock('@/features/chat/lib/follow/follow-along', () => ({
+  followAlong: { flash: vi.fn(), isFollowing: vi.fn(() => false) },
 }));
 
 describe('useFlushPendingEditsOnLeave', () => {
@@ -246,6 +251,39 @@ describe('useRefreshDraftOnPush', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('sheens the changed steps when the chat that edits this flow is followed', async () => {
+    vi.mocked(followAlong.flash).mockClear();
+    vi.mocked(followAlong.isFollowing).mockReturnValue(true);
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    flowsApiMock.get.mockResolvedValue(flowWithRenamedTrigger());
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(followAlong.isFollowing).toHaveBeenCalledWith({
+      kind: 'flow',
+      id: 'flow-1',
+    });
+    expect(followAlong.flash).toHaveBeenCalledWith(['flow-step:trigger']);
+  });
+
+  it('shows a collaborator edit without the sheen when no chat follows the flow', async () => {
+    vi.mocked(followAlong.flash).mockClear();
+    vi.mocked(followAlong.isFollowing).mockReturnValue(false);
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    flowsApiMock.get.mockResolvedValue(flowWithRenamedTrigger());
+    mount(store);
+
+    sendDraftPush({ flowId: 'flow-1', editorSessionId: 'other-session' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState().flowVersion.trigger.displayName).toBe(
+      'Renamed trigger',
+    );
+    expect(followAlong.flash).not.toHaveBeenCalled();
   });
 
   it('shows the newest draft after a push with no Editor Session id', async () => {
@@ -742,6 +780,17 @@ function renameTrigger(displayName: string): FlowOperationRequest {
       displayName,
       type: FlowTriggerType.EMPTY,
       settings: {},
+    },
+  };
+}
+
+function flowWithRenamedTrigger(): PopulatedFlow {
+  const flow = flowWithDraftVersion({ versionId: 'draft-1' });
+  return {
+    ...flow,
+    version: {
+      ...flow.version,
+      trigger: { ...flow.version.trigger, displayName: 'Renamed trigger' },
     },
   };
 }
