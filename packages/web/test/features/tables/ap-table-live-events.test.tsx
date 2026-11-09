@@ -15,7 +15,13 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { toast } from 'sonner';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import {
+  MemoryRouter,
+  NavigateFunction,
+  Route,
+  Routes,
+  useNavigate,
+} from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { followAlong } from '@/features/chat/lib/follow/follow-along';
@@ -473,6 +479,71 @@ describe('open table live events', () => {
     await act(settle);
 
     expect(rows()).toEqual(['old', 'b', 'during load']);
+  });
+
+  it('does not apply a change for the previous table to the next one', async () => {
+    const loading = Promise.withResolvers<void>();
+    vi.mocked(tablesApi.getById).mockImplementation(async () => {
+      await loading.promise;
+      return table;
+    });
+    vi.mocked(fieldsApi.list).mockImplementation(async () => {
+      await loading.promise;
+      return [nameField];
+    });
+    vi.mocked(recordsApi.list).mockImplementation(async () => {
+      await loading.promise;
+      return { data: [record('r1', 'old')], next: null, previous: null };
+    });
+    let rows: unknown[] = [];
+    let navigate: NavigateFunction | null = null;
+    function Probe() {
+      rows = useTableState((current) =>
+        current.records.map((row) => row.values[0]?.value),
+      );
+      return <span data-testid="table-probe" />;
+    }
+    function Navigator() {
+      navigate = useNavigate();
+      return null;
+    }
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/tables/t1']}>
+          <Navigator />
+          <Routes>
+            <Route
+              path="/tables/:tableId"
+              element={
+                <ApTableStateProvider>
+                  <Probe />
+                </ApTableStateProvider>
+              }
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    socket.serverSends(WebsocketClientEvent.TABLE_RECORDS_CHANGED, {
+      tableId: 't1',
+      op: TableRecordsChangeOp.CREATED,
+      records: [record('r3', 'from the first table')],
+      editorSessionId: null,
+    });
+    act(() => {
+      void navigate?.('/tables/t2');
+    });
+    loading.resolve();
+    for (
+      let attempt = 0;
+      attempt < 20 && screen.queryByTestId('table-probe') === null;
+      attempt += 1
+    ) {
+      await act(settle);
+    }
+    await act(settle);
+
+    expect(rows).toEqual(['old']);
   });
 });
 

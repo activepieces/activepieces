@@ -74,6 +74,20 @@ export function ApTableStateProvider({
   children: React.ReactNode;
 }) {
   const tableId = useParams().tableId;
+  return (
+    <RouteTableStateProvider key={tableId} tableId={tableId}>
+      {children}
+    </RouteTableStateProvider>
+  );
+}
+
+function RouteTableStateProvider({
+  tableId,
+  children,
+}: {
+  tableId: string | undefined;
+  children: React.ReactNode;
+}) {
   const queryClient = useQueryClient();
   const [refreshKey, setRefreshKey] = useState(0);
   const {
@@ -121,11 +135,11 @@ export function ApTableStateProvider({
   });
 
   const [changes] = useState(createChangeFeed);
-  const [deletedTableId, setDeletedTableId] = useState<string | null>(null);
+  const [deleted, setDeleted] = useState(false);
   const onChange = useCallback(
     (change: TableChange) => {
       if (change.type === 'deleted') {
-        setDeletedTableId(tableId ?? null);
+        setDeleted(true);
         return;
       }
       if (change.type === 'reload') {
@@ -172,7 +186,7 @@ export function ApTableStateProvider({
     return <RouteLoadingBar />;
   }
 
-  if (!isNil(deletedTableId) && deletedTableId === tableId) {
+  if (deleted) {
     return <TableUnavailable title={t('This table was deleted')} />;
   }
 
