@@ -96,9 +96,7 @@ function NarrowEmptyState({
     (pattern) => matchPath({ path: pattern, end: false }, pathname) !== null,
   );
   const name = user?.firstName;
-  const suggestions = (
-    onResource ? [PAGE_SUGGESTION, ...SUGGESTIONS] : SUGGESTIONS
-  ).slice(0, 3);
+  const suggestions = narrowSuggestions({ onResource });
   return (
     <div className="flex h-full flex-col justify-end gap-3 px-4 pb-3">
       <p className="text-base font-semibold text-gray-12">
@@ -107,14 +105,13 @@ function NarrowEmptyState({
           : t('What can I help with?')}
       </p>
       <div className="flex flex-col items-start gap-1.5">
-        {suggestions.map((suggestion) => {
-          const text = t(suggestion.text);
+        {suggestions.map(({ text, kind }) => {
           return (
             <Button
-              key={suggestion.text}
+              key={text}
               variant="ghost"
               onClick={() =>
-                suggestion.kind === 'build' ? onFill(text) : onSend(text)
+                kind === 'build' ? onFill(text) : onSend(text)
               }
               className="h-auto max-w-full justify-start rounded-full border px-3 py-1.5 text-gray-11 hover:bg-gray-3 active:bg-gray-4"
             >
@@ -694,23 +691,29 @@ function resolveCards({
   }));
 }
 
+function narrowSuggestions({
+  onResource,
+}: {
+  onResource: boolean;
+}): Suggestion[] {
+  const general: Suggestion[] = [
+    { text: t('Build me a flow for new leads'), kind: 'build' },
+    { text: t('Which flows saved the most time this month?'), kind: 'ask' },
+    { text: t('Why did my last run fail?'), kind: 'ask' },
+  ];
+  const all: Suggestion[] = onResource
+    ? [{ text: t('What can I do on this page?'), kind: 'ask' }, ...general]
+    : general;
+  return all.slice(0, NARROW_SUGGESTION_COUNT);
+}
+
 const COLLAPSED_CARD_COUNT = 4;
+const NARROW_SUGGESTION_COUNT = 3;
 const CARD_STAGGER_S = 0.03;
 
 const RESOURCE_PAGES = [
   `/projects/:projectId${routesThatRequireProjectId.singleFlow}`,
   `/projects/:projectId${routesThatRequireProjectId.singleTable}`,
-];
-
-const PAGE_SUGGESTION: Suggestion = {
-  text: 'What can I do on this page?',
-  kind: 'ask',
-};
-
-const SUGGESTIONS: Suggestion[] = [
-  { text: 'Build me a flow for new leads', kind: 'build' },
-  { text: 'Which flows saved the most time this month?', kind: 'ask' },
-  { text: 'Why did my last run fail?', kind: 'ask' },
 ];
 
 type Suggestion = { text: string; kind: 'build' | 'ask' };
