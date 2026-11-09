@@ -46,6 +46,16 @@ describe('useAgentChat history load', () => {
     expect(onConversationMissing).not.toHaveBeenCalled();
   });
 
+  it('keeps the chat it failed to load, so a reply cannot start a new chat', async () => {
+    vi.mocked(chatApi.getMessages).mockRejectedValueOnce(new Error('offline'));
+    const { result } = renderHook(() => useAgentChat(), { wrapper });
+
+    await act(() => result.current.setConversationId('conv-1'));
+
+    expect(result.current.historyFailed).toBe(true);
+    expect(result.current.conversationId).toBe('conv-1');
+  });
+
   it('loads the chat on retry', async () => {
     vi.mocked(chatApi.getMessages)
       .mockRejectedValueOnce(new Error('offline'))

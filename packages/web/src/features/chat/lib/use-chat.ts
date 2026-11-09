@@ -1005,15 +1005,8 @@ export function useAgentChat({
     [],
   );
 
-  const setConversationId = useCallback(
+  const loadConversation = useCallback(
     async (id: string) => {
-      if (
-        chatUtils.reopensSameConversation({
-          current: conversationIdRef.current,
-          next: id,
-        })
-      )
-        return;
       const gen = resetSession(id);
       setIsLoadingHistory(true);
       const [historyResult, convResult] = await Promise.all([
@@ -1022,8 +1015,6 @@ export function useAgentChat({
       ]);
       if (gen !== sessionGenRef.current) return;
       if (historyResult.error || convResult.error) {
-        conversationIdRef.current = null;
-        setConversationIdState(null);
         setIsLoadingHistory(false);
         const missing = [historyResult.error, convResult.error].some((e) =>
           api.isApError(e, ErrorCode.ENTITY_NOT_FOUND),
@@ -1032,6 +1023,8 @@ export function useAgentChat({
           setHistoryFailedId(id);
           return;
         }
+        conversationIdRef.current = null;
+        setConversationIdState(null);
         const onMissing = onConversationMissingRef.current;
         if (onMissing) {
           onMissing();
@@ -1105,6 +1098,21 @@ export function useAgentChat({
     [resetSession, startStream, updateSendStatus, store],
   );
 
+  const setConversationId = useCallback(
+    async (id: string) => {
+      if (
+        chatUtils.reopensSameConversation({
+          current: conversationIdRef.current,
+          next: id,
+        })
+      ) {
+        return;
+      }
+      await loadConversation(id);
+    },
+    [loadConversation],
+  );
+
   const setModelPick = useCallback(async (newPick: ChatModelPick) => {
     const gen = sessionGenRef.current;
     modelPickRef.current = newPick;
@@ -1149,7 +1157,7 @@ export function useAgentChat({
     failed,
     historyFailed: historyFailedId !== null,
     reloadHistory: async () => {
-      if (historyFailedId !== null) await setConversationId(historyFailedId);
+      if (historyFailedId !== null) await loadConversation(historyFailedId);
     },
     sendMessage,
     retryLastMessage,

@@ -221,7 +221,7 @@ function ChatBoxContent({
       options?: { messageSource?: AgentMessageSource },
     ) => {
       if (!text.trim() && (!files || files.length === 0)) return;
-      if (pickUnavailable) return;
+      if (pickUnavailable || historyFailed) return;
       if (isNil(conversationId) && isNil(modelPick) && !isNil(shownChoice)) {
         await setModelPick(chatUtils.pickOf({ choice: shownChoice }));
       }
@@ -231,6 +231,7 @@ function ChatBoxContent({
     [
       sendMessage,
       pickUnavailable,
+      historyFailed,
       conversationId,
       modelPick,
       shownChoice,
@@ -594,7 +595,11 @@ function ChatBoxContent({
               ) : null
             }
             sendBlockedReason={
-              pickUnavailable ? t('Pick another model to continue') : undefined
+              historyFailed
+                ? t('Load this chat again before you reply.')
+                : pickUnavailable
+                ? t('Pick another model to continue')
+                : undefined
             }
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}

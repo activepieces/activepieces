@@ -3799,5 +3799,6 @@
   "One message is already waiting. Cancel it to change it.": "One message is already waiting. Cancel it to change it.",
   "Moved back to the composer because the AI is waiting for your answer.": "Moved back to the composer because the AI is waiting for your answer.",
   "Remove file": "Remove file",
+  "Load this chat again before you reply.": "Load this chat again before you reply.",
   "Sends when the reply ends.": "Sends when the reply ends."
 }
