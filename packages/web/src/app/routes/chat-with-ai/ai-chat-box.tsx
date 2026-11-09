@@ -11,6 +11,7 @@ import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useStickToBottomContext } from 'use-stick-to-bottom';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
@@ -49,6 +50,7 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { ComposerFill } from './components/chat-input';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import {
@@ -186,6 +188,10 @@ function ChatBoxContent({
     !isNil(initialConversationId) &&
     (isLoadingHistory ||
       (initialConversationId !== conversationId && !failed && !historyFailed));
+  const showHistorySkeleton = useDelayedFlag({
+    value: isLoadingHistory,
+    delayMs: HISTORY_SKELETON_DELAY_MS,
+  });
   const pickUnavailable =
     showsPicker &&
     !isNil(modelOptions) &&
@@ -221,6 +227,8 @@ function ChatBoxContent({
   );
 
   const [hasInput, setHasInput] = useState(false);
+  const [composerFill, setComposerFill] = useState<ComposerFill | null>(null);
+  const clearComposerFill = useCallback(() => setComposerFill(null), []);
   const [promptOpen, setPromptOpen] = useState(false);
   const sentInitialPrompt = useRef(false);
 
@@ -383,6 +391,7 @@ function ChatBoxContent({
                 onboarding={showOnboardingCard}
                 showFlowCards={!hasConversations}
                 onSend={(text) => handleSend(text).catch(() => undefined)}
+                onFill={(text) => setComposerFill({ text, id: Date.now() })}
               />
             )}
           </div>
@@ -407,7 +416,7 @@ function ChatBoxContent({
                 scrollClassName="px-3 @chat-sm/chat:px-6"
                 className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full"
               >
-                {isLoadingHistory && <MessageSkeletons />}
+                {showHistorySkeleton && <MessageSkeletons />}
 
                 {historyFailed && (
                   <DataFetchErrorState
@@ -503,6 +512,7 @@ function ChatBoxContent({
                 <ChatContainerScrollAnchor />
               </ChatContainerContent>
               <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
+              <ScrolledEdge />
             </ChatContainerRoot>
           </motion.div>
         )}
@@ -543,6 +553,8 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             onInputChange={setHasInput}
+            fill={composerFill}
+            onFillApplied={clearComposerFill}
             autoFocus={autoFocusComposer}
             recede={showOnboardingCard}
             modelPicker={
@@ -646,6 +658,49 @@ function computeClaimedBuildIds(
   }
   return claimed;
 }
+
+// A hairline under the header once the message list scrolls off the top.
+function ScrolledEdge() {
+  const { scrollRef } = useStickToBottomContext();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const update = () => setScrolled(scroller.scrollTop > 0);
+    update();
+    scroller.addEventListener('scroll', update, { passive: true });
+    return () => scroller.removeEventListener('scroll', update);
+  }, [scrollRef]);
+  return (
+    <div
+      aria-hidden
+      data-scrolled={scrolled}
+      className={cn(
+        'pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gray-5 transition-opacity duration-150',
+        scrolled ? 'opacity-100' : 'opacity-0',
+      )}
+    />
+  );
+}
+
+function useDelayedFlag({
+  value,
+  delayMs,
+}: {
+  value: boolean;
+  delayMs: number;
+}): boolean {
+  const [elapsed, setElapsed] = useState(false);
+  useEffect(() => {
+    setElapsed(false);
+    if (!value) return;
+    const timer = setTimeout(() => setElapsed(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return value && elapsed;
+}
+
+const HISTORY_SKELETON_DELAY_MS = 150;
 
 type AIChatBoxProps = {
   incognito: boolean;

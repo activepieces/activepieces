@@ -1,32 +1,45 @@
+import { tryCatch } from '@activepieces/core-utils';
 import { AgentConversation } from '@activepieces/shared';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
+  Ellipsis,
   History,
   Maximize2,
   PanelLeft,
   PanelRight,
+  Pencil,
   Plus,
+  Settings,
+  Trash2,
   X,
 } from 'lucide-react';
-import { memo, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { memo, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
+import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { chatPendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
 import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
@@ -42,7 +55,14 @@ export function ChatChrome() {
   const conversationId = useActiveConversationId();
   const newChatToken = useChatPanel((s) => s.newChatToken);
   const pendingPrompt = useChatPanel((s) => s.pendingPrompt);
+  const queryClient = useQueryClient();
+  const [typingId, setTypingId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const renameCancelled = useRef(false);
+  const titleInput = useRef<HTMLInputElement>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const reduced = useReducedMotion();
   const full = layout === 'full';
   const chatShown = layout !== 'closed';
 
@@ -51,7 +71,17 @@ export function ChatChrome() {
   }
 
   const phone = windowSizeHooks.useIsPhone();
-  const title = useConversationTitle({ conversationId });
+  const renaming = renamingId !== null && renamingId === conversationId;
+  const setRenaming = (on: boolean) =>
+    setRenamingId(on ? conversationId : null);
+  const { title, loading: titleLoading } = useConversationTitle({
+    conversationId,
+  });
+
+  const invalidateList = () =>
+    queryClient
+      .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
+      .catch(() => undefined);
 
   const openConversation = (id: string) => {
     setHistoryOpen(false);
@@ -67,18 +97,104 @@ export function ChatChrome() {
     chatPanelUtils.startNewChat();
   };
 
+  const finishRename = async (next: string) => {
+    setRenaming(false);
+    const trimmed = next.trim();
+    if (!conversationId || !trimmed || trimmed === title) return;
+    const key = chatQueryKeys.conversation(conversationId);
+    const previous = queryClient.getQueryData<AgentConversation | null>(key);
+    setTypingId(null);
+    setCachedTitle({ queryClient, conversationId, title: trimmed });
+    const { error } = await tryCatch(() =>
+      chatApi.updateConversation(conversationId, { title: trimmed }),
+    );
+    if (error) {
+      queryClient.setQueryData(key, previous);
+      toast.error(t('Failed to rename conversation'));
+      return;
+    }
+    invalidateList();
+  };
+
+  const deleteChat = () => {
+    if (!conversationId) return;
+    const id = conversationId;
+    const bringBack = () => {
+      if (useChatPanel.getState().conversationId) return;
+      openConversation(id);
+    };
+    chatPendingDeletes.removeWithUndo({
+      id,
+      onUndo: bringBack,
+      onFailed: bringBack,
+      onDeleted: () => {
+        queryClient.removeQueries({ queryKey: chatQueryKeys.conversation(id) });
+        invalidateList();
+      },
+    });
+    startFresh();
+  };
+
   return (
     <>
       <div
         data-chat-header
         className="relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-4"
       >
-        <h2
-          title={title ?? undefined}
-          className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-12"
-        >
-          {title ?? t('New chat')}
-        </h2>
+        <div className="grid min-w-0 flex-1 items-center">
+          <AnimatePresence initial={false}>
+            {renaming ? (
+              <Input
+                key="rename"
+                ref={titleInput}
+                aria-label={t('Chat title')}
+                defaultValue={title ?? ''}
+                onBlur={(event) => {
+                  if (renameCancelled.current) {
+                    renameCancelled.current = false;
+                    setRenaming(false);
+                    return;
+                  }
+                  finishRename(event.currentTarget.value).catch(
+                    () => undefined,
+                  );
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                    event.currentTarget.blur();
+                  }
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    renameCancelled.current = true;
+                    event.currentTarget.blur();
+                  }
+                }}
+                className="-ml-1.5 h-8 min-w-0 px-1.5 text-sm font-semibold [grid-area:1/1]"
+              />
+            ) : titleLoading ? (
+              <motion.div
+                key="loading"
+                {...titleFade(reduced)}
+                className="[grid-area:1/1]"
+              >
+                <Skeleton className="h-4 w-32" />
+              </motion.div>
+            ) : (
+              <motion.h2
+                key="chat"
+                {...titleFade(reduced)}
+                title={title ?? undefined}
+                className="truncate text-sm font-semibold text-gray-12 [grid-area:1/1]"
+              >
+                {title && typingId === conversationId ? (
+                  <TypedText text={title} />
+                ) : (
+                  title ?? t('New chat')
+                )}
+              </motion.h2>
+            )}
+          </AnimatePresence>
+        </div>
         <div className="-mr-1 flex shrink-0 items-center gap-0.5">
           <HeaderButton
             label={historyOpen ? t('Hide history') : t('History')}
@@ -91,6 +207,16 @@ export function ChatChrome() {
             <Plus />
           </HeaderButton>
           {!phone && <LayoutMenu />}
+          <MoreMenu
+            hasConversation={conversationId !== null}
+            onRename={() => {
+              setHistoryOpen(false);
+              setRenaming(true);
+            }}
+            renameInput={titleInput}
+            onDelete={deleteChat}
+            onSettings={() => setSettingsOpen(true)}
+          />
           {!full && (
             <HeaderButton
               label={t('Close')}
@@ -116,9 +242,11 @@ export function ChatChrome() {
             conversationId={conversationId}
             newChatToken={newChatToken}
             prompt={pendingPrompt}
+            onTitleTyped={setTypingId}
           />
         </div>
       </div>
+      <SettingsHubDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </>
   );
 }
@@ -128,11 +256,13 @@ const ChatBody = memo(function ChatBody({
   conversationId,
   newChatToken,
   prompt,
+  onTitleTyped,
 }: {
   full: boolean;
   conversationId: string | null;
   newChatToken: number;
   prompt?: string;
+  onTitleTyped: (conversationId: string) => void;
 }) {
   const queryClient = useQueryClient();
   const invalidate = () =>
@@ -163,6 +293,7 @@ const ChatBody = memo(function ChatBody({
         const id = useChatPanel.getState().conversationId;
         if (id) {
           setCachedTitle({ queryClient, conversationId: id, title: next });
+          onTitleTyped(id);
         }
         invalidate();
       }}
@@ -174,8 +305,8 @@ function useConversationTitle({
   conversationId,
 }: {
   conversationId: string | null;
-}): string | null {
-  const { data } = useQuery({
+}): { title: string | null; loading: boolean } {
+  const { data, isLoading } = useQuery({
     queryKey: chatQueryKeys.conversation(conversationId),
     queryFn: () =>
       conversationId ? chatApi.getConversation(conversationId) : null,
@@ -183,7 +314,10 @@ function useConversationTitle({
     staleTime: Infinity,
   });
   const title = data?.title ?? null;
-  return title ? chatUtils.sanitizeTitle(title) : null;
+  return {
+    title: title ? chatUtils.sanitizeTitle(title) : null,
+    loading: isLoading,
+  };
 }
 
 function setCachedTitle({
@@ -258,6 +392,65 @@ function LayoutMenu() {
   );
 }
 
+function MoreMenu({
+  hasConversation,
+  onRename,
+  renameInput,
+  onDelete,
+  onSettings,
+}: {
+  hasConversation: boolean;
+  onRename: () => void;
+  renameInput: React.RefObject<HTMLInputElement | null>;
+  onDelete: () => void;
+  onSettings: () => void;
+}) {
+  const renameChosen = useRef(false);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <HeaderButton label={t('More')}>
+          <Ellipsis />
+        </HeaderButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-64"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (!renameChosen.current) return;
+          renameChosen.current = false;
+          renameInput.current?.focus();
+        }}
+      >
+        <DropdownMenuItem
+          disabled={!hasConversation}
+          onSelect={() => {
+            renameChosen.current = true;
+            onRename();
+          }}
+        >
+          <Pencil className="size-4" />
+          {t('Rename')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={!hasConversation}
+          onSelect={onDelete}
+          className="text-danger-11 focus:text-danger-11"
+        >
+          <Trash2 className="size-4" />
+          {t('Delete')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={onSettings}>
+          <Settings className="size-4" />
+          {t('Chat settings')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function HeaderButton({
   label,
   children,
@@ -288,3 +481,55 @@ function HeaderButton({
 }
 
 const HEADER_TOOLTIP_DELAY_MS = 500;
+
+function titleFade(reduced: boolean | null) {
+  return {
+    initial: { opacity: 0 },
+    animate: {
+      opacity: 1,
+      transition: {
+        duration: reduced ? 0.1 : 0.22,
+        ease: TITLE_EASE,
+      },
+    },
+    exit: {
+      opacity: 0,
+      transition: {
+        duration: reduced ? 0.08 : 0.16,
+        ease: TITLE_EASE,
+      },
+    },
+  };
+}
+
+function TypedText({ text }: { text: string }) {
+  const reduced = useReducedMotion();
+  const [shown, setShown] = useState(reduced ? text.length : 0);
+
+  useEffect(() => {
+    if (reduced) {
+      setShown(text.length);
+      return;
+    }
+    setShown(0);
+    const timer = setInterval(
+      () =>
+        setShown((count) => {
+          if (count >= text.length) clearInterval(timer);
+          return Math.min(count + 1, text.length);
+        }),
+      TYPE_STEP_MS,
+    );
+    return () => clearInterval(timer);
+  }, [text, reduced]);
+
+  return (
+    <>
+      <span aria-hidden>{text.slice(0, shown)}</span>
+      <span className="sr-only">{text}</span>
+    </>
+  );
+}
+
+const TITLE_EASE = [0.22, 1, 0.36, 1] as const;
+const TYPE_STEP_MS = 24;

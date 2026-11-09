@@ -42,6 +42,7 @@ import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { CopyIconButton } from './copy-icon-button';
+import { ExpiredGateCard, hasExpiredGate } from './expired-gate-card';
 import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
@@ -104,6 +105,10 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const { isSpeaking, isSupported: isTtsSupported, speak, stop } = useTts();
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const expired = useMemo(
+    () => !isStreaming && hasExpiredGate(message.parts),
+    [isStreaming, message.parts],
+  );
 
   const hasRenderedContent = blocks.some((b) => b.kind !== 'thinking');
   const hasThinkingContent = blocks.some((b) => b.kind === 'thinking');
@@ -140,6 +145,12 @@ export const AssistantMessage = memo(function AssistantMessage({
             setIsAccordionOpen={setIsAccordionOpen}
             isResumed={isResumed}
           />
+
+          {expired && (
+            <ExpiredGateCard
+              onSendPrompt={isLastMessage ? onSendPrompt : undefined}
+            />
+          )}
 
           {!isStreaming && sources.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-2">

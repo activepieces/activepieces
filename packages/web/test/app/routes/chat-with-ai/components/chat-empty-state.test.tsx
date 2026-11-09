@@ -37,7 +37,7 @@ describe('ChatEmptyState', () => {
     vi.unstubAllGlobals();
 
     expect(
-      screen.getByText('Build me a flow for new leads').closest(
+      screen.getByText('Hi Maya, what can I help with?').closest(
         '[data-empty-state="narrow"]',
       )?.className,
     ).toContain('@chat-md/chat:hidden');
@@ -57,6 +57,7 @@ function renderEmptyState({ onboarding }: { onboarding: boolean }) {
         onboarding={onboarding}
         showFlowCards={false}
         onSend={vi.fn()}
+        onFill={vi.fn()}
       />
     </MemoryRouter>,
   );
