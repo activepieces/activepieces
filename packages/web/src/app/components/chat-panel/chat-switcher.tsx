@@ -1,12 +1,22 @@
 import { AgentConversation } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, RefreshCw, Search, Settings } from 'lucide-react';
+import {
+  ChevronDown,
+  Ellipsis,
+  History,
+  Pencil,
+  RefreshCw,
+  Search,
+  Settings,
+  Trash2,
+} from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandGroup,
@@ -16,6 +26,14 @@ import {
   CommandSeparator,
 } from '@/components/ui/command';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
   Popover,
   PopoverAnchor,
   PopoverContent,
@@ -23,15 +41,23 @@ import {
 } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { chatApi } from '@/features/chat/lib/chat-api';
-import { useChatConversations } from '@/features/chat/lib/chat-conversations';
+import {
+  chatConversations,
+  useChatConversations,
+} from '@/features/chat/lib/chat-conversations';
 import { chatDom } from '@/features/chat/lib/chat-dom';
 import {
   chatHistoryUtils,
   OlderChats,
 } from '@/features/chat/lib/chat-history-utils';
+import { chatPendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
 import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
+import {
+  chatPanelUtils,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
 import { cn } from '@/lib/utils';
 
 export function ChatSwitcher({
@@ -42,6 +68,8 @@ export function ChatSwitcher({
   openedBy,
   onOpenChange,
   onSelect,
+  onShowAll,
+  onTitleEdited,
 }: {
   conversationId: string | null;
   layout: ChatSwitcherLayout;
@@ -53,19 +81,143 @@ export function ChatSwitcher({
     openedBy: ChatSwitcherOpener;
   }) => void;
   onSelect: (id: string) => void;
+  onShowAll: () => void;
+  onTitleEdited: () => void;
 }) {
+  const queryClient = useQueryClient();
   const { title, loading } = useConversationTitle({ conversationId });
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [refocusTitle, setRefocusTitle] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const opener = useRef<ChatSwitcherOpener>('pointer');
   const closeFocus = useRef<CloseFocus>('title');
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const renameEnd = useRef<RenameEnd | null>(null);
+  const renaming = renamingId !== null && renamingId === conversationId;
 
   const close = (focus: CloseFocus) => {
     closeFocus.current = focus;
     onOpenChange({ open: false, openedBy });
   };
 
+  const finishRename = async ({
+    next,
+    refocus,
+  }: {
+    next: string;
+    refocus: boolean;
+  }) => {
+    setRenamingId(null);
+    setRefocusTitle(refocus);
+    const trimmed = next.trim();
+    if (!conversationId || !trimmed || trimmed === title) return;
+    const cached = queryClient.getQueryData<AgentConversation | null>(
+      chatQueryKeys.conversation(conversationId),
+    );
+    onTitleEdited();
+    await chatConversations.rename({
+      queryClient,
+      id: conversationId,
+      title: trimmed,
+      previousTitle: cached?.title ?? null,
+    });
+  };
+
+  const deleteChat = () => {
+    if (!conversationId) return;
+    const id = conversationId;
+    const bringBack = () => {
+      if (useChatPanel.getState().conversationId) return;
+      onSelect(id);
+    };
+    chatPendingDeletes.removeWithUndo({
+      queryClient,
+      id,
+      onUndo: bringBack,
+      onFailed: bringBack,
+    });
+    close('none');
+    chatPanelUtils.startNewChat();
+  };
+
   const shownTitle = chatUtils.displayTitle(title);
+  const startRename = () => {
+    setRefocusTitle(false);
+    setRenamingId(conversationId);
+  };
+  const renameInput = (
+    <Input
+      autoFocus
+      aria-label={t('Chat title')}
+      defaultValue={title ?? ''}
+      onFocus={(event) => {
+        const input = event.currentTarget;
+        input.setSelectionRange(0, input.value.length, 'backward');
+        input.scrollLeft = 0;
+      }}
+      onBlur={(event) => {
+        const end = renameEnd.current;
+        renameEnd.current = null;
+        if (end === 'cancel') {
+          setRenamingId(null);
+          setRefocusTitle(true);
+          return;
+        }
+        finishRename({
+          next: event.currentTarget.value,
+          refocus: end === 'commit',
+        }).catch(() => undefined);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+          event.preventDefault();
+          renameEnd.current = 'commit';
+          event.currentTarget.blur();
+        }
+        if (event.key === 'Escape') {
+          chatDom.claimEscape(event.nativeEvent);
+          renameEnd.current = 'cancel';
+          event.currentTarget.blur();
+        }
+      }}
+      className="h-8 min-w-0 max-w-md px-2 text-sm font-medium"
+    />
+  );
+  const titleText = loading ? (
+    <Skeleton className="h-4 w-32" />
+  ) : (
+    <TextWithTooltip
+      tooltipMessage={shownTitle}
+      delayDuration={TITLE_TOOLTIP_DELAY_MS}
+    >
+      <span className="min-w-0">
+        {title && typing ? <TypedText key={title} text={title} /> : shownTitle}
+      </span>
+    </TextWithTooltip>
+  );
+
+  if (layout === 'full') {
+    return (
+      <>
+        <div className="flex min-w-0 items-center gap-1">
+          {renaming ? (
+            renameInput
+          ) : (
+            <h2 className="flex h-8 min-w-0 items-center px-1 text-sm font-medium text-gray-12">
+              {titleText}
+            </h2>
+          )}
+          <ChatActionsMenu
+            hasChat={conversationId !== null}
+            onRename={startRename}
+            onSettings={() => setSettingsOpen(true)}
+            onDelete={deleteChat}
+          />
+        </div>
+        <SettingsHubDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -75,37 +227,27 @@ export function ChatSwitcher({
           onOpenChange({ open: next, openedBy: opener.current })
         }
       >
-        <PopoverTrigger asChild>
-          <button
-            ref={triggerRef}
-            type="button"
-            onClick={(event) => {
-              opener.current = event.detail === 0 ? 'keyboard' : 'pointer';
-            }}
-            className="flex h-8 max-w-full min-w-0 items-center gap-1 rounded-md px-2 text-sm font-medium text-gray-12 outline-hidden transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 focus-visible:ring-2 focus-visible:ring-gray-8 active:bg-gray-5 data-[state=open]:bg-gray-4"
-          >
-            {loading ? (
-              <Skeleton className="h-4 w-32" />
-            ) : (
-              <TextWithTooltip
-                tooltipMessage={shownTitle}
-                delayDuration={TITLE_TOOLTIP_DELAY_MS}
-              >
-                <span className="min-w-0">
-                  {title && typing ? (
-                    <TypedText key={title} text={title} />
-                  ) : (
-                    shownTitle
-                  )}
-                </span>
-              </TextWithTooltip>
-            )}
-            <ChevronDown
-              aria-hidden
-              className="size-3.5 shrink-0 text-gray-10"
-            />
-          </button>
-        </PopoverTrigger>
+        {renaming ? (
+          renameInput
+        ) : (
+          <PopoverTrigger asChild>
+            <button
+              ref={triggerRef}
+              type="button"
+              autoFocus={refocusTitle}
+              onClick={(event) => {
+                opener.current = event.detail === 0 ? 'keyboard' : 'pointer';
+              }}
+              className="flex h-8 max-w-full min-w-0 items-center gap-1 rounded-md px-2 text-sm font-medium text-gray-12 outline-hidden transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3 focus-visible:ring-2 focus-visible:ring-gray-8 active:bg-gray-5 data-[state=open]:bg-gray-4"
+            >
+              {titleText}
+              <ChevronDown
+                aria-hidden
+                className="size-3.5 shrink-0 text-gray-10"
+              />
+            </button>
+          </PopoverTrigger>
+        )}
         <PopoverAnchor
           aria-hidden
           className="pointer-events-none absolute inset-0"
@@ -143,10 +285,19 @@ export function ChatSwitcher({
               close('composer');
               if (id !== conversationId) onSelect(id);
             }}
+            onShowAll={() => {
+              close('none');
+              onShowAll();
+            }}
+            onRename={() => {
+              close('none');
+              startRename();
+            }}
             onSettings={() => {
               close('none');
               setSettingsOpen(true);
             }}
+            onDelete={deleteChat}
           />
         </PopoverContent>
       </Popover>
@@ -155,14 +306,82 @@ export function ChatSwitcher({
   );
 }
 
+function ChatActionsMenu({
+  hasChat,
+  onRename,
+  onSettings,
+  onDelete,
+}: {
+  hasChat: boolean;
+  onRename: () => void;
+  onSettings: () => void;
+  onDelete: () => void;
+}) {
+  const renameAfterClose = useRef(false);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t('Chat actions')}
+          className="text-gray-11 hover:text-gray-12 data-[state=open]:bg-gray-4 data-[state=open]:text-gray-12"
+        >
+          <Ellipsis />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="w-60"
+        onCloseAutoFocus={(event) => {
+          if (!renameAfterClose.current) return;
+          renameAfterClose.current = false;
+          event.preventDefault();
+          onRename();
+        }}
+      >
+        {hasChat && (
+          <DropdownMenuItem
+            onSelect={() => {
+              renameAfterClose.current = true;
+            }}
+          >
+            <Pencil />
+            {t('Rename')}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onSelect={onSettings}>
+          <Settings />
+          {t('Chat settings')}
+        </DropdownMenuItem>
+        {hasChat && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+              <Trash2 />
+              {t('Delete')}
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function SwitcherMenu({
   conversationId,
   onPickChat,
+  onShowAll,
+  onRename,
   onSettings,
+  onDelete,
 }: {
   conversationId: string | null;
   onPickChat: (id: string) => void;
+  onShowAll: () => void;
+  onRename: () => void;
   onSettings: () => void;
+  onDelete: () => void;
 }) {
   const [query, setQuery] = useState('');
   const [value, setValue] = useState(conversationId ?? '');
@@ -204,6 +423,7 @@ function SwitcherMenu({
         currentId: conversationId,
         count: RECENT_COUNT,
       });
+  const hasChat = conversationId !== null;
   const loadOlder = () => {
     fetchNextPage().catch(() => undefined);
   };
@@ -211,10 +431,13 @@ function SwitcherMenu({
   const chatValues = [
     ...(isError && conversations.length === 0 ? [RETRY_LIST] : []),
     ...shown.map((conversation) => conversation.id),
+    ...(!searching && conversations.length > 0 ? [ALL_CHATS] : []),
     ...(older === 'available' ? [SEARCH_OLDER] : []),
     ...(older === 'failed' ? [RETRY_OLDER] : []),
   ];
-  const actionValues = searching ? [] : [SETTINGS];
+  const actionValues = searching
+    ? []
+    : [...(hasChat ? [RENAME] : []), SETTINGS, ...(hasChat ? [DELETE] : [])];
 
   const pick = (id: string) => {
     markRead(id);
@@ -273,6 +496,16 @@ function SwitcherMenu({
                 onPick={() => pick(conversation.id)}
               />
             ))}
+            {!searching && (
+              <CommandItem
+                value={ALL_CHATS}
+                onSelect={onShowAll}
+                className="h-9"
+              >
+                <History />
+                {t('All chats…')}
+              </CommandItem>
+            )}
           </CommandGroup>
         ) : searching && older !== 'loading' ? (
           <p className="px-4 py-3 text-sm text-gray-11">
@@ -284,6 +517,12 @@ function SwitcherMenu({
           <>
             {shown.length > 0 && <CommandSeparator />}
             <CommandGroup>
+              {hasChat && (
+                <CommandItem value={RENAME} onSelect={onRename} className="h-9">
+                  <Pencil />
+                  {t('Rename')}
+                </CommandItem>
+              )}
               <CommandItem
                 value={SETTINGS}
                 onSelect={onSettings}
@@ -293,6 +532,21 @@ function SwitcherMenu({
                 {t('Chat settings')}
               </CommandItem>
             </CommandGroup>
+            {hasChat && (
+              <>
+                <CommandSeparator />
+                <CommandGroup>
+                  <CommandItem
+                    value={DELETE}
+                    onSelect={onDelete}
+                    className="h-9 text-danger-11 data-[selected=true]:text-danger-11 [&_svg:not([class*='text-'])]:text-danger-11"
+                  >
+                    <Trash2 />
+                    {t('Delete')}
+                  </CommandItem>
+                </CommandGroup>
+              </>
+            )}
           </>
         )}
       </CommandList>
@@ -449,17 +703,20 @@ const ANCHOR_SIDE_OFFSET_PX = -8;
 const ANCHOR_ALIGN_OFFSET_PX = 8;
 const TYPE_STEP_MS = 24;
 const TYPE_TOTAL_MS = 300;
+const ALL_CHATS = 'switcher:all-chats';
 const SEARCH_OLDER = 'switcher:search-older';
 const RETRY_OLDER = 'switcher:retry-older';
 const RETRY_LIST = 'switcher:retry-list';
+const RENAME = 'switcher:rename';
 const SETTINGS = 'switcher:settings';
+const DELETE = 'switcher:delete';
 const SKELETON_WIDTHS = ['w-2/3', 'w-1/2', 'w-3/4'];
-const WIDTH_CLASS: Record<ChatSwitcherLayout, string> = {
+const WIDTH_CLASS: Record<Exclude<ChatSwitcherLayout, 'full'>, string> = {
   dock: 'w-[min(calc(var(--radix-popover-trigger-width)_-_16px),360px)]',
-  full: 'w-[min(calc(var(--radix-popover-trigger-width)_-_16px),420px)]',
 };
 
 type CloseFocus = 'title' | 'composer' | 'none';
+type RenameEnd = 'commit' | 'cancel';
 
 export type ChatSwitcherOpener = 'pointer' | 'keyboard';
 type ChatSwitcherLayout = 'dock' | 'full';
