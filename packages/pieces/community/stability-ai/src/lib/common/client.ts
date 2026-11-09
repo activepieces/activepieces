@@ -410,10 +410,9 @@ async function pollOnce({ apiKey, id, files, fileNamePrefix, outputFileName }: G
   }
 }
 
-async function waitForResult({ apiKey, id, files, fileNamePrefix, outputFileName }: GetResultParams): Promise<StabilityAsyncOutput> {
-  const startedAt = Date.now();
+async function waitForResult({ apiKey, id, files, fileNamePrefix, outputFileName, deadline }: WaitForResultParams): Promise<StabilityAsyncOutput> {
   let latest = inProgressOutput(id);
-  while (Date.now() - startedAt + POLL_INTERVAL_MS <= POLL_BUDGET_MS) {
+  while (Date.now() + POLL_INTERVAL_MS + POLL_TIMEOUT_MS <= deadline) {
     await sleep(POLL_INTERVAL_MS);
     latest = await pollOnce({ apiKey, id, files, fileNamePrefix, outputFileName });
     if (latest.status === 'complete') {
@@ -424,11 +423,12 @@ async function waitForResult({ apiKey, id, files, fileNamePrefix, outputFileName
 }
 
 async function startAndMaybeWait({ apiKey, path, fields, files, fileNamePrefix, outputFileName, waitForCompletion }: StartAndMaybeWaitParams): Promise<StabilityAsyncOutput> {
+  const deadline = Date.now() + WAIT_BUDGET_MS;
   const { id } = await startAsync({ apiKey, path, fields });
   if (!waitForCompletion) {
     return inProgressOutput(id);
   }
-  return waitForResult({ apiKey, id, files, fileNamePrefix, outputFileName });
+  return waitForResult({ apiKey, id, files, fileNamePrefix, outputFileName, deadline });
 }
 
 const API_BASE_URL = 'https://api.stability.ai';
@@ -436,7 +436,7 @@ const CLIENT_ID = 'activepieces';
 const JSON_TIMEOUT_MS = 60_000;
 const IMAGE_TIMEOUT_MS = 150_000;
 const POLL_INTERVAL_MS = 10_000;
-const POLL_BUDGET_MS = 300_000;
+const WAIT_BUDGET_MS = 240_000;
 const POLL_TIMEOUT_MS = 30_000;
 const MAX_REQUEST_BYTES = 10 * 1024 * 1024;
 const MAX_RAW_ERROR_LENGTH = 500;
@@ -516,6 +516,10 @@ type GetResultParams = {
   timeoutMs?: number;
 };
 
+type WaitForResultParams = GetResultParams & {
+  deadline: number;
+};
+
 type StartAndMaybeWaitParams = GenerateImageFileParams & {
   waitForCompletion: boolean;
 };
@@ -559,5 +563,5 @@ export const stabilityClient = {
   getResult,
   normalizeGenerationId,
   pollIntervalMs: POLL_INTERVAL_MS,
-  pollBudgetMs: POLL_BUDGET_MS,
+  waitBudgetMs: WAIT_BUDGET_MS,
 };

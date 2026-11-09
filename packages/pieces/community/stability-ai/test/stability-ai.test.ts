@@ -10,6 +10,7 @@ import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { stabilityAi } from '../src';
 import { stabilityAiAuth } from '../src/lib/auth';
+import { stabilityClient } from '../src/lib/common/client';
 import { creativeUpscale } from '../src/lib/actions/creative-upscale';
 import { eraseObject } from '../src/lib/actions/erase-object';
 import { generateImage } from '../src/lib/actions/generate-image';
@@ -727,18 +728,45 @@ describe('Creative Upscale (async)', () => {
     });
   });
 
-  it('stops polling at the 300 second budget and returns the id', async () => {
+  it('stops polling within the 240 second budget so agent tool calls get the id', async () => {
     vi.useFakeTimers();
+    const startedAt = Date.now();
     respondJson({ status: 200, body: { id: GENERATION_ID } });
     sendRequest.mockResolvedValue({
       status: 202,
       headers: {},
       body: Buffer.from(JSON.stringify({ id: GENERATION_ID, status: 'in-progress' })),
     });
-    const pending = runAction({ action: creativeUpscale, propsValue: { image: PHOTO, prompt: 'a cat', wait_for_result: 'yes' } });
+    let finishedAt = 0;
+    const pending = runAction({ action: creativeUpscale, propsValue: { image: PHOTO, prompt: 'a cat', wait_for_result: 'yes' } }).then(
+      (output) => {
+        finishedAt = Date.now();
+        return output;
+      },
+    );
     await vi.advanceTimersByTimeAsync(400_000);
     const result = await pending;
-    expect(sendRequest).toHaveBeenCalledTimes(31);
+    expect(stabilityClient.waitBudgetMs).toBe(240_000);
+    expect(sendRequest).toHaveBeenCalledTimes(22);
+    expect(finishedAt - startedAt).toBeLessThanOrEqual(240_000);
+    expect(result).toMatchObject({ status: 'in-progress', generationId: GENERATION_ID, url: null });
+  });
+
+  it('counts a slow job start against the wait budget', async () => {
+    vi.useFakeTimers();
+    sendRequest.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(
+            () => resolve({ status: 200, headers: { 'content-type': 'application/json' }, body: { id: GENERATION_ID } }),
+            215_000,
+          );
+        }),
+    );
+    const pending = runAction({ action: creativeUpscale, propsValue: { image: PHOTO, prompt: 'a cat', wait_for_result: 'yes' } });
+    await vi.advanceTimersByTimeAsync(215_000);
+    const result = await pending;
+    expect(sendRequest).toHaveBeenCalledTimes(1);
     expect(result).toMatchObject({ status: 'in-progress', generationId: GENERATION_ID, url: null });
   });
 

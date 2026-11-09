@@ -10,11 +10,11 @@ export const creativeUpscale = createAction({
   classification: 'READ',
   displayName: 'Creative Upscale',
   description:
-    'Upscale a small or degraded image to 4K, reimagining details (60 credits). Runs as a background job; optionally waits up to 5 minutes for the result.',
+    'Upscale a small or degraded image to 4K, reimagining details (60 credits). Runs as a background job; optionally waits up to 4 minutes for the result.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Starts a Stability AI job that upscales a low-resolution or degraded image (up to 1 megapixel) to about 4K while reimagining details from an English prompt; costs 60 credits. With Wait for Result "yes" it checks every 10 seconds for up to 5 minutes and returns the image; otherwise, or if it is still running, it returns a generation ID to pass to Get Generation Result. Output defaults to WebP because PNG results can exceed the Activepieces file size limit (10 MB on Cloud). Use Upscale Image for cheaper upscales that keep the original details. Each call starts and charges a new job.',
+      'Starts a Stability AI job that upscales a low-resolution or degraded image (up to 1 megapixel) to about 4K while reimagining details from an English prompt; costs 60 credits. With Wait for Result "yes" it checks every 10 seconds until 4 minutes after the job was sent and returns the image; otherwise, or if it is still running, it returns a generation ID to pass to Get Generation Result. Output defaults to WebP because PNG results can exceed the Activepieces file size limit (10 MB on Cloud). Use Upscale Image for cheaper upscales that keep the original details. Each call starts and charges a new job.',
     idempotent: false,
   },
   props: {

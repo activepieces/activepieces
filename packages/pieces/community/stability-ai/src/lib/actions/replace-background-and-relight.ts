@@ -12,11 +12,11 @@ export const replaceBackgroundAndRelight = createAction({
   classification: 'READ',
   displayName: 'Replace Background and Relight',
   description:
-    'Put the subject of a photo on a new background described by a prompt or a reference image, and adjust the lighting (8 credits). Runs as a background job; optionally waits up to 5 minutes.',
+    'Put the subject of a photo on a new background described by a prompt or a reference image, and adjust the lighting (8 credits). Runs as a background job; optionally waits up to 4 minutes.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Starts a Stability AI job that keeps the subject of a photo, replaces the background from an English Background Prompt or a Background Reference image (one is required) and relights the scene; costs 8 credits. To only change the lighting, set Keep Original Background to "true" and describe the lighting in Background Prompt. With Wait for Result "yes" it checks every 10 seconds for up to 5 minutes and returns the image; otherwise, or if it is still running, it returns a generation ID for Get Generation Result. To only cut out the subject use Remove Background. Each call starts and charges a new job.',
+      'Starts a Stability AI job that keeps the subject of a photo, replaces the background from an English Background Prompt or a Background Reference image (one is required) and relights the scene; costs 8 credits. To only change the lighting, set Keep Original Background to "true" and describe the lighting in Background Prompt. With Wait for Result "yes" it checks every 10 seconds until 4 minutes after the job was sent and returns the image; otherwise, or if it is still running, it returns a generation ID for Get Generation Result. To only cut out the subject use Remove Background. Each call starts and charges a new job.',
     idempotent: false,
   },
   props: {

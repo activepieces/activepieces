@@ -114,7 +114,7 @@ function waitForResult() {
   return Property.StaticDropdown<string, true>({
     displayName: 'Wait for Result',
     description:
-      'Yes: check every 10 seconds for up to 5 minutes and return the image when it is ready. No: return the generation ID right away; use Get Generation Result to fetch the image later.',
+      'Yes: check every 10 seconds for up to 4 minutes after the job is sent and return the image when it is ready. No: return the generation ID right away; use Get Generation Result to fetch the image later.',
     required: true,
     defaultValue: 'yes',
     options: {
