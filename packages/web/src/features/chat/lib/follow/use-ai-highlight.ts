@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { aiSheen } from './ai-sheen';
 import { useFollowAlong } from './follow-along';
@@ -6,6 +6,7 @@ import { pageFocus } from './page-focus';
 
 export function useAiFieldHighlights(): void {
   const flashes = useFollowAlong((state) => state.flashes);
+  const shown = useRef<Record<string, number>>({});
   useEffect(() => {
     const mark = (event: Event) => {
       if (pageFocus.inChat(event.target)) return;
@@ -24,11 +25,14 @@ export function useAiFieldHighlights(): void {
       );
   }, []);
   useEffect(() => {
+    const previous = shown.current;
+    shown.current = flashes;
     const lit = Object.entries(flashes).flatMap(([key, token]) => {
+      if (previous[key] === token) return [];
       const elements = [
         ...document.querySelectorAll(`[data-ai-field="${CSS.escape(key)}"]`),
       ];
-      return aiSheen.play({ id: `${key}:${token}`, elements }) ? elements : [];
+      return aiSheen.play(elements) ? elements : [];
     });
     const first = lit.find(
       (element) => element.getAttribute('data-ai-scroll') !== 'canvas',
@@ -72,7 +76,5 @@ const SCROLL_KEYS = new Set([
 ]);
 
 export const aiHighlight = {
-  mayScroll,
   claimScroll,
-  scrollIntoView,
 };

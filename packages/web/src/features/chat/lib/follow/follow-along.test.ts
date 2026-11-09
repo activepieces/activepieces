@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const chat = vi.hoisted(() => ({ conversationId: 'c1' }));
+const chat = vi.hoisted(() => ({ conversationId: 'c1', announce: vi.fn() }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 vi.mock('@/lib/authentication-session', () => ({

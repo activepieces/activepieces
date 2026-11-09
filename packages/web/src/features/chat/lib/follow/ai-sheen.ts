@@ -1,21 +1,12 @@
 import { pageFocus } from './page-focus';
 
-function play({
-  id,
-  elements,
-  bounds,
-}: {
-  id: string;
-  elements: Element[];
-  bounds?: Element | null;
-}): boolean {
+function play(elements: Element[]): boolean {
   const hosts = elements.filter(
     (element): element is HTMLElement =>
       element instanceof HTMLElement && element.getClientRects().length > 0,
   );
-  if (hosts.length === 0 || played.has(id)) return false;
-  played.add(id);
-  pending.push({ hosts, bounds: bounds ?? null });
+  if (hosts.length === 0) return false;
+  pending.push(hosts);
   if (frame === 0) frame = requestAnimationFrame(flush);
   return true;
 }
@@ -48,17 +39,10 @@ function flush(): void {
   );
 }
 
-function measure({ hosts, bounds }: PendingGroup): MeasuredGroup {
+function measure(hosts: HTMLElement[]): MeasuredGroup {
   const rects = hosts.map((host) => host.getBoundingClientRect());
-  const area = bounds?.getBoundingClientRect();
-  const left = Math.max(
-    Math.min(...rects.map((rect) => rect.left)),
-    area?.left ?? -Infinity,
-  );
-  const right = Math.min(
-    Math.max(...rects.map((rect) => rect.right)),
-    area?.right ?? Infinity,
-  );
+  const left = Math.min(...rects.map((rect) => rect.left));
+  const right = Math.max(...rects.map((rect) => rect.right));
   return {
     top: Math.min(...rects.map((rect) => rect.top)),
     width: Math.max(0, right - left),
@@ -151,17 +135,12 @@ const MAX_MS = 900;
 const BASE_TAIL_MS = 150;
 const STAGGER_MS = 40;
 const REDUCED_FADE_MS = 600;
-const played = new Set<string>();
-const pending: PendingGroup[] = [];
+const pending: HTMLElement[][] = [];
 let frame = 0;
 
 export const aiSheen = {
   play,
-  durationFor,
-  delaysByTop,
 };
-
-type PendingGroup = { hosts: HTMLElement[]; bounds: Element | null };
 
 type MeasuredGroup = {
   top: number;

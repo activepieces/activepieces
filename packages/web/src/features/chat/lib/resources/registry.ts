@@ -6,7 +6,7 @@ import { generatePath } from 'react-router-dom';
 import { authenticationSession } from '@/lib/authentication-session';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
-function resolve(output: unknown): ResolvedCall | null {
+function resolve(output: unknown): { ref: ResourceRef; op: ResourceOp } | null {
   const parsed = parseOutput(output);
   if (!isObject(parsed) || !isObject(parsed._meta)) return null;
   const contract = ApResource.safeParse(parsed._meta.apResource);
@@ -16,23 +16,15 @@ function resolve(output: unknown): ResolvedCall | null {
 }
 
 function route(ref: ResourceRef): string {
-  return inProject({ ref, path: KINDS[ref.kind].path(ref.id) });
+  return `/projects/${ref.projectId}${KINDS[ref.kind].path(ref.id)}`;
 }
 
 function parentRoute(ref: ResourceRef): string {
-  return inProject({ ref, path: routesThatRequireProjectId.automations });
-}
-
-function inProject({ ref, path }: { ref: ResourceRef; path: string }): string {
-  return ref.projectId
-    ? `/projects/${ref.projectId}${path}`
-    : authenticationSession.appendProjectRoutePrefix(path);
+  return `/projects/${ref.projectId}${routesThatRequireProjectId.automations}`;
 }
 
 function isOn(pathname: string, ref: ResourceRef): boolean {
-  if (ref.projectId && !pathname.includes(`/projects/${ref.projectId}/`)) {
-    return false;
-  }
+  if (!pathname.includes(`/projects/${ref.projectId}/`)) return false;
   const marker = KINDS[ref.kind].path(ref.id);
   const at = pathname.indexOf(marker);
   if (at === -1) return false;
@@ -41,13 +33,20 @@ function isOn(pathname: string, ref: ResourceRef): boolean {
 }
 
 function isInCurrentProject(ref: ResourceRef): boolean {
-  return (
-    !ref.projectId || ref.projectId === authenticationSession.getProjectId()
-  );
+  return ref.projectId === authenticationSession.getProjectId();
 }
 
-function queryKeys(ref: ResourceRef): QueryKey[] {
-  return KINDS[ref.kind].queryKeys(ref.id);
+function queryKeys({
+  ref,
+  op,
+}: {
+  ref: ResourceRef;
+  op: ResourceOp;
+}): QueryKey[] {
+  const kind = KINDS[ref.kind];
+  return op === 'update'
+    ? [...kind.listKeys, ...kind.pageKeys(ref.id)]
+    : [...kind.listKeys, FOLDERS_KEY];
 }
 
 function keyOf({ kind, id }: Pick<ResourceRef, 'kind' | 'id'>): string {
@@ -59,23 +58,23 @@ function parseOutput(output: unknown): unknown {
   return tryCatchSync<unknown>(() => JSON.parse(output)).data ?? null;
 }
 
-const AUTOMATIONS_LIST_KEYS: QueryKey[] = [
-  ['root-flows'],
-  ['root-tables'],
-  ['all-folder-contents'],
-  ['folders'],
-];
+const FOLDERS_KEY: QueryKey = ['folders'];
 
 const KINDS: Record<ResourceKind, KindSpec> = {
   flow: {
     path: (flowId) =>
       generatePath(routesThatRequireProjectId.singleFlow, { flowId }),
-    queryKeys: () => [['flows'], ...AUTOMATIONS_LIST_KEYS],
+    listKeys: [['flows'], ['root-flows'], ['all-folder-contents']],
+    pageKeys: () => [],
   },
   table: {
     path: (tableId) =>
       generatePath(routesThatRequireProjectId.singleTable, { tableId }),
-    queryKeys: () => [['tables'], ...AUTOMATIONS_LIST_KEYS],
+    listKeys: [['tables'], ['root-tables'], ['all-folder-contents']],
+    pageKeys: (tableId) => [
+      ['table', tableId],
+      ['fields', tableId],
+    ],
   },
 };
 
@@ -96,16 +95,12 @@ export type ResourceOp = ApResource['op'];
 export type ResourceRef = {
   kind: ResourceKind;
   id: string;
-  projectId?: string;
+  projectId: string;
   name: string;
-};
-
-export type ResolvedCall = {
-  ref: ResourceRef;
-  op: ResourceOp;
 };
 
 type KindSpec = {
   path: (id: string) => string;
-  queryKeys: (id: string) => QueryKey[];
+  listKeys: QueryKey[];
+  pageKeys: (id: string) => QueryKey[];
 };

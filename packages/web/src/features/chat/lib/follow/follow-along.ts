@@ -1,4 +1,5 @@
 import { isObject } from '@activepieces/core-utils';
+import { t } from 'i18next';
 import { create } from 'zustand';
 
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
@@ -34,11 +35,16 @@ function onChunks({
 }
 
 function onChange(change: FollowChange): void {
-  if (change.navigable) begin();
+  const began = change.navigable && begin();
   if (change.op === 'delete') {
     forget(change.resource);
   } else if (change.navigable) {
-    setTarget(change.resource);
+    const retargeted = setTarget(change.resource);
+    if (began || retargeted) {
+      useChatPanel
+        .getState()
+        .announce(t('Chat is changing {name}', { name: change.resource.name }));
+    }
   }
   changeListeners.forEach((listener) => listener(change));
 }
@@ -50,26 +56,27 @@ function mayNavigate(ctx: RunContext): boolean {
   );
 }
 
-function begin(): void {
-  if (useFollowAlong.getState().phase === 'editing') return;
+function begin(): boolean {
+  if (useFollowAlong.getState().phase === 'editing') return false;
+  pushedRuns.clear();
   useFollowAlong.setState({
     phase: 'editing',
     following: true,
     flashes: {},
     scrollTaken: false,
   });
+  return true;
 }
 
-function setTarget(resource: ResourceRef): void {
+function setTarget(resource: ResourceRef): boolean {
   const current = useFollowAlong.getState().target;
-  if (
-    current &&
-    resourceRegistry.keyOf(current) === resourceRegistry.keyOf(resource) &&
-    current.name === resource.name
-  ) {
-    return;
+  const sameKey =
+    current !== null &&
+    resourceRegistry.keyOf(current) === resourceRegistry.keyOf(resource);
+  if (!sameKey || current.name !== resource.name) {
+    useFollowAlong.setState({ target: resource });
   }
-  useFollowAlong.setState({ target: resource });
+  return !sameKey;
 }
 
 function forget(resource: ResourceRef): void {
@@ -111,12 +118,20 @@ function flash(keys: string[]): void {
   });
 }
 
+function claimHistoryPush(runId: string | null): boolean {
+  if (runId === null) return true;
+  if (pushedRuns.has(runId)) return false;
+  pushedRuns.add(runId);
+  return true;
+}
+
 function onToolDone(listener: (change: FollowChange) => void): () => void {
   changeListeners.add(listener);
   return () => changeListeners.delete(listener);
 }
 
 const changeListeners = new Set<(change: FollowChange) => void>();
+const pushedRuns = new Set<string>();
 let flashCount = 0;
 
 export const useFollowAlong = create<FollowState>(() => ({
@@ -133,6 +148,7 @@ export const followAlong = {
   endRun,
   stopFollowing,
   flash,
+  claimHistoryPush,
   onToolDone,
 };
 

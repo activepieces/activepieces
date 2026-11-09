@@ -35,7 +35,6 @@ export function FollowAlongController() {
   const pathnameRef = useRef(pathname);
   pathnameRef.current = pathname;
   const runOfTarget = useRef<string | null>(null);
-  const pushedRuns = useRef(new Set<string>());
 
   useEffect(() => {
     let stopLeaving = (): void => undefined;
@@ -60,7 +59,10 @@ export function FollowAlongController() {
       if (change.navigable && change.op !== 'delete') {
         runOfTarget.current = change.runId;
       }
-      const keys = resourceRegistry.queryKeys(change.resource);
+      const keys = resourceRegistry.queryKeys({
+        ref: change.resource,
+        op: change.op,
+      });
       keys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
     });
     return () => {
@@ -68,14 +70,6 @@ export function FollowAlongController() {
       stopLeaving();
     };
   }, [queryClient, navigate, embedded]);
-
-  useEffect(() => {
-    const target = useFollowAlong.getState().target;
-    if (phase !== 'editing' || !target) return;
-    useChatPanel
-      .getState()
-      .announce(t('Chat is changing {name}', { name: target.name }));
-  }, [phase, targetKey]);
 
   useEffect(() => {
     const state = useFollowAlong.getState();
@@ -102,9 +96,7 @@ export function FollowAlongController() {
 
     const open = () => {
       const route = resourceRegistry.route(target);
-      const runId = runOfTarget.current;
-      const push = runId === null || !pushedRuns.current.has(runId);
-      if (runId !== null) pushedRuns.current.add(runId);
+      const push = followAlong.claimHistoryPush(runOfTarget.current);
       selfNavRef.current = route.split('?')[0];
       chatPanelUtils.openBeside({ route, push, name: target.name });
     };
