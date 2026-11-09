@@ -9,7 +9,5 @@ export function useSessionProjectId(): string | null {
     authenticationSession.subscribe,
     authenticationSession.getStoredProjectId,
   );
-  return (
-    authenticationSession.getProjectIdFromPath(pathname) ?? storedProjectId
-  );
+  return authenticationSession.projectIdFor({ pathname, storedProjectId });
 }

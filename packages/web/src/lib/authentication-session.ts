@@ -6,12 +6,14 @@ import {
 } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { jwtDecode } from 'jwt-decode';
+import { matchPath } from 'react-router-dom';
 
 import { authenticationApi } from '@/api/authentication-api';
 import { queryClient } from '@/app/query-client';
 
 import { ApStorage } from './ap-browser-storage';
 import { routeLocation } from './route-location';
+import { safeStorage } from './safe-storage';
 import { telemetryUtils } from './telemetry-utils';
 
 const tokenKey = 'token';
@@ -58,38 +60,60 @@ export const authenticationSession = {
     if (isNil(authenticationSession.getToken())) {
       return null;
     }
+    return authenticationSession.projectIdFor({
+      pathname: routeLocation.pathname(),
+      storedProjectId: authenticationSession.getStoredProjectId(),
+    });
+  },
+  projectIdFor({
+    pathname,
+    storedProjectId,
+  }: {
+    pathname: string;
+    storedProjectId: string | null;
+  }): string | null {
     return (
-      authenticationSession.getProjectIdFromPath(routeLocation.pathname()) ??
-      authenticationSession.getStoredProjectId()
+      authenticationSession.getProjectIdFromPath(pathname) ?? storedProjectId
     );
   },
   getProjectIdFromPath(pathname: string): string | null {
-    const match = /^\/projects\/([^/]+)/.exec(pathname);
-    return match ? match[1] : null;
+    return (
+      matchPath({ path: '/projects/:projectId', end: false }, pathname)?.params
+        .projectId ?? null
+    );
   },
   getStoredProjectId(): string | null {
     const token = authenticationSession.getToken();
     if (isNil(token)) {
       return null;
     }
-    const userId = readUserId(token);
     const tabProject = readTabProject();
-    if (!isNil(tabProject) && tabProject.userId === userId) {
+    if (!isNil(tabProject) && tabProject.userId === readUserId(token)) {
       return tabProject.projectId;
+    }
+    return readSharedProjectId(token);
+  },
+  // Pins this tab to the project it opened on, so another tab switching
+  // projects does not move it. Runs once at start, never while reading.
+  pinTabProject(): void {
+    const token = authenticationSession.getToken();
+    if (isNil(token) || !isNil(readTabProject())) {
+      return;
     }
     const sharedProjectId = readSharedProjectId(token);
     if (!isNil(sharedProjectId)) {
-      writeTabProject({ userId, projectId: sharedProjectId });
+      writeTabProject({
+        userId: readUserId(token),
+        projectId: sharedProjectId,
+      });
     }
-    return sharedProjectId;
   },
   getCurrentUserId(): string | null {
     const token = this.getToken();
     if (isNil(token)) {
       return null;
     }
-    const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.id;
+    return readUserId(token);
   },
   appendProjectRoutePrefix(path: string): string {
     const projectId = this.getProjectId();
@@ -105,7 +129,7 @@ export const authenticationSession = {
       return null;
     }
     const decodedJwt = getDecodedJwt(token);
-    if ('platform' in decodedJwt && decodedJwt.platform) {
+    if (decodedJwt && 'platform' in decodedJwt && decodedJwt.platform) {
       return decodedJwt.platform.id;
     }
     return null;
@@ -115,8 +139,7 @@ export const authenticationSession = {
     if (isNil(token)) {
       return false;
     }
-    const decodedJwt = jwtDecode<{ type: string }>(token);
-    return decodedJwt.type === PrincipalType.ONBOARDING;
+    return getDecodedJwt(token)?.type === PrincipalType.ONBOARDING;
   },
   async switchToPlatform(platformId: string) {
     if (authenticationSession.getPlatformId() === platformId) {
@@ -162,12 +185,12 @@ function notifySessionChanged(): void {
   window.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
 }
 
-function getDecodedJwt(token: string): Principal {
-  return jwtDecode<Principal>(token);
+function getDecodedJwt(token: string): Principal | null {
+  return tryCatchSync(() => jwtDecode<Principal>(token)).data ?? null;
 }
 
 function readUserId(token: string): string | null {
-  return tryCatchSync(() => getDecodedJwt(token).id).data ?? null;
+  return getDecodedJwt(token)?.id ?? null;
 }
 
 function readSharedProjectId(token: string): string | null {
@@ -176,20 +199,18 @@ function readSharedProjectId(token: string): string | null {
     return projectId;
   }
   const decodedJwt = getDecodedJwt(token);
-  if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
+  if (
+    decodedJwt &&
+    'projectId' in decodedJwt &&
+    typeof decodedJwt.projectId === 'string'
+  ) {
     return decodedJwt.projectId;
   }
   return null;
 }
 
 function readTabProject(): TabProject | null {
-  const raw = tryCatchSync(() =>
-    window.sessionStorage.getItem(tabProjectKey),
-  ).data;
-  if (isNil(raw)) {
-    return null;
-  }
-  const parsed = tryCatchSync<unknown>(() => JSON.parse(raw)).data;
+  const parsed = safeStorage.readJson({ area: 'session', key: tabProjectKey });
   if (
     typeof parsed !== 'object' ||
     parsed === null ||
@@ -204,15 +225,17 @@ function readTabProject(): TabProject | null {
 }
 
 function writeTabProject(tabProject: TabProject): void {
-  tryCatchSync(() =>
-    window.sessionStorage.setItem(tabProjectKey, JSON.stringify(tabProject)),
-  );
+  safeStorage.writeJson({
+    area: 'session',
+    key: tabProjectKey,
+    value: tabProject,
+  });
 }
 
 function saveProjectIdOrClear(projectId: string | null | undefined): void {
   if (isNil(projectId)) {
     ApStorage.getInstance().removeItem(projectIdKey);
-    tryCatchSync(() => window.sessionStorage.removeItem(tabProjectKey));
+    safeStorage.remove({ area: 'session', key: tabProjectKey });
     return;
   }
   ApStorage.getInstance().setItem(projectIdKey, projectId);

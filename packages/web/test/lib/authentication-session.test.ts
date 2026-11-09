@@ -169,6 +169,7 @@ describe('authenticationSession per-tab project', () => {
 
   it('keeps the seeded project after another tab switches', () => {
     window.localStorage.setItem('projectId', 'seed-project');
+    authenticationSession.pinTabProject();
     expect(authenticationSession.getProjectId()).toBe('seed-project');
 
     switchInAnotherTab({ projectId: 'tab-b-project' });
@@ -191,6 +192,39 @@ describe('authenticationSession per-tab project', () => {
     switchInAnotherTab({ projectId: 'tab-b-project' });
 
     expect(authenticationSession.getProjectId()).toBe('tab-b-project');
+  });
+});
+
+describe('authenticationSession reads', () => {
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('never writes storage while reading the project', () => {
+    signIn({ userId: 'user-1' });
+    window.localStorage.setItem('projectId', 'shared-project');
+
+    expect(authenticationSession.getStoredProjectId()).toBe('shared-project');
+    expect(window.sessionStorage.length).toBe(0);
+  });
+
+  it('reads nothing from a broken token instead of throwing', () => {
+    window.localStorage.setItem('token', 'not-a-jwt');
+
+    expect(authenticationSession.getCurrentUserId()).toBeNull();
+    expect(authenticationSession.getPlatformId()).toBeNull();
+    expect(authenticationSession.isOnboarding()).toBe(false);
+  });
+
+  it.each([
+    ['/projects/p1', 'p1'],
+    ['/projects/p1/flows/f1', 'p1'],
+    ['/projectsx/p1', null],
+    ['/platform/projects', null],
+  ])('reads the project of %s from the URL', (pathname, projectId) => {
+    expect(authenticationSession.getProjectIdFromPath(pathname)).toBe(
+      projectId,
+    );
   });
 });
 
