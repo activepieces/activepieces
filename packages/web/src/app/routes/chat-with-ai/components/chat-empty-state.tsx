@@ -36,8 +36,8 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
-import { MOBILE_BREAKPOINT } from '@/hooks/use-mobile';
 import { userHooks } from '@/hooks/user-hooks';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
@@ -199,7 +199,7 @@ export function SetupRequiredState() {
       push: true,
       name: t('AI providers'),
     });
-    if (window.innerWidth >= MOBILE_BREAKPOINT) {
+    if (!windowSizeHooks.isPhone()) {
       useChatPanel.getState().setOpen(true);
     }
   };

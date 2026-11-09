@@ -1,9 +1,9 @@
 import { flushSync } from 'react-dom';
 
-import { MOBILE_BREAKPOINT } from '@/hooks/use-mobile';
 import { errorReporting } from '@/lib/error-reporting';
 
 import { chatLayoutUtils } from './chat-layout';
+import { windowSizeHooks } from './window-size-hooks';
 
 function run({
   update,
@@ -82,7 +82,7 @@ function isLayoutTransition(value: unknown): value is LayoutTransition {
 
 function canAnimate(): boolean {
   return (
-    window.innerWidth >= MOBILE_BREAKPOINT &&
+    !windowSizeHooks.isPhone() &&
     !chatLayoutUtils.prefersReducedMotion() &&
     !keyPressInProgress
   );
