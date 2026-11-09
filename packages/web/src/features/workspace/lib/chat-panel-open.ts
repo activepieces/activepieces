@@ -79,6 +79,10 @@ function startNewChat(): void {
   panel.setOpen(true);
 }
 
+function createChatPanelStore() {
+  return create<ChatPanelState>(initChatPanel);
+}
+
 function readSaved(): SavedChatPanel {
   const prefs = safeStorage.readJson({ area: 'local', key: STORAGE_KEY });
   const open = readOpen();
@@ -166,7 +170,10 @@ const DEFAULTS: SavedChatPanel = {
   dockWidth: chatLayoutUtils.DOCK_DEFAULT_WIDTH,
 };
 
-export const useChatPanel = create<ChatPanelState>((set, get) => {
+const initChatPanel = (
+  set: SetChatPanel,
+  get: () => ChatPanelState,
+): ChatPanelState => {
   const update = (patch: Partial<SavedChatPanel>) => {
     set(patch);
     save(get());
@@ -227,9 +234,12 @@ export const useChatPanel = create<ChatPanelState>((set, get) => {
       });
     },
   };
-});
+};
+
+export const useChatPanel = createChatPanelStore();
 
 export const chatPanelUtils = {
+  createStore: createChatPanelStore,
   bindRouter,
   routeFor,
   useChatRoute,
@@ -250,6 +260,8 @@ export type ChatRouter = {
 export type ChatNavTarget =
   | { back: true }
   | { to: string; replace: boolean; state?: Record<string, unknown> };
+
+type SetChatPanel = (patch: Partial<ChatPanelState>) => void;
 
 type SavedChatPanel = {
   open: boolean;
