@@ -4,8 +4,8 @@ import { matchRoutes, Navigate, useLocation } from 'react-router-dom';
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { Error, Success } from '@/features/billing';
+import { shellHandles } from '@/features/workspace/lib/shell-handle';
 
-import { shellHandles } from '../components/app-shell';
 import { PlatformAdminGuard } from '../guards/platform-admin-guard';
 
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';

@@ -2,9 +2,9 @@ import React, { Suspense } from 'react';
 
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
+import { shellHandles } from '@/features/workspace/lib/shell-handle';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
-import { shellHandles } from '../components/app-shell';
 import { TemplateDetailsWrapper } from '../guards/template-details-wrapper';
 
 import NotFoundPage from './404-page';

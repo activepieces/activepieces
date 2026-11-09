@@ -5,9 +5,9 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { projectCollectionUtils } from '@/features/projects';
+import { RouteHandle } from '@/features/workspace/lib/shell-handle';
 
 import { authenticationSession } from '../../lib/authentication-session';
-import { RouteHandle } from '../components/app-shell';
 import { NoProjectsState } from '../components/no-projects-state';
 
 export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({

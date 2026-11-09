@@ -48,6 +48,7 @@ import {
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -104,9 +105,8 @@ export function AppNav() {
 }
 
 function DriversGroup() {
-  const { platform } = platformHooks.useCurrentPlatform();
   const { reachesMcp } = mcpHooks.useMcpReach({ enabled: true });
-  const showChat = platform.plan.chatEnabled;
+  const showChat = useChatOn();
   const chatRoute = chatPanelUtils.useChatRoute();
 
   if (!showChat && !reachesMcp) {

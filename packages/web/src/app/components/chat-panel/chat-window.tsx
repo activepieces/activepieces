@@ -24,11 +24,11 @@ import {
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
 import { useRailOpen } from '@/features/workspace/lib/rail-collapsed';
+import { useShellHandle } from '@/features/workspace/lib/shell-handle';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { cn } from '@/lib/utils';
-
-import { CHAT_ALLOWED, useShellHandle } from '../app-shell';
 
 import { FollowAlongController } from './follow-along-controller';
 import { useSheetSwipe } from './use-sheet-swipe';
@@ -60,15 +60,15 @@ export function useDockWidth(dragWidth: number | null = null): number {
 }
 
 export function useChatWidth(): ChatWidth {
-  const handle = useShellHandle();
-  const fullPage = handle.chat === 'full';
+  const fullPage = useShellHandle().chat === 'full';
+  const chatOn = useChatOn();
   const sheetOpen = useLocation().hash === chatPanelUtils.SHEET_HASH;
   const docked = useChatPanel((s) => s.open);
   const mode = useChatPanel((s) => s.mode);
   const phone = windowSizeHooks.useIsPhone();
   return chatLayoutUtils.widthFor({
     fullPage,
-    open: CHAT_ALLOWED[handle.shell] && (phone ? sheetOpen : docked),
+    open: chatOn && (phone ? sheetOpen : docked),
     mode,
     phone,
   });

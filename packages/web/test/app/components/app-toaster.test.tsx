@@ -17,9 +17,14 @@ vi.mock('@/components/ui/sonner', () => ({
   ),
 }));
 
-vi.mock('@/app/components/app-shell', () => ({
+vi.mock('@/features/workspace/lib/shell-handle', () => ({
   useShellHandle: () => ({ shell: 'project' }),
   CHAT_ALLOWED: { project: true, builder: true, platform: false },
+}));
+
+vi.mock('@/features/workspace/lib/use-chat-on', () => ({
+  useChatEnabled: () => true,
+  useChatOn: () => true,
 }));
 
 vi.mock('@/features/workspace/lib/rail-collapsed', () => ({

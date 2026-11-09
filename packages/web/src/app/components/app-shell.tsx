@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { RefreshCw } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Navigate, Outlet, useMatches } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -14,7 +14,11 @@ import { SidebarInset } from '@/components/ui/sidebar-shadcn';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesHooks } from '@/features/templates';
-import { useChatEnabled } from '@/features/workspace/lib/use-chat-on';
+import {
+  RouteHandle,
+  useShellMatch,
+} from '@/features/workspace/lib/shell-handle';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useSessionProjectId } from '@/hooks/use-session-project-id';
@@ -59,31 +63,6 @@ export function AppShellRoute() {
       </SocketProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
-}
-
-export function useShellHandle(): RouteHandle {
-  return useShellMatch().handle;
-}
-
-export function useChatOn(): boolean {
-  const enabled = useChatEnabled();
-  const { shell } = useShellHandle();
-  return enabled && CHAT_ALLOWED[shell];
-}
-
-function useShellMatch(): { handle: RouteHandle; templateId?: string } {
-  const matches = useMatches();
-  const match = matches.findLast((m) => isRouteHandle(m.handle));
-  const handle: RouteHandle = isRouteHandle(match?.handle)
-    ? match.handle
-    : shellHandles.project;
-  return {
-    handle,
-    templateId:
-      handle.standalone === 'sharedTemplate'
-        ? match?.params.templateId
-        : undefined,
-  };
 }
 
 function useShellVariant({
@@ -238,8 +217,6 @@ function ChatPanelError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-// Beside the chat, a page that is still loading shows its shape instead of
-// a blank card.
 function PageFallback() {
   const chatWidth = useChatWidth();
   const besideChat = chatWidth === 'left' || chatWidth === 'right';
@@ -256,10 +233,6 @@ function ProjectHeader({ projectId }: { projectId: string }) {
   return hasAccess ? <ProjectDashboardLayoutHeader key={projectId} /> : null;
 }
 
-function isRouteHandle(value: unknown): value is RouteHandle {
-  return typeof value === 'object' && value !== null && 'shell' in value;
-}
-
 const PAGE_CLASS: Record<RouteHandle['shell'], string> = {
   project: 'flex-1 overflow-auto',
   builder: 'flex min-h-0 flex-1 flex-col',
@@ -267,38 +240,3 @@ const PAGE_CLASS: Record<RouteHandle['shell'], string> = {
 };
 
 type ShellVariant = 'shell' | 'bare';
-
-export type RouteHandle = {
-  shell: 'project' | 'builder' | 'platform';
-  chat?: 'full';
-  projectHeader?: true;
-  allowAnonymous?: true;
-  standalone?: 'sharedTemplate';
-  redirectOnly?: true;
-};
-
-export const shellHandles = {
-  project: { shell: 'project' },
-  projectWithHeader: { shell: 'project', projectHeader: true },
-  publicProject: { shell: 'project', allowAnonymous: true },
-  projectRedirect: { shell: 'project', redirectOnly: true },
-  publicRedirect: {
-    shell: 'project',
-    allowAnonymous: true,
-    redirectOnly: true,
-  },
-  templateDetails: {
-    shell: 'project',
-    allowAnonymous: true,
-    standalone: 'sharedTemplate',
-  },
-  chat: { shell: 'project', chat: 'full' },
-  builder: { shell: 'builder' },
-  platform: { shell: 'platform' },
-} satisfies Record<string, RouteHandle>;
-
-export const CHAT_ALLOWED: Record<RouteHandle['shell'], boolean> = {
-  project: true,
-  builder: true,
-  platform: false,
-};

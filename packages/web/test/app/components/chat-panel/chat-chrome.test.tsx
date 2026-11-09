@@ -31,9 +31,14 @@ vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('sonner', () => ({ toast: { error: toastError } }));
 
-vi.mock('@/app/components/app-shell', () => ({
+vi.mock('@/features/workspace/lib/shell-handle', () => ({
   useShellHandle: () => ({ shell: 'project' }),
   CHAT_ALLOWED: { project: true, builder: true, platform: false },
+}));
+
+vi.mock('@/features/workspace/lib/use-chat-on', () => ({
+  useChatEnabled: () => true,
+  useChatOn: () => true,
 }));
 
 vi.mock('@/app/components/chat-panel/follow-along-controller', () => ({

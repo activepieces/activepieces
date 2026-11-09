@@ -105,8 +105,12 @@ vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: 'ce' }) },
 }));
 
-vi.mock('@/features/workspace/lib/use-chat-on', () => ({
-  useChatEnabled: () => chat.on,
+vi.mock('@/hooks/platform-hooks', () => ({
+  platformHooks: {
+    useCurrentPlatform: () => ({
+      platform: { plan: { chatEnabled: chat.on } },
+    }),
+  },
 }));
 
 vi.mock('@/app/components/chat-panel/chat-window', () => ({
