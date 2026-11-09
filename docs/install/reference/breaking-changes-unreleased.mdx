@@ -7,3 +7,22 @@ hidden: true
 Entries here move to [Breaking Changes](/install/reference/breaking-changes) automatically when the release that contains them is tagged. Add new entries at the top, right under the heading below.
 
 ## What has changed?
+
+#### Fireflies.ai 0.2.0: three find actions are no longer AI agent tools, and Upload Audio returns a smaller output
+
+**Find Meeting by ID**, **Find Recent Meeting** and **Find Meeting by Call Details** are now shown only in the flow builder. AI agents and MCP clients get **Get Meeting**, **Get Meeting Summary** and **Find Meetings** instead.
+
+After you upgrade:
+
+- **Upload Audio** returns `{ success, title, message }` instead of the raw `{ data: { uploadAudio: { ... } } }` response, and it fails the step when Fireflies rejects the upload (for example `paid_required` on the Free plan) instead of showing it as a successful step.
+- **Find Meeting by Call Details** reads at most 1,000 meetings (20 pages of 50). If more meetings match, the step fails and asks you to narrow the filters, instead of paging through the whole account. Its **Date** filter now covers the 24 hours starting at the date and time you give, instead of the UTC calendar day, so meetings no longer go missing when your time zone is ahead of UTC.
+- **Find Meeting by Call Details** now fails before calling Fireflies when Host Email and Participant Email are both set. Fireflies already rejected that combination, so these steps were failing before; fill in only one of the two.
+- Every action fails the step when Fireflies returns a GraphQL error, instead of returning an empty or null result.
+
+#### What you need to do
+
+- Agents that used the three find actions as tools: switch to Get Meeting, Get Meeting Summary or Find Meetings.
+- Steps that read `data.uploadAudio.success`, `data.uploadAudio.title` or `data.uploadAudio.message` from Upload Audio: read `success`, `title` and `message` instead.
+- Find Meeting by Call Details steps on large accounts: add a date range or another filter.
+
+Steps keep running on the version they were built with until you upgrade them.
