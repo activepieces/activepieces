@@ -1,5 +1,5 @@
-import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, isNil, SeekPage, tryCatch } from '@activepieces/core-utils'
-import { Cell, CreateRecordsRequest, Field, FieldType, Filter, FilterOperator, PopulatedRecord, TableRecordsChangedEvent, TableRecordsChangeOp, TableWebhookEventType, UpdateRecordRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
+import { Cell, CreateRecordsRequest, Field, FieldType, Filter, FilterOperator, PopulatedRecord, TableWebhookEventType, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -12,8 +12,6 @@ import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
 
-const MAX_BATCH_SIZE = 50
-
 const recordRepo = repoFactory(RecordEntity)
 const cellsRepo = repoFactory(CellEntity)
 
@@ -21,7 +19,6 @@ export const recordService = {
     async create({
         request,
         projectId,
-        logger,
         fields,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
@@ -56,7 +53,6 @@ export const recordService = {
             return insertedRecordIds
         })
 
-        await emitRecordsChanged({ projectId, event: { tableId: request.tableId, recordIds: insertedRecordIds, op: TableRecordsChangeOp.CREATED }, log: logger })
         const insertedRecords = await recordRepo().find({
             where: { id: In(insertedRecordIds), tableId: request.tableId, projectId },
             relations: ['cells'],
@@ -156,10 +152,9 @@ export const recordService = {
         id,
         projectId,
         request,
-        log,
     }: UpdateParams): Promise<UpdateRecordResult> {
         const { tableId } = request
-        const result = await transaction(async (entityManager: EntityManager) => {
+        return transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
                 where: { projectId, tableId, id },
                 lock: { mode: 'pessimistic_write' },
@@ -214,21 +209,16 @@ export const recordService = {
             const [updatedRecord] = formatRecords([{ ...updatedRecordEntity, cells }], fields)
             return { record: updatedRecord, changed }
         })
-        if (result.changed) {
-            await emitRecordsChanged({ projectId, event: { tableId, recordIds: [id], op: TableRecordsChangeOp.UPDATED }, log })
-        }
-        return result
     },
 
     async delete({
         ids,
         projectId,
         tableId,
-        log,
     }: DeleteParams): Promise<DeleteRecordsResult> {
         const uniqueIds = [...new Set(ids)]
         if (uniqueIds.length === 0) {
-            return { deletedCount: 0, records: [] }
+            return { deletedCount: 0, deletedIds: [], records: [] }
         }
         const maxRecordsPerTable = system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)
         if (uniqueIds.length > maxRecordsPerTable) {
@@ -250,9 +240,9 @@ export const recordService = {
                 params: { entityType: 'Record', entityId: uniqueIds[0] },
             })
         }
-        await emitRecordsChanged({ projectId, event: { tableId, recordIds: deletedIds, op: TableRecordsChangeOp.DELETED }, log })
         return {
             deletedCount: deletedIds.length,
+            deletedIds,
             records,
         }
     },
@@ -260,10 +250,8 @@ export const recordService = {
     async deleteAll({
         tableId,
         projectId,
-        log,
     }: DeleteAllParams): Promise<PopulatedRecord[]> {
-        const { deletedIds, records } = await deleteRecordsAndReturnWebhookPayloads({ projectId, tableId })
-        await emitRecordsChanged({ projectId, event: { tableId, recordIds: deletedIds, op: TableRecordsChangeOp.DELETED }, log })
+        const { records } = await deleteRecordsAndReturnWebhookPayloads({ projectId, tableId })
         return records
     },
 
@@ -493,19 +481,6 @@ const dateFilterValidator = ({ cellValue, filterValue, cb }: OrderedFilterValida
 
 const isDateFieldType = (fieldType: FieldType | undefined): boolean => fieldType === FieldType.DATE || fieldType === FieldType.DATETIME
 
-async function emitRecordsChanged({ projectId, event, log }: { projectId: string, event: TableRecordsChangedEvent, log: FastifyBaseLogger }): Promise<void> {
-    if (event.recordIds.length === 0) {
-        return
-    }
-    const { error } = await tryCatch(async () => {
-        const { websocketService } = await import('../../core/websockets.service')
-        websocketService.to(projectId).emit(WebsocketClientEvent.TABLE_RECORDS_CHANGED, event)
-    })
-    if (!isNil(error)) {
-        log.error({ error, table: { id: event.tableId }, project: { id: projectId } }, '[recordService#emitRecordsChanged] Could not send the records change, the write is kept')
-    }
-}
-
 type CreateParams = {
     request: CreateRecordsRequest
     projectId: string
@@ -531,7 +506,6 @@ type UpdateParams = {
     id: string
     projectId: string
     request: UpdateRecordRequest
-    log: FastifyBaseLogger
 }
 
 type UpdateRecordResult = {
@@ -543,18 +517,17 @@ type DeleteParams = {
     ids: string[]
     projectId: string
     tableId: string
-    log: FastifyBaseLogger
 }
 
 type DeleteRecordsResult = {
     deletedCount: number
+    deletedIds: string[]
     records: PopulatedRecord[]
 }
 
 type DeleteAllParams = {
     tableId: string
     projectId: string
-    log: FastifyBaseLogger
 }
 
 type CountParams = {
@@ -588,3 +561,5 @@ type OrderedFilterValidatorParams = {
     filterValue: string
     cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean
 }
+
+export const MAX_BATCH_SIZE = 50

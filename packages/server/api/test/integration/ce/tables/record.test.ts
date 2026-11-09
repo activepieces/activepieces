@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FieldType, FilterOperator, TableRecordsChangeOp, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
+import { EDITOR_SESSION_ID_HEADER, FieldType, FilterOperator, TableRecordsChangeOp, TableWebhookEventType, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -31,21 +31,10 @@ afterAll(async () => {
 describe('Record API', () => {
 
     describeWithAuth('records changed push', () => app!, (setup) => {
-        it('sends the changed record ids to the project room for create, update and delete', async () => {
+        it('sends the changed rows for create and update and the ids for delete to the project room', async () => {
             const ctx = await setup()
             const { table, field } = await createTableWithField(ctx)
-            const pushes: { room: string, payload: unknown }[] = []
-            const realTo = websocketService.to
-            vi.spyOn(websocketService, 'to').mockImplementation((room) => {
-                const operator = realTo(room)
-                vi.spyOn(operator, 'emit').mockImplementation((event, ...args) => {
-                    if (event === WebsocketClientEvent.TABLE_RECORDS_CHANGED) {
-                        pushes.push({ room, payload: args[0] })
-                    }
-                    return true
-                })
-                return operator
-            })
+            const pushes = capturePushes()
 
             const created = await ctx.post('/v1/records', { tableId: table.id, records: [[{ fieldId: field.id, value: 'a' }]] })
             const recordId = created?.json()[0].id
@@ -54,9 +43,68 @@ describe('Record API', () => {
             vi.restoreAllMocks()
 
             expect(pushes).toEqual([
-                { room: ctx.project.id, payload: { tableId: table.id, recordIds: [recordId], op: TableRecordsChangeOp.CREATED } },
-                { room: ctx.project.id, payload: { tableId: table.id, recordIds: [recordId], op: TableRecordsChangeOp.UPDATED } },
-                { room: ctx.project.id, payload: { tableId: table.id, recordIds: [recordId], op: TableRecordsChangeOp.DELETED } },
+                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.CREATED, records: [rowWithValue({ id: recordId, fieldId: field.id, value: 'a' })] } },
+                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.UPDATED, records: [rowWithValue({ id: recordId, fieldId: field.id, value: 'b' })] } },
+                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.DELETED, recordIds: [recordId] } },
+            ])
+        })
+
+        it('sends nothing when an update changes no cell', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const [record] = await saveRecordsWithValues({ ctx, table, field, values: ['same'] })
+            const pushes = capturePushes()
+
+            const response = await ctx.post(`/v1/records/${record.id}`, { tableId: table.id, cells: [{ fieldId: field.id, value: 'same' }] })
+            vi.restoreAllMocks()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(pushes).toEqual([])
+        })
+
+        it('sends a cleared change without record ids when the table is cleared', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            await saveRecordsWithValues({ ctx, table, field, values: ['a', 'b'] })
+            const pushes = capturePushes()
+
+            await ctx.post(`/v1/tables/${table.id}/clear`)
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.CLEARED } },
+            ])
+        })
+
+        it('carries the editor session id of the request', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const editorSessionId = apId()
+            const pushes = capturePushes()
+
+            const created = await ctx.inject({
+                method: 'POST',
+                url: '/api/v1/records',
+                headers: { [EDITOR_SESSION_ID_HEADER]: editorSessionId },
+                body: { tableId: table.id, records: [[{ fieldId: field.id, value: 'a' }]] },
+            })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: ctx.project.id, payload: { tableId: table.id, editorSessionId, op: TableRecordsChangeOp.CREATED, records: [rowWithValue({ id: created.json()[0].id, fieldId: field.id, value: 'a' })] } },
+            ])
+        })
+
+        it('asks for a reload instead of listing ids above the batch size', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const pushes = capturePushes()
+
+            await ctx.post('/v1/records', { tableId: table.id, records: Array.from({ length: 51 }, () => [{ fieldId: field.id, value: 'a' }]) })
+            vi.restoreAllMocks()
+
+            expect(pushes).toEqual([
+                { room: ctx.project.id, payload: { tableId: table.id, op: TableRecordsChangeOp.RELOAD } },
             ])
         })
     })
@@ -829,6 +877,26 @@ describe('Record API', () => {
         })
     })
 })
+
+function rowWithValue({ id, fieldId, value }: { id: string, fieldId: string, value: string }): unknown {
+    return expect.objectContaining({ id, cells: { [fieldId]: expect.objectContaining({ value }) } })
+}
+
+function capturePushes(): { room: string, payload: unknown }[] {
+    const pushes: { room: string, payload: unknown }[] = []
+    const realTo = websocketService.to
+    vi.spyOn(websocketService, 'to').mockImplementation((room) => {
+        const operator = realTo(room)
+        vi.spyOn(operator, 'emit').mockImplementation((event, ...args) => {
+            if (event === WebsocketClientEvent.TABLE_RECORDS_CHANGED) {
+                pushes.push({ room, payload: args[0] })
+            }
+            return true
+        })
+        return operator
+    })
+    return pushes
+}
 
 async function createTableWithField(ctx: TestContext) {
     return createTableWithTypedField({ ctx, type: FieldType.TEXT })
