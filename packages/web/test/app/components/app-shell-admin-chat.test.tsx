@@ -6,7 +6,8 @@ import * as React from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AppShellRoute, shellHandles } from '@/app/components/app-shell';
+import { AppShellRoute } from '@/app/components/app-shell';
+import { shellHandles } from '@/features/workspace/lib/shell-handle';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
