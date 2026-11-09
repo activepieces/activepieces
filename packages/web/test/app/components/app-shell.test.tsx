@@ -25,6 +25,7 @@ const template = vi.hoisted(() => {
   return store;
 });
 const pageRenders = vi.hoisted(() => ({ count: 0 }));
+const chat = vi.hoisted(() => ({ on: false }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -87,6 +88,22 @@ vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: 'ce' }) },
 }));
 
+vi.mock('@/features/workspace/lib/use-chat-on', () => ({
+  useChatOn: () => chat.on,
+}));
+
+vi.mock('@/app/components/chat-panel/chat-window', () => ({
+  ChatPanel: () => <aside aria-label="Chat" />,
+}));
+
+vi.mock('@/app/components/chat-panel/chat-notch', () => ({
+  ChatNotch: () => null,
+}));
+
+vi.mock('@/app/components/chat-panel/chat-content-column', () => ({
+  ChatContentColumn: ({ children }: React.PropsWithChildren) => <>{children}</>,
+}));
+
 vi.mock('@/hooks/use-session-project-id', () => ({
   useSessionProjectId: () => null,
 }));
@@ -135,6 +152,24 @@ describe('AppShellRoute on a template link', () => {
   });
 });
 
+describe('AppShellRoute on the chat page', () => {
+  afterEach(cleanup);
+
+  it('shows the chat when it is on', () => {
+    chat.on = true;
+    renderAt('/chat');
+
+    expect(screen.getByRole('complementary', { name: 'Chat' })).toBeTruthy();
+  });
+
+  it('leaves the chat page when the chat is off or hidden', () => {
+    chat.on = false;
+    renderAt('/chat');
+
+    expect(screen.getByText('Home')).toBeTruthy();
+  });
+});
+
 function TemplatePage() {
   React.useEffect(() => {
     pageRenders.count += 1;
@@ -153,6 +188,7 @@ function renderAt(path: string) {
             handle: shellHandles.templateDetails,
             element: <TemplatePage />,
           },
+          { path: '/chat', handle: shellHandles.chat, element: null },
           { path: '/', handle: shellHandles.project, element: <p>Home</p> },
         ],
       },

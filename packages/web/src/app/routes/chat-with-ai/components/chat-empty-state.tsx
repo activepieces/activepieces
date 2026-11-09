@@ -5,8 +5,10 @@ import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
   ReactNode,
+  RefObject,
   memo,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -14,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
@@ -26,7 +29,91 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
-export function EmptyState({
+import { OnboardingWelcome } from './onboarding-welcome';
+
+export function ChatEmptyState({
+  incognito,
+  hasInput,
+  onboarding,
+  showFlowCards,
+  onSend,
+}: {
+  incognito: boolean;
+  hasInput: boolean;
+  onboarding: boolean;
+  showFlowCards: boolean;
+  onSend: (text: string) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const width = useWidthOf(containerRef);
+  return (
+    <div ref={containerRef} className="h-full">
+      {width === null ? null : width < WIDE_EMPTY_STATE_MIN_WIDTH ? (
+        <NarrowEmptyState onSend={onSend} />
+      ) : onboarding ? (
+        <OnboardingWelcome />
+      ) : (
+        <WideEmptyState
+          incognito={incognito}
+          hasInput={hasInput}
+          showFlowCards={showFlowCards}
+          onSuggestionClick={onSend}
+        />
+      )}
+    </div>
+  );
+}
+
+function useWidthOf(ref: RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = () => setWidth(element.getBoundingClientRect().width);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
+}
+
+function NarrowEmptyState({ onSend }: { onSend: (text: string) => void }) {
+  const { data: user } = userHooks.useCurrentUser();
+  const name = user?.firstName;
+  const suggestions = [
+    t('Build me a flow for new leads'),
+    t('What saved us the most time this month?'),
+    t('Why did my last run fail?'),
+  ];
+  return (
+    <div className="flex h-full flex-col justify-end gap-3 px-4 pb-3">
+      <p className="text-base font-semibold text-gray-12">
+        {name
+          ? t('Hi {name}, what should I do?', { name })
+          : t('What should I do?')}
+      </p>
+      <div className="flex flex-col items-start gap-1.5">
+        {suggestions.map((text) => {
+          return (
+            <Button
+              key={text}
+              variant="ghost"
+              onClick={() => onSend(text)}
+              className="h-auto max-w-full justify-start rounded-full border px-3 py-1.5 text-gray-11 hover:bg-gray-3 active:bg-gray-4"
+            >
+              <TextWithTooltip tooltipMessage={text}>
+                <span className="min-w-0">{text}</span>
+              </TextWithTooltip>
+            </Button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function WideEmptyState({
   onSuggestionClick,
   incognito,
   hasInput,
@@ -46,7 +133,7 @@ export function EmptyState({
 
   if (incognito) {
     return (
-      <div className="flex min-h-full flex-col justify-center px-3 pt-8 pb-6 sm:px-6">
+      <div className="flex min-h-full flex-col justify-center px-6 pt-8 pb-6">
         <div className="max-w-3xl mx-auto w-full">
           <Greeting firstName={firstName} incognito />
         </div>
@@ -55,15 +142,13 @@ export function EmptyState({
   }
 
   return (
-    <div className="flex min-h-full flex-col px-3 pt-12 pb-6 sm:px-6 sm:pt-16">
+    <div className="flex min-h-full flex-col px-6 pt-16 pb-6">
       <div className="max-w-3xl mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
-          <div className="min-w-0 sm:flex-1 sm:max-w-md">
+        <div className="flex flex-row items-center gap-10">
+          <div className="min-w-0 flex-1 max-w-md">
             <Greeting firstName={firstName} incognito={false} />
           </div>
-          <div className="hidden sm:contents">
-            <AppMarquee />
-          </div>
+          <AppMarquee />
         </div>
         <CollapseOnInput collapsed={hasInput}>
           <ExampleCards cards={cards} onSuggestionClick={onSuggestionClick} />
@@ -545,3 +630,4 @@ function resolveCards({
 }
 
 const COLLAPSED_CARD_COUNT = 4;
+const WIDE_EMPTY_STATE_MIN_WIDTH = 704;

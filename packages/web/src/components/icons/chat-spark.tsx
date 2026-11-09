@@ -15,16 +15,16 @@ export function ChatSparkIcon({
       aria-hidden
       {...props}
     >
-      <path d={CHAT_SPARK_PATHS.bubble} />
-      <path d={CHAT_SPARK_PATHS.spark} />
-      {CHAT_SPARK_PATHS.lines.map((d) => (
+      <path d={chatSparkPaths.bubble} />
+      <path d={chatSparkPaths.spark} />
+      {chatSparkPaths.lines.map((d) => (
         <path key={d} d={d} />
       ))}
     </svg>
   );
 }
 
-const CHAT_SPARK_PATHS = {
+export const chatSparkPaths = {
   bubble:
     'M14 3.5H7A4.5 4.5 0 0 0 2.5 8v7A4.5 4.5 0 0 0 7 19.5v1.8c0 .6.7.96 1.2.6l3.3-2.4H17a4.5 4.5 0 0 0 4.5-4.5v-4.5',
   spark:

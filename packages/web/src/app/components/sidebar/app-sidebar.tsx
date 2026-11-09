@@ -36,6 +36,7 @@ import {
 import { SidebarUsageLimits } from '@/features/billing';
 import { PlatformSwitcher } from '@/features/projects';
 import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -211,13 +212,13 @@ function AppHeader() {
 }
 
 function PlatformHeader() {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const chatOn = useChatOn();
   const { checkAccess } = useAuthorization();
   const { toggleSidebar } = useSidebar();
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
   const defaultRoute = determineDefaultRoute({
     checkAccess,
-    chatEnabled: platform.plan.chatEnabled,
+    chatEnabled: chatOn,
   });
 
   return (

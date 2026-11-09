@@ -10,6 +10,7 @@ export type ChatContainerRootProps = {
 export type ChatContainerContentProps = {
   children: React.ReactNode;
   className?: string;
+  scrollClassName?: string;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export type ChatContainerScrollAnchorProps = {
@@ -24,7 +25,7 @@ function ChatContainerRoot({
 }: ChatContainerRootProps) {
   return (
     <StickToBottom
-      className={cn('flex overflow-y-auto', className)}
+      className={cn('flex overflow-hidden', className)}
       resize="smooth"
       initial="instant"
       role="log"
@@ -38,10 +39,15 @@ function ChatContainerRoot({
 function ChatContainerContent({
   children,
   className,
+  scrollClassName,
   ...props
 }: ChatContainerContentProps) {
   return (
     <StickToBottom.Content
+      scrollClassName={cn(
+        'overflow-y-auto [scrollbar-gutter:stable]!',
+        scrollClassName,
+      )}
       className={cn('flex w-full flex-col', className)}
       {...props}
     >

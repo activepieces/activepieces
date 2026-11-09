@@ -360,7 +360,7 @@ export function ConnectionPickerCard({
         <RadioGroup
           value={selectedExternalId ?? ''}
           onValueChange={setUserSelectedExternalId}
-          className="max-h-64 gap-0 overflow-auto"
+          className="max-h-64 grid-cols-1 gap-0 overflow-auto"
         >
           {filteredPicker.connections.map((conn) => {
             const status = statusOf(conn);

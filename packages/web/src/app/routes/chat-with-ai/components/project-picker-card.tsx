@@ -237,7 +237,7 @@ function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
   }
 
   return (
-    <div className="mt-4 grid max-h-72 grid-cols-1 gap-3 overflow-auto pr-1 sm:grid-cols-2">
+    <div className="mt-4 grid max-h-72 grid-cols-1 gap-3 overflow-auto pr-1 @chat-sm/chat:grid-cols-2">
       {filtered.map(({ project, name }) => {
         return (
           <button

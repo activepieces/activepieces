@@ -41,13 +41,13 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { useAgentsNavVisible } from '@/features/agents';
-import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
   getProjectName,
   projectCollectionUtils,
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
+import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -107,6 +107,7 @@ function DriversGroup() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { reachesMcp } = mcpHooks.useMcpReach({ enabled: true });
   const showChat = platform.plan.chatEnabled;
+  const chatRoute = chatPanelUtils.useChatRoute();
 
   if (!showChat && !reachesMcp) {
     return null;
@@ -119,12 +120,9 @@ function DriversGroup() {
           {showChat && (
             <ApSidebarItem
               type="link"
-              to="/chat"
+              to={chatRoute}
               icon={ChatSparkIcon}
               label={t('Chat')}
-              onClick={() =>
-                window.dispatchEvent(new Event(chatUtils.newChatEvent))
-              }
             />
           )}
           {reachesMcp && (

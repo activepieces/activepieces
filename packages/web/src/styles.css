@@ -191,10 +191,13 @@
 @theme {
   --ease-*: initial;
   --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
+  --ease-move: cubic-bezier(0.22, 1, 0.36, 1);
 
   --transition-duration-1500: 1500ms;
 
   --container-page-band: 1198px;
+  --container-chat-sm: 30rem;
+  --container-chat-md: 44rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -1271,5 +1274,29 @@
     --admin-page: var(--gray-1);
     --admin-surface: var(--panel);
     --admin-card-border: var(--gray-6);
+  }
+}
+
+.ap-chat-notch-line {
+  stroke-dasharray: 1;
+}
+
+.group:hover .ap-chat-notch-line {
+  animation: ap-chat-notch-write 150ms var(--ease-move) both;
+}
+
+.group:hover .ap-chat-notch-line + .ap-chat-notch-line {
+  animation-delay: 40ms;
+}
+
+@keyframes ap-chat-notch-write {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .ap-chat-notch-line {
+    animation: none;
   }
 }
