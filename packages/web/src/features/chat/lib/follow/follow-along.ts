@@ -201,7 +201,6 @@ function flash(keys: string[]): void {
   });
 }
 
-// Changes made while the user was elsewhere light up when they get there.
 function rememberUnseen({
   resource,
   keys,
@@ -327,7 +326,6 @@ function claimHistoryPush(runId: string | null): boolean {
   return true;
 }
 
-// A new user or project starts with nothing remembered from the last one.
 function reset(): void {
   useFollowAlong.setState(initialFollowState());
   useFollowMemory.setState(initialMemory());
@@ -403,7 +401,6 @@ export type FollowOffer = {
 
 type ToolCall = { toolName: string; input: unknown; startedAt: number };
 
-// Bookkeeping that no component renders from.
 type FollowMemory = {
   toolCalls: Record<string, ToolCall>;
   unseen: Record<string, true>;

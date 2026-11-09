@@ -125,8 +125,6 @@ function startNewChat(): void {
   panel.setOpen(true);
 }
 
-// Swapping the chat shown on the full page replaces the history entry, so
-// keep the mark that says the full page was opened from a docked chat.
 function showOnFullPage(conversationId: string | null): void {
   const current = router;
   if (!current?.isFullPage()) return;
@@ -139,9 +137,6 @@ function showOnFullPage(conversationId: string | null): void {
   });
 }
 
-// The router, not a component effect, keeps the panel in step with the URL:
-// the chat page's conversation becomes the panel's, and any other app page is
-// where "On the left/right" goes back to.
 function followRouter(target: FollowableRouter): () => void {
   syncWithRoute(target.state);
   return target.subscribe(syncWithRoute);
