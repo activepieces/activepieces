@@ -16,7 +16,7 @@ export const replaceBackgroundAndRelight = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Starts a Stability AI job that keeps the subject of a photo, replaces the background from an English Background Prompt or a Background Reference image (one is required) and relights the scene; costs 8 credits. With Wait for Result "yes" it checks every 10 seconds for up to 5 minutes and returns the image; otherwise, or if it is still running, it returns a generation ID for Get Generation Result. To only cut out the subject use Remove Background. Each call starts and charges a new job.',
+      'Starts a Stability AI job that keeps the subject of a photo, replaces the background from an English Background Prompt or a Background Reference image (one is required) and relights the scene; costs 8 credits. To only change the lighting, set Keep Original Background to "true" and describe the lighting in Background Prompt. With Wait for Result "yes" it checks every 10 seconds for up to 5 minutes and returns the image; otherwise, or if it is still running, it returns a generation ID for Get Generation Result. To only cut out the subject use Remove Background. Each call starts and charges a new job.',
     idempotent: false,
   },
   props: {
@@ -27,7 +27,8 @@ export const replaceBackgroundAndRelight = createAction({
     }),
     background_prompt: Property.LongText({
       displayName: 'Background Prompt',
-      description: 'English description of the new background. Required unless you give a Background Reference.',
+      description:
+        'English description of the new background, or only of the lighting when Keep Original Background is Yes. Required unless you give a Background Reference.',
       required: false,
     }),
     background_reference: stabilityProps.image({
@@ -53,7 +54,8 @@ export const replaceBackgroundAndRelight = createAction({
     }),
     keep_original_background: Property.StaticDropdown<string, false>({
       displayName: 'Keep Original Background',
-      description: 'Yes: keep the original background and only change the lighting.',
+      description:
+        'Yes: keep the original background and only change the lighting. Stability AI still needs a Background Prompt or Background Reference, so describe the lighting you want in Background Prompt.',
       required: false,
       options: {
         disabled: false,
@@ -97,7 +99,17 @@ export const replaceBackgroundAndRelight = createAction({
       label: 'Background Reference',
       required: false,
     });
+    const keepOriginalBackground = stabilityInput.readChoice({
+      value: props.keep_original_background,
+      label: 'Keep Original Background',
+      allowed: ['true', 'false'],
+    });
     if (backgroundPrompt === undefined && backgroundReference === undefined) {
+      if (keepOriginalBackground === 'true') {
+        throw new Error(
+          'Keep Original Background still needs a Background Prompt or a Background Reference image. To only change the lighting, describe the lighting in Background Prompt, for example "warm sunset light from the left".',
+        );
+      }
       throw new Error('Give a Background Prompt or a Background Reference image.');
     }
     const lightReference = stabilityInput.readFile({ value: props.light_reference, label: 'Light Reference', required: false });
@@ -136,11 +148,7 @@ export const replaceBackgroundAndRelight = createAction({
           min: 0,
           max: 1,
         }),
-        keep_original_background: stabilityInput.readChoice({
-          value: props.keep_original_background,
-          label: 'Keep Original Background',
-          allowed: ['true', 'false'],
-        }),
+        keep_original_background: keepOriginalBackground,
         light_source_direction: lightDirection,
         light_reference: lightReference,
         light_source_strength: lightStrength,

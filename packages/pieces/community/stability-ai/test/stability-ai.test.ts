@@ -758,6 +758,47 @@ describe('Replace Background and Relight', () => {
     expect(sendRequest).not.toHaveBeenCalled();
   });
 
+  it('explains how to relight only when keeping the original background without a prompt', async () => {
+    await expect(
+      runAction({
+        action: replaceBackgroundAndRelight,
+        propsValue: {
+          subject_image: PHOTO,
+          keep_original_background: 'true',
+          light_source_direction: 'left',
+          wait_for_result: 'no',
+        },
+      }),
+    ).rejects.toThrow('To only change the lighting, describe the lighting in Background Prompt');
+    expect(sendRequest).not.toHaveBeenCalled();
+  });
+
+  it('sends a lighting-only request that keeps the original background', async () => {
+    respondJson({ status: 200, body: { id: GENERATION_ID } });
+    const result = await runAction({
+      action: replaceBackgroundAndRelight,
+      propsValue: {
+        subject_image: PHOTO,
+        background_prompt: 'warm sunset light from the left',
+        keep_original_background: 'true',
+        light_source_direction: 'left',
+        light_source_strength: 0.7,
+        wait_for_result: 'no',
+      },
+    });
+    expect(sent(0).url).toBe('https://api.stability.ai/v2beta/stable-image/edit/replace-background-and-relight');
+    expect(fieldNames(0)).toEqual([
+      'background_prompt',
+      'keep_original_background',
+      'light_source_direction',
+      'light_source_strength',
+      'subject_image',
+    ]);
+    expect(formOf(0).get('keep_original_background')).toBe('true');
+    expect(formOf(0).get('background_prompt')).toBe('warm sunset light from the left');
+    expect(result).toMatchObject({ status: 'in-progress', generationId: GENERATION_ID });
+  });
+
   it('needs a light reference or direction for light strength', async () => {
     await expect(
       runAction({
