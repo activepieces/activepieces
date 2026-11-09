@@ -40,7 +40,7 @@ export function ActionReceiptCard({
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-gray-12 truncate">
+              <span className="text-sm font-medium text-gray-12 truncate">
                 {receipt.actionDisplayName}
               </span>
               <StatusBadge isSuccess={isSuccess} />
@@ -53,7 +53,7 @@ export function ActionReceiptCard({
       </div>
 
       {receipt.status === 'failed' && receipt.errorMessage && (
-        <p className="px-3.5 pb-2.5 text-xs leading-relaxed text-gray-11 break-words">
+        <p className="px-3.5 pb-2.5 text-sm leading-relaxed text-gray-11 break-words">
           {receipt.errorMessage}
         </p>
       )}
