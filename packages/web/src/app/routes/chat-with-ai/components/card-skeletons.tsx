@@ -14,6 +14,7 @@ import {
 } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 export function CardSkeleton({
   cardKind,
@@ -84,9 +85,9 @@ function GeneratedImageCardSkeleton({ label }: { label: string }) {
   return (
     <motion.div
       className="my-2 max-w-md overflow-hidden rounded-xl border bg-panel"
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <Skeleton className="aspect-[4/3] w-full rounded-none" />
       <div className="flex items-center justify-between gap-2 p-2">
@@ -118,9 +119,9 @@ function ActionReceiptCardSkeleton({
   return (
     <motion.div
       className="my-2 overflow-hidden rounded-xl border bg-gray-1"
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="px-3.5 pb-2.5 pt-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -154,9 +155,9 @@ function CardSkeletonFailed({ cardKind }: { cardKind: PendingCardKind }) {
   return (
     <motion.div
       className="my-2 flex items-center gap-2.5 rounded-xl border bg-gray-1 px-3.5 py-2.5 text-gray-11"
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <AlertCircle className="size-4 shrink-0 text-gray-11" />
       <span className="text-xs">

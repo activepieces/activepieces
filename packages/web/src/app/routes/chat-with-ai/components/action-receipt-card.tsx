@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 
 import { normalizePieceName } from '../lib/message-parsers';
 
@@ -25,9 +26,9 @@ export function ActionReceiptCard({
   return (
     <motion.div
       className="rounded-xl border bg-gray-1 overflow-hidden my-2"
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="px-3.5 pt-3 pb-2">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -39,7 +40,7 @@ export function ActionReceiptCard({
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-gray-12 truncate">
+              <span className="text-sm font-medium text-gray-12 truncate">
                 {receipt.actionDisplayName}
               </span>
               <StatusBadge isSuccess={isSuccess} />
@@ -52,7 +53,7 @@ export function ActionReceiptCard({
       </div>
 
       {receipt.status === 'failed' && receipt.errorMessage && (
-        <p className="px-3.5 pb-2.5 text-xs leading-relaxed text-gray-11 break-words">
+        <p className="px-3.5 pb-2.5 text-sm leading-relaxed text-gray-11 break-words">
           {receipt.errorMessage}
         </p>
       )}
@@ -63,7 +64,7 @@ export function ActionReceiptCard({
             <button
               type="button"
               onClick={() => setOutputOpen(!outputOpen)}
-              className="flex items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors"
+              className="flex items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors duration-(--dur-micro) ease-[ease]"
             >
               {outputOpen ? (
                 <>

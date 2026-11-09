@@ -2,6 +2,8 @@ import { t } from 'i18next';
 import { Loader2, RotateCcw, Sparkles, UserRound } from 'lucide-react';
 import { motion } from 'motion/react';
 
+import { MOTION } from '@/features/workspace/lib/chat-layout';
+
 export function PersonalizationChip({
   state,
   role,
@@ -19,16 +21,20 @@ export function PersonalizationChip({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 6 }}
-      transition={{ duration: 0.2 }}
-      className="group inline-flex max-w-full items-center rounded-full border bg-gray-1 text-xs font-medium text-gray-12/80 shadow-sm transition-colors hover:border-accent-7"
+      exit={{
+        opacity: 0,
+        y: 4,
+        transition: { duration: MOTION.fast, ease: MOTION.easeOut },
+      }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
+      className="group inline-flex max-w-full items-center rounded-full border bg-gray-1 text-xs font-medium text-gray-12/80 shadow-sm transition-colors duration-(--dur-micro) ease-[ease] hover:border-accent-7"
     >
       <button
         type="button"
         onClick={onClick}
-        className="inline-flex min-w-0 items-center gap-1.5 py-1 pl-2.5 pr-3 transition-colors hover:text-gray-12"
+        className="inline-flex min-w-0 items-center gap-1.5 py-1 pl-2.5 pr-3 transition-colors duration-(--dur-micro) ease-[ease] hover:text-gray-12"
       >
         <ChipIcon state={state} />
         <span className="truncate">{chipLabel({ state, role, company })}</span>
@@ -37,9 +43,9 @@ export function PersonalizationChip({
         <button
           type="button"
           onClick={onClear}
-          className="max-w-0 shrink-0 overflow-hidden opacity-0 transition-all duration-300 focus-visible:outline-none group-hover:max-w-16 group-hover:opacity-100 group-focus-within:max-w-16 group-focus-within:opacity-100"
+          className="max-w-0 shrink-0 overflow-hidden opacity-0 transition-opacity duration-(--dur-micro) ease-[ease] focus-visible:outline-none group-hover:max-w-16 group-hover:opacity-100 group-focus-within:max-w-16 group-focus-within:opacity-100"
         >
-          <span className="flex items-center whitespace-nowrap border-l py-1 pl-2.5 pr-3 text-gray-11 transition-colors hover:text-danger-11">
+          <span className="flex items-center whitespace-nowrap border-l py-1 pl-2.5 pr-3 text-gray-11 transition-colors duration-(--dur-micro) ease-[ease] hover:text-danger-11">
             {t('Clear')}
           </span>
         </button>

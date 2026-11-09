@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
 import { Progress } from '@/components/ui/progress';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { cn } from '@/lib/utils';
 
 export function BatchProgressCard({
@@ -29,9 +30,9 @@ export function BatchProgressCard({
   return (
     <motion.div
       className="rounded-xl border bg-gray-1 overflow-hidden my-2"
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="px-3.5 pt-3 pb-2">
         <div className="flex items-center justify-between gap-2">
@@ -49,7 +50,7 @@ export function BatchProgressCard({
             value={percentage}
             className="h-2"
             indicatorClassName={cn(
-              'transition-all duration-500',
+              'transition-[translate,transform,background-color] duration-(--dur-move) ease-(--ease-ap-out) motion-reduce:transition-none',
               progress.done
                 ? hasFailures
                   ? 'bg-warning-9'
@@ -149,7 +150,7 @@ function FailureDetails({
         {!expanded && remaining > 0 && (
           <motion.button
             type="button"
-            className="flex items-center gap-1 text-xs text-warning-11 hover:text-warning-12 transition-colors"
+            className="flex items-center gap-1 text-xs text-warning-11 hover:text-warning-12 transition-colors duration-(--dur-micro) ease-[ease]"
             onClick={() => setExpanded(true)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -162,7 +163,7 @@ function FailureDetails({
         {expanded && results.length > 3 && (
           <motion.button
             type="button"
-            className="flex items-center gap-1 text-xs text-warning-11 hover:text-warning-12 transition-colors"
+            className="flex items-center gap-1 text-xs text-warning-11 hover:text-warning-12 transition-colors duration-(--dur-micro) ease-[ease]"
             onClick={() => setExpanded(false)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

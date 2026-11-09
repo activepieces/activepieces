@@ -17,6 +17,7 @@ import { chatApi } from '@/features/chat/lib/chat-api';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { piecesHooks } from '@/features/pieces';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import { MOTION } from '@/features/workspace/lib/chat-layout';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -54,7 +55,7 @@ function SelectedState({
       className="rounded-xl border bg-gray-1 overflow-hidden my-2"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: MOTION.base, ease: MOTION.easeOut }}
     >
       <div className="p-4 flex items-center gap-3">
         <div className="relative">
@@ -360,7 +361,7 @@ export function ConnectionPickerCard({
         <RadioGroup
           value={selectedExternalId ?? ''}
           onValueChange={setUserSelectedExternalId}
-          className="max-h-64 gap-0 overflow-auto"
+          className="max-h-64 grid-cols-1 gap-0 overflow-auto"
         >
           {filteredPicker.connections.map((conn) => {
             const status = statusOf(conn);
@@ -425,7 +426,7 @@ export function ConnectionPickerCard({
                 key={conn.externalId}
                 htmlFor={`conn-${conn.externalId}`}
                 className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-2 py-3 transition-colors hover:bg-gray-3/40',
+                  'flex cursor-pointer items-center gap-3 rounded-xl border border-transparent px-2 py-3 transition-colors duration-(--dur-micro) ease-[ease] hover:bg-gray-3/40',
                   isSelected && 'border-accent-7 bg-accent-3',
                 )}
               >

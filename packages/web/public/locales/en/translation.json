@@ -3384,6 +3384,8 @@
   "{count, plural, =1 {1 hour} other {# hours}}": "{count, plural, =1 {1 hour} other {# hours}}",
   "Image preview": "Image preview",
   "The assistant did not respond. Please try again.": "The assistant did not respond. Please try again.",
+  "Conversation not found": "Conversation not found",
+  "this chat": "this chat",
   "The last reply did not finish. Please try again.": "The last reply did not finish. Please try again.",
   "Couldn't switch the model. Try again.": "Couldn't switch the model. Try again.",
   "From your email": "From your email",
@@ -3770,5 +3772,6 @@
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
   "{count} hours ago": "{count} hours ago",
-  "Step data": "Step data"
+  "Step data": "Step data",
+  "Load this chat again before you reply.": "Load this chat again before you reply."
 }
