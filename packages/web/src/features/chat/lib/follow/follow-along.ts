@@ -44,13 +44,17 @@ function onChunks({
       });
       continue;
     }
-    if (chunk.type !== 'tool-output-available') continue;
-    const resolved = resourceRegistry.resolve(chunk.output);
-    if (!resolved) continue;
+    const finished =
+      chunk.type === 'tool-output-available' ||
+      chunk.type === 'tool-output-error';
+    if (!finished) continue;
     const call =
       typeof chunk.toolCallId === 'string'
         ? takeToolCall(chunk.toolCallId)
         : undefined;
+    if (chunk.type !== 'tool-output-available') continue;
+    const resolved = resourceRegistry.resolve(chunk.output);
+    if (!resolved) continue;
     if (call && resolved.op !== 'delete') {
       rememberEditedSince({ resource: resolved.ref, since: call.startedAt });
     }
