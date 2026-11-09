@@ -172,7 +172,7 @@ describe('open table live events', () => {
     ]);
   });
 
-  it('removes deleted rows and empties a cleared table', async () => {
+  it('removes deleted rows', async () => {
     const { rows } = await mount(queryClient);
 
     await receive({
@@ -181,18 +181,25 @@ describe('open table live events', () => {
       recordIds: ['r1'],
       editorSessionId: null,
     });
+
     expect(rows()).toEqual(['b']);
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('refetches the records for a clear instead of emptying the table', async () => {
+    const { rows } = await mount(queryClient);
 
     await receive({
       tableId: 't1',
       op: TableRecordsChangeOp.CLEARED,
       editorSessionId: null,
     });
-    expect(rows()).toEqual([]);
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+
+    expect(rows()).toEqual(['old', 'b']);
+    expect(invalidatedKeys(queryClient)).toEqual([['records', 't1']]);
   });
 
-  it('empties the whole table on a clear, rows that never saved included', async () => {
+  it('keeps a row this tab is still creating when the table is cleared', async () => {
     const { rows, store } = await mount(queryClient);
     await act(async () => {
       store().createRecord({
@@ -202,15 +209,21 @@ describe('open table live events', () => {
       });
       await settle();
     });
-    expect(rows()).toEqual(['old', 'b', 'draft']);
+
+    vi.mocked(recordsApi.list).mockResolvedValue({
+      data: [],
+      next: null,
+      previous: null,
+    });
 
     await receive({
       tableId: 't1',
       op: TableRecordsChangeOp.CLEARED,
       editorSessionId: null,
     });
+    await act(settle);
 
-    expect(rows()).toEqual([]);
+    expect(rows()).toEqual(['draft']);
   });
 
   it('ignores the echo of this tab’s own edits', async () => {

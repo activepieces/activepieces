@@ -117,7 +117,6 @@ function changeOf(event: TableRecordsChangedEvent): TableChange {
     case TableRecordsChangeOp.DELETED:
       return { type: 'rows', records: [], removedIds: event.recordIds };
     case TableRecordsChangeOp.CLEARED:
-      return { type: 'cleared' };
     case TableRecordsChangeOp.RELOAD:
       return { type: 'reload', scope: 'records' };
     case TableRecordsChangeOp.FIELDS_CHANGED:
@@ -135,6 +134,5 @@ const TABLE_LIVE_UPDATES_TOAST_ID = 'table-live-updates';
 
 export type TableChange =
   | { type: 'rows'; records: PopulatedRecord[]; removedIds: string[] }
-  | { type: 'cleared' }
   | { type: 'deleted' }
   | { type: 'reload'; scope: 'table' | 'records' | 'fields' };

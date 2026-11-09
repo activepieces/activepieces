@@ -167,20 +167,6 @@ describe('table live sync', () => {
     ]);
   });
 
-  it('empties a cleared table even when a row was edited locally after the event arrived', async () => {
-    const store = createApTableStore(table, [nameField], [record('r1', '1')]);
-    const eventSince = tableSyncClock.tick();
-    vi.mocked(recordsApi.update).mockResolvedValue(record('r1', '2'));
-
-    store
-      .getState()
-      .updateRecord(0, { values: [{ fieldIndex: 0, value: '2' }] });
-    await store.getState().waitForSaves();
-    store.getState().clearRecords({ since: eventSince });
-
-    expect(values(store.getState())).toEqual([]);
-  });
-
   it('does not bring back a deleted row when a late update for it arrives', () => {
     const store = createApTableStore(
       table,
@@ -200,19 +186,6 @@ describe('table live sync', () => {
     });
 
     expect(values(store.getState())).toEqual(['b']);
-  });
-
-  it('does not bring back rows of a cleared table when a late create arrives', () => {
-    const store = createApTableStore(table, [nameField], [record('r1', 'a')]);
-
-    store.getState().clearRecords({ since: tableSyncClock.tick() });
-    store.getState().applyRecordChanges({
-      records: [record('r1', 'late')],
-      removedIds: [],
-      since: tableSyncClock.tick(),
-    });
-
-    expect(values(store.getState())).toEqual([]);
   });
 
   it('keeps the other cells of a remote update when a local save finishes after it', async () => {

@@ -342,10 +342,6 @@ async function applyChange({
 }) {
   await store.getState().waitForSaves();
   const state = store.getState();
-  if (change.type === 'cleared') {
-    state.clearRecords({ since });
-    return;
-  }
   const knownFieldIds = new Set(state.serverFields.map((field) => field.id));
   const hasUnknownField = change.records.some((record) =>
     Object.keys(record.cells).some((fieldId) => !knownFieldIds.has(fieldId)),
