@@ -3,6 +3,7 @@ import { apDayjs, apVersionUtil } from '@activepieces/server-utils'
 import { ApEdition, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { IsNull } from 'typeorm'
 import { distributedLock } from '../../database/redis-connections'
 import { eventDestinationService } from '../../event-destinations/event-destinations.service'
 import { system } from '../../helper/system/system'
@@ -26,7 +27,7 @@ export const pieceCatalogEventsJob = (log: FastifyBaseLogger) => ({
         systemJobHandlers.registerJobHandler(SystemJobName.PIECE_CATALOG_EVENTS, async () => run(log))
         systemJobHandlers.registerJobHandler(SystemJobName.PIECE_CATALOG_RECONCILE, async () => {
             await pieceCatalogEventsJob(log).seedAtBootIfSyncOff()
-            if (!isCommunity() && system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE) === PieceSyncMode.OFFICIAL_AUTO && !await isPiecesSyncRunning()) {
+            if (!isCommunity() && system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE) === PieceSyncMode.OFFICIAL_AUTO && !await isPiecesSyncRunning(log)) {
                 await seedIfMissing({ allowEmptyCatalog: false, log })
             }
             await run(log)
@@ -85,8 +86,14 @@ function isCommunity(): boolean {
     return system.getEdition() === ApEdition.COMMUNITY
 }
 
-async function isPiecesSyncRunning(): Promise<boolean> {
-    return (await systemJobsQueue.getActive().catch(() => [])).some((job) => job.name === SystemJobName.PIECES_SYNC)
+async function isPiecesSyncRunning(log: FastifyBaseLogger): Promise<boolean> {
+    try {
+        return (await systemJobsQueue.getActive()).some((job) => job.name === SystemJobName.PIECES_SYNC)
+    }
+    catch (err) {
+        log.warn({ err }, '[pieceCatalogEvents] could not read the pieces sync state, skipping the auto seed')
+        return true
+    }
 }
 
 async function findIdleJobId(log: FastifyBaseLogger): Promise<string | null> {
@@ -125,6 +132,9 @@ async function run(log: FastifyBaseLogger): Promise<void> {
 }
 
 async function seedIfMissing({ allowEmptyCatalog, log }: SeedIfMissingParams): Promise<void> {
+    if (!isNil(await catalogSnapshotStore(log).load())) {
+        return
+    }
     await distributedLock(log).runExclusive({
         key: LOCK_KEY,
         timeoutInSeconds: LOCK_TIMEOUT_SECONDS,
@@ -147,7 +157,7 @@ async function listOfficialLatest(): Promise<CatalogEntry[]> {
     const release = apVersionUtil.getCurrentRelease()
     const rows = await pieceRepos().find({
         select: { name: true, displayName: true, version: true, minimumSupportedRelease: true, maximumSupportedRelease: true, deprecated: true },
-        where: { pieceType: PieceType.OFFICIAL },
+        where: { pieceType: PieceType.OFFICIAL, platformId: IsNull() },
     })
     return lastVersionOfEachPiece(rows.filter((row) => isSupportedRelease(release, row))).map((row) => ({
         name: row.name,
