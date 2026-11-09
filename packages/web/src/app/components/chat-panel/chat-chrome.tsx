@@ -86,17 +86,31 @@ export function ChatChrome() {
   const sheet = layout === 'sheet';
   const chatShown = layout !== 'closed';
 
+  if (!chatShown && historyOpen) {
+    setHistoryOpen(false);
+  }
+
   useEffect(() => {
     if (!chatShown) return;
     const onKey = (event: KeyboardEvent) => {
       if (chatDom.shortcutOf(event) === 'history') {
         event.preventDefault();
         setHistoryOpen((open) => !open);
+        return;
+      }
+      if (
+        event.key === 'Escape' &&
+        historyOpen &&
+        chatDom.inChat(document.activeElement) &&
+        chatDom.escapeFree(event)
+      ) {
+        chatDom.claimEscape(event);
+        setHistoryOpen(false);
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [chatShown]);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [chatShown, historyOpen]);
   const phone = windowSizeHooks.useWidth() < chatLayoutUtils.MOBILE_BREAKPOINT;
   const chatSheet = useChatSheet();
   const renaming = renamingId !== null && renamingId === conversationId;

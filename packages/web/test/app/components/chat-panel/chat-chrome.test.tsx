@@ -15,7 +15,9 @@ import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatChrome } from '@/app/components/chat-panel/chat-chrome';
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { useFollowAlong } from '@/features/chat/lib/follow/follow-along';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
 import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 
 const mounts = vi.hoisted(() => ({ chatBox: 0 }));
@@ -251,6 +253,36 @@ describe('ChatChrome', () => {
     expect(screen.getByRole('button', { name: 'Hide history' })).toBe(toggle);
   });
 
+  it('closes History, not the chat, on Escape', () => {
+    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
+    renderChrome();
+    const toggle = screen.getByRole('button', { name: 'History' });
+    fireEvent.click(toggle);
+    toggle.focus();
+    const panelMayClose: boolean[] = [];
+    const onWindowKey = (event: KeyboardEvent) =>
+      panelMayClose.push(chatDom.escapeFree(event));
+    window.addEventListener('keydown', onWindowKey);
+
+    fireEvent.keyDown(toggle, { key: 'Escape' });
+    window.removeEventListener('keydown', onWindowKey);
+
+    expect(historyList()).toBeNull();
+    expect(panelMayClose).toEqual([false]);
+  });
+
+  it('shows the chat, not History, when the chat opens again', () => {
+    getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
+    renderChrome();
+    fireEvent.click(screen.getByRole('button', { name: 'History' }));
+    expect(historyList()).not.toBeNull();
+
+    act(() => useChatPanel.getState().setOpen(false));
+    act(() => useChatPanel.getState().setOpen(true));
+
+    expect(historyList()).toBeNull();
+  });
+
   it('starts a fresh chat box for a new chat', async () => {
     getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
     renderChrome();
@@ -299,6 +331,10 @@ describe('ChatChrome', () => {
   });
 });
 
+function historyList() {
+  return screen.queryByRole('navigation', { name: 'Chat history' });
+}
+
 async function rename(title: string) {
   fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
   const input = await screen.findByRole('textbox', { name: 'Chat title' });
@@ -329,7 +365,11 @@ function renderChrome() {
           [
             {
               path: '/projects/:projectId/automations',
-              element: <ChatChrome />,
+              element: (
+                <aside id={chatLayoutUtils.PANEL_ID}>
+                  <ChatChrome />
+                </aside>
+              ),
             },
           ],
           { initialEntries: ['/projects/p1/automations'] },
