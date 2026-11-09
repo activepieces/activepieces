@@ -19,6 +19,8 @@ import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useShellHandle } from '@/lib/shell-handle';
 import { cn } from '@/lib/utils';
 
+import { FollowAlongController } from './follow-along-controller';
+
 const loadChatChrome = () =>
   import('./chat-chrome').then((m) => ({ default: m.ChatChrome }));
 const ChatChrome = lazyWithRetry(loadChatChrome, 'chat-chrome');
@@ -152,6 +154,8 @@ export function ChatPanel() {
         )}
       >
         <ChatRouterBinding />
+        <FollowAlongController />
+        <ChatAnnouncer />
         <div
           style={{ width: full ? '100%' : `${width}px` }}
           className={cn(
@@ -214,6 +218,15 @@ export function ChatPanel() {
         )}
       </aside>
     </>
+  );
+}
+
+function ChatAnnouncer() {
+  const announcement = useChatPanel((s) => s.announcement);
+  return (
+    <div aria-live="polite" role="status" className="sr-only">
+      {announcement && <span key={announcement.id}>{announcement.text}</span>}
+    </div>
   );
 }
 

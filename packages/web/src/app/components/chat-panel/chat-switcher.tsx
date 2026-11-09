@@ -4,6 +4,8 @@ import { t } from 'i18next';
 import {
   ChevronDown,
   Ellipsis,
+  Eye,
+  EyeOff,
   History,
   Pencil,
   RefreshCw,
@@ -53,6 +55,10 @@ import {
 import { chatPendingDeletes } from '@/features/chat/lib/chat-pending-deletes';
 import { chatQueryKeys } from '@/features/chat/lib/chat-query-keys';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import {
+  followAlong,
+  useFollowAlong,
+} from '@/features/chat/lib/follow/follow-along';
 import { useConversationIndicators } from '@/features/chat/lib/use-conversation-indicators';
 import {
   chatPanelUtils,
@@ -210,6 +216,7 @@ export function ChatSwitcher({
           <ChatActionsMenu
             hasChat={conversationId !== null}
             onRename={startRename}
+            onStopFollowing={followAlong.stopFollowing}
             onSettings={() => setSettingsOpen(true)}
             onDelete={deleteChat}
           />
@@ -293,6 +300,10 @@ export function ChatSwitcher({
               close('none');
               startRename();
             }}
+            onStopFollowing={() => {
+              close('title');
+              followAlong.stopFollowing();
+            }}
             onSettings={() => {
               close('none');
               setSettingsOpen(true);
@@ -309,15 +320,19 @@ export function ChatSwitcher({
 function ChatActionsMenu({
   hasChat,
   onRename,
+  onStopFollowing,
   onSettings,
   onDelete,
 }: {
   hasChat: boolean;
   onRename: () => void;
+  onStopFollowing: () => void;
   onSettings: () => void;
   onDelete: () => void;
 }) {
   const renameAfterClose = useRef(false);
+  const autoFollow = useChatPanel((s) => s.autoFollow);
+  const following = useFollowAlong((s) => s.phase === 'editing' && s.following);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -350,6 +365,19 @@ function ChatActionsMenu({
             {t('Rename')}
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem
+          onSelect={() => useChatPanel.getState().setAutoFollow(!autoFollow)}
+          className="items-start"
+        >
+          <Eye className="mt-0.5" />
+          <FollowAlongLabel on={autoFollow} />
+        </DropdownMenuItem>
+        {autoFollow && following && (
+          <DropdownMenuItem onSelect={onStopFollowing}>
+            <EyeOff />
+            {t('Stop following')}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onSelect={onSettings}>
           <Settings />
           {t('Chat settings')}
@@ -368,11 +396,30 @@ function ChatActionsMenu({
   );
 }
 
+function FollowAlongLabel({ on }: { on: boolean }) {
+  return (
+    <>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span>{t('Follow along')}</span>
+        <span className="text-xs text-gray-11">
+          {on
+            ? t('Opens pages the AI edits.')
+            : t('Doesn’t open pages for you.')}
+        </span>
+      </span>
+      <span className="text-xs leading-5 text-gray-11">
+        {on ? t('On') : t('Off')}
+      </span>
+    </>
+  );
+}
+
 function SwitcherMenu({
   conversationId,
   onPickChat,
   onShowAll,
   onRename,
+  onStopFollowing,
   onSettings,
   onDelete,
 }: {
@@ -380,6 +427,7 @@ function SwitcherMenu({
   onPickChat: (id: string) => void;
   onShowAll: () => void;
   onRename: () => void;
+  onStopFollowing: () => void;
   onSettings: () => void;
   onDelete: () => void;
 }) {
@@ -407,6 +455,8 @@ function SwitcherMenu({
     setListShown(true);
     setValue(conversationId ?? '');
   }
+  const autoFollow = useChatPanel((s) => s.autoFollow);
+  const following = useFollowAlong((s) => s.phase === 'editing' && s.following);
 
   const searching = query.trim().length > 0;
   const older = searching
@@ -437,7 +487,13 @@ function SwitcherMenu({
   ];
   const actionValues = searching
     ? []
-    : [...(hasChat ? [RENAME] : []), SETTINGS, ...(hasChat ? [DELETE] : [])];
+    : [
+        ...(hasChat ? [RENAME] : []),
+        FOLLOW,
+        ...(autoFollow && following ? [STOP_FOLLOWING] : []),
+        SETTINGS,
+        ...(hasChat ? [DELETE] : []),
+      ];
 
   const pick = (id: string) => {
     markRead(id);
@@ -521,6 +577,26 @@ function SwitcherMenu({
                 <CommandItem value={RENAME} onSelect={onRename} className="h-9">
                   <Pencil />
                   {t('Rename')}
+                </CommandItem>
+              )}
+              <CommandItem
+                value={FOLLOW}
+                onSelect={() =>
+                  useChatPanel.getState().setAutoFollow(!autoFollow)
+                }
+                className="min-h-9 items-start py-2"
+              >
+                <Eye className="mt-0.5" />
+                <FollowAlongLabel on={autoFollow} />
+              </CommandItem>
+              {autoFollow && following && (
+                <CommandItem
+                  value={STOP_FOLLOWING}
+                  onSelect={onStopFollowing}
+                  className="h-9"
+                >
+                  <EyeOff />
+                  {t('Stop following')}
                 </CommandItem>
               )}
               <CommandItem
@@ -708,6 +784,8 @@ const SEARCH_OLDER = 'switcher:search-older';
 const RETRY_OLDER = 'switcher:retry-older';
 const RETRY_LIST = 'switcher:retry-list';
 const RENAME = 'switcher:rename';
+const FOLLOW = 'switcher:follow-along';
+const STOP_FOLLOWING = 'switcher:stop-following';
 const SETTINGS = 'switcher:settings';
 const DELETE = 'switcher:delete';
 const SKELETON_WIDTHS = ['w-2/3', 'w-1/2', 'w-3/4'];

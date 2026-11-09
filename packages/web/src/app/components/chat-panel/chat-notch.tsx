@@ -14,6 +14,7 @@ import { useChatWidth } from './chat-window';
 
 export function ChatNotch({ className }: { className?: string }) {
   const hidden = useChatWidth() !== 'closed';
+  const needsYou = useChatPanel((s) => s.gateOpen);
   return (
     <div
       className={cn(
@@ -41,7 +42,9 @@ export function ChatNotch({ className }: { className?: string }) {
           <TooltipTrigger asChild>
             <button
               type="button"
-              aria-label={t('Chat')}
+              aria-label={
+                needsYou ? t('Chat is waiting for your answer') : t('Chat')
+              }
               aria-hidden={hidden || undefined}
               tabIndex={hidden ? -1 : 0}
               onClick={() => useChatPanel.getState().setOpen(true)}
@@ -52,7 +55,13 @@ export function ChatNotch({ className }: { className?: string }) {
                   : 'pointer-events-auto duration-(--dur-base)',
               )}
             >
-              <NotchChatIcon spark />
+              <NotchChatIcon spark={!needsYou} />
+              {needsYou && (
+                <span
+                  aria-hidden
+                  className="absolute top-3.25 left-6.5 size-2.5 rounded-full bg-accent-9"
+                />
+              )}
             </button>
           </TooltipTrigger>
           <TooltipContent side="right" className="flex items-center gap-2">

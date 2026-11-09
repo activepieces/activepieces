@@ -71,11 +71,23 @@ export function truncateLargeResult(result: unknown): unknown {
 }
 
 function buildOversizeEnvelope({ result, text }: { result: unknown, text: string }): { content: Array<{ type: 'text', text: string }> } {
-    const meta = isObject(result) && isObject(result['_meta']) ? result['_meta'] : undefined
     return {
         content: [{ type: 'text', text }],
-        ...spreadIfDefined('_meta', meta),
+        ...spreadIfDefined('_meta', resultMeta(result)),
     }
+}
+
+export function resultMeta(result: unknown): Record<string, unknown> | undefined {
+    return isObject(result) && isObject(result['_meta']) ? result['_meta'] : undefined
+}
+
+export function withoutApResource(result: unknown): unknown {
+    const meta = resultMeta(result)
+    if (!isObject(result) || isNil(meta) || !('apResource' in meta)) {
+        return result
+    }
+    const { apResource: _untrustedResource, ...ownMeta } = meta
+    return { ...result, _meta: ownMeta }
 }
 
 export function plainJsonSchema<T = JSONSchema7>(schema: JSONSchema7): T {

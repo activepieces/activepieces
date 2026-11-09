@@ -11,6 +11,7 @@ import { agentHelpers } from '.././agent-helpers'
 import { agentModelTier, agentTierCandidates, AgentTierRun } from '.././agent-model-tier'
 import { agentMcp } from '.././mcp/agent-mcp'
 import { chatPersonalizationService } from '.././personalization/chat-personalization-service'
+import { agentPageContextNote } from '.././prompt/agent-page-context-note'
 import { agentPrompt } from '.././prompt/agent-prompt'
 import { agentSurfaceNotes } from '.././prompt/agent-surface-notes'
 import { UserIdentity } from '.././prompt/agent-user-identity'
@@ -241,8 +242,12 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const resumedHistory = lock === 'handed-off' ? await agentHelpers.conversationRepo().findOneByOrFail({ id: conversationId, platformId }) : null
         const history = resumedHistory ?? conversation
         const previousMessages = history.messages as ModelMessage[]
-        const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
-        const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
+        const leadingNotes = [
+            agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) }),
+            await agentPageContextNote.build({ pageContext: input.pageContext, log }),
+        ].filter((note): note is string => !isNil(note))
+        const newUserContent = leadingNotes.reduceRight<UserContent>((content, note) => withLeadingNote({ content, note }), userContent)
+        const newUserMessage: ModelMessage = { role: 'user' as const, content: newUserContent }
         const allMessages = isNil(resumedHistory) ? [...previousMessages, newUserMessage] : previousMessages
         const fastModelSeesMessages = conversation.source !== AgentRunSource.CHAT
         const modelsSeeingMessages = isNil(tierRun)
