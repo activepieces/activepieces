@@ -1,0 +1,33 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const chat = vi.hoisted(() => ({ gateOpen: false }));
+
+vi.mock('@/features/workspace/lib/chat-panel-open', () => ({
+  useChatPanel: { getState: () => chat },
+}));
+
+import {
+  followHold,
+  useFollowHold,
+} from '@/features/chat/lib/follow/follow-hold';
+
+describe('followHold', () => {
+  afterEach(() => {
+    followHold.report({ pressing: false, drafting: false, scrolledUp: false });
+  });
+
+  it('holds while a pointer is pressed on the page', () => {
+    followHold.report({ pressing: true });
+
+    expect(followHold.holds({ fullPage: false })).toBe(true);
+    expect(followHold.pagePressed()).toBe(true);
+  });
+
+  it('lets go once the pointer is released', () => {
+    followHold.report({ pressing: true });
+    followHold.report({ pressing: false });
+
+    expect(followHold.holds({ fullPage: false })).toBe(false);
+    expect(useFollowHold.getState().pressing).toBe(false);
+  });
+});

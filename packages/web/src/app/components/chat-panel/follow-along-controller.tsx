@@ -44,6 +44,24 @@ export function FollowAlongController() {
   useEffect(() => authenticationSession.subscribe(followAlong.reset), []);
 
   useEffect(() => {
+    const press = (event: PointerEvent) => {
+      if (!pageFocus.inChat(event.target)) {
+        followHold.report({ pressing: true });
+      }
+    };
+    const release = () => followHold.report({ pressing: false });
+    window.addEventListener('pointerdown', press, true);
+    window.addEventListener('pointerup', release, true);
+    window.addEventListener('pointercancel', release, true);
+    return () => {
+      window.removeEventListener('pointerdown', press, true);
+      window.removeEventListener('pointerup', release, true);
+      window.removeEventListener('pointercancel', release, true);
+      release();
+    };
+  }, []);
+
+  useEffect(() => {
     let stopLeaving = (): void => undefined;
     const leaveIfDeleted = (change: FollowChange) => {
       if (change.op !== 'delete' || !change.navigable || embedded) return;
@@ -54,7 +72,9 @@ export function FollowAlongController() {
         if (!resourceRegistry.isOn(pathnameRef.current, change.resource)) {
           return true;
         }
-        if (pageFocus.isBusyIn(focused)) return false;
+        if (pageFocus.isBusyIn(focused) || followHold.pagePressed()) {
+          return false;
+        }
         const route = resourceRegistry.parentRoute(change.resource);
         selfNavRef.current = route;
         navigate(route, { replace: true });
