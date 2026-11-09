@@ -119,7 +119,9 @@ function AppShell({ handle }: { handle: RouteHandle }) {
           !embedded && 'max-md:h-svh max-md:flex-col',
         )}
       >
-        <AppSidebar mode={isPlatform ? 'platform' : 'app'} />
+        <div className="contents" inert={chatWidth === 'sheet'}>
+          <AppSidebar mode={isPlatform ? 'platform' : 'app'} />
+        </div>
         <div
           className={cn(
             'flex h-svh flex-1 min-w-0',

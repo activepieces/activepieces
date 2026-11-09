@@ -6,10 +6,12 @@ function widthFor({
   fullPage,
   open,
   mode,
+  phone,
 }: {
   fullPage: boolean;
   open: boolean;
   mode: ChatPanelSide;
+  phone: boolean;
 }): ChatWidth {
   if (fullPage) {
     return 'full';
@@ -17,13 +19,15 @@ function widthFor({
   if (!open) {
     return 'closed';
   }
-  return mode;
+  return phone ? 'sheet' : mode;
 }
 
 function toastPlacementFor(chatWidth: ChatWidth | null): ToastPlacement {
   switch (chatWidth) {
     case 'full':
       return { position: 'top-center', offset: { top: FULL_TOAST_TOP } };
+    case 'sheet':
+      return { position: 'top-center', offset: undefined };
     case 'right':
       return { position: 'bottom-left', offset: undefined };
     default:
@@ -87,6 +91,11 @@ const FULL_TOAST_TOP = 80;
 
 const EASE_OUT: CubicBezier = [0.23, 1, 0.32, 1];
 const EASE_DRAWER: CubicBezier = [0.32, 0.72, 0, 1];
+const GESTURE_SPRING: GestureSpring = {
+  type: 'spring',
+  bounce: 0,
+  visualDuration: 0.25,
+};
 
 const MOTION = {
   easeOut: EASE_OUT,
@@ -98,6 +107,7 @@ const MOTION = {
   move: 0.2,
   sheet: 0.26,
   highlightMax: 0.6,
+  gestureSpring: GESTURE_SPRING,
 };
 
 function cssBezier([x1, y1, x2, y2]: CubicBezier): string {
@@ -141,8 +151,9 @@ const chatLayoutUtils = {
 export { chatLayoutUtils, MOTION };
 
 type CubicBezier = [number, number, number, number];
+type GestureSpring = { type: 'spring'; bounce: number; visualDuration: number };
 
-export type ChatWidth = ChatPanelSide | 'full' | 'closed';
+export type ChatWidth = ChatPanelSide | 'sheet' | 'full' | 'closed';
 type ToastPlacement = {
   position: NonNullable<ToasterProps['position']>;
   offset: ToasterProps['offset'];
