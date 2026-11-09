@@ -10,6 +10,7 @@ import { safeStorage } from '@/lib/safe-storage';
 
 import { chatLayoutUtils } from './chat-layout';
 import { layoutMove } from './layout-move';
+import { parseHandle } from './shell-handle';
 
 function bindRouter(next: ChatRouter): () => void {
   router = next;
@@ -143,10 +144,10 @@ function followRouter(target: FollowableRouter): () => void {
 }
 
 function syncWithRoute({ location, matches }: ChatRouteState): void {
-  const handle = matches.findLast(
-    (match) => isObject(match.route.handle) && 'shell' in match.route.handle,
-  )?.route.handle;
-  if (!isObject(handle) || handle.redirectOnly === true) return;
+  const handle = matches
+    .map((match) => parseHandle(match.route.handle))
+    .findLast((parsed) => parsed !== null);
+  if (isNil(handle) || handle.redirectOnly === true) return;
   const panel = useChatPanel.getState();
   if (handle.chat !== 'full') {
     panel.setLastPage(`${location.pathname}${location.search}`);

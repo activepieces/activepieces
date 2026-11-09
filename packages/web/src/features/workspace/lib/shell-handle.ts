@@ -1,3 +1,4 @@
+import { isObject } from '@activepieces/core-utils';
 import { useMatches } from 'react-router-dom';
 
 function useShellMatch(): { handle: RouteHandle; templateId?: string } {
@@ -19,9 +20,15 @@ function useShellHandle(): RouteHandle {
   return useShellMatch().handle;
 }
 
-function isRouteHandle(value: unknown): value is RouteHandle {
-  return typeof value === 'object' && value !== null && 'shell' in value;
+function parseHandle(value: unknown): RouteHandle | null {
+  return isRouteHandle(value) ? value : null;
 }
+
+function isRouteHandle(value: unknown): value is RouteHandle {
+  return isObject(value) && SHELLS.some((shell) => shell === value.shell);
+}
+
+const SHELLS = ['project', 'builder', 'platform'] as const;
 
 const shellHandles = {
   project: { shell: 'project' },
@@ -49,10 +56,16 @@ const CHAT_ALLOWED: Record<RouteHandle['shell'], boolean> = {
   platform: false,
 };
 
-export { useShellMatch, useShellHandle, shellHandles, CHAT_ALLOWED };
+export {
+  useShellMatch,
+  useShellHandle,
+  parseHandle,
+  shellHandles,
+  CHAT_ALLOWED,
+};
 
 export type RouteHandle = {
-  shell: 'project' | 'builder' | 'platform';
+  shell: (typeof SHELLS)[number];
   chat?: 'full';
   projectHeader?: true;
   allowAnonymous?: true;

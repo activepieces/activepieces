@@ -1,5 +1,5 @@
-import { isObject } from '@activepieces/core-utils';
 
+import { parseHandle } from '@/features/workspace/lib/shell-handle';
 import { routeLocation } from '@/lib/route-location';
 
 function classifyLink({
@@ -52,13 +52,8 @@ function hasControlCharacter(value: string): boolean {
 }
 
 function isAppPage(pathname: string): boolean {
-  const handle = routeLocation.handleOf(pathname);
-  return (
-    isObject(handle) &&
-    typeof handle.shell === 'string' &&
-    APP_SHELLS.includes(handle.shell) &&
-    handle.allowAnonymous !== true
-  );
+  const handle = parseHandle(routeLocation.handleOf(pathname));
+  return handle !== null && handle.allowAnonymous !== true;
 }
 
 function isPublicPage(pathname: string): boolean {
@@ -76,14 +71,13 @@ function parseUrl({ href, origin }: { href: string; origin: string }) {
 }
 
 const ENCODED_SLASH = /%(2f|5c)/i;
-const APP_SHELLS = ['project', 'builder', 'platform'];
 const PUBLIC_PAGES = ['/forms', '/chats', '/templates'];
 
 export const markdownTextUtils = {
   classifyLink,
 };
 
-export type MarkdownLink =
+type MarkdownLink =
   | { kind: 'app'; route: string }
   | { kind: 'external'; href: string }
   | { kind: 'contact' }
