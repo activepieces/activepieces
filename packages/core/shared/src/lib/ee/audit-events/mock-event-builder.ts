@@ -26,6 +26,9 @@ import {
     FlowRunEvent,
     FlowUpdatedEvent,
     FolderEvent,
+    PieceCatalogEventData,
+    PieceCreatedEvent,
+    PieceVersionCreatedEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
     ProjectRoleEvent,
@@ -60,6 +63,25 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         projectDisplayName: project.displayName,
     }
     const flow = { id: apId(), externalId: apId(), created: isoNow, updated: isoNow }
+    const catalogEnvelope = {
+        id: apId(),
+        created: isoNow,
+        updated: isoNow,
+        platformId,
+    }
+    const catalogPiece: PieceCatalogEventData['piece'] = {
+        name: '@activepieces/piece-gmail',
+        displayName: 'Gmail',
+        version: '0.9.0',
+        previousVersion: '0.8.3',
+        changeType: 'minor',
+        pieceType: 'OFFICIAL',
+        minimumSupportedRelease: '0.88.2',
+        deprecated: false,
+    }
+    const catalogPieceSets: PieceCatalogEventData['pieceSets'] = [
+        { id: apId(), key: null, name: 'Default', isDefault: true },
+    ]
     const flowVersion = {
         id: apId(),
         displayName: 'Sample flow',
@@ -446,6 +468,28 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     flowVersionId: flowVersion.id,
                     flowDisplayName: flowVersion.displayName,
                     rejectionReason: event === ApplicationEventName.FLOW_APPROVAL_REJECTED ? 'Needs stricter validation' : null,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.PIECE_CREATED: {
+            const mock: PieceCreatedEvent = {
+                ...catalogEnvelope,
+                action: ApplicationEventName.PIECE_CREATED,
+                data: {
+                    piece: { ...catalogPiece, previousVersion: null, changeType: 'new' },
+                    pieceSets: catalogPieceSets,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.PIECE_VERSION_CREATED: {
+            const mock: PieceVersionCreatedEvent = {
+                ...catalogEnvelope,
+                action: ApplicationEventName.PIECE_VERSION_CREATED,
+                data: {
+                    piece: catalogPiece,
+                    pieceSets: catalogPieceSets,
                 },
             }
             return mock

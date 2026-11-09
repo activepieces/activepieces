@@ -1588,6 +1588,8 @@
   "Flow approval granted": "Flow approval granted",
   "Flow approval rejected": "Flow approval rejected",
   "Flow approval withdrawn": "Flow approval withdrawn",
+  "Piece added": "Piece added",
+  "Piece version released": "Piece version released",
   "Daily job health": "Daily job health",
   "Stability of platform jobs over the last 30 days.": "Stability of platform jobs over the last 30 days.",
   "View runs health": "View runs health",
