@@ -31,6 +31,7 @@ export const apDeleteFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                         text: `✅ Flow "${displayName}" has been permanently deleted.`,
                     }],
                     structuredContent: { flowId, deleted: true },
+                    ...mcpUtils.apResourceMeta({ kind: 'flow', id: flowId, projectId: mcp.projectId, op: 'delete', label: displayName }),
                 }
             }
             catch (err) {

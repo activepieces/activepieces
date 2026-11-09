@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { useShellHandle } from '../app-shell';
 
 import { ChatChrome, ChatLastPageTracker } from './chat-chrome';
+import { FollowAlongController } from './follow-along-controller';
 
 export function useChatWidth(): ChatWidth {
   const fullPage = useShellHandle().chat === 'full';
@@ -117,6 +118,7 @@ export function ChatPanel() {
   return (
     <aside
       ref={panelRef}
+      id={chatLayoutUtils.PANEL_ID}
       aria-label={t('Chat')}
       inert={!visible}
       style={
@@ -138,6 +140,8 @@ export function ChatPanel() {
     >
       <ChatRouterBinding />
       <ChatLastPageTracker />
+      <FollowAlongController />
+      <ChatAnnouncer />
       {mounted && <ChatChrome />}
       {visible && !full && (
         <div
@@ -206,6 +210,15 @@ export function ChatLauncher() {
     >
       <ChatSparkIcon className="size-5" />
     </Button>
+  );
+}
+
+function ChatAnnouncer() {
+  const announcement = useChatPanel((s) => s.announcement);
+  return (
+    <div aria-live="polite" role="status" className="sr-only">
+      {announcement && <span key={announcement.id}>{announcement.text}</span>}
+    </div>
   );
 }
 

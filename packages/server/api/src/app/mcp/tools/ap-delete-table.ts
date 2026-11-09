@@ -36,6 +36,7 @@ export const apDeleteTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                         type: 'text',
                         text: `✅ Table "${table.name}" deleted successfully.`,
                     }],
+                    ...mcpUtils.apResourceMeta({ kind: 'table', id: table.id, projectId: mcp.projectId, op: 'delete', label: table.name }),
                 }
             }
             catch (err) {
