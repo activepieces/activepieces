@@ -1,8 +1,9 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FieldType, McpToolDefinition, McpToolResult, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FieldType, McpToolDefinition, McpToolResult, ProjectScopedMcpServer, TableRecordsChangeOp } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { fieldService } from '../../tables/field/field.service'
+import { tableRoom } from '../../tables/table-room/table-room'
 import { mcpUtils } from './mcp-utils'
 import { fieldTypeSchema, formatFieldInfo, resolveTable, tableNotFoundError } from './table-utils'
 
@@ -31,7 +32,10 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     return tableNotFoundError(tableId)
                 }
                 const resolvedTableId = table.id
-                const fieldsChanged = (text: string): McpToolResult => ({ content: [{ type: 'text', text }], ...mcpUtils.apResourceMeta({ kind: 'table', id: resolvedTableId, projectId: mcp.projectId, op: 'update', label: table.name }) })
+                const fieldsChanged = async (text: string): Promise<McpToolResult> => {
+                    await tableRoom.notifyChanged({ tableId: resolvedTableId, change: { op: TableRecordsChangeOp.FIELDS_CHANGED }, editorSessionId: null })
+                    return { content: [{ type: 'text', text }], ...mcpUtils.apResourceMeta({ kind: 'table', id: resolvedTableId, projectId: mcp.projectId, op: 'update', label: table.name }) }
+                }
 
                 switch (operation) {
                     case 'ADD': {
@@ -53,7 +57,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             projectId: mcp.projectId,
                             request,
                         })
-                        return fieldsChanged(`✅ Field added: ${formatFieldInfo(field)}`)
+                        return await fieldsChanged(`✅ Field added: ${formatFieldInfo(field)}`)
                     }
                     case 'UPDATE': {
                         if (isNil(fieldId)) {
@@ -71,7 +75,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             projectId: mcp.projectId,
                             request: { name },
                         })
-                        return fieldsChanged(`✅ Field renamed: ${formatFieldInfo(field)}`)
+                        return await fieldsChanged(`✅ Field renamed: ${formatFieldInfo(field)}`)
                     }
                     case 'DELETE': {
                         if (isNil(fieldId)) {
@@ -85,7 +89,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                             id: fieldId,
                             projectId: mcp.projectId,
                         })
-                        return fieldsChanged(`✅ Field "${toDelete.name}" deleted successfully.`)
+                        return await fieldsChanged(`✅ Field "${toDelete.name}" deleted successfully.`)
                     }
                 }
             }

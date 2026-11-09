@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { EntitySourceType, ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { editorSession } from '../../flows/flow/editor-session'
 import { TableEntity } from '../table/table.entity'
 import { recordSideEffects } from './record-side-effects'
 import { RecordEntity } from './record.entity'
@@ -21,6 +22,7 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             request: request.body,
             projectId: request.projectId,
             logger: request.log,
+            editorSessionId: editorSession.idFromRequest(request),
         })
         await reply.status(StatusCodes.CREATED).send(records)
         await recordSideEffects(fastify.log).handleRecordsEvent({
@@ -44,6 +46,7 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             id: request.params.id,
             request: request.body,
             projectId: request.projectId,
+            editorSessionId: editorSession.idFromRequest(request),
         })
         await reply.status(StatusCodes.OK).send(record)
         if (!changed) {
@@ -64,6 +67,7 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
             ids: request.body.ids,
             projectId: request.projectId,
             tableId: request.body.tableId,
+            editorSessionId: editorSession.idFromRequest(request),
         })
         await reply.status(StatusCodes.OK).send([])
         await recordSideEffects(fastify.log).handleRecordsEvent({

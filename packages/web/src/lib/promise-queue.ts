@@ -26,6 +26,10 @@ export class PromiseQueue {
     return this.unsettled.size === 0;
   }
 
+  async idle(): Promise<void> {
+    await this.firstFailureUntilIdle();
+  }
+
   async drain(): Promise<void> {
     const failure = await this.firstFailureUntilIdle();
     if (failure) {

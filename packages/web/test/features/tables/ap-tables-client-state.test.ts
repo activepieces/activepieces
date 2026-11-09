@@ -11,7 +11,11 @@ import { createApTableStore } from '@/features/tables/stores/store/ap-tables-cli
 const serverUpdateRecord = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/tables/stores/store/ap-tables-server-state', () => ({
-  createServerState: () => ({ updateRecord: serverUpdateRecord }),
+  createServerState: (_table: unknown, fields: unknown[]) => ({
+    updateRecord: serverUpdateRecord,
+    link: vi.fn(),
+    fields,
+  }),
 }));
 
 const table: Table = {

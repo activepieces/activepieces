@@ -3,6 +3,7 @@ import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authoriza
 import { fieldController } from './field/field.controller'
 import { recordController } from './record/record.controller'
 import { tablesController } from './table/table.controller'
+import { tableRoomModule } from './table-room/table-room.module'
 
 export const tablesModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
@@ -10,4 +11,5 @@ export const tablesModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(tablesController, { prefix: '/v1/tables' })
     await app.register(fieldController, { prefix: '/v1/fields' })
     await app.register(recordController, { prefix: '/v1/records' })
+    await app.register(tableRoomModule)
 }

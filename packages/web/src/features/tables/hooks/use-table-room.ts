@@ -1,0 +1,106 @@
+import { isNil } from '@activepieces/core-utils';
+import {
+  JoinTableRoomResponse,
+  PopulatedRecord,
+  TableRecordsChangedEvent,
+  TableRecordsChangeOp,
+  WebsocketClientEvent,
+  WebsocketServerEvent,
+} from '@activepieces/shared';
+import { useEffect } from 'react';
+
+import {
+  emitInProject,
+  useSocket,
+} from '@/components/providers/socket-provider';
+import { editorSession } from '@/lib/editor-session';
+import { errorReporting } from '@/lib/error-reporting';
+
+export function useTableRoom({
+  tableId,
+  onChange,
+  onJoined,
+}: {
+  tableId: string | undefined;
+  onChange: (change: TableChange) => void;
+  onJoined: (join: { sentAt: number }) => void;
+}) {
+  const socket = useSocket();
+  useEffect(() => {
+    if (isNil(tableId)) {
+      return;
+    }
+    let active = true;
+    const join = () =>
+      emitInProject(() => {
+        if (!active) {
+          return;
+        }
+        const sentAt = Date.now();
+        socket
+          .timeout(JOIN_TIMEOUT_MS)
+          .emit(
+            WebsocketServerEvent.JOIN_TABLE_ROOM,
+            { tableId },
+            (error: Error | null, response: unknown) => {
+              if (!active) {
+                return;
+              }
+              if (!isNil(error)) {
+                errorReporting.report({ error, source: 'table-live-updates' });
+                return;
+              }
+              const parsed = JoinTableRoomResponse.safeParse(response);
+              if (parsed.success && parsed.data.joined) {
+                onJoined({ sentAt });
+              }
+            },
+          );
+      });
+    const onRecordsChanged = (event: TableRecordsChangedEvent) => {
+      if (
+        event.tableId !== tableId ||
+        event.editorSessionId === editorSession.getId()
+      ) {
+        return;
+      }
+      onChange(changeOf(event));
+    };
+    socket.on(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onRecordsChanged);
+    socket.on('connect', join);
+    if (socket.connected) {
+      join();
+    }
+    return () => {
+      active = false;
+      socket.off(WebsocketClientEvent.TABLE_RECORDS_CHANGED, onRecordsChanged);
+      socket.off('connect', join);
+      if (socket.connected) {
+        socket.emit(WebsocketServerEvent.LEAVE_TABLE_ROOM, { tableId });
+      }
+    };
+  }, [socket, tableId, onChange, onJoined]);
+}
+
+function changeOf(event: TableRecordsChangedEvent): TableChange {
+  switch (event.op) {
+    case TableRecordsChangeOp.CREATED:
+    case TableRecordsChangeOp.UPDATED:
+      return { type: 'rows', records: event.records, removedIds: [] };
+    case TableRecordsChangeOp.DELETED:
+      return { type: 'rows', records: [], removedIds: event.recordIds };
+    case TableRecordsChangeOp.CLEARED:
+      return { type: 'cleared' };
+    case TableRecordsChangeOp.RELOAD:
+      return { type: 'reload', scope: 'records' };
+    case TableRecordsChangeOp.FIELDS_CHANGED:
+      return { type: 'reload', scope: 'fields' };
+  }
+}
+
+const JOIN_TIMEOUT_MS = 10_000;
+
+export type TableChange =
+  | { type: 'rows'; records: PopulatedRecord[]; removedIds: string[] }
+  | { type: 'cleared' }
+  | { type: 'reload'; scope: 'records' | 'fields' };
