@@ -253,7 +253,14 @@ describe('ChatChrome', () => {
     expect(screen.getByRole('button', { name: 'Hide history' })).toBe(toggle);
   });
 
-  it('closes History, not the chat, on Escape', () => {
+  it('offers Follow along before the first message', () => {
+    useChatPanel.setState({ conversationId: null });
+    renderChrome();
+
+    expect(screen.getByText('Follow along')).toBeTruthy();
+  });
+
+    it('closes History, not the chat, on Escape', () => {
     getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
     renderChrome();
     const toggle = screen.getByRole('button', { name: 'History' });
