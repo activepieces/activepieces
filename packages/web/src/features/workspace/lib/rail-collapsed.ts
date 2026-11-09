@@ -40,10 +40,6 @@ const useRailCollapsed = create<RailCollapsedState>((set) => ({
     set({ preference: persist(collapsed), openedOn: pathname }),
 }));
 
-export function useRailOpen(): boolean {
-  return useRailState().open;
-}
-
 export function useRailOpenState() {
   const { open, setCollapsed } = useRailState();
   const onOpenChange = useCallback(
