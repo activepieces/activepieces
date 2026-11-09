@@ -115,10 +115,12 @@ describe('Piece catalog broadcast', () => {
         expect(addSpy).not.toHaveBeenCalled()
     })
 
-    it('destination with all 60 old events gets nothing', async () => {
+    it('destination with every old event gets nothing', async () => {
         const ctx = await createTestContext(app, ENTITLED_PLAN)
         const oldEvents = Object.values(ApplicationEventName).filter((event) => !PIECE_EVENTS.includes(event))
-        expect(oldEvents).toHaveLength(60)
+        expect(oldEvents.length).toBeGreaterThan(0)
+        expect(oldEvents).not.toContain(ApplicationEventName.PIECE_CREATED)
+        expect(oldEvents).not.toContain(ApplicationEventName.PIECE_VERSION_CREATED)
         await subscribe({ platformId: ctx.platform.id, events: oldEvents })
 
         const result = await eventDestinationService(app.log).broadcast({ changes: [buildChange({ changeType: 'new', previousVersion: null })] })
@@ -161,7 +163,7 @@ describe('Piece catalog broadcast', () => {
         expect(queuedJobs()[0].data.payload.data.piece).toMatchObject({ changeType: 'patch', version: '1.0.1' })
     })
 
-    it('same delivery key twice queues one job', async () => {
+    it('same delivery key yields the same job id', async () => {
         const ctx = await createTestContext(app, ENTITLED_PLAN)
         await subscribe({ platformId: ctx.platform.id })
         const change = buildChange()
