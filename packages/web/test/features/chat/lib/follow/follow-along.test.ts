@@ -140,9 +140,22 @@ describe('followAlong', () => {
     expect(useFollowAlong.getState().target).toBeNull();
   });
 
+  it('keeps a newer flash of the same key until the next run starts', () => {
+    followAlong.flash(['a', 'b']);
+    const first = useFollowAlong.getState().flashes;
+    followAlong.flash(['b']);
+    const next = useFollowAlong.getState().flashes;
+    expect(next.a).toBe(first.a);
+    expect(next.b).toBeGreaterThan(first.b);
+
+    toolResult({ ctx: sent(uid('run')), result: output({ id: 't1' }) });
+    expect(useFollowAlong.getState().flashes).toEqual({});
+  });
+
   it('forgets everything from the last user or project on reset', () => {
     const ctx = sent(uid('run'));
     toolResult({ ctx, result: output({ id: 't1' }) });
+    followAlong.flash(['a']);
     expect(followAlong.claimHistoryPush('r-reset')).toBe(true);
     expect(followAlong.claimHistoryPush('r-reset')).toBe(false);
 
@@ -151,6 +164,7 @@ describe('followAlong', () => {
     expect(useFollowAlong.getState()).toMatchObject({
       phase: 'idle',
       target: null,
+      flashes: {},
       liveRuns: {},
     });
     expect(followAlong.claimHistoryPush('r-reset')).toBe(true);

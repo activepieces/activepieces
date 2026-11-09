@@ -1,4 +1,4 @@
-import { isObject } from '@activepieces/core-utils';
+import { isObject, tryCatchSync } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { create } from 'zustand';
 
@@ -22,9 +22,38 @@ function onChunks({
     useFollowAlong.setState({ liveRuns: { ...liveRuns, [ctx.runId]: ctx } });
   }
   for (const chunk of chunks) {
-    if (!isObject(chunk) || chunk.type !== 'tool-output-available') continue;
+    if (!isObject(chunk)) continue;
+    if (
+      chunk.type === 'tool-input-available' &&
+      typeof chunk.toolCallId === 'string' &&
+      typeof chunk.toolName === 'string'
+    ) {
+      const { toolCalls } = useFollowMemory.getState();
+      useFollowMemory.setState({
+        toolCalls: {
+          ...toolCalls,
+          [chunk.toolCallId]: { toolName: chunk.toolName, input: chunk.input },
+        },
+      });
+      continue;
+    }
+    if (chunk.type !== 'tool-output-available') continue;
     const resolved = resourceRegistry.resolve(chunk.output);
     if (!resolved) continue;
+    const call =
+      typeof chunk.toolCallId === 'string'
+        ? takeToolCall(chunk.toolCallId)
+        : undefined;
+    if (call) {
+      rememberUnseen({
+        resource: resolved.ref,
+        keys: highlightKeys({
+          ...call,
+          output: chunk.output,
+          ref: resolved.ref,
+        }),
+      });
+    }
     onChange({
       resource: resolved.ref,
       op: resolved.op,
@@ -32,6 +61,12 @@ function onChunks({
       navigable: mayNavigate(ctx),
     });
   }
+}
+
+function takeToolCall(toolCallId: string): ToolCall | undefined {
+  const { [toolCallId]: call, ...rest } = useFollowMemory.getState().toolCalls;
+  if (call) useFollowMemory.setState({ toolCalls: rest });
+  return call;
 }
 
 function onChange(change: FollowChange): void {
@@ -64,6 +99,8 @@ function begin(): boolean {
   useFollowAlong.setState({
     phase: 'editing',
     following: true,
+    flashes: {},
+    scrollTaken: false,
   });
   return true;
 }
@@ -109,6 +146,92 @@ function stopFollowing(): void {
   useFollowAlong.setState({ following: false });
 }
 
+function flash(keys: string[]): void {
+  if (keys.length === 0) return;
+  const flashCount = useFollowMemory.getState().flashCount + 1;
+  useFollowMemory.setState({ flashCount });
+  const lit = Object.fromEntries(keys.map((key) => [key, flashCount]));
+  useFollowAlong.setState({
+    flashes: { ...useFollowAlong.getState().flashes, ...lit },
+  });
+}
+
+// Changes made while the user was elsewhere light up when they get there.
+function rememberUnseen({
+  resource,
+  keys,
+}: {
+  resource: ResourceRef;
+  keys: string[];
+}): void {
+  if (keys.length === 0) return;
+  if (resourceRegistry.isOn(window.location.pathname, resource)) return;
+  const scope = resourceRegistry.keyOf(resource);
+  const added = Object.fromEntries(
+    keys.map((key): [string, true] => [`${scope}|${key}`, true]),
+  );
+  const { unseen } = useFollowMemory.getState();
+  useFollowMemory.setState({ unseen: { ...unseen, ...added } });
+}
+
+function takeUnseen({
+  resource,
+  key,
+}: {
+  resource: Pick<ResourceRef, 'kind' | 'id'>;
+  key: string;
+}): boolean {
+  const unseenKey = `${resourceRegistry.keyOf(resource)}|${key}`;
+  const { [unseenKey]: seen, ...rest } = useFollowMemory.getState().unseen;
+  if (!seen) return false;
+  useFollowMemory.setState({ unseen: rest });
+  return true;
+}
+
+function highlightKeys({
+  toolName,
+  input,
+  output,
+  ref,
+}: {
+  toolName: string;
+  input: unknown;
+  output: unknown;
+  ref: ResourceRef;
+}): string[] {
+  const tool = toolName.slice(toolName.lastIndexOf('ap_'));
+  const args = isObject(input) ? input : {};
+  switch (tool) {
+    case 'ap_add_step': {
+      const stepName = structuredField(output, 'stepName');
+      return stepName ? [`flow-step:${stepName}`] : [];
+    }
+    case 'ap_update_step':
+      return typeof args.stepName === 'string'
+        ? [`flow-step:${args.stepName}`]
+        : [];
+    case 'ap_update_trigger':
+      return ['flow-step:trigger'];
+    case 'ap_rename_flow':
+      return [`flow-name:${ref.id}`];
+    case 'ap_lock_and_publish':
+    case 'ap_change_flow_status':
+      return [`flow-status:${ref.id}`];
+    default:
+      return [];
+  }
+}
+
+function structuredField(output: unknown, field: string): string | null {
+  const parsed =
+    typeof output === 'string'
+      ? tryCatchSync<unknown>(() => JSON.parse(output)).data
+      : output;
+  if (!isObject(parsed) || !isObject(parsed.structuredContent)) return null;
+  const value = parsed.structuredContent[field];
+  return typeof value === 'string' ? value : null;
+}
+
 function isFollowing(resource: Pick<ResourceRef, 'kind' | 'id'>): boolean {
   const { target, phase } = useFollowAlong.getState();
   return (
@@ -137,12 +260,14 @@ function initialFollowState(): FollowState {
     target: null,
     phase: 'idle',
     following: true,
+    flashes: {},
+    scrollTaken: false,
     liveRuns: {},
   };
 }
 
 function initialMemory(): FollowMemory {
-  return { pushedRuns: {} };
+  return { toolCalls: {}, unseen: {}, pushedRuns: {}, flashCount: 0 };
 }
 
 function onToolDone(listener: (change: FollowChange) => void): () => void {
@@ -160,9 +285,11 @@ export const followAlong = {
   onChunks,
   endRun,
   stopFollowing,
+  flash,
   isFollowing,
   claimHistoryPush,
   onToolDone,
+  takeUnseen,
   reset,
 };
 
@@ -179,14 +306,21 @@ export type FollowChange = {
   navigable: boolean;
 };
 
+type ToolCall = { toolName: string; input: unknown };
+
 // Bookkeeping that no component renders from.
 type FollowMemory = {
+  toolCalls: Record<string, ToolCall>;
+  unseen: Record<string, true>;
   pushedRuns: Record<string, true>;
+  flashCount: number;
 };
 
 type FollowState = {
   target: ResourceRef | null;
   phase: 'idle' | 'editing';
   following: boolean;
+  flashes: Record<string, number>;
+  scrollTaken: boolean;
   liveRuns: Record<string, RunContext>;
 };
