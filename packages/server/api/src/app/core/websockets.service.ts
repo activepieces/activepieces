@@ -56,13 +56,14 @@ export const websocketService = {
             case PrincipalType.USER: {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 listener[PrincipalType.USER][event] = handler as unknown as WebsocketListener<any, PrincipalType.USER>
-                if (!isNil(options?.permission)) {
-                    eventPermissions[event] = options.permission
+                const { permission, rejectResponse, orderedWithSwitch } = options ?? {}
+                if (!isNil(permission)) {
+                    eventPermissions[event] = permission
                 }
-                if (!isNil(options?.rejectResponse)) {
-                    eventRejectResponses[event] = options.rejectResponse
+                if (!isNil(rejectResponse)) {
+                    eventRejectResponses[event] = rejectResponse
                 }
-                if (options?.orderedWithSwitch === true) {
+                if (orderedWithSwitch === true) {
                     eventsOrderedWithSwitch.add(event)
                 }
                 break
