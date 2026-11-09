@@ -58,6 +58,10 @@ import {
   SetupRequiredState,
 } from './components/chat-empty-state';
 import { ComposerHandle } from './components/chat-input';
+import {
+  KeepBottomOnFooterGrowth,
+  MatchScrollGutter,
+} from './components/chat-scroll-sync';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import {
@@ -160,6 +164,7 @@ function ChatBoxContent({
   }, [conversationId, setStoreConversationId]);
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!isStreaming) return;
     const handler = (e: KeyboardEvent) => {
@@ -425,9 +430,9 @@ function ChatBoxContent({
               className="flex-1 relative h-full"
               style={{
                 maskImage:
-                  'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
+                  'linear-gradient(to bottom, black 0%, black calc(100% - 24px), transparent 100%)',
                 WebkitMaskImage:
-                  'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
+                  'linear-gradient(to bottom, black 0%, black calc(100% - 24px), transparent 100%)',
               }}
             >
               <ChatContainerContent
@@ -533,13 +538,18 @@ function ChatBoxContent({
               </ChatContainerContent>
               <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
               <ScrolledEdge />
+              <MatchScrollGutter footerRef={footerRef} />
+              <KeepBottomOnFooterGrowth footerRef={footerRef} />
               <ReportScrolledUp />
             </ChatContainerRoot>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="px-3 @chat-sm/chat:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div
+        ref={footerRef}
+        className="pl-3 pr-[calc(0.75rem+var(--chat-scroll-gutter,0px))] @chat-sm/chat:pl-6 @chat-sm/chat:pr-[calc(1.5rem+var(--chat-scroll-gutter,0px))] pb-[max(1rem,env(safe-area-inset-bottom))]"
+      >
         <div className="max-w-3xl mx-auto relative">
           {showOnboardingCard && (
             <div className="mb-3">

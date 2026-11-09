@@ -234,7 +234,7 @@ export function ChatPanel() {
         <div
           style={phone ? undefined : { width: full ? '100%' : `${width}px` }}
           className={cn(
-            'flex flex-col',
+            '@container/chat flex flex-col',
             phone
               ? 'min-h-0 flex-1'
               : ['absolute inset-y-0', side === 'left' ? 'left-0' : 'right-0'],

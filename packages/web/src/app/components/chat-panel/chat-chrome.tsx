@@ -113,7 +113,7 @@ export function ChatChrome() {
       <div
         data-chat-header
         className={cn(
-          'relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-2',
+          'relative flex h-14 shrink-0 items-center gap-2 pr-3 pl-1 @chat-sm/chat:pl-4',
           sheet && 'touch-none select-none',
         )}
       >
