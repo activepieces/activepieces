@@ -1,10 +1,18 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus, X } from 'lucide-react';
+import { Maximize2, PanelLeft, PanelRight, Plus, X } from 'lucide-react';
 import { memo } from 'react';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Tooltip,
   TooltipContent,
@@ -17,11 +25,19 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import { windowSizeHooks } from '@/features/workspace/lib/window-size-hooks';
+
+import { useActiveConversationId, useChatWidth } from './chat-window';
 
 export function ChatChrome() {
-  const conversationId = useChatPanel((s) => s.conversationId);
+  const layout = useChatWidth();
+  const conversationId = useActiveConversationId();
   const newChatToken = useChatPanel((s) => s.newChatToken);
   const pendingPrompt = useChatPanel((s) => s.pendingPrompt);
+  const full = layout === 'full';
+
+  const phone = windowSizeHooks.useIsPhone();
+  const embedded = useEmbedding().embedState.isEmbedded;
 
   const startFresh = () => {
     chatPanelUtils.startNewChat();
@@ -40,17 +56,21 @@ export function ChatChrome() {
           <HeaderButton label={t('New chat')} onClick={startFresh}>
             <Plus />
           </HeaderButton>
-          <HeaderButton
-            label={t('Close')}
-            onClick={() => useChatPanel.getState().setOpen(false)}
-          >
-            <X />
-          </HeaderButton>
+          {!phone && !embedded && <LayoutMenu />}
+          {!full && (
+            <HeaderButton
+              label={t('Close')}
+              onClick={() => useChatPanel.getState().setOpen(false)}
+            >
+              <X />
+            </HeaderButton>
+          )}
         </div>
       </div>
       <div className="relative min-h-0 flex-1">
         <div className="h-full">
           <ChatBody
+            full={full}
             conversationId={conversationId}
             newChatToken={newChatToken}
             prompt={pendingPrompt}
@@ -62,10 +82,12 @@ export function ChatChrome() {
 }
 
 const ChatBody = memo(function ChatBody({
+  full,
   conversationId,
   newChatToken,
   prompt,
 }: {
+  full: boolean;
   conversationId: string | null;
   newChatToken: number;
   prompt?: string;
@@ -75,6 +97,9 @@ const ChatBody = memo(function ChatBody({
     queryClient
       .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
       .catch(() => undefined);
+  const showOnPage = (id: string | null) => {
+    if (full) chatPanelUtils.showOnFullPage(id);
+  };
   return (
     <AIChatBox
       key={newChatToken}
@@ -83,6 +108,7 @@ const ChatBody = memo(function ChatBody({
       initialPrompt={prompt}
       onConversationCreated={(id) => {
         useChatPanel.getState().conversationCreated(id);
+        showOnPage(id);
         invalidate();
       }}
       onTitleUpdate={() => {
@@ -97,6 +123,51 @@ const ChatBody = memo(function ChatBody({
     />
   );
 });
+
+function LayoutMenu() {
+  const layout = useChatWidth();
+  const mode = useChatPanel((s) => s.mode);
+  const current = layout === 'full' ? 'full' : mode;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <HeaderButton label={t('Chat layout')}>
+          <PanelLeft />
+        </HeaderButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-44"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <DropdownMenuRadioGroup
+          value={current}
+          onValueChange={(value) => {
+            if (value === current) return;
+            if (value === 'full') {
+              chatPanelUtils.expand();
+            } else if (value === 'left' || value === 'right') {
+              chatPanelUtils.collapse(value);
+            }
+          }}
+        >
+          <DropdownMenuRadioItem value="left">
+            <PanelLeft className="size-4" />
+            {t('On the left')}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="right">
+            <PanelRight className="size-4" />
+            {t('On the right')}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="full">
+            <Maximize2 className="size-4" />
+            {t('Full page')}
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function ChatTitle({ conversationId }: { conversationId: string | null }) {
   const { data } = useQuery({

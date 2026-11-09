@@ -3,12 +3,17 @@ import type { ToasterProps } from 'sonner';
 import type { ChatPanelSide } from './chat-panel-open';
 
 function widthFor({
+  fullPage,
   open,
   mode,
 }: {
+  fullPage: boolean;
   open: boolean;
   mode: ChatPanelSide;
 }): ChatWidth {
+  if (fullPage) {
+    return 'full';
+  }
   if (!open) {
     return 'closed';
   }
@@ -17,6 +22,8 @@ function widthFor({
 
 function toastPlacementFor(chatWidth: ChatWidth | null): ToastPlacement {
   switch (chatWidth) {
+    case 'full':
+      return { position: 'top-center', offset: { top: FULL_TOAST_TOP } };
     case 'right':
       return { position: 'bottom-left', offset: undefined };
     default:
@@ -72,6 +79,7 @@ const SIDEBAR_WIDTH_REM = 15.5;
 const RAIL_WIDTH_REM = 3;
 const CARD_CHROME = 10;
 const PANEL_ID = 'ap-chat-panel';
+const FULL_TOAST_TOP = 80;
 
 const EASE_OUT: CubicBezier = [0.23, 1, 0.32, 1];
 const EASE_DRAWER: CubicBezier = [0.32, 0.72, 0, 1];

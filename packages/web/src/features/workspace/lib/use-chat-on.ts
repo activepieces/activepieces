@@ -9,7 +9,12 @@ export function useChatEnabled(): boolean {
 }
 
 export function useChatOn(): boolean {
-  const enabled = useChatEnabled();
-  const { shell } = useShellHandle();
-  return enabled && CHAT_ALLOWED[shell];
+  const embedded = useEmbedding().embedState.isEmbedded;
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { shell, chat } = useShellHandle();
+  return (
+    platform.plan.chatEnabled &&
+    CHAT_ALLOWED[shell] &&
+    (!embedded || chat === 'full')
+  );
 }

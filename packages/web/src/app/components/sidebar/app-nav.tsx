@@ -15,7 +15,6 @@ import {
   Lock,
   Shield,
   SlidersHorizontal,
-  SquarePen,
   Unplug,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -24,6 +23,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { ChatSparkIcon } from '@/components/icons/chat-spark';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   DropdownMenu,
@@ -41,13 +41,14 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { useAgentsNavVisible } from '@/features/agents';
-import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
   getProjectName,
   projectCollectionUtils,
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
+import { chatPanelUtils } from '@/features/workspace/lib/chat-panel-open';
+import { useChatOn } from '@/features/workspace/lib/use-chat-on';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -104,9 +105,9 @@ export function AppNav() {
 }
 
 function DriversGroup() {
-  const { platform } = platformHooks.useCurrentPlatform();
   const { reachesMcp } = mcpHooks.useMcpReach({ enabled: true });
-  const showChat = platform.plan.chatEnabled;
+  const showChat = useChatOn();
+  const chatRoute = chatPanelUtils.useChatRoute();
 
   if (!showChat && !reachesMcp) {
     return null;
@@ -119,12 +120,9 @@ function DriversGroup() {
           {showChat && (
             <ApSidebarItem
               type="link"
-              to="/chat"
-              icon={SquarePen}
+              to={chatRoute}
+              icon={ChatSparkIcon}
               label={t('Chat')}
-              onClick={() =>
-                window.dispatchEvent(new Event(chatUtils.newChatEvent))
-              }
             />
           )}
           {reachesMcp && (
