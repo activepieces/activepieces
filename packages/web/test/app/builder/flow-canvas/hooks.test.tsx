@@ -300,7 +300,7 @@ describe('useRefreshDraftOnPush', () => {
     expect(store.getState().flowVersion.displayName).toBe(
       'Renamed by the chat',
     );
-    expect(followAlong.flash).toHaveBeenCalledWith([]);
+    expect(followAlong.flash).toHaveBeenCalledWith(['flow-name:flow-1']);
   });
 
   it('shows a collaborator edit without the sheen when no chat follows the flow', async () => {

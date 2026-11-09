@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 
+import { KbdHint, modShortcut } from '@/components/custom/kbd-hint';
 import { chatSparkPaths } from '@/components/icons/chat-spark';
 import {
   Tooltip,
@@ -14,6 +15,7 @@ import { useChatWidth } from './chat-window';
 
 export function ChatNotch({ className }: { className?: string }) {
   const hidden = useChatWidth() !== 'closed';
+  const needsYou = useChatPanel((s) => s.gateOpen);
   return (
     <div
       className={cn(
@@ -41,7 +43,7 @@ export function ChatNotch({ className }: { className?: string }) {
           <TooltipTrigger asChild>
             <button
               type="button"
-              aria-label={t('Chat')}
+              aria-label={needsYou ? t('Chat, it needs you') : t('Chat')}
               aria-keyshortcuts="Meta+J Control+J"
               aria-hidden={hidden || undefined}
               tabIndex={hidden ? -1 : 0}
@@ -54,11 +56,17 @@ export function ChatNotch({ className }: { className?: string }) {
               )}
             >
               <NotchChatIcon />
+              {needsYou && (
+                <span
+                  aria-hidden
+                  className="absolute top-1 left-9 size-2.5 rounded-full border-2 border-gray-2 bg-accent-9"
+                />
+              )}
             </button>
           </TooltipTrigger>
           <TooltipContent side="right" className="flex items-center gap-2">
             {t('Chat')}
-            <span className="text-xs opacity-50">⌘J</span>
+            <KbdHint>{modShortcut({ key: 'J' })}</KbdHint>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

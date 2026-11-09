@@ -1,6 +1,6 @@
 import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -13,11 +13,18 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { matchPath, useLocation } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { DEFAULT_USE_CASES } from '@/features/chat/use-cases/default-use-cases';
@@ -26,7 +33,14 @@ import {
   UseCaseCard,
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { chatLayoutUtils } from '@/features/workspace/lib/chat-layout';
+import {
+  chatPanelUtils,
+  useChatPanel,
+} from '@/features/workspace/lib/chat-panel-open';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { routesThatRequireProjectId } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import { OnboardingWelcome } from './onboarding-welcome';
@@ -37,19 +51,21 @@ export function ChatEmptyState({
   onboarding,
   showFlowCards,
   onSend,
+  onFill,
 }: {
   incognito: boolean;
   hasInput: boolean;
   onboarding: boolean;
   showFlowCards: boolean;
   onSend: (text: string) => void;
+  onFill: (text: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useWidthOf(containerRef);
   return (
     <div ref={containerRef} className="h-full">
       {width === null ? null : width < WIDE_EMPTY_STATE_MIN_WIDTH ? (
-        <NarrowEmptyState onSend={onSend} />
+        <NarrowEmptyState onSend={onSend} onFill={onFill} />
       ) : onboarding ? (
         <OnboardingWelcome />
       ) : (
@@ -57,7 +73,7 @@ export function ChatEmptyState({
           incognito={incognito}
           hasInput={hasInput}
           showFlowCards={showFlowCards}
-          onSuggestionClick={onSend}
+          onSuggestionClick={onFill}
         />
       )}
     </div>
@@ -78,14 +94,22 @@ function useWidthOf(ref: RefObject<HTMLElement | null>): number | null {
   return width;
 }
 
-function NarrowEmptyState({ onSend }: { onSend: (text: string) => void }) {
+function NarrowEmptyState({
+  onSend,
+  onFill,
+}: {
+  onSend: (text: string) => void;
+  onFill: (text: string) => void;
+}) {
   const { data: user } = userHooks.useCurrentUser();
+  const { pathname } = useLocation();
+  const onResource = RESOURCE_PAGES.some(
+    (pattern) => matchPath({ path: pattern, end: false }, pathname) !== null,
+  );
   const name = user?.firstName;
-  const suggestions = [
-    t('Build me a flow for new leads'),
-    t('What saved us the most time this month?'),
-    t('Why did my last run fail?'),
-  ];
+  const suggestions = (
+    onResource ? [PAGE_SUGGESTION, ...SUGGESTIONS] : SUGGESTIONS
+  ).slice(0, 3);
   return (
     <div className="flex h-full flex-col justify-end gap-3 px-4 pb-3">
       <p className="text-base font-semibold text-gray-12">
@@ -94,12 +118,15 @@ function NarrowEmptyState({ onSend }: { onSend: (text: string) => void }) {
           : t('What should I do?')}
       </p>
       <div className="flex flex-col items-start gap-1.5">
-        {suggestions.map((text) => {
+        {suggestions.map((suggestion) => {
+          const text = t(suggestion.text);
           return (
             <Button
-              key={text}
+              key={suggestion.text}
               variant="ghost"
-              onClick={() => onSend(text)}
+              onClick={() =>
+                suggestion.kind === 'build' ? onFill(text) : onSend(text)
+              }
               className="h-auto max-w-full justify-start rounded-full border px-3 py-1.5 text-gray-11 hover:bg-gray-3 active:bg-gray-4"
             >
               <TextWithTooltip tooltipMessage={text}>
@@ -178,27 +205,75 @@ function CollapseOnInput({
 }
 
 export function SetupRequiredState() {
-  const navigate = useNavigate();
+  const isAdmin = useIsPlatformAdmin();
+
+  const connect = () => {
+    chatPanelUtils.openBeside({
+      route: '/platform/ai',
+      push: true,
+      name: t('AI providers'),
+    });
+    if (window.innerWidth >= chatLayoutUtils.MOBILE_BREAKPOINT) {
+      useChatPanel.getState().setOpen(true);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-gray-3">
-        <Settings className="h-8 w-8 text-gray-11" />
-      </div>
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold">
-          {t('Set up an AI provider to get started')}
-        </h2>
-        <p className="text-gray-11 text-sm max-w-md">
-          {t(
-            'AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.',
+    <ChatNotice
+      icon={<Sparkles className="size-5 text-gray-11" />}
+      title={t('Chat needs an AI provider')}
+      body={
+        isAdmin
+          ? t('Connect an AI provider to start chatting.')
+          : t('Ask an admin to connect an AI provider.')
+      }
+      action={
+        isAdmin ? (
+          <Button size="sm" onClick={connect}>
+            {t('Connect an AI provider')}
+          </Button>
+        ) : null
+      }
+    />
+  );
+}
+
+function ChatNotice({
+  icon,
+  title,
+  body,
+  action,
+}: {
+  icon: ReactNode;
+  title: string;
+  body?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="@container flex h-full min-w-0 flex-1 flex-col">
+      <Empty className="items-start justify-end gap-3 rounded-none px-4 pt-4 pb-6 text-left md:px-4 md:pt-4 md:pb-6 @chat-md:items-center @chat-md:justify-center @chat-md:px-6 @chat-md:text-center">
+        <EmptyHeader className="items-start gap-0 text-left @chat-md:items-center @chat-md:text-center">
+          <EmptyMedia
+            variant="icon"
+            className="mb-3 rounded-lg @chat-md:size-12"
+          >
+            {icon}
+          </EmptyMedia>
+          <EmptyTitle
+            className="text-gray-12 @chat-md:text-xl"
+            role="heading"
+            aria-level={2}
+          >
+            {title}
+          </EmptyTitle>
+          {body && (
+            <EmptyDescription className="mt-1 max-w-md text-sm">
+              {body}
+            </EmptyDescription>
           )}
-        </p>
-      </div>
-      <Button onClick={() => navigate('/platform/ai')} className="gap-2">
-        <Settings className="h-4 w-4" />
-        {t('Go to AI Settings')}
-      </Button>
+        </EmptyHeader>
+        {action}
+      </Empty>
     </div>
   );
 }
@@ -631,3 +706,21 @@ function resolveCards({
 
 const COLLAPSED_CARD_COUNT = 4;
 const WIDE_EMPTY_STATE_MIN_WIDTH = 704;
+
+const RESOURCE_PAGES = [
+  `/projects/:projectId${routesThatRequireProjectId.singleFlow}`,
+  `/projects/:projectId${routesThatRequireProjectId.singleTable}`,
+];
+
+const PAGE_SUGGESTION: Suggestion = {
+  text: 'What can I do on this page?',
+  kind: 'ask',
+};
+
+const SUGGESTIONS: Suggestion[] = [
+  { text: 'Build me a flow for new leads', kind: 'build' },
+  { text: 'What saved us the most time this month?', kind: 'ask' },
+  { text: 'Why did my last run fail?', kind: 'ask' },
+];
+
+type Suggestion = { text: string; kind: 'build' | 'ask' };

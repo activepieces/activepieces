@@ -19,9 +19,16 @@ import { errorReporting } from '@/lib/error-reporting';
 import { cn } from '@/lib/utils';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import { ChatContentColumn } from './chat-panel/chat-content-column';
+import {
+  ChatContentColumn,
+  PageSkeleton,
+} from './chat-panel/chat-content-column';
 import { ChatNotch } from './chat-panel/chat-notch';
-import { ChatPanel, ChatSheetLauncher } from './chat-panel/chat-window';
+import {
+  ChatPanel,
+  ChatSheetLauncher,
+  useChatWidth,
+} from './chat-panel/chat-window';
 import { GlobalSearchProvider } from './global-search/global-search-context';
 import { ProjectDashboardLayoutHeader } from './project-layout/project-dashboard-layout-header';
 import { AppSidebar } from './sidebar/app-sidebar';
@@ -167,7 +174,7 @@ function AppShell({ handle }: { handle: RouteHandle }) {
                   )}
                   {handle.shell === 'project' && <CreditsUsageAlert />}
                   <div className={PAGE_CLASS[handle.shell]}>
-                    <Suspense fallback={<RouteLoadingBar />}>
+                    <Suspense fallback={<PageFallback />}>
                       <Outlet />
                     </Suspense>
                   </div>
@@ -187,6 +194,19 @@ function AppShell({ handle }: { handle: RouteHandle }) {
       </div>
       {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
     </GlobalSearchProvider>
+  );
+}
+
+// Beside the chat, a page that is still loading shows its shape instead of
+// a blank card.
+function PageFallback() {
+  const chatWidth = useChatWidth();
+  const besideChat = chatWidth === 'left' || chatWidth === 'right';
+  return (
+    <>
+      <RouteLoadingBar />
+      {besideChat && <PageSkeleton />}
+    </>
   );
 }
 

@@ -11,6 +11,7 @@ import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useStickToBottomContext } from 'use-stick-to-bottom';
 
 import {
   ChatContainerContent,
@@ -32,6 +33,8 @@ import {
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { followHold } from '@/features/chat/lib/follow/follow-hold';
+import { pageFocus } from '@/features/chat/lib/follow/page-focus';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
@@ -49,6 +52,7 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { ComposerFill } from './components/chat-input';
 import { MemoryImportNudgeCard } from './components/memory-import-nudge-card';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import {
@@ -183,6 +187,10 @@ function ChatBoxContent({
   const awaitingSavedPick =
     !isNil(initialConversationId) &&
     (isLoadingHistory || (initialConversationId !== conversationId && !failed));
+  const showHistorySkeleton = useDelayedFlag({
+    value: isLoadingHistory,
+    delayMs: HISTORY_SKELETON_DELAY_MS,
+  });
   const pickUnavailable =
     showsPicker &&
     !isNil(modelOptions) &&
@@ -218,6 +226,8 @@ function ChatBoxContent({
   );
 
   const [hasInput, setHasInput] = useState(false);
+  const [composerFill, setComposerFill] = useState<ComposerFill | null>(null);
+  const clearComposerFill = useCallback(() => setComposerFill(null), []);
   const [promptOpen, setPromptOpen] = useState(false);
   const sentInitialPrompt = useRef(false);
 
@@ -379,6 +389,7 @@ function ChatBoxContent({
                 onboarding={showOnboardingCard}
                 showFlowCards={!hasConversations}
                 onSend={(text) => handleSend(text).catch(() => undefined)}
+                onFill={(text) => setComposerFill({ text, id: Date.now() })}
               />
             )}
           </div>
@@ -403,7 +414,7 @@ function ChatBoxContent({
                 scrollClassName="px-3 @chat-sm/chat:px-6"
                 className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full"
               >
-                {isLoadingHistory && <MessageSkeletons />}
+                {showHistorySkeleton && <MessageSkeletons />}
 
                 <ChatResourceLinks messages={messages}>
                   {messages.map((msg, idx) => {
@@ -494,6 +505,8 @@ function ChatBoxContent({
                 <ChatContainerScrollAnchor />
               </ChatContainerContent>
               <ScrollButton className="absolute bottom-4 right-1/2 translate-x-1/2" />
+              <ScrolledEdge />
+              <ReportScrolledUp />
             </ChatContainerRoot>
           </motion.div>
         )}
@@ -534,6 +547,8 @@ function ChatBoxContent({
             onSend={handleSend}
             onStop={cancelStream}
             onInputChange={setHasInput}
+            fill={composerFill}
+            onFillApplied={clearComposerFill}
             recede={showOnboardingCard}
             modelPicker={
               showsPicker && awaitingSavedPick ? (
@@ -636,6 +651,60 @@ function computeClaimedBuildIds(
   }
   return claimed;
 }
+
+// A hairline under the header once the message list scrolls off the top.
+function ScrolledEdge() {
+  const { scrollRef } = useStickToBottomContext();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const update = () => setScrolled(scroller.scrollTop > 0);
+    update();
+    scroller.addEventListener('scroll', update, { passive: true });
+    return () => scroller.removeEventListener('scroll', update);
+  }, [scrollRef]);
+  return (
+    <div
+      aria-hidden
+      data-scrolled={scrolled}
+      className={cn(
+        'pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gray-5 transition-opacity duration-150',
+        scrolled ? 'opacity-100' : 'opacity-0',
+      )}
+    />
+  );
+}
+
+// Follow-along waits while the user reads back through the chat.
+function ReportScrolledUp() {
+  const { isAtBottom, scrollRef } = useStickToBottomContext();
+  useEffect(() => {
+    if (!pageFocus.inChat(scrollRef.current)) return;
+    followHold.report({ scrolledUp: !isAtBottom });
+    return () => followHold.report({ scrolledUp: false });
+  }, [isAtBottom, scrollRef]);
+  return null;
+}
+
+function useDelayedFlag({
+  value,
+  delayMs,
+}: {
+  value: boolean;
+  delayMs: number;
+}): boolean {
+  const [elapsed, setElapsed] = useState(false);
+  useEffect(() => {
+    setElapsed(false);
+    if (!value) return;
+    const timer = setTimeout(() => setElapsed(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return value && elapsed;
+}
+
+const HISTORY_SKELETON_DELAY_MS = 150;
 
 type AIChatBoxProps = {
   incognito: boolean;

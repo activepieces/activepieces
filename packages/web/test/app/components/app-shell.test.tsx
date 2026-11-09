@@ -94,6 +94,8 @@ vi.mock('@/features/workspace/lib/use-chat-on', () => ({
 
 vi.mock('@/app/components/chat-panel/chat-window', () => ({
   ChatPanel: () => <aside aria-label="Chat" />,
+  ChatSheetLauncher: () => null,
+  useChatWidth: () => 'full',
 }));
 
 vi.mock('@/app/components/chat-panel/chat-notch', () => ({

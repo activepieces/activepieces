@@ -4,6 +4,7 @@ import {
   FlowRunStatus,
   FlowVersion,
   FlowVersionState,
+  PopulatedFlow,
   flowStructureUtil,
   WebsocketClientEvent,
   RunEnvironment,
@@ -20,7 +21,12 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { followAlong } from '@/features/chat/lib/follow/follow-along';
+import {
+  followAlong,
+  useFollowAlong,
+} from '@/features/chat/lib/follow/follow-along';
+import { pageFocus } from '@/features/chat/lib/follow/page-focus';
+import { aiHighlight } from '@/features/chat/lib/follow/use-ai-highlight';
 import { appConnectionsQueries } from '@/features/connections';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
@@ -157,7 +163,8 @@ const useRefreshDraftOnPush = () => {
       ) {
         return;
       }
-      const before = store.getState().flowVersion.trigger;
+      const { flow: flowBefore, flowVersion: versionBefore } = store.getState();
+      const before = { flow: flowBefore, flowVersion: versionBefore };
       refreshDraft()
         .then((applied) => {
           if (
@@ -166,11 +173,9 @@ const useRefreshDraftOnPush = () => {
           ) {
             return;
           }
-          const after = store.getState().flowVersion.trigger;
+          const { flow, flowVersion } = store.getState();
           followAlong.flash(
-            changedStepNames({ before, after }).map(
-              (name) => `flow-step:${name}`,
-            ),
+            changedFlowParts({ before, after: { flow, flowVersion } }),
           );
         })
         .catch(() => undefined);
@@ -182,17 +187,22 @@ const useRefreshDraftOnPush = () => {
   }, [socket, store, flowId, refreshDraft]);
 };
 
-function changedStepNames({
+// Highlight keys for what a push changed: steps, plus the header's flow name
+// and publish status.
+function changedFlowParts({
   before,
   after,
 }: {
-  before: FlowVersion['trigger'];
-  after: FlowVersion['trigger'];
+  before: FlowSnapshot;
+  after: FlowSnapshot;
 }): string[] {
-  return flowStructureUtil
-    .getAllSteps(after)
+  const steps = flowStructureUtil
+    .getAllSteps(after.flowVersion.trigger)
     .filter((step) => {
-      const old = flowStructureUtil.getStep(step.name, before);
+      const old = flowStructureUtil.getStep(
+        step.name,
+        before.flowVersion.trigger,
+      );
       return (
         !old ||
         old.type !== step.type ||
@@ -200,8 +210,70 @@ function changedStepNames({
         !deepEquals({ a: prune(old.settings), b: prune(step.settings) })
       );
     })
-    .map((step) => step.name);
+    .map((step) => `${STEP_KEY_PREFIX}${step.name}`);
+  const renamed =
+    before.flowVersion.displayName !== after.flowVersion.displayName;
+  const statusChanged =
+    before.flow.status !== after.flow.status ||
+    before.flow.publishedVersionId !== after.flow.publishedVersionId;
+  return [
+    ...steps,
+    ...(renamed ? [`flow-name:${after.flow.id}`] : []),
+    ...(statusChanged ? [`flow-status:${after.flow.id}`] : []),
+  ];
 }
+
+// When a flash lights a step that sits off screen, pan the canvas to the
+// last one at the current zoom. Runs off the flash itself, after the
+// refreshed nodes are on the page.
+const usePanToFlashedStep = () => {
+  const { fitView, getViewport } = useReactFlow();
+  const flashes = useFollowAlong((state) => state.flashes);
+  const seen = useRef(flashes);
+  useEffect(() => {
+    const previous = seen.current;
+    seen.current = flashes;
+    const last = Object.entries(flashes)
+      .filter(
+        ([key, token]) =>
+          key.startsWith(STEP_KEY_PREFIX) && previous[key] !== token,
+      )
+      .map(([key]) => key.slice(STEP_KEY_PREFIX.length))
+      .at(-1);
+    if (!last || isStepVisible(last) || !aiHighlight.mayScroll()) return;
+    const { zoom } = getViewport();
+    fitView({
+      nodes: [{ id: last }],
+      duration: pageFocus.prefersReducedMotion() ? 0 : PAN_DURATION_MS,
+      minZoom: zoom,
+      maxZoom: zoom,
+    }).catch(() => undefined);
+  }, [flashes, fitView, getViewport]);
+};
+
+function isStepVisible(stepName: string): boolean {
+  const node = document.querySelector(
+    `.react-flow__node[data-id="${CSS.escape(stepName)}"]`,
+  );
+  const pane = node?.closest('.react-flow');
+  if (!node || !pane) return true;
+  const rect = node.getBoundingClientRect();
+  const view = pane.getBoundingClientRect();
+  return (
+    rect.top >= view.top &&
+    rect.bottom <= view.bottom - 64 &&
+    rect.left >= view.left &&
+    rect.right <= view.right
+  );
+}
+
+const STEP_KEY_PREFIX = 'flow-step:';
+const PAN_DURATION_MS = 450;
+
+type FlowSnapshot = {
+  flow: PopulatedFlow;
+  flowVersion: FlowVersion;
+};
 
 const useRefreshDraftOnReconnectAndReturn = () => {
   const socket = useSocket();
@@ -403,6 +475,7 @@ export const flowCanvasHooks = {
   useRefreshDraftOnReconnectAndReturn,
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,
+  usePanToFlashedStep,
   useResizeCanvas,
   useSwitchToDraft,
   useListenToExistingRun,

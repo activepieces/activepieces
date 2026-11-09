@@ -6,6 +6,13 @@ function composer(): HTMLElement | null {
   );
 }
 
+function inChat(target: EventTarget | null | undefined): boolean {
+  return (
+    target instanceof Element &&
+    target.closest(`#${chatLayoutUtils.PANEL_ID}`) !== null
+  );
+}
+
 function escapeFree(event: KeyboardEvent): boolean {
   return !claimedEscapes.has(event) && !layerOpen();
 }
@@ -29,6 +36,7 @@ const OPEN_OVERLAYS = ['dialog', 'alertdialog', 'menu', 'listbox']
 
 export const chatDom = {
   composer,
+  inChat,
   escapeFree,
   claimEscape,
 };

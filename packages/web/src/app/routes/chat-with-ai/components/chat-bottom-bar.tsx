@@ -1,6 +1,9 @@
 import { t } from 'i18next';
-import { ReactNode, useState } from 'react';
+import { CircleSlash } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
+import { chatDom } from '@/features/chat/lib/chat-dom';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
 import { MultiQuestion } from '@/features/chat/lib/chat-store-types';
@@ -9,6 +12,8 @@ import {
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { followHold } from '@/features/chat/lib/follow/follow-hold';
+import { useChatPanel } from '@/features/workspace/lib/chat-panel-open';
 import { cn } from '@/lib/utils';
 
 import {
@@ -18,8 +23,9 @@ import {
 
 import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
-import { ChatInput } from './chat-input';
+import { ChatInput, ComposerFill } from './chat-input';
 import { ConnectionPickerCard } from './connection-picker-card';
+import { FollowFinishedNote } from './follow-finished-note';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
 import { ProjectPickerCard } from './project-picker-card';
@@ -36,8 +42,16 @@ export function ChatBottomBar({
   placeholder,
   banner,
   recede,
+  fill,
+  onFillApplied,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
+  const [skipped, setSkipped] = useState(false);
+  useEffect(() => {
+    if (!skipped) return;
+    const timer = setTimeout(() => setSkipped(false), SKIPPED_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [skipped]);
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
       state: s,
@@ -113,14 +127,54 @@ export function ChatBottomBar({
   // dismissed/rejected so the card doesn't flash back before the worker unblocks.
   const handleSend = (text: string, files?: File[]) => {
     void onSend(text, files);
-    dismissActiveCard?.();
+    if (dismissActiveCard) {
+      dismissActiveCard();
+      setSkipped(true);
+    }
   };
 
   const minimal = recede === true && !activeCard && !composerEngaged;
+  const needsYou = activeCard !== null;
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!chatDom.inChat(rootRef.current)) return;
+    useChatPanel.getState().setGateOpen(needsYou);
+    return () => useChatPanel.getState().setGateOpen(false);
+  }, [needsYou]);
+
+  // Tell follow-along when the user is mid-reply, so it waits before opening
+  // a page.
+  const [hasDraft, setHasDraft] = useState(false);
+  const handleInputChange = (hasInput: boolean) => {
+    setHasDraft(hasInput);
+    onInputChange?.(hasInput);
+  };
+  const drafting = hasDraft && composerEngaged;
+  useEffect(() => {
+    if (!chatDom.inChat(rootRef.current)) return;
+    followHold.report({ drafting });
+    return () => followHold.report({ drafting: false });
+  }, [drafting]);
 
   return (
-    <div className="flex flex-col gap-2">
-      {activeCard}
+    <div ref={rootRef} className="flex flex-col gap-2">
+      {activeCard ?? <FollowFinishedNote />}
+      <AnimatePresence initial={false}>
+        {skipped && !activeCard && (
+          <motion.div
+            key="skipped"
+            role="status"
+            className="flex items-center gap-1.5 px-1 text-xs text-gray-11"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <CircleSlash className="size-3" />
+            {t('Skipped')}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div
         className={cn(
           'overflow-hidden rounded-xl border transition-colors',
@@ -134,16 +188,18 @@ export function ChatBottomBar({
           isStreaming={activeCard ? false : isStreaming}
           onSend={handleSend}
           onStop={onStop}
-          onInputChange={onInputChange}
+          onInputChange={handleInputChange}
           minimalUntilFocus={recede === true && !activeCard}
           onFocusChange={setComposerEngaged}
           placeholder={
             activeCard
-              ? t('Or reply in your own words')
+              ? t('Answer the card above, or reply to change the plan')
               : placeholder ?? t('Reply...')
           }
           rightActions={modelPicker}
           sendBlockedReason={sendBlockedReason}
+          fill={fill}
+          onFillApplied={onFillApplied}
         />
       </div>
     </div>
@@ -223,4 +279,8 @@ type ChatBottomBarProps = {
   placeholder?: string;
   banner?: ReactNode;
   recede?: boolean;
+  fill?: ComposerFill | null;
+  onFillApplied?: () => void;
 };
+
+const SKIPPED_VISIBLE_MS = 2500;

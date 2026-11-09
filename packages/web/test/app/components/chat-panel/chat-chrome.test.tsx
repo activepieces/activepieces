@@ -210,7 +210,7 @@ describe('ChatChrome', () => {
     act(() => useFollowAlong.setState({ phase: 'idle', following: true }));
   });
 
-  it('keeps one label on the history toggle and marks it pressed', () => {
+  it('labels the history toggle Hide history and marks it pressed while open', () => {
     getConversation.mockResolvedValue(conversation({ title: 'Old title' }));
     renderChrome();
     const toggle = screen.getByRole('button', { name: 'History' });
@@ -218,7 +218,7 @@ describe('ChatChrome', () => {
     fireEvent.click(toggle);
 
     expect(toggle.getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByRole('button', { name: 'History' })).toBe(toggle);
+    expect(screen.getByRole('button', { name: 'Hide history' })).toBe(toggle);
   });
 
   it('starts a fresh chat box for a new chat', async () => {

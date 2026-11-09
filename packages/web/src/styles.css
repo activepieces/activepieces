@@ -1286,11 +1286,11 @@
 }
 
 .group:hover .ap-chat-notch-line {
-  animation: ap-chat-notch-write 150ms var(--ease-move) both;
+  animation: ap-chat-notch-write 450ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 
 .group:hover .ap-chat-notch-line + .ap-chat-notch-line {
-  animation-delay: 40ms;
+  animation-delay: 60ms;
 }
 
 @keyframes ap-chat-notch-write {

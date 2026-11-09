@@ -2,6 +2,7 @@ import { isNil, isObject } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { create } from 'zustand';
 
+import { keepComposerFocus } from '@/features/chat/lib/keep-composer-focus';
 import { authenticationSession } from '@/lib/authentication-session';
 import { CHAT_ROUTE } from '@/lib/route-utils';
 import { safeStorage } from '@/lib/safe-storage';
@@ -23,9 +24,24 @@ function useChatRoute(): string {
   return routeFor(useChatPanel((s) => s.conversationId));
 }
 
+function isFullPage(): boolean {
+  return router?.isFullPage() ?? false;
+}
+
+function startMove(move: ChatMove): void {
+  if (
+    window.innerWidth >= chatLayoutUtils.MOBILE_BREAKPOINT &&
+    !chatLayoutUtils.prefersReducedMotion()
+  ) {
+    useChatPanel.getState().setMoving(move);
+  }
+}
+
 function expand(): void {
   const current = router;
   if (!current || current.isFullPage()) return;
+  if (useChatPanel.getState().open) startMove('exit');
+  keepComposerFocus.keep();
   current.navigate({
     to: routeFor(useChatPanel.getState().conversationId),
     replace: false,
@@ -45,7 +61,11 @@ function openBeside({
   const current = router;
   if (!current || current.location().pathname === route) return;
   const panel = useChatPanel.getState();
-  if (current.isFullPage()) panel.dock(panel.mode);
+  keepComposerFocus.keep();
+  if (current.isFullPage()) {
+    startMove('enter');
+    panel.dock(panel.mode);
+  }
   if (current.location().hash === SHEET_HASH) {
     current.navigate({ to: `${route}${SHEET_HASH}`, replace: !push });
     panel.announce(t('Opened {name} behind the chat.', { name }));
@@ -59,6 +79,8 @@ function collapse(side: ChatPanelSide): void {
   const current = router;
   if (!current) return;
   const panel = useChatPanel.getState();
+  if (current.isFullPage()) startMove('enter');
+  keepComposerFocus.keep();
   panel.dock(side);
   if (!current.isFullPage()) return;
   const { state } = current.location();
@@ -167,6 +189,7 @@ function forgetSignedOutUser(): void {
 }
 
 let router: ChatRouter | null = null;
+let movingGuard: ReturnType<typeof setTimeout> | null = null;
 
 const STORAGE_KEY = 'chat-panel';
 const TAB_VIEW_KEY = 'chat:view';
@@ -176,6 +199,7 @@ const TAB_LAST_PAGE_KEY = 'chat:last-page';
 const EXPANDED_STATE = 'chatExpanded';
 const AUTO_FOLLOW_KEY = 'chat:auto-follow';
 const SHEET_HASH = '#chat';
+const MOVING_GUARD_MS = 900;
 
 const DEFAULTS: SavedChatPanel = {
   open: false,
@@ -204,11 +228,23 @@ const initChatPanel = (
     lastPage: readLastPage(),
     autoFollow: readAutoFollow(),
     panelMounted: false,
+    docks: 0,
+    gateOpen: false,
+    moving: null,
     announcement: null,
     newChatToken: 0,
     pendingPrompt: undefined,
-    setOpen: (open) => update({ open }),
-    dock: (side) => update({ open: true, mode: side }),
+    setOpen: (open) => {
+      if (open !== get().open) {
+        chatLayoutUtils.startStructuralMove(open ? 'enter' : 'exit');
+      }
+      update({ open });
+    },
+    dock: (side) => {
+      chatLayoutUtils.startStructuralMove('enter');
+      set({ docks: get().docks + 1 });
+      update({ open: true, mode: side });
+    },
     setDockWidth: (width) =>
       update({ dockWidth: chatLayoutUtils.dockWidthFor(width) }),
     newChat: (prompt) =>
@@ -237,6 +273,17 @@ const initChatPanel = (
       });
     },
     setPanelMounted: (panelMounted) => set({ panelMounted }),
+    setGateOpen: (gateOpen) => {
+      if (gateOpen !== get().gateOpen) set({ gateOpen });
+    },
+    setMoving: (moving) => {
+      if (moving === get().moving) return;
+      set({ moving });
+      if (movingGuard) clearTimeout(movingGuard);
+      movingGuard = moving
+        ? setTimeout(() => set({ moving: null }), MOVING_GUARD_MS)
+        : null;
+    },
     announce: (text) =>
       set({ announcement: { text, id: (get().announcement?.id ?? 0) + 1 } }),
     setLastPage: (lastPage) => {
@@ -261,6 +308,7 @@ export const chatPanelUtils = {
   routeFor,
   useChatRoute,
   openBeside,
+  isFullPage,
   expand,
   collapse,
   startNewChat,
@@ -268,6 +316,8 @@ export const chatPanelUtils = {
 };
 
 export type ChatPanelSide = 'left' | 'right';
+// enter: full page shrinks into the dock. exit: dock grows into the full page.
+export type ChatMove = 'enter' | 'exit';
 export type ChatRouter = {
   navigate: (target: ChatNavTarget) => void;
   location: () => { pathname: string; hash: string; state: unknown };
@@ -291,6 +341,9 @@ type ChatPanelState = SavedChatPanel & {
   lastPage: string | null;
   autoFollow: boolean;
   panelMounted: boolean;
+  docks: number;
+  gateOpen: boolean;
+  moving: ChatMove | null;
   announcement: { text: string; id: number } | null;
   newChatToken: number;
   pendingPrompt?: string;
@@ -303,6 +356,8 @@ type ChatPanelState = SavedChatPanel & {
   showConversation: (conversationId: string | null) => void;
   setAutoFollow: (autoFollow: boolean) => void;
   setPanelMounted: (panelMounted: boolean) => void;
+  setGateOpen: (gateOpen: boolean) => void;
+  setMoving: (moving: ChatMove | null) => void;
   announce: (text: string) => void;
   setLastPage: (lastPage: string) => void;
 };

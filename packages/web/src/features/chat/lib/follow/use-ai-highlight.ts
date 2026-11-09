@@ -1,8 +1,26 @@
 import { useEffect, useRef } from 'react';
 
+import { ResourceRef } from '../resources/registry';
+
 import { aiSheen } from './ai-sheen';
-import { useFollowAlong } from './follow-along';
+import { followAlong, useFollowAlong } from './follow-along';
 import { pageFocus } from './page-focus';
+
+// Lights `key` when its component mounts after the AI changed it out of view.
+export function useAiHighlight({
+  resource,
+  key,
+}: {
+  resource: Pick<ResourceRef, 'kind' | 'id'>;
+  key: string;
+}): void {
+  const { kind, id } = resource;
+  useEffect(() => {
+    if (followAlong.takeUnseen({ resource: { kind, id }, key })) {
+      followAlong.flash([key]);
+    }
+  }, [kind, id, key]);
+}
 
 export function useAiFieldHighlights(): void {
   const flashes = useFollowAlong((state) => state.flashes);
@@ -15,13 +33,33 @@ export function useAiFieldHighlights(): void {
       }
       takeScroll();
     };
-    const events: (keyof WindowEventMap)[] = ['wheel', 'touchmove', 'keydown'];
-    events.forEach((name) =>
-      window.addEventListener(name, mark, { capture: true, passive: true }),
+    // Dragging a scrollbar fires no wheel or key event, only scrolls while
+    // the pointer is held down outside the chat.
+    let pointerDown = false;
+    const press = (event: Event) => {
+      pointerDown = !pageFocus.inChat(event.target);
+    };
+    const release = () => {
+      pointerDown = false;
+    };
+    const scrolled = (event: Event) => {
+      if (pointerDown && !pageFocus.inChat(event.target)) takeScroll();
+    };
+    const listeners: [keyof WindowEventMap, (event: Event) => void][] = [
+      ['wheel', mark],
+      ['touchmove', mark],
+      ['keydown', mark],
+      ['pointerdown', press],
+      ['pointerup', release],
+      ['pointercancel', release],
+      ['scroll', scrolled],
+    ];
+    listeners.forEach(([name, listener]) =>
+      window.addEventListener(name, listener, { capture: true, passive: true }),
     );
     return () =>
-      events.forEach((name) =>
-        window.removeEventListener(name, mark, { capture: true }),
+      listeners.forEach(([name, listener]) =>
+        window.removeEventListener(name, listener, { capture: true }),
       );
   }, []);
   useEffect(() => {
@@ -76,5 +114,6 @@ const SCROLL_KEYS = new Set([
 ]);
 
 export const aiHighlight = {
+  mayScroll,
   claimScroll,
 };
