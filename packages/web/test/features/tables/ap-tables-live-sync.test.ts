@@ -142,6 +142,55 @@ describe('table live sync', () => {
     expect(values(store.getState())).toEqual(['from the chat', 'new']);
   });
 
+  it('keeps the other cells of a remote update when a local save finishes after it', async () => {
+    const store = createApTableStore(
+      table,
+      [nameField, emailField],
+      [contact({ name: 'a', email: 'b', updated: T1 })],
+    );
+    const eventSince = tableSyncClock.tick();
+    vi.mocked(recordsApi.update).mockResolvedValue(
+      contact({ name: 'mine', email: 'remote', updated: T3 }),
+    );
+
+    store
+      .getState()
+      .updateRecord(0, { values: [{ fieldIndex: 0, value: 'mine' }] });
+    await store.getState().waitForSaves();
+    store.getState().applyRecordChanges({
+      records: [contact({ name: 'a', email: 'remote', updated: T2 })],
+      removedIds: [],
+      since: eventSince,
+    });
+
+    expect(cells(store.getState())).toEqual([['mine', 'remote']]);
+  });
+
+  it('applies a remote update the server made after the local save, even when it arrived first', async () => {
+    const store = createApTableStore(
+      table,
+      [nameField, emailField],
+      [contact({ name: 'a', email: 'b', updated: T1 })],
+    );
+    const eventSince = tableSyncClock.tick();
+    vi.mocked(recordsApi.update).mockResolvedValue(
+      contact({ name: 'mine', email: 'b', updated: T2 }),
+    );
+
+    store
+      .getState()
+      .updateRecord(0, { values: [{ fieldIndex: 0, value: 'mine' }] });
+    await store.getState().waitForSaves();
+    const rowIds = store.getState().applyRecordChanges({
+      records: [contact({ name: 'mine', email: 'remote', updated: T3 })],
+      removedIds: [],
+      since: eventSince,
+    });
+
+    expect(cells(store.getState())).toEqual([['mine', 'remote']]);
+    expect(rowIds.has('r1')).toBe(true);
+  });
+
   it('changes only the rows a change event names', () => {
     const store = createApTableStore(
       table,
@@ -236,6 +285,38 @@ function values(state: {
   return state.records.map((row) => row.values[0]?.value);
 }
 
+function cells(state: {
+  records: { values: { fieldIndex: number; value: unknown }[] }[];
+}): unknown[][] {
+  return state.records.map((row) =>
+    [...row.values]
+      .sort((a, b) => a.fieldIndex - b.fieldIndex)
+      .map((cell) => cell.value),
+  );
+}
+
+function contact({
+  name,
+  email,
+  updated,
+}: {
+  name: string;
+  email: string;
+  updated: string;
+}): PopulatedRecord {
+  return {
+    id: 'r1',
+    created: T1,
+    updated,
+    tableId: table.id,
+    projectId: table.projectId,
+    cells: {
+      f1: { fieldName: 'Name', value: name, updated, created: T1 },
+      f2: { fieldName: 'Email', value: email, updated, created: T1 },
+    },
+  };
+}
+
 function record(id: string, value: string): PopulatedRecord {
   return {
     id,
@@ -271,3 +352,15 @@ const nameField: Field = {
   externalId: 'x1',
   position: 0,
 };
+
+const emailField: Field = {
+  ...nameField,
+  id: 'f2',
+  name: 'Email',
+  externalId: 'x2',
+  position: 1,
+};
+
+const T1 = '2026-01-01T00:00:01.000Z';
+const T2 = '2026-01-01T00:00:02.000Z';
+const T3 = '2026-01-01T00:00:03.000Z';

@@ -165,15 +165,21 @@ export const createApTableStore = (
           const unchanged = unchangedLocally(record.id);
           const gone = removed.has(record.id) || (dropMissing && !update);
           if (unchanged && gone) return [];
-          if (!update || !unchanged) {
+          if (!update) {
             return row ? [{ record, row, applied: false }] : [];
           }
-          const values = mapCellsToClientValues(update, serverState.fields);
+          const order = compareUpdated({
+            incoming: update.updated,
+            local: record.updated,
+          });
+          const incomingWins = order > 0 || (order === 0 && unchanged);
+          const winner = incomingWins ? update : record;
+          const values = mapCellsToClientValues(winner, serverState.fields);
           return [
             {
-              record: update,
+              record: winner,
               row: row ? { ...row, values } : newRow(values),
-              applied: true,
+              applied: incomingWins,
             },
           ];
         },
@@ -466,6 +472,17 @@ export const createApTableStore = (
     };
   });
 };
+
+function compareUpdated({
+  incoming,
+  local,
+}: {
+  incoming: string;
+  local: string;
+}): number {
+  const diff = Date.parse(incoming) - Date.parse(local);
+  return Number.isNaN(diff) ? 0 : Math.sign(diff);
+}
 
 function newRow(values: ClientCellData[]): ClientRecordData {
   return { uuid: nanoid(), agentRunId: null, values };
