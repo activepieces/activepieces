@@ -153,14 +153,14 @@ const PublishFlowReminderWidget = () => {
   });
   return (
     <LargeWidgetWrapper>
-      <div className="flex items-center gap-2">
-        <Info className="size-5" />
+      <div className="flex min-w-0 items-center gap-2">
+        <Info className="size-5 shrink-0" />
         {showLoading ? loadingText : t('You have unpublished changes')}
       </div>
       {showLoading ? (
         <LoadingSpinner className="size-5 stroke-gray-12" />
       ) : (
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
           {!isNil(flow.publishedVersionId) && !isSaving && (
             <Button
               size="sm"

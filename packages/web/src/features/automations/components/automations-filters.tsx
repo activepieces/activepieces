@@ -146,11 +146,9 @@ export const AutomationsFilters = ({
 
   return (
     <>
-      <div
-        className={cn('overflow-x-auto mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}
-      >
-        <div className="flex items-center justify-between gap-4 min-w-max">
-          <div className="flex items-center gap-2">
+      <div className={cn('mt-4 mb-4', DASHBOARD_CONTENT_PADDING_X)}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-11" />
               <Input
@@ -255,7 +253,7 @@ export const AutomationsFilters = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {!embedState.hideExportAndImportFlow && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

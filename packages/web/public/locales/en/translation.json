@@ -3784,5 +3784,6 @@
   "The AI is changing {name}.": "The AI is changing {name}.",
   "The AI deleted {name}.": "The AI deleted {name}.",
   "Opened {name} beside the chat.": "Opened {name} beside the chat.",
-  "Opened {name} behind the chat.": "Opened {name} behind the chat."
+  "Opened {name} behind the chat.": "Opened {name} behind the chat.",
+  "Step data": "Step data"
 }
