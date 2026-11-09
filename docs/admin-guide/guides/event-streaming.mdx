@@ -158,7 +158,7 @@ See [Piece catalog events](#piece-catalog-events) below for what fires them and 
 
 ### Piece catalog events
 
-Piece catalog events fire only for **official** pieces, and only for the **latest version** of each piece. Custom and private pieces do not send them.
+Piece catalog events fire only for **official** pieces, and only for the **latest version** of each piece. Custom and private pieces do not send them. An event can arrive up to about an hour after the catalog changes: the piece sync runs every hour, and a check at minute 45 of each hour picks up anything it missed.
 
 By default a destination receives `new`, `major`, and `minor` changes. To also receive patch releases, tick **Also send patch version updates** on the Events step; it appears once you select a piece event. Patch updates are frequent, so leave it off unless you need them.
 
@@ -179,10 +179,10 @@ The envelope carries `platformId` but no project or user: there is no `projectId
 ```
 
 <Note>
-Expect a burst after you upgrade Activepieces. The upgrade sends one event for each official piece that is new or has a newer version since your previous release — about 200 events when going from 0.86 to 0.93, before your change-type filter applies. With the default filter, fewer arrive.
+Expect a burst after you upgrade Activepieces. The upgrade sends one event for each official piece that is new or has a newer version since your previous release — about 200 events when going from 0.86 to 0.93, before your change-type filter applies. With the default filter, fewer arrive. The first start on a release that includes piece catalog events only records a baseline of the catalog and sends nothing.
 </Note>
 
-Delivery is at-least-once. If the background job that detects catalog changes fails partway, its next run can send the same batch again, and every send gets a new `id`, so use `data.piece.name` plus `data.piece.version` as the idempotency key. Activepieces does not replay events your endpoint missed. To catch up after an outage, compare what you have against `GET /v1/pieces`.
+An event can arrive more than once, and an event that is not delivered is not sent again. If the background job that detects catalog changes fails partway, its next run can send the same batch again, and every send gets a new `id`, so use `data.piece.name` plus `data.piece.version` as the idempotency key. Activepieces does not replay events your endpoint missed. To catch up after an outage, compare what you have against `GET /v1/pieces`.
 
 ## Requirements
 
