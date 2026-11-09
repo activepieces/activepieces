@@ -21,22 +21,11 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   if (isNil(projectIdFromParams)) {
     return <Navigate to="/sign-in" replace />;
   }
-  const hasAccessToProject =
-    projectCollectionUtils.useHasAccessToProject(projectIdFromParams);
-
-  if (!hasAccessToProject) {
-    toast.error(t('Invalid Access'), {
-      description: t(
-        'You tried to access a project that you do not have access to.',
-      ),
-      duration: 10000,
-    });
-    return <Navigate to="/" replace />;
-  }
-
-  authenticationSession.switchToProject(projectIdFromParams);
-
-  return <>{children}</>;
+  return (
+    <ProjectAccessGuard projectId={projectIdFromParams}>
+      {children}
+    </ProjectAccessGuard>
+  );
 };
 
 type RedirectToCurrentProjectRouteProps = {
@@ -102,3 +91,25 @@ export const ProjectRouterWrapper = ({
     ),
   },
 ];
+
+function ProjectAccessGuard({
+  projectId,
+  children,
+}: {
+  projectId: string;
+  children: React.ReactNode;
+}) {
+  const hasAccessToProject = projectCollectionUtils.useAdoptProject(projectId);
+
+  if (!hasAccessToProject) {
+    toast.error(t('Invalid Access'), {
+      description: t(
+        'You tried to access a project that you do not have access to.',
+      ),
+      duration: 10000,
+    });
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}

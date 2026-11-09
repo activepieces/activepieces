@@ -14,6 +14,7 @@ import { publicRoutes } from '@/app/routes/public-routes';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { routeLocation } from '@/lib/route-location';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { RouteErrorBoundary } from '../components/global-error-boundary';
@@ -134,6 +135,8 @@ const routesWithErrorBoundary = routes.map((route) => ({
 
 export const memoryRouter = createMemoryRouter(routesWithErrorBoundary);
 const browserRouter = createBrowserRouter(routesWithErrorBoundary);
+routeLocation.track(memoryRouter);
+routeLocation.track(browserRouter);
 
 const ApRouter = () => {
   const { embedState } = useEmbedding();

@@ -6,7 +6,10 @@ import {
 } from '@activepieces/shared';
 import { useEffect, useState } from 'react';
 
-import { useSocket } from '@/components/providers/socket-provider';
+import {
+  emitInProject,
+  useSocket,
+} from '@/components/providers/socket-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
 function usePresence({ resourceId }: { resourceId: string }): PresenceUser[] {
@@ -29,18 +32,22 @@ function usePresence({ resourceId }: { resourceId: string }): PresenceUser[] {
   }, [resourceId, socket, currentUserId]);
 
   useEffect(() => {
-    socket.emit(
-      WebsocketServerEvent.JOIN_PRESENCE,
-      { resourceId },
-      (response: { users: PresenceUser[] }) => {
-        setActiveUsers(
-          response.users.filter((u) => u.userId !== currentUserId),
-        );
-      },
+    emitInProject(() =>
+      socket.emit(
+        WebsocketServerEvent.JOIN_PRESENCE,
+        { resourceId },
+        (response: { users: PresenceUser[] }) => {
+          setActiveUsers(
+            response.users.filter((u) => u.userId !== currentUserId),
+          );
+        },
+      ),
     );
 
     const heartbeat = setInterval(() => {
-      socket.emit(WebsocketServerEvent.JOIN_PRESENCE, { resourceId });
+      emitInProject(() =>
+        socket.emit(WebsocketServerEvent.JOIN_PRESENCE, { resourceId }),
+      );
     }, 30_000);
 
     return () => {

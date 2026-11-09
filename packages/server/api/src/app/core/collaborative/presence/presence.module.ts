@@ -1,13 +1,18 @@
 import { isNil } from '@activepieces/core-utils'
-import { PresenceRequest, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { PresenceRequest, PresenceUpdatedEvent, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { Socket } from 'socket.io'
 import { userService } from '../../../user/user-service'
 import { websocketService } from '../../websockets.service'
 import { collaborativeResource } from '../collaborative-resource'
 import { presenceService } from './presence.service'
 
 export const presenceModule: FastifyPluginAsyncZod = async (app) => {
+    websocketService.onProjectLeave({
+        name: 'presence',
+        handler: ({ socket, userId }) => leavePresence({ socket, userId, app }),
+    })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.JOIN_PRESENCE, (socket) => {
         return async (data: unknown, principal, projectId, callback) => {
             const request = PresenceRequest.safeParse(data)
@@ -35,15 +40,13 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                     userEmail: user.email,
                     userImageUrl: user.imageUrl ?? null,
                 })
-                socket.data.presenceResourceId = resourceId
+                presenceBySocket.set(socket, { resourceId, projectId })
 
                 const users = await presenceService(app.log).getActiveUsers({ resourceId, projectId })
                 websocketService.to(projectId).emit(WebsocketClientEvent.PRESENCE_UPDATED, {
                     resourceId,
                     users,
                 })
-
-                registerPresenceDisconnectHandler({ socket, userId: principal.id, projectId, app })
 
                 callback?.({ users })
             }
@@ -52,7 +55,7 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                 callback?.({ users: [] })
             }
         }
-    })
+    }, { rejectResponse: NO_PRESENCE, orderedWithSwitch: true })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.LEAVE_PRESENCE, (socket) => {
         return async (data: unknown, principal, projectId) => {
             const request = PresenceRequest.safeParse(data)
@@ -66,7 +69,7 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                     projectId,
                     userId: principal.id,
                 })
-                socket.data.presenceResourceId = null
+                presenceBySocket.delete(socket)
 
                 const users = await presenceService(app.log).getActiveUsers({ resourceId, projectId })
                 websocketService.to(projectId).emit(WebsocketClientEvent.PRESENCE_UPDATED, {
@@ -78,34 +81,39 @@ export const presenceModule: FastifyPluginAsyncZod = async (app) => {
                 app.log.error({ error }, '[LEAVE_PRESENCE] Failed to leave presence')
             }
         }
-    })
+    }, { orderedWithSwitch: true })
 }
 
-function registerPresenceDisconnectHandler({ socket, userId, projectId, app }: RegisterDisconnectHandlerParams): void {
-    if (socket.data.presenceDisconnectRegistered) {
+const NO_PRESENCE: Pick<PresenceUpdatedEvent, 'users'> = { users: [] }
+
+const presenceBySocket = new WeakMap<Socket, JoinedPresence>()
+
+async function leavePresence({ socket, userId, app }: LeavePresenceParams): Promise<void> {
+    const joined = presenceBySocket.get(socket)
+    if (isNil(joined)) {
         return
     }
-    socket.data.presenceDisconnectRegistered = true
-    socket.once('disconnect', async () => {
-        const presenceResourceId = socket.data.presenceResourceId
-        if (typeof presenceResourceId === 'string') {
-            await presenceService(app.log).leave({
-                resourceId: presenceResourceId,
-                projectId,
-                userId,
-            })
-            const users = await presenceService(app.log).getActiveUsers({ resourceId: presenceResourceId, projectId })
-            websocketService.to(projectId).emit(WebsocketClientEvent.PRESENCE_UPDATED, {
-                resourceId: presenceResourceId,
-                users,
-            })
-        }
+    const { resourceId, projectId } = joined
+    await presenceService(app.log).leave({
+        resourceId,
+        projectId,
+        userId,
+    })
+    presenceBySocket.delete(socket)
+    const users = await presenceService(app.log).getActiveUsers({ resourceId, projectId })
+    websocketService.to(projectId).emit(WebsocketClientEvent.PRESENCE_UPDATED, {
+        resourceId,
+        users,
     })
 }
 
-type RegisterDisconnectHandlerParams = {
-    socket: { data: Record<string, unknown>, once: (event: string, handler: () => void) => void, id: string }
-    userId: string
+type JoinedPresence = {
+    resourceId: string
     projectId: string
+}
+
+type LeavePresenceParams = {
+    socket: Socket
+    userId: string
     app: FastifyInstance
 }

@@ -25,11 +25,15 @@ vi.mock('@/app/query-client', () => ({
 
 const switchPlatform = vi.mocked(authenticationApi.switchPlatform);
 
+beforeEach(() => {
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+});
+
 describe('authenticationSession', () => {
   beforeEach(() => {
-    window.localStorage.clear();
     window.localStorage.setItem('projectId', 'project-on-previous-platform');
-    vi.stubGlobal('location', { href: '' });
+    vi.stubGlobal('location', { href: '', pathname: '/' });
   });
 
   afterEach(() => {
@@ -67,6 +71,174 @@ describe('authenticationSession', () => {
   });
 });
 
+describe('authenticationSession.subscribe', () => {
+  beforeEach(() => {
+    signIn({ userId: 'user-1' });
+    authenticationSession.setProjectId('a');
+  });
+
+  it('notifies for changes made in this tab', () => {
+    const listener = vi.fn();
+    const unsubscribe = authenticationSession.subscribe(listener);
+    authenticationSession.switchToProject('b');
+    expect(listener).toHaveBeenCalledTimes(1);
+    unsubscribe();
+  });
+
+  it('ignores storage events from other tabs', () => {
+    const listener = vi.fn();
+    const unsubscribe = authenticationSession.subscribe(listener);
+    localStorage.setItem('projectId', 'other');
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: 'projectId', newValue: 'other' }),
+    );
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it('does not notify when switching to the stored project', () => {
+    const listener = vi.fn();
+    const unsubscribe = authenticationSession.subscribe(listener);
+    authenticationSession.switchToProject('a');
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+});
+
+describe('authenticationSession.getProjectId', () => {
+  beforeEach(() => {
+    signIn({ userId: 'user-1' });
+    authenticationSession.setProjectId('a');
+  });
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('uses the project in the URL over the stored one', () => {
+    window.history.replaceState(
+      null,
+      '',
+      '/projects/route-project/automations',
+    );
+    expect(authenticationSession.getProjectId()).toBe('route-project');
+  });
+
+  it('keeps the URL project when another tab stores a different one', () => {
+    window.history.replaceState(null, '', '/projects/route-project/runs');
+    localStorage.setItem('projectId', 'other');
+    expect(authenticationSession.getProjectId()).toBe('route-project');
+  });
+
+  it('falls back to the stored project on pages without one', () => {
+    window.history.replaceState(null, '', '/impact');
+    expect(authenticationSession.getProjectId()).toBe('a');
+  });
+
+  it('returns null without a token', () => {
+    localStorage.removeItem('token');
+    window.history.replaceState(null, '', '/projects/route-project');
+    expect(authenticationSession.getProjectId()).toBeNull();
+  });
+});
+
+describe('authenticationSession per-tab project', () => {
+  beforeEach(() => {
+    signIn({ userId: 'user-1' });
+    window.history.replaceState(null, '', '/impact');
+  });
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('keeps this tab on its project when another tab switches', () => {
+    authenticationSession.switchToProject('tab-a-project');
+    switchInAnotherTab({ projectId: 'tab-b-project' });
+
+    expect(authenticationSession.getProjectId()).toBe('tab-a-project');
+  });
+
+  it('seeds a new tab from the last project used in any tab', () => {
+    authenticationSession.switchToProject('tab-a-project');
+    switchInAnotherTab({ projectId: 'tab-b-project' });
+    window.sessionStorage.clear();
+
+    expect(authenticationSession.getProjectId()).toBe('tab-b-project');
+  });
+
+  it('keeps the seeded project after another tab switches', () => {
+    window.localStorage.setItem('projectId', 'seed-project');
+    authenticationSession.pinTabProject();
+    expect(authenticationSession.getProjectId()).toBe('seed-project');
+
+    switchInAnotherTab({ projectId: 'tab-b-project' });
+
+    expect(authenticationSession.getProjectId()).toBe('seed-project');
+  });
+
+  it('drops the tab project when another user signs in', () => {
+    authenticationSession.switchToProject('tab-a-project');
+    signIn({ userId: 'user-2' });
+    switchInAnotherTab({ projectId: 'user-2-project' });
+
+    expect(authenticationSession.getProjectId()).toBe('user-2-project');
+  });
+
+  it('forgets the tab project on sign out', () => {
+    authenticationSession.switchToProject('tab-a-project');
+    authenticationSession.clearSession();
+    signIn({ userId: 'user-1' });
+    switchInAnotherTab({ projectId: 'tab-b-project' });
+
+    expect(authenticationSession.getProjectId()).toBe('tab-b-project');
+  });
+});
+
+describe('authenticationSession reads', () => {
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('never writes storage while reading the project', () => {
+    signIn({ userId: 'user-1' });
+    window.localStorage.setItem('projectId', 'shared-project');
+
+    expect(authenticationSession.getStoredProjectId()).toBe('shared-project');
+    expect(window.sessionStorage.length).toBe(0);
+  });
+
+  it('reads nothing from a broken token instead of throwing', () => {
+    window.localStorage.setItem('token', 'not-a-jwt');
+
+    expect(authenticationSession.getCurrentUserId()).toBeNull();
+    expect(authenticationSession.getPlatformId()).toBeNull();
+    expect(authenticationSession.isOnboarding()).toBe(false);
+  });
+
+  it.each([
+    ['/projects/p1', 'p1'],
+    ['/projects/p1/flows/f1', 'p1'],
+    ['/projectsx/p1', null],
+    ['/platform/projects', null],
+  ])('reads the project of %s from the URL', (pathname, projectId) => {
+    expect(authenticationSession.getProjectIdFromPath(pathname)).toBe(
+      projectId,
+    );
+  });
+});
+
+function signIn({ userId }: { userId: string }): void {
+  window.localStorage.setItem(
+    'token',
+    userToken({ platformId: 'platform-a', userId }),
+  );
+}
+
+function switchInAnotherTab({ projectId }: { projectId: string }): void {
+  window.localStorage.setItem('projectId', projectId);
+}
+
 function switchResponse({
   platformId,
   projectId,
@@ -78,7 +250,7 @@ function switchResponse({
     id: 'user-1',
     platformId,
     projectId,
-    token: userToken({ platformId }),
+    token: userToken({ platformId, userId: 'user-1' }),
     platformRole: PlatformRole.MEMBER,
     status: UserStatus.ACTIVE,
     externalId: null,
@@ -91,12 +263,18 @@ function switchResponse({
   };
 }
 
-function userToken({ platformId }: { platformId: string }): string {
+function userToken({
+  platformId,
+  userId,
+}: {
+  platformId: string;
+  userId: string;
+}): string {
   const encode = (value: object): string =>
     Buffer.from(JSON.stringify(value)).toString('base64url');
   return [
     encode({ alg: 'HS256', typ: 'JWT' }),
-    encode({ id: 'user-1', type: 'USER', platform: { id: platformId } }),
+    encode({ id: userId, type: 'USER', platform: { id: platformId } }),
     'signature',
   ].join('.');
 }
