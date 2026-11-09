@@ -7,11 +7,11 @@ import {
 } from '@activepieces/shared';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createApTableStore } from './ap-tables-client-state';
+import { createApTableStore } from '@/features/tables/stores/store/ap-tables-client-state';
 
-vi.mock('../../api/fields-api', () => ({ fieldsApi: {} }));
-vi.mock('../../api/records-api', () => ({ recordsApi: {} }));
-vi.mock('../../api/tables-api', () => ({ tablesApi: {} }));
+vi.mock('@/features/tables/api/fields-api', () => ({ fieldsApi: {} }));
+vi.mock('@/features/tables/api/records-api', () => ({ recordsApi: {} }));
+vi.mock('@/features/tables/api/tables-api', () => ({ tablesApi: {} }));
 vi.mock('@/lib/error-reporting', () => ({ errorReporting: {} }));
 
 describe('mergeServerRecords', () => {
