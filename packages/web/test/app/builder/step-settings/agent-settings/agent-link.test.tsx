@@ -70,6 +70,7 @@ vi.mock('@/lib/authentication-session', () => ({
     getCurrentUserId: () => null,
     getPlatformId: () => null,
     subscribe: () => () => undefined,
+    appendProjectRoutePrefix: (path: string) => `/projects/project-1${path}`,
   },
 }));
 
