@@ -190,6 +190,27 @@ describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
     })
 })
 
+describe('agentMcpClient.withToolTimeouts large result offload', () => {
+    it('keeps _meta on a result it offloads to a file', async () => {
+        const apResource = { v: 1, kind: 'table', id: 'table-1', projectId: 'project-1', op: 'update', label: 'Leads' }
+        const bigResult = { content: [{ type: 'text', text: 'x'.repeat(70 * 1024) }], _meta: { apResource } }
+        const saveLargeResult = vi.fn().mockResolvedValue('file-1')
+
+        const wrapped = agentMcpClient.withToolTimeouts({
+            mcpToolSet: { [ATTIO_TOOL]: { execute: async () => bigResult } },
+            brokenConnectors: new Set<string>(),
+            taintState: { tainted: false },
+            saveLargeResult,
+        }) as Record<string, { execute: (args: unknown) => Promise<{ content: { text: string }[], _meta?: unknown }> }>
+
+        const result = await wrapped[ATTIO_TOOL].execute({})
+
+        expect(saveLargeResult).toHaveBeenCalledTimes(1)
+        expect(result.content[0].text).toContain('file-1')
+        expect(result._meta).toEqual({ apResource })
+    })
+})
+
 function createTestLogger(): { log: FastifyBaseLogger, warnCalls: unknown[][] } {
     const warnCalls: unknown[][] = []
     const log: FastifyBaseLogger = {
