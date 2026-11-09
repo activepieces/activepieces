@@ -1,6 +1,7 @@
 import { flushSync } from 'react-dom';
 
 import { MOBILE_BREAKPOINT } from '@/hooks/use-mobile';
+import { errorReporting } from '@/lib/error-reporting';
 
 import { chatLayoutUtils } from './chat-layout';
 
@@ -41,7 +42,9 @@ function run({
       active = null;
       delete root.dataset.chatMove;
     })
-    .catch(() => undefined);
+    .catch((error: unknown) =>
+      errorReporting.report({ error, source: 'chat-layout-move' }),
+    );
 }
 
 function apply(update: () => void): void {
@@ -92,20 +95,25 @@ function markKeyPress(): void {
   }, 0);
 }
 
+function watchKeyPresses(): () => void {
+  window.addEventListener('keydown', markKeyPress, true);
+  return () => {
+    window.removeEventListener('keydown', markKeyPress, true);
+    keyPressInProgress = false;
+  };
+}
+
 let active: LayoutTransition | null = null;
 let commitWaiter: (() => void) | null = null;
 let applying = false;
 let keyPressInProgress = false;
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('keydown', markKeyPress, true);
-}
 
 const COMMIT_TIMEOUT_MS = 300;
 
 export const layoutMove = {
   run,
   routeCommitted,
+  watchKeyPresses,
 };
 
 type LayoutTransition = {

@@ -181,7 +181,7 @@ function CollapseOnInput({
   return (
     <div
       className={cn(
-        'grid transition-opacity duration-(--dur-base) ease-out motion-reduce:transition-none',
+        'grid transition-opacity duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none',
         collapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
       )}
     >
@@ -266,7 +266,7 @@ function ChatNotice({
 
 export function MessageSkeletons() {
   return (
-    <div className="space-y-8 animate-in fade-in duration-(--dur-base) ease-out py-4 motion-reduce:animate-none">
+    <div className="space-y-8 animate-in fade-in duration-(--dur-base) ease-(--ease-ap-out) py-4 motion-reduce:animate-none">
       <div className="flex justify-end">
         <Skeleton className="h-10 w-48 rounded-xl" />
       </div>
@@ -484,7 +484,7 @@ function ExampleCards({
           {expanded ? t('Show less') : t('More and bigger')}
           <ChevronDown
             className={cn(
-              'size-4 transition-transform duration-(--dur-base) ease-out motion-reduce:transition-none',
+              'size-4 transition-transform duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none',
               expanded && 'rotate-180',
             )}
           />
@@ -558,14 +558,14 @@ function CardCarousel({ children }: { children: ReactNode }) {
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-gray-1 to-transparent transition-opacity duration-(--dur-base) ease-out',
+          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-gray-1 to-transparent transition-opacity duration-(--dur-base) ease-(--ease-ap-out)',
           edges.atStart ? 'opacity-0' : 'opacity-100',
         )}
       />
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-gray-1 to-transparent transition-opacity duration-(--dur-base) ease-out',
+          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-gray-1 to-transparent transition-opacity duration-(--dur-base) ease-(--ease-ap-out)',
           edges.atEnd ? 'opacity-0' : 'opacity-100',
         )}
       />

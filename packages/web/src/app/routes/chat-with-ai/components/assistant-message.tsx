@@ -578,7 +578,7 @@ function CardGroup({
           <span>{t('chatOutcomeCount', { count: cards.length })}</span>
           <ChevronDown
             className={cn(
-              'size-3.5 shrink-0 opacity-50 transition-transform duration-(--dur-base) ease-out motion-reduce:transition-none',
+              'size-3.5 shrink-0 opacity-50 transition-transform duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none',
               open && 'rotate-180',
             )}
           />

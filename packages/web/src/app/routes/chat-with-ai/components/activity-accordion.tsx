@@ -74,7 +74,7 @@ export function ThinkingBlock({
           )}
           <ChevronDown
             className={cn(
-              'size-3.5 shrink-0 transition-[rotate,opacity] duration-(--dur-base) ease-out motion-reduce:transition-none',
+              'size-3.5 shrink-0 transition-[rotate,opacity] duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none',
               isOpen && 'rotate-180',
               isExpandable ? 'opacity-50 text-gray-11' : 'opacity-0',
             )}

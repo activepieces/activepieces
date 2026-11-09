@@ -27,7 +27,7 @@ export function ChatNotch({ className }: { className?: string }) {
         viewBox={`0 0 ${NOTCH_BOX} ${NOTCH_BOX}`}
         aria-hidden
         className={cn(
-          'absolute inset-0 size-full overflow-visible transition-opacity ease-out',
+          'absolute inset-0 size-full overflow-visible transition-opacity ease-(--ease-ap-out)',
           hidden ? 'opacity-0 duration-(--dur-fast)' : 'duration-(--dur-base)',
         )}
       >
@@ -49,7 +49,7 @@ export function ChatNotch({ className }: { className?: string }) {
               tabIndex={hidden ? -1 : 0}
               onClick={() => useChatPanel.getState().setOpen(true)}
               className={cn(
-                'group absolute bottom-0 left-0 flex size-12 items-start justify-start rounded-md pt-3.25 pl-3 text-gray-12 outline-hidden transition-[opacity,scale] ease-out focus-visible:ring-2 focus-visible:ring-gray-8 focus-visible:ring-inset motion-reduce:transition-opacity',
+                'group absolute bottom-0 left-0 flex size-12 items-start justify-start rounded-md pt-3.25 pl-3 text-gray-12 outline-hidden transition-[opacity,scale] ease-(--ease-ap-out) focus-visible:ring-2 focus-visible:ring-gray-8 focus-visible:ring-inset motion-reduce:transition-opacity',
                 hidden
                   ? 'pointer-events-none scale-95 opacity-0 duration-(--dur-fast) motion-reduce:scale-100'
                   : 'pointer-events-auto duration-(--dur-base)',

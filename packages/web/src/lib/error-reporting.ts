@@ -156,4 +156,5 @@ export type FrontendErrorSource =
   | 'chunk-preload'
   | 'query'
   | 'table-save'
-  | 'table-live-updates';
+  | 'table-live-updates'
+  | 'chat-layout-move';

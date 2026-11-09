@@ -494,7 +494,7 @@ function ChatBoxContent({
                 )}
 
                 {wasCancelled && (
-                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-(--dur-base) ease-out motion-reduce:animate-none">
+                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:animate-none">
                     <Square className="h-3 w-3 fill-current" />
                     <span>{t('Response stopped')}</span>
                   </div>

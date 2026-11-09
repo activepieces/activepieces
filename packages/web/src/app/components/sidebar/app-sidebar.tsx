@@ -271,7 +271,7 @@ function HeaderActions({ children }: { children: React.ReactNode }) {
   return (
     <div
       inert={state === 'collapsed' && !isMobile}
-      className="absolute top-0 left-[calc(var(--sidebar-width)-1rem-4.125rem)] flex w-[4.125rem] items-center justify-end gap-0.5 transition-opacity duration-(--dur-fast) ease-out group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none"
+      className="absolute top-0 left-[calc(var(--sidebar-width)-1rem-4.125rem)] flex w-[4.125rem] items-center justify-end gap-0.5 transition-opacity duration-(--dur-fast) ease-(--ease-ap-out) group-data-[collapsible=icon]:opacity-0 motion-reduce:transition-none"
     >
       {children}
     </div>

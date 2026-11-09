@@ -28,7 +28,7 @@ export function UseCaseCard({
       aria-hidden={!interactive}
       tabIndex={interactive ? undefined : -1}
       className={cn(
-        'group relative flex min-h-[148px] flex-col justify-between rounded-xl p-4 text-left ring-1 transition-shadow duration-(--dur-base) ease-out',
+        'group relative flex min-h-[148px] flex-col justify-between rounded-xl p-4 text-left ring-1 transition-shadow duration-(--dur-base) ease-(--ease-ap-out)',
         interactive ? 'cursor-pointer' : 'cursor-default',
         useCaseCardArt.CARD_SURFACE,
         theme.ring,
@@ -59,7 +59,7 @@ export function UseCaseCard({
       {interactive && (
         <DoodleArrow
           className={cn(
-            'absolute bottom-4 right-4 size-4 opacity-0 transition-[opacity,translate] duration-(--dur-base) ease-out group-hover:translate-x-0 group-hover:opacity-100 motion-safe:translate-x-1.5',
+            'absolute bottom-4 right-4 size-4 opacity-0 transition-[opacity,translate] duration-(--dur-base) ease-(--ease-ap-out) group-hover:translate-x-0 group-hover:opacity-100 motion-safe:translate-x-1.5',
             theme.ink,
           )}
         />

@@ -23,6 +23,7 @@ import {
   chatPanelUtils,
   useChatPanel,
 } from '@/features/workspace/lib/chat-panel-open';
+import { layoutMove } from '@/features/workspace/lib/layout-move';
 import { useRailOpen } from '@/features/workspace/lib/rail-collapsed';
 import { useShellHandle } from '@/features/workspace/lib/shell-handle';
 import { useChatOn } from '@/features/workspace/lib/use-chat-on';
@@ -151,6 +152,8 @@ export function ChatPanel() {
     return () => useChatPanel.getState().setPanelMounted(false);
   }, []);
 
+  useEffect(() => layoutMove.watchKeyPresses(), []);
+
   useComposerFocus({ panelRef, visible });
 
   const widthAt = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -198,8 +201,8 @@ export function ChatPanel() {
           className={cn(
             'fixed inset-0 z-40 cursor-default bg-scrim transition-opacity motion-reduce:duration-(--dur-fast)',
             sheetOpen
-              ? 'duration-(--dur-sheet) ease-drawer'
-              : 'pointer-events-none opacity-0 duration-(--dur-move) ease-out',
+              ? 'duration-(--dur-sheet) ease-(--ease-ap-drawer)'
+              : 'pointer-events-none opacity-0 duration-(--dur-move) ease-(--ease-ap-out)',
           )}
         />
       )}
@@ -219,8 +222,8 @@ export function ChatPanel() {
             ? [
                 'fixed inset-x-0 top-2 bottom-0 z-40 flex flex-col overflow-hidden rounded-t-xl border bg-gray-1 shadow-over transition-[translate,opacity,visibility] motion-reduce:transition-[opacity,visibility] motion-reduce:duration-(--dur-fast)',
                 sheetOpen
-                  ? 'duration-(--dur-sheet) ease-drawer'
-                  : 'invisible translate-y-full duration-(--dur-move) ease-out motion-reduce:translate-y-0 motion-reduce:opacity-0',
+                  ? 'duration-(--dur-sheet) ease-(--ease-ap-drawer)'
+                  : 'invisible translate-y-full duration-(--dur-move) ease-(--ease-ap-out) motion-reduce:translate-y-0 motion-reduce:opacity-0',
               ]
             : [
                 'relative flex shrink-0 flex-col overflow-hidden bg-gray-1 [view-transition-name:ap-chat]',
@@ -325,7 +328,7 @@ function ChatSheetPill({ onOpen }: { onOpen: () => void }) {
       variant="outline"
       onClick={onOpen}
       aria-label={needsYou ? t('Open chat, it needs you') : t('Open chat')}
-      className="fixed left-1/2 z-40 h-11 -translate-x-1/2 animate-in fade-in-0 motion-safe:slide-in-from-bottom-2 gap-2 rounded-full bg-gray-1 pr-4 pl-3 text-gray-12 shadow-lift duration-(--dur-base) ease-out"
+      className="fixed left-1/2 z-40 h-11 -translate-x-1/2 animate-in fade-in-0 motion-safe:slide-in-from-bottom-2 gap-2 rounded-full bg-gray-1 pr-4 pl-3 text-gray-12 shadow-lift duration-(--dur-base) ease-(--ease-ap-out)"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
     >
       <span className="relative flex size-6 shrink-0 items-center justify-center">

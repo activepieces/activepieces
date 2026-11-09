@@ -50,7 +50,7 @@ export function BatchProgressCard({
             value={percentage}
             className="h-2"
             indicatorClassName={cn(
-              'transition-[translate,transform,background-color] duration-(--dur-move) ease-out motion-reduce:transition-none',
+              'transition-[translate,transform,background-color] duration-(--dur-move) ease-(--ease-ap-out) motion-reduce:transition-none',
               progress.done
                 ? hasFailures
                   ? 'bg-warning-9'

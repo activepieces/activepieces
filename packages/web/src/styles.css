@@ -403,18 +403,6 @@
   }
 }
 
-@theme static {
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-
-  --dur-micro: 100ms;
-  --dur-fast: 120ms;
-  --dur-base: 160ms;
-  --dur-move: 200ms;
-  --dur-sheet: 260ms;
-  --dur-highlight-max: 600ms;
-}
-
 /*
   Per-block entrance fade for streaming chat markdown. While a message is actively
   streaming (`data-stream-animate` set), each top-level markdown block
@@ -435,7 +423,7 @@
 }
 
 [data-stream-animate] > * {
-  animation: chat-stream-block-in var(--dur-base) var(--ease-out) both;
+  animation: chat-stream-block-in var(--dur-base) var(--ease-ap-out) both;
 }
 
 /*
@@ -455,7 +443,7 @@
 }
 
 .chat-word {
-  animation: chat-word-in var(--dur-base) var(--ease-out) both;
+  animation: chat-word-in var(--dur-base) var(--ease-ap-out) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1298,7 +1286,7 @@
 
 ::view-transition-group(*) {
   animation-duration: var(--dur-move);
-  animation-timing-function: var(--ease-out);
+  animation-timing-function: var(--ease-ap-out);
 }
 
 ::view-transition-group(ap-chat) {
@@ -1337,11 +1325,11 @@
 }
 
 ::view-transition-old(ap-chat) {
-  animation: ap-view-fade-out calc(var(--dur-move) * 0.4) var(--ease-out) both;
+  animation: ap-view-fade-out calc(var(--dur-move) * 0.4) var(--ease-ap-out) both;
 }
 
 ::view-transition-new(ap-chat) {
-  animation: ap-view-fade-in var(--dur-move) var(--ease-out) both;
+  animation: ap-view-fade-in var(--dur-move) var(--ease-ap-out) both;
 }
 
 ::view-transition-old(ap-page),
@@ -1351,7 +1339,7 @@
 ::view-transition-old(ap-card),
 ::view-transition-new(ap-card) {
   animation-duration: var(--dur-move);
-  animation-timing-function: var(--ease-out);
+  animation-timing-function: var(--ease-ap-out);
 }
 
 ::view-transition-old(root),
@@ -1428,7 +1416,7 @@
 }
 
 [data-chat-switcher][data-state='open'] {
-  animation: chat-switcher-in var(--dur-fast) var(--ease-out);
+  animation: chat-switcher-in var(--dur-fast) var(--ease-ap-out);
 }
 
 [data-chat-switcher][data-state='open'][data-opened-by='keyboard'] {
@@ -1436,7 +1424,7 @@
 }
 
 [data-chat-switcher][data-state='closed'] {
-  animation: chat-switcher-fade-out var(--dur-micro) var(--ease-out);
+  animation: chat-switcher-fade-out var(--dur-micro) var(--ease-ap-out);
 }
 
 @media (prefers-reduced-motion: reduce) {

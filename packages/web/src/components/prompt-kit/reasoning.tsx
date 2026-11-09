@@ -105,7 +105,7 @@ const ReasoningTrigger = React.forwardRef<
       <span className="text-accent-11">{children}</span>
       <div
         className={cn(
-          'transform transition-transform duration-(--dur-base) ease-out motion-reduce:transition-none',
+          'transform transition-transform duration-(--dur-base) ease-(--ease-ap-out) motion-reduce:transition-none',
           isOpen ? 'rotate-180' : '',
         )}
       >

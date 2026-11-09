@@ -55,8 +55,6 @@ function cardInnerWidth({
   return viewportWidth - sidebarWidth(railOpen) - chrome;
 }
 
-// The dock never squeezes the page under PAGE_COMFORT_WIDTH, but it never
-// gets narrower than DOCK_MIN_WIDTH either.
 function shownDockWidth({
   savedWidth,
   cardWidth,
@@ -91,20 +89,6 @@ const CARD_CHROME = 10;
 const PANEL_ID = 'ap-chat-panel';
 const FULL_TOAST_TOP = 80;
 
-export const chatLayoutUtils = {
-  widthFor,
-  dockWidthFor,
-  cardInnerWidth,
-  shownDockWidth,
-  prefersReducedMotion,
-  toastPlacementFor,
-  DOCK_MIN_WIDTH,
-  DOCK_MAX_WIDTH,
-  DOCK_DEFAULT_WIDTH,
-  PAGE_COMFORT_WIDTH,
-  PANEL_ID,
-};
-
 const EASE_OUT: CubicBezier = [0.23, 1, 0.32, 1];
 const EASE_DRAWER: CubicBezier = [0.32, 0.72, 0, 1];
 const GESTURE_SPRING: GestureSpring = {
@@ -113,7 +97,7 @@ const GESTURE_SPRING: GestureSpring = {
   visualDuration: 0.25,
 };
 
-export const MOTION = {
+const MOTION = {
   easeOut: EASE_OUT,
   easeDrawer: EASE_DRAWER,
   easeOutCss: cssBezier(EASE_OUT),
@@ -130,6 +114,43 @@ export const MOTION = {
 function cssBezier([x1, y1, x2, y2]: CubicBezier): string {
   return `cubic-bezier(${x1}, ${y1}, ${x2}, ${y2})`;
 }
+
+function motionCssVars(): Record<string, string> {
+  const ms = (seconds: number) => `${Math.round(seconds * 1000)}ms`;
+  return {
+    '--ease-ap-out': MOTION.easeOutCss,
+    '--ease-ap-drawer': MOTION.easeDrawerCss,
+    '--dur-micro': ms(MOTION.micro),
+    '--dur-fast': ms(MOTION.fast),
+    '--dur-base': ms(MOTION.base),
+    '--dur-move': ms(MOTION.move),
+    '--dur-sheet': ms(MOTION.sheet),
+  };
+}
+
+function applyMotionVars({ root }: { root: HTMLElement }): void {
+  for (const [name, value] of Object.entries(motionCssVars())) {
+    root.style.setProperty(name, value);
+  }
+}
+
+const chatLayoutUtils = {
+  widthFor,
+  dockWidthFor,
+  cardInnerWidth,
+  shownDockWidth,
+  prefersReducedMotion,
+  toastPlacementFor,
+  motionCssVars,
+  applyMotionVars,
+  DOCK_MIN_WIDTH,
+  DOCK_MAX_WIDTH,
+  DOCK_DEFAULT_WIDTH,
+  PAGE_COMFORT_WIDTH,
+  PANEL_ID,
+};
+
+export { chatLayoutUtils, MOTION };
 
 type CubicBezier = [number, number, number, number];
 type GestureSpring = { type: 'spring'; bounce: number; visualDuration: number };

@@ -24,7 +24,7 @@ function ScrollButton({
       variant={variant}
       size={size}
       className={cn(
-        'h-10 w-10 rounded-full transition-[opacity,translate,scale] duration-(--dur-fast) ease-out motion-reduce:transition-opacity',
+        'h-10 w-10 rounded-full transition-[opacity,translate,scale] duration-(--dur-fast) ease-(--ease-ap-out) motion-reduce:transition-opacity',
         !isAtBottom
           ? 'translate-y-0 scale-100 opacity-100'
           : 'pointer-events-none translate-y-2 scale-95 opacity-0',

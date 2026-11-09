@@ -131,7 +131,7 @@ export function OnboardingJourneyPattern() {
 
       <div
         ref={lensRef}
-        className="absolute inset-0 opacity-0 transition-opacity duration-(--dur-move) ease-out"
+        className="absolute inset-0 opacity-0 transition-opacity duration-(--dur-move) ease-(--ease-ap-out)"
         style={{
           maskImage: LENS_MASK,
           WebkitMaskImage: LENS_MASK,

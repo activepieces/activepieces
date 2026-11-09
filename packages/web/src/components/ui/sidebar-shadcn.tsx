@@ -520,7 +520,7 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        'flex h-7 shrink-0 items-center overflow-hidden rounded-md px-2 text-xs font-medium text-gray-11 ring-gray-8 outline-hidden transition-opacity duration-(--dur-fast) ease-out motion-reduce:transition-none focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'flex h-7 shrink-0 items-center overflow-hidden rounded-md px-2 text-xs font-medium text-gray-11 ring-gray-8 outline-hidden transition-opacity duration-(--dur-fast) ease-(--ease-ap-out) motion-reduce:transition-none focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:opacity-0',
         className,
       )}
