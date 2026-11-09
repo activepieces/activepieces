@@ -8,6 +8,7 @@ import { createNotifyServer, createRpcClient, createRpcServer, EngineContract, E
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { cacheUtils } from '../cache/cache-paths'
+import { codeCache } from '../cache/flow/code/code-cache'
 import { assertSafeCodeNamespace, assertSafePathSegment } from '../utils/path-safety'
 import { Sandbox, SandboxInitOptions, SandboxLogger, SandboxMount, SandboxOptions, SandboxProcessMaker, SandboxResult } from './types'
 
@@ -52,11 +53,10 @@ function buildDenoCacheMount({ flowVersionId, reusable, basePath }: { flowVersio
     if (reusable || isNil(flowVersionId)) {
         return null
     }
-    assertSafeCodeNamespace(flowVersionId)
-    const codeCachePath = cacheUtils(basePath).getGlobalCodeCachePath()
+    const hostPath = codeCache(cacheUtils(basePath).getGlobalCodeCachePath()).denoCacheDir(flowVersionId)
     return {
-        hostPath: path.join(codeCachePath, flowVersionId, DENO_CACHE_DIR_NAME),
-        sandboxPath: `/root/codes/${flowVersionId}/${DENO_CACHE_DIR_NAME}`,
+        hostPath,
+        sandboxPath: `/root/codes/${flowVersionId}/${path.basename(hostPath)}`,
         rw: true,
     }
 }
@@ -481,8 +481,6 @@ function authenticateHandshake({ getExpectedToken, log, sandboxId }: {
         next()
     }
 }
-
-const DENO_CACHE_DIR_NAME = '.deno-cache'
 
 const unsupportedEngineRpc: WorkerRpcContract = {
     async forceReinstallPiece(): Promise<void> {
