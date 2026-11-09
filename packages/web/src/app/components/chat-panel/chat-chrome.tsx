@@ -417,7 +417,7 @@ function FollowAlongItems() {
       >
         <span className="flex min-w-0 flex-1 flex-col">
           <span>{t('Follow along')}</span>
-          <span className="text-xs text-gray-10">
+          <span className="text-xs text-gray-11">
             {autoFollow
               ? t('Opens what it edits.')
               : t("Doesn't open pages for you.")}

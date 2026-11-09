@@ -47,7 +47,7 @@ function openBeside({
   const panel = useChatPanel.getState();
   if (current.isFullPage()) panel.dock(panel.mode);
   current.navigate({ to: route, replace: !push });
-  panel.announce(t('Opened {name} beside the chat', { name }));
+  panel.announce(t('Opened {name} beside the chat.', { name }));
 }
 
 function collapse(side: ChatPanelSide): void {
