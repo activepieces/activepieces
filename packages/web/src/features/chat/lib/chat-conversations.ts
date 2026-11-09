@@ -55,7 +55,8 @@ async function rename({
     chatApi.updateConversation(id, { title }),
   );
   if (error) {
-    if (previousTitle !== null) {
+    const newerRename = cachedTitle({ queryClient, id }) !== title;
+    if (previousTitle !== null && !newerRename) {
       setTitle({ queryClient, id, title: previousTitle });
     }
     toast.error(t('Failed to rename conversation'));
@@ -63,6 +64,32 @@ async function rename({
   queryClient
     .invalidateQueries({ queryKey: chatQueryKeys.allConversationLists() })
     .catch(() => undefined);
+  queryClient
+    .invalidateQueries({ queryKey: chatQueryKeys.conversation(id) })
+    .catch(() => undefined);
+}
+
+function cachedTitle({
+  queryClient,
+  id,
+}: {
+  queryClient: QueryClient;
+  id: string;
+}): string | null | undefined {
+  const cached = queryClient.getQueryData<AgentConversation | null>(
+    chatQueryKeys.conversation(id),
+  );
+  if (cached) return cached.title;
+  const lists = queryClient.getQueriesData<
+    InfiniteData<SeekPage<AgentConversation>>
+  >({ queryKey: chatQueryKeys.allConversationLists() });
+  for (const [, list] of lists) {
+    const found = list?.pages
+      .flatMap((page) => page.data)
+      .find((conversation) => conversation.id === id);
+    if (found) return found.title;
+  }
+  return undefined;
 }
 
 function setTitle({
